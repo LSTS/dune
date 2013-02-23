@@ -301,6 +301,7 @@ namespace Plan
 
             std::string comp = DTR("plan completed");
             onSuccess(comp, false);
+            m_pcs.last_outcome = IMC::PlanControlState::LPO_SUCCESS;
             m_reply.plan_id = m_spec.plan_id;
             changeMode(IMC::PlanControlState::PCS_READY, comp);
           }
@@ -706,6 +707,10 @@ namespace Plan
       void
       onFailure(const std::string& errmsg, bool print = true)
       {
+        m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
+        m_pcs.plan_progress = -1.0;
+        m_pcs.plan_eta = 0;
+
         answer(IMC::PlanControl::PC_FAILURE, errmsg, print);
       }
 
@@ -715,6 +720,9 @@ namespace Plan
       void
       onSuccess(const std::string& msg = DTR("OK"), bool print = true)
       {
+        m_pcs.plan_progress = -1.0;
+        m_pcs.plan_eta = 0;
+
         answer(IMC::PlanControl::PC_SUCCESS, msg, print);
       }
 
@@ -722,6 +730,7 @@ namespace Plan
       //! @param[in] s plan control state to switch to
       //! @param[in] event_desc description of the event that motivated the change
       //! @param[in] nid id of the maneuver if any
+      //! @param[in] maneuver pointer to maneuver message
       //! @param[in] print true if the messages should be printed to output
       void
       changeMode(IMC::PlanControlState::StateEnum s, const std::string& event_desc,
@@ -788,6 +797,7 @@ namespace Plan
         m_pcs.man_id.clear();
         m_pcs.man_type = 0xFFFF;
         m_pcs.plan_progress = -1.0;
+        m_pcs.last_outcome = IMC::PlanControlState::LPO_NONE;
         m_last_event = DTR("initializing");
         dispatch(m_pcs);
 
