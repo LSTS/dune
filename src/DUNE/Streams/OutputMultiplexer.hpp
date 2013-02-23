@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-// $Id:: OutputMultiplexer.hpp 12667 2013-01-22 02:44:42Z rasm            $:*
-//***************************************************************************
 
 #ifndef DUNE_STREAMS_OUTPUT_MULTIPLEXER_HPP_INCLUDED_
 #define DUNE_STREAMS_OUTPUT_MULTIPLEXER_HPP_INCLUDED_

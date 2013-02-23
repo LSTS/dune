@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-// $Id:: Bzip2Decompressor.hpp 12667 2013-01-22 02:44:42Z rasm            $:*
-//***************************************************************************
 
 #ifndef DUNE_COMPRESSION_BZIP2_DECOMPRESSOR_HPP_INCLUDED_
 #define DUNE_COMPRESSION_BZIP2_DECOMPRESSOR_HPP_INCLUDED_

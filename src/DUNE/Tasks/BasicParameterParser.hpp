@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-// $Id:: BasicParameterParser.hpp 12910 2013-02-14 00:11:15Z rasm         $:*
-//***************************************************************************
 
 #ifndef DUNE_TASKS_BASIC_PARAMETER_PARSER_HPP_INCLUDED_
 #define DUNE_TASKS_BASIC_PARAMETER_PARSER_HPP_INCLUDED_

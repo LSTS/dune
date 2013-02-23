@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
-// $Id:: SimulationDriver.hpp 12667 2013-01-22 02:44:42Z rasm             $:*
-//***************************************************************************
 
 #ifndef TRANSPORTS_UNDERWATER_BENTHOS_SIMULATION_DRIVER_HPP_INCLUDED_
 #define TRANSPORTS_UNDERWATER_BENTHOS_SIMULATION_DRIVER_HPP_INCLUDED_

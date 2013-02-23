@@ -6,8 +6,6 @@
 // Author: Bruno Terra                                                      *
 // Author: José Braga                                                       *
 //***************************************************************************
-// $Id:: VSIM.hpp 12303 2013-01-01 02:14:25Z jbraga                       $:*
-//***************************************************************************
 
 #ifndef SIMULATORS_VSIM_VSIM_HPP_INCLUDED_
 #define SIMULATORS_VSIM_VSIM_HPP_INCLUDED_

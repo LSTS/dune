@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 //***************************************************************************
-// $Id:: PlanDuration.hpp 12970 2013-02-19 18:47:56Z pdcalado             $:*
-//***************************************************************************
 
 #ifndef DUNE_PLAN_ENGINE_PLANDURATION_HPP_INCLUDED_
 #define DUNE_PLAN_ENGINE_PLANDURATION_HPP_INCLUDED_

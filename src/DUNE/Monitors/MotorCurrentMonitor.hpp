@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 //***************************************************************************
-// $Id:: MotorCurrentMonitor.hpp 12731 2013-01-25 11:30:03Z pdcalado      $:*
-//***************************************************************************
 
 #ifndef DUNE_MONITORS_MOTOR_CURRENT_MONITOR_HPP_INCLUDED_
 #define DUNE_MONITORS_MOTOR_CURRENT_MONITOR_HPP_INCLUDED_

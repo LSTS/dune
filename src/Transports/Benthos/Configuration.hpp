@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
-// $Id:: Configuration.hpp 12667 2013-01-22 02:44:42Z rasm                $:*
-//***************************************************************************
 
 #ifndef TRANSPORTS_UNDERWATER_CONFIGURATION_HPP_INCLUDED_
 #define TRANSPORTS_UNDERWATER_CONFIGURATION_HPP_INCLUDED_

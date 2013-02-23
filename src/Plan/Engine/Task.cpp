@@ -6,8 +6,6 @@
 // Author: Eduardo Marques                                                  *
 // Author: Paulo Dias (plan actions addition)                               *
 //***************************************************************************
-// $Id:: Task.cpp 12993 2013-02-21 19:21:15Z pdcalado                     $:*
-//***************************************************************************
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>

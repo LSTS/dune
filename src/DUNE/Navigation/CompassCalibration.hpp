@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: José Braga                                                       *
 //***************************************************************************
-// $Id:: CompassCalibration.hpp 12667 2013-01-22 02:44:42Z rasm           $:*
-//***************************************************************************
 
 #ifndef DUNE_NAVIGATION_COMPASS_CALIBRATION_HPP_INCLUDED_
 #define DUNE_NAVIGATION_COMPASS_CALIBRATION_HPP_INCLUDED_

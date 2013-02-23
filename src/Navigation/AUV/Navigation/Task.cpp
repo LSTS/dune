@@ -9,8 +9,6 @@
 // Author: Jorge Estrela da Silva (port and enhancements, velocity updates) *
 // Author: José Braga                                                       *
 //***************************************************************************
-// $Id:: Task.cpp 12955 2013-02-18 17:02:31Z jbraga                       $:*
-//***************************************************************************
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>

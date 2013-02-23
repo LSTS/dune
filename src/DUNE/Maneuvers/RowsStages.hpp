@@ -6,8 +6,6 @@
 // Author: Eduardo Marques (original stage implementation)                  *
 // Author: Pedro Calado                                                     *
 //***************************************************************************
-// $Id:: RowsStages.hpp 12968 2013-02-19 18:47:54Z pdcalado               $:*
-//***************************************************************************
 
 #ifndef DUNE_MANEUVERS_ROWS_STAGES_HPP_INCLUDED_
 #define DUNE_MANEUVERS_ROWS_STAGES_HPP_INCLUDED_

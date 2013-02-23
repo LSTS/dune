@@ -6,8 +6,6 @@
 // Author: Eduardo Marques                                                  *
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-// $Id:: WGS84.hpp 12667 2013-01-22 02:44:42Z rasm                        $:*
-//***************************************************************************
 // These are the standard conversion routines as described in: J. Zhu,      *
 // "Conversion of Earth-centered Earth-fixed coordinates to geodetic        *
 // coordinates," IEEE Transactions on Aerospace and Electronic              *

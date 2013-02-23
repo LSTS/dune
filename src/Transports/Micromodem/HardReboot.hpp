@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-// $Id:: HardReboot.hpp 12667 2013-01-22 02:44:42Z rasm                   $:*
-//***************************************************************************
 
 #ifndef TRANSPORTS_MICROMODEM_HARD_REBOOT_HPP_INCLUDED_
 #define TRANSPORTS_MICROMODEM_HARD_REBOOT_HPP_INCLUDED_

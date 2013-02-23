@@ -6,8 +6,6 @@
 // Author: Bruno Terra                                                      *
 // Author: José Braga                                                       *
 //***************************************************************************
-// $Id:: Volume.hpp 12658 2013-01-21 11:43:00Z jbraga                     $:*
-//***************************************************************************
 
 #ifndef SIMULATORS_VSIM_VOLUME_HPP_INCLUDED_
 #define SIMULATORS_VSIM_VOLUME_HPP_INCLUDED_

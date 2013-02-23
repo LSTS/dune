@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-// $Id:: Constants.hpp 12383 2013-01-04 03:14:45Z rasm                    $:*
-//***************************************************************************
 
 #ifndef TRANSPORTS_MICROMODEM_CONSTANTS_HPP_INCLUDED_
 #define TRANSPORTS_MICROMODEM_CONSTANTS_HPP_INCLUDED_

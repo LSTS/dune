@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
-// $Id:: PlanConfigParser.hpp 12986 2013-02-21 16:45:23Z pdcalado         $:*
-//***************************************************************************
 
 #ifndef DUNE_PARSERS_PLANCONFIGPARSER_HPP_INCLUDED_
 #define DUNE_PARSERS_PLANCONFIGPARSER_HPP_INCLUDED_

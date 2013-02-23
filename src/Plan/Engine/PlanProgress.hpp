@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 //***************************************************************************
-// $Id:: PlanProgress.hpp 12966 2013-02-19 16:11:41Z pdcalado             $:*
-//***************************************************************************
 
 #ifndef DUNE_PLAN_ENGINE_PLANPROGRESS_HPP_INCLUDED_
 #define DUNE_PLAN_ENGINE_PLANPROGRESS_HPP_INCLUDED_

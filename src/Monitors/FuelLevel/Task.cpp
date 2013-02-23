@@ -6,8 +6,6 @@
 // Author: Ricardo Martins                                                  *
 // Author: Pedro Calado (energy counting adaptation)                        *
 //***************************************************************************
-// $Id:: Task.cpp 12905 2013-02-11 18:19:44Z pdcalado                     $:*
-//***************************************************************************
 
 // ISO C++ 98 headers.
 #include <cmath>

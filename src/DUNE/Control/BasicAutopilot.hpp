@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 //***************************************************************************
-// $Id:: BasicAutopilot.hpp 12836 2013-02-01 17:04:32Z pdcalado           $:*
-//***************************************************************************
 
 #ifndef DUNE_CONTROL_BASIC_AUTOPILOT_HPP_INCLUDED_
 #define DUNE_CONTROL_BASIC_AUTOPILOT_HPP_INCLUDED_

@@ -9,8 +9,6 @@
 // Author: Jorge Estrela da Silva, (port and theory enhancements)           *
 // Author: José Braga (new Extended Kalman Filter)                          *
 //***************************************************************************
-// $Id:: Task.cpp 12995 2013-02-22 18:25:54Z jbraga                       $:*
-//***************************************************************************
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>

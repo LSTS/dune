@@ -9,8 +9,6 @@
 // Author: Rui Gomes (Matrix concatenation)                                 *
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
-// $Id:: Matrix.hpp 12698 2013-01-24 01:13:55Z rasm                       $:*
-//***************************************************************************
 
 #ifndef DUNE_MATH_MATRIX_HPP_INCLUDED_
 #define DUNE_MATH_MATRIX_HPP_INCLUDED_

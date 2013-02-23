@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 //***************************************************************************
-// $Id:: ServoPositionMonitor.hpp 12757 2013-01-26 19:27:19Z pdcalado     $:*
-//***************************************************************************
 
 #ifndef DUNE_MONITORS_SERVO_POSITION_MONITOR_HPP_INCLUDED_
 #define DUNE_MONITORS_SERVO_POSITION_MONITOR_HPP_INCLUDED_

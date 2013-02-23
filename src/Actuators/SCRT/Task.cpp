@@ -7,8 +7,6 @@
 // Author: Ricardo Martins                                                  *
 // Author: Pedro Calado (servo fault detection)                             *
 //***************************************************************************
-// $Id:: Task.cpp 12717 2013-01-24 19:13:15Z pdcalado                     $:*
-//***************************************************************************
 
 // ISO C++ 98 headers.
 #include <cmath>

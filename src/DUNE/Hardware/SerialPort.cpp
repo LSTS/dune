@@ -6,8 +6,6 @@
 // Author: Ricardo Martins (POSIX)                                          *
 // Author: Eduardo Marques (Microsoft Windows)                              *
 //***************************************************************************
-// $Id:: SerialPort.cpp 12667 2013-01-22 02:44:42Z rasm                   $:*
-//***************************************************************************
 
 // DUNE headers.
 #include <DUNE/Config.hpp>

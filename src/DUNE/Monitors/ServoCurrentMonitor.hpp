@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 //***************************************************************************
-// $Id:: ServoCurrentMonitor.hpp 12667 2013-01-22 02:44:42Z rasm          $:*
-//***************************************************************************
 
 #ifndef DUNE_MONITORS_SERVO_CURRENT_MONITOR_HPP_INCLUDED_
 #define DUNE_MONITORS_SERVO_CURRENT_MONITOR_HPP_INCLUDED_

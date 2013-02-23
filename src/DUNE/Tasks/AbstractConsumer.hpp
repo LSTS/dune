@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-// $Id:: AbstractConsumer.hpp 12667 2013-01-22 02:44:42Z rasm             $:*
-//***************************************************************************
 
 #ifndef DUNE_TASKS_ABSTRACT_CONSUMER_HPP_INCLUDED_
 #define DUNE_TASKS_ABSTRACT_CONSUMER_HPP_INCLUDED_

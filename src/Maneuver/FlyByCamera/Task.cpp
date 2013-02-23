@@ -7,8 +7,6 @@
 // Author: Joao Fortuna                                                     *
 // Author: Christian Fuchs                                                  *
 //***************************************************************************
-// $Id:: Task.cpp 12695 2013-01-23 22:54:41Z rasm                         $:*
-//***************************************************************************
 
 // Preliminary version of Fly By Camera
 // Flies vehicle based on camera orientation

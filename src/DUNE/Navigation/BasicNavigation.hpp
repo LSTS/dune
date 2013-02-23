@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: José Braga                                                       *
 //***************************************************************************
-// $Id:: BasicNavigation.hpp 12955 2013-02-18 17:02:31Z jbraga            $:*
-//***************************************************************************
 
 #ifndef DUNE_NAVIGATION_BASIC_NAVIGATION_HPP_INCLUDED_
 #define DUNE_NAVIGATION_BASIC_NAVIGATION_HPP_INCLUDED_

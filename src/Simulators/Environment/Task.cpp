@@ -6,8 +6,6 @@
 // Author: Eduardo Marques (former Bathymetry task)                         *
 // Author: Pedro Calado                                                     *
 //***************************************************************************
-// $Id:: Task.cpp 12721 2013-01-25 02:01:06Z jbraga                       $:*
-//***************************************************************************
 
 // ISO C++ 98 headers.
 #include <iomanip>

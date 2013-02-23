@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-// $Id:: BasicStringReader.hpp 12667 2013-01-22 02:44:42Z rasm            $:*
-//***************************************************************************
 
 #ifndef DUNE_PARSERS_BASIC_STRING_READER_HPP_INCLUDED_
 #define DUNE_PARSERS_BASIC_STRING_READER_HPP_INCLUDED_

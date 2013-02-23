@@ -6,8 +6,6 @@
 // Author: Eduardo Marques (original stage implementation)                  *
 // Author: Pedro Calado                                                     *
 //***************************************************************************
-// $Id:: RowsStages.cpp 12968 2013-02-19 18:47:54Z pdcalado               $:*
-//***************************************************************************
 
 // DUNE headers.
 #include <DUNE/Maneuvers/RowsStages.hpp>

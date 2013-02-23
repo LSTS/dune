@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-// $Id:: MessageMonitor.hpp 12667 2013-01-22 02:44:42Z rasm               $:*
-//***************************************************************************
 
 #ifndef TRANSPORTS_HTTP_STATE_MONITOR_HPP_INCLUDED_
 #define TRANSPORTS_HTTP_STATE_MONITOR_HPP_INCLUDED_

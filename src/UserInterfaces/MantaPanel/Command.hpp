@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-// $Id:: Command.hpp 12667 2013-01-22 02:44:42Z rasm                      $:*
-//***************************************************************************
 
 #ifndef USER_INTERFACES_MANTA_PANEL_COMMAND_HPP_INCLUDED_
 #define USER_INTERFACES_MANTA_PANEL_COMMAND_HPP_INCLUDED_

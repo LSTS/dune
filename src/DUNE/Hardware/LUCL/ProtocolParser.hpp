@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-// $Id:: ProtocolParser.hpp 12667 2013-01-22 02:44:42Z rasm               $:*
-//***************************************************************************
 
 #ifndef DUNE_HARDWARE_LUCL_PROTOCOL_PARSER_HPP_INCLUDED_
 #define DUNE_HARDWARE_LUCL_PROTOCOL_PARSER_HPP_INCLUDED_

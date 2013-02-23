@@ -6,8 +6,6 @@
 // Author: Rui Gomes (original code)                                        *
 // Author: Eduardo Marques (port)                                           *
 //***************************************************************************
-// $Id:: BodyFixedFrame.hpp 12667 2013-01-22 02:44:42Z rasm               $:*
-//***************************************************************************
 // Ported from Neptus (pt.up.fe.dceg.neptus.types.coord.CoordinateUtil)     *
 //***************************************************************************
 

@@ -7,8 +7,6 @@
 // Author: Renato Caldas                                                    *
 // Author: Pedro Calado (control in meters per second)                      *
 //***************************************************************************
-// $Id:: Task.cpp 12695 2013-01-23 22:54:41Z rasm                         $:*
-//***************************************************************************
 
 // ISO C++ 98 headers.
 #include <cmath>

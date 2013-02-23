@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-// $Id:: SetParameter.hpp 12667 2013-01-22 02:44:42Z rasm                 $:*
-//***************************************************************************
 
 #ifndef TRANSPORTS_MICROMODEM_SET_PARAMETER_HPP_INCLUDED_
 #define TRANSPORTS_MICROMODEM_SET_PARAMETER_HPP_INCLUDED_

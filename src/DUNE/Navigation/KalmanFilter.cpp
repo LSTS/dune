@@ -6,8 +6,6 @@
 // Author: Pedro Vaz Teixeira                                               *
 // Author: José Braga                                                       *
 //***************************************************************************
-// $Id:: KalmanFilter.cpp 12693 2013-01-23 22:15:44Z jbraga               $:*
-//***************************************************************************
 
 // DUNE headers.
 #include <DUNE/Navigation/KalmanFilter.hpp>

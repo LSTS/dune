@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 //***************************************************************************
-// $Id:: BatteryData.hpp 12667 2013-01-22 02:44:42Z rasm                  $:*
-//***************************************************************************
 
 #ifndef MONITORS_FUELLEVEL_BATTERY_DATA_HPP_INCLUDED_
 #define MONITORS_FUELLEVEL_BATTERY_DATA_HPP_INCLUDED_

@@ -6,8 +6,6 @@
 // Author: Pedro Vaz Teixeira                                               *
 // Author: José Braga                                                       *
 //***************************************************************************
-// $Id:: KalmanFilter.hpp 12706 2013-01-24 11:47:08Z jbraga               $:*
-//***************************************************************************
 // Kalman filter implementation. Assumes the system is described by the     *
 // following linear time-invariant model:                                   *
 //   x(k+1) = A * x(k) + q(k)                                               *

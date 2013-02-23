@@ -6,8 +6,6 @@
 // Author: André Pinto                                                      *
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
-// $Id:: Vector.hpp 12667 2013-01-22 02:44:42Z rasm                       $:*
-//***************************************************************************
 
 #ifndef DUNE_MATH_VECTOR_HPP_INCLUDED_
 #define DUNE_MATH_VECTOR_HPP_INCLUDED_

@@ -6,8 +6,6 @@
 // Author: José Braga                                                       *
 // Author: Pedro Calado (Bottom Distance/Altitude filter)                   *
 //***************************************************************************
-// $Id:: BasicNavigation.cpp 12955 2013-02-18 17:02:31Z jbraga            $:*
-//***************************************************************************
 
 // Local headers.
 #include <DUNE/Navigation/BasicNavigation.hpp>
