@@ -8,8 +8,6 @@
    *****************************************************************************
    * Author: Ricardo Martins                                                   *
    *****************************************************************************
-   * $Id::                                                                   $:*
-   *****************************************************************************
   -->
 
 <xsl:stylesheet
@@ -24,7 +22,7 @@
     <html>
       <head>
         <title>Log List</title>
-        <link rel="stylesheet" type="text/css" href="/css/default.css"/>        
+        <link rel="stylesheet" type="text/css" href="/css/default.css"/>
       </head>
       <body>
         <table>

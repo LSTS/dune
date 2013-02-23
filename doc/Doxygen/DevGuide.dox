@@ -3,45 +3,11 @@
 
   @section VCS Version Control System
 
-  DUNE's repository is hosted using Subversion (SVN). You should learn
-  to use the SVN client (or any other available front-end), studying
-  the advantages and limitations of the system before compromising any
-  part of the repository. A good SVN guide is available at
-  http://svnbook.red-bean.com.
-
-  DUNE's SVN repository is accessible at
-  https//:whale.fe.up.pt/svn/dune with a web-based interface for
-  repository browsing at https://whale.fe.up.pt/viewvc/dune.
-
-  By default SVN will not add the property svn:keywords to newly created
-  files and as a result will not perform substitution of the Id
-  keyword, which is used by DUNE's developers to identify the revision,
-  date and last author of a given file. You can force SVN to add this
-  property to all newly created files by adding the following directives
-  to your SVN client's configuration.
-
-  @verbatim
-  [miscellany]
-  enable-auto-props = yes
-
-  [auto-props]
-  *.c               = svn:keywords=Id
-  *.h               = svn:keywords=Id
-  *.cpp             = svn:keywords=Id
-  *.hpp             = svn:keywords=Id
-  *.cmake           = svn:keywords=Id
-  *.txt             = svn:keywords=Id
-  *.ini             = svn:keywords=Id
-  *.xml             = svn:keywords=Id
-  *.sh              = svn:keywords=Id; svn:executable
-  @endverbatim
-
-  Or alternatively you can set the property by hand and to every new
-  file by executing the following command:
-
-  @code
-  svn propset svn:keywords Id filename
-  @endcode
+  DUNE's repository is hosted using Git. You should learn to use the
+  Git client (or any other available front-end), studying the
+  advantages and limitations of the system before compromising any
+  part of the repository. A good Git book is available at
+  http://git-scm.com/book
 
   @li Do not commit compiled files to the source tree. Exceptions to
       this rule are files supplied by third parties that cannot be easily
@@ -59,8 +25,6 @@
   @li Document every commit meaningfully;
 
   @li Always update your working copy before starting work.
-
-  @li You should never commit files without the property svn:keywords=Id.
 
   @section FilesDirectories Files and Directories
 
@@ -129,8 +93,6 @@
   // Author: Ricardo Martins                                                  *
   // Author: Eduardo Marques (Microsoft Windows Port)                         *
   //***************************************************************************
-  // $Id::                                                                  $:*
-  //***************************************************************************
   @endcode
 
   @subsection CppCodeHeaders Headers
@@ -156,8 +118,6 @@
   // Rua Dr. Roberto Frias, 4200-465 Porto, Portugal                          *
   //***************************************************************************
   // Author: Ricardo Martins                                                  *
-  //***************************************************************************
-  // $Id::                                                                  $:*
   //***************************************************************************
 
   #ifndef DUNE_HARDWARE_DEVICE_DRIVER_HPP_INCLUDED_
