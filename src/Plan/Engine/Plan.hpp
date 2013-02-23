@@ -70,7 +70,7 @@ namespace Plan
         m_seq_nodes.clear();
         m_sequential = false;
         m_durations.clear();
-        m_progress = 0.0;
+        m_progress = -1.0;
       }
 
       //! Parse a given plan
@@ -182,7 +182,7 @@ namespace Plan
           return false;
         else if (!m_curr_node->trans.size())
           return true;
-        else if (m_curr_node->trans[0]->dest_man == "_done")
+        else if (m_curr_node->trans[0]->dest_man == "_done_")
           return true;
         else
           return false;
@@ -270,8 +270,14 @@ namespace Plan
         float prog = PlanProgress::compute(man, mcs, itr->second, total_duration);
 
         // If negative, then unable to compute
+        // But keep last value of progress if it is not invalid
         if (prog < 0.0)
-          return -1.0;
+        {
+          if (m_progress < 0.0)
+            return -1.0;
+          else
+            return m_progress;
+        }
 
         // Never output shorter than previous
         m_progress = prog > m_progress ? prog : m_progress;
