@@ -5,8 +5,6 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-// $Id:: GraphicsScene.hpp 12303 2013-01-01 02:14:25Z jbraga              $:*
-//***************************************************************************
 
 #ifndef VIDEO_CLIENT_GRAPHICS_SCENE_HPP_INCLUDED_
 #define VIDEO_CLIENT_GRAPHICS_SCENE_HPP_INCLUDED_
