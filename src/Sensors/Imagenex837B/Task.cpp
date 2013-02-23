@@ -162,6 +162,8 @@ namespace Sensors
       uint8_t m_rdata_ftr[c_rdata_ftr_size];
       //! Single sidescan ping.
       IMC::SonarData m_ping;
+      //! Estimated state.
+      IMC::EstimatedState m_estate;
       //! Log file name.
       Path m_log_file_name;
       //! Log file.
@@ -346,16 +348,7 @@ namespace Sensors
       void
       consume(const IMC::EstimatedState* msg)
       {
-        setNadirAngle(m_args.nadir + Angles::degrees(msg->phi));
-
-        double lat, lon;
-        Coordinates::toWGS84(*msg, lat, lon);
-        m_frame.setGpsData(lat, lon);
-        m_frame.setSpeed(msg->u);
-        m_frame.setCourse(msg->psi);
-        m_frame.setRoll(msg->phi);
-        m_frame.setPitch(msg->theta);
-        m_frame.setHeading(msg->psi);
+        m_estate = *msg;
       }
 
       void
@@ -541,15 +534,33 @@ namespace Sensors
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
+      //! Handle sonar data to 837 file format.
       void
       handleSonarData(void)
       {
         // Update information.
+        updateState();
         m_frame.setDateTime();
         m_frame.setSerialStatus(m_rdata_hdr[4]);
         m_frame.setFirmwareVersion(m_rdata_hdr[6]);
 
         m_log_file.write((const char*)m_frame.getData(), m_frame.getSize());
+      }
+
+      //! Update vehicle state in 837 files.
+      void
+      updateState(void)
+      {
+        setNadirAngle(m_args.nadir + Angles::degrees(m_estate.phi));
+
+        double lat, lon;
+        Coordinates::toWGS84(m_estate, lat, lon);
+        m_frame.setGpsData(lat, lon);
+        m_frame.setSpeed(m_estate.u);
+        m_frame.setCourse(m_estate.psi);
+        m_frame.setRoll(m_estate.phi);
+        m_frame.setPitch(m_estate.theta);
+        m_frame.setHeading(m_estate.psi);
       }
 
       void
