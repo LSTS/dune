@@ -34,8 +34,10 @@ namespace Plan
         double lat;
         //! Longitude
         double lon;
-        //! Depth
+        //! Z reference
         float z;
+        //! Z units
+        uint8_t z_units;
       };
 
       //! Compute distance and move Position to new one
@@ -63,7 +65,7 @@ namespace Plan
       //! @return accumulated plan duration in seconds, -1 if unable to compute
       template <typename Type>
       static float
-      parseSimple(Type* maneuver, Position& last_pos,
+      parseSimple(const Type* maneuver, Position& last_pos,
                   float last_dur, std::vector<float>& durations)
       {
         if (maneuver->speed_units != IMC::SUNITS_METERS_PS ||
@@ -71,6 +73,8 @@ namespace Plan
           return -1.0;
 
         float value = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
+        last_pos.z = maneuver->z;
+        last_pos.z_units = maneuver->z_units;
         durations.push_back(value / maneuver->speed + last_dur);
         return durations[0];
       }
@@ -162,6 +166,9 @@ namespace Plan
           durations.push_back(total_duration);
         }
 
+        last_pos.z = (*itr)->z;
+        last_pos.z_units = maneuver->z_units;
+
         return durations.back();
       };
 #endif
@@ -197,6 +204,9 @@ namespace Plan
         for (; itr != rstages.getDistancesEnd(); ++itr)
           durations.push_back(*itr / maneuver->speed + durations.back());
 
+        last_pos.z = maneuver->z;
+        last_pos.z_units = maneuver->z_units;
+
         return distance / maneuver->speed;
       };
 #endif
@@ -221,6 +231,9 @@ namespace Plan
         double dur = (horz_dist / std::cos(maneuver->pitch)) / maneuver->speed;
         durations.push_back(dur + last_dur);
 
+        last_pos.z = maneuver->z;
+        last_pos.z_units = maneuver->z_units;
+
         return durations.back();
       };
 #endif
@@ -243,10 +256,14 @@ namespace Plan
         double horz_dist = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
         // pitch value is hardcoded here
         double pitch = Math::Angles::radians(15.0);
-        double amplitude = std::fabs(maneuver->start_z - maneuver->end_z);
+        double amplitude = std::fabs(last_pos.z - maneuver->end_z);
         double real_dist = amplitude / std::sin(pitch);
 
         durations.push_back((horz_dist + real_dist) / maneuver->speed + last_dur);
+
+        last_pos.z = maneuver->end_z;
+        last_pos.z_units = maneuver->end_z_units;
+
         return durations.back();
       };
 #endif
@@ -262,6 +279,8 @@ namespace Plan
       {
         Position pos;
         DUNE::Coordinates::toWGS84(*state, pos.lat, pos.lon);
+        pos.z = state->depth;
+        pos.z_units = IMC::Z_DEPTH;
 
         float last_duration = 0.0;
 
@@ -316,6 +335,9 @@ namespace Plan
 
           std::pair<std::string, std::vector<float> > ent((*itr)->maneuver_id, durations);
           man_durations.insert(ent);
+
+          for (unsigned i = 0; i < durations.size(); ++i)
+            std::cerr << "duration " << durations[i] << std::endl;
         }
 
         return last_duration;
