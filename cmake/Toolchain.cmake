@@ -5,8 +5,6 @@
 #############################################################################
 # Author: Ricardo Martins                                                   #
 #############################################################################
-# $Id:: Toolchain.cmake 12303 2013-01-01 02:14:25Z jbraga                 $:#
-#############################################################################
 # This script tries to overcome some CMake limitations regarding cross      #
 # compilers. The alternative method is to have a CMAKE_TOOLCHAIN_FILE       #
 # describing the toolchain. For now this script is far easier to use.       #

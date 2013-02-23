@@ -5,8 +5,6 @@
 #############################################################################
 # Author: Ricardo Martins                                                   #
 #############################################################################
-# $Id:: Programs.cmake 12303 2013-01-01 02:14:25Z jbraga                  $:#
-#############################################################################
 
 # Test system programs. The following variables are set to the program
 # path (if any): DUNE_PROGRAM_JAVA, DUNE_PROGRAM_DOXYGEN
