@@ -1,0 +1,203 @@
+//***************************************************************************
+// Copyright (C) 2007-2013 Laboratório de Sistemas e Tecnologia Subaquática *
+// Departamento de Engenharia Electrotécnica e de Computadores              *
+// Rua Dr. Roberto Frias, 4200-465 Porto, Portugal                          *
+//***************************************************************************
+// Author: Ricardo Martins                                                  *
+//***************************************************************************
+// $Id:: Config.cpp 12795 2013-01-30 03:58:26Z rasm                       $:*
+//***************************************************************************
+
+// ISO C++ 98 headers.
+#include <map>
+#include <string>
+#include <iomanip>
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <cstdlib>
+#include <fstream>
+#include <algorithm>
+
+// DUNE headers.
+#include <DUNE/System/Error.hpp>
+#include <DUNE/FileSystem/Path.hpp>
+#include <DUNE/Utils/String.hpp>
+#include <DUNE/Parsers/Exceptions.hpp>
+#include <DUNE/Parsers/Config.hpp>
+
+namespace DUNE
+{
+  namespace Parsers
+  {
+    using FileSystem::Path;
+    using Utils::String;
+
+    //! Maximum buffer size.
+    static const size_t c_max_bfr_size = 1024;
+
+    Config::Config(const char* fname)
+    {
+      parseFile(fname);
+    }
+
+    void
+    Config::parseFile(const char* fname)
+    {
+      char line[c_max_bfr_size] = {0};
+      char section[c_max_bfr_size] = {0};
+      char option[c_max_bfr_size] = {0};
+      char arg[c_max_bfr_size] = {0};
+      char tmp[c_max_bfr_size] = {0};
+      char isec[c_max_bfr_size] = {0};
+      char iopt[c_max_bfr_size] = {0};
+      size_t line_count = 0;
+      size_t section_count = 0;
+      std::FILE* fd = std::fopen(fname, "r");
+
+      if (fd == 0)
+        throw FileOpenError(fname, System::Error::getLastMessage());
+
+      while (std::fscanf(fd, " %1023[^\n] ", line) == 1)
+      {
+        ++line_count;
+
+        // Ignore comments
+        if (line[0] == ';' || line[0] == '#')
+          continue;
+
+        // Section name
+        if (std::sscanf(line, "[%[^]]] ", section) == 1)
+        {
+          String::rtrim(section);
+
+          if (std::strncmp(section, "Include ", 8) == 0)
+          {
+            Path path = Path(fname).dirname() / String::trim(section + 8);
+            try
+            {
+              parseFile(path.c_str());
+            }
+            catch (FileOpenError& e)
+            {
+              DUNE_WRN("Config", e.what());
+            }
+          }
+          else if (std::strncmp(section, "Require ", 8) == 0)
+          {
+            Path path = Path(fname).dirname() / String::trim(section + 8);
+            parseFile(path.c_str());
+          }
+
+          ++section_count;
+        }
+        // Option and arguments
+        else if (std::sscanf(line, " %[^=] = %[^\n|;|#] ", option, arg) == 2)
+        {
+          if (section_count == 0)
+            throw SyntaxError(fname, line_count);
+
+          String::rtrim(option);
+          String::rtrim(arg);
+          std::strncpy(tmp, option, c_max_bfr_size);
+          m_data[section][option] = arg;
+
+          if (std::strlen(arg) < 4)
+            continue;
+
+          if (std::sscanf(arg, "$(%[^,], %[^)]", isec, iopt) != 2)
+            continue;
+
+          Sections::iterator sitr = m_data.find(isec);
+          if (sitr == m_data.end())
+            throw InvalidReference(arg);
+
+          std::map<std::string, std::string>::iterator oitr = sitr->second.find(iopt);
+          if (oitr == sitr->second.end())
+            throw InvalidReference(arg);
+
+          m_data[section][option] = m_data[isec][iopt];
+        }
+        // Multiline argument
+        else if (std::sscanf(line, " %[^\n|;|#] ", arg) == 1)
+        {
+          if (section_count == 0)
+            throw SyntaxError(fname, line_count);
+
+          String::rtrim(arg);
+          m_data[section][tmp] += " ";
+          m_data[section][tmp] += arg;
+        }
+        // Error
+        else
+        {
+          throw SyntaxError(fname, line_count);
+        }
+      }
+
+      std::fclose(fd);
+
+      m_files.push_back(fname);
+    }
+
+    void
+    Config::writeToFile(const char* file)
+    {
+      std::ofstream os(file);
+      os << *this;
+    }
+
+    std::vector<std::string>
+    Config::sections(void)
+    {
+      std::vector<std::string> vec;
+      for (Sections::iterator itr = m_data.begin(); itr != m_data.end(); ++itr)
+        vec.push_back(itr->first);
+      return vec;
+    }
+
+    std::vector<std::string>
+    Config::options(const std::string& section)
+    {
+      Sections::const_iterator sitr = m_data.find(section);
+
+      if (sitr == m_data.end())
+        return std::vector<std::string>();
+
+      std::map<std::string, std::string>::const_iterator itr = sitr->second.begin();
+      std::map<std::string, std::string>::const_iterator end = sitr->second.end();
+
+      std::vector<std::string> opts;
+      for (; itr != end; ++itr)
+        opts.push_back(itr->first);
+      return opts;
+    }
+
+    std::ostream&
+    operator<<(std::ostream& os, const Config& cfg)
+    {
+      Config::Sections::const_iterator sections;
+      Config::Section::const_iterator labels;
+
+      os << std::setfill(';')
+      << std::setw(74) << ";" << std::endl
+      << String::str("; %-71s;", "Generated by DUNE v" DUNE_COMPLETE_VERSION) << std::endl
+      << std::setw(74) << ";" << std::endl;
+
+      for (sections = cfg.m_data.begin(); sections != cfg.m_data.end(); ++sections)
+      {
+        os << "[" << (*sections).first << "]" << std::endl;
+
+        for (labels = (*sections).second.begin(); labels != (*sections).second.end(); ++labels)
+        {
+          if ((*labels).second != "")
+            os << (*labels).first << " = " << (*labels).second << std::endl;
+        }
+
+        os << std::endl;
+      }
+
+      return os;
+    }
+  }
+}

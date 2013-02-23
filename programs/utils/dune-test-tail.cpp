@@ -1,0 +1,233 @@
+//***************************************************************************
+// Copyright (C) 2007-2013 Laboratório de Sistemas e Tecnologia Subaquática *
+// Departamento de Engenharia Electrotécnica e de Computadores              *
+// Rua Dr. Roberto Frias, 4200-465 Porto, Portugal                          *
+//***************************************************************************
+// Author: Ricardo Martins                                                  *
+//***************************************************************************
+// $Id:: dune-test-tail.cpp 12667 2013-01-22 02:44:42Z rasm               $:*
+//***************************************************************************
+
+// ISO C++ 98 headers.
+#include <iostream>
+#include <cstdlib>
+
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
+
+// POSIX headers.
+#if defined(DUNE_SYS_HAS_UNISTD_H)
+#  include <unistd.h>
+#endif
+
+#if defined (DUNE_SYS_HAS_SIGNAL_H)
+#  include <signal.h>
+#endif
+
+using DUNE_NAMESPACES;
+
+UDPSocket g_sock;
+Address g_addr;
+uint16_t g_port = 6002;
+char g_buffer[4096];
+bool g_stop = false;
+
+// POSIX implementation.
+#if defined(DUNE_OS_POSIX)
+extern "C" void
+handleTerminate(int signo)
+{
+  switch (signo)
+  {
+    case SIGINT:
+    case SIGTERM:
+      g_stop = true;
+  }
+}
+
+#endif
+
+void
+sendMessage(IMC::Message& msg)
+{
+  uint16_t rv = IMC::Packet::serialize(&msg, (uint8_t*)g_buffer, sizeof(g_buffer));
+  g_sock.write(g_buffer, rv, g_addr, g_port);
+  msg.toText(std::cerr);
+}
+
+void
+setLog(const char* log_name)
+{
+  IMC::LoggingControl lc;
+  lc.setTimeStamp();
+  lc.op = IMC::LoggingControl::COP_REQUEST_START;
+  lc.name = log_name;
+  sendMessage(lc);
+}
+
+void
+setThrust(double value)
+{
+  IMC::SetThrusterActuation tc;
+  tc.setTimeStamp();
+  tc.value = value;
+  sendMessage(tc);
+}
+
+void
+setFin(unsigned id, double value)
+{
+  IMC::SetServoPosition sc;
+  sc.setTimeStamp();
+  sc.id = id;
+  sc.value = Angles::radians(value);
+  sendMessage(sc);
+}
+
+void
+onTerminate(void)
+{
+  setThrust(0);
+
+  for (unsigned i = 0; i < 4; ++i)
+    setFin(i, 0);
+}
+
+int
+main(int argc, char** argv)
+{
+  OptionParser options;
+  options.executable("dune-test-tail")
+  .program(DUNE_SHORT_NAME)
+  .copyright(DUNE_COPYRIGHT)
+  .email(DUNE_CONTACT)
+  .version(DUNE_COMPLETE_VERSION)
+  .date(DUNE_BUILD_TIME)
+  .arch(DUNE_SYSTEM_NAME)
+  .add("-i", "--address",
+       "Vehicle's IP address", "ADDRESS")
+  .add("-w", "--wait",
+       "Wait DELAY seconds before starting test", "DELAY")
+  .add("-d", "--duration",
+       "Test duration in seconds", "DURATION")
+  .add("-s", "--speed",
+       "Speed in percentage", "SPEED")
+  .add("-t", "--angle",
+       "Angle in degrees", "ANGLE");
+
+  // Parse command line arguments.
+  if (!options.parse(argc, argv))
+  {
+    if (options.bad())
+      std::cerr << "ERROR: " << options.error() << std::endl;
+    options.usage();
+    return 1;
+  }
+
+  // Set destination address.
+  if (options.value("--address") == "")
+    g_addr = "127.0.0.1";
+  else
+    g_addr = options.value("--address").c_str();
+
+  // Set start delay.
+  double sdelay = 0;
+  if (options.value("--wait") == "")
+    sdelay = 0;
+  else
+    sdelay = castLexical<double>(options.value("--wait"));
+
+  // Set duration.
+  double duration = 0;
+  if (options.value("--duration") == "")
+    duration = 0;
+  else
+    duration = castLexical<double>(options.value("--duration"));
+
+  // Set speed.
+  double speed = 0;
+  if (options.value("--speed") == "")
+    speed = 0;
+  else
+  {
+    speed = castLexical<double>(options.value("--speed"));
+    speed /= 100.0;
+  }
+
+  // Set Angle
+  double angle = 0;
+  if (options.value("--angle") == "")
+    angle = 0;
+  else
+    angle = castLexical<double>(options.value("--angle"));
+
+  // POSIX implementation.
+#if defined(DUNE_SYS_HAS_SIGACTION)
+  struct sigaction actions;
+  std::memset(&actions, 0, sizeof(actions));
+  sigemptyset(&actions.sa_mask);
+  actions.sa_flags = 0;
+  actions.sa_handler = handleTerminate;
+  sigaction(SIGALRM, &actions, 0);
+  sigaction(SIGHUP, &actions, 0);
+  sigaction(SIGINT, &actions, 0);
+  sigaction(SIGQUIT, &actions, 0);
+  sigaction(SIGTERM, &actions, 0);
+  sigaction(SIGCHLD, &actions, 0);
+  sigaction(SIGCONT, &actions, 0);
+#endif
+
+  setThrust(0);
+  Delay::wait(sdelay);
+
+  setLog("mcrt_endurance");
+  Delay::wait(2.0);
+
+  double deadline = Clock::get() + duration;
+  setThrust(speed);
+
+  while ((Clock::get() < deadline) && !g_stop)
+  {
+    setFin(0, -angle);
+    setFin(1, -angle);
+    setFin(2, -angle);
+    setFin(3, -angle);
+
+    if (!g_stop)
+      Delay::wait(1.0);
+
+    if (!g_stop)
+      Delay::wait(1.0);
+
+    if (!g_stop)
+      Delay::wait(1.0);
+
+    if (!g_stop)
+      Delay::wait(1.0);
+
+    setFin(0, angle);
+    setFin(1, angle);
+    setFin(2, angle);
+    setFin(3, angle);
+
+    if (!g_stop)
+      Delay::wait(1.0);
+
+    if (!g_stop)
+      Delay::wait(1.0);
+
+    if (!g_stop)
+      Delay::wait(1.0);
+
+    if (!g_stop)
+      Delay::wait(1.0);
+  }
+
+  // Change log.
+  Delay::wait(2.0);
+  setLog("idle");
+
+  onTerminate();
+
+  return 0;
+}

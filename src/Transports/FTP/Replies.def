@@ -1,0 +1,28 @@
+//***************************************************************************
+// Copyright (C) 2007-2013 Laboratório de Sistemas e Tecnologia Subaquática *
+// Departamento de Engenharia Electrotécnica e de Computadores              *
+// Rua Dr. Roberto Frias, 4200-465 Porto, Portugal                          *
+//***************************************************************************
+// Author: Ricardo Martins                                                  *
+//***************************************************************************
+// $Id:: Replies.def 12303 2013-01-01 02:14:25Z jbraga                    $:*
+//***************************************************************************
+
+REPLY(FILE_OK         , 150, "File status okay; about to open data connection."  )
+REPLY(OK              , 200, "Command okay."                                     )
+REPLY(SYS_UNIX        , 215, "UNIX Type: L8"                                     )
+REPLY(BANNER          , 220, "DUNE FTP server ready."                            )
+REPLY(CTL_CLOSE       , 221, "Service closing control connection."               )
+REPLY(DAT_CLOSE       , 226, "Closing data connection."                          )
+REPLY(LOGGED_IN       , 230, "User logged in, proceed."                          )
+REPLY(FILE_ACTION_OK  , 250, "Requested file action okay, completed."            )
+REPLY(FILE_PEND       , 350, "Requested file action pending further information.")
+REPLY(FILE_NO_ACTION  , 450, "Requested file action not taken."                  )
+REPLY(ERR_SYNTAX      , 500, "Syntax error, command unrecognized."               )
+REPLY(ERR_SYNTAX_PARAM, 501, "Syntax error in parameters or arguments."          )
+REPLY(CMD_NI          , 502, "Command not implemented."                          )
+REPLY(CMD_NI_PARAM    , 504, "Command not implemented for that parameter."       )
+REPLY(NO_ACTION       , 550, "Requested action not taken."                       )
+REPLY(FILE_ERR_SIZE   , 550, "Could not get file size."                          )
+
+#undef REPLY

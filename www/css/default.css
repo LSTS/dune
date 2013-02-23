@@ -1,0 +1,360 @@
+/***************************************************************************
+* Copyright (C) 2007-2013 Laboratório de Sistemas e Tecnologia Subaquática *
+* Departamento de Engenharia Electrotécnica e de Computadores              *
+* Rua Dr. Roberto Frias, 4200-465 Porto, Portugal                          *
+****************************************************************************
+* Author: Ricardo Martins                                                  *
+****************************************************************************
+* $Id::                                                                  $:*
+****************************************************************************/
+
+body
+{
+  font-family: Arial, Helvetica, sans;
+  color: #666;
+}
+
+a 
+{
+  outline: none;
+}
+
+input
+{ 
+  font-size: 10px;
+}
+
+#x-body-table
+{ 
+  width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  border-collapse: collapse
+}
+
+#x-copyright
+{ 
+  font-size: 12px;
+  text-align: center;
+}
+
+#x-container
+{ 
+  padding: 1em;
+}
+
+#Logs
+{
+  text-align: left;
+}
+
+#Logs ul li ul
+{ 
+  list-style-type: none;
+  margin-left: 5px;
+  padding-left: 5px;
+}
+
+#Logs ul li ul li
+{ 
+  list-style-type: none;
+  margin-left: 5px;
+  padding-left: 5px;
+}
+
+#Sensors table
+{ 
+  border-collapse: collapse;
+  margin-bottom: 1em;
+}
+
+#Sensors table:last-child
+{ 
+  margin-bottom: 0em;
+}
+
+#Sensors th
+{ 
+  background-color: #777;
+  color: white;
+}
+
+#Sensors td
+{
+  padding: 2px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#Sensors td:first-child
+{ 
+  background-color: #ddd;
+  font-weight: bold;
+  width: 150px;
+  text-align: left;
+}
+
+#Sensors tr , #Sensors td, #Sensors th
+{ 
+  border: solid black thin;
+  border-collapse: collapse;
+}
+
+#Sensors table
+{ 
+  margin-left: auto;
+  margin-right: auto;
+  width: 90%;
+}
+
+#Sensors td:last-child
+{ 
+  text-align: right;
+}
+
+#ConnectionIcon
+{ 
+  border: none;
+}
+
+div.Hidden
+{ 
+  visibility: hidden;
+  position: absolute; 
+  left:0px;
+  top:0px; 
+  width:0px; 
+  height:0px; 
+  overflow:hidden; 
+}
+
+td {
+  text-align: center;
+  vertical-align: middle;
+  font-size: 12px;
+}
+
+td.entryLeft
+{ 
+  font-weight: bold;
+  text-align: left;
+  padding-right: 5px;
+  vertical-align: middle;
+}
+
+td.entryRight
+{ 
+  vertical-align: middle;
+  text-align: left;
+}
+
+h1
+{ 
+  font-size: 14px;
+  color: #666;
+  text-align: left;
+}
+
+hr
+{ 
+  border-style: solid #aaa thin;
+  border-collapse: collapse;
+}
+
+#MainOverviewLeft, #MainOverviewRight
+{
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+#MenuBar
+{ 
+  padding: 0px;
+  padding-left: 5px;
+  padding-top: 10px; 
+  border-collapse: collapse;
+  vertical-align: middle;
+}
+
+#Menu 
+{
+  position: relative;
+  clear: both;
+  float: left;
+  width: 100%;
+  height: 31px;
+  display: inline;
+  z-index: 10;
+  background: url(../images/menu/bg_navi_sublist.gif) -5000px 0 no-repeat;
+}
+
+#Menu ul 
+{ 
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+}
+
+#Menu li 
+{ 
+  float: left;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: url(../images/menu/btn_navi_right.gif) 100% 0 no-repeat;
+}
+
+#Menu li a 
+{ 
+  display: block;
+  height: 25px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: bold;
+  text-decoration: none;
+  padding: 6px 13px 0 13px;
+  background: url(../images/menu/btn_navi_left.gif) 0 0 no-repeat;
+}
+
+#Menu li.First a, #Menu li.FirstSelected a
+{
+  background: url(../images/menu/btn_navi_left_first.gif) 0 0 no-repeat;
+}
+
+#Menu li ul
+{
+  float: left;
+  position: absolute;
+  left: 0;
+  top: 30px;
+  width: 200px;
+  display: none;
+  text-align: left;
+  background: url(../images/menu/bg_navi_sublist.gif) 0 100% no-repeat;
+  padding: 0 0 10px 0;
+  z-index: 10;
+}
+
+#Menu li ul li
+{ 
+  clear: both;
+  color: white;
+  text-align: left;
+  background-image: none;
+  font-size: 15px;
+}
+
+#Menu li ul li a 
+{
+  color: #394852;
+  padding: 2px 10px 0 10px;
+  width: 160px;
+  height: auto;
+  font-weight: normal;
+  font-size: 0.9em;
+  background-image: none;
+}
+
+#Menu li:hover, #Menu li.Selected, #Menu li.FirstSelected
+{
+  background-position: 100% -100px;
+}
+
+#Menu li:hover a, #Menu li.Selected a, #Menu li.FirstSelected a
+{
+  background-position: 0 -100px;
+  color: #394852; 
+  border-bottom: solid #f6f6f6 thin;
+}
+
+#Menu li.Static
+{ 
+  background-position: 100% 0px;
+}
+
+#Menu li.Static a
+{ 
+  background-position: 0 0px;
+  color: #394852; 
+  border-bottom: solid #aaa thin;
+}
+
+#Menu li:hover ul, #Menu li.Selected ul, #Menu li.FirstSelected ul
+{
+  display: block;
+}
+
+#MainTaskTableDiv
+{ 
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#MainTaskTable
+{ 
+  border-collapse: collapse;
+}
+
+#MainTaskTable tr
+{ 
+  border-bottom: solid #999 thin;
+}
+
+#MainTaskTable tr:last-child
+{ 
+  border-bottom: none;
+}
+
+#MainTaskTable th, #MainTaskTable td
+{
+  text-align: left;
+  padding: 5px;
+}
+
+#MainTaskTable th
+{ 
+  width: 150px;
+}
+
+#Power th
+{ 
+  background-color: #777;
+  color: white;
+}
+
+#Power table tr td
+{ 
+  text-align: left;
+}
+
+#Power table tr td img
+{ 
+  vertical-align: middle;
+  text-align: center;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 10px;
+}
+
+#Power table
+{ 
+  width: 95%;
+  margin-left: auto;
+  margin-right: auto;
+  border-collapse: collapse;
+  margin-bottom: 1em;
+}
+
+#Power table tr
+{ 
+  border: solid #999 thin;
+}
+
+#Power table form *
+{ 
+  margin: 5px;
+}

@@ -1,0 +1,224 @@
+//***************************************************************************
+// Copyright (C) 2007-2013 Laboratório de Sistemas e Tecnologia Subaquática *
+// Departamento de Engenharia Electrotécnica e de Computadores              *
+// Rua Dr. Roberto Frias, 4200-465 Porto, Portugal                          *
+//***************************************************************************
+// Author: Eduardo Marques                                                  *
+//***************************************************************************
+// $Id:: Maneuver.hpp 12842 2013-02-02 19:46:08Z pdcalado                 $:*
+//***************************************************************************
+
+#ifndef DUNE_MANEUVERS_MANEUVER_HPP_INCLUDED_
+#define DUNE_MANEUVERS_MANEUVER_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <string>
+#include <map>
+
+// DUNE headers.
+#include <DUNE/Config.hpp>
+#include <DUNE/Tasks.hpp>
+#include <DUNE/IMC.hpp>
+#include <DUNE/Time.hpp>
+
+namespace DUNE
+{
+  namespace Maneuvers
+  {
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM Maneuver;
+
+    //! Base abstract class for maneuver tasks.
+    class Maneuver: public Tasks::Task
+    {
+    public:
+      //! Constructor.
+      Maneuver(const std::string& name, Tasks::Context& ctx);
+
+      //! Destructor.
+      virtual
+      ~Maneuver();
+
+      //! On resource initialization
+      void
+      onResourceInitialization(void)
+      {
+        Task::deactivate();
+      }
+
+      //! On maneuver activation
+      virtual void
+      onManeuverActivation(void)
+      { }
+
+      //! On maneuver deactivation
+      virtual void
+      onManeuverDeactivation(void)
+      { }
+
+      //! On task activation
+      void
+      onActivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        onManeuverActivation();
+      }
+
+      //! On task deactivation
+      void
+      onDeactivation(void)
+      {
+        onManeuverDeactivation();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        debug("disabling");
+
+        unlock();
+      }
+
+      //! Method fired on maneuver startup.
+      //! It performs some initialization, then delegates handling on
+      //! the task's consume method for the message.
+      //! @param maneuver maneuver object
+      template <typename T, typename M>
+      void
+      startManeuver(const M* maneuver)
+      {
+        if (!isActive())
+        {
+          while (!tryLock())
+          {
+            Time::Delay::wait(0.5);
+          }
+        }
+
+        debug("enabling");
+        signalProgress(65535, "in progress");
+
+        static_cast<T*>(this)->consume(maneuver);
+
+        if (m_mcs.state == IMC::ManeuverControlState::MCS_EXECUTING)
+          activate();
+      }
+
+      template <typename T, typename M>
+      void
+      bindToManeuver(void)
+      {
+        void (Maneuver::* startfunc)(const M*) = &Maneuver::startManeuver<T, M>;
+        Task::bind<M>(this, startfunc);
+        m_rm.mid = M::getIdStatic();
+      }
+
+      template <typename M, typename T>
+      void
+      consumeIfActive(const M* msg)
+      {
+        if (isActive())
+          static_cast<T*>(this)->consume(msg);
+      }
+
+      template <typename M, typename T>
+      void
+      bind(T* task_obj, bool always = false)
+      {
+        if (always)
+        {
+          Task::bind<M>(task_obj);
+        }
+        else
+        {
+          void (Maneuver::* func)(const M*) = &Maneuver::consumeIfActive<M, T>;
+          Task::bind<M>(this, func);
+        }
+      }
+
+      //! Consumer for StopManeuver message.
+      //! @param sm message to consume.
+      void
+      consume(const IMC::StopManeuver* sm);
+
+      //! Set or reconfigure control loops used by maneuver task.
+      //! @param mask mask identifying controllers that should be made active.
+      void
+      setControl(uint32_t mask);
+
+      //! State report handler.
+      //! It should be overriden by maneuvers where it
+      //! convenient to do so in time-triggered manner
+      //! rather than in response to a particular message.
+      virtual void
+      onStateReport(void)
+      { }
+
+      //! Update active control loops
+      //! @param cl control loops message
+      void
+      updateLoops(const IMC::ControlLoops* cl);
+
+      //! Signal an error.
+      //! This method should be used by subclasses to signal an error condition.
+      //! @param msg error message
+      void
+      signalError(const std::string& msg);
+
+      //! Signal no altitude error.
+      //! This method should be used by subclasses to signal an error condition.
+      void
+      signalNoAltitude(void);
+
+      //! Signal an error.
+      //! This method should be used by subclasses to signal maneuver completion.
+      //! @param msg completion message
+      void
+      signalCompletion(const std::string& msg = "done");
+
+      //! Signal maneuver progress.
+      //! @param time_left estimated time for completion.
+      //! @param msg human-readable information.
+      void
+      signalProgress(uint16_t time_left, const std::string& msg);
+
+      //! Signal maneuver progress.
+      //! @param msg human-readable information.
+      inline void
+      signalProgress(const std::string& msg)
+      {
+        signalProgress(65535, msg);
+      }
+
+      //! Signal maneuver progress.
+      //! @param time_left estimated time for completion.
+      inline void
+      signalProgress(uint16_t time_left)
+      {
+        signalProgress(time_left, "");
+      }
+
+      //! Signal maneuver progress.
+      inline void
+      signalProgress(void)
+      {
+        signalProgress("");
+      }
+
+      void
+      onMain(void);
+
+    private:
+      //! Check if maneuver system is locked
+      //! meaning a maneuver is in execution already
+      //! @return if sucessful at locking return true
+      bool
+      tryLock(void);
+
+      //! Unlock maneuver so that other maneuver may start
+      void
+      unlock(void);
+
+      IMC::ManeuverControlState m_mcs;
+      IMC::RegisterManeuver m_rm;
+    };
+  }
+}
+
+#endif

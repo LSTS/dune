@@ -1,0 +1,126 @@
+//***************************************************************************
+// Copyright (C) 2007-2013 Laboratório de Sistemas e Tecnologia Subaquática *
+// Departamento de Engenharia Electrotécnica e de Computadores              *
+// Rua Dr. Roberto Frias, 4200-465 Porto, Portugal                          *
+//***************************************************************************
+// Author: Ricardo Martins                                                  *
+//***************************************************************************
+// $Id:: Units.def 12681 2013-01-23 15:16:22Z jbraga                      $:*
+//***************************************************************************
+
+// Name, Symbol
+
+
+// Acceleration.
+UNIT(MeterPerSquareSecond     , "m/s^2")
+
+// Attenuation.
+UNIT(DecibelPerMeter          , "dB/m")
+
+// Angles.
+UNIT(Degree                   , "\xc2\xb0")
+UNIT(Radian                   , "rad")
+UNIT(RadianPerSecond          , "rad/s")
+UNIT(DegreePerSecond          , "\xc2\xb0/s")
+
+// Area.
+UNIT(SquareMeter              , "m^2")
+
+// Density.
+UNIT(KilogramPerCubicMeter    , "kg/m^3")
+
+// Digital information.
+UNIT(Bit                      , "bit")
+UNIT(Byte                     , "B")
+UNIT(Kibibyte                 , "KiB")
+UNIT(Mebibyte                 , "MiB")
+UNIT(Gibibyte                 , "GiB")
+UNIT(BitPerSecond             , "bit/s")
+UNIT(Pixel                    , "px")
+
+// Distance.
+UNIT(Meter                    , "m")
+UNIT(Centimeter               , "cm")
+UNIT(Kilometer                , "km")
+
+// Drag.
+UNIT(KilogramPerSecond        , "kg/s")
+UNIT(KilogramPerMeter         , "kg/m")
+
+// Electric charge.
+UNIT(Coulomb                  , "C")
+UNIT(AmpereHour               , "Ah")
+UNIT(MilliampereHour          , "mAh")
+
+// Electric current.
+UNIT(Ampere                   , "A")
+UNIT(Milliampere              , "mA")
+
+// Electric potential.
+UNIT(Volt                     , "V")
+UNIT(Millivolt                , "mV")
+
+// Energy.
+UNIT(WattHour                 , "Wh")
+UNIT(KilowattHour             , "kWh")
+
+// Force.
+UNIT(Newton                   , "N")
+
+// Frequency.
+UNIT(Hertz                    , "Hz")
+UNIT(Kilohertz                , "kHz")
+UNIT(Megahertz                , "MHz")
+
+// Logarithmic.
+UNIT(Decibel                  , "dB")
+
+// Magnetic Field.
+UNIT(Gauss                    , "G")
+
+// Mass.
+UNIT(Gram                     , "g")
+UNIT(Kilogram                 , "kg")
+
+// Moment of Inertia
+UNIT(KilogramSquareMeter      , "kg.m^2")
+
+// Power.
+UNIT(Watt                     , "W")
+UNIT(Milliwatt                , "mW")
+
+// Pressure.
+UNIT(Atmosphere               , "atm")
+UNIT(Pascal                   , "Pa")
+UNIT(Kilopascal               , "kPa")
+UNIT(Bar                      , "bar")
+
+// Shaft Speed.
+UNIT(RPM                      , "r/min")
+
+// Temperature.
+UNIT(DegreeCelsius            , "\xc2\xb0""C")
+
+// Time.
+UNIT(Second                   , "s")
+UNIT(Millisecond              , "ms")
+UNIT(Microsecond              , "us")
+UNIT(Nanosecond               , "ns")
+UNIT(Minute                   , "min")
+
+// Torque.
+UNIT(NewtonMeter              , "N.m")
+UNIT(NewtonMeterPerRadian     , "N.m/rad")
+
+// Velocity.
+UNIT(MeterPerSecond           , "m/s")
+UNIT(Knot                     , "kt")
+
+// Volume.
+UNIT(CubicMeter               , "m^3")
+
+// Not real units but useful anyway.
+UNIT(Percentage               , "%")
+UNIT(None                     , "")
+
+#undef UNIT

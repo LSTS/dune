@@ -1,0 +1,242 @@
+//***************************************************************************
+// Copyright (C) 2007-2013 Laboratório de Sistemas e Tecnologia Subaquática *
+// Departamento de Engenharia Electrotécnica e de Computadores              *
+// Rua Dr. Roberto Frias, 4200-465 Porto, Portugal                          *
+//***************************************************************************
+// Author: Ricardo Martins                                                  *
+//***************************************************************************
+// $Id:: Config.hpp.in 12303 2013-01-01 02:14:25Z jbraga                  $:*
+//***************************************************************************
+// Automatically Generated                                                  *
+//***************************************************************************
+
+#ifndef DUNE_CONFIG_HPP_INCLUDED_
+#define DUNE_CONFIG_HPP_INCLUDED_
+
+//! DUNE's short name.
+#define DUNE_SHORT_NAME "@PROJECT_SHORT_NAME@"
+//! DUNE's version string.
+#define DUNE_VERSION_STR "@PROJECT_VERSION@"
+//! DUNE's version major.
+#define DUNE_VERSION_MAJ @PROJECT_VERSION_MAJ@
+//! DUNE's version minor.
+#define DUNE_VERSION_MIN @PROJECT_VERSION_MIN@
+//! DUNE's version patch level.
+#define DUNE_VERSION_PAT @PROJECT_VERSION_PAT@
+//! DUNE's version release candidate number.
+#define DUNE_VERSION_RCN @PROJECT_VERSION_RCN@
+//! DUNE's SVN revision.
+#define DUNE_SVN_REV_STR "@DUNE_SVN_REV_STR@"
+//! DUNE's complete version string.
+#define DUNE_COMPLETE_VERSION DUNE_VERSION_STR " (" DUNE_SVN_REV_STR ")"
+//! DUNE's copyright.
+#define DUNE_COPYRIGHT "@PROJECT_COPYRIGHT@"
+//! DUNE's contact.
+#define DUNE_CONTACT "@PROJECT_CONTACT@"
+//! DUNE's build type.
+#define DUNE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
+//! DUNE's build time.
+#define DUNE_BUILD_TIME __DATE__ " - " __TIME__
+//! DUNE's system name.
+#define DUNE_SYSTEM_NAME "@DUNE_SYSTEM_NAME@"
+//! DUNE's source path.
+#define DUNE_PATH_SRC "@PROJECT_SOURCE_DIR@"
+//! DUNE's build path.
+#define DUNE_PATH_BUILD "@CMAKE_BINARY_DIR@"
+
+//! DUNE was compiled with Piccolo avionics support.
+#cmakedefine DUNE_USING_PICCOLO
+//! DUNE was compiled with GUI.
+#cmakedefine DUNE_USING_GUI
+//! DUNE was compiled with TLSF.
+#cmakedefine DUNE_USING_TLSF
+//! DUNE was compiled with JPEG library.
+#cmakedefine DUNE_USING_JPEG
+//! DUNE was compiled with DC1394 library.
+#cmakedefine DUNE_USING_DC1394
+//! DUNE was compiled with V4L2 library.
+#cmakedefine DUNE_USING_V4L2
+//! DUNE was compiled with SpiderMonkey support.
+#cmakedefine DUNE_USING_SPIDERMONKEY
+//! DUNE was compiled with libtiff support.
+#cmakedefine DUNE_USING_TIFF
+//! DUNE was compiled with gettext support.
+#cmakedefine DUNE_USING_I18N
+
+//! Defined on Microsoft Windows.
+#cmakedefine DUNE_OS_WINDOWS
+//! Defined on GNU/Linux.
+#cmakedefine DUNE_OS_LINUX
+//! Defined on GNU/Linux 2.4.
+#cmakedefine DUNE_OS_LINUX24
+//! Defined on QNX v6.x
+#cmakedefine DUNE_OS_QNX6
+//! Defined on SUN Solaris.
+#cmakedefine DUNE_OS_SOLARIS
+//! Defined on Mac OS X/Darwin.
+#cmakedefine DUNE_OS_DARWIN
+//! Defined on RTEMS.
+#cmakedefine DUNE_OS_RTEMS
+//! Defined on eCos.
+#cmakedefine DUNE_OS_ECOS
+//! Defined on FreeBSD.
+#cmakedefine DUNE_OS_FREEBSD
+//! Defined on NetBSD.
+#cmakedefine DUNE_OS_NETBSD
+//! Defined on OpenBSD.
+#cmakedefine DUNE_OS_OPENBSD
+//! Defined on BSD variants.
+#cmakedefine DUNE_OS_BSD
+//! Defined on POSIX compliant systems.
+#cmakedefine DUNE_OS_POSIX
+
+//! Defined when using uClibc.
+#cmakedefine DUNE_CLIB_UC
+//! Defined when using the GNU C Library.
+#cmakedefine DUNE_CLIB_GNU
+//! Defined when using Newlib.
+#cmakedefine DUNE_CLIB_NEWLIB
+//! Defined when using MinGW.
+#cmakedefine DUNE_CLIB_MINGW
+//! Defined when using the Microsoft C Library.
+#cmakedefine DUNE_CLIB_MICROSOFT
+//! Defined when using the Apple C Library.
+#cmakedefine DUNE_CLIB_APPLE
+//! Defined when using the SUN C Library.
+#cmakedefine DUNE_CLIB_SUN
+//! Defined when using the Dinkum C Library.
+#cmakedefine DUNE_CLIB_DINKUM
+//! Defined when using the BSD Library.
+#cmakedefine DUNE_CLIB_BSD
+//! Defined when using the LLVM libc++ Library.
+#cmakedefine DUNE_CLIB_LIBCPP
+//! Defined when using an unknown C Library.
+#cmakedefine DUNE_CLIB_UNKNOWN
+
+//! Defined if DUNE was compiled with GNU's C++ compiler.
+#cmakedefine DUNE_CXX_GNU
+//! Defined if DUNE was compiled with Intel's C++ compiler.
+#cmakedefine DUNE_CXX_INTEL
+//! Defined if DUNE was compiled with LLVM/Clang C++ compiler.
+#cmakedefine DUNE_CXX_CLANG
+//! Defined if DUNE was compiled with Microsoft's C++ compiler.
+#cmakedefine DUNE_CXX_MICROSOFT
+//! Defined if DUNE was compiled with an unknown C++ compiler.
+#cmakedefine DUNE_CXX_UNKNOWN
+
+//! Target CPU architecture.
+#define DUNE_CPU_@DUNE_CPU_UCASE@
+
+//! Target CPU architecture variant.
+#define DUNE_CPU_VARIANT_@DUNE_CPU_VARIANT_UCASE@
+
+//! Defined if DUNE was compiled for a big endian system.
+#cmakedefine DUNE_CPU_BIG_ENDIAN
+//! Defined if DUNE was compiled for a little endian system.
+#cmakedefine DUNE_CPU_LITTLE_ENDIAN
+//! Defined if DUNE was compiled for a a system with mixed endian doubles.
+#cmakedefine DUNE_CPU_MIXED_ENDIAN_DOUBLES
+
+//! Defined if DUNE was compiled for a 32 bit CPU.
+#cmakedefine DUNE_CPU_32B
+//! Defined if DUNE was compiled for a 64 bit CPU.
+#cmakedefine DUNE_CPU_64B
+
+// Headers.
+@DUNE_SYS_HEADERS@
+
+// Types.
+@DUNE_SYS_TYPES@
+
+// Functions.
+@DUNE_SYS_FUNCTIONS@
+
+// Cleanup namespace in Microsoft Windows.
+#if defined(DUNE_SYS_HAS_WINDOWS_H)
+#  define WIN32_LEAN_AND_MEAN
+#  define _WIN32_WINNT 0x0501
+#  include <windows.h>
+
+#  if defined(max)
+#    undef max
+#  endif
+
+#  if defined(min)
+#    undef min
+#  endif
+
+#  if defined(CM_NONE)
+#    undef CM_NONE
+#  endif
+#endif
+
+// Fixed width integers.
+#if defined(DUNE_SYS_HAS_STDINT_H)
+#  include <stdint.h>
+#elif defined(DUNE_SYS_HAS_WINDOWS_H)
+   typedef INT8 int8_t;
+   typedef UINT8 uint8_t;
+   typedef INT16 int16_t;
+   typedef UINT16 uint16_t;
+   typedef INT32 int32_t;
+   typedef UINT32 uint32_t;
+   typedef INT64 int64_t;
+   typedef UINT64 uint64_t;
+   typedef SSIZE_T ssize_t;
+#else
+#  error Unable to find fixed precision integer types.
+#endif
+
+//! 64 bit floating point type.
+typedef double fp64_t;
+//! 32 bit floating point type.
+typedef float fp32_t;
+
+// Library type.
+#cmakedefine DUNE_SHARED
+#cmakedefine DUNE_STATIC
+
+// Declaration for exporting symbols.
+#if defined(DUNE_OS_WINDOWS) && defined(DUNE_SHARED)
+#  define DUNE_SYM_EXPORT __declspec(dllexport)
+#  define DUNE_SYM_IMPORT __declspec(dllimport)
+#else
+#  define DUNE_SYM_EXPORT
+#  define DUNE_SYM_IMPORT
+#endif
+
+#if defined(DUNE_DLL_EXPORT)
+#  define DUNE_DLL_SYM DUNE_SYM_EXPORT
+#else
+#  define DUNE_DLL_SYM DUNE_SYM_IMPORT
+#endif
+
+// GCC extension only: hint the compiler about the likely result of a boolean evaluation
+#if defined (DUNE_CXX_GNU)
+#  define likely(x)       __builtin_expect((x),1)
+#  define unlikely(x)     __builtin_expect((x),0)
+#else
+#  define likely(x)       (x)
+#  define unlikely(x)     (x)
+#endif
+
+#if defined(DUNE_CXX_GNU)
+#  define DUNE_DEPRECATED __attribute__ ((deprecated))
+#  define DUNE_PRINTF_FORMAT(s, f) __attribute__ ((format(printf, s, f)))
+#else
+#  define DUNE_DEPRECATED
+#  define DUNE_PRINTF_FORMAT(s, f)
+#endif
+
+// Internationalization.
+#if defined(DUNE_USING_I18N)
+#  include <libintl.h>
+#  define DTR(str) gettext(str)
+#else
+#  define DTR(str) str
+#endif
+
+//! Mark string as run-time translatable.
+#define DTR_RT(str) str
+
+#endif

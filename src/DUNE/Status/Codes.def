@@ -1,0 +1,33 @@
+//***************************************************************************
+// Copyright (C) 2007-2013 Laboratório de Sistemas e Tecnologia Subaquática *
+// Departamento de Engenharia Electrotécnica e de Computadores              *
+// Rua Dr. Roberto Frias, 4200-465 Porto, Portugal                          *
+//***************************************************************************
+// Author: Ricardo Martins                                                  *
+//***************************************************************************
+// $Id:: Codes.def 12746 2013-01-26 01:40:33Z rasm                        $:*
+//***************************************************************************
+
+CODE(INIT                , "initializing"                                   )
+CODE(IDLE                , "idle"                                           )
+CODE(ACTIVE              , "active"                                         )
+CODE(IO_ERROR            , "input/output error"                             )
+CODE(INTERNAL_ERROR      , "internal error"                                 )
+CODE(CPU_TOO_HIGH        , "CPU usage is too high"                          )
+CODE(FUEL_LOW            , "fuel is running low"                            )
+CODE(FUEL_EST_UNRELIABLE , "fuel level estimation is not reliable"          )
+CODE(FUEL_RESERVE        , "fuel reserve"                                   )
+CODE(CALIBRATING         , "calibrating"                                    )
+CODE(CALIBRATED          , "calibrated"                                     )
+CODE(POWER_DOWN          , "powering down"                                  )
+CODE(COM_ERROR           , "communication error"                            )
+CODE(SYNCHED             , "synchronized"                                   )
+CODE(SYNCING             , "synchronizing"                                  )
+CODE(NOT_SYNCHED         , "not synchronized"                               )
+CODE(WAIT_GPS_FIX        , "waiting for GPS fix"                            )
+CODE(WAIT_LBL_CFG        , "waiting for configuration of LBL beacons"       )
+CODE(WAIT_CONVERGE       , "waiting for solution to converge"               )
+CODE(MISSING_DATA        , "missing data"                                   )
+CODE(INVALID_CHECKSUM    , "invalid checksum"                               )
+CODE(INVALID_VERSION     , "invalid version"                                )
+CODE(NO_BOTTOM_LOCK      , "active but without bottom lock"                 )

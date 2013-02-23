@@ -1,0 +1,237 @@
+//***************************************************************************
+// Copyright (C) 2007-2013 Laboratório de Sistemas e Tecnologia Subaquática *
+// Departamento de Engenharia Electrotécnica e de Computadores              *
+// Rua Dr. Roberto Frias, 4200-465 Porto, Portugal                          *
+//***************************************************************************
+// Author: Ricardo Martins                                                  *
+//***************************************************************************
+// $Id:: Task.cpp 12721 2013-01-25 02:01:06Z jbraga                       $:*
+//***************************************************************************
+
+// ISO C++ 98 headers.
+#include <cstddef>
+
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
+
+namespace Actuators
+{
+  namespace SingleSIMCT01
+  {
+    using DUNE_NAMESPACES;
+
+    struct Arguments
+    {
+      // UART device.
+      std::string uart_dev;
+      // UART baud rate.
+      unsigned uart_baud;
+      // True if UART has local echo enabled.
+      bool uart_echo;
+      // Motor identification number.
+      int motor_id;
+      // Thruster identification number.
+      int thruster_id;
+      // Actuation scale factor.
+      float scale;
+    };
+
+    struct Task: public Tasks::Periodic
+    {
+      // Maximum number of errors.
+      static const unsigned c_err_max = 6;
+      // UART handle.
+      SerialPort* m_uart;
+      // Demand value.
+      int8_t m_demand;
+      // Scratch buffer.
+      char m_scratch[15];
+      // RPMs
+      IMC::Rpm m_rpm;
+      // Current.
+      IMC::Current m_amp;
+      // Query amps command.
+      std::string m_cmd_query_amp;
+      // Query RPMs command.
+      std::string m_cmd_query_rpm;
+      // Demand command reply.
+      std::string m_rpl_demand;
+      // Communication error count.
+      unsigned m_err_count;
+      // Error watchdog.
+      Counter<float> m_err_wdog;
+      // Task arguments.
+      Arguments m_args;
+
+      Task(const std::string& name, Tasks::Context& ctx):
+        Tasks::Periodic(name, ctx),
+        m_uart(NULL),
+        m_demand(0),
+        m_err_count(0),
+        m_err_wdog(5)
+      {
+        // Define configuration parameters.
+        param("Serial Port - Device", m_args.uart_dev)
+        .defaultValue("")
+        .description("Serial port device used to communicate with the sensor");
+
+        param("Serial Port - Baud Rate", m_args.uart_baud)
+        .defaultValue("57600")
+        .description("Serial port baud rate");
+
+        param("Serial Port - Local Echo", m_args.uart_echo)
+        .defaultValue("0")
+        .description("Set to true if serial port has local echo enabled");
+
+        param("Motor Id", m_args.motor_id)
+        .defaultValue("-1")
+        .description("Motor identification number, used for low level (RS485) communication");
+
+        param("Thruster Id", m_args.thruster_id)
+        .defaultValue("-1")
+        .description("Thruster identification number, used to fill IMC messages");
+
+        param("Actuation Scale Factor", m_args.scale)
+        .defaultValue("100.0")
+        .minimumValue("0.0")
+        .maximumValue("100.0")
+        .description("Actuation scale factor");
+
+        // Register consumers.
+        bind<IMC::SetThrusterActuation>(this);
+      }
+
+      ~Task(void)
+      {
+        Task::onResourceRelease();
+      }
+
+      void
+      onResourceAcquisition(void)
+      {
+        m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+        m_uart->setCanonicalInput(true);
+        m_uart->setCanonicalInputTerminator('\r');
+      }
+
+      void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_uart);
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        if (m_args.motor_id < 0)
+          throw std::runtime_error(DTR("invalid value for 'Motor Id'"));
+
+        if (m_args.thruster_id < 0)
+          throw std::runtime_error(DTR("invalid value for 'Thruster Id'"));
+
+        // Initialize commands.
+        m_cmd_query_amp = String::str("u%d6?C\r", m_args.motor_id);
+        m_cmd_query_rpm = String::str("u%d6?R\r", m_args.motor_id);
+        m_rpl_demand = String::str("U%d4\r", m_args.motor_id);
+      }
+
+      bool
+      sendCommand(const char* cmd, char* bfr, unsigned bfr_len)
+      {
+        m_uart->write(cmd);
+
+        if (m_args.uart_echo)
+        {
+          if (m_uart->hasNewData(0.2) != IOMultiplexing::PRES_OK)
+            return false;
+
+          m_uart->readString(bfr, bfr_len);
+        }
+
+        if (m_uart->hasNewData(0.2) != IOMultiplexing::PRES_OK)
+          return false;
+
+        m_uart->readString(bfr, bfr_len);
+
+        return true;
+      }
+
+      void
+      demand(void)
+      {
+        // Remember that the + eats a digit.
+        std::sprintf(m_scratch, "u%d_%+03d\r", m_args.motor_id, m_demand);
+        m_scratch[2] = std::strlen(m_scratch) + '0';
+
+        char bfr[32];
+        sendCommand(m_scratch, bfr, sizeof(bfr));
+        if (m_rpl_demand != bfr)
+          ++m_err_count;
+      }
+
+      void
+      queryCurrent(void)
+      {
+        char bfr[32];
+        if (sendCommand(m_cmd_query_amp.c_str(), bfr, sizeof(bfr)))
+        {
+          unsigned value = 0;
+          if (std::sscanf(bfr, "U%*c%*cC%u\r", &value) != 1)
+          {
+            ++m_err_count;
+            return;
+          }
+
+          m_amp.value = value;
+          dispatch(m_amp);
+        }
+      }
+
+      void
+      queryRPM(void)
+      {
+        char bfr[32];
+        if (sendCommand(m_cmd_query_rpm.c_str(), bfr, sizeof(bfr)))
+        {
+          int value = 0;
+          if (std::sscanf(bfr, "U%*c%*cR%d\r", &value) != 1)
+          {
+            ++m_err_count;
+            return;
+          }
+
+          m_rpm.value = (int16_t)(value / 5.0);
+          dispatch(m_rpm);
+        }
+      }
+
+      void
+      consume(const IMC::SetThrusterActuation* msg)
+      {
+        if (msg->id == m_args.thruster_id)
+          m_demand = (int8_t)(msg->value * m_args.scale);
+      }
+
+      void
+      task(void)
+      {
+        demand();
+        queryCurrent();
+        queryRPM();
+
+        if (m_err_wdog.overflow())
+        {
+          if (m_err_count > c_err_max)
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          else
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+          m_err_count = 0;
+          m_err_wdog.reset();
+        }
+      }
+    };
+  }
+}
+
+DUNE_TASK

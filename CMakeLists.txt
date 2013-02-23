@@ -1,0 +1,401 @@
+#############################################################################
+# Copyright (C) 2007-2013 Laboratório de Sistemas e Tecnologia Subaquática  #
+# Departamento de Engenharia Electrotécnica e de Computadores               #
+# Rua Dr. Roberto Frias, 4200-465 Porto, Portugal                           #
+#############################################################################
+# Author: Ricardo Martins                                                   #
+#############################################################################
+# $Id:: CMakeLists.txt 12867 2013-02-06 03:03:27Z robot                   $:#
+#############################################################################
+
+# Validate CMake version.
+cmake_minimum_required(VERSION 2.6.0 FATAL_ERROR)
+
+if(COMMAND CMAKE_POLICY)
+  cmake_policy(SET CMP0003 NEW)
+endif(COMMAND CMAKE_POLICY)
+
+include(cmake/Toolchain.cmake)
+
+##########################################################################
+#                         Project information                            #
+##########################################################################
+project("DUNE")
+set(PROJECT_NAME "DUNE: Unified Navigation Environment")
+set(PROJECT_SHORT_NAME "DUNE")
+set(PROJECT_VENDOR "Universidade do Porto - LSTS")
+set(PROJECT_COPYRIGHT "Copyright (C) 2007-2013 - ${PROJECT_VENDOR}")
+set(PROJECT_CONTACT "DUNE <dune@lsts.pt>")
+set(PROJECT_VERSION_MAJ "2")
+set(PROJECT_VERSION_MIN "3")
+set(PROJECT_VERSION_PAT "0")
+set(PROJECT_VERSION_RCN "1")
+
+# Version formats.
+set(PROJECT_VERSION
+  "${PROJECT_VERSION_MAJ}.${PROJECT_VERSION_MIN}.${PROJECT_VERSION_PAT}")
+
+if(PROJECT_VERSION_RCN GREATER 0)
+  set(PROJECT_VERSION "${PROJECT_VERSION}-rc${PROJECT_VERSION_RCN}")
+endif(PROJECT_VERSION_RCN GREATER 0)
+
+set(PROJECT_VERSION_PARTS
+  "${PROJECT_VERSION_MAJ},${PROJECT_VERSION_MIN},${PROJECT_VERSION_PAT},${PROJECT_VERSION_RCN}")
+
+# This directory will hold generated files.
+set(DUNE_GENERATED ${CMAKE_BINARY_DIR}/DUNEGeneratedFiles)
+
+include(${PROJECT_SOURCE_DIR}/cmake/Subversion.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/Macros.cmake)
+
+# Define options.
+message(STATUS "")
+message(STATUS "******************************************")
+message(STATUS "***          Optional Features         ***")
+message(STATUS "******************************************")
+dune_option(PICCOLO "Include Piccolo library")
+dune_option(SHARED "Build shared library and shared plugins")
+dune_option(DEBUG "Compile with debug information enabled")
+dune_option(PROFILE "Compile with profiling and debug information enabled")
+dune_option(TLSF "Include the TLSF O(1) memory allocator")
+dune_option(GUI "Include Qt based GUI")
+dune_option(DC1394 "Enable support for libdc1394")
+dune_option(V4L2 "Enable support for libv4l2")
+dune_option(JS "Enable support for SpiderMonkey javascript engine")
+dune_option(JAI "Enable JAI camera support")
+dune_option(FFMPEG "Enable FFmpeg support")
+dune_option(H264 "Enable H264 support")
+
+# Internationalization.
+if(DUNE_SYS_HAS_GETTEXT)
+  if(NOT DEFINED I18N)
+    set(I18N 1)
+  endif(NOT DEFINED I18N)
+  dune_option(I18N "Enable support for internationalization")
+endif(DUNE_SYS_HAS_GETTEXT)
+include(${PROJECT_SOURCE_DIR}/cmake/I18N.cmake)
+
+#############################################################################
+# DUNE's default build type
+#############################################################################
+if(DEBUG)
+  set(CMAKE_BUILD_TYPE "Debug")
+  add_definitions(-DDEBUG)
+else(DEBUG)
+  set(CMAKE_BUILD_TYPE "Release")
+endif(DEBUG)
+
+if(PROFILE)
+  set(CMAKE_BUILD_TYPE "Debug")
+endif(PROFILE)
+
+# Set a build name with more details than the default.
+set(BUILDNAME "${DUNE_SYSTEM_NAME_VAR}")
+
+##########################################################################
+# IMC                                                                    #
+##########################################################################
+set(DUNE_MESSAGES_IMC_XML ${PROJECT_SOURCE_DIR}/etc/xml/IMC.xml)
+
+if(DUNE_PROGRAM_PYTHON)
+  add_custom_target(imc
+    COMMAND ${DUNE_PROGRAM_PYTHON}
+    ${PROJECT_SOURCE_DIR}/programs/generators/imc_code.py
+    ${DUNE_MESSAGES_IMC_XML} ${PROJECT_SOURCE_DIR}/src/DUNE/IMC
+    COMMAND ${DUNE_PROGRAM_PYTHON}
+    ${PROJECT_SOURCE_DIR}/programs/generators/imc_tests.py
+    ${DUNE_MESSAGES_IMC_XML} ${PROJECT_SOURCE_DIR}/programs/tests
+    DEPENDS ${xml})
+endif(DUNE_PROGRAM_PYTHON)
+
+install(FILES ${DUNE_MESSAGES_IMC_XML} RENAME IMC.xml
+  DESTINATION etc/xml)
+
+##########################################################################
+# Piccolo                                                                #
+##########################################################################
+set(PICCOLO_MESSAGES_XML ${PROJECT_SOURCE_DIR}/private/etc/xml/Piccolo.xml)
+
+if(DUNE_PROGRAM_PYTHON)
+  add_custom_target(piccolo_messages
+    COMMAND ${DUNE_PROGRAM_PYTHON}
+    ${PROJECT_SOURCE_DIR}/private/programs/generators/piccolo_messages.py
+    ${PICCOLO_MESSAGES_XML} ${PROJECT_SOURCE_DIR}/private/src/Piccolo
+    DEPENDS ${xml})
+endif(DUNE_PROGRAM_PYTHON)
+
+##########################################################################
+# Status Codes                                                           #
+##########################################################################
+if(DUNE_PROGRAM_PYTHON)
+  add_custom_target(status
+    COMMAND ${DUNE_PROGRAM_PYTHON}
+    ${PROJECT_SOURCE_DIR}/programs/generators/status_codes.py
+    ${PROJECT_SOURCE_DIR}/src/DUNE/Status/Codes.def
+    ${PROJECT_SOURCE_DIR}/src/DUNE/Status
+    DEPENDS ${PROJECT_SOURCE_DIR}/src/DUNE/Status/Codes.def)
+endif(DUNE_PROGRAM_PYTHON)
+
+##########################################################################
+#                         DUNE's Core Library                            #
+##########################################################################
+if(SHARED)
+  set(DUNE_SHARED 1)
+else(SHARED)
+  set(DUNE_STATIC 1)
+endif(SHARED)
+
+file(GLOB_RECURSE DUNE_CORE_SOURCES "${PROJECT_SOURCE_DIR}/src/DUNE/*.cpp")
+file(GLOB_RECURSE DUNE_CORE_HEADERS "${PROJECT_SOURCE_DIR}/src/DUNE/*.hpp"
+  "${PROJECT_SOURCE_DIR}/src/DUNE/*.def")
+file(GLOB_RECURSE DUNE_CORE_DEFS    "${PROJECT_SOURCE_DIR}/src/DUNE/*.def")
+string(REPLACE ";" " " DUNE_CORE_HEADERS_STRING "${DUNE_CORE_HEADERS}")
+
+configure_file(${PROJECT_SOURCE_DIR}/src/DUNE/Config.hpp.in
+  ${DUNE_GENERATED}/src/DUNE/Config.hpp)
+
+install(FILES ${DUNE_GENERATED}/src/DUNE/Config.hpp
+  DESTINATION include/DUNE)
+
+set_source_files_properties(${DUNE_CORE_SOURCES}
+  PROPERTIES COMPILE_FLAGS "${DUNE_CXX_FLAGS} ${DUNE_CXX_FLAGS_STRICT}")
+
+if(DUNE_OS_WINDOWS)
+  configure_file(${PROJECT_SOURCE_DIR}/src/DUNE/Version.rc.in
+    ${DUNE_GENERATED}/src/DUNE/Version.rc)
+
+  set(DUNE_CORE_SOURCES ${DUNE_CORE_SOURCES}
+    ${DUNE_GENERATED}/src/DUNE/Version.rc)
+endif(DUNE_OS_WINDOWS)
+
+foreach(header ${DUNE_CORE_HEADERS})
+  string(REGEX REPLACE "${PROJECT_SOURCE_DIR}/" "" header ${header})
+  string(REGEX REPLACE "src" "include" destination ${header})
+  get_filename_component(destination ${destination} PATH)
+  install(FILES ${header} DESTINATION ${destination})
+endforeach(header ${DUNE_CORE_HEADERS})
+
+# Bundled Libraries.
+file(GLOB extlibs ${PROJECT_SOURCE_DIR}/external/libraries/*/Library.cmake)
+foreach(extlib ${extlibs})
+  include(${extlib})
+endforeach(extlib ${extlibs})
+
+# Private Libraries.
+file(GLOB extlibs ${PROJECT_SOURCE_DIR}/private/external/libraries/*/Library.cmake)
+foreach(extlib ${extlibs})
+  include(${extlib})
+endforeach(extlib ${extlibs})
+
+include_directories(${DUNE_GENERATED}/src ${PROJECT_SOURCE_DIR}/src ${DUNE_EXTERNAL_INCS_DIR})
+link_directories(${DUNE_EXTERNAL_LIBS_DIR})
+set(DUNE_CORE_FILES ${DUNE_CORE_SOURCES} ${DUNE_EXTERNAL_FILES})
+
+if(DUNE_SHARED)
+  message(STATUS "Building shared library")
+  add_library(dune-core SHARED ${DUNE_CORE_FILES})
+  set_target_properties(dune-core PROPERTIES DEFINE_SYMBOL DUNE_DLL_EXPORT)
+  target_link_libraries(dune-core ${DUNE_SYS_LIBS})
+else(DUNE_SHARED)
+  message(STATUS "Building static library")
+  add_library(dune-core STATIC ${DUNE_CORE_FILES})
+  if(DUNE_CXX_MICROSOFT AND DUNE_CPU_X86)
+    if(DUNE_CPU_32B)
+      set_target_properties(dune-core PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x86")
+    else(DUNE_CPU_32B)
+      set_target_properties(dune-core PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
+    endif(DUNE_CPU_32B)
+  endif(DUNE_CXX_MICROSOFT AND DUNE_CPU_X86)
+endif(DUNE_SHARED)
+
+##########################################################################
+#                          Tasks                                         #
+##########################################################################
+include(${PROJECT_SOURCE_DIR}/cmake/Tasks.cmake)
+
+##########################################################################
+#                          DUNE's Executable                             #
+##########################################################################
+if(CMAKE_RC_COMPILER)
+  enable_language(RC)
+endif(CMAKE_RC_COMPILER)
+
+# Daemon.
+configure_file(${PROJECT_SOURCE_DIR}/src/Main/StaticTasks.cpp.cmake
+  ${DUNE_GENERATED}/src/Main/StaticTasks.cpp)
+
+add_executable(dune
+  ${DUNE_TASKS}
+  ${DUNE_GENERATED}/src/Main/StaticTasks.cpp
+  src/Main/Assets.rc
+  src/Main/Daemon.cpp)
+set_source_files_properties(src/Main/Daemon.cpp
+  PROPERTIES
+  COMPILE_FLAGS "${DUNE_CXX_FLAGS}")
+target_link_libraries(dune dune-core ${DUNE_SYS_LIBS} ${DUNE_STATIC_TASKS}
+  ${DUNE_EXTERNAL_LIBS})
+
+# Launcher.
+add_executable(dune-launcher
+  src/Main/Assets.rc
+  src/Main/Launcher.cpp)
+set_source_files_properties(src/Main/Launcher.cpp
+  PROPERTIES
+  COMPILE_FLAGS "${DUNE_CXX_FLAGS}")
+target_link_libraries(dune-launcher dune-core ${DUNE_SYS_LIBS}
+  ${DUNE_EXTERNAL_LIBS})
+
+##########################################################################
+#                          Simple programs                               #
+##########################################################################
+macro(dune_program source exclude)
+  get_filename_component(executable ${source} NAME_WE)
+  if(${exclude})
+    add_executable(${executable} EXCLUDE_FROM_ALL ${source})
+  else(${exclude})
+    add_executable(${executable} ${source})
+    set(DUNE_EXTRA_EXE ${DUNE_EXTRA_EXE} ${executable})
+  endif(${exclude})
+  set_target_properties(${executable} PROPERTIES COMPILE_FLAGS "${DUNE_CXX_FLAGS}")
+  target_link_libraries(${executable} dune-core ${DUNE_SYS_LIBS} ${DUNE_EXTERNAL_LIBS})
+endmacro(dune_program source)
+
+file(GLOB programs programs/*.cpp)
+foreach(program ${programs})
+  dune_program(${program} 1)
+endforeach(program ${programs})
+
+file(GLOB programs programs/utils/*.cpp)
+foreach(program ${programs})
+  dune_program(${program} 0)
+endforeach(program ${programs})
+
+##########################################################################
+#                          Documentation                                 #
+##########################################################################
+if(DUNE_PROGRAM_DOXYGEN AND DUNE_PROGRAM_ZIP)
+  set(DUNE_DOCS_LABEL
+    dune-${PROJECT_VERSION}-docs)
+
+  set(DUNE_DOXYGEN_DOCS_DIR
+    ${DUNE_GENERATED}/${DUNE_DOCS_LABEL})
+
+  configure_file(${PROJECT_SOURCE_DIR}/doc/Doxygen/Doxyfile.in
+    ${DUNE_GENERATED}/Doxyfile)
+
+  add_custom_target(doc
+    ${DUNE_PROGRAM_DOXYGEN} ${DUNE_GENERATED}/Doxyfile)
+
+  add_custom_target(doc_package
+    zip -r ${CMAKE_BINARY_DIR}/${DUNE_DOCS_LABEL}.zip ${DUNE_DOCS_LABEL}
+    WORKING_DIRECTORY ${DUNE_GENERATED})
+
+  add_dependencies(doc_package doc)
+endif(DUNE_PROGRAM_DOXYGEN AND DUNE_PROGRAM_ZIP)
+
+##########################################################################
+#                        Packaging/Installation                          #
+##########################################################################
+install(TARGETS dune dune-launcher dune-core ${DUNE_EXTRA_EXE}
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)
+
+# Install www helper files.
+install(DIRECTORY www DESTINATION .
+  PATTERN .svn EXCLUDE)
+
+install(DIRECTORY etc DESTINATION .
+  PATTERN .svn EXCLUDE)
+
+install(DIRECTORY firmware DESTINATION .
+  PATTERN .svn EXCLUDE)
+
+# MinGW dependencies.
+if(DUNE_OS_WINDOWS AND DUNE_CLIB_MINGW)
+  get_filename_component(MINGW_BIN_PATH ${CMAKE_CXX_COMPILER} PATH)
+  install(FILES
+    ${MINGW_BIN_PATH}/libgcc_s_dw2-1.dll
+    ${MINGW_BIN_PATH}/libstdc++-6.dll
+    ${MINGW_BIN_PATH}/mingwm10.dll
+    DESTINATION bin)
+endif(DUNE_OS_WINDOWS AND DUNE_CLIB_MINGW)
+
+# Seacon simulator link.
+if(DUNE_OS_WINDOWS)
+  set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "CreateShortCut \\\\
+    \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Seacon Simulator.lnk\\\" \\\\
+    \\\"$INSTDIR\\\\bin\\\\dune.exe\\\" \\\\
+    \\\"-c lauv-seacon-1 -p Simulation\\\"")
+endif(DUNE_OS_WINDOWS)
+
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_NAME})
+set(CPACK_PACKAGE_NAME ${PROJECT_SHORT_NAME})
+set(CPACK_PACKAGE_VENDOR ${PROJECT_VENDOR})
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_CONTACT ${PROJECT_CONTACT})
+set(CPACK_STRIP_FILES "bin/dune")
+set(CPACK_PACKAGE_EXECUTABLES ${DUNE_EXTRA_EXE_NAMES})
+set(CPACK_PACKAGE_FILE_NAME
+  "dune-${CPACK_PACKAGE_VERSION}-${DUNE_SYSTEM_NAME_VAR}")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY
+  "${PROJECT_SHORT_NAME} v${PROJECT_VERSION}")
+set(CPACK_RESOURCE_FILE_LICENSE
+  "${PROJECT_SOURCE_DIR}/doc/License.txt")
+dune_set_path(CPACK_PACKAGE_ICON
+  "${PROJECT_SOURCE_DIR}/assets/icons/install.bmp")
+dune_set_path(CPACK_NSIS_MUI_ICON
+  "${PROJECT_SOURCE_DIR}/assets/icons/dune.ico")
+set(CPACK_NSIS_MUI_UNIICON
+  "${CPACK_NSIS_MUI_ICON}")
+set(CPACK_NSIS_DISPLAY_NAME
+  "${PROJECT_SHORT_NAME} ${PROJECT_VERSION}")
+
+if(DUNE_OS_WINDOWS)
+  set(CPACK_GENERATOR "NSIS")
+else(DUNE_OS_WINDOWS)
+  set(CPACK_GENERATOR "TBZ2")
+endif(DUNE_OS_WINDOWS)
+
+include(InstallRequiredSystemLibraries)
+include(CPack)
+
+# GUI
+include(programs/video-client/Program.cmake)
+
+##########################################################################
+#                                 Tests                                  #
+##########################################################################
+option(TESTS "Compile test programs" FALSE)
+
+if(TESTS)
+  enable_testing()
+
+  macro(dune_test source)
+    get_filename_component(executable ${source} NAME_WE)
+    add_executable(${executable} ${source})
+    set_target_properties(${executable} PROPERTIES COMPILE_FLAGS
+      "${DUNE_CXX_FLAGS}")
+    target_link_libraries(${executable} dune-core ${DUNE_SYS_LIBS}
+      ${DUNE_EXTERNAL_LIBS})
+    ADD_TEST(${executable} ${executable})
+  endmacro(dune_test source)
+
+  dune_test(programs/tests/test_Network.cpp)
+  dune_test(programs/tests/test_System.cpp)
+  dune_test(programs/tests/test_AtomicInteger.cpp)
+  dune_test(programs/tests/test_BodyFixedFrame.cpp)
+  dune_test(programs/tests/test_Optimization.cpp)
+  dune_test(programs/tests/test_Path.cpp)
+  dune_test(programs/tests/test_StateMachine.cpp)
+  dune_test(programs/tests/test_Random.cpp)
+  dune_test(programs/tests/test_CircularBuffer.cpp)
+  dune_test(programs/tests/test_MD5.cpp)
+  dune_test(programs/tests/test_Database.cpp)
+  dune_test(programs/tests/test_IMC.cpp)
+endif(TESTS)
+
+##########################################################################
+#                                CDash                                   #
+##########################################################################
+include(Dart)

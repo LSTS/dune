@@ -1,0 +1,10 @@
+PATTERN(PAT_NORMAL, "Pattern - Normal")
+PATTERN(PAT_FUEL_LOW, "Pattern - Fuel Low")
+PATTERN(PAT_PLAN_STARTING, "Pattern - Plan Starting")
+PATTERN(PAT_PLAN_EXECUTING, "Pattern - Plan Executing")
+PATTERN(PAT_MANUAL_OPERATION, "Pattern - Manual Operation")
+PATTERN(PAT_ERROR, "Pattern - Error")
+PATTERN(PAT_ERROR_FATAL, "Pattern - Fatal Error")
+PATTERN(PAT_SHUTDOWN, "Pattern - Shutdown")
+
+#undef PATTERN
