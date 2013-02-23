@@ -69,8 +69,12 @@ namespace Maneuver
       IMC::Elevator m_maneuver;
       //! Estimated state
       IMC::EstimatedState m_estate;
+      //! Pointer to zed that matters
+      float* m_state_z;
       //! true if the target depth has been reached
       bool m_done;
+      //! True if loitering
+      bool m_loitering;
       //! direction up or down (1 or -1)
       int m_dir;
       //! Vertical monitor
@@ -103,7 +107,7 @@ namespace Maneuver
 
         bindToManeuver<Task, IMC::Elevator>();
         bind<IMC::PathControlState>(this);
-        bind<IMC::EstimatedState>(this, true);
+        bind<IMC::EstimatedState>(this);
       }
 
       void
@@ -129,13 +133,20 @@ namespace Maneuver
 
         // either start helicoid right away or get to the waypoint first
         if (maneuver->flags & IMC::Elevator::FLG_CURR_POS)
+        {
           m_path.flags = IMC::DesiredPath::FL_LOITER_CURR;
+          m_path.end_z = m_maneuver.end_z;
+          m_path.end_z_units = m_maneuver.end_z_units;
+        }
+        else
+        {
+          m_path.end_z = m_maneuver.start_z;
+          m_path.end_z_units = m_maneuver.start_z_units;
+        }
 
         m_path.end_lat = m_maneuver.lat;
         m_path.end_lon = m_maneuver.lon;
         m_path.lradius = m_maneuver.radius;
-        m_path.end_z = m_maneuver.start_z;
-        m_path.end_z_units = m_maneuver.start_z_units;
 
         // If we are going down then loiter counter-clockwise
         if (m_maneuver.end_z_units == IMC::Z_DEPTH)
@@ -163,39 +174,32 @@ namespace Maneuver
         // init
         m_dir = 0;
         m_done = false;
+        m_loitering = false;
       }
 
       void
       consume(const IMC::EstimatedState* state)
       {
         m_estate = *state;
-      }
 
-      void
-      consume(const IMC::PathControlState* pcs)
-      {
-        if (pcs->flags & IMC::PathControlState::FL_LOITERING)
+        bool was_dir = m_dir;
+
+        // a direction has not been defined yet
+        if (!m_dir)
         {
-          if (m_done)
-          {
-            signalCompletion();
-            return;
-          }
-
-          double state_z;
-
-          // variable state_z will hold the vehicle's depth(+) or altitude(-)
-          // depending on whether the target depth is positive or negative
+          // variable state_z will hold the vehicle's depth or altitude
           if (m_maneuver.end_z_units == IMC::Z_DEPTH)
           {
             // Depth
-            state_z = m_estate.depth;
+            m_state_z = &m_estate.depth;
+            m_dir = (*m_state_z > m_maneuver.end_z) ? 1 : -1;
           }
           else if ((m_maneuver.end_z_units == IMC::Z_ALTITUDE) &&
                    (m_estate.alt >= 0))
           {
             // Altitude.
-            state_z = m_estate.alt;
+            m_state_z = &m_estate.alt;
+            m_dir = (*m_state_z > m_maneuver.end_z) ? -1 : 1;
           }
           else
           {
@@ -203,12 +207,40 @@ namespace Maneuver
             return;
           }
 
-          // a direction has not been defined yet
-          if (!m_dir)
-            setVerticalDirection(state_z);
+          debug("%s to %0.2f meters of depth/altitude",
+                (m_dir < 0) ? "descending" : "ascending",
+                m_maneuver.end_z);
+        }
+
+        // If we have set the direction for the first time
+        if (!was_dir && m_dir)
+        {
+          if (m_maneuver.flags & IMC::Elevator::FLG_CURR_POS)
+            return;
+
+          m_path.end_z = m_maneuver.end_z;
+          m_path.end_z_units = m_maneuver.end_z_units;
+        }
+      }
+
+      void
+      consume(const IMC::PathControlState* pcs)
+      {
+        // if direction has not been defined yet then do not proceed
+        if (!m_dir)
+          return;
+
+        if (pcs->flags & IMC::PathControlState::FL_LOITERING)
+        {
+          // If it's not supposed to use the current location then path
+          // reference to dive has yet to be fired
+          if (!m_loitering && (m_maneuver.flags & IMC::Elevator::FLG_CURR_POS) == 0)
+            dispatch(m_path);
+
+          m_loitering = true;
 
           // check if it is in the neighborhood of the desired depth
-          if (std::fabs(state_z - m_maneuver.end_z) <= m_args.depth_tolerance)
+          if (std::fabs(*m_state_z - m_maneuver.end_z) <= m_args.depth_tolerance)
           {
             m_done = true;
             debug("Reached target depth/altitude of %0.2f meters.", m_maneuver.end_z);
@@ -226,10 +258,18 @@ namespace Maneuver
             }
           }
 
+          // signal as complete
+          if (m_done)
+          {
+            signalCompletion();
+            return;
+          }
+
           if (m_args.vmonitor_speed > 0.0)
             checkVerticalProgress();
 
-          signalProgress(getVerticalError() / (m_estate.u * std::sin(m_estate.theta)));
+          float time_left = getVerticalError() / (m_estate.u * std::sin(m_estate.theta));
+          signalProgress((unsigned)std::fabs(time_left));
         }
         else
         {
@@ -239,35 +279,11 @@ namespace Maneuver
         }
       }
 
-      //! Set vertical direction (up or down)
-      //! @param[in] state_z current zed reference
-      void
-      setVerticalDirection(float state_z)
-      {
-        if (m_maneuver.end_z_units == IMC::Z_DEPTH)
-          m_dir = (state_z > m_maneuver.end_z) ? 1 : -1;
-        else
-          m_dir = (state_z > -m_maneuver.end_z) ? 1 : -1;
-
-        debug("%s to %0.2f meters of depth/altitude",
-              (m_dir < 0) ? "descending" : "ascending",
-              m_maneuver.end_z);
-
-        m_path.flags |= IMC::DesiredPath::FL_LOITER_CURR;
-        m_path.end_z = m_maneuver.end_z;
-        m_path.end_z_units = m_maneuver.end_z_units;
-
-        dispatch(m_path);
-      }
-
       //! Get absolute difference between current zed and target one
       float
       getVerticalError(void) const
       {
-        if (m_maneuver.end_z_units == IMC::Z_ALTITUDE)
-          return std::fabs(m_maneuver.end_z - m_estate.alt);
-        else
-          return std::fabs(m_maneuver.end_z - m_estate.depth);
+        return std::fabs(m_maneuver.end_z - *m_state_z);
       }
 
       //! Check vertical progress
@@ -278,7 +294,8 @@ namespace Maneuver
         // (multiply by minus direction for absolute value)
         float vrate = - m_dir * (m_estate.depth - m_vmon->last_depth) / (Clock::get() - m_vmon->last_time);
 
-        if ((m_args.vmonitor_speed > vrate) || (m_args.vmonitor_speed > m_vmon->mave->update(vrate)))
+        if ((m_args.vmonitor_speed > vrate) ||
+            (m_args.vmonitor_speed > m_vmon->mave->update(vrate)))
         {
           if (m_vmon->slow_progress)
           {
