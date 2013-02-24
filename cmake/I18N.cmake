@@ -41,7 +41,7 @@ if(DUNE_PROGRAM_PYTHON)
   add_custom_target(i18n_texts
     COMMAND
     ${DUNE_PROGRAM_PYTHON}
-    ${PROJECT_SOURCE_DIR}/programs/scripts/extract_entity_labels.py
+    ${PROJECT_SOURCE_DIR}/programs/scripts/dune-extract-elabels.py
     ${PROJECT_SOURCE_DIR}/etc ${PROJECT_SOURCE_DIR}/i18n/entity_labels.txt)
 else(DUNE_PROGRAM_PYTHON)
   add_custom_target(i18n_texts)
