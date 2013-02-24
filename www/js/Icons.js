@@ -45,5 +45,5 @@ Icons.prototype.load = function(label, path)
 
 Icons.prototype.path = function(label)
 {
-    return this.m_icons[label].src;  
+    return this.m_icons[label].src;
 };

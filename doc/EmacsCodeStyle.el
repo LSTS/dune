@@ -12,7 +12,7 @@
 ;;
 ;; (setq auto-mode-alist
 ;;   (append '((".*dune.*/.*\\.cpp$" . dune-c++-mode)
-;;	       (".*dune.*/.*\\.hpp$" . dune-c++-mode))
+;;         (".*dune.*/.*\\.hpp$" . dune-c++-mode))
 ;;           auto-mode-alist))
 ;;
 ;; Good luck!

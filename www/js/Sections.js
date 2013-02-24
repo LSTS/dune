@@ -47,7 +47,7 @@ Sections.prototype.create = function()
 Sections.prototype.clear = function()
 {
     var ctn = document.getElementById('x-container');
-    
+
     while (ctn.childNodes.length > 0)
     {
         ctn.removeChild(ctn.firstChild);
@@ -65,7 +65,7 @@ Sections.prototype.show = function(section)
 {
     if (this.m_section)
         this.hideSection(this.m_section);
-    
+
     this.m_section = section;
     this.showSection(this.m_section);
 };
@@ -77,7 +77,7 @@ Sections.prototype.hideSection = function(section)
         btn.className = 'First';
     else
         btn.className = '';
-    
+
     this.m_sections[section].element().className = 'Hidden';
 };
 
@@ -88,7 +88,7 @@ Sections.prototype.showSection = function(section)
         btn.className = 'FirstSelected';
     else
         btn.className = 'Selected';
-    
+
     this.m_sections[section].element().className = '';
     this.m_sections[section].element().style.visibility = 'visible';
 };
@@ -97,7 +97,7 @@ Sections.prototype.update = function(data)
 {
     for (var i in this.m_sections)
     {
-        this.m_sections[i].update();    
+        this.m_sections[i].update();
     }
 };
 

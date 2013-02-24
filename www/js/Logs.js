@@ -98,7 +98,7 @@ Logs.prototype.createFolder = function(root, tree)
     // {
     //     var e = this.createFile(tree[i].file);
     // }
-    
+
     var tr = document.createElement('tr');
     tr.appendChild(td);
 
@@ -107,7 +107,7 @@ Logs.prototype.createFolder = function(root, tree)
 
 Logs.prototype.createFile = function(root)
 {
-    var li = document.createElement('li');  
+    var li = document.createElement('li');
     li.appendChild(document.createTextNode(i));
     ul.appendChild(li);
 };

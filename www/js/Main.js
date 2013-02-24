@@ -98,11 +98,11 @@ Main.prototype.createTable = function()
     tr.appendChild(tdr);
     this.m_table.appendChild(tr);
     this.m_table.id = 'MainTable';
-    
+
     this.m_table_left = document.createElement('table');
     this.m_table_left.id = 'MainOverviewLeft';
     tdl.appendChild(this.m_table_left);
-    
+
     this.m_table_right = document.createElement('table');
     this.m_table_right.id = 'MainOverviewRight';
     tdr.appendChild(this.m_table_right);
@@ -111,11 +111,11 @@ Main.prototype.createTable = function()
     {
         if (this.m_fields[i].side == 'left')
         {
-            this.createTableEntry(i, this.m_table_left);     
+            this.createTableEntry(i, this.m_table_left);
         }
-        else  
+        else
         {
-            this.createTableEntry(i, this.m_table_right); 
+            this.createTableEntry(i, this.m_table_right);
         }
     }
 };
@@ -142,7 +142,7 @@ Main.prototype.createTableEntry = function(idx, tbl)
     td_label.className = 'entryLeft';
     td_label.appendChild(document.createTextNode(field.label));
     tr.appendChild(td_label);
-    
+
     var td_value = document.createElement('td');
     td_value.className = 'entryRight';
 
@@ -150,7 +150,7 @@ Main.prototype.createTableEntry = function(idx, tbl)
     if (!("widget" in field))
         field.widget = new TextLabel();
     field.widget.create(td_value);
-    
+
     tbl.appendChild(tr);
 };
 
@@ -160,14 +160,14 @@ Main.prototype.update = function()
     {
         var value = null;
         var field = this.m_fields[i];
-        
+
         if ("data_function" in field)
         {
             value = field.data_function(g_data);
         }
         else if ("data_field" in field)
         {
-            value = g_data[field.data_field];    
+            value = g_data[field.data_field];
         }
 
         field.widget.update(value);
@@ -192,9 +192,9 @@ Main.prototype.updateTasks = function()
 
 Main.prototype.insertTaskNode = function(id, name, desc, status)
 {
-    for (var i = 0; i < this.m_tbl_task.childNodes.length; i++) 
+    for (var i = 0; i < this.m_tbl_task.childNodes.length; i++)
     {
-	var item = this.m_tbl_task.childNodes[i];
+        var item = this.m_tbl_task.childNodes[i];
         var tgt = item.childNodes[1].firstChild;
         if (tgt.data == name)
         {
@@ -224,16 +224,16 @@ Main.prototype.createTask = function(id, name, desc, status)
     img_status.src = this.getEntityStateIcon(status);
     td_status.appendChild(img_status);
     tr.appendChild(td_status);
-    
+
     var th_name = document.createElement('th');
     th_name.style.width = '170px';
     th_name.appendChild(document.createTextNode(name));
     tr.appendChild(th_name);
-    
+
     var td_desc = document.createElement('td');
     td_desc.appendChild(document.createTextNode(desc));
     tr.appendChild(td_desc);
-    
+
     return tr;
 };
 
@@ -246,15 +246,15 @@ function findMessage(data, abbrev)
         if (msg.abbrev == abbrev)
             return msg;
     }
-    
+
     return null;
 };
 
 function getMessageValue(data, abbrev, defval)
 {
-    try 
+    try
     {
-        return findMessage(data, abbrev).value;    
+        return findMessage(data, abbrev).value;
     }
     catch (err)
     {
@@ -291,26 +291,26 @@ function getUptime(data)
     var diff = data.dune_time_current - data.dune_time_start;
     if (diff <= 0)
         return "just started";
-    
+
     var hours = Math.floor(diff / 3600);
     var minutes = Math.floor((diff % 3600) / 60);
     var seconds = Math.floor((diff % 3600) % 60);
 
     var str = '';
     if (hours > 0)
-        str += hours + ' ' + ((hours > 1) ? 'hours' : 'hour'); 
+        str += hours + ' ' + ((hours > 1) ? 'hours' : 'hour');
 
     if (minutes > 0)
     {
         if (hours > 0)
         {
             if (seconds > 0)
-                str += ', ';    
+                str += ', ';
             else
-                str += ' and ';    
+                str += ' and ';
         }
 
-        str += minutes + ' ' + ((minutes > 1) ? 'minutes' : 'minute');     
+        str += minutes + ' ' + ((minutes > 1) ? 'minutes' : 'minute');
     }
 
     if (seconds > 0)
@@ -321,8 +321,8 @@ function getUptime(data)
         {
             str += ' and ';
         }
-        
-        str += seconds + ' ' + ((seconds > 1) ? 'seconds' : 'second') + ' ';     
+
+        str += seconds + ' ' + ((seconds > 1) ? 'seconds' : 'second') + ' ';
     }
 
     return str;

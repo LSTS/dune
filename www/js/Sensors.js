@@ -32,7 +32,7 @@ function Sensors(root_id)
 
 Sensors.prototype = new BasicSection;
 
-Sensors.prototype.m_msgs = 
+Sensors.prototype.m_msgs =
     {
         'Depth': { },
         'Pressure': { },
@@ -43,16 +43,16 @@ Sensors.prototype.m_msgs =
         'Current': { },
         'Voltage': { },
         'RSSI': { },
-        'LinkLevel': 
-        { 
-          'label': 'Link Level'
+        'LinkLevel':
+        {
+            'label': 'Link Level'
         },
         'Distance':
         {
             'label': 'Altitude'
         },
-        
-        'Rpm': 
+
+        'Rpm':
         {
             'label': 'RPMs'
         }
@@ -60,15 +60,15 @@ Sensors.prototype.m_msgs =
 
 Sensors.prototype.updateSubSection = function(msg)
 {
-    for (var i = 0; i < this.m_base.childNodes.length; i++) 
+    for (var i = 0; i < this.m_base.childNodes.length; i++)
     {
-	var tbl = this.m_base.childNodes[i];
+        var tbl = this.m_base.childNodes[i];
         var hdr = tbl.firstChild.firstChild.firstChild.data;
 
         if (hdr == this.translateAbbrev(msg.abbrev))
         {
             this.updateValue(tbl, msg);
-            return;    
+            return;
         }
         else if (this.translateAbbrev(msg.abbrev) < hdr)
         {
@@ -86,7 +86,7 @@ Sensors.prototype.translateAbbrev = function(abbrev)
 {
     if ('label' in this.m_msgs[abbrev])
         return this.m_msgs[abbrev].label;
-    
+
     return abbrev;
 };
 
@@ -98,10 +98,10 @@ Sensors.prototype.createSubSection = function(msg)
 
     var tr = document.createElement('tr');
     tr.appendChild(th);
-    
+
     var tbl = document.createElement('table');
     tbl.appendChild(tr);
-    
+
     this.updateValue(tbl, msg);
 
     return tbl;
@@ -111,9 +111,9 @@ Sensors.prototype.updateValue = function(parent, msg)
 {
     var el = this.resolveEntity(msg.src_ent);
 
-    for (var i = 1; i < parent.childNodes.length; i++) 
+    for (var i = 1; i < parent.childNodes.length; i++)
     {
-	var tr = parent.childNodes[i];
+        var tr = parent.childNodes[i];
         var ent = tr.firstChild.firstChild.data;
 
         if (ent == el)
@@ -128,7 +128,7 @@ Sensors.prototype.updateValue = function(parent, msg)
             return;
         }
     }
-    
+
     var vn = this.createValue(msg);
     parent.appendChild(vn);
 };
@@ -137,7 +137,7 @@ Sensors.prototype.createValue = function(msg)
 {
     var td_label = document.createElement('td');
     td_label.appendChild(document.createTextNode(this.resolveEntity(msg.src_ent)));
-    
+
     var td_value = document.createElement('td');
     td_value.style.width = '50px';
     td_value.appendChild(document.createTextNode(''));
@@ -157,9 +157,9 @@ Sensors.prototype.createValue = function(msg)
 
     var tr = document.createElement('tr');
     tr.appendChild(td_label);
-    tr.appendChild(td_value);    
-    tr.appendChild(td_desc);    
-    tr.appendChild(td_status);    
+    tr.appendChild(td_value);
+    tr.appendChild(td_desc);
+    tr.appendChild(td_status);
 
     this.updateField(tr, msg);
 
@@ -186,7 +186,7 @@ Sensors.prototype.updateField = function(root, msg)
 
     if (state)
     {
-        root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);    
+        root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);
     }
 
 

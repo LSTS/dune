@@ -27,50 +27,50 @@
 
 HTTP = new Object();
 
-HTTP.m_factories = 
+HTTP.m_factories =
     [
         function()
         {
-            return new XMLHttpRequest(); 
+            return new XMLHttpRequest();
         },
-        
-        function() 
+
+        function()
         {
-            return new ActiveXObject("Msxml2.XMLHTTP"); 
+            return new ActiveXObject("Msxml2.XMLHTTP");
         },
-        
-        function() 
+
+        function()
         {
-            return new ActiveXObject("Microsoft.XMLHTTP"); 
+            return new ActiveXObject("Microsoft.XMLHTTP");
         }
     ];
 
 HTTP.m_factory = null;
 
-HTTP.newRequest = function() 
+HTTP.newRequest = function()
 {
     if (HTTP.m_factory != null)
         return HTTP.m_factory();
-    
-    for (var i = 0; i < HTTP.m_factories.length; i++) 
+
+    for (var i = 0; i < HTTP.m_factories.length; i++)
     {
-        try 
+        try
         {
             var factory = HTTP.m_factories[i];
             var request = factory();
-            if (request != null) 
+            if (request != null)
             {
                 HTTP.m_factory = factory;
                 return request;
             }
         }
-        catch(e) 
+        catch(e)
         {
             continue;
         }
     }
 
-    HTTP.m_factory = function() 
+    HTTP.m_factory = function()
     {
         throw new Error("XMLHttpRequest not supported");
     };
@@ -78,19 +78,19 @@ HTTP.newRequest = function()
     HTTP.m_factory();
 };
 
-HTTP._getResponse = function(request) 
+HTTP._getResponse = function(request)
 {
     return request.responseText;
 };
 
-HTTP.get = function(url, callback, options) 
+HTTP.get = function(url, callback, options)
 {
     var request = HTTP.newRequest();
     var n = 0;
     var timer;
     if (options.timeout)
         timer = setTimeout(
-            function() 
+            function()
             {
                 request.abort();
                 if (options.timeoutHandler)
@@ -98,18 +98,18 @@ HTTP.get = function(url, callback, options)
             },
             options.timeout);
 
-    request.onreadystatechange = function() 
+    request.onreadystatechange = function()
     {
-        if (request.readyState == 4) 
+        if (request.readyState == 4)
         {
             if (timer)
                 clearTimeout(timer);
-            
-            if (request.status == 200) 
+
+            if (request.status == 200)
             {
                 callback(HTTP._getResponse(request), options.callback_data);
             }
-            else 
+            else
             {
                 try
                 {
@@ -122,16 +122,16 @@ HTTP.get = function(url, callback, options)
                 {
                     if (options.errorHandler)
                         options.errorHandler('', '');
-                    
+
                 }
             }
         }
-        else if (options.progressHandler) 
+        else if (options.progressHandler)
         {
             options.progressHandler(++n);
         }
     };
-    
+
     var target = url;
     if (options.parameters)
         target += "?" + HTTP.encodeFormData(options.parameters);

@@ -40,11 +40,11 @@ Gauge.prototype.create = function(root)
 
     td.appendChild(this.m_img);
     tr.appendChild(td);
-    
+
     this.m_value = document.createElement('td');
     this.m_value.appendChild(document.createTextNode(''));
     tr.appendChild(this.m_value);
-    
+
     var table = document.createElement('table');
     table.appendChild(tr);
     this.m_root.appendChild(table);

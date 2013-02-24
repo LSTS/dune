@@ -34,7 +34,7 @@ function findMessage(data, abbrev)
         if (msg.abbrev == abbrev)
             return msg;
     }
-    
+
     return null;
 };
 

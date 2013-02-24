@@ -63,7 +63,7 @@ function setConnected(value)
     {
         icon.src = g_icons.path('normal');
         icon.title = 'Connected';
-        
+
     }
     else
     {
@@ -73,7 +73,7 @@ function setConnected(value)
 }
 
 function timeoutHandler()
-{ 
+{
     setConnected(false);
 }
 
@@ -119,7 +119,7 @@ function handleData(text)
         var msg = data.dune_messages[i];
         if (msg.abbrev != 'EntityState')
             continue;
-        
+
         data.dune_entities[msg.src_ent].state = msg.state;
         data.dune_entities[msg.src_ent].description = msg.description;
     }

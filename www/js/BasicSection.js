@@ -34,7 +34,7 @@ BasicSection.prototype.create = function(id, root_id)
     this.m_base.id = id;
     this.m_base.width = '100%';
     this.m_base.className = 'Hidden';
-    
+
     this.m_root_id = root_id;
     this.m_root = document.getElementById(root_id);
     this.m_root.appendChild(this.m_base);
@@ -51,7 +51,7 @@ BasicSection.prototype.createHeader = function(label)
 
 BasicSection.prototype.element = function()
 {
-    return this.m_base;    
+    return this.m_base;
 };
 
 BasicSection.prototype.resolveEntity = function(id)
@@ -81,7 +81,7 @@ BasicSection.prototype.getEntityStateDesc = function(msg, defval)
         if ('desc' in g_data.dune_entities[msg.src_ent])
             return g_data.dune_entities[msg.src_ent].desc;
     }
-    
+
     return defval;
 };
 
@@ -94,7 +94,7 @@ BasicSection.prototype.findMessage = function(abbrev)
         if (msg.abbrev == abbrev)
             return msg;
     }
-    
+
     return null;
 };
 
@@ -118,7 +118,7 @@ BasicSection.prototype.getEntityStateIcon = function(state)
     case 5:
         return g_icons.path('fatal');
     }
-    
+
     return g_icons.path('unknown');
 };
 

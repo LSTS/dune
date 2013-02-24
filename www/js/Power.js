@@ -47,7 +47,7 @@ Power.prototype = new BasicSection;
 
 Power.prototype.updateEntry = function(msg)
 {
-    for (var i = 0; i < this.m_sbase.childNodes.length; i++) 
+    for (var i = 0; i < this.m_sbase.childNodes.length; i++)
     {
         var child = this.m_sbase.childNodes[i];
         var label = child.firstChild.firstChild.firstChild.data;
@@ -55,7 +55,7 @@ Power.prototype.updateEntry = function(msg)
         if (label == msg.label)
         {
             this.updateValue(child, msg);
-            return;    
+            return;
         }
         else if (msg.label < label)
         {
@@ -93,12 +93,12 @@ Power.prototype.createEntry = function(msg)
     th.appendChild(document.createTextNode(msg.label));
     var tr = document.createElement('tr');
     tr.appendChild(th);
-    
+
     // Controls.
     var ctr = document.createElement('tr');
 
     var form = document.createElement('form');
-    form.id = 'PowerChannelForm' + msg.id; 
+    form.id = 'PowerChannelForm' + msg.id;
     var btd = document.createElement('td');
     btd.appendChild(form);
 
@@ -112,7 +112,7 @@ Power.prototype.createEntry = function(msg)
     this.appendButton(form, msg.id, 'reset', 'Reset Schedules');
 
     ctr.appendChild(btd);
-    
+
     // Table.
     var tbl = document.createElement('table');
     tbl.appendChild(tr);
@@ -140,7 +140,7 @@ Power.prototype.appendInput = function(root, form_id, id, label)
     einput.value = '0';
     einput.size = 5;
     root.appendChild(einput);
-    
+
     var etext = document.createTextNode(label);
     root.appendChild(etext);
 };
@@ -170,7 +170,7 @@ function submitPowerForm(channel, op, id)
         var h = document.getElementById(id + 'Hours').value;
         var m = document.getElementById(id + 'Minutes').value;
         var s = document.getElementById(id + 'Seconds').value;
-        url += '/' + h + '/' + m + '/' + s; 
+        url += '/' + h + '/' + m + '/' + s;
     }
 
     var options = Array();
