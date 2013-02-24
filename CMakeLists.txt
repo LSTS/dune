@@ -319,14 +319,13 @@ install(TARGETS dune dune-launcher dune-core ${DUNE_EXTRA_EXE}
   ARCHIVE DESTINATION lib)
 
 # Install www helper files.
-install(DIRECTORY www DESTINATION .
-  PATTERN .svn EXCLUDE)
+install(DIRECTORY www DESTINATION .)
 
-install(DIRECTORY etc DESTINATION .
-  PATTERN .svn EXCLUDE)
+# Install configuration files.
+install(DIRECTORY etc DESTINATION .)
 
-install(DIRECTORY firmware DESTINATION .
-  PATTERN .svn EXCLUDE)
+# Install scripts.
+install(DIRECTORY programs/scripts DESTINATION .)
 
 # MinGW dependencies.
 if(DUNE_OS_WINDOWS AND DUNE_CLIB_MINGW)
