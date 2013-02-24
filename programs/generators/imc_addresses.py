@@ -27,6 +27,8 @@
 ############################################################################
 
 import sys
+import os.path
+
 if len(sys.argv) != 3:
     print('Usage: %s <IMC_Addresses.xml> <imc-addresses.ini>' % sys.argv[0])
     sys.exit(1)
@@ -38,16 +40,17 @@ root = tree.getroot()
 
 fd = open(sys.argv[2], 'w')
 
-fd.write('############################################################################\n')
-fd.write('# Copyright (C) 2007-2013 Laboratório de Sistemas e Tecnologia Subaquática #\n')
-fd.write('# Departamento de Engenharia Electrotécnica e de Computadores              #\n')
-fd.write('# Rua Dr. Roberto Frias, 4200-465 Porto, Portugal                          #\n')
-fd.write('############################################################################\n')
-fd.write('# Author: Ricardo Martins                                                  #\n')
-fd.write('############################################################################\n')
-fd.write('# Automatically generated, do not edit.                                    #\n')
-fd.write('############################################################################\n')
-fd.write('\n')
+# Insert licence.
+lfd = open(os.path.abspath(__file__).replace('.pyc', '.py'))
+for line in lfd:
+    line = line.strip()
+    if line.startswith('#') and line.endswith('#'):
+        fd.write(line + '\n')
+    if len(line) == 0:
+        fd.write('# ' + 'Automatically generated, do not edit.'.ljust(73) + '#\n')
+        fd.write(('#' * 76) + '\n\n')
+        break
+
 fd.write('[IMC Addresses]\n')
 for addr in root.findall('address'):
     fd.write('%-20s = %s\n' % (addr.get('name'), addr.get('id')))
