@@ -43,36 +43,36 @@ if(GUI)
 
       set(QT_LIBRARIES ${QT_LIBRARIES} -mwindows)
     endif(DUNE_OS_WINDOWS AND DUNE_CXX_GNU)
+
+    macro(dune_qt4_wrap_ui outfiles)
+      QT4_EXTRACT_OPTIONS(ui_files ui_options ${ARGN})
+
+      foreach(it ${ui_files})
+        DUNE_GET_GENERATED_PATH(outpath ${it})
+        get_filename_component(outfile ${it} NAME_WE)
+        get_filename_component(infile ${it} ABSOLUTE)
+
+        set(outfile ${outpath}/ui_${outfile}.hpp)
+        add_custom_command(OUTPUT ${outfile}
+          COMMAND ${QT_UIC_EXECUTABLE}
+          ARGS ${ui_options} -o ${outfile} ${infile}
+          MAIN_DEPENDENCY ${infile})
+        set(${outfiles} ${${outfiles}} ${outfile})
+      endforeach(it)
+    endmacro(dune_qt4_wrap_ui)
+
+    macro(dune_qt4_wrap_cpp outfiles )
+      QT4_EXTRACT_OPTIONS(moc_files moc_options ${ARGN})
+
+      foreach(it ${moc_files})
+        DUNE_GET_GENERATED_PATH(outpath ${it})
+        get_filename_component(outfile ${it} NAME_WE)
+        set(outfile ${outpath}/moc_${outfile}.cpp)
+        get_filename_component(it ${it} ABSOLUTE)
+
+        QT4_CREATE_MOC_COMMAND(${it}  ${outfile} "" "${moc_options}")
+        set(${outfiles} ${${outfiles}} ${outfile})
+      endforeach(it)
+    endmacro(dune_qt4_wrap_cpp)
   endif(QT_LIBRARIES)
-
-  macro(dune_qt4_wrap_ui outfiles)
-    QT4_EXTRACT_OPTIONS(ui_files ui_options ${ARGN})
-
-    foreach(it ${ui_files})
-      DUNE_GET_GENERATED_PATH(outpath ${it})
-      get_filename_component(outfile ${it} NAME_WE)
-      get_filename_component(infile ${it} ABSOLUTE)
-
-      set(outfile ${outpath}/ui_${outfile}.hpp)
-      add_custom_command(OUTPUT ${outfile}
-        COMMAND ${QT_UIC_EXECUTABLE}
-        ARGS ${ui_options} -o ${outfile} ${infile}
-        MAIN_DEPENDENCY ${infile})
-      set(${outfiles} ${${outfiles}} ${outfile})
-    endforeach(it)
-  endmacro(dune_qt4_wrap_ui)
-
-  macro(dune_qt4_wrap_cpp outfiles )
-    QT4_EXTRACT_OPTIONS(moc_files moc_options ${ARGN})
-
-    foreach(it ${moc_files})
-      DUNE_GET_GENERATED_PATH(outpath ${it})
-      get_filename_component(outfile ${it} NAME_WE)
-      set(outfile ${outpath}/moc_${outfile}.cpp)
-      get_filename_component(it ${it} ABSOLUTE)
-
-      QT4_CREATE_MOC_COMMAND(${it}  ${outfile} "" "${moc_options}")
-      set(${outfiles} ${${outfiles}} ${outfile})
-    endforeach(it)
-  endmacro(dune_qt4_wrap_cpp)
 endif(GUI)
