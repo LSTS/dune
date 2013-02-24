@@ -1,5 +1,10 @@
-European Union Public Licence V. 1.1
+DUNE: Unified Navigation Environment
 ====================================
+
+DUNE © Universidade do Porto - Faculdade de Engenharia 2007-2013.
+
+European Union Public Licence V. 1.1
+------------------------------------
 
 EUPL © the European Community 2007
 
@@ -18,8 +23,7 @@ Licensed under the EUPL V.1.1
 or has expressed by any other mean his willingness to license under
 the EUPL.
 
-1. Definitions
---------------
+### 1. Definitions
 
 In this Licence, the following terms have the following meaning:
 
@@ -60,8 +64,7 @@ otherwise making available, on-line or off-line, copies of the Work or
 providing access to its essential functionalities at the disposal of
 any other natural or legal person.
 
-2. Scope of the rights granted by the Licence
----------------------------------------------
+### 2. Scope of the rights granted by the Licence
 
 The Licensor hereby grants You a world-wide, royalty-free,
 non-exclusive, sub-licensable licence to do the following, for the
@@ -95,8 +98,7 @@ The Licensor grants to the Licensee royalty-free, non exclusive usage
 rights to any patents held by the Licensor, to the extent necessary to
 make use of the rights granted on the Work under this Licence.
 
-3. Communication of the Source Code
------------------------------------
+### 3. Communication of the Source Code
 
 The Licensor may provide the Work either in its Source Code form, or
 as Executable Code. If the Work is provided as Executable Code, the
@@ -107,16 +109,14 @@ attached to the Work, a repository where the Source Code is easily and
 freely accessible for as long as the Licensor continues to distribute
 and/or communicate the Work.
 
-4. Limitations on copyright
----------------------------
+### 4. Limitations on copyright
 
 Nothing in this Licence is intended to deprive the Licensee of the
 benefits from any exception or limitation to the exclusive rights of
 the rights owners in the Original Work or Software, of the exhaustion
 of those rights or of other applicable limitations thereto.
 
-5. Obligations of the Licensee
-------------------------------
+### 5. Obligations of the Licensee
 
 The grant of the rights mentioned above is subject to some
 restrictions and obligations imposed on the Licensee. Those
@@ -161,8 +161,7 @@ except as required for reasonable and customary use in describing the
 origin of the Work and reproducing the content of the copyright
 notice.
 
-6. Chain of Authorship
-----------------------
+### 6. Chain of Authorship
 
 The original Licensor warrants that the copyright in the Original Work
 granted hereunder is owned by him/her or licensed to him/her and that
@@ -176,8 +175,7 @@ Each time You accept the Licence, the original Licensor and subsequent
 Contributors grant You a licence to their contributions to the Work,
 under the terms of this Licence.
 
-7. Disclaimer of Warranty
--------------------------
+### 7. Disclaimer of Warranty
 
 The Work is a work in progress, which is continuously improved by
 numerous contributors. It is not a finished work and may therefore
@@ -194,8 +192,7 @@ intellectual property rights other than copyright as stated in Article
 This disclaimer of warranty is an essential part of the Licence and a
 condition for the grant of any rights to the Work.
 
-8. Disclaimer of Liability
---------------------------
+### 8. Disclaimer of Liability
 
 Except in the cases of wilful misconduct or damages directly caused to
 natural persons, the Licensor will in no event be liable for any
@@ -207,8 +204,7 @@ the Licensor has been advised of the possibility of such
 damage. However, the Licensor will be liable under statutory product
 liability laws as far such laws apply to the Work.
 
-9. Additional agreements
-------------------------
+### 9. Additional agreements
 
 While distributing the Original Work or Derivative Works, You may
 choose to conclude an additional agreement to offer, and charge a fee
@@ -221,8 +217,7 @@ hold each Contributor harmless for any liability incurred by, or
 claims asserted against such Contributor by the fact You have accepted
 any such warranty or additional liability.
 
-10. Acceptance of the Licence
------------------------------
+### 10. Acceptance of the Licence
 
 The provisions of this Licence can be accepted by clicking on an icon
 "I agree" placed under the bottom of a window displaying the text of
@@ -237,8 +232,7 @@ this Licence, such as the use of the Work, the creation by You of a
 Derivative Work or the Distribution and/or Communication by You of the
 Work or copies thereof.
 
-11. Information to the public
------------------------------
+### 11. Information to the public
 
 In case of any Distribution and/or Communication of the Work by means
 of electronic communication by You (for example, by offering to
@@ -248,8 +242,7 @@ information requested by the applicable law regarding the Licensor,
 the Licence and the way it may be accessible, concluded, stored and
 reproduced by the Licensee.
 
-12. Termination of the Licence
-------------------------------
+### 12. Termination of the Licence
 
 The Licence and the rights granted hereunder will terminate
 automatically upon any breach by the Licensee of the terms of the
@@ -259,8 +252,7 @@ Such a termination will not terminate the licences of any person who
 has received the Work from the Licensee under the Licence, provided
 such persons remain in full compliance with the Licence.
 
-13. Miscellaneous
------------------
+### 13. Miscellaneous
 
 Without prejudice of Article 9 above, the Licence represents the
 complete agreement between the Parties as to the Work licensed
@@ -281,8 +273,7 @@ All linguistic versions of this Licence, approved by the European
 Commission, have identical value. Parties can take advantage of the
 linguistic version of their choice.
 
-14. Jurisdiction
-----------------
+### 14. Jurisdiction
 
 Any litigation resulting from the interpretation of this License,
 arising between the European Commission, as a Licensor, and any
@@ -295,8 +286,7 @@ Commission, and resulting from the interpretation of this License,
 will be subject to the exclusive jurisdiction of the competent court
 where the Licensor resides or conducts its primary business.
 
-15. Applicable Law
-------------------
+### 15. Applicable Law
 
 This Licence shall be governed by the law of the European Union
 country where the Licensor resides or has his registered office.
@@ -309,8 +299,7 @@ and any Licensee;
 * the Licensor, other than the European Commission, has no residence
 or registered office inside a European Union country.
 
-Appendix
---------
+### Appendix
 
 "Compatible Licences" according to article 5 EUPL are:
 
@@ -319,3 +308,179 @@ Appendix
 - Common Public License v. 1.0
 - Eclipse Public License v. 1.0
 - Cecill v. 2.0
+
+bzip2
+=====
+
+http://www.bzip.org/1.0.5/bzip2-1.0.5.tar.gz
+
+Copyright © 1996-2007 Julian Seward.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+* Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+
+* The origin of this software must not be misrepresented; you must
+not claim that you wrote the original software. If you use this
+software in a product, an acknowledgment in the product
+documentation would be appreciated but is not required.
+
+* Altered source versions must be plainly marked as such, and must
+not be misrepresented as being the original software.
+
+* The name of the author may not be used to endorse or promote
+products derived from this software without specific prior written
+permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+zlib
+====
+
+http://www.zlib.net/zlib-1.2.5.tar.gz
+
+Copyright © 1995-2012 Jean-loup Gailly and Mark Adler
+
+This software is provided 'as-is', without any express or implied
+warranty.  In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must
+not claim that you wrote the original software. If you use this
+software in a product, an acknowledgment in the product
+documentation would be appreciated but is not required.
+
+2. Altered source versions must be plainly marked as such, and must
+not be misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source
+distribution.
+
+Jean-loup Gailly jloup@gzip.org
+Mark Adler madler@alumni.caltech.edu
+
+TLSF
+====
+
+http://rtportal.upv.es/rtdsa/files/rtportal.upv.es.rtdsa/src/tlsf/TLSF-2.4.4.tbz2
+
+Copyright (C) 2004-2008 Miguel Masmano Tello
+
+TLSF is free software; you can redistribute it and/or modify it under
+terms of the GNU General Public License as published by the Free
+Software Foundation; either version 2, or (at your option) any later
+version.  TLSF is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details. You should have received a
+copy of the GNU General Public License along with TLSF; see file
+COPYING. If not, write to the Free Software Foundation, 675 Mass Ave,
+Cambridge, MA 02139, USA.
+
+As a special exception, including TLSF header files in a file, or
+linking with other files objects to produce an executable application,
+is merely considered normal use of the library, and does *not* fall
+under the heading of "derived work". Therefore does not by itself
+cause the resulting executable application to be covered by the GNU
+General Public License. This exception does not however invalidate any
+other reasons why the executable file might be covered by the GNU
+Public License.
+
+Mersenne-Twister PRNG algorithm
+===============================
+
+http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
+http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/CODES/mt19937ar.c
+
+Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+
+3. The names of its contributors may not be used to endorse or promote
+   products derived from this software without specific prior written
+   permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+QuadProg++ library
+==================
+http://sourceforge.net/projects/quadprog
+
+Copyright (C) 2007-2009 Luca Di Gaspero.
+Copyright (C) 2009 Eric Moyer.
+
+QuadProg++ is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+QuadProg++ is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with QuadProg++.  If not, see <http://www.gnu.org/licenses/>.
+
+MD5 Message-Digest Algorithm
+============================
+http://tools.ietf.org/html/rfc1321
+
+Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
+rights reserved.
+
+License to copy and use this software is granted provided that it
+is identified as the "RSA Data Security, Inc. MD5 Message-Digest
+Algorithm" in all material mentioning or referencing this software
+or this function.
+
+License is also granted to make and use derivative works provided
+that such works are identified as "derived from the RSA Data
+Security, Inc. MD5 Message-Digest Algorithm" in all material
+mentioning or referencing the derived work.
+
+RSA Data Security, Inc. makes no representations concerning either
+the merchantability of this software or the suitability of this
+software for any particular purpose. It is provided "as is"
+without express or implied warranty of any kind.
+
+These notices must be retained in any copies of any part of this
+documentation and/or software.
