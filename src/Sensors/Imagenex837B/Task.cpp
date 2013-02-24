@@ -572,6 +572,9 @@ namespace Sensors
       {
         setNadirAngle(m_args.nadir + Angles::degrees(m_estate.phi));
 
+        if (!m_args.fill_state)
+          return;
+
         double lat, lon;
         Coordinates::toWGS84(m_estate, lat, lon);
         m_frame.setGpsData(lat, lon);
