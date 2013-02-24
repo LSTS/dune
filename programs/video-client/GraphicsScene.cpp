@@ -104,7 +104,7 @@ GraphicsScene::sendAction(const std::string& action, const std::string& value)
   msg.actions = os.str();
 
   char bfr[512];
-  unsigned rv = msg.serialize((uint8_t*)bfr, sizeof(bfr));
+  unsigned rv = IMC::Packet::serialize(&msg, (uint8_t*)bfr, sizeof(bfr));
   m_sock->writeDatagram(bfr, rv, QHostAddress(m_raddr.c_str()), m_rport);
 }
 
