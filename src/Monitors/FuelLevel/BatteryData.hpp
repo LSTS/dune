@@ -32,7 +32,7 @@
 #include <cstring>
 
 // DUNE headers.
-#include <DUNE/Math.hpp>
+#include <DUNE/DUNE.hpp>
 
 namespace Monitors
 {

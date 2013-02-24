@@ -33,6 +33,7 @@
 
 // DUNE headers.
 #include <DUNE/Math.hpp>
+#include <DUNE/Tasks/Task.hpp>
 
 namespace DUNE
 {

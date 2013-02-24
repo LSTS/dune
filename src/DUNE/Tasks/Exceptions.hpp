@@ -34,6 +34,7 @@
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
+#include <DUNE/Utils/String.hpp>
 
 namespace DUNE
 {

@@ -93,6 +93,8 @@ namespace Transports
       void
       prepare(void)
       {
+        using DUNE::Utils::String;
+
         std::string cmd = String::str("CCPNT,%u,%u,%u,%u,%u,%u,%u,%u,1",
                                       m_tx_freq,
                                       m_tx_length, m_rx_length,
@@ -112,6 +114,8 @@ namespace Transports
       bool
       matchFuzzy(const std::string& stn, const std::string& exp)
       {
+        using DUNE::Utils::String;
+
         if (exp != "SNTTA")
           return false;
 

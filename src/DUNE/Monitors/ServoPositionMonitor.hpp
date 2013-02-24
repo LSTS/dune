@@ -29,11 +29,12 @@
 #define DUNE_MONITORS_SERVO_POSITION_MONITOR_HPP_INCLUDED_
 
 // DUNE headers.
+#include <DUNE/Math/Angles.hpp>
 #include <DUNE/Utils/String.hpp>
 #include <DUNE/Monitors/DelayedTrigger.hpp>
 
 //! Minimum difference in degrees to account for accumulated change
-static const float c_min_diff = Angles::radians(3.0);
+static const float c_min_diff = DUNE::Math::Angles::radians(3.0);
 
 namespace DUNE
 {

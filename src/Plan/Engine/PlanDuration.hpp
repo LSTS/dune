@@ -29,10 +29,7 @@
 #define DUNE_PLAN_ENGINE_PLANDURATION_HPP_INCLUDED_
 
 // DUNE headers.
-#include <DUNE/Coordinates.hpp>
-#include <DUNE/Math/Angles.hpp>
-#include <DUNE/IMC.hpp>
-#include <DUNE/Maneuvers/RowsStages.hpp>
+#include <DUNE/DUNE.hpp>
 
 namespace Plan
 {

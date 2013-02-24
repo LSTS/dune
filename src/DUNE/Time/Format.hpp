@@ -60,7 +60,7 @@ namespace DUNE
         std::time_t t = static_cast<std::time_t>(tstamp);
 
 #if defined(DUNE_SYS_HAS_GMTIME_R) && defined(DUNE_SYS_HAS_LOCALTIME_R)
-        struct tm tm_bfr= {0};
+        struct tm tm_bfr = {0};
         std::tm* tmp = utc ? gmtime_r(&t, &tm_bfr) : localtime_r(&t, &tm_bfr);
 #else
         std::tm* tmp = utc ? std::gmtime(&t) : std::localtime(&t);

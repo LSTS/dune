@@ -33,6 +33,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <map>
+#include <vector>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>

@@ -30,6 +30,7 @@
 
 // ISO C++ 98 headers.
 #include <iomanip>
+#include <stdexcept>
 
 // DUNE headers.
 #include <DUNE/Utils/String.hpp>

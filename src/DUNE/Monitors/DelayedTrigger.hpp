@@ -30,6 +30,7 @@
 
 // DUNE headers.
 #include <DUNE/Math.hpp>
+#include <DUNE/Memory.hpp>
 #include <DUNE/Time/Clock.hpp>
 
 namespace DUNE

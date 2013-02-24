@@ -36,6 +36,7 @@
 
 // Local headers.
 #include "Exceptions.hpp"
+#include "IO.hpp"
 
 namespace Transports
 {
