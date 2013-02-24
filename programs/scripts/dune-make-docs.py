@@ -53,7 +53,7 @@ if os.path.isdir(bld_dir):
     shutil.rmtree(bld_dir)
 os.makedirs(bld_dir)
 os.chdir(bld_dir)
-subprocess.call(['cmake', '-DGUI=1', '..'])
+subprocess.call(['cmake', '..'])
 subprocess.call(['make', 'doc'])
 
 # Find HTML dir.
