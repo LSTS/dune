@@ -1,4 +1,5 @@
-#! /bin/bash
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 ############################################################################
 # Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
@@ -25,37 +26,72 @@
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
-# This script checks if headers include all required headers.              #
-############################################################################
 
-bld='/tmp/dune-header-check'
-src='/tmp/dune-header-check/source'
-svn='https://whale.fe.up.pt/svn/dune/trunk'
-flags="-Wall -x c++-header"
-flags="$flags -DDUNE_TASK_NAMESPACE="
-flags="$flags -DDUNE_TASK_NAMESPACE_END="
-flags="$flags -I$src/src"
-flags="$flags -I$src/src/Maneuvers"
-flags="$flags -I$src/external/libraries"
-flags="$flags -I$src/external/libraries/x86-64bit-linux-glibc-gcc4x/include"
-flags="$flags -I$bld/DUNEGeneratedFiles/src"
-flags="$flags -I/usr/include/opencv"
-flags="$flags -I/usr/include/Qt"
-flags="$flags -I/usr/include/QtCore"
-flags="$flags -I/usr/include/QtGui"
-flags="$flags -I/usr/include/QtUiTools"
-flags="$flags -I$src/src/Simulators/VSIM"
+import os
+import io
+import sys
+import shutil
+import os.path
+import threading
+import subprocess
+import queue
 
-svn co "$svn" "$src"
+# Find source folder.
+script = os.path.abspath(__file__).replace('.pyc', '.py')
+wrk_dir = os.path.dirname(script)
+top_dir = os.path.abspath(os.path.join(wrk_dir, '..', '..'))
+src_dir = os.path.abspath(os.path.join(top_dir, 'src'))
 
-cd "$bld"
+# Find headers.
+headers = []
+for dirname, dirnames, filenames in os.walk(src_dir):
+    for filename in filenames:
+        if os.path.splitext(filename)[1] == '.hpp':
+            headers.append(os.path.abspath(os.path.join(dirname, filename)))
 
-cmake -DGUI=1 source
+# Run CMake to generate a few required headers.
+bld_dir = os.path.abspath(os.path.join(top_dir, 'check-headers'))
+if os.path.isdir(bld_dir):
+    shutil.rmtree(bld_dir)
+os.makedirs(bld_dir)
+os.chdir(bld_dir)
+subprocess.call(['cmake', '-DGUI=1', '..'])
 
-find "$src/src" -iname '*.hpp' | while read file; do
-    g++ $flags "$file" -o /dev/null > "$bld/check.log"
-    if [ $? -ne 0 ]; then
-        echo $file
-        cat "$bld/check.log"
-    fi
-done
+# Compile headers.
+cxx = ['g++', '-Wall', '-Wextra', '-Werror',
+       '-Wno-missing-field-initializers', '-pedantic',
+       '-x', 'c++-header',
+       '-D', 'DUNE_TASK=',
+       '-I', os.path.join(top_dir, 'src'),
+       '-I', os.path.join(top_dir, 'src', 'Simulators', 'VSIM'),
+       '-I', os.path.join(top_dir, 'external/libraries'),
+       '-I', os.path.join(bld_dir, 'DUNEGeneratedFiles/src'),
+       '-I', '/usr/include/Qt',
+       '-I', '/usr/include/QtCore',
+       '-I', '/usr/include/QtGui',
+       '-I', '/usr/include/QtUiTools',
+       '-o', '/dev/null'
+       ]
+
+work_queue = queue.Queue()
+
+def worker():
+    while True:
+        hdr = work_queue.get()
+        print(hdr)
+        subprocess.call(cxx + [hdr])
+        work_queue.task_done()
+
+for i in range(0, 4):
+    t = threading.Thread(target = worker)
+    t.daemon = True
+    t.start()
+
+for header in headers:
+    work_queue.put_nowait(header)
+
+work_queue.join()
+
+# Remove CMake files.
+if os.path.isdir(bld_dir):
+    shutil.rmtree(bld_dir)
