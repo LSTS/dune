@@ -27,54 +27,18 @@
 ############################################################################
 
 import os
-import io
 import sys
-import shutil
 import os.path
-
-def clean_whitespace(file):
-    ifd = open(file, 'r')
-    ofd = open(file + '.bak', 'w')
-    for line in ifd:
-        line = line.rstrip().replace('\t', '  ')
-        ofd.write(line + '\n')
-    ifd.close()
-    ofd.close()
-    os.rename(file + '.bak', file)
-
-EXCLUDE = [
-    '.git', 'external', 'etc/xml/IMC.xml'
-]
-
-INCLUDE_EXT = [
-    '.cpp', '.hpp', '.md', '.def', '.py', '.cmake', '.css', '.dox', '.el',
-    '.html', '.in', '.ini', '.js',  '.po', '.pot', '.rc', '.sh', '.tex',
-    '.txt', '.xml', '.xsl'
-]
+import subprocess
 
 # Find source folder.
 script = os.path.abspath(__file__).replace('.pyc', '.py')
 wrk_dir = os.path.dirname(script)
 top_dir = os.path.abspath(os.path.join(wrk_dir, '..', '..'))
-src_dir = os.path.abspath(os.path.join(top_dir, 'src'))
 
-# Find sources.
-files = set()
-for dirname, dirnames, filenames in os.walk(top_dir):
-    for filename in filenames:
-        if os.path.splitext(filename)[1] not in INCLUDE_EXT:
-            continue
+DST='git@github.com:LSTS/dune.git'
 
-        path = os.path.join(dirname, filename)
-        path = path.replace(top_dir + '/', '')
-        add = True
-        for exc in EXCLUDE:
-            if path.startswith(exc):
-                add = False
-                break
-        if add:
-            files.add(path)
-
-for f in files:
-    f = os.path.join(top_dir, f)
-    clean_whitespace(f)
+os.chdir(top_dir)
+subprocess.call(['git', 'remote', 'add', 'github', 'git@github.com:LSTS/dune.git'])
+subprocess.call(['git', 'push', 'github', 'master'])
+subprocess.call(['git', 'remote', 'rm', 'github'])

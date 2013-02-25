@@ -149,6 +149,7 @@ namespace DUNE
           case DUNE_IMC_LOITER:
           case DUNE_IMC_ELEVATOR:
           case DUNE_IMC_YOYO:
+          case DUNE_IMC_POPUP:
             time_left = total_duration - durations[0] + (float)mcs->eta;
             break;
           case DUNE_IMC_FOLLOWPATH:

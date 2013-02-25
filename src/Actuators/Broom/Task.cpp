@@ -29,7 +29,6 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
-#include <cstring>
 #include <stdexcept>
 
 // DUNE headers.
