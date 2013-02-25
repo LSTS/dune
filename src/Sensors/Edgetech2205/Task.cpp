@@ -71,8 +71,6 @@ namespace Sensors
       Parser m_parser;
       //! Command link.
       CommandLink* m_cmd;
-      //! Log file name.
-      Path m_log_file_name;
       //! Log file.
       std::ofstream m_log_file;
       //! Time difference.

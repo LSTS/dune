@@ -27,6 +27,7 @@
 
 // ISO C++ 98 headers.
 #include <cstring>
+#include <string>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -183,10 +184,10 @@ namespace Sensors
       IMC::SonarData m_ping;
       //! Estimated state.
       IMC::EstimatedState m_estate;
-      //! Log file name.
-      Path m_log_file_name;
       //! Log file.
       std::ofstream m_log_file;
+      //! Log filename
+      std::string m_log_filename;
       //! True if sampling is active.
       bool m_active;
       //! Configuration parameters.
@@ -359,9 +360,15 @@ namespace Sensors
         m_active = (msg->op == IMC::EntityControl::ECO_ACTIVATE);
 
         if (m_active)
+        {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          if (!m_log_file.is_open())
+            m_log_file.open((m_ctx.dir_log / m_log_filename / "Data.837").c_str(), std::ios::binary);
+        }
         else
+        {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        }
       }
 
       void
@@ -379,13 +386,16 @@ namespace Sensors
         if (!m_args.save_in_837)
           return;
 
+        m_log_filename = msg->name;
+
         switch (msg->op)
         {
           case IMC::LoggingControl::COP_STARTED:
             if (m_log_file.is_open())
               m_log_file.close();
 
-            m_log_file.open((m_ctx.dir_log / msg->name / "Data.837").c_str(), std::ios::binary);
+            if (m_active)
+              m_log_file.open((m_ctx.dir_log / m_log_filename / "Data.837").c_str(), std::ios::binary);
             break;
           case IMC::LoggingControl::COP_REQUEST_STOP:
             m_log_file.close();
