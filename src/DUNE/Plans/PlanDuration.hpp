@@ -394,9 +394,6 @@ namespace DUNE
 
           std::pair<std::string, std::vector<float> > ent((*itr)->maneuver_id, durations);
           man_durations.insert(ent);
-
-          for (unsigned i = 0; i < durations.size(); ++i)
-            std::cerr << "duration " << durations[i] << std::endl;
         }
 
         return last_duration;
