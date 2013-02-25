@@ -87,6 +87,11 @@ namespace DUNE
       .defaultValue("0.3")
       .description("Distance between DVL and vehicle Center of Gravity");
 
+      param("Distance Between GPS and CG", m_dist_gps_cg)
+      .units(Units::Meter)
+      .defaultValue("0.28")
+      .description("Distance between GPS and vehicle Center of Gravity");
+
       param("Distance Between LBL and GPS", m_dist_lbl_gps)
       .units(Units::Meter)
       .defaultValue("0.50")
@@ -473,6 +478,9 @@ namespace DUNE
       Coordinates::WGS84::displacement(m_origin->lat, m_origin->lon, m_origin->height,
                                        msg->lat, msg->lon, msg->height,
                                        &x, &y, &m_last_z);
+
+      // Correct for roll angle.
+      y += std::sin(getRoll()) * m_dist_gps_cg;
 
       // Check distance to current LLH origin.
       if (Math::norm(x, y) > m_max_dis2ref)
