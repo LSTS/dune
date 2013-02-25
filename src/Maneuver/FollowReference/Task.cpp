@@ -33,7 +33,6 @@ namespace Maneuver
   namespace FollowReference
   {
     using DUNE_NAMESPACES;
-
     struct Arguments
     {
       float vertical_tolerance;
@@ -58,13 +57,17 @@ namespace Maneuver
       //! Did we get a reference already?
       bool m_got_reference;
 
+      //! Are we moving or idle (floating)
+      bool m_moving;
+
       //! Store last timestamp when reference was received
       double m_last_ref_time;
 
       Task(const std::string& name, Tasks::Context& ctx) :
         DUNE::Maneuvers::Maneuver(name, ctx),
         m_last_ref_time(0),
-        m_got_reference(false)
+        m_got_reference(false),
+        m_moving(false)
       {
         bindToManeuver<Task, IMC::FollowReference>();
         bind<IMC::Reference>(this);
@@ -76,30 +79,18 @@ namespace Maneuver
       consume(const IMC::FollowReference* msg)
       {
         m_spec = *msg;
+
+        // send a notify to controlling peer that the maneuver was activated
+        IMC::FollowReference reply;
+        reply.control_ent = msg->control_ent;
+        reply.control_src = msg->control_src;
+        reply.timeout = msg->timeout;
+
+        dispatch(reply);
       }
 
-      /**
-       * \brief Consume Reference messages and generate DesiredPath messages accordingly
-       *
-       * Whenever a new Reference is received from a valid source, a new desired_path
-       * gets commanded to the vehicle.
-       * @param msg the Reference message to be processed
-       */
-      void
-      consume(const IMC::Reference* msg)
+      void follow(const IMC::Reference* msg)
       {
-
-        // verify that the source is acceptable
-        if (m_spec.control_src != 0xFFFF && m_spec.control_src != msg->getSource()) {
-          //warn("ignoring reference from non-authorized source: %d", msg->getSource());
-          return;
-        }
-
-        // verify that the source entity is acceptable
-        if (m_spec.control_ent != 0xFF && m_spec.control_ent != msg->getSourceEntity()) {
-          //warn("ignoring reference from non-authorized entity: %d", msg->getSource());
-          return;
-        }
 
         // start building the DesiredPath message to command
         DesiredPath desired_path;
@@ -128,7 +119,7 @@ namespace Maneuver
           desired_path.start_z_units = Z_HEIGHT;
         }
 
-        // set end_z according to received reference
+        // set end location according to received reference
         if (msg->flags & IMC::Reference::FLAG_LOCATION)
         {
           desired_path.end_lat = msg->lat;
@@ -158,7 +149,7 @@ namespace Maneuver
           desired_path.speed_units = m_cur_ref.speed->speed_units;
         }
 
-
+        // set end_z according to received reference
         if ((msg->flags & IMC::Reference::FLAG_Z) && !(msg->z.isNull()))
         {
           desired_path.end_z = msg->z->value;
@@ -170,17 +161,102 @@ namespace Maneuver
           desired_path.end_z_units = m_cur_ref.z->z_units;
         }
 
-        double distance_to_target = WGS84::distance(desired_path.end_lat, desired_path.end_lon, 0, curlat, curlon, 0);
+        // check to see if we are already at the target...
+        double xy_dist = WGS84::distance(desired_path.end_lat,
+            desired_path.end_lon, 0, curlat,
+            curlon, 0);
+        double z_dist;
 
-        if (distance_to_target < m_args.horizontal_tolerance)
+        switch (desired_path.end_z_units)
         {
-          desired_path.lradius = m_args.loitering_radius;
+          case (Z_DEPTH):
+                z_dist = std::abs(desired_path.end_z - m_estate.depth);
+          break;
+          case (Z_ALTITUDE):
+                z_dist = std::abs(desired_path.end_z - m_estate.alt);
+          break;
+          case (Z_HEIGHT):
+                z_dist = std::abs(desired_path.end_z - m_estate.height);
+          break;
+          default:
+            z_dist = 0;
+            break;
+        }
+
+        // if inside target cylinder
+        if (xy_dist < m_args.horizontal_tolerance)
+        {
+
+          // if inside desired location
+          if (z_dist < m_spec.altitude_interval && desired_path.end_z == 0 && desired_path.end_z_units == Z_DEPTH)
+          {
+            enableMovement(false);
+            return;
+          }
+          else
+            desired_path.lradius = m_args.loitering_radius;
+        }
+
+        inf("sending desired path");
+
+        if (!m_moving)
+          enableMovement(true);
+
+        dispatch(desired_path);
+      }
+
+      /**
+       * \brief Consume Reference messages and generate DesiredPath messages accordingly
+       *
+       * Whenever a new Reference is received from a valid source, a new desired_path
+       * gets commanded to the vehicle.
+       * @see https://whale.fe.up.pt/imc/doc/trunk/Maneuvering.html#follow-reference-maneuver
+       * @param msg the Reference message to be processed
+       */
+      void
+      consume(const IMC::Reference* msg)
+      {
+
+        // verify that the source is acceptable
+        if (m_spec.control_src != 0xFFFF
+            && m_spec.control_src != msg->getSource())
+        {
+          inf("ignoring reference from non-authorized source: %d", msg->getSource());
+          return;
+        }
+
+        // verify that the source entity is acceptable
+        if (m_spec.control_ent != 0xFF
+            && m_spec.control_ent != msg->getSourceEntity())
+        {
+          inf("ignoring reference from non-authorized entity: %d", msg->getSource());
+          return;
         }
 
         m_cur_ref = *msg;
         m_got_reference = true;
 
-        dispatch(desired_path);
+        follow(msg);
+      }
+
+      // Function for enabling and disabling the control loops
+      void
+      enableMovement(bool enable)
+      {
+        const uint32_t mask = IMC::CL_PATH;
+
+        if (enable)
+        {
+          // set control loops in order to move
+          setControl(mask);
+          m_moving = true;
+        }
+        else
+        {
+          // stop moving by setting control loops to zero
+          m_moving = false;
+          setControl(0);
+        }
       }
 
       void
