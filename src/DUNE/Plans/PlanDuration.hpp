@@ -25,17 +25,23 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLAN_ENGINE_PLANDURATION_HPP_INCLUDED_
-#define DUNE_PLAN_ENGINE_PLANDURATION_HPP_INCLUDED_
+#ifndef DUNE_PLANS_PLANDURATION_HPP_INCLUDED_
+#define DUNE_PLANS_PLANDURATION_HPP_INCLUDED_
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
+#include <DUNE/Coordinates.hpp>
+#include <DUNE/IMC.hpp>
+#include <DUNE/Maneuvers.hpp>
+#include <DUNE/Math.hpp>
 
-namespace Plan
+namespace DUNE
 {
-  namespace Engine
+  namespace Plans
   {
-    using DUNE_NAMESPACES;
+    //! Speed acquired by buoyancy
+    static const float c_buoyancy_speed = 0.3;
+    //! Average amount of time it takes to get a gps fix
+    static const float c_fix_time = 7.0;
 
     // Export DLL Symbol.
     class DUNE_DLL_SYM PlanDuration;
@@ -284,6 +290,39 @@ namespace Plan
       };
 #endif
 
+#ifdef DUNE_IMC_POPUP
+      //! Parse a PopUp maneuver
+      //! @param[in] pointer to maneuver message
+      //! @param[in,out] last_pos last position to consider when computing duration
+      //! @param[in] last_dur last computed accumulated plan duration
+      //! @param[out] durations vector of accumulated durations for this maneuver
+      //! @return accumulated plan duration in seconds, -1 if unable to compute
+      static float
+      parse(const IMC::PopUp* maneuver, Position& last_pos,
+            float last_dur, std::vector<float>& durations)
+      {
+        if (maneuver->speed_units != IMC::SUNITS_METERS_PS ||
+            maneuver->speed == 0.0)
+          return -1.0;
+
+        // Rising time
+        float rising_time;
+        if (maneuver->z_units == IMC::Z_DEPTH)
+          rising_time = std::fabs(last_pos.z) / maneuver->speed;
+        else // altitude, assume zero
+          rising_time = 0.0;
+
+        last_pos.z = 0.0;
+        last_pos.z_units = (uint8_t)IMC::Z_DEPTH;;
+
+        float dist = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
+
+        durations.push_back(rising_time + dist / maneuver->speed + c_fix_time + last_dur);
+
+        return durations.back();
+      };
+#endif
+
       //! Parse plan duration from plan specification
       //! @param[in] spec plan specification message
       //! @param[in] state current estimated state
@@ -339,6 +378,10 @@ namespace Plan
               break;
             case DUNE_IMC_ELEVATOR:
               last_duration = parse(dynamic_cast<IMC::Elevator*>(msg), pos,
+                                    last_duration, durations);
+              break;
+            case DUNE_IMC_POPUP:
+              last_duration = parse(dynamic_cast<IMC::PopUp*>(msg), pos,
                                     last_duration, durations);
               break;
             default:

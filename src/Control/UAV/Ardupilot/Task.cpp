@@ -55,9 +55,7 @@ namespace Control
         //! Communications timeout
         uint8_t comm_timeout;
         //! Use Ardupilot's waypoint tracker
-        bool ext_tracker;
-        //! Use Piccolo simulator
-        bool piccolo_sim;
+        bool ardu_tracker;
         //! UDP Port for Mission Planner connection
         uint16_t port;
         //! Address for Mission Planner connection
@@ -141,13 +139,9 @@ namespace Control
           .units(Units::Second)
           .description("Ardupilot communications timeout");
 
-          param("Ardupilot Tracker", m_args.ext_tracker)
+          param("Ardupilot Tracker", m_args.ardu_tracker)
           .defaultValue("false")
           .description("Use Ardupilot's waypoint tracker");
-
-          param("Piccolo Simulator", m_args.piccolo_sim)
-          .defaultValue("false")
-          .description("Use Piccolo simulator");
 
           param("UDP Port", m_args.port)
           .defaultValue("14550")
@@ -264,36 +258,32 @@ namespace Control
 
           mavlink_message_t* msg = new mavlink_message_t;
 
-          if(!m_args.tcp)
-          {
-            mavlink_msg_hil_state_pack(255, 0, msg,
-                                       Time::Clock::getSinceEpochNsec(),
-                                       (float)simstate->phi,
-                                       (float)simstate->theta,
-                                       (float)simstate->psi,
-                                       (float)simstate->p,
-                                       (float)simstate->q,
-                                       (float)simstate->r,
-                                       lat,
-                                       lon,
-                                       alt,
-                                       (int16_t)(vx * 100),
-                                       (int16_t)(vy * 100),
-                                       (int16_t)(vz * 100),
-                                       (int16_t)(1000 * m_acc_x / DUNE::Math::c_gravity),
-                                       (int16_t)(1000 * m_acc_y / DUNE::Math::c_gravity),
-                                       (int16_t)(1000 * m_acc_z / DUNE::Math::c_gravity));
-            uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
-            send(buf, n);
-          }
-
+          mavlink_msg_hil_state_pack(255, 0, msg,
+              Time::Clock::getSinceEpochNsec(),
+              (float)simstate->phi,
+              (float)simstate->theta,
+              (float)simstate->psi,
+              (float)simstate->p,
+              (float)simstate->q,
+              (float)simstate->r,
+              lat,
+              lon,
+              alt,
+              (int16_t)(vx * 100),
+              (int16_t)(vy * 100),
+              (int16_t)(vz * 100),
+              (int16_t)(1000 * m_acc_x / DUNE::Math::c_gravity),
+              (int16_t)(1000 * m_acc_y / DUNE::Math::c_gravity),
+              (int16_t)(1000 * m_acc_z / DUNE::Math::c_gravity));
+          uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
           spew(DTR("Simulation packet sent to Ardupilot"));
         }
 
         void
         consume(const IMC::DesiredSpeed* speed)
         {
-          sendCommandPacket(MAV_CMD_DO_CHANGE_SPEED,
+          sendCommandPacket(MAV_CMD_DO_CHANGE_SPEED, // Change speed and/or throttle set points
                             0, // (0=Airspeed, 1=Ground Speed)
                             speed->value, // (m/s, -1 indicates no change)
                             -1); // Throttle ( Percent, -1 indicates no change)
@@ -308,22 +298,45 @@ namespace Control
           mavlink_message_t* msg = new mavlink_message_t;
           mavlink_msg_set_roll_pitch_yaw_thrust_pack(255, 0, msg, 1, 1, (float)roll->value, 4.0, 4.0, 0); // 8.0 radians is more than 2pi (is ignored by ardupilot)
           uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
-          send(buf, n);
+          sendData(buf, n);
           debug(DTR("DesiredRoll packet sent to Ardupilot"));
+        }
+
+        void
+        consume(const IMC::DesiredZ* desired_z)
+        {
+          sendCommandPacket(MAV_CMD_CONDITION_CHANGE_ALT, // Ascend/descend at rate.  Delay mission state machine until desired altitude reached.
+                            2, // Descent / Ascend rate (m/s)
+                            0, // Empty
+                            0, // Empty
+                            0, // Empty
+                            0, // Empty
+                            0, // Empty
+                            desired_z->value); // Finish Altitude
+          debug(DTR("DesiredZ packet sent to Ardupilot"));
         }
 
         void
         consume(const IMC::DesiredPath* path)
         {
-          if(!m_args.ext_tracker)
+          if(!m_args.ardu_tracker)
             return;
 
-          sendCommandPacket(MAV_CMD_NAV_WAYPOINT,
+          sendCommandPacket(MAV_CMD_NAV_WAYPOINT, // Navigate to MISSION.
               0, // Hold time in decimal seconds. (ignored by fixed wing, time to stay at MISSION for rotary wing)
-              -path->end_z, // Acceptance radius in meters (if the sphere with this radius is hit, the MISSION counts as reached)
-              path->end_lat, // 0 to pass through the WP, if > 0 radius in meters to pass by WP. Positive value for clockwise orbit, negative value for counter-clockwise orbit.
-              path->end_lon); // Desired yaw angle at MISSION (rotary wing)
-          debug(DTR("WaypointNavigation packet sent to Ardupilot"));
+              20, // Acceptance radius in meters (if the sphere with this radius is hit, the MISSION counts as reached)
+              path->lradius, // 0 to pass through the WP, if > 0 radius in meters to pass by WP. Positive value for clockwise orbit, negative value for counter-clockwise orbit.
+              0, // Desired yaw angle at MISSION (rotary wing)
+              (float)Angles::degrees(path->end_lat), // Latitude
+              (float)Angles::degrees(path->end_lon), // Longitude
+              (float)path->end_z); // Altitude
+          debug(DTR("Waypoint packet sent to Ardupilot"));
+
+          IMC::DesiredSpeed* d_speed;
+          d_speed = new DesiredSpeed;
+          d_speed->value = path->speed;
+          d_speed->speed_units = path->speed_units;
+          receive(d_speed);
         }
 
         void
@@ -349,7 +362,7 @@ namespace Control
           mavlink_msg_command_long_pack(0, 0, &msg, 0, 0, cmd, 0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 
           uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
-          send(buf, n);
+          sendData(buf, n);
         }
 
         void
@@ -399,7 +412,7 @@ namespace Control
         }
 
         int
-        send(uint8_t* bfr, int size)
+        sendData(uint8_t* bfr, int size)
         {
           if(m_uart)
           {
@@ -413,7 +426,7 @@ namespace Control
         }
 
         int
-        receive(uint8_t* buf)
+        receiveData(uint8_t* buf)
         {
           if(m_uart)
           {
@@ -449,7 +462,7 @@ namespace Control
 
           while (poll(0.01))
           {
-            int n = receive(m_buf);
+            int n = receiveData(m_buf);
 
             if (n < 0)
             {
@@ -727,7 +740,7 @@ namespace Control
             return;
           }
 
-          send(buf,n);
+          sendData(buf,n);
         }
       };
     }
