@@ -684,6 +684,8 @@ namespace DUNE
       std::vector<float> m_lbl_reject_constants;
       //! Displacement between DVL and vehicle center of gravity.
       float m_dist_dvl_cg;
+      //! Displacement between GPS and vehicle center of gravity.
+      float m_dist_gps_cg;
       //! Timestep between consecutive valid ground velocity messages.
       Time::Delta m_dvl_gv_tstep;
       //! Timestep between consecutive valid water velocity messages.
