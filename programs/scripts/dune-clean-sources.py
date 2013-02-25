@@ -31,7 +31,6 @@ import io
 import sys
 import shutil
 import os.path
-import subprocess
 
 def clean_whitespace(file):
     ifd = open(file, 'r')
