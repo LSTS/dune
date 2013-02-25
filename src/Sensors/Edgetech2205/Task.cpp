@@ -27,6 +27,7 @@
 
 // ISO C++ 98 headers.
 #include <cstring>
+#include <string>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -73,6 +74,8 @@ namespace Sensors
       CommandLink* m_cmd;
       //! Log file.
       std::ofstream m_log_file;
+      //! Log filename
+      std::string m_log_filename;
       //! Time difference.
       int64_t m_time_diff;
       //! Estimated state.
@@ -229,13 +232,16 @@ namespace Sensors
         if (msg->getSource() != getSystemId())
           return;
 
+        m_log_filename = msg->name;
+
         switch (msg->op)
         {
           case IMC::LoggingControl::COP_STARTED:
             if (m_log_file.is_open())
               m_log_file.close();
 
-            m_log_file.open((m_ctx.dir_log / msg->name / "Data.jsf").c_str(), std::ios::binary);
+            if (isActive())
+              m_log_file.open((m_ctx.dir_log / m_log_filename / "Data.jsf").c_str(), std::ios::binary);
             break;
           case IMC::LoggingControl::COP_REQUEST_STOP:
             m_log_file.close();
@@ -248,6 +254,9 @@ namespace Sensors
       {
         if (m_cmd == NULL)
           return;
+
+        if (!m_log_file.is_open())
+          m_log_file.open((m_ctx.dir_log / m_log_filename / "Data.jsf").c_str(), std::ios::binary);
 
         m_sock_dat = new TCPSocket;
         m_sock_dat->setNoDelay(true);
