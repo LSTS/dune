@@ -33,6 +33,7 @@ namespace Maneuver
   namespace FollowReference
   {
     using DUNE_NAMESPACES;
+
     struct Arguments
     {
       float vertical_tolerance;
@@ -44,22 +45,16 @@ namespace Maneuver
     {
       //! Task arguments.
       Arguments m_args;
-
       //! Store maneuver specification
       IMC::FollowReference m_spec;
-
       //! Store latest received reference
       IMC::Reference m_cur_ref;
-
       //! Estimated state
       IMC::EstimatedState m_estate;
-
       //! Did we get a reference already?
       bool m_got_reference;
-
       //! Are we moving or idle (floating)
       bool m_moving;
-
       //! Store last timestamp when reference was received
       double m_last_ref_time;
 
@@ -91,7 +86,6 @@ namespace Maneuver
 
       void follow(const IMC::Reference* msg)
       {
-
         // start building the DesiredPath message to command
         DesiredPath desired_path;
 
@@ -163,21 +157,21 @@ namespace Maneuver
 
         // check to see if we are already at the target...
         double xy_dist = WGS84::distance(desired_path.end_lat,
-            desired_path.end_lon, 0, curlat,
-            curlon, 0);
+                                         desired_path.end_lon, 0, curlat,
+                                         curlon, 0);
         double z_dist;
 
         switch (desired_path.end_z_units)
         {
           case (Z_DEPTH):
-                z_dist = std::abs(desired_path.end_z - m_estate.depth);
-          break;
+            z_dist = std::abs(desired_path.end_z - m_estate.depth);
+            break;
           case (Z_ALTITUDE):
-                z_dist = std::abs(desired_path.end_z - m_estate.alt);
-          break;
+            z_dist = std::abs(desired_path.end_z - m_estate.alt);
+            break;
           case (Z_HEIGHT):
-                z_dist = std::abs(desired_path.end_z - m_estate.height);
-          break;
+            z_dist = std::abs(desired_path.end_z - m_estate.height);
+            break;
           default:
             z_dist = 0;
             break;
@@ -205,18 +199,14 @@ namespace Maneuver
         dispatch(desired_path);
       }
 
-      /**
-       * \brief Consume Reference messages and generate DesiredPath messages accordingly
-       *
-       * Whenever a new Reference is received from a valid source, a new desired_path
-       * gets commanded to the vehicle.
-       * @see https://whale.fe.up.pt/imc/doc/trunk/Maneuvering.html#follow-reference-maneuver
-       * @param msg the Reference message to be processed
-       */
+      //! Consume Reference messages and generate DesiredPath messages accordingly
+      //! Whenever a new Reference is received from a valid source, a new desired_path
+      //! gets commanded to the vehicle.
+      //! @see https://!whale.fe.up.pt/imc/doc/trunk/Maneuvering.html#follow-reference-maneuver
+      //! @param msg the Reference message to be processed
       void
       consume(const IMC::Reference* msg)
       {
-
         // verify that the source is acceptable
         if (m_spec.control_src != 0xFFFF
             && m_spec.control_src != msg->getSource())
@@ -239,7 +229,7 @@ namespace Maneuver
         follow(msg);
       }
 
-      // Function for enabling and disabling the control loops
+      //! Function for enabling and disabling the control loops
       void
       enableMovement(bool enable)
       {
@@ -265,7 +255,7 @@ namespace Maneuver
         m_estate = *msg;
       }
 
-      // Function to check if the vehicle is getting near to the next waypoint
+      //! Function to check if the vehicle is getting near to the next waypoint
       void
       consume(const IMC::PathControlState* pcs)
       {
