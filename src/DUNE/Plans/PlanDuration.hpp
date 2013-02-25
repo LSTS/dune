@@ -25,25 +25,26 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLAN_ENGINE_PLANDURATION_HPP_INCLUDED_
-#define DUNE_PLAN_ENGINE_PLANDURATION_HPP_INCLUDED_
+#ifndef DUNE_PLANS_PLANDURATION_HPP_INCLUDED_
+#define DUNE_PLANS_PLANDURATION_HPP_INCLUDED_
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
+#include <DUNE/Coordinates.hpp>
+#include <DUNE/IMC.hpp>
+#include <DUNE/Maneuvers.hpp>
+#include <DUNE/Math.hpp>
 
-namespace Plan
+namespace DUNE
 {
-  namespace Engine
+  namespace Plans
   {
-    using DUNE_NAMESPACES;
+    //! Speed acquired by buoyancy
+    static const float c_buoyancy_speed = 0.3;
+    //! Average amount of time it takes to get a gps fix
+    static const float c_fix_time = 7.0;
 
     // Export DLL Symbol.
     class DUNE_DLL_SYM PlanDuration;
-
-    // Speed acquired by buoyancy
-    float c_buoyancy_speed = 0.3;
-    // Average amount of time it takes to get a gps fix
-    float c_fix_time = 7.0;
 
     //! Utility class to estimate a plan's duration.
     class PlanDuration

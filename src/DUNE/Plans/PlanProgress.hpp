@@ -25,21 +25,21 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLAN_ENGINE_PLANPROGRESS_HPP_INCLUDED_
-#define DUNE_PLAN_ENGINE_PLANPROGRESS_HPP_INCLUDED_
+#ifndef DUNE_PLANS_PLANPROGRESS_HPP_INCLUDED_
+#define DUNE_PLANS_PLANPROGRESS_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <cstdlib>
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
+#include <DUNE/IMC.hpp>
+#include <DUNE/Maneuvers.hpp>
+#include <DUNE/Utils.hpp>
 
-namespace Plan
+namespace DUNE
 {
-  namespace Engine
+  namespace Plans
   {
-    using DUNE_NAMESPACES;
-
     // Export DLL Symbol.
     class DUNE_DLL_SYM PlanProgress;
 

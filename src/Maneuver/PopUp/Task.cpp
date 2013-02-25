@@ -208,8 +208,8 @@ namespace Maneuver
 
           if (mustWait())
             steady_time = m_maneuver.duration;
-          // else
-          //   steady_time = c_fix_time;
+          else
+            steady_time = Plans::c_fix_time;
 
           signalProgress(rising_time + steady_time);
         }
