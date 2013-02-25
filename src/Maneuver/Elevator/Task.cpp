@@ -40,8 +40,6 @@ namespace Maneuver
     static const unsigned c_vsamples = 10;
     //! Value to be consider at surface
     static const float c_depth_tol = 0.3;
-    //! Value to be considered as typical pitch
-    static const float c_pitch = Angles::radians(15.0);
 
     //! Task arguments
     struct Arguments
@@ -294,7 +292,7 @@ namespace Maneuver
         }
         else
         {
-          float diagonal_length = getVerticalError() / std::sin(c_pitch);
+          float diagonal_length = getVerticalError() / std::sin(Plans::c_rated_pitch);
           float loiter;
           if (m_estate.u)
             loiter = diagonal_length / m_estate.u;

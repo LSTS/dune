@@ -42,6 +42,8 @@ namespace DUNE
     static const float c_buoyancy_speed = 0.3;
     //! Average amount of time it takes to get a gps fix
     static const float c_fix_time = 7.0;
+    //! Typical pitch value for elevator maneuver
+    static const float c_rated_pitch = Math::Angles::radians(15.0);
 
     // Export DLL Symbol.
     class DUNE_DLL_SYM PlanDuration;
@@ -276,10 +278,8 @@ namespace DUNE
           return -1.0;
 
         double horz_dist = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
-        // pitch value is hardcoded here
-        double pitch = Math::Angles::radians(15.0);
         double amplitude = std::fabs(last_pos.z - maneuver->end_z);
-        double real_dist = amplitude / std::sin(pitch);
+        double real_dist = amplitude / std::sin(c_rated_pitch);
 
         durations.push_back((horz_dist + real_dist) / maneuver->speed + last_dur);
 
