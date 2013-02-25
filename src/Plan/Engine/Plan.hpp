@@ -35,10 +35,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-
-// Local headers
-#include "PlanDuration.hpp"
-#include "PlanProgress.hpp"
+#include <DUNE/Plans.hpp>
 
 namespace Plan
 {

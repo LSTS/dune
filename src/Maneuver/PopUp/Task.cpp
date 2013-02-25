@@ -50,6 +50,8 @@ namespace Maneuver
     {
       //! DesiredPath message
       IMC::DesiredPath m_path;
+      //! EstimatedState message
+      IMC::EstimatedState m_state;
       //! PopUp maneuver message
       IMC::PopUp m_maneuver;
       //! Last GpsFix latitude
@@ -151,6 +153,8 @@ namespace Maneuver
       void
       consume(const IMC::EstimatedState* state)
       {
+        m_state = *state;
+
         if (m_got_fix && !m_matched_criteria)
         {
           float dist = Coordinates::WGS84::distance(state->lat, state->lon, 0.0,
@@ -183,10 +187,31 @@ namespace Maneuver
         {
           signalProgress(std::ceil(m_counter.getRemaining()));
         }
+        else if (m_matched_criteria)
+        {
+          signalProgress(0);
+        }
         else
         {
-          // can be estimated though
-          signalProgress();
+          unsigned rising_time = 65535;
+          unsigned steady_time = 0;
+
+          if (!m_at_surface)
+          {
+            if (m_state.vz != 0.0)
+              rising_time = std::ceil(std::fabs(m_state.depth / m_state.vz));
+          }
+          else
+          {
+            rising_time = 0;
+          }
+
+          if (mustWait())
+            steady_time = m_maneuver.duration;
+          else
+            steady_time = Plans::c_fix_time;
+
+          signalProgress(rising_time + steady_time);
         }
       }
 
