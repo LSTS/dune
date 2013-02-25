@@ -44,7 +44,7 @@ namespace DUNE
     class DUNE_DLL_SYM PlanProgress;
 
     //! Maximum estimated time of arrival
-    static const int c_max_duration = 65535;
+    static const int c_max_eta = 65535;
 
     //! Utility class to estimate a plan's progress.
     class PlanProgress
@@ -137,7 +137,7 @@ namespace DUNE
         if (man == NULL)
           return -1.0;
 
-        if (!durations.size() || mcs->eta == c_max_duration)
+        if (!durations.size() || mcs->eta == c_max_eta)
           return -1.0;
 
         float time_left = -1.0;

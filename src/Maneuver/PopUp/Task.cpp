@@ -193,7 +193,7 @@ namespace Maneuver
         }
         else
         {
-          unsigned rising_time = 65535;
+          unsigned rising_time = Plans::c_max_eta;
           unsigned steady_time = 0;
 
           if (!m_at_surface)
