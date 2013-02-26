@@ -42,7 +42,8 @@ static const unsigned c_pubx04_fields = 10;
 class Filter
 {
 public:
-  Filter(void)
+  Filter(FILE* fd):
+    m_fd(fd)
   {
     printHeader();
     m_nav_status = new char[6];
@@ -59,6 +60,8 @@ public:
   {
     if (m_sync_status[0] == 1)
       return;
+
+    fflush(m_fd);
 
     m_sample_msec = 0;
 
@@ -120,18 +123,20 @@ public:
   void
   printHeader(void)
   {
-    fprintf(stdout,
+    fprintf(m_fd,
             "Sync_Lost"
 #define FIELD(label, var, type, fmt) "\t" label
 #include "Fields.def"
             "\r\n"
             );
+
+    fflush(m_fd);
   }
 
   void
   print(unsigned index)
   {
-    fprintf(stdout,
+    fprintf(m_fd,
             "%u"
 #define FIELD(label, var, type, fmt) "\t" fmt
 #include "Fields.def"
@@ -211,7 +216,6 @@ private:
     else
     {
       std::cerr << "ERROR: unknown NMEA message." << std::endl;
-      std::cerr << sanitize(stn) << std::endl;
     }
   }
 
@@ -328,6 +332,8 @@ private:
     }
   }
 
+  //! Output file descriptor.
+  FILE* m_fd;
   //! Status.
   uint8_t m_sync_status[100];
   //! Sample millisecond.

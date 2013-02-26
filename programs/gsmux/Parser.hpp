@@ -49,7 +49,8 @@ enum Channels
 class Parser
 {
 public:
-  Parser(void):
+  Parser(FILE* fd):
+    m_filter(fd),
     m_block_cnt(0)
   {
     m_state = STATE_SYNC;
