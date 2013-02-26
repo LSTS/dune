@@ -376,8 +376,8 @@ endif(DUNE_OS_WINDOWS)
 include(InstallRequiredSystemLibraries)
 include(CPack)
 
-# GUI
 include(programs/video-client/Program.cmake)
+include(programs/gsmux/Program.cmake)
 
 ##########################################################################
 #                                 Tests                                  #
