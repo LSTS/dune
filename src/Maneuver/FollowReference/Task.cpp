@@ -65,9 +65,9 @@ namespace Maneuver
 
       Task(const std::string& name, Tasks::Context& ctx) :
         DUNE::Maneuvers::Maneuver(name, ctx),
-        m_last_ref_time(0),
         m_got_reference(false),
-        m_moving(false)
+        m_moving(false),
+        m_last_ref_time(0)
       {
         bindToManeuver<Task, IMC::FollowReference>();
         bind<IMC::Reference>(this);
