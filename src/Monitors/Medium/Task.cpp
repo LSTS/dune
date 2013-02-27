@@ -150,7 +150,7 @@ namespace Monitors
       void
       consume(const IMC::GpsFix* msg)
       {
-        if (msg->validity == m_gps_val_bits)
+        if ((msg->validity & m_gps_val_bits) == m_gps_val_bits)
           m_gps_status.reset();
       }
 
