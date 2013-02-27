@@ -33,11 +33,15 @@
 
 namespace Maneuver
 {
+  //! This task is responsible for emerging
+  //! to acquire a gps fix.
+  //!
+  //! @author Pedro Calado
   namespace PopUp
   {
     using DUNE_NAMESPACES;
 
-    //! Task arguments
+    //! %Task arguments
     struct Arguments
     {
       //! Minimum number of satelites to accept fix
@@ -46,6 +50,7 @@ namespace Maneuver
       float min_distance;
     };
 
+    //! %PopUp task.
     struct Task: public DUNE::Maneuvers::Maneuver
     {
       //! DesiredPath message
