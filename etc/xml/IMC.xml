@@ -11,8 +11,8 @@
           name="IMC"
           long-name="Inter Module Communication"
           version="5.1.0"
-          revision="$Rev: 1729 $"
-          creation="$Date: 2013-02-21 15:57:28 +0000 (Thu, 21 Feb 2013) $">
+          revision="$Rev: 1732 $"
+          creation="$Date: 2013-02-26 11:41:32 +0000 (Tue, 26 Feb 2013) $">
 
   <description>
     This document describes the communications protocol associated
@@ -309,6 +309,7 @@
       <message-type abbrev="VehicleFormation"/>
       <message-type abbrev="CompassCalibration"/>
       <message-type abbrev="CoverArea"/>
+      <message-type abbrev="FollowReference"/>
     </message-group>
 
     <message-group name="Control Command" abbrev="ControlCommand">
