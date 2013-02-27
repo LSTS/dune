@@ -172,11 +172,11 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_GPS_RAW_INT] = &Task::handleRawGPSPacket;
           m_mlh[MAVLINK_MSG_ID_WIND] = &Task::handleWindPacket;
           m_mlh[MAVLINK_MSG_ID_COMMAND_ACK] = &Task::handleCmdAckPacket;
+          m_mlh[MAVLINK_MSG_ID_MISSION_ACK] = &Task::handleMissionAckPacket;
 
           // Setup processing of IMC messages
           bind<DesiredPath>(this);
           bind<DesiredRoll>(this);
-          bind<DesiredSpeed>(this);
           bind<SetServoPosition>(this);
           bind<SimulatedState>(this);
           bind<Acceleration>(this);
@@ -281,16 +281,6 @@ namespace Control
         }
 
         void
-        consume(const IMC::DesiredSpeed* speed)
-        {
-          sendCommandPacket(MAV_CMD_DO_CHANGE_SPEED, // Change speed and/or throttle set points
-                            0, // (0=Airspeed, 1=Ground Speed)
-                            speed->value, // (m/s, -1 indicates no change)
-                            -1); // Throttle ( Percent, -1 indicates no change)
-          debug(DTR("ChangeSpeed packet sent to Ardupilot"));
-        }
-
-        void
         consume(const IMC::DesiredRoll* roll)
         {
           uint8_t buf[512];
@@ -321,6 +311,66 @@ namespace Control
         {
           if(!m_args.ardu_tracker)
             return;
+
+          uint8_t buf[512];
+          int seq = 1;
+
+          mavlink_message_t* msg = new mavlink_message_t;
+
+          mavlink_msg_mission_count_pack(255, 0, msg,
+              m_sysid, //! target_system System ID
+              0, //! target_component Component ID
+              3); //! size of Mission
+
+          uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+
+          mavlink_msg_mission_write_partial_list_pack(255, 0, msg,
+              m_sysid, //! target_system System ID
+              0, //! target_component Component ID
+              seq, //! start_index Start index, 0 by default and smaller / equal to the largest index of the current onboard list
+              seq+1); //! end_index End index, equal or greater than start index
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+
+          mavlink_msg_mission_item_pack(255, 0, msg,
+              m_sysid, //! target_system System ID
+              0, //! target_component Component ID
+              seq++, //! seq Sequence
+              MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+              MAV_CMD_DO_CHANGE_SPEED, //! command The scheduled action for the MISSION. see MAV_CMD in common.xml MAVLink specs
+              1, //! current false:0, true:1
+              1, //! autocontinue autocontinue to next wp
+              0, //! Speed type (0=Airspeed, 1=Ground Speed)
+              (float)(path->speed_units == IMC::SUNITS_METERS_PS ? path->speed : -1), //! Speed  (m/s, -1 indicates no change)
+              (float)(path->speed_units == IMC::SUNITS_PERCENTAGE ? path->speed : -1), //! Throttle  ( Percent, -1 indicates no change)
+              0, //! Not used
+              0, //! Not used
+              0, //! Not used
+              0);//! Not used
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+
+          mavlink_msg_mission_item_pack(255, 0, msg,
+              m_sysid, //! target_system System ID
+              0, //! target_component Component ID
+              seq++, //! seq Sequence
+              MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+              (path->lradius ? MAV_CMD_NAV_LOITER_UNLIM : MAV_CMD_NAV_WAYPOINT), //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+              0, //! current false:0, true:1
+              0, //! autocontinue autocontinue to next wp
+              0, //! Not used
+              0, //! Not used
+              0, //! Not used
+              0, //! Not used
+              (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
+              (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
+              (float)(path->end_z));//! z PARAM7 / z position: global: altitude
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
 
           debug(DTR("Waypoint packet sent to Ardupilot"));
         }
@@ -509,6 +559,9 @@ namespace Control
                   case 42:
                     trace("WAYPOINT_CURRENT");
                     break;
+                  case MAVLINK_MSG_ID_MISSION_ACK:
+                    spew("MISSION_ACK");
+                    break;
                   case 62:
                     trace("NAV_CONTROLLER_OUTPUT");
                     break;
@@ -516,7 +569,7 @@ namespace Control
                     trace("VFR_HUD");
                     break;
                   case MAVLINK_MSG_ID_COMMAND_ACK:
-                    trace("CMD_ACK");
+                    spew("CMD_ACK");
                     break;
                   case 150:
                     trace("SENSOR_OFFSETS");
@@ -703,6 +756,15 @@ namespace Control
 
           mavlink_msg_command_ack_decode(msg, &cmd_ack);
           debug("Command %d was received, result is %d", cmd_ack.command, cmd_ack.result);
+        }
+
+        void
+        handleMissionAckPacket(const mavlink_message_t* msg)
+        {
+          mavlink_mission_ack_t miss_ack;
+
+          mavlink_msg_mission_ack_decode(msg, &miss_ack);
+          debug("Mission was received, result is %d", miss_ack.type);
         }
 
         void
