@@ -60,24 +60,21 @@ namespace Simulators
     {
       //! Simulated state.
       IMC::SimulatedState m_sstate;
-      //! Current sound velocity.
+      //! Current sound speed.
       IMC::SoundSpeed m_sspeed;
       //! PRNG handle.
       Random::Generator* m_prng;
-      //! True if task is active.
-      bool m_active;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
-        m_prng(NULL),
-        m_active(false)
+        m_prng(NULL)
       {
         // Retrieve configuration values.
         param("Standard Deviation", m_args.std_dev)
         .units(Units::Meter)
-        .defaultValue("0.05");
+        .defaultValue("1.5");
 
         param("PRNG Type", m_args.prng_type)
         .defaultValue(Random::Factory::c_default);
@@ -134,7 +131,7 @@ namespace Simulators
         if (!isActive())
           return;
 
-        //! Compute positive depth value adding a gaussian noise component.
+        // Compute positive sound speed adding a gaussian noise component.
         m_sspeed.value = m_args.mean_sspeed + m_prng->gaussian() * m_args.std_dev;
         dispatch(m_sspeed);
       }
