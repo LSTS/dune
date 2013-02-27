@@ -112,7 +112,8 @@ namespace Actuators
         .description("Logical addresses of the thrusters");
 
         param("Scale Factor", m_args.scale)
-        .defaultValue("1.0")
+        .defaultValue("100.0")
+        .units(Units::Percentage)
         .description("Scale factor to be multiplied to the thruster actuation reference");
 
         param("Feedback Querying Frequency", m_args.feedback_freq)
