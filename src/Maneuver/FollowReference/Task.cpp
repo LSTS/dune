@@ -86,7 +86,8 @@ namespace Maneuver
 
       //! This method updates current reference, possibly generating movement
       //! or not (if vehicle already in the vicinity of the target).
-      void follow(const IMC::Reference* msg)
+      void
+      follow(const IMC::Reference* msg)
       {
         // start building the DesiredPath message to be commanded
         DesiredPath desired_path;
@@ -186,13 +187,16 @@ namespace Maneuver
         {
 
           // if inside desired location
-          if (z_dist < m_spec.altitude_interval && desired_path.end_z == 0 && desired_path.end_z_units == Z_DEPTH)
+          if (z_dist < m_spec.altitude_interval && desired_path.end_z == 0 &&
+              desired_path.end_z_units == Z_DEPTH)
           {
             enableMovement(false);
             return;
           }
           else
+          {
             desired_path.lradius = m_args.loitering_radius;
+          }
         }
 
         inf("sending desired path");
@@ -233,11 +237,11 @@ namespace Maneuver
 
         if (m_cur_ref.flags & IMC::Reference::FLAG_MANDONE)
         {
-        	signalCompletion("maneuver terminated by reference source");
+          signalCompletion("maneuver terminated by reference source");
         }
         else
         {
-        	follow(msg);
+          follow(msg);
         }
       }
 
@@ -271,12 +275,12 @@ namespace Maneuver
       void
       consume(const IMC::PathControlState* pcs)
       {
-    	  double delta = 0;
-    	  if (m_spec.timeout != 0)
-    		  delta = Clock::get() - m_spec.timeout;
-    	  if (delta > m_spec.timeout) {
-    		  signalError("reference source timed out");
-    	  }
+        double delta = 0;
+        if (m_spec.timeout != 0)
+          delta = Clock::get() - m_spec.timeout;
+
+        if (delta > m_spec.timeout)
+          signalError("reference source timed out");
 
         //        // Verify maneuver completion
         //        double delta = Clock::get() - m_start_time - m_maneuver.duration;
