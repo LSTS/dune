@@ -111,8 +111,8 @@ namespace Control
         Address m_TCP_addr;
         uint16_t m_TCP_port;
         System::IOMultiplexing m_iom;
-
-
+        //! System ID
+        uint8_t m_sysid;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -125,8 +125,8 @@ namespace Control
           m_acc_z(0.0)
         {
           param("Serial Port - Device", m_args.uart_dev)
-              .defaultValue("")
-              .description("Serial port used to connect to Ardupilot");
+                  .defaultValue("")
+                  .description("Serial port used to connect to Ardupilot");
 
           param("Serial Port - Baud Rate", m_args.uart_baud)
           .defaultValue("57600")
@@ -171,7 +171,7 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_SCALED_PRESSURE] = &Task::handleScaledPressurePacket;
           m_mlh[MAVLINK_MSG_ID_GPS_RAW_INT] = &Task::handleRawGPSPacket;
           m_mlh[MAVLINK_MSG_ID_WIND] = &Task::handleWindPacket;
-          m_mlh[MAVLINK_MSG_ID_SERVO_OUTPUT_RAW] = &Task::handleRawServoPacket;
+          m_mlh[MAVLINK_MSG_ID_COMMAND_ACK] = &Task::handleCmdAckPacket;
 
           // Setup processing of IMC messages
           bind<DesiredPath>(this);
@@ -322,21 +322,13 @@ namespace Control
           if(!m_args.ardu_tracker)
             return;
 
-          sendCommandPacket(MAV_CMD_NAV_WAYPOINT, // Navigate to MISSION.
-              0, // Hold time in decimal seconds. (ignored by fixed wing, time to stay at MISSION for rotary wing)
-              20, // Acceptance radius in meters (if the sphere with this radius is hit, the MISSION counts as reached)
-              path->lradius, // 0 to pass through the WP, if > 0 radius in meters to pass by WP. Positive value for clockwise orbit, negative value for counter-clockwise orbit.
-              0, // Desired yaw angle at MISSION (rotary wing)
-              (float)Angles::degrees(path->end_lat), // Latitude
-              (float)Angles::degrees(path->end_lon), // Longitude
-              (float)path->end_z); // Altitude
           debug(DTR("Waypoint packet sent to Ardupilot"));
+        }
 
-          IMC::DesiredSpeed* d_speed;
-          d_speed = new DesiredSpeed;
-          d_speed->value = path->speed;
-          d_speed->speed_units = path->speed_units;
-          receive(d_speed);
+        void
+        loiterHere(void)
+        {
+          sendCommandPacket(MAV_CMD_NAV_LOITER_UNLIM);
         }
 
         void
@@ -359,7 +351,7 @@ namespace Control
 
           debug("%0.2f %0.2f %0.2f %0.2f %0.2f %0.2f %0.2f", arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 
-          mavlink_msg_command_long_pack(0, 0, &msg, 0, 0, cmd, 0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+          mavlink_msg_command_long_pack(255, 0, &msg, m_sysid, 0, cmd, 0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 
           uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
@@ -514,9 +506,6 @@ namespace Control
                   case 35:
                     trace("RC_CHANNELS_RAW");
                     break;
-                    //                  case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
-                    //                    trace("SERVO_OUTPUT_RAW");
-                    //                    break;
                   case 42:
                     trace("WAYPOINT_CURRENT");
                     break;
@@ -525,6 +514,9 @@ namespace Control
                     break;
                   case 74:
                     trace("VFR_HUD");
+                    break;
+                  case MAVLINK_MSG_ID_COMMAND_ACK:
+                    trace("CMD_ACK");
                     break;
                   case 150:
                     trace("SENSOR_OFFSETS");
@@ -559,6 +551,7 @@ namespace Control
 
                 // Call handler
                 (this->*h)(&msg);
+                m_sysid = msg.sysid;
 
                 m_last_pkt_time = now;
 
@@ -704,28 +697,12 @@ namespace Control
         }
 
         void
-        handleRawServoPacket(const mavlink_message_t* msg)
+        handleCmdAckPacket(const mavlink_message_t* msg)
         {
-          mavlink_servo_output_raw_t servo_raw;
-          mavlink_msg_servo_output_raw_decode(msg, &servo_raw);
+          mavlink_command_ack_t cmd_ack;
 
-          inf("Decoded SERVO_OUTPUT_RAW");
-
-          m_servo.id = 1;
-          m_servo.value = servo_raw.servo1_raw;
-          dispatch(m_servo);
-
-          m_servo.id = 2;
-          m_servo.value = servo_raw.servo2_raw;
-          dispatch(m_servo);
-
-          m_servo.id = 3;
-          m_servo.value = servo_raw.servo3_raw;
-          dispatch(m_servo);
-
-          m_servo.id = 4;
-          m_servo.value = servo_raw.servo4_raw;
-          dispatch(m_servo);
+          mavlink_msg_command_ack_decode(msg, &cmd_ack);
+          debug("Command %d was received, result is %d", cmd_ack.command, cmd_ack.result);
         }
 
         void
