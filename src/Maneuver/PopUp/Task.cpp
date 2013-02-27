@@ -293,6 +293,7 @@ namespace Maneuver
       bool
       mustSendSMS(void)
       {
+        // flag must be added to IMC spec
         return (m_maneuver.flags & 0x08) != 0;
       }
 
