@@ -84,19 +84,23 @@ namespace Maneuver
         dispatch(reply);
       }
 
+      //! This method updates current reference, possibly generating movement
+      //! or not (if vehicle already in the vicinity of the target).
       void follow(const IMC::Reference* msg)
       {
-        // start building the DesiredPath message to command
+        // start building the DesiredPath message to be commanded
         DesiredPath desired_path;
 
+        // compute current position
         double curlat = m_estate.lat;
         double curlon = m_estate.lon;
         WGS84::displace(m_estate.x, m_estate.y, &curlat, &curlon);
 
+        // command start corresponds to current position
         desired_path.start_lat = curlat;
         desired_path.start_lon = curlon;
 
-        // set start_z according to current estimated state
+        // set start_z according to last received estimated state
         if (m_estate.depth != -1)
         {
           desired_path.start_z = m_estate.depth;
@@ -225,8 +229,16 @@ namespace Maneuver
 
         m_cur_ref = *msg;
         m_got_reference = true;
+        m_last_ref_time = Clock::get();
 
-        follow(msg);
+        if (m_cur_ref.flags & IMC::Reference::FLAG_MANDONE)
+        {
+        	signalCompletion("maneuver terminated by reference source");
+        }
+        else
+        {
+        	follow(msg);
+        }
       }
 
       //! Function for enabling and disabling the control loops
@@ -259,6 +271,13 @@ namespace Maneuver
       void
       consume(const IMC::PathControlState* pcs)
       {
+    	  double delta = 0;
+    	  if (m_spec.timeout != 0)
+    		  delta = Clock::get() - m_spec.timeout;
+    	  if (delta > m_spec.timeout) {
+    		  signalError("reference source timed out");
+    	  }
+
         //        // Verify maneuver completion
         //        double delta = Clock::get() - m_start_time - m_maneuver.duration;
         //        if (delta >= 0)
