@@ -48,10 +48,6 @@ namespace Maneuver
       unsigned min_sats;
       //! Minimum distance between gps_fix position and the estimated state
       float min_distance;
-      //! Minimum time between sending SMS (to prevent sending too many)
-      float min_sms_interval;
-      //! Recipient number for sms
-      std::string recipient;
     };
 
     //! %PopUp task.
@@ -79,14 +75,6 @@ namespace Maneuver
       Maneuvers::StationKeep* m_skeep;
       //! Timer counter for duration
       Time::Counter<float> m_dur_timer;
-      //! Timer counter for sending sms
-      Time::Counter<float> m_sms_timer;
-      //! Plan's progress
-      float m_progress;
-      //! Vehicle's fuel
-      float m_fuel;
-      //! Confidence in fuel level
-      float m_fuel_conf;
       //! Task arguments
       Arguments m_args;
 
@@ -107,34 +95,17 @@ namespace Maneuver
         .units(Units::Meter)
         .description("Minimum distance between gps_fix position and the estimated state");
 
-        param("Minimum SMS Interval", m_args.min_sms_interval)
-        .defaultValue("45.0")
-        .description("Minimum time between sending SMS (to prevent sending too many)");
-
-        param(DTR_RT("SMS Recipient Number"), m_args.recipient)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .defaultValue("+351932811685")
-        .description(DTR("Phone number of the SMS recipient"));
-
         bindToManeuver<Task, IMC::PopUp>();
         bind<IMC::EstimatedState>(this);
         bind<IMC::PathControlState>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::VehicleMedium>(this);
-        bind<IMC::PlanControlState>(this);
-        bind<IMC::FuelLevel>(this);
       }
 
       void
       onResourceRelease(void)
       {
         Memory::clear(m_skeep);
-      }
-
-      void
-      onManeuverDeactivation(void)
-      {
-        m_sms_timer.setTop(m_args.min_sms_interval);
       }
 
       void
@@ -171,19 +142,6 @@ namespace Maneuver
         }
       }
 
-      void
-      consume(const IMC::PlanControlState* msg)
-      {
-        m_progress = msg->plan_progress;
-      }
-
-      void
-      consume(const IMC::FuelLevel* msg)
-      {
-        m_fuel = msg->value;
-        m_fuel_conf = msg->confidence;
-      }
-
       //! Used to check if we're at the surface
       void
       consume(const IMC::VehicleMedium* msg)
@@ -194,17 +152,6 @@ namespace Maneuver
 
         if (m_at_surface != was_at_surface && m_at_surface)
           m_dur_timer.setTop(m_maneuver.duration);
-
-        // Only send sms if it is going to wait some time on the surface
-        if (m_at_surface && mustWait() && mustSendSMS() && m_got_fix)
-        {
-          if (m_sms_timer.overflow())
-          {
-            sendSMS();
-            m_sms_timer.reset();
-            debug("sent sms");
-          }
-        }
       }
 
       void
@@ -291,6 +238,10 @@ namespace Maneuver
           {
             if (m_state.vz != 0.0)
               rising_time = std::ceil(std::fabs(m_state.depth / m_state.vz));
+
+            // Might be heading to the waypoint
+            if (!useCurr())
+              rising_time += pcs->eta;
           }
           else
           {
@@ -325,45 +276,6 @@ namespace Maneuver
       mustKeep(void)
       {
         return (m_maneuver.flags & IMC::PopUp::FLG_STATION_KEEP) != 0;
-      }
-
-      //! Must send sms when reaches surface
-      bool
-      mustSendSMS(void)
-      {
-        // flag must be added to IMC spec
-        return (m_maneuver.flags & 0x08) != 0;
-      }
-
-      //! Generate sms text message
-      const std::string
-      smsText(void)
-      {
-        int lat_deg;
-        double lat_min;
-        Angles::convertDecimalToDM(Angles::degrees(m_gps_lat), lat_deg, lat_min);
-
-        int lon_deg;
-        double lon_min;
-        Angles::convertDecimalToDM(Angles::degrees(m_gps_lon), lon_deg, lon_min);
-
-        Time::BrokenDown bdt;
-        return String::str("(%s) %02u:%02u:%02u / %d %f, %d %f / p:%.1f, f:%.1f, c:%d",
-                           getSystemName(),
-                           bdt.hour, bdt.minutes, bdt.seconds,
-                           lat_deg, lat_min, lon_deg, std::fabs(lon_min),
-                           m_progress, m_fuel, (unsigned)m_fuel_conf);
-      }
-
-      //! Send sms
-      void
-      sendSMS(void)
-      {
-        IMC::Sms sms;
-        sms.number = m_args.recipient;
-        sms.timeout = m_maneuver.duration;
-        sms.contents = smsText();
-        dispatch(sms);
       }
     };
   }
