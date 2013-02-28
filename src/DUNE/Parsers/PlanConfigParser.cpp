@@ -23,6 +23,7 @@
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
+// Author: Pedro Calado (added some maneuvers)                              *
 //***************************************************************************
 
 #include <vector>
@@ -53,6 +54,8 @@ namespace DUNE
       parseDuration(cfg, id, man);
       parseZ(cfg, id, man);
       parseZUnits(cfg, id, man);
+      cfg.get(id, "Radius (meters)", "15.0", man.radius);
+      cfg.get(id, "Flags", "0x00", man.flags);
     }
 
 #endif

@@ -23,6 +23,7 @@
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
+// Author: Pedro Calado (added some maneuvers)                              *
 //***************************************************************************
 
 #ifndef DUNE_PARSERS_PLANCONFIGPARSER_HPP_INCLUDED_
