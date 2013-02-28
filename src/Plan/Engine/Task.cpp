@@ -340,17 +340,26 @@ namespace Plan
       onVehicleError(const IMC::VehicleState* vs)
       {
         m_vehicle_ready = false;
-        std::string edesc = DTR("vehicle errors: ") + vs->error_ents;
+        std::string err_ents = DTR("vehicle errors: ") + vs->error_ents;
+        std::string edesc = vs->last_error_time < 0 ? err_ents : vs->last_error;
 
         if (execMode())
         {
-          onFailure(vs->last_error);
+          onFailure(edesc);
           m_reply.plan_id = m_spec.plan_id;
         }
 
         // @FIXME blockedmode or there are new error entities
         if (!blockedMode() || edesc != m_last_event)
+        {
+          if (initMode())
+          {
+            onFailure(edesc);
+            m_reply.plan_id = m_spec.plan_id;
+          }
+
           changeMode(IMC::PlanControlState::PCS_BLOCKED, edesc, false);
+        }
       }
 
       void
