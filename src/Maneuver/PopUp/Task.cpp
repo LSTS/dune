@@ -142,18 +142,32 @@ namespace Maneuver
       {
         m_maneuver = *maneuver;
 
-        if (m_maneuver.flags & IMC::PopUp::FLG_CURR_POS)
+        if (useCurr())
         {
           // disable control loops and let it surface
           setControl(IMC::CL_NONE);
         }
-        else
+        else if (mustKeep())
         {
           Memory::clear(m_skeep);
 
           m_skeep = new Maneuvers::StationKeep(this, maneuver->lat, maneuver->lon,
                                                maneuver->radius, 0.0, IMC::Z_DEPTH,
                                                maneuver->speed, maneuver->speed_units);
+        }
+        else
+        {
+          setControl(IMC::CL_PATH);
+
+          IMC::DesiredPath path;
+          path.end_lat = m_maneuver.lat;
+          path.end_lon = m_maneuver.lon;
+          path.end_z = m_maneuver.z;
+          path.end_z_units = m_maneuver.z_units;
+          path.speed = m_maneuver.speed;
+          path.speed_units = m_maneuver.speed_units;
+
+          dispatch(path);
         }
       }
 
@@ -170,6 +184,7 @@ namespace Maneuver
         m_fuel_conf = msg->confidence;
       }
 
+      //! Used to check if we're at the surface
       void
       consume(const IMC::VehicleMedium* msg)
       {
@@ -178,18 +193,16 @@ namespace Maneuver
         m_at_surface = msg->medium != IMC::VehicleMedium::VM_UNDERWATER;
 
         if (m_at_surface != was_at_surface && m_at_surface)
-        {
-          debug("at surface");
           m_dur_timer.setTop(m_maneuver.duration);
 
-          if (mustSendSMS() && m_got_fix)
+        // Only send sms if it is going to wait some time on the surface
+        if (m_at_surface && mustWait() && mustSendSMS() && m_got_fix)
+        {
+          if (m_sms_timer.overflow())
           {
-            if (m_sms_timer.overflow())
-            {
-              sendSMS();
-              m_sms_timer.reset();
-              debug("sent sms");
-            }
+            sendSMS();
+            m_sms_timer.reset();
+            debug("sent sms");
           }
         }
       }
@@ -246,8 +259,21 @@ namespace Maneuver
       void
       consume(const IMC::PathControlState* pcs)
       {
+        if ((pcs->flags & IMC::PathControlState::FL_NEAR) && !m_near)
+        {
+          if (!useCurr() && !mustKeep())
+            setControl(IMC::CL_NONE);
+        }
+
         m_near = (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
 
+        computeETA(pcs);
+      }
+
+      //! Compute ETA
+      inline void
+      computeETA(const IMC::PathControlState* pcs)
+      {
         if (m_matched_criteria && mustWait())
         {
           signalProgress(std::ceil(m_dur_timer.getRemaining()));
@@ -278,6 +304,13 @@ namespace Maneuver
 
           signalProgress(rising_time + steady_time);
         }
+      }
+
+      //! Will use current position
+      bool
+      useCurr(void)
+      {
+        return (m_maneuver.flags & IMC::PopUp::FLG_CURR_POS) != 0;
       }
 
       //! Must wait some time at surface
