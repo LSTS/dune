@@ -74,7 +74,7 @@ namespace Simulators
         // Retrieve configuration values.
         param("Standard Deviation", m_args.std_dev)
         .units(Units::Meter)
-        .defaultValue("1.5");
+        .defaultValue("0.1");
 
         param("PRNG Type", m_args.prng_type)
         .defaultValue(Random::Factory::c_default);
@@ -83,7 +83,7 @@ namespace Simulators
         .defaultValue("-1");
 
         param("Mean Value", m_args.mean_sspeed)
-        .defaultValue("1450.0")
+        .defaultValue("1500.0")
         .description("Mean value for the sound speed");
 
         // Register consumers.
