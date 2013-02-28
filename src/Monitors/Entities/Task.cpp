@@ -232,6 +232,7 @@ namespace Monitors
       enableDefaults(void)
       {
         inf(DTR("setting up configuration defaults"));
+        m_ems.last_error_time = -1.0;
 
         if (m_current.size() > 0)
         {
