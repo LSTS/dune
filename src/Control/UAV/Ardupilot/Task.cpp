@@ -115,6 +115,8 @@ namespace Control
         uint8_t m_sysid;
         //! Last received position
         float m_lat, m_lon, m_alt;
+        //! External control
+        bool m_external;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -125,13 +127,15 @@ namespace Control
           m_acc_x(0.0),
           m_acc_y(0.0),
           m_acc_z(0.0),
+          m_sysid(1),
           m_lat(0.0),
           m_lon(0.0),
-          m_alt(0.0)
+          m_alt(0.0),
+          m_external(true)
         {
           param("Serial Port - Device", m_args.uart_dev)
-                  .defaultValue("")
-                  .description("Serial port used to connect to Ardupilot");
+          .defaultValue("")
+          .description("Serial port used to connect to Ardupilot");
 
           param("Serial Port - Baud Rate", m_args.uart_baud)
           .defaultValue("57600")
@@ -178,6 +182,9 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_WIND] = &Task::handleWindPacket;
           m_mlh[MAVLINK_MSG_ID_COMMAND_ACK] = &Task::handleCmdAckPacket;
           m_mlh[MAVLINK_MSG_ID_MISSION_ACK] = &Task::handleMissionAckPacket;
+          m_mlh[MAVLINK_MSG_ID_MISSION_CURRENT] = &Task::handleMissionCurrentPacket;
+          m_mlh[MAVLINK_MSG_ID_STATUSTEXT] = &Task::handleStatusTextPacket;
+          m_mlh[MAVLINK_MSG_ID_HEARTBEAT] = &Task::handleHeartbeatPacket;
 
           // Setup processing of IMC messages
           bind<DesiredPath>(this);
@@ -185,6 +192,7 @@ namespace Control
           bind<SetServoPosition>(this);
           bind<SimulatedState>(this);
           bind<Acceleration>(this);
+          bind<IdleManeuver>(this);
 
           // Misc. initialization
           m_last_pkt_time = 0; // time of last packet from Ardupilot
@@ -407,6 +415,8 @@ namespace Control
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
 
+          sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_AUTO_DISARMED);
+
           debug(DTR("Waypoint packet sent to Ardupilot"));
         }
 
@@ -414,6 +424,15 @@ namespace Control
         loiterHere(void)
         {
           sendCommandPacket(MAV_CMD_NAV_LOITER_UNLIM);
+        }
+
+        void
+        consume(const IMC::IdleManeuver* idle)
+        {
+          (void)idle;
+
+          if(getEntityState() == IMC::EntityState::ESTA_NORMAL)
+            loiterHere();
         }
 
         void
@@ -561,7 +580,7 @@ namespace Control
                   default:
                     debug("UNDEF: %u", msg.msgid);
                     break;
-                  case 0:
+                  case MAVLINK_MSG_ID_HEARTBEAT:
                     trace("HEARTBEAT");
                     break;
                   case 1:
@@ -591,7 +610,7 @@ namespace Control
                   case 35:
                     trace("RC_CHANNELS_RAW");
                     break;
-                  case 42:
+                  case MAVLINK_MSG_ID_MISSION_CURRENT:
                     trace("WAYPOINT_CURRENT");
                     break;
                   case MAVLINK_MSG_ID_MISSION_ACK:
@@ -627,7 +646,7 @@ namespace Control
                   case MAVLINK_MSG_ID_WIND:
                     spew("WIND");
                     break;
-                  case 253:
+                  case MAVLINK_MSG_ID_STATUSTEXT:
                     trace("STATUSTEXT");
                     break;
                 }
@@ -643,8 +662,8 @@ namespace Control
 
                 m_last_pkt_time = now;
 
-                if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
-                  setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+//                if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
+//                  setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
               }
             }
           }
@@ -805,6 +824,65 @@ namespace Control
 
           mavlink_msg_mission_ack_decode(msg, &miss_ack);
           debug("Mission was received, result is %d", miss_ack.type);
+        }
+
+        void
+        handleMissionCurrentPacket(const mavlink_message_t* msg)
+        {
+          mavlink_mission_current_t miss_curr;
+
+          mavlink_msg_mission_current_decode(msg, &miss_curr);
+          trace("Current mission item: %d", miss_curr.seq);
+        }
+
+        void
+        handleStatusTextPacket(const mavlink_message_t* msg)
+        {
+          mavlink_statustext_t stat_tex;
+
+          mavlink_msg_statustext_decode(msg, &stat_tex);
+          if(!strcmp("out of commands!", stat_tex.text))
+          {
+            IMC::PathControlState path_cs;
+            path_cs.flags |= PathControlState::FL_NEAR;
+            dispatch(path_cs);
+          }
+          debug("Status: %s", stat_tex.text);
+        }
+
+        void
+        handleHeartbeatPacket(const mavlink_message_t* msg)
+        {
+          mavlink_heartbeat_t hbt;
+
+          mavlink_msg_heartbeat_decode(msg, &hbt);
+
+          switch(hbt.custom_mode)
+          {
+            default:
+              m_external = true;
+              break;
+            case 10:
+              trace("AUTO");
+              m_external = false;
+              break;
+            case 12:
+              trace("LOITER");
+              m_external = false;
+              break;
+            case 15:
+              trace("GUIDED");
+              m_external = false;
+              break;
+          }
+
+          if(m_external)
+          {
+            if(getEntityState() != IMC::EntityState::ESTA_ERROR)
+              setEntityState(IMC::EntityState::ESTA_ERROR, "External Control");
+          }
+          else if(getEntityState() != IMC::EntityState::ESTA_NORMAL)
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
 
         void
