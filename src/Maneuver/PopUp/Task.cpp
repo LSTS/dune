@@ -33,11 +33,15 @@
 
 namespace Maneuver
 {
+  //! This task is responsible for emerging
+  //! to acquire a gps fix.
+  //!
+  //! @author Pedro Calado
   namespace PopUp
   {
     using DUNE_NAMESPACES;
 
-    //! Task arguments
+    //! %Task arguments
     struct Arguments
     {
       //! Minimum number of satelites to accept fix
@@ -46,6 +50,7 @@ namespace Maneuver
       float min_distance;
     };
 
+    //! %PopUp task.
     struct Task: public DUNE::Maneuvers::Maneuver
     {
       //! DesiredPath message
@@ -69,7 +74,7 @@ namespace Maneuver
       //! Station keeping behavior in case it is necessary
       Maneuvers::StationKeep* m_skeep;
       //! Timer counter for duration
-      Time::Counter<float> m_counter;
+      Time::Counter<float> m_dur_timer;
       //! Task arguments
       Arguments m_args;
 
@@ -108,12 +113,12 @@ namespace Maneuver
       {
         m_maneuver = *maneuver;
 
-        if (m_maneuver.flags & IMC::PopUp::FLG_CURR_POS)
+        if (useCurr())
         {
           // disable control loops and let it surface
           setControl(IMC::CL_NONE);
         }
-        else
+        else if (mustKeep())
         {
           Memory::clear(m_skeep);
 
@@ -121,8 +126,23 @@ namespace Maneuver
                                                maneuver->radius, 0.0, IMC::Z_DEPTH,
                                                maneuver->speed, maneuver->speed_units);
         }
+        else
+        {
+          setControl(IMC::CL_PATH);
+
+          IMC::DesiredPath path;
+          path.end_lat = m_maneuver.lat;
+          path.end_lon = m_maneuver.lon;
+          path.end_z = m_maneuver.z;
+          path.end_z_units = m_maneuver.z_units;
+          path.speed = m_maneuver.speed;
+          path.speed_units = m_maneuver.speed_units;
+
+          dispatch(path);
+        }
       }
 
+      //! Used to check if we're at the surface
       void
       consume(const IMC::VehicleMedium* msg)
       {
@@ -131,9 +151,7 @@ namespace Maneuver
         m_at_surface = msg->medium != IMC::VehicleMedium::VM_UNDERWATER;
 
         if (m_at_surface != was_at_surface && m_at_surface)
-        {
-          m_counter.setTop(m_maneuver.duration);
-        }
+          m_dur_timer.setTop(m_maneuver.duration);
       }
 
       void
@@ -165,12 +183,15 @@ namespace Maneuver
                                                     m_gps_lat, m_gps_lon, 0.0);
 
           if (dist < m_args.min_distance)
+          {
             m_matched_criteria = true;
+            debug("matched criteria");
+          }
         }
 
         if (m_matched_criteria && mustWait())
         {
-          if (m_counter.overflow())
+          if (m_dur_timer.overflow())
             signalCompletion();
 
           if (mustKeep())
@@ -185,11 +206,24 @@ namespace Maneuver
       void
       consume(const IMC::PathControlState* pcs)
       {
+        if ((pcs->flags & IMC::PathControlState::FL_NEAR) && !m_near)
+        {
+          if (!useCurr() && !mustKeep())
+            setControl(IMC::CL_NONE);
+        }
+
         m_near = (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
 
+        computeETA(pcs);
+      }
+
+      //! Compute ETA
+      inline void
+      computeETA(const IMC::PathControlState* pcs)
+      {
         if (m_matched_criteria && mustWait())
         {
-          signalProgress(std::ceil(m_counter.getRemaining()));
+          signalProgress(std::ceil(m_dur_timer.getRemaining()));
         }
         else if (m_matched_criteria)
         {
@@ -204,6 +238,10 @@ namespace Maneuver
           {
             if (m_state.vz != 0.0)
               rising_time = std::ceil(std::fabs(m_state.depth / m_state.vz));
+
+            // Might be heading to the waypoint
+            if (!useCurr())
+              rising_time += pcs->eta;
           }
           else
           {
@@ -219,12 +257,21 @@ namespace Maneuver
         }
       }
 
+      //! Will use current position
+      bool
+      useCurr(void)
+      {
+        return (m_maneuver.flags & IMC::PopUp::FLG_CURR_POS) != 0;
+      }
+
+      //! Must wait some time at surface
       bool
       mustWait(void)
       {
         return (m_maneuver.flags & IMC::PopUp::FLG_WAIT_AT_SURFACE) != 0;
       }
 
+      //! Must station keep while at surface
       bool
       mustKeep(void)
       {
