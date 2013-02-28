@@ -132,7 +132,7 @@ namespace Maneuver
       }
 
       void
-      onResourceInitialization(void)
+      onManeuverDeactivation(void)
       {
         m_sms_timer.setTop(m_args.min_sms_interval);
       }
@@ -179,6 +179,7 @@ namespace Maneuver
 
         if (m_at_surface != was_at_surface && m_at_surface)
         {
+          debug("at surface");
           m_dur_timer.setTop(m_maneuver.duration);
 
           if (mustSendSMS() && m_got_fix)
@@ -187,6 +188,7 @@ namespace Maneuver
             {
               sendSMS();
               m_sms_timer.reset();
+              debug("sent sms");
             }
           }
         }
@@ -221,7 +223,10 @@ namespace Maneuver
                                                     m_gps_lat, m_gps_lon, 0.0);
 
           if (dist < m_args.min_distance)
+          {
             m_matched_criteria = true;
+            debug("matched criteria");
+          }
         }
 
         if (m_matched_criteria && mustWait())
