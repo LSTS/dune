@@ -157,7 +157,11 @@ namespace Maneuver
 
         if (m_got_fix && !m_matched_criteria)
         {
-          float dist = Coordinates::WGS84::distance(state->lat, state->lon, 0.0,
+          double lat;
+          double lon;
+          Coordinates::toWGS84(*state, lat, lon);
+
+          float dist = Coordinates::WGS84::distance(lat, lon, 0.0,
                                                     m_gps_lat, m_gps_lon, 0.0);
 
           if (dist < m_args.min_distance)
