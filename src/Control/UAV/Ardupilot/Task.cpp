@@ -113,6 +113,8 @@ namespace Control
         System::IOMultiplexing m_iom;
         //! System ID
         uint8_t m_sysid;
+        //! Last received position
+        float m_lat, m_lon, m_alt;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -122,7 +124,10 @@ namespace Control
           ref_hei(0.0),
           m_acc_x(0.0),
           m_acc_y(0.0),
-          m_acc_z(0.0)
+          m_acc_z(0.0),
+          m_lat(0.0),
+          m_lon(0.0),
+          m_alt(0.0)
         {
           param("Serial Port - Device", m_args.uart_dev)
                   .defaultValue("")
@@ -320,7 +325,7 @@ namespace Control
           mavlink_msg_mission_count_pack(255, 0, msg,
               m_sysid, //! target_system System ID
               0, //! target_component Component ID
-              3); //! size of Mission
+              4); //! size of Mission
 
           uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
@@ -329,18 +334,39 @@ namespace Control
               m_sysid, //! target_system System ID
               0, //! target_component Component ID
               seq, //! start_index Start index, 0 by default and smaller / equal to the largest index of the current onboard list
-              seq+1); //! end_index End index, equal or greater than start index
+              seq+2); //! end_index End index, equal or greater than start index
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
 
+          //! Current position
+          mavlink_msg_mission_item_pack(255, 0, msg,
+              m_sysid, //! target_system System ID
+              0, //! target_component Component ID
+              seq++, //! seq Sequence
+              MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+              MAV_CMD_NAV_WAYPOINT, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+              1, //! current false:0, true:1
+              1, //! autocontinue autocontinue to next wp
+              0, //! Not used
+              0, //! Not used
+              0, //! Not used
+              0, //! Not used
+              m_lat, //! x PARAM5 / local: x position, global: latitude
+              m_lon, //! y PARAM6 / y position: global: longitude
+              m_alt);//! z PARAM7 / z position: global: altitude
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+
+          //! Desired speed
           mavlink_msg_mission_item_pack(255, 0, msg,
               m_sysid, //! target_system System ID
               0, //! target_component Component ID
               seq++, //! seq Sequence
               MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
               MAV_CMD_DO_CHANGE_SPEED, //! command The scheduled action for the MISSION. see MAV_CMD in common.xml MAVLink specs
-              1, //! current false:0, true:1
+              0, //! current false:0, true:1
               1, //! autocontinue autocontinue to next wp
               0, //! Speed type (0=Airspeed, 1=Ground Speed)
               (float)(path->speed_units == IMC::SUNITS_METERS_PS ? path->speed : -1), //! Speed  (m/s, -1 indicates no change)
@@ -353,6 +379,7 @@ namespace Control
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
 
+          //! Destination
           mavlink_msg_mission_item_pack(255, 0, msg,
               m_sysid, //! target_system System ID
               0, //! target_component Component ID
@@ -368,6 +395,14 @@ namespace Control
               (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
               (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
               (float)(path->end_z));//! z PARAM7 / z position: global: altitude
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+
+          mavlink_msg_mission_set_current_pack(255, 0, msg,
+              m_sysid,
+              0,
+              1);
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
@@ -642,6 +677,11 @@ namespace Control
           fp64_t lat = Angles::radians((fp64_t)gp.lat * 1e-07);
           fp64_t lon = Angles::radians((fp64_t)gp.lon * 1e-07);
           fp32_t hei = gp.alt * 1e-03;
+
+          m_lat = (float)(gp.lat * 1e-07);
+          m_lon = (float)(gp.lon * 1e-07);
+          m_alt = (float)(gp.alt * 1e-03);
+
 
           double distance_to_ref = WGS84::distance(ref_lat,ref_lon,ref_hei,
               lat,lon,hei);
