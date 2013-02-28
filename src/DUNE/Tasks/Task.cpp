@@ -319,7 +319,16 @@ namespace DUNE
 
       IMC::MessageList<IMC::EntityParameter>::const_iterator itr = msg->params.begin();
       for (; itr != msg->params.end(); ++itr)
-        m_params.set((*itr)->name, (*itr)->value);
+      {
+        try
+        {
+          m_params.set((*itr)->name, (*itr)->value);
+        }
+        catch (std::runtime_error& e)
+        {
+          err(DTR("updating entity parameters: %s"), e.what());
+        }
+      }
 
       updateParameters();
     }
