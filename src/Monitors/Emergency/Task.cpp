@@ -114,6 +114,9 @@ namespace Monitors
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
         m_heartbeat_last = Clock::get();
+        m_fuel = -1.0;
+        m_fuel_conf = -1.0;
+        m_progress = -1.0;
       }
 
       void
@@ -135,9 +138,9 @@ namespace Monitors
                                getSystemName(),
                                bdt.hour, bdt.minutes, bdt.seconds,
                                lat_deg, lat_min, lon_deg, std::fabs(lon_min),
-                               (unsigned)m_fuel, (unsigned)m_fuel_conf);
+                               (int)m_fuel, (int)m_fuel_conf);
 
-          m_emsg += m_in_mission? String::str(" / p:%u", (unsigned)m_progress) : "";
+          m_emsg += m_in_mission? String::str(" / p:%u", (int)m_progress) : "";
         }
         else
         {
