@@ -117,6 +117,8 @@ namespace Control
         float m_lat, m_lon, m_alt;
         //! External control
         bool m_external;
+        //! Current waypoint
+        int m_current_wp;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -131,7 +133,8 @@ namespace Control
           m_lat(0.0),
           m_lon(0.0),
           m_alt(0.0),
-          m_external(true)
+          m_external(true),
+          m_current_wp(0)
         {
           param("Serial Port - Device", m_args.uart_dev)
           .defaultValue("")
@@ -185,6 +188,7 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_MISSION_CURRENT] = &Task::handleMissionCurrentPacket;
           m_mlh[MAVLINK_MSG_ID_STATUSTEXT] = &Task::handleStatusTextPacket;
           m_mlh[MAVLINK_MSG_ID_HEARTBEAT] = &Task::handleHeartbeatPacket;
+          m_mlh[MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT] = &Task::handleNavControllerPacket;
 
           // Setup processing of IMC messages
           bind<DesiredPath>(this);
@@ -324,6 +328,7 @@ namespace Control
         {
           if(!m_args.ardu_tracker)
             return;
+          sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_AUTO_DISARMED);
 
           uint8_t buf[512];
           int seq = 1;
@@ -414,8 +419,6 @@ namespace Control
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
-
-          sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_AUTO_DISARMED);
 
           debug(DTR("Waypoint packet sent to Ardupilot"));
         }
@@ -616,7 +619,7 @@ namespace Control
                   case MAVLINK_MSG_ID_MISSION_ACK:
                     spew("MISSION_ACK");
                     break;
-                  case 62:
+                  case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
                     trace("NAV_CONTROLLER_OUTPUT");
                     break;
                   case 74:
@@ -661,9 +664,6 @@ namespace Control
                 m_sysid = msg.sysid;
 
                 m_last_pkt_time = now;
-
-//                if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
-//                  setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
               }
             }
           }
@@ -832,6 +832,7 @@ namespace Control
           mavlink_mission_current_t miss_curr;
 
           mavlink_msg_mission_current_decode(msg, &miss_curr);
+          m_current_wp = miss_curr.seq;
           trace("Current mission item: %d", miss_curr.seq);
         }
 
@@ -841,7 +842,7 @@ namespace Control
           mavlink_statustext_t stat_tex;
 
           mavlink_msg_statustext_decode(msg, &stat_tex);
-          if(!strcmp("out of commands!", stat_tex.text))
+          if((!strcmp("out of commands!", stat_tex.text)) && (m_current_wp == 3))
           {
             IMC::PathControlState path_cs;
             path_cs.flags |= PathControlState::FL_NEAR;
@@ -883,6 +884,14 @@ namespace Control
           }
           else if(getEntityState() != IMC::EntityState::ESTA_NORMAL)
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        }
+
+        void
+        handleNavControllerPacket(const mavlink_message_t* msg)
+        {
+          mavlink_nav_controller_output_t nav_out;
+          mavlink_msg_nav_controller_output_decode(msg, &nav_out);
+          debug("WP Dist: %d", nav_out.wp_dist);
         }
 
         void
