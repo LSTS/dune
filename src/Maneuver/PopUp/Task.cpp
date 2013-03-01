@@ -71,6 +71,8 @@ namespace Maneuver
       bool m_at_surface;
       //! True if flag near from PathControlState has gone true
       bool m_near;
+      //! Estimated time of arrival from PathControlState
+      unsigned m_path_eta;
       //! Station keeping behavior in case it is necessary
       Maneuvers::StationKeep* m_skeep;
       //! Timer counter for duration
@@ -84,6 +86,7 @@ namespace Maneuver
         m_matched_criteria(false),
         m_at_surface(false),
         m_near(false),
+        m_path_eta(Plans::c_max_eta),
         m_skeep(NULL)
       {
         param("Minimum Satellites", m_args.min_sats)
@@ -118,14 +121,6 @@ namespace Maneuver
           // disable control loops and let it surface
           setControl(IMC::CL_NONE);
         }
-        else if (mustKeep())
-        {
-          Memory::clear(m_skeep);
-
-          m_skeep = new Maneuvers::StationKeep(this, maneuver->lat, maneuver->lon,
-                                               maneuver->radius, 0.0, IMC::Z_DEPTH,
-                                               maneuver->speed, maneuver->speed_units);
-        }
         else
         {
           setControl(IMC::CL_PATH);
@@ -139,6 +134,15 @@ namespace Maneuver
           path.speed_units = m_maneuver.speed_units;
 
           dispatch(path);
+        }
+
+        if (mustWait() && mustKeep())
+        {
+          Memory::clear(m_skeep);
+
+          m_skeep = new Maneuvers::StationKeep(this, maneuver->lat, maneuver->lon,
+                                               maneuver->radius, 0.0, IMC::Z_DEPTH,
+                                               maneuver->speed, maneuver->speed_units);
         }
       }
 
@@ -213,13 +217,17 @@ namespace Maneuver
         }
 
         m_near = (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
+      }
 
-        computeETA(pcs);
+      void
+      onStateReport(void)
+      {
+        computeETA();
       }
 
       //! Compute ETA
       inline void
-      computeETA(const IMC::PathControlState* pcs)
+      computeETA(void)
       {
         if (m_matched_criteria && mustWait())
         {
@@ -241,7 +249,7 @@ namespace Maneuver
 
             // Might be heading to the waypoint
             if (!useCurr())
-              rising_time += pcs->eta;
+              rising_time += m_path_eta;
           }
           else
           {
