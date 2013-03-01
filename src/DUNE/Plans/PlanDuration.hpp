@@ -305,6 +305,22 @@ namespace DUNE
             maneuver->speed == 0.0)
           return -1.0;
 
+        // Travel time
+        float travel_time;
+
+        if ((maneuver->flags & IMC::PopUp::FLG_CURR_POS) != 0)
+        {
+          last_pos.z = 0.0;
+          last_pos.z_units = (uint8_t)IMC::Z_DEPTH;;
+
+          float dist = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
+          travel_time = dist / maneuver->speed;
+        }
+        else
+        {
+          travel_time = 0;
+        }
+
         // Rising time
         float rising_time;
         if (maneuver->z_units == IMC::Z_DEPTH)
@@ -312,12 +328,11 @@ namespace DUNE
         else // altitude, assume zero
           rising_time = 0.0;
 
-        last_pos.z = 0.0;
-        last_pos.z_units = (uint8_t)IMC::Z_DEPTH;;
+        // surface time
+        bool wait = (maneuver->flags & IMC::PopUp::FLG_WAIT_AT_SURFACE) != 0;
+        float surface_time = wait ? maneuver->duration : c_fix_time;
 
-        float dist = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
-
-        durations.push_back(rising_time + dist / maneuver->speed + c_fix_time + last_dur);
+        durations.push_back(travel_time + rising_time + surface_time + last_dur);
 
         return durations.back();
       };
