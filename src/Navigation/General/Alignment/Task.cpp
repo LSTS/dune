@@ -205,13 +205,7 @@ namespace Navigation
           if (msg->getSourceEntity() != m_imu_eid)
             return;
 
-          if (m_calibrated)
-            return;
-
-          if (!m_dev_active)
-            return;
-
-          if (!m_dev_proper_medium)
+          if (!canCalibrate())
             return;
 
           if (!m_delay.overflow())
@@ -220,10 +214,7 @@ namespace Navigation
           if (!m_args.start_at_boot)
           {
             if (!m_dev_cal_control)
-            {
-              setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
               return;
-            }
           }
 
           double accel = std::sqrt(msg->x * msg->x + msg->y * msg->y + msg->z * msg->z);
@@ -253,13 +244,7 @@ namespace Navigation
           if (msg->getSourceEntity() != m_imu_eid)
             return;
 
-          if (m_calibrated)
-            return;
-
-          if (!m_dev_active)
-            return;
-
-          if (!m_dev_proper_medium)
+          if (!canCalibrate())
             return;
 
           if (getEntityState() == IMC::EntityState::ESTA_FAULT)
@@ -388,6 +373,14 @@ namespace Navigation
             m_dev_proper_medium = false;
           else
             m_dev_proper_medium = true;
+        }
+
+        //! Perform basic checks.
+        //! @return true to calibrate, false otherwise.
+        bool
+        canCalibrate(void)
+        {
+          return (!m_calibrated && m_dev_active && m_dev_proper_medium);
         }
 
         //! Reset internal parameters.
