@@ -45,6 +45,7 @@ if(GUI)
     endif(DUNE_OS_WINDOWS AND DUNE_CXX_GNU)
 
     macro(dune_qt4_wrap_ui outfiles)
+      set(${outfiles})
       QT4_EXTRACT_OPTIONS(ui_files ui_options ${ARGN})
 
       foreach(it ${ui_files})
@@ -61,7 +62,8 @@ if(GUI)
       endforeach(it)
     endmacro(dune_qt4_wrap_ui)
 
-    macro(dune_qt4_wrap_cpp outfiles )
+    macro(dune_qt4_wrap_cpp outfiles)
+      set(${outfiles})
       QT4_EXTRACT_OPTIONS(moc_files moc_options ${ARGN})
 
       foreach(it ${moc_files})
