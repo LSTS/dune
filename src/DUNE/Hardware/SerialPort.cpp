@@ -26,6 +26,11 @@
 // Author: Eduardo Marques (Microsoft Windows)                              *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <vector>
+#include <string>
+#include <cstring>
+
 // DUNE headers.
 #include <DUNE/Config.hpp>
 #include <DUNE/Utils/Utils.hpp>
@@ -53,6 +58,11 @@
 
 #if defined(DUNE_SYS_HAS_SYS_SELECT_H)
 #  include <sys/select.h>
+#endif
+
+// Microsoft Windows headers.
+#if defined(DUNE_SYS_HAS_WINDOWS_H)
+#  include <windows.h>
 #endif
 
 // POSIX implementation.
@@ -129,6 +139,37 @@ namespace DUNE
         }
         ++fmt;
       }
+
+#elif defined(DUNE_OS_WINDOWS)
+      std::vector<char> buffer(4096);
+
+      while (true)
+      {
+        DWORD rv = QueryDosDevice(NULL, &buffer[0], buffer.size());
+        if (rv > 0)
+        {
+          unsigned b = 0;
+          for (unsigned i = 0; i < rv; ++i)
+          {
+            if (buffer[i] == '\0')
+            {
+              if (std::strncmp("COM", &buffer[b], 3) == 0)
+                devs.push_back(std::string(&buffer[b], i - b));
+              b = i + 1;
+            }
+          }
+
+          break;
+        }
+        else
+        {
+          if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+            buffer.resize(buffer.size() * 2);
+          else
+            break;
+        }
+      }
+
 #endif
 
       return devs;
