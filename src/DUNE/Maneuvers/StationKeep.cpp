@@ -76,7 +76,7 @@ namespace DUNE
 
 
     void
-    StationKeep::update(const IMC::EstimatedState* state, bool near)
+    StationKeep::update(const IMC::EstimatedState* state, bool near_on)
     {
       double lat = state->lat;
       double lon = state->lon;
@@ -97,13 +97,13 @@ namespace DUNE
       m_inside = range < m_radius;
 
       if (was_inside && !m_inside)
-        near = false;
+        near_on = false;
 
       if (m_inside != was_inside)
         m_task->inf(DTR("%s safe region (distance: %.1f m)"),
                     m_inside ? "inside" : "outside", range);
 
-      if (near)
+      if (near_on)
       {
         if (m_moving)
         {
