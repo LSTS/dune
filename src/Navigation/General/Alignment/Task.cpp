@@ -205,6 +205,9 @@ namespace Navigation
           if (msg->getSourceEntity() != m_imu_eid)
             return;
 
+          if (m_calibrated)
+            return;
+
           if (!m_dev_active)
             return;
 
@@ -213,6 +216,15 @@ namespace Navigation
 
           if (!m_delay.overflow())
             return;
+
+          if (!m_args.start_at_boot)
+          {
+            if (!m_dev_cal_control)
+            {
+              setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+              return;
+            }
+          }
 
           double accel = std::sqrt(msg->x * msg->x + msg->y * msg->y + msg->z * msg->z);
 
@@ -239,6 +251,9 @@ namespace Navigation
         consume(const IMC::AngularVelocity* msg)
         {
           if (msg->getSourceEntity() != m_imu_eid)
+            return;
+
+          if (m_calibrated)
             return;
 
           if (!m_dev_active)
@@ -295,33 +310,35 @@ namespace Navigation
           if (msg->getDestinationEntity() != getEntityId())
             return;
 
-          if (!m_dev_active)
-          {
-            IMC::DevCalibrationState state;
-            state.step = DTR("device is not active");
-            state.flags = IMC::DevCalibrationState::DCS_ERROR;
-            dispatch(state);
-          }
-
-          if (!m_dev_proper_medium)
-          {
-            IMC::DevCalibrationState state;
-            state.step = DTR("device is not in proper medium");
-            state.flags = IMC::DevCalibrationState::DCS_ERROR;
-            dispatch(state);
-          }
-
           if (msg->op == IMC::DevCalibrationControl::DCAL_START)
           {
             IMC::DevCalibrationState state;
-            state.step_number = 0;
-            state.step = DTR("calibrating: system must remain static");
-            state.total_steps = 2;
-            state.flags = (IMC::DevCalibrationState::DCS_PREVIOUS_NOT_SUPPORTED |
-                           IMC::DevCalibrationState::DCS_NEXT_NOT_SUPPORTED);
-            dispatch(state);
+
+            if (!m_dev_active)
+            {
+              state.step = DTR("device is not active");
+              state.flags = IMC::DevCalibrationState::DCS_ERROR;
+              dispatch(state);
+              return;
+            }
+
+            if (!m_dev_proper_medium)
+            {
+              state.step = DTR("device is not in proper medium");
+              state.flags = IMC::DevCalibrationState::DCS_ERROR;
+              dispatch(state);
+              return;
+            }
 
             m_dev_cal_control = true;
+
+            state.step_number = 0;
+            state.total_steps = 2;
+            state.step = DTR("calibrating: system must remain static");
+            state.flags = (IMC::DevCalibrationState::DCS_PREVIOUS_NOT_SUPPORTED |
+                           IMC::DevCalibrationState::DCS_NEXT_NOT_SUPPORTED);
+
+            dispatch(state);
           }
 
           if (msg->op == IMC::DevCalibrationControl::DCAL_STOP)
