@@ -113,6 +113,9 @@ namespace DUNE
       inline double
       getState(short pos) const
       {
+        if ((size_t)pos > m_state_count)
+          throw std::runtime_error("invalid index while getting state");
+
         return m_x(pos);
       }
 
@@ -175,6 +178,9 @@ namespace DUNE
       inline double
       getOutput(short pos) const
       {
+        if (pos > m_y.rows())
+          throw std::runtime_error("invalid index while getting output");
+
         return m_y(pos);
       }
 
@@ -190,6 +196,9 @@ namespace DUNE
       inline double
       getInnovation(short pos) const
       {
+        if ((size_t)pos > m_state_count)
+          throw std::runtime_error("invalid index while getting innovation matrix value");
+
         return m_innov(pos);
       }
 
@@ -233,6 +242,9 @@ namespace DUNE
       inline double
       getCovariance(short ln, short cl) const
       {
+        if (ln > m_p.rows() || cl > m_p.columns())
+          throw std::runtime_error("invalid index while getting state covariance matrix value");
+
         return m_p(ln, cl);
       }
 
@@ -242,6 +254,9 @@ namespace DUNE
       inline double
       getCovariance(short in) const
       {
+        if ((size_t)in > m_state_count)
+          throw std::runtime_error("invalid index while getting state covariance matrix diagonal value");
+
         return m_p(in, in);
       }
 
@@ -276,6 +291,10 @@ namespace DUNE
       //! @param value state covariance matrix value.
       void
       setCovariance(double value);
+
+      //! Reset covariance values.
+      void
+      resetCovariance(short in);
 
       //! Set process noise covariance matrix value.
       //! @param ln row index.

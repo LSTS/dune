@@ -246,9 +246,7 @@ namespace Navigation
             if (!m_alignment)
             {
               // Reinitialize state covariance matrix value.
-              for (int i = 0; i < NUM_STATE; ++i)
-                m_kal.setCovariance(STATE_PSI_BIAS, i, 0.0);
-
+              m_kal.resetCovariance(STATE_PSI_BIAS);
               m_kal.setCovariance(STATE_PSI_BIAS, STATE_PSI_BIAS, m_state_cov[3]);
               m_kal.setProcessNoise(STATE_PSI_BIAS, STATE_PSI_BIAS, m_process_noise[5]);
 
@@ -269,8 +267,7 @@ namespace Navigation
             debug("deactivating IMU");
 
             // No heading offset estimation without IMU.
-            for (int i = 0; i < NUM_STATE; ++i)
-              m_kal.setCovariance(STATE_PSI_BIAS, i, 0.0);
+            m_kal.resetCovariance(STATE_PSI_BIAS);
             m_kal.setProcessNoise(STATE_PSI_BIAS, STATE_PSI_BIAS, 0.0);
 
             // Reinitialize EKF variances.
@@ -418,9 +415,7 @@ namespace Navigation
           m_kal.setState(STATE_PSI, psi);
           m_kal.setState(STATE_PSI_BIAS, m_heading - psi);
 
-          for (int i = 0; i < NUM_STATE; ++i)
-            m_kal.setCovariance(STATE_PSI_BIAS, i, 0.0);
-
+          m_kal.resetCovariance(STATE_PSI_BIAS);
           m_kal.setProcessNoise(STATE_PSI_BIAS, STATE_PSI_BIAS, 0.0);
         }
 
