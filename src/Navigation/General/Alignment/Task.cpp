@@ -75,11 +75,11 @@ namespace Navigation
       struct Task: public DUNE::Tasks::Task
       {
         //! Device is proper medium.
-        bool m_dev_proper_medium;
+        bool m_dev_medium;
         //! Device is activated.
         bool m_dev_active;
         //! Received order to calibrate.
-        bool m_dev_cal_control;
+        bool m_cmd_calibrate;
         //! Device calibrated.
         bool m_calibrated;
         //! GpsFix received.
@@ -117,9 +117,9 @@ namespace Navigation
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Task(name, ctx),
-          m_dev_proper_medium(true),
+          m_dev_medium(true),
           m_dev_active(false),
-          m_dev_cal_control(false),
+          m_cmd_calibrate(false),
           m_gps(false),
           m_avg_acc(NULL)
         {
@@ -213,7 +213,7 @@ namespace Navigation
 
           if (!m_args.start_at_boot)
           {
-            if (!m_dev_cal_control)
+            if (!m_cmd_calibrate)
               return;
           }
 
@@ -255,7 +255,7 @@ namespace Navigation
 
           if (!m_args.start_at_boot)
           {
-            if (!m_dev_cal_control)
+            if (!m_cmd_calibrate)
             {
               setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
               return;
@@ -307,7 +307,7 @@ namespace Navigation
               return;
             }
 
-            if (!m_dev_proper_medium)
+            if (!m_dev_medium)
             {
               state.step = DTR("device is not in proper medium");
               state.flags = IMC::DevCalibrationState::DCS_ERROR;
@@ -315,7 +315,7 @@ namespace Navigation
               return;
             }
 
-            m_dev_cal_control = true;
+            m_cmd_calibrate = true;
 
             state.step_number = 0;
             state.total_steps = 2;
@@ -328,7 +328,7 @@ namespace Navigation
 
           if (msg->op == IMC::DevCalibrationControl::DCAL_STOP)
           {
-            m_dev_cal_control = false;
+            m_cmd_calibrate = false;
             reset();
           }
         }
@@ -370,9 +370,9 @@ namespace Navigation
         {
           if (msg->medium == IMC::VehicleMedium::VM_WATER ||
               msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
-            m_dev_proper_medium = false;
+            m_dev_medium = false;
           else
-            m_dev_proper_medium = true;
+            m_dev_medium = true;
         }
 
         //! Perform basic checks.
@@ -380,7 +380,7 @@ namespace Navigation
         bool
         canCalibrate(void)
         {
-          return (!m_calibrated && m_dev_active && m_dev_proper_medium);
+          return (!m_calibrated && m_dev_active && m_dev_medium);
         }
 
         //! Reset internal parameters.
