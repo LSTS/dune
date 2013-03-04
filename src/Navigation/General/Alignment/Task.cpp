@@ -1,4 +1,4 @@
-//***************************************************************************
+c//***************************************************************************
 // Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
@@ -64,6 +64,8 @@ namespace Navigation
         float time;
         //! Delay time to accept data.
         float delay;
+        //! Watchdog time.
+        float wdog;
         //! Number of samples to average accelerations.
         int avg_samples;
         //! Minimum standard deviation value to detect motion.
@@ -112,6 +114,8 @@ namespace Navigation
         Time::Counter<float> m_time;
         //! Initial delay time.
         Time::Counter<float> m_delay;
+        //! Watchdog
+        Time::Counter<float> m_wdog;
         //! Task arguments.
         Arguments m_args;
 
@@ -140,6 +144,12 @@ namespace Navigation
           .defaultValue("5")
           .description("Delay time to avoid using initial noisier IMU booting data.");
 
+          param("Watchdog", m_args.wdog)
+          .units(Units::Second)
+          .minimumValue("2")
+          .defaultValue("3")
+          .description("Task watchdog for data income.");
+
           param("Moving Average Samples", m_args.avg_samples)
           .defaultValue("10")
           .description("Number of moving average samples to smooth acceleration vector");
@@ -167,8 +177,8 @@ namespace Navigation
         void
         onUpdateParameters(void)
         {
-          m_time.setTop(m_args.time + m_args.delay);
           m_delay.setTop(m_args.delay);
+          m_wdog.setTop(m_args.wdog);
         }
 
         void
@@ -243,6 +253,8 @@ namespace Navigation
         {
           if (msg->getSourceEntity() != m_imu_eid)
             return;
+
+          m_wdog.reset();
 
           if (!canCalibrate())
             return;
@@ -329,6 +341,9 @@ namespace Navigation
 
           if (msg->op == IMC::DevCalibrationControl::DCAL_STOP)
           {
+            if (!m_calibrated)
+              setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+
             m_cmd_calibrate = false;
             reset();
           }
@@ -388,7 +403,11 @@ namespace Navigation
         void
         reset(void)
         {
-          m_time.reset();
+          if (m_delay.overflow())
+            m_time.setTop(m_args.time);
+          else
+            m_time.setTop(m_args.time + m_args.delay);
+
           m_av_readings = 0;
           m_acc_readings = 0;
           m_av_x = 0.0;
@@ -463,6 +482,12 @@ namespace Navigation
           while (!stopping())
           {
             waitForMessages(1.0);
+
+            if (m_wdog.overflow())
+            {
+              m_calibrated = false;
+              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
+            }
           }
         }
       };
