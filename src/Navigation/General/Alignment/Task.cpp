@@ -64,16 +64,24 @@ namespace Navigation
         float time;
         //! Delay time to accept data.
         float delay;
+        //! Watchdog time.
+        float wdog;
         //! Number of samples to average accelerations.
         int avg_samples;
         //! Minimum standard deviation value to detect motion.
         float std;
+        //! Start at boot
+        bool start_at_boot;
       };
 
       struct Task: public DUNE::Tasks::Task
       {
-        //! Device is calibrating.
-        bool m_calibrating;
+        //! Device is proper medium.
+        bool m_dev_medium;
+        //! Device is activated.
+        bool m_dev_active;
+        //! Received order to calibrate.
+        bool m_cmd_calibrate;
         //! Device calibrated.
         bool m_calibrated;
         //! GpsFix received.
@@ -106,12 +114,16 @@ namespace Navigation
         Time::Counter<float> m_time;
         //! Initial delay time.
         Time::Counter<float> m_delay;
+        //! Watchdog
+        Time::Counter<float> m_wdog;
         //! Task arguments.
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Task(name, ctx),
-          m_calibrating(false),
+          m_dev_medium(true),
+          m_dev_active(false),
+          m_cmd_calibrate(false),
           m_gps(false),
           m_avg_acc(NULL)
         {
@@ -132,6 +144,12 @@ namespace Navigation
           .defaultValue("5")
           .description("Delay time to avoid using initial noisier IMU booting data.");
 
+          param("Watchdog", m_args.wdog)
+          .units(Units::Second)
+          .minimumValue("2")
+          .defaultValue("3")
+          .description("Task watchdog for data income.");
+
           param("Moving Average Samples", m_args.avg_samples)
           .defaultValue("10")
           .description("Number of moving average samples to smooth acceleration vector");
@@ -140,12 +158,17 @@ namespace Navigation
           .defaultValue("0.2")
           .description("Minimum standard deviation value for motion detection");
 
+          param("Start At Boot", m_args.start_at_boot)
+          .defaultValue("false")
+          .description("Task starts alignment as soon as it is activated.");
+
           // Initialize entity state.
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
           m_calibrated = false;
 
           bind<IMC::Acceleration>(this);
           bind<IMC::AngularVelocity>(this);
+          bind<IMC::DevCalibrationControl>(this);
           bind<IMC::EntityControl>(this);
           bind<IMC::GpsFix>(this);
           bind<IMC::VehicleMedium>(this);
@@ -154,8 +177,8 @@ namespace Navigation
         void
         onUpdateParameters(void)
         {
-          m_time.setTop(m_args.time + m_args.delay);
           m_delay.setTop(m_args.delay);
+          m_wdog.setTop(m_args.wdog);
         }
 
         void
@@ -177,6 +200,7 @@ namespace Navigation
         {
           m_avg_acc = new MovingAverage<double>(m_args.avg_samples);
           reset();
+          m_delay.reset();
         }
 
         void
@@ -191,11 +215,17 @@ namespace Navigation
           if (msg->getSourceEntity() != m_imu_eid)
             return;
 
-          if (!m_calibrating)
+          if (!canCalibrate())
             return;
 
           if (!m_delay.overflow())
             return;
+
+          if (!m_args.start_at_boot)
+          {
+            if (!m_cmd_calibrate)
+              return;
+          }
 
           double accel = std::sqrt(msg->x * msg->x + msg->y * msg->y + msg->z * msg->z);
 
@@ -224,17 +254,27 @@ namespace Navigation
           if (msg->getSourceEntity() != m_imu_eid)
             return;
 
-          if (!m_calibrating)
+          m_wdog.reset();
+
+          if (!canCalibrate())
             return;
 
           if (getEntityState() == IMC::EntityState::ESTA_FAULT)
             return;
 
           if (getEntityState() == IMC::EntityState::ESTA_BOOT && m_gps)
-          {
             reset();
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATING);
+
+          if (!m_args.start_at_boot)
+          {
+            if (!m_cmd_calibrate)
+            {
+              setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+              return;
+            }
           }
+
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATING);
 
           if (!m_delay.overflow())
             return;
@@ -250,7 +290,61 @@ namespace Navigation
             dispatch(m_euler);
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATED);
             m_calibrated = true;
-            m_calibrating = false;
+            reset();
+
+            IMC::DevCalibrationState state;
+            state.step_number = 1;
+            state.step = DTR(Status::getString(Status::CODE_CALIBRATED));
+            state.total_steps = 2;
+            state.flags = IMC::DevCalibrationState::DCS_COMPLETED;
+            dispatch(state);
+          }
+        }
+
+        void
+        consume(const IMC::DevCalibrationControl* msg)
+        {
+          if (msg->getDestinationEntity() != getEntityId())
+            return;
+
+          if (msg->op == IMC::DevCalibrationControl::DCAL_START)
+          {
+            IMC::DevCalibrationState state;
+
+            if (!m_dev_active)
+            {
+              state.step = DTR("device is not active");
+              state.flags = IMC::DevCalibrationState::DCS_ERROR;
+              dispatch(state);
+              return;
+            }
+
+            if (!m_dev_medium)
+            {
+              state.step = DTR("device is not in proper medium");
+              state.flags = IMC::DevCalibrationState::DCS_ERROR;
+              dispatch(state);
+              return;
+            }
+
+            m_cmd_calibrate = true;
+            m_calibrated = false;
+
+            state.step_number = 0;
+            state.total_steps = 2;
+            state.step = DTR("calibrating: system must remain static");
+            state.flags = (IMC::DevCalibrationState::DCS_PREVIOUS_NOT_SUPPORTED |
+                           IMC::DevCalibrationState::DCS_NEXT_NOT_SUPPORTED);
+
+            dispatch(state);
+          }
+
+          if (msg->op == IMC::DevCalibrationControl::DCAL_STOP)
+          {
+            if (!m_calibrated)
+              setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+
+            m_cmd_calibrate = false;
             reset();
           }
         }
@@ -263,16 +357,16 @@ namespace Navigation
 
           if (msg->op == IMC::EntityControl::ECO_ACTIVATE)
           {
-            if (!m_calibrating && !m_calibrated)
+            if (!m_dev_active && !m_calibrated)
             {
               setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-              m_calibrating = true;
+              m_dev_active = true;
             }
           }
           else
           {
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-            m_calibrating = false;
+            m_dev_active = false;
             m_calibrated = false;
           }
         }
@@ -292,15 +386,28 @@ namespace Navigation
         {
           if (msg->medium == IMC::VehicleMedium::VM_WATER ||
               msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
-            m_calibrating = false;
+            m_dev_medium = false;
+          else
+            m_dev_medium = true;
+        }
+
+        //! Perform basic checks.
+        //! @return true to calibrate, false otherwise.
+        bool
+        canCalibrate(void)
+        {
+          return (!m_calibrated && m_dev_active && m_dev_medium);
         }
 
         //! Reset internal parameters.
         void
         reset(void)
         {
-          m_time.reset();
-          m_delay.reset();
+          if (m_delay.overflow())
+            m_time.setTop(m_args.time);
+          else
+            m_time.setTop(m_args.time + m_args.delay);
+
           m_av_readings = 0;
           m_acc_readings = 0;
           m_av_x = 0.0;
@@ -375,6 +482,12 @@ namespace Navigation
           while (!stopping())
           {
             waitForMessages(1.0);
+
+            if (m_wdog.overflow())
+            {
+              m_calibrated = false;
+              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
+            }
           }
         }
       };
