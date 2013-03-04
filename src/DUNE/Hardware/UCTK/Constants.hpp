@@ -43,6 +43,9 @@ namespace DUNE
       static const uint8_t c_csum_mask = 0x80;
       //! Maximum size of message payload in bytes.
       static const unsigned c_max_payload = 64;
+      //! Header size.
+      static const unsigned c_header_size = 3;
+
       //! Framing overhead in bytes.
       static const unsigned c_frame_overhead = 4;
       //! Default baud rate.

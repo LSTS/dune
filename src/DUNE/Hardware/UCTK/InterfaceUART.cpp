@@ -37,10 +37,13 @@ namespace DUNE
   {
     namespace UCTK
     {
-      InterfaceUART::InterfaceUART(const std::string& dev):
+      InterfaceUART::InterfaceUART(const std::string& dev, unsigned baud_rate):
+        m_baud_rate(baud_rate),
         m_dev(dev),
         m_handle(NULL)
-      { }
+      {
+        doOpen();
+      }
 
       InterfaceUART::~InterfaceUART(void)
       {
@@ -51,26 +54,33 @@ namespace DUNE
       InterfaceUART::doOpen(void)
       {
         Memory::clear(m_handle);
-        unsigned baud_rate = probeBaudRate(m_dev);
-        m_handle = new SerialPort(m_dev, baud_rate);
+        if (m_baud_rate == 0)
+          m_baud_rate = probeBaudRate(m_dev);
+        m_handle = new SerialPort(m_dev, m_baud_rate);
       }
 
       bool
-      InterfaceUART::hasNewData(double timeout)
+      InterfaceUART::doPoll(double timeout)
       {
         return m_handle->hasNewData(timeout) == System::IOMultiplexing::PRES_OK;
       }
 
       void
-      InterfaceUART::write(const uint8_t* data, unsigned data_size)
+      InterfaceUART::doWrite(const uint8_t* data, unsigned data_size)
       {
         m_handle->write((const char*)data, data_size);
       }
 
       unsigned
-      InterfaceUART::read(uint8_t* data, unsigned data_size)
+      InterfaceUART::doRead(uint8_t* data, unsigned data_size)
       {
         return (unsigned)m_handle->read((char*)data, data_size);
+      }
+
+      void
+      InterfaceUART::doFlush(void)
+      {
+        return m_handle->flushInput();
       }
 
       unsigned

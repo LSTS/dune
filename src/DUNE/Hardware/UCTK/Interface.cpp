@@ -35,6 +35,12 @@ namespace DUNE
   {
     namespace UCTK
     {
+      Interface::~Interface(void)
+      {
+        while (!m_queue.empty())
+          delete m_queue.pop();
+      }
+
       void
       Interface::open(void)
       {
@@ -81,36 +87,43 @@ namespace DUNE
 
         write(frame, size + c_frame_overhead);
 
+        if (timeout < 0)
+          return true;
+
         return readReply(msg, timeout);
       }
 
       bool
       Interface::readReply(Message& msg, double timeout)
       {
+        Frame frame;
+
         Time::Counter<double> timer(timeout);
         while (!timer.overflow())
         {
-          if (!hasNewData(timer.getRemaining()))
+          if (!poll(timer.getRemaining()))
             break;
 
           unsigned rv = read(m_buffer, sizeof(m_buffer));
           for (unsigned i = 0; i < rv; ++i)
           {
-            if (!m_parser.parse(m_buffer[i]))
+            if (!m_parser.parse(m_buffer[i], frame))
               continue;
 
-            if (m_parser.getId() == MSG_ERR)
+            if (frame.getId() == MSG_ERR)
             {
               Error error;
-              error.deserialize(m_parser.getPayload(), m_parser.getPayloadSize());
+              error.deserialize(frame.getData(), frame.getSize());
               throw std::runtime_error(error.error);
             }
 
-            if (m_parser.getId() == msg.getId())
+            if (frame.getId() == msg.getId())
             {
-              msg.deserialize(m_parser.getPayload(), m_parser.getPayloadSize());
+              msg.deserialize(frame.getData(), frame.getSize());
               return true;
             }
+
+            m_queue.push(new Frame(frame));
           }
         }
 

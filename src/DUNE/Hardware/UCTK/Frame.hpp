@@ -25,12 +25,13 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_HARDWARE_UCTK_INTERFACE_UART_HPP_INCLUDED_
-#define DUNE_HARDWARE_UCTK_INTERFACE_UART_HPP_INCLUDED_
+#ifndef DUNE_HARDWARE_UCTK_FRAME_HPP_INCLUDED_
+#define DUNE_HARDWARE_UCTK_FRAME_HPP_INCLUDED_
 
 // DUNE headers.
-#include <DUNE/Hardware/SerialPort.hpp>
-#include <DUNE/Hardware/UCTK/Interface.hpp>
+#include <DUNE/Utils/ByteCopy.hpp>
+#include <DUNE/Algorithms/XORChecksum.hpp>
+#include <DUNE/Hardware/UCTK/Constants.hpp>
 
 namespace DUNE
 {
@@ -38,41 +39,81 @@ namespace DUNE
   {
     namespace UCTK
     {
-      class InterfaceUART: public Interface
+      class Frame
       {
       public:
-        InterfaceUART(const std::string& dev, unsigned baud_rate = 0);
+        Frame(void)
+        {
+          m_data[0] = c_sync;
+          m_data[1] = 0;
+          m_data[2] = 0;
+        }
 
-        ~InterfaceUART(void);
+        void
+        setSize(uint8_t size)
+        {
+          m_data[1] = size;
+        }
+
+        uint8_t
+        getSize(void) const
+        {
+          return m_data[1];
+        }
+
+        void
+        setId(uint8_t id)
+        {
+          m_data[2] = id;
+        }
+
+        uint8_t
+        getId(void) const
+        {
+          return m_data[2];
+        }
+
+        uint8_t*
+        getData(void)
+        {
+          return m_data + c_header_size;
+        }
+
+        const uint8_t*
+        getData(void) const
+        {
+          return m_data + c_header_size;
+        }
+
+        void
+        setData(uint8_t byte, unsigned index)
+        {
+          m_data[c_header_size + index] = byte;
+        }
+
+        template <typename T>
+        void
+        set(const T& value, unsigned index)
+        {
+          Utils::ByteCopy::toLE(value, m_data + c_header_size + index);
+        }
+
+        template <typename T>
+        void
+        get(T& value, unsigned index) const
+        {
+          Utils::ByteCopy::fromLE(value, m_data + c_header_size + index);
+        }
+
+        void
+        computeCRC(void)
+        {
+          uint8_t size = c_header_size + getSize();
+          m_data[size] = Algorithms::XORChecksum::compute(m_data, size) | 0x80;
+        }
 
       private:
-        //! Baud rate.
-        unsigned m_baud_rate;
-        //! Device name.
-        std::string m_dev;
-        //! Serial port handle.
-        SerialPort* m_handle;
-
-        void
-        doOpen(void);
-
-        bool
-        doPoll(double timeout);
-
-        void
-        doWrite(const uint8_t* data, unsigned data_size);
-
-        unsigned
-        doRead(uint8_t* data, unsigned data_size);
-
-        void
-        doFlush(void);
-
-        static unsigned
-        probeBaudRate(const std::string& dev);
-
-        static bool
-        testBaudRate(const std::string& dev, unsigned baud_rate);
+        uint8_t m_data[c_header_size + c_max_payload];
       };
     }
   }
