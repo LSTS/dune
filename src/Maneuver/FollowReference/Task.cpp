@@ -70,6 +70,8 @@ namespace Maneuver
       IMC::Reference m_cur_ref;
       //! Estimated state
       IMC::EstimatedState m_estate;
+      //! FollowRefState
+      IMC::FollowRefState m_fref_state;
 
       //! Did we get a reference already?
       bool m_got_reference;
@@ -98,18 +100,18 @@ namespace Maneuver
                 "Minimum distance required to consider that the vehicle has arrived at the reference (Z)");
 
         param("Default Speed", m_args.default_speed).defaultValue("50")
-                .description("Speed to use in case no speed is given by reference source.");
+                            .description("Speed to use in case no speed is given by reference source.");
 
         param("Default Speed Units", m_args.default_speed_units).defaultValue("%")
-                .description("Units to use for default speed (one of 'm/s', 'rpm' or '%').");
+                            .description("Units to use for default speed (one of 'm/s', 'rpm' or '%').");
 
         param("Default Z", m_args.default_z).defaultValue("0")
-                .units(Units::Meter)
-                .description("Default z when no vertical reference is given.");
+                            .units(Units::Meter)
+                            .description("Default z when no vertical reference is given.");
 
         param("Default Z Units", m_args.default_z_units).defaultValue("DEPTH")
-                .units(Units::Meter)
-                .description("Units to use for default z reference (one of 'DEPTH', 'ALTITUDE' or 'HEIGHT')");
+                            .units(Units::Meter)
+                            .description("Units to use for default z reference (one of 'DEPTH', 'ALTITUDE' or 'HEIGHT')");
 
         bindToManeuver<Task, IMC::FollowReference>();
         bind<IMC::Reference>(this);
@@ -126,12 +128,13 @@ namespace Maneuver
         m_last_ref_time = Clock::get();
         state = FREF_BOOT;
 
+        m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
+        m_fref_state.state = IMC::FollowRefState::FR_WAIT;
+        m_fref_state.control_ent = msg->control_ent;
+        m_fref_state.control_src = msg->control_src;
+
         // send a notify to controlling peer that the maneuver was activated
-        IMC::FollowReference reply;
-        reply.control_ent = msg->control_ent;
-        reply.control_src = msg->control_src;
-        reply.timeout = msg->timeout;
-        dispatch(reply);
+        dispatch(m_fref_state);
       }
 
       //! Consume Reference messages and generate DesiredPath messages accordingly
@@ -166,6 +169,9 @@ namespace Maneuver
 
         if (m_cur_ref.flags & IMC::Reference::FLAG_MANDONE)
         {
+          m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
+          m_fref_state.state = IMC::FollowRefState::FR_WAIT;
+
           signalCompletion("maneuver terminated by reference source");
         }
         else
@@ -182,8 +188,11 @@ namespace Maneuver
         if (m_spec.timeout != 0)
           delta = Clock::get() - m_last_ref_time;
 
-        if (delta > m_spec.timeout)
+        if (delta > m_spec.timeout) {
+          m_fref_state.state = IMC::FollowRefState::FR_TIMEOUT;
+          dispatch(m_fref_state);
           signalError("reference source timed out");
+        }
 
       }
 
@@ -306,13 +315,13 @@ namespace Maneuver
         switch (desired_path.end_z_units)
         {
           case (Z_DEPTH):
-                z_dist = std::abs(desired_path.end_z - m_estate.depth);
+                            z_dist = std::abs(desired_path.end_z - m_estate.depth);
           break;
           case (Z_ALTITUDE):
-                z_dist = std::abs(desired_path.end_z - m_estate.alt);
+                            z_dist = std::abs(desired_path.end_z - m_estate.alt);
           break;
           case (Z_HEIGHT):
-                z_dist = std::abs(desired_path.end_z - m_estate.height);
+                            z_dist = std::abs(desired_path.end_z - m_estate.height);
           break;
           default:
             z_dist = 0;
@@ -347,14 +356,29 @@ namespace Maneuver
 
         switch (state)
         {
-          case FREF_LOITERING:
+          case FREF_GOING:
+            m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
+            m_fref_state.state = IMC::FollowRefState::FR_GOING;
+            break;
           case FREF_ELEVATOR:
+            m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR;
+            m_fref_state.state = IMC::FollowRefState::FR_GOING;
             desired_path.lradius = m_args.loitering_radius;
+            break;
+          case FREF_LOITERING:
+            m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR | IMC::FollowRefState::PROX_Z_NEAR;
+            m_fref_state.state = IMC::FollowRefState::FR_STAYING;
+            desired_path.lradius = m_args.loitering_radius;
+            break;
+          case FREF_HOVERING:
+            m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR | IMC::FollowRefState::PROX_Z_NEAR;
+            m_fref_state.state = IMC::FollowRefState::FR_STAYING;
             break;
           default:
             break;
         }
 
+        m_fref_state.reference.set(*msg);
         dispatch(desired_path);
       }
 
