@@ -119,6 +119,8 @@ namespace Control
         bool m_external;
         //! Current waypoint
         int m_current_wp;
+        //! Critical WP
+        bool m_critical;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -134,7 +136,8 @@ namespace Control
           m_lon(0.0),
           m_alt(0.0),
           m_external(true),
-          m_current_wp(0)
+          m_current_wp(0),
+          m_critical(true)
         {
           param("Serial Port - Device", m_args.uart_dev)
           .defaultValue("")
@@ -189,6 +192,7 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_STATUSTEXT] = &Task::handleStatusTextPacket;
           m_mlh[MAVLINK_MSG_ID_HEARTBEAT] = &Task::handleHeartbeatPacket;
           m_mlh[MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT] = &Task::handleNavControllerPacket;
+          m_mlh[MAVLINK_MSG_ID_MISSION_ITEM] = &Task::handleMissionItemPacket;
 
           // Setup processing of IMC messages
           bind<DesiredPath>(this);
@@ -476,6 +480,15 @@ namespace Control
             // Handle data
             handleArdupilotData();
 
+
+            if(m_external || m_critical)
+            {
+              if(getEntityState() != IMC::EntityState::ESTA_ERROR)
+                setEntityState(IMC::EntityState::ESTA_ERROR, "External Control");
+            }
+            else if(getEntityState() != IMC::EntityState::ESTA_NORMAL)
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
             // Handle IMC messages from bus
             consumeMessages();
 
@@ -613,8 +626,11 @@ namespace Control
                   case 35:
                     trace("RC_CHANNELS_RAW");
                     break;
+                  case MAVLINK_MSG_ID_MISSION_ITEM:
+                    trace("MISSION_ITEM");
+                    break;
                   case MAVLINK_MSG_ID_MISSION_CURRENT:
-                    trace("WAYPOINT_CURRENT");
+                    trace("MISSION_CURRENT");
                     break;
                   case MAVLINK_MSG_ID_MISSION_ACK:
                     spew("MISSION_ACK");
@@ -834,6 +850,18 @@ namespace Control
           mavlink_msg_mission_current_decode(msg, &miss_curr);
           m_current_wp = miss_curr.seq;
           trace("Current mission item: %d", miss_curr.seq);
+
+          uint8_t buf[512];
+
+          mavlink_message_t* msg_out = new mavlink_message_t;
+
+          mavlink_msg_mission_request_pack(255, 0, msg_out,
+              m_sysid, //! target_system System ID
+              0, //! target_component Component ID
+              m_current_wp); //! Mission item to request
+
+          uint16_t n = mavlink_msg_to_send_buffer(buf, msg_out);
+          sendData(buf, n);
         }
 
         void
@@ -876,14 +904,6 @@ namespace Control
               m_external = false;
               break;
           }
-
-          if(m_external)
-          {
-            if(getEntityState() != IMC::EntityState::ESTA_ERROR)
-              setEntityState(IMC::EntityState::ESTA_ERROR, "External Control");
-          }
-          else if(getEntityState() != IMC::EntityState::ESTA_NORMAL)
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
 
         void
@@ -892,6 +912,27 @@ namespace Control
           mavlink_nav_controller_output_t nav_out;
           mavlink_msg_nav_controller_output_decode(msg, &nav_out);
           debug("WP Dist: %d", nav_out.wp_dist);
+        }
+
+        void
+        handleMissionItemPacket(const mavlink_message_t* msg)
+        {
+          mavlink_mission_item_t miss_item;
+          mavlink_msg_mission_item_decode(msg, &miss_item);
+          debug("Mission type: %d", miss_item.command);
+
+          switch(miss_item.command)
+          {
+            default:
+              m_critical = false;
+              break;
+            case MAV_CMD_NAV_TAKEOFF:
+              m_critical = true;
+              break;
+            case MAV_CMD_NAV_LAND:
+              m_critical = true;
+              break;
+          }
         }
 
         void
