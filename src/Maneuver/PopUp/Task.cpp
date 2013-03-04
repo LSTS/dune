@@ -266,6 +266,7 @@ namespace Maneuver
       }
 
       //! Will use current position
+      //! @return true if must use current waypoint
       bool
       useCurr(void)
       {
@@ -273,6 +274,7 @@ namespace Maneuver
       }
 
       //! Must wait some time at surface
+      //! @return true if must wait when surface has been reached
       bool
       mustWait(void)
       {
@@ -280,6 +282,7 @@ namespace Maneuver
       }
 
       //! Must station keep while at surface
+      //! @return true if position must be kept at surface
       bool
       mustKeep(void)
       {

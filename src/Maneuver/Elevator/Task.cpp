@@ -304,6 +304,7 @@ namespace Maneuver
       }
 
       //! Get absolute difference between current zed and target one
+      //! @return the vertical error for the desiredZ
       float
       getVerticalError(void) const
       {
