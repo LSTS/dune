@@ -316,6 +316,7 @@ namespace Navigation
             }
 
             m_cmd_calibrate = true;
+            m_calibrated = false;
 
             state.step_number = 0;
             state.total_steps = 2;
