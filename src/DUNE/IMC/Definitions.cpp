@@ -11534,6 +11534,132 @@ namespace DUNE
       }
     }
 
+    FollowRefState::FollowRefState(void)
+    {
+      m_header.mgid = 480;
+      clear();
+      reference.setParent(this);
+    }
+
+    void
+    FollowRefState::clear(void)
+    {
+      control_src = 0;
+      control_ent = 0;
+      reference.clear();
+      state = 0;
+      proximity = 0;
+    }
+
+    bool
+    FollowRefState::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FollowRefState& other__ = dynamic_cast<const FollowRefState&>(msg__);
+      if (control_src != other__.control_src) return false;
+      if (control_ent != other__.control_ent) return false;
+      if (reference != other__.reference) return false;
+      if (state != other__.state) return false;
+      if (proximity != other__.proximity) return false;
+      return true;
+    }
+
+    int
+    FollowRefState::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    FollowRefState::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(control_src, ptr__);
+      ptr__ += IMC::serialize(control_ent, ptr__);
+      ptr__ += reference.serialize(ptr__);
+      ptr__ += IMC::serialize(state, ptr__);
+      ptr__ += IMC::serialize(proximity, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FollowRefState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(control_src, bfr__, size__);
+      bfr__ += IMC::deserialize(control_ent, bfr__, size__);
+      bfr__ += reference.deserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      bfr__ += IMC::deserialize(proximity, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FollowRefState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(control_src, bfr__, size__);
+      bfr__ += IMC::deserialize(control_ent, bfr__, size__);
+      bfr__ += reference.reverseDeserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      bfr__ += IMC::deserialize(proximity, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FollowRefState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "control_src", control_src, nindent__);
+      IMC::toJSON(os__, "control_ent", control_ent, nindent__);
+      reference.toJSON(os__, "reference", nindent__);
+      IMC::toJSON(os__, "state", state, nindent__);
+      IMC::toJSON(os__, "proximity", proximity, nindent__);
+    }
+
+    void
+    FollowRefState::setTimeStampNested(double value__)
+    {
+      if (!reference.isNull())
+      {
+        reference.get()->setTimeStamp(value__);
+      }
+    }
+
+    void
+    FollowRefState::setSourceNested(uint16_t value__)
+    {
+      if (!reference.isNull())
+      {
+        reference.get()->setSource(value__);
+      }
+    }
+
+    void
+    FollowRefState::setSourceEntityNested(uint8_t value__)
+    {
+      if (!reference.isNull())
+      {
+        reference.get()->setSourceEntity(value__);
+      }
+    }
+
+    void
+    FollowRefState::setDestinationNested(uint16_t value__)
+    {
+      if (!reference.isNull())
+      {
+        reference.get()->setDestination(value__);
+      }
+    }
+
+    void
+    FollowRefState::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!reference.isNull())
+      {
+        reference.get()->setDestinationEntity(value__);
+      }
+    }
+
     VehicleState::VehicleState(void)
     {
       m_header.mgid = 500;

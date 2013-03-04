@@ -11056,6 +11056,121 @@ namespace DUNE
       setDestinationEntityNested(uint8_t value__);
     };
 
+    //! Follow Reference State.
+    class FollowRefState: public Message
+    {
+    public:
+      //! State.
+      enum StateEnum
+      {
+        //! Waiting for first reference.
+        FR_WAIT = 1,
+        //! Going towards received reference.
+        FR_GOING = 2,
+        //! Loitering after arriving at the reference.
+        FR_STAYING = 3,
+        //! Controlling system timed out.
+        FR_TIMEOUT = 4
+      };
+
+      //! Proximity.
+      enum ProximityBits
+      {
+        //! Far from the destination.
+        PROX_FAR = 0x01,
+        //! Near in the horizontal plane.
+        PROX_XY_NEAR = 0x02,
+        //! Near in the vertical plane.
+        PROX_Z_NEAR = 0x04
+      };
+
+      //! Controlling Source.
+      uint16_t control_src;
+      //! Controlling Entity.
+      uint8_t control_ent;
+      //! Reference.
+      InlineMessage<Reference> reference;
+      //! State.
+      uint8_t state;
+      //! Proximity.
+      uint8_t proximity;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 480;
+      }
+
+      FollowRefState(void);
+
+      Message*
+      clone(void) const
+      {
+        return new FollowRefState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FollowRefState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FollowRefState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 5;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return reference.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
     //! Vehicle State.
     class VehicleState: public Message
     {

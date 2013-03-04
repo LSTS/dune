@@ -318,6 +318,8 @@
 #define DUNE_IMC_FOLLOWREFERENCE 478
 //! Reference identification number.
 #define DUNE_IMC_REFERENCE 479
+//! FollowRefState identification number.
+#define DUNE_IMC_FOLLOWREFSTATE 480
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.
