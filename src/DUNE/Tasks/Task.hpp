@@ -140,6 +140,14 @@ namespace DUNE
         return m_ctx.resolver.id();
       }
 
+      //! Retrieve the main entity identifier of the task.
+      //! @return main entity identifier.
+      unsigned int
+      getEntityId(void) const
+      {
+        return m_eid;
+      }
+
       //! Retrieve the identifier associated with a given system name.
       //! @param[in] name system name.
       //! @return system identifier.
@@ -318,14 +326,6 @@ namespace DUNE
     protected:
       //! Context.
       Context& m_ctx;
-
-      //! Retrieve the main entity identifier of the task.
-      //! @return main entity identifier.
-      unsigned int
-      getEntityId(void) const
-      {
-        return m_eid;
-      }
 
       //! Retrieve the main entity label of the task.
       //! @return main entity label.
