@@ -46,19 +46,31 @@ namespace Control
 
       struct Arguments
       {
+        //! Maximum thrust limit
         float max_thrust;
+        //! Minimum thrust limit
         float min_thrust;
+        //! RPM controller feedforward gain
         float rpm_ffgain;
+        //! Hardware control of the motor's rpms
         bool hardrpms;
+        //! End of scale value for RPM's at 100% of thurst
         float rpms_eos;
-        int16_t max_rpm;
+        //! Minimum value admissible for desired RPMs
         int16_t min_rpm;
+        //! Maximum acceleration step to smooth speed ramp in mps control
         int16_t max_accel;
+        //! MPS controller feedforward gain
         float mps_ffgain;
+        //! PID gains for RPM controller
         std::vector<float> rpm_gains;
+        //! PID gains for MPS controller
         std::vector<float> mps_gains;
+        //! Limit for the integral term
         float max_int_mps;
+        //! Ramp actuation limit when the value is rising in actuation per second
         float ramp_act;
+        //! Log the size of each PID parcel
         bool log_parcels;
       };
 
@@ -140,11 +152,6 @@ namespace Control
           param("Negative Thrust Limit", m_args.min_thrust)
           .defaultValue("-1.0")
           .description("Minimum thrust limit");
-
-          param("Maximum RPM Limit", m_args.max_rpm)
-          .defaultValue("1200")
-          .units(Units::RPM)
-          .description("Maximum value admissible for desired RPMs");
 
           param("Minimum RPM Limit", m_args.min_rpm)
           .defaultValue("200")
@@ -384,7 +391,7 @@ namespace Control
                                           m_previous_rpm + m_args.max_accel * timestep);
 
           // trim rpm value
-          m_desired_rpm = Math::trimValue(m_desired_rpm, m_args.min_rpm, m_args.max_rpm);
+          m_desired_rpm = Math::trimValue(m_desired_rpm, m_args.min_rpm, m_args.rpms_eos);
 
           m_previous_rpm = m_desired_rpm;
         }
