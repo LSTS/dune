@@ -296,7 +296,9 @@ namespace Navigation
             state.step_number = 1;
             state.step = DTR(Status::getString(Status::CODE_CALIBRATED));
             state.total_steps = 2;
-            state.flags = IMC::DevCalibrationState::DCS_COMPLETED;
+            state.flags = (IMC::DevCalibrationState::DCS_PREVIOUS_NOT_SUPPORTED |
+                           IMC::DevCalibrationState::DCS_NEXT_NOT_SUPPORTED |
+                           IMC::DevCalibrationState::DCS_COMPLETED);
             dispatch(state);
           }
         }
