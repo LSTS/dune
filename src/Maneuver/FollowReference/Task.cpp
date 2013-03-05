@@ -100,18 +100,18 @@ namespace Maneuver
                 "Minimum distance required to consider that the vehicle has arrived at the reference (Z)");
 
         param("Default Speed", m_args.default_speed).defaultValue("50")
-                            .description("Speed to use in case no speed is given by reference source.");
+                                                .description("Speed to use in case no speed is given by reference source.");
 
         param("Default Speed Units", m_args.default_speed_units).defaultValue("%")
-                            .description("Units to use for default speed (one of 'm/s', 'rpm' or '%').");
+                                                .description("Units to use for default speed (one of 'm/s', 'rpm' or '%').");
 
         param("Default Z", m_args.default_z).defaultValue("0")
-                            .units(Units::Meter)
-                            .description("Default z when no vertical reference is given.");
+                                                .units(Units::Meter)
+                                                .description("Default z when no vertical reference is given.");
 
         param("Default Z Units", m_args.default_z_units).defaultValue("DEPTH")
-                            .units(Units::Meter)
-                            .description("Units to use for default z reference (one of 'DEPTH', 'ALTITUDE' or 'HEIGHT')");
+                                                .units(Units::Meter)
+                                                .description("Units to use for default z reference (one of 'DEPTH', 'ALTITUDE' or 'HEIGHT')");
 
         bindToManeuver<Task, IMC::FollowReference>();
         bind<IMC::Reference>(this);
@@ -135,6 +135,31 @@ namespace Maneuver
 
         // send a notify to controlling peer that the maneuver was activated
         dispatch(m_fref_state);
+      }
+
+
+      bool
+      sameReference(const IMC::Reference *msg1, const IMC::Reference *msg2)
+      {
+        if (msg1->flags != msg2->flags)
+          return false;
+        if (msg1->lat != msg2->lat)
+          return false;
+        if (msg1->lon != msg2->lon)
+          return false;
+
+        const DesiredZ *z1 = msg1->z.get();
+        const DesiredZ *z2 = msg2->z.get();
+        const DesiredSpeed *s1 = msg1->speed.get();
+        const DesiredSpeed *s2 = msg2->speed.get();
+
+        if (!z1->fieldsEqual(*z2))
+          return false;
+
+        if (!s1->fieldsEqual(*s2))
+          return false;
+
+        return true;
       }
 
       //! Consume Reference messages and generate DesiredPath messages accordingly
@@ -163,9 +188,16 @@ namespace Maneuver
           return;
         }
 
-        m_cur_ref = *msg;
         m_got_reference = true;
         m_last_ref_time = Clock::get();
+
+        if (sameReference(msg, &m_cur_ref)) {
+          return;
+        }
+        else
+        {
+          m_cur_ref = *msg;
+        }
 
         if (m_cur_ref.flags & IMC::Reference::FLAG_MANDONE)
         {
@@ -315,13 +347,13 @@ namespace Maneuver
         switch (desired_path.end_z_units)
         {
           case (Z_DEPTH):
-                            z_dist = std::abs(desired_path.end_z - m_estate.depth);
+                                                z_dist = std::abs(desired_path.end_z - m_estate.depth);
           break;
           case (Z_ALTITUDE):
-                            z_dist = std::abs(desired_path.end_z - m_estate.alt);
+                                                z_dist = std::abs(desired_path.end_z - m_estate.alt);
           break;
           case (Z_HEIGHT):
-                            z_dist = std::abs(desired_path.end_z - m_estate.height);
+                                                z_dist = std::abs(desired_path.end_z - m_estate.height);
           break;
           default:
             z_dist = 0;
@@ -379,6 +411,7 @@ namespace Maneuver
         }
 
         m_fref_state.reference.set(*msg);
+        dispatch(m_fref_state);
         dispatch(desired_path);
       }
 
