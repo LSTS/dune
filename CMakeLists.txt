@@ -324,6 +324,9 @@ install(DIRECTORY www DESTINATION .)
 # Install configuration files.
 install(DIRECTORY etc DESTINATION .)
 
+# Install firmware files.
+install(DIRECTORY firmware DESTINATION .)
+
 # Install scripts.
 install(DIRECTORY programs/scripts DESTINATION .)
 
