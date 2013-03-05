@@ -120,7 +120,7 @@ namespace Sensors
       }
 
       //! Set command type.
-      //! @param[in] command type.
+      //! @param[in] type command type.
       void
       setCommandType(uint8_t type)
       {
@@ -136,7 +136,7 @@ namespace Sensors
       }
 
       //! Set channel.
-      //! @param[in] channel.
+      //! @param[in] channel channel.
       void
       setChannel(uint8_t channel)
       {

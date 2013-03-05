@@ -450,6 +450,7 @@ namespace Power
 
       //! Wait for command.
       //! @param[in] code command code.
+      //! @param[in] retries number of retries.
       //! @return true if succcessful, false otherwise.
       bool
       waitForCommand(uint8_t code, unsigned retries = 10)

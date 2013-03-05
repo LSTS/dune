@@ -261,6 +261,7 @@ namespace DUNE
       //! message.
       //! @param[in] original original message.
       //! @param[in] msg message reference.
+      //! @param[in] flags bitfield with flags (see DispatchFlags).
       void
       dispatchReply(const IMC::Message& original, IMC::Message& msg, unsigned int flags = 0)
       {
@@ -354,7 +355,7 @@ namespace DUNE
 
       //! Set current entity state with a custom description.
       //! @param[in] state entity state.
-      //! @param[in] message custom description.
+      //! @param[in] description custom state description.
       void
       setEntityState(IMC::EntityState::StateEnum state,
                      const std::string& description);
@@ -370,8 +371,6 @@ namespace DUNE
       //! Associate an entity label with an automatically generated
       //! number (entity id).
       //! @param[in] label entity name/label.
-      //! @param[in] unique true if the entity name cannot be shared,
-      //! false otherwise.
       //! @return entity id.
       unsigned int
       reserveEntity(const std::string& label);
@@ -421,6 +420,7 @@ namespace DUNE
       //! Declare a configuration parameter that can be parsed using
       //! the basic parameter parser.
       //! @tparam T type of the destination variable.
+      //! @param[in] name parameter name.
       //! @param[in] var variable that will hold the parameter value.
       //! @return Parameter object.
       template <typename T>
@@ -434,6 +434,7 @@ namespace DUNE
       //! a custom parameter reader.
       //! @tparam Y type of the custom parameter reader.
       //! @tparam T type of the destination variable.
+      //! @param[in] name parameter name.
       //! @param[in] var variable that will hold the parameter value.
       //! @return Parameter object.
       template <typename Y, typename T>

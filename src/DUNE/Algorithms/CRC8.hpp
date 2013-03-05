@@ -51,7 +51,7 @@ namespace DUNE
       { }
 
       //! Set the current CRC8 value.
-      //! @param[in] current CRC8 value.
+      //! @param[in] value current CRC8 value.
       void
       set(uint8_t value = 0)
       {
