@@ -111,8 +111,16 @@ namespace Control
         Address m_TCP_addr;
         uint16_t m_TCP_port;
         System::IOMultiplexing m_iom;
-
-
+        //! System ID
+        uint8_t m_sysid;
+        //! Last received position
+        float m_lat, m_lon, m_alt;
+        //! External control
+        bool m_external;
+        //! Current waypoint
+        int m_current_wp;
+        //! Critical WP
+        bool m_critical;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -122,11 +130,18 @@ namespace Control
           ref_hei(0.0),
           m_acc_x(0.0),
           m_acc_y(0.0),
-          m_acc_z(0.0)
+          m_acc_z(0.0),
+          m_sysid(1),
+          m_lat(0.0),
+          m_lon(0.0),
+          m_alt(0.0),
+          m_external(true),
+          m_current_wp(0),
+          m_critical(true)
         {
           param("Serial Port - Device", m_args.uart_dev)
-              .defaultValue("")
-              .description("Serial port used to connect to Ardupilot");
+          .defaultValue("")
+          .description("Serial port used to connect to Ardupilot");
 
           param("Serial Port - Baud Rate", m_args.uart_baud)
           .defaultValue("57600")
@@ -171,15 +186,21 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_SCALED_PRESSURE] = &Task::handleScaledPressurePacket;
           m_mlh[MAVLINK_MSG_ID_GPS_RAW_INT] = &Task::handleRawGPSPacket;
           m_mlh[MAVLINK_MSG_ID_WIND] = &Task::handleWindPacket;
-          m_mlh[MAVLINK_MSG_ID_SERVO_OUTPUT_RAW] = &Task::handleRawServoPacket;
+          m_mlh[MAVLINK_MSG_ID_COMMAND_ACK] = &Task::handleCmdAckPacket;
+          m_mlh[MAVLINK_MSG_ID_MISSION_ACK] = &Task::handleMissionAckPacket;
+          m_mlh[MAVLINK_MSG_ID_MISSION_CURRENT] = &Task::handleMissionCurrentPacket;
+          m_mlh[MAVLINK_MSG_ID_STATUSTEXT] = &Task::handleStatusTextPacket;
+          m_mlh[MAVLINK_MSG_ID_HEARTBEAT] = &Task::handleHeartbeatPacket;
+          m_mlh[MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT] = &Task::handleNavControllerPacket;
+          m_mlh[MAVLINK_MSG_ID_MISSION_ITEM] = &Task::handleMissionItemPacket;
 
           // Setup processing of IMC messages
           bind<DesiredPath>(this);
           bind<DesiredRoll>(this);
-          bind<DesiredSpeed>(this);
           bind<SetServoPosition>(this);
           bind<SimulatedState>(this);
           bind<Acceleration>(this);
+          bind<IdleManeuver>(this);
 
           // Misc. initialization
           m_last_pkt_time = 0; // time of last packet from Ardupilot
@@ -281,16 +302,6 @@ namespace Control
         }
 
         void
-        consume(const IMC::DesiredSpeed* speed)
-        {
-          sendCommandPacket(MAV_CMD_DO_CHANGE_SPEED, // Change speed and/or throttle set points
-                            0, // (0=Airspeed, 1=Ground Speed)
-                            speed->value, // (m/s, -1 indicates no change)
-                            -1); // Throttle ( Percent, -1 indicates no change)
-          debug(DTR("ChangeSpeed packet sent to Ardupilot"));
-        }
-
-        void
         consume(const IMC::DesiredRoll* roll)
         {
           uint8_t buf[512];
@@ -321,22 +332,114 @@ namespace Control
         {
           if(!m_args.ardu_tracker)
             return;
+          sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_AUTO_DISARMED);
 
-          sendCommandPacket(MAV_CMD_NAV_WAYPOINT, // Navigate to MISSION.
-              0, // Hold time in decimal seconds. (ignored by fixed wing, time to stay at MISSION for rotary wing)
-              20, // Acceptance radius in meters (if the sphere with this radius is hit, the MISSION counts as reached)
-              path->lradius, // 0 to pass through the WP, if > 0 radius in meters to pass by WP. Positive value for clockwise orbit, negative value for counter-clockwise orbit.
-              0, // Desired yaw angle at MISSION (rotary wing)
-              (float)Angles::degrees(path->end_lat), // Latitude
-              (float)Angles::degrees(path->end_lon), // Longitude
-              (float)path->end_z); // Altitude
+          uint8_t buf[512];
+          int seq = 1;
+
+          mavlink_message_t* msg = new mavlink_message_t;
+
+          mavlink_msg_mission_count_pack(255, 0, msg,
+              m_sysid, //! target_system System ID
+              0, //! target_component Component ID
+              4); //! size of Mission
+
+          uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+
+          mavlink_msg_mission_write_partial_list_pack(255, 0, msg,
+              m_sysid, //! target_system System ID
+              0, //! target_component Component ID
+              seq, //! start_index Start index, 0 by default and smaller / equal to the largest index of the current onboard list
+              seq+2); //! end_index End index, equal or greater than start index
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+
+          //! Current position
+          mavlink_msg_mission_item_pack(255, 0, msg,
+              m_sysid, //! target_system System ID
+              0, //! target_component Component ID
+              seq++, //! seq Sequence
+              MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+              MAV_CMD_NAV_WAYPOINT, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+              1, //! current false:0, true:1
+              1, //! autocontinue autocontinue to next wp
+              0, //! Not used
+              0, //! Not used
+              0, //! Not used
+              0, //! Not used
+              m_lat, //! x PARAM5 / local: x position, global: latitude
+              m_lon, //! y PARAM6 / y position: global: longitude
+              m_alt);//! z PARAM7 / z position: global: altitude
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+
+          //! Desired speed
+          mavlink_msg_mission_item_pack(255, 0, msg,
+              m_sysid, //! target_system System ID
+              0, //! target_component Component ID
+              seq++, //! seq Sequence
+              MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+              MAV_CMD_DO_CHANGE_SPEED, //! command The scheduled action for the MISSION. see MAV_CMD in common.xml MAVLink specs
+              0, //! current false:0, true:1
+              1, //! autocontinue autocontinue to next wp
+              0, //! Speed type (0=Airspeed, 1=Ground Speed)
+              (float)(path->speed_units == IMC::SUNITS_METERS_PS ? path->speed : -1), //! Speed  (m/s, -1 indicates no change)
+              (float)(path->speed_units == IMC::SUNITS_PERCENTAGE ? path->speed : -1), //! Throttle  ( Percent, -1 indicates no change)
+              0, //! Not used
+              0, //! Not used
+              0, //! Not used
+              0);//! Not used
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+
+          //! Destination
+          mavlink_msg_mission_item_pack(255, 0, msg,
+              m_sysid, //! target_system System ID
+              0, //! target_component Component ID
+              seq++, //! seq Sequence
+              MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+              (path->lradius ? MAV_CMD_NAV_LOITER_UNLIM : MAV_CMD_NAV_WAYPOINT), //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+              0, //! current false:0, true:1
+              0, //! autocontinue autocontinue to next wp
+              0, //! Not used
+              0, //! Not used
+              0, //! Not used
+              0, //! Not used
+              (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
+              (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
+              (float)(path->end_z));//! z PARAM7 / z position: global: altitude
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+
+          mavlink_msg_mission_set_current_pack(255, 0, msg,
+              m_sysid,
+              0,
+              1);
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+
           debug(DTR("Waypoint packet sent to Ardupilot"));
+        }
 
-          IMC::DesiredSpeed* d_speed;
-          d_speed = new DesiredSpeed;
-          d_speed->value = path->speed;
-          d_speed->speed_units = path->speed_units;
-          receive(d_speed);
+        void
+        loiterHere(void)
+        {
+          sendCommandPacket(MAV_CMD_NAV_LOITER_UNLIM);
+        }
+
+        void
+        consume(const IMC::IdleManeuver* idle)
+        {
+          (void)idle;
+
+          if(getEntityState() == IMC::EntityState::ESTA_NORMAL)
+            loiterHere();
         }
 
         void
@@ -359,7 +462,7 @@ namespace Control
 
           debug("%0.2f %0.2f %0.2f %0.2f %0.2f %0.2f %0.2f", arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 
-          mavlink_msg_command_long_pack(0, 0, &msg, 0, 0, cmd, 0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+          mavlink_msg_command_long_pack(255, 0, &msg, m_sysid, 0, cmd, 0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 
           uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
@@ -376,6 +479,15 @@ namespace Control
           {
             // Handle data
             handleArdupilotData();
+
+
+            if(m_external || m_critical)
+            {
+              if(getEntityState() != IMC::EntityState::ESTA_ERROR)
+                setEntityState(IMC::EntityState::ESTA_ERROR, "External Control");
+            }
+            else if(getEntityState() != IMC::EntityState::ESTA_NORMAL)
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
             // Handle IMC messages from bus
             consumeMessages();
@@ -470,21 +582,23 @@ namespace Control
               break;
             }
 
-            //! Send to UDP client
-            m_UDP_sock.write((char*)m_buf, n, m_args.addr, m_args.port);
 
             for (int i = 0; i < n; i++)
             {
 
               if (mavlink_parse_char(MAVLINK_COMM_0, m_buf[i], &msg, &status))
               {
+                //! Send to UDP client
+                uint8_t buf[512];
+                int buf_s = mavlink_msg_to_send_buffer(buf, &msg);
+                m_UDP_sock.write((char*)buf, buf_s, m_args.addr, m_args.port);
 
                 switch ((int)msg.msgid)
                 {
                   default:
                     debug("UNDEF: %u", msg.msgid);
                     break;
-                  case 0:
+                  case MAVLINK_MSG_ID_HEARTBEAT:
                     trace("HEARTBEAT");
                     break;
                   case 1:
@@ -514,17 +628,23 @@ namespace Control
                   case 35:
                     trace("RC_CHANNELS_RAW");
                     break;
-                    //                  case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
-                    //                    trace("SERVO_OUTPUT_RAW");
-                    //                    break;
-                  case 42:
-                    trace("WAYPOINT_CURRENT");
+                  case MAVLINK_MSG_ID_MISSION_ITEM:
+                    trace("MISSION_ITEM");
                     break;
-                  case 62:
+                  case MAVLINK_MSG_ID_MISSION_CURRENT:
+                    trace("MISSION_CURRENT");
+                    break;
+                  case MAVLINK_MSG_ID_MISSION_ACK:
+                    spew("MISSION_ACK");
+                    break;
+                  case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
                     trace("NAV_CONTROLLER_OUTPUT");
                     break;
                   case 74:
                     trace("VFR_HUD");
+                    break;
+                  case MAVLINK_MSG_ID_COMMAND_ACK:
+                    spew("CMD_ACK");
                     break;
                   case 150:
                     trace("SENSOR_OFFSETS");
@@ -547,7 +667,7 @@ namespace Control
                   case MAVLINK_MSG_ID_WIND:
                     spew("WIND");
                     break;
-                  case 253:
+                  case MAVLINK_MSG_ID_STATUSTEXT:
                     trace("STATUSTEXT");
                     break;
                 }
@@ -559,11 +679,9 @@ namespace Control
 
                 // Call handler
                 (this->*h)(&msg);
+                m_sysid = msg.sysid;
 
                 m_last_pkt_time = now;
-
-                if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
-                  setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
               }
             }
           }
@@ -596,6 +714,11 @@ namespace Control
           fp64_t lat = Angles::radians((fp64_t)gp.lat * 1e-07);
           fp64_t lon = Angles::radians((fp64_t)gp.lon * 1e-07);
           fp32_t hei = gp.alt * 1e-03;
+
+          m_lat = (float)(gp.lat * 1e-07);
+          m_lon = (float)(gp.lon * 1e-07);
+          m_alt = (float)(gp.alt * 1e-03);
+
 
           double distance_to_ref = WGS84::distance(ref_lat,ref_lon,ref_hei,
               lat,lon,hei);
@@ -704,28 +827,114 @@ namespace Control
         }
 
         void
-        handleRawServoPacket(const mavlink_message_t* msg)
+        handleCmdAckPacket(const mavlink_message_t* msg)
         {
-          mavlink_servo_output_raw_t servo_raw;
-          mavlink_msg_servo_output_raw_decode(msg, &servo_raw);
+          mavlink_command_ack_t cmd_ack;
 
-          inf("Decoded SERVO_OUTPUT_RAW");
+          mavlink_msg_command_ack_decode(msg, &cmd_ack);
+          debug("Command %d was received, result is %d", cmd_ack.command, cmd_ack.result);
+        }
 
-          m_servo.id = 1;
-          m_servo.value = servo_raw.servo1_raw;
-          dispatch(m_servo);
+        void
+        handleMissionAckPacket(const mavlink_message_t* msg)
+        {
+          mavlink_mission_ack_t miss_ack;
 
-          m_servo.id = 2;
-          m_servo.value = servo_raw.servo2_raw;
-          dispatch(m_servo);
+          mavlink_msg_mission_ack_decode(msg, &miss_ack);
+          debug("Mission was received, result is %d", miss_ack.type);
+        }
 
-          m_servo.id = 3;
-          m_servo.value = servo_raw.servo3_raw;
-          dispatch(m_servo);
+        void
+        handleMissionCurrentPacket(const mavlink_message_t* msg)
+        {
+          mavlink_mission_current_t miss_curr;
 
-          m_servo.id = 4;
-          m_servo.value = servo_raw.servo4_raw;
-          dispatch(m_servo);
+          mavlink_msg_mission_current_decode(msg, &miss_curr);
+          m_current_wp = miss_curr.seq;
+          trace("Current mission item: %d", miss_curr.seq);
+
+          uint8_t buf[512];
+
+          mavlink_message_t* msg_out = new mavlink_message_t;
+
+          mavlink_msg_mission_request_pack(255, 0, msg_out,
+              m_sysid, //! target_system System ID
+              0, //! target_component Component ID
+              m_current_wp); //! Mission item to request
+
+          uint16_t n = mavlink_msg_to_send_buffer(buf, msg_out);
+          sendData(buf, n);
+        }
+
+        void
+        handleStatusTextPacket(const mavlink_message_t* msg)
+        {
+          mavlink_statustext_t stat_tex;
+
+          mavlink_msg_statustext_decode(msg, &stat_tex);
+          if((!strcmp("out of commands!", stat_tex.text)) && (m_current_wp == 3))
+          {
+            IMC::PathControlState path_cs;
+            path_cs.flags |= PathControlState::FL_NEAR;
+            dispatch(path_cs);
+          }
+          debug("Status: %s", stat_tex.text);
+        }
+
+        void
+        handleHeartbeatPacket(const mavlink_message_t* msg)
+        {
+          mavlink_heartbeat_t hbt;
+
+          mavlink_msg_heartbeat_decode(msg, &hbt);
+
+          switch(hbt.custom_mode)
+          {
+            default:
+              m_external = true;
+              break;
+            case 10:
+              trace("AUTO");
+              m_external = false;
+              break;
+            case 12:
+              trace("LOITER");
+              m_external = false;
+              break;
+            case 15:
+              trace("GUIDED");
+              m_external = false;
+              break;
+          }
+        }
+
+        void
+        handleNavControllerPacket(const mavlink_message_t* msg)
+        {
+          mavlink_nav_controller_output_t nav_out;
+          mavlink_msg_nav_controller_output_decode(msg, &nav_out);
+          trace("WP Dist: %d", nav_out.wp_dist);
+        }
+
+        void
+        handleMissionItemPacket(const mavlink_message_t* msg)
+        {
+          mavlink_mission_item_t miss_item;
+          mavlink_msg_mission_item_decode(msg, &miss_item);
+          trace("Mission type: %d", miss_item.command);
+
+          switch(miss_item.command)
+          {
+            default:
+              m_critical = false;
+              break;
+            case MAV_CMD_NAV_TAKEOFF:
+              m_critical = true;
+              break;
+            case MAV_CMD_NAV_LAND:
+              m_critical = true;
+              break;
+          }
         }
 
         void
