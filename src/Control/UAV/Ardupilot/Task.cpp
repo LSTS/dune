@@ -582,14 +582,16 @@ namespace Control
               break;
             }
 
-            //! Send to UDP client
-            m_UDP_sock.write((char*)m_buf, n, m_args.addr, m_args.port);
 
             for (int i = 0; i < n; i++)
             {
 
               if (mavlink_parse_char(MAVLINK_COMM_0, m_buf[i], &msg, &status))
               {
+                //! Send to UDP client
+                uint8_t buf[512];
+                int buf_s = mavlink_msg_to_send_buffer(buf, &msg);
+                m_UDP_sock.write((char*)buf, buf_s, m_args.addr, m_args.port);
 
                 switch ((int)msg.msgid)
                 {
@@ -911,7 +913,7 @@ namespace Control
         {
           mavlink_nav_controller_output_t nav_out;
           mavlink_msg_nav_controller_output_decode(msg, &nav_out);
-          debug("WP Dist: %d", nav_out.wp_dist);
+          trace("WP Dist: %d", nav_out.wp_dist);
         }
 
         void
@@ -919,7 +921,7 @@ namespace Control
         {
           mavlink_mission_item_t miss_item;
           mavlink_msg_mission_item_decode(msg, &miss_item);
-          debug("Mission type: %d", miss_item.command);
+          trace("Mission type: %d", miss_item.command);
 
           switch(miss_item.command)
           {
