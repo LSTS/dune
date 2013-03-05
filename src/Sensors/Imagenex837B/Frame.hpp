@@ -234,9 +234,9 @@ namespace Sensors
       setSoundVelocity(uint16_t speed)
       {
         if (speed == 1500)
-          ByteCopy::toLE((int16_t)(0x0000), getData() + HDR_IDX_SOUND_SPEED);
+          ByteCopy::toBE((uint16_t)(0x0000), getData() + HDR_IDX_SOUND_SPEED);
         else
-          ByteCopy::toLE((int16_t)(((speed * 10) & 0x7fff) | 0x8000),
+          ByteCopy::toBE((uint16_t)(((speed * 10) & 0x7fff) | 0x8000),
                          getData() + HDR_IDX_SOUND_SPEED);
       }
 
@@ -253,7 +253,7 @@ namespace Sensors
       void
       setCourse(float course)
       {
-        ByteCopy::toLE((int16_t)(course * 10.0), getData() + HDR_IDX_COURSE);
+        ByteCopy::toBE((uint16_t)(course * 10.0), getData() + HDR_IDX_COURSE);
       }
 
       //! Set roll.
@@ -261,7 +261,7 @@ namespace Sensors
       void
       setRoll(float roll)
       {
-        ByteCopy::toLE((((int16_t)((roll + 900) * 10) & 0x7fff) | 0x8000),
+        ByteCopy::toBE((uint16_t)(((unsigned)((roll + 900) * 10) & 0x7fff) | 0x8000),
                        getData() + HDR_IDX_ROLL);
       }
 
@@ -270,7 +270,7 @@ namespace Sensors
       void
       setPitch(float pitch)
       {
-        ByteCopy::toLE((((int16_t)((pitch + 900) * 10) & 0x7fff) | 0x8000),
+        ByteCopy::toBE((uint16_t)(((unsigned)((pitch + 900) * 10) & 0x7fff) | 0x8000),
                        getData() + HDR_IDX_PITCH);
       }
 
@@ -279,7 +279,7 @@ namespace Sensors
       void
       setHeading(float heading)
       {
-        ByteCopy::toLE((((int16_t)((heading + 900) * 10) & 0x7fff) | 0x8000),
+        ByteCopy::toBE((uint16_t)(((unsigned)(heading * 10) & 0x7fff) | 0x8000),
                        getData() + HDR_IDX_HEADING);
       }
 
@@ -288,7 +288,7 @@ namespace Sensors
       void
       setRepRate(uint16_t rate)
       {
-        ByteCopy::toLE(rate, getData() + HDR_IDX_REP_RATE);
+        ByteCopy::toBE(rate, getData() + HDR_IDX_REP_RATE);
       }
 
       //! Set display gain.
