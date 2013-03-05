@@ -389,6 +389,8 @@ namespace Sensors
             if (!m_parser.parse(bfr[i]))
               continue;
 
+            m_dist.validity = IMC::Distance::DV_VALID;
+
             m_dist.value = m_parser.getProfileRange();
 
             // If range is zero, there are no echoes.

@@ -118,7 +118,7 @@ namespace Sensors
         unsigned accum = 0;
 
         for (unsigned i = 0; i < m_psize; ++i)
-          accum += std::abs((first[i] - second[i]));
+          accum += std::abs(first[i] - second[i]);
 
         return accum;
       }
