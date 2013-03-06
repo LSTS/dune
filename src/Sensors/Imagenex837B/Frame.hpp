@@ -263,7 +263,9 @@ namespace Sensors
       void
       setRoll(float roll)
       {
-        ByteCopy::toBE((uint16_t)(((int)((roll + 900) * 10) & 0x7fff) | 0x8000),
+        roll = Angles::degrees(roll);
+
+        ByteCopy::toBE((uint16_t)(((int)(roll * 10 + 900) & 0x7fff) | 0x8000),
                        getData() + HDR_IDX_ROLL);
       }
 
@@ -272,7 +274,9 @@ namespace Sensors
       void
       setPitch(float pitch)
       {
-        ByteCopy::toBE((uint16_t)(((int)((pitch + 900) * 10) & 0x7fff) | 0x8000),
+        pitch = Angles::degrees(pitch);
+
+        ByteCopy::toBE((uint16_t)(((int)(pitch * 10 + 900) & 0x7fff) | 0x8000),
                        getData() + HDR_IDX_PITCH);
       }
 
@@ -281,6 +285,8 @@ namespace Sensors
       void
       setHeading(float heading)
       {
+        heading = Angles::degrees(heading);
+
         ByteCopy::toBE((uint16_t)(((int)(heading * 10) & 0x7fff) | 0x8000),
                        getData() + HDR_IDX_HEADING);
       }
