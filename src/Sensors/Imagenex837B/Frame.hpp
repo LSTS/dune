@@ -326,15 +326,15 @@ namespace Sensors
           m_data[HDR_IDX_LATITUDE + 13] = 'S';
 
         if (lon > 0)
-          m_data[HDR_IDX_LONGITUDE + 13] = 'W';
-        else
           m_data[HDR_IDX_LONGITUDE + 13] = 'E';
+        else
+          m_data[HDR_IDX_LONGITUDE + 13] = 'W';
 
         lat = DUNE::Math::Angles::degrees(std::abs(lat));
         lon = DUNE::Math::Angles::degrees(std::abs(lon));
 
         // Latitude.
-        m_data[HDR_IDX_LATITUDE] = '_';
+        m_data[HDR_IDX_LATITUDE] = ' ';
         m_data[HDR_IDX_LATITUDE + 1] = '0' + lat / 10;
         m_data[HDR_IDX_LATITUDE + 2] = '0' + (uint8_t)lat % 10;
         m_data[HDR_IDX_LATITUDE + 3] = '.';
