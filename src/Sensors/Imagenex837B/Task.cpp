@@ -460,6 +460,7 @@ namespace Sensors
 
         m_ping.max_range = c_ranges[idx];
         Periodic::setFrequency(1.0 / (c_rep_rate[idx] / 1000.0));
+        m_frame.setRepRate((uint16_t)c_rep_rate[idx])
       }
 
       //! Define switch command data start gain.
