@@ -215,11 +215,18 @@ namespace Sensors
       //! Set profile tilt angle.
       //! @param[in] angle profile tilt angle.
       void
-      setProfileTiltAngle(uint8_t angle)
+      setProfileTiltAngle(float angle)
       {
-        m_data[HDR_IDX_PROFILE] = 0x00;
-        m_data[HDR_IDX_PROFILE + 1] = 0x00;
-        (void)angle;
+        if (angle == 0.0)
+        {
+          m_data[HDR_IDX_PROFILE] = 0x00;
+          m_data[HDR_IDX_PROFILE + 1] = 0x00;
+        }
+        else
+        {
+          ByteCopy::toBE((uint16_t)(((uint16_t)((angle + 180.0) * 10.0) & 0x7fff) | 0x8000),
+                         getData() + HDR_IDX_PROFILE);
+        }
       }
 
       //! Set pulse length.

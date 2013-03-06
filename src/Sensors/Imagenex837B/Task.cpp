@@ -136,6 +136,8 @@ namespace Sensors
       bool auto_gain;
       //! Automatic gain control threshold.
       unsigned auto_gain_value;
+      //! Profile Tilt Angle.
+      float tilt_angle;
       //! Transducer mounting position.
       bool xdcr;
       //! Save data in 837 format.
@@ -267,6 +269,11 @@ namespace Sensors
                      "For weak bottom returns, use a high threshold value."
                      "A value of 120 is a typical threshold value for a sandy bottom.");
 
+        param("Profile Tilt Angle", m_args.tilt_angle)
+        .defaultValue("0.0")
+        .units(Units::Degree)
+        .description("Mounting offset");
+
         param("Connector Pointing Aft", m_args.xdcr)
         .defaultValue("true")
         .description("Mounting position of the multibeam");
@@ -329,6 +336,8 @@ namespace Sensors
         setSwitchDelay(m_args.switch_delay);
         setAbsorption((unsigned)(m_args.absorption * 100));
         setDataPoints(m_args.data_points);
+
+        m_frame.setProfileTiltAngle(m_args.tilt_angle);
 
         if (!m_args.auto_gain)
         {
