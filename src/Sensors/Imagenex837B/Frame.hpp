@@ -247,7 +247,7 @@ namespace Sensors
       void
       setSpeed(float speed)
       {
-        m_data[HDR_IDX_SPEED] = (uint8_t)(speed * 10 * c_ms_to_knots);
+        m_data[HDR_IDX_SPEED] = (int8_t)(speed * 10 * c_ms_to_knots);
       }
 
       //! Set GNSS ships course.
@@ -255,7 +255,7 @@ namespace Sensors
       void
       setCourse(float course)
       {
-        ByteCopy::toBE((uint16_t)(Angles::degrees(course) * 10), getData() + HDR_IDX_COURSE);
+        ByteCopy::toBE((int16_t)(Angles::degrees(course) * 10), getData() + HDR_IDX_COURSE);
       }
 
       //! Set roll.
@@ -263,7 +263,7 @@ namespace Sensors
       void
       setRoll(float roll)
       {
-        ByteCopy::toBE((uint16_t)(((unsigned)((roll + 900) * 10) & 0x7fff) | 0x8000),
+        ByteCopy::toBE((int16_t)(((int)((roll + 900) * 10) & 0x7fff) | 0x8000),
                        getData() + HDR_IDX_ROLL);
       }
 
@@ -272,7 +272,7 @@ namespace Sensors
       void
       setPitch(float pitch)
       {
-        ByteCopy::toBE((uint16_t)(((unsigned)((pitch + 900) * 10) & 0x7fff) | 0x8000),
+        ByteCopy::toBE((int16_t)(((int)((pitch + 900) * 10) & 0x7fff) | 0x8000),
                        getData() + HDR_IDX_PITCH);
       }
 
@@ -281,7 +281,7 @@ namespace Sensors
       void
       setHeading(float heading)
       {
-        ByteCopy::toBE((uint16_t)(((unsigned)(heading * 10) & 0x7fff) | 0x8000),
+        ByteCopy::toBE((int16_t)(((int)(heading * 10) & 0x7fff) | 0x8000),
                        getData() + HDR_IDX_HEADING);
       }
 
