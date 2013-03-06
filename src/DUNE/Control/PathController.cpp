@@ -319,11 +319,15 @@ namespace DUNE
 
       Coordinates::getBearingAndRange(m_ts.start, m_ts.end, &m_ts.track_bearing, &m_ts.track_length);
 
+      // Re-initializing tracking state values
       m_ts.start_time = now;
       m_ts.end_time = -1;
       m_ts.now = m_ts.start_time;
       m_ts.delta = 0;
       m_tracking = true;
+
+      // Set jump monitors to false
+      m_jump_monitors = false;
 
       // Send altitude or depth references, unless NO_Z flag is set
       // or controller wishes to handle depth/altitude in a specific manner
@@ -569,8 +573,9 @@ namespace DUNE
       else
         loiter(*es, m_ts);
 
-      // If braking do not check for errors in monitoring
-      if (m_braking)
+      // If we're braking or there has been a jump in the navigation filter
+      // then do not check for errors in monitoring
+      if (m_braking || m_jump_monitors)
       {
         m_running_monitors = false;
       }
