@@ -574,7 +574,6 @@ namespace DUNE
       m_ts.delta = now - m_ts.now;
       m_ts.now = now;
 
-
       if (m_ts.nearby && m_ts.now - m_ts.end_time >= c_new_ref_timeout)
       {
         signalError(DTR("expected new path control reference"));
@@ -711,7 +710,7 @@ namespace DUNE
         double old_lat;
         double old_lon;
         double old_hae;
-        Coordinates::toWGS84(m_estate, old_lat, old_lon, old_hae);
+        Coordinates::toWGS84(*old_state, old_lat, old_lon, old_hae);
 
         distance = Coordinates::WGS84::distance(new_lat, new_lon, new_hae,
                                                 old_lat, old_lon, old_hae);
