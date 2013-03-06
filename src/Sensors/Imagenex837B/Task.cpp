@@ -415,6 +415,10 @@ namespace Sensors
       void
       consume(const IMC::SoundSpeed* msg)
       {
+        // Do not use invalid readings.
+        if (msg->value < 0)
+          return;
+
         m_frame.setSoundVelocity(msg->value * 10.0);
       }
 
