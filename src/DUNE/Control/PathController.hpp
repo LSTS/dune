@@ -289,10 +289,14 @@ namespace DUNE
 
       //! Test if there has been a jump in navigation
       //! @param[in] new_state newly received EstimatedState
-      //! @param[in] distance distance between present and previous EstimatedState
+      //! @param[in] old_state newly received EstimatedState
+      //! @param[out] distance distance between present and previous EstimatedState
+      //! @param[in] change_ref true if EstimatedState reference has changed
       //! @return true if the jump is considered to be meaningful
       bool
-      navigationJumped(const IMC::EstimatedState* new_state, float &distance);
+      navigationJumped(const IMC::EstimatedState* new_state,
+                       const IMC::EstimatedState* old_state,
+                       float &distance, bool change_ref);
 
       //! Monitor along track error and update variables
       void

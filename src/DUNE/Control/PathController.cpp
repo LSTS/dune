@@ -52,6 +52,8 @@ namespace DUNE
     static const double c_lsize_factor = 0.75;
     //! Distance tolerance to loiter's center
     static const double c_ldistance = 1.0;
+    //! Maximum admissible time for disabling monitors due to navigation jump
+    static const float c_max_jump_time = 100.0;
 
     PathController::PathController(std::string name, Tasks::Context& ctx):
       Task(name, ctx),
@@ -122,7 +124,7 @@ namespace DUNE
       param("Position Jump Time Factor", m_jump_factor)
       .defaultValue("0.3")
       .minimumValue("0.1")
-      .units(Units::Meter)
+      .units(Units::MeterPerSecond)
       .description("Relation between monitor disabling time and position jump");
 
       param("Bottom Track -- Enabled", m_btd.enabled)
@@ -265,6 +267,7 @@ namespace DUNE
 
       double now = Clock::get();
       m_pcs.flags = 0;
+      bool no_start = false;
 
       if (dpath->flags & IMC::DesiredPath::FL_START)
       {
@@ -281,6 +284,8 @@ namespace DUNE
         Coordinates::toWGS84(m_estate, m_pcs.start_lat, m_pcs.start_lon);
 
         m_pcs.start_z = m_estate.z;
+
+        no_start = true;
       }
       else
       {
@@ -326,8 +331,10 @@ namespace DUNE
       m_ts.delta = 0;
       m_tracking = true;
 
-      // Set jump monitors to false
-      m_jump_monitors = false;
+      // Reset monitors disable due to navigation jump
+      // if current desired path does not have fixed start location
+      if (no_start)
+        m_jump_monitors = false;
 
       // Send altitude or depth references, unless NO_Z flag is set
       // or controller wishes to handle depth/altitude in a specific manner
@@ -512,29 +519,41 @@ namespace DUNE
         lon = es->lon;
       }
 
+      // Save previous EstimatedState values
+      IMC::EstimatedState prev_estate = m_estate;
+
+      // Save new EstimatedState values
+      m_estate = *es;
+
+      if (!isActive() || m_error || !m_tracking)
+        return;
+
       // If navigation jumped, disable path monitors for an amount time
       // proportional to the size of the navigation jump (by m_jump_factor)
       if (!m_jump_monitors)
       {
         float dist;
 
-        if (navigationJumped(es, dist))
+        if (navigationJumped(&m_estate, &prev_estate, dist, change_ref))
         {
           m_jump_monitors = true;
-          m_jump_timer.setTop(dist / m_jump_factor);
+
+          // Limit the distance
+          float top = trimValue(dist / m_jump_factor, 0, c_max_jump_time);
+          m_jump_timer.setTop(top);
+
+          debug("navigation jumped %.1f meters", dist);
         }
       }
       else
       {
         if (m_jump_timer.overflow())
+        {
           m_jump_monitors = false;
+
+          debug("no longer jumping");
+        }
       }
-
-      // Save EstimatedState values
-      m_estate = *es;
-
-      if (!isActive() || m_error || !m_tracking)
-        return;
 
       // Apply new LLH reference.
       if (change_ref)
@@ -678,20 +697,29 @@ namespace DUNE
     }
 
     bool
-    PathController::navigationJumped(const IMC::EstimatedState* new_state, float &distance)
+    PathController::navigationJumped(const IMC::EstimatedState* new_state,
+                                     const IMC::EstimatedState* old_state,
+                                     float &distance, bool change_ref)
     {
-      double new_lat;
-      double new_lon;
-      double new_hae;
-      Coordinates::toWGS84(*new_state, new_lat, new_lon, new_hae);
+      if (change_ref)
+      {
+        double new_lat;
+        double new_lon;
+        double new_hae;
+        Coordinates::toWGS84(*new_state, new_lat, new_lon, new_hae);
 
-      double old_lat;
-      double old_lon;
-      double old_hae;
-      Coordinates::toWGS84(m_estate, old_lat, old_lon, old_hae);
+        double old_lat;
+        double old_lon;
+        double old_hae;
+        Coordinates::toWGS84(m_estate, old_lat, old_lon, old_hae);
 
-      distance = Coordinates::WGS84::distance(new_lat, new_lon, new_hae,
-                                              old_lat, old_lon, old_hae);
+        distance = Coordinates::WGS84::distance(new_lat, new_lon, new_hae,
+                                                old_lat, old_lon, old_hae);
+      }
+      else
+      {
+        distance = Coordinates::getRange(*new_state, *old_state);
+      }
 
       return (distance > m_jump_threshold);
     }
