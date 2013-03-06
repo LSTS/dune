@@ -76,7 +76,7 @@ namespace DUNE
       };
 
       //! Constructor.
-      //! @param[in] pointer to bottom track arguments struct
+      //! @param[in] args pointer to bottom track arguments struct
       BottomTracker(const Arguments* args);
 
       //! Destructor.

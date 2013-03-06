@@ -166,8 +166,8 @@ namespace Monitors
 
       //! Initialize op limits mask
       //! @param[out] v value of the limit
-      //! @param[in] default value for the limit
-      //! @param[in] mask
+      //! @param[in] dfl value for the limit
+      //! @param[in] mask initial mask
       void
       init(fp32_t& v, fp32_t dfl, uint8_t mask)
       {
@@ -260,6 +260,7 @@ namespace Monitors
       //! @param[in] ldesc error description
       //! @param[in] v1 current value
       //! @param[in] v2 limit value
+      //! @param[in] hyst hysteresis factor to avoid chattering
       //! @return true if in error mode
       bool
       test(uint8_t lmask, const char* ldesc, double v1, double v2, double hyst = 0.0)

@@ -342,6 +342,7 @@ namespace Navigation
         }
 
         //! Add beacon.
+        //! @param[in] id beacon id number
         //! @param[in] msg beacon information.
         void
         addBeacon(unsigned id, const IMC::LblBeacon* msg)

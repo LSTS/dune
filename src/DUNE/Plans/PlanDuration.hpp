@@ -106,7 +106,7 @@ namespace DUNE
     public:
 #ifdef DUNE_IMC_GOTO
       //! Parse a Goto maneuver
-      //! @param[in] pointer to maneuver message
+      //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @param[in] last_dur last computed accumulated plan duration
       //! @param[out] durations vector of accumulated durations for this maneuver
@@ -121,7 +121,7 @@ namespace DUNE
 
 #ifdef DUNE_IMC_STATIONKEEPING
       //! Parse a StationKeeping maneuver
-      //! @param[in] pointer to maneuver message
+      //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @param[in] last_dur last computed accumulated plan duration
       //! @param[out] durations vector of accumulated durations for this maneuver
@@ -139,7 +139,7 @@ namespace DUNE
 
 #ifdef DUNE_IMC_LOITER
       //! Parse a Loiter maneuver
-      //! @param[in] pointer to maneuver message
+      //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @param[in] last_dur last computed accumulated plan duration
       //! @param[out] durations vector of accumulated durations for this maneuver
@@ -157,7 +157,7 @@ namespace DUNE
 
 #ifdef DUNE_IMC_FOLLOWPATH
       //! Parse a FollowPath maneuver
-      //! @param[in] pointer to maneuver message
+      //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @param[in] last_dur last computed accumulated plan duration
       //! @param[out] durations vector of accumulated durations for this maneuver
@@ -199,7 +199,7 @@ namespace DUNE
 
 #ifdef DUNE_IMC_ROWS
       //! Parse a Rows maneuver
-      //! @param[in] pointer to maneuver message
+      //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @param[in] last_dur last computed accumulated plan duration
       //! @param[out] durations vector of accumulated durations for this maneuver
@@ -237,7 +237,7 @@ namespace DUNE
 
 #ifdef DUNE_IMC_YOYO
       //! Parse a YoYo maneuver
-      //! @param[in] pointer to maneuver message
+      //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @param[in] last_dur last computed accumulated plan duration
       //! @param[out] durations vector of accumulated durations for this maneuver
@@ -264,7 +264,7 @@ namespace DUNE
 
 #ifdef DUNE_IMC_ELEVATOR
       //! Parse an Elevator maneuver
-      //! @param[in] pointer to maneuver message
+      //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @param[in] last_dur last computed accumulated plan duration
       //! @param[out] durations vector of accumulated durations for this maneuver
@@ -292,7 +292,7 @@ namespace DUNE
 
 #ifdef DUNE_IMC_POPUP
       //! Parse a PopUp maneuver
-      //! @param[in] pointer to maneuver message
+      //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @param[in] last_dur last computed accumulated plan duration
       //! @param[out] durations vector of accumulated durations for this maneuver
@@ -339,7 +339,7 @@ namespace DUNE
 #endif
 
       //! Parse plan duration from plan specification
-      //! @param[in] spec plan specification message
+      //! @param[in] nodes vector of plan maneuver nodes
       //! @param[in] state current estimated state
       //! @param[out] man_durations map of maneuver ids to point durations
       //! @return accumulated plan duration in seconds, -1 if unable to compute

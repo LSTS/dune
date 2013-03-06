@@ -133,7 +133,6 @@ namespace Maneuver
       }
 
       //! Routine to throw next waypoint
-      //! @param[in] pcs pathcontrolstate message pointer
       void
       gotoNextPoint(void)
       {

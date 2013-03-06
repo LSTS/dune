@@ -35,8 +35,9 @@ namespace DUNE
 {
   namespace Control
   {
-    using Math::Matrix;
-    using namespace std;
+    using namespace Math;
+    using std::sin;
+    using std::cos;
 
     //! Constructor.
     AUVModel::AUVModel(const ModelParameters& param):
@@ -61,7 +62,6 @@ namespace DUNE
     AUVModel::~AUVModel(void)
     { }
 
-    //! Step forward
     Matrix
     AUVModel::step(const Matrix& nu_dot, const Matrix& nu, const Matrix& eta)
     {

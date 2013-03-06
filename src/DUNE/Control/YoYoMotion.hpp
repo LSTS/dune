@@ -43,8 +43,9 @@ namespace DUNE
     {
     public:
       //! Constructor
+      //! @param[in] task pointer to calling task
       //! @param[in] pitch pitch angle to use in motion
-      //! @param[in] amplitude z reference for yoyo motion (negative if altitude)
+      //! @param[in] z_ref amplitude z reference for yoyo motion (negative if altitude)
       //! @param[in] amplitude z reference amplitude for yoyo motion
       //! @param[in] variation maximum variation for the pitch angle
       YoYoMotion(DUNE::Tasks::Task* task, float pitch, float z_ref,

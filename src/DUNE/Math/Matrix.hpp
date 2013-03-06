@@ -378,7 +378,7 @@ namespace DUNE
       multiply(const Matrix& m);
 
       //! Compare matrices for equality.
-      //! @param[in] matrix matrix to compare.
+      //! @param[in] m matrix to compare.
       //! @return true if matrices are equal, false otherwise.
       bool
       operator==(const Matrix& m) const;

@@ -427,7 +427,7 @@ namespace Plan
       //! @param[in] plan_id name of the plan
       //! @param[in] arg argument which may either be a maneuver or a plan specification
       //! @param[in] plan_startup true if a plan will start right after
-      //! @param[in] true if plan is successfully loaded
+      //! @return true if plan is successfully loaded
       bool
       loadPlan(const std::string& plan_id, const IMC::Message* arg, bool plan_startup = false)
       {
@@ -689,7 +689,7 @@ namespace Plan
       }
 
       //! Start a maneuver by name
-      //! @param[in] pointer to plan maneuver message
+      //! @param[in] pman pointer to plan maneuver message
       void
       startManeuver(IMC::PlanManeuver* pman)
       {
