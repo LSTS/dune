@@ -225,7 +225,7 @@ namespace Sensors
       void
       setPulseLength(uint8_t length)
       {
-        m_data[HDR_IDX_PULSE_LENGTH] = (uint8_t)(length * 10);
+        m_data[HDR_IDX_PULSE_LENGTH] = length;
       }
 
       //! Set sound velocity.
@@ -309,6 +309,9 @@ namespace Sensors
           m_data[HDR_IDX_DISPLAY_MODE] |= 0x40;
         else
           m_data[HDR_IDX_DISPLAY_MODE] &= 0xbf;
+
+        // Profile mode.
+        m_data[HDR_IDX_DISPLAY_MODE + 1] = 0x03;
       }
 
       //! Define frame GPS data.
