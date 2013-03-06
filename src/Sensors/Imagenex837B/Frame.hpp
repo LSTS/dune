@@ -231,12 +231,12 @@ namespace Sensors
       //! Set sound velocity.
       //! @param[in] speed sound velocity
       void
-      setSoundVelocity(uint16_t speed)
+      setSoundVelocity(float speed)
       {
         if (speed == 1500)
           ByteCopy::toBE((uint16_t)(0x0000), getData() + HDR_IDX_SOUND_SPEED);
         else
-          ByteCopy::toBE((uint16_t)(((speed * 10) & 0x7fff) | 0x8000),
+          ByteCopy::toBE((uint16_t)(((uint16_t)(speed * 10.0) & 0x7fff) | 0x8000),
                          getData() + HDR_IDX_SOUND_SPEED);
       }
 

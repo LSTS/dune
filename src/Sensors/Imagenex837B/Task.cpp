@@ -415,7 +415,7 @@ namespace Sensors
       void
       consume(const IMC::SoundSpeed* msg)
       {
-        m_frame.setSoundVelocity((uint16_t)msg->value);
+        m_frame.setSoundVelocity(msg->value * 10.0);
       }
 
       //! Get index from table according with given value.
