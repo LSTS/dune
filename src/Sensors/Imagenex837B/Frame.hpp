@@ -56,6 +56,8 @@ namespace Sensors
     static const unsigned c_ivx_frame_size = 272;
     //! Size of IUX body.
     static const unsigned c_iux_frame_size = 80;
+    //! Meter per Second to Knots conversion.
+    static const double c_ms_to_knots = 1.94384449;
 
     //! Data logger to Imagenex .837 format.
     class Frame
@@ -245,7 +247,7 @@ namespace Sensors
       void
       setSpeed(float speed)
       {
-        m_data[HDR_IDX_SPEED] = (uint8_t)(speed * 10);
+        m_data[HDR_IDX_SPEED] = (uint8_t)(speed * 10 * c_ms_to_knots);
       }
 
       //! Set GNSS ships course.
