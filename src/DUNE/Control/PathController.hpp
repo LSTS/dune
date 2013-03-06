@@ -36,6 +36,7 @@
 #include <DUNE/Coordinates.hpp>
 #include <DUNE/Tasks.hpp>
 #include <DUNE/IMC.hpp>
+#include <DUNE/Time.hpp>
 #include <DUNE/Control/BottomTracker.hpp>
 
 namespace DUNE
@@ -286,6 +287,13 @@ namespace DUNE
       void
       updateTrackingState(void);
 
+      //! Test if there has been a jump in navigation
+      //! @param[in] new_state newly received EstimatedState
+      //! @param[in] distance distance between present and previous EstimatedState
+      //! @return true if the jump is considered to be meaningful
+      bool
+      navigationJumped(const IMC::EstimatedState* new_state, float &distance);
+
       //! Monitor along track error and update variables
       void
       monitorAlongTrackError(void);
@@ -380,6 +388,10 @@ namespace DUNE
       bool m_setup;
       //! In braking procedures
       bool m_braking;
+      //! True if monitors are being disabled because of navigation jump
+      bool m_jump_monitors;
+      //! Navigation jump timer to  disable monitors
+      Time::Counter<float> m_jump_timer;
 
       // Arguments
       //! Control period
@@ -389,7 +401,7 @@ namespace DUNE
       //! Last time path control state was reported
       double m_last_pcs_report;
       //! Threshold for a jump in EstimatedState to turn monitors off
-      float m_jump_thresold;
+      float m_jump_threshold;
       //! Relation between monitor disabling time and position jump
       float m_jump_factor;
       //! Active loops
