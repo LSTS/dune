@@ -388,7 +388,10 @@ namespace DUNE
       double m_speriod;
       //! Last time path control state was reported
       double m_last_pcs_report;
-
+      //! Threshold for a jump in EstimatedState to turn monitors off
+      float m_jump_thresold;
+      //! Relation between monitor disabling time and position jump
+      float m_jump_factor;
       //! Active loops
       uint32_t m_aloops;
 

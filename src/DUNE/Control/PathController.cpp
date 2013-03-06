@@ -113,6 +113,16 @@ namespace DUNE
       .defaultValue("-1")
       .description("");
 
+      param("Position Jump Threshold", m_jump_thresold)
+      .defaultValue("7.0")
+      .units(Units::Meter)
+      .description("Threshold for a jump in EstimatedState to turn monitors off");
+
+      param("Position Jump Time Factor", m_jump_factor)
+      .defaultValue("0.3")
+      .units(Units::Meter)
+      .description("Relation between monitor disabling time and position jump");
+
       param("Bottom Track -- Enabled", m_btd.enabled)
       .defaultValue("false")
       .description("Enable or disable bottom track control");
