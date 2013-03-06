@@ -453,6 +453,9 @@ namespace Sensors
         // Number of pings averaged.
         m_data[HDR_IDX_PINGS_AVG] = 0x00;
 
+        // Display gain.
+        m_data[HDR_IDX_DISPLAY_GAIN] = c_display_gain;
+
         // Operating Frequency 260 kHz.
         m_data[HDR_IDX_FREQUENCY] = (uint8_t)(c_frequency >> 8);
         m_data[HDR_IDX_FREQUENCY + 1] = (uint8_t)c_frequency;
@@ -537,6 +540,8 @@ namespace Sensors
       static const unsigned c_ping_size = 1000;
       //! Operating frequency.
       static const unsigned c_frequency = 260;
+      //! Default display gain.
+      static const uint8_t c_display_gain = 50;
       //! Message data.
       std::vector<uint8_t> m_data;
       //! IVX mode active.
