@@ -508,7 +508,7 @@ namespace Sensors
       }
 
       //! Define switch command data number nadir angle.
-      //! @param[in] value nadir angle.
+      //! @param[in] angle nadir angle.
       void
       setNadirAngle(float angle)
       {

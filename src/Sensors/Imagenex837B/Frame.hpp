@@ -211,7 +211,7 @@ namespace Sensors
       }
 
       //! Set profile tilt angle.
-      //! @param[in] ptang profile tilt angle.
+      //! @param[in] angle profile tilt angle.
       void
       setProfileTiltAngle(uint8_t angle)
       {
@@ -221,7 +221,7 @@ namespace Sensors
       }
 
       //! Set pulse length.
-      //! @param[in] plength pulse length.
+      //! @param[in] length pulse length.
       void
       setPulseLength(uint8_t length)
       {
