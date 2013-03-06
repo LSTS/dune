@@ -313,7 +313,7 @@ namespace Sensors
           m_data[HDR_IDX_DISPLAY_MODE] &= 0xbf;
 
         // Profile mode.
-        m_data[HDR_IDX_DISPLAY_MODE + 1] = 0x03;
+        m_data[HDR_IDX_DISPLAY_MODE] |= 0x03;
       }
 
       //! Define frame GPS data.
