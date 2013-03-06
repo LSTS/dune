@@ -423,6 +423,7 @@ namespace Sensors
         setBytesToRead();
         setMode();
         setNumberOfBytesToRead();
+        setPacketNumber();
         setFooter();
       }
 
@@ -469,7 +470,6 @@ namespace Sensors
 
         // Head ID and default packet number.
         m_data[HDR_IDX_HEAD_ID] = 0x10;
-        m_data[HDR_IDX_PACKET_NUM] = 0x00;
 
         // Data bytes (1k data bytes).
         m_data[HDR_IDX_DATA_BYTES_HI] = (uint8_t)(c_ping_size >> 8);
@@ -484,6 +484,16 @@ namespace Sensors
           m_data[HDR_IDX_N_TO_READ] = (uint8_t) 0x0b;
         else
           m_data[HDR_IDX_N_TO_READ] = (uint8_t) 0x0a;
+      }
+
+      //! Set packet number
+      void
+      setPacketNumber(void)
+      {
+        if (m_ivx_mode)
+          m_data[HDR_IDX_PACKET_NUM] = (uint8_t) 0x0f;
+        else
+          m_data[HDR_IDX_PACKET_NUM] = (uint8_t) 0x07;
       }
 
       //! Define frame footer.
