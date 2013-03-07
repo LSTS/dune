@@ -52,6 +52,8 @@ namespace DUNE
     static const double c_lsize_factor = 0.75;
     //! Distance tolerance to loiter's center
     static const double c_ldistance = 1.0;
+    //! Maximum admissible time for disabling monitors due to navigation jump
+    static const float c_max_jump_time = 100.0;
 
     PathController::PathController(std::string name, Tasks::Context& ctx):
       Task(name, ctx),
@@ -59,6 +61,7 @@ namespace DUNE
       m_error(false),
       m_setup(true),
       m_braking(false),
+      m_jump_monitors(false),
       m_aloops(0),
       m_btrack(NULL)
     {
@@ -112,6 +115,17 @@ namespace DUNE
       param("Cross-track -- Nav. Unc. Factor", m_ctm.nav_unc_factor)
       .defaultValue("-1")
       .description("");
+
+      param("Position Jump Threshold", m_jump_threshold)
+      .defaultValue("7.0")
+      .units(Units::Meter)
+      .description("Threshold for a jump in EstimatedState to turn monitors off");
+
+      param("Position Jump Time Factor", m_jump_factor)
+      .defaultValue("0.3")
+      .minimumValue("0.1")
+      .units(Units::MeterPerSecond)
+      .description("Relation between monitor disabling time and position jump");
 
       param("Bottom Track -- Enabled", m_btd.enabled)
       .defaultValue("false")
@@ -253,6 +267,7 @@ namespace DUNE
 
       double now = Clock::get();
       m_pcs.flags = 0;
+      bool no_start = false;
 
       if (dpath->flags & IMC::DesiredPath::FL_START)
       {
@@ -269,6 +284,8 @@ namespace DUNE
         Coordinates::toWGS84(m_estate, m_pcs.start_lat, m_pcs.start_lon);
 
         m_pcs.start_z = m_estate.z;
+
+        no_start = true;
       }
       else
       {
@@ -307,11 +324,17 @@ namespace DUNE
 
       Coordinates::getBearingAndRange(m_ts.start, m_ts.end, &m_ts.track_bearing, &m_ts.track_length);
 
+      // Re-initializing tracking state values
       m_ts.start_time = now;
       m_ts.end_time = -1;
       m_ts.now = m_ts.start_time;
       m_ts.delta = 0;
       m_tracking = true;
+
+      // Reset monitors disable due to navigation jump
+      // if current desired path does not have fixed start location
+      if (no_start)
+        m_jump_monitors = false;
 
       // Send altitude or depth references, unless NO_Z flag is set
       // or controller wishes to handle depth/altitude in a specific manner
@@ -496,10 +519,41 @@ namespace DUNE
         lon = es->lon;
       }
 
+      // Save previous EstimatedState values
+      IMC::EstimatedState prev_estate = m_estate;
+
+      // Save new EstimatedState values
       m_estate = *es;
 
       if (!isActive() || m_error || !m_tracking)
         return;
+
+      // If navigation jumped, disable path monitors for an amount time
+      // proportional to the size of the navigation jump (by m_jump_factor)
+      if (!m_jump_monitors)
+      {
+        float dist;
+
+        if (navigationJumped(&m_estate, &prev_estate, dist, change_ref))
+        {
+          m_jump_monitors = true;
+
+          // Limit the distance
+          float top = trimValue(dist / m_jump_factor, 0, c_max_jump_time);
+          m_jump_timer.setTop(top);
+
+          debug("disabling monitors, navigation jumped %.1f meters", dist);
+        }
+      }
+      else
+      {
+        if (m_jump_timer.overflow())
+        {
+          m_jump_monitors = false;
+
+          debug("re-enabling monitors");
+        }
+      }
 
       // Apply new LLH reference.
       if (change_ref)
@@ -520,7 +574,6 @@ namespace DUNE
       m_ts.delta = now - m_ts.now;
       m_ts.now = now;
 
-
       if (m_ts.nearby && m_ts.now - m_ts.end_time >= c_new_ref_timeout)
       {
         signalError(DTR("expected new path control reference"));
@@ -538,8 +591,9 @@ namespace DUNE
       else
         loiter(*es, m_ts);
 
-      // If braking do not check for errors in monitoring
-      if (m_braking)
+      // If we're braking or there has been a jump in the navigation filter
+      // then do not check for errors in monitoring
+      if (m_braking || m_jump_monitors)
       {
         m_running_monitors = false;
       }
@@ -639,6 +693,34 @@ namespace DUNE
       m_ts.track_vel.x = m_ts.speed * std::cos(m_ts.course_error); // along-track
       m_ts.track_vel.y = m_ts.speed * std::sin(m_ts.course_error); // cross-track
       m_ts.track_vel.z = std::sin(m_estate.theta) * m_estate.vz; // vertical-track
+    }
+
+    bool
+    PathController::navigationJumped(const IMC::EstimatedState* new_state,
+                                     const IMC::EstimatedState* old_state,
+                                     float &distance, bool change_ref)
+    {
+      if (change_ref)
+      {
+        double new_lat;
+        double new_lon;
+        double new_hae;
+        Coordinates::toWGS84(*new_state, new_lat, new_lon, new_hae);
+
+        double old_lat;
+        double old_lon;
+        double old_hae;
+        Coordinates::toWGS84(*old_state, old_lat, old_lon, old_hae);
+
+        distance = Coordinates::WGS84::distance(new_lat, new_lon, new_hae,
+                                                old_lat, old_lon, old_hae);
+      }
+      else
+      {
+        distance = Coordinates::getRange(*new_state, *old_state);
+      }
+
+      return (distance > m_jump_threshold);
     }
 
     void
