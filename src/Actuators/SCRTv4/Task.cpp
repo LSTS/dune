@@ -198,14 +198,19 @@ namespace Actuators
       void
       consume(const IMC::SetServoPosition* msg)
       {
-        uint8_t servo = msg->id;
-        if (servo >= c_servo_count)
+        if (msg->id >= c_servo_count)
           return;
 
+        setServoPosition(msg->id, msg->value);
+      }
+
+      void
+      setServoPosition(unsigned servo, double position)
+      {
         uint8_t data[] =
         {
           servo,
-          convertAngleToDemand(servo, msg->value)
+          convertAngleToDemand(servo, position)
         };
 
         LUCL::ProtocolParser::sendCommand(CMD_SERVO_SET, data, sizeof(data), m_uart);
@@ -246,6 +251,8 @@ namespace Actuators
 
           m_exc_min[i] = -exc_min;
           m_exc_max[i] = exc_max;
+
+          setServoPosition(i, 0);
         }
       }
 
