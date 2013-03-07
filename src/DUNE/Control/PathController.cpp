@@ -542,7 +542,7 @@ namespace DUNE
           float top = trimValue(dist / m_jump_factor, 0, c_max_jump_time);
           m_jump_timer.setTop(top);
 
-          debug("navigation jumped %.1f meters", dist);
+          debug("disabling monitors, navigation jumped %.1f meters", dist);
         }
       }
       else
@@ -551,7 +551,7 @@ namespace DUNE
         {
           m_jump_monitors = false;
 
-          debug("no longer jumping");
+          debug("re-enabling monitors");
         }
       }
 
