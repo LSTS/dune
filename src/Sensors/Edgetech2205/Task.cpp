@@ -159,13 +159,21 @@ namespace Sensors
         if (paramChanged(m_args.channels_lf))
         {
           if (m_cmd)
+          {
             setDataActive(SUBSYS_SSL, m_args.channels_lf);
+            if (isActive())
+              setPing(SUBSYS_SSL, m_args.channels_lf);
+          }
         }
 
         if (paramChanged(m_args.channels_hf))
         {
           if (m_cmd)
+          {
             setDataActive(SUBSYS_SSH, m_args.channels_hf);
+            if (isActive())
+              setPing(SUBSYS_SSH, m_args.channels_hf);
+          }
         }
 
         if (paramChanged(m_args.addr))
@@ -449,7 +457,6 @@ namespace Sensors
           return;
         }
 
-        inf("data");
         handleSonarData(pkt);
       }
 
