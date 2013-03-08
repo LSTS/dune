@@ -97,16 +97,16 @@ namespace Vision
         .description("Frames per second");
 
         param("Maximum Exposure", m_args.exposure_max)
-        .defaultValue("0.01")
-        .description("Maximum exposure");
+        .defaultValue("10")
+        .description("Maximum exposure in miliseconds");
 
         param("Maximum Gain", m_args.gain_max)
         .defaultValue("4.0")
         .description("Maximum gain");
 
         param("Autoexposure Knee", m_args.exposure_knee)
-        .defaultValue("0.005")
-        .description("Exposure limit before increasing the gain");
+        .defaultValue("5")
+        .description("Exposure limit before increasing the gain (in miliseconds)");
 
         param("Autogain Knee", m_args.gain_knee)
         .defaultValue("2.0")
