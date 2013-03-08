@@ -217,24 +217,24 @@ namespace Navigation
           BasicNavigation::onUpdateParameters();
 
           // Initialize Process and Measure Covariances matrices
-          m_kal.setProcessNoise(STATE_X, STATE_X, m_process_noise[PN_POSITION]);
-          m_kal.setProcessNoise(STATE_Y, STATE_Y, m_process_noise[PN_POSITION]);
-          m_kal.setProcessNoise(STATE_PSI, STATE_PSI, m_process_noise[PN_PSI]);
-          m_kal.setProcessNoise(STATE_R, STATE_R, m_process_noise[PN_YAWRATE]);
-          m_kal.setProcessNoise(STATE_U, STATE_U, m_process_noise[PN_SPEED]);
-          m_kal.setProcessNoise(STATE_V, STATE_V, m_process_noise[PN_SPEED]);
-          m_kal.setProcessNoise(STATE_R_BIAS, STATE_R_BIAS, m_process_noise[PN_YRATE_BIAS]);
-          m_kal.setProcessNoise(STATE_PSI_BIAS, STATE_PSI_BIAS, m_process_noise[PN_PSI_BIAS]);
+          m_kal.setProcessNoise(STATE_X, m_process_noise[PN_POSITION]);
+          m_kal.setProcessNoise(STATE_Y, m_process_noise[PN_POSITION]);
+          m_kal.setProcessNoise(STATE_PSI, m_process_noise[PN_PSI]);
+          m_kal.setProcessNoise(STATE_R, m_process_noise[PN_YAWRATE]);
+          m_kal.setProcessNoise(STATE_U, m_process_noise[PN_SPEED]);
+          m_kal.setProcessNoise(STATE_V, m_process_noise[PN_SPEED]);
+          m_kal.setProcessNoise(STATE_R_BIAS, m_process_noise[PN_YRATE_BIAS]);
+          m_kal.setProcessNoise(STATE_PSI_BIAS, m_process_noise[PN_PSI_BIAS]);
 
-          m_kal.setMeasurementNoise(OUT_U, OUT_U, m_measure_noise[MN_U]);
-          m_kal.setMeasurementNoise(OUT_V, OUT_V, m_measure_noise[MN_V]);
-          m_kal.setMeasurementNoise(OUT_PSI, OUT_PSI, m_measure_noise[MN_PSI]);
-          m_kal.setMeasurementNoise(OUT_R, OUT_R, m_measure_noise[MN_YAWRATE]);
-          m_kal.setMeasurementNoise(OUT_GPS_X, OUT_GPS_X, m_args.gps_noise[GPS_ACC_GOOD]);
-          m_kal.setMeasurementNoise(OUT_GPS_Y, OUT_GPS_Y, m_args.gps_noise[GPS_ACC_GOOD]);
+          m_kal.setMeasurementNoise(OUT_U, m_measure_noise[MN_U]);
+          m_kal.setMeasurementNoise(OUT_V, m_measure_noise[MN_V]);
+          m_kal.setMeasurementNoise(OUT_PSI, m_measure_noise[MN_PSI]);
+          m_kal.setMeasurementNoise(OUT_R, m_measure_noise[MN_YAWRATE]);
+          m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_GOOD]);
+          m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_GOOD]);
 
           for (unsigned i = 0; i < m_num_beacons; i++)
-            m_kal.setMeasurementNoise(NUM_OUT + i, NUM_OUT + i, m_measure_noise[MN_LBL]);
+            m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
         }
 
         void
@@ -288,15 +288,15 @@ namespace Navigation
             {
               // Reinitialize state covariance matrix value.
               m_kal.resetCovariance(STATE_PSI_BIAS);
-              m_kal.setCovariance(STATE_PSI_BIAS, STATE_PSI_BIAS, m_state_cov[SC_BIASES]);
+              m_kal.setCovariance(STATE_PSI_BIAS, m_state_cov[SC_BIASES]);
 
               // Position process noise covariance value if IMU is available.
-              m_kal.setProcessNoise(STATE_X, STATE_X, m_args.position_noise_with_imu);
-              m_kal.setProcessNoise(STATE_Y, STATE_Y, m_args.position_noise_with_imu);
+              m_kal.setProcessNoise(STATE_X, m_args.position_noise_with_imu);
+              m_kal.setProcessNoise(STATE_Y, m_args.position_noise_with_imu);
 
               // LBL noise.
               for (unsigned i = 0; i < m_num_beacons; i++)
-                m_kal.setMeasurementNoise(NUM_OUT + i, NUM_OUT + i, m_args.lbl_noise_with_imu);
+                m_kal.setMeasurementNoise(NUM_OUT + i, m_args.lbl_noise_with_imu);
             }
           }
           else
@@ -310,11 +310,11 @@ namespace Navigation
             m_kal.resetCovariance(STATE_PSI_BIAS);
 
             // Reinitialize EKF variances.
-            m_kal.setProcessNoise(STATE_X, STATE_X, m_process_noise[PN_POSITION]);
-            m_kal.setProcessNoise(STATE_Y, STATE_Y, m_process_noise[PN_POSITION]);
+            m_kal.setProcessNoise(STATE_X, m_process_noise[PN_POSITION]);
+            m_kal.setProcessNoise(STATE_Y, m_process_noise[PN_POSITION]);
 
             for (unsigned i = 0; i < m_num_beacons; i++)
-              m_kal.setMeasurementNoise(NUM_OUT + i, NUM_OUT + i, m_measure_noise[MN_LBL]);
+              m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
 
             m_alignment = false;
           }
@@ -328,17 +328,17 @@ namespace Navigation
           m_kal.setState(STATE_K, m_args.initial_rpm_to_speed);
 
           // Initial position covariances (GPS and LBL)
-          m_kal.setCovariance(STATE_X, STATE_X, m_state_cov[SC_POSITION]);
-          m_kal.setCovariance(STATE_Y, STATE_Y, m_state_cov[SC_POSITION]);
-          m_kal.setCovariance(STATE_PSI, STATE_PSI, m_state_cov[SC_ANGLES]);
-          m_kal.setCovariance(STATE_R, STATE_R, m_state_cov[SC_ANGLES]);
-          m_kal.setCovariance(STATE_U, STATE_U, m_state_cov[SC_SPEED]);
-          m_kal.setCovariance(STATE_V, STATE_V, m_state_cov[SC_SPEED]);
-          m_kal.setCovariance(STATE_R_BIAS, STATE_R_BIAS, m_state_cov[SC_BIASES]);
-          m_kal.setCovariance(STATE_K, STATE_K, m_state_cov[SC_RPM]);
+          m_kal.setCovariance(STATE_X, m_state_cov[SC_POSITION]);
+          m_kal.setCovariance(STATE_Y, m_state_cov[SC_POSITION]);
+          m_kal.setCovariance(STATE_PSI, m_state_cov[SC_ANGLES]);
+          m_kal.setCovariance(STATE_R, m_state_cov[SC_ANGLES]);
+          m_kal.setCovariance(STATE_U, m_state_cov[SC_SPEED]);
+          m_kal.setCovariance(STATE_V, m_state_cov[SC_SPEED]);
+          m_kal.setCovariance(STATE_R_BIAS, m_state_cov[SC_BIASES]);
+          m_kal.setCovariance(STATE_K, m_state_cov[SC_RPM]);
 
           // No heading bias estimation without IMU.
-          m_kal.setCovariance(STATE_PSI_BIAS, STATE_PSI_BIAS, 0.0);
+          m_kal.setCovariance(STATE_PSI_BIAS, 0.0);
 
           return true;
         }
@@ -362,23 +362,23 @@ namespace Navigation
         {
           if (hacc > 10)
           {
-            m_kal.setMeasurementNoise(OUT_GPS_X, OUT_GPS_X, m_args.gps_noise[GPS_ACC_BAD]);
-            m_kal.setMeasurementNoise(OUT_GPS_Y, OUT_GPS_Y, m_args.gps_noise[GPS_ACC_BAD]);
+            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_BAD]);
+            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_BAD]);
           }
           if (hacc > 8 && hacc <= 10)
           {
-            m_kal.setMeasurementNoise(OUT_GPS_X, OUT_GPS_X, m_args.gps_noise[GPS_ACC_AVERAGE]);
-            m_kal.setMeasurementNoise(OUT_GPS_Y, OUT_GPS_Y, m_args.gps_noise[GPS_ACC_AVERAGE]);
+            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_AVERAGE]);
+            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_AVERAGE]);
           }
           if (hacc > 4 && hacc <= 8)
           {
-            m_kal.setMeasurementNoise(OUT_GPS_X, OUT_GPS_X, m_args.gps_noise[GPS_ACC_GOOD]);
-            m_kal.setMeasurementNoise(OUT_GPS_Y, OUT_GPS_Y, m_args.gps_noise[GPS_ACC_GOOD]);
+            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_GOOD]);
+            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_GOOD]);
           }
           if (hacc <= 4)
           {
-            m_kal.setMeasurementNoise(OUT_GPS_X, OUT_GPS_X, m_args.gps_noise[GPS_ACC_PERFECT]);
-            m_kal.setMeasurementNoise(OUT_GPS_Y, OUT_GPS_Y, m_args.gps_noise[GPS_ACC_PERFECT]);
+            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_PERFECT]);
+            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_PERFECT]);
           }
         }
 

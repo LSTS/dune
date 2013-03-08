@@ -288,6 +288,12 @@ namespace DUNE
       setCovariance(short ln, short cl, double value);
 
       //! Set state covariance matrix value.
+      //! @param in row and column index.
+      //! @param value state covariance matrix value.
+      void
+      setCovariance(short in, double value);
+
+      //! Set state covariance matrix value.
       //! @param value state covariance matrix value.
       void
       setCovariance(double value);
@@ -304,6 +310,12 @@ namespace DUNE
       setProcessNoise(short ln, short cl, double value);
 
       //! Set process noise covariance matrix value.
+      //! @param in row and column index.
+      //! @param value process noise covariance matrix value.
+      void
+      setProcessNoise(short in, double value);
+
+      //! Set process noise covariance matrix value.
       //! @param value process noise covariance matrix value.
       void
       setProcessNoise(double value);
@@ -311,12 +323,18 @@ namespace DUNE
       //! Set measurement noise covariance matrix value.
       //! @param ln row index.
       //! @param cl column index.
-      //! @param value measurement noise covariance  matrix value.
+      //! @param value measurement noise covariance matrix value.
       void
       setMeasurementNoise(short ln, short cl, double value);
 
       //! Set measurement noise covariance matrix value.
-      //! @param value measurement noise covariance  matrix value.
+      //! @param in row and column index.
+      //! @param value measurement noise covariance matrix value.
+      void
+      setMeasurementNoise(short in, double value);
+
+      //! Set measurement noise covariance matrix value.
+      //! @param value measurement noise covariance matrix value.
       void
       setMeasurementNoise(double value);
 
