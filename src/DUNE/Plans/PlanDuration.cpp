@@ -25,14 +25,15 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
+// DUNE headers.
 #include <DUNE/Plans/PlanDuration.hpp>
 
 namespace DUNE
 {
   namespace Plans
   {
-    static float
-    distanceAndMove(double lat, double lon, Position& last_pos)
+    float
+    PlanDuration::distanceAndMove(double lat, double lon, Position& last_pos)
     {
       double value = Coordinates::WGS84::distance(lat, lon, 0.0,
                                                   last_pos.lat, last_pos.lon, 0.0);
@@ -44,9 +45,10 @@ namespace DUNE
     }
 
     template <typename Type>
-    static float
-    parseSimple(const Type* maneuver, Position& last_pos, float last_dur,
-                std::vector<float>& durations, const SpeedConversion& speed_conv)
+    float
+    PlanDuration::parseSimple(const Type* maneuver, Position& last_pos,
+                              float last_dur, std::vector<float>& durations,
+                              const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
@@ -61,8 +63,8 @@ namespace DUNE
     }
 
     template <typename Type>
-    static float
-    convertSpeed(const Type* maneuver, const SpeedConversion& conv)
+    float
+    PlanDuration::convertSpeed(const Type* maneuver, const SpeedConversion& conv)
     {
       switch (maneuver->speed_units)
       {
@@ -78,9 +80,9 @@ namespace DUNE
     }
 
 #ifdef DUNE_IMC_FOLLOWPATH
-    static float
-    parse(const IMC::FollowPath* maneuver, Position& last_pos, float last_dur,
-          std::vector<float>& durations, const SpeedConversion& speed_conv)
+    float
+    PlanDuration::parse(const IMC::FollowPath* maneuver, Position& last_pos, float last_dur,
+                        std::vector<float>& durations, const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
@@ -114,9 +116,9 @@ namespace DUNE
     }
 #endif
 #ifdef DUNE_IMC_ROWS
-    static float
-    parse(const IMC::Rows* maneuver, Position& last_pos, float last_dur,
-          std::vector<float>& durations, const SpeedConversion& speed_conv)
+    float
+    PlanDuration::parse(const IMC::Rows* maneuver, Position& last_pos, float last_dur,
+                        std::vector<float>& durations, const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
@@ -146,9 +148,9 @@ namespace DUNE
     }
 #endif
 #ifdef DUNE_IMC_YOYO
-    static float
-    parse(const IMC::YoYo* maneuver, Position& last_pos, float last_dur,
-          std::vector<float>& durations, const SpeedConversion& speed_conv)
+    float
+    PlanDuration::parse(const IMC::YoYo* maneuver, Position& last_pos, float last_dur,
+                        std::vector<float>& durations, const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
@@ -166,9 +168,9 @@ namespace DUNE
     }
 #endif
 #ifdef DUNE_IMC_ELEVATOR
-    static float
-    parse(const IMC::Elevator* maneuver, Position& last_pos, float last_dur,
-          std::vector<float>& durations, const SpeedConversion& speed_conv)
+    float
+    PlanDuration::parse(const IMC::Elevator* maneuver, Position& last_pos, float last_dur,
+                        std::vector<float>& durations, const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
@@ -188,9 +190,9 @@ namespace DUNE
     }
 #endif
 #ifdef DUNE_IMC_POPUP
-    static float
-    parse(const IMC::PopUp* maneuver, Position& last_pos, float last_dur,
-          std::vector<float>& durations, const SpeedConversion& speed_conv)
+    float
+    PlanDuration::parse(const IMC::PopUp* maneuver, Position& last_pos, float last_dur,
+                        std::vector<float>& durations, const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
@@ -230,10 +232,11 @@ namespace DUNE
     }    
 #endif
 
-    static float
-    parse(const std::vector<IMC::PlanManeuver*>& nodes , const IMC::EstimatedState* state,
-          std::map< std::string, std::vector<float> >& man_durations,
-          const SpeedConversion& speed_conv)
+    float
+    PlanDuration::parse(const std::vector<IMC::PlanManeuver*>& nodes,
+                        const IMC::EstimatedState* state,
+                        std::map< std::string, std::vector<float> >& man_durations,
+                        const SpeedConversion& speed_conv)
     {
       Position pos;
       DUNE::Coordinates::toWGS84(*state, pos.lat, pos.lon);

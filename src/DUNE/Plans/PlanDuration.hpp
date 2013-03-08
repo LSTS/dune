@@ -51,7 +51,6 @@ namespace DUNE
     //! Utility class to estimate a plan's duration.
     class PlanDuration
     {
-
     public:
       //! Conversion factors for rpm and actuation percent
       struct SpeedConversion
