@@ -58,6 +58,8 @@ namespace Vision
       float gain_knee;
       // Enable median filtering (helps with noise in low light/high gain settings)
       bool median_filter;
+      // Enable the LED strobe output
+      bool strobe;
     };
 
     //! Device driver task.
@@ -113,6 +115,10 @@ namespace Vision
         param("Median Filter", m_args.median_filter)
         .defaultValue("false")
         .description("Enable Median Filter");
+
+        param("Strobe", m_args.strobe)
+        .defaultValue("true")
+        .description("Enable Strobe");
 
         bind<IMC::LoggingControl>(this);
         bind<IMC::EntityControl>(this);
@@ -287,6 +293,17 @@ namespace Vision
         setProperty("autogain_knee", uncastLexical(m_args.gain_knee));
         debug("setting median filtering to '%u'", m_args.median_filter);
         setProperty("median_filter", uncastLexical(m_args.median_filter));
+
+        if (m_args.strobe)
+        {
+          debug("enabling strobe output");
+          setProperty("output_select", "strobe");
+        }
+        else
+        {
+          debug("disabling strobe output");
+          setProperty("output_select", "off");
+        }
       }
 
       //! Release allocated resources.
