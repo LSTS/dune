@@ -55,6 +55,10 @@ namespace Plan
       bool progress;
       //! State report period
       float speriod;
+      //! Factor to convert from RPMs to meters per second
+      float speed_conv_rpm;
+      //! Conv to convert from actuation to meters per second      
+      float speed_conv_act;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -107,6 +111,14 @@ namespace Plan
         .units(Units::Hertz)
         .description("Frequency of plan control state");
 
+        param("RPM Conversion Factor", m_args.speed_conv_rpm)
+        .defaultValue("0.001")
+        .description("Factor to convert from RPMs to meters per second");
+
+        param("Actuation Conversion Factor", m_args.speed_conv_act)
+        .defaultValue("2.0")
+        .description("Factor to convert from actuation to meters per second");
+
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::EstimatedState>(this);
@@ -137,7 +149,8 @@ namespace Plan
       void
       onResourceAcquisition(void)
       {
-        m_plan = new Plan(&m_spec, m_args.progress);
+        m_plan = new Plan(&m_spec, m_args.progress,
+                          m_args.speed_conv_rpm, m_args.speed_conv_act);
       }
 
       void
