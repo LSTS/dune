@@ -43,7 +43,6 @@ namespace Maneuver
       std::string default_speed_units;
       float default_z;
       std::string default_z_units;
-
     };
 
     enum FREF_STATE
@@ -62,8 +61,6 @@ namespace Maneuver
 
     struct Task : public DUNE::Maneuvers::Maneuver
     {
-      //! Task arguments.
-      Arguments m_args;
       //! Store maneuver specification
       IMC::FollowReference m_spec;
       //! Store latest received reference
@@ -72,7 +69,6 @@ namespace Maneuver
       IMC::EstimatedState m_estate;
       //! FollowRefState
       IMC::FollowRefState m_fref_state;
-
       //! Did we get a reference already?
       bool m_got_reference;
       //! Are we moving or idle (floating)
@@ -80,38 +76,49 @@ namespace Maneuver
       //! Store last timestamp when reference was received
       double m_last_ref_time;
       //! Stores the current execution state
-      FREF_STATE state;
+      FREF_STATE m_fstate;
+      //! Task arguments.
+      Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx) :
-        DUNE::Maneuvers::Maneuver(name, ctx), m_got_reference(false), m_moving(
-            false), m_last_ref_time(0), state(FREF_BOOT)
+        DUNE::Maneuvers::Maneuver(name, ctx),
+        m_got_reference(false),
+        m_moving(false),
+        m_last_ref_time(0),
+        m_fstate(FREF_BOOT)
       {
+        param("Loitering Radius", m_args.loitering_radius)
+        .defaultValue("7.5")
+        .units(Units::Meter).
+        description("Radius of loitering circle after arriving at destination");
 
-        param("Loitering Radius", m_args.loitering_radius).defaultValue("7.5").units(
-            Units::Meter).description(
-                "Radius of loitering circle after arriving at destination");
+        param("Horizontal Tolerance", m_args.horizontal_tolerance)
+        .defaultValue("15.0")
+        .units(Units::Meter)
+        .description("Minimum distance required to consider that the vehicle has arrived at the reference (XY)");
 
-        param("Horizontal Tolerance", m_args.horizontal_tolerance).defaultValue(
-            "15.0").units(Units::Meter).description(
-                "Minimum distance required to consider that the vehicle has arrived at the reference (XY)");
+        param("Vertical Tolerance", m_args.vertical_tolerance)
+        .defaultValue("2.0")
+        .units(Units::Meter)
+        .description("Minimum distance required to consider that the vehicle has arrived at the reference (Z)");
 
-        param("Vertical Tolerance", m_args.vertical_tolerance).defaultValue(
-            "2.0").units(Units::Meter).description(
-                "Minimum distance required to consider that the vehicle has arrived at the reference (Z)");
+        param("Default Speed", m_args.default_speed)
+        .defaultValue("50")
+        .description("Speed to use in case no speed is given by reference source.");
 
-        param("Default Speed", m_args.default_speed).defaultValue("50")
-                                                .description("Speed to use in case no speed is given by reference source.");
+        param("Default Speed Units", m_args.default_speed_units)
+        .defaultValue("%")
+        .description("Units to use for default speed (one of 'm/s', 'rpm' or '%').");
 
-        param("Default Speed Units", m_args.default_speed_units).defaultValue("%")
-                                                .description("Units to use for default speed (one of 'm/s', 'rpm' or '%').");
+        param("Default Z", m_args.default_z)
+        .defaultValue("0")
+        .units(Units::Meter)
+        .description("Default z when no vertical reference is given.");
 
-        param("Default Z", m_args.default_z).defaultValue("0")
-                                                .units(Units::Meter)
-                                                .description("Default z when no vertical reference is given.");
-
-        param("Default Z Units", m_args.default_z_units).defaultValue("DEPTH")
-                                                .units(Units::Meter)
-                                                .description("Units to use for default z reference (one of 'DEPTH', 'ALTITUDE' or 'HEIGHT')");
+        param("Default Z Units", m_args.default_z_units)
+        .defaultValue("DEPTH")
+        .units(Units::Meter)
+        .description("Units to use for default z reference (one of 'DEPTH', 'ALTITUDE' or 'HEIGHT')");
 
         bindToManeuver<Task, IMC::FollowReference>();
         bind<IMC::Reference>(this);
@@ -126,7 +133,7 @@ namespace Maneuver
         m_got_reference = false;
         m_spec = *msg;
         m_last_ref_time = Clock::get();
-        state = FREF_BOOT;
+        m_fstate = FREF_BOOT;
 
         m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
         m_fref_state.state = IMC::FollowRefState::FR_WAIT;
@@ -136,7 +143,6 @@ namespace Maneuver
         // send a notify to controlling peer that the maneuver was activated
         dispatch(m_fref_state);
       }
-
 
       bool
       sameReference(const IMC::Reference *msg1, const IMC::Reference *msg2)
@@ -191,13 +197,10 @@ namespace Maneuver
         m_got_reference = true;
         m_last_ref_time = Clock::get();
 
-        if (sameReference(msg, &m_cur_ref)) {
+        if (sameReference(msg, &m_cur_ref))
           return;
-        }
         else
-        {
           m_cur_ref = *msg;
-        }
 
         if (m_cur_ref.flags & IMC::Reference::FLAG_MANDONE)
         {
@@ -220,24 +223,21 @@ namespace Maneuver
         if (m_spec.timeout != 0)
           delta = Clock::get() - m_last_ref_time;
 
-        if (delta > m_spec.timeout) {
+        if (delta > m_spec.timeout)
+        {
           m_fref_state.state = IMC::FollowRefState::FR_TIMEOUT;
           dispatch(m_fref_state);
           signalError("reference source timed out");
         }
-
       }
 
       //! Function to check if the vehicle is getting near to the next waypoint
       void
       consume(const IMC::PathControlState* pcs)
       {
-
         // if we have arrived at the target, we stop moving
         if (pcs->flags & IMC::PathControlState::FL_NEAR)
-        {
           follow(&m_cur_ref);
-        }
       }
 
       SpeedUnits
@@ -340,53 +340,52 @@ namespace Maneuver
 
         // check to see if we are already at the target...
         double xy_dist = WGS84::distance(desired_path.end_lat,
-            desired_path.end_lon, 0, curlat,
-            curlon, 0);
+                                         desired_path.end_lon, 0, curlat,
+                                         curlon, 0);
         double z_dist;
 
         switch (desired_path.end_z_units)
         {
           case (Z_DEPTH):
-                                                z_dist = std::abs(desired_path.end_z - m_estate.depth);
-          break;
+            z_dist = std::abs(desired_path.end_z - m_estate.depth);
+            break;
           case (Z_ALTITUDE):
-                                                z_dist = std::abs(desired_path.end_z - m_estate.alt);
-          break;
+            z_dist = std::abs(desired_path.end_z - m_estate.alt);
+            break;
           case (Z_HEIGHT):
-                                                z_dist = std::abs(desired_path.end_z - m_estate.height);
-          break;
+            z_dist = std::abs(desired_path.end_z - m_estate.height);
+            break;
           default:
             z_dist = 0;
             break;
         }
 
-        state = FREF_GOING;
+        m_fstate = FREF_GOING;
         // if inside target cylinder
         if (xy_dist < m_args.horizontal_tolerance)
         {
-
           // if inside desired location
           if (z_dist < 1 && desired_path.end_z == 0
               && desired_path.end_z_units == Z_DEPTH)
           {
-            state = FREF_HOVERING;
+            m_fstate = FREF_HOVERING;
             enableMovement(false);
             return;
           }
           else if (z_dist < m_spec.altitude_interval)
           {
-            state = FREF_LOITERING;
+            m_fstate = FREF_LOITERING;
           }
           else
           {
-            state = FREF_ELEVATOR;
+            m_fstate = FREF_ELEVATOR;
           }
         }
 
         if (!m_moving)
           enableMovement(true);
 
-        switch (state)
+        switch (m_fstate)
         {
           case FREF_GOING:
             m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
