@@ -48,6 +48,14 @@ namespace Vision
       Address address;
       // Maximum Frames Per Second
       unsigned fps;
+      // Maximum Exposure
+      float exposure_max;
+      // Exposure Knee
+      float exposure_knee;
+      // Maximum Gain
+      float gain_max;
+      // Gain knee
+      float gain_knee;
     };
 
     //! Device driver task.
@@ -83,6 +91,22 @@ namespace Vision
         param("Frames Per Second", m_args.fps)
         .defaultValue("15")
         .description("Frames per second");
+
+        param("Maximum Exposure", m_args.exposure_max)
+        .defaultValue("0.01")
+        .description("Maximum exposure");
+
+        param("Maximum Gain", m_args.gain_max)
+        .defaultValue("4.0")
+        .description("Maximum gain");
+
+        param("Autoexposure Knee", m_args.exposure_knee)
+        .defaultValue("0.005")
+        .description("Exposure limit before increasing the gain");
+
+        param("Autogain Knee", m_args.gain_knee)
+        .defaultValue("2.0")
+        .description("Gain limit before increasing the exposure");
 
         bind<IMC::LoggingControl>(this);
         bind<IMC::EntityControl>(this);
@@ -244,6 +268,17 @@ namespace Vision
       {
         debug("setting frames per second to '%u'", m_args.fps);
         setProperty("maximum_framerate", uncastLexical(m_args.fps));
+        debug("enabling autogain and autoexposure");
+        setProperty("autogain", "1");
+        setProperty("autoexposure", "1");
+        debug("setting maximum exposure to '%f' seconds", m_args.exposure_max);
+        setProperty("maximum_exposure", uncastLexical(m_args.exposure_max));
+        debug("setting maximum gain to '%f'", m_args.gain_max);
+        setProperty("maximum_gain", uncastLexical(m_args.gain_max));
+        debug("setting auto-exposure knee to '%f' seconds", m_args.exposure_knee);
+        setProperty("autoexposure_knee", uncastLexical(m_args.exposure_knee));
+        debug("setting auto-gain knee to '%f'", m_args.gain_knee);
+        setProperty("autogain_knee", uncastLexical(m_args.gain_knee));
       }
 
       //! Release allocated resources.
