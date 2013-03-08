@@ -70,6 +70,8 @@ namespace Plan
       //! Default constructor.
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] compute_progress true if progress should be computed
+      //! @param[in] speed_rpm_factor factor to convert from RPMs to m/s
+      //! @param[in] speed_act_factor factor to convert from actuation to m/s
       Plan(const IMC::PlanSpecification* spec, bool compute_progress,
            float speed_rpm_factor, float speed_act_factor):
         m_spec(spec),
