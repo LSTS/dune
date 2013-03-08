@@ -34,8 +34,6 @@ namespace DUNE
 {
   namespace Parsers
   {
-    using namespace DUNE::IMC;
-
 #ifdef DUNE_IMC_IDLEMANEUVER
     void
     PlanConfigParser::parse(Parsers::Config& cfg, std::string id, IMC::IdleManeuver& man)
