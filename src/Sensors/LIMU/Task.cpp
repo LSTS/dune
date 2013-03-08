@@ -37,6 +37,31 @@ namespace Sensors
     //! Baud rate is constant.
     static const unsigned c_baud_rate = 115200;
 
+    //! Data structure.
+    struct Data
+    {
+      //! Acceleration.
+      float accel[3];
+      //! Angular Velocity.
+      float anvel[3];
+      //! Euler Angles.
+      float euler[3];
+      //! Magnetometer.
+      float magne[3];
+      //! Temperature.
+      float temp;
+    };
+
+    //! Calibration parameters.
+    struct Calibration
+    {
+      //! Hard-Iron calibration parameters.
+      int16_t hiron[3];
+      //! Soft-Iron calibration parameters.
+      int16_t siron[9];
+    };
+
+    //! %Task arguments.
     struct Arguments
     {
       //! Serial port device.
