@@ -64,6 +64,15 @@ namespace DUNE
         uint8_t z_units;
       };
 
+      //! Conversion factors for rpm and actuation percent
+      struct SpeedConversion
+      {
+        //! From RPM to meters per second
+        float rpm_factor;
+        //! From Actuation to meters per second
+        float act_factor;
+      };
+
       //! Compute distance and move Position to new one
       //! @param[in] lat latitude of new position
       //! @param[in] lon longitude of new position
@@ -101,6 +110,24 @@ namespace DUNE
         last_pos.z_units = maneuver->z_units;
         durations.push_back(value / maneuver->speed + last_dur);
         return durations[0];
+      }
+
+      //! Convert speed to meters per second
+      template <typename Type>
+      static float
+      convertSpeed(const Type* maneuver, SpeedConversion& conv)
+      {
+        switch (maneuver->speed_units)
+        {
+          case IMC::SUNITS_METERS_PS:
+            return maneuver->speed;
+          case IMC::SUNITS_RPM:
+            return maneuver->speed * conv.rpm_factor;
+          case IMC::SUNITS_PERCENTAGE:
+            return maneuver->speed * conv.act_factor;
+          default:
+            return 0.0;
+        }
       }
 
     public:
