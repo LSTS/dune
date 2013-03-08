@@ -26,7 +26,10 @@
 // Author: Pedro Calado (added some maneuvers)                              *
 //***************************************************************************
 
+// ISO C++ 98 headers.
 #include <vector>
+
+// DUNE headers.
 #include <DUNE/Parsers/PlanConfigParser.hpp>
 #include <DUNE/Math/Matrix.hpp>
 
