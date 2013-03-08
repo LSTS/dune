@@ -56,6 +56,8 @@ namespace Vision
       float gain_max;
       // Gain knee
       float gain_knee;
+      // Enable median filtering (helps with noise in low light/high gain settings)
+      bool median_filter;
     };
 
     //! Device driver task.
@@ -107,6 +109,10 @@ namespace Vision
         param("Autogain Knee", m_args.gain_knee)
         .defaultValue("2.0")
         .description("Gain limit before increasing the exposure");
+
+        param("Median Filter", m_args.median_filter)
+        .defaultValue("false")
+        .description("Enable Median Filter");
 
         bind<IMC::LoggingControl>(this);
         bind<IMC::EntityControl>(this);
@@ -279,6 +285,8 @@ namespace Vision
         setProperty("autoexposure_knee", uncastLexical(m_args.exposure_knee));
         debug("setting auto-gain knee to '%f'", m_args.gain_knee);
         setProperty("autogain_knee", uncastLexical(m_args.gain_knee));
+        debug("setting median filtering to '%u'", m_args.median_filter);
+        setProperty("median_filter", uncastLexical(m_args.median_filter));
       }
 
       //! Release allocated resources.
