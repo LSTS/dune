@@ -116,7 +116,7 @@ namespace Plan
         .description("Factor to convert from RPMs to meters per second");
 
         param("Actuation Conversion Factor", m_args.speed_conv_act)
-        .defaultValue("2.0")
+        .defaultValue("0.02")
         .description("Factor to convert from actuation to meters per second");
 
         bind<IMC::PlanControl>(this);
