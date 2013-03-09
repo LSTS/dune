@@ -279,25 +279,26 @@ namespace Navigation
 
           if (msg->op == IMC::EntityControl::ECO_ACTIVATE)
           {
-            // Start integrating heading rates and use IMU data.
+            // IMU already activated.
+            if (m_integ_yrate)
+              return;
+
+            // Start integrating heading rates from IMU data.
             m_integ_yrate = true;
             m_agvel_eid = m_imu_eid;
             debug("activating IMU");
 
-            if (!m_alignment)
-            {
-              // Reinitialize state covariance matrix value.
-              m_kal.resetCovariance(STATE_PSI_BIAS);
-              m_kal.setCovariance(STATE_PSI_BIAS, m_state_cov[SC_BIASES]);
+            // Reinitialize state covariance matrix value.
+            m_kal.resetCovariance(STATE_PSI_BIAS);
+            m_kal.setCovariance(STATE_PSI_BIAS, m_state_cov[SC_BIASES]);
 
-              // Position process noise covariance value if IMU is available.
-              m_kal.setProcessNoise(STATE_X, m_args.position_noise_with_imu);
-              m_kal.setProcessNoise(STATE_Y, m_args.position_noise_with_imu);
+            // Position process noise covariance value if IMU is available.
+            m_kal.setProcessNoise(STATE_X, m_args.position_noise_with_imu);
+            m_kal.setProcessNoise(STATE_Y, m_args.position_noise_with_imu);
 
-              // LBL noise.
-              for (unsigned i = 0; i < m_num_beacons; i++)
-                m_kal.setMeasurementNoise(NUM_OUT + i, m_args.lbl_noise_with_imu);
-            }
+            // LBL noise.
+            for (unsigned i = 0; i < m_num_beacons; i++)
+              m_kal.setMeasurementNoise(NUM_OUT + i, m_args.lbl_noise_with_imu);
           }
           else
           {
@@ -315,8 +316,6 @@ namespace Navigation
 
             for (unsigned i = 0; i < m_num_beacons; i++)
               m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
-
-            m_alignment = false;
           }
         }
 
@@ -454,6 +453,7 @@ namespace Navigation
           m_kal.setState(STATE_PSI, psi);
           m_kal.setState(STATE_PSI_BIAS, m_heading - psi);
           m_kal.resetCovariance(STATE_PSI_BIAS);
+          m_kal.setCovariance(STATE_PSI_BIAS, m_state_cov[SC_BIASES]);
         }
 
         void
@@ -480,13 +480,10 @@ namespace Navigation
           resetMatrixA(ax, x);
           resetMatrixA(ap, x);
 
-          if (!m_alignment)
-          {
-            ap(STATE_X, STATE_PSI) = (- x(STATE_U) * std::sin(x(STATE_PSI))
-                                      - x(STATE_V) * std::cos(x(STATE_PSI)));
-            ap(STATE_Y, STATE_PSI) = (x(STATE_U) * std::cos(x(STATE_PSI))
-                                      - x(STATE_V) * std::sin(x(STATE_PSI)));
-          }
+          ap(STATE_X, STATE_PSI) = (- x(STATE_U) * std::sin(x(STATE_PSI))
+                                    - x(STATE_V) * std::cos(x(STATE_PSI)));
+          ap(STATE_Y, STATE_PSI) = (x(STATE_U) * std::cos(x(STATE_PSI))
+                                    - x(STATE_V) * std::sin(x(STATE_PSI)));
 
           m_kal.setCovarianceTransition((ap * tstep).expmts());
           m_kal.setStateTransition((ax * tstep).expmts());
