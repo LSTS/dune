@@ -59,7 +59,9 @@ namespace DUNE
       m_eid(DUNE_IMC_CONST_UNK_EID),
       m_debug_level(DEBUG_LEVEL_NONE),
       m_entity_state_code(-1),
-      m_is_active(true)
+      m_is_active(true),
+      m_act_time(0),
+      m_deact_time(0)
     {
       param(DTR_RT("Entity Label"), m_elabel)
       .defaultValue("")
@@ -72,11 +74,18 @@ namespace DUNE
       param(DTR_RT("Execution Priority"), m_priority)
       .defaultValue("10");
 
+      param(DTR_RT("Activation Time"), m_act_time)
+      .defaultValue("0");
+
+      param(DTR_RT("Deactivation Time"), m_deact_time)
+      .defaultValue("0");
+
       m_recipient = new Recipient(this, ctx);
 
       // Initialize main entity state.
       setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
 
+      bind<IMC::QueryEntityInfo>(this);
       bind<IMC::QueryEntityState>(this);
       bind<IMC::QueryEntityParameters>(this);
       bind<IMC::SetEntityParameters>(this);
@@ -181,6 +190,12 @@ namespace DUNE
     void
     Task::updateParameters(void)
     {
+      m_ent_info.label = getEntityLabel();
+      m_ent_info.component = getName();
+      m_ent_info.act_time = m_act_time;
+      m_ent_info.deact_time = m_deact_time;
+      dispatch(m_ent_info);
+
       if (m_debug_level_string == "Debug")
         m_debug_level = DEBUG_LEVEL_DEBUG;
       else if (m_debug_level_string == "Trace")
@@ -201,6 +216,11 @@ namespace DUNE
 
       m_is_active = true;
       onActivation();
+
+      IMC::EntityActivationState msg;
+      msg.state = IMC::EntityActivationState::EAS_ACT_IP;
+      dispatch(msg);
+
       return true;
     }
 
@@ -212,6 +232,11 @@ namespace DUNE
 
       m_is_active = false;
       onDeactivation();
+
+      IMC::EntityActivationState msg;
+      msg.state = IMC::EntityActivationState::EAS_DEACT_IP;
+      dispatch(msg);
+
       return true;
     }
 
@@ -281,6 +306,12 @@ namespace DUNE
         m_ctx.mbus.dispatch(msg, this);
       else
         m_ctx.mbus.dispatch(msg);
+    }
+
+    void
+    Task::consume(const IMC::QueryEntityInfo* msg)
+    {
+      dispatchReply(*msg, m_ent_info);
     }
 
     void

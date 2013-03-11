@@ -10974,7 +10974,7 @@ namespace DUNE
     };
 
     //! Follow Reference Maneuver.
-    class FollowReference: public Message
+    class FollowReference: public Maneuver
     {
     public:
       //! Controlling Source.

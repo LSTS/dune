@@ -11,8 +11,8 @@
           name="IMC"
           long-name="Inter Module Communication"
           version="5.1.0"
-          revision="$Rev: 1729 $"
-          creation="$Date: 2013-02-21 15:57:28 +0000 (Thu, 21 Feb 2013) $">
+          revision="$Rev: 1741 $"
+          creation="$Date: 2013-03-11 15:30:29 +0000 (Mon, 11 Mar 2013) $">
 
   <description>
     This document describes the communications protocol associated
@@ -309,6 +309,7 @@
       <message-type abbrev="VehicleFormation"/>
       <message-type abbrev="CompassCalibration"/>
       <message-type abbrev="CoverArea"/>
+      <message-type abbrev="FollowReference"/>
     </message-group>
 
     <message-group name="Control Command" abbrev="ControlCommand">
@@ -577,7 +578,7 @@
     </description>
   </message>
 
-  <message id="10" name="Parameter" abbrev="Parameter" source="ccu,vehicle">
+  <message id="10" name="Parameter" abbrev="Parameter" source="ccu,vehicle" flags="deprecated">
     <description>
       This message gives information about a configuration parameter.
     </description>
@@ -598,7 +599,7 @@
     </field>
   </message>
 
-  <message id="11" name="Parameters Control" abbrev="ParameterControl" source="ccu">
+  <message id="11" name="Parameters Control" abbrev="ParameterControl" source="ccu" flags="deprecated">
     <description>
       This message is used to control the configuration in
       IMC-compatible systems.
@@ -5075,7 +5076,7 @@
       </description>
     </field>
   </message>
-  
+
   <!-- NOT YET IMPLEMENTED -->
   <message id="478" name="Follow Reference Maneuver" abbrev="FollowReference" source="ccu">
   	<description>
@@ -5103,24 +5104,24 @@
   	<field name="Loiter Radius" abbrev="loiter_radius" type="fp32_t">
   		<description>
   		  Whenever an intended reference is achieved, this maneuver will maintain the vehicle in vaticiny of that
-  		  location. The loiter radius is used to define the radius of this (xy) area. 
+  		  location. The loiter radius is used to define the radius of this (xy) area.
   		</description>
   	</field>
   	<field name="Altitude Interval" abbrev="altitude_interval" type="fp32_t">
   		<description>
   		  Similarly to Loiter Radius, this field is used to define the "z" distance considered to be inside the vacitiny of
   		  the target location. An AUV may, for instance, be floating until it more than z units above the current reference,
-  		  in which case it actively changes its position in order to achieve the desired depth / altitude. 
+  		  in which case it actively changes its position in order to achieve the desired depth / altitude.
   		</description>
   	</field>
   </message>
-  
+
   <message id="479" name="Reference To Follow" abbrev="Reference" source="ccu,vehicle">
   	<field name="Flags" abbrev="flags" type="uint8_t" unit="Bitfield" prefix="FLAG">
   		<value abbrev="LOCATION" name="Use Location Reference" id="0x01"/>
   		<value abbrev="SPEED" name="Use Speed Reference" id="0x02"/>
   		<value abbrev="Z" name="Use Z Reference" id="0x04"/>
-  		<value abbrev="MANDONE" name="Flag Maneuver Completion" id="0x80"/>  		
+  		<value abbrev="MANDONE" name="Flag Maneuver Completion" id="0x80"/>
   	</field>
   	<field name="Speed Reference" abbrev="speed" type="message" message-type="DesiredSpeed"/>
   	<field name="Z Reference" abbrev="z" type="message" message-type="DesiredZ"/>
@@ -6132,7 +6133,7 @@
       <description>A list of Announce messages with last announces heard</description>
     </field>
   </message>
-  
+
   <message id="651" name="TREX Observation" abbrev="TrexObservation" source="vehicle,ccu">
     <description>
       This message is sent to TREX to post timeline observations
@@ -6310,35 +6311,44 @@
   </message>
 
   <message id="806" name="Create Session" abbrev="CreateSession" source="ccu,vehicle">
-  <description>Request creating a new session with this remote peer. Example session sequence is shown
-  in the following diagram.
-  
-        .. figure:: images/session_sequence.png
-         :align:  center
-  </description>
+    <description>
+      Request creating a new session with this remote peer. Example
+      session sequence is shown in the following diagram.
+
+      .. figure:: images/session_sequence.png
+      :align:  center
+    </description>
     <field name="Session Timeout" abbrev="timeout" type="uint32_t">
-      <description>Session timeout, in seconds. If no messages are received from the remote peer, the session
-      will be closed after this ammount of seconds have ellapsed.</description>
+      <description>
+        Session timeout, in seconds. If no messages are received from
+        the remote peer, the session will be closed after this ammount
+        of seconds have ellapsed.
+      </description>
     </field>
   </message>
 
   <message id="807" name="Close Session" abbrev="CloseSession" source="ccu,vehicle">
-    <description>Request closing of an ongoing session</description>
+    <description>
+      Request closing of an ongoing session
+    </description>
     <field name="Session Identifier" abbrev="sessid" type="uint32_t"/>
   </message>
-  
+
   <message id="808" name="Session Subscription" abbrev="SessionSubscription" source="ccu,vehicle">
-  	<field name="Session Identifier" abbrev="sessid" type="uint32_t"/>
-  	<field name="Messages to subscribe" abbrev="messages" type="plaintext">
-  	  <description>Comma-separated list of messages to subscribe. Example: "EstimatedState,EulerAngles,Temperature"</description>
-  	</field>
+    <field name="Session Identifier" abbrev="sessid" type="uint32_t"/>
+    <field name="Messages to subscribe" abbrev="messages" type="plaintext">
+      <description>
+        Comma-separated list of messages to subscribe. Example:
+        "EstimatedState,EulerAngles,Temperature"
+      </description>
+    </field>
   </message>
-  
+
   <message id="809" name="Session Keep-Alive" abbrev="SessionKeepAlive" source="ccu,vehicle">
     <description>Message exchanged to prevent a session from timing out</description>
-  	<field name="Session Identifier" abbrev="sessid" type="uint32_t"/>
+    <field name="Session Identifier" abbrev="sessid" type="uint32_t"/>
   </message>
-    
+
   <message id="810" name="Session Status" abbrev="SessionStatus" source="ccu,vehicle" flags="periodic">
     <description>Message transmitted periodically to inform the state of a communication session</description>
     <field name="Session Identifier" abbrev="sessid" type="uint32_t"/>
@@ -6347,6 +6357,4 @@
       <value abbrev="CLOSED" name="Closed" id="2"/>
     </field>
   </message>
-
-  
 </messages>

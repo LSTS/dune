@@ -583,6 +583,12 @@ namespace DUNE
       int m_entity_state_code;
       //! True if task is active.
       bool m_is_active;
+      //! Entity information message.
+      IMC::EntityInfo m_ent_info;
+      //! Activation time.
+      uint16_t m_act_time;
+      //! Deactivation time.
+      uint16_t m_deact_time;
 
       //! Report current entity states by dispatching EntityState
       //! messages. This function will at least report the state of
@@ -606,6 +612,9 @@ namespace DUNE
              IMC::Factory::getAbbrevFromId(message_id).c_str());
         m_recipient->bind(message_id, consumer);
       }
+
+      void
+      consume(const IMC::QueryEntityInfo* msg);
 
       //! Consume QueryEntityState messages and reply accordingly.
       //! @param[in] msg QueryEntityState message.
