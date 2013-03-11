@@ -306,19 +306,6 @@ namespace DUNE
       void
       updateParameters(void);
 
-      //! Instruct task to start/resume normal execution.
-      //! @return true if task was successfully activated, false if
-      //! the task was already active.
-      bool
-      activate(void);
-
-      //! Instruct task to stop normal execution and enter an idleness
-      //! state.
-      //! @return true if task was successfully deactivated, false if
-      //! the task was already inactive.
-      bool
-      deactivate(void);
-
       //! Write task parameters in XML format.
       //! @param[in] os output stream.
       void
@@ -487,6 +474,37 @@ namespace DUNE
                new Consumer<T, IMC::Message>(*task_obj, func));
       }
 
+      //! Request task to start/resume normal execution.
+      void
+      requestActivation(void);
+
+      //! Request task to stop normal execution and enter an idleness
+      //! state.
+      void
+      requestDeactivation(void);
+
+      //! Derived classes should use this function to signal that
+      //! activation was completed successfully.
+      void
+      activate(void);
+
+      //! Derived classes should use this function to signal that
+      //! activation failed.
+      //! @param[in] reason reason for activation failure.
+      void
+      activationFailed(const std::string& reason);
+
+      //! Derived classes should use this function to signal that
+      //! deactivation was completed successfully.
+      void
+      deactivate(void);
+
+      //! Derived classes should use this function to signal that
+      //! deactivation failed.
+      //! @param[in] reason reason for deactivation failure.
+      void
+      deactivationFailed(const std::string& reason);
+
       //! Called when the task is instructed to reserve all the entity
       //! identifiers it needs for normal execution. See
       //! reserveEntity(). Derived classes that need to reserve entity
@@ -542,17 +560,37 @@ namespace DUNE
       onUpdateParameters(void)
       { }
 
-      //! Called when the task is instructed to start/resume normal
-      //! operation. Derived classes that need to perform extra steps
-      //! to prepare normal execution should override this function.
+      //! Called when an external activation request is
+      //! received. Derived classes that need to perform extra steps
+      //! to prepare normal execution should replace the default
+      //! behaviour of immediate activation with calls to activate()
+      //! when the request is completed or activationFailed() if the
+      //! request cannot be honoured.
+      virtual void
+      onRequestActivation(void)
+      {
+        activate();
+      }
+
+      //! Called when an external deactivation request is
+      //! received. Derived classes that need to perform extra steps
+      //! to prepare normal execution should replace the default
+      //! behaviour of immediate deactivation with calls to deactivate()
+      //! when the request is completed or deactivationFailed() if the
+      //! request cannot be honoured.
+      virtual void
+      onRequestDeactivation(void)
+      {
+        deactivate();
+      }
+
+      //! Called when the task starts/resumes normal execution.
       virtual void
       onActivation(void)
       { }
 
-      //! Called when the task is instructed to stop normal operation
-      //! and enter an idleness state. Derived classes that need to
-      //! perform extra steps to prepare the deactivation should
-      //! override this function.
+      //! Called when the task stops normal execution and enters an
+      //! idleness state.
       virtual void
       onDeactivation(void)
       { }

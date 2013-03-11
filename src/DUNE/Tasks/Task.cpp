@@ -208,27 +208,46 @@ namespace DUNE
       onUpdateParameters();
     }
 
-    bool
+    void
+    Task::requestActivation(void)
+    {
+      onRequestActivation();
+    }
+
+    void
     Task::activate(void)
     {
       if (m_is_active)
-        return false;
+        return;
 
       m_is_active = true;
       onActivation();
 
       IMC::EntityActivationState msg;
-      msg.state = IMC::EntityActivationState::EAS_ACT_IP;
+      msg.state = IMC::EntityActivationState::EAS_ACT_DONE;
       dispatch(msg);
-
-      return true;
     }
 
-    bool
+    void
+    Task::activationFailed(const std::string& reason)
+    {
+      IMC::EntityActivationState msg;
+      msg.state = IMC::EntityActivationState::EAS_ACT_FAIL;
+      msg.error = reason;
+      dispatch(msg);
+    }
+
+    void
+    Task::requestDeactivation(void)
+    {
+      onRequestDeactivation();
+    }
+
+    void
     Task::deactivate(void)
     {
       if (!m_is_active)
-        return false;
+        return;
 
       m_is_active = false;
       onDeactivation();
@@ -236,8 +255,15 @@ namespace DUNE
       IMC::EntityActivationState msg;
       msg.state = IMC::EntityActivationState::EAS_DEACT_IP;
       dispatch(msg);
+    }
 
-      return true;
+    void
+    Task::deactivationFailed(const std::string& reason)
+    {
+      IMC::EntityActivationState msg;
+      msg.state = IMC::EntityActivationState::EAS_DEACT_FAIL;
+      msg.error = reason;
+      dispatch(msg);
     }
 
     void
