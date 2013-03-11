@@ -54,21 +54,35 @@ namespace Monitors
       uint8_t state;
       //! Monitored flag.
       bool monitor;
+      //! Time of last state transition
+      double last_transition;
+      //! Consecutive changes in a short time
+      unsigned transitions;
 
       ESRecord(std::string& l, double t):
         label(l),
         time(t),
         state(IMC::EntityState::ESTA_BOOT),
-        monitor(false)
+        monitor(false),
+        last_transition(0.0),
+        transitions(0)
       { }
     };
 
     struct Arguments
     {
+      //! Timeout threshold to report Entity error
       double report_timeout;
+      //! Default entities to monitor
       std::vector<std::string> defmon;
+      //! Additional default entities to monitor in Hardware profile
       std::vector<std::string> defmon_hw;
+      //! Enable verbose output
       bool trace;
+      //! Minimum gap for state transitioning
+      float transition_gap;
+      //! Maximum number of consecutive transitions before starting to ignore
+      unsigned max_transitions;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -107,6 +121,15 @@ namespace Monitors
         .defaultValue("false")
         .description("Enable verbose output");
 
+        param("Transition Time Gap", m_args.transition_gap)
+        .units(Units::Second)
+        .defaultValue("4.0")
+        .description("Minimum gap for state transitioning");
+
+        param("Maximum Consecutive Transitions", m_args.max_transitions)
+        .defaultValue("3")
+        .description("Maximum number of consecutive transitions before starting to ignore");
+
         bind<IMC::EntityState>(this);
         bind<IMC::MonitorEntityState>(this);
       }
@@ -141,8 +164,7 @@ namespace Monitors
         }
 
         // Enable the defaults initially
-        enableDefaults();
-        reportState();
+        enableDefaults(true);
       }
 
       //! Fill default entities vector
@@ -162,7 +184,6 @@ namespace Monitors
             err(DTR("can not monitor %s (%s), is there a task failure or a configuration error?"),
                 ents[i].c_str(), e.what());
           }
-
         }
       }
 
@@ -184,7 +205,31 @@ namespace Monitors
 
         if (noteworthy)
         {
-          war(DTR("%s : %s -> %s | %s"), r.label.c_str(), c_state_desc[r.state],
+          if (Clock::get() - r.last_transition < m_args.transition_gap)
+            ++r.transitions;
+          else
+            r.transitions = 0;
+
+          r.last_transition = Clock::get();
+
+          if (r.transitions < m_args.max_transitions)
+          {
+            war(DTR("%s : %s -> %s | %s"), r.label.c_str(), c_state_desc[r.state],
+                c_state_desc[msg->state], msg->description.c_str());
+          }
+          else if (r.transitions == m_args.max_transitions)
+          {
+            war(DTR("%s entity state is unstable (%s <-> %s), ignoring"),
+                r.label.c_str(), c_state_desc[r.state], c_state_desc[msg->state]);
+          }
+        }
+
+        if (Clock::get() - r.last_transition > m_args.transition_gap &&
+            r.transitions > m_args.max_transitions)
+        {
+          r.transitions = 0;
+
+          war(DTR("%s : State stabilized in %s | %s"), r.label.c_str(),
               c_state_desc[msg->state], msg->description.c_str());
         }
 
@@ -228,8 +273,9 @@ namespace Monitors
       }
 
       //! Enable configuration defaults
+      //! @param[in] startup true if the task is just starting
       void
-      enableDefaults(void)
+      enableDefaults(bool startup = false)
       {
         inf(DTR("setting up configuration defaults"));
         m_ems.last_error_time = -1.0;
@@ -246,13 +292,14 @@ namespace Monitors
         }
 
         for (EIdSet::iterator it = m_defaults.begin(); it != m_defaults.end(); ++it)
-          enable(*it);
+          enable(*it, startup);
       }
 
       //! Enable monitoring for an entity
       //! @param[in] eid entity ID
+      //! @param[in] startup true if task is just starting
       void
-      enable(uint8_t eid)
+      enable(uint8_t eid, bool startup = false)
       {
         ESRecord& r = m_record[eid];
 
@@ -263,7 +310,7 @@ namespace Monitors
           m_current.insert(eid);
           r.monitor = true;
 
-          if (r.state != IMC::EntityState::ESTA_NORMAL)
+          if (r.state != IMC::EntityState::ESTA_NORMAL && !startup)
             err(DTR("%s - current state not normal - %s"), r.label.c_str(), c_state_desc[r.state]);
         }
         else
