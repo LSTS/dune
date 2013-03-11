@@ -382,12 +382,26 @@ namespace DUNE
       }
 
       static inline unsigned
+      toLE(const int8_t value, uint8_t* dst)
+      {
+        dst[0] = static_cast<uint8_t>(value);
+
+        return 1;
+      }
+
+      static inline unsigned
       toLE(const uint16_t value, uint8_t* dst)
       {
         dst[0] = value & 0xff;
         dst[1] = (value >> 8) & 0xff;
 
         return 2;
+      }
+
+      static inline unsigned
+      toLE(const int16_t value, uint8_t* dst)
+      {
+        return toLE(static_cast<uint16_t>(value), dst);
       }
 
       static inline unsigned
@@ -404,13 +418,21 @@ namespace DUNE
       static inline unsigned
       toLE(const int32_t value, uint8_t* dst)
       {
-        return toLE((const uint32_t)value, dst);
+        return toLE(static_cast<uint32_t>(value), dst);
       }
 
       static inline unsigned
       toBE(const uint8_t value, uint8_t* dst)
       {
         dst[0] = value;
+
+        return 1;
+      }
+
+      static inline unsigned
+      toBE(const int8_t value, uint8_t* dst)
+      {
+        dst[0] = static_cast<uint8_t>(value);
 
         return 1;
       }
@@ -425,6 +447,12 @@ namespace DUNE
       }
 
       static inline unsigned
+      toBE(const int16_t value, uint8_t* dst)
+      {
+        return toBE(static_cast<uint16_t>(value), dst);
+      }
+
+      static inline unsigned
       toBE(const uint32_t value, uint8_t* dst)
       {
         dst[0] = (value >> 24) & 0xff;
@@ -433,6 +461,12 @@ namespace DUNE
         dst[3] = value & 0xff;
 
         return 4;
+      }
+
+      static inline unsigned
+      toBE(const int32_t value, uint8_t* dst)
+      {
+        return toBE(static_cast<uint32_t>(value), dst);
       }
     };
 

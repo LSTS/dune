@@ -258,6 +258,15 @@ namespace DUNE
     }
 
     void
+    KalmanFilter::setProcessNoise(short in, double value)
+    {
+      if ((size_t)in > m_state_count)
+        throw std::runtime_error("invalid index while setting process noise covariance matrix");
+
+      m_q(in, in) = value;
+    }
+
+    void
     KalmanFilter::setProcessNoise(double value)
     {
       for (size_t i = 0; i < m_state_count; ++i)
@@ -274,6 +283,15 @@ namespace DUNE
     }
 
     void
+    KalmanFilter::setMeasurementNoise(short in, double value)
+    {
+      if (in > m_r.rows())
+        throw std::runtime_error("invalid index while setting measurement noise covariance matrix");
+
+      m_r(in, in) = value;
+    }
+
+    void
     KalmanFilter::setMeasurementNoise(double value)
     {
       for (int i = 0; i < m_r.rows(); ++i)
@@ -287,6 +305,15 @@ namespace DUNE
         throw std::runtime_error("invalid index while setting state covariance matrix");
 
       m_p(ln, cl) = value;
+    }
+
+    void
+    KalmanFilter::setCovariance(short in, double value)
+    {
+      if ((size_t)in > m_state_count)
+        throw std::runtime_error("invalid index while setting state covariance matrix");
+
+      m_p(in, in) = value;
     }
 
     void

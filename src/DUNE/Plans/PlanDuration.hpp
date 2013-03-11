@@ -51,6 +51,44 @@ namespace DUNE
     //! Utility class to estimate a plan's duration.
     class PlanDuration
     {
+    public:
+      //! Conversion factors for rpm and actuation percent
+      struct SpeedConversion
+      {
+        //! From RPM to meters per second
+        float rpm_factor;
+        //! From Actuation to meters per second
+        float act_factor;
+      };
+
+      //! Parse plan duration from plan specification
+      //! @param[in] nodes vector of plan maneuver nodes
+      //! @param[in] state current estimated state
+      //! @param[out] man_durations map of maneuver ids to point durations
+      //! @param[in] speed_conv speed conversion factors
+      //! @return accumulated plan duration in seconds, -1 if unable to compute
+      static float
+      parse(const std::vector<IMC::PlanManeuver*>& nodes , const IMC::EstimatedState* state,
+            std::map< std::string, std::vector<float> >& man_durations,
+            const SpeedConversion& speed_conv);
+
+      //! Parse plan duration from plan specification
+      //! @param[in] nodes vector of plan maneuver nodes
+      //! @param[in] state current estimated state
+      //! @param[out] man_durations map of maneuver ids to point durations
+      //! @return accumulated plan duration in seconds, -1 if unable to compute
+      static float
+      parse(const std::vector<IMC::PlanManeuver*>& nodes , const IMC::EstimatedState* state,
+            std::map< std::string, std::vector<float> >& man_durations)
+      {
+        SpeedConversion speed_conv;
+        speed_conv.rpm_factor = 0.0;
+        speed_conv.act_factor = 0.0;
+
+        return parse(nodes, state, man_durations, speed_conv);
+      };
+
+    private:
       //! Simple position structure
       struct Position
       {
@@ -70,16 +108,7 @@ namespace DUNE
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @return distance computed
       static float
-      distanceAndMove(double lat, double lon, Position& last_pos)
-      {
-        double value = Coordinates::WGS84::distance(lat, lon, 0.0,
-                                                    last_pos.lat, last_pos.lon, 0.0);
-
-        last_pos.lat = lat;
-        last_pos.lon = lon;
-
-        return value;
-      };
+      distanceAndMove(double lat, double lon, Position& last_pos);
 
       //! Parse the simplest maneuvers
       //! @param[in] pointer to maneuver message
@@ -89,21 +118,17 @@ namespace DUNE
       //! @return accumulated plan duration in seconds, -1 if unable to compute
       template <typename Type>
       static float
-      parseSimple(const Type* maneuver, Position& last_pos,
-                  float last_dur, std::vector<float>& durations)
-      {
-        if (maneuver->speed_units != IMC::SUNITS_METERS_PS ||
-            maneuver->speed == 0.0)
-          return -1.0;
+      parseSimple(const Type* maneuver, Position& last_pos, float last_dur,
+                  std::vector<float>& durations, const SpeedConversion& speed_conv);
 
-        float value = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
-        last_pos.z = maneuver->z;
-        last_pos.z_units = maneuver->z_units;
-        durations.push_back(value / maneuver->speed + last_dur);
-        return durations[0];
-      }
+      //! Convert speed to meters per second
+      //! @param[in] pointer to maneuver message
+      //! @param[in] conv speed conversion factors
+      //! @return converted speed
+      template <typename Type>
+      static float
+      convertSpeed(const Type* maneuver, const SpeedConversion& conv);
 
-    public:
 #ifdef DUNE_IMC_GOTO
       //! Parse a Goto maneuver
       //! @param[in] maneuver pointer to maneuver message
@@ -112,10 +137,10 @@ namespace DUNE
       //! @param[out] durations vector of accumulated durations for this maneuver
       //! @return accumulated plan duration in seconds, -1 if unable to compute
       static float
-      parse(const IMC::Goto* maneuver, Position& last_pos,
-            float last_dur, std::vector<float>& durations)
+      parse(const IMC::Goto* maneuver, Position& last_pos, float last_dur,
+            std::vector<float>& durations, const SpeedConversion& speed_conv)
       {
-        return parseSimple(maneuver, last_pos, last_dur, durations);
+        return parseSimple(maneuver, last_pos, last_dur, durations, speed_conv);
       };
 #endif
 
@@ -127,13 +152,13 @@ namespace DUNE
       //! @param[out] durations vector of accumulated durations for this maneuver
       //! @return accumulated plan duration in seconds, -1 if unable to compute
       static float
-      parse(const IMC::StationKeeping* maneuver, Position& last_pos,
-            float last_dur, std::vector<float>& durations)
+      parse(const IMC::StationKeeping* maneuver, Position& last_pos, float last_dur,
+            std::vector<float>& durations, const SpeedConversion& speed_conv)
       {
         if (!maneuver->duration)
           return -1.0;
 
-        return parseSimple(maneuver, last_pos, last_dur + maneuver->duration, durations);
+        return parseSimple(maneuver, last_pos, last_dur + maneuver->duration, durations, speed_conv);
       };
 #endif
 
@@ -145,13 +170,13 @@ namespace DUNE
       //! @param[out] durations vector of accumulated durations for this maneuver
       //! @return accumulated plan duration in seconds, -1 if unable to compute
       static float
-      parse(const IMC::Loiter* maneuver, Position& last_pos,
-            float last_dur, std::vector<float>& durations)
+      parse(const IMC::Loiter* maneuver, Position& last_pos, float last_dur,
+            std::vector<float>& durations, const SpeedConversion& speed_conv)
       {
         if (!maneuver->duration)
           return -1.0;
 
-        return parseSimple(maneuver, last_pos, last_dur + maneuver->duration, durations);
+        return parseSimple(maneuver, last_pos, last_dur + maneuver->duration, durations, speed_conv);
       };
 #endif
 
@@ -163,38 +188,8 @@ namespace DUNE
       //! @param[out] durations vector of accumulated durations for this maneuver
       //! @return accumulated plan duration in seconds, -1 if unable to compute
       static float
-      parse(const IMC::FollowPath* maneuver, Position& last_pos,
-            float last_dur, std::vector<float>& durations)
-      {
-        if (maneuver->speed_units != IMC::SUNITS_METERS_PS ||
-            maneuver->speed == 0.0)
-          return -1.0;
-
-        IMC::MessageList<IMC::PathPoint>::const_iterator itr = maneuver->points.begin();
-        double total_duration = last_dur;
-
-        // Iterate point list
-        for (; itr != maneuver->points.end(); itr++)
-        {
-          if ((*itr) == NULL)
-            continue;
-
-          double wlat;
-          double wlon;
-
-          wlat = maneuver->lat;
-          wlon = maneuver->lon;
-          Coordinates::WGS84::displace((*itr)->x, (*itr)->y, &wlat, &wlon);
-
-          total_duration += distanceAndMove(wlat, wlon, last_pos) / maneuver->speed;
-          durations.push_back(total_duration);
-        }
-
-        last_pos.z = (*itr)->z;
-        last_pos.z_units = maneuver->z_units;
-
-        return durations.back();
-      };
+      parse(const IMC::FollowPath* maneuver, Position& last_pos, float last_dur,
+            std::vector<float>& durations, const SpeedConversion& speed_conv);
 #endif
 
 #ifdef DUNE_IMC_ROWS
@@ -205,34 +200,8 @@ namespace DUNE
       //! @param[out] durations vector of accumulated durations for this maneuver
       //! @return accumulated plan duration in seconds, -1 if unable to compute
       static float
-      parse(const IMC::Rows* maneuver, Position& last_pos,
-            float last_dur, std::vector<float>& durations)
-      {
-        if (maneuver->speed_units != IMC::SUNITS_METERS_PS ||
-            maneuver->speed == 0.0)
-          return -1.0;
-
-        Maneuvers::RowsStages rstages = Maneuvers::RowsStages(maneuver, NULL);
-
-        double lat;
-        double lon;
-        rstages.getFirstPoint(&lat, &lon);
-
-        double distance = distanceAndMove(lat, lon, last_pos);
-        durations.push_back(distance / maneuver->speed + last_dur);
-
-        distance += rstages.getDistance(&last_pos.lat, &last_pos.lon);
-
-        std::vector<float>::const_iterator itr = rstages.getDistancesBegin();
-
-        for (; itr != rstages.getDistancesEnd(); ++itr)
-          durations.push_back(*itr / maneuver->speed + durations.back());
-
-        last_pos.z = maneuver->z;
-        last_pos.z_units = maneuver->z_units;
-
-        return distance / maneuver->speed;
-      };
+      parse(const IMC::Rows* maneuver, Position& last_pos, float last_dur,
+            std::vector<float>& durations, const SpeedConversion& speed_conv);
 #endif
 
 #ifdef DUNE_IMC_YOYO
@@ -243,23 +212,8 @@ namespace DUNE
       //! @param[out] durations vector of accumulated durations for this maneuver
       //! @return accumulated plan duration in seconds, -1 if unable to compute
       static float
-      parse(const IMC::YoYo* maneuver, Position& last_pos,
-            float last_dur, std::vector<float>& durations)
-      {
-        if (maneuver->speed_units != IMC::SUNITS_METERS_PS ||
-            maneuver->speed == 0.0 || maneuver->pitch <= 0.0 ||
-            maneuver->pitch >= DUNE::Math::c_half_pi)
-          return -1.0;
-
-        double horz_dist = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
-        double dur = (horz_dist / std::cos(maneuver->pitch)) / maneuver->speed;
-        durations.push_back(dur + last_dur);
-
-        last_pos.z = maneuver->z;
-        last_pos.z_units = maneuver->z_units;
-
-        return durations.back();
-      };
+      parse(const IMC::YoYo* maneuver, Position& last_pos, float last_dur,
+            std::vector<float>& durations, const SpeedConversion& speed_conv);
 #endif
 
 #ifdef DUNE_IMC_ELEVATOR
@@ -270,24 +224,8 @@ namespace DUNE
       //! @param[out] durations vector of accumulated durations for this maneuver
       //! @return accumulated plan duration in seconds, -1 if unable to compute
       static float
-      parse(const IMC::Elevator* maneuver, Position& last_pos,
-            float last_dur, std::vector<float>& durations)
-      {
-        if (maneuver->speed_units != IMC::SUNITS_METERS_PS ||
-            maneuver->speed == 0.0)
-          return -1.0;
-
-        double horz_dist = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
-        double amplitude = std::fabs(last_pos.z - maneuver->end_z);
-        double real_dist = amplitude / std::sin(c_rated_pitch);
-
-        durations.push_back((horz_dist + real_dist) / maneuver->speed + last_dur);
-
-        last_pos.z = maneuver->end_z;
-        last_pos.z_units = maneuver->end_z_units;
-
-        return durations.back();
-      };
+      parse(const IMC::Elevator* maneuver, Position& last_pos, float last_dur,
+            std::vector<float>& durations, const SpeedConversion& speed_conv);
 #endif
 
 #ifdef DUNE_IMC_POPUP
@@ -298,121 +236,9 @@ namespace DUNE
       //! @param[out] durations vector of accumulated durations for this maneuver
       //! @return accumulated plan duration in seconds, -1 if unable to compute
       static float
-      parse(const IMC::PopUp* maneuver, Position& last_pos,
-            float last_dur, std::vector<float>& durations)
-      {
-        if (maneuver->speed_units != IMC::SUNITS_METERS_PS ||
-            maneuver->speed == 0.0)
-          return -1.0;
-
-        // Travel time
-        float travel_time;
-
-        if ((maneuver->flags & IMC::PopUp::FLG_CURR_POS) != 0)
-        {
-          last_pos.z = 0.0;
-          last_pos.z_units = (uint8_t)IMC::Z_DEPTH;;
-
-          float dist = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
-          travel_time = dist / maneuver->speed;
-        }
-        else
-        {
-          travel_time = 0;
-        }
-
-        // Rising time
-        float rising_time;
-        if (maneuver->z_units == IMC::Z_DEPTH)
-          rising_time = std::fabs(last_pos.z) / maneuver->speed;
-        else // altitude, assume zero
-          rising_time = 0.0;
-
-        // surface time
-        bool wait = (maneuver->flags & IMC::PopUp::FLG_WAIT_AT_SURFACE) != 0;
-        float surface_time = wait ? maneuver->duration : c_fix_time;
-
-        durations.push_back(travel_time + rising_time + surface_time + last_dur);
-
-        return durations.back();
-      };
+      parse(const IMC::PopUp* maneuver, Position& last_pos, float last_dur,
+            std::vector<float>& durations, const SpeedConversion& speed_conv);
 #endif
-
-      //! Parse plan duration from plan specification
-      //! @param[in] nodes vector of plan maneuver nodes
-      //! @param[in] state current estimated state
-      //! @param[out] man_durations map of maneuver ids to point durations
-      //! @return accumulated plan duration in seconds, -1 if unable to compute
-      static float
-      parse(const std::vector<IMC::PlanManeuver*>& nodes , const IMC::EstimatedState* state,
-            std::map< std::string, std::vector<float> >& man_durations)
-      {
-        Position pos;
-        DUNE::Coordinates::toWGS84(*state, pos.lat, pos.lon);
-        pos.z = state->depth;
-        pos.z_units = IMC::Z_DEPTH;
-
-        float last_duration = 0.0;
-
-        std::vector<IMC::PlanManeuver*>::const_iterator itr = nodes.begin();
-
-        for (; itr != nodes.end(); ++itr)
-        {
-          if ((*itr)->data.isNull())
-            return -1.0;
-
-          IMC::Message* msg = (*itr)->data.get();
-
-          std::vector<float> durations;
-
-          switch (msg->getId())
-          {
-            case DUNE_IMC_GOTO:
-              last_duration = parse(dynamic_cast<IMC::Goto*>(msg), pos,
-                                    last_duration, durations);
-              break;
-            case DUNE_IMC_STATIONKEEPING:
-              last_duration = parse(dynamic_cast<IMC::StationKeeping*>(msg), pos,
-                                    last_duration, durations);
-              break;
-            case DUNE_IMC_LOITER:
-              last_duration = parse(dynamic_cast<IMC::Loiter*>(msg), pos,
-                                    last_duration, durations);
-              break;
-            case DUNE_IMC_FOLLOWPATH:
-              last_duration = parse(dynamic_cast<IMC::FollowPath*>(msg), pos,
-                                    last_duration, durations);
-              break;
-            case DUNE_IMC_ROWS:
-              last_duration = parse(dynamic_cast<IMC::Rows*>(msg), pos,
-                                    last_duration, durations);
-              break;
-            case DUNE_IMC_YOYO:
-              last_duration = parse(dynamic_cast<IMC::YoYo*>(msg), pos,
-                                    last_duration, durations);
-              break;
-            case DUNE_IMC_ELEVATOR:
-              last_duration = parse(dynamic_cast<IMC::Elevator*>(msg), pos,
-                                    last_duration, durations);
-              break;
-            case DUNE_IMC_POPUP:
-              last_duration = parse(dynamic_cast<IMC::PopUp*>(msg), pos,
-                                    last_duration, durations);
-              break;
-            default:
-              return -1.0;
-              break;
-          }
-
-          if (last_duration < 0.0)
-            return -1.0;
-
-          std::pair<std::string, std::vector<float> > ent((*itr)->maneuver_id, durations);
-          man_durations.insert(ent);
-        }
-
-        return last_duration;
-      };
     };
   }
 }
