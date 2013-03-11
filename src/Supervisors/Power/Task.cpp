@@ -46,21 +46,23 @@ namespace Supervisors
 
     struct Arguments
     {
-      // Command to execute on power down.
+      //! Main power channel.
+      std::string pwr_main;
+      //! Command to execute on power down.
       std::string cmd_pwr_down;
-      // Command to execute on power down abort.
+      //! Command to execute on power down abort.
       std::string cmd_pwr_down_abort;
     };
 
     struct Task: public Tasks::Task
     {
-      // Task arguments.
+      //! Task arguments.
       Arguments m_args;
-      // True if powering down.
+      //! True if powering down.
       bool m_power_down;
-      // True if powering down immediately.
+      //! True if powering down immediately.
       bool m_power_down_now;
-      // Command.
+      //! Command.
       Command* m_cmd;
 
       Task(const std::string& name, Tasks::Context& ctx):
@@ -70,6 +72,10 @@ namespace Supervisors
         m_cmd(0)
       {
         // Define configuration parameters.
+        param("Main Power Channel", m_args.pwr_main)
+        .defaultValue("")
+        .description("Name of the main power channel");
+
         param("Command - On Power Down", m_args.cmd_pwr_down)
         .defaultValue("")
         .description("Command to execute before powering down the system");
@@ -144,7 +150,7 @@ namespace Supervisors
             m_power_down_now = true;
 
             IMC::PowerChannelControl pcc;
-            pcc.id = 255;
+            pcc.name = m_args.pwr_main;
             pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
             dispatch(pcc);
           }

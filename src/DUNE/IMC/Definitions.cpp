@@ -6420,7 +6420,7 @@ namespace DUNE
     void
     PowerChannelControl::clear(void)
     {
-      id = 0;
+      name.clear();
       op = 0;
       sched_time = 0;
     }
@@ -6429,7 +6429,7 @@ namespace DUNE
     PowerChannelControl::fieldsEqual(const Message& msg__) const
     {
       const IMC::PowerChannelControl& other__ = dynamic_cast<const PowerChannelControl&>(msg__);
-      if (id != other__.id) return false;
+      if (name != other__.name) return false;
       if (op != other__.op) return false;
       if (sched_time != other__.sched_time) return false;
       return true;
@@ -6445,7 +6445,7 @@ namespace DUNE
     PowerChannelControl::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(id, ptr__);
+      ptr__ += IMC::serialize(name, ptr__);
       ptr__ += IMC::serialize(op, ptr__);
       ptr__ += IMC::serialize(sched_time, ptr__);
       return ptr__;
@@ -6455,7 +6455,7 @@ namespace DUNE
     PowerChannelControl::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(id, bfr__, size__);
+      bfr__ += IMC::deserialize(name, bfr__, size__);
       bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::deserialize(sched_time, bfr__, size__);
       return bfr__ - start__;
@@ -6465,28 +6465,16 @@ namespace DUNE
     PowerChannelControl::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
       bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(sched_time, bfr__, size__);
       return bfr__ - start__;
     }
 
-    uint16_t
-    PowerChannelControl::getSubId(void) const
-    {
-      return id;
-    }
-
-    void
-    PowerChannelControl::setSubId(uint16_t subid)
-    {
-      id = (uint8_t)subid;
-    }
-
     void
     PowerChannelControl::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
-      IMC::toJSON(os__, "id", id, nindent__);
+      IMC::toJSON(os__, "name", name, nindent__);
       IMC::toJSON(os__, "op", op, nindent__);
       IMC::toJSON(os__, "sched_time", sched_time, nindent__);
     }
@@ -6539,8 +6527,7 @@ namespace DUNE
     void
     PowerChannelState::clear(void)
     {
-      id = 0;
-      label.clear();
+      name.clear();
       state = 0;
     }
 
@@ -6548,8 +6535,7 @@ namespace DUNE
     PowerChannelState::fieldsEqual(const Message& msg__) const
     {
       const IMC::PowerChannelState& other__ = dynamic_cast<const PowerChannelState&>(msg__);
-      if (id != other__.id) return false;
-      if (label != other__.label) return false;
+      if (name != other__.name) return false;
       if (state != other__.state) return false;
       return true;
     }
@@ -6564,8 +6550,7 @@ namespace DUNE
     PowerChannelState::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(id, ptr__);
-      ptr__ += IMC::serialize(label, ptr__);
+      ptr__ += IMC::serialize(name, ptr__);
       ptr__ += IMC::serialize(state, ptr__);
       return ptr__;
     }
@@ -6574,8 +6559,7 @@ namespace DUNE
     PowerChannelState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(id, bfr__, size__);
-      bfr__ += IMC::deserialize(label, bfr__, size__);
+      bfr__ += IMC::deserialize(name, bfr__, size__);
       bfr__ += IMC::deserialize(state, bfr__, size__);
       return bfr__ - start__;
     }
@@ -6584,29 +6568,15 @@ namespace DUNE
     PowerChannelState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(id, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(label, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
       bfr__ += IMC::deserialize(state, bfr__, size__);
       return bfr__ - start__;
-    }
-
-    uint16_t
-    PowerChannelState::getSubId(void) const
-    {
-      return id;
-    }
-
-    void
-    PowerChannelState::setSubId(uint16_t subid)
-    {
-      id = (uint8_t)subid;
     }
 
     void
     PowerChannelState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
-      IMC::toJSON(os__, "id", id, nindent__);
-      IMC::toJSON(os__, "label", label, nindent__);
+      IMC::toJSON(os__, "name", name, nindent__);
       IMC::toJSON(os__, "state", state, nindent__);
     }
 

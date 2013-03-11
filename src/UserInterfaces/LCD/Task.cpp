@@ -96,7 +96,7 @@ namespace UserInterfaces
       // Backlight GPIO.
       int blight_gpio;
       // Backlight power channel.
-      int blight_pchan;
+      std::string blight_pchan;
       // Backlight timeout.
       double blight_tout;
     };
@@ -141,7 +141,7 @@ namespace UserInterfaces
         .defaultValue("-1.0");
 
         param("Backlight - Power Channel", m_args.blight_pchan)
-        .defaultValue("-1");
+        .defaultValue("");
 
         param("Backlight - Timeout", m_args.blight_tout)
         .units(Units::Second)
@@ -213,10 +213,10 @@ namespace UserInterfaces
             m_blight->setValue(state);
         }
 
-        if (m_args.blight_pchan > 0)
+        if (!m_args.blight_pchan.empty())
         {
           IMC::PowerChannelControl pc;
-          pc.id = m_args.blight_pchan;
+          pc.name = m_args.blight_pchan;
           pc.op = state ? IMC::PowerChannelControl::PCC_OP_TURN_ON : IMC::PowerChannelControl::PCC_OP_TURN_OFF;
           dispatch(pc);
         }

@@ -90,7 +90,7 @@ Power.prototype.createEntry = function(msg)
     // Header.
     var th = document.createElement('th');
     th.colSpan = 2;
-    th.appendChild(document.createTextNode(msg.label));
+    th.appendChild(document.createTextNode(msg.name));
     var tr = document.createElement('tr');
     tr.appendChild(th);
 
@@ -98,7 +98,7 @@ Power.prototype.createEntry = function(msg)
     var ctr = document.createElement('tr');
 
     var form = document.createElement('form');
-    form.id = 'PowerChannelForm' + msg.id;
+    form.id = 'PowerChannelForm' + msg.name;
     var btd = document.createElement('td');
     btd.appendChild(form);
 

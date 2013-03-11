@@ -269,7 +269,7 @@ main(int argc, char** argv)
   {
     IMC::PowerChannelControl* tmsg = new IMC::PowerChannelControl;
     msg = tmsg;
-    tmsg->id = atoi(argv[4]);
+    tmsg->name = argv[4];
     tmsg->op = atoi(argv[5]);
   }
   else if (strcmp(argv[3], "AcousticSystemsQuery") == 0)
