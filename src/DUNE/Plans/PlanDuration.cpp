@@ -109,7 +109,7 @@ namespace DUNE
         durations.push_back(total_duration);
       }
 
-      last_pos.z = (*itr)->z;
+      last_pos.z = maneuver->z;
       last_pos.z_units = maneuver->z_units;
 
       return durations.back();
