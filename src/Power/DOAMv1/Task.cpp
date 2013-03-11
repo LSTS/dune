@@ -82,6 +82,8 @@ namespace Power
       std::string adc_messages[c_adcs_max];
       //! Watchdog timeout.
       double wdog_tout;
+      //! Power channel name.
+      std::string pwr_name;
     };
 
     struct Task: public Tasks::Task
@@ -106,6 +108,9 @@ namespace Power
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
         .description("Serial port device used to communicate with the device");
+
+        param("Power Channel - Name", m_args.pwr_name)
+        .defaultValue("DOAM");
 
         param("ADC Reference Voltage", m_args.ref_volt)
         .units(Units::Volt)
