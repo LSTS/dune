@@ -205,7 +205,7 @@ namespace Actuators
       }
 
       void
-      setServoPosition(unsigned servo, double position)
+      setServoPosition(uint8_t servo, double position)
       {
         uint8_t data[] =
         {
