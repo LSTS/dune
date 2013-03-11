@@ -634,6 +634,9 @@ namespace Control
                   case MAVLINK_MSG_ID_MISSION_CURRENT:
                     trace("MISSION_CURRENT");
                     break;
+                  case 44:
+                    trace("MISSION_COUNT");
+                    break;
                   case MAVLINK_MSG_ID_MISSION_ACK:
                     spew("MISSION_ACK");
                     break;
@@ -940,8 +943,10 @@ namespace Control
         void
         handleUDP(UDPSocket& sock)
         {
-          uint8_t buf[512];
-          int n = sock.read((char*)buf, sizeof(buf), &m_UDP_addr);
+          mavlink_message_t msg;
+          mavlink_status_t status;
+          uint8_t bufr[512];
+          int n = sock.read((char*)bufr, sizeof(bufr), &m_UDP_addr);
 
           if (n < 0)
           {
@@ -949,7 +954,17 @@ namespace Control
             return;
           }
 
-          sendData(buf,n);
+          for (int i = 0; i < n; i++)
+          {
+            if (mavlink_parse_char(MAVLINK_COMM_0, bufr[i], &msg, &status))
+            {
+              debug("SENDING: %u", msg.msgid);
+              //! Send to Ardupilot
+              uint8_t buf[512];
+              int buf_s = mavlink_msg_to_send_buffer(buf, &msg);
+              sendData(buf,buf_s);
+            }
+          }
         }
       };
     }
