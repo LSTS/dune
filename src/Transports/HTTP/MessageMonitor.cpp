@@ -55,9 +55,16 @@ namespace Transports
     {
       ScopedMutex l(m_mutex);
 
-      std::map<unsigned, IMC::Message*>::iterator itr = m_msgs.begin();
-      for (; itr != m_msgs.end(); ++itr)
-        delete itr->second;
+      {
+        std::map<unsigned, IMC::Message*>::iterator itr = m_msgs.begin();
+        for (; itr != m_msgs.end(); ++itr)
+          delete itr->second;
+      }
+
+      {
+        for (PowerChannelMap::iterator itr = m_power_channels.begin(); itr != m_power_channels.end(); ++itr)
+          delete itr->second;
+      }
     }
 
     void
@@ -113,6 +120,12 @@ namespace Transports
         itr->second->toJSON(os);
       }
 
+      for (PowerChannelMap::iterator pitr = m_power_channels.begin(); pitr != m_power_channels.end(); ++pitr)
+      {
+        os << ",\n";
+        pitr->second->toJSON(os);
+      }
+
       os << "\n]"
          << "\n};";
 
@@ -128,6 +141,9 @@ namespace Transports
     {
       ScopedMutex l(m_mutex);
 
+      if (msg->getId() == DUNE_IMC_POWERCHANNELSTATE)
+        updatePowerChannel(static_cast<const IMC::PowerChannelState*>(msg));
+
       IMC::Message* tmsg = msg->clone();
       unsigned key = tmsg->getId() << 24 | tmsg->getSubId() << 8 | tmsg->getSourceEntity();
 
@@ -135,6 +151,16 @@ namespace Transports
         delete m_msgs[key];
 
       m_msgs[key] = tmsg;
+    }
+
+    void
+    MessageMonitor::updatePowerChannel(const IMC::PowerChannelState* msg)
+    {
+      std::map<std::string, IMC::PowerChannelState*>::iterator itr = m_power_channels.find(msg->name);
+      if (itr != m_power_channels.end())
+        *itr->second = *msg;
+      else
+        m_power_channels[msg->name] = new IMC::PowerChannelState(*msg);
     }
   }
 }

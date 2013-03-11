@@ -27,6 +27,8 @@
 
 function Power(root_id)
 {
+    this.serial = 0;
+
     this.create('Power', root_id);
 
     // Subpanel.
@@ -50,14 +52,14 @@ Power.prototype.updateEntry = function(msg)
     for (var i = 0; i < this.m_sbase.childNodes.length; i++)
     {
         var child = this.m_sbase.childNodes[i];
-        var label = child.firstChild.firstChild.firstChild.data;
+        var name = child.firstChild.firstChild.firstChild.data;
 
-        if (label == msg.label)
+        if (name == msg.name)
         {
             this.updateValue(child, msg);
             return;
         }
-        else if (msg.label < label)
+        else if (msg.name < name)
         {
             var ne = this.createEntry(msg);
             this.m_sbase.insertBefore(ne, child);
@@ -75,18 +77,20 @@ Power.prototype.updateValue = function(root, msg)
 
     if (msg.state == 0)
     {
-        base.childNodes[0].disabled = false;
-        base.childNodes[1].disabled = true;
+        base.childNodes[1].disabled = false;
+        base.childNodes[2].disabled = true;
     }
     else
     {
-        base.childNodes[0].disabled = true;
-        base.childNodes[1].disabled = false;
+        base.childNodes[1].disabled = true;
+        base.childNodes[2].disabled = false;
     }
 };
 
 Power.prototype.createEntry = function(msg)
 {
+    this.serial = this.serial + 1;
+
     // Header.
     var th = document.createElement('th');
     th.colSpan = 2;
@@ -98,18 +102,23 @@ Power.prototype.createEntry = function(msg)
     var ctr = document.createElement('tr');
 
     var form = document.createElement('form');
-    form.id = 'PowerChannelForm' + msg.name;
+    form.id = 'PowerChannelForm' + this.serial;
     var btd = document.createElement('td');
     btd.appendChild(form);
 
-    this.appendButton(form, msg.id, 'on', 'Turn On');
-    this.appendButton(form, msg.id, 'off', 'Turn Off');
+    var name = document.createElement('input');
+    name.type = 'hidden';
+    name.value = msg.name;
+    form.appendChild(name);
+
+    this.appendButton(form, msg.name, 'on', 'Turn On');
+    this.appendButton(form, msg.name, 'off', 'Turn Off');
     this.appendInput(form, form.id, 'Hours', 'hour(s)');
     this.appendInput(form, form.id, 'Minutes', 'minute(s)');
     this.appendInput(form, form.id, 'Seconds', 'second(s)');
-    this.appendButton(form, msg.id, 'sched_on', 'Schedule On');
-    this.appendButton(form, msg.id, 'sched_off', 'Schedule Off');
-    this.appendButton(form, msg.id, 'reset', 'Reset Schedules');
+    this.appendButton(form, msg.name, 'sched_on', 'Schedule On');
+    this.appendButton(form, msg.name, 'sched_off', 'Schedule Off');
+    this.appendButton(form, msg.name, 'reset', 'Reset Schedules');
 
     ctr.appendChild(btd);
 

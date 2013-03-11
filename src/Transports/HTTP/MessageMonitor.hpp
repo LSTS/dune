@@ -68,10 +68,12 @@ namespace Transports
       }
 
     private:
-      // Software meta information.
-      std::string m_meta;
+      //! Convenience type definition for a map of power channels.
+      typedef std::map<std::string, DUNE::IMC::PowerChannelState*> PowerChannelMap;
       // Convenience type definition for a map of entity labels.
       typedef std::map<unsigned, std::string> EntityMap;
+      // Software meta information.
+      std::string m_meta;
       // Table of messages.
       std::map<unsigned, DUNE::IMC::Message*> m_msgs;
       // Entity map.
@@ -84,6 +86,11 @@ namespace Transports
       DUNE::Utils::ByteBuffer m_msgs_json;
       // Last JSON messages refresh.
       uint64_t m_last_msgs_json;
+      //! Power channels.
+      PowerChannelMap m_power_channels;
+
+      void
+      updatePowerChannel(const DUNE::IMC::PowerChannelState* msg);
     };
   }
 }
