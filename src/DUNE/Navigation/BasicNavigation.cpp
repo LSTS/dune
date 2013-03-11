@@ -361,7 +361,6 @@ namespace DUNE
         m_phi_offset = msg->phi - getRoll();
         m_theta_offset = msg->theta - getPitch();
         debug("Euler Angles offset - phi, theta: %f | %f", m_phi_offset, m_theta_offset);
-        m_alignment = true;
         return;
       }
 
@@ -758,7 +757,6 @@ namespace DUNE
       m_phi_offset = 0.0;
       m_theta_offset = 0.0;
       m_altitude = -1;
-      m_alignment = false;
 
       m_reject_gps = false;
       m_lbl_log_beacons = false;

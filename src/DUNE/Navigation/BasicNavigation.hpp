@@ -607,8 +607,6 @@ namespace DUNE
       bool m_valid_gv;
       //! Received valid water velocity message.
       bool m_valid_wv;
-      //! Received coarse alignment output.
-      bool m_alignment;
       //! Derivative for roll.
       Math::Derivative<double> m_drv_roll;
       //! Derivative for pitch.
