@@ -1,2 +1,4 @@
 /.project
+*.pyc
+*/__pycache__
 private/
