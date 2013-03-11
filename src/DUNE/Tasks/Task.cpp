@@ -44,41 +44,46 @@
 #  include <sys/prctl.h>
 #endif
 
-//! Maximum size of a log book entry message.
-const static size_t c_log_message_max_size = 1024;
-
 namespace DUNE
 {
   namespace Tasks
   {
+    //! Maximum size of a log book entry message.
+    const static size_t c_log_message_max_size = 1024;
+
     Task::Task(const std::string& n, Context& ctx):
       m_ctx(ctx),
       m_recipient(0),
       m_name(n),
-      m_priority(10),
       m_eid(DUNE_IMC_CONST_UNK_EID),
       m_debug_level(DEBUG_LEVEL_NONE),
       m_entity_state_code(-1),
-      m_is_active(true),
-      m_act_time(0),
-      m_deact_time(0)
+      m_is_active(true)
     {
+      m_args.priority = 10;
+      m_args.act_time = 0;
+      m_args.deact_time = 0;
+      m_args.active = true;
+
       param(DTR_RT("Entity Label"), m_elabel)
       .defaultValue("")
       .description(DTR("Main entity label"));
 
+      param(DTR_RT("Active"), m_args.active)
+      .defaultValue("True");
+
+      param(DTR_RT("Execution Priority"), m_args.priority)
+      .defaultValue("10");
+
+      param(DTR_RT("Activation Time"), m_args.act_time)
+      .defaultValue("0");
+
+      param(DTR_RT("Deactivation Time"), m_args.deact_time)
+      .defaultValue("0");
+
       param(DTR_RT("Debug Level"), m_debug_level_string)
       .defaultValue("None")
       .values("None, Debug, Trace, Spew");
-
-      param(DTR_RT("Execution Priority"), m_priority)
-      .defaultValue("10");
-
-      param(DTR_RT("Activation Time"), m_act_time)
-      .defaultValue("0");
-
-      param(DTR_RT("Deactivation Time"), m_deact_time)
-      .defaultValue("0");
 
       m_recipient = new Recipient(this, ctx);
 
@@ -192,8 +197,8 @@ namespace DUNE
     {
       m_ent_info.label = getEntityLabel();
       m_ent_info.component = getName();
-      m_ent_info.act_time = m_act_time;
-      m_ent_info.deact_time = m_deact_time;
+      m_ent_info.act_time = m_args.act_time;
+      m_ent_info.deact_time = m_args.deact_time;
       dispatch(m_ent_info);
 
       if (m_debug_level_string == "Debug")
@@ -275,7 +280,7 @@ namespace DUNE
 
       try
       {
-        Thread::setPriority(Concurrency::Scheduler::POLICY_RR, m_priority);
+        Thread::setPriority(Concurrency::Scheduler::POLICY_RR, m_args.priority);
       }
       catch (...)
       { }

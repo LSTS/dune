@@ -1020,18 +1020,22 @@ namespace DUNE
       //! State.
       enum StateEnum
       {
+        //! Entity is Inactive.
+        EAS_INACTIVE = 0,
+        //! Entity is Active.
+        EAS_ACTIVE = 1,
         //! Activation in Progress.
-        EAS_ACT_IP = 0,
+        EAS_ACT_IP = 2,
         //! Activation Completed.
-        EAS_ACT_DONE = 1,
+        EAS_ACT_DONE = 3,
         //! Activation Failed.
-        EAS_ACT_FAIL = 2,
+        EAS_ACT_FAIL = 4,
         //! Deactivation Failed.
-        EAS_DEACT_IP = 3,
+        EAS_DEACT_IP = 5,
         //! Deactivation Completed.
-        EAS_DEACT_DONE = 4,
+        EAS_DEACT_DONE = 6,
         //! Deactivation Failed.
-        EAS_DEACT_FAIL = 5
+        EAS_DEACT_FAIL = 7
       };
 
       //! State.

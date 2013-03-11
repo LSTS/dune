@@ -175,7 +175,7 @@ namespace DUNE
       void
       setPriority(unsigned int value)
       {
-        m_priority = value;
+        m_args.priority = value;
       }
 
       //! Get scheduling priority. The priority of a task might change
@@ -184,7 +184,7 @@ namespace DUNE
       unsigned int
       getPriority(void) const
       {
-        return m_priority;
+        return m_args.priority;
       }
 
       //! Send an human-readable informational message to all
@@ -599,12 +599,22 @@ namespace DUNE
       onMain(void) = 0;
 
     private:
+      struct BasicArguments
+      {
+        //! Activation time.
+        uint16_t act_time;
+        //! Deactivation time.
+        uint16_t deact_time;
+        //! Scheduling priority.
+        unsigned int priority;
+        //! True if task is active.
+        bool active;
+      };
+
       //! Message recipient (queue).
       Recipient* m_recipient;
       //! Task name.
       std::string m_name;
-      //! Task priority.
-      unsigned int m_priority;
       //! Task parameters.
       ParameterTable m_params;
       //! Entity Id.
@@ -623,10 +633,8 @@ namespace DUNE
       bool m_is_active;
       //! Entity information message.
       IMC::EntityInfo m_ent_info;
-      //! Activation time.
-      uint16_t m_act_time;
-      //! Deactivation time.
-      uint16_t m_deact_time;
+      //! Arguments.
+      BasicArguments m_args;
 
       //! Report current entity states by dispatching EntityState
       //! messages. This function will at least report the state of

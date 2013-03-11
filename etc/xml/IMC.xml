@@ -742,32 +742,42 @@
       <description>
         Current state.
       </description>
-      <value id="0" abbrev="ACT_IP" name="Activation in Progress">
+      <value id="0" abbrev="INACTIVE" name="Entity is Inactive">
+        <description>
+          Entity is inactive.
+        </description>
+      </value>
+      <value id="1" abbrev="ACTIVE" name="Entity is Active">
+        <description>
+          Entity is active.
+        </description>
+      </value>
+      <value id="2" abbrev="ACT_IP" name="Activation in Progress">
         <description>
           Activation is in progress.
         </description>
       </value>
-      <value id="1" abbrev="ACT_DONE" name="Activation Completed">
+      <value id="3" abbrev="ACT_DONE" name="Activation Completed">
         <description>
           Activation is completed.
         </description>
       </value>
-      <value id="2" abbrev="ACT_FAIL" name="Activation Failed">
+      <value id="4" abbrev="ACT_FAIL" name="Activation Failed">
         <description>
           The activation procedure failed and the field 'error' contains the error message.
         </description>
       </value>
-      <value id="3" abbrev="DEACT_IP" name="Deactivation Failed">
+      <value id="5" abbrev="DEACT_IP" name="Deactivation Failed">
         <description>
           Deactivation is in progress.
         </description>
       </value>
-      <value id="4" abbrev="DEACT_DONE" name="Deactivation Completed">
+      <value id="6" abbrev="DEACT_DONE" name="Deactivation Completed">
         <description>
           Deactivation is in progress.
         </description>
       </value>
-      <value id="5" abbrev="DEACT_FAIL" name="Deactivation Failed">
+      <value id="7" abbrev="DEACT_FAIL" name="Deactivation Failed">
         <description>
           The deactivation procedure failed and the field 'error' contains the error message.
         </description>
