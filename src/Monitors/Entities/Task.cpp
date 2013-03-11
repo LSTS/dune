@@ -141,8 +141,7 @@ namespace Monitors
         }
 
         // Enable the defaults initially
-        enableDefaults();
-        reportState();
+        enableDefaults(true);
       }
 
       //! Fill default entities vector
@@ -228,8 +227,9 @@ namespace Monitors
       }
 
       //! Enable configuration defaults
+      //! @param[in] startup true if the task is just starting
       void
-      enableDefaults(void)
+      enableDefaults(bool startup = false)
       {
         inf(DTR("setting up configuration defaults"));
         m_ems.last_error_time = -1.0;
@@ -246,13 +246,14 @@ namespace Monitors
         }
 
         for (EIdSet::iterator it = m_defaults.begin(); it != m_defaults.end(); ++it)
-          enable(*it);
+          enable(*it, startup);
       }
 
       //! Enable monitoring for an entity
       //! @param[in] eid entity ID
+      //! @param[in] startup true if task is just starting
       void
-      enable(uint8_t eid)
+      enable(uint8_t eid, bool startup = false)
       {
         ESRecord& r = m_record[eid];
 
@@ -263,7 +264,7 @@ namespace Monitors
           m_current.insert(eid);
           r.monitor = true;
 
-          if (r.state != IMC::EntityState::ESTA_NORMAL)
+          if (r.state != IMC::EntityState::ESTA_NORMAL && !startup)
             err(DTR("%s - current state not normal - %s"), r.label.c_str(), c_state_desc[r.state]);
         }
         else
