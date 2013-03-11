@@ -487,6 +487,16 @@
         entity.
       </description>
     </field>
+    <field name="Activation Time" abbrev="act_time" type="uint16_t" unit="s">
+      <description>
+        Amount of time needed to properly activate the entity.
+      </description>
+    </field>
+    <field name="Deactivation Time" abbrev="deact_time" type="uint16_t" unit="s">
+      <description>
+        Amount of time needed to properly deactivate the entity.
+      </description>
+    </field>
   </message>
 
   <message id="4" name="Query Entity Information" abbrev="QueryEntityInfo" source="ccu">
@@ -720,6 +730,52 @@
           The calibration procedure was completed.
         </description>
       </value>
+    </field>
+  </message>
+
+  <message id="14" name="Entity Activation State" abbrev="EntityActivationState" source="vehicle,ccu">
+    <description>
+      State of entity activation/deactivation.
+    </description>
+    <field name="State" abbrev="state" type="uint8_t" unit="Enumerated" prefix="EAS">
+      <description>
+        Current state.
+      </description>
+      <value id="0" abbrev="ACT_IP" name="Activation in Progress">
+        <description>
+          Activation is in progress.
+        </description>
+      </value>
+      <value id="1" abbrev="ACT_DONE" name="Activation Completed">
+        <description>
+          Activation is completed.
+        </description>
+      </value>
+      <value id="2" abbrev="ACT_FAIL" name="Activation Failed">
+        <description>
+          The activation procedure failed and the field 'error' contains the error message.
+        </description>
+      </value>
+      <value id="3" abbrev="DEACT_IP" name="Deactivation Failed">
+        <description>
+          Deactivation is in progress.
+        </description>
+      </value>
+      <value id="4" abbrev="DEACT_DONE" name="Deactivation Completed">
+        <description>
+          Deactivation is in progress.
+        </description>
+      </value>
+      <value id="5" abbrev="DEACT_FAIL" name="Deactivation Failed">
+        <description>
+          The deactivation procedure failed and the field 'error' contains the error message.
+        </description>
+      </value>
+    </field>
+    <field name="Error" abbrev="error" type="plaintext">
+      <description>
+        Human-readable error message.
+      </description>
     </field>
   </message>
 

@@ -205,6 +205,10 @@ namespace DUNE
       std::string label;
       //! Component name.
       std::string component;
+      //! Activation Time.
+      uint16_t act_time;
+      //! Deactivation Time.
+      uint16_t deact_time;
 
       static uint16_t
       getIdStatic(void)
@@ -253,7 +257,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 5;
       }
 
       unsigned
@@ -1003,6 +1007,92 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(step);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Entity Activation State.
+    class EntityActivationState: public Message
+    {
+    public:
+      //! State.
+      enum StateEnum
+      {
+        //! Activation in Progress.
+        EAS_ACT_IP = 0,
+        //! Activation Completed.
+        EAS_ACT_DONE = 1,
+        //! Activation Failed.
+        EAS_ACT_FAIL = 2,
+        //! Deactivation Failed.
+        EAS_DEACT_IP = 3,
+        //! Deactivation Completed.
+        EAS_DEACT_DONE = 4,
+        //! Deactivation Failed.
+        EAS_DEACT_FAIL = 5
+      };
+
+      //! State.
+      uint8_t state;
+      //! Error.
+      std::string error;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 14;
+      }
+
+      EntityActivationState(void);
+
+      Message*
+      clone(void) const
+      {
+        return new EntityActivationState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return EntityActivationState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "EntityActivationState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(error);
       }
 
       void

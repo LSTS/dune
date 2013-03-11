@@ -56,6 +56,8 @@
 #define DUNE_IMC_DEVCALIBRATIONCONTROL 12
 //! DevCalibrationState identification number.
 #define DUNE_IMC_DEVCALIBRATIONSTATE 13
+//! EntityActivationState identification number.
+#define DUNE_IMC_ENTITYACTIVATIONSTATE 14
 //! SimulatedState identification number.
 #define DUNE_IMC_SIMULATEDSTATE 50
 //! LeakSimulation identification number.

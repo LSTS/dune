@@ -33,7 +33,7 @@
 //! IMC version string.
 #define DUNE_IMC_CONST_VERSION "5.1.0"
 //! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "939ae3e6f357666752f1dd8b381f0f58"
+#define DUNE_IMC_CONST_MD5 "a2ddd2a3c8015637ea4f357e7ddc5160"
 //! Synchronization number.
 #define DUNE_IMC_CONST_SYNC 0xFE51
 //! Reversed synchronization number.
