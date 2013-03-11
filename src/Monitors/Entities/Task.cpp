@@ -123,7 +123,7 @@ namespace Monitors
 
         param("Transition Time Gap", m_args.transition_gap)
         .units(Units::Second)
-        .defaultValue("3.0")
+        .defaultValue("4.0")
         .description("Minimum gap for state transitioning");
 
         param("Maximum Consecutive Transitions", m_args.max_transitions)
