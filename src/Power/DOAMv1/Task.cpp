@@ -96,6 +96,8 @@ namespace Power
       Time::Counter<double> m_wdog;
       //! Temperature.
       IMC::Temperature m_temp;
+      //! Power channel state.
+      IMC::PowerChannelState m_power_state;
       //! Task arguments.
       Arguments m_args;
 
@@ -138,6 +140,8 @@ namespace Power
         // Register handler routines.
         bind<IMC::PowerOperation>(this);
         bind<IMC::EntityControl>(this);
+        bind<IMC::PowerChannelControl>(this);
+        bind<IMC::QueryPowerChannelState>(this);
       }
 
       ~Task(void)
@@ -159,6 +163,9 @@ namespace Power
 
           m_adcs[i] = IMC::Factory::produce(m_args.adc_messages[i]);
         }
+
+        m_power_state.name = m_args.pwr_name;
+        m_power_state.state = IMC::PowerChannelState::PCS_OFF;
       }
 
       void
@@ -197,14 +204,8 @@ namespace Power
       onResourceInitialization(void)
       {
         m_proto.requestVersion();
-
-        uint8_t power = (1 << 0);
-        m_proto.sendCommand(CMD_PWR_SET, &power, 1);
-        if (!waitForCommand(CMD_PWR_SET, 100))
-          err(DTR("failed to turn on ATX PSU"));
-
+        setPowerChannelState(0);
         setStrobeMode(STROBE_MODE_MCU);
-
         m_wdog.setTop(m_args.wdog_tout);
       }
 
@@ -278,26 +279,33 @@ namespace Power
       }
 
       void
+      consume(const IMC::QueryPowerChannelState* msg)
+      {
+        dispatchReply(*msg, m_power_state);
+      }
+
+      void
+      consume(const IMC::PowerChannelControl* msg)
+      {
+        if (msg->name != m_args.pwr_name)
+          return;
+
+        if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_ON)
+          setPowerChannelState(1);
+        else if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
+          setPowerChannelState(0);
+      }
+
+      void
       consume(const IMC::PowerOperation* msg)
       {
+        uint8_t value = 0;
         if (msg->op == IMC::PowerOperation::POP_PWR_DOWN_IP)
-        {
-          uint8_t power = 0;
-          m_proto.sendCommand(CMD_PWR_SET, &power, 1);
-          if (!waitForCommand(CMD_PWR_SET, 100))
-            err(DTR("failed to turn off ATX PSU"));
-          else
-            inf(DTR("ATX turned off"));
-        }
+          value = 0;
         else if (msg->op == IMC::PowerOperation::POP_PWR_DOWN_ABORTED)
-        {
-          uint8_t power = 1;
-          m_proto.sendCommand(CMD_PWR_SET, &power, 1);
-          if (!waitForCommand(CMD_PWR_SET, 100))
-            err(DTR("failed to turn on ATX PSU"));
-          else
-            inf(DTR("ATX turned on"));
-        }
+          value = 1;
+
+        setPowerChannelState(value);
       }
 
       void
@@ -310,6 +318,24 @@ namespace Power
           setStrobeMode(STROBE_MODE_CAM);
         else
           setStrobeMode(STROBE_MODE_MCU);
+      }
+
+      bool
+      setPowerChannelState(uint8_t value)
+      {
+        m_proto.sendCommand(CMD_PWR_SET, &value, 1);
+        bool rv = waitForCommand(CMD_PWR_SET, 100);
+        if (rv)
+        {
+          if (value)
+            m_power_state.state = IMC::PowerChannelState::PCS_ON;
+          else
+            m_power_state.state= IMC::PowerChannelState::PCS_OFF;
+
+          dispatch(m_power_state);
+        }
+
+        return rv;
       }
 
       bool
