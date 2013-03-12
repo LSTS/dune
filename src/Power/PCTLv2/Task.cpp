@@ -127,6 +127,8 @@ namespace Power
       std::vector<uint8_t> chn_eme_state;
       //! Minimum operating voltage.
       double vol_min;
+      //! State report periodicity.
+      double state_per;
     };
 
     struct Task: public Tasks::Task
@@ -147,6 +149,8 @@ namespace Power
       IMC::Temperature m_temp;
       //! Watchdog.
       Time::Counter<double> m_wdog;
+      //! State timer.
+      Time::Counter<double> m_state_timer;
       //! Task arguments.
       Arguments m_args;
 
@@ -178,6 +182,11 @@ namespace Power
         .units(Units::Second)
         .defaultValue("2.0")
         .description("Watchdog timeout");
+
+        param("State Report Periodicity", m_args.state_per)
+        .units(Units::Second)
+        .defaultValue("1.0")
+        .description("Periodicity with which the state of power channels is reported");
 
         for (unsigned i = 0; i < c_adcs_count; ++i)
         {
@@ -249,7 +258,7 @@ namespace Power
           m_channels.add(i, channel);
         }
 
-        dispatchPowerChannelStates();
+        m_state_timer.setTop(m_args.state_per);
       }
 
       //! Reserve entities.
@@ -295,16 +304,8 @@ namespace Power
       void
       onResourceRelease(void)
       {
-        uint8_t state = IMC::PowerChannelState::PCS_OFF;
         for (unsigned i = 0; i < c_pwrs_count; ++i)
-        {
-          if (m_args.pwr_states[i] == 1)
-            state = IMC::PowerChannelState::PCS_ON;
-          else
-            state = IMC::PowerChannelState::PCS_OFF;
-
-          setPowerChannelState(i, state);
-        }
+          setPowerChannelState(i, m_args.pwr_states[i] ? 1 : 0);
 
         for (uint8_t i = 0; i < c_led_count; ++i)
         {
@@ -623,10 +624,7 @@ namespace Power
         for (; itr != m_channels.end(); ++itr)
         {
           if (itr->second->state.name.substr(0, 3) != "N/C")
-          {
-            itr->second->state.toText(std::cerr);
             dispatch(itr->second->state);
-          }
         }
       }
 
@@ -645,7 +643,11 @@ namespace Power
           else
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
-          //dispatchPowerChannelStates();
+          if (m_state_timer.overflow())
+          {
+            m_state_timer.reset();
+            dispatchPowerChannelStates();
+          }
         }
       }
     };
