@@ -59,7 +59,7 @@ namespace Plan
       };
 
       //! Actions that should be fired on plan and maneuver start or end
-      struct onEventActions
+      struct EventActions
       {
         //! Vector of pointers to start actions
         std::vector<IMC::SetEntityParameters*> start_actions;
@@ -68,20 +68,105 @@ namespace Plan
       };
 
       //! Map to address event based actions
-      typedef std::map<std::string, onEventActions> EventMap;
+      typedef std::map<std::string, EventActions> EventMap;
 
-      //! Fill timed actions queue
-      void
-      createSchedule(const std::vector<IMC::PlanManeuver*> nodes)
+      //! Default constructor
+      ActionSchedule(void)
+      { };
+
+      //! Default constructor
+      ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
+                     const std::vector<IMC::PlanManeuver*>& nodes,
+                     const std::map<std::string, IMC::EntityInfo>& cinfo):
+        m_task(task),
+        m_cinfo(&cinfo)
       {
-        (void)nodes;
-      }
+        // start by adding plan actions
+        parseStartActions(spec->start_actions, &m_plan_actions);
+        parseEndActions(spec->end_actions, &m_plan_actions);
+      };
 
     private:
+      //! Parse Start actions
+      inline void
+      parseStartActions(const IMC::MessageList<IMC::Message>& actions,
+                        EventActions* event_actions)
+      {
+        parseActions(actions, event_actions, true);
+      }
+
+      //! Parse End actions
+      inline void
+      parseEndActions(const IMC::MessageList<IMC::Message>& actions,
+                      EventActions* event_actions)
+      {
+        parseActions(actions, event_actions, false);
+      }
+
+      //! Parse actions
+      void
+      parseActions(const IMC::MessageList<IMC::Message>& actions,
+                   EventActions* event_actions, bool start)
+      {
+        if (actions.size())
+        {
+          IMC::MessageList<IMC::Message>::const_iterator itr = actions.begin();
+
+          // check if the type is SetEntityParameters
+          IMC::SetEntityParameters* sep;
+          sep = dynamic_cast<IMC::SetEntityParameters*>(*itr);
+
+          if (sep)
+          {
+            for (; itr != actions.end(); ++itr)
+            {
+              sep = dynamic_cast<IMC::SetEntityParameters*>(*itr);
+
+              if (start)
+              {
+                uint16_t act_time = getActivationTime(sep->name);
+
+                if (act_time == 0)
+                  event_actions->start_actions.push_back(sep);
+              }
+              else
+              {
+                uint16_t deact_time = getDeactivationTime(sep->name);
+
+                if (deact_time == 0)
+                  event_actions->end_actions.push_back(sep);
+              }
+            }
+          }
+        }
+      }
+
+      //! Get activation time of component
+      inline uint16_t
+      getActivationTime(const std::string label)
+      {
+        std::map<std::string, IMC::EntityInfo>::const_iterator itr = m_cinfo->find(label);
+        return itr->second.act_time;
+      }
+
+      //! Get deactivation time of component
+      inline uint16_t
+      getDeactivationTime(const std::string label)
+      {
+        std::map<std::string, IMC::EntityInfo>::const_iterator itr = m_cinfo->find(label);
+        return itr->second.deact_time;
+      }
+
       //! Queue of timed actions
       std::queue<TimedAction, std::vector<TimedAction> > m_timed;
-      //! Map of event based actions
+      //! Map of event based maneuver actions
       EventMap m_onevent;
+      //! Event based plan actions
+      EventActions m_plan_actions;
+      //! Pointer to task for dispatching messages
+      Tasks::Task* m_task;
+      //! Pointer to map of component names to EntityInfo
+      const std::map<std::string, IMC::EntityInfo>* m_cinfo;
     };
   }
 }
