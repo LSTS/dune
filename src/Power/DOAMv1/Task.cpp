@@ -137,6 +137,8 @@ namespace Power
           param(label, m_args.adc_elabels[i]);
         }
 
+        m_power_state.state = IMC::PowerChannelState::PCS_OFF;
+
         // Register handler routines.
         bind<IMC::PowerOperation>(this);
         bind<IMC::EntityControl>(this);
@@ -165,7 +167,6 @@ namespace Power
         }
 
         m_power_state.name = m_args.pwr_name;
-        m_power_state.state = IMC::PowerChannelState::PCS_OFF;
       }
 
       void
