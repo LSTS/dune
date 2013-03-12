@@ -45,20 +45,6 @@ namespace Maneuver
       std::string default_z_units;
     };
 
-    enum FREF_STATE
-    {
-      //! Waiting for first reference
-      FREF_BOOT = 1,
-      //! Following
-      FREF_GOING = 2,
-      //! Loitering
-      FREF_LOITERING = 3,
-      //! Hovering
-      FREF_HOVERING = 4,
-      //! Vertical movement
-      FREF_ELEVATOR = 5
-    };
-
     struct Task : public DUNE::Maneuvers::Maneuver
     {
       //! Store maneuver specification
@@ -75,8 +61,6 @@ namespace Maneuver
       bool m_moving;
       //! Store last timestamp when reference was received
       double m_last_ref_time;
-      //! Stores the current execution state
-      FREF_STATE m_fstate;
       //! Task arguments.
       Arguments m_args;
 
@@ -84,8 +68,7 @@ namespace Maneuver
         DUNE::Maneuvers::Maneuver(name, ctx),
         m_got_reference(false),
         m_moving(false),
-        m_last_ref_time(0),
-        m_fstate(FREF_BOOT)
+        m_last_ref_time(0)
       {
         param("Loitering Radius", m_args.loitering_radius)
         .defaultValue("7.5")
@@ -133,7 +116,6 @@ namespace Maneuver
         m_got_reference = false;
         m_spec = *msg;
         m_last_ref_time = Clock::get();
-        m_fstate = FREF_BOOT;
 
         m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
         m_fref_state.state = IMC::FollowRefState::FR_WAIT;
@@ -209,10 +191,6 @@ namespace Maneuver
 
           signalCompletion("maneuver terminated by reference source");
         }
-        else
-        {
-          follow(msg);
-        }
       }
 
       void
@@ -235,9 +213,7 @@ namespace Maneuver
       void
       consume(const IMC::PathControlState* pcs)
       {
-        // if we have arrived at the target, we stop moving
-        if (pcs->flags & IMC::PathControlState::FL_NEAR)
-          follow(&m_cur_ref);
+        guide(pcs,&m_cur_ref,&m_estate);
       }
 
       SpeedUnits
@@ -264,30 +240,27 @@ namespace Maneuver
           return IMC::Z_NONE;
       }
 
-      //! This method updates current reference, possibly generating movement
-      //! or not (if vehicle already in the vicinity of the target).
       void
-      follow(const IMC::Reference* msg)
+      guide(const IMC::PathControlState * pcs, const IMC::Reference * ref, const IMC::EstimatedState * state)
       {
         // start building the DesiredPath message to be commanded
         DesiredPath desired_path;
 
-        // compute current position
-        double curlat = m_estate.lat;
-        double curlon = m_estate.lon;
-        WGS84::displace(m_estate.x, m_estate.y, &curlat, &curlon);
-
+        double curlat = state->lat;
+        double curlon = state->lon;
+        WGS84::displace(state->x, state->y, &curlat, &curlon);
+        bool near = (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
         // command start corresponds to current position
         desired_path.start_lat = curlat;
         desired_path.start_lon = curlon;
         desired_path.flags = IMC::DesiredPath::FL_DIRECT;
 
         // set end location according to received reference
-        if (msg->flags & IMC::Reference::FLAG_LOCATION)
+        if (ref->flags & IMC::Reference::FLAG_LOCATION)
         {
           // use new reference
-          desired_path.end_lat = msg->lat;
-          desired_path.end_lon = msg->lon;
+          desired_path.end_lat = ref->lat;
+          desired_path.end_lon = ref->lon;
         }
         else if (m_got_reference)
         {
@@ -304,10 +277,10 @@ namespace Maneuver
 
         // set speed according to received reference. If the reference does not
         // provide a desired speed, use last sent speed
-        if ((msg->flags & IMC::Reference::FLAG_SPEED) && !(msg->speed.isNull()))
+        if ((ref->flags & IMC::Reference::FLAG_SPEED) && !(ref->speed.isNull()))
         {
-          desired_path.speed = msg->speed->value;
-          desired_path.speed_units = msg->speed->speed_units;
+          desired_path.speed = ref->speed->value;
+          desired_path.speed_units = ref->speed->speed_units;
         }
         else if (m_got_reference && !m_cur_ref.speed.isNull())
         {
@@ -322,10 +295,10 @@ namespace Maneuver
         }
 
         // set end_z according to received reference
-        if ((msg->flags & IMC::Reference::FLAG_Z) && !(msg->z.isNull()))
+        if ((ref->flags & IMC::Reference::FLAG_Z) && !(ref->z.isNull()))
         {
-          desired_path.end_z = msg->z->value;
-          desired_path.end_z_units = msg->z->z_units;
+          desired_path.end_z = ref->z->value;
+          desired_path.end_z_units = ref->z->z_units;
         }
         else if (m_got_reference && !m_cur_ref.z.isNull())
         {
@@ -340,27 +313,25 @@ namespace Maneuver
 
         // check to see if we are already at the target...
         double xy_dist = WGS84::distance(desired_path.end_lat,
-                                         desired_path.end_lon, 0, curlat,
-                                         curlon, 0);
+            desired_path.end_lon, 0, curlat,
+            curlon, 0);
         double z_dist;
 
         switch (desired_path.end_z_units)
         {
           case (Z_DEPTH):
             z_dist = std::abs(desired_path.end_z - m_estate.depth);
-            break;
+          break;
           case (Z_ALTITUDE):
             z_dist = std::abs(desired_path.end_z - m_estate.alt);
-            break;
+          break;
           case (Z_HEIGHT):
             z_dist = std::abs(desired_path.end_z - m_estate.height);
-            break;
+          break;
           default:
             z_dist = 0;
             break;
         }
-
-        m_fstate = FREF_GOING;
         // if inside target cylinder
         if (xy_dist < m_args.horizontal_tolerance)
         {
@@ -368,50 +339,35 @@ namespace Maneuver
           if (z_dist < 1 && desired_path.end_z == 0
               && desired_path.end_z_units == Z_DEPTH)
           {
-            m_fstate = FREF_HOVERING;
-            enableMovement(false);
+            m_fref_state.state = IMC::FollowRefState::FR_HOVER;
             return;
           }
           else if (z_dist < m_spec.altitude_interval)
           {
-            m_fstate = FREF_LOITERING;
+            m_fref_state.state = IMC::FollowRefState::FR_LOITER;
+            desired_path.lradius = m_args.loitering_radius;
           }
           else
           {
-            m_fstate = FREF_ELEVATOR;
+            m_fref_state.state = IMC::FollowRefState::FR_ELEVATOR;
+            desired_path.lradius = m_args.loitering_radius;
           }
         }
-
-        if (!m_moving)
-          enableMovement(true);
-
-        switch (m_fstate)
-        {
-          case FREF_GOING:
-            m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
-            m_fref_state.state = IMC::FollowRefState::FR_GOING;
-            break;
-          case FREF_ELEVATOR:
-            m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR;
-            m_fref_state.state = IMC::FollowRefState::FR_GOING;
-            desired_path.lradius = m_args.loitering_radius;
-            break;
-          case FREF_LOITERING:
-            m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR | IMC::FollowRefState::PROX_Z_NEAR;
-            m_fref_state.state = IMC::FollowRefState::FR_STAYING;
-            desired_path.lradius = m_args.loitering_radius;
-            break;
-          case FREF_HOVERING:
-            m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR | IMC::FollowRefState::PROX_Z_NEAR;
-            m_fref_state.state = IMC::FollowRefState::FR_STAYING;
-            break;
-          default:
-            break;
+        else {
+          m_fref_state.state = IMC::FollowRefState::FR_GOTO;
         }
 
-        m_fref_state.reference.set(*msg);
+        m_fref_state.reference.set(*ref);
         dispatch(m_fref_state);
-        dispatch(desired_path);
+
+        if (m_fref_state.state != IMC::FollowRefState::FR_HOVER) {
+          if (!m_moving)
+            enableMovement(true);
+          dispatch(desired_path);
+        }
+        else {
+          enableMovement(false);
+        }
       }
 
       //! Function for enabling and disabling the control loops
