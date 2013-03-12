@@ -127,8 +127,6 @@ namespace Power
       std::vector<uint8_t> chn_eme_state;
       //! Minimum operating voltage.
       double vol_min;
-      //! State report periodicity.
-      double state_per;
     };
 
     struct Task: public Tasks::Task
@@ -182,11 +180,6 @@ namespace Power
         .units(Units::Second)
         .defaultValue("2.0")
         .description("Watchdog timeout");
-
-        param("State Report Periodicity", m_args.state_per)
-        .units(Units::Second)
-        .defaultValue("1.0")
-        .description("Periodicity with which the state of power channels is reported");
 
         for (unsigned i = 0; i < c_adcs_count; ++i)
         {
@@ -257,8 +250,6 @@ namespace Power
             channel->state.state = IMC::PowerChannelState::PCS_OFF;
           m_channels.add(i, channel);
         }
-
-        m_state_timer.setTop(m_args.state_per);
       }
 
       //! Reserve entities.
@@ -642,12 +633,6 @@ namespace Power
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           else
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
-          if (m_state_timer.overflow())
-          {
-            m_state_timer.reset();
-            dispatchPowerChannelStates();
-          }
         }
       }
     };
