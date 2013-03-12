@@ -49,11 +49,24 @@ namespace Plan
     class ActionSchedule
     {
     public:
+      //! Enumeration for type of timed action
+      enum ActionType
+      {
+        //! Deactivation
+        TYPE_DEACT,
+        //! Activation
+        TYPE_ACT
+      };
+
       //! Struct for actions set on a timed reference
       struct TimedAction
       {
+        //! Type (true activation or deactivation)
+        ActionType type;
+        //! Time to activate or deactivate
+        float boot_time;
         //! Time relative to Plan's eta to fire action
-        float time;
+        float sched_time;
         //! Set Entity parameters to dispatch
         IMC::SetEntityParameters* list;
       };
@@ -71,13 +84,9 @@ namespace Plan
       typedef std::map<std::string, EventActions> EventMap;
 
       //! Default constructor
-      ActionSchedule(void)
-      { };
-
-      //! Default constructor
       ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
                      const std::vector<IMC::PlanManeuver*>& nodes,
-                     PlanDuration::ManeuverDuration durations,
+                     const PlanDuration::ManeuverDuration& durations,
                      const std::map<std::string, IMC::EntityInfo>& cinfo):
         m_task(task),
         m_cinfo(&cinfo)
@@ -85,62 +94,139 @@ namespace Plan
         (void)nodes;
         (void)durations;
 
-        // start by adding plan actions
-        parseStartActions(spec->start_actions, &m_plan_actions);
-        parseEndActions(spec->end_actions, &m_plan_actions);
-      };
+        float plan_duration;
+        PlanDuration::ManeuverDuration::const_iterator dur;
+        dur = durations.find(nodes.back()->maneuver_id);
+
+        if (dur == durations.end())
+          plan_duration = -1.0;
+        else
+          plan_duration = dur->second.back();
+
+        // start by adding "start" plan actions
+        parseStartActions(spec->start_actions, &m_plan_actions, plan_duration);
+
+        std::vector<IMC::PlanManeuver*>::const_iterator itr;
+        itr = nodes.begin();
+
+        // Maneuver's start and end ETA
+        float maneuver_start_eta;
+        float maneuver_end_eta;
+
+        // Iterate through plan maneuvers
+        for (; itr != nodes.end(); ++itr)
+        {
+          if (itr == nodes.begin())
+            maneuver_start_eta = plan_duration;
+          else
+            maneuver_start_eta = maneuver_end_eta;
+
+          dur = durations.find((*itr)->maneuver_id);
+          if (dur == durations.end())
+            maneuver_end_eta = -1.0;
+          else if (dur->second.size())
+            maneuver_end_eta = dur->second.back();
+          else
+            maneuver_end_eta = -1.0;
+
+          EventActions eact;
+
+          parseStartActions((*itr)->start_actions, &eact, maneuver_start_eta);
+          parseEndActions((*itr)->end_actions, &eact, maneuver_end_eta);
+        }
+
+        parseEndActions(spec->end_actions, &m_plan_actions, 0.0);
+      }
 
     private:
       //! Parse Start actions
       inline void
       parseStartActions(const IMC::MessageList<IMC::Message>& actions,
-                        EventActions* event_actions)
+                        EventActions* event_actions, float eta)
       {
-        parseActions(actions, event_actions, true);
+        parseActions(actions, event_actions, eta, true);
       }
 
       //! Parse End actions
       inline void
       parseEndActions(const IMC::MessageList<IMC::Message>& actions,
-                      EventActions* event_actions)
+                      EventActions* event_actions, float eta)
       {
-        parseActions(actions, event_actions, false);
+        parseActions(actions, event_actions, eta, false);
       }
 
       //! Parse actions
       void
       parseActions(const IMC::MessageList<IMC::Message>& actions,
-                   EventActions* event_actions, bool start)
+                   EventActions* event_actions, float eta, bool start)
       {
-        if (actions.size())
-        {
-          IMC::MessageList<IMC::Message>::const_iterator itr = actions.begin();
+        // if empty exit
+        if (!actions.size())
+          return;
 
-          // check if the type is SetEntityParameters
-          IMC::SetEntityParameters* sep;
+        IMC::MessageList<IMC::Message>::const_iterator itr = actions.begin();
+
+        IMC::SetEntityParameters* sep;
+        sep = dynamic_cast<IMC::SetEntityParameters*>(*itr);
+
+        // if it's not SetEntityParameters we ignore
+        if (!sep)
+          return;
+
+        for (; itr != actions.end(); ++itr)
+        {
           sep = dynamic_cast<IMC::SetEntityParameters*>(*itr);
 
-          if (sep)
+          // no parameters then skip
+          if (!sep->params.size())
+            continue;
+
+          // true if event based, false if time based
+          bool event_based = true;
+          // activation and deactivation times
+          uint16_t act_time;
+          uint16_t deact_time;
+          // action type
+          ActionType type;
+
+          IMC::MessageList<IMC::EntityParameter>::const_iterator par;
+          par = hasParameterActive(sep->params);
+
+          // has parameter active, then check activation time
+          if (par != sep->params.end())
           {
-            for (; itr != actions.end(); ++itr)
+            if ((*par)->value == "ON")
             {
-              sep = dynamic_cast<IMC::SetEntityParameters*>(*itr);
+              act_time = getActivationTime(sep->name);
 
-              if (start)
+              if (act_time > 0)
               {
-                uint16_t act_time = getActivationTime(sep->name);
-
-                if (act_time == 0)
-                  event_actions->start_actions.push_back(sep);
-              }
-              else
-              {
-                uint16_t deact_time = getDeactivationTime(sep->name);
-
-                if (deact_time == 0)
-                  event_actions->end_actions.push_back(sep);
+                event_based = false;
+                type = TYPE_ACT;
               }
             }
+            else
+            {
+              deact_time = getDeactivationTime(sep->name);
+
+              if (deact_time > 0)
+              {
+                event_based = false;
+                type = TYPE_DEACT;
+              }
+            }
+          }
+
+          if (event_based)
+          {
+            if (start)
+              event_actions->start_actions.push_back(sep);
+            else
+              event_actions->end_actions.push_back(sep);
+          }
+          else
+          {
+            scheduleTimed(type, eta);
           }
         }
       }
@@ -159,6 +245,26 @@ namespace Plan
       {
         std::map<std::string, IMC::EntityInfo>::const_iterator itr = m_cinfo->find(label);
         return itr->second.deact_time;
+      }
+
+      //! Check if it has parameter active
+      IMC::MessageList<IMC::EntityParameter>::const_iterator
+      hasParameterActive(const IMC::MessageList<IMC::EntityParameter>& params)
+      {
+        IMC::MessageList<IMC::EntityParameter>::const_iterator itr = params.begin();
+        for (; itr != params.end(); ++itr)
+          if ((*itr)->name == "Active")
+            return itr;
+
+        return itr;
+      }
+
+      //! Schedule timed actions
+      void
+      scheduleTimed(ActionType type, float eta)
+      {
+        (void)type;
+        (void)eta;
       }
 
       //! Queue of timed actions
