@@ -64,12 +64,15 @@ namespace Plan
         //! Type (true activation or deactivation)
         ActionType type;
         //! Time to activate or deactivate
-        float boot_time;
+        uint16_t boot_time;
         //! Time relative to Plan's eta to fire action
         float sched_time;
         //! Set Entity parameters to dispatch
-        IMC::SetEntityParameters* list;
+        const IMC::MessageList<EntityParameter>* list;
       };
+
+      //! Queue of timed actions
+      typedef std::queue<TimedAction> TimedQueue;
 
       //! Actions that should be fired on plan and maneuver start or end
       struct EventActions
@@ -98,6 +101,7 @@ namespace Plan
         PlanDuration::ManeuverDuration::const_iterator dur;
         dur = durations.find(nodes.back()->maneuver_id);
 
+        // If durations
         if (dur == durations.end())
           plan_duration = -1.0;
         else
@@ -110,8 +114,8 @@ namespace Plan
         itr = nodes.begin();
 
         // Maneuver's start and end ETA
-        float maneuver_start_eta;
-        float maneuver_end_eta;
+        float maneuver_start_eta = -1.0;
+        float maneuver_end_eta = -1.0;
 
         // Iterate through plan maneuvers
         for (; itr != nodes.end(); ++itr)
@@ -125,7 +129,7 @@ namespace Plan
           if (dur == durations.end())
             maneuver_end_eta = -1.0;
           else if (dur->second.size())
-            maneuver_end_eta = dur->second.back();
+            maneuver_end_eta = plan_duration - dur->second.back();
           else
             maneuver_end_eta = -1.0;
 
@@ -226,14 +230,14 @@ namespace Plan
           }
           else
           {
-            scheduleTimed(type, eta);
+            scheduleTimed(sep, type, eta);
           }
         }
       }
 
       //! Get activation time of component
       inline uint16_t
-      getActivationTime(const std::string label)
+      getActivationTime(const std::string& label)
       {
         std::map<std::string, IMC::EntityInfo>::const_iterator itr = m_cinfo->find(label);
         return itr->second.act_time;
@@ -241,7 +245,7 @@ namespace Plan
 
       //! Get deactivation time of component
       inline uint16_t
-      getDeactivationTime(const std::string label)
+      getDeactivationTime(const std::string& label)
       {
         std::map<std::string, IMC::EntityInfo>::const_iterator itr = m_cinfo->find(label);
         return itr->second.deact_time;
@@ -261,14 +265,46 @@ namespace Plan
 
       //! Schedule timed actions
       void
-      scheduleTimed(ActionType type, float eta)
+      scheduleTimed(const IMC::SetEntityParameters* sep, ActionType type, float eta)
       {
-        (void)type;
-        (void)eta;
+        if (eta < 0)
+          return;
+
+        TimedAction action;
+        action.type = type;
+        action.list = &sep->params;
+
+        if (type == TYPE_ACT)
+        {
+          action.boot_time = m_cinfo->find(sep->name)->second.act_time;
+          action.sched_time = eta + action.boot_time;
+        }
+        else
+        {
+          action.boot_time = m_cinfo->find(sep->name)->second.deact_time;
+          // when deactivating do not schedule to an earlier time
+          action.sched_time = eta;
+        }
+
+        std::map<std::string, TimedQueue>::iterator itr;
+        itr = m_timed.find(sep->name);
+
+        // Adding action to queue
+        if (itr != m_timed.end())
+        {
+          itr->second.push(action);
+        }
+        else
+        {
+          TimedQueue q;
+          q.push(action);
+          m_timed.insert(std::pair<std::string, TimedQueue>(sep->name, q));
+        }
       }
 
-      //! Queue of timed actions
-      std::queue<TimedAction, std::vector<TimedAction> > m_timed;
+      //! Map of entity labels to TimedQueue's
+      //! This means we'll have one queue per component
+      std::map<std::string, TimedQueue> m_timed;
       //! Map of event based maneuver actions
       EventMap m_onevent;
       //! Event based plan actions
