@@ -36,6 +36,7 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 #include <DUNE/Plans.hpp>
+#include "ActionSchedule.hpp"
 
 namespace Plan
 {
@@ -63,7 +64,6 @@ namespace Plan
       typedef std::map<std::string, Node> PlanMap;
       //! Mapping between maneuver IDs and point durations
       typedef std::map< std::string, std::vector<float> > ManeuverDuration;
-
       //! Iterator
       typedef std::vector<IMC::PlanManeuver*>::const_iterator const_iterator;
 
@@ -193,7 +193,10 @@ namespace Plan
           sequenceNodes();
 
           if (m_sequential && state != NULL)
+          {
             computeDurations(state);
+            m_sched.createSchedule(m_seq_nodes);
+          }
         }
 
         m_last_id = m_spec->start_man_id;
@@ -438,6 +441,8 @@ namespace Plan
       ManeuverDuration m_durations;
       //! Speed conversion factors for plan duration
       PlanDuration::SpeedConversion m_speed_conv;
+      //! Schedule for actions to take during plan
+      ActionSchedule m_sched;
     };
   }
 }
