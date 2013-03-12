@@ -93,6 +93,8 @@ namespace Plan
       IMC::ManeuverControlState m_mcs;
       //! Timer counter for state report period
       Time::Counter<float> m_report_timer;
+      //! Map of component names to entityinfo
+      std::map<std::string, IMC::EntityInfo> m_cinfo;
       //! Task arguments.
       Arguments m_args;
 
@@ -127,6 +129,7 @@ namespace Plan
         bind<IMC::RegisterManeuver>(this);
         bind<IMC::VehicleCommand>(this);
         bind<IMC::VehicleState>(this);
+        bind<IMC::EntityInfo>(this);
       }
 
       ~Task()
@@ -192,6 +195,12 @@ namespace Plan
       consume(const IMC::RegisterManeuver* msg)
       {
         m_supported_maneuvers.insert(msg->mid);
+      }
+
+      void
+      consume(const IMC::EntityInfo* msg)
+      {
+        m_cinfo.insert(std::pair<std::string, IMC::EntityInfo>(msg->label, *msg));
       }
 
       void
