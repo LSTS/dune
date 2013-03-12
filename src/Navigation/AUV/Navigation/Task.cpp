@@ -234,23 +234,18 @@ namespace Navigation
           if (tstep < 0)
             return;
 
-          // Update estimated state.
-          BasicNavigation::onDispatchNavigation();
-
           m_heading += Angles::minimumSignedAngle(m_heading, BasicNavigation::getYaw());
           m_estate.psi = Angles::normalizeRadian(m_heading);
+
+          // Update estimated state.
+          BasicNavigation::onDispatchNavigation();
 
           // Update Euler Angles derivatives when
           // Angular Velocity readings are not available.
           if (!gotAngularReadings())
-          {
-            m_drv_yaw.update(m_estate.psi);
-            m_estate.r = BasicNavigation::produceAngularVelocity(AXIS_Z);
-          }
+            m_estate.r = BasicNavigation::getVirtualAngularVelocity(AXIS_Z);
           else
-          {
             m_estate.r = BasicNavigation::getAngularVelocity(AXIS_Z);
-          }
 
           // Some (experimental) sanity checks. This is not standard EKF!
           // If any of this conditions is met, some kind of warning should be raised.

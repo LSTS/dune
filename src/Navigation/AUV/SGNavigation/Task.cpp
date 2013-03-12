@@ -608,20 +608,16 @@ namespace Navigation
         void
         sendToBus(void)
         {
-          BasicNavigation::onDispatchNavigation();
-
           m_estate.psi = Angles::normalizeRadian(m_kal.getState(STATE_PSI));
+
+          BasicNavigation::onDispatchNavigation();
 
           // Update Euler Angles derivatives when
           // Angular Velocity readings are not available.
           if (!gotAngularReadings())
-          {
-            m_drv_yaw.update(m_estate.psi);
-            m_estate.r = BasicNavigation::produceAngularVelocity(AXIS_Z);
-          }
+            m_estate.r = BasicNavigation::getVirtualAngularVelocity(AXIS_Z);
           else
             m_estate.r = m_kal.getState(STATE_R);
-
 
           if (!m_args.use_rpm)
           {

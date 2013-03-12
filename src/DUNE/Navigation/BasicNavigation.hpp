@@ -258,22 +258,21 @@ namespace DUNE
         return 0;
       }
 
-      //! Get angular velocity value along a specific axis.
-      //! @return angular velocity value.
-      inline double
-      produceAngularVelocity(Axes axis)
+      //! Produce virtual angular velocities.
+      inline void
+      produceAngularVelocity(void)
       {
         if (!gotAngularReadings())
         {
           if (!gotEulerReadings())
-            return 0;
+            return;
 
           double pitch = getPitch();
           double cp = std::cos(pitch);
 
           // Avoid singularity
           if ((1e-2 - std::abs(cp)) > 0.0)
-            return 0;
+            return;
 
           double roll = getRoll();
           double sr = std::sin(roll);
@@ -292,15 +291,18 @@ namespace DUNE
 
           Math::Matrix ea = Math::Matrix(euler, 3, 1);
 
-          Math::Matrix av = Math::Matrix(3, 1);
-          av = inverse(j2) * ea;
-
-          return Math::trimValue(av(axis), - c_max_av, c_max_av);
+          m_virtual_avel = inverse(j2) * ea;
         }
-
-        return 0;
       }
 
+      //! Get virtual angular velocity
+      //! @param[in] axix axis of rotation.
+      //! @return angular velocity value.
+      inline double
+      getVirtualAngularVelocity(Axes axis)
+      {
+        return Math::trimValue(m_virtual_avel(axis), - c_max_av, c_max_av);
+      }
 
       //! Get heading rate value.
       //! @return heading rate.
@@ -724,6 +726,8 @@ namespace DUNE
       double m_accel_x_bfr;
       double m_accel_y_bfr;
       double m_accel_z_bfr;
+      //! Virtual Angular Velocities.
+      Math::Matrix m_virtual_avel;
       //! Depth offset value.
       float m_depth_offset;
       //! Moving Average for heave.

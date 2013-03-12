@@ -165,6 +165,7 @@ namespace DUNE
       m_z_ref = 0;
       m_diving = false;
       m_rpm = 0;
+      m_virtual_avel.resizeAndFill(3, 1, 0.0);
 
       m_gps_val_bits = 0;
       m_gvel_val_bits = IMC::GroundVelocity::VAL_VEL_X
@@ -871,8 +872,11 @@ namespace DUNE
       {
         m_drv_roll.update(m_estate.phi);
         m_drv_pitch.update(m_estate.theta);
-        m_estate.p = BasicNavigation::produceAngularVelocity(AXIS_X);
-        m_estate.q = BasicNavigation::produceAngularVelocity(AXIS_Y);
+        m_drv_yaw.update(m_estate.psi);
+
+        BasicNavigation::produceAngularVelocity();
+        m_estate.p = BasicNavigation::getVirtualAngularVelocity(AXIS_X);
+        m_estate.q = BasicNavigation::getVirtualAngularVelocity(AXIS_Y);
       }
       else
       {
