@@ -77,10 +77,14 @@ namespace Plan
       //! Default constructor
       ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
                      const std::vector<IMC::PlanManeuver*>& nodes,
+                     PlanDuration::ManeuverDuration durations,
                      const std::map<std::string, IMC::EntityInfo>& cinfo):
         m_task(task),
         m_cinfo(&cinfo)
       {
+        (void)nodes;
+        (void)durations;
+
         // start by adding plan actions
         parseStartActions(spec->start_actions, &m_plan_actions);
         parseEndActions(spec->end_actions, &m_plan_actions);
