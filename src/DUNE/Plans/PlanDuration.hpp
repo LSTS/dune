@@ -52,6 +52,9 @@ namespace DUNE
     class PlanDuration
     {
     public:
+      //! Mapping between maneuver IDs and point durations
+      typedef std::map< std::string, std::vector<float> > ManeuverDuration;
+
       //! Conversion factors for rpm and actuation percent
       struct SpeedConversion
       {
@@ -69,7 +72,7 @@ namespace DUNE
       //! @return accumulated plan duration in seconds, -1 if unable to compute
       static float
       parse(const std::vector<IMC::PlanManeuver*>& nodes , const IMC::EstimatedState* state,
-            std::map< std::string, std::vector<float> >& man_durations,
+            ManeuverDuration& man_durations,
             const SpeedConversion& speed_conv);
 
       //! Parse plan duration from plan specification

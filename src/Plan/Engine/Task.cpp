@@ -602,7 +602,7 @@ namespace Plan
       parsePlan(void)
       {
         std::string desc;
-        if (!m_plan->parse(&m_supported_maneuvers, desc, &m_state))
+        if (!m_plan->parse(&m_supported_maneuvers, desc, m_cinfo, this, &m_state))
         {
           onFailure(desc);
           return false;

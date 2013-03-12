@@ -235,7 +235,7 @@ namespace DUNE
     float
     PlanDuration::parse(const std::vector<IMC::PlanManeuver*>& nodes,
                         const IMC::EstimatedState* state,
-                        std::map< std::string, std::vector<float> >& man_durations,
+                        ManeuverDuration& man_durations,
                         const SpeedConversion& speed_conv)
     {
       Position pos;

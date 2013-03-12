@@ -62,8 +62,6 @@ namespace Plan
 
       //! Mapping between maneuver IDs and graph nodes
       typedef std::map<std::string, Node> PlanMap;
-      //! Mapping between maneuver IDs and point durations
-      typedef std::map< std::string, std::vector<float> > ManeuverDuration;
       //! Iterator
       typedef std::vector<IMC::PlanManeuver*>::const_iterator const_iterator;
 
@@ -78,7 +76,8 @@ namespace Plan
         m_curr_node(NULL),
         m_sequential(false),
         m_compute_progress(compute_progress),
-        m_progress(0.0)
+        m_progress(0.0),
+        m_sched(NULL)
       {
         m_speed_conv.rpm_factor = speed_rpm_factor;
         m_speed_conv.act_factor = speed_act_factor;
@@ -90,6 +89,11 @@ namespace Plan
       Plan(const IMC::PlanSpecification* spec, bool compute_progress)
       {
         *this = Plan(spec, compute_progress, 0.0, 0.0);
+      }
+
+      ~Plan(void)
+      {
+        Memory::clear(m_sched);
       }
 
       //! Reset data
@@ -110,6 +114,7 @@ namespace Plan
       //! @return true if was able to parse the plan
       bool
       parse(const std::set<uint16_t>* supported_maneuvers, std::string& desc,
+            const std::map<std::string, IMC::EntityInfo>& cinfo, Tasks::Task* task,
             const IMC::EstimatedState* state = NULL)
       {
         bool start_maneuver_ok = false;
@@ -195,7 +200,7 @@ namespace Plan
           if (m_sequential && state != NULL)
           {
             computeDurations(state);
-            m_sched.createSchedule(m_seq_nodes);
+            m_sched = new ActionSchedule(task, m_spec, m_seq_nodes, cinfo);
           }
         }
 
@@ -257,7 +262,8 @@ namespace Plan
         if (!m_sequential || !m_durations.size())
           return -1.0;
 
-        ManeuverDuration::const_iterator itr = m_durations.find(m_seq_nodes.back()->maneuver_id);
+        PlanDuration::ManeuverDuration::const_iterator itr;
+        itr = m_durations.find(m_seq_nodes.back()->maneuver_id);
 
         if (itr == m_durations.end())
           return -1.0;
@@ -287,7 +293,8 @@ namespace Plan
 
         float total_duration = getTotalDuration();
 
-        ManeuverDuration::const_iterator itr = m_durations.find(getCurrentId());
+        PlanDuration::ManeuverDuration::const_iterator itr;
+        itr = m_durations.find(getCurrentId());
 
         // If not found
         if (itr == m_durations.end())
@@ -438,11 +445,11 @@ namespace Plan
       //! Vector of message pointers to cycle through (sequential) plan
       std::vector<IMC::PlanManeuver*> m_seq_nodes;
       //! Maneuver durations
-      ManeuverDuration m_durations;
+      PlanDuration::ManeuverDuration m_durations;
       //! Speed conversion factors for plan duration
       PlanDuration::SpeedConversion m_speed_conv;
       //! Schedule for actions to take during plan
-      ActionSchedule m_sched;
+      ActionSchedule* m_sched;
     };
   }
 }
