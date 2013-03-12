@@ -279,6 +279,10 @@ namespace DUNE
     // Dispatch query entity state.
     IMC::QueryEntityState qes;
     dispatch(qes, Tasks::DF_LOOP_BACK);
+
+    // Dispatch query power channel state.
+    IMC::QueryPowerChannelState qpcs;
+    dispatch(qpcs);
   }
 
   void
