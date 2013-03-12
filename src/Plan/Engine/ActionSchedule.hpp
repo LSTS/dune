@@ -94,9 +94,6 @@ namespace Plan
         m_task(task),
         m_cinfo(&cinfo)
       {
-        (void)nodes;
-        (void)durations;
-
         float plan_duration;
         PlanDuration::ManeuverDuration::const_iterator dur;
         dur = durations.find(nodes.back()->maneuver_id);
