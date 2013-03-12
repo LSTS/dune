@@ -165,6 +165,14 @@ namespace DUNE
       static void
       parse(Parsers::Config& parser, IMC::PlanSpecification& plan);
 
+      //! Parse actions from a set vector of sections
+      //! @param cfg Config object to use
+      //! @param sections vector of sections to look for and parse
+      //! @param actions message list to fill in with parsed data
+      static void
+      parseActions(Parsers::Config& cfg, const std::vector<std::string>& sections,
+                   IMC::MessageList<IMC::Message>& actions);
+
       //! Parse speed and speed units for a maneuver.
       //! @param parser configuration parser handle.
       //! @param section section configuration section.
