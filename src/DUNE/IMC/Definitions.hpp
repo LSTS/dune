@@ -11066,11 +11066,15 @@ namespace DUNE
         //! Waiting for first reference.
         FR_WAIT = 1,
         //! Going towards received reference.
-        FR_GOING = 2,
+        FR_GOTO = 2,
         //! Loitering after arriving at the reference.
-        FR_STAYING = 3,
+        FR_LOITER = 3,
+        //! Hovering after arriving at the reference.
+        FR_HOVER = 4,
+        //! Moving in z after arriving at the target cylinder.
+        FR_ELEVATOR = 5,
         //! Controlling system timed out.
-        FR_TIMEOUT = 4
+        FR_TIMEOUT = 6
       };
 
       //! Proximity.
