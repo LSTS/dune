@@ -58,6 +58,10 @@ namespace Sensors
       unsigned range_hf;
       //! Range of the low-frequency subsystem.
       unsigned range_lf;
+      //! Name of the system power channel.
+      std::string pwr_sys;
+      //! Name of the CPU power channel.
+      std::string pwr_cpu;
     };
 
     struct Task: public Tasks::Task
@@ -80,6 +84,8 @@ namespace Sensors
       int64_t m_time_diff;
       //! Estimated state.
       IMC::EstimatedState m_estate;
+      //! Power channel state.
+      IMC::PowerChannelState m_pwr_cpu;
       //! Configuration parameters.
       Arguments m_args;
 
@@ -134,16 +140,30 @@ namespace Sensors
         .units(Units::Meter)
         .description("Enable high frequency subsystem");
 
+        param("Power Channel - System", m_args.pwr_sys)
+        .defaultValue("Sidescan")
+        .description("Name of the power channel that controls system power");
+
+        param("Power Channel - CPU", m_args.pwr_cpu)
+        .defaultValue("Sidescan CPU")
+        .description("Name of the power channel that controls CPU power");
+
         m_bfr.resize(256 * 1024);
+
+        m_pwr_cpu.state = IMC::PowerChannelState::PCS_OFF;
 
         bind<IMC::EstimatedState>(this);
         bind<IMC::LoggingControl>(this);
         bind<IMC::EntityControl>(this);
+        bind<IMC::PowerChannelControl>(this);
+        bind<IMC::QueryPowerChannelState>(this);
       }
 
       void
       onUpdateParameters(void)
       {
+        m_pwr_cpu.name = m_args.pwr_cpu;
+
         if (paramChanged(m_args.range_lf))
         {
           if (m_cmd)
@@ -198,7 +218,14 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
-        m_cmd = new CommandLink(m_args.addr, m_args.port_cmd);
+        try
+        {
+          m_cmd = new CommandLink(m_args.addr, m_args.port_cmd);
+        }
+        catch (...)
+        {
+          throw RestartNeeded("system not online", 5);
+        }
       }
 
       void
@@ -214,6 +241,27 @@ namespace Sensors
       onResourceInitialization(void)
       {
         onDeactivation();
+      }
+
+      void
+      consume(const IMC::PowerChannelControl* msg)
+      {
+        if (msg->name != m_args.pwr_cpu)
+          return;
+
+        if (m_cmd)
+        {
+          inf("sending shutdown");
+
+          m_cmd->shutdown();
+          m_pwr_cpu.state = IMC::PowerChannelState::PCS_OFF;
+        }
+      }
+
+      void
+      consume(const IMC::QueryPowerChannelState* msg)
+      {
+        dispatchReply(*msg, m_pwr_cpu);
       }
 
       void
