@@ -805,11 +805,13 @@ namespace Plan
         {
           debug(DTR("now in %s state"), c_state_desc[s]);
 
-          bool was_plan_exec = initMode() || execMode();
+          bool was_calibrating = initMode();
+          bool was_plan_exec = was_calibrating || execMode();
 
           m_pcs.state = s;
 
-          bool is_plan_exec = initMode() || execMode();
+          bool is_calibrating = initMode();
+          bool is_plan_exec = is_calibrating || execMode();
 
           if (was_plan_exec && !is_plan_exec)
           {
@@ -819,6 +821,9 @@ namespace Plan
 
           if (!was_plan_exec && is_plan_exec)
             m_plan->planStarted();
+
+          if (was_calibrating && !is_calibrating)
+            m_plan->calibrationStopped();
         }
 
         if (maneuver)
@@ -874,7 +879,7 @@ namespace Plan
         if (m_plan == NULL || !execMode())
           return;
 
-        m_pcs.plan_progress = m_plan->getProgress(&m_mcs);
+        m_pcs.plan_progress = m_plan->updateProgress(&m_mcs);
         m_pcs.plan_eta = m_plan->getPlanEta();
       }
 

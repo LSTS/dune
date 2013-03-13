@@ -77,6 +77,8 @@ namespace Plan
         m_sequential(false),
         m_compute_progress(compute_progress),
         m_progress(0.0),
+        m_calibration(-1.0),
+        m_in_calib(false),
         m_sched(NULL)
       {
         m_speed_conv.rpm_factor = speed_rpm_factor;
@@ -105,6 +107,8 @@ namespace Plan
         m_sequential = false;
         m_durations.clear();
         m_progress = -1.0;
+        m_calibration = -1.0;
+        m_in_calib = false;
       }
 
       //! Parse a given plan
@@ -203,6 +207,10 @@ namespace Plan
 
             Memory::clear(m_sched);
             m_sched = new ActionSchedule(task, m_spec, m_seq_nodes, m_durations, cinfo);
+
+            // Estimate necessary calibration time
+            float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
+            m_calibration = trimValue(diff, -1.0, diff);
           }
         }
 
@@ -215,6 +223,12 @@ namespace Plan
       void
       planStarted(void)
       {
+        if (m_calibration > 0.0)
+        {
+          m_in_calib = true;
+          m_calib_timer.setTop(m_calibration);
+        }
+
         if (m_sched == NULL)
           return;
 
@@ -229,6 +243,13 @@ namespace Plan
           return;
 
         m_sched->planStopped();
+      }
+
+      //! Signal that calibration has stopped
+      void
+      calibrationStopped(void)
+      {
+        m_in_calib = false;
       }
 
       //! Signal that a maneuver has started
@@ -250,6 +271,14 @@ namespace Plan
           return;
 
         m_sched->maneuverDone(m_last_id);
+      }
+
+      //! Get necessary calibration time
+      //! @return necessary calibration time
+      float
+      getCalibrationTime(void)
+      {
+        return m_calibration;
       }
 
       //! Check if plan has been completed
@@ -297,10 +326,11 @@ namespace Plan
         return m_last_id;
       }
 
-      //! Get total duration of the plan
-      //! @return total duration of plan
+      //! Get duration of the execution phase of the plan
+      //! (total of maneuver accumulated duration)
+      //! @return duration of the execution phase of the plan
       float
-      getTotalDuration(void) const
+      getExecutionDuration(void) const
       {
         if (!m_sequential || !m_durations.size())
           return -1.0;
@@ -314,11 +344,23 @@ namespace Plan
         return itr->second.back();
       }
 
+      //! Get total duration of the plan
+      //! @return total duration of the plan
+      float
+      getTotalDuration(void) const
+      {
+        if (m_sched != NULL)
+          if (m_sched->getEarliestSchedule() > getExecutionDuration())
+            return m_sched->getEarliestSchedule();
+
+        return getExecutionDuration();
+      }
+
       //! Get current plan progress
       //! @param[in] mcs pointer to maneuver control state message
       //! @return progress in percent (-1.0 if unable to compute)
       float
-      getProgress(const IMC::ManeuverControlState* mcs)
+      updateProgress(const IMC::ManeuverControlState* mcs)
       {
         (void)mcs;
 
@@ -329,12 +371,20 @@ namespace Plan
         if (!m_sequential || !m_durations.size())
           return -1.0;
 
+        float total_duration = getTotalDuration();
+
+        // Check if its calibrating
+        if (m_in_calib)
+        {
+          float time_left = m_calib_timer.getRemaining() + getExecutionDuration();
+          m_progress = 100 * trimValue(1.0 - time_left / total_duration, 0.0, 1.0);
+          return m_progress;
+        }
+
         // If it's not executing, do not compute
         if (mcs->state != IMC::ManeuverControlState::MCS_EXECUTING ||
             mcs->eta == 0)
           return m_progress;
-
-        float total_duration = getTotalDuration();
 
         PlanDuration::ManeuverDuration::const_iterator itr;
         itr = m_durations.find(getCurrentId());
@@ -493,6 +543,12 @@ namespace Plan
       bool m_compute_progress;
       //! Current progress if any
       float m_progress;
+      //! Current plan's calibration time if any
+      float m_calibration;
+      //! True if currently in calibration
+      bool m_in_calib;
+      //! Timer to estimate time left in calibration
+      Time::Counter<float> m_calib_timer;
       //! Vector of message pointers to cycle through (sequential) plan
       std::vector<IMC::PlanManeuver*> m_seq_nodes;
       //! Maneuver durations

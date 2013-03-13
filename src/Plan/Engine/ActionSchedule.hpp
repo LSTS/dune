@@ -188,6 +188,7 @@ namespace Plan
       }
 
       //! Compute the time of the earliest scheduled action
+      //! @return time of the earliest scheduled action
       float
       getEarliestSchedule(void) const
       {
@@ -201,6 +202,8 @@ namespace Plan
         for (; itr != m_timed.end(); ++itr)
           if (itr->second.front().sched_time > earliest)
             earliest = itr->second.front().sched_time;
+
+        return earliest;
       }
 
     private:
