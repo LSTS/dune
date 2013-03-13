@@ -1,0 +1,143 @@
+//***************************************************************************
+// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+//***************************************************************************
+// This file is part of DUNE: Unified Navigation Environment.               *
+//                                                                          *
+// Commercial Licence Usage                                                 *
+// Licencees holding valid commercial DUNE licences may use this file in    *
+// accordance with the commercial licence agreement provided with the       *
+// Software or, alternatively, in accordance with the terms contained in a  *
+// written agreement between you and Universidade do Porto. For licensing   *
+// terms, conditions, and further information contact lsts@fe.up.pt.        *
+//                                                                          *
+// European Union Public Licence - EUPL v.1.1 Usage                         *
+// Alternatively, this file may be used under the terms of the EUPL,        *
+// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// included in the packaging of this file. You may not use this work        *
+// except in compliance with the Licence. Unless required by applicable     *
+// law or agreed to in writing, software distributed under the Licence is   *
+// distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
+// ANY KIND, either express or implied. See the Licence for the specific    *
+// language governing permissions and limitations at                        *
+// https://www.lsts.pt/dune/licence.                                        *
+//***************************************************************************
+// Author: Pedro Calado                                                     *
+//***************************************************************************
+
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
+
+using DUNE_NAMESPACES;
+
+namespace Simulators
+{
+  //! %Dummy simulator for DUNE.
+  //! %Dummy task mimics basic parameters behavior
+  //! such as activation, deactivation times
+  //! and set entity parameter.
+  //!
+  //! @author Pedro Calado
+  namespace Dummy
+  {
+    //! %Task arguments.
+    struct Arguments
+    {
+      //! Time it takes dummy to boot
+      float boot_time;
+      //! Time it takes dummy to shutdown
+      float shut_time;
+    };
+
+    //! %Dummy simulator task
+    struct Task: public Tasks::Periodic
+    {
+      //! Timer for activation process
+      Time::Counter<float> m_act_timer;
+      //! Timer for deactivation process
+      Time::Counter<float> m_deact_timer;
+      //! Activating
+      bool m_activating;
+      //! Deactivating
+      bool m_deactivating;
+      //! Task arguments.
+      Arguments m_args;
+
+      Task(const std::string& name, Tasks::Context& ctx):
+        Tasks::Periodic(name, ctx),
+        m_activating(false),
+        m_deactivating(false)
+      {
+        param("Boot Time", m_args.boot_time)
+        .defaultValue("45")
+        .description("Time it takes dummy to boot");
+
+        param("Shutdown Time", m_args.shut_time)
+        .defaultValue("10")
+        .description("Time it takes dummy to shutdown");
+
+        // Initialize entity state.
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      ~Task(void)
+      {
+        Task::onResourceRelease();
+      }
+
+      //! On update parameters
+      void
+      onUpdateParameters(void)
+      {
+        m_act_timer.setTop(m_args.boot_time);
+        m_deact_timer.setTop(m_args.shut_time);
+      }
+
+      //! Release resources.
+      void
+      onResourceRelease(void)
+      { }
+
+      //! Initialize resources.
+      void
+      onResourceInitialization(void)
+      {
+        deactivate();
+      }
+
+      //! On activation
+      void
+      onRequestActivation(void)
+      {
+        m_act_timer.reset();
+        m_activating = true;
+      }
+
+      //! On deactivation
+      void
+      onRequestDeactivation(void)
+      {
+        m_deact_timer.reset();
+        m_deactivating = true;
+      }
+
+      void
+      task(void)
+      {
+        if (m_activating && m_act_timer.overflow())
+        {
+          m_activating = false;
+          activate();
+        }
+
+        if (m_deactivating && m_deact_timer.overflow())
+        {
+          m_deactivating = false;
+          deactivate();
+        }
+      }
+    };
+  }
+}
+
+DUNE_TASK
