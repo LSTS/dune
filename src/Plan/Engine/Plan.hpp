@@ -418,10 +418,20 @@ namespace Plan
         return m_progress;
       }
 
+      //! Update schedule if any
+      void
+      updateSchedule(float time_left)
+      {
+        if (m_sched == NULL)
+          return;
+
+        m_sched->updateSchedule(time_left);
+      }
+
       //! Get plan estimated time of arrival
       //! @return ETA
       float
-      getPlanEta(void)
+      getPlanEta(void) const
       {
         return getTotalDuration() * (1.0 - 0.01 * m_progress);
       }

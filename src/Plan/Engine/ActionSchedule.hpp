@@ -149,6 +149,43 @@ namespace Plan
 
         m_task->debug("schedule - plan end");
         parseEndActions(spec->end_actions, &m_plan_actions, 0.0);
+
+        std::map<std::string, TimedQueue>::const_iterator next;
+        next = nextSchedule();
+
+        if (next == m_timed.end())
+          m_earliest = 0.0;
+        else
+          m_earliest = next->second.front().sched_time;
+      }
+
+      //! Update timed actions in schedule
+      void
+      updateSchedule(float time_left)
+      {
+        if (time_left <= 0.0)
+          return;
+
+        while (1)
+        {
+          std::map<std::string, TimedQueue>::iterator next;
+          next = nextSchedule();
+
+          if (next == m_timed.end())
+            break;
+
+          TimedQueue* q = &next->second;
+
+          if (q->front().sched_time <= time_left)
+            break;
+
+          dispatchActions(q->front().list);
+
+          q->pop();
+
+          if (!q->size())
+            m_timed.erase(next);
+        }
       }
 
       //! The plan has started
@@ -187,23 +224,12 @@ namespace Plan
           dispatchActions(itr->second.start_actions);
       }
 
-      //! Compute the time of the earliest scheduled action
+      //! Get the time of the earliest scheduled action
       //! @return time of the earliest scheduled action
       float
       getEarliestSchedule(void) const
       {
-        if (!m_timed.size())
-          return 0.0;
-
-        float earliest = 0.0;
-
-        std::map<std::string, TimedQueue>::const_iterator itr;
-        itr = m_timed.begin();
-        for (; itr != m_timed.end(); ++itr)
-          if (itr->second.front().sched_time > earliest)
-            earliest = itr->second.front().sched_time;
-
-        return earliest;
+        return m_earliest;
       }
 
     private:
@@ -317,7 +343,7 @@ namespace Plan
 
       //! Get activation time of component
       inline uint16_t
-      getActivationTime(const std::string& label)
+      getActivationTime(const std::string& label) const
       {
         std::map<std::string, IMC::EntityInfo>::const_iterator itr = m_cinfo->find(label);
         return itr->second.deact_time;
@@ -325,7 +351,7 @@ namespace Plan
 
       //! Get deactivation time of component
       inline uint16_t
-      getDeactivationTime(const std::string& label)
+      getDeactivationTime(const std::string& label) const
       {
         std::map<std::string, IMC::EntityInfo>::const_iterator itr = m_cinfo->find(label);
         return itr->second.deact_time;
@@ -333,7 +359,7 @@ namespace Plan
 
       //! Check if it has parameter active
       IMC::MessageList<IMC::EntityParameter>::const_iterator
-      hasParameterActive(const IMC::MessageList<IMC::EntityParameter>& params)
+      hasParameterActive(const IMC::MessageList<IMC::EntityParameter>& params) const
       {
         IMC::MessageList<IMC::EntityParameter>::const_iterator itr = params.begin();
         for (; itr != params.end(); ++itr)
@@ -397,6 +423,32 @@ namespace Plan
           m_task->dispatch(actions[i]);
       }
 
+      //! Compute the time of the next scheduled action
+      //! @return iterator to the queue with the next scheduled action
+      std::map<std::string, TimedQueue>::iterator
+      nextSchedule(void)
+      {
+        if (!m_timed.size())
+          return m_timed.end();
+
+        float earliest = 0.0;
+
+        std::map<std::string, TimedQueue>::iterator itr, next;
+        itr = m_timed.begin();
+        next = m_timed.end();
+
+        for (; itr != m_timed.end(); ++itr)
+        {
+          if (itr->second.front().sched_time > earliest)
+          {
+            earliest = itr->second.front().sched_time;
+            next = itr;
+          }
+        }
+
+        return next;
+      }
+
       //! Map of entity labels to TimedQueue's
       //! This means we'll have one queue per component
       std::map<std::string, TimedQueue> m_timed;
@@ -408,6 +460,8 @@ namespace Plan
       Tasks::Task* m_task;
       //! Pointer to map of component names to EntityInfo
       const std::map<std::string, IMC::EntityInfo>* m_cinfo;
+      //! Time of earliest scheduled actions
+      float m_earliest;
     };
   }
 }
