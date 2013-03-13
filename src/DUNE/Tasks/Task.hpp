@@ -31,6 +31,7 @@
 // ISO C++ 98 headers.
 #include <string>
 #include <map>
+#include <stack>
 #include <cstdarg>
 
 // DUNE headers.
@@ -635,6 +636,8 @@ namespace DUNE
       IMC::EntityInfo m_ent_info;
       //! Arguments.
       BasicArguments m_args;
+      //! Parameters stack.
+      std::stack<std::map<std::string, std::string> > m_params_stack;
 
       //! Report current entity states by dispatching EntityState
       //! messages. This function will at least report the state of
@@ -672,6 +675,12 @@ namespace DUNE
 
       void
       consume(const IMC::SetEntityParameters* msg);
+
+      void
+      consume(const IMC::PushEntityParameters* msg);
+
+      void
+      consume(const IMC::PopEntityParameters* msg);
     };
   }
 }

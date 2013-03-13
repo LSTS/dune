@@ -94,6 +94,8 @@ namespace DUNE
       bind<IMC::QueryEntityState>(this);
       bind<IMC::QueryEntityParameters>(this);
       bind<IMC::SetEntityParameters>(this);
+      bind<IMC::PushEntityParameters>(this);
+      bind<IMC::PopEntityParameters>(this);
     }
 
     unsigned int
@@ -397,6 +399,32 @@ namespace DUNE
           err(DTR("updating entity parameters: %s"), e.what());
         }
       }
+
+      updateParameters();
+    }
+
+    void
+    Task::consume(const IMC::PushEntityParameters* msg)
+    {
+      std::map<std::string, std::string> map;
+      std::map<std::string, Parameter*>::const_iterator itr = m_params.begin();
+      for (; itr != m_params.end(); ++itr)
+        map[itr->second->name()] = itr->second->value();
+
+      m_params_stack.push(map);
+    }
+
+    void
+    Task::consume(const IMC::PopEntityParameters* msg)
+    {
+      if (m_params_stack.empty())
+        return;
+
+      std::map<std::string, std::string>& map = m_params_stack.top();
+      std::map<std::string, std::string>::const_iterator itr = map.begin();
+      for (; itr != map.end(); ++itr)
+        m_params.set(itr->first, itr->second);
+      m_params_stack.pop();
 
       updateParameters();
     }
