@@ -57,7 +57,7 @@ namespace Plan
       float speriod;
       //! Factor to convert from RPMs to meters per second
       float speed_conv_rpm;
-      //! Conv to convert from actuation to meters per second      
+      //! Conv to convert from actuation to meters per second
       float speed_conv_act;
     };
 
@@ -80,7 +80,7 @@ namespace Plan
       bool m_plan_loaded;
       //! PlanSpecification message
       IMC::PlanSpecification m_spec;
-      // List of supported maneuvers.
+      //! List of supported maneuvers.
       std::set<uint16_t> m_supported_maneuvers;
       //! Database related (for plan DB direct queries to avoid
       //! unnecessary interface with bus / PlanDB task directly)
@@ -172,6 +172,9 @@ namespace Plan
       consume(const IMC::ManeuverControlState* msg)
       {
         m_mcs = *msg;
+
+        if (msg->state & IMC::ManeuverControlState::MCS_DONE)
+          m_plan->maneuverDone();
       }
 
       void
@@ -727,6 +730,8 @@ namespace Plan
         changeMode(IMC::PlanControlState::PCS_EXECUTING,
                    pman->maneuver_id + DTR(": executing maneuver"),
                    pman->maneuver_id, pman->data.get());
+
+        m_plan->maneuverStarted(pman->maneuver_id);
       }
 
       //! Answer to the plan control request
@@ -807,7 +812,13 @@ namespace Plan
           bool is_plan_exec = initMode() || execMode();
 
           if (was_plan_exec && !is_plan_exec)
+          {
+            m_plan->planStopped();
             changeLog("idle");
+          }
+
+          if (!was_plan_exec && is_plan_exec)
+            m_plan->planStarted();
         }
 
         if (maneuver)

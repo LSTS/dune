@@ -211,6 +211,35 @@ namespace Plan
         return true;
       }
 
+      //! Signal that the plan has started
+      void
+      planStarted(void)
+      {
+
+      }
+
+      //! Signal that the plan has stopped
+      void
+      planStopped(void)
+      {
+
+      }
+
+      //! Signal that a maneuver has started
+      //! @param[in] id name of the started maneuver
+      void
+      maneuverStarted(const std::string& id)
+      {
+        (void)id;
+      }
+
+      //! Signal that current maneuver is done
+      void
+      maneuverDone(void)
+      {
+
+      }
+
       //! Check if plan has been completed
       //! @return true if plan is done
       bool
