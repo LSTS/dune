@@ -74,7 +74,7 @@ namespace UserInterfaces
       //! Command to execute on power down abort.
       std::string cmd_pwr_down_abort;
       //! CPU power channel.
-      unsigned pwr_chn_cpu;
+      std::string pwr_chn_cpu;
       //! Name of supported systems.
       std::vector<std::string> systems;
     };
@@ -461,7 +461,7 @@ namespace UserInterfaces
           m_power_down_now = true;
 
           IMC::PowerChannelControl pcc;
-          pcc.id = m_args.pwr_chn_cpu;
+          pcc.name = m_args.pwr_chn_cpu;
           pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
           dispatch(pcc);
         }

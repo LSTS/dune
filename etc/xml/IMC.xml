@@ -2742,10 +2742,9 @@
     <description>
       This message allows controlling power channels.
     </description>
-    <field name="Channel" abbrev="id" type="uint8_t">
+    <field name="Channel Name" abbrev="name" type="plaintext">
       <description>
-        Power channel identification number. The number 255 means all
-        channels.
+        The name of the power channel.
       </description>
     </field>
     <field name="Operation" abbrev="op" type="uint8_t" unit="Enumerated" min="0" max="6" prefix="PCC_OP">
@@ -2809,14 +2808,9 @@
     <description>
       Message conveying the state of a power channel.
     </description>
-    <field name="Id" abbrev="id" type="uint8_t">
+    <field name="Name" abbrev="name" type="plaintext">
       <description>
-        Power Channel Id.
-      </description>
-    </field>
-    <field name="Label" abbrev="label" type="plaintext">
-      <description>
-        Power Channel Label.
+        Power Channel Name.
       </description>
     </field>
     <field name="State" abbrev="state" type="uint8_t" unit="Enumerated" prefix="PCS">

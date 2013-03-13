@@ -6644,8 +6644,8 @@ namespace DUNE
         PCC_OP_SAVE = 6
       };
 
-      //! Channel.
-      uint8_t id;
+      //! Channel Name.
+      std::string name;
       //! Operation.
       uint8_t op;
       //! Scheduled Time.
@@ -6698,14 +6698,14 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 10;
+        return 9;
       }
 
-      uint16_t
-      getSubId(void) const;
-
-      void
-      setSubId(uint16_t subid);
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(name);
+      }
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
@@ -6777,10 +6777,8 @@ namespace DUNE
         PCS_ON = 1
       };
 
-      //! Id.
-      uint8_t id;
-      //! Label.
-      std::string label;
+      //! Name.
+      std::string name;
       //! State.
       uint8_t state;
 
@@ -6831,20 +6829,14 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 1;
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(label);
+        return IMC::getSerializationSize(name);
       }
-
-      uint16_t
-      getSubId(void) const;
-
-      void
-      setSubId(uint16_t subid);
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;

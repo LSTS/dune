@@ -25,72 +25,105 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef TRANSPORTS_HTTP_STATE_MONITOR_HPP_INCLUDED_
-#define TRANSPORTS_HTTP_STATE_MONITOR_HPP_INCLUDED_
-
-// ISO C++ 98 headers.
-#include <map>
-#include <string>
+#ifndef POWER_PCTLV2_POWER_CHANNELS_HPP_INCLUDED_
+#define POWER_PCTLV2_POWER_CHANNELS_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-namespace Transports
+namespace Power
 {
-  namespace HTTP
+  namespace PCTLv2
   {
-    class MessageMonitor
+    using DUNE_NAMESPACES;
+
+    struct PowerChannel
+    {
+      unsigned id;
+      IMC::PowerChannelState state;
+    };
+
+    class PowerChannels
     {
     public:
-      MessageMonitor(const std::string& system, uint64_t uid);
+      PowerChannels(void)
+      { }
 
-      ~MessageMonitor(void);
-
-      void
-      setEntities(const std::map<unsigned, std::string>& entities);
-
-      DUNE::Utils::ByteBuffer*
-      messagesJSON(void);
-
-      void
-      updateMessage(const DUNE::IMC::Message* msg);
-
-      void
-      readLock(void)
+      ~PowerChannels(void)
       {
-        m_mutex.lock();
+        clear();
       }
 
       void
-      readUnlock(void)
+      clear(void)
       {
-        m_mutex.unlock();
+        std::map<unsigned, PowerChannel*>::iterator itr = m_by_id.begin();
+        for (; itr != m_by_id.end(); ++itr)
+          delete itr->second;
+
+        m_by_id.clear();
+        m_by_name.clear();
+      }
+
+      void
+      add(unsigned id, PowerChannel* channel)
+      {
+        channel->id = id;
+        m_by_name[channel->state.name] = channel;
+        m_by_id[id] = channel;
+      }
+
+      std::map<unsigned, PowerChannel*>::const_iterator
+      find(const unsigned& id) const
+      {
+        return m_by_id.find(id);
+      }
+
+      std::map<std::string, PowerChannel*>::const_iterator
+      find_by_name(const std::string& name) const
+      {
+        return m_by_name.find(name);
+      }
+
+      std::map<std::string, PowerChannel*>::const_iterator
+      begin_by_name(void) const
+      {
+        return m_by_name.begin();
+      }
+
+      std::map<std::string, PowerChannel*>::const_iterator
+      end_by_name(void) const
+      {
+        return m_by_name.end();
+      }
+
+      std::map<unsigned, PowerChannel*>::const_iterator
+      begin(void) const
+      {
+        return m_by_id.begin();
+      }
+
+      std::map<unsigned, PowerChannel*>::const_iterator
+      end(void) const
+      {
+        return m_by_id.end();
+      }
+
+      std::map<unsigned, PowerChannel*>::iterator
+      begin(void)
+      {
+        return m_by_id.begin();
+      }
+
+      std::map<unsigned, PowerChannel*>::iterator
+      end(void)
+      {
+        return m_by_id.end();
       }
 
     private:
-      //! Convenience type definition for a map of power channels.
-      typedef std::map<std::string, DUNE::IMC::PowerChannelState*> PowerChannelMap;
-      // Convenience type definition for a map of entity labels.
-      typedef std::map<unsigned, std::string> EntityMap;
-      // Software meta information.
-      std::string m_meta;
-      // Table of messages.
-      std::map<unsigned, DUNE::IMC::Message*> m_msgs;
-      // Entity map.
-      EntityMap m_entities;
-      // Concurrency mutex.
-      DUNE::Concurrency::Mutex m_mutex;
-      // DUNE's UID.
-      uint64_t m_uid;
-      // JSON messages.
-      DUNE::Utils::ByteBuffer m_msgs_json;
-      // Last JSON messages refresh.
-      uint64_t m_last_msgs_json;
-      //! Power channels.
-      PowerChannelMap m_power_channels;
-
-      void
-      updatePowerChannel(const DUNE::IMC::PowerChannelState* msg);
+      std::map<std::string, PowerChannel*> m_by_name;
+      std::map<unsigned, PowerChannel*> m_by_id;
     };
   }
 }
