@@ -53,6 +53,8 @@ namespace Maneuver
       IMC::Reference m_cur_ref;
       //! Estimated state
       IMC::EstimatedState m_estate;
+      //! Path Control state
+      IMC::PathControlState m_pcs;
       //! FollowRefState
       IMC::FollowRefState m_fref_state;
       //! Did we get a reference already?
@@ -179,10 +181,7 @@ namespace Maneuver
         m_got_reference = true;
         m_last_ref_time = Clock::get();
 
-        if (sameReference(msg, &m_cur_ref))
-          return;
-        else
-          m_cur_ref = *msg;
+        m_cur_ref = *msg;
 
         if (m_cur_ref.flags & IMC::Reference::FLAG_MANDONE)
         {
@@ -191,6 +190,8 @@ namespace Maneuver
 
           signalCompletion("maneuver terminated by reference source");
         }
+
+        guide(&m_pcs, &m_cur_ref, &m_estate);
       }
 
       void
@@ -198,6 +199,7 @@ namespace Maneuver
       {
         m_estate = *msg;
         double delta = 0;
+
         if (m_spec.timeout != 0)
           delta = Clock::get() - m_last_ref_time;
 
@@ -209,11 +211,10 @@ namespace Maneuver
         }
       }
 
-      //! Function to check if the vehicle is getting near to the next waypoint
       void
       consume(const IMC::PathControlState* pcs)
       {
-        guide(pcs,&m_cur_ref,&m_estate);
+        m_pcs = *pcs;
       }
 
       SpeedUnits
@@ -243,13 +244,16 @@ namespace Maneuver
       void
       guide(const IMC::PathControlState * pcs, const IMC::Reference * ref, const IMC::EstimatedState * state)
       {
+
         // start building the DesiredPath message to be commanded
         DesiredPath desired_path;
 
         double curlat = state->lat;
         double curlon = state->lon;
         WGS84::displace(state->x, state->y, &curlat, &curlon);
-        bool near = (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
+
+        bool near = pcs == NULL ? false : (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
+
         // command start corresponds to current position
         desired_path.start_lat = curlat;
         desired_path.start_lon = curlon;
@@ -315,6 +319,7 @@ namespace Maneuver
         double xy_dist = WGS84::distance(desired_path.end_lat,
             desired_path.end_lon, 0, curlat,
             curlon, 0);
+
         double z_dist;
 
         switch (desired_path.end_z_units)
@@ -332,29 +337,35 @@ namespace Maneuver
             z_dist = 0;
             break;
         }
-        // if inside target cylinder
-        if (xy_dist < m_args.horizontal_tolerance)
+
+        if (near && m_fref_state.state == IMC::FollowRefState::FR_GOTO)
         {
-          // if inside desired location
+          m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR;
+
           if (z_dist < 1 && desired_path.end_z == 0
               && desired_path.end_z_units == Z_DEPTH)
           {
             m_fref_state.state = IMC::FollowRefState::FR_HOVER;
+            m_fref_state.proximity = IMC::FollowRefState::PROX_Z_NEAR | IMC::FollowRefState::PROX_XY_NEAR;
             return;
           }
           else if (z_dist < m_spec.altitude_interval)
           {
             m_fref_state.state = IMC::FollowRefState::FR_LOITER;
+            m_fref_state.proximity = IMC::FollowRefState::PROX_Z_NEAR | IMC::FollowRefState::PROX_XY_NEAR;
             desired_path.lradius = m_args.loitering_radius;
           }
           else
           {
             m_fref_state.state = IMC::FollowRefState::FR_ELEVATOR;
+            m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR;
             desired_path.lradius = m_args.loitering_radius;
           }
         }
-        else {
+        else if (xy_dist > m_args.horizontal_tolerance)
+        {
           m_fref_state.state = IMC::FollowRefState::FR_GOTO;
+          m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
         }
 
         m_fref_state.reference.set(*ref);
@@ -366,8 +377,11 @@ namespace Maneuver
           dispatch(desired_path);
         }
         else {
+          inf("stopping...");
           enableMovement(false);
         }
+
+        inf("xy distance is %f, z distance is %f, near: %d, state: %d.", xy_dist, z_dist, near, m_fref_state.state);
       }
 
       //! Function for enabling and disabling the control loops
