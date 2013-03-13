@@ -68,7 +68,7 @@ namespace Plan
         //! Time relative to Plan's eta to fire action
         float sched_time;
         //! Set Entity parameters to dispatch
-        const IMC::MessageList<EntityParameter>* list;
+        IMC::SetEntityParameters* list;
       };
 
       //! Queue of timed actions
@@ -149,6 +149,42 @@ namespace Plan
 
         m_task->debug("schedule - plan end");
         parseEndActions(spec->end_actions, &m_plan_actions, 0.0);
+      }
+
+      //! The plan has started
+      void
+      planStarted(void)
+      {
+        dispatchActions(m_plan_actions.start_actions);
+      }
+
+      //! The plan has stopped/ended
+      void
+      planStopped(void)
+      {
+        dispatchActions(m_plan_actions.end_actions);
+      }
+
+      //! Maneuver has started
+      //! @param[in] id name of the started maneuver
+      void
+      maneuverStarted(const std::string& id)
+      {
+        EventMap::iterator itr = m_onevent.find(id);
+
+        if (itr != m_onevent.end())
+          dispatchActions(itr->second.start_actions);
+      }
+
+      //! Maneuver has stopped
+      //! @param[in] id name of the done maneuver
+      void
+      maneuverDone(const std::string& id)
+      {
+        EventMap::iterator itr = m_onevent.find(id);
+
+        if (itr != m_onevent.end())
+          dispatchActions(itr->second.start_actions);
       }
 
     private:
@@ -290,14 +326,14 @@ namespace Plan
 
       //! Schedule timed actions
       void
-      scheduleTimed(const IMC::SetEntityParameters* sep, ActionType type, float eta)
+      scheduleTimed(IMC::SetEntityParameters* sep, ActionType type, float eta)
       {
         if (eta < 0)
           return;
 
         TimedAction action;
         action.type = type;
-        action.list = &sep->params;
+        action.list = sep;
 
         if (type == TYPE_ACT)
         {
@@ -325,6 +361,21 @@ namespace Plan
           q.push(action);
           m_timed.insert(std::pair<std::string, TimedQueue>(sep->name, q));
         }
+      }
+
+      //! Dispatch actions
+      void
+      dispatchActions(IMC::SetEntityParameters* msg)
+      {
+        m_task->dispatch(*msg);
+      }
+
+      //! Dispatch actions
+      void
+      dispatchActions(std::vector<IMC::SetEntityParameters*>& actions)
+      {
+        for (unsigned i = 0; i < actions.size(); ++i)
+          m_task->dispatch(actions[i]);
       }
 
       //! Map of entity labels to TimedQueue's

@@ -215,14 +215,20 @@ namespace Plan
       void
       planStarted(void)
       {
+        if (m_sched == NULL)
+          return;
 
+        m_sched->planStarted();
       }
 
       //! Signal that the plan has stopped
       void
       planStopped(void)
       {
+        if (m_sched == NULL)
+          return;
 
+        m_sched->planStopped();
       }
 
       //! Signal that a maneuver has started
@@ -230,14 +236,20 @@ namespace Plan
       void
       maneuverStarted(const std::string& id)
       {
-        (void)id;
+        if (m_sched == NULL)
+          return;
+
+        m_sched->maneuverStarted(id);
       }
 
       //! Signal that current maneuver is done
       void
       maneuverDone(void)
       {
+        if (m_sched == NULL)
+          return;
 
+        m_sched->maneuverDone(m_last_id);
       }
 
       //! Check if plan has been completed
