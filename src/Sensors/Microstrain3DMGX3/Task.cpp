@@ -188,7 +188,14 @@ namespace Sensors
       void
       onEntityResolution(void)
       {
-        m_calib_eid = resolveEntity(m_args.calib_elabel);
+        try
+        {
+          m_calib_eid = resolveEntity(m_args.calib_elabel);
+        }
+        catch (...)
+        {
+          m_calib_eid = 0;
+        }
       }
 
       //! Acquire resources.
