@@ -369,7 +369,7 @@ namespace Sensors
           {
             m_timer.reset();
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATING);
-            debug(DTR("resetting device"));
+            debug("resetting device");
             poll(CMD_DEVICE_RESET, CMD_DEVICE_RESET_SIZE, 0, 0);
           }
         }
