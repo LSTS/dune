@@ -100,9 +100,16 @@ namespace Plan
 
         // If durations
         if (dur == durations.end())
+        {
           plan_duration = -1.0;
+          m_task->debug("schedule - plan duration is unavailable");
+        }
         else
+        {
           plan_duration = dur->second.back();
+        }
+
+        m_task->debug("schedule - plan start");
 
         // start by adding "start" plan actions
         parseStartActions(spec->start_actions, &m_plan_actions, plan_duration);
@@ -132,10 +139,15 @@ namespace Plan
 
           EventActions eact;
 
+          m_task->debug("schedule - maneuver: %s", (*itr)->maneuver_id.c_str());
+          
           parseStartActions((*itr)->start_actions, &eact, maneuver_start_eta);
           parseEndActions((*itr)->end_actions, &eact, maneuver_end_eta);
+
+          m_onevent.insert(std::pair<std::string, EventActions>((*itr)->maneuver_id, eact));
         }
 
+        m_task->debug("schedule - plan end");
         parseEndActions(spec->end_actions, &m_plan_actions, 0.0);
       }
 
@@ -165,6 +177,8 @@ namespace Plan
         if (!actions.size())
           return;
 
+        m_task->debug("schedule - actions: %lu", actions.size());
+
         IMC::MessageList<IMC::Message>::const_iterator itr = actions.begin();
 
         IMC::SetEntityParameters* sep;
@@ -178,9 +192,20 @@ namespace Plan
         {
           sep = dynamic_cast<IMC::SetEntityParameters*>(*itr);
 
-          // no parameters then skip
+          // Check if entity label exists
+          std::map<std::string, IMC::EntityInfo>::const_iterator test;
+          test = m_cinfo->find(sep->name);
+          if (test == m_cinfo->end())
+          {
+            m_task->debug("schedule - entity label %s not found", sep->name.c_str());
+            continue;
+          }
+
+          // If no parameters then skip
           if (!sep->params.size())
             continue;
+
+          m_task->debug("schedule - params: %lu", sep->params.size());
 
           // true if event based, false if time based
           bool event_based = true;
@@ -193,7 +218,7 @@ namespace Plan
           IMC::MessageList<IMC::EntityParameter>::const_iterator par;
           par = hasParameterActive(sep->params);
 
-          // has parameter active, then check activation time
+          // has entity parameter "Active", then get (de)activation time
           if (par != sep->params.end())
           {
             if ((*par)->value == "ON")
@@ -220,6 +245,8 @@ namespace Plan
 
           if (event_based)
           {
+            m_task->debug("schedule - pushing event based \"%s\"", sep->name.c_str());
+
             if (start)
               event_actions->start_actions.push_back(sep);
             else
@@ -227,6 +254,7 @@ namespace Plan
           }
           else
           {
+            m_task->debug("schedule - pushing time based \"%s\"", sep->name.c_str());
             scheduleTimed(sep, type, eta);
           }
         }
@@ -237,7 +265,7 @@ namespace Plan
       getActivationTime(const std::string& label)
       {
         std::map<std::string, IMC::EntityInfo>::const_iterator itr = m_cinfo->find(label);
-        return itr->second.act_time;
+        return itr->second.deact_time;
       }
 
       //! Get deactivation time of component
