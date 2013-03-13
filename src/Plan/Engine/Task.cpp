@@ -875,7 +875,7 @@ namespace Plan
           return;
 
         m_pcs.plan_progress = m_plan->getProgress(&m_mcs);
-        m_pcs.plan_eta = m_plan->getTotalDuration() * (1.0 - 0.01 * m_pcs.plan_progress);
+        m_pcs.plan_eta = m_plan->getPlanEta();
       }
 
       void

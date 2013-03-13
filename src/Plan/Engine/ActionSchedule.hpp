@@ -187,6 +187,22 @@ namespace Plan
           dispatchActions(itr->second.start_actions);
       }
 
+      //! Compute the time of the earliest scheduled action
+      float
+      getEarliestSchedule(void) const
+      {
+        if (!m_timed.size())
+          return 0.0;
+
+        float earliest = 0.0;
+
+        std::map<std::string, TimedQueue>::const_iterator itr;
+        itr = m_timed.begin();
+        for (; itr != m_timed.end(); ++itr)
+          if (itr->second.front().sched_time > earliest)
+            earliest = itr->second.front().sched_time;
+      }
+
     private:
       //! Parse Start actions
       inline void

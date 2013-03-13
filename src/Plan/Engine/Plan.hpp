@@ -368,6 +368,14 @@ namespace Plan
         return m_progress;
       }
 
+      //! Get plan estimated time of arrival
+      //! @return ETA
+      float
+      getPlanEta(void)
+      {
+        return getTotalDuration() * (1.0 - 0.01 * m_progress);
+      }
+
       //! Retrieve the number of elements in sequential list.
       //! @return number of elements in the list.
       size_t
