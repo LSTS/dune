@@ -15653,5 +15653,117 @@ namespace DUNE
       IMC::toJSON(os__, "sessid", sessid, nindent__);
       IMC::toJSON(os__, "status", status, nindent__);
     }
+
+    PushEntityParameters::PushEntityParameters(void)
+    {
+      m_header.mgid = 811;
+      clear();
+    }
+
+    void
+    PushEntityParameters::clear(void)
+    {
+      name.clear();
+    }
+
+    bool
+    PushEntityParameters::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::PushEntityParameters& other__ = dynamic_cast<const PushEntityParameters&>(msg__);
+      if (name != other__.name) return false;
+      return true;
+    }
+
+    int
+    PushEntityParameters::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    PushEntityParameters::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(name, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    PushEntityParameters::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(name, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    PushEntityParameters::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    PushEntityParameters::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "name", name, nindent__);
+    }
+
+    PopEntityParameters::PopEntityParameters(void)
+    {
+      m_header.mgid = 812;
+      clear();
+    }
+
+    void
+    PopEntityParameters::clear(void)
+    {
+      name.clear();
+    }
+
+    bool
+    PopEntityParameters::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::PopEntityParameters& other__ = dynamic_cast<const PopEntityParameters&>(msg__);
+      if (name != other__.name) return false;
+      return true;
+    }
+
+    int
+    PopEntityParameters::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    PopEntityParameters::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(name, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    PopEntityParameters::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(name, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    PopEntityParameters::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    PopEntityParameters::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "name", name, nindent__);
+    }
   }
 }

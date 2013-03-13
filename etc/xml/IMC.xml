@@ -6361,4 +6361,12 @@
       <value abbrev="CLOSED" name="Closed" id="2"/>
     </field>
   </message>
+
+  <message id="811" name="Push Entity Parameters" abbrev="PushEntityParameters" source="ccu,vehicle">
+    <field name="Entity Name" abbrev="name" type="plaintext"/>
+  </message>
+
+  <message id="812" name="Pop Entity Parameters" abbrev="PopEntityParameters" source="ccu,vehicle">
+    <field name="Entity Name" abbrev="name" type="plaintext"/>
+  </message>
 </messages>

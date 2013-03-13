@@ -15055,6 +15055,140 @@ namespace DUNE
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
+
+    //! Push Entity Parameters.
+    class PushEntityParameters: public Message
+    {
+    public:
+      //! Entity Name.
+      std::string name;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 811;
+      }
+
+      PushEntityParameters(void);
+
+      Message*
+      clone(void) const
+      {
+        return new PushEntityParameters(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return PushEntityParameters::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PushEntityParameters";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(name);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Pop Entity Parameters.
+    class PopEntityParameters: public Message
+    {
+    public:
+      //! Entity Name.
+      std::string name;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 812;
+      }
+
+      PopEntityParameters(void);
+
+      Message*
+      clone(void) const
+      {
+        return new PopEntityParameters(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return PopEntityParameters::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PopEntityParameters";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(name);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
   }
 }
 

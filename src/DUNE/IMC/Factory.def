@@ -219,4 +219,6 @@ MESSAGE(807, CloseSession)
 MESSAGE(808, SessionSubscription)
 MESSAGE(809, SessionKeepAlive)
 MESSAGE(810, SessionStatus)
+MESSAGE(811, PushEntityParameters)
+MESSAGE(812, PopEntityParameters)
 #undef MESSAGE
