@@ -419,6 +419,7 @@ namespace Plan
       }
 
       //! Update schedule if any
+      //! @param[in] time_left estimated time left to finish the plan
       void
       updateSchedule(float time_left)
       {

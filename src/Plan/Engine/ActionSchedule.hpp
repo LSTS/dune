@@ -87,6 +87,11 @@ namespace Plan
       typedef std::map<std::string, EventActions> EventMap;
 
       //! Default constructor
+      //! @param[in] task pointer to task
+      //! @param[in] spec pointer to PlanSpecification message
+      //! @param[in] nodes vector of sequential PlanManeuvers that describe the plan
+      //! @param[in] durations information regarding each maneuvers duration
+      //! @param[in] cinfo map of components info
       ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
                      const std::vector<IMC::PlanManeuver*>& nodes,
                      const PlanDuration::ManeuverDuration& durations,
@@ -160,6 +165,7 @@ namespace Plan
       }
 
       //! Update timed actions in schedule
+      //! @param[in] time_left estimated time left to finish the plan
       void
       updateSchedule(float time_left)
       {
@@ -234,6 +240,9 @@ namespace Plan
 
     private:
       //! Parse Start actions
+      //! @param[in] actions message list of actions to parse
+      //! @param[out] event_actions event based actions pointer
+      //! @param[in] eta estimated time of arrival for actions' dispatching point
       inline void
       parseStartActions(const IMC::MessageList<IMC::Message>& actions,
                         EventActions* event_actions, float eta)
@@ -242,6 +251,9 @@ namespace Plan
       }
 
       //! Parse End actions
+      //! @param[in] actions message list of actions to parse
+      //! @param[out] event_actions event based actions pointer
+      //! @param[in] eta estimated time of arrival for actions' dispatching point
       inline void
       parseEndActions(const IMC::MessageList<IMC::Message>& actions,
                       EventActions* event_actions, float eta)
@@ -250,6 +262,10 @@ namespace Plan
       }
 
       //! Parse actions
+      //! @param[in] actions message list of actions to parse
+      //! @param[out] event_actions event based actions pointer
+      //! @param[in] eta estimated time of arrival for actions' dispatching point
+      //! @param[in] start true if these are start actions
       void
       parseActions(const IMC::MessageList<IMC::Message>& actions,
                    EventActions* event_actions, float eta, bool start)
@@ -342,6 +358,8 @@ namespace Plan
       }
 
       //! Get activation time of component
+      //! @param[in] label entity label of component to look for
+      //! @return deactivation time of component
       inline uint16_t
       getActivationTime(const std::string& label) const
       {
@@ -350,6 +368,8 @@ namespace Plan
       }
 
       //! Get deactivation time of component
+      //! @param[in] label entity label of component to look for
+      //! @return deactivation time of component
       inline uint16_t
       getDeactivationTime(const std::string& label) const
       {
@@ -357,7 +377,9 @@ namespace Plan
         return itr->second.deact_time;
       }
 
-      //! Check if it has parameter active
+      //! Check if it has parameter named "Active"
+      //! @param[in] params message list of entity parameters to search in
+      //! @return iterator to parameter named "Active"
       IMC::MessageList<IMC::EntityParameter>::const_iterator
       hasParameterActive(const IMC::MessageList<IMC::EntityParameter>& params) const
       {
@@ -370,6 +392,9 @@ namespace Plan
       }
 
       //! Schedule timed actions
+      //! @param[in] sep pointer to SetEntityParameters to schedule
+      //! @param[in] type action type to schedule
+      //! @param[in] eta estimated time of arrival of action
       void
       scheduleTimed(IMC::SetEntityParameters* sep, ActionType type, float eta)
       {
@@ -409,6 +434,7 @@ namespace Plan
       }
 
       //! Dispatch actions
+      //! @param[in] msg SetEntityParameters to dispatch
       void
       dispatchActions(IMC::SetEntityParameters* msg)
       {
@@ -416,6 +442,7 @@ namespace Plan
       }
 
       //! Dispatch actions
+      //! @param[in] actions vector of SetEntityParameters to dispatch
       void
       dispatchActions(std::vector<IMC::SetEntityParameters*>& actions)
       {
@@ -423,7 +450,7 @@ namespace Plan
           m_task->dispatch(actions[i]);
       }
 
-      //! Compute the time of the next scheduled action
+      //! Find the queue with the next scheduled action
       //! @return iterator to the queue with the next scheduled action
       std::map<std::string, TimedQueue>::iterator
       nextSchedule(void)
