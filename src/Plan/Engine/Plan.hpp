@@ -200,6 +200,8 @@ namespace Plan
           if (m_sequential && state != NULL)
           {
             computeDurations(state);
+
+            Memory::clear(m_sched);
             m_sched = new ActionSchedule(task, m_spec, m_seq_nodes, m_durations, cinfo);
           }
         }
