@@ -216,6 +216,9 @@ namespace DUNE
     void
     Task::requestActivation(void)
     {
+      IMC::EntityActivationState msg;
+      msg.state = IMC::EntityActivationState::EAS_ACT_IP;
+      dispatch(msg);
       onRequestActivation();
     }
 
@@ -245,6 +248,9 @@ namespace DUNE
     void
     Task::requestDeactivation(void)
     {
+      IMC::EntityActivationState msg;
+      msg.state = IMC::EntityActivationState::EAS_DEACT_IP;
+      dispatch(msg);
       onRequestDeactivation();
     }
 
@@ -258,7 +264,7 @@ namespace DUNE
       onDeactivation();
 
       IMC::EntityActivationState msg;
-      msg.state = IMC::EntityActivationState::EAS_DEACT_IP;
+      msg.state = IMC::EntityActivationState::EAS_DEACT_DONE;
       dispatch(msg);
     }
 
