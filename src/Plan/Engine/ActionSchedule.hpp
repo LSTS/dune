@@ -335,7 +335,7 @@ namespace Plan
           test = m_cinfo->find(sep->name);
           if (test == m_cinfo->end())
           {
-            m_task->err("schedule -\t\t entity label %s not found", sep->name.c_str());
+            m_task->err(DTR("schedule: entity label %s not found"), sep->name.c_str());
             continue;
           }
 
