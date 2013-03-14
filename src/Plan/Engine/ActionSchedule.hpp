@@ -279,15 +279,14 @@ namespace Plan
         IMC::MessageList<IMC::Message>::const_iterator itr = actions.begin();
 
         IMC::SetEntityParameters* sep;
-        sep = dynamic_cast<IMC::SetEntityParameters*>(*itr);
-
-        // if it's not SetEntityParameters we ignore
-        if (!sep)
-          return;
 
         for (; itr != actions.end(); ++itr)
         {
-          sep = dynamic_cast<IMC::SetEntityParameters*>(*itr);
+          // if it's not SetEntityParameters we ignore
+          if ((*itr)->getId() != DUNE_IMC_SETENTITYPARAMETERS)
+            continue;
+
+          sep = static_cast<IMC::SetEntityParameters*>(*itr);
 
           // Check if entity label exists
           std::map<std::string, IMC::EntityInfo>::const_iterator test;
