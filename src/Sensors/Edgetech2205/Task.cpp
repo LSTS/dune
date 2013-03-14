@@ -154,7 +154,6 @@ namespace Sensors
 
         bind<IMC::EstimatedState>(this);
         bind<IMC::LoggingControl>(this);
-        bind<IMC::EntityControl>(this);
         bind<IMC::PowerChannelControl>(this);
         bind<IMC::QueryPowerChannelState>(this);
       }
@@ -268,18 +267,6 @@ namespace Sensors
       consume(const IMC::EstimatedState* msg)
       {
         m_estate = *msg;
-      }
-
-      void
-      consume(const IMC::EntityControl* msg)
-      {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
-
-        if (msg->op == IMC::EntityControl::ECO_ACTIVATE)
-          activate();
-        else
-          deactivate();
       }
 
       void

@@ -109,15 +109,12 @@ namespace Sensors
       uint8_t m_rdata_ftr[c_rdata_ftr_size];
       // Single sidescan ping.
       IMC::SonarData m_ping;
-      // True if sampling is active.
-      bool m_active;
       // Configuration parameters.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
-        m_sock(NULL),
-        m_active(false)
+        m_sock(NULL)
       {
         // Define configuration parameters.
         param("IPv4 Address", m_args.addr)
@@ -171,7 +168,6 @@ namespace Sensors
         m_ping.bits_per_point = 8;
         m_ping.scale_factor = 1.0f;
 
-        bind<IMC::EntityControl>(this);
         bind<IMC::SonarConfig>(this);
       }
 
@@ -232,20 +228,6 @@ namespace Sensors
       }
 
       void
-      consume(const IMC::EntityControl* msg)
-      {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
-
-        m_active = (msg->op == IMC::EntityControl::ECO_ACTIVATE);
-
-        if (m_active)
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        else
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-      }
-
-      void
       consume(const IMC::SonarConfig* msg)
       {
         if (msg->getDestinationEntity() != getEntityId())
@@ -253,6 +235,24 @@ namespace Sensors
 
         setRange(msg->max_range);
         setFrequency(msg->frequency);
+      }
+
+      uint32_t
+      getExecutionFlags(void) const
+      {
+        return EXE_HONOUR_ACTIVE;
+      }
+
+      void
+      onActivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       unsigned
@@ -347,7 +347,7 @@ namespace Sensors
       void
       task(void)
       {
-        if (!m_active)
+        if (!isActive())
           return;
 
         try

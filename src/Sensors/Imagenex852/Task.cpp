@@ -136,8 +136,6 @@ namespace Sensors
       IMC::SonarData m_profile;
       //! Task arguments.
       Arguments m_args;
-      //! True if task is active.
-      bool m_active;
       //! Watchdog.
       Counter<double> m_wdog;
       //! Last valid sound speed value.
@@ -153,7 +151,6 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_active(false),
         m_sound_speed(0),
         m_parser(m_profile.data),
         m_pfilt(NULL)
@@ -232,7 +229,6 @@ namespace Sensors
 
         m_dist.validity = IMC::Distance::DV_VALID;
 
-        bind<IMC::EntityControl>(this);
         bind<IMC::SonarConfig>(this);
         bind<IMC::SoundSpeed>(this);
       }
@@ -315,7 +311,7 @@ namespace Sensors
         m_switch.setProfileMinRange(m_args.profile_range);
         m_switch.setDataPoints(m_args.data_points);
 
-        m_trigger.setActive(m_active);
+        m_trigger.setActive(isActive());
         m_trigger.setUART(m_uart);
         m_trigger.setSwitchData(m_switch.data(), m_switch.size());
         m_trigger.start();
@@ -325,22 +321,6 @@ namespace Sensors
         m_profile.frequency = c_frequency;
         m_profile.bits_per_point = 8;
         m_profile.scale_factor = 1.0f;
-      }
-
-      void
-      consume(const IMC::EntityControl* msg)
-      {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
-
-        m_active = (msg->op == IMC::EntityControl::ECO_ACTIVATE);
-
-        if (m_active)
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        else
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-
-        m_trigger.setActive(m_active);
       }
 
       void
@@ -362,6 +342,26 @@ namespace Sensors
         m_sound_speed = msg->value;
       }
 
+      uint32_t
+      getExecutionFlags(void) const
+      {
+        return EXE_HONOUR_ACTIVE;
+      }
+
+      void
+      onActivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_trigger.setActive(true);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        m_trigger.setActive(false);
+      }
+
       void
       onMain(void)
       {
@@ -369,7 +369,7 @@ namespace Sensors
 
         while (!stopping())
         {
-          if (!m_active)
+          if (!isActive())
           {
             waitForMessages(1.0);
             continue;
