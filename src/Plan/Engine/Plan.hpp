@@ -362,71 +362,12 @@ namespace Plan
       float
       updateProgress(const IMC::ManeuverControlState* mcs)
       {
-        (void)mcs;
+        float prog = progress(mcs);
 
-        if (!m_compute_progress)
-          return -1.0;
+        if (prog > 0.0 && m_sched == NULL)
+          m_sched->updateSchedule(getPlanEta());
 
-        // Compute only if sequential and durations exists
-        if (!m_sequential || !m_durations.size())
-          return -1.0;
-
-        float total_duration = getTotalDuration();
-
-        // Check if its calibrating
-        if (m_in_calib)
-        {
-          float time_left = m_calib_timer.getRemaining() + getExecutionDuration();
-          m_progress = 100 * trimValue(1.0 - time_left / total_duration, 0.0, 1.0);
-          return m_progress;
-        }
-
-        // If it's not executing, do not compute
-        if (mcs->state != IMC::ManeuverControlState::MCS_EXECUTING ||
-            mcs->eta == 0)
-          return m_progress;
-
-        PlanDuration::ManeuverDuration::const_iterator itr;
-        itr = m_durations.find(getCurrentId());
-
-        // If not found
-        if (itr == m_durations.end())
-          return -1.0;
-
-        // If durations for this maneuver is empty
-        if (!itr->second.size())
-          return -1.0;
-
-        IMC::Message* man = m_graph.find(getCurrentId())->second.pman->data.get();
-
-        // Get progress
-        float prog = PlanProgress::compute(man, mcs, itr->second, total_duration);
-
-        // If negative, then unable to compute
-        // But keep last value of progress if it is not invalid
-        if (prog < 0.0)
-        {
-          if (m_progress < 0.0)
-            return -1.0;
-          else
-            return m_progress;
-        }
-
-        // Never output shorter than previous
-        m_progress = prog > m_progress ? prog : m_progress;
-
-        return m_progress;
-      }
-
-      //! Update schedule if any
-      //! @param[in] time_left estimated time left to finish the plan
-      void
-      updateSchedule(float time_left)
-      {
-        if (m_sched == NULL)
-          return;
-
-        m_sched->updateSchedule(time_left);
+        return prog;
       }
 
       //! Get plan estimated time of arrival
@@ -538,6 +479,66 @@ namespace Plan
           m_curr_node = &itr->second;
           return m_curr_node->pman;
         }
+      }
+
+      //! Compute current progress
+      //! @param[in] pointer to ManeuverControlState message
+      //! @return progress in percent (-1.0 if unable to compute)
+      float
+      progress(const IMC::ManeuverControlState* mcs)
+      {
+        if (!m_compute_progress)
+          return -1.0;
+
+        // Compute only if sequential and durations exists
+        if (!m_sequential || !m_durations.size())
+          return -1.0;
+
+        float total_duration = getTotalDuration();
+
+        // Check if its calibrating
+        if (m_in_calib)
+        {
+          float time_left = m_calib_timer.getRemaining() + getExecutionDuration();
+          m_progress = 100 * trimValue(1.0 - time_left / total_duration, 0.0, 1.0);
+          return m_progress;
+        }
+
+        // If it's not executing, do not compute
+        if (mcs->state != IMC::ManeuverControlState::MCS_EXECUTING ||
+            mcs->eta == 0)
+          return m_progress;
+
+        PlanDuration::ManeuverDuration::const_iterator itr;
+        itr = m_durations.find(getCurrentId());
+
+        // If not found
+        if (itr == m_durations.end())
+          return -1.0;
+
+        // If durations for this maneuver is empty
+        if (!itr->second.size())
+          return -1.0;
+
+        IMC::Message* man = m_graph.find(getCurrentId())->second.pman->data.get();
+
+        // Get progress
+        float prog = PlanProgress::compute(man, mcs, itr->second, total_duration);
+
+        // If negative, then unable to compute
+        // But keep last value of progress if it is not invalid
+        if (prog < 0.0)
+        {
+          if (m_progress < 0.0)
+            return -1.0;
+          else
+            return m_progress;
+        }
+
+        // Never output shorter than previous
+        m_progress = prog > m_progress ? prog : m_progress;
+
+        return m_progress;
       }
 
       //! Pointer to plan specification
