@@ -243,6 +243,9 @@ namespace DUNE
     void
     Task::activate(void)
     {
+      if (m_act_state.state != IMC::EntityActivationState::EAS_ACT_IP)
+        throw std::runtime_error("activation is not in progress");
+
       spew("activate");
       m_params.set("Active", "true");
 
@@ -289,6 +292,9 @@ namespace DUNE
     void
     Task::deactivate(void)
     {
+      if (m_act_state.state != IMC::EntityActivationState::EAS_DEACT_IP)
+        throw std::runtime_error("deactivation is not in progress");
+
       spew("deactivate");
       m_params.set("Active", "false");
 
