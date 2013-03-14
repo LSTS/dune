@@ -77,7 +77,7 @@ namespace DUNE
     void
     BasicAutopilot::onResourceInitialization(void)
     {
-      deactivate();
+      requestDeactivation();
     }
 
     void
@@ -305,7 +305,7 @@ namespace DUNE
       {
         if (!isActive())
         {
-          activate();
+          requestActivation();
           m_aloops = 0;
         }
         m_aloops |= loops;
@@ -315,7 +315,7 @@ namespace DUNE
         m_aloops &= ~loops;
 
         if (!m_aloops)
-          deactivate();
+          requestDeactivation();
       }
 
       if (was_active != isActive())
@@ -324,7 +324,7 @@ namespace DUNE
 
         if (msg->enable)
         {
-          activate();
+          requestActivation();
 
           IMC::ControlLoops cloops;
           cloops.enable = IMC::ControlLoops::CL_ENABLE;
@@ -333,7 +333,7 @@ namespace DUNE
         }
         else
         {
-          deactivate();
+          requestDeactivation();
         }
       }
     }

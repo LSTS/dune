@@ -221,7 +221,7 @@ namespace DUNE
     void
     PathController::onResourceInitialization(void)
     {
-      deactivate();
+      requestDeactivation();
     }
 
     void
@@ -831,9 +831,9 @@ namespace DUNE
       if (was != will)
       {
         if (will)
-          activate();
+          requestActivation();
         else
-          deactivate();
+          requestDeactivation();
       }
     }
 

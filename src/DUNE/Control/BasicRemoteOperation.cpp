@@ -58,7 +58,7 @@ namespace DUNE
 
       m_actions.op = IMC::RemoteActionsRequest::OP_REPORT;
 
-      deactivate();
+      requestDeactivation();
 
       // Register handler routines.
       bind<IMC::RemoteActions>(this);
@@ -102,12 +102,12 @@ namespace DUNE
 
       if (msg->enable == IMC::ControlLoops::CL_ENABLE)
       {
-        activate();
+        requestActivation();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
       else
       {
-        deactivate();
+        requestDeactivation();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
     }
