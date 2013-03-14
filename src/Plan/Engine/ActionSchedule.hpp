@@ -258,7 +258,7 @@ namespace Plan
         EventMap::iterator itr = m_onevent.find(id);
 
         if (itr != m_onevent.end())
-          dispatchActions(itr->second.start_actions);
+          dispatchActions(itr->second.end_actions);
       }
 
       //! Get the time of the earliest scheduled action
