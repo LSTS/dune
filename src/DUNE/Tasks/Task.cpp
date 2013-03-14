@@ -57,8 +57,7 @@ namespace DUNE
       m_name(n),
       m_eid(DUNE_IMC_CONST_UNK_EID),
       m_debug_level(DEBUG_LEVEL_NONE),
-      m_entity_state_code(-1),
-      m_is_active(true)
+      m_entity_state_code(-1)
     {
       m_args.priority = 10;
       m_args.act_time = 0;
@@ -213,70 +212,106 @@ namespace DUNE
         m_debug_level = DEBUG_LEVEL_NONE;
 
       onUpdateParameters();
+
+      if (paramChanged(m_args.active))
+      {
+        if (m_args.active)
+          requestActivation();
+        else
+          requestDeactivation();
+      }
     }
 
     void
     Task::requestActivation(void)
     {
-      IMC::EntityActivationState msg;
-      msg.state = IMC::EntityActivationState::EAS_ACT_IP;
-      dispatch(msg);
+      spew("request activation");
+
+      if (m_act_state.state != IMC::EntityActivationState::EAS_INACTIVE)
+      {
+        spew("task is not inactive");
+        return;
+      }
+
+      m_act_state.state = IMC::EntityActivationState::EAS_ACT_IP;
+      dispatch(m_act_state);
+
+      spew("calling on request activation");
       onRequestActivation();
     }
 
     void
     Task::activate(void)
     {
-      if (m_is_active)
-        return;
+      spew("activate");
+      m_params.set("Active", "true");
 
-      m_is_active = true;
+      spew("calling on activation");
       onActivation();
 
-      IMC::EntityActivationState msg;
-      msg.state = IMC::EntityActivationState::EAS_ACT_DONE;
-      dispatch(msg);
+      m_act_state.state = IMC::EntityActivationState::EAS_ACT_DONE;
+      dispatch(m_act_state);
+
+      m_act_state.state = IMC::EntityActivationState::EAS_ACTIVE;
+      dispatch(m_act_state);
     }
 
     void
     Task::activationFailed(const std::string& reason)
     {
-      IMC::EntityActivationState msg;
-      msg.state = IMC::EntityActivationState::EAS_ACT_FAIL;
-      msg.error = reason;
-      dispatch(msg);
+      spew("activation failed");
+      m_act_state.state = IMC::EntityActivationState::EAS_ACT_FAIL;
+      m_act_state.error = reason;
+      dispatch(m_act_state);
+
+      m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
+      m_act_state.error.clear();
+      dispatch(m_act_state);
     }
 
     void
     Task::requestDeactivation(void)
     {
-      IMC::EntityActivationState msg;
-      msg.state = IMC::EntityActivationState::EAS_DEACT_IP;
-      dispatch(msg);
+      spew("request deactivation");
+      if (m_act_state.state != IMC::EntityActivationState::EAS_ACTIVE)
+      {
+        spew("task is not active");
+        return;
+      }
+
+      m_act_state.state = IMC::EntityActivationState::EAS_DEACT_IP;
+      dispatch(m_act_state);
+
+      spew("calling on request activation");
       onRequestDeactivation();
     }
 
     void
     Task::deactivate(void)
     {
-      if (!m_is_active)
-        return;
+      spew("deactivate");
+      m_params.set("Active", "false");
 
-      m_is_active = false;
+      spew("calling on deactivation");
       onDeactivation();
 
-      IMC::EntityActivationState msg;
-      msg.state = IMC::EntityActivationState::EAS_DEACT_DONE;
-      dispatch(msg);
+      m_act_state.state = IMC::EntityActivationState::EAS_DEACT_DONE;
+      dispatch(m_act_state);
+      m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
     }
 
     void
     Task::deactivationFailed(const std::string& reason)
     {
-      IMC::EntityActivationState msg;
-      msg.state = IMC::EntityActivationState::EAS_DEACT_FAIL;
-      msg.error = reason;
-      dispatch(msg);
+      spew("deactivation failed");
+
+      m_act_state.state = IMC::EntityActivationState::EAS_DEACT_FAIL;
+      m_act_state.error = reason;
+      dispatch(m_act_state);
+
+      m_act_state.state = IMC::EntityActivationState::EAS_ACTIVE;
+      m_act_state.error.clear();
+      dispatch(m_act_state);
     }
 
     void

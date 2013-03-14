@@ -400,7 +400,7 @@ namespace DUNE
       bool
       isActive(void) const
       {
-        return m_is_active;
+        return m_act_state.state == IMC::EntityActivationState::EAS_ACTIVE;
       }
 
       //! Wait for the receiving queue to contain at least one message
@@ -586,6 +586,7 @@ namespace DUNE
       virtual void
       onRequestActivation(void)
       {
+        spew("on request activation");
         activate();
       }
 
@@ -598,19 +599,24 @@ namespace DUNE
       virtual void
       onRequestDeactivation(void)
       {
+        spew("on request deactivation");
         deactivate();
       }
 
       //! Called when the task starts/resumes normal execution.
       virtual void
       onActivation(void)
-      { }
+      {
+        spew("on activation");
+      }
 
       //! Called when the task stops normal execution and enters an
       //! idleness state.
       virtual void
       onDeactivation(void)
-      { }
+      {
+        spew("on deactivation");
+      }
 
       virtual void
       onMain(void) = 0;
@@ -646,14 +652,14 @@ namespace DUNE
       IMC::EntityState m_entity_state;
       //! Last entity state description code (-1 means none).
       int m_entity_state_code;
-      //! True if task is active.
-      bool m_is_active;
       //! Entity information message.
       IMC::EntityInfo m_ent_info;
       //! Arguments.
       BasicArguments m_args;
       //! Parameters stack.
       std::stack<std::map<std::string, std::string> > m_params_stack;
+      //! Activation state.
+      IMC::EntityActivationState m_act_state;
 
       //! Report current entity states by dispatching EntityState
       //! messages. This function will at least report the state of
