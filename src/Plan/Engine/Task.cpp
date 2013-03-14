@@ -672,6 +672,10 @@ namespace Plan
 
         changeLog(plan_id);
 
+        // Flag the plan as starting
+        if (initMode() || execMode())
+          m_plan->planStarted();
+
         dispatch(m_spec);
 
         if (flags & IMC::PlanControl::FLG_CALIBRATE)
@@ -824,9 +828,6 @@ namespace Plan
             m_plan->planStopped();
             changeLog("idle");
           }
-
-          if (!was_plan_exec && is_plan_exec)
-            m_plan->planStarted();
 
           if (was_calibrating && !is_calibrating)
             m_plan->calibrationStopped();
