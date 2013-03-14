@@ -84,7 +84,7 @@ namespace Supervisors
         m_switch_time(-1.0),
         m_in_safe_plan(false)
       {
-        param("Calibration Time", m_args.calibration_time)
+        param("Minimum Calibration Time", m_args.calibration_time)
         .defaultValue("10")
         .units(Units::Second)
         .description("Duration of vehicle calibration commands");
@@ -414,7 +414,8 @@ namespace Supervisors
         dispatch(m_calibration);
         m_switch_time = Clock::get();
 
-        requestOK(msg, DTR("calibrating vehicle"));
+        requestOK(msg, String::str(DTR("calibrating vehicle for %u seconds"),
+                                   m_calibration.duration));
       }
 
       void
