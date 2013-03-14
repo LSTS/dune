@@ -101,14 +101,14 @@ namespace DUNE
       (void)sm;
 
       if (isActive())
-        Task::deactivate();
+        requestDeactivation();
     }
 
     void
     Maneuver::signalError(const std::string& msg)
     {
       err("%s", msg.c_str());
-      Task::deactivate();
+      requestDeactivation();
       m_mcs.state = IMC::ManeuverControlState::MCS_ERROR;
       m_mcs.info = msg;
       m_mcs.eta = 0;
@@ -126,7 +126,7 @@ namespace DUNE
     Maneuver::signalCompletion(const std::string& msg)
     {
       debug("%s", msg.c_str());
-      Task::deactivate();
+      requestDeactivation();
       m_mcs.state = IMC::ManeuverControlState::MCS_DONE;
       m_mcs.info = msg;
       m_mcs.eta = 0;
