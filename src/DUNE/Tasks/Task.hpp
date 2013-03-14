@@ -101,6 +101,13 @@ namespace DUNE
       DF_LOOP_BACK = (1 << 2)
     };
 
+    //! Execution options.
+    enum ExecutionFlags
+    {
+      //! The task will honour changes to the 'Active' parameter.
+      EXE_HONOUR_ACTIVE  = (1 << 0)
+    };
+
     //! Task.
     class Task: public AbstractTask
     {
@@ -616,6 +623,14 @@ namespace DUNE
       onDeactivation(void)
       {
         spew("on deactivation");
+      }
+
+      //! Retrieve flags describing execution details.
+      //! @return bitfield with execution flags (see ExecutionFlags).
+      virtual uint32_t
+      getExecutionFlags(void) const
+      {
+        return 0;
       }
 
       virtual void

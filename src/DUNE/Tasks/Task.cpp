@@ -63,16 +63,17 @@ namespace DUNE
       m_args.act_time = 0;
       m_args.deact_time = 0;
       m_args.active = true;
+      m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
 
       param(DTR_RT("Entity Label"), m_elabel)
       .defaultValue("")
       .description(DTR("Main entity label"));
 
-      param(DTR_RT("Active"), m_args.active)
-      .defaultValue("True");
-
       param(DTR_RT("Execution Priority"), m_args.priority)
       .defaultValue("10");
+
+      param(DTR_RT("Active"), m_args.active)
+      .defaultValue("true");
 
       param(DTR_RT("Activation Time"), m_args.act_time)
       .defaultValue("0");
@@ -213,12 +214,15 @@ namespace DUNE
 
       onUpdateParameters();
 
-      if (paramChanged(m_args.active))
+      if (getExecutionFlags() & EXE_HONOUR_ACTIVE)
       {
-        if (m_args.active)
-          requestActivation();
-        else
-          requestDeactivation();
+        if (paramChanged(m_args.active))
+        {
+          if (m_args.active)
+            requestActivation();
+          else
+            requestDeactivation();
+        }
       }
     }
 
