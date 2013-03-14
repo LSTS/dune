@@ -91,7 +91,7 @@ namespace Simulators
       void
       onResourceInitialization(void)
       {
-        deactivate();
+        requestDeactivation();
       }
 
       //! On activation
@@ -116,13 +116,13 @@ namespace Simulators
         if (m_activating && m_act_timer.overflow())
         {
           m_activating = false;
-          activate();
+          requestActivation();
         }
 
         if (m_deactivating && m_deact_timer.overflow())
         {
           m_deactivating = false;
-          deactivate();
+          requestActivation();
         }
       }
     };
