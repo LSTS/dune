@@ -409,7 +409,8 @@ namespace Supervisors
           reset();
 
         changeMode(IMC::VehicleState::VS_CALIBRATION);
-        m_calibration.duration = (uint16_t)m_args.calibration_time;
+        m_calibration.duration = std::max((uint16_t)m_args.calibration_time,
+                                          (uint16_t)msg->calib_time);
         dispatch(m_calibration);
         m_switch_time = Clock::get();
 

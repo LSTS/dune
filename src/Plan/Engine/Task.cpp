@@ -676,7 +676,12 @@ namespace Plan
 
         if (flags & IMC::PlanControl::FLG_CALIBRATE)
         {
-          if (!startCalibration())
+          uint16_t ct = 0;
+
+          if (m_plan->getCalibrationTime() > 0.0)
+            ct = (uint16_t)m_plan->getCalibrationTime();
+
+          if (!startCalibration(ct))
             return stopped;
         }
         else
@@ -699,9 +704,10 @@ namespace Plan
       }
 
       //! Send a request to start calibration procedures
+      //! @param[in] calibration_time amount of time to remain in calibration mode
       //! @return true if request was sent
       bool
-      startCalibration(void)
+      startCalibration(uint16_t calibration_time)
       {
         if (blockedMode())
         {
@@ -709,7 +715,7 @@ namespace Plan
           return false;
         }
 
-        vehicleRequest(IMC::VehicleCommand::VC_CALIBRATE);
+        vehicleRequest(IMC::VehicleCommand::VC_CALIBRATE, calibration_time);
         return true;
       }
 
@@ -925,7 +931,9 @@ namespace Plan
       }
 
       void
-      vehicleRequest(IMC::VehicleCommand::CommandEnum command, const IMC::Message* arg = 0)
+      vehicleRequest(IMC::VehicleCommand::CommandEnum command,
+                     const IMC::Message* arg = 0,
+                     uint16_t calibration_time = 0)
       {
         m_vc.type = IMC::VehicleCommand::VC_REQUEST;
         m_vc.request_id = ++m_vreq_ctr;
@@ -934,11 +942,20 @@ namespace Plan
         if (arg)
           m_vc.maneuver.set(*dynamic_cast<const IMC::Maneuver*>(arg));
 
+        m_vc.calib_time = calibration_time;
+
         dispatch(m_vc);
 
         if (arg)
           m_vc.maneuver.clear();
         m_vc_reply_deadline = Clock::get() + c_vc_reply_timeout;
+      }
+
+      void
+      vehicleRequest(IMC::VehicleCommand::CommandEnum command,
+                     uint16_t calibration_time)
+      {
+        vehicleRequest(command, 0, calibration_time);
       }
 
       inline bool
