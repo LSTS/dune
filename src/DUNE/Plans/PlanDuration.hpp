@@ -72,8 +72,7 @@ namespace DUNE
       //! @return accumulated plan duration in seconds, -1 if unable to compute
       static float
       parse(const std::vector<IMC::PlanManeuver*>& nodes , const IMC::EstimatedState* state,
-            ManeuverDuration& man_durations,
-            const SpeedConversion& speed_conv);
+            ManeuverDuration& man_durations, const SpeedConversion& speed_conv);
 
       //! Parse plan duration from plan specification
       //! @param[in] nodes vector of plan maneuver nodes
@@ -82,7 +81,7 @@ namespace DUNE
       //! @return accumulated plan duration in seconds, -1 if unable to compute
       static float
       parse(const std::vector<IMC::PlanManeuver*>& nodes , const IMC::EstimatedState* state,
-            std::map< std::string, std::vector<float> >& man_durations)
+            ManeuverDuration& man_durations)
       {
         SpeedConversion speed_conv;
         speed_conv.rpm_factor = 0.0;
