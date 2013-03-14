@@ -186,7 +186,7 @@ namespace Control
         void
         onResourceInitialization(void)
         {
-          deactivate();
+          requestDeactivation();
           reset();
 
           m_act.id = 0;
@@ -290,12 +290,12 @@ namespace Control
 
           if (!msg->enable)
           {
-            deactivate();
+            requestDeactivation();
             debug("disabling");
           }
           else
           {
-            activate();
+            requestActivation();
             debug("enabling");
           }
 
