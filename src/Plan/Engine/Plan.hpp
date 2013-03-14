@@ -364,7 +364,7 @@ namespace Plan
       {
         float prog = progress(mcs);
 
-        if (prog > 0.0 && m_sched == NULL)
+        if (prog > 0.0 && m_sched != NULL)
           m_sched->updateSchedule(getPlanEta());
 
         return prog;
