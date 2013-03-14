@@ -232,6 +232,16 @@ namespace Plan
       void
       planStarted(void)
       {
+        // Order all entities to push their parameters
+        std::set<std::string>::const_iterator itr;
+        itr = m_ents_changed.begin();
+        for (; itr != m_ents_changed.end(); ++itr)
+        {
+          IMC::PushEntityParameters push;
+          push.name = *itr;
+          m_task->dispatch(push);
+        }
+
         dispatchActions(m_plan_actions.start_actions);
       }
 
@@ -240,6 +250,16 @@ namespace Plan
       planStopped(void)
       {
         dispatchActions(m_plan_actions.end_actions);
+
+        // Order all entities to pop their parameters
+        std::set<std::string>::const_iterator itr;
+        itr = m_ents_changed.begin();
+        for (; itr != m_ents_changed.end(); ++itr)
+        {
+          IMC::PopEntityParameters pop;
+          pop.name = *itr;
+          m_task->dispatch(pop);
+        }
       }
 
       //! Maneuver has started
@@ -334,6 +354,9 @@ namespace Plan
           // If no parameters then skip
           if (!sep->params.size())
             continue;
+
+          // Fill entities set
+          m_ents_changed.insert(sep->name);
 
           m_task->debug("schedule -\t\t params: %lu", sep->params.size());
 
@@ -534,6 +557,8 @@ namespace Plan
       const std::map<std::string, IMC::EntityInfo>* m_cinfo;
       //! Time of earliest scheduled actions
       float m_earliest;
+      //! Set of entities that will be changed during plan
+      std::set<std::string> m_ents_changed;
     };
   }
 }
