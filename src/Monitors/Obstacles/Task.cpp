@@ -106,7 +106,7 @@ namespace Monitors
       void
       onResourceInitialization(void)
       {
-        deactivate();
+        requestDeactivation();
       }
 
       void
@@ -121,7 +121,7 @@ namespace Monitors
         // cannot be active without estimated state
         if (!isActive())
         {
-          activate();
+          requestActivation();
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
 

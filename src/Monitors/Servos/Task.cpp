@@ -201,7 +201,7 @@ namespace Monitors
         m_args.max_rotation_rate = Angles::radians(m_args.max_rotation_rate);
 
         if (!m_args.pos_fault_detect && !m_args.curr_fault_detect)
-          deactivate();
+          requestDeactivation();
       }
 
       void
