@@ -487,7 +487,7 @@ namespace Supervisors
 
         double delta = Clock::get() - m_switch_time;
 
-        if (calibrationMode() && (delta > m_args.calibration_time))
+        if (calibrationMode() && (delta > m_calibration.duration))
         {
           debug("calibration over");
           changeMode(IMC::VehicleState::VS_SERVICE);
