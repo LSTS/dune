@@ -149,6 +149,22 @@ namespace DUNE
         return m_eid;
       }
 
+      //! Retrieve the task's activation time.
+      //! @return activation time of the task.
+      uint16_t
+      getActivationTime(void) const
+      {
+        return m_args.act_time;
+      }
+
+      //! Retrieve the task's deactivation time.
+      //! @return deactivation time of the task.
+      uint16_t
+      getDeactivationTime(void) const
+      {
+        return m_args.deact_time;
+      }
+
       //! Retrieve the identifier associated with a given system name.
       //! @param[in] name system name.
       //! @return system identifier.
