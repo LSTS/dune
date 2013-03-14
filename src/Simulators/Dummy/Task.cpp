@@ -43,10 +43,7 @@ namespace Simulators
     //! %Task arguments.
     struct Arguments
     {
-      //! Time it takes dummy to boot
-      float boot_time;
-      //! Time it takes dummy to shutdown
-      float shut_time;
+
     };
 
     //! %Dummy simulator task
@@ -68,14 +65,6 @@ namespace Simulators
         m_activating(false),
         m_deactivating(false)
       {
-        param("Boot Time", m_args.boot_time)
-        .defaultValue("45")
-        .description("Time it takes dummy to boot");
-
-        param("Shutdown Time", m_args.shut_time)
-        .defaultValue("10")
-        .description("Time it takes dummy to shutdown");
-
         // Initialize entity state.
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
@@ -89,8 +78,8 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        m_act_timer.setTop(m_args.boot_time);
-        m_deact_timer.setTop(m_args.shut_time);
+        m_act_timer.setTop(getActivationTime());
+        m_deact_timer.setTop(getDeactivationTime());
       }
 
       //! Release resources.
