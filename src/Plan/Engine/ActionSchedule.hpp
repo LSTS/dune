@@ -63,8 +63,6 @@ namespace Plan
       {
         //! Type (true activation or deactivation)
         ActionType type;
-        //! Time to activate or deactivate
-        uint16_t boot_time;
         //! Time relative to Plan's eta to fire action
         float sched_time;
         //! Set Entity parameters to dispatch
@@ -182,14 +180,47 @@ namespace Plan
 
           TimedQueue* q = &next->second;
 
+          // Check if the time is right
           if (q->front().sched_time <= time_left)
             break;
 
-          dispatchActions(q->front().list);
+          // Test if it is a deactivation
+          // If so, we should skip in case an activation comes in too soon
+          if (q->front().type == TYPE_DEACT)
+          {
+            TimedQueue clone = *q;
+            clone.pop();
+
+            bool conflict = false;
+            float min_gap;
+            min_gap = getDeactivationTime(next->first) + getActivationTime(next->first);
+
+            while (clone.size())
+            {
+              if (clone.front().sched_time + min_gap < time_left)
+                break;
+
+              // Device is ordered to reactivate to close in time to deactivation
+              if (clone.front().type == TYPE_ACT)
+              {
+                conflict = true;
+                break;
+              }
+
+              clone.pop();
+            }
+
+            if (!conflict)
+              dispatchActions(q->front().list);
+          }
+          else
+          {
+            dispatchActions(q->front().list);
+          }
 
           q->pop();
 
-          if (!q->size())
+          if (q->empty())
             m_timed.erase(next);
         }
       }
@@ -305,9 +336,6 @@ namespace Plan
 
           // true if event based, false if time based
           bool event_based = true;
-          // activation and deactivation times
-          uint16_t act_time;
-          uint16_t deact_time;
           // action type
           ActionType type;
 
@@ -317,25 +345,18 @@ namespace Plan
           // has entity parameter "Active", then get (de)activation time
           if (par != sep->params.end())
           {
-            if ((*par)->value == "ON")
-            {
-              act_time = getActivationTime(sep->name);
+            // activation and deactivation times
+            uint16_t act_time = getActivationTime(sep->name);
+            uint16_t deact_time = getDeactivationTime(sep->name);
 
-              if (act_time > 0)
-              {
-                event_based = false;
+            if (act_time > 0 || deact_time > 0)
+            {
+              event_based = false;
+
+              if ((*par)->value == "true")
                 type = TYPE_ACT;
-              }
-            }
-            else
-            {
-              deact_time = getDeactivationTime(sep->name);
-
-              if (deact_time > 0)
-              {
-                event_based = false;
+              else
                 type = TYPE_DEACT;
-              }
             }
           }
 
@@ -406,12 +427,10 @@ namespace Plan
 
         if (type == TYPE_ACT)
         {
-          action.boot_time = m_cinfo->find(sep->name)->second.act_time;
-          action.sched_time = eta + action.boot_time;
+          action.sched_time = eta + getActivationTime(sep->name);
         }
         else
         {
-          action.boot_time = m_cinfo->find(sep->name)->second.deact_time;
           // when deactivating do not schedule to an earlier time
           action.sched_time = eta;
         }
