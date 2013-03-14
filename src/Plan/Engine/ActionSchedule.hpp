@@ -103,16 +103,9 @@ namespace Plan
 
         // If durations
         if (dur == durations.end())
-        {
           plan_duration = -1.0;
-          m_task->debug("schedule - plan duration is unavailable");
-        }
         else
-        {
           plan_duration = dur->second.back();
-        }
-
-        m_task->debug("schedule - plan start");
 
         // start by adding "start" plan actions
         parseStartActions(spec->start_actions, &m_plan_actions, plan_duration);
@@ -142,15 +135,12 @@ namespace Plan
 
           EventActions eact;
 
-          m_task->debug("schedule - maneuver: %s", (*itr)->maneuver_id.c_str());
-          
           parseStartActions((*itr)->start_actions, &eact, maneuver_start_eta);
           parseEndActions((*itr)->end_actions, &eact, maneuver_end_eta);
 
           m_onevent.insert(std::pair<std::string, EventActions>((*itr)->maneuver_id, eact));
         }
 
-        m_task->debug("schedule - plan end");
         parseEndActions(spec->end_actions, &m_plan_actions, 0.0);
 
         std::map<std::string, TimedQueue>::const_iterator next;
@@ -162,7 +152,7 @@ namespace Plan
           m_earliest = next->second.front().sched_time;
 
         // DEBUG
-        // printTimed();
+        printTimed();
       }
 
       //! Update timed actions in schedule
@@ -328,8 +318,6 @@ namespace Plan
         if (!actions.size())
           return;
 
-        m_task->debug("schedule -\t actions: %lu", actions.size());
-
         IMC::MessageList<IMC::Message>::const_iterator itr = actions.begin();
 
         IMC::SetEntityParameters* sep;
@@ -347,7 +335,7 @@ namespace Plan
           test = m_cinfo->find(sep->name);
           if (test == m_cinfo->end())
           {
-            m_task->debug("schedule -\t\t entity label %s not found", sep->name.c_str());
+            m_task->err("schedule -\t\t entity label %s not found", sep->name.c_str());
             continue;
           }
 
@@ -357,8 +345,6 @@ namespace Plan
 
           // Fill entities set
           m_ents_changed.insert(sep->name);
-
-          m_task->debug("schedule -\t\t params: %lu", sep->params.size());
 
           // true if event based, false if time based
           bool event_based = true;
@@ -385,15 +371,9 @@ namespace Plan
                 type = TYPE_DEACT;
             }
           }
-          else
-          {
-            m_task->debug("schedule -\t\t active not found");
-          }
 
           if (event_based)
           {
-            m_task->debug("schedule -\t\t pushing event based \"%s\"", sep->name.c_str());
-
             if (start)
               event_actions->start_actions.push_back(sep);
             else
@@ -401,7 +381,6 @@ namespace Plan
           }
           else
           {
-            m_task->debug("schedule -\t\t pushing time based \"%s\"", sep->name.c_str());
             scheduleTimed(sep, type, eta);
           }
         }
@@ -536,7 +515,7 @@ namespace Plan
           m_task->war("--- %s ---", itr->first.c_str());
           while (!itr->second.empty())
           {
-            m_task->inf("scheduled for: %.1f", itr->second.front().sched_time);
+            m_task->debug("scheduled for: %.1f", itr->second.front().sched_time);
             itr->second.front().list->toText(std::cerr);
             itr->second.pop();
           }
