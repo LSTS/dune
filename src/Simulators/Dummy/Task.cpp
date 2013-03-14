@@ -90,8 +90,12 @@ namespace Simulators
       //! Initialize resources.
       void
       onResourceInitialization(void)
+      { }
+
+      uint32_t
+      getExecutionFlags(void) const
       {
-        requestDeactivation();
+        return EXE_HONOUR_ACTIVE;
       }
 
       //! On activation
@@ -116,13 +120,13 @@ namespace Simulators
         if (m_activating && m_act_timer.overflow())
         {
           m_activating = false;
-          requestActivation();
+          activate();
         }
 
         if (m_deactivating && m_deact_timer.overflow())
         {
           m_deactivating = false;
-          requestActivation();
+          deactivate();
         }
       }
     };
