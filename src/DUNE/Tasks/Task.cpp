@@ -406,6 +406,9 @@ namespace DUNE
     void
     Task::consume(const IMC::PushEntityParameters* msg)
     {
+      if (!(msg->name.empty() || msg->name == getEntityLabel()))
+        return;
+
       std::map<std::string, std::string> map;
       std::map<std::string, Parameter*>::const_iterator itr = m_params.begin();
       for (; itr != m_params.end(); ++itr)
@@ -417,6 +420,9 @@ namespace DUNE
     void
     Task::consume(const IMC::PopEntityParameters* msg)
     {
+      if (!(msg->name.empty() || msg->name == getEntityLabel()))
+        return;
+
       if (m_params_stack.empty())
         return;
 
