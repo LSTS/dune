@@ -11285,6 +11285,8 @@ namespace DUNE
       uint8_t command;
       //! Maneuver.
       InlineMessage<Maneuver> maneuver;
+      //! Calibration Time.
+      uint16_t calib_time;
       //! Info.
       std::string info;
 
@@ -11335,7 +11337,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 6;
       }
 
       unsigned

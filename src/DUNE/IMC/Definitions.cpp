@@ -11702,6 +11702,7 @@ namespace DUNE
       request_id = 0;
       command = 0;
       maneuver.clear();
+      calib_time = 0;
       info.clear();
     }
 
@@ -11713,6 +11714,7 @@ namespace DUNE
       if (request_id != other__.request_id) return false;
       if (command != other__.command) return false;
       if (maneuver != other__.maneuver) return false;
+      if (calib_time != other__.calib_time) return false;
       if (info != other__.info) return false;
       return true;
     }
@@ -11731,6 +11733,7 @@ namespace DUNE
       ptr__ += IMC::serialize(request_id, ptr__);
       ptr__ += IMC::serialize(command, ptr__);
       ptr__ += maneuver.serialize(ptr__);
+      ptr__ += IMC::serialize(calib_time, ptr__);
       ptr__ += IMC::serialize(info, ptr__);
       return ptr__;
     }
@@ -11743,6 +11746,7 @@ namespace DUNE
       bfr__ += IMC::deserialize(request_id, bfr__, size__);
       bfr__ += IMC::deserialize(command, bfr__, size__);
       bfr__ += maneuver.deserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(calib_time, bfr__, size__);
       bfr__ += IMC::deserialize(info, bfr__, size__);
       return bfr__ - start__;
     }
@@ -11755,6 +11759,7 @@ namespace DUNE
       bfr__ += IMC::reverseDeserialize(request_id, bfr__, size__);
       bfr__ += IMC::deserialize(command, bfr__, size__);
       bfr__ += maneuver.reverseDeserialize(bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(calib_time, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(info, bfr__, size__);
       return bfr__ - start__;
     }
@@ -11766,6 +11771,7 @@ namespace DUNE
       IMC::toJSON(os__, "request_id", request_id, nindent__);
       IMC::toJSON(os__, "command", command, nindent__);
       maneuver.toJSON(os__, "maneuver", nindent__);
+      IMC::toJSON(os__, "calib_time", calib_time, nindent__);
       IMC::toJSON(os__, "info", info, nindent__);
     }
 

@@ -5252,6 +5252,9 @@
     <field name="Maneuver" abbrev="maneuver" type="message" message-type="Maneuver">
       <description>Maneuver to be executed (for 'EXEC_MANEUVER' command)</description>
     </field>
+    <field name="Calibration Time" abbrev="calib_time" type="uint16_t" unit="s">
+      <description>Amount of time to calibrate</description>
+    </field>
     <field name="Info" abbrev="info" type="plaintext">
       <description>Complementary human-readable information for replies.</description>
     </field>
