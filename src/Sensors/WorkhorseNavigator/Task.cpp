@@ -78,8 +78,6 @@ namespace Sensors
       IMC::WaterVelocity m_wvel;
       // Bottom ranges.
       IMC::Distance m_brange[4];
-      // True if data sampling is enabled.
-      bool m_active;
       // Sample count.
       unsigned m_samples;
       // Task arguments.
@@ -88,9 +86,11 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_active(true),
         m_samples(0)
       {
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
         .description("Serial port used to connect to the Workhorse Navigator.");
@@ -133,8 +133,6 @@ namespace Sensors
           m_brange[i].beam_config.clear();
           m_brange[i].beam_config.push_back(bc);
         }
-
-        bind<IMC::EntityControl>(this);
       }
 
       void
@@ -160,17 +158,15 @@ namespace Sensors
       }
 
       void
-      consume(const IMC::EntityControl* msg)
+      onActivation(void)
       {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
+        startSampling();
+      }
 
-        m_active = (msg->op == IMC::EntityControl::ECO_ACTIVATE);
-
-        if (m_active)
-          startSampling();
-        else
-          stopSampling();
+      void
+      onDeactivation(void)
+      {
+        stopSampling();
       }
 
       void
@@ -303,7 +299,7 @@ namespace Sensors
 
         while (!stopping())
         {
-          if (m_active)
+          if (isActive())
           {
             consumeMessages();
           }
