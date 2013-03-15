@@ -61,15 +61,12 @@ namespace Simulators
       IMC::Depth m_depth;
       //! PRNG handle.
       Random::Generator* m_prng;
-      //! True if task is active.
-      bool m_active;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
-        m_prng(NULL),
-        m_active(false)
+        m_prng(NULL)
       {
         // Retrieve configuration values.
         param("Standard Deviation", m_args.std_dev)
@@ -109,7 +106,7 @@ namespace Simulators
       consume(const IMC::SimulatedState* msg)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        m_active = true;
+        requestActivation();
         m_sstate = *msg;
       }
 
@@ -117,7 +114,7 @@ namespace Simulators
       task(void)
       {
         // Return if task is not active.
-        if (!m_active)
+        if (!isActive())
           return;
 
         //! Compute positive depth value adding a gaussian noise component.

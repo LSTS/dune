@@ -68,8 +68,6 @@ namespace Simulators
 
     struct Task: public Tasks::Periodic
     {
-      //! Active flag
-      bool m_active;
       //! Simulation vehicle.
       AUVModel* m_model;
       //! Simulated position (X,Y,Z).
@@ -91,7 +89,6 @@ namespace Simulators
 
       Task(const std::string& name, Tasks::Context& ctx):
         Periodic(name, ctx),
-        m_active(false),
         m_model(NULL),
         m_start_time(Clock::get()),
         m_last_update(Clock::get()),
@@ -202,22 +199,18 @@ namespace Simulators
       void
       consume(const IMC::SetServoPosition* msg)
       {
-        if (!m_active)
+        if (!isActive())
           return;
 
         if (msg->id < c_servo_count)
-        {
           m_servo_pos(msg->id) = msg->value;
-        }
       }
 
       void
       consume(const IMC::GpsFix* msg)
       {
-        if (!m_active)
-        {
-          m_active = true;
-        }
+        if (!isActive())
+          requestActivation();
 
         if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
           return;
@@ -248,7 +241,7 @@ namespace Simulators
       void
       consume(const IMC::SetThrusterActuation* msg)
       {
-        if (!m_active)
+        if (!isActive())
           return;
 
         m_thruster_act = msg->value;

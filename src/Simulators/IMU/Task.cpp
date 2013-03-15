@@ -84,8 +84,6 @@ namespace Simulators
       Random::Generator* m_prng;
       //! Random dynamic heading offset.
       float m_heading_offset;
-      //! True if task is active.
-      bool m_active;
       //! True if task is activated by entity control.
       bool m_entity_on;
       //! Timestep
@@ -95,8 +93,7 @@ namespace Simulators
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_prng(NULL),
-        m_active(false)
+        m_prng(NULL)
       {
         // Retrieve configuration values
         param("Standard Deviation - Euler Angles", m_args.stdev_euler)
@@ -178,9 +175,9 @@ namespace Simulators
       void
       consume(const IMC::SimulatedState* msg)
       {
-        if (!m_active)
+        if (!isActive())
         {
-          m_active = true;
+          requestActivation();
           m_vel[0] = msg->u;
           m_vel[1] = msg->v;
           m_vel[2] = msg->w;
@@ -231,7 +228,7 @@ namespace Simulators
         dispatch(m_agvel, DF_KEEP_TIME);
         dispatch(m_accel, DF_KEEP_TIME);
 
-        m_active = true;
+        requestActivation();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 

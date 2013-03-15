@@ -72,15 +72,12 @@ namespace Simulators
       IMC::GroundVelocity m_gvel;
       //! Pseudo-random generator.
       Random::Generator* m_prng;
-      //! True if task is active.
-      bool m_active;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
-        m_prng(NULL),
-        m_active(false)
+        m_prng(NULL)
       {
         // Retrieve configuration parameters.
         param("Standard Deviation - Ground Velocity", m_args.stdev_gvel)
@@ -135,14 +132,14 @@ namespace Simulators
       consume(const IMC::SimulatedState* msg)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        m_active = true;
+        requestActivation();
         m_sstate = *msg;
       }
 
       void
       task(void)
       {
-        if (!m_active)
+        if (!isActive())
           return;
 
         // Valid reading ?

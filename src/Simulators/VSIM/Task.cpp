@@ -69,8 +69,6 @@ namespace Simulators
     //! Simulator task.
     struct Task: public Tasks::Periodic
     {
-      //! Task is active.
-      bool m_active;
       //! Simulation vehicle.
       Simulators::VSIM::Vehicle* m_vehicle;
       //! Simulation world.
@@ -84,7 +82,6 @@ namespace Simulators
 
       Task(const std::string& name, Tasks::Context& ctx):
         Periodic(name, ctx),
-        m_active(false),
         m_vehicle(NULL),
         m_world(NULL),
         m_start_time(Clock::get())
@@ -168,7 +165,7 @@ namespace Simulators
 
         m_start_time = Clock::get();
 
-        m_active = true;
+        requestActivation();
 
         // Save message to cache.
         IMC::CacheControl cop;
@@ -194,7 +191,7 @@ namespace Simulators
       void
       task(void)
       {
-        if (!m_active)
+        if (!isActive())
           return;
 
         m_world->takeStep();
