@@ -140,6 +140,7 @@ namespace Transports
           {
             TCPSocket* nc = m_sock->accept();
             m_clients.push_back(nc);
+            nc->addToPoll(m_iom);
           }
           catch (std::runtime_error& e)
           {
@@ -162,6 +163,13 @@ namespace Transports
             {
               int rv = (*itr)->read(bfr, sizeof(bfr));
               m_uart->write(bfr, rv);
+            }
+            catch (Network::ConnectionClosed& e)
+            {
+              (void)e;
+              (*itr)->delFromPoll(m_iom);
+              delete *itr;
+              itr = m_clients.erase(itr);
             }
             catch (std::runtime_error& e)
             {
