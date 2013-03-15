@@ -190,17 +190,17 @@ namespace Sensors
       std::ofstream m_log_file;
       //! Log filename
       std::string m_log_filename;
-      //! True if sampling is active.
-      bool m_active;
       //! Configuration parameters.
       Arguments m_args;
 
       //! Constructor.
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Periodic(name, ctx),
-        m_active(false)
+        Tasks::Periodic(name, ctx)
       {
         // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("IPv4 Address", m_args.addr)
         .defaultValue("192.168.0.2")
         .description("IP address of the sonar");
@@ -302,7 +302,6 @@ namespace Sensors
         m_ping.beam_config.push_back(bc);
 
         // Register consumers.
-        bind<IMC::EntityControl>(this);
         bind<IMC::LoggingControl>(this);
         bind<IMC::SonarConfig>(this);
         bind<IMC::SoundSpeed>(this);
@@ -361,23 +360,17 @@ namespace Sensors
       }
 
       void
-      consume(const IMC::EntityControl* msg)
+      onActivation(void)
       {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        if (!m_log_file.is_open())
+          m_log_file.open((m_ctx.dir_log / m_log_filename / "Data.837").c_str(), std::ios::binary);
+      }
 
-        m_active = (msg->op == IMC::EntityControl::ECO_ACTIVATE);
-
-        if (m_active)
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          if (!m_log_file.is_open())
-            m_log_file.open((m_ctx.dir_log / m_log_filename / "Data.837").c_str(), std::ios::binary);
-        }
-        else
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-        }
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -403,7 +396,7 @@ namespace Sensors
             if (m_log_file.is_open())
               m_log_file.close();
 
-            if (m_active)
+            if (isActive())
               m_log_file.open((m_ctx.dir_log / m_log_filename / "Data.837").c_str(), std::ios::binary);
             break;
           case IMC::LoggingControl::COP_REQUEST_STOP:
@@ -612,7 +605,7 @@ namespace Sensors
       void
       task(void)
       {
-        if (!m_active)
+        if (!isActive())
           return;
 
         try
