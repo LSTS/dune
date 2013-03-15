@@ -65,6 +65,9 @@ namespace Simulators
         m_activating(false),
         m_deactivating(false)
       {
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         // Initialize entity state.
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
@@ -91,12 +94,6 @@ namespace Simulators
       void
       onResourceInitialization(void)
       { }
-
-      uint32_t
-      getExecutionFlags(void) const
-      {
-        return EXE_HONOUR_ACTIVE;
-      }
 
       //! On activation
       void

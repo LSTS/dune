@@ -117,6 +117,9 @@ namespace Sensors
         m_sock(NULL)
       {
         // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("IPv4 Address", m_args.addr)
         .defaultValue("192.168.0.5")
         .description("IP address of the sonar");
@@ -235,12 +238,6 @@ namespace Sensors
 
         setRange(msg->max_range);
         setFrequency(msg->frequency);
-      }
-
-      uint32_t
-      getExecutionFlags(void) const
-      {
-        return EXE_HONOUR_ACTIVE;
       }
 
       void

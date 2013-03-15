@@ -156,6 +156,9 @@ namespace Sensors
         m_pfilt(NULL)
       {
         // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
         .description("Serial port device used to communicate with the sensor");
@@ -340,12 +343,6 @@ namespace Sensors
           return;
 
         m_sound_speed = msg->value;
-      }
-
-      uint32_t
-      getExecutionFlags(void) const
-      {
-        return EXE_HONOUR_ACTIVE;
       }
 
       void

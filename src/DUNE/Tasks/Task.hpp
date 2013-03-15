@@ -101,13 +101,6 @@ namespace DUNE
       DF_LOOP_BACK = (1 << 2)
     };
 
-    //! Execution options.
-    enum ExecutionFlags
-    {
-      //! The task will honour changes to the 'Active' parameter.
-      EXE_HONOUR_ACTIVE  = (1 << 0)
-    };
-
     //! Task.
     class Task: public AbstractTask
     {
@@ -463,6 +456,9 @@ namespace DUNE
         return m_params.changed(&var);
       }
 
+      void
+      paramActive(Parameter::Scope scope, Parameter::Visibility visibility);
+
       //! Bind a message to a consumer method.
       //! @param task_obj consumer task.
       //! @param consumer consumer method.
@@ -625,14 +621,6 @@ namespace DUNE
         spew("on deactivation");
       }
 
-      //! Retrieve flags describing execution details.
-      //! @return bitfield with execution flags (see ExecutionFlags).
-      virtual uint32_t
-      getExecutionFlags(void) const
-      {
-        return 0;
-      }
-
       virtual void
       onMain(void) = 0;
 
@@ -675,6 +663,8 @@ namespace DUNE
       std::stack<std::map<std::string, std::string> > m_params_stack;
       //! Activation state.
       IMC::EntityActivationState m_act_state;
+      //! True if task honours changes to 'Active' parameter.
+      bool m_honours_active;
 
       //! Report current entity states by dispatching EntityState
       //! messages. This function will at least report the state of

@@ -57,12 +57,13 @@ namespace DUNE
       m_name(n),
       m_eid(DUNE_IMC_CONST_UNK_EID),
       m_debug_level(DEBUG_LEVEL_NONE),
-      m_entity_state_code(-1)
+      m_entity_state_code(-1),
+      m_honours_active(false)
     {
       m_args.priority = 10;
       m_args.act_time = 0;
       m_args.deact_time = 0;
-      m_args.active = true;
+      m_args.active = false;
       m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
 
       param(DTR_RT("Entity Label"), m_elabel)
@@ -71,9 +72,6 @@ namespace DUNE
 
       param(DTR_RT("Execution Priority"), m_args.priority)
       .defaultValue("10");
-
-      param(DTR_RT("Active"), m_args.active)
-      .defaultValue("true");
 
       param(DTR_RT("Activation Time"), m_args.act_time)
       .defaultValue("0");
@@ -195,6 +193,17 @@ namespace DUNE
     }
 
     void
+    Task::paramActive(Parameter::Scope scope, Parameter::Visibility visibility)
+    {
+      m_honours_active = true;
+
+      param(DTR_RT("Active"), m_args.active)
+      .visibility(visibility)
+      .scope(scope)
+      .defaultValue("false");
+    }
+
+    void
     Task::updateParameters(void)
     {
       m_ent_info.label = getEntityLabel();
@@ -214,7 +223,7 @@ namespace DUNE
 
       onUpdateParameters();
 
-      if (getExecutionFlags() & EXE_HONOUR_ACTIVE)
+      if (m_honours_active)
       {
         if (paramChanged(m_args.active))
         {
@@ -251,7 +260,9 @@ namespace DUNE
         throw std::runtime_error("activation is not in progress");
 
       spew("activate");
-      m_params.set("Active", "true");
+
+      if (m_honours_active)
+        m_params.set("Active", "true");
 
       spew("calling on activation");
       onActivation();
@@ -300,7 +311,9 @@ namespace DUNE
         throw std::runtime_error("deactivation is not in progress");
 
       spew("deactivate");
-      m_params.set("Active", "false");
+
+      if (m_honours_active)
+        m_params.set("Active", "false");
 
       spew("calling on deactivation");
       onDeactivation();
