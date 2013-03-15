@@ -61,8 +61,6 @@ namespace Monitors
     //! Collisions task.
     struct Task: public Tasks::Task
     {
-      //! Task is active.
-      bool m_active;
       //! Accelerations along x-axis moving average
       //! for innovation limits threshold checking.
       MovingAverage<double>* m_avg_x_innov;
@@ -82,7 +80,6 @@ namespace Monitors
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_active(false),
         m_avg_x_innov(NULL),
         m_avg_z_innov(NULL),
         m_avg_x_abs(NULL),
@@ -164,9 +161,9 @@ namespace Monitors
       consume(const IMC::Acceleration* msg)
       {
         // Activate task if not active.
-        if (!m_active)
+        if (!isActive())
         {
-          m_active = true;
+          requestActivation();
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
 
