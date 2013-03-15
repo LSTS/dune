@@ -225,12 +225,6 @@ namespace Plan
       void
       planStarted(void)
       {
-        if (m_calibration > 0.0)
-        {
-          m_in_calib = true;
-          m_calib_timer.setTop(m_calibration);
-        }
-
         if (m_sched == NULL)
           return;
 
@@ -245,6 +239,19 @@ namespace Plan
           return;
 
         m_sched->planStopped();
+      }
+
+      //! Signal that calibration has started
+      //! This will allow us to monitor the calibration time
+      //! @param[in] time time during which vehicle will calibrate
+      void
+      calibrationStarted(uint16_t time)
+      {
+        if (time > 0.0)
+        {
+          m_in_calib = true;
+          m_calib_timer.setTop(time);
+        }
       }
 
       //! Signal that calibration has stopped

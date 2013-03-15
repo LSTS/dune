@@ -78,6 +78,7 @@ namespace Plan
       double m_vc_reply_deadline;
       double m_last_vstate;
       IMC::VehicleCommand m_vc;
+      uint16_t m_calib_time;
       //! Is the plan loaded
       bool m_plan_loaded;
       //! PlanSpecification message
@@ -103,6 +104,7 @@ namespace Plan
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_plan(NULL),
+        m_calib_time(0),
         m_db(NULL),
         m_get_plan_stmt(NULL)
       {
@@ -403,7 +405,11 @@ namespace Plan
           return;
 
         if (!blockedMode())
-          changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("vehicle in CALIBRATION mode"), false);
+        {
+          changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                     DTR("vehicle in CALIBRATION mode"), false);
+          m_plan->calibrationStarted(m_calib_time);
+        }
       }
 
       void
@@ -687,14 +693,14 @@ namespace Plan
 
         if (flags & IMC::PlanControl::FLG_CALIBRATE)
         {
-          uint16_t ct = 0;
+          m_calib_time = 0;
 
           if (m_plan->getCalibrationTime() > 0.0)
-            ct = (uint16_t)m_plan->getCalibrationTime();
+            m_calib_time = (uint16_t)m_plan->getCalibrationTime();
 
-          ct = std::max((uint16_t)m_args.calibration_time, ct);
+          m_calib_time = std::max((uint16_t)m_args.calibration_time, m_calib_time);
 
-          if (!startCalibration(ct))
+          if (!startCalibration(m_calib_time))
             return stopped;
         }
         else
