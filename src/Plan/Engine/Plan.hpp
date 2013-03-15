@@ -114,6 +114,8 @@ namespace Plan
       //! Parse a given plan
       //! @param[in] supported_maneuvers list of supported maneuvers
       //! @param[out] desc description of the failure if any
+      //! @param[in] cinfo map of components info
+      //! @param[in] task pointer to task
       //! @param[in] state pointer to EstimatedState message
       //! @return true if was able to parse the plan
       bool
