@@ -103,6 +103,14 @@ namespace Transports
       }
 
       void
+      onResourceRelease(void)
+      {
+        std::list<TCPSocket*>::iterator itr = m_clients.begin();
+        for (; itr != m_clients.end(); ++itr)
+          delete *itr;
+      }
+
+      void
       dispatchToClients(const char* bfr, unsigned bfr_len)
       {
         // List of nodes to remove if send fails.
