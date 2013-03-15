@@ -107,6 +107,9 @@ namespace Power
         std::memset(m_adcs, 0, sizeof(m_adcs));
 
         // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
         .description("Serial port device used to communicate with the device");
@@ -141,7 +144,6 @@ namespace Power
 
         // Register handler routines.
         bind<IMC::PowerOperation>(this);
-        bind<IMC::EntityControl>(this);
         bind<IMC::PowerChannelControl>(this);
         bind<IMC::QueryPowerChannelState>(this);
       }
@@ -310,15 +312,15 @@ namespace Power
       }
 
       void
-      consume(const IMC::EntityControl* msg)
+      onActivation(void)
       {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
+        setStrobeMode(STROBE_MODE_CAM);
+      }
 
-        if (msg->op == IMC::EntityControl::ECO_ACTIVATE)
-          setStrobeMode(STROBE_MODE_CAM);
-        else
-          setStrobeMode(STROBE_MODE_MCU);
+      void
+      onDeactivation(void)
+      {
+        setStrobeMode(STROBE_MODE_MCU);
       }
 
       bool
