@@ -169,7 +169,7 @@ namespace Navigation
           bind<IMC::Acceleration>(this);
           bind<IMC::AngularVelocity>(this);
           bind<IMC::DevCalibrationControl>(this);
-          bind<IMC::EntityControl>(this);
+          bind<IMC::EntityActivationState>(this);
           bind<IMC::GpsFix>(this);
           bind<IMC::VehicleMedium>(this);
         }
@@ -353,12 +353,12 @@ namespace Navigation
         }
 
         void
-        consume(const IMC::EntityControl* msg)
+        consume(const IMC::EntityActivationState* msg)
         {
-          if (msg->getDestinationEntity() != m_imu_eid)
+          if (msg->getSourceEntity() != m_imu_eid)
             return;
 
-          if (msg->op == IMC::EntityControl::ECO_ACTIVATE)
+          if (msg->state == IMC::EntityActivationState::EAS_ACTIVE)
           {
             if (!m_dev_active && !m_calibrated)
             {
@@ -366,7 +366,7 @@ namespace Navigation
               m_dev_active = true;
             }
           }
-          else
+          else if (msg->state == IMC::EntityActivationState::EAS_INACTIVE)
           {
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
             m_dev_active = false;
