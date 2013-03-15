@@ -52,13 +52,10 @@ namespace Sensors
       Arguments m_args;
       // PPS object.
       Hardware::PPS* m_pps;
-      // True if pulse detection is enabled.
-      bool m_active;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_pps(NULL),
-        m_active(false)
+        m_pps(NULL)
       {
         param("PPS Device", m_args.pps_dev)
         .defaultValue("")
@@ -87,7 +84,10 @@ namespace Sensors
       void
       consume(const IMC::PulseDetectionControl* msg)
       {
-        m_active = (msg->op == IMC::PulseDetectionControl::POP_ON);
+        if (msg->op == IMC::PulseDetectionControl::POP_ON)
+          requestActivation();
+        else
+          requestDeactivation();
       }
 
       void
@@ -95,7 +95,7 @@ namespace Sensors
       {
         while (!stopping())
         {
-          if (!m_active)
+          if (!isActive())
           {
             waitForMessages(0.1);
             continue;

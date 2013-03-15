@@ -68,8 +68,6 @@ namespace Navigation
 
       struct Task: public Tasks::Task
       {
-        //! True if this task is active.
-        bool m_active;
         //! Last North reference displacement.
         double m_last_n;
         //! Last East reference displacement.
@@ -105,7 +103,6 @@ namespace Navigation
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
-          m_active(false),
           m_origin(NULL)
         {
           param("State Covariance Initial State", m_args.state_cov)
@@ -224,7 +221,7 @@ namespace Navigation
           // Reset GPS timeout.
           m_time_without_gps.reset();
 
-          if (!m_active)
+          if (!isActive())
           {
             // Navigation self-initialisation.
             startFilter(msg);
@@ -279,7 +276,7 @@ namespace Navigation
         void
         consume(const IMC::LblRange* msg)
         {
-          if (!m_active)
+          if (!isActive())
             return;
 
           if (m_time_without_gps.overflow())
@@ -418,7 +415,8 @@ namespace Navigation
           cop.message.set(*msg);
           dispatch(cop);
 
-          m_active = true;
+          requestActivation();
+
           Memory::replace(m_origin, new IMC::GpsFix(*msg));
 
           // Set beacons if data is logged.
