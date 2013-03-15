@@ -79,7 +79,10 @@ namespace Simulators
         Tasks::Periodic(name, ctx),
         m_prng(NULL)
       {
-        // Retrieve configuration parameters.
+        // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER);
+
         param("Standard Deviation - Ground Velocity", m_args.stdev_gvel)
         .units(Units::MeterPerSecond)
         .defaultValue("0.004")

@@ -115,7 +115,10 @@ namespace Simulators
         m_lbl_cfg(NULL),
         m_prng(NULL)
       {
-        // Retrieve configuration parameters.
+        // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER);
+
         param("Ping Delay", m_args.ping_delay)
         .units(Units::Second)
         .defaultValue("1.0")
