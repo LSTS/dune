@@ -50,25 +50,21 @@ namespace Supervisors
 
     struct Arguments
     {
-      std::vector<std::string> idle_elbs;
-      std::vector<std::string> plan_elbs;
-      std::vector<std::string> manual_elbs;
+      std::vector<std::string> elabels[MODE_COUNT];
     };
 
     struct Task: public DUNE::Tasks::Periodic
     {
-      // Task arguments.
+      //! Task arguments.
       Arguments m_args;
-      // Entity control message.
-      IMC::EntityControl m_ectl;
-      // Entity Ids by mode.
-      std::set<unsigned> m_eids[MODE_COUNT];
-      // All Entity Ids regardeless of mode.
-      std::set<unsigned> m_all_eids;
-      // Current system mode.
+      //! Current system mode.
       Modes m_mode;
-      // New system modem.
+      //! New system modem.
       Modes m_new_mode;
+      //! All entities names..
+      std::set<std::string> m_elabels_all;
+      //! Entity names by mode.
+      std::set<std::string> m_elabels[MODE_COUNT];
 
       Task(const std::string& name, Tasks::Context& ctx):
         Periodic(name, ctx),
@@ -76,19 +72,17 @@ namespace Supervisors
         m_new_mode(MODE_NONE)
       {
         // Define configuration parameters.
-        param("Idle Mode - Entity Labels", m_args.idle_elbs)
+        param("Idle Mode - Entity Labels", m_args.elabels[MODE_IDLE])
         .defaultValue("")
         .description("List of entity labels that should be enabled on idle mode");
 
-        param("Plan Mode - Entity Labels", m_args.plan_elbs)
+        param("Plan Mode - Entity Labels", m_args.elabels[MODE_PLAN])
         .defaultValue("")
         .description("List of entity labels that should be enabled on plan execution mode");
 
-        param("Manual Mode - Entity Labels", m_args.manual_elbs)
+        param("Manual Mode - Entity Labels", m_args.elabels[MODE_MANUAL])
         .defaultValue("")
         .description("List of entity labels that should be enabled on remote operation mode");
-
-        m_ectl.setDestination(getSystemId());
 
         // Register listeners.
         bind<IMC::VehicleState>(this);
@@ -97,56 +91,19 @@ namespace Supervisors
       void
       onResourceInitialization(void)
       {
-        // Initialize entity state.
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
-      onEntityResolution(void)
+      onUpdateParameters(void)
       {
-        for (unsigned i = 0; i < m_args.idle_elbs.size(); ++i)
-        {
-          try
-          {
-            unsigned eid = resolveEntity(m_args.idle_elbs[i]);
-            m_eids[MODE_IDLE].insert(eid);
-            m_all_eids.insert(eid);
-          }
-          catch (std::runtime_error& e)
-          {
-            war("failed to resolve entity '%s': %s",
-                m_args.idle_elbs[i].c_str(), e.what());
-          }
-        }
+        m_elabels_all.clear();
 
-        for (unsigned i = 0; i < m_args.plan_elbs.size(); ++i)
+        for (unsigned i = 0; i < MODE_COUNT; ++i)
         {
-          try
-          {
-            unsigned eid = resolveEntity(m_args.plan_elbs[i]);
-            m_eids[MODE_PLAN].insert(eid);
-            m_all_eids.insert(eid);
-          }
-          catch (std::runtime_error& e)
-          {
-            war("failed to resolve entity '%s': %s",
-                m_args.plan_elbs[i].c_str(), e.what());
-          }
-        }
-
-        for (unsigned i = 0; i < m_args.manual_elbs.size(); ++i)
-        {
-          try
-          {
-            unsigned eid = resolveEntity(m_args.manual_elbs[i]);
-            m_eids[MODE_MANUAL].insert(eid);
-            m_all_eids.insert(eid);
-          }
-          catch (std::runtime_error& e)
-          {
-            war("failed to resolve entity '%s': %s",
-                m_args.manual_elbs[i].c_str(), e.what());
-          }
+          m_elabels[i].clear();
+          m_elabels[i].insert(m_args.elabels[i].begin(), m_args.elabels[i].end());
+          m_elabels_all.insert(m_elabels[i].begin(), m_elabels[i].end());
         }
       }
 
@@ -171,6 +128,20 @@ namespace Supervisors
       }
 
       void
+      sendActivation(const std::string& name, const std::string& value)
+      {
+        IMC::EntityParameter parm;
+        parm.name = "Active";
+        parm.value = value;
+
+        IMC::SetEntityParameters eparm;
+        eparm.name = name;
+        eparm.params.push_back(parm);
+
+        dispatch(eparm);
+      }
+
+      void
       task(void)
       {
         if (m_new_mode == MODE_NONE)
@@ -179,17 +150,13 @@ namespace Supervisors
         if (m_new_mode == m_mode)
           return;
 
-        std::set<unsigned>::iterator itr = m_all_eids.begin();
-        for (; itr != m_all_eids.end(); ++itr)
+        std::set<std::string>::const_iterator itr = m_elabels_all.begin();
+        for (; itr != m_elabels_all.end(); ++itr)
         {
-          m_ectl.setDestinationEntity(*itr);
-
-          if (m_eids[m_new_mode].find(*itr) == m_eids[m_new_mode].end())
-            m_ectl.op = IMC::EntityControl::ECO_DEACTIVATE;
+          if (m_elabels[m_new_mode].find(*itr) == m_elabels[m_new_mode].end())
+            sendActivation(*itr, "false");
           else
-            m_ectl.op = IMC::EntityControl::ECO_ACTIVATE;
-
-          dispatch(m_ectl);
+            sendActivation(*itr, "true");
         }
 
         m_mode = m_new_mode;
