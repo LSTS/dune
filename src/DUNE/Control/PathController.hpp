@@ -43,6 +43,9 @@ namespace DUNE
 {
   namespace Control
   {
+    //! Estimated time of arrival factor
+    static const double c_time_factor = 5;
+
     // Export DLL Symbol.
     class DUNE_DLL_SYM PathController;
 
