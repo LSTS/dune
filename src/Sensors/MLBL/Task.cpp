@@ -211,8 +211,6 @@ namespace Sensors
       unsigned m_addr;
       // Bitfield with results of last processInput().
       unsigned m_result;
-      // True if pinging is active.
-      bool m_active;
       // Time of last serial port input.
       double m_last_input;
       // Current sound speed (m/s).
@@ -228,10 +226,12 @@ namespace Sensors
         m_last_range(0),
         m_last_range_report(0),
         m_result(RS_NONE),
-        m_active(false),
         m_sound_speed_eid(-1)
       {
         // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
         .description("Serial port device used to communicate with the sensor");
@@ -316,7 +316,6 @@ namespace Sensors
         // Register handlers.
         bind<IMC::LblConfig>(this);
         bind<IMC::QueryEntityState>(this);
-        bind<IMC::EntityControl>(this);
         bind<IMC::SoundSpeed>(this);
         bind<IMC::EstimatedState>(this);
       }
@@ -684,7 +683,7 @@ namespace Sensors
           m_last_input = Clock::get();
 
           if (m_state != STA_NO_BEACONS)
-            m_state = m_active ? STA_ACTIVE : STA_IDLE;
+            m_state = isActive() ? STA_ACTIVE : STA_IDLE;
 
           m_cmds.value.assign(sanitize(m_bfr));
           dispatch(m_cmds);
@@ -823,7 +822,7 @@ namespace Sensors
             }
 
             if (m_state != STA_ERR_COM && m_state != STA_ERR_SRC && m_state != STA_ERR_STP)
-              m_state = m_active ? STA_ACTIVE : STA_IDLE;
+              m_state = isActive() ? STA_ACTIVE : STA_IDLE;
         }
 
         if (msg->op == IMC::LblConfig::OP_GET_CFG)
@@ -855,15 +854,6 @@ namespace Sensors
       {
         (void)msg;
         onReportEntityState();
-      }
-
-      void
-      consume(const IMC::EntityControl* msg)
-      {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
-
-        m_active = (msg->op == IMC::EntityControl::ECO_ACTIVATE);
       }
 
       void
@@ -941,7 +931,7 @@ namespace Sensors
           if (Clock::get() >= (m_last_input + c_input_tout))
             m_state = STA_ERR_COM;
 
-          if (m_active)
+          if (isActive())
           {
             ping();
 
