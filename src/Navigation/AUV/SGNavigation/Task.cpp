@@ -208,7 +208,7 @@ namespace Navigation
           resetKalman();
 
           // Register callbacks
-          bind<IMC::EntityControl>(this);
+          bind<IMC::EntityActivationState>(this);
         }
 
         void
@@ -272,12 +272,12 @@ namespace Navigation
         }
 
         void
-        consume(const IMC::EntityControl* msg)
+        consume(const IMC::EntityActivationState* msg)
         {
-          if (msg->getDestinationEntity() != m_imu_eid)
+          if (msg->getSourceEntity() != m_imu_eid)
             return;
 
-          if (msg->op == IMC::EntityControl::ECO_ACTIVATE)
+          if (msg->state == IMC::EntityActivationState::EAS_ACTIVE)
           {
             // Start integrating heading rates and use IMU data.
             m_integ_yrate = true;
@@ -299,7 +299,7 @@ namespace Navigation
                 m_kal.setMeasurementNoise(NUM_OUT + i, m_args.lbl_noise_with_imu);
             }
           }
-          else
+          else if (msg->state == IMC::EntityActivationState::EAS_INACTIVE)
           {
             // Stop integrate heading rates and use AHRS data.
             m_integ_yrate = false;
