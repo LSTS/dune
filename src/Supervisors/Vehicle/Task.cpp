@@ -52,8 +52,6 @@ namespace Supervisors
 
     struct Arguments
     {
-      //! Duration of vehicle calibration commands.
-      double calibration_time;
       //! Relevant entities when performing a safe plan.
       std::vector<std::string> safe_ents;
     };
@@ -84,11 +82,6 @@ namespace Supervisors
         m_switch_time(-1.0),
         m_in_safe_plan(false)
       {
-        param("Minimum Calibration Time", m_args.calibration_time)
-        .defaultValue("10")
-        .units(Units::Second)
-        .description("Duration of vehicle calibration commands");
-
         param("Safe Entities", m_args.safe_ents)
         .defaultValue("")
         .description("Relevant entities when performing a safe plan");
@@ -409,9 +402,10 @@ namespace Supervisors
           reset();
 
         changeMode(IMC::VehicleState::VS_CALIBRATION);
-        m_calibration.duration = std::max((uint16_t)m_args.calibration_time,
-                                          (uint16_t)msg->calib_time);
+
+        m_calibration.duration = msg->calib_time;
         dispatch(m_calibration);
+
         m_switch_time = Clock::get();
 
         requestOK(msg, String::str(DTR("calibrating vehicle for %u seconds"),

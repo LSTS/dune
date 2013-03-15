@@ -59,6 +59,8 @@ namespace Plan
       float speed_conv_rpm;
       //! Conv to convert from actuation to meters per second
       float speed_conv_act;
+      //! Duration of vehicle calibration process.
+      float calibration_time;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -120,6 +122,11 @@ namespace Plan
         param("Actuation Conversion Factor", m_args.speed_conv_act)
         .defaultValue("0.02")
         .description("Factor to convert from actuation to meters per second");
+
+        param("Minimum Calibration Time", m_args.calibration_time)
+        .defaultValue("10")
+        .units(Units::Second)
+        .description("Duration of vehicle calibration commands");
 
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
@@ -684,6 +691,8 @@ namespace Plan
 
           if (m_plan->getCalibrationTime() > 0.0)
             ct = (uint16_t)m_plan->getCalibrationTime();
+
+          ct = std::max((uint16_t)m_args.calibration_time, ct);
 
           if (!startCalibration(ct))
             return stopped;
