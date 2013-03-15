@@ -48,18 +48,10 @@ namespace Control
       //! %Task arguments.
       struct Arguments
       {
-        //! Serial port device.
-        std::string uart_dev;
-        //! Serial port baud rate.
-        unsigned uart_baud;
         //! Communications timeout
         uint8_t comm_timeout;
         //! Use Ardupilot's waypoint tracker
         bool ardu_tracker;
-        //! UDP Port for Mission Planner connection
-        uint16_t port;
-        //! Address for Mission Planner connection
-        Address addr;
         //! Port for SITL simulations
         uint16_t TCP_port;
         //! Address for SITL simulations
@@ -70,8 +62,6 @@ namespace Control
 
       struct Task: public DUNE::Tasks::Task
       {
-        //! Serial port device.
-        SerialPort* m_uart;
         //! Task arguments.
         Arguments m_args;
         //! Arduino packet handling
@@ -103,10 +93,7 @@ namespace Control
         fp32_t ref_hei;
         //! Simulated acceleration
         fp64_t m_acc_x, m_acc_y, m_acc_z;
-        //! UDP socket for APM planner
-        UDPSocket m_UDP_sock;
-        Address m_UDP_addr;
-        //! TCP socket for SITL simulation
+        //! TCP socket
         TCPSocket* m_TCP_sock;
         Address m_TCP_addr;
         uint16_t m_TCP_port;
@@ -124,7 +111,6 @@ namespace Control
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
-          m_uart(NULL),
           ref_lat(0.0),
           ref_lon(0.0),
           ref_hei(0.0),
@@ -139,14 +125,6 @@ namespace Control
           m_current_wp(0),
           m_critical(true)
         {
-          param("Serial Port - Device", m_args.uart_dev)
-          .defaultValue("")
-          .description("Serial port used to connect to Ardupilot");
-
-          param("Serial Port - Baud Rate", m_args.uart_baud)
-          .defaultValue("57600")
-          .description("Serial port baud rate");
-
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
           .maximumValue("60")
@@ -158,25 +136,13 @@ namespace Control
           .defaultValue("false")
           .description("Use Ardupilot's waypoint tracker");
 
-          param("UDP Port", m_args.port)
-          .defaultValue("14550")
-          .description("Port for connection to APM Mission Planner");
-
-          param("UDP Address", m_args.addr)
-          .defaultValue("127.0.0.1")
-          .description("Address for connection to APM Mission Planner");
-
-          param("SITL Port", m_args.TCP_port)
+          param("TCP - Port", m_args.TCP_port)
           .defaultValue("5760")
           .description("Port for connection to SITL Simulation");
 
-          param("SITL Address", m_args.TCP_addr)
+          param("TCP - Address", m_args.TCP_addr)
           .defaultValue("127.0.0.1")
           .description("Address for connection to SITL Simulation");
-
-          param("Enable SITL", m_args.tcp)
-          .defaultValue("false")
-          .description("Use TCP instead of Serial for SITL");
 
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
@@ -215,35 +181,26 @@ namespace Control
         void
         onResourceRelease(void)
         {
-          Memory::clear(m_uart);
+          Memory::clear(m_TCP_sock);
         }
 
         void
         onResourceAcquisition(void)
         {
-          if(m_args.tcp)
-          {
-            m_uart = 0;
-            m_TCP_addr = m_args.TCP_addr;
-            m_TCP_port = m_args.TCP_port;
-            m_TCP_sock = new TCPSocket;
+          m_TCP_addr = m_args.TCP_addr;
+          m_TCP_port = m_args.TCP_port;
+          m_TCP_sock = new TCPSocket;
 
-            try
-            {
-              m_TCP_sock->connect(m_TCP_addr, m_TCP_port);
-              m_TCP_sock->addToPoll(m_iom);
-            }
-            catch(std::exception& e)
-            {
-              delete m_TCP_sock;
-              m_TCP_sock = 0;
-              throw;
-            }
-          }
-          else
+          try
           {
+            m_TCP_sock->connect(m_TCP_addr, m_TCP_port);
+            m_TCP_sock->addToPoll(m_iom);
+          }
+          catch(std::exception& e)
+          {
+            delete m_TCP_sock;
             m_TCP_sock = 0;
-            m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+            throw;
           }
         }
 
@@ -471,15 +428,10 @@ namespace Control
         void
         onMain(void)
         {
-          //! I/O multiplexer.
-          IOMultiplexing iom;
-          m_UDP_sock.addToPoll(iom);
-
           while (!stopping())
           {
             // Handle data
             handleArdupilotData();
-
 
             if(m_external || m_critical)
             {
@@ -491,28 +443,12 @@ namespace Control
 
             // Handle IMC messages from bus
             consumeMessages();
-
-            // Check for UDP messages
-            try
-            {
-              if (iom.poll(1.0))
-              {
-                if (m_UDP_sock.wasTriggered(iom))
-                  handleUDP(m_UDP_sock);
-              }
-            }
-            catch (...)
-            { }
           }
         }
 
         bool
         poll(double timeout)
         {
-          if(m_uart)
-          {
-            return m_uart->hasNewData(timeout) == System::IOMultiplexing::PRES_OK;
-          }
           if(m_TCP_sock)
           {
             if (m_iom.poll(timeout))
@@ -526,10 +462,6 @@ namespace Control
         int
         sendData(uint8_t* bfr, int size)
         {
-          if(m_uart)
-          {
-            return m_uart->write((char*)bfr);
-          }
           if(m_TCP_sock)
           {
             return m_TCP_sock->write((char*)bfr, size);
@@ -540,10 +472,6 @@ namespace Control
         int
         receiveData(uint8_t* buf)
         {
-          if(m_uart)
-          {
-            return m_uart->read(buf, sizeof(buf));
-          }
           if(m_TCP_sock)
           {
             try
@@ -588,11 +516,6 @@ namespace Control
 
               if (mavlink_parse_char(MAVLINK_COMM_0, m_buf[i], &msg, &status))
               {
-                //! Send to UDP client
-                uint8_t buf[512];
-                int buf_s = mavlink_msg_to_send_buffer(buf, &msg);
-                m_UDP_sock.write((char*)buf, buf_s, m_args.addr, m_args.port);
-
                 switch ((int)msg.msgid)
                 {
                   default:
@@ -937,33 +860,6 @@ namespace Control
             case MAV_CMD_NAV_LAND:
               m_critical = true;
               break;
-          }
-        }
-
-        void
-        handleUDP(UDPSocket& sock)
-        {
-          mavlink_message_t msg;
-          mavlink_status_t status;
-          uint8_t bufr[512];
-          int n = sock.read((char*)bufr, sizeof(bufr), &m_UDP_addr);
-
-          if (n < 0)
-          {
-            err(DTR("receive error over UDP port"));
-            return;
-          }
-
-          for (int i = 0; i < n; i++)
-          {
-            if (mavlink_parse_char(MAVLINK_COMM_0, bufr[i], &msg, &status))
-            {
-              debug("SENDING: %u", msg.msgid);
-              //! Send to Ardupilot
-              uint8_t buf[512];
-              int buf_s = mavlink_msg_to_send_buffer(buf, &msg);
-              sendData(buf,buf_s);
-            }
           }
         }
       };
