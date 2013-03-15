@@ -883,7 +883,8 @@ namespace Plan
       void
       reportProgress(void)
       {
-        if (m_plan == NULL || !execMode())
+        // Must be executing or calibrating to be able to compute progress
+        if (m_plan == NULL || (!execMode() && !initMode()))
           return;
 
         m_pcs.plan_progress = m_plan->updateProgress(&m_mcs);

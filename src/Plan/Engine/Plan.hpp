@@ -356,6 +356,14 @@ namespace Plan
         return getExecutionDuration();
       }
 
+      //! Get execution percentage
+      //! @return percentage of the plan represented by the execution
+      inline float
+      getExecutionPercentage(void) const
+      {
+        return getExecutionDuration() / getTotalDuration() * 100.0;
+      }
+
       //! Get current plan progress
       //! @param[in] mcs pointer to maneuver control state message
       //! @return progress in percent (-1.0 if unable to compute)
@@ -495,12 +503,13 @@ namespace Plan
           return -1.0;
 
         float total_duration = getTotalDuration();
+        float exec_duration = getExecutionDuration();
 
         // Check if its calibrating
         if (m_in_calib)
         {
-          float time_left = m_calib_timer.getRemaining() + getExecutionDuration();
-          m_progress = 100 * trimValue(1.0 - time_left / total_duration, 0.0, 1.0);
+          float time_left = m_calib_timer.getRemaining() + exec_duration;
+          m_progress = 100.0 * trimValue(1.0 - time_left / total_duration, 0.0, 1.0);
           return m_progress;
         }
 
@@ -522,8 +531,11 @@ namespace Plan
 
         IMC::Message* man = m_graph.find(getCurrentId())->second.pman->data.get();
 
-        // Get progress
-        float prog = PlanProgress::compute(man, mcs, itr->second, total_duration);
+        // Get execution progress
+        float exec_prog = PlanProgress::compute(man, mcs,
+                                                itr->second, exec_duration);
+
+        float prog = 100.0 - getExecutionPercentage() * (1.0 - exec_prog / 100.0);
 
         // If negative, then unable to compute
         // But keep last value of progress if it is not invalid
