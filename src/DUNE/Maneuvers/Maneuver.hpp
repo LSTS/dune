@@ -60,7 +60,8 @@ namespace DUNE
       void
       onResourceInitialization(void)
       {
-        requestDeactivation();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        unlock();
       }
 
       //! On maneuver activation
