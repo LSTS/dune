@@ -55,10 +55,14 @@ namespace DUNE
       if (speed == 0.0)
         return -1.0;
 
-      float value = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
+      float travelled = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
       last_pos.z = maneuver->z;
       last_pos.z_units = maneuver->z_units;
-      durations.push_back(value / speed + last_dur);
+
+      // compensate with path controller's eta factor
+      travelled = compensate(travelled, speed);
+
+      durations.push_back(travelled / speed + last_dur);
       return durations[0];
     }
 
@@ -77,6 +81,12 @@ namespace DUNE
         default:
           return 0.0;
       }
+    }
+
+    inline float
+    PlanDuration::compensate(float distance, float speed)
+    {
+      return std::max(0.0, distance - Control::c_time_factor * speed);
     }
 
 #ifdef DUNE_IMC_FOLLOWPATH
@@ -105,7 +115,10 @@ namespace DUNE
         wlon = maneuver->lon;
         Coordinates::WGS84::displace((*itr)->x, (*itr)->y, &wlat, &wlon);
 
-        total_duration += distanceAndMove(wlat, wlon, last_pos) / speed;
+        float travelled = distanceAndMove(wlat, wlon, last_pos);
+
+        // compensate with path controller's eta factor
+        total_duration += compensate(travelled, speed) / speed;
         durations.push_back(total_duration);
       }
 
@@ -131,7 +144,7 @@ namespace DUNE
       double lon;
       rstages.getFirstPoint(&lat, &lon);
 
-      double distance = distanceAndMove(lat, lon, last_pos);
+      float distance = distanceAndMove(lat, lon, last_pos);
       durations.push_back(distance / speed + last_dur);
 
       distance += rstages.getDistance(&last_pos.lat, &last_pos.lon);
@@ -139,7 +152,11 @@ namespace DUNE
       std::vector<float>::const_iterator itr = rstages.getDistancesBegin();
 
       for (; itr != rstages.getDistancesEnd(); ++itr)
-        durations.push_back(*itr / speed + durations.back());
+      {
+        // compensate with path controller's eta factor
+        float travelled = compensate(*itr, speed);
+        durations.push_back(travelled / speed + durations.back());
+      }
 
       last_pos.z = maneuver->z;
       last_pos.z_units = maneuver->z_units;
@@ -157,9 +174,13 @@ namespace DUNE
       if (speed == 0.0)
         return -1.0;
 
-      double horz_dist = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
-      double dur = (horz_dist / std::cos(maneuver->pitch)) / speed;
-      durations.push_back(dur + last_dur);
+      float horz_dist = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
+      float travelled = horz_dist / std::cos(maneuver->pitch);
+
+      // compensate with path controller's eta factor
+      travelled = compensate(travelled, speed);
+
+      durations.push_back(travelled / speed + last_dur);
 
       last_pos.z = maneuver->z;
       last_pos.z_units = maneuver->z_units;
@@ -177,11 +198,16 @@ namespace DUNE
       if (speed == 0.0)
         return -1.0;
 
-      double horz_dist = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
-      double amplitude = std::fabs(last_pos.z - maneuver->end_z);
-      double real_dist = amplitude / std::sin(c_rated_pitch);
+      float horz_dist = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
+      float amplitude = std::fabs(last_pos.z - maneuver->end_z);
+      float real_dist = amplitude / std::sin(c_rated_pitch);
 
-      durations.push_back((horz_dist + real_dist) / speed + last_dur);
+      float travelled = horz_dist + real_dist;
+
+      // compensate with path controller's eta factor
+      travelled = compensate(travelled, speed);
+
+      durations.push_back(travelled / speed + last_dur);
 
       last_pos.z = maneuver->end_z;
       last_pos.z_units = maneuver->end_z_units;
@@ -207,8 +233,12 @@ namespace DUNE
         last_pos.z = 0.0;
         last_pos.z_units = (uint8_t)IMC::Z_DEPTH;;
 
-        float dist = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
-        travel_time = dist / speed;
+        float travelled = distanceAndMove(maneuver->lat, maneuver->lon, last_pos);
+        
+        // compensate with path controller's eta factor
+        travelled = compensate(travelled, speed);
+
+        travel_time = travelled / speed;
       }
       else
       {

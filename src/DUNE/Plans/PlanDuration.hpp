@@ -33,6 +33,7 @@
 #include <DUNE/IMC.hpp>
 #include <DUNE/Maneuvers.hpp>
 #include <DUNE/Math.hpp>
+#include <DUNE/Control.hpp>
 
 namespace DUNE
 {
@@ -130,6 +131,12 @@ namespace DUNE
       template <typename Type>
       static float
       convertSpeed(const Type* maneuver, const SpeedConversion& conv);
+
+      //! Compensate travelled distance with path control time factor
+      //! @param[in] dist travelled distance to compensate
+      //! @return compensated travelled distance
+      static float
+      compensate(float distance, float speed);
 
 #ifdef DUNE_IMC_GOTO
       //! Parse a Goto maneuver
