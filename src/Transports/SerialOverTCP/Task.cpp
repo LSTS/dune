@@ -74,7 +74,7 @@ namespace Transports
         .defaultValue("9600")
         .description("Serial port baud rate");
 
-        param("TCP - Port", m_args.uart_baud)
+        param("TCP - Port", m_args.tcp_port)
         .defaultValue("9999")
         .description("TCP port to listen on");
       }
