@@ -285,9 +285,9 @@ namespace DUNE
 
           Math::Matrix j2 = Math::Matrix(j2_elements, 3, 3);
 
-          double euler[3] = {m_drv_roll.check(),
-                             m_drv_pitch.check(),
-                             m_drv_yaw.check()};
+          double euler[3] = {m_deriv_roll.check(),
+                             m_deriv_pitch.check(),
+                             m_deriv_yaw.check()};
 
           Math::Matrix ea = Math::Matrix(euler, 3, 1);
 
@@ -610,13 +610,13 @@ namespace DUNE
       //! Received valid water velocity message.
       bool m_valid_wv;
       //! Derivative for roll.
-      Math::Derivative<double> m_drv_roll;
+      Math::Derivative<double> m_deriv_roll;
       //! Derivative for pitch.
-      Math::Derivative<double> m_drv_pitch;
+      Math::Derivative<double> m_deriv_pitch;
       //! Derivative for yaw.
-      Math::Derivative<double> m_drv_yaw;
+      Math::Derivative<double> m_deriv_yaw;
       //! Derivative for heave.
-      Math::Derivative<double> m_drv_heave;
+      Math::Derivative<double> m_deriv_heave;
 
     private:
       //! Routine to add a new beacon.
@@ -726,6 +726,14 @@ namespace DUNE
       double m_accel_x_bfr;
       double m_accel_y_bfr;
       double m_accel_z_bfr;
+      // Moving Average for roll angle.
+      Math::MovingAverage<double>* m_avg_phi;
+      // Moving Average for pitch angle.
+      Math::MovingAverage<double>* m_avg_theta;
+      // Moving Average for heading angle.
+      Math::MovingAverage<double>* m_avg_psi;
+      //! Number of samples to average euler angles.
+      unsigned m_avg_euler_samples;
       //! Virtual Angular Velocities.
       Math::Matrix m_virtual_avel;
       //! Depth offset value.
@@ -733,7 +741,7 @@ namespace DUNE
       //! Moving Average for heave.
       Math::MovingAverage<double>* m_avg_heave;
       //! Number of samples to average heave.
-      int m_avg_heave_samples;
+      unsigned m_avg_heave_samples;
       //! Z reference.
       double m_z_ref;
       //! Reject GPS fixes based on desired depth.
