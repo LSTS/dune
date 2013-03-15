@@ -189,18 +189,24 @@ namespace Control
         {
           m_TCP_addr = m_args.TCP_addr;
           m_TCP_port = m_args.TCP_port;
-          m_TCP_sock = new TCPSocket;
+          openConnection();
+        }
 
+        void
+        openConnection(void)
+        {
           try
           {
+            m_TCP_sock = new TCPSocket;
             m_TCP_sock->connect(m_TCP_addr, m_TCP_port);
             m_TCP_sock->addToPoll(m_iom);
+            inf(DTR("ArduPilot interface initialized"));
           }
           catch(std::exception& e)
           {
-            delete m_TCP_sock;
             m_TCP_sock = 0;
-            throw;
+            war("Connection failed, will try again");
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
           }
         }
 
@@ -431,7 +437,15 @@ namespace Control
           while (!stopping())
           {
             // Handle data
-            handleArdupilotData();
+            if(m_TCP_sock)
+            {
+              handleArdupilotData();
+            }
+            else
+            {
+              Time::Delay::wait(1.0);
+              openConnection();
+            }
 
             if(m_external || m_critical)
             {
