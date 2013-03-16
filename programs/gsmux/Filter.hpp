@@ -42,7 +42,7 @@ static const unsigned c_pubx04_fields = 10;
 class Filter
 {
 public:
-  Filter(FILE* fd):
+  Filter(std::FILE* fd):
     m_fd(fd)
   {
     printHeader();
@@ -97,7 +97,7 @@ public:
 
     if (data[2] != 0x32)
     {
-      fprintf(stderr, "WARNING: spurious data.\n");
+      std::fprintf(stderr, "WARNING: spurious data.\n");
     }
 
     const uint8_t* ptr = &data[4];
@@ -123,20 +123,20 @@ public:
   void
   printHeader(void)
   {
-    fprintf(m_fd,
+    std::fprintf(m_fd,
             "Sync_Lost"
 #define FIELD(label, var, type, fmt) "\t" label
 #include "Fields.def"
             "\r\n"
             );
 
-    fflush(m_fd);
+    std::fflush(m_fd);
   }
 
   void
   print(unsigned index)
   {
-    fprintf(m_fd,
+    std::fprintf(m_fd,
             "%u"
 #define FIELD(label, var, type, fmt) "\t" fmt
 #include "Fields.def"
@@ -284,7 +284,7 @@ private:
   {
     if (parts.size() < c_pubx00_fields)
     {
-      fprintf(stderr, "WARNING: invalid PUBX,00 sentence\n");
+      std::fprintf(stderr, "WARNING: invalid PUBX,00 sentence\n");
       return;
     }
 
@@ -333,7 +333,7 @@ private:
   }
 
   //! Output file descriptor.
-  FILE* m_fd;
+  std::FILE* m_fd;
   //! Status.
   uint8_t m_sync_status[100];
   //! Sample millisecond.

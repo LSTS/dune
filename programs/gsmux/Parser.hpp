@@ -31,6 +31,7 @@
 // ISO C++ 98 headers.
 #include <vector>
 #include <string>
+#include <cstdio>
 
 // Local headers.
 #include "Filter.hpp"
@@ -49,7 +50,7 @@ enum Channels
 class Parser
 {
 public:
-  Parser(FILE* fd):
+  Parser(std::FILE* fd):
     m_filter(fd),
     m_block_cnt(0)
   {
