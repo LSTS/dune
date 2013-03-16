@@ -277,11 +277,9 @@ namespace Navigation
           if (msg->getSourceEntity() != m_imu_eid)
             return;
 
-          err("that's right %d", msg->getSourceEntity());
           if (msg->state == IMC::EntityActivationState::EAS_ACTIVE)
           {
             // Start integrating heading rates and use IMU data.
-            err("Major fuck.");
             m_integ_yrate = true;
             m_agvel_eid = m_imu_eid;
             debug("activating IMU");
@@ -495,8 +493,6 @@ namespace Navigation
 
           // Kalman Prediction.
           m_kal.predict();
-
-          war("Integration rate: %d", m_integ_yrate);
 
           // Use compass readings or integrate yaw-rate data to compute heading.
           if (m_integ_yrate)
