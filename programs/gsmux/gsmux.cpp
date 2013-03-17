@@ -29,6 +29,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <cstdio>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -56,14 +57,14 @@ main(int argc, char** argv)
   std::string bin_name = prefix + ".bin";
   std::string tsv_name = prefix + ".tsv";
 
-  FILE* bin = fopen(bin_name.c_str(), "wb");
+  std::FILE* bin = std::fopen(bin_name.c_str(), "wb");
   if (bin == NULL)
   {
     std::cerr << "ERROR: failed to open file '" << bin_name << "'" << std::endl;
     return 1;
   }
 
-  FILE* tsv = fopen(tsv_name.c_str(), "w");
+  std::FILE* tsv = std::fopen(tsv_name.c_str(), "w");
   if (tsv == NULL)
   {
     std::cerr << "ERROR: failed to open file '" << tsv_name << "'" << std::endl;

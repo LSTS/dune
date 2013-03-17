@@ -61,7 +61,7 @@ public:
     if (m_sync_status[0] == 1)
       return;
 
-    fflush(m_fd);
+    std::fflush(m_fd);
 
     m_sample_msec = 0;
 
