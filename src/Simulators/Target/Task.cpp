@@ -34,34 +34,115 @@ namespace Simulators
   {
     using DUNE_NAMESPACES;
 
-    struct Task: public DUNE::Tasks::Task
+    //! %Task arguments.
+    struct Arguments
     {
+      //! Target Latitude
+      fp64_t lat;
+      //! Target Longitude
+      fp64_t lon;
+      //! Target Height
+      fp32_t hei;
+      //! Target Max Speed
+      fp32_t max_speed;
+      //! Target Name
+      std::string target;
+    };
+
+    struct Task: public Tasks::Periodic
+    {
+      //! Task arguments.
+      Arguments m_args;
+      //! PRNG handle.
+      Random::Generator* m_prng;
+      //! Target Course Over Ground
+      fp32_t m_cog;
+      //! Target Speed Over Ground
+      fp32_t m_sog;
+      //! Target Latitude
+      fp64_t m_lat;
+      //! Target Longitude
+      fp64_t m_lon;
+
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx)
+        Tasks::Periodic(name, ctx),
+        m_cog(0.0),
+        m_sog(0.0)
       {
-        bind<GpsFix>(this);
+        param("Latitude", m_args.lat)
+        .defaultValue("0")
+        .description("Initial Target Latitude");
+
+        param("Longitude", m_args.lon)
+        .defaultValue("0")
+        .description("Initial Target Longitude");
+
+        param("Height", m_args.hei)
+        .defaultValue("0")
+        .description("Initial Target Height");
+
+        param("Max Speed", m_args.max_speed)
+        .defaultValue("1")
+        .description("Maximum Target Speed in m/s");
+
+        param("Target Name", m_args.target)
+        .defaultValue("lauv-seacon-1")
+        .description("Target Name");
+      }
+
+      //! Acquire resources
+      void
+      onResourceAcquisition(void)
+      {
+        m_prng = Random::Factory::create(Random::Factory::c_default, -1);
+      }
+
+      //! Release resources.
+      void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_prng);
       }
 
       void
-      consume(const GpsFix* gps_fix)
+      onUpdateParameters(void)
+      {
+        m_lat = Angles::radians(m_args.lat);
+        m_lon = Angles::radians(m_args.lon);
+      }
+
+      void
+      sendTarget(void)
       {
         IMC::Target trg;
 
-        trg.label = "lauv-seacon-1";
-        trg.lat = gps_fix->lat;
-        trg.lon = gps_fix->lon;
-        trg.z = gps_fix->height;
+        trg.label = m_args.target;
+
+        m_cog = m_prng->gaussian(m_cog, 0.05);
+        m_sog = m_prng->uniform(0, m_args.max_speed);
+
+        float t_step = 1 / getFrequency();
+
+        float n = std::cos(m_cog) * m_sog * t_step;
+        float e = std::sin(m_cog) * m_sog * t_step;
+
+        WGS84::displace(n, e, &m_lat, &m_lon);
+
+        trg.lat = m_lat;
+        trg.lon = m_lon;
+        trg.z = m_args.hei;
         trg.z_units = IMC::Z_HEIGHT;
-        trg.cog = gps_fix->cog;
-        trg.sog = gps_fix->sog;
+        trg.cog = m_cog;
+        trg.sog = m_sog;
 
         dispatch(trg);
+        debug("Target Sent");
       }
 
       void
-      onMain(void)
+      task(void)
       {
-        waitForMessages(1.0);
+        sendTarget();
       }
     };
   }
