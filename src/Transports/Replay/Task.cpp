@@ -67,7 +67,6 @@ namespace Transports
 
       double m_ts_delta;
       double m_start_time;
-      bool m_active;
 
       // Replay file handle
       std::ifstream* m_ifs;
@@ -147,7 +146,7 @@ namespace Transports
       void
       consume(const IMC::EstimatedState* es)
       {
-        if (!m_active)
+        if (!isActive())
           return;
 
         updateStats(m_sstats["x"], es->x - m_estate.x);
@@ -196,7 +195,7 @@ namespace Transports
       void
       startReplay(const std::string& file)
       {
-        if (m_active)
+        if (isActive())
           stopReplay();
 
         if (!Path(file).isFile())
@@ -260,7 +259,8 @@ namespace Transports
         m_next_stats = m_start_time + c_stats_period;
         delete m;
 
-        m_active = true;
+        requestActivation();
+
         war("%s '%s'", DTR("started replay of"), file.c_str());
         m_parser.reset();
       }
@@ -308,7 +308,8 @@ namespace Transports
       void
       reset(void)
       {
-        m_active = false;
+        requestDeactivation();
+
         if (m_ifs)
         {
           delete m_ifs;
@@ -330,7 +331,7 @@ namespace Transports
 
         while (!stopping())
         {
-          if (!m_active)
+          if (!isActive())
           {
             waitForMessages(1.0);
             continue;
@@ -338,7 +339,7 @@ namespace Transports
 
           consumeMessages(); // for possible ReplayControl requests
 
-          if (!m_active)
+          if (!isActive())
             continue;
 
           IMC::Message* m = 0;

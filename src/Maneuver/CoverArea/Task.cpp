@@ -43,7 +43,7 @@ namespace Maneuver
       IMC::EstimatedState m_estate;
       Math::Matrix m_rows;
       IMC::DesiredPath m_path;
-      bool m_moving, m_increase_row, m_arrived, m_active, m_last_on_row;
+      bool m_moving, m_increase_row, m_arrived, m_last_on_row;
       int m_current_row, m_times, m_param_times;
       double m_lat, m_lon, m_z, m_next_lat, m_next_lon, m_param_width;
 
@@ -77,7 +77,6 @@ namespace Maneuver
         m_current_row = -1;
         m_increase_row = false;
         m_moving = false;
-        m_active = false;
         m_arrived = true;
         m_last_on_row = true;
         m_times = m_param_times;
@@ -375,7 +374,6 @@ namespace Maneuver
         trace("%d rows found", m_rows.columns() / 2);
 
         m_moving = true;
-        m_active = true;
         enableMovement(true);
       }
 
@@ -384,7 +382,7 @@ namespace Maneuver
       {
         m_estate = *msg;
 
-        if(!m_active)
+        if (!isActive())
           return;
 
         if(m_moving)

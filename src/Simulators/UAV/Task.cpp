@@ -63,8 +63,6 @@ namespace Simulators
 
     struct Task: public DUNE::Tasks::Task
     {
-      //! Active flag
-      bool m_active;
       //! Simulation vehicle.
       UAVModel* m_model;
       //! Simulated position (X,Y,Z).
@@ -92,7 +90,6 @@ namespace Simulators
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_active(false),
         m_model(NULL),
         m_start_time(Clock::get()),
         m_last_update(Clock::get()),
@@ -231,7 +228,7 @@ namespace Simulators
       void
       consume(const IMC::DesiredRoll* msg)
       {
-        if (!m_active)
+        if (!isActive())
           return;
 
         m_bank_cmd = msg->value;
@@ -240,7 +237,7 @@ namespace Simulators
       void
       consume(const IMC::DesiredVelocity* msg)
       {
-        if (!m_active)
+        if (!isActive())
           return;
 
         m_speed_cmd = msg->value;
@@ -249,7 +246,7 @@ namespace Simulators
       void
       consume(const IMC::SetServoPosition* msg)
       {
-        if (!m_active)
+        if (!isActive())
           return;
 
         m_servo_pos(msg->id) = msg->value;
@@ -258,7 +255,7 @@ namespace Simulators
       void
       consume(const IMC::SetThrusterActuation* msg)
       {
-        if (!m_active)
+        if (!isActive())
           return;
 
         m_thruster_act = msg->value;

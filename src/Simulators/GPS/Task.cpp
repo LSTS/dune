@@ -90,14 +90,11 @@ namespace Simulators
       IMC::SimulatedState m_sstate_at_fix;
       //! Origin for simulated state.
       IMC::GpsFix m_origin;
-      //! True if task is active, false otherwise.
-      bool m_active;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Periodic(name, ctx),
-        m_active(false)
+        Tasks::Periodic(name, ctx)
       {
         // Retrieve configuration parameters.
         param("Report Ground Velocity", m_args.report_gv)
@@ -148,14 +145,14 @@ namespace Simulators
         if (msg->getSourceEntity() == getEntityId())
           return;
 
-        m_active = true;
+        requestActivation();
         m_origin = *msg;
       }
 
       void
       consume(const IMC::SimulatedState* msg)
       {
-        if (!m_active)
+        if (!isActive())
           return;
 
         if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
@@ -183,7 +180,7 @@ namespace Simulators
       task(void)
       {
         // Report invalid fixes when task not active or system is underwater.
-        if (!m_active || m_sstate.z > m_args.act_depth)
+        if (!isActive() || m_sstate.z > m_args.act_depth)
         {
           reportInvalidFix();
           return;

@@ -35,6 +35,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "PowerChannels.hpp"
+
 namespace Power
 {
   //! %PCTLv2 is responsible to interact with
@@ -113,7 +116,7 @@ namespace Power
       //! ADC conversion factors.
       std::vector<double> adc_factors[c_adcs_count];
       //! Power channels names.
-      std::string pwr_labels[c_pwrs_count];
+      std::string pwr_names[c_pwrs_count];
       //! Power channels states.
       unsigned pwr_states[c_pwrs_count];
       //! Leaks entity labels.
@@ -135,7 +138,7 @@ namespace Power
       //! Leak detection.
       IMC::EntityState m_leaks[c_leak_count];
       //! Power channels.
-      IMC::PowerChannelState m_pwrs[c_pwrs_count];
+      PowerChannels m_channels;
       //! Power operation.
       IMC::PowerOperation m_pwr_op;
       //! Power down is in progress.
@@ -144,6 +147,8 @@ namespace Power
       IMC::Temperature m_temp;
       //! Watchdog.
       Time::Counter<double> m_wdog;
+      //! State timer.
+      Time::Counter<double> m_state_timer;
       //! Task arguments.
       Arguments m_args;
 
@@ -192,8 +197,8 @@ namespace Power
 
         for (unsigned i = 0; i < c_pwrs_count; ++i)
         {
-          std::string option = String::str("Power Channel %u - Label", i);
-          param(option, m_args.pwr_labels[i]);
+          std::string option = String::str("Power Channel %u - Name", i);
+          param(option, m_args.pwr_names[i]);
 
           option = String::str("Power Channel %u - State", i);
           param(option, m_args.pwr_states[i])
@@ -233,15 +238,17 @@ namespace Power
           m_adcs[i] = IMC::Factory::produce(m_args.adc_messages[i]);
         }
 
+        m_channels.clear();
         for (unsigned i = 0; i < c_pwrs_count; ++i)
         {
-          m_pwrs[i].id = i;
-          m_pwrs[i].label = m_args.pwr_labels[i];
-
+          PowerChannel* channel = new PowerChannel;
+          channel->id = i;
+          channel->state.name = m_args.pwr_names[i];
           if (m_args.pwr_states[i] == 1)
-            m_pwrs[i].state = IMC::PowerChannelState::PCS_ON;
+            channel->state.state = IMC::PowerChannelState::PCS_ON;
           else
-            m_pwrs[i].state = IMC::PowerChannelState::PCS_OFF;
+            channel->state.state = IMC::PowerChannelState::PCS_OFF;
+          m_channels.add(i, channel);
         }
       }
 
@@ -288,16 +295,8 @@ namespace Power
       void
       onResourceRelease(void)
       {
-        uint8_t state = IMC::PowerChannelState::PCS_OFF;
         for (unsigned i = 0; i < c_pwrs_count; ++i)
-        {
-          if (m_args.pwr_states[i] == 1)
-            state = IMC::PowerChannelState::PCS_ON;
-          else
-            state = IMC::PowerChannelState::PCS_OFF;
-
-          setPowerChannelState(i, state);
-        }
+          setPowerChannelState(i, m_args.pwr_states[i] ? 1 : 0);
 
         for (uint8_t i = 0; i < c_led_count; ++i)
         {
@@ -315,8 +314,9 @@ namespace Power
 
         updateEEPROM();
 
-        for (unsigned i = 0; i < c_pwrs_count; ++i)
-          setPowerChannelState(i, m_pwrs[i].state);
+        std::map<unsigned, PowerChannel*>::const_iterator itr = m_channels.begin();
+        for ( ; itr != m_channels.end(); ++itr)
+          setPowerChannelState(itr->second->id, itr->second->state.state);
       }
 
       //! Update EEPROM data.
@@ -383,8 +383,13 @@ namespace Power
       processPowerInfo(const uint8_t* data)
       {
         uint32_t pwr = (data[8]) | (data[9] << 8) | (data[10] << 16);
-        for (unsigned i = 0; i < c_pwrs_count; ++i)
-          m_pwrs[i].state = (pwr & (1 << i)) ? IMC::PowerChannelState::PCS_ON : IMC::PowerChannelState::PCS_OFF;
+
+        std::map<unsigned, PowerChannel*>::const_iterator itr = m_channels.begin();
+        for ( ; itr != m_channels.end(); ++itr)
+        {
+          unsigned id = itr->second->id;
+          itr->second->state.state = (pwr & (1 << id)) ? IMC::PowerChannelState::PCS_ON : IMC::PowerChannelState::PCS_OFF;
+        }
       }
 
       //! Process device mode.
@@ -559,23 +564,29 @@ namespace Power
       void
       consume(const IMC::PowerChannelControl* msg)
       {
+        std::map<std::string, PowerChannel*>::const_iterator itr = m_channels.find_by_name(msg->name);
+        if (itr == m_channels.end_by_name())
+          return;
+
+        uint8_t id = itr->second->id;
+
         if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
         {
-          if (msg->id == 255)
+          if (id == 255)
           {
             m_proto.sendCommand(CMD_PWR_HLT, 0, 0);
             return;
           }
           else
           {
-            uint8_t data[] = {msg->id, 0};
+            uint8_t data[] = {id, 0};
             m_proto.sendCommand(CMD_PWR_CTL, data, sizeof(data));
             waitForCommand(CMD_PWR_CTL);
           }
         }
         else if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_ON)
         {
-          uint8_t data[] = {msg->id, 1};
+          uint8_t data[] = {id, 1};
           m_proto.sendCommand(CMD_PWR_CTL, data, sizeof(data));
           waitForCommand(CMD_PWR_CTL);
         }
@@ -599,10 +610,12 @@ namespace Power
       void
       dispatchPowerChannelStates(void)
       {
-        for (unsigned i = 0; i < c_pwrs_count; ++i)
+        std::map<unsigned, PowerChannel*>::const_iterator itr = m_channels.begin();
+
+        for (; itr != m_channels.end(); ++itr)
         {
-          if (m_pwrs[i].label.substr(0, 3) != "N/C")
-            dispatch(m_pwrs[i]);
+          if (itr->second->state.name.substr(0, 3) != "N/C")
+            dispatch(itr->second->state);
         }
       }
 
@@ -620,8 +633,6 @@ namespace Power
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           else
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
-          dispatchPowerChannelStates();
         }
       }
     };

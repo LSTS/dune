@@ -22,46 +22,54 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Pedro Calado                                                     *
 //***************************************************************************
-
-// ISO C++ 98 headers.
-#include <cstdio>
-#include <cstdlib>
-#include <string>
-#include <cstddef>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-namespace Sensors
-{
-  namespace PPS
-  {
-    using DUNE_NAMESPACES;
+using DUNE_NAMESPACES;
 
+namespace Simulators
+{
+  //! %Dummy simulator for DUNE.
+  //! %Dummy task mimics basic parameters behavior
+  //! such as activation, deactivation times
+  //! and set entity parameter.
+  //!
+  //! @author Pedro Calado
+  namespace Dummy
+  {
+    //! %Task arguments.
     struct Arguments
     {
-      // PPS device.
-      std::string pps_dev;
+
     };
 
-    struct Task: public DUNE::Tasks::Task
+    //! %Dummy simulator task
+    struct Task: public Tasks::Periodic
     {
-      // Task arguments.
+      //! Timer for activation process
+      Time::Counter<float> m_act_timer;
+      //! Timer for deactivation process
+      Time::Counter<float> m_deact_timer;
+      //! Activating
+      bool m_activating;
+      //! Deactivating
+      bool m_deactivating;
+      //! Task arguments.
       Arguments m_args;
-      // PPS object.
-      Hardware::PPS* m_pps;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
-        m_pps(NULL)
+        Tasks::Periodic(name, ctx),
+        m_activating(false),
+        m_deactivating(false)
       {
-        param("PPS Device", m_args.pps_dev)
-        .defaultValue("")
-        .description("Platform specific PPS device");
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
 
-        bind<IMC::PulseDetectionControl>(this);
+        // Initialize entity state.
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       ~Task(void)
@@ -69,47 +77,53 @@ namespace Sensors
         Task::onResourceRelease();
       }
 
+      //! On update parameters
       void
-      onResourceAcquisition(void)
+      onUpdateParameters(void)
       {
-        m_pps = new Hardware::PPS(m_args.pps_dev);
+        m_act_timer.setTop(getActivationTime());
+        m_deact_timer.setTop(getDeactivationTime());
       }
 
+      //! Release resources.
       void
       onResourceRelease(void)
+      { }
+
+      //! Initialize resources.
+      void
+      onResourceInitialization(void)
+      { }
+
+      //! On activation
+      void
+      onRequestActivation(void)
       {
-        Memory::clear(m_pps);
+        m_act_timer.reset();
+        m_activating = true;
+      }
+
+      //! On deactivation
+      void
+      onRequestDeactivation(void)
+      {
+        m_deact_timer.reset();
+        m_deactivating = true;
       }
 
       void
-      consume(const IMC::PulseDetectionControl* msg)
+      task(void)
       {
-        if (msg->op == IMC::PulseDetectionControl::POP_ON)
-          requestActivation();
-        else
-          requestDeactivation();
-      }
-
-      void
-      onMain(void)
-      {
-        while (!stopping())
+        if (m_activating && m_act_timer.overflow())
         {
-          if (!isActive())
-          {
-            waitForMessages(0.1);
-            continue;
-          }
-          else
-            consumeMessages();
+          m_activating = false;
+          activate();
+        }
 
-          int64_t time = m_pps->fetch(0.5);
-          if (time < 0)
-            continue;
-
-          IMC::Pulse msg;
-          msg.setTimeStamp(time / 1000000000.0);
-          dispatch(msg, DF_KEEP_TIME);
+        if (m_deactivating && m_deact_timer.overflow())
+        {
+          m_deactivating = false;
+          deactivate();
         }
       }
     };

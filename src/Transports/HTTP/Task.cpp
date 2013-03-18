@@ -43,7 +43,7 @@
 
 namespace Transports
 {
-  //! %HTTP is responsible to establish HTTP protocol in DUNE.
+  //! %HTTP server.
   //!
   //! @author Ricardo Martins
   namespace HTTP
@@ -505,13 +505,6 @@ namespace Transports
           return;
         }
 
-        unsigned channel = 0;
-        if (!castLexical(parts[1], channel))
-        {
-          sendResponse500(sock);
-          return;
-        }
-
         double sched_time = 0;
         if (parts.size() == 5)
         {
@@ -542,7 +535,9 @@ namespace Transports
         }
 
         IMC::PowerChannelControl pcc;
-        pcc.id = channel;
+        pcc.name = parts[1];
+
+        err("channel name: '%s'", pcc.name.c_str());
 
         if (parts[0] == "on")
           pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;

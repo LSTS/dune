@@ -75,8 +75,6 @@ namespace Control
         float m_dspeed;
         // Desired speed units.
         uint8_t m_speed_units;
-        // Controller is active.
-        bool m_active;
         // Differential Thrust.
         float m_thrust_diff;
         // Common Thrust.
@@ -89,8 +87,7 @@ namespace Control
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
-          Tasks::Task(name, ctx),
-          m_active(false)
+          Tasks::Task(name, ctx)
         {
           param("Maximum Motor Command", m_args.max_motor)
           .defaultValue("1.0")
@@ -160,7 +157,7 @@ namespace Control
         void
         consume(const IMC::EstimatedState* msg)
         {
-          if (!m_active)
+          if (!isActive())
           {
             m_dhead = msg->psi;
             m_dspeed = msg->u;
@@ -278,7 +275,7 @@ namespace Control
         void
         consume(const IMC::DesiredHeading* msg)
         {
-          if (!m_active)
+          if (!isActive())
             return;
           m_dhead = msg->value;
         }
@@ -286,7 +283,7 @@ namespace Control
         void
         consume(const IMC::DesiredSpeed* msg)
         {
-          if (!m_active)
+          if (!isActive())
             return;
           m_dspeed = msg->value;
           m_speed_units = msg->speed_units;
@@ -295,13 +292,17 @@ namespace Control
         void
         consume(const IMC::ControlLoops* msg)
         {
-          if (!(msg->mask & (IMC::CL_YAW | IMC::CL_SPEED)) || m_active == msg->enable)
+          if (!(msg->mask & (IMC::CL_YAW | IMC::CL_SPEED)) || isActive() == msg->enable)
             return;
 
-          m_active = (msg->enable != 0);
-          inf(m_active ? "enabling" : "disabling");
+          if (msg->enable != 0)
+            requestActivation();
+          else
+            requestDeactivation();
 
-          if (!m_active)
+          inf(isActive() ? "enabling" : "disabling");
+
+          if (!isActive())
             reset();
         }
 

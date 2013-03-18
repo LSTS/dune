@@ -57,8 +57,10 @@ namespace Plan
       float speriod;
       //! Factor to convert from RPMs to meters per second
       float speed_conv_rpm;
-      //! Conv to convert from actuation to meters per second      
+      //! Conv to convert from actuation to meters per second
       float speed_conv_act;
+      //! Duration of vehicle calibration process.
+      float calibration_time;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -76,11 +78,12 @@ namespace Plan
       double m_vc_reply_deadline;
       double m_last_vstate;
       IMC::VehicleCommand m_vc;
+      uint16_t m_calib_time;
       //! Is the plan loaded
       bool m_plan_loaded;
       //! PlanSpecification message
       IMC::PlanSpecification m_spec;
-      // List of supported maneuvers.
+      //! List of supported maneuvers.
       std::set<uint16_t> m_supported_maneuvers;
       //! Database related (for plan DB direct queries to avoid
       //! unnecessary interface with bus / PlanDB task directly)
@@ -93,12 +96,15 @@ namespace Plan
       IMC::ManeuverControlState m_mcs;
       //! Timer counter for state report period
       Time::Counter<float> m_report_timer;
+      //! Map of component names to entityinfo
+      std::map<std::string, IMC::EntityInfo> m_cinfo;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_plan(NULL),
+        m_calib_time(0),
         m_db(NULL),
         m_get_plan_stmt(NULL)
       {
@@ -119,6 +125,11 @@ namespace Plan
         .defaultValue("0.02")
         .description("Factor to convert from actuation to meters per second");
 
+        param("Minimum Calibration Time", m_args.calibration_time)
+        .defaultValue("10")
+        .units(Units::Second)
+        .description("Duration of vehicle calibration commands");
+
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::EstimatedState>(this);
@@ -127,6 +138,7 @@ namespace Plan
         bind<IMC::RegisterManeuver>(this);
         bind<IMC::VehicleCommand>(this);
         bind<IMC::VehicleState>(this);
+        bind<IMC::EntityInfo>(this);
       }
 
       ~Task()
@@ -169,6 +181,9 @@ namespace Plan
       consume(const IMC::ManeuverControlState* msg)
       {
         m_mcs = *msg;
+
+        if (msg->state & IMC::ManeuverControlState::MCS_DONE)
+          m_plan->maneuverDone();
       }
 
       void
@@ -192,6 +207,12 @@ namespace Plan
       consume(const IMC::RegisterManeuver* msg)
       {
         m_supported_maneuvers.insert(msg->mid);
+      }
+
+      void
+      consume(const IMC::EntityInfo* msg)
+      {
+        m_cinfo.insert(std::pair<std::string, IMC::EntityInfo>(msg->label, *msg));
       }
 
       void
@@ -384,7 +405,11 @@ namespace Plan
           return;
 
         if (!blockedMode())
-          changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("vehicle in CALIBRATION mode"), false);
+        {
+          changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                     DTR("vehicle in CALIBRATION mode"), false);
+          m_plan->calibrationStarted(m_calib_time);
+        }
       }
 
       void
@@ -593,7 +618,7 @@ namespace Plan
       parsePlan(void)
       {
         std::string desc;
-        if (!m_plan->parse(&m_supported_maneuvers, desc, &m_state))
+        if (!m_plan->parse(&m_supported_maneuvers, desc, m_cinfo, this, &m_state))
         {
           onFailure(desc);
           return false;
@@ -660,11 +685,22 @@ namespace Plan
 
         changeLog(plan_id);
 
+        // Flag the plan as starting
+        if (initMode() || execMode())
+          m_plan->planStarted();
+
         dispatch(m_spec);
 
         if (flags & IMC::PlanControl::FLG_CALIBRATE)
         {
-          if (!startCalibration())
+          m_calib_time = 0;
+
+          if (m_plan->getCalibrationTime() > 0.0)
+            m_calib_time = (uint16_t)m_plan->getCalibrationTime();
+
+          m_calib_time = std::max((uint16_t)m_args.calibration_time, m_calib_time);
+
+          if (!startCalibration(m_calib_time))
             return stopped;
         }
         else
@@ -687,9 +723,10 @@ namespace Plan
       }
 
       //! Send a request to start calibration procedures
+      //! @param[in] calibration_time amount of time to remain in calibration mode
       //! @return true if request was sent
       bool
-      startCalibration(void)
+      startCalibration(uint16_t calibration_time)
       {
         if (blockedMode())
         {
@@ -697,7 +734,7 @@ namespace Plan
           return false;
         }
 
-        vehicleRequest(IMC::VehicleCommand::VC_CALIBRATE);
+        vehicleRequest(IMC::VehicleCommand::VC_CALIBRATE, calibration_time);
         return true;
       }
 
@@ -718,6 +755,8 @@ namespace Plan
         changeMode(IMC::PlanControlState::PCS_EXECUTING,
                    pman->maneuver_id + DTR(": executing maneuver"),
                    pman->maneuver_id, pman->data.get());
+
+        m_plan->maneuverStarted(pman->maneuver_id);
       }
 
       //! Answer to the plan control request
@@ -791,14 +830,22 @@ namespace Plan
         {
           debug(DTR("now in %s state"), c_state_desc[s]);
 
-          bool was_plan_exec = initMode() || execMode();
+          bool was_calibrating = initMode();
+          bool was_plan_exec = was_calibrating || execMode();
 
           m_pcs.state = s;
 
-          bool is_plan_exec = initMode() || execMode();
+          bool is_calibrating = initMode();
+          bool is_plan_exec = is_calibrating || execMode();
 
           if (was_plan_exec && !is_plan_exec)
+          {
+            m_plan->planStopped();
             changeLog("idle");
+          }
+
+          if (was_calibrating && !is_calibrating)
+            m_plan->calibrationStopped();
         }
 
         if (maneuver)
@@ -851,11 +898,12 @@ namespace Plan
       void
       reportProgress(void)
       {
-        if (m_plan == NULL || !execMode())
+        // Must be executing or calibrating to be able to compute progress
+        if (m_plan == NULL || (!execMode() && !initMode()))
           return;
 
-        m_pcs.plan_progress = m_plan->getProgress(&m_mcs);
-        m_pcs.plan_eta = m_plan->getTotalDuration() * (1.0 - 0.01 * m_pcs.plan_progress);
+        m_pcs.plan_progress = m_plan->updateProgress(&m_mcs);
+        m_pcs.plan_eta = m_plan->getPlanEta();
       }
 
       void
@@ -900,7 +948,9 @@ namespace Plan
       }
 
       void
-      vehicleRequest(IMC::VehicleCommand::CommandEnum command, const IMC::Message* arg = 0)
+      vehicleRequest(IMC::VehicleCommand::CommandEnum command,
+                     const IMC::Message* arg = 0,
+                     uint16_t calibration_time = 0)
       {
         m_vc.type = IMC::VehicleCommand::VC_REQUEST;
         m_vc.request_id = ++m_vreq_ctr;
@@ -909,11 +959,20 @@ namespace Plan
         if (arg)
           m_vc.maneuver.set(*dynamic_cast<const IMC::Maneuver*>(arg));
 
+        m_vc.calib_time = calibration_time;
+
         dispatch(m_vc);
 
         if (arg)
           m_vc.maneuver.clear();
         m_vc_reply_deadline = Clock::get() + c_vc_reply_timeout;
+      }
+
+      void
+      vehicleRequest(IMC::VehicleCommand::CommandEnum command,
+                     uint16_t calibration_time)
+      {
+        vehicleRequest(command, 0, calibration_time);
       }
 
       inline bool

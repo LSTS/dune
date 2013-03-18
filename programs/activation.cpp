@@ -25,95 +25,69 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-// ISO C++ 98 headers.
-#include <cstdio>
+// ISO C++ 9 headers.
 #include <cstdlib>
-#include <string>
-#include <cstddef>
+#include <cstdio>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-namespace Sensors
+using DUNE_NAMESPACES;
+
+int
+main(int argc, char** argv)
 {
-  namespace PPS
+  if (argc < 4)
   {
-    using DUNE_NAMESPACES;
-
-    struct Arguments
-    {
-      // PPS device.
-      std::string pps_dev;
-    };
-
-    struct Task: public DUNE::Tasks::Task
-    {
-      // Task arguments.
-      Arguments m_args;
-      // PPS object.
-      Hardware::PPS* m_pps;
-
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
-        m_pps(NULL)
-      {
-        param("PPS Device", m_args.pps_dev)
-        .defaultValue("")
-        .description("Platform specific PPS device");
-
-        bind<IMC::PulseDetectionControl>(this);
-      }
-
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
-      void
-      onResourceAcquisition(void)
-      {
-        m_pps = new Hardware::PPS(m_args.pps_dev);
-      }
-
-      void
-      onResourceRelease(void)
-      {
-        Memory::clear(m_pps);
-      }
-
-      void
-      consume(const IMC::PulseDetectionControl* msg)
-      {
-        if (msg->op == IMC::PulseDetectionControl::POP_ON)
-          requestActivation();
-        else
-          requestDeactivation();
-      }
-
-      void
-      onMain(void)
-      {
-        while (!stopping())
-        {
-          if (!isActive())
-          {
-            waitForMessages(0.1);
-            continue;
-          }
-          else
-            consumeMessages();
-
-          int64_t time = m_pps->fetch(0.5);
-          if (time < 0)
-            continue;
-
-          IMC::Pulse msg;
-          msg.setTimeStamp(time / 1000000000.0);
-          dispatch(msg, DF_KEEP_TIME);
-        }
-      }
-    };
+    std::fprintf(stderr, "Usage: %s <destination host> <destination port> <entity> <true|false>\n", argv[0]);
+    return 1;
   }
-}
 
-DUNE_TASK
+  Address dest(argv[1]);
+
+  // Parse port.
+  unsigned port = 0;
+  if (!castLexical(argv[2], port))
+  {
+    fprintf(stderr, "ERROR: invalid port '%s'\n", argv[2]);
+    return 1;
+  }
+
+  if (port > 65535)
+  {
+    fprintf(stderr, "ERROR: invalid port '%s'\n", argv[2]);
+    return 1;
+  }
+
+  IMC::EntityParameter p;
+  p.name = "Active";
+  p.value = argv[4];
+
+  IMC::SetEntityParameters msg;
+  msg.name = argv[3];
+  msg.params.push_back(p);
+  msg.setTimeStamp();
+
+  uint8_t bfr[1024] = {0};
+  uint16_t rv = IMC::Packet::serialize(&msg, bfr, sizeof(bfr));
+
+  UDPSocket sock;
+  try
+  {
+    sock.write((const char*)bfr, rv, dest, port);
+
+    fprintf(stderr, "Raw:");
+    for (int i = 0; i < rv; ++i)
+      fprintf(stderr, " %02X", bfr[i]);
+    fprintf(stderr, "\n");
+
+    msg.toText(std::cerr);
+  }
+  catch (std::runtime_error& e)
+  {
+    std::cerr << "ERROR: " << e.what() << std::endl;
+    return 1;
+  }
+
+  return 0;
+}

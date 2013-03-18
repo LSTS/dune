@@ -73,8 +73,6 @@ namespace Vision
       HTTPClient* m_http;
       // MJPEG boundary string
       std::string m_boundary;
-      // True if task is active.
-      bool m_active;
       // Destination log folder.
       Path m_log_dir;
       // Timestamp for last frame
@@ -84,10 +82,12 @@ namespace Vision
         Tasks::Task(name, ctx),
         m_http(NULL),
         m_boundary(""),
-        m_active(false),
         m_log_dir(ctx.dir_log)
       {
         // Retrieve configuration values.
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("Camera IPv4 Address", m_args.address)
         .defaultValue("10.0.10.82")
         .description("IPv4 address of the camera");
@@ -121,7 +121,6 @@ namespace Vision
         .description("Enable Strobe");
 
         bind<IMC::LoggingControl>(this);
-        bind<IMC::EntityControl>(this);
       }
 
       void
@@ -314,17 +313,6 @@ namespace Vision
       }
 
       void
-      consume(const IMC::EntityControl* msg)
-      {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
-
-        m_active = (msg->op == IMC::EntityControl::ECO_ACTIVATE);
-        if (m_active)
-          inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
-      }
-
-      void
       consume(const IMC::LoggingControl* msg)
       {
         switch (msg->op)
@@ -345,7 +333,7 @@ namespace Vision
         {
           consumeMessages();
 
-          if (!m_active)
+          if (!isActive())
             continue;
 
           // Start the video if not already

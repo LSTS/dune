@@ -87,17 +87,6 @@ namespace Sensors
       }
 
       void
-      shutdown(void)
-      {
-        m_pkt.setMessageType(25);
-        m_pkt.setSubsystemNumber(0);
-        m_pkt.setChannel(0);
-        m_pkt.setCommandType(COMMAND_TYPE_SET);
-        m_pkt.setValue(0);
-        sendPacket(m_pkt);
-      }
-
-      void
       setPingAutoselectMode(SubsystemId subsys, uint32_t mode)
       {
         m_pkt.setMessageType(MSG_ID_PING_AUTOSEL_MODE);
@@ -176,6 +165,17 @@ namespace Sensors
         m_pkt.setChannel(0);
         m_pkt.setCommandType(COMMAND_TYPE_SET);
         m_pkt.setValue(value);
+        sendPacket(m_pkt);
+      }
+
+      void
+      shutdown(void)
+      {
+        m_pkt.setMessageType(MSG_ID_SYSTEM_SHUTDOWN);
+        m_pkt.setSubsystemNumber(0);
+        m_pkt.setChannel(0);
+        m_pkt.setCommandType(COMMAND_TYPE_SET);
+        m_pkt.setValue(1);
         sendPacket(m_pkt);
       }
 

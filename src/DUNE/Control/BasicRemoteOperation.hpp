@@ -81,14 +81,6 @@ namespace DUNE
       }
 
       virtual void
-      onActivation(void)
-      { }
-
-      virtual void
-      onDeactivation(void)
-      { }
-
-      virtual void
       onRemoteActions(const IMC::RemoteActions* message)
       {
         (void)message;

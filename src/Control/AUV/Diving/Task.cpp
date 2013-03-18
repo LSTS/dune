@@ -180,7 +180,7 @@ namespace Control
         void
         onResourceInitialization(void)
         {
-          deactivate();
+          requestDeactivation();
           reset();
         }
 
@@ -297,7 +297,7 @@ namespace Control
           {
             if (!isActive())
             {
-              activate();
+              requestActivation();
               m_aloops = 0;
             }
             m_aloops |= loops;
@@ -307,16 +307,16 @@ namespace Control
             m_aloops &= ~loops;
 
             if (!m_aloops)
-              deactivate();
+              requestDeactivation();
           }
 
           if (was_active != isActive())
           {
             debug("%s", isActive() ? "enabling" : "disabling");
             if (msg->enable)
-              activate();
+              requestActivation();
             else
-              deactivate();
+              requestDeactivation();
 
             reset();
           }

@@ -84,6 +84,8 @@ namespace Sensors
     {
       MSG_ID_SYSTEM_TIME = 22,
       MSG_ID_SYSTEM_TIME_DELTA = 23,
+      //! Shutdown system.
+      MSG_ID_SYSTEM_SHUTDOWN = 25,
       MSG_ID_ALIVE = 41,
       //! Ping trace.
       MSG_ID_SONAR_DATA = 80,

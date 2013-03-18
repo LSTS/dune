@@ -270,11 +270,20 @@ namespace DUNE
     {
       cfg.get("Plan Configuration", "Plan ID", "", plan.plan_id);
 
+      // Parse plan actions
+      std::vector<std::string> plan_start_actions;
+      std::vector<std::string> plan_end_actions;
+
+      cfg.get("Plan Configuration", "Start Actions", "", plan_start_actions);
+      cfg.get("Plan Configuration", "End Actions", "", plan_end_actions);
+      parseActions(cfg, plan_start_actions, plan.start_actions);
+      parseActions(cfg, plan_end_actions, plan.end_actions);
+
       std::vector<std::string> ids;
 
       cfg.get("Plan Configuration", "Maneuvers", "", ids);
 
-      for (uint16_t i = 0; i < ids.size(); i++)
+      for (unsigned i = 0; i < ids.size(); i++)
       {
         std::string id = ids[i];
 
@@ -401,6 +410,15 @@ namespace DUNE
                         return;
                       }
 
+        // Parse maneuver actions
+        std::vector<std::string> man_start_actions;
+        std::vector<std::string> man_end_actions;
+
+        cfg.get(id, "Start Actions", "", man_start_actions);
+        cfg.get(id, "End Actions", "", man_end_actions);
+        parseActions(cfg, man_start_actions, pman.start_actions);
+        parseActions(cfg, man_end_actions, pman.end_actions);
+
         plan.maneuvers.push_back(pman);
 
         if (plan.maneuvers.size() == 1)
@@ -415,6 +433,35 @@ namespace DUNE
           ptransition.dest_man = id;
           plan.transitions.push_back(ptransition);
         }
+      }
+    }
+
+    void
+    PlanConfigParser::parseActions(Parsers::Config& cfg,
+                                   const std::vector<std::string>& sections,
+                                   IMC::MessageList<IMC::Message>& actions)
+    {
+      for (unsigned i = 0; i < sections.size(); ++i)
+      {
+        std::vector<std::string> options;
+        options = cfg.options(sections[i]);
+
+        IMC::SetEntityParameters sep;
+        cfg.get(sections[i], "Name", "", sep.name);
+
+        for (unsigned j = 0; j < options.size(); ++j)
+        {
+          if (options[j] == "Name")
+            continue;
+
+          IMC::EntityParameter ent_par;
+          ent_par.name = options[j];
+          cfg.get(sections[i], ent_par.name, "", ent_par.value);
+
+          sep.params.push_back(ent_par);
+        }
+
+        actions.push_back(sep);
       }
     }
   }

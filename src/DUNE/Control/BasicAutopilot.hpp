@@ -149,7 +149,7 @@ namespace DUNE
       {
         setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR(desc), m_yaw_mode));
         err("%s", Utils::String::str(DTR(desc), m_yaw_mode).c_str());
-        deactivate();
+        requestDeactivation();
       }
 
       //! Signal a bad vertical mode or incompatible
@@ -159,7 +159,7 @@ namespace DUNE
       {
         setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR(desc), m_vertical_mode));
         err("%s", Utils::String::str(DTR(desc), m_vertical_mode).c_str());
-        deactivate();
+        requestDeactivation();
       }
 
       //! get vertical ref value

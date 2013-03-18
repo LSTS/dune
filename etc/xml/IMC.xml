@@ -11,8 +11,8 @@
           name="IMC"
           long-name="Inter Module Communication"
           version="5.1.0"
-          revision="$Rev: 1729 $"
-          creation="$Date: 2013-02-21 15:57:28 +0000 (Thu, 21 Feb 2013) $">
+          revision="$Rev: 1741 $"
+          creation="$Date: 2013-03-11 15:30:29 +0000 (Mon, 11 Mar 2013) $">
 
   <description>
     This document describes the communications protocol associated
@@ -309,6 +309,7 @@
       <message-type abbrev="VehicleFormation"/>
       <message-type abbrev="CompassCalibration"/>
       <message-type abbrev="CoverArea"/>
+      <message-type abbrev="FollowReference"/>
     </message-group>
 
     <message-group name="Control Command" abbrev="ControlCommand">
@@ -487,6 +488,16 @@
         entity.
       </description>
     </field>
+    <field name="Activation Time" abbrev="act_time" type="uint16_t" unit="s">
+      <description>
+        Amount of time needed to properly activate the entity.
+      </description>
+    </field>
+    <field name="Deactivation Time" abbrev="deact_time" type="uint16_t" unit="s">
+      <description>
+        Amount of time needed to properly deactivate the entity.
+      </description>
+    </field>
   </message>
 
   <message id="4" name="Query Entity Information" abbrev="QueryEntityInfo" source="ccu">
@@ -567,7 +578,7 @@
     </description>
   </message>
 
-  <message id="10" name="Parameter" abbrev="Parameter" source="ccu,vehicle">
+  <message id="10" name="Parameter" abbrev="Parameter" source="ccu,vehicle" flags="deprecated">
     <description>
       This message gives information about a configuration parameter.
     </description>
@@ -588,7 +599,7 @@
     </field>
   </message>
 
-  <message id="11" name="Parameters Control" abbrev="ParameterControl" source="ccu">
+  <message id="11" name="Parameters Control" abbrev="ParameterControl" source="ccu" flags="deprecated">
     <description>
       This message is used to control the configuration in
       IMC-compatible systems.
@@ -720,6 +731,62 @@
           The calibration procedure was completed.
         </description>
       </value>
+    </field>
+  </message>
+
+  <message id="14" name="Entity Activation State" abbrev="EntityActivationState" source="vehicle,ccu">
+    <description>
+      State of entity activation/deactivation.
+    </description>
+    <field name="State" abbrev="state" type="uint8_t" unit="Enumerated" prefix="EAS">
+      <description>
+        Current state.
+      </description>
+      <value id="0" abbrev="INACTIVE" name="Entity is Inactive">
+        <description>
+          Entity is inactive.
+        </description>
+      </value>
+      <value id="1" abbrev="ACTIVE" name="Entity is Active">
+        <description>
+          Entity is active.
+        </description>
+      </value>
+      <value id="2" abbrev="ACT_IP" name="Activation in Progress">
+        <description>
+          Activation is in progress.
+        </description>
+      </value>
+      <value id="3" abbrev="ACT_DONE" name="Activation Completed">
+        <description>
+          Activation is completed.
+        </description>
+      </value>
+      <value id="4" abbrev="ACT_FAIL" name="Activation Failed">
+        <description>
+          The activation procedure failed and the field 'error' contains the error message.
+        </description>
+      </value>
+      <value id="5" abbrev="DEACT_IP" name="Deactivation Failed">
+        <description>
+          Deactivation is in progress.
+        </description>
+      </value>
+      <value id="6" abbrev="DEACT_DONE" name="Deactivation Completed">
+        <description>
+          Deactivation is in progress.
+        </description>
+      </value>
+      <value id="7" abbrev="DEACT_FAIL" name="Deactivation Failed">
+        <description>
+          The deactivation procedure failed and the field 'error' contains the error message.
+        </description>
+      </value>
+    </field>
+    <field name="Error" abbrev="error" type="plaintext">
+      <description>
+        Human-readable error message.
+      </description>
     </field>
   </message>
 
@@ -2675,10 +2742,9 @@
     <description>
       This message allows controlling power channels.
     </description>
-    <field name="Channel" abbrev="id" type="uint8_t">
+    <field name="Channel Name" abbrev="name" type="plaintext">
       <description>
-        Power channel identification number. The number 255 means all
-        channels.
+        The name of the power channel.
       </description>
     </field>
     <field name="Operation" abbrev="op" type="uint8_t" unit="Enumerated" min="0" max="6" prefix="PCC_OP">
@@ -2742,14 +2808,9 @@
     <description>
       Message conveying the state of a power channel.
     </description>
-    <field name="Id" abbrev="id" type="uint8_t">
+    <field name="Name" abbrev="name" type="plaintext">
       <description>
-        Power Channel Id.
-      </description>
-    </field>
-    <field name="Label" abbrev="label" type="plaintext">
-      <description>
-        Power Channel Label.
+        Power Channel Name.
       </description>
     </field>
     <field name="State" abbrev="state" type="uint8_t" unit="Enumerated" prefix="PCS">
@@ -5019,7 +5080,7 @@
       </description>
     </field>
   </message>
-  
+
   <!-- NOT YET IMPLEMENTED -->
   <message id="478" name="Follow Reference Maneuver" abbrev="FollowReference" source="ccu">
   	<description>
@@ -5047,24 +5108,24 @@
   	<field name="Loiter Radius" abbrev="loiter_radius" type="fp32_t">
   		<description>
   		  Whenever an intended reference is achieved, this maneuver will maintain the vehicle in vaticiny of that
-  		  location. The loiter radius is used to define the radius of this (xy) area. 
+  		  location. The loiter radius is used to define the radius of this (xy) area.
   		</description>
   	</field>
   	<field name="Altitude Interval" abbrev="altitude_interval" type="fp32_t">
   		<description>
   		  Similarly to Loiter Radius, this field is used to define the "z" distance considered to be inside the vacitiny of
   		  the target location. An AUV may, for instance, be floating until it more than z units above the current reference,
-  		  in which case it actively changes its position in order to achieve the desired depth / altitude. 
+  		  in which case it actively changes its position in order to achieve the desired depth / altitude.
   		</description>
   	</field>
   </message>
-  
+
   <message id="479" name="Reference To Follow" abbrev="Reference" source="ccu,vehicle">
   	<field name="Flags" abbrev="flags" type="uint8_t" unit="Bitfield" prefix="FLAG">
   		<value abbrev="LOCATION" name="Use Location Reference" id="0x01"/>
   		<value abbrev="SPEED" name="Use Speed Reference" id="0x02"/>
   		<value abbrev="Z" name="Use Z Reference" id="0x04"/>
-  		<value abbrev="MANDONE" name="Flag Maneuver Completion" id="0x80"/>  		
+  		<value abbrev="MANDONE" name="Flag Maneuver Completion" id="0x80"/>
   	</field>
   	<field name="Speed Reference" abbrev="speed" type="message" message-type="DesiredSpeed"/>
   	<field name="Z Reference" abbrev="z" type="message" message-type="DesiredZ"/>
@@ -5190,6 +5251,9 @@
     </field>
     <field name="Maneuver" abbrev="maneuver" type="message" message-type="Maneuver">
       <description>Maneuver to be executed (for 'EXEC_MANEUVER' command)</description>
+    </field>
+    <field name="Calibration Time" abbrev="calib_time" type="uint16_t" unit="s">
+      <description>Amount of time to calibrate</description>
     </field>
     <field name="Info" abbrev="info" type="plaintext">
       <description>Complementary human-readable information for replies.</description>
@@ -6076,7 +6140,7 @@
       <description>A list of Announce messages with last announces heard</description>
     </field>
   </message>
-  
+
   <message id="651" name="TREX Observation" abbrev="TrexObservation" source="vehicle,ccu">
     <description>
       This message is sent to TREX to post timeline observations
@@ -6254,35 +6318,44 @@
   </message>
 
   <message id="806" name="Create Session" abbrev="CreateSession" source="ccu,vehicle">
-  <description>Request creating a new session with this remote peer. Example session sequence is shown
-  in the following diagram.
-  
-        .. figure:: images/session_sequence.png
-         :align:  center
-  </description>
+    <description>
+      Request creating a new session with this remote peer. Example
+      session sequence is shown in the following diagram.
+
+      .. figure:: images/session_sequence.png
+      :align:  center
+    </description>
     <field name="Session Timeout" abbrev="timeout" type="uint32_t">
-      <description>Session timeout, in seconds. If no messages are received from the remote peer, the session
-      will be closed after this ammount of seconds have ellapsed.</description>
+      <description>
+        Session timeout, in seconds. If no messages are received from
+        the remote peer, the session will be closed after this ammount
+        of seconds have ellapsed.
+      </description>
     </field>
   </message>
 
   <message id="807" name="Close Session" abbrev="CloseSession" source="ccu,vehicle">
-    <description>Request closing of an ongoing session</description>
+    <description>
+      Request closing of an ongoing session
+    </description>
     <field name="Session Identifier" abbrev="sessid" type="uint32_t"/>
   </message>
-  
+
   <message id="808" name="Session Subscription" abbrev="SessionSubscription" source="ccu,vehicle">
-  	<field name="Session Identifier" abbrev="sessid" type="uint32_t"/>
-  	<field name="Messages to subscribe" abbrev="messages" type="plaintext">
-  	  <description>Comma-separated list of messages to subscribe. Example: "EstimatedState,EulerAngles,Temperature"</description>
-  	</field>
+    <field name="Session Identifier" abbrev="sessid" type="uint32_t"/>
+    <field name="Messages to subscribe" abbrev="messages" type="plaintext">
+      <description>
+        Comma-separated list of messages to subscribe. Example:
+        "EstimatedState,EulerAngles,Temperature"
+      </description>
+    </field>
   </message>
-  
+
   <message id="809" name="Session Keep-Alive" abbrev="SessionKeepAlive" source="ccu,vehicle">
     <description>Message exchanged to prevent a session from timing out</description>
-  	<field name="Session Identifier" abbrev="sessid" type="uint32_t"/>
+    <field name="Session Identifier" abbrev="sessid" type="uint32_t"/>
   </message>
-    
+
   <message id="810" name="Session Status" abbrev="SessionStatus" source="ccu,vehicle" flags="periodic">
     <description>Message transmitted periodically to inform the state of a communication session</description>
     <field name="Session Identifier" abbrev="sessid" type="uint32_t"/>
@@ -6292,5 +6365,11 @@
     </field>
   </message>
 
-  
+  <message id="811" name="Push Entity Parameters" abbrev="PushEntityParameters" source="ccu,vehicle">
+    <field name="Entity Name" abbrev="name" type="plaintext"/>
+  </message>
+
+  <message id="812" name="Pop Entity Parameters" abbrev="PopEntityParameters" source="ccu,vehicle">
+    <field name="Entity Name" abbrev="name" type="plaintext"/>
+  </message>
 </messages>

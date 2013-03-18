@@ -115,7 +115,10 @@ namespace Simulators
         m_lbl_cfg(NULL),
         m_prng(NULL)
       {
-        // Retrieve configuration parameters.
+        // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER);
+
         param("Ping Delay", m_args.ping_delay)
         .units(Units::Second)
         .defaultValue("1.0")
@@ -145,13 +148,12 @@ namespace Simulators
         .defaultValue("-1");
 
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
-        deactivate();
+        requestDeactivation();
 
         // Register consumers.
         bind<IMC::LblConfig>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::SimulatedState>(this);
-        bind<IMC::EntityControl>(this);
       }
 
       //! Update parameters.
@@ -283,35 +285,23 @@ namespace Simulators
       }
 
       void
-      consume(const IMC::EntityControl* msg)
-      {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
-
-        if (!isInitialized())
-          return;
-
-        if (msg->op == IMC::EntityControl::ECO_ACTIVATE)
-          activate();
-        else
-          deactivate();
-
-        if (isActive())
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          m_ping_time.reset();
-        }
-        else
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-        }
-      }
-
-      void
       consume(const IMC::SimulatedState* msg)
       {
         if (isInitialized())
           m_sstate = *msg;
+      }
+
+      void
+      onActivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_ping_time.reset();
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void

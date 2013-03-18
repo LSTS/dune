@@ -127,7 +127,6 @@ namespace DUNE
     m_tman = new DUNE::Tasks::Manager(m_ctx);
 
     bind<IMC::RestartSystem>(this);
-    bind<IMC::QueryEntityInfo>(this);
     bind<IMC::EntityList>(this);
     bind<IMC::SaveEntityParameters>(this);
     bind<IMC::EntityParameters>(this);
@@ -184,24 +183,6 @@ namespace DUNE
     IMC::QueryEntityParameters query;
     query.name = msg->name;
     dispatch(query);
-  }
-
-  void
-  Daemon::consume(const IMC::QueryEntityInfo* msg)
-  {
-    IMC::EntityInfo info;
-    info.id = msg->id;
-
-    try
-    {
-      info.label = m_ctx.entities.resolve(info.id);
-    }
-    catch (std::runtime_error& e)
-    {
-      err("%s", e.what());
-    }
-
-    dispatch(info);
   }
 
   void
@@ -279,6 +260,10 @@ namespace DUNE
     // Dispatch query entity state.
     IMC::QueryEntityState qes;
     dispatch(qes, Tasks::DF_LOOP_BACK);
+
+    // Dispatch query power channel state.
+    IMC::QueryPowerChannelState qpcs;
+    dispatch(qpcs);
   }
 
   void

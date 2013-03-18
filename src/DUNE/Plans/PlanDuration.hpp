@@ -33,6 +33,7 @@
 #include <DUNE/IMC.hpp>
 #include <DUNE/Maneuvers.hpp>
 #include <DUNE/Math.hpp>
+#include <DUNE/Control.hpp>
 
 namespace DUNE
 {
@@ -52,6 +53,9 @@ namespace DUNE
     class PlanDuration
     {
     public:
+      //! Mapping between maneuver IDs and point durations
+      typedef std::map< std::string, std::vector<float> > ManeuverDuration;
+
       //! Conversion factors for rpm and actuation percent
       struct SpeedConversion
       {
@@ -69,8 +73,7 @@ namespace DUNE
       //! @return accumulated plan duration in seconds, -1 if unable to compute
       static float
       parse(const std::vector<IMC::PlanManeuver*>& nodes , const IMC::EstimatedState* state,
-            std::map< std::string, std::vector<float> >& man_durations,
-            const SpeedConversion& speed_conv);
+            ManeuverDuration& man_durations, const SpeedConversion& speed_conv);
 
       //! Parse plan duration from plan specification
       //! @param[in] nodes vector of plan maneuver nodes
@@ -79,7 +82,7 @@ namespace DUNE
       //! @return accumulated plan duration in seconds, -1 if unable to compute
       static float
       parse(const std::vector<IMC::PlanManeuver*>& nodes , const IMC::EstimatedState* state,
-            std::map< std::string, std::vector<float> >& man_durations)
+            ManeuverDuration& man_durations)
       {
         SpeedConversion speed_conv;
         speed_conv.rpm_factor = 0.0;
@@ -128,6 +131,12 @@ namespace DUNE
       template <typename Type>
       static float
       convertSpeed(const Type* maneuver, const SpeedConversion& conv);
+
+      //! Compensate travelled distance with path control time factor
+      //! @param[in] dist travelled distance to compensate
+      //! @return compensated travelled distance
+      static float
+      compensate(float distance, float speed);
 
 #ifdef DUNE_IMC_GOTO
       //! Parse a Goto maneuver

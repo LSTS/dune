@@ -121,7 +121,7 @@ namespace Control
         reset(void)
         {
           m_braking = false;
-          deactivate();
+          requestDeactivation();
         }
 
         void
@@ -201,7 +201,7 @@ namespace Control
             return;
 
           if (msg->enable)
-            activate();
+            requestActivation();
           else
             reset();
 

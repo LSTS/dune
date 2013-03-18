@@ -60,7 +60,8 @@ namespace DUNE
       void
       onResourceInitialization(void)
       {
-        Task::deactivate();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        unlock();
       }
 
       //! On maneuver activation
@@ -114,7 +115,7 @@ namespace DUNE
         static_cast<T*>(this)->consume(maneuver);
 
         if (m_mcs.state == IMC::ManeuverControlState::MCS_EXECUTING)
-          activate();
+          requestActivation();
       }
 
       template <typename T, typename M>

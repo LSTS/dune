@@ -25,95 +25,107 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-// ISO C++ 98 headers.
-#include <cstdio>
-#include <cstdlib>
-#include <string>
-#include <cstddef>
+#ifndef POWER_PCTLV2_POWER_CHANNELS_HPP_INCLUDED_
+#define POWER_PCTLV2_POWER_CHANNELS_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-namespace Sensors
+namespace Power
 {
-  namespace PPS
+  namespace PCTLv2
   {
     using DUNE_NAMESPACES;
 
-    struct Arguments
+    struct PowerChannel
     {
-      // PPS device.
-      std::string pps_dev;
+      unsigned id;
+      IMC::PowerChannelState state;
     };
 
-    struct Task: public DUNE::Tasks::Task
+    class PowerChannels
     {
-      // Task arguments.
-      Arguments m_args;
-      // PPS object.
-      Hardware::PPS* m_pps;
+    public:
+      PowerChannels(void)
+      { }
 
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
-        m_pps(NULL)
+      ~PowerChannels(void)
       {
-        param("PPS Device", m_args.pps_dev)
-        .defaultValue("")
-        .description("Platform specific PPS device");
-
-        bind<IMC::PulseDetectionControl>(this);
-      }
-
-      ~Task(void)
-      {
-        Task::onResourceRelease();
+        clear();
       }
 
       void
-      onResourceAcquisition(void)
+      clear(void)
       {
-        m_pps = new Hardware::PPS(m_args.pps_dev);
+        std::map<unsigned, PowerChannel*>::iterator itr = m_by_id.begin();
+        for (; itr != m_by_id.end(); ++itr)
+          delete itr->second;
+
+        m_by_id.clear();
+        m_by_name.clear();
       }
 
       void
-      onResourceRelease(void)
+      add(unsigned id, PowerChannel* channel)
       {
-        Memory::clear(m_pps);
+        channel->id = id;
+        m_by_name[channel->state.name] = channel;
+        m_by_id[id] = channel;
       }
 
-      void
-      consume(const IMC::PulseDetectionControl* msg)
+      std::map<unsigned, PowerChannel*>::const_iterator
+      find(const unsigned& id) const
       {
-        if (msg->op == IMC::PulseDetectionControl::POP_ON)
-          requestActivation();
-        else
-          requestDeactivation();
+        return m_by_id.find(id);
       }
 
-      void
-      onMain(void)
+      std::map<std::string, PowerChannel*>::const_iterator
+      find_by_name(const std::string& name) const
       {
-        while (!stopping())
-        {
-          if (!isActive())
-          {
-            waitForMessages(0.1);
-            continue;
-          }
-          else
-            consumeMessages();
-
-          int64_t time = m_pps->fetch(0.5);
-          if (time < 0)
-            continue;
-
-          IMC::Pulse msg;
-          msg.setTimeStamp(time / 1000000000.0);
-          dispatch(msg, DF_KEEP_TIME);
-        }
+        return m_by_name.find(name);
       }
+
+      std::map<std::string, PowerChannel*>::const_iterator
+      begin_by_name(void) const
+      {
+        return m_by_name.begin();
+      }
+
+      std::map<std::string, PowerChannel*>::const_iterator
+      end_by_name(void) const
+      {
+        return m_by_name.end();
+      }
+
+      std::map<unsigned, PowerChannel*>::const_iterator
+      begin(void) const
+      {
+        return m_by_id.begin();
+      }
+
+      std::map<unsigned, PowerChannel*>::const_iterator
+      end(void) const
+      {
+        return m_by_id.end();
+      }
+
+      std::map<unsigned, PowerChannel*>::iterator
+      begin(void)
+      {
+        return m_by_id.begin();
+      }
+
+      std::map<unsigned, PowerChannel*>::iterator
+      end(void)
+      {
+        return m_by_id.end();
+      }
+
+    private:
+      std::map<std::string, PowerChannel*> m_by_name;
+      std::map<unsigned, PowerChannel*> m_by_id;
     };
   }
 }
 
-DUNE_TASK
+#endif

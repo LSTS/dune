@@ -44,42 +44,56 @@
 #  include <sys/prctl.h>
 #endif
 
-//! Maximum size of a log book entry message.
-const static size_t c_log_message_max_size = 1024;
-
 namespace DUNE
 {
   namespace Tasks
   {
+    //! Maximum size of a log book entry message.
+    const static size_t c_log_message_max_size = 1024;
+
     Task::Task(const std::string& n, Context& ctx):
       m_ctx(ctx),
       m_recipient(0),
       m_name(n),
-      m_priority(10),
       m_eid(DUNE_IMC_CONST_UNK_EID),
       m_debug_level(DEBUG_LEVEL_NONE),
       m_entity_state_code(-1),
-      m_is_active(true)
+      m_honours_active(false)
     {
+      m_args.priority = 10;
+      m_args.act_time = 0;
+      m_args.deact_time = 0;
+      m_args.active = false;
+      m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
+
       param(DTR_RT("Entity Label"), m_elabel)
       .defaultValue("")
       .description(DTR("Main entity label"));
 
+      param(DTR_RT("Execution Priority"), m_args.priority)
+      .defaultValue("10");
+
+      param(DTR_RT("Activation Time"), m_args.act_time)
+      .defaultValue("0");
+
+      param(DTR_RT("Deactivation Time"), m_args.deact_time)
+      .defaultValue("0");
+
       param(DTR_RT("Debug Level"), m_debug_level_string)
       .defaultValue("None")
       .values("None, Debug, Trace, Spew");
-
-      param(DTR_RT("Execution Priority"), m_priority)
-      .defaultValue("10");
 
       m_recipient = new Recipient(this, ctx);
 
       // Initialize main entity state.
       setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
 
+      bind<IMC::QueryEntityInfo>(this);
       bind<IMC::QueryEntityState>(this);
       bind<IMC::QueryEntityParameters>(this);
       bind<IMC::SetEntityParameters>(this);
+      bind<IMC::PushEntityParameters>(this);
+      bind<IMC::PopEntityParameters>(this);
     }
 
     unsigned int
@@ -179,8 +193,25 @@ namespace DUNE
     }
 
     void
+    Task::paramActive(Parameter::Scope scope, Parameter::Visibility visibility)
+    {
+      m_honours_active = true;
+
+      param(DTR_RT("Active"), m_args.active)
+      .visibility(visibility)
+      .scope(scope)
+      .defaultValue("false");
+    }
+
+    void
     Task::updateParameters(void)
     {
+      m_ent_info.label = getEntityLabel();
+      m_ent_info.component = getName();
+      m_ent_info.act_time = m_args.act_time;
+      m_ent_info.deact_time = m_args.deact_time;
+      dispatch(m_ent_info);
+
       if (m_debug_level_string == "Debug")
         m_debug_level = DEBUG_LEVEL_DEBUG;
       else if (m_debug_level_string == "Trace")
@@ -191,28 +222,119 @@ namespace DUNE
         m_debug_level = DEBUG_LEVEL_NONE;
 
       onUpdateParameters();
+
+      if (m_honours_active)
+      {
+        if (paramChanged(m_args.active))
+        {
+          if (m_args.active)
+            requestActivation();
+          else
+            requestDeactivation();
+        }
+      }
     }
 
-    bool
+    void
+    Task::requestActivation(void)
+    {
+      spew("request activation");
+
+      if (m_act_state.state != IMC::EntityActivationState::EAS_INACTIVE)
+      {
+        spew("task is not inactive");
+        return;
+      }
+
+      m_act_state.state = IMC::EntityActivationState::EAS_ACT_IP;
+      dispatch(m_act_state);
+
+      spew("calling on request activation");
+      onRequestActivation();
+    }
+
+    void
     Task::activate(void)
     {
-      if (m_is_active)
-        return false;
+      if (m_act_state.state != IMC::EntityActivationState::EAS_ACT_IP)
+        throw std::runtime_error("activation is not in progress");
 
-      m_is_active = true;
+      spew("activate");
+
+      if (m_honours_active)
+        m_params.set("Active", "true");
+
+      spew("calling on activation");
       onActivation();
-      return true;
+
+      m_act_state.state = IMC::EntityActivationState::EAS_ACT_DONE;
+      dispatch(m_act_state);
+
+      m_act_state.state = IMC::EntityActivationState::EAS_ACTIVE;
+      dispatch(m_act_state);
     }
 
-    bool
+    void
+    Task::activationFailed(const std::string& reason)
+    {
+      spew("activation failed");
+      m_act_state.state = IMC::EntityActivationState::EAS_ACT_FAIL;
+      m_act_state.error = reason;
+      dispatch(m_act_state);
+
+      m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
+      m_act_state.error.clear();
+      dispatch(m_act_state);
+    }
+
+    void
+    Task::requestDeactivation(void)
+    {
+      spew("request deactivation");
+      if (m_act_state.state != IMC::EntityActivationState::EAS_ACTIVE)
+      {
+        spew("task is not active");
+        return;
+      }
+
+      m_act_state.state = IMC::EntityActivationState::EAS_DEACT_IP;
+      dispatch(m_act_state);
+
+      spew("calling on request activation");
+      onRequestDeactivation();
+    }
+
+    void
     Task::deactivate(void)
     {
-      if (!m_is_active)
-        return false;
+      if (m_act_state.state != IMC::EntityActivationState::EAS_DEACT_IP)
+        throw std::runtime_error("deactivation is not in progress");
 
-      m_is_active = false;
+      spew("deactivate");
+
+      if (m_honours_active)
+        m_params.set("Active", "false");
+
+      spew("calling on deactivation");
       onDeactivation();
-      return true;
+
+      m_act_state.state = IMC::EntityActivationState::EAS_DEACT_DONE;
+      dispatch(m_act_state);
+      m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
+    }
+
+    void
+    Task::deactivationFailed(const std::string& reason)
+    {
+      spew("deactivation failed");
+
+      m_act_state.state = IMC::EntityActivationState::EAS_DEACT_FAIL;
+      m_act_state.error = reason;
+      dispatch(m_act_state);
+
+      m_act_state.state = IMC::EntityActivationState::EAS_ACTIVE;
+      m_act_state.error.clear();
+      dispatch(m_act_state);
     }
 
     void
@@ -224,7 +346,7 @@ namespace DUNE
 
       try
       {
-        Thread::setPriority(Concurrency::Scheduler::POLICY_RR, m_priority);
+        Thread::setPriority(Concurrency::Scheduler::POLICY_RR, m_args.priority);
       }
       catch (...)
       { }
@@ -284,6 +406,12 @@ namespace DUNE
     }
 
     void
+    Task::consume(const IMC::QueryEntityInfo* msg)
+    {
+      dispatchReply(*msg, m_ent_info);
+    }
+
+    void
     Task::consume(const IMC::QueryEntityState* msg)
     {
       (void)msg;
@@ -329,6 +457,38 @@ namespace DUNE
           err(DTR("updating entity parameters: %s"), e.what());
         }
       }
+
+      updateParameters();
+    }
+
+    void
+    Task::consume(const IMC::PushEntityParameters* msg)
+    {
+      if (msg->name != getEntityLabel())
+        return;
+
+      std::map<std::string, std::string> map;
+      std::map<std::string, Parameter*>::const_iterator itr = m_params.begin();
+      for (; itr != m_params.end(); ++itr)
+        map[itr->second->name()] = itr->second->value();
+
+      m_params_stack.push(map);
+    }
+
+    void
+    Task::consume(const IMC::PopEntityParameters* msg)
+    {
+      if (msg->name != getEntityLabel())
+        return;
+
+      if (m_params_stack.empty())
+        return;
+
+      std::map<std::string, std::string>& map = m_params_stack.top();
+      std::map<std::string, std::string>::const_iterator itr = map.begin();
+      for (; itr != map.end(); ++itr)
+        m_params.set(itr->first, itr->second);
+      m_params_stack.pop();
 
       updateParameters();
     }

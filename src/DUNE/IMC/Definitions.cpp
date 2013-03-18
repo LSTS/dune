@@ -165,6 +165,8 @@ namespace DUNE
       id = 0;
       label.clear();
       component.clear();
+      act_time = 0;
+      deact_time = 0;
     }
 
     bool
@@ -174,6 +176,8 @@ namespace DUNE
       if (id != other__.id) return false;
       if (label != other__.label) return false;
       if (component != other__.component) return false;
+      if (act_time != other__.act_time) return false;
+      if (deact_time != other__.deact_time) return false;
       return true;
     }
 
@@ -190,6 +194,8 @@ namespace DUNE
       ptr__ += IMC::serialize(id, ptr__);
       ptr__ += IMC::serialize(label, ptr__);
       ptr__ += IMC::serialize(component, ptr__);
+      ptr__ += IMC::serialize(act_time, ptr__);
+      ptr__ += IMC::serialize(deact_time, ptr__);
       return ptr__;
     }
 
@@ -200,6 +206,8 @@ namespace DUNE
       bfr__ += IMC::deserialize(id, bfr__, size__);
       bfr__ += IMC::deserialize(label, bfr__, size__);
       bfr__ += IMC::deserialize(component, bfr__, size__);
+      bfr__ += IMC::deserialize(act_time, bfr__, size__);
+      bfr__ += IMC::deserialize(deact_time, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -210,6 +218,8 @@ namespace DUNE
       bfr__ += IMC::deserialize(id, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(label, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(component, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(act_time, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(deact_time, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -231,6 +241,8 @@ namespace DUNE
       IMC::toJSON(os__, "id", id, nindent__);
       IMC::toJSON(os__, "label", label, nindent__);
       IMC::toJSON(os__, "component", component, nindent__);
+      IMC::toJSON(os__, "act_time", act_time, nindent__);
+      IMC::toJSON(os__, "deact_time", deact_time, nindent__);
     }
 
     QueryEntityInfo::QueryEntityInfo(void)
@@ -877,6 +889,68 @@ namespace DUNE
       IMC::toJSON(os__, "step_number", step_number, nindent__);
       IMC::toJSON(os__, "step", step, nindent__);
       IMC::toJSON(os__, "flags", flags, nindent__);
+    }
+
+    EntityActivationState::EntityActivationState(void)
+    {
+      m_header.mgid = 14;
+      clear();
+    }
+
+    void
+    EntityActivationState::clear(void)
+    {
+      state = 0;
+      error.clear();
+    }
+
+    bool
+    EntityActivationState::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::EntityActivationState& other__ = dynamic_cast<const EntityActivationState&>(msg__);
+      if (state != other__.state) return false;
+      if (error != other__.error) return false;
+      return true;
+    }
+
+    int
+    EntityActivationState::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    EntityActivationState::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(state, ptr__);
+      ptr__ += IMC::serialize(error, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    EntityActivationState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      bfr__ += IMC::deserialize(error, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    EntityActivationState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(error, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    EntityActivationState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "state", state, nindent__);
+      IMC::toJSON(os__, "error", error, nindent__);
     }
 
     SimulatedState::SimulatedState(void)
@@ -6420,7 +6494,7 @@ namespace DUNE
     void
     PowerChannelControl::clear(void)
     {
-      id = 0;
+      name.clear();
       op = 0;
       sched_time = 0;
     }
@@ -6429,7 +6503,7 @@ namespace DUNE
     PowerChannelControl::fieldsEqual(const Message& msg__) const
     {
       const IMC::PowerChannelControl& other__ = dynamic_cast<const PowerChannelControl&>(msg__);
-      if (id != other__.id) return false;
+      if (name != other__.name) return false;
       if (op != other__.op) return false;
       if (sched_time != other__.sched_time) return false;
       return true;
@@ -6445,7 +6519,7 @@ namespace DUNE
     PowerChannelControl::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(id, ptr__);
+      ptr__ += IMC::serialize(name, ptr__);
       ptr__ += IMC::serialize(op, ptr__);
       ptr__ += IMC::serialize(sched_time, ptr__);
       return ptr__;
@@ -6455,7 +6529,7 @@ namespace DUNE
     PowerChannelControl::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(id, bfr__, size__);
+      bfr__ += IMC::deserialize(name, bfr__, size__);
       bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::deserialize(sched_time, bfr__, size__);
       return bfr__ - start__;
@@ -6465,28 +6539,16 @@ namespace DUNE
     PowerChannelControl::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
       bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(sched_time, bfr__, size__);
       return bfr__ - start__;
     }
 
-    uint16_t
-    PowerChannelControl::getSubId(void) const
-    {
-      return id;
-    }
-
-    void
-    PowerChannelControl::setSubId(uint16_t subid)
-    {
-      id = (uint8_t)subid;
-    }
-
     void
     PowerChannelControl::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
-      IMC::toJSON(os__, "id", id, nindent__);
+      IMC::toJSON(os__, "name", name, nindent__);
       IMC::toJSON(os__, "op", op, nindent__);
       IMC::toJSON(os__, "sched_time", sched_time, nindent__);
     }
@@ -6539,8 +6601,7 @@ namespace DUNE
     void
     PowerChannelState::clear(void)
     {
-      id = 0;
-      label.clear();
+      name.clear();
       state = 0;
     }
 
@@ -6548,8 +6609,7 @@ namespace DUNE
     PowerChannelState::fieldsEqual(const Message& msg__) const
     {
       const IMC::PowerChannelState& other__ = dynamic_cast<const PowerChannelState&>(msg__);
-      if (id != other__.id) return false;
-      if (label != other__.label) return false;
+      if (name != other__.name) return false;
       if (state != other__.state) return false;
       return true;
     }
@@ -6564,8 +6624,7 @@ namespace DUNE
     PowerChannelState::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(id, ptr__);
-      ptr__ += IMC::serialize(label, ptr__);
+      ptr__ += IMC::serialize(name, ptr__);
       ptr__ += IMC::serialize(state, ptr__);
       return ptr__;
     }
@@ -6574,8 +6633,7 @@ namespace DUNE
     PowerChannelState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(id, bfr__, size__);
-      bfr__ += IMC::deserialize(label, bfr__, size__);
+      bfr__ += IMC::deserialize(name, bfr__, size__);
       bfr__ += IMC::deserialize(state, bfr__, size__);
       return bfr__ - start__;
     }
@@ -6584,29 +6642,15 @@ namespace DUNE
     PowerChannelState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(id, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(label, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
       bfr__ += IMC::deserialize(state, bfr__, size__);
       return bfr__ - start__;
-    }
-
-    uint16_t
-    PowerChannelState::getSubId(void) const
-    {
-      return id;
-    }
-
-    void
-    PowerChannelState::setSubId(uint16_t subid)
-    {
-      id = (uint8_t)subid;
     }
 
     void
     PowerChannelState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
-      IMC::toJSON(os__, "id", id, nindent__);
-      IMC::toJSON(os__, "label", label, nindent__);
+      IMC::toJSON(os__, "name", name, nindent__);
       IMC::toJSON(os__, "state", state, nindent__);
     }
 
@@ -11658,6 +11702,7 @@ namespace DUNE
       request_id = 0;
       command = 0;
       maneuver.clear();
+      calib_time = 0;
       info.clear();
     }
 
@@ -11669,6 +11714,7 @@ namespace DUNE
       if (request_id != other__.request_id) return false;
       if (command != other__.command) return false;
       if (maneuver != other__.maneuver) return false;
+      if (calib_time != other__.calib_time) return false;
       if (info != other__.info) return false;
       return true;
     }
@@ -11687,6 +11733,7 @@ namespace DUNE
       ptr__ += IMC::serialize(request_id, ptr__);
       ptr__ += IMC::serialize(command, ptr__);
       ptr__ += maneuver.serialize(ptr__);
+      ptr__ += IMC::serialize(calib_time, ptr__);
       ptr__ += IMC::serialize(info, ptr__);
       return ptr__;
     }
@@ -11699,6 +11746,7 @@ namespace DUNE
       bfr__ += IMC::deserialize(request_id, bfr__, size__);
       bfr__ += IMC::deserialize(command, bfr__, size__);
       bfr__ += maneuver.deserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(calib_time, bfr__, size__);
       bfr__ += IMC::deserialize(info, bfr__, size__);
       return bfr__ - start__;
     }
@@ -11711,6 +11759,7 @@ namespace DUNE
       bfr__ += IMC::reverseDeserialize(request_id, bfr__, size__);
       bfr__ += IMC::deserialize(command, bfr__, size__);
       bfr__ += maneuver.reverseDeserialize(bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(calib_time, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(info, bfr__, size__);
       return bfr__ - start__;
     }
@@ -11722,6 +11771,7 @@ namespace DUNE
       IMC::toJSON(os__, "request_id", request_id, nindent__);
       IMC::toJSON(os__, "command", command, nindent__);
       maneuver.toJSON(os__, "maneuver", nindent__);
+      IMC::toJSON(os__, "calib_time", calib_time, nindent__);
       IMC::toJSON(os__, "info", info, nindent__);
     }
 
@@ -15608,6 +15658,118 @@ namespace DUNE
     {
       IMC::toJSON(os__, "sessid", sessid, nindent__);
       IMC::toJSON(os__, "status", status, nindent__);
+    }
+
+    PushEntityParameters::PushEntityParameters(void)
+    {
+      m_header.mgid = 811;
+      clear();
+    }
+
+    void
+    PushEntityParameters::clear(void)
+    {
+      name.clear();
+    }
+
+    bool
+    PushEntityParameters::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::PushEntityParameters& other__ = dynamic_cast<const PushEntityParameters&>(msg__);
+      if (name != other__.name) return false;
+      return true;
+    }
+
+    int
+    PushEntityParameters::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    PushEntityParameters::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(name, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    PushEntityParameters::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(name, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    PushEntityParameters::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    PushEntityParameters::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "name", name, nindent__);
+    }
+
+    PopEntityParameters::PopEntityParameters(void)
+    {
+      m_header.mgid = 812;
+      clear();
+    }
+
+    void
+    PopEntityParameters::clear(void)
+    {
+      name.clear();
+    }
+
+    bool
+    PopEntityParameters::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::PopEntityParameters& other__ = dynamic_cast<const PopEntityParameters&>(msg__);
+      if (name != other__.name) return false;
+      return true;
+    }
+
+    int
+    PopEntityParameters::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    PopEntityParameters::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(name, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    PopEntityParameters::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(name, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    PopEntityParameters::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    PopEntityParameters::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "name", name, nindent__);
     }
   }
 }

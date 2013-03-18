@@ -205,6 +205,10 @@ namespace DUNE
       std::string label;
       //! Component name.
       std::string component;
+      //! Activation Time.
+      uint16_t act_time;
+      //! Deactivation Time.
+      uint16_t deact_time;
 
       static uint16_t
       getIdStatic(void)
@@ -253,7 +257,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 5;
       }
 
       unsigned
@@ -1003,6 +1007,96 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(step);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Entity Activation State.
+    class EntityActivationState: public Message
+    {
+    public:
+      //! State.
+      enum StateEnum
+      {
+        //! Entity is Inactive.
+        EAS_INACTIVE = 0,
+        //! Entity is Active.
+        EAS_ACTIVE = 1,
+        //! Activation in Progress.
+        EAS_ACT_IP = 2,
+        //! Activation Completed.
+        EAS_ACT_DONE = 3,
+        //! Activation Failed.
+        EAS_ACT_FAIL = 4,
+        //! Deactivation Failed.
+        EAS_DEACT_IP = 5,
+        //! Deactivation Completed.
+        EAS_DEACT_DONE = 6,
+        //! Deactivation Failed.
+        EAS_DEACT_FAIL = 7
+      };
+
+      //! State.
+      uint8_t state;
+      //! Error.
+      std::string error;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 14;
+      }
+
+      EntityActivationState(void);
+
+      Message*
+      clone(void) const
+      {
+        return new EntityActivationState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return EntityActivationState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "EntityActivationState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(error);
       }
 
       void
@@ -6550,8 +6644,8 @@ namespace DUNE
         PCC_OP_SAVE = 6
       };
 
-      //! Channel.
-      uint8_t id;
+      //! Channel Name.
+      std::string name;
       //! Operation.
       uint8_t op;
       //! Scheduled Time.
@@ -6604,14 +6698,14 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 10;
+        return 9;
       }
 
-      uint16_t
-      getSubId(void) const;
-
-      void
-      setSubId(uint16_t subid);
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(name);
+      }
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
@@ -6683,10 +6777,8 @@ namespace DUNE
         PCS_ON = 1
       };
 
-      //! Id.
-      uint8_t id;
-      //! Label.
-      std::string label;
+      //! Name.
+      std::string name;
       //! State.
       uint8_t state;
 
@@ -6737,20 +6829,14 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 1;
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(label);
+        return IMC::getSerializationSize(name);
       }
-
-      uint16_t
-      getSubId(void) const;
-
-      void
-      setSubId(uint16_t subid);
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
@@ -10884,7 +10970,7 @@ namespace DUNE
     };
 
     //! Follow Reference Maneuver.
-    class FollowReference: public Message
+    class FollowReference: public Maneuver
     {
     public:
       //! Controlling Source.
@@ -11199,6 +11285,8 @@ namespace DUNE
       uint8_t command;
       //! Maneuver.
       InlineMessage<Maneuver> maneuver;
+      //! Calibration Time.
+      uint16_t calib_time;
       //! Info.
       std::string info;
 
@@ -11249,7 +11337,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 6;
       }
 
       unsigned
@@ -14964,6 +15052,140 @@ namespace DUNE
       getFixedSerializationSize(void) const
       {
         return 5;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Push Entity Parameters.
+    class PushEntityParameters: public Message
+    {
+    public:
+      //! Entity Name.
+      std::string name;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 811;
+      }
+
+      PushEntityParameters(void);
+
+      Message*
+      clone(void) const
+      {
+        return new PushEntityParameters(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return PushEntityParameters::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PushEntityParameters";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(name);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Pop Entity Parameters.
+    class PopEntityParameters: public Message
+    {
+    public:
+      //! Entity Name.
+      std::string name;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 812;
+      }
+
+      PopEntityParameters(void);
+
+      Message*
+      clone(void) const
+      {
+        return new PopEntityParameters(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return PopEntityParameters::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PopEntityParameters";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(name);
       }
 
       void

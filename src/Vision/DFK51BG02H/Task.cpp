@@ -165,8 +165,6 @@ namespace Vision
       Path m_log_dir;
       //! Array of frames.
       std::queue<Frame*> m_frames;
-      //! True if task is active.
-      bool m_active;
       //! PGM header.
       std::string m_pgm_header;
       //! Compressor.
@@ -186,11 +184,13 @@ namespace Vision
         m_gvsp(NULL),
         m_kalive(0.5),
         m_log_dir(ctx.dir_log),
-        m_active(false),
         m_debayer(BayerDecoder::TILE_GBRG),
         m_white(c_width, c_height)
       {
         // Retrieve configuration values.
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("Camera IPv4 Address", m_args.raddr)
         .defaultValue("192.168.106.86")
         .description("IPv4 address of the camera");
@@ -279,7 +279,6 @@ namespace Vision
         m_pgm_header = String::str("P5 %u %u 255\n", c_width, c_height);
 
         bind<IMC::LoggingControl>(this);
-        bind<IMC::EntityControl>(this);
       }
 
       //! Destructor.
@@ -396,17 +395,6 @@ namespace Vision
       }
 
       void
-      consume(const IMC::EntityControl* msg)
-      {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
-
-        m_active = (msg->op == IMC::EntityControl::ECO_ACTIVATE);
-        if (m_active)
-          inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
-      }
-
-      void
       consume(const IMC::LoggingControl* msg)
       {
         switch (msg->op)
@@ -454,7 +442,7 @@ namespace Vision
           if (pkt_count < c_pkts_per_frame)
             war("lost at least %d packets", c_pkts_per_frame - pkt_count);
 
-          if (m_active)
+          if (isActive())
           {
             m_white.filter(frame->getData());
             double timestamp = frame->getTimeStamp();

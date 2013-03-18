@@ -61,8 +61,6 @@ namespace Simulators
       double gyro_bias;
       //! Measures Euler Angles messages.
       bool euler;
-      //! Allow Entity Control.
-      bool allow_ec;
       //! PRNG type.
       std::string prng_type;
       //! PRNG seed.
@@ -84,10 +82,6 @@ namespace Simulators
       Random::Generator* m_prng;
       //! Random dynamic heading offset.
       float m_heading_offset;
-      //! True if task is active.
-      bool m_active;
-      //! True if task is activated by entity control.
-      bool m_entity_on;
       //! Timestep
       Time::Delta m_delta;
       //! Task arguments.
@@ -95,8 +89,7 @@ namespace Simulators
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_prng(NULL),
-        m_active(false)
+        m_prng(NULL)
       {
         // Retrieve configuration values
         param("Standard Deviation - Euler Angles", m_args.stdev_euler)
@@ -123,10 +116,6 @@ namespace Simulators
         .defaultValue("true")
         .description("Some IMUs do not output Euler Angles measurements");
 
-        param("Allow Entity Control", m_args.allow_ec)
-        .defaultValue("false")
-        .description("This entity can be subject to EntityControl messages");
-
         param("PRNG Type", m_args.prng_type)
         .defaultValue(Random::Factory::c_default);
 
@@ -134,7 +123,6 @@ namespace Simulators
         .defaultValue("-1");
 
         // Register consumers.
-        bind<IMC::EntityControl>(this);
         bind<IMC::SimulatedState>(this);
       }
 
@@ -146,13 +134,6 @@ namespace Simulators
         m_heading_offset = m_prng->gaussian() * Angles::radians(m_args.stdev_heading_offset);
       }
 
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
-        m_entity_on = !m_args.allow_ec;
-      }
-
       //! Release resources.
       void
       onResourceRelease(void)
@@ -161,33 +142,16 @@ namespace Simulators
       }
 
       void
-      consume(const IMC::EntityControl* msg)
-      {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
-
-        if (!m_args.allow_ec)
-          return;
-
-        if (msg->op == IMC::EntityControl::ECO_ACTIVATE)
-          m_entity_on = true;
-        else
-          m_entity_on = false;
-      }
-
-      void
       consume(const IMC::SimulatedState* msg)
       {
-        if (!m_active)
+        if (!isActive())
         {
-          m_active = true;
           m_vel[0] = msg->u;
           m_vel[1] = msg->v;
           m_vel[2] = msg->w;
-        }
 
-        if (!m_entity_on)
-          return;
+          requestActivation();
+        }
 
         // Compute time delta.
         double tstep = m_delta.getDelta();
@@ -231,7 +195,6 @@ namespace Simulators
         dispatch(m_agvel, DF_KEEP_TIME);
         dispatch(m_accel, DF_KEEP_TIME);
 
-        m_active = true;
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 

@@ -99,7 +99,7 @@ namespace Simulators
       void
       onResourceInitialization(void)
       {
-        deactivate();
+        requestDeactivation();
       }
 
       //! Acquire resources.
@@ -120,7 +120,7 @@ namespace Simulators
       consume(const IMC::SimulatedState* msg)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        activate();
+        requestActivation();
         m_sstate = *msg;
       }
 

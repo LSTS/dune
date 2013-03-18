@@ -36,6 +36,7 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 #include <DUNE/Plans.hpp>
+#include "ActionSchedule.hpp"
 
 namespace Plan
 {
@@ -61,9 +62,6 @@ namespace Plan
 
       //! Mapping between maneuver IDs and graph nodes
       typedef std::map<std::string, Node> PlanMap;
-      //! Mapping between maneuver IDs and point durations
-      typedef std::map< std::string, std::vector<float> > ManeuverDuration;
-
       //! Iterator
       typedef std::vector<IMC::PlanManeuver*>::const_iterator const_iterator;
 
@@ -78,7 +76,10 @@ namespace Plan
         m_curr_node(NULL),
         m_sequential(false),
         m_compute_progress(compute_progress),
-        m_progress(0.0)
+        m_progress(0.0),
+        m_calibration(-1.0),
+        m_in_calib(false),
+        m_sched(NULL)
       {
         m_speed_conv.rpm_factor = speed_rpm_factor;
         m_speed_conv.act_factor = speed_act_factor;
@@ -92,6 +93,11 @@ namespace Plan
         *this = Plan(spec, compute_progress, 0.0, 0.0);
       }
 
+      ~Plan(void)
+      {
+        Memory::clear(m_sched);
+      }
+
       //! Reset data
       void
       clear(void)
@@ -101,15 +107,20 @@ namespace Plan
         m_sequential = false;
         m_durations.clear();
         m_progress = -1.0;
+        m_calibration = -1.0;
+        m_in_calib = false;
       }
 
       //! Parse a given plan
       //! @param[in] supported_maneuvers list of supported maneuvers
       //! @param[out] desc description of the failure if any
+      //! @param[in] cinfo map of components info
+      //! @param[in] task pointer to task
       //! @param[in] state pointer to EstimatedState message
       //! @return true if was able to parse the plan
       bool
       parse(const std::set<uint16_t>* supported_maneuvers, std::string& desc,
+            const std::map<std::string, IMC::EntityInfo>& cinfo, Tasks::Task* task,
             const IMC::EstimatedState* state = NULL)
       {
         bool start_maneuver_ok = false;
@@ -193,12 +204,90 @@ namespace Plan
           sequenceNodes();
 
           if (m_sequential && state != NULL)
+          {
             computeDurations(state);
+
+            Memory::clear(m_sched);
+            m_sched = new ActionSchedule(task, m_spec, m_seq_nodes, m_durations, cinfo);
+
+            // Estimate necessary calibration time
+            float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
+            m_calibration = trimValue(diff, -1.0, diff);
+          }
         }
 
         m_last_id = m_spec->start_man_id;
 
         return true;
+      }
+
+      //! Signal that the plan has started
+      void
+      planStarted(void)
+      {
+        if (m_sched == NULL)
+          return;
+
+        m_sched->planStarted();
+      }
+
+      //! Signal that the plan has stopped
+      void
+      planStopped(void)
+      {
+        if (m_sched == NULL)
+          return;
+
+        m_sched->planStopped();
+      }
+
+      //! Signal that calibration has started
+      //! This will allow us to monitor the calibration time
+      //! @param[in] time time during which vehicle will calibrate
+      void
+      calibrationStarted(uint16_t time)
+      {
+        if (time > 0.0)
+        {
+          m_in_calib = true;
+          m_calib_timer.setTop(time);
+        }
+      }
+
+      //! Signal that calibration has stopped
+      void
+      calibrationStopped(void)
+      {
+        m_in_calib = false;
+      }
+
+      //! Signal that a maneuver has started
+      //! @param[in] id name of the started maneuver
+      void
+      maneuverStarted(const std::string& id)
+      {
+        if (m_sched == NULL)
+          return;
+
+        m_sched->maneuverStarted(id);
+      }
+
+      //! Signal that current maneuver is done
+      void
+      maneuverDone(void)
+      {
+        if (m_sched == NULL)
+          return;
+
+        m_sched->maneuverDone(m_last_id);
+      }
+
+      //! Get necessary calibration time
+      //! @return necessary calibration time
+      float
+      getCalibrationTime(void)
+      {
+        return m_calibration;
       }
 
       //! Check if plan has been completed
@@ -246,15 +335,17 @@ namespace Plan
         return m_last_id;
       }
 
-      //! Get total duration of the plan
-      //! @return total duration of plan
+      //! Get duration of the execution phase of the plan
+      //! (total of maneuver accumulated duration)
+      //! @return duration of the execution phase of the plan
       float
-      getTotalDuration(void) const
+      getExecutionDuration(void) const
       {
         if (!m_sequential || !m_durations.size())
           return -1.0;
 
-        ManeuverDuration::const_iterator itr = m_durations.find(m_seq_nodes.back()->maneuver_id);
+        PlanDuration::ManeuverDuration::const_iterator itr;
+        itr = m_durations.find(m_seq_nodes.back()->maneuver_id);
 
         if (itr == m_durations.end())
           return -1.0;
@@ -262,57 +353,46 @@ namespace Plan
         return itr->second.back();
       }
 
+      //! Get total duration of the plan
+      //! @return total duration of the plan
+      float
+      getTotalDuration(void) const
+      {
+        if (m_sched != NULL)
+          if (m_sched->getEarliestSchedule() > getExecutionDuration())
+            return m_sched->getEarliestSchedule();
+
+        return getExecutionDuration();
+      }
+
+      //! Get execution percentage
+      //! @return percentage of the plan represented by the execution
+      inline float
+      getExecutionPercentage(void) const
+      {
+        return getExecutionDuration() / getTotalDuration() * 100.0;
+      }
+
       //! Get current plan progress
       //! @param[in] mcs pointer to maneuver control state message
       //! @return progress in percent (-1.0 if unable to compute)
       float
-      getProgress(const IMC::ManeuverControlState* mcs)
+      updateProgress(const IMC::ManeuverControlState* mcs)
       {
-        (void)mcs;
+        float prog = progress(mcs);
 
-        if (!m_compute_progress)
-          return -1.0;
+        if (prog > 0.0 && m_sched != NULL)
+          m_sched->updateSchedule(getPlanEta());
 
-        // Compute only if sequential and durations exists
-        if (!m_sequential || !m_durations.size())
-          return -1.0;
+        return prog;
+      }
 
-        // If it's not executing, do not compute
-        if (mcs->state != IMC::ManeuverControlState::MCS_EXECUTING ||
-            mcs->eta == 0)
-          return m_progress;
-
-        float total_duration = getTotalDuration();
-
-        ManeuverDuration::const_iterator itr = m_durations.find(getCurrentId());
-
-        // If not found
-        if (itr == m_durations.end())
-          return -1.0;
-
-        // If durations for this maneuver is empty
-        if (!itr->second.size())
-          return -1.0;
-
-        IMC::Message* man = m_graph.find(getCurrentId())->second.pman->data.get();
-
-        // Get progress
-        float prog = PlanProgress::compute(man, mcs, itr->second, total_duration);
-
-        // If negative, then unable to compute
-        // But keep last value of progress if it is not invalid
-        if (prog < 0.0)
-        {
-          if (m_progress < 0.0)
-            return -1.0;
-          else
-            return m_progress;
-        }
-
-        // Never output shorter than previous
-        m_progress = prog > m_progress ? prog : m_progress;
-
-        return m_progress;
+      //! Get plan estimated time of arrival
+      //! @return ETA
+      float
+      getPlanEta(void) const
+      {
+        return getTotalDuration() * (1.0 - 0.01 * m_progress);
       }
 
       //! Retrieve the number of elements in sequential list.
@@ -418,6 +498,70 @@ namespace Plan
         }
       }
 
+      //! Compute current progress
+      //! @param[in] pointer to ManeuverControlState message
+      //! @return progress in percent (-1.0 if unable to compute)
+      float
+      progress(const IMC::ManeuverControlState* mcs)
+      {
+        if (!m_compute_progress)
+          return -1.0;
+
+        // Compute only if sequential and durations exists
+        if (!m_sequential || !m_durations.size())
+          return -1.0;
+
+        float total_duration = getTotalDuration();
+        float exec_duration = getExecutionDuration();
+
+        // Check if its calibrating
+        if (m_in_calib)
+        {
+          float time_left = m_calib_timer.getRemaining() + exec_duration;
+          m_progress = 100.0 * trimValue(1.0 - time_left / total_duration, 0.0, 1.0);
+          return m_progress;
+        }
+
+        // If it's not executing, do not compute
+        if (mcs->state != IMC::ManeuverControlState::MCS_EXECUTING ||
+            mcs->eta == 0)
+          return m_progress;
+
+        PlanDuration::ManeuverDuration::const_iterator itr;
+        itr = m_durations.find(getCurrentId());
+
+        // If not found
+        if (itr == m_durations.end())
+          return -1.0;
+
+        // If durations for this maneuver is empty
+        if (!itr->second.size())
+          return -1.0;
+
+        IMC::Message* man = m_graph.find(getCurrentId())->second.pman->data.get();
+
+        // Get execution progress
+        float exec_prog = PlanProgress::compute(man, mcs,
+                                                itr->second, exec_duration);
+
+        float prog = 100.0 - getExecutionPercentage() * (1.0 - exec_prog / 100.0);
+
+        // If negative, then unable to compute
+        // But keep last value of progress if it is not invalid
+        if (prog < 0.0)
+        {
+          if (m_progress < 0.0)
+            return -1.0;
+          else
+            return m_progress;
+        }
+
+        // Never output shorter than previous
+        m_progress = prog > m_progress ? prog : m_progress;
+
+        return m_progress;
+      }
+
       //! Pointer to plan specification
       const IMC::PlanSpecification* m_spec;
       //! Plan graph of maneuvers and transitions
@@ -432,12 +576,20 @@ namespace Plan
       bool m_compute_progress;
       //! Current progress if any
       float m_progress;
+      //! Current plan's calibration time if any
+      float m_calibration;
+      //! True if currently in calibration
+      bool m_in_calib;
+      //! Timer to estimate time left in calibration
+      Time::Counter<float> m_calib_timer;
       //! Vector of message pointers to cycle through (sequential) plan
       std::vector<IMC::PlanManeuver*> m_seq_nodes;
       //! Maneuver durations
-      ManeuverDuration m_durations;
+      PlanDuration::ManeuverDuration m_durations;
       //! Speed conversion factors for plan duration
       PlanDuration::SpeedConversion m_speed_conv;
+      //! Schedule for actions to take during plan
+      ActionSchedule* m_sched;
     };
   }
 }

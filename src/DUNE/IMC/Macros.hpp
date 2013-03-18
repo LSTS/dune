@@ -56,6 +56,8 @@
 #define DUNE_IMC_DEVCALIBRATIONCONTROL 12
 //! DevCalibrationState identification number.
 #define DUNE_IMC_DEVCALIBRATIONSTATE 13
+//! EntityActivationState identification number.
+#define DUNE_IMC_ENTITYACTIVATIONSTATE 14
 //! SimulatedState identification number.
 #define DUNE_IMC_SIMULATEDSTATE 50
 //! LeakSimulation identification number.
@@ -412,5 +414,9 @@
 #define DUNE_IMC_SESSIONKEEPALIVE 809
 //! SessionStatus identification number.
 #define DUNE_IMC_SESSIONSTATUS 810
+//! PushEntityParameters identification number.
+#define DUNE_IMC_PUSHENTITYPARAMETERS 811
+//! PopEntityParameters identification number.
+#define DUNE_IMC_POPENTITYPARAMETERS 812
 
 #endif

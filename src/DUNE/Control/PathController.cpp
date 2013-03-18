@@ -44,8 +44,6 @@ namespace DUNE
 {
   namespace Control
   {
-    //! Estimated time of arrival factor
-    static const double c_time_factor = 5;
     //! Timeout for new incoming path reference
     static const double c_new_ref_timeout = 5;
     //! Loiter size factor to compute if inside the circle
@@ -221,7 +219,7 @@ namespace DUNE
     void
     PathController::onResourceInitialization(void)
     {
-      deactivate();
+      requestDeactivation();
     }
 
     void
@@ -831,9 +829,9 @@ namespace DUNE
       if (was != will)
       {
         if (will)
-          activate();
+          requestActivation();
         else
-          deactivate();
+          requestDeactivation();
       }
     }
 
