@@ -89,6 +89,45 @@ namespace DUNE
       return std::max(0.0, distance - Control::c_time_factor * speed);
     }
 
+    template <typename Type>
+    float
+    PlanDuration::computeZOffset(const Position& new_pos, const Position& last_pos)
+    {
+      if (last_pos.z_units == new_pos.z_units)
+      {
+        if (last_pos.z_units == IMC::Z_ALTITUDE)
+        {
+          if (new_pos.binfo.validity && last_pos.binfo.validity)
+            return (last_pos.binfo.depth - last_pos.z) - (new_pos.binfo.depth - new_pos.z);
+          else
+            return last_pos.z - new_pos.z;
+        }
+        else if (last_pos.z_units == IMC::Z_DEPTH)
+        {
+          return last_pos.z - new_pos.z;
+        }
+        else
+        {
+          return 0.0;
+        }
+      }
+      else
+      {
+        if (last_pos.z_units == IMC::Z_DEPTH && new_pos.z_units == IMC::Z_ALTITUDE)
+        {
+          if (new_pos.binfo.validity)
+            return last_pos.z - (new_pos.binfo.depth - new_pos.z);
+        }
+        else if (last_pos.z_units == IMC::Z_ALTITUDE && new_pos.z_units == IMC::Z_DEPTH)
+        {
+          if (last_pos.binfo.validity)
+            return (last_pos.binfo.depth - last_pos.z) - new_pos.z;
+        }
+
+        return 0.0;
+      }
+    }
+
 #ifdef DUNE_IMC_FOLLOWPATH
     float
     PlanDuration::parse(const IMC::FollowPath* maneuver, Position& last_pos, float last_dur,
