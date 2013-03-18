@@ -150,9 +150,6 @@ namespace Plan
           m_earliest = 0.0;
         else
           m_earliest = next->second.front().sched_time;
-
-        // DEBUG
-        printTimed();
       }
 
       //! Update timed actions in schedule
@@ -512,14 +509,14 @@ namespace Plan
         std::map<std::string, TimedQueue>::iterator itr = clone.begin();
         for (; itr != clone.end(); ++itr)
         {
-          m_task->war("--- %s ---", itr->first.c_str());
+          m_task->debug("--- %s ---", itr->first.c_str());
           while (!itr->second.empty())
           {
             m_task->debug("scheduled for: %.1f", itr->second.front().sched_time);
             itr->second.front().list->toText(std::cerr);
             itr->second.pop();
           }
-          m_task->war("END %s ---", itr->first.c_str());
+          m_task->debug("END %s ---", itr->first.c_str());
         }
       }
 
