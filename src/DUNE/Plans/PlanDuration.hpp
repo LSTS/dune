@@ -92,6 +92,23 @@ namespace DUNE
       };
 
     private:
+      //! Struct of bathymetric info for a certain location
+      struct BathymetricInfo
+      {
+        //! Water column depth
+        float depth;
+        //! True if the measure is valid and can be used
+        bool validity;
+        //! Type of reference or reference axis
+        uint8_t reference;
+        //! Uncertainty of the measure in meters
+        float uncertainty;
+
+        BathymetricInfo(void):
+          depth(0.0), validity(false), reference(0), uncertainty(0.0)
+        { };
+      };
+
       //! Simple position structure
       struct Position
       {
@@ -103,6 +120,8 @@ namespace DUNE
         float z;
         //! Z units
         uint8_t z_units;
+        //! Bathymetric information
+        BathymetricInfo binfo;
       };
 
       //! Compute distance and move Position to new one
@@ -137,6 +156,12 @@ namespace DUNE
       //! @return compensated travelled distance
       static float
       compensate(float distance, float speed);
+
+      //! Compute the slope between two waypoints/positions
+      //! @param[in]
+      template <typename Type>
+      static float
+      computeZOffset(const Position& new_pos, const Position& last_pos);
 
 #ifdef DUNE_IMC_GOTO
       //! Parse a Goto maneuver
