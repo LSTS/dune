@@ -30,7 +30,10 @@
 
 // ISO C++ 98 headers.
 #include <cstring>
-#include <sys/time.h>
+
+#if defined(DUNE_SYS_HAS_SYS_TIME_H)
+#  include <sys/time.h>
+#endif
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -443,10 +446,14 @@ namespace Sensors
         m_data[HDR_IDX_SECONDS + 1] = '0' + bdt.seconds % 10;
 
         // Hundreth of Seconds.
+        unsigned usec = 0;
+#if defined(DUNE_SYS_HAS_SYS_TIME_H)
         struct timeval tv;
         struct timezone tz;
         gettimeofday(&tv, &tz);
-        unsigned usec = tv.tv_usec;
+        usec = tv.tv_usec;
+#endif
+
         m_data[HDR_IDX_TIME_HSEC] = '.';
         m_data[HDR_IDX_TIME_HSEC + 1] = '0' + usec / 100000;
         m_data[HDR_IDX_TIME_HSEC + 2] = '0' + (usec / 10000) % 10;
