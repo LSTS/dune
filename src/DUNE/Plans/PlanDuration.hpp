@@ -132,6 +132,13 @@ namespace DUNE
       static float
       distanceAndMove(double lat, double lon, Position& last_pos);
 
+      //! Compute distance and move Position to new one
+      //! @param[in,out] new_pos object where the new position info will be stored
+      //! @param[in,out] last_pos last position to consider when computing duration
+      //! @return distance computed
+      static float
+      distanceAndMove(Position& new_pos, const Position& last_pos);
+
       //! Parse the simplest maneuvers
       //! @param[in] pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
@@ -157,11 +164,31 @@ namespace DUNE
       static float
       compensate(float distance, float speed);
 
-      //! Compute the slope between two waypoints/positions
-      //! @param[in]
-      template <typename Type>
+      //! Compute the offset in z the axis between two waypoints/positions
+      //! @param[in] new_pos next position in line
+      //! @param[in] last_pos current position
+      //! @return offset in the z axis in meters
       static float
       computeZOffset(const Position& new_pos, const Position& last_pos);
+
+      //! Convert maneuver to Position struct
+      //! @param[in] maneuver to extract position from
+      //! @param[out] pos extracted position information
+      template <typename Type>
+      static void
+      extractPosition(const Type* maneuver, Position& pos);
+
+      //! Convert Elevator maneuver to Position struct
+      //! @param[in] maneuver to extract position from
+      //! @param[out] pos extracted position information
+      static void
+      extractPosition(const IMC::Elevator* maneuver, Position& pos);
+
+      //! Convert PopUp maneuver to Position struct
+      //! @param[in] maneuver to extract position from
+      //! @param[out] pos extracted position information
+      static void
+      extractPosition(const IMC::PopUp* maneuver, Position& pos);
 
 #ifdef DUNE_IMC_GOTO
       //! Parse a Goto maneuver
