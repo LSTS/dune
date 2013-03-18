@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-+ Copyright (C) 2007-2012 Laboratório de Sistemas e Tecnologia Subaquática   +
++ Copyright (C) 2007-2013 Laboratório de Sistemas e Tecnologia Subaquática   +
 + Departamento de Engenharia Electrotécnica e de Computadores                +
 + Rua Dr. Roberto Frias, 4200-465 Porto, Portugal                            +
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -10,9 +10,7 @@
           xsi:noNamespaceSchemaLocation="IMC.xsd"
           name="IMC"
           long-name="Inter Module Communication"
-          version="5.1.0"
-          revision="$Rev: 1741 $"
-          creation="$Date: 2013-03-11 15:30:29 +0000 (Mon, 11 Mar 2013) $">
+          version="5.1.0">
 
   <description>
     This document describes the communications protocol associated
@@ -178,17 +176,19 @@
     </description>
     <unit abbrev="A" name="Ampere"/>
     <unit abbrev="bit" name="Bit"/>
+    <unit abbrev="bps" name="Bits per second"/>
     <unit abbrev="byte" name="Byte"/>
-    <unit abbrev="MiB" name="Mebibyte"/>
+    <unit abbrev="g" name="Gravity acceleration"/>
     <unit abbrev="dB" name="Decibel"/>
     <unit abbrev="dB/m" name="Decibel per meter"/>
     <unit abbrev="dBHz" name="Decibel hertz"/>
-    <unit abbrev="º" name="Degree"/>
-    <unit abbrev="ºC" name="Degree Celsius"/>
+    <unit abbrev="°" name="Degree"/>
+    <unit abbrev="°C" name="Degree Celsius"/>
     <unit abbrev="G" name="Gauss"/>
     <unit abbrev="hPa" name="Hectopascal"/>
     <unit abbrev="Hz" name="Hertz"/>
     <unit abbrev="kg/m/m/m" name="Kilogram per cubic metre"/>
+    <unit abbrev="MiB" name="Mebibyte"/>
     <unit abbrev="m" name="Meter"/>
     <unit abbrev="m/s" name="Meter per second"/>
     <unit abbrev="m/s/s" name="Meter per second^2"/>
@@ -229,17 +229,16 @@
       <value id="1" name="True" abbrev="TRUE"/>
     </def>
 
+    <def name="Controlled Mode" abbrev="ControlledMode" prefix="CTLMD">
+      <value id="0" name="Relinquish / Handoff Control" abbrev="RELINQUISH_HANDOFF_CTL"/>
+      <value id="1" name="Request Control" abbrev="REQUEST_CTL"/>
+      <value id="2" name="Override Control" abbrev="OVERRIDE_CTL"/>
+    </def>
+
     <def name="Speed Units" abbrev="SpeedUnits" prefix="SUNITS">
       <value id="0" name="Meters per second" abbrev="METERS_PS"/>
       <value id="1" name="RPM" abbrev="RPM"/>
       <value id="2" name="Percentage" abbrev="PERCENTAGE"/>
-    </def>
-
-    <def name="Z Units" abbrev="ZUnits" prefix="Z" >
-      <value id="0" name="None" abbrev="NONE"/>
-      <value id="1" name="Depth" abbrev="DEPTH"/>
-      <value id="2" name="Altitude" abbrev="ALTITUDE"/>
-      <value id="3" name="Height" abbrev="HEIGHT"/>
     </def>
 
     <def name="System Type" abbrev="SystemType" prefix="SYSTEMTYPE">
@@ -254,24 +253,15 @@
       <value id="8" name="Wireless Sensor Network" abbrev="WSN"/>
     </def>
 
-    <def name="Controlled Mode" abbrev="ControlledMode" prefix="CTLMD">
-      <value id="0" name="Relinquish / Handoff Control" abbrev="RELINQUISH_HANDOFF_CTL"/>
-      <value id="1" name="Request Control" abbrev="REQUEST_CTL"/>
-      <value id="2" name="Override Control" abbrev="OVERRIDE_CTL"/>
+    <def name="Z Units" abbrev="ZUnits" prefix="Z" >
+      <value id="0" name="None" abbrev="NONE"/>
+      <value id="1" name="Depth" abbrev="DEPTH"/>
+      <value id="2" name="Altitude" abbrev="ALTITUDE"/>
+      <value id="3" name="Height" abbrev="HEIGHT"/>
     </def>
   </enumerations>
 
   <bitfields>
-    <def prefix="OPL" name="Operational Limits Mask" abbrev="OpLimitsMask">
-      <value id="0x01" name="Maximum Depth" abbrev="MAX_DEPTH"/>
-      <value id="0x02" name="Minimum Altitude" abbrev="MIN_ALT"/>
-      <value id="0x04" name="Maximum Altitude" abbrev="MAX_ALT"/>
-      <value id="0x08" name="Minimum Speed" abbrev="MIN_SPEED"/>
-      <value id="0x10" name="Maximum Speed" abbrev="MAX_SPEED"/>
-      <value id="0x20" name="Maximum Vertical Rate" abbrev="MAX_VRATE"/>
-      <value id="0x40" name="Operation Area" abbrev="AREA"/>
-    </def>
-
     <def prefix="CL" name="Control Loops Mask" abbrev="CLoopsMask">
       <value id="0x00000000" abbrev="NONE" name="None"/>
       <value id="0x00000001" abbrev="PATH" name="Path Control"/>
@@ -288,6 +278,16 @@
       <value id="0x40000000" abbrev="EXTERNAL" name="Unspecified External Control"/>
       <value id="0x80000000" abbrev="NO_OVERRIDE" name="Non-overridable control"/>
       <value id="0xFFFFFFFF" abbrev="ALL" name="All"/>
+    </def>
+
+    <def prefix="OPL" name="Operational Limits Mask" abbrev="OpLimitsMask">
+      <value id="0x01" name="Maximum Depth" abbrev="MAX_DEPTH"/>
+      <value id="0x02" name="Minimum Altitude" abbrev="MIN_ALT"/>
+      <value id="0x04" name="Maximum Altitude" abbrev="MAX_ALT"/>
+      <value id="0x08" name="Minimum Speed" abbrev="MIN_SPEED"/>
+      <value id="0x10" name="Maximum Speed" abbrev="MAX_SPEED"/>
+      <value id="0x20" name="Maximum Vertical Rate" abbrev="MAX_VRATE"/>
+      <value id="0x40" name="Operation Area" abbrev="AREA"/>
     </def>
   </bitfields>
 
@@ -767,7 +767,7 @@
           The activation procedure failed and the field 'error' contains the error message.
         </description>
       </value>
-      <value id="5" abbrev="DEACT_IP" name="Deactivation Failed">
+      <value id="5" abbrev="DEACT_IP" name="Deactivation In Progress">
         <description>
           Deactivation is in progress.
         </description>
@@ -1289,7 +1289,7 @@
     </field>
   </message>
 
-  <message id="156" name="SMS" abbrev="Sms" source="vehicle">
+  <message id="156" name="SMS" abbrev="Sms" source="vehicle" flags="deprecated">
     <description>
       Send a SMS message.
     </description>
@@ -1308,6 +1308,69 @@
         Message contents.
       </description>
     </field>
+  </message>
+
+  <message id="157" name="SMS Transmit" abbrev="SmsTx" source="vehicle,ccu">
+    <description>
+      Request to send SMS.
+    </description>
+    <field name="Sequence Number" abbrev="seq" type="uint32_t">
+      <description>
+        Sequence number.
+      </description>
+    </field>
+    <field name="Destination" abbrev="destination" type="plaintext">
+      <description>
+        Number or name of the recipient.
+      </description>
+    </field>
+    <field name="Timeout" abbrev="timeout" type="uint16_t" unit="s">
+      <description>
+        Timeout for sending message.
+      </description>
+    </field>
+    <field name="Data" abbrev="data" type="rawdata">
+      <description>
+        Message data.
+      </description>
+    </field>
+  </message>
+
+  <message id="158" name="SMS Receive" abbrev="SmsRx" source="vehicle">
+    <description>
+      Received SMS data.
+    </description>
+    <field name="Source" abbrev="source" type="plaintext">
+      <description>
+        Number of name of the sender.
+      </description>
+    </field>
+    <field name="Data" abbrev="data" type="rawdata">
+      <description>
+        Message data.
+      </description>
+    </field>
+  </message>
+
+  <message id="159" name="SMS State" abbrev="SmsState" source="vehicle">
+    <field name="Sequence Number" abbrev="seq" type="uint32_t">
+      <description>
+        Sequence number.
+      </description>
+    </field>
+    <field name="State" abbrev="state" type="uint8_t" unit="Enumerated" prefix="SMS">
+      <description>
+        Current state of an SMS transaction.
+      </description>
+      <value id="0" name="Accepted" abbrev="ACCEPTED"/>
+      <value id="1" name="Rejected" abbrev="REJECTED"/>
+      <value id="2" name="Interrupted" abbrev="INTERRUPTED"/>
+      <value id="3" name="Completed" abbrev="COMPLETED"/>
+      <value id="4" name="Idle" abbrev="IDLE"/>
+      <value id="5" name="Transmitting" abbrev="TRANSMITTING"/>
+      <value id="6" name="Receiving" abbrev="RECEIVING"/>
+    </field>
+    <field name="Error Message" abbrev="error" type="plaintext"/>
   </message>
 
   <!-- Acoustic Networking -->
@@ -2126,7 +2189,7 @@
     <description>
       Report of temperature.
     </description>
-    <field name="Measured Temperature" abbrev="value" type="fp32_t" unit="ºC">
+    <field name="Measured Temperature" abbrev="value" type="fp32_t" unit="°C">
       <description>
         The value of the temperature as measured by the sensor.
       </description>
@@ -5133,6 +5196,43 @@
   	<field name="Longitude Reference" abbrev="lon" type="fp64_t"/>
   </message>
 
+  <message id="480" name="Follow Reference State" abbrev="FollowRefState" source="vehicle">
+
+  	<field name="Controlling Source" abbrev="control_src" type="uint16_t">
+  		<description>
+  	 	  The IMC identifier of the source system that is allowed to control the vehicle.
+  	 	  If the value ''0xFFFF'' is used, any system is allowed to command references.
+  		</description>
+  	</field>
+
+  	<field name="Controlling Entity" abbrev="control_ent" type="uint8_t">
+  		<description>
+  		  The entity identifier of the entity that is allowed to control the vehicle.
+  		  If the value ''0xFF'' is used, any entity is allowed to command references.
+  		</description>
+  	</field>
+
+  	<field name="Reference" abbrev="reference" type="message" message-type="Reference">
+  	  <description>Reference currently being followed.</description>
+  	</field>
+
+  	<field name="State" abbrev="state" type="uint8_t" unit="Enumerated" prefix="FR">
+  	  <value abbrev="WAIT" name="Waiting for first reference" id="1"/>
+  	  <value abbrev="GOTO" name="Going towards received reference" id="2"/>
+  	  <value abbrev="LOITER" name="Loitering after arriving at the reference" id="3"/>
+  	  <value abbrev="HOVER" name="Hovering after arriving at the reference" id="4"/>
+  	  <value abbrev="ELEVATOR" name="Moving in z after arriving at the target cylinder" id="5"/>
+  	  <value abbrev="TIMEOUT" name="Controlling system timed out" id="6"/>
+  	</field>
+
+  	<field name="Proximity" abbrev="proximity" type="uint8_t" unit="Bitfield" prefix="PROX">
+  	  <value abbrev="FAR" name="Far from the destination" id="0x01"/>
+  	  <value abbrev="XY_NEAR" name="Near in the horizontal plane" id="0x02"/>
+  	  <value abbrev="Z_NEAR" name="Near in the vertical plane" id="0x04"/>
+  	</field>
+
+  </message>
+
   <!-- Vehicle Supervision -->
   <message id="500" name="Vehicle State" abbrev="VehicleState" source="vehicle">
     <description>
@@ -5388,6 +5488,34 @@
       </value>
       <value id="3" abbrev="UNDERWATER" name="Underwater">
 	<description>Vehicle is underwater</description>
+      </value>
+    </field>
+  </message>
+
+  <message id="509" name="Collision" abbrev="Collision" source="vehicle">
+    <description>
+      Detected collision.
+    </description>
+    <field name="Collision value" abbrev="value" type="fp32_t" unit="m/s/s">
+      <description>
+	Estimated collision acceleration value.
+      </description>
+    </field>
+    <field name="Type" abbrev="type" type="uint8_t" unit="Bitfield" prefix="CD">
+      <description>
+	Collision flags.
+      </description>
+      <value id="0x01" abbrev="X" name="X-axis">
+	<description>Collision detected in the x-axis</description>
+      </value>
+      <value id="0x02" abbrev="Y" name="Y-axis">
+	<description>Collision detected in the y-axis</description>
+      </value>
+      <value id="0x04" abbrev="Z" name="Z-axis">
+	<description>Collision detected in the z-axis</description>
+      </value>
+      <value id="0x08" abbrev="IMPACT" name="Impact">
+	<description>Sudden impact detected</description>
       </value>
     </field>
   </message>
@@ -6147,7 +6275,7 @@
     </description>
     <field name="Timeline" abbrev="timeline" type="plaintext" />
     <field name="Predicate" abbrev="predicate" type="plaintext" />
-    <field name="Attributes" abbrev="attributes" type="plaintext" unit="Tuplelist" />
+    <field name="Attributes" abbrev="attributes" type="plaintext" unit="TupleList" />
   </message>
 
   <message id="652" name="TREX Command" abbrev="TrexCommand" source="vehicle,ccu">

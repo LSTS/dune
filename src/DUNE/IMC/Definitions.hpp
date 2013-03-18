@@ -1030,7 +1030,7 @@ namespace DUNE
         EAS_ACT_DONE = 3,
         //! Activation Failed.
         EAS_ACT_FAIL = 4,
-        //! Deactivation Failed.
+        //! Deactivation In Progress.
         EAS_DEACT_IP = 5,
         //! Deactivation Completed.
         EAS_DEACT_DONE = 6,
@@ -2443,6 +2443,238 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(number) + IMC::getSerializationSize(contents);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! SMS Transmit.
+    class SmsTx: public Message
+    {
+    public:
+      //! Sequence Number.
+      uint32_t seq;
+      //! Destination.
+      std::string destination;
+      //! Timeout.
+      uint16_t timeout;
+      //! Data.
+      std::vector<char> data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 157;
+      }
+
+      SmsTx(void);
+
+      Message*
+      clone(void) const
+      {
+        return new SmsTx(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SmsTx::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SmsTx";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 6;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(destination) + IMC::getSerializationSize(data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! SMS Receive.
+    class SmsRx: public Message
+    {
+    public:
+      //! Source.
+      std::string source;
+      //! Data.
+      std::vector<char> data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 158;
+      }
+
+      SmsRx(void);
+
+      Message*
+      clone(void) const
+      {
+        return new SmsRx(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SmsRx::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SmsRx";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(source) + IMC::getSerializationSize(data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! SMS State.
+    class SmsState: public Message
+    {
+    public:
+      //! State.
+      enum StateEnum
+      {
+        //! Accepted.
+        SMS_ACCEPTED = 0,
+        //! Rejected.
+        SMS_REJECTED = 1,
+        //! Interrupted.
+        SMS_INTERRUPTED = 2,
+        //! Completed.
+        SMS_COMPLETED = 3,
+        //! Idle.
+        SMS_IDLE = 4,
+        //! Transmitting.
+        SMS_TRANSMITTING = 5,
+        //! Receiving.
+        SMS_RECEIVING = 6
+      };
+
+      //! Sequence Number.
+      uint32_t seq;
+      //! State.
+      uint8_t state;
+      //! Error Message.
+      std::string error;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 159;
+      }
+
+      SmsState(void);
+
+      Message*
+      clone(void) const
+      {
+        return new SmsState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SmsState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SmsState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 5;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(error);
       }
 
       void
@@ -11142,6 +11374,125 @@ namespace DUNE
       setDestinationEntityNested(uint8_t value__);
     };
 
+    //! Follow Reference State.
+    class FollowRefState: public Message
+    {
+    public:
+      //! State.
+      enum StateEnum
+      {
+        //! Waiting for first reference.
+        FR_WAIT = 1,
+        //! Going towards received reference.
+        FR_GOTO = 2,
+        //! Loitering after arriving at the reference.
+        FR_LOITER = 3,
+        //! Hovering after arriving at the reference.
+        FR_HOVER = 4,
+        //! Moving in z after arriving at the target cylinder.
+        FR_ELEVATOR = 5,
+        //! Controlling system timed out.
+        FR_TIMEOUT = 6
+      };
+
+      //! Proximity.
+      enum ProximityBits
+      {
+        //! Far from the destination.
+        PROX_FAR = 0x01,
+        //! Near in the horizontal plane.
+        PROX_XY_NEAR = 0x02,
+        //! Near in the vertical plane.
+        PROX_Z_NEAR = 0x04
+      };
+
+      //! Controlling Source.
+      uint16_t control_src;
+      //! Controlling Entity.
+      uint8_t control_ent;
+      //! Reference.
+      InlineMessage<Reference> reference;
+      //! State.
+      uint8_t state;
+      //! Proximity.
+      uint8_t proximity;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 480;
+      }
+
+      FollowRefState(void);
+
+      Message*
+      clone(void) const
+      {
+        return new FollowRefState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FollowRefState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FollowRefState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 5;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return reference.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
     //! Vehicle State.
     class VehicleState: public Message
     {
@@ -11869,6 +12220,88 @@ namespace DUNE
       {
         return 1;
       }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Collision.
+    class Collision: public Message
+    {
+    public:
+      //! Type.
+      enum TypeBits
+      {
+        //! X-axis.
+        CD_X = 0x01,
+        //! Y-axis.
+        CD_Y = 0x02,
+        //! Z-axis.
+        CD_Z = 0x04,
+        //! Impact.
+        CD_IMPACT = 0x08
+      };
+
+      //! Collision value.
+      fp32_t value;
+      //! Type.
+      uint8_t type;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 509;
+      }
+
+      Collision(void);
+
+      Message*
+      clone(void) const
+      {
+        return new Collision(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return Collision::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Collision";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 5;
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;

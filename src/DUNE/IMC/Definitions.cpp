@@ -2259,6 +2259,210 @@ namespace DUNE
       IMC::toJSON(os__, "contents", contents, nindent__);
     }
 
+    SmsTx::SmsTx(void)
+    {
+      m_header.mgid = 157;
+      clear();
+    }
+
+    void
+    SmsTx::clear(void)
+    {
+      seq = 0;
+      destination.clear();
+      timeout = 0;
+      data.clear();
+    }
+
+    bool
+    SmsTx::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::SmsTx& other__ = dynamic_cast<const SmsTx&>(msg__);
+      if (seq != other__.seq) return false;
+      if (destination != other__.destination) return false;
+      if (timeout != other__.timeout) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    SmsTx::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    SmsTx::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(seq, ptr__);
+      ptr__ += IMC::serialize(destination, ptr__);
+      ptr__ += IMC::serialize(timeout, ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    SmsTx::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(seq, bfr__, size__);
+      bfr__ += IMC::deserialize(destination, bfr__, size__);
+      bfr__ += IMC::deserialize(timeout, bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    SmsTx::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(seq, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(destination, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    SmsTx::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "seq", seq, nindent__);
+      IMC::toJSON(os__, "destination", destination, nindent__);
+      IMC::toJSON(os__, "timeout", timeout, nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
+    }
+
+    SmsRx::SmsRx(void)
+    {
+      m_header.mgid = 158;
+      clear();
+    }
+
+    void
+    SmsRx::clear(void)
+    {
+      source.clear();
+      data.clear();
+    }
+
+    bool
+    SmsRx::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::SmsRx& other__ = dynamic_cast<const SmsRx&>(msg__);
+      if (source != other__.source) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    SmsRx::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    SmsRx::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(source, ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    SmsRx::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(source, bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    SmsRx::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(source, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    SmsRx::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "source", source, nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
+    }
+
+    SmsState::SmsState(void)
+    {
+      m_header.mgid = 159;
+      clear();
+    }
+
+    void
+    SmsState::clear(void)
+    {
+      seq = 0;
+      state = 0;
+      error.clear();
+    }
+
+    bool
+    SmsState::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::SmsState& other__ = dynamic_cast<const SmsState&>(msg__);
+      if (seq != other__.seq) return false;
+      if (state != other__.state) return false;
+      if (error != other__.error) return false;
+      return true;
+    }
+
+    int
+    SmsState::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    SmsState::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(seq, ptr__);
+      ptr__ += IMC::serialize(state, ptr__);
+      ptr__ += IMC::serialize(error, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    SmsState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(seq, bfr__, size__);
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      bfr__ += IMC::deserialize(error, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    SmsState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(seq, bfr__, size__);
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(error, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    SmsState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "seq", seq, nindent__);
+      IMC::toJSON(os__, "state", state, nindent__);
+      IMC::toJSON(os__, "error", error, nindent__);
+    }
+
     LblRange::LblRange(void)
     {
       m_header.mgid = 200;
@@ -11578,6 +11782,132 @@ namespace DUNE
       }
     }
 
+    FollowRefState::FollowRefState(void)
+    {
+      m_header.mgid = 480;
+      clear();
+      reference.setParent(this);
+    }
+
+    void
+    FollowRefState::clear(void)
+    {
+      control_src = 0;
+      control_ent = 0;
+      reference.clear();
+      state = 0;
+      proximity = 0;
+    }
+
+    bool
+    FollowRefState::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FollowRefState& other__ = dynamic_cast<const FollowRefState&>(msg__);
+      if (control_src != other__.control_src) return false;
+      if (control_ent != other__.control_ent) return false;
+      if (reference != other__.reference) return false;
+      if (state != other__.state) return false;
+      if (proximity != other__.proximity) return false;
+      return true;
+    }
+
+    int
+    FollowRefState::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    FollowRefState::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(control_src, ptr__);
+      ptr__ += IMC::serialize(control_ent, ptr__);
+      ptr__ += reference.serialize(ptr__);
+      ptr__ += IMC::serialize(state, ptr__);
+      ptr__ += IMC::serialize(proximity, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FollowRefState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(control_src, bfr__, size__);
+      bfr__ += IMC::deserialize(control_ent, bfr__, size__);
+      bfr__ += reference.deserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      bfr__ += IMC::deserialize(proximity, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FollowRefState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(control_src, bfr__, size__);
+      bfr__ += IMC::deserialize(control_ent, bfr__, size__);
+      bfr__ += reference.reverseDeserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      bfr__ += IMC::deserialize(proximity, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FollowRefState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "control_src", control_src, nindent__);
+      IMC::toJSON(os__, "control_ent", control_ent, nindent__);
+      reference.toJSON(os__, "reference", nindent__);
+      IMC::toJSON(os__, "state", state, nindent__);
+      IMC::toJSON(os__, "proximity", proximity, nindent__);
+    }
+
+    void
+    FollowRefState::setTimeStampNested(double value__)
+    {
+      if (!reference.isNull())
+      {
+        reference.get()->setTimeStamp(value__);
+      }
+    }
+
+    void
+    FollowRefState::setSourceNested(uint16_t value__)
+    {
+      if (!reference.isNull())
+      {
+        reference.get()->setSource(value__);
+      }
+    }
+
+    void
+    FollowRefState::setSourceEntityNested(uint8_t value__)
+    {
+      if (!reference.isNull())
+      {
+        reference.get()->setSourceEntity(value__);
+      }
+    }
+
+    void
+    FollowRefState::setDestinationNested(uint16_t value__)
+    {
+      if (!reference.isNull())
+      {
+        reference.get()->setDestination(value__);
+      }
+    }
+
+    void
+    FollowRefState::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!reference.isNull())
+      {
+        reference.get()->setDestinationEntity(value__);
+      }
+    }
+
     VehicleState::VehicleState(void)
     {
       m_header.mgid = 500;
@@ -12313,6 +12643,80 @@ namespace DUNE
     VehicleMedium::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "medium", medium, nindent__);
+    }
+
+    Collision::Collision(void)
+    {
+      m_header.mgid = 509;
+      clear();
+    }
+
+    void
+    Collision::clear(void)
+    {
+      value = 0;
+      type = 0;
+    }
+
+    bool
+    Collision::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Collision& other__ = dynamic_cast<const Collision&>(msg__);
+      if (value != other__.value) return false;
+      if (type != other__.type) return false;
+      return true;
+    }
+
+    int
+    Collision::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    Collision::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      ptr__ += IMC::serialize(type, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Collision::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Collision::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    Collision::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    Collision::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    Collision::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
+      IMC::toJSON(os__, "type", type, nindent__);
     }
 
     Abort::Abort(void)

@@ -43,6 +43,17 @@ namespace DUNE
       BOOL_TRUE = 1
     };
 
+    //! Controlled Mode.
+    enum ControlledMode
+    {
+      //! Relinquish / Handoff Control.
+      CTLMD_RELINQUISH_HANDOFF_CTL = 0,
+      //! Request Control.
+      CTLMD_REQUEST_CTL = 1,
+      //! Override Control.
+      CTLMD_OVERRIDE_CTL = 2
+    };
+
     //! Speed Units.
     enum SpeedUnits
     {
@@ -52,19 +63,6 @@ namespace DUNE
       SUNITS_RPM = 1,
       //! Percentage.
       SUNITS_PERCENTAGE = 2
-    };
-
-    //! Z Units.
-    enum ZUnits
-    {
-      //! None.
-      Z_NONE = 0,
-      //! Depth.
-      Z_DEPTH = 1,
-      //! Altitude.
-      Z_ALTITUDE = 2,
-      //! Height.
-      Z_HEIGHT = 3
     };
 
     //! System Type.
@@ -90,15 +88,17 @@ namespace DUNE
       SYSTEMTYPE_WSN = 8
     };
 
-    //! Controlled Mode.
-    enum ControlledMode
+    //! Z Units.
+    enum ZUnits
     {
-      //! Relinquish / Handoff Control.
-      CTLMD_RELINQUISH_HANDOFF_CTL = 0,
-      //! Request Control.
-      CTLMD_REQUEST_CTL = 1,
-      //! Override Control.
-      CTLMD_OVERRIDE_CTL = 2
+      //! None.
+      Z_NONE = 0,
+      //! Depth.
+      Z_DEPTH = 1,
+      //! Altitude.
+      Z_ALTITUDE = 2,
+      //! Height.
+      Z_HEIGHT = 3
     };
   }
 }

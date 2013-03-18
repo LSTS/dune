@@ -34,25 +34,6 @@ namespace DUNE
 {
   namespace IMC
   {
-    //! Operational Limits Mask.
-    enum OpLimitsMask
-    {
-      //! Maximum Depth.
-      OPL_MAX_DEPTH = 0x01,
-      //! Minimum Altitude.
-      OPL_MIN_ALT = 0x02,
-      //! Maximum Altitude.
-      OPL_MAX_ALT = 0x04,
-      //! Minimum Speed.
-      OPL_MIN_SPEED = 0x08,
-      //! Maximum Speed.
-      OPL_MAX_SPEED = 0x10,
-      //! Maximum Vertical Rate.
-      OPL_MAX_VRATE = 0x20,
-      //! Operation Area.
-      OPL_AREA = 0x40
-    };
-
     //! Control Loops Mask.
     enum CLoopsMask
     {
@@ -86,6 +67,25 @@ namespace DUNE
       CL_NO_OVERRIDE = 0x80000000,
       //! All.
       CL_ALL = 0xFFFFFFFF
+    };
+
+    //! Operational Limits Mask.
+    enum OpLimitsMask
+    {
+      //! Maximum Depth.
+      OPL_MAX_DEPTH = 0x01,
+      //! Minimum Altitude.
+      OPL_MIN_ALT = 0x02,
+      //! Maximum Altitude.
+      OPL_MAX_ALT = 0x04,
+      //! Minimum Speed.
+      OPL_MIN_SPEED = 0x08,
+      //! Maximum Speed.
+      OPL_MAX_SPEED = 0x10,
+      //! Maximum Vertical Rate.
+      OPL_MAX_VRATE = 0x20,
+      //! Operation Area.
+      OPL_AREA = 0x40
     };
   }
 }

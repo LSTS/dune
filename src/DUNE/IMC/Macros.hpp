@@ -92,6 +92,12 @@
 #define DUNE_IMC_LINKLEVEL 155
 //! Sms identification number.
 #define DUNE_IMC_SMS 156
+//! SmsTx identification number.
+#define DUNE_IMC_SMSTX 157
+//! SmsRx identification number.
+#define DUNE_IMC_SMSRX 158
+//! SmsState identification number.
+#define DUNE_IMC_SMSSTATE 159
 //! LblRange identification number.
 #define DUNE_IMC_LBLRANGE 200
 //! LblDetection identification number.
@@ -320,6 +326,8 @@
 #define DUNE_IMC_FOLLOWREFERENCE 478
 //! Reference identification number.
 #define DUNE_IMC_REFERENCE 479
+//! FollowRefState identification number.
+#define DUNE_IMC_FOLLOWREFSTATE 480
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.
@@ -338,6 +346,8 @@
 #define DUNE_IMC_CONTROLLOOPS 507
 //! VehicleMedium identification number.
 #define DUNE_IMC_VEHICLEMEDIUM 508
+//! Collision identification number.
+#define DUNE_IMC_COLLISION 509
 //! Abort identification number.
 #define DUNE_IMC_ABORT 550
 //! PlanSpecification identification number.
