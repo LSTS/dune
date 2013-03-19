@@ -170,6 +170,12 @@ namespace DUNE
       static float
       computeZOffset(const Position& new_pos, const Position& last_pos);
 
+      //! Extract bathymetry information
+      //! @param[in] list string with the list of bathymetries
+      //! @param[in] pos position struct where bathymetry data will be stored
+      static void
+      extractBathymetry(const std::string& str, Position& pos);
+
       //! Convert maneuver to Position struct
       //! @param[in] maneuver to extract position from
       //! @param[out] pos extracted position information
@@ -188,6 +194,12 @@ namespace DUNE
       //! @param[out] pos extracted position information
       static void
       extractPosition(const IMC::PopUp* maneuver, Position& pos);
+
+      //! Convert EstimatedState to Position struct
+      //! @param[in] maneuver to extract position from
+      //! @param[out] pos extracted position information
+      static void
+      extractPosition(const IMC::EstimatedState* state, Position& pos);
 
 #ifdef DUNE_IMC_GOTO
       //! Parse a Goto maneuver

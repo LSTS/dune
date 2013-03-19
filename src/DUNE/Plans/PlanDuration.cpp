@@ -134,6 +134,15 @@ namespace DUNE
       }
     }
 
+    void
+    PlanDuration::extractBathymetry(const std::string& str, Position& pos)
+    {
+      (void)str;
+
+      // for now equal to false
+      pos.binfo.validity = false;
+    }
+
     template <typename Type>
     void
     PlanDuration::extractPosition(const Type* maneuver, Position& pos)
@@ -155,8 +164,7 @@ namespace DUNE
       pos.z = maneuver->start_z;
       pos.z_units = maneuver->start_z_units;
 
-      // for now equal to false
-      pos.binfo.validity = false;
+      extractBathymetry("", pos);
     }
 
     void
@@ -165,10 +173,19 @@ namespace DUNE
       pos.lat = maneuver->lat;
       pos.lon = maneuver->lon;
       pos.z = 0.0;
-      pos.z_units = (uint8_t)maneuver->z_units;
+      pos.z_units = maneuver->z_units;
 
-      // for now equal to false
-      pos.binfo.validity = false;
+      extractBathymetry("", pos);
+    }
+
+    void
+    PlanDuration::extractPosition(const IMC::EstimatedState* state, Position& pos)
+    {
+      DUNE::Coordinates::toWGS84(*state, pos.lat, pos.lon);
+      pos.z = state->depth;
+      pos.z_units = IMC::Z_DEPTH;
+
+      extractBathymetry("", pos);
     }
 
 #ifdef DUNE_IMC_FOLLOWPATH
@@ -320,7 +337,7 @@ namespace DUNE
         extractPosition(maneuver, pos);
 
         float travelled = distance3D(pos, last_pos);
-        
+
         // compensate with path controller's eta factor
         travelled = compensate(travelled, speed);
 
@@ -347,7 +364,7 @@ namespace DUNE
       durations.push_back(travel_time + rising_time + surface_time + last_dur);
 
       return durations.back();
-    }    
+    }
 #endif
 
     float
@@ -357,9 +374,7 @@ namespace DUNE
                         const SpeedConversion& speed_conv)
     {
       Position pos;
-      DUNE::Coordinates::toWGS84(*state, pos.lat, pos.lon);
-      pos.z = state->depth;
-      pos.z_units = IMC::Z_DEPTH;
+      extractPosition(state, pos);
 
       float last_duration = 0.0;
 
