@@ -92,6 +92,23 @@ namespace DUNE
       };
 
     private:
+      //! Struct of bathymetric info for a certain location
+      struct BathymetricInfo
+      {
+        //! Water column depth
+        float depth;
+        //! True if the measure is valid and can be used
+        bool validity;
+        //! Type of reference or reference axis
+        uint8_t reference;
+        //! Uncertainty of the measure in meters
+        float uncertainty;
+
+        BathymetricInfo(void):
+          depth(0.0), validity(false), reference(0), uncertainty(0.0)
+        { };
+      };
+
       //! Simple position structure
       struct Position
       {
@@ -103,15 +120,23 @@ namespace DUNE
         float z;
         //! Z units
         uint8_t z_units;
+        //! Bathymetric information
+        BathymetricInfo binfo;
       };
 
+      //! Find 2D distance between two positions
+      //! @param[in] new_pos object where the new position info will be stored
+      //! @param[in] last_pos last position to consider when computing duration
+      //! @return distance computed
+      static inline float
+      distance2D(const Position& new_pos, const Position& last_pos);
+
       //! Compute distance and move Position to new one
-      //! @param[in] lat latitude of new position
-      //! @param[in] lon longitude of new position
-      //! @param[in,out] last_pos last position to consider when computing duration
+      //! @param[in] new_pos object where the new position info will be stored
+      //! @param[in] last_pos last position to consider when computing duration
       //! @return distance computed
       static float
-      distanceAndMove(double lat, double lon, Position& last_pos);
+      distance3D(const Position& new_pos, const Position& last_pos);
 
       //! Parse the simplest maneuvers
       //! @param[in] pointer to maneuver message
@@ -137,6 +162,44 @@ namespace DUNE
       //! @return compensated travelled distance
       static float
       compensate(float distance, float speed);
+
+      //! Compute the offset in z the axis between two waypoints/positions
+      //! @param[in] new_pos next position in line
+      //! @param[in] last_pos current position
+      //! @return offset in the z axis in meters
+      static float
+      computeZOffset(const Position& new_pos, const Position& last_pos);
+
+      //! Extract bathymetry information
+      //! @param[in] list string with the list of bathymetries
+      //! @param[in] pos position struct where bathymetry data will be stored
+      static void
+      extractBathymetry(const std::string& str, Position& pos);
+
+      //! Convert maneuver to Position struct
+      //! @param[in] maneuver to extract position from
+      //! @param[out] pos extracted position information
+      template <typename Type>
+      static void
+      extractPosition(const Type* maneuver, Position& pos);
+
+      //! Convert Elevator maneuver to Position struct
+      //! @param[in] maneuver to extract position from
+      //! @param[out] pos extracted position information
+      static void
+      extractPosition(const IMC::Elevator* maneuver, Position& pos);
+
+      //! Convert PopUp maneuver to Position struct
+      //! @param[in] maneuver to extract position from
+      //! @param[out] pos extracted position information
+      static void
+      extractPosition(const IMC::PopUp* maneuver, Position& pos);
+
+      //! Convert EstimatedState to Position struct
+      //! @param[in] maneuver to extract position from
+      //! @param[out] pos extracted position information
+      static void
+      extractPosition(const IMC::EstimatedState* state, Position& pos);
 
 #ifdef DUNE_IMC_GOTO
       //! Parse a Goto maneuver
