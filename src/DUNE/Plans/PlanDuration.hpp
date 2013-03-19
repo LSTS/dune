@@ -124,20 +124,19 @@ namespace DUNE
         BathymetricInfo binfo;
       };
 
-      //! Compute distance and move Position to new one
-      //! @param[in] lat latitude of new position
-      //! @param[in] lon longitude of new position
-      //! @param[in,out] last_pos last position to consider when computing duration
+      //! Find 2D distance between two positions
+      //! @param[in] new_pos object where the new position info will be stored
+      //! @param[in] last_pos last position to consider when computing duration
       //! @return distance computed
-      static float
-      distanceAndMove(double lat, double lon, Position& last_pos);
+      static inline float
+      distance2D(const Position& new_pos, const Position& last_pos);
 
       //! Compute distance and move Position to new one
-      //! @param[in,out] new_pos object where the new position info will be stored
-      //! @param[in,out] last_pos last position to consider when computing duration
+      //! @param[in] new_pos object where the new position info will be stored
+      //! @param[in] last_pos last position to consider when computing duration
       //! @return distance computed
       static float
-      distanceAndMove(Position& new_pos, const Position& last_pos);
+      distance3D(const Position& new_pos, const Position& last_pos);
 
       //! Parse the simplest maneuvers
       //! @param[in] pointer to maneuver message

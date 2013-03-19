@@ -33,22 +33,16 @@ namespace DUNE
   namespace Plans
   {
     float
-    PlanDuration::distanceAndMove(double lat, double lon, Position& last_pos)
+    PlanDuration::distance2D(const Position& new_pos, const Position& last_pos)
     {
-      float value = Coordinates::WGS84::distance(lat, lon, 0.0,
-                                                 last_pos.lat, last_pos.lon, 0.0);
-
-      last_pos.lat = lat;
-      last_pos.lon = lon;
-
-      return value;
+      return Coordinates::WGS84::distance(new_pos.lat, new_pos.lon, 0.0,
+                                          last_pos.lat, last_pos.lon, 0.0);
     }
 
     float
-    PlanDuration::distanceAndMove(Position& new_pos, const Position& last_pos)
+    PlanDuration::distance3D(const Position& new_pos, const Position& last_pos)
     {
-      float value = Coordinates::WGS84::distance(new_pos.lat, new_pos.lon, 0.0,
-                                                 last_pos.lat, last_pos.lon, 0.0);
+      float value = distance2D(new_pos, last_pos);
 
       float offset = computeZOffset(new_pos, last_pos);
       float slope = std::atan2(offset, value);
@@ -68,7 +62,7 @@ namespace DUNE
 
       Position pos;
       extractPosition(maneuver, pos);
-      float travelled = distanceAndMove(pos, last_pos);
+      float travelled = distance3D(pos, last_pos);
 
       // compensate with path controller's eta factor
       travelled = compensate(travelled, speed);
@@ -204,7 +198,7 @@ namespace DUNE
         pos.lon = maneuver->lon;
         Coordinates::WGS84::displace((*itr)->x, (*itr)->y, &pos.lat, &pos.lon);
 
-        float travelled = distanceAndMove(pos, last_pos);
+        float travelled = distance3D(pos, last_pos);
 
         last_pos = pos;
 
@@ -234,7 +228,7 @@ namespace DUNE
 
       rstages.getFirstPoint(&pos.lat, &pos.lon);
 
-      float distance = distanceAndMove(pos, last_pos);
+      float distance = distance3D(pos, last_pos);
       durations.push_back(distance / speed + last_dur);
 
       last_pos = pos;
@@ -266,7 +260,8 @@ namespace DUNE
       Position pos;
       extractPosition(maneuver, pos);
 
-      float horz_dist = distanceAndMove(pos.lat, pos.lon, last_pos);
+      // Use 2D distance here
+      float horz_dist = distance2D(pos, last_pos);
       float travelled = horz_dist / std::cos(maneuver->pitch);
 
       // compensate with path controller's eta factor
@@ -292,11 +287,11 @@ namespace DUNE
       Position pos;
       extractPosition(maneuver, pos);
 
-      float horz_dist = distanceAndMove(pos, last_pos);
+      float goto_dist = distance3D(pos, last_pos);
       float amplitude = std::fabs(last_pos.z - maneuver->end_z);
       float real_dist = amplitude / std::sin(c_rated_pitch);
 
-      float travelled = horz_dist + real_dist;
+      float travelled = goto_dist + real_dist;
 
       // compensate with path controller's eta factor
       travelled = compensate(travelled, speed);
@@ -324,7 +319,7 @@ namespace DUNE
         Position pos;
         extractPosition(maneuver, pos);
 
-        float travelled = distanceAndMove(pos, last_pos);
+        float travelled = distance3D(pos, last_pos);
         
         // compensate with path controller's eta factor
         travelled = compensate(travelled, speed);
