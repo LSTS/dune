@@ -83,7 +83,7 @@ main(int argc, char** argv)
       continue;
 
     int rv = port.read(bfr, sizeof(bfr));
-    fwrite(bfr, 1, rv, bin);
+    std::fwrite(bfr, 1, rv, bin);
     for (int i = 0; i < rv; ++i)
     {
       parser.parse(bfr[i]);
