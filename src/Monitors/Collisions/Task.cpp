@@ -159,7 +159,7 @@ namespace Monitors
       }
 
       void
-      onResourceResolution(void)
+      onEntityResolution(void)
       {
         try
         {
