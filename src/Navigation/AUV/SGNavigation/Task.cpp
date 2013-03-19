@@ -139,7 +139,7 @@ namespace Navigation
         //! IMU entity label.
         std::string elabel_imu;
         //! Number of samples to average forward speed.
-        int avg_speed_samples;
+        unsigned avg_speed_samples;
         //! Initial RPM to Speed multiplicative factor.
         float initial_rpm_to_speed;
         //! Use RPM information.

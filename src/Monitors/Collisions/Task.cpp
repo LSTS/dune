@@ -56,6 +56,8 @@ namespace Monitors
       float max_x;
       //! Z-Axis acceleration maximum variation limit.
       float max_z;
+      //! Device Entity Label.
+      std::string elabel_device;
     };
 
     //! Collisions task.
@@ -77,6 +79,8 @@ namespace Monitors
       Time::Counter<double> m_twindow;
       //! Collision detected.
       IMC::Collision m_collision;
+      //! Device entity id.
+      unsigned m_device_eid;
       //! Task arguments.
       Arguments m_args;
 
@@ -124,6 +128,10 @@ namespace Monitors
         .defaultValue("3")
         .description("Maximum variation limit for z-axis acceleration values");
 
+        param("Entity Label - Device", m_args.elabel_device)
+        .defaultValue("AHRS")
+        .description("Entity label of the device");
+
         // Register consumers.
         bind<IMC::Acceleration>(this);
       }
@@ -151,6 +159,20 @@ namespace Monitors
       }
 
       void
+      onResourceResolution(void)
+      {
+        try
+        {
+          m_device_eid = resolveEntity(m_args.elabel_device);
+        }
+        catch (std::runtime_error& e)
+        {
+          war(DTR("failed to resolve entity '%s': %s"), m_args.elabel_device.c_str(), e.what());
+          m_device_eid = UINT_MAX;
+        }
+      }
+
+      void
       onResourceRelease(void)
       {
         Memory::clear(m_avg_x_innov);
@@ -162,6 +184,9 @@ namespace Monitors
       void
       consume(const IMC::Acceleration* msg)
       {
+        if (msg->getSourceEntity() != m_device_eid)
+          return;
+
         // Activate task if not active.
         if (!isActive())
         {
