@@ -75,6 +75,8 @@ namespace Monitors
       MovingAverage<double>* m_avg_z_abs;
       //! Time window to remain in error mode after colliding.
       Time::Counter<double> m_twindow;
+      //! Collision detected.
+      IMC::Collision m_collision;
       //! Task arguments.
       Arguments m_args;
 
@@ -187,6 +189,11 @@ namespace Monitors
         if ((std_x > m_args.min_std) && (x > m_args.k_std * std_x))
         {
           err(DTR("collision in the x-axis: %.2f times the standard deviation %f"), (x / std_x), std_x);
+
+          m_collision.value = msg->x;
+          m_collision.type = (IMC::Collision::CD_IMPACT |
+                              IMC::Collision::CD_X);
+
           collided();
         }
 
@@ -194,6 +201,11 @@ namespace Monitors
         if ((std_z > m_args.min_std) && (z > m_args.k_std * std_z))
         {
           err(DTR("collision in the z-axis: %.2f times the standard deviation %f"), (z / std_z), std_z);
+
+          m_collision.value = msg->z;
+          m_collision.type = (IMC::Collision::CD_IMPACT |
+                              IMC::Collision::CD_Z);
+
           collided();
         }
 
@@ -201,6 +213,10 @@ namespace Monitors
         if ((mean_x_abs > m_args.max_x) || (mean_x_abs < - m_args.max_x))
         {
           err(DTR("x-axis acceleration breached limits: %.2f"), mean_x_abs);
+
+          m_collision.value = mean_x_abs;
+          m_collision.type = IMC::Collision::CD_X;
+
           collided();
         }
 
@@ -209,6 +225,10 @@ namespace Monitors
             (std::abs(mean_z_abs) < Math::c_gravity - m_args.max_z))
         {
           err(DTR("z-axis acceleration breached limits: %.2f"), mean_z_abs);
+
+          m_collision.value = mean_z_abs;
+          m_collision.type = IMC::Collision::CD_Z;
+
           collided();
         }
       }
@@ -219,6 +239,9 @@ namespace Monitors
       {
         // Reset counter.
         m_twindow.reset();
+
+        // Dispatch collision.
+        dispatch(m_collision);
 
         // Change state and send state to the bus.
         setEntityState(IMC::EntityState::ESTA_ERROR, DTR("collision detected"));
