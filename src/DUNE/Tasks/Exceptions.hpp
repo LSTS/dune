@@ -90,6 +90,20 @@ namespace DUNE
         std::invalid_argument(Utils::String::str(DTR("invalid task name '%s'"), name.c_str()))
       { }
     };
+
+    //! Value is invalid for a given parameter.
+    class InvalidValue: public std::invalid_argument
+    {
+    public:
+      //! Constructor.
+      //! @param[in] name parameter name.
+      //! @param[in] value value.
+      InvalidValue(const std::string& name, const std::string& value):
+        std::invalid_argument(Utils::String::str(DTR("invalid value for parameter '%s': '%s'"),
+                                                 name.c_str(),
+                                                 value.c_str()))
+      { }
+    };
   }
 }
 
