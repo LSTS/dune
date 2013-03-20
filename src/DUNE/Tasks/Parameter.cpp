@@ -33,6 +33,7 @@
 // DUNE headers.
 #include <DUNE/Utils/String.hpp>
 #include <DUNE/Tasks/Parameter.hpp>
+#include <DUNE/Tasks/Exceptions.hpp>
 
 namespace DUNE
 {
@@ -96,8 +97,15 @@ namespace DUNE
         throw std::runtime_error(Utils::String::str("'%s': %s", m_name.c_str(), e.what()));
       }
 
-      m_reader->validate();
-      m_value = val;
+      try
+      {
+        m_reader->validate();
+        m_value = val;
+      }
+      catch (std::exception& e)
+      {
+        throw InvalidValue(m_name, val);
+      }
     }
 
     void
