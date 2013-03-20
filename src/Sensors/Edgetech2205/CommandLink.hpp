@@ -147,13 +147,32 @@ namespace Sensors
       }
 
       void
-      setPingTrigger(SubsystemId subsys, uint32_t value)
+      setPingTrigger(SubsystemId subsys, TriggerMode mode)
       {
         m_pkt.setMessageType(MSG_ID_PING_TRIGGER);
         m_pkt.setCommandType(COMMAND_TYPE_SET);
         m_pkt.setSubsystemNumber(subsys);
         m_pkt.setChannel(0);
-        m_pkt.setValue(value);
+        m_pkt.setValue(mode);
+        sendPacket(m_pkt);
+      }
+
+      //! Set ping coupling parameters of slave systems.
+      //! @param[in] subsys subsystem identifier.
+      //! @param[in] tsrc id number of the master subsystem.
+      //! @param[in] tdiv an integer divisor specifying that the slave
+      //! subsystem will respond to every tdiv input from the master.
+      //! @param[in] tdel trigger delay in microsecond.
+      void
+      setPingCoupling(SubsystemId subsys, SubsystemId tsrc, uint32_t tdiv, uint32_t tdel)
+      {
+        m_pkt.setMessageType(MSG_ID_PING_TRIGGER);
+        m_pkt.setCommandType(COMMAND_TYPE_SET);
+        m_pkt.setSubsystemNumber(subsys);
+        m_pkt.setChannel(0);
+        m_pkt.set(tsrc, 0);
+        m_pkt.set(tdiv, 4);
+        m_pkt.set(tdel, 8);
         sendPacket(m_pkt);
       }
 
