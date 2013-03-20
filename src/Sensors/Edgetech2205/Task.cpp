@@ -79,7 +79,7 @@ namespace Sensors
       //! Log file.
       std::ofstream m_log_file;
       //! Log filename
-      Path m_log_file_path;
+      Path m_log_path;
       //! Time difference.
       int64_t m_time_diff;
       //! Estimated state.
@@ -198,6 +198,7 @@ namespace Sensors
       onResourceRelease(void)
       {
         requestDeactivation();
+        closeLog();
       }
 
       void
@@ -236,8 +237,6 @@ namespace Sensors
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_activating = false;
-
-        openLog();
       }
 
       void
@@ -279,15 +278,12 @@ namespace Sensors
         if (msg->getSource() != getSystemId())
           return;
 
-        if (!isActive())
-          return;
-
         switch (msg->op)
         {
           case IMC::LoggingControl::COP_STARTED:
             closeLog();
-            m_log_file_path = m_ctx.dir_log / msg->name / "Data.jsf";
-            openLog();
+            debug("changing log file to %s", m_log_path.c_str());
+            openLog(m_ctx.dir_log / msg->name / "Data.jsf");
             break;
 
           case IMC::LoggingControl::COP_REQUEST_STOP:
@@ -522,15 +518,23 @@ namespace Sensors
       }
 
       void
-      openLog(void)
+      openLog(const Path& path)
       {
+        if (path == m_log_path)
+          return;
+
         closeLog();
-        m_log_file.open(m_log_file_path.c_str(), std::ios::binary);
+
+        m_log_path = path;
+        m_log_file.open(m_log_path.c_str(), std::ios::binary);
+        debug("opening %s", m_log_path.c_str());
       }
 
       void
       writeToLog(const Packet* pkt)
       {
+        debug("writing %u", pkt->getMessageType());
+
         m_log_file.write((const char*)pkt->getData(), pkt->getSize());
       }
 
@@ -540,9 +544,12 @@ namespace Sensors
         if (m_log_file.is_open())
         {
           m_log_file.close();
-          int64_t size = m_log_file_path.size();
+          int64_t size = m_log_path.size();
           if (size == 0)
-            m_log_file_path.remove();
+          {
+            debug("removing empty log '%s'", m_log_path.c_str());
+            m_log_path.remove();
+          }
         }
       }
 
