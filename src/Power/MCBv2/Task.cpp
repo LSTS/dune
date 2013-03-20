@@ -28,6 +28,7 @@
 // ISO C++ 98 headers.
 #include <iostream>
 #include <string>
+#include <algorithm>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -59,6 +60,8 @@ namespace Power
 
     //! Maximum number of ADC derived messages.
     static const unsigned c_adcs_count = 6;
+    //! Number of power channels.
+    static const unsigned c_pwrs_count = 17;
 
     //! Commands to the device.
     enum Commands
@@ -77,30 +80,11 @@ namespace Power
       BIT_SW_CHR_ON = (1 << 6)
     };
 
-    //! List of Power Channels.
-    enum PowerChannels
-    {
-      PCH_ATX = 0,
-      PCH_12V_SPARE2 = 1,
-      PCH_ETH_SWITCH = 2,
-      PCH_12V_POE3 = 3,
-      PCH_12V_POE2 = 4,
-      PCH_12V_POE1 = 5,
-      PCH_12V_AMODEM = 6,
-      PCH_BAT_OUT = 7,
-      PCH_CPU = 8,
-      PCH_USB_HUB_P4 = 9,
-      PCH_USB_HUB_P3 = 10,
-      PCH_GPS = 11,
-      PCH_HSDPA = 12,
-      PCH_USB_HUB = 13,
-      PCH_LCD_BLIGHT = 16
-    };
-
     //! Power Channel data structure.
     struct PowerChannel
     {
       IMC::PowerChannelState state;
+      unsigned id;
       double sched_on;
       double sched_off;
 
@@ -134,6 +118,10 @@ namespace Power
       std::string adc_elabels[c_adcs_count];
       //! ADC conversion factors.
       std::vector<double> adc_factors[c_adcs_count];
+      //! Power channels names.
+      std::string pwr_names[c_pwrs_count];
+      //! Initial power channels states.
+      unsigned pwr_states[c_pwrs_count];
     };
 
     struct Task: public Tasks::Task
@@ -144,8 +132,6 @@ namespace Power
       Arguments m_args;
       //! Device protocol handler.
       Hardware::LUCL::Protocol m_proto;
-      //! List of power channels.
-      std::vector<PowerChannel*> m_pcs;
       //! True if power down is in progress.
       bool m_pwr_down;
       //! Power channels (1 bit per channel).
@@ -156,6 +142,8 @@ namespace Power
       bool m_halt;
       //! ADC messages.
       IMC::Message* m_adcs[c_adcs_count];
+      //! Power channels by name.
+      std::map<std::string, PowerChannel*> m_pwr_by_name;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -197,8 +185,19 @@ namespace Power
           .defaultValue("1.0, 0.0");
         }
 
+        for (unsigned i = 0; i < c_pwrs_count; ++i)
+        {
+          std::string option = String::str("Power Channel %u - Name", i);
+          param(option, m_args.pwr_names[i]);
+
+          option = String::str("Power Channel %u - State", i);
+          param(option, m_args.pwr_states[i])
+          .defaultValue("0");
+        }
+
         // Register consumers.
         bind<IMC::PowerChannelControl>(this);
+        bind<IMC::QueryPowerChannelState>(this);
       }
 
       ~Task(void)
@@ -209,8 +208,7 @@ namespace Power
             delete m_adcs[i];
         }
 
-        for (unsigned i = 0; i < m_pcs.size(); ++i)
-          delete m_pcs[i];
+        clearPowerChannels();
 
         if (m_gpios)
           delete m_gpios;
@@ -227,6 +225,29 @@ namespace Power
 
           m_adcs[i] = IMC::Factory::produce(m_args.adc_messages[i]);
         }
+
+        clearPowerChannels();
+        for (unsigned i = 0; i < c_pwrs_count; ++i)
+        {
+          if (String::startsWith(m_args.pwr_names[i], "N/C"))
+            continue;
+
+          PowerChannel* pc = new PowerChannel;
+          pc->id = i;
+          pc->state.name = m_args.pwr_names[i];
+
+          m_pwr_by_name[m_args.pwr_names[i]] = pc;
+        }
+      }
+
+      void
+      clearPowerChannels(void)
+      {
+        std::map<std::string, PowerChannel*>::iterator itr = m_pwr_by_name.begin();
+        for (; itr != m_pwr_by_name.end(); ++itr)
+          delete itr->second;
+
+        m_pwr_by_name.clear();
       }
 
       //! Reserve entities.
@@ -261,20 +282,6 @@ namespace Power
 
         m_gpios = new MCP23017(m_args.i2c_dev, MCP23017_ADDR);
         m_pwr_chns = m_gpios->getGPIOs();
-
-        // Create power channels.
-        createPC(PCH_GPS, "GPS", 1);
-        createPC(PCH_HSDPA, "HSDPA Modem", 1);
-        createPC(PCH_12V_POE3, "+12VDC P.O.E. #3", 1);
-        createPC(PCH_12V_POE2, "+12VDC P.O.E. #2", 1);
-        createPC(PCH_12V_POE1, "+12VDC P.O.E. #1", 1);
-
-        if (m_args.model == "A321")
-        {
-          createPC(PCH_12V_AMODEM, "Acoustic Modem", 1);
-          createPC(PCH_BAT_OUT, "Battery Out", 1);
-          createPC(PCH_USB_HUB_P4, "Ethernet Switch", 1);
-        }
       }
 
       //! Initialize resources.
@@ -326,35 +333,20 @@ namespace Power
         waitForCommand(CMD_PARAMS);
       }
 
-      //! Create Power Channel.
-      //! @param[in] id channel identifier.
-      //! @param[in] label channel label.
-      //! @param[in] state channel state.
-      void
-      createPC(uint8_t id, const std::string& label, uint8_t state)
-      {
-        PowerChannel* pc = new PowerChannel;
-        pc->state.id = id;
-        pc->state.label = label;
-        pc->state.state = state;
-        m_pcs.push_back(pc);
-      }
-
-      //! Dispatch power channels to bus.
-      void
-      dispatchPCs(void)
-      {
-        for (unsigned i = 0; i < m_pcs.size(); ++i)
-          dispatch(m_pcs[i]->state);
-      }
-
       void
       consume(const IMC::PowerChannelControl* msg)
       {
         if (m_halt)
           return;
 
-        if (msg->id == PCH_CPU)
+        std::map<std::string, PowerChannel*>::const_iterator itr = m_pwr_by_name.find(msg->name);
+        if (itr == m_pwr_by_name.end())
+          return;
+
+        PowerChannel* pc = itr->second;
+
+#if FIXME
+        if (pc->id == PCH_CPU)
         {
           // We're dead after this but it might take a few moments, so
           // don't mess with the i2c bus.
@@ -362,33 +354,45 @@ namespace Power
           m_halt = true;
           return;
         }
+#endif
 
-        if (msg->id == PCH_LCD_BLIGHT)
+#if FIXME
+        if (pc->id == PCH_LCD_BLIGHT)
         {
           uint8_t state = (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_ON) ? 1 : 0;
           m_proto.sendCommand(CMD_BLIGHT, &state, 1);
           return;
         }
+#endif
 
         if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
         {
-          m_pwr_chns &= ~(1 << msg->id);
+          m_pwr_chns &= ~(1 << pc->id);
+
+#if FIXME
           if (!((m_pwr_chns & (1 << PCH_GPS)) || (m_pwr_chns & (1 << PCH_HSDPA))))
             m_pwr_chns &= ~(1 << PCH_USB_HUB);
+#endif
         }
         else if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_ON)
         {
-          m_pwr_chns |= (1 << msg->id);
+          m_pwr_chns |= (1 << pc->id);
+
+#if FIXME
           if (((m_pwr_chns & (1 << PCH_GPS)) || (m_pwr_chns & (1 << PCH_HSDPA))))
             m_pwr_chns |= (1 << PCH_USB_HUB);
+#endif
         }
         else if (msg->op == IMC::PowerChannelControl::PCC_OP_TOGGLE)
         {
-          m_pwr_chns ^= (1 << msg->id);
+          m_pwr_chns ^= (1 << pc->id);
+
+#if FIXME
           if (((m_pwr_chns & (1 << PCH_GPS)) || (m_pwr_chns & (1 << PCH_HSDPA))))
             m_pwr_chns |= (1 << PCH_USB_HUB);
           else
             m_pwr_chns &= ~(1 << PCH_USB_HUB);
+#endif
         }
         else if (msg->op == IMC::PowerChannelControl::PCC_OP_SAVE)
         {
@@ -396,13 +400,13 @@ namespace Power
           m_proto.sendCommand(CMD_SAVE, data, sizeof(data));
         }
         else if (msg->op == IMC::PowerChannelControl::PCC_OP_SCHED_ON)
-          m_pcs[msg->id]->sched_on = Clock::get() + msg->sched_time;
+          pc->sched_on = Clock::get() + msg->sched_time;
         else if (msg->op == IMC::PowerChannelControl::PCC_OP_SCHED_OFF)
-          m_pcs[msg->id]->sched_off = Clock::get() + msg->sched_time;
+          pc->sched_off = Clock::get() + msg->sched_time;
         else if (msg->op == IMC::PowerChannelControl::PCC_OP_SCHED_RESET)
         {
-          m_pcs[msg->id]->sched_on = -1;
-          m_pcs[msg->id]->sched_off = -1;
+          pc->sched_on = -1;
+          pc->sched_off = -1;
         }
 
         m_gpios->setGPIOs(m_pwr_chns);
@@ -411,8 +415,9 @@ namespace Power
       void
       consume(const IMC::QueryPowerChannelState* msg)
       {
-        (void)msg;
-        dispatchPCs();
+        std::map<std::string, PowerChannel*>::iterator itr = m_pwr_by_name.begin();
+        for (; itr != m_pwr_by_name.end(); ++itr)
+          dispatchReply(*msg, itr->second->state);
       }
 
       //! On Command call.
@@ -572,29 +577,45 @@ namespace Power
         double now = Clock::get();
         IMC::PowerChannelControl pcc;
 
-        for (unsigned i = 0; i < m_pcs.size(); ++i)
+        std::map<std::string, PowerChannel*>::iterator itr = m_pwr_by_name.begin();
+        for (; itr != m_pwr_by_name.end(); ++itr)
         {
-          if (m_pcs[i]->sched_on != -1)
+          PowerChannel* pc = itr->second;
+
+          if (pc->sched_on != -1)
           {
-            if (now >= m_pcs[i]->sched_on)
+            if (now >= pc->sched_on)
             {
-              m_pcs[i]->sched_on = -1;
-              pcc.id = m_pcs[i]->state.id;
+              pc->sched_on = -1;
+              pcc.name = pc->state.name;
               pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
-              dispatch(pcc);
+              consume(&pcc);
             }
           }
 
-          if (m_pcs[i]->sched_off != -1)
+          if (pc->sched_off != -1)
           {
-            if (now >= m_pcs[i]->sched_off)
+            if (now >= pc->sched_off)
             {
-              m_pcs[i]->sched_off = -1;
-              pcc.id = m_pcs[i]->state.id;
+              pc->sched_off = -1;
+              pcc.name = pc->state.name;
               pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
-              dispatch(pcc);
+              consume(&pcc);
             }
           }
+        }
+      }
+
+      void
+      updatePowerChannels(void)
+      {
+        std::map<std::string, PowerChannel*>::iterator itr = m_pwr_by_name.begin();
+        for (; itr != m_pwr_by_name.end(); ++itr)
+        {
+          if (m_pwr_chns & (1 << itr->second->id))
+            itr->second->state.state = IMC::PowerChannelState::PCS_ON;
+          else
+            itr->second->state.state = IMC::PowerChannelState::PCS_OFF;
         }
       }
 
@@ -614,10 +635,7 @@ namespace Power
               m_proto.sendCommand(CMD_STATE);
               waitForCommand(CMD_STATE);
 
-              for (unsigned i = 0; i < m_pcs.size(); ++i)
-                m_pcs[i]->state.state = (m_pwr_chns & (1 << m_pcs[i]->state.id)) != 0;
-
-              dispatchPCs();
+              updatePowerChannels();
             }
           }
           catch (std::exception& e)
