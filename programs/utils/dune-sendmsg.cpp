@@ -484,6 +484,33 @@ main(int argc, char** argv)
     msg = tmsg;
     tmsg->op = atoi(argv[4]);
   }
+  else if (strcmp(argv[3], "SetEntityParameters") == 0)
+  {
+    IMC::SetEntityParameters* tmsg = new IMC::SetEntityParameters;
+    msg = tmsg;
+    tmsg->name = argv[4];
+
+    IMC::EntityParameter param;
+
+    unsigned i = 4;
+
+    while (1)
+    {
+      if (argc >= (int)i + 2)
+      {
+        ++i;
+        param.name = argv[i];
+        ++i;
+        param.value = argv[i];
+
+        tmsg->params.push_back(param);
+      }
+      else
+      {
+        break;
+      }
+    }
+  }
 
   if (msg == NULL)
   {
