@@ -79,7 +79,7 @@ namespace Sensors
       //! Log file.
       std::ofstream m_log_file;
       //! Log filename
-      std::string m_log_filename;
+      Path m_log_file_path;
       //! Time difference.
       int64_t m_time_diff;
       //! Estimated state.
@@ -219,9 +219,6 @@ namespace Sensors
       void
       onActivation(void)
       {
-        if (!m_log_file.is_open())
-          m_log_file.open((m_ctx.dir_log / m_log_filename / "Data.jsf").c_str(), std::ios::binary);
-
         m_sock_dat = new TCPSocket;
         m_sock_dat->setNoDelay(true);
         m_sock_dat->setReceiveTimeout(5);
@@ -239,11 +236,15 @@ namespace Sensors
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_activating = false;
+
+        openLog();
       }
 
       void
       onRequestDeactivation(void)
       {
+        closeLog();
+
         setDataActive(SUBSYS_SSL, "None");
         setPing(SUBSYS_SSL, "None");
         setDataActive(SUBSYS_SSH, "None");
@@ -278,19 +279,19 @@ namespace Sensors
         if (msg->getSource() != getSystemId())
           return;
 
-        m_log_filename = msg->name;
+        if (!isActive())
+          return;
 
         switch (msg->op)
         {
           case IMC::LoggingControl::COP_STARTED:
-            if (m_log_file.is_open())
-              m_log_file.close();
-
-            if (isActive())
-              m_log_file.open((m_ctx.dir_log / m_log_filename / "Data.jsf").c_str(), std::ios::binary);
+            closeLog();
+            m_log_file_path = m_ctx.dir_log / msg->name / "Data.jsf";
+            openLog();
             break;
+
           case IMC::LoggingControl::COP_REQUEST_STOP:
-            m_log_file.close();
+            closeLog();
             break;
         }
       }
@@ -462,20 +463,15 @@ namespace Sensors
         validity |= (1 << 9);
 
         pkt->set(validity, SDATA_IDX_VALIDITY);
-
-        m_log_file.write((const char*)pkt->getData(), pkt->getSize());
       }
 
       void
       handle(Packet* pkt)
       {
-        if (pkt->getMessageType() != MSG_ID_SONAR_DATA)
-        {
-          debug("unhandled message type: %u", pkt->getMessageType());
-          return;
-        }
+        if (pkt->getMessageType() == MSG_ID_SONAR_DATA)
+          handleSonarData(pkt);
 
-        handleSonarData(pkt);
+        writeToLog(pkt);
       }
 
       bool
@@ -523,6 +519,31 @@ namespace Sensors
       {
         if (m_countdown.overflow())
           deactivate();
+      }
+
+      void
+      openLog(void)
+      {
+        closeLog();
+        m_log_file.open(m_log_file_path.c_str(), std::ios::binary);
+      }
+
+      void
+      writeToLog(const Packet* pkt)
+      {
+        m_log_file.write((const char*)pkt->getData(), pkt->getSize());
+      }
+
+      void
+      closeLog(void)
+      {
+        if (m_log_file.is_open())
+        {
+          m_log_file.close();
+          int64_t size = m_log_file_path.size();
+          if (size == 0)
+            m_log_file_path.remove();
+        }
       }
 
       void
