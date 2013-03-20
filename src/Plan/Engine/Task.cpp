@@ -67,6 +67,8 @@ namespace Plan
     {
       //! Pointer to Plan class
       Plan* m_plan;
+      //! Calibration flag
+      bool m_calibrating;
       //! Plan control interface
       IMC::PlanControlState m_pcs;
       IMC::PlanControl m_reply;
@@ -104,6 +106,7 @@ namespace Plan
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_plan(NULL),
+        m_calibrating(false),
         m_calib_time(0),
         m_db(NULL),
         m_get_plan_stmt(NULL)
@@ -315,6 +318,17 @@ namespace Plan
             onVehicleExternalControl(vs);
             break;
         }
+
+        if (vs->op_mode == IMC::VehicleState::VS_CALIBRATION && !m_calibrating)
+        {
+          m_plan->calibrationStarted(m_calib_time);
+          m_calibrating = true;
+        }
+        else if (vs->op_mode != IMC::VehicleState::VS_CALIBRATION && m_calibrating)
+        {
+          m_plan->calibrationStopped();
+          m_calibrating = false;
+        }
       }
 
       void
@@ -416,7 +430,6 @@ namespace Plan
         {
           changeMode(IMC::PlanControlState::PCS_BLOCKED,
                      DTR("vehicle in CALIBRATION mode"), false);
-          m_plan->calibrationStarted(m_calib_time);
         }
       }
 
@@ -838,22 +851,17 @@ namespace Plan
         {
           debug(DTR("now in %s state"), c_state_desc[s]);
 
-          bool was_calibrating = initMode();
-          bool was_plan_exec = was_calibrating || execMode();
+          bool was_plan_exec = initMode() || execMode();
 
           m_pcs.state = s;
 
-          bool is_calibrating = initMode();
-          bool is_plan_exec = is_calibrating || execMode();
+          bool is_plan_exec = initMode() || execMode();
 
           if (was_plan_exec && !is_plan_exec)
           {
             m_plan->planStopped();
             changeLog("idle");
           }
-
-          if (was_calibrating && !is_calibrating)
-            m_plan->calibrationStopped();
         }
 
         if (maneuver)
