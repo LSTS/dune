@@ -533,8 +533,6 @@ namespace Sensors
       void
       writeToLog(const Packet* pkt)
       {
-        debug("writing %u", pkt->getMessageType());
-
         m_log_file.write((const char*)pkt->getData(), pkt->getSize());
       }
 
