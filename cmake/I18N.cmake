@@ -94,11 +94,12 @@ endif(DUNE_PROGRAM_MSGMERGE)
 
 # Compile.
 if(DUNE_PROGRAM_MSGFMT)
-  add_custom_target(i18n_compile)
+  add_custom_target(i18n_compile ALL)
 
   foreach(locale ${locales})
     dune_i18n_get_name(${locale} locale_name)
-    get_filename_component(locale_folder ${locale} PATH)
+    set(mo_folder "${DUNE_GENERATED}/i18n/${locale_name}/LC_MESSAGES")
+    file(MAKE_DIRECTORY ${mo_folder})
 
     add_custom_target(i18n_compile_${locale_name}
       msgfmt
@@ -106,14 +107,14 @@ if(DUNE_PROGRAM_MSGFMT)
       --check
       --statistics
       ${locale}
-      -o ${locale_folder}/dune.mo
+      -o ${mo_folder}/dune.mo
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/i18n)
     add_dependencies(i18n_compile i18n_compile_${locale_name})
   endforeach(locale ${locales})
 endif(DUNE_PROGRAM_MSGFMT)
 
 # Install.
-install(DIRECTORY i18n DESTINATION .
+install(DIRECTORY ${DUNE_GENERATED}/i18n DESTINATION .
   PATTERN .svn EXCLUDE
   PATTERN *.pot EXCLUDE
   PATTERN *.po EXCLUDE)
