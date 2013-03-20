@@ -160,6 +160,8 @@ namespace Plan
         if (time_left <= 0.0)
           return;
 
+        m_time_left = time_left;
+
         while (1)
         {
           std::map<std::string, TimedQueue>::iterator next;
@@ -207,6 +209,12 @@ namespace Plan
           {
             dispatchActions(q->front().list);
           }
+
+          if (m_reqs.find(next->first) != m_reqs.end())
+            m_reqs.erase(next->first);
+
+          m_reqs.insert(std::pair<std::string, TimedAction>(next->first, q->front()));
+          m_task->debug("pushing %s", next->first.c_str());
 
           q->pop();
 
@@ -279,6 +287,43 @@ namespace Plan
         return m_earliest;
       }
 
+      //! Check if the activation and deactivation requests are being complied
+      //! @param[in] id entity label
+      //! @param[in] msg pointer to EntityActivationState message
+      void
+      onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg)
+      {
+        if (m_reqs.empty())
+          return;
+
+        std::map<std::string, TimedAction>::const_iterator itr;
+        itr = m_reqs.find(id);
+
+        if (itr == m_reqs.end())
+          return;
+
+        if (itr->second.type == TYPE_ACT)
+        {
+          if (msg->state == IMC::EntityActivationState::EAS_ACT_DONE)
+          {
+            if (m_time_left > itr->second.sched_time - getActivationTime(id))
+              m_task->debug("schedule: %s active on time", id.c_str());
+            else
+              m_task->war("schedule: %s activation missed deadline", id.c_str());
+
+            m_reqs.erase(id);
+          }
+
+          if (msg->state == IMC::EntityActivationState::EAS_ACT_FAIL)
+            m_task->err("schedule: failed to activate %s", id.c_str());
+        }
+        else
+        {
+          if (msg->state == IMC::EntityActivationState::EAS_DEACT_DONE)
+            m_reqs.erase(id);
+        }
+      }
+
     private:
       //! Parse Start actions
       //! @param[in] actions message list of actions to parse
@@ -332,7 +377,7 @@ namespace Plan
           test = m_cinfo->find(sep->name);
           if (test == m_cinfo->end())
           {
-            m_task->err(DTR("schedule: entity label %s not found"), sep->name.c_str());
+            m_task->war(DTR("schedule: entity label %s not found"), sep->name.c_str());
             continue;
           }
 
@@ -535,6 +580,10 @@ namespace Plan
       float m_earliest;
       //! Set of entities that will be changed during plan
       std::set<std::string> m_ents_changed;
+      //! Estimated time left to finish plan
+      float m_time_left;
+      //! Set of activation requests yet to be confirmed
+      std::map<std::string, TimedAction> m_reqs;
     };
   }
 }

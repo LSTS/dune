@@ -139,6 +139,7 @@ namespace Plan
         bind<IMC::VehicleCommand>(this);
         bind<IMC::VehicleState>(this);
         bind<IMC::EntityInfo>(this);
+        bind<IMC::EntityActivationState>(this);
       }
 
       ~Task()
@@ -222,6 +223,13 @@ namespace Plan
           return;
 
         openDB();
+      }
+
+      void
+      consume(const IMC::EntityActivationState* msg)
+      {
+        if (m_plan != NULL)
+          m_plan->onEntityActivationState(resolveEntity(msg->getSourceEntity()), msg);
       }
 
       void

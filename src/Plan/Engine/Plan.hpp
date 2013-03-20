@@ -121,8 +121,8 @@ namespace Plan
       //! @return true if was able to parse the plan
       bool
       parse( std::string& desc, const std::set<uint16_t>* supported_maneuvers,
-            bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
-            Tasks::Task* task, const IMC::EstimatedState* state = NULL)
+             bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
+             Tasks::Task* task, const IMC::EstimatedState* state = NULL)
       {
         bool start_maneuver_ok = false;
 
@@ -389,6 +389,15 @@ namespace Plan
           m_sched->updateSchedule(getPlanEta());
 
         return prog;
+      }
+
+      //! Pass EntityActivationState to scheduler
+      //! @param[in] msg pointer to EntityActivationState message
+      void
+      onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg)
+      {
+        if (m_sched != NULL)
+          m_sched->onEntityActivationState(id, msg);
       }
 
       //! Get plan estimated time of arrival
