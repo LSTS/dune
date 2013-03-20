@@ -60,7 +60,7 @@ namespace Plan
       //! Conv to convert from actuation to meters per second
       float speed_conv_act;
       //! Duration of vehicle calibration process.
-      float calibration_time;
+      uint16_t calibration_time;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -680,7 +680,8 @@ namespace Plan
       {
         bool stopped = stopPlan(true);
 
-        changeMode(IMC::PlanControlState::PCS_INITIALIZING, DTR("plan initializing: ") + plan_id);
+        changeMode(IMC::PlanControlState::PCS_INITIALIZING,
+                   DTR("plan initializing: ") + plan_id);
 
         if (!loadPlan(plan_id, spec, true))
           return stopped;
@@ -695,12 +696,9 @@ namespace Plan
 
         if (flags & IMC::PlanControl::FLG_CALIBRATE)
         {
-          m_calib_time = 0;
-
-          if (m_plan->getCalibrationTime() > 0.0)
-            m_calib_time = (uint16_t)m_plan->getCalibrationTime();
-
-          m_calib_time = std::max((uint16_t)m_args.calibration_time, m_calib_time);
+          // Calibration time cannot be shorter than the parameter
+          m_calib_time = std::max(m_args.calibration_time,
+                                  m_plan->getCalibrationTime());
 
           if (!startCalibration(m_calib_time))
             return stopped;

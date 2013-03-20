@@ -77,7 +77,7 @@ namespace Plan
         m_sequential(false),
         m_compute_progress(compute_progress),
         m_progress(0.0),
-        m_calibration(-1.0),
+        m_calibration(0),
         m_in_calib(false),
         m_sched(NULL)
       {
@@ -107,7 +107,7 @@ namespace Plan
         m_sequential = false;
         m_durations.clear();
         m_progress = -1.0;
-        m_calibration = -1.0;
+        m_calibration = 0;
         m_in_calib = false;
       }
 
@@ -216,7 +216,7 @@ namespace Plan
 
             // Estimate necessary calibration time
             float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
-            m_calibration = trimValue(diff, -1.0, diff);
+            m_calibration = (uint16_t)trimValue(diff, 0.0, diff);
           }
         }
 
@@ -288,7 +288,7 @@ namespace Plan
 
       //! Get necessary calibration time
       //! @return necessary calibration time
-      float
+      uint16_t
       getCalibrationTime(void)
       {
         return m_calibration;
@@ -581,7 +581,7 @@ namespace Plan
       //! Current progress if any
       float m_progress;
       //! Current plan's calibration time if any
-      float m_calibration;
+      uint16_t m_calibration;
       //! True if currently in calibration
       bool m_in_calib;
       //! Timer to estimate time left in calibration
