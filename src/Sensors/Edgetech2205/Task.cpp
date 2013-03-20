@@ -60,6 +60,8 @@ namespace Sensors
       unsigned range_lf;
       //! Name of sidescan's power channel.
       std::string pwr_ss;
+      //! Pulse auto selection mode.
+      unsigned autosel_mode;
     };
 
     struct Task: public Tasks::Task
@@ -149,6 +151,12 @@ namespace Sensors
         .units(Units::Meter)
         .description("Enable high frequency subsystem");
 
+        param("Pulse Autoselection Mode", m_args.autosel_mode)
+        .defaultValue("2")
+        .minimumValue("0")
+        .maximumValue("4")
+        .description("Auto pulse selection mode");
+
         param("Power Channel - Sidescan", m_args.pwr_ss)
         .defaultValue("Sidescan")
         .description("Name of sidescan's power channel");
@@ -221,8 +229,11 @@ namespace Sensors
         m_sock_dat->connect(m_args.addr, m_args.port_dat);
         m_sock_dat->addToPoll(m_iom_dat);
 
-        m_cmd->setPingAutoselectMode(SUBSYS_SSL, 2);
-        m_cmd->setPingAutoselectMode(SUBSYS_SSH, 2);
+        m_cmd->setPingAutoselectMode(SUBSYS_SSL, m_args.autosel_mode);
+        m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_INTERNAL);
+
+        m_cmd->setPingAutoselectMode(SUBSYS_SSH, m_args.autosel_mode);
+        m_cmd->setPingTrigger(SUBSYS_SSH, TRIG_MODE_INTERNAL);
 
         setConfig();
 
@@ -289,6 +300,17 @@ namespace Sensors
       {
         m_cmd->setPingRange(SUBSYS_SSL, m_args.range_lf);
         m_cmd->setPingRange(SUBSYS_SSH, m_args.range_hf);
+
+        if ((m_args.channels_lf != "None") && (m_args.channels_hf != "None"))
+        {
+          m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_COUPLED);
+          m_cmd->setPingCoupling(SUBSYS_SSL, SUBSYS_SSH, 0, 0);
+        }
+        else
+        {
+          m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_INTERNAL);
+        }
+
         setDataActive(SUBSYS_SSL, m_args.channels_lf);
         setDataActive(SUBSYS_SSH, m_args.channels_hf);
 
