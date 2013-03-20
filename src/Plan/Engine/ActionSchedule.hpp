@@ -214,7 +214,6 @@ namespace Plan
             m_reqs.erase(next->first);
 
           m_reqs.insert(std::pair<std::string, TimedAction>(next->first, q->front()));
-          m_task->debug("pushing %s", next->first.c_str());
 
           q->pop();
 
