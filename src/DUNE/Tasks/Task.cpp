@@ -454,7 +454,8 @@ namespace DUNE
         }
         catch (std::runtime_error& e)
         {
-          err(DTR("updating entity parameters: %s"), e.what());
+          err(DTR("updating entity parameters: %s: '%s'"), e.what(),
+              (*itr)->name.c_str());
         }
       }
 
