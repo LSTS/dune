@@ -296,7 +296,7 @@ namespace DUNE
       }
 
       //! Get virtual angular velocity
-      //! @param[in] axix axis of rotation.
+      //! @param[in] axis axis of rotation.
       //! @return angular velocity value.
       inline double
       getVirtualAngularVelocity(Axes axis)

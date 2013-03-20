@@ -613,6 +613,7 @@ namespace Plan
       }
 
       //! Parse a given plan
+      //! @param[in] plan_startup true if the plan is starting up
       //! @return true if was able to parse the plan
       inline bool
       parsePlan(bool plan_startup)
