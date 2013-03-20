@@ -224,9 +224,9 @@ namespace DUNE
       }
 
       void
-      setChanged(void)
+      setChanged(bool enabled = true)
       {
-        m_changed = true;
+        m_changed = enabled;
       }
 
     protected:
