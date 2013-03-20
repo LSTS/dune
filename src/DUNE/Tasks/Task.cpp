@@ -300,7 +300,7 @@ namespace DUNE
       m_act_state.state = IMC::EntityActivationState::EAS_DEACT_IP;
       dispatch(m_act_state);
 
-      spew("calling on request activation");
+      spew("calling on request deactivation");
       onRequestDeactivation();
     }
 
