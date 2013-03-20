@@ -58,10 +58,8 @@ namespace Sensors
       unsigned range_hf;
       //! Range of the low-frequency subsystem.
       unsigned range_lf;
-      //! Name of the system power channel.
-      std::string pwr_sys;
-      //! Name of the CPU power channel.
-      std::string pwr_cpu;
+      //! Name of sidescan's power channel.
+      std::string pwr_ss;
     };
 
     struct Task: public Tasks::Task
@@ -85,17 +83,28 @@ namespace Sensors
       //! Estimated state.
       IMC::EstimatedState m_estate;
       //! Power channel state.
-      IMC::PowerChannelState m_pwr_cpu;
+      IMC::PowerChannelControl m_pwr_ss;
       //! Configuration parameters.
       Arguments m_args;
+      //! True if task is activating.
+      bool m_activating;
+      //! True if task is deactivating.
+      bool m_deactivating;
+      //! Activation/deactivation timer.
+      Counter<double> m_countdown;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_sock_dat(NULL),
         m_cmd(NULL),
-        m_time_diff(0)
+        m_time_diff(0),
+        m_activating(false),
+        m_deactivating(false)
       {
         // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("IPv4 Address", m_args.addr)
         .defaultValue("192.168.0.5")
         .description("IP address of the sonar");
@@ -140,76 +149,34 @@ namespace Sensors
         .units(Units::Meter)
         .description("Enable high frequency subsystem");
 
-        param("Power Channel - System", m_args.pwr_sys)
+        param("Power Channel - Sidescan", m_args.pwr_ss)
         .defaultValue("Sidescan")
-        .description("Name of the power channel that controls system power");
-
-        param("Power Channel - CPU", m_args.pwr_cpu)
-        .defaultValue("Sidescan CPU")
-        .description("Name of the power channel that controls CPU power");
+        .description("Name of sidescan's power channel");
 
         m_bfr.resize(256 * 1024);
 
-        m_pwr_cpu.state = IMC::PowerChannelState::PCS_OFF;
+        m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
 
         bind<IMC::EstimatedState>(this);
         bind<IMC::LoggingControl>(this);
-        bind<IMC::PowerChannelControl>(this);
-        bind<IMC::QueryPowerChannelState>(this);
       }
 
       void
       onUpdateParameters(void)
       {
-        m_pwr_cpu.name = m_args.pwr_cpu;
+        m_pwr_ss.name = m_args.pwr_ss;
 
-        if (paramChanged(m_args.range_lf))
+        if (isActive())
         {
-          if (m_cmd)
-            m_cmd->setPingRange(SUBSYS_SSL, m_args.range_lf);
-        }
+          setConfig();
 
-        if (paramChanged(m_args.range_hf))
-        {
-          if (m_cmd)
-            m_cmd->setPingRange(SUBSYS_SSH, m_args.range_hf);
-        }
-
-        if (paramChanged(m_args.channels_lf))
-        {
-          if (m_cmd)
-          {
-            setDataActive(SUBSYS_SSL, m_args.channels_lf);
-            if (isActive())
-              setPing(SUBSYS_SSL, m_args.channels_lf);
-          }
-        }
-
-        if (paramChanged(m_args.channels_hf))
-        {
-          if (m_cmd)
-          {
-            setDataActive(SUBSYS_SSH, m_args.channels_hf);
-            if (isActive())
-              setPing(SUBSYS_SSH, m_args.channels_hf);
-          }
-        }
-
-        if (paramChanged(m_args.addr))
-        {
-          if (m_cmd)
+          if (paramChanged(m_args.addr))
             throw RestartNeeded(DTR("restarting to change IPv4 address"), 1);
-        }
 
-        if (paramChanged(m_args.port_cmd))
-        {
-          if (m_cmd)
+          if (paramChanged(m_args.port_cmd))
             throw RestartNeeded(DTR("restarting to change TCP command port"), 1);
-        }
 
-        if (paramChanged(m_args.port_dat))
-        {
-          if (m_cmd)
+          if (paramChanged(m_args.port_dat))
             throw RestartNeeded(DTR("restarting to change TCP data port"), 1);
         }
       }
@@ -217,50 +184,76 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
-        try
-        {
-          m_cmd = new CommandLink(m_args.addr, m_args.port_cmd);
-        }
-        catch (...)
-        {
-          throw RestartNeeded("system not online", 5);
-        }
       }
 
       void
       onResourceRelease(void)
       {
-        onDeactivation();
-
-        if (m_cmd)
-          Memory::clear(m_cmd);
+        requestDeactivation();
       }
 
       void
       onResourceInitialization(void)
       {
-        onDeactivation();
+        requestDeactivation();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
-      consume(const IMC::PowerChannelControl* msg)
+      onRequestActivation(void)
       {
-        if (msg->name != m_args.pwr_cpu)
-          return;
-
-        if (m_cmd)
-        {
-          inf("sending shutdown");
-
-          m_cmd->shutdown();
-          m_pwr_cpu.state = IMC::PowerChannelState::PCS_OFF;
-        }
+        m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+        dispatch(m_pwr_ss);
+        m_pwr_ss.toText(std::cerr);
+        m_activating = true;
+        m_countdown.setTop(getActivationTime());
       }
 
       void
-      consume(const IMC::QueryPowerChannelState* msg)
+      onActivation(void)
       {
-        dispatchReply(*msg, m_pwr_cpu);
+        if (!m_log_file.is_open())
+          m_log_file.open((m_ctx.dir_log / m_log_filename / "Data.jsf").c_str(), std::ios::binary);
+
+        m_sock_dat = new TCPSocket;
+        m_sock_dat->setNoDelay(true);
+        m_sock_dat->setReceiveTimeout(5);
+        m_sock_dat->setSendTimeout(5);
+        m_sock_dat->connect(m_args.addr, m_args.port_dat);
+        m_sock_dat->addToPoll(m_iom_dat);
+
+        m_cmd->setPingAutoselectMode(SUBSYS_SSL, 2);
+        m_cmd->setPingAutoselectMode(SUBSYS_SSH, 2);
+
+        setConfig();
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_activating = false;
+      }
+
+      void
+      onRequestDeactivation(void)
+      {
+        setDataActive(SUBSYS_SSL, "None");
+        setPing(SUBSYS_SSL, "None");
+        setDataActive(SUBSYS_SSH, "None");
+        setPing(SUBSYS_SSH, "None");
+        m_cmd->shutdown();
+
+        Memory::clear(m_cmd);
+        Memory::clear(m_sock_dat);
+
+        m_deactivating = true;
+        m_countdown.setTop(getDeactivationTime());
+      }
+
+      void
+      onDeactivation(void)
+      {
+        m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+        dispatch(m_pwr_ss);
+        m_deactivating = false;
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -293,48 +286,17 @@ namespace Sensors
       }
 
       void
-      onActivation(void)
+      setConfig(void)
       {
-        if (m_cmd == NULL)
-          return;
-
-        if (!m_log_file.is_open())
-          m_log_file.open((m_ctx.dir_log / m_log_filename / "Data.jsf").c_str(), std::ios::binary);
-
-        m_sock_dat = new TCPSocket;
-        m_sock_dat->setNoDelay(true);
-        m_sock_dat->setReceiveTimeout(5);
-        m_sock_dat->setSendTimeout(5);
-        m_sock_dat->connect(m_args.addr, m_args.port_dat);
-        m_sock_dat->addToPoll(m_iom_dat);
-
-        m_cmd->setPingAutoselectMode(SUBSYS_SSL, 2);
-        m_cmd->setPingAutoselectMode(SUBSYS_SSH, 2);
-
         m_cmd->setPingRange(SUBSYS_SSL, m_args.range_lf);
         m_cmd->setPingRange(SUBSYS_SSH, m_args.range_hf);
-
         setDataActive(SUBSYS_SSL, m_args.channels_lf);
-        setPing(SUBSYS_SSL, m_args.channels_lf);
         setDataActive(SUBSYS_SSH, m_args.channels_hf);
-        setPing(SUBSYS_SSH, m_args.channels_hf);
-      }
 
-      void
-      onDeactivation(void)
-      {
-        if (m_cmd == NULL)
-          return;
-
-        setDataActive(SUBSYS_SSL, "None");
-        setPing(SUBSYS_SSL, "None");
-        setDataActive(SUBSYS_SSH, "None");
-        setPing(SUBSYS_SSH, "None");
-
-        if (m_sock_dat != NULL)
+        if (isActive())
         {
-          m_sock_dat->delFromPoll(m_iom_dat);
-          Memory::clear(m_sock_dat);
+          setPing(SUBSYS_SSL, m_args.channels_lf);
+          setPing(SUBSYS_SSH, m_args.channels_hf);
         }
       }
 
@@ -488,7 +450,7 @@ namespace Sensors
       {
         if (pkt->getMessageType() != MSG_ID_SONAR_DATA)
         {
-          inf("something else");
+          debug("unhandled message type: %u", pkt->getMessageType());
           return;
         }
 
@@ -508,12 +470,38 @@ namespace Sensors
         for (int i = 0; i < rv; ++i)
         {
           if (m_parser.parse(m_bfr[i]))
-          {
             handle(m_parser.getPacket());
-          }
         }
 
         return true;
+      }
+
+      void
+      checkActivationProgress(void)
+      {
+        if (m_countdown.overflow())
+        {
+          activationFailed(DTR("failed to contact device"));
+          m_activating = false;
+          return;
+        }
+
+        try
+        {
+          m_cmd = new CommandLink(m_args.addr, m_args.port_cmd);
+          activate();
+          debug("activation took %0.2f s", getActivationTime() -
+                m_countdown.getRemaining());
+        }
+        catch (...)
+        { }
+      }
+
+      void
+      checkDeactivationProgress(void)
+      {
+        if (m_countdown.overflow())
+          deactivate();
       }
 
       void
@@ -521,15 +509,20 @@ namespace Sensors
       {
         while (!stopping())
         {
-          if (m_sock_dat == NULL)
+          consumeMessages();
+
+          if (isActive() && (m_sock_dat != NULL))
           {
-            waitForMessages(1.0);
+            readData();
+            m_time_diff = m_cmd->estimateTimeDifference();
           }
           else
           {
-            consumeMessages();
-            readData();
-            m_time_diff = m_cmd->estimateTimeDifference();
+            waitForMessages(1.0);
+            if (m_activating)
+              checkActivationProgress();
+            else if (m_deactivating)
+              checkDeactivationProgress();
           }
         }
       }
