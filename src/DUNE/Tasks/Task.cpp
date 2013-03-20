@@ -233,6 +233,8 @@ namespace DUNE
             requestDeactivation();
         }
       }
+
+      m_params.setChanged(false);
     }
 
     void
