@@ -387,6 +387,14 @@ namespace DUNE
       unsigned int
       resolveEntity(const std::string& label) const;
 
+      //! Retrieve the entity label of a given entity id.
+      //! @param[in] id entity id.
+      //! @throw NonexistentId if the id doesn't have an
+      //! associated label.
+      //! @return entity label.
+      std::string
+      resolveEntity(unsigned int id) const;
+
       //! Test if task is stopping.
       //! @return true if task is stopping, false otherwise.
       bool

@@ -109,6 +109,12 @@ namespace DUNE
       return m_ctx.entities.resolve(label);
     }
 
+    std::string
+    Task::resolveEntity(unsigned int id) const
+    {
+      return m_ctx.entities.resolve(id);
+    }
+
     void
     Task::reserveEntities(void)
     {
