@@ -204,7 +204,6 @@ namespace Sensors
       {
         m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
         dispatch(m_pwr_ss);
-        m_pwr_ss.toText(std::cerr);
         m_activating = true;
         m_countdown.setTop(getActivationTime());
       }
