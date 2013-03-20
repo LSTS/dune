@@ -126,6 +126,8 @@ namespace Power
 
     struct Task: public Tasks::Task
     {
+      //! Convenience type definition for a table of power channels.
+      typedef std::map<std::string, PowerChannel*> PowerChannelMap;
       //! Device I2C address.
       static const uint8_t c_addr = 0x10;
       //! Task arguments.
@@ -143,7 +145,7 @@ namespace Power
       //! ADC messages.
       IMC::Message* m_adcs[c_adcs_count];
       //! Power channels by name.
-      std::map<std::string, PowerChannel*> m_pwr_by_name;
+      PowerChannelMap m_pwr_chs;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -236,18 +238,18 @@ namespace Power
           pc->id = i;
           pc->state.name = m_args.pwr_names[i];
 
-          m_pwr_by_name[m_args.pwr_names[i]] = pc;
+          m_pwr_chs[m_args.pwr_names[i]] = pc;
         }
       }
 
       void
       clearPowerChannels(void)
       {
-        std::map<std::string, PowerChannel*>::iterator itr = m_pwr_by_name.begin();
-        for (; itr != m_pwr_by_name.end(); ++itr)
+        PowerChannelMap::iterator itr = m_pwr_chs.begin();
+        for (; itr != m_pwr_chs.end(); ++itr)
           delete itr->second;
 
-        m_pwr_by_name.clear();
+        m_pwr_chs.clear();
       }
 
       //! Reserve entities.
@@ -339,8 +341,8 @@ namespace Power
         if (m_halt)
           return;
 
-        std::map<std::string, PowerChannel*>::const_iterator itr = m_pwr_by_name.find(msg->name);
-        if (itr == m_pwr_by_name.end())
+        PowerChannelMap::const_iterator itr = m_pwr_chs.find(msg->name);
+        if (itr == m_pwr_chs.end())
           return;
 
         PowerChannel* pc = itr->second;
@@ -415,8 +417,8 @@ namespace Power
       void
       consume(const IMC::QueryPowerChannelState* msg)
       {
-        std::map<std::string, PowerChannel*>::iterator itr = m_pwr_by_name.begin();
-        for (; itr != m_pwr_by_name.end(); ++itr)
+        PowerChannelMap::iterator itr = m_pwr_chs.begin();
+        for (; itr != m_pwr_chs.end(); ++itr)
           dispatchReply(*msg, itr->second->state);
       }
 
@@ -577,8 +579,8 @@ namespace Power
         double now = Clock::get();
         IMC::PowerChannelControl pcc;
 
-        std::map<std::string, PowerChannel*>::iterator itr = m_pwr_by_name.begin();
-        for (; itr != m_pwr_by_name.end(); ++itr)
+        PowerChannelMap::iterator itr = m_pwr_chs.begin();
+        for (; itr != m_pwr_chs.end(); ++itr)
         {
           PowerChannel* pc = itr->second;
 
@@ -609,8 +611,8 @@ namespace Power
       void
       updatePowerChannels(void)
       {
-        std::map<std::string, PowerChannel*>::iterator itr = m_pwr_by_name.begin();
-        for (; itr != m_pwr_by_name.end(); ++itr)
+        PowerChannelMap::iterator itr = m_pwr_chs.begin();
+        for (; itr != m_pwr_chs.end(); ++itr)
         {
           if (m_pwr_chns & (1 << itr->second->id))
             itr->second->state.state = IMC::PowerChannelState::PCS_ON;
