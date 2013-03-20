@@ -228,25 +228,6 @@ namespace Control
         onResourceInitialization(void)
         {
           BasicAutopilot::onResourceInitialization();
-
-          float output_limits[LP_MAX_LOOPS];
-          output_limits[LP_ROLL] = m_args.max_fin_rot;
-          output_limits[LP_PITCH] = m_args.max_pitch_act;
-          output_limits[LP_DEPTH] = m_args.max_pitch;
-          output_limits[LP_HEADING] = m_args.max_hrate;
-          output_limits[LP_HRATE] = m_args.max_fin_rot;
-
-          // Setting pid gains and integral limits
-          for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
-          {
-            m_pid[i].setGains(m_args.gains[i]);
-            m_pid[i].setOutputLimits(-output_limits[i], output_limits[i]);
-            m_pid[i].setIntegralLimits(m_args.max_int[i]);
-
-            // Debug parcels
-            if (m_args.log_parcels)
-              m_pid[i].enableParcels(this, &m_parcels[i]);
-          }
         }
 
         //! Update internal parameters.
@@ -269,6 +250,32 @@ namespace Control
           // Heading rate control parameters
           m_args.max_fin_rot = Angles::radians(m_args.max_fin_rot);
           m_args.max_hrate = Angles::radians(m_args.max_hrate);
+
+          initializePIDs();
+        }
+
+        //! Initialize PID related variables
+        void
+        initializePIDs(void)
+        {
+          float output_limits[LP_MAX_LOOPS];
+          output_limits[LP_ROLL] = m_args.max_fin_rot;
+          output_limits[LP_PITCH] = m_args.max_pitch_act;
+          output_limits[LP_DEPTH] = m_args.max_pitch;
+          output_limits[LP_HEADING] = m_args.max_hrate;
+          output_limits[LP_HRATE] = m_args.max_fin_rot;
+
+          // Setting pid gains and integral limits
+          for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
+          {
+            m_pid[i].setGains(m_args.gains[i]);
+            m_pid[i].setOutputLimits(-output_limits[i], output_limits[i]);
+            m_pid[i].setIntegralLimits(m_args.max_int[i]);
+
+            // Debug parcels
+            if (m_args.log_parcels)
+              m_pid[i].enableParcels(this, &m_parcels[i]);
+          }
         }
 
         //! Member variable reset function
