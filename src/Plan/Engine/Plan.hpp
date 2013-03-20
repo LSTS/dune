@@ -112,15 +112,15 @@ namespace Plan
       }
 
       //! Parse a given plan
-      //! @param[in] supported_maneuvers list of supported maneuvers
       //! @param[out] desc description of the failure if any
+      //! @param[in] supported_maneuvers list of supported maneuvers
       //! @param[in] plan_startup true if the plan is starting up
       //! @param[in] cinfo map of components info
       //! @param[in] task pointer to task
       //! @param[in] state pointer to EstimatedState message
       //! @return true if was able to parse the plan
       bool
-      parse(const std::set<uint16_t>* supported_maneuvers, std::string& desc,
+      parse( std::string& desc, const std::set<uint16_t>* supported_maneuvers,
             bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
             Tasks::Task* task, const IMC::EstimatedState* state = NULL)
       {
@@ -134,7 +134,8 @@ namespace Plan
           return false;
         }
 
-        IMC::MessageList<IMC::PlanManeuver>::const_iterator mitr = m_spec->maneuvers.begin();
+        IMC::MessageList<IMC::PlanManeuver>::const_iterator mitr;
+        mitr = m_spec->maneuvers.begin();
 
         // parse maneuvers and transitions
         do
@@ -155,7 +156,7 @@ namespace Plan
 
           if (supported_maneuvers->find(m->getId()) == supported_maneuvers->end())
           {
-            desc = (*mitr)->maneuver_id + DTR(" maneuver is not supported");
+            desc = (*mitr)->maneuver_id + DTR(": maneuver is not supported");
             return false;
           }
 
@@ -185,7 +186,9 @@ namespace Plan
           // if a match was not found and this is not the start maneuver
           if (!matched && ((*mitr)->maneuver_id != m_spec->start_man_id))
           {
-            desc = (*mitr)->maneuver_id + DTR(": maneuver has no incoming transition and is not the initial maneuver");
+            std::string str = DTR(": maneuver has no incoming transition"
+                                  " and it's not the initial maneuver");
+            desc = (*mitr)->maneuver_id + str;
             return false;
           }
 

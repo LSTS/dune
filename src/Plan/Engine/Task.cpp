@@ -619,7 +619,7 @@ namespace Plan
       parsePlan(bool plan_startup)
       {
         std::string desc;
-        if (!m_plan->parse(&m_supported_maneuvers, desc, plan_startup,
+        if (!m_plan->parse(desc, &m_supported_maneuvers, plan_startup,
                            m_cinfo, this, &m_state))
         {
           onFailure(desc);
