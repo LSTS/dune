@@ -517,7 +517,7 @@ namespace Plan
           }
         }
 
-        if (!parsePlan())
+        if (!parsePlan(plan_startup))
         {
           changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("plan validation failed: ") + m_reply.info);
           return false;
@@ -615,10 +615,11 @@ namespace Plan
       //! Parse a given plan
       //! @return true if was able to parse the plan
       inline bool
-      parsePlan(void)
+      parsePlan(bool plan_startup)
       {
         std::string desc;
-        if (!m_plan->parse(&m_supported_maneuvers, desc, m_cinfo, this, &m_state))
+        if (!m_plan->parse(&m_supported_maneuvers, desc, plan_startup,
+                           m_cinfo, this, &m_state))
         {
           onFailure(desc);
           return false;

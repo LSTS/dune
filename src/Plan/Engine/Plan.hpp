@@ -120,8 +120,8 @@ namespace Plan
       //! @return true if was able to parse the plan
       bool
       parse(const std::set<uint16_t>* supported_maneuvers, std::string& desc,
-            const std::map<std::string, IMC::EntityInfo>& cinfo, Tasks::Task* task,
-            const IMC::EstimatedState* state = NULL)
+            bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
+            Tasks::Task* task, const IMC::EstimatedState* state = NULL)
       {
         bool start_maneuver_ok = false;
 
@@ -199,7 +199,7 @@ namespace Plan
           return false;
         }
 
-        if (m_compute_progress)
+        if (m_compute_progress && plan_startup)
         {
           sequenceNodes();
 
