@@ -166,11 +166,11 @@ namespace Sensors
       void
       setPingCoupling(SubsystemId subsys, SubsystemId tsrc, uint32_t tdiv, uint32_t tdel)
       {
-        m_pkt.setMessageType(MSG_ID_PING_TRIGGER);
+        m_pkt.setMessageType(MSG_ID_PING_COUPLING_PARAMS);
         m_pkt.setCommandType(COMMAND_TYPE_SET);
         m_pkt.setSubsystemNumber(subsys);
         m_pkt.setChannel(0);
-        m_pkt.set(tsrc, 0);
+        m_pkt.set<uint32_t>(tsrc, 0);
         m_pkt.set(tdiv, 4);
         m_pkt.set(tdel, 8);
         sendPacket(m_pkt);
