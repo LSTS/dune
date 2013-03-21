@@ -295,13 +295,16 @@ namespace Sensors
       void
       setConfig(void)
       {
+        if (m_cmd == NULL)
+          return;
+
         m_cmd->setPingRange(SUBSYS_SSL, m_args.range_lf);
         m_cmd->setPingRange(SUBSYS_SSH, m_args.range_hf);
 
         if ((m_args.channels_lf != "None") && (m_args.channels_hf != "None"))
         {
           m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_COUPLED);
-          m_cmd->setPingCoupling(SUBSYS_SSL, SUBSYS_SSH, 0, 0);
+          m_cmd->setPingCoupling(SUBSYS_SSL, SUBSYS_SSH, 1, 0);
         }
         else
         {
@@ -311,11 +314,8 @@ namespace Sensors
         setDataActive(SUBSYS_SSL, m_args.channels_lf);
         setDataActive(SUBSYS_SSH, m_args.channels_hf);
 
-        if (isActive())
-        {
-          setPing(SUBSYS_SSL, m_args.channels_lf);
-          setPing(SUBSYS_SSH, m_args.channels_hf);
-        }
+        setPing(SUBSYS_SSL, m_args.channels_lf);
+        setPing(SUBSYS_SSH, m_args.channels_hf);
       }
 
       void
@@ -561,7 +561,13 @@ namespace Sensors
           if (isActive() && (m_sock_dat != NULL))
           {
             readData();
-            m_time_diff = m_cmd->estimateTimeDifference();
+
+            try
+            {
+              m_time_diff = m_cmd->estimateTimeDifference();
+            }
+            catch (...)
+            { }
           }
           else
           {
