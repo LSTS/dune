@@ -82,6 +82,14 @@ namespace DUNE
         return itr->second->changed();
       }
 
+      void
+      setChanged(bool enabled)
+      {
+        std::map<void*, Parameter*>::iterator itr = m_pointers.begin();
+        for (; itr != m_pointers.end(); ++itr)
+          itr->second->setChanged(enabled);
+      }
+
       //! Retrieve the list of registered parameters.
       //! @return list with the labels of registered parameters.
       std::vector<std::string>

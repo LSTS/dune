@@ -60,6 +60,19 @@ namespace Plan
         std::vector<IMC::PlanTransition*> trans;
       };
 
+      //! Calibration state
+      enum CalibrationState
+      {
+        //! Not available as in, no need for calibration
+        CS_NONE,
+        //! Must be done but has not started yet
+        CS_NOT_STARTED,
+        //! In progress
+        CS_IN_PROGRESS,
+        //! Calibration done
+        CS_DONE
+      };
+
       //! Mapping between maneuver IDs and graph nodes
       typedef std::map<std::string, Node> PlanMap;
       //! Iterator
@@ -77,8 +90,8 @@ namespace Plan
         m_sequential(false),
         m_compute_progress(compute_progress),
         m_progress(0.0),
-        m_calibration(-1.0),
-        m_in_calib(false),
+        m_calibration(0),
+        m_calib_state(CS_NONE),
         m_sched(NULL)
       {
         m_speed_conv.rpm_factor = speed_rpm_factor;
@@ -107,8 +120,8 @@ namespace Plan
         m_sequential = false;
         m_durations.clear();
         m_progress = -1.0;
-        m_calibration = -1.0;
-        m_in_calib = false;
+        m_calibration = 0;
+        m_calib_state = CS_NONE;
       }
 
       //! Parse a given plan
@@ -121,8 +134,8 @@ namespace Plan
       //! @return true if was able to parse the plan
       bool
       parse( std::string& desc, const std::set<uint16_t>* supported_maneuvers,
-            bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
-            Tasks::Task* task, const IMC::EstimatedState* state = NULL)
+             bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
+             Tasks::Task* task, const IMC::EstimatedState* state = NULL)
       {
         bool start_maneuver_ok = false;
 
@@ -216,7 +229,7 @@ namespace Plan
 
             // Estimate necessary calibration time
             float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
-            m_calibration = trimValue(diff, -1.0, diff);
+            m_calibration = (uint16_t)trimValue(diff, 0.0, diff);
           }
         }
 
@@ -229,6 +242,11 @@ namespace Plan
       void
       planStarted(void)
       {
+        if (m_calibration > 0.0)
+          m_calib_state = CS_NOT_STARTED;
+        else
+          m_calib_state = CS_NONE;
+
         if (m_sched == NULL)
           return;
 
@@ -253,8 +271,12 @@ namespace Plan
       {
         if (time > 0.0)
         {
-          m_in_calib = true;
+          m_calib_state = CS_IN_PROGRESS;
           m_calib_timer.setTop(time);
+        }
+        else
+        {
+          m_calib_state = CS_NONE;
         }
       }
 
@@ -262,7 +284,7 @@ namespace Plan
       void
       calibrationStopped(void)
       {
-        m_in_calib = false;
+        m_calib_state = CS_DONE;
       }
 
       //! Signal that a maneuver has started
@@ -288,7 +310,7 @@ namespace Plan
 
       //! Get necessary calibration time
       //! @return necessary calibration time
-      float
+      uint16_t
       getCalibrationTime(void)
       {
         return m_calibration;
@@ -391,12 +413,24 @@ namespace Plan
         return prog;
       }
 
+      //! Pass EntityActivationState to scheduler
+      //! @param[in] msg pointer to EntityActivationState message
+      void
+      onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg)
+      {
+        if (m_sched != NULL)
+          m_sched->onEntityActivationState(id, msg);
+      }
+
       //! Get plan estimated time of arrival
       //! @return ETA
       float
       getPlanEta(void) const
       {
-        return getTotalDuration() * (1.0 - 0.01 * m_progress);
+        if (m_progress >= 0.0)
+          return getTotalDuration() * (1.0 - 0.01 * m_progress);
+        else
+          return -1.0;
       }
 
       //! Retrieve the number of elements in sequential list.
@@ -515,11 +549,15 @@ namespace Plan
         if (!m_sequential || !m_durations.size())
           return -1.0;
 
+        // If calibration has not started yet
+        if (m_calib_state == CS_NOT_STARTED)
+          return -1.0;
+
         float total_duration = getTotalDuration();
         float exec_duration = getExecutionDuration();
 
         // Check if its calibrating
-        if (m_in_calib)
+        if (m_calib_state == CS_IN_PROGRESS)
         {
           float time_left = m_calib_timer.getRemaining() + exec_duration;
           m_progress = 100.0 * trimValue(1.0 - time_left / total_duration, 0.0, 1.0);
@@ -581,9 +619,9 @@ namespace Plan
       //! Current progress if any
       float m_progress;
       //! Current plan's calibration time if any
-      float m_calibration;
-      //! True if currently in calibration
-      bool m_in_calib;
+      uint16_t m_calibration;
+      //! Calibration state
+      CalibrationState m_calib_state;
       //! Timer to estimate time left in calibration
       Time::Counter<float> m_calib_timer;
       //! Vector of message pointers to cycle through (sequential) plan

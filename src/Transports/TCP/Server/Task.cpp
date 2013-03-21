@@ -140,13 +140,34 @@ namespace Transports
               dispatch(announce);
             }
           }
+
+          updateEntityState(0);
+        }
+
+        void
+        updateEntityState(unsigned client_count)
+        {
+          if (client_count > 0)
+          {
+            setEntityState(IMC::EntityState::ESTA_NORMAL,
+                           String::str(DTR("connected to %u clients"),
+                                       client_count));
+          }
+          else
+          {
+            setEntityState(IMC::EntityState::ESTA_NORMAL,
+                           Status::CODE_IDLE);
+          }
         }
 
         void
         closeConnection(Client& c, std::exception& e)
         {
-          inf(DTR("closing connection to %s:%u (%s), client count is %lu"),
-              c.address.c_str(), c.port, e.what(), (long unsigned int)(m_clients.size() - 1));
+          long unsigned int client_count = m_clients.size() - 1;
+          updateEntityState(client_count);
+
+          debug("closing connection to %s:%u (%s), client count is %lu",
+                c.address.c_str(), c.port, e.what(), client_count);
 
           c.socket->delFromPoll(m_iom);
           delete c.socket;
@@ -217,8 +238,10 @@ namespace Transports
             c.socket = m_sock->accept(&c.address, &c.port);
             c.socket->addToPoll(m_iom);
             m_clients.push_back(c);
-            inf(DTR("accepted connection from %s:%u, client count is %lu"),
-                c.address.c_str(), c.port, (long unsigned int)m_clients.size());
+            updateEntityState(m_clients.size());
+
+            debug("accepted connection from %s:%u, client count is %lu",
+                  c.address.c_str(), c.port, (long unsigned int)m_clients.size());
           }
           catch (std::runtime_error& e)
           {

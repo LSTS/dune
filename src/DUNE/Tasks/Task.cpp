@@ -109,6 +109,12 @@ namespace DUNE
       return m_ctx.entities.resolve(label);
     }
 
+    std::string
+    Task::resolveEntity(unsigned int id) const
+    {
+      return m_ctx.entities.resolve(id);
+    }
+
     void
     Task::reserveEntities(void)
     {
@@ -233,6 +239,8 @@ namespace DUNE
             requestDeactivation();
         }
       }
+
+      m_params.setChanged(false);
     }
 
     void
@@ -300,7 +308,7 @@ namespace DUNE
       m_act_state.state = IMC::EntityActivationState::EAS_DEACT_IP;
       dispatch(m_act_state);
 
-      spew("calling on request activation");
+      spew("calling on request deactivation");
       onRequestDeactivation();
     }
 
@@ -454,7 +462,8 @@ namespace DUNE
         }
         catch (std::runtime_error& e)
         {
-          err(DTR("updating entity parameters: %s"), e.what());
+          err(DTR("updating entity parameters: %s: '%s'"), e.what(),
+              (*itr)->name.c_str());
         }
       }
 

@@ -63,7 +63,8 @@ namespace DUNE
         dir_lib = dir_app;
         dir_cfg = Path(DUNE_PATH_SRC) / Path("etc");
         dir_www = Path(DUNE_PATH_SRC) / Path("www");
-        dir_i18n = Path(DUNE_PATH_SRC) / Path("i18n");
+        dir_i18n = Path(DUNE_PATH_BUILD) / Path("DUNEGeneratedFiles") / Path("i18n");
+        std::cerr << dir_i18n << std::endl;
         dir_fmw = Path(DUNE_PATH_SRC) / Path("firmware");
         dir_log = dir_app / Path("log");
         dir_db = dir_app / Path("db");
