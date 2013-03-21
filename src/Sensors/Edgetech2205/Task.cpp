@@ -301,6 +301,9 @@ namespace Sensors
         m_cmd->setPingRange(SUBSYS_SSL, m_args.range_lf);
         m_cmd->setPingRange(SUBSYS_SSH, m_args.range_hf);
 
+        setDataActive(SUBSYS_SSL, m_args.channels_lf);
+        setDataActive(SUBSYS_SSH, m_args.channels_hf);
+
         if ((m_args.channels_lf != "None") && (m_args.channels_hf != "None"))
         {
           m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_COUPLED);
@@ -310,9 +313,6 @@ namespace Sensors
         {
           m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_INTERNAL);
         }
-
-        setDataActive(SUBSYS_SSL, m_args.channels_lf);
-        setDataActive(SUBSYS_SSH, m_args.channels_hf);
 
         setPing(SUBSYS_SSL, m_args.channels_lf);
         setPing(SUBSYS_SSH, m_args.channels_hf);
