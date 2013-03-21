@@ -161,7 +161,7 @@ namespace Sensors
         .defaultValue("0.1")
         .units(Units::Gauss)
         .minimumValue("0.0")
-        .description("Number of seconds without data before reporting an error");
+        .description("Minimum magnetic field calibration values to reset hard iron parameters");
 
         param(m_param, m_args.calib_params)
         .units(Units::Gauss)
