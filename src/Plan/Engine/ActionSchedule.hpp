@@ -97,18 +97,17 @@ namespace Plan
         m_task(task),
         m_cinfo(&cinfo)
       {
-        float plan_duration;
         PlanDuration::ManeuverDuration::const_iterator dur;
         dur = durations.find(nodes.back()->maneuver_id);
 
         // If durations
         if (dur == durations.end())
-          plan_duration = -1.0;
+          m_plan_duration = -1.0;
         else
-          plan_duration = dur->second.back();
+          m_plan_duration = dur->second.back();
 
         // start by adding "start" plan actions
-        parseStartActions(spec->start_actions, &m_plan_actions, plan_duration);
+        parseStartActions(spec->start_actions, &m_plan_actions, m_plan_duration);
 
         std::vector<IMC::PlanManeuver*>::const_iterator itr;
         itr = nodes.begin();
@@ -121,7 +120,7 @@ namespace Plan
         for (; itr != nodes.end(); ++itr)
         {
           if (itr == nodes.begin())
-            maneuver_start_eta = plan_duration;
+            maneuver_start_eta = m_plan_duration;
           else
             maneuver_start_eta = maneuver_end_eta;
 
@@ -129,7 +128,7 @@ namespace Plan
           if (dur == durations.end())
             maneuver_end_eta = -1.0;
           else if (dur->second.size())
-            maneuver_end_eta = plan_duration - dur->second.back();
+            maneuver_end_eta = m_plan_duration - dur->second.back();
           else
             maneuver_end_eta = -1.0;
 
@@ -583,6 +582,8 @@ namespace Plan
       float m_time_left;
       //! Set of activation requests yet to be confirmed
       std::map<std::string, TimedAction> m_reqs;
+      //! Expected plan duration disregarding calibration time
+      float m_plan_duration;
     };
   }
 }
