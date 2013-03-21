@@ -537,8 +537,6 @@ namespace Transports
         IMC::PowerChannelControl pcc;
         pcc.name = parts[1];
 
-        err("channel name: '%s'", pcc.name.c_str());
-
         if (parts[0] == "on")
           pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
         else if (parts[0] == "off")
