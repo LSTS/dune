@@ -276,8 +276,6 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-
         m_uart = new SerialPort(m_args.uart_dev,
                                 c_uart_baud,
                                 SerialPort::SP_PARITY_NONE,
@@ -324,6 +322,8 @@ namespace Sensors
         m_profile.frequency = c_frequency;
         m_profile.bits_per_point = 8;
         m_profile.scale_factor = 1.0f;
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
