@@ -352,11 +352,10 @@ namespace Supervisors
           case IMC::VehicleCommand::VC_STOP_MANEUVER:
             stopManeuver(cmd);
             break;
-          case IMC::VehicleCommand::VC_CALIBRATE:
+          case IMC::VehicleCommand::VC_START_CALIBRATION:
             startCalibration(cmd);
             break;
-            // FINISH CALIBRATION
-          case 3:
+          case IMC::VehicleCommand::VC_STOP_CALIBRATION:
             stopCalibration(cmd);
             break;
         }
@@ -424,6 +423,8 @@ namespace Supervisors
           requestFailed(msg, DTR("cannot stop calibration: vehicle is not calibrating"));
           return;
         }
+
+        requestOK(msg, String::str(DTR("stopped calibration"), m_calibration.duration));
 
         debug("calibration over");
         changeMode(IMC::VehicleState::VS_SERVICE);
