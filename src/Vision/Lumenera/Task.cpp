@@ -184,9 +184,15 @@ namespace Vision
           if (String::startsWith(*it, "Content-length:"))
           {
             jpg_size = std::atoi((*it).substr(15, (*it).size()-15).c_str());
+
+            if (jpg_size <= 0)
+              spew("Content-length is zero");
             break;
           }
         }
+
+        if (jpg_size <= 0)
+          spew("jpeg size is zero after header");
 
         // Retrieve JPEG data
         dst.setSize(jpg_size);
@@ -348,6 +354,8 @@ namespace Vision
           try
           {
             captureFrame(dst);
+            if (dst.getSize == 0)
+              spew("destination size is zero");
           }
           catch (std::runtime_error& e)
           {
