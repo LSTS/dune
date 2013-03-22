@@ -11624,8 +11624,10 @@ namespace DUNE
         VC_EXEC_MANEUVER = 0,
         //! Stop Maneuver.
         VC_STOP_MANEUVER = 1,
-        //! Calibrate.
-        VC_CALIBRATE = 2
+        //! Start Calibration.
+        VC_START_CALIBRATION = 2,
+        //! Stop Calibration.
+        VC_STOP_CALIBRATION = 3
       };
 
       //! Type.
