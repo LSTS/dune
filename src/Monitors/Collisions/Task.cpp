@@ -58,6 +58,8 @@ namespace Monitors
       float max_z;
       //! Device Entity Label.
       std::string elabel_device;
+      //! Depth value below which collisions will be ignored
+      float min_depth;
     };
 
     //! Collisions task.
@@ -81,6 +83,12 @@ namespace Monitors
       IMC::Collision m_collision;
       //! Device entity id.
       unsigned m_device_eid;
+      //! Depth value
+      float m_depth;
+      //! True if braking
+      bool m_braking;
+      //! Motor's rpms
+      int m_rpms;
       //! Task arguments.
       Arguments m_args;
 
@@ -89,7 +97,9 @@ namespace Monitors
         m_avg_x_innov(NULL),
         m_avg_z_innov(NULL),
         m_avg_x_abs(NULL),
-        m_avg_z_abs(NULL)
+        m_avg_z_abs(NULL),
+        m_braking(false),
+        m_rpms(0)
       {
         // Definition of configuration parameters.
         param("Innovation Moving Average Samples", m_args.avg_samples_innov)
@@ -132,8 +142,15 @@ namespace Monitors
         .defaultValue("AHRS")
         .description("Entity label of the device");
 
+        param("Minimum Depth", m_args.min_depth)
+        .defaultValue("1.0")
+        .description("Depth value below which collisions will be ignored");
+
         // Register consumers.
         bind<IMC::Acceleration>(this);
+        bind<IMC::Depth>(this);
+        bind<IMC::Brake>(this);
+        bind<IMC::Rpm>(this);
       }
 
       ~Task(void)
@@ -258,6 +275,44 @@ namespace Monitors
         }
       }
 
+      void
+      consume(const IMC::Depth* msg)
+      {
+        m_depth = msg->value;
+      }
+
+      void
+      consume(const IMC::Brake* msg)
+      {
+        if (msg->op == IMC::Brake::OP_STOP)
+          m_braking = false;
+        else
+          m_braking = true;
+      }
+
+      void
+      consume(const IMC::Rpm* msg)
+      {
+        m_rpms = msg->value;
+      }
+
+      //! Check if the collision should be ignored
+      //! @return true if collision should be ignored
+      bool
+      ignoreCollision(void)
+      {
+        if (m_depth < m_args.min_depth)
+          return true;
+
+        if (m_braking)
+          return true;
+
+        if (!m_rpms)
+          return true;
+
+        return false;
+      }
+
       //! This routine is called when a collision is detected.
       void
       collided(void)
@@ -267,6 +322,10 @@ namespace Monitors
 
         // Dispatch collision.
         dispatch(m_collision);
+
+        // If certain conditions are met, do not trigger an error
+        if (ignoreCollision())
+          return;
 
         // Change state and send state to the bus.
         setEntityState(IMC::EntityState::ESTA_ERROR, DTR("collision detected"));
