@@ -97,8 +97,8 @@ namespace DUNE
       setKeepAlive(bool enabled);
 
       //! Disable/enable the Nagle algorithm.
-      //! @param[in] enabled true to enable Nagle algorithm, false to
-      //! disable.
+      //! @param[in] enabled true to disable Nagle algorithm, false to
+      //! enable.
       void
       setNoDelay(bool enabled);
 
