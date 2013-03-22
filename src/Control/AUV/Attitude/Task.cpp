@@ -244,21 +244,32 @@ namespace Control
         onUpdateParameters(void)
         {
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
-            m_args.max_int[i] = Angles::radians(m_args.max_int[i]);
+          {
+            if (paramChanged(m_args.max_int[i]))
+              m_args.max_int[i] = Angles::radians(m_args.max_int[i]);
+          }
 
           // Pitch control parameters
-          m_args.max_pitch_act = Angles::radians(m_args.max_pitch_act);
+          if (paramChanged(m_args.max_pitch_act))
+            m_args.max_pitch_act = Angles::radians(m_args.max_pitch_act);
 
           // Depth control parameters
-          m_args.max_pitch = Angles::radians(m_args.max_pitch);
-          m_args.surface_pitch = Angles::radians(m_args.surface_pitch);
+          if (paramChanged(m_args.max_pitch))
+            m_args.max_pitch = Angles::radians(m_args.max_pitch);
+          
+          if (paramChanged(m_args.surface_pitch))
+            m_args.surface_pitch = Angles::radians(m_args.surface_pitch);
 
           // Roll offset conversion
-          m_args.roll_offset = Angles::radians(m_args.roll_offset);
+          if (paramChanged(m_args.roll_offset))
+            m_args.roll_offset = Angles::radians(m_args.roll_offset);
 
           // Heading rate control parameters
-          m_args.max_fin_rot = Angles::radians(m_args.max_fin_rot);
-          m_args.max_hrate = Angles::radians(m_args.max_hrate);
+          if (paramChanged(m_args.max_fin_rot))
+            m_args.max_fin_rot = Angles::radians(m_args.max_fin_rot);
+
+          if (paramChanged(m_args.max_hrate))
+            m_args.max_hrate = Angles::radians(m_args.max_hrate);
 
           initializePIDs();
         }

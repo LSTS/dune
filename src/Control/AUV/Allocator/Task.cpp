@@ -122,7 +122,8 @@ namespace Control
         void
         onUpdateParameters(void)
         {
-          m_args.max_fin_rot = Angles::radians(m_args.max_fin_rot);
+          if (paramChanged(m_args.max_fin_rot))
+            m_args.max_fin_rot = Angles::radians(m_args.max_fin_rot);
 
           reset();
         }

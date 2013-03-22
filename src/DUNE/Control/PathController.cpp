@@ -192,8 +192,11 @@ namespace DUNE
     void
     PathController::onUpdateParameters(void)
     {
-      m_cperiod = 1.0 / m_cperiod;
-      m_speriod = 1.0 / m_speriod;
+      if (paramChanged(m_cperiod))
+        m_cperiod = 1.0 / m_cperiod;
+
+      if (paramChanged(m_cperiod))
+        m_speriod = 1.0 / m_speriod;
 
       m_ts.cc = m_course_ctl ? 1 : 0;
       m_ts.loitering = false;
@@ -206,13 +209,19 @@ namespace DUNE
       else
         m_ctm.nav_uncertainty = 0;
 
-      m_atm.min_yaw = Angles::radians(m_atm.min_yaw);
+      if (paramChanged(m_atm.min_yaw))
+        m_atm.min_yaw = Angles::radians(m_atm.min_yaw);
 
       if (m_btd.enabled)
       {
-        m_btd.args.safe_pitch = Angles::radians(m_btd.args.safe_pitch);
-        m_btd.args.slope_hyst = Angles::radians(m_btd.args.slope_hyst);
-        m_btd.args.control_period = 1.0 / m_btd.args.control_period;
+        if (paramChanged(m_btd.args.safe_pitch))
+          m_btd.args.safe_pitch = Angles::radians(m_btd.args.safe_pitch);
+
+        if (paramChanged(m_btd.args.slope_hyst))
+          m_btd.args.slope_hyst = Angles::radians(m_btd.args.slope_hyst);
+
+        if (paramChanged(m_btd.args.control_period))
+          m_btd.args.control_period = 1.0 / m_btd.args.control_period;
       }
     }
 
