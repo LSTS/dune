@@ -199,14 +199,14 @@ namespace DUNE
     }
 
     void
-    Task::paramActive(Parameter::Scope scope, Parameter::Visibility visibility)
+    Task::paramActive(Parameter::Scope scope, Parameter::Visibility visibility, bool def_value)
     {
       m_honours_active = true;
 
       param(DTR_RT("Active"), m_args.active)
       .visibility(visibility)
       .scope(scope)
-      .defaultValue("false");
+      .defaultValue(uncastLexical(def_value));
     }
 
     void

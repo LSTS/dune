@@ -464,8 +464,16 @@ namespace DUNE
         return m_params.changed(&var);
       }
 
+      //! Declare parameter 'Active'. This parameter allows the task
+      //! to be activated/deactivated using the message
+      //! SetEntityParameters.
+      //! @param[in] scope parameter's scope.
+      //! @param[in] visibility parameter's visibility.
+      //! @param[in] def_value parameter's default value.
       void
-      paramActive(Parameter::Scope scope, Parameter::Visibility visibility);
+      paramActive(Parameter::Scope scope,
+                  Parameter::Visibility visibility,
+                  bool def_value = false);
 
       //! Bind a message to a consumer method.
       //! @param task_obj consumer task.
