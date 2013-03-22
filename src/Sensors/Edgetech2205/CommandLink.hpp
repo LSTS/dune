@@ -173,6 +173,7 @@ namespace Sensors
         m_pkt.set<uint32_t>(tsrc, 0);
         m_pkt.set(tdiv, 4);
         m_pkt.set(tdel, 8);
+        m_pkt.setMessageSize(12);
         sendPacket(m_pkt);
       }
 
