@@ -32,6 +32,9 @@
 // Local headers.
 #include "Plan.hpp"
 
+// Temporary macro before changing imc message
+#define VC_STOP_CALIBRATION 3
+
 namespace Plan
 {
   namespace Engine
@@ -283,6 +286,10 @@ namespace Plan
 
         m_vc_reply_deadline = -1;
         bool error = vc->type == IMC::VehicleCommand::VC_FAILURE;
+
+        // Ignore failure if it failed to stop calibration
+        if (vc->command == VC_STOP_CALIBRATION)
+          error = false;
 
         if (initMode() || execMode())
         {
