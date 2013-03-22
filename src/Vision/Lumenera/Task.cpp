@@ -329,6 +329,8 @@ namespace Vision
       void
       onMain(void)
       {
+        ByteBuffer dst;
+
         while (!stopping())
         {
           consumeMessages();
@@ -343,7 +345,6 @@ namespace Vision
             continue;
           }
 
-          ByteBuffer dst;
           try
           {
             captureFrame(dst);
