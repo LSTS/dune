@@ -227,11 +227,9 @@ namespace Sensors
         m_sock_dat->connect(m_args.addr, m_args.port_dat);
         m_sock_dat->addToPoll(m_iom_dat);
 
-        m_cmd->setPingAutoselectMode(SUBSYS_SSL, m_args.autosel_mode);
-        m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_INTERNAL);
-
-        m_cmd->setPingAutoselectMode(SUBSYS_SSH, m_args.autosel_mode);
         m_cmd->setPingTrigger(SUBSYS_SSH, TRIG_MODE_INTERNAL);
+        m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_INTERNAL);
+        m_cmd->setPingCoupling(SUBSYS_SSL, SUBSYS_SSH, 1, 0);
 
         setConfig();
 
@@ -298,24 +296,22 @@ namespace Sensors
         if (m_cmd == NULL)
           return;
 
-        m_cmd->setPingRange(SUBSYS_SSL, m_args.range_lf);
-        m_cmd->setPingRange(SUBSYS_SSH, m_args.range_hf);
-
-        setDataActive(SUBSYS_SSL, m_args.channels_lf);
         setDataActive(SUBSYS_SSH, m_args.channels_hf);
+        setDataActive(SUBSYS_SSL, m_args.channels_lf);
+
+        m_cmd->setPingRange(SUBSYS_SSH, m_args.range_hf);
+        m_cmd->setPingRange(SUBSYS_SSL, m_args.range_lf);
+
+        m_cmd->setPingAutoselectMode(SUBSYS_SSH, m_args.autosel_mode);
+        m_cmd->setPingAutoselectMode(SUBSYS_SSL, m_args.autosel_mode);
 
         if ((m_args.channels_lf != "None") && (m_args.channels_hf != "None"))
-        {
           m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_COUPLED);
-          m_cmd->setPingCoupling(SUBSYS_SSL, SUBSYS_SSH, 1, 0);
-        }
         else
-        {
           m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_INTERNAL);
-        }
 
-        setPing(SUBSYS_SSL, m_args.channels_lf);
         setPing(SUBSYS_SSH, m_args.channels_hf);
+        setPing(SUBSYS_SSL, m_args.channels_lf);
       }
 
       void
