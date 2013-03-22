@@ -150,10 +150,13 @@ namespace DUNE
 
       // Check if innovation is above a threshold value.
       // Set threshold to 0 to accept everything.
-      double level = (transpose(m_innov) * S_1 * m_innov)(0);
+      if (threshold != 0)
+      {
+        double level = (transpose(m_innov) * S_1 * m_innov)(0);
 
-      if ((threshold != 0) && (level >= threshold))
-        return -1;
+        if (level >= threshold)
+          return -1;
+      }
 
       // Kalman Gain.
       Math::Matrix K = m_p * transpose(m_c) * S_1;
