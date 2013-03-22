@@ -48,8 +48,10 @@ namespace Control
         float max_fin_rot;
         //! Angle to torque conversion factor (Nm/rad).
         float conv[3];
-        //! When braking, position fins in a pitching up position.
-        bool brake_pitch;
+        //! Percentage of fin margin to use for braking
+        float brake_margin;
+        //! Pitch up when braking
+        bool pitch_brake;
         //! ServoPosition label
         std::string spos_label;
       };
@@ -93,9 +95,15 @@ namespace Control
           .units(Units::NewtonMeterPerRadian)
           .description("Fin effect N");
 
-          param("Pitch Up Brake", m_args.brake_pitch)
+          param("Pitch Up Brake", m_args.pitch_brake)
           .defaultValue("false")
-          .description("When braking, position fins in a pitching up position");
+          .description("Pitch up when braking");
+
+          param("Brake Margin", m_args.brake_margin)
+          .defaultValue("1.0")
+          .minimumValue("0.0")
+          .maximumValue("1.0")
+          .description("Percentage of fin margin to use for braking");
 
           param("Entity Label - Servo Position", m_args.spos_label)
           .defaultValue("")
@@ -129,6 +137,8 @@ namespace Control
         void
         onResourceInitialization(void)
         {
+          requestDeactivation();
+
           // Initialize fin commands.
           for (int i = 0; i < c_fins; i++)
           {
@@ -157,7 +167,11 @@ namespace Control
           if (msg->op == IMC::Brake::OP_START)
           {
             m_braking = true;
-            brake();
+
+            if (m_args.pitch_brake)
+              brakePitch();
+            else
+              brake();
           }
           else
           {
@@ -186,7 +200,20 @@ namespace Control
             return;
 
           if (m_braking)
-            brake();
+          {
+            if((msg->flags & IMC::DesiredControl::FL_K) &&
+               (msg->flags & IMC::DesiredControl::FL_M))
+            {
+              if (m_args.pitch_brake)
+                brakePitch();
+              else if (m_args.brake_margin >= 1.0f)
+                brake();
+              else
+                brake(msg->k, msg->m);
+            }
+
+            return;
+          }
 
           uint8_t allocator_flags = IMC::DesiredControl::FL_K | IMC::DesiredControl::FL_M | IMC::DesiredControl::FL_N;
 
@@ -260,7 +287,6 @@ namespace Control
           ang = (k / m_args.conv[0]) / c_fins;
 
           // Determine the maximum angle for even distribution
-
           ang = trimValue(ang, -roll_margin_hfins, roll_margin_hfins);
           ang = trimValue(ang, -roll_margin_vfins, roll_margin_vfins);
 
@@ -293,35 +319,82 @@ namespace Control
             m_allocated.k += ang * m_args.conv[0] * 2.0;
           }
 
-          for (int i = 0; i < c_fins; i++)
-            dispatch(m_fins[i]);
+          dispatchAllFins();
 
           dispatch(m_allocated);
         }
 
         // Position the fins in a braking position (neutral or pitching up)
+        //! @param[in] k torque about x to apply
+        //! @param[in] m torque about y to apply
+        void
+        brake(float k, float m)
+        {
+          // compute brake margin in radians
+          float ang = m_args.max_fin_rot * m_args.brake_margin;
+
+          m_fins[0].value = ang;
+          m_fins[3].value = -ang;
+
+          m_fins[1].value = -ang;
+          m_fins[2].value = ang;
+
+          float h_margin_left = m_args.max_fin_rot * (1.0 - m_args.brake_margin);
+
+          // Allocate M
+          ang = (m / m_args.conv[1]) * 0.5;
+
+          ang = trimValue(ang, -h_margin_left, h_margin_left);
+
+          m_fins[1].value -= ang;
+          m_fins[2].value -= ang;
+
+          // recalculate horizontal margin
+          h_margin_left = m_args.max_fin_rot - std::abs(ang);
+
+          // Allocate K
+          ang = (k / m_args.conv[0]) / c_fins;
+
+          ang = trimValue(ang, -h_margin_left, h_margin_left);
+
+          m_fins[1].value += ang;
+          m_fins[2].value -= ang;
+
+          float v_margin_left = m_args.max_fin_rot * (1.0 - m_args.brake_margin);
+
+          ang = (k / m_args.conv[0]) / c_fins - ang;
+
+          ang = trimValue(ang, -v_margin_left, v_margin_left);
+
+          m_fins[0].value -= ang;
+          m_fins[3].value += ang;
+
+          dispatchAllFins();
+        }
+
+        //! Brake but ignore desired control
         void
         brake(void)
         {
-          if (m_args.brake_pitch)
-          {
-            m_fins[0].value = 0.0;
-            m_fins[3].value = 0.0;
+          m_fins[0].value = m_args.max_fin_rot;
+          m_fins[3].value = -m_args.max_fin_rot;
+          m_fins[1].value = -m_args.max_fin_rot;
+          m_fins[2].value = m_args.max_fin_rot;
 
-            m_fins[1].value = -m_args.max_fin_rot;
-            m_fins[2].value = -m_args.max_fin_rot;
-          }
-          else
-          {
-            m_fins[0].value = m_args.max_fin_rot;
-            m_fins[3].value = -m_args.max_fin_rot;
+          dispatchAllFins();
+        }
 
-            m_fins[1].value = -m_args.max_fin_rot;
-            m_fins[2].value = m_args.max_fin_rot;
-          }
+        //! Change my pitch up
+        void
+        brakePitch(void)
+        {
+          m_fins[0].value = 0.0;
+          m_fins[3].value = 0.0;
 
-          for (int i = 0; i < c_fins; i++)
-            dispatch(m_fins[i]);
+          m_fins[1].value = -m_args.max_fin_rot;
+          m_fins[2].value = -m_args.max_fin_rot;
+
+          dispatchAllFins();
         }
 
         //! Compute actually produced torque
@@ -335,6 +408,14 @@ namespace Control
                                (m_servo_pos[1] - m_servo_pos[2])) / 4.0;
 
           dispatch(produced_torque);
+        }
+
+        //! Dispatch all fins desired positions
+        inline void
+        dispatchAllFins(void)
+        {
+          for (int i = 0; i < c_fins; i++)
+            dispatch(m_fins[i]);
         }
 
         void

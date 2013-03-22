@@ -129,8 +129,6 @@ namespace Control
         IMC::ControlParcel m_parcels[LP_MAX_LOOPS];
         //! Previously received estimated state
         IMC::EstimatedState m_prev_estate;
-        //! True if braking.
-        bool m_braking;
         //! Task Arguments
         Arguments m_args;
 
@@ -226,9 +224,6 @@ namespace Control
           param("Minimum DVL Altitude", m_args.min_dvl_alt)
           .defaultValue("0.50")
           .description("Altitude value below which altitude from DVL will be ignored");
-
-          // Register handler routines.
-          bind<IMC::Brake>(this);
         }
 
         //! Destructor
@@ -300,8 +295,6 @@ namespace Control
 
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
             m_pid[i].reset();
-
-          m_braking = false;
         }
 
         //! Reserve entities for messages
@@ -311,16 +304,6 @@ namespace Control
           if (m_args.log_parcels)
             for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
               m_parcels[i].setSourceEntity(reserveEntity(c_loop_name[i] + " Parcel"));
-        }
-
-        //! Consume brake message
-        void
-        consume(const IMC::Brake* msg)
-        {
-          if (msg->op == IMC::Brake::OP_START)
-            m_braking = true;
-          else
-            m_braking = false;
         }
 
         //! Computes control values when receiving EstimatedState
@@ -378,8 +361,7 @@ namespace Control
 
           torques.flags = IMC::DesiredControl::FL_K | IMC::DesiredControl::FL_M | IMC::DesiredControl::FL_N;
 
-          if (!m_braking)
-            dispatch(torques);
+          dispatch(torques);
 
           // Save last estimated state message
           m_prev_estate = *msg;
