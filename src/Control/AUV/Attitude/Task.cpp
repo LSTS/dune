@@ -48,6 +48,8 @@ namespace Control
 
       //! Depth tolerance to be considered surface
       static const float c_depth_tol = 0.1f;
+      //! Depth reference when altitude is ignored
+      static const float c_min_depth_ref = 1.5f;
       //! Controllable loops
       static const uint32_t c_controllable = IMC::CL_YAW | IMC::CL_YAW_RATE | IMC::CL_DEPTH | IMC::CL_PITCH;
       //! Required loops
@@ -109,6 +111,10 @@ namespace Control
         bool log_parcels;
         //! Compute angular rates
         bool compute_rates;
+        //! Altitude value below which altitude from DVL will be ignored
+        float min_dvl_alt;
+        //! Depth value below which altitude from DVL will be ignored
+        float min_dvl_depth;
       };
 
       struct Task: public DUNE::Control::BasicAutopilot
@@ -212,6 +218,14 @@ namespace Control
           param("Compute Angular Rates", m_args.compute_rates)
           .defaultValue("false")
           .description("Compute angular rates when the compass is not providing them");
+
+          param("Minimum DVL Depth", m_args.min_dvl_depth)
+          .defaultValue("2.5")
+          .description("Depth value below which altitude from DVL will be ignored");
+
+          param("Minimum DVL Altitude", m_args.min_dvl_alt)
+          .defaultValue("0.50")
+          .description("Altitude value below which altitude from DVL will be ignored");
 
           // Register handler routines.
           bind<IMC::Brake>(this);
@@ -402,7 +416,10 @@ namespace Control
 
                 break;
               case VERTICAL_MODE_ALTITUDE:
-                z_error = getBottomFollowDepth() - msg->depth;
+                if (msg->alt < m_args.min_dvl_alt && msg->depth < m_args.min_dvl_depth)
+                  z_error = c_min_depth_ref;
+                else
+                  z_error = getBottomFollowDepth() - msg->depth;
                 break;
               default:
                 signalBadVertical();
