@@ -43,7 +43,10 @@ namespace Simulators
     //! %Task arguments.
     struct Arguments
     {
-
+      //! Actual activation time of the device
+      float actual_act_time;
+      //! Actual deactivation time of the device
+      float actual_deact_time;
     };
 
     //! %Dummy simulator task
@@ -65,6 +68,14 @@ namespace Simulators
         m_activating(false),
         m_deactivating(false)
       {
+        param("Actual Activation Time", m_args.actual_act_time)
+        .defaultValue("30.0")
+        .description("Actual activation time of the device");
+
+        param("Actual Deactivation Time", m_args.actual_deact_time)
+        .defaultValue("10.0")
+        .description("Actual deactivation time of the device");
+
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
@@ -81,8 +92,8 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        m_act_timer.setTop(getActivationTime());
-        m_deact_timer.setTop(getDeactivationTime());
+        m_act_timer.setTop(m_args.actual_act_time);
+        m_deact_timer.setTop(m_args.actual_deact_time);
       }
 
       //! Release resources.
