@@ -311,15 +311,38 @@ namespace Plan
 
             m_reqs.erase(id);
           }
-
-          if (msg->state == IMC::EntityActivationState::EAS_ACT_FAIL)
+          else if (msg->state == IMC::EntityActivationState::EAS_ACT_FAIL)
+          {
             m_task->err("schedule: failed to activate %s", id.c_str());
+            m_reqs.erase(id);
+          }
         }
         else
         {
           if (msg->state == IMC::EntityActivationState::EAS_DEACT_DONE)
             m_reqs.erase(id);
         }
+      }
+
+      //! Check if we are still waiting for a device in calibration process
+      //! @return true if we are still waiting
+      bool
+      waitingForDevice(void)
+      {
+        // if no requests are hanging then we're not waiting
+        if (m_reqs.empty())
+          return false;
+
+        std::map<std::string, TimedQueue>::const_iterator next;
+        next = nextSchedule();
+
+        if (next != m_timed.end())
+        {
+          if (next->second.front().sched_time >= m_plan_duration)
+            return true;
+        }
+
+        return false;
       }
 
     private:

@@ -414,12 +414,28 @@ namespace Plan
       }
 
       //! Pass EntityActivationState to scheduler
+      //! @param[in] id entity label
       //! @param[in] msg pointer to EntityActivationState message
       void
       onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg)
       {
         if (m_sched != NULL)
           m_sched->onEntityActivationState(id, msg);
+      }
+
+      //! Check if scheduler is waiting for a device
+      //! @return true if waiting for device
+      bool
+      waitingForDevice(void)
+      {
+        if (m_sched != NULL)
+        {
+          // If calibration is in progress test scheduler
+          if (m_calib_state == CS_IN_PROGRESS)
+            return m_sched->waitingForDevice();
+        }
+
+        return false;
       }
 
       //! Get plan estimated time of arrival

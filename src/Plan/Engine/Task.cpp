@@ -235,7 +235,12 @@ namespace Plan
       consume(const IMC::EntityActivationState* msg)
       {
         if (m_plan != NULL)
+        {
           m_plan->onEntityActivationState(resolveEntity(msg->getSourceEntity()), msg);
+
+          if (m_calibrating && m_plan->waitingForDevice())
+            vehicleRequest((IMC::VehicleCommand::CommandEnum)VC_STOP_CALIBRATION);
+        }
       }
 
       void
