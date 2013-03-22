@@ -354,7 +354,7 @@ namespace Vision
           try
           {
             captureFrame(dst);
-            if (dst.getSize == 0)
+            if (dst.getSize() == 0)
               spew("destination size is zero");
           }
           catch (std::runtime_error& e)
