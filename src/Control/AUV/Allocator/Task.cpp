@@ -115,6 +115,8 @@ namespace Control
         onUpdateParameters(void)
         {
           m_args.max_fin_rot = Angles::radians(m_args.max_fin_rot);
+
+          reset();
         }
 
         void
@@ -127,8 +129,6 @@ namespace Control
         void
         onResourceInitialization(void)
         {
-          reset();
-
           // Initialize fin commands.
           for (int i = 0; i < c_fins; i++)
           {
@@ -223,14 +223,9 @@ namespace Control
 
           // Allocate N
           ang = (n / m_args.conv[2]) * 0.5;
-          if (ang > m_args.max_fin_rot)
+
+          if (trimValueMod(ang, -m_args.max_fin_rot, m_args.max_fin_rot))
           {
-            ang = m_args.max_fin_rot;
-            roll_margin_vfins = 0;
-          }
-          else if (ang < -m_args.max_fin_rot)
-          {
-            ang = -m_args.max_fin_rot;
             roll_margin_vfins = 0;
           }
           else
@@ -245,14 +240,9 @@ namespace Control
 
           // Allocate M
           ang = (m / m_args.conv[1]) * 0.5;
-          if (ang > m_args.max_fin_rot)
+
+          if (trimValueMod(ang, -m_args.max_fin_rot, m_args.max_fin_rot))
           {
-            ang = m_args.max_fin_rot;
-            roll_margin_hfins = 0;
-          }
-          else if (ang < -m_args.max_fin_rot)
-          {
-            ang = -m_args.max_fin_rot;
             roll_margin_hfins = 0;
           }
           else
@@ -270,14 +260,9 @@ namespace Control
           ang = (k / m_args.conv[0]) / c_fins;
 
           // Determine the maximum angle for even distribution
-          if (ang > roll_margin_hfins)
-            ang = roll_margin_hfins;
-          if (ang < -roll_margin_hfins)
-            ang = -roll_margin_hfins;
-          if (ang > roll_margin_vfins)
-            ang = roll_margin_vfins;
-          if (ang < -roll_margin_vfins)
-            ang = -roll_margin_vfins;
+
+          ang = trimValue(ang, -roll_margin_hfins, roll_margin_hfins);
+          ang = trimValue(ang, -roll_margin_vfins, roll_margin_vfins);
 
           m_fins[1].value += ang;
           m_fins[2].value -= ang;
@@ -293,10 +278,7 @@ namespace Control
           ang = ((k - m_allocated.k) / m_args.conv[0]) * 0.5;
           if (roll_margin_hfins > 0)
           {
-            if (ang > roll_margin_hfins)
-              ang = roll_margin_hfins;
-            if (ang < -roll_margin_hfins)
-              ang = -roll_margin_hfins;
+            ang = trimValue(ang, -roll_margin_hfins, roll_margin_hfins);
 
             m_fins[1].value += ang;
             m_fins[2].value -= ang;
@@ -304,10 +286,7 @@ namespace Control
           }
           else if (roll_margin_vfins > 0)
           {
-            if (ang > roll_margin_vfins)
-              ang = roll_margin_vfins;
-            if (ang < -roll_margin_vfins)
-              ang = -roll_margin_vfins;
+            ang = trimValue(ang, -roll_margin_vfins, roll_margin_vfins);
 
             m_fins[0].value -= ang;
             m_fins[3].value += ang;
