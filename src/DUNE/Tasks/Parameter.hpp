@@ -229,6 +229,18 @@ namespace DUNE
         m_changed = enabled;
       }
 
+      Visibility
+      getVisibility(void) const
+      {
+        return m_visibility;
+      }
+
+      Scope
+      getScope(void) const
+      {
+        return m_scope;
+      }
+
     protected:
       std::string m_name;
       std::string m_type_name;
