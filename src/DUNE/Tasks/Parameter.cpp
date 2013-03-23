@@ -190,7 +190,9 @@ namespace DUNE
           os << " max-size=\"" << m_max_size << "\"";
       }
 
-      if (!m_default.empty())
+      if (!m_value.empty())
+        os << " default=\"" << m_value << "\"";
+      else if (!m_default.empty())
         os << " default=\"" << m_default << "\"";
 
       if (m_units != Units::None)
