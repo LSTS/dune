@@ -209,6 +209,9 @@ namespace DUNE
         return *this;
       }
 
+      //! Set parameter's scope.
+      //! @param[in] a_scope desired scope.
+      //! @return parameter reference.
       Parameter&
       scope(Scope a_scope)
       {
