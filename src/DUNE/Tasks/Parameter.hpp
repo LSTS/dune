@@ -240,26 +240,31 @@ namespace DUNE
       }
 
     protected:
+      //! Name.
       std::string m_name;
+      //! Type name.
       std::string m_type_name;
+      //! Description.
       std::string m_desc;
+      //! Default value.
       std::string m_default;
+      //! Units.
       Units::Types m_units;
-      std::string m_old_value;
+      //! Current value.
       std::string m_value;
+      //! Comma separated list of valid values.
       std::string m_values;
-
       //! Minimum size.
       unsigned m_min_size;
       //! Maximum size.
       unsigned m_max_size;
-
       //! Minimum value.
       std::string m_min_value;
       //! Maximum value.
       std::string m_max_value;
-
+      //! Conditional comma separated list of valid values.
       std::vector<ValuesIf*> m_values_if;
+      //! String reader.
       AbstractParameterParser* m_reader;
       //! True if the value of this parameter changed.
       bool m_changed;
