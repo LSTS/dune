@@ -50,12 +50,16 @@ namespace DUNE
     class Parameter
     {
     public:
+      //! Parameter visibility.
       enum Visibility
       {
+        //! Parameter is visible to the user.
         VISIBILITY_USER,
+        //! Parameter is visible only to developers.
         VISIBILITY_DEVELOPER
       };
 
+      //! Parameter scope.
       enum Scope
       {
         SCOPE_GLOBAL,
