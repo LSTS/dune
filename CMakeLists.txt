@@ -62,7 +62,7 @@ set(PROJECT_VERSION_PARTS
 # This directory will hold generated files.
 set(DUNE_GENERATED ${CMAKE_BINARY_DIR}/DUNEGeneratedFiles)
 
-include(${PROJECT_SOURCE_DIR}/cmake/Subversion.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/Git.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/Macros.cmake)
 
 # Define options.

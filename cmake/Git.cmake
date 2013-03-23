@@ -27,15 +27,13 @@
 # Get SVN revision of source tree.                                         #
 ############################################################################
 
-execute_process(COMMAND svnversion -c
+execute_process(COMMAND git rev-parse --short HEAD
   WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-  OUTPUT_VARIABLE DUNE_SVN_REV_STR
+  OUTPUT_VARIABLE DUNE_GIT_SHA1_STR
   ERROR_QUIET
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-string(REGEX REPLACE "^[^:]+:" "" DUNE_SVN_REV_STR "${DUNE_SVN_REV_STR}")
-
-string(COMPARE EQUAL "${DUNE_SVN_REV_STR}" "" empty_string)
+string(COMPARE EQUAL "${DUNE_GIT_SHA1_STR}" "" empty_string)
 if(empty_string)
-  set(DUNE_SVN_REV_STR "unknown")
+  set(DUNE_GIT_SHA1_STR "unknown")
 endif(empty_string)
