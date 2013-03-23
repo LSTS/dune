@@ -70,6 +70,18 @@ namespace DUNE
         std::string values;
       };
 
+      static Visibility
+      visibilityFromString(const std::string& v);
+
+      static const char*
+      visibilityToString(Visibility v);
+
+      static Scope
+      scopeFromString(const std::string& s);
+
+      static const char*
+      scopeToString(Scope s);
+
       //! Constructor.
       Parameter(const std::string& param_name, const std::string& type_name);
 
@@ -206,11 +218,17 @@ namespace DUNE
       }
 
       Parameter&
+      visibility(const std::string& a_visibility);
+
+      Parameter&
       scope(Scope a_scope)
       {
         m_scope = a_scope;
         return *this;
       }
+
+      Parameter&
+      scope(const std::string a_scope);
 
       void
       writeXML(std::ostream& os) const;

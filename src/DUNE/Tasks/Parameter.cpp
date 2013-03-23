@@ -45,12 +45,52 @@ namespace DUNE
       "developer"
     };
 
+    static const unsigned c_visibility_count = sizeof(c_visibility_strs) / sizeof(char*);
+
     static const char* c_scope_strs[] =
     {
       "global",
       "plan",
       "maneuver"
     };
+
+    static const unsigned c_scope_count = sizeof(c_scope_strs) / sizeof(char*);
+
+    Parameter::Visibility
+    Parameter::visibilityFromString(const std::string& v)
+    {
+      for (unsigned i = 0; i < c_visibility_count; ++i)
+      {
+        if (v == c_visibility_strs[i])
+          return static_cast<Visibility>(i);
+      }
+
+      throw std::runtime_error("invalid visibility string");
+    }
+
+    const char*
+    Parameter::visibilityToString(Visibility v)
+    {
+      return c_visibility_strs[v];
+    }
+
+    Parameter::Scope
+    Parameter::scopeFromString(const std::string& s)
+    {
+      for (unsigned i = 0; i < c_scope_count; ++i)
+      {
+        if (s == c_scope_strs[i])
+          return static_cast<Scope>(i);
+      }
+
+      throw std::runtime_error("invalid scope string");
+    }
+
+    const char*
+    Parameter::scopeToString(Scope s)
+    {
+      return c_scope_strs[s];
+    }
 
     Parameter::Parameter(const std::string& param_name, const std::string& type_name):
       m_name(param_name),
@@ -108,14 +148,28 @@ namespace DUNE
       }
     }
 
+    Parameter&
+    Parameter::visibility(const std::string& a_visibility)
+    {
+      m_visibility = visibilityFromString(a_visibility);
+      return *this;
+    }
+
+    Parameter&
+    Parameter::scope(const std::string a_scope)
+    {
+      m_scope = scopeFromString(a_scope);
+      return *this;
+    }
+
     void
     Parameter::writeXML(std::ostream& os) const
     {
       os << "<param name=\"" << m_name << "\""
          << " i18n-name=\"" << DTR(m_name.c_str()) << "\""
          << " type=\"" << m_type_name << "\""
-         << " visibility=\"" << c_visibility_strs[m_visibility] << "\""
-         << " scope=\"" << c_scope_strs[m_scope] << "\"";
+         << " visibility=\"" << visibilityToString(m_visibility) << "\""
+         << " scope=\"" << scopeToString(m_scope) << "\"";
 
       if (!m_min_value.empty())
         os << " min=\"" << m_min_value << "\"";
