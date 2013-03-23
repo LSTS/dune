@@ -117,7 +117,8 @@ namespace Simulators
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER);
+                    Tasks::Parameter::VISIBILITY_USER,
+                    true);
 
         param("Ping Delay", m_args.ping_delay)
         .units(Units::Second)
