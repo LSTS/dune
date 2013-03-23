@@ -157,7 +157,8 @@ namespace Sensors
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER);
+                    Tasks::Parameter::VISIBILITY_USER,
+                    true);
 
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
