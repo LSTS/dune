@@ -81,7 +81,8 @@ namespace Simulators
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER);
+                    Tasks::Parameter::VISIBILITY_USER,
+                    true);
 
         param("Standard Deviation - Ground Velocity", m_args.stdev_gvel)
         .units(Units::MeterPerSecond)
