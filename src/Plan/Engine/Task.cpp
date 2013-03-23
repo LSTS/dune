@@ -70,6 +70,8 @@ namespace Plan
       Plan* m_plan;
       //! Calibration object
       Calibration* m_calib;
+      //! True if a stop for calibration has been requested
+      bool m_stopped_calib;
       //! Plan control interface
       IMC::PlanControlState m_pcs;
       IMC::PlanControl m_reply;
@@ -107,6 +109,7 @@ namespace Plan
         DUNE::Tasks::Task(name, ctx),
         m_plan(NULL),
         m_calib(NULL),
+        m_stopped_calib(false),
         m_db(NULL),
         m_get_plan_stmt(NULL)
       {
@@ -238,9 +241,10 @@ namespace Plan
           m_plan->onEntityActivationState(resolveEntity(msg->getSourceEntity()), msg);
 
           // If calibration is in progress and we're not waiting for any device
+          // and we have not yet send a request to stop calibration
           // then stop calibration and move on with plan
           if (m_calib->inProgress() && m_calib->pastMinimum() &&
-              !m_plan->waitingForDevice())
+              !m_plan->waitingForDevice() && !m_stopped_calib)
           {
             vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
           }
@@ -989,9 +993,17 @@ namespace Plan
           m_vc.maneuver.set(*dynamic_cast<const IMC::Maneuver*>(arg));
 
         if (command == IMC::VehicleCommand::VC_START_CALIBRATION)
+        {
           m_vc.calib_time = m_calib->getTime();
+          m_stopped_calib = false;
+        }
         else
+        {
           m_vc.calib_time = 0;
+
+          if (command == IMC::VehicleCommand::VC_STOP_CALIBRATION)
+            m_stopped_calib = true;
+        }
 
         dispatch(m_vc);
 
