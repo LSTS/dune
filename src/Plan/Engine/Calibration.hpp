@@ -83,14 +83,6 @@ namespace Plan
           m_state = CS_NONE;
       }
 
-      //! Get the calibration time
-      //! @return calibration time
-      uint16_t
-      getTime(void) const
-      {
-        return m_time;
-      }
-
       //! Start calibration
       void
       start(void)
@@ -122,17 +114,26 @@ namespace Plan
         m_state = CS_FAILED;
       }
 
+      //! Get the calibration time
+      //! @return calibration time
+      uint16_t
+      getTime(void) const
+      {
+        return m_time;
+      }
+
       //! Get remaining time in calibration
       //! @return remaining time
       float
-      getRemaining(void)
+      getRemaining(void) const
       {
         return m_timer.getRemaining();
       }
 
       //! Check if calibration time is past minimum time
+      //! @return true if elapsed calibration time is larger than minimum
       bool
-      pastMinimum(void)
+      pastMinimum(void) const
       {
         return (m_time - m_timer.getRemaining() > m_min_time);
       }
@@ -156,7 +157,7 @@ namespace Plan
       //! Calibration is done
       //! @return true if calibration is done
       bool
-      isDone(void)
+      isDone(void) const
       {
         return CS_DONE == m_state;
       }
@@ -164,7 +165,7 @@ namespace Plan
       //! Calibration has failed
       //! @return true if calibration has failed
       bool
-      hasFailed(void)
+      hasFailed(void) const
       {
         return CS_FAILED == m_state;
       }
@@ -172,7 +173,7 @@ namespace Plan
       //! Get error message
       //! @return error string message
       const std::string&
-      getInfo(void)
+      getInfo(void) const
       {
         return m_info;
       }
