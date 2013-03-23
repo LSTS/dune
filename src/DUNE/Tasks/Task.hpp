@@ -320,8 +320,10 @@ namespace DUNE
       initializeResources(void);
 
       //! Instruct task to update its run-time parameters.
+      //! @param[in] act_deact if true this function will request
+      //! activation/deactivation if the 'Active' parameter changed.
       void
-      updateParameters(void);
+      updateParameters(bool act_deact = true);
 
       //! Write task parameters in XML format.
       //! @param[in] os output stream.
@@ -464,8 +466,17 @@ namespace DUNE
         return m_params.changed(&var);
       }
 
+      //! Declare parameter 'Active' and associated parameters 'Active
+      //! - Scope' and 'Active - Visibility'. These parameters allows
+      //! the task to be activated/deactivated using the message
+      //! SetEntityParameters.
+      //! @param[in] def_scope default scope of 'Active' parameter.
+      //! @param[in] def_visibility default visibility of 'Active' parameter.
+      //! @param[in] def_value default value of 'Active' parameter.
       void
-      paramActive(Parameter::Scope scope, Parameter::Visibility visibility);
+      paramActive(Parameter::Scope def_scope,
+                  Parameter::Visibility def_visibility,
+                  bool def_value = false);
 
       //! Bind a message to a consumer method.
       //! @param task_obj consumer task.
@@ -643,6 +654,10 @@ namespace DUNE
         unsigned int priority;
         //! True if task is active.
         bool active;
+        //! Scope of 'Active' parameter.
+        std::string active_scope;
+        //! Visibility of 'Active' parameter.
+        std::string active_visibility;
       };
 
       //! Message recipient (queue).

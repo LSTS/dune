@@ -113,6 +113,12 @@ namespace DUNE
         return m_names.find(name);
       }
 
+      std::map<std::string, Parameter*>::iterator
+      find(const std::string& name)
+      {
+        return m_names.find(name);
+      }
+
     private:
       std::vector<Parameter*> m_params;
       std::map<void*, Parameter*> m_pointers;
