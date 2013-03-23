@@ -237,9 +237,19 @@ namespace Plan
         {
           m_plan->onEntityActivationState(resolveEntity(msg->getSourceEntity()), msg);
 
+          // If calibration is in progress and we're not waiting for any device
+          // then stop calibration and move on with plan
           if (m_calib->inProgress() && m_calib->pastMinimum() &&
               !m_plan->waitingForDevice())
+          {
             vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
+          }
+          else if (m_calib->hasFailed())
+          {
+            onFailure(m_calib->getInfo());
+            m_reply.plan_id = m_spec.plan_id;
+            changeMode(IMC::PlanControlState::PCS_BLOCKED, m_calib->getInfo());
+          }
         }
       }
 
