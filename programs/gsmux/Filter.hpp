@@ -33,6 +33,7 @@
 #include <string>
 #include <cstring>
 #include <cstdio>
+#include <iostream>
 
 //! Minimum number of fields of PUBX,00 sentence.
 static const unsigned c_pubx00_fields = 21;
@@ -97,7 +98,7 @@ public:
 
     if (data[2] != 0x32)
     {
-      std::fprintf(stderr, "WARNING: spurious data.\n");
+      std::cerr << "WARNING: spurious data." << std::endl;
     }
 
     const uint8_t* ptr = &data[4];
@@ -123,20 +124,24 @@ public:
   void
   printHeader(void)
   {
-    std::fprintf(m_fd,
+    using namespace std;
+
+    fprintf(m_fd,
             "Sync_Lost"
 #define FIELD(label, var, type, fmt) "\t" label
 #include "Fields.def"
             "\r\n"
             );
 
-    std::fflush(m_fd);
+    fflush(m_fd);
   }
 
   void
   print(unsigned index)
   {
-    std::fprintf(m_fd,
+    using namespace std;
+
+    fprintf(m_fd,
             "%u"
 #define FIELD(label, var, type, fmt) "\t" fmt
 #include "Fields.def"
@@ -284,7 +289,7 @@ private:
   {
     if (parts.size() < c_pubx00_fields)
     {
-      std::fprintf(stderr, "WARNING: invalid PUBX,00 sentence\n");
+      std::cerr << "WARNING: invalid PUBX,00 sentence\n" << std::endl;
       return;
     }
 
