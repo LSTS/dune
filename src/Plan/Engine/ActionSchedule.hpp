@@ -31,7 +31,7 @@
 // ISO C++ 98 headers.
 #include <string>
 #include <vector>
-#include <queue>
+#include <stack>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -69,8 +69,8 @@ namespace Plan
         IMC::SetEntityParameters* list;
       };
 
-      //! Queue of timed actions
-      typedef std::queue<TimedAction> TimedQueue;
+      //! Stack of timed actions
+      typedef std::stack<TimedAction> TimedStack;
 
       //! Actions that should be fired on plan and maneuver start or end
       struct EventActions
@@ -97,18 +97,17 @@ namespace Plan
         m_task(task),
         m_cinfo(&cinfo)
       {
-        float plan_duration;
         PlanDuration::ManeuverDuration::const_iterator dur;
         dur = durations.find(nodes.back()->maneuver_id);
 
         // If durations
         if (dur == durations.end())
-          plan_duration = -1.0;
+          m_plan_duration = -1.0;
         else
-          plan_duration = dur->second.back();
+          m_plan_duration = dur->second.back();
 
         // start by adding "start" plan actions
-        parseStartActions(spec->start_actions, &m_plan_actions, plan_duration);
+        parseStartActions(spec->start_actions, &m_plan_actions, m_plan_duration);
 
         std::vector<IMC::PlanManeuver*>::const_iterator itr;
         itr = nodes.begin();
@@ -121,7 +120,7 @@ namespace Plan
         for (; itr != nodes.end(); ++itr)
         {
           if (itr == nodes.begin())
-            maneuver_start_eta = plan_duration;
+            maneuver_start_eta = m_plan_duration;
           else
             maneuver_start_eta = maneuver_end_eta;
 
@@ -129,7 +128,7 @@ namespace Plan
           if (dur == durations.end())
             maneuver_end_eta = -1.0;
           else if (dur->second.size())
-            maneuver_end_eta = plan_duration - dur->second.back();
+            maneuver_end_eta = m_plan_duration - dur->second.back();
           else
             maneuver_end_eta = -1.0;
 
@@ -143,13 +142,18 @@ namespace Plan
 
         parseEndActions(spec->end_actions, &m_plan_actions, 0.0);
 
-        std::map<std::string, TimedQueue>::const_iterator next;
+        // Create a proper schedule from the unscheduled set of actions
+        scheduleTimed();
+
+        std::map<std::string, TimedStack>::const_iterator next;
         next = nextSchedule();
 
         if (next == m_timed.end())
           m_earliest = 0.0;
         else
-          m_earliest = next->second.front().sched_time;
+          m_earliest = next->second.top().sched_time;
+
+        m_task->war("earliest is %s with %.1f", next->first.c_str(), m_earliest);
       }
 
       //! Update timed actions in schedule
@@ -164,56 +168,24 @@ namespace Plan
 
         while (1)
         {
-          std::map<std::string, TimedQueue>::iterator next;
+          std::map<std::string, TimedStack>::iterator next;
           next = nextSchedule();
 
           if (next == m_timed.end())
             break;
 
-          TimedQueue* q = &next->second;
+          TimedStack* q = &next->second;
 
           // Check if the time is right
-          if (q->front().sched_time <= time_left)
+          if (q->top().sched_time <= time_left)
             break;
 
-          // Test if it is a deactivation
-          // If so, we should skip in case an activation comes in too soon
-          if (q->front().type == TYPE_DEACT)
-          {
-            TimedQueue clone = *q;
-            clone.pop();
-
-            bool conflict = false;
-            float min_gap;
-            min_gap = getDeactivationTime(next->first) + getActivationTime(next->first);
-
-            while (clone.size())
-            {
-              if (clone.front().sched_time + min_gap < time_left)
-                break;
-
-              // Device is ordered to reactivate to close in time to deactivation
-              if (clone.front().type == TYPE_ACT)
-              {
-                conflict = true;
-                break;
-              }
-
-              clone.pop();
-            }
-
-            if (!conflict)
-              dispatchActions(q->front().list);
-          }
-          else
-          {
-            dispatchActions(q->front().list);
-          }
+          dispatchActions(q->top().list);
 
           if (m_reqs.find(next->first) != m_reqs.end())
             m_reqs.erase(next->first);
 
-          m_reqs.insert(std::pair<std::string, TimedAction>(next->first, q->front()));
+          m_reqs.insert(std::pair<std::string, TimedAction>(next->first, q->top()));
 
           q->pop();
 
@@ -312,15 +284,38 @@ namespace Plan
 
             m_reqs.erase(id);
           }
-
-          if (msg->state == IMC::EntityActivationState::EAS_ACT_FAIL)
+          else if (msg->state == IMC::EntityActivationState::EAS_ACT_FAIL)
+          {
             m_task->err("schedule: failed to activate %s", id.c_str());
+            m_reqs.erase(id);
+          }
         }
         else
         {
           if (msg->state == IMC::EntityActivationState::EAS_DEACT_DONE)
             m_reqs.erase(id);
         }
+      }
+
+      //! Check if we are still waiting for a device in calibration process
+      //! @return true if we are still waiting
+      bool
+      waitingForDevice(void)
+      {
+        // if no requests are hanging then we're not waiting
+        if (m_reqs.empty())
+          return false;
+
+        std::map<std::string, TimedStack>::const_iterator next;
+        next = nextSchedule();
+
+        if (next != m_timed.end())
+        {
+          if (next->second.top().sched_time >= m_plan_duration)
+            return true;
+        }
+
+        return false;
       }
 
     private:
@@ -422,7 +417,7 @@ namespace Plan
           }
           else
           {
-            scheduleTimed(sep, type, eta);
+            gatherUntimed(sep, type, eta);
           }
         }
       }
@@ -461,12 +456,35 @@ namespace Plan
         return itr;
       }
 
-      //! Schedule timed actions
+      //! Add action to map
+      //! @param[in] name name of the entity
+      //! @param[in] action action that will be added
+      void
+      addTimedAction(std::map<std::string, TimedStack>& action_map,
+                     const std::string& name, const TimedAction& action)
+      {
+        std::map<std::string, TimedStack>::iterator itr;
+        itr = action_map.find(name);
+
+        // Adding action to stack
+        if (itr != action_map.end())
+        {
+          itr->second.push(action);
+        }
+        else
+        {
+          TimedStack q;
+          q.push(action);
+          action_map.insert(std::pair<std::string, TimedStack>(name, q));
+        }
+      }
+
+      //! Simply gather untimed actions in untimed stacks
       //! @param[in] sep pointer to SetEntityParameters to schedule
       //! @param[in] type action type to schedule
       //! @param[in] eta estimated time of arrival of action
       void
-      scheduleTimed(IMC::SetEntityParameters* sep, ActionType type, float eta)
+      gatherUntimed(IMC::SetEntityParameters* sep, ActionType type, float eta)
       {
         if (eta < 0)
           return;
@@ -474,30 +492,90 @@ namespace Plan
         TimedAction action;
         action.type = type;
         action.list = sep;
+        action.sched_time = eta;
 
-        if (type == TYPE_ACT)
-        {
-          action.sched_time = eta + getActivationTime(sep->name);
-        }
-        else
-        {
-          // when deactivating do not schedule to an earlier time
-          action.sched_time = eta;
-        }
+        addTimedAction(m_unsched, sep->name, action);
+      }
 
-        std::map<std::string, TimedQueue>::iterator itr;
-        itr = m_timed.find(sep->name);
+      //! Schedule timed actions
+      //! @param[in] sep pointer to SetEntityParameters to schedule
+      //! @param[in] type action type to schedule
+      //! @param[in] eta estimated time of arrival of action
+      void
+      scheduleTimed(void)
+      {
+        if (m_unsched.empty())
+          return;
 
-        // Adding action to queue
-        if (itr != m_timed.end())
+        std::map<std::string, TimedStack>::iterator itr = m_unsched.begin();
+
+        for (; itr != m_unsched.end(); ++itr)
         {
-          itr->second.push(action);
-        }
-        else
-        {
-          TimedQueue q;
-          q.push(action);
-          m_timed.insert(std::pair<std::string, TimedQueue>(sep->name, q));
+          TimedStack* us = &itr->second;
+
+          while (!us->empty())
+          {
+            TimedAction action = us->top();
+
+            us->pop();
+
+            // If activation
+            if (action.type == TYPE_ACT)
+            {
+              if (us->empty())
+              {
+                // pre-schedule
+                action.sched_time += getActivationTime(itr->first);
+                addTimedAction(m_timed, itr->first, action);
+              }
+              else
+              {
+                while (!us->empty())
+                {
+                  TimedAction prev_action = us->top();
+
+                  if (prev_action.type == TYPE_DEACT)
+                  {
+                    // find least eta for a deactivation prior to the activation
+                    float deact_time = getDeactivationTime(itr->first);
+                    float act_time = getActivationTime(itr->first);
+                    float act_eta = deact_time + act_time + action.sched_time;
+
+                    // check if the gap between 'de' and activation is big enough
+                    if (prev_action.sched_time > act_eta)
+                    {
+                      action.sched_time += act_time;
+                      addTimedAction(m_timed, itr->first, action);
+                      break;
+                    }
+                    else // previous action deactivation is voided
+                    {
+                      us->pop();
+
+                      // if stack becomes empty, then pre-schedule
+                      if (us->empty())
+                      {
+                        action.sched_time += act_time;
+                        addTimedAction(m_timed, itr->first, action);
+                      }
+
+                      // proceed in inner loop to check previous action
+                    }
+                  }
+                  else // previous action is activation
+                  {
+                    // if previous action is activation, do not pre-schedule
+                    addTimedAction(m_timed, itr->first, action);
+                    break;
+                  }
+                }
+              }
+            }
+            else // if deactivation never pre-schedule
+            {
+              addTimedAction(m_timed, itr->first, action);
+            }
+          }
         }
       }
 
@@ -518,9 +596,9 @@ namespace Plan
           m_task->dispatch(actions[i]);
       }
 
-      //! Find the queue with the next scheduled action
-      //! @return iterator to the queue with the next scheduled action
-      std::map<std::string, TimedQueue>::iterator
+      //! Find the stack with the next scheduled action
+      //! @return iterator to the stack with the next scheduled action
+      std::map<std::string, TimedStack>::iterator
       nextSchedule(void)
       {
         if (!m_timed.size())
@@ -528,15 +606,15 @@ namespace Plan
 
         float earliest = 0.0;
 
-        std::map<std::string, TimedQueue>::iterator itr, next;
+        std::map<std::string, TimedStack>::iterator itr, next;
         itr = m_timed.begin();
         next = m_timed.end();
 
         for (; itr != m_timed.end(); ++itr)
         {
-          if (itr->second.front().sched_time > earliest)
+          if (itr->second.top().sched_time > earliest)
           {
-            earliest = itr->second.front().sched_time;
+            earliest = itr->second.top().sched_time;
             next = itr;
           }
         }
@@ -548,25 +626,27 @@ namespace Plan
       void
       printTimed(void)
       {
-        std::map<std::string, TimedQueue> clone = m_timed;
+        std::map<std::string, TimedStack> clone = m_timed;
 
-        std::map<std::string, TimedQueue>::iterator itr = clone.begin();
+        std::map<std::string, TimedStack>::iterator itr = clone.begin();
         for (; itr != clone.end(); ++itr)
         {
-          m_task->debug("--- %s ---", itr->first.c_str());
+          m_task->war("--- %s ---", itr->first.c_str());
           while (!itr->second.empty())
           {
-            m_task->debug("scheduled for: %.1f", itr->second.front().sched_time);
-            itr->second.front().list->toText(std::cerr);
+            m_task->war("scheduled for: %.1f", itr->second.top().sched_time);
+            itr->second.top().list->toText(std::cerr);
             itr->second.pop();
           }
-          m_task->debug("END %s ---", itr->first.c_str());
+          m_task->war("END %s ---", itr->first.c_str());
         }
       }
 
-      //! Map of entity labels to TimedQueue's
-      //! This means we'll have one queue per component
-      std::map<std::string, TimedQueue> m_timed;
+      //! Map of entity labels to TimedStack's
+      //! This means we'll have one stack per component
+      std::map<std::string, TimedStack> m_timed;
+      //! Map of entity labels to unscheduled stack
+      std::map<std::string, TimedStack> m_unsched;
       //! Map of event based maneuver actions
       EventMap m_onevent;
       //! Event based plan actions
@@ -583,6 +663,8 @@ namespace Plan
       float m_time_left;
       //! Set of activation requests yet to be confirmed
       std::map<std::string, TimedAction> m_reqs;
+      //! Expected plan duration disregarding calibration time
+      float m_plan_duration;
     };
   }
 }

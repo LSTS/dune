@@ -91,7 +91,7 @@ namespace DUNE
       //! Get remaining time.
       //! @return time remaining.
       inline T
-      getRemaining(void)
+      getRemaining(void) const
       {
         if (m_overflow)
           return 0;
