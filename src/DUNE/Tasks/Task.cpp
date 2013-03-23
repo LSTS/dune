@@ -199,18 +199,30 @@ namespace DUNE
     }
 
     void
-    Task::paramActive(Parameter::Scope scope, Parameter::Visibility visibility, bool def_value)
+    Task::paramActive(Parameter::Scope def_scope, Parameter::Visibility def_visibility, bool def_value)
     {
       m_honours_active = true;
 
+      std::string scope_str = Parameter::scopeToString(def_scope);
+      param(DTR_RT("Active - Scope"), m_args.active_scope)
+      .visibility(Parameter::VISIBILITY_DEVELOPER)
+      .scope(Parameter::SCOPE_GLOBAL)
+      .defaultValue(scope_str);
+
+      std::string visibility_str = Parameter::visibilityToString(def_visibility);
+      param(DTR_RT("Active - Visibility"), m_args.active_visibility)
+      .visibility(Parameter::VISIBILITY_DEVELOPER)
+      .scope(Parameter::SCOPE_GLOBAL)
+      .defaultValue(visibility_str);
+
       param(DTR_RT("Active"), m_args.active)
-      .visibility(visibility)
-      .scope(scope)
+      .visibility(def_visibility)
+      .scope(def_scope)
       .defaultValue(uncastLexical(def_value));
     }
 
     void
-    Task::updateParameters(void)
+    Task::updateParameters(bool act_deact)
     {
       m_ent_info.label = getEntityLabel();
       m_ent_info.component = getName();
@@ -231,7 +243,15 @@ namespace DUNE
 
       if (m_honours_active)
       {
-        if (paramChanged(m_args.active))
+        std::map<std::string, Parameter*>::iterator itr = m_params.find("Active");
+
+        if (paramChanged(m_args.active_scope))
+          itr->second->scope(m_args.active_scope);
+
+        if (paramChanged(m_args.active_visibility))
+          itr->second->visibility(m_args.active_visibility);
+
+        if (paramChanged(m_args.active) && act_deact)
         {
           if (m_args.active)
             requestActivation();
@@ -655,7 +675,7 @@ namespace DUNE
           err(DTR("invalid parameter '%s'"), pitr->first.c_str());
       }
 
-      updateParameters();
+      updateParameters(false);
     }
   }
 }
