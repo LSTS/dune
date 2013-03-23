@@ -202,6 +202,9 @@ namespace DUNE
         return *this;
       }
 
+      //! Set parameter's visibility.
+      //! @param[in] a_visibility desired visibility.
+      //! @return parameter reference.
       Parameter&
       visibility(Visibility a_visibility)
       {
