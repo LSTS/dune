@@ -152,8 +152,6 @@ namespace Plan
           m_earliest = 0.0;
         else
           m_earliest = next->second.top().sched_time;
-
-        m_task->war("earliest is %s with %.1f", next->first.c_str(), m_earliest);
       }
 
       //! Update timed actions in schedule
