@@ -242,7 +242,7 @@ private:
     {
       m_utc_hour = h;
       m_utc_minute = m;
-      m_utc_second_msec = (s * 1000);
+      m_utc_second_msec = static_cast<unsigned>(s * 1000);
     }
 
     // Read date.
@@ -276,7 +276,7 @@ private:
     double tow;
     if (std::sscanf(parts[4].c_str(), "%lf", &tow))
     {
-      m_utc_tow_msec = (tow * 1000);
+      m_utc_tow_msec = static_cast<unsigned>(tow * 1000);
     }
     else
     {
