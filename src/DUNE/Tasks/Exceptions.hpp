@@ -98,10 +98,11 @@ namespace DUNE
       //! Constructor.
       //! @param[in] name parameter name.
       //! @param[in] value value.
-      InvalidValue(const std::string& name, const std::string& value):
-        std::invalid_argument(Utils::String::str(DTR("invalid value for parameter '%s': '%s'"),
+      InvalidValue(const std::string& name, const std::string& value, const std::string& reason):
+        std::invalid_argument(Utils::String::str(DTR("invalid value '%s' for parameter '%s': '%s'"),
+                                                 value.c_str(),
                                                  name.c_str(),
-                                                 value.c_str()))
+                                                 reason.c_str()))
       { }
     };
   }

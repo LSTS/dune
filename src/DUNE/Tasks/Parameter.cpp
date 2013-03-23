@@ -104,7 +104,7 @@ namespace DUNE
       }
       catch (std::exception& e)
       {
-        throw InvalidValue(m_name, val);
+        throw InvalidValue(m_name, val, e.what());
       }
     }
 
