@@ -511,7 +511,7 @@ namespace Plan
       //! @param[in] calib pointer to calibration information
       //! @return progress in percent (-1.0 if unable to compute)
       float
-      progress(const IMC::ManeuverControlState* mcs, Calibration* calib)
+      progress(const IMC::ManeuverControlState* mcs, const Calibration* calib)
       {
         if (!m_compute_progress)
           return -1.0;
@@ -520,7 +520,7 @@ namespace Plan
         if (!m_sequential || !m_durations.size())
           return -1.0;
 
-        // If calibration has not started yet
+        // If calibration has not started yet, but will later
         if (calib->notStarted())
           return -1.0;
 
