@@ -46,25 +46,21 @@ namespace UserInterfaces
     class Message: public AbstractOutput
     {
     public:
-      Message(unsigned nr, Tasks::Task& task):
+      Message(const std::string& name, Tasks::Task& task):
         m_task(task)
       {
-        m_msg.id = nr;
+        m_msg.name = name;
       }
 
       void
       setValue(bool value)
       {
-        if (value)
-          m_msg.op = IMC::LedControl::LC_ON;
-        else
-          m_msg.op = IMC::LedControl::LC_OFF;
-
+        m_msg.value = value;
         m_task.dispatch(m_msg);
       }
 
     private:
-      IMC::LedControl m_msg;
+      IMC::SetLedBrightness m_msg;
       Tasks::Task& m_task;
     };
   }

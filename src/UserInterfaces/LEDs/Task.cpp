@@ -63,13 +63,13 @@ namespace UserInterfaces
 
     struct Arguments
     {
-      // Interface (GPIO, Parallel Port, Emulator).
+      //! Interface (GPIO, Parallel Port, Emulator).
       std::string interface;
-      // Pins.
-      std::vector<unsigned> pins;
-      // Parallel base address.
+      //! LED identifiers.
+      std::vector<std::string> led_ids;
+      //! Parallel base address.
       unsigned pp_addr;
-      // Start delay.
+      //! Start delay.
       double start_delay;
     };
 
@@ -103,8 +103,9 @@ namespace UserInterfaces
         param("Parallel Port - Base Address", m_args.pp_addr)
         .defaultValue("0x378");
 
-        param("Pin Numbers", m_args.pins)
-        .defaultValue("");
+        param("Identifiers", m_args.led_ids)
+        .defaultValue("")
+        .description("List of LED identifiers (Names, GPIO number, etc)");
 
         param("Start Delay", m_args.start_delay)
         .units(Units::Second)
@@ -142,20 +143,30 @@ namespace UserInterfaces
       void
       onResourceAcquisition(void)
       {
-        for (unsigned i = 0; i < m_args.pins.size(); ++i)
+        for (unsigned i = 0; i < m_args.led_ids.size(); ++i)
         {
           AbstractOutput* out = NULL;
 
-          if (m_args.interface.compare("GPIO") == 0)
-            out = new GPIO(m_args.pins[i]);
-          else if (m_args.interface.compare("Parallel Port") == 0)
-            out = new ParallelPort(m_args.pp_addr, m_args.pins[i]);
-          else if (m_args.interface.compare("Emulator") == 0)
-            out = new Emulator(m_args.pins[i]);
-          else if (m_args.interface.compare("Message") == 0)
-            out = new Message(m_args.pins[i], *this);
+          if (m_args.interface == "Message")
+          {
+            out = new Message(m_args.led_ids[i], *this);
+          }
           else
-            std::runtime_error(String::str("unsupported interface '%s'", m_args.interface.c_str()));
+          {
+            unsigned nr = 0;
+            if (!castLexical(m_args.led_ids[i], nr))
+              throw std::runtime_error(String::str("invalid LED identifier '%s'",
+                                                   m_args.led_ids[i].c_str()));
+
+            if (m_args.interface.compare("GPIO") == 0)
+              out = new GPIO(nr);
+            else if (m_args.interface.compare("Parallel Port") == 0)
+              out = new ParallelPort(m_args.pp_addr, nr);
+            else if (m_args.interface.compare("Emulator") == 0)
+              out = new Emulator(nr);
+            else
+              std::runtime_error(String::str("unsupported interface '%s'", m_args.interface.c_str()));
+          }
 
           out->setValue(0);
           m_outs.push_back(out);
