@@ -210,8 +210,12 @@
 #define DUNE_IMC_QUERYPOWERCHANNELSTATE 310
 //! PowerChannelState identification number.
 #define DUNE_IMC_POWERCHANNELSTATE 311
-//! LedControl identification number.
-#define DUNE_IMC_LEDCONTROL 312
+//! LedBrightness identification number.
+#define DUNE_IMC_LEDBRIGHTNESS 312
+//! QueryLedBrightness identification number.
+#define DUNE_IMC_QUERYLEDBRIGHTNESS 313
+//! SetLedBrightness identification number.
+#define DUNE_IMC_SETLEDBRIGHTNESS 314
 //! EstimatedState identification number.
 #define DUNE_IMC_ESTIMATEDSTATE 350
 //! EstimatedStreamVelocity identification number.

@@ -6756,25 +6756,14 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
-    //! LED Control.
-    class LedControl: public Message
+    //! LED Brightness.
+    class LedBrightness: public Message
     {
     public:
-      //! Operation.
-      enum OperationEnum
-      {
-        //! Turn Off.
-        LC_OFF = 0,
-        //! Turn On.
-        LC_ON = 1,
-        //! Toggle.
-        LC_TOGGLE = 2
-      };
-
-      //! Id.
-      uint8_t id;
-      //! Operation.
-      uint8_t op;
+      //! Name.
+      std::string name;
+      //! Value.
+      uint8_t value;
 
       static uint16_t
       getIdStatic(void)
@@ -6782,12 +6771,12 @@ namespace DUNE
         return 312;
       }
 
-      LedControl(void);
+      LedBrightness(void);
 
       Message*
       clone(void) const
       {
-        return new LedControl(*this);
+        return new LedBrightness(*this);
       }
 
       void
@@ -6811,26 +6800,174 @@ namespace DUNE
       uint16_t
       getId(void) const
       {
-        return LedControl::getIdStatic();
+        return LedBrightness::getIdStatic();
       }
 
       const char*
       getName(void) const
       {
-        return "LedControl";
+        return "LedBrightness";
       }
 
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 1;
       }
 
-      uint16_t
-      getSubId(void) const;
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(name);
+      }
+
+      fp64_t
+      getValueFP(void) const;
 
       void
-      setSubId(uint16_t subid);
+      setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Query LED Brightness.
+    class QueryLedBrightness: public Message
+    {
+    public:
+      //! Name.
+      std::string name;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 313;
+      }
+
+      QueryLedBrightness(void);
+
+      Message*
+      clone(void) const
+      {
+        return new QueryLedBrightness(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return QueryLedBrightness::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "QueryLedBrightness";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(name);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Set LED Brightness.
+    class SetLedBrightness: public Message
+    {
+    public:
+      //! Name.
+      std::string name;
+      //! Value.
+      uint8_t value;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 314;
+      }
+
+      SetLedBrightness(void);
+
+      Message*
+      clone(void) const
+      {
+        return new SetLedBrightness(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SetLedBrightness::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SetLedBrightness";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(name);
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;

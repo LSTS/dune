@@ -205,8 +205,6 @@
     <unit abbrev="rpm/s" name="Revolutions per minute per second"/>
     <unit abbrev="s" name="Second"/>
     <unit abbrev="V" name="Volt"/>
-    <unit abbrev="g" name="Gravity acceleration"/>
-    <unit abbrev="bps" name="Bits per second"/>
     <unit abbrev="Enumerated" name="Enumeration of integer values"/>
     <unit abbrev="List" name="Comma separated list of values"/>
     <unit abbrev="Bitfield" name="Bit field"/>
@@ -2770,34 +2768,49 @@
     </field>
   </message>
 
-  <message id="312" name="LED Control" abbrev="LedControl" source="vehicle">
+  <message id="312" name="LED Brightness" abbrev="LedBrightness" source="vehicle">
     <description>
-      Message to control the state of Light-emitting diodes (LEDs).
+      Brightness value of an LED (Light-Emitting Diode).
     </description>
-    <field name="Id" abbrev="id" type="uint8_t">
+    <field name="Name" abbrev="name" type="plaintext">
       <description>
-        LED Identification Number.
+        LED name.
       </description>
     </field>
-    <field name="Operation" abbrev="op" type="uint8_t" unit="Enumerated" prefix="LC">
+    <field name="Value" abbrev="value" type="uint8_t">
       <description>
-        Operation to perform.
+        Brightness value.
       </description>
-      <value id="0" name="Turn Off" abbrev="OFF">
-        <description>
-          Turn off LED.
-        </description>
-      </value>
-      <value id="1" name="Turn On" abbrev="ON">
-        <description>
-          Turn on LED.
-        </description>
-      </value>
-      <value id="2" name="Toggle" abbrev="TOGGLE">
-        <description>
-          Toggle LED state.
-        </description>
-      </value>
+    </field>
+  </message>
+
+  <message id="313" name="Query LED Brightness" abbrev="QueryLedBrightness" source="vehicle">
+    <description>
+      Query the brightness of an LED (Light-Emitting Diode). The
+      recipient of this message shall reply with 'LedBrightness'.
+    </description>
+    <field name="Name" abbrev="name" type="plaintext">
+      <description>
+        LED name.
+      </description>
+    </field>
+  </message>
+
+  <message id="314" name="Set LED Brightness" abbrev="SetLedBrightness" source="vehicle">
+    <description>
+      Control the brightness of an LED (Light-Emitting Diode). The
+      recipient of this message shall set the intensity of the LED to
+      the desired 'value' and reply with 'LedBrightness'.
+    </description>
+    <field name="Name" abbrev="name" type="plaintext">
+      <description>
+        LED name.
+      </description>
+    </field>
+    <field name="Value" abbrev="value" type="uint8_t">
+      <description>
+        Desired brightness value.
+      </description>
     </field>
   </message>
 

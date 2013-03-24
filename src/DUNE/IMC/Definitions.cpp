@@ -6610,78 +6610,208 @@ namespace DUNE
       IMC::toJSON(os__, "state", state, nindent__);
     }
 
-    LedControl::LedControl(void)
+    LedBrightness::LedBrightness(void)
     {
       m_header.mgid = 312;
       clear();
     }
 
     void
-    LedControl::clear(void)
+    LedBrightness::clear(void)
     {
-      id = 0;
-      op = 0;
+      name.clear();
+      value = 0;
     }
 
     bool
-    LedControl::fieldsEqual(const Message& msg__) const
+    LedBrightness::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LedControl& other__ = dynamic_cast<const LedControl&>(msg__);
-      if (id != other__.id) return false;
-      if (op != other__.op) return false;
+      const IMC::LedBrightness& other__ = dynamic_cast<const LedBrightness&>(msg__);
+      if (name != other__.name) return false;
+      if (value != other__.value) return false;
       return true;
     }
 
     int
-    LedControl::validate(void) const
+    LedBrightness::validate(void) const
     {
       return false;
     }
 
     uint8_t*
-    LedControl::serializeFields(uint8_t* bfr__) const
+    LedBrightness::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(id, ptr__);
-      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(name, ptr__);
+      ptr__ += IMC::serialize(value, ptr__);
       return ptr__;
     }
 
     uint16_t
-    LedControl::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    LedBrightness::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(id, bfr__, size__);
-      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(name, bfr__, size__);
+      bfr__ += IMC::deserialize(value, bfr__, size__);
       return bfr__ - start__;
     }
 
     uint16_t
-    LedControl::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    LedBrightness::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(id, bfr__, size__);
-      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    LedBrightness::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    LedBrightness::setValueFP(fp64_t val)
+    {
+      value = static_cast<uint8_t>(val);
+    }
+
+    void
+    LedBrightness::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "name", name, nindent__);
+      IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    QueryLedBrightness::QueryLedBrightness(void)
+    {
+      m_header.mgid = 313;
+      clear();
+    }
+
+    void
+    QueryLedBrightness::clear(void)
+    {
+      name.clear();
+    }
+
+    bool
+    QueryLedBrightness::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::QueryLedBrightness& other__ = dynamic_cast<const QueryLedBrightness&>(msg__);
+      if (name != other__.name) return false;
+      return true;
+    }
+
+    int
+    QueryLedBrightness::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    QueryLedBrightness::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(name, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    QueryLedBrightness::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(name, bfr__, size__);
       return bfr__ - start__;
     }
 
     uint16_t
-    LedControl::getSubId(void) const
+    QueryLedBrightness::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
-      return id;
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
+      return bfr__ - start__;
     }
 
     void
-    LedControl::setSubId(uint16_t subid)
+    QueryLedBrightness::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
-      id = (uint8_t)subid;
+      IMC::toJSON(os__, "name", name, nindent__);
+    }
+
+    SetLedBrightness::SetLedBrightness(void)
+    {
+      m_header.mgid = 314;
+      clear();
     }
 
     void
-    LedControl::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    SetLedBrightness::clear(void)
     {
-      IMC::toJSON(os__, "id", id, nindent__);
-      IMC::toJSON(os__, "op", op, nindent__);
+      name.clear();
+      value = 0;
+    }
+
+    bool
+    SetLedBrightness::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::SetLedBrightness& other__ = dynamic_cast<const SetLedBrightness&>(msg__);
+      if (name != other__.name) return false;
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    SetLedBrightness::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    SetLedBrightness::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(name, ptr__);
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    SetLedBrightness::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(name, bfr__, size__);
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    SetLedBrightness::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    SetLedBrightness::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    SetLedBrightness::setValueFP(fp64_t val)
+    {
+      value = static_cast<uint8_t>(val);
+    }
+
+    void
+    SetLedBrightness::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "name", name, nindent__);
+      IMC::toJSON(os__, "value", value, nindent__);
     }
 
     EstimatedState::EstimatedState(void)

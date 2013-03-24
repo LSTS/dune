@@ -238,12 +238,12 @@ main(int argc, char** argv)
     tmsg->button = atoi(argv[4]);
     tmsg->value = atoi(argv[5]);
   }
-  else if (strcmp(argv[3], "LedControl") == 0)
+  else if (strcmp(argv[3], "SetLedBrightness") == 0)
   {
-    IMC::LedControl* tmsg = new IMC::LedControl;
+    IMC::SetLedBrightness* tmsg = new IMC::SetLedBrightness;
     msg = tmsg;
-    tmsg->id = atoi(argv[4]);
-    tmsg->op = atoi(argv[5]);
+    tmsg->name = argv[4];
+    tmsg->value = atoi(argv[5]);
   }
   else if (strcmp(argv[3], "EstimatedState") == 0)
   {
