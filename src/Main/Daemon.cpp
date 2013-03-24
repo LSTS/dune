@@ -269,24 +269,31 @@ main(int argc, char** argv)
   if (!options.value("--vehicle").empty())
     context.config.set("General", "Vehicle", options.value("--vehicle"));
 
-  DUNE::Daemon daemon(context, options.value("--profiles"));
-
-  // Parameters XML.
-  if (options.value("--dump-params-xml") != "")
+  try
   {
-    std::string lang = I18N::getLanguage();
-    std::string file = String::str("%s.%s.xml", daemon.getSystemName(), lang.c_str());
-    Path path = Path(options.value("--dump-params-xml")) / file;
-    std::ofstream ofs(path.c_str());
-    if (!ofs.is_open())
+    DUNE::Daemon daemon(context, options.value("--profiles"));
+
+    // Parameters XML.
+    if (options.value("--dump-params-xml") != "")
     {
-      std::cerr << "ERROR: failed to create file '" << path << "'" << std::endl;
-      return 1;
+      std::string lang = I18N::getLanguage();
+      std::string file = String::str("%s.%s.xml", daemon.getSystemName(), lang.c_str());
+      Path path = Path(options.value("--dump-params-xml")) / file;
+      std::ofstream ofs(path.c_str());
+      if (!ofs.is_open())
+      {
+        std::cerr << "ERROR: failed to create file '" << path << "'" << std::endl;
+        return 1;
+      }
+
+      daemon.writeParamsXML(ofs);
+      return 0;
     }
 
-    daemon.writeParamsXML(ofs);
-    return 0;
+    return runDaemon(daemon);
   }
-
-  return runDaemon(daemon);
+  catch (std::exception& e)
+  {
+    std::cerr << "ERROR: " << e.what() << std::endl;
+  }
 }
