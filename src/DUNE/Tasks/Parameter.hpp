@@ -62,8 +62,12 @@ namespace DUNE
       //! Parameter scope.
       enum Scope
       {
+        //! Parameter can only be changed when the system is not
+        //! performing plans/maneuvers.
         SCOPE_GLOBAL,
+        //! Parameter can be changed on a per plan basis.
         SCOPE_PLAN,
+        //! Parameter can be changed on a per maneuver basis.
         SCOPE_MANEUVER
       };
 
