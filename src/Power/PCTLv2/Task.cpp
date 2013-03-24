@@ -127,6 +127,8 @@ namespace Power
       std::vector<uint8_t> chn_eme_state;
       //! Minimum operating voltage.
       double vol_min;
+      //! LED names.
+      std::vector<std::string> leds;
     };
 
     struct Task: public Tasks::Task
@@ -141,6 +143,8 @@ namespace Power
       PowerChannels m_channels;
       //! Power operation.
       IMC::PowerOperation m_pwr_op;
+      //! LED brightness.
+      IMC::LedBrightness m_led_bright[c_led_count];
       //! Power down is in progress.
       bool m_pwr_down;
       //! Temperature.
@@ -151,6 +155,8 @@ namespace Power
       Time::Counter<double> m_state_timer;
       //! Task arguments.
       Arguments m_args;
+      //! LED name to id map.
+      std::map<std::string, unsigned> m_led_map;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -180,6 +186,10 @@ namespace Power
         .units(Units::Second)
         .defaultValue("2.0")
         .description("Watchdog timeout");
+
+        param("LED - Names", m_args.leds)
+        .size(c_led_count)
+        .description("List of LED names");
 
         for (unsigned i = 0; i < c_adcs_count; ++i)
         {
@@ -214,7 +224,8 @@ namespace Power
         // Register handler routines.
         bind<IMC::QueryPowerChannelState>(this);
         bind<IMC::PowerChannelControl>(this);
-        bind<IMC::LedControl>(this);
+        bind<IMC::SetLedBrightness>(this);
+        bind<IMC::QueryLedBrightness>(this);
       }
 
       ~Task(void)
@@ -230,6 +241,15 @@ namespace Power
       void
       onUpdateParameters(void)
       {
+        // Fill LED map.
+        m_led_map.clear();
+        for (unsigned i = 0; i < m_args.leds.size(); ++i)
+        {
+          m_led_bright[i].name = m_args.leds[i];
+          m_led_bright[i].value = 0;
+          m_led_map[m_args.leds[i]] = i;
+        }
+
         for (unsigned i = 0; i < c_adcs_count; ++i)
         {
           if (m_adcs[i] != NULL)
@@ -599,11 +619,27 @@ namespace Power
       }
 
       void
-      consume(const IMC::LedControl* msg)
+      consume(const IMC::SetLedBrightness* msg)
       {
-        uint8_t data[] = {msg->id, msg->op};
+        std::map<std::string, unsigned>::const_iterator itr = m_led_map.find(msg->name);
+        if (itr == m_led_map.end())
+          return;
+
+        uint8_t data[] = {(uint8_t)itr->second, msg->value};
         m_proto.sendCommand(CMD_LED_CTL, data, sizeof(data));
         waitForCommand(CMD_LED_CTL);
+
+        m_led_bright[itr->second].value = msg->value;
+      }
+
+      void
+      consume(const IMC::QueryLedBrightness* msg)
+      {
+        std::map<std::string, unsigned>::const_iterator itr = m_led_map.find(msg->name);
+        if (itr == m_led_map.end())
+          return;
+
+        dispatchReply(*msg, m_led_bright[itr->second]);
       }
 
       //! Dispatch power channel state messages to bus.
