@@ -119,9 +119,9 @@ namespace Plan
       //! @param[in] state pointer to EstimatedState message
       //! @return true if was able to parse the plan
       bool
-      parse( std::string& desc, const std::set<uint16_t>* supported_maneuvers,
-             bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
-             Tasks::Task* task, const IMC::EstimatedState* state = NULL)
+      parse(std::string& desc, const std::set<uint16_t>* supported_maneuvers,
+            bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
+            Tasks::Task* task, const IMC::EstimatedState* state = NULL)
       {
         bool start_maneuver_ok = false;
 
@@ -244,6 +244,13 @@ namespace Plan
         m_sched->planStopped();
       }
 
+      //! Signal that calibration has started
+      void
+      calibrationStarted(const Calibration* calib)
+      {
+        m_calibration = calib->getTime();
+      }
+
       //! Signal that a maneuver has started
       //! @param[in] id name of the started maneuver
       void
@@ -268,7 +275,7 @@ namespace Plan
       //! Get necessary calibration time
       //! @return necessary calibration time
       uint16_t
-      getCalibrationTime(void)
+      getCalibrationTime(void) const
       {
         return m_calibration;
       }
@@ -341,11 +348,7 @@ namespace Plan
       float
       getTotalDuration(void) const
       {
-        if (m_sched != NULL)
-          if (m_sched->getEarliestSchedule() > getExecutionDuration())
-            return m_sched->getEarliestSchedule();
-
-        return getExecutionDuration();
+        return getExecutionDuration() + getCalibrationTime();
       }
 
       //! Get execution percentage

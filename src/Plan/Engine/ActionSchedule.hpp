@@ -455,6 +455,7 @@ namespace Plan
       }
 
       //! Add action to map
+      //! @param[in] action_map map of actions to which the action will be added
       //! @param[in] name name of the entity
       //! @param[in] action action that will be added
       void
@@ -496,9 +497,6 @@ namespace Plan
       }
 
       //! Schedule timed actions
-      //! @param[in] sep pointer to SetEntityParameters to schedule
-      //! @param[in] type action type to schedule
-      //! @param[in] eta estimated time of arrival of action
       void
       scheduleTimed(void)
       {

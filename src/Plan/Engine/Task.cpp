@@ -994,6 +994,7 @@ namespace Plan
 
         if (command == IMC::VehicleCommand::VC_START_CALIBRATION)
         {
+          m_plan->calibrationStarted(m_calib);
           m_vc.calib_time = m_calib->getTime();
           m_stopped_calib = false;
         }
