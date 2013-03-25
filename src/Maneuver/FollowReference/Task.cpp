@@ -50,7 +50,7 @@ namespace Maneuver
       //! Store maneuver specification
       IMC::FollowReference m_spec;
       //! Store latest received reference
-      IMC::Reference m_cur_ref;
+      IMC::Reference m_cur_ref, m_last_ref;
       //! Estimated state
       IMC::EstimatedState m_estate;
       //! Path Control state
@@ -181,6 +181,7 @@ namespace Maneuver
         m_got_reference = true;
         m_last_ref_time = Clock::get();
 
+        m_last_ref = m_cur_ref;
         m_cur_ref = *msg;
 
         if (m_cur_ref.flags & IMC::Reference::FLAG_MANDONE)
@@ -338,47 +339,126 @@ namespace Maneuver
             break;
         }
 
-        if (near && m_fref_state.state == IMC::FollowRefState::FR_GOTO)
-        {
-          m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR;
+        bool at_z_target = z_dist < m_args.vertical_tolerance;
+        bool at_xy_target = xy_dist < m_args.horizontal_tolerance;
+        bool target_at_surface = desired_path.end_z == 0 && desired_path.end_z_units == Z_DEPTH;
+        bool still_same_reference = sameReference(ref, &m_last_ref);
+        int prevMode = m_fref_state.state;
 
-          if (z_dist < 1 && desired_path.end_z == 0
-              && desired_path.end_z_units == Z_DEPTH)
+        inf("at_z_target: %d, at_xy_target: %d, tgt_at_surface: %d, same_ref: %d", at_z_target, at_xy_target, target_at_surface, still_same_reference);
+        if (still_same_reference)
+        {
+          switch (prevMode)
           {
-            m_fref_state.state = IMC::FollowRefState::FR_HOVER;
-            m_fref_state.proximity = IMC::FollowRefState::PROX_Z_NEAR | IMC::FollowRefState::PROX_XY_NEAR;
-            return;
+            case (IMC::FollowRefState::FR_GOTO):
+              if (near)
+              {
+                if (at_z_target && target_at_surface)
+                {
+                  m_fref_state.state = IMC::FollowRefState::FR_HOVER;
+                  m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
+                      | IMC::FollowRefState::PROX_Z_NEAR;
+                }
+                else if (at_z_target && !target_at_surface)
+                {
+                  m_fref_state.state = IMC::FollowRefState::FR_LOITER;
+                  m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
+                      | IMC::FollowRefState::PROX_Z_NEAR;
+                }
+                else
+                {
+                  m_fref_state.state = IMC::FollowRefState::FR_ELEVATOR;
+                  m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR;
+                }
+              }
+              break;
+            case (IMC::FollowRefState::FR_HOVER):
+              if (!at_xy_target)
+              {
+                m_fref_state.state = IMC::FollowRefState::FR_GOTO;
+                m_fref_state.proximity = IMC::FollowRefState::PROX_Z_NEAR;
+              }
+              break;
+            case (IMC::FollowRefState::FR_ELEVATOR):
+              if (at_z_target && target_at_surface)
+              {
+                m_fref_state.state = IMC::FollowRefState::FR_HOVER;
+                m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
+                    | IMC::FollowRefState::PROX_Z_NEAR;
+              }
+              if (at_z_target && !target_at_surface)
+              {
+                m_fref_state.state = IMC::FollowRefState::FR_LOITER;
+                m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
+                    | IMC::FollowRefState::PROX_Z_NEAR;
+              }
+              break;
           }
-          else if (z_dist < m_spec.altitude_interval)
+        }
+        else
+        {
+          if (!at_xy_target)
           {
-            m_fref_state.state = IMC::FollowRefState::FR_LOITER;
-            m_fref_state.proximity = IMC::FollowRefState::PROX_Z_NEAR | IMC::FollowRefState::PROX_XY_NEAR;
-            desired_path.lradius = m_args.loitering_radius;
+            m_fref_state.state = IMC::FollowRefState::FR_GOTO;
+            m_fref_state.proximity =
+                at_z_target ? IMC::FollowRefState::PROX_Z_NEAR :
+                    IMC::FollowRefState::PROX_FAR;
           }
-          else
+          if (at_xy_target && !at_z_target)
           {
             m_fref_state.state = IMC::FollowRefState::FR_ELEVATOR;
             m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR;
-            desired_path.lradius = m_args.loitering_radius;
           }
-        }
-        else if (xy_dist > m_args.horizontal_tolerance)
-        {
-          m_fref_state.state = IMC::FollowRefState::FR_GOTO;
-          m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
+          if (at_z_target && at_xy_target && target_at_surface)
+          {
+            m_fref_state.state = IMC::FollowRefState::FR_HOVER;
+            m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
+                | IMC::FollowRefState::PROX_Z_NEAR;
+          }
+          if (at_z_target && at_xy_target && !target_at_surface)
+          {
+            m_fref_state.state = IMC::FollowRefState::FR_LOITER;
+            m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
+                | IMC::FollowRefState::PROX_Z_NEAR;
+          }
         }
 
         m_fref_state.reference.set(*ref);
         dispatch(m_fref_state);
 
-        if (m_fref_state.state != IMC::FollowRefState::FR_HOVER) {
-          if (!m_moving)
-            enableMovement(true);
-          dispatch(desired_path);
+        if (sameReference(ref, &m_last_ref) && m_fref_state.state == prevMode)
+        {
+          inf("xy distance is %f, z distance is %f, near: %d, state: %d.", xy_dist, z_dist, near, m_fref_state.state);
+          return;
         }
-        else {
-          inf("stopping...");
-          enableMovement(false);
+        else
+        {
+          inf("state changed, dispatching new desired path");
+        }
+
+        switch(m_fref_state.state)
+        {
+          case (IMC::FollowRefState::FR_LOITER):
+            inf("loiter");
+            desired_path.lradius = m_args.loitering_radius;
+            enableMovement(true);
+            dispatch(desired_path);
+            break;
+          case (IMC::FollowRefState::FR_ELEVATOR):
+            inf("elevator");
+            desired_path.lradius = m_args.loitering_radius;
+            enableMovement(true);
+            dispatch(desired_path);
+            break;
+          case (IMC::FollowRefState::FR_GOTO):
+            inf("goto");
+            enableMovement(true);
+            dispatch(desired_path);
+            break;
+          default:
+            inf("stop");
+            enableMovement(false);
+            break;
         }
 
         inf("xy distance is %f, z distance is %f, near: %d, state: %d.", xy_dist, z_dist, near, m_fref_state.state);
