@@ -31,7 +31,6 @@
 // ISO C++ 98 headers.
 #include <vector>
 #include <cmath>
-#include <iostream>
 #include <limits>
 
 // DUNE headers.
