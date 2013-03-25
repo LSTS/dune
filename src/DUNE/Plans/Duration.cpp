@@ -26,21 +26,21 @@
 //***************************************************************************
 
 // DUNE headers.
-#include <DUNE/Plans/PlanDuration.hpp>
+#include <DUNE/Plans/Duration.hpp>
 
 namespace DUNE
 {
   namespace Plans
   {
     float
-    PlanDuration::distance2D(const Position& new_pos, const Position& last_pos)
+    Duration::distance2D(const Position& new_pos, const Position& last_pos)
     {
       return Coordinates::WGS84::distance(new_pos.lat, new_pos.lon, 0.0,
                                           last_pos.lat, last_pos.lon, 0.0);
     }
 
     float
-    PlanDuration::distance3D(const Position& new_pos, const Position& last_pos)
+    Duration::distance3D(const Position& new_pos, const Position& last_pos)
     {
       float value = distance2D(new_pos, last_pos);
 
@@ -51,7 +51,7 @@ namespace DUNE
 
     template <typename Type>
     float
-    PlanDuration::parseSimple(const Type* maneuver, Position& last_pos,
+    Duration::parseSimple(const Type* maneuver, Position& last_pos,
                               float last_dur, std::vector<float>& durations,
                               const SpeedConversion& speed_conv)
     {
@@ -75,7 +75,7 @@ namespace DUNE
 
     template <typename Type>
     float
-    PlanDuration::convertSpeed(const Type* maneuver, const SpeedConversion& conv)
+    Duration::convertSpeed(const Type* maneuver, const SpeedConversion& conv)
     {
       switch (maneuver->speed_units)
       {
@@ -91,13 +91,13 @@ namespace DUNE
     }
 
     inline float
-    PlanDuration::compensate(float distance, float speed)
+    Duration::compensate(float distance, float speed)
     {
       return std::max(0.0, distance - Control::c_time_factor * speed);
     }
 
     float
-    PlanDuration::computeZOffset(const Position& new_pos, const Position& last_pos)
+    Duration::computeZOffset(const Position& new_pos, const Position& last_pos)
     {
       if (last_pos.z_units == new_pos.z_units)
       {
@@ -135,7 +135,7 @@ namespace DUNE
     }
 
     void
-    PlanDuration::extractBathymetry(const std::string& str, Position& pos)
+    Duration::extractBathymetry(const std::string& str, Position& pos)
     {
       (void)str;
 
@@ -145,7 +145,7 @@ namespace DUNE
 
     template <typename Type>
     void
-    PlanDuration::extractPosition(const Type* maneuver, Position& pos)
+    Duration::extractPosition(const Type* maneuver, Position& pos)
     {
       pos.lat = maneuver->lat;
       pos.lon = maneuver->lon;
@@ -157,7 +157,7 @@ namespace DUNE
     }
 
     void
-    PlanDuration::extractPosition(const IMC::Elevator* maneuver, Position& pos)
+    Duration::extractPosition(const IMC::Elevator* maneuver, Position& pos)
     {
       pos.lat = maneuver->lat;
       pos.lon = maneuver->lon;
@@ -168,7 +168,7 @@ namespace DUNE
     }
 
     void
-    PlanDuration::extractPosition(const IMC::PopUp* maneuver, Position& pos)
+    Duration::extractPosition(const IMC::PopUp* maneuver, Position& pos)
     {
       pos.lat = maneuver->lat;
       pos.lon = maneuver->lon;
@@ -179,7 +179,7 @@ namespace DUNE
     }
 
     void
-    PlanDuration::extractPosition(const IMC::EstimatedState* state, Position& pos)
+    Duration::extractPosition(const IMC::EstimatedState* state, Position& pos)
     {
       DUNE::Coordinates::toWGS84(*state, pos.lat, pos.lon);
       pos.z = state->depth;
@@ -190,7 +190,7 @@ namespace DUNE
 
 #ifdef DUNE_IMC_FOLLOWPATH
     float
-    PlanDuration::parse(const IMC::FollowPath* maneuver, Position& last_pos, float last_dur,
+    Duration::parse(const IMC::FollowPath* maneuver, Position& last_pos, float last_dur,
                         std::vector<float>& durations, const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
@@ -229,7 +229,7 @@ namespace DUNE
 #endif
 #ifdef DUNE_IMC_ROWS
     float
-    PlanDuration::parse(const IMC::Rows* maneuver, Position& last_pos, float last_dur,
+    Duration::parse(const IMC::Rows* maneuver, Position& last_pos, float last_dur,
                         std::vector<float>& durations, const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
@@ -266,7 +266,7 @@ namespace DUNE
 #endif
 #ifdef DUNE_IMC_YOYO
     float
-    PlanDuration::parse(const IMC::YoYo* maneuver, Position& last_pos, float last_dur,
+    Duration::parse(const IMC::YoYo* maneuver, Position& last_pos, float last_dur,
                         std::vector<float>& durations, const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
@@ -293,7 +293,7 @@ namespace DUNE
 #endif
 #ifdef DUNE_IMC_ELEVATOR
     float
-    PlanDuration::parse(const IMC::Elevator* maneuver, Position& last_pos, float last_dur,
+    Duration::parse(const IMC::Elevator* maneuver, Position& last_pos, float last_dur,
                         std::vector<float>& durations, const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
@@ -320,7 +320,7 @@ namespace DUNE
 #endif
 #ifdef DUNE_IMC_POPUP
     float
-    PlanDuration::parse(const IMC::PopUp* maneuver, Position& last_pos, float last_dur,
+    Duration::parse(const IMC::PopUp* maneuver, Position& last_pos, float last_dur,
                         std::vector<float>& durations, const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
@@ -367,8 +367,8 @@ namespace DUNE
     }
 #endif
 
-    PlanDuration::ManeuverDuration::const_iterator
-    PlanDuration::parse(const std::vector<IMC::PlanManeuver*>& nodes,
+    Duration::ManeuverDuration::const_iterator
+    Duration::parse(const std::vector<IMC::PlanManeuver*>& nodes,
                         const IMC::EstimatedState* state,
                         ManeuverDuration& man_durations,
                         const SpeedConversion& speed_conv)

@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLANS_PLANDURATION_HPP_INCLUDED_
-#define DUNE_PLANS_PLANDURATION_HPP_INCLUDED_
+#ifndef DUNE_PLANS_DURATION_HPP_INCLUDED_
+#define DUNE_PLANS_DURATION_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/Coordinates.hpp>
@@ -47,10 +47,10 @@ namespace DUNE
     static const float c_rated_pitch = (float)Math::Angles::radians(15.0f);
 
     // Export DLL Symbol.
-    class DUNE_DLL_SYM PlanDuration;
+    class DUNE_DLL_SYM Duration;
 
     //! Utility class to estimate a plan's duration.
-    class PlanDuration
+    class Duration
     {
     public:
       //! Mapping between maneuver IDs and point durations

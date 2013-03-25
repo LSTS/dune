@@ -34,7 +34,6 @@
 #include <vector>
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
 #include <DUNE/Plans.hpp>
 #include "Calibration.hpp"
 #include "ActionSchedule.hpp"
@@ -43,7 +42,7 @@ namespace Plan
 {
   namespace Engine
   {
-    using DUNE_NAMESPACES;
+    using namespace DUNE::Plans;
 
     // Export DLL Symbol.
     class DUNE_DLL_SYM Plan;
@@ -485,7 +484,7 @@ namespace Plan
       void
       computeDurations(const IMC::EstimatedState* state)
       {
-        m_last_dur = PlanDuration::parse(m_seq_nodes, state, m_durations, m_speed_conv);
+        m_last_dur = Duration::parse(m_seq_nodes, state, m_durations, m_speed_conv);
       }
 
       //! Get maneuver from id
@@ -541,7 +540,7 @@ namespace Plan
             mcs->eta == 0)
           return m_progress;
 
-        PlanDuration::ManeuverDuration::const_iterator itr;
+        Duration::ManeuverDuration::const_iterator itr;
         itr = m_durations.find(getCurrentId());
 
         // If not found, report last value of progress
@@ -566,7 +565,7 @@ namespace Plan
         IMC::Message* man = m_graph.find(getCurrentId())->second.pman->data.get();
 
         // Get execution progress
-        float exec_prog = PlanProgress::compute(man, mcs, itr->second, exec_duration);
+        float exec_prog = Progress::compute(man, mcs, itr->second, exec_duration);
 
         float prog = 100.0 - getExecutionPercentage() * (1.0 - exec_prog / 100.0);
 
@@ -605,11 +604,11 @@ namespace Plan
       //! Vector of message pointers to cycle through (sequential) plan
       std::vector<IMC::PlanManeuver*> m_seq_nodes;
       //! Maneuver durations
-      PlanDuration::ManeuverDuration m_durations;
+      Duration::ManeuverDuration m_durations;
       //! Speed conversion factors for plan duration
-      PlanDuration::SpeedConversion m_speed_conv;
+      Duration::SpeedConversion m_speed_conv;
       //! Iterator to last maneuver with a valid duration
-      PlanDuration::ManeuverDuration::const_iterator m_last_dur;
+      Duration::ManeuverDuration::const_iterator m_last_dur;
       //! Schedule for actions to take during plan
       ActionSchedule* m_sched;
     };

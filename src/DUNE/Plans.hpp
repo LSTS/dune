@@ -35,7 +35,7 @@ namespace DUNE
   { }
 }
 
-#include <DUNE/Plans/PlanDuration.hpp>
-#include <DUNE/Plans/PlanProgress.hpp>
+#include <DUNE/Plans/Duration.hpp>
+#include <DUNE/Plans/Progress.hpp>
 
 #endif

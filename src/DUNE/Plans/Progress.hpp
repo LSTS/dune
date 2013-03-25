@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLANS_PLANPROGRESS_HPP_INCLUDED_
-#define DUNE_PLANS_PLANPROGRESS_HPP_INCLUDED_
+#ifndef DUNE_PLANS_PROGRESS_HPP_INCLUDED_
+#define DUNE_PLANS_PROGRESS_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <cstdlib>
@@ -41,13 +41,13 @@ namespace DUNE
   namespace Plans
   {
     // Export DLL Symbol.
-    class DUNE_DLL_SYM PlanProgress;
+    class DUNE_DLL_SYM Progress;
 
     //! Maximum estimated time of arrival
     static const int c_max_eta = 65535;
 
     //! Utility class to estimate a plan's progress.
-    class PlanProgress
+    class Progress
     {
     public:
       //! Get waypoint number out of info message

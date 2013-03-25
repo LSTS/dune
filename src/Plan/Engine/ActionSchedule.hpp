@@ -32,16 +32,22 @@
 #include <string>
 #include <vector>
 #include <stack>
+#include <map>
+#include <set>
+#include <utility>
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
+#include <DUNE/Plans.hpp>
+#include <DUNE/IMC.hpp>
+#include "Calibration.hpp"
+
+using namespace DUNE::IMC;
+using namespace DUNE::Plans;
 
 namespace Plan
 {
   namespace Engine
   {
-    using DUNE_NAMESPACES;
-
     // Export DLL Symbol.
     class DUNE_DLL_SYM ActionSchedule;
 
@@ -93,8 +99,8 @@ namespace Plan
       //! @param[in] cinfo map of components info
       ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
                      const std::vector<IMC::PlanManeuver*>& nodes,
-                     const PlanDuration::ManeuverDuration& durations,
-                     const PlanDuration::ManeuverDuration::const_iterator last_dur,
+                     const Duration::ManeuverDuration& durations,
+                     const Duration::ManeuverDuration::const_iterator last_dur,
                      const std::map<std::string, IMC::EntityInfo>& cinfo):
         m_task(task),
         m_cinfo(&cinfo)
@@ -123,7 +129,7 @@ namespace Plan
           else
             maneuver_start_eta = maneuver_end_eta;
 
-          PlanDuration::ManeuverDuration::const_iterator dur;
+          Duration::ManeuverDuration::const_iterator dur;
           dur = durations.find((*itr)->maneuver_id);
 
           if (dur == durations.end())
