@@ -70,8 +70,8 @@ namespace DUNE
       //! @param[in] state current estimated state
       //! @param[out] man_durations map of maneuver ids to point durations
       //! @param[in] speed_conv speed conversion factors
-      //! @return accumulated plan duration in seconds, -1 if unable to compute
-      static float
+      //! @return iterator to last computed maneuver, returns end() if unable to compute
+      static ManeuverDuration::const_iterator
       parse(const std::vector<IMC::PlanManeuver*>& nodes , const IMC::EstimatedState* state,
             ManeuverDuration& man_durations, const SpeedConversion& speed_conv);
 
@@ -79,8 +79,8 @@ namespace DUNE
       //! @param[in] nodes vector of plan maneuver nodes
       //! @param[in] state current estimated state
       //! @param[out] man_durations map of maneuver ids to point durations
-      //! @return accumulated plan duration in seconds, -1 if unable to compute
-      static float
+      //! @return iterator to last computed maneuver, returns end() if unable to compute
+      static ManeuverDuration::const_iterator
       parse(const std::vector<IMC::PlanManeuver*>& nodes , const IMC::EstimatedState* state,
             ManeuverDuration& man_durations)
       {
