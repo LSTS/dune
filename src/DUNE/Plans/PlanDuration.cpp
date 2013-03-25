@@ -367,7 +367,7 @@ namespace DUNE
     }
 #endif
 
-    float
+    PlanDuration::ManeuverDuration::const_iterator
     PlanDuration::parse(const std::vector<IMC::PlanManeuver*>& nodes,
                         const IMC::EstimatedState* state,
                         ManeuverDuration& man_durations,
@@ -383,7 +383,7 @@ namespace DUNE
       for (; itr != nodes.end(); ++itr)
       {
         if ((*itr)->data.isNull())
-          return -1.0;
+          return man_durations.end();
 
         IMC::Message* msg = (*itr)->data.get();
 
@@ -440,18 +440,30 @@ namespace DUNE
             break;
 #endif
           default:
-            return -1.0;
+            last_duration = -1.0;
             break;
         }
 
         if (last_duration < 0.0)
-          return -1.0;
+        {
+          if (man_durations.empty() || itr == nodes.begin())
+            return man_durations.end();
+
+          // return the duration from the previously computed maneuver
+          ManeuverDuration::const_iterator dtr;
+          dtr = man_durations.find((*(--itr))->maneuver_id);
+
+          if (dtr->second.empty())
+            return man_durations.end();
+
+          return dtr;
+        }
 
         std::pair<std::string, std::vector<float> > ent((*itr)->maneuver_id, durations);
         man_durations.insert(ent);
       }
 
-      return last_duration;
+      return man_durations.find(nodes.back()->maneuver_id);
     }
   }
 }

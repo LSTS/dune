@@ -211,7 +211,8 @@ namespace Plan
             computeDurations(state);
 
             Memory::clear(m_sched);
-            m_sched = new ActionSchedule(task, m_spec, m_seq_nodes, m_durations, cinfo);
+            m_sched = new ActionSchedule(task, m_spec, m_seq_nodes,
+                                         m_durations, m_last_dur, cinfo);
 
             // Estimate necessary calibration time
             float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
@@ -334,13 +335,10 @@ namespace Plan
         if (!m_sequential || !m_durations.size())
           return -1.0;
 
-        PlanDuration::ManeuverDuration::const_iterator itr;
-        itr = m_durations.find(m_seq_nodes.back()->maneuver_id);
-
-        if (itr == m_durations.end())
+        if (m_last_dur == m_durations.end())
           return -1.0;
 
-        return itr->second.back();
+        return m_last_dur->second.back();
       }
 
       //! Get total duration of the plan
@@ -487,7 +485,7 @@ namespace Plan
       void
       computeDurations(const IMC::EstimatedState* state)
       {
-        PlanDuration::parse(m_seq_nodes, state, m_durations, m_speed_conv);
+        m_last_dur = PlanDuration::parse(m_seq_nodes, state, m_durations, m_speed_conv);
       }
 
       //! Get maneuver from id
@@ -546,19 +544,29 @@ namespace Plan
         PlanDuration::ManeuverDuration::const_iterator itr;
         itr = m_durations.find(getCurrentId());
 
-        // If not found
+        // If not found, report last value of progress
         if (itr == m_durations.end())
-          return -1.0;
+        {
+          // If progress used to be valid set to 100%
+          if (m_progress > 0.0)
+          {
+            m_progress = 100.0;
+            return m_progress;
+          }
+          else
+          {
+            return -1.0;
+          }
+        }
 
-        // If durations for this maneuver is empty
+        // If durations vector for this maneuver is empty
         if (!itr->second.size())
-          return -1.0;
+          return m_progress;
 
         IMC::Message* man = m_graph.find(getCurrentId())->second.pman->data.get();
 
         // Get execution progress
-        float exec_prog = PlanProgress::compute(man, mcs,
-                                                itr->second, exec_duration);
+        float exec_prog = PlanProgress::compute(man, mcs, itr->second, exec_duration);
 
         float prog = 100.0 - getExecutionPercentage() * (1.0 - exec_prog / 100.0);
 
@@ -600,6 +608,8 @@ namespace Plan
       PlanDuration::ManeuverDuration m_durations;
       //! Speed conversion factors for plan duration
       PlanDuration::SpeedConversion m_speed_conv;
+      //! Iterator to last maneuver with a valid duration
+      PlanDuration::ManeuverDuration::const_iterator m_last_dur;
       //! Schedule for actions to take during plan
       ActionSchedule* m_sched;
     };
