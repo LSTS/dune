@@ -25,20 +25,98 @@
 // Author: José Braga                                                       *
 //***************************************************************************
 
-#ifndef DUNE_NAVIGATION_HPP_INCLUDED_
-#define DUNE_NAVIGATION_HPP_INCLUDED_
+#ifndef DUNE_NAVIGATION_BEAM_FILTER_HPP_INCLUDED_
+#define DUNE_NAVIGATION_BEAM_FILTER_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <cmath>
+
+// DUNE headers.
+#include <DUNE/Math/Matrix.hpp>
+#include <DUNE/IMC/Definitions.hpp>
 
 namespace DUNE
 {
-  //! %Navigation related routines and classes.
   namespace Navigation
-  { }
-}
+  {
+    //! Maximum distance value to check dropout.
+    static const float c_max = 1.0;
+    //! Minimum distance for previous measurement.
+    static const float c_min = 3.0;
 
-#include <DUNE/Navigation/AAKR.hpp>
-#include <DUNE/Navigation/BasicNavigation.hpp>
-#include <DUNE/Navigation/BeamFilter.hpp>
-#include <DUNE/Navigation/CompassCalibration.hpp>
-#include <DUNE/Navigation/KalmanFilter.hpp>
+    //! %BeamFilter is responsible to gather beam
+    //! distance values from a DVL unit and compute
+    //! one local distance output.
+    //!
+    //! @author José Braga
+    class BeamFilter
+    {
+    public:
+      //! Constructor.
+      BeamFilter(void)
+      {
+        m_size = 4;
+        clear();
+      }
+
+      //! Constructor.
+      BeamFilter(size_t size)
+      {
+        m_size = size;
+        clear();
+      }
+
+      //! Clear data.
+      void
+      clear(void)
+      {
+        m_beams.resizeAndFill(1, m_size, 0.0);
+        m_prev = 0;
+      }
+
+      //! Update beam index with new measurement.
+      //! @param[in] index beam index.
+      //! @param[in] msg distance measurement.
+      void
+      updateBeam(size_t index, const IMC::Distance& msg)
+      {
+        if (index > m_size)
+          return;
+
+        m_beams(0, index) = msg.value;
+      }
+
+      //! Get distance using current beam data.
+      //! @return distance.
+      float
+      getDistance(void)
+      {
+        float dist = max(m_beams);
+
+        if (dist < c_max)
+        {
+          if (m_prev > c_min)
+          {
+            float aux = dist;
+            dist = m_prev;
+            m_prev = aux;
+            return dist;
+          }
+        }
+
+        m_prev = dist;
+        return dist;
+      }
+
+    private:
+      //! Number of DVL beams.
+      size_t m_size;
+      //! Data matrix.
+      Math::Matrix m_beams;
+      //! Previous distance value.
+      float m_prev;
+    };
+  }
+}
 
 #endif
