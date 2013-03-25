@@ -73,6 +73,8 @@ namespace Plan
         float sched_time;
         //! Set Entity parameters to dispatch
         IMC::SetEntityParameters* list;
+        //! Flag to signal that this action was pre-scheduled
+        bool prescheduled;
       };
 
       //! Stack of timed actions
@@ -192,10 +194,26 @@ namespace Plan
 
           dispatchActions(q->top().list);
 
-          if (m_reqs.find(next->first) != m_reqs.end())
-            m_reqs.erase(next->first);
+          EASMap::const_iterator itr = m_eas.find(next->first);
 
-          m_reqs.insert(std::pair<std::string, TimedAction>(next->first, q->top()));
+          if (q->top().type == TYPE_ACT)
+          {
+            bool active = (itr->second == IMC::EntityActivationState::EAS_ACTIVE ||
+                           itr->second == IMC::EntityActivationState::EAS_ACT_DONE);
+
+            // do not add request if device is already active
+            if (!active && q->top().prescheduled)
+              addRequest(next->first, q->top());
+          }
+          else
+          {
+            bool inactive = (itr->second == IMC::EntityActivationState::EAS_INACTIVE ||
+                             itr->second == IMC::EntityActivationState::EAS_DEACT_DONE);
+
+            // do not add request if device is already inactive
+            if (!inactive)
+              addRequest(next->first, q->top());
+          }
 
           q->pop();
 
@@ -499,22 +517,50 @@ namespace Plan
       //! @param[in] action action that will be added
       void
       addTimedAction(std::map<std::string, TimedStack>& action_map,
-                     const std::string& name, const TimedAction& action)
+                     const std::string& name, const TimedAction& action,
+                     bool preschedule = false)
       {
         std::map<std::string, TimedStack>::iterator itr;
         itr = action_map.find(name);
 
+        TimedAction mod_action = action;
+
+        // If we need to preschedule, add activation time
+        if (preschedule)
+        {
+          mod_action.sched_time += getActivationTime(name);
+          mod_action.prescheduled = true;
+        }
+        else
+        {
+          mod_action.prescheduled = false;
+        }
+
         // Adding action to stack
         if (itr != action_map.end())
         {
-          itr->second.push(action);
+          itr->second.push(mod_action);
         }
         else
         {
           TimedStack q;
-          q.push(action);
+          q.push(mod_action);
           action_map.insert(std::pair<std::string, TimedStack>(name, q));
         }
+      }
+
+      //! Add action request to set of requests
+      //! @param[in] name entity name
+      //! @param[in] action TimedAction to add to requests
+      void
+      addRequest(const std::string name, const TimedAction& action)
+      {
+        if (m_reqs.find(name) != m_reqs.end())
+          m_reqs.erase(name);
+
+        m_reqs.insert(std::pair<std::string, TimedAction>(name, action));
+
+        m_task->war("adding req %s type %u", name.c_str(), (uint8_t)action.type);
       }
 
       //! Simply gather untimed actions in untimed stacks
@@ -560,8 +606,7 @@ namespace Plan
               if (us->empty())
               {
                 // pre-schedule
-                action.sched_time += getActivationTime(itr->first);
-                addTimedAction(m_timed, itr->first, action);
+                addTimedAction(m_timed, itr->first, action, true);
               }
               else
               {
@@ -579,8 +624,7 @@ namespace Plan
                     // check if the gap between 'de' and activation is big enough
                     if (prev_action.sched_time > act_eta)
                     {
-                      action.sched_time += act_time;
-                      addTimedAction(m_timed, itr->first, action);
+                      addTimedAction(m_timed, itr->first, action, true);
                       break;
                     }
                     else // previous action deactivation is voided
@@ -589,10 +633,7 @@ namespace Plan
 
                       // if stack becomes empty, then pre-schedule
                       if (us->empty())
-                      {
-                        action.sched_time += act_time;
-                        addTimedAction(m_timed, itr->first, action);
-                      }
+                        addTimedAction(m_timed, itr->first, action, true);
 
                       // proceed in inner loop to check previous action
                     }
