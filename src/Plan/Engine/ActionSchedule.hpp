@@ -89,22 +89,21 @@ namespace Plan
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] nodes vector of sequential PlanManeuvers that describe the plan
       //! @param[in] durations information regarding each maneuvers duration
+      //! @param[in] last_dur iterator to last maneuver with a valid duration
       //! @param[in] cinfo map of components info
       ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
                      const std::vector<IMC::PlanManeuver*>& nodes,
                      const PlanDuration::ManeuverDuration& durations,
+                     const PlanDuration::ManeuverDuration::const_iterator last_dur,
                      const std::map<std::string, IMC::EntityInfo>& cinfo):
         m_task(task),
         m_cinfo(&cinfo)
       {
-        PlanDuration::ManeuverDuration::const_iterator dur;
-        dur = durations.find(nodes.back()->maneuver_id);
-
-        // If durations
-        if (dur == durations.end())
+        // Get plan duration
+        if (last_dur == durations.end())
           m_plan_duration = -1.0;
         else
-          m_plan_duration = dur->second.back();
+          m_plan_duration = last_dur->second.back();
 
         // start by adding "start" plan actions
         parseStartActions(spec->start_actions, &m_plan_actions, m_plan_duration);
@@ -124,7 +123,9 @@ namespace Plan
           else
             maneuver_start_eta = maneuver_end_eta;
 
+          PlanDuration::ManeuverDuration::const_iterator dur;
           dur = durations.find((*itr)->maneuver_id);
+
           if (dur == durations.end())
             maneuver_end_eta = -1.0;
           else if (dur->second.size())
@@ -415,7 +416,11 @@ namespace Plan
           }
           else
           {
-            gatherUntimed(sep, type, eta);
+            // if the eta is not valid, schedule action to last valid duration (1.0 sec)
+            if (eta >= 0.0)
+              gatherUntimed(sep, type, eta);
+            else
+              gatherUntimed(sep, type, 1.0);
           }
         }
       }
