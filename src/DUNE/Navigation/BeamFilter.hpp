@@ -83,7 +83,7 @@ namespace DUNE
         if (index >= m_size)
           return;
 
-        m_beams(0, index) = msg.value;
+        m_beams(index) = msg.value;
       }
 
       //! Get distance using current beam data.
