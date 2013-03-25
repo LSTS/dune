@@ -126,6 +126,8 @@ namespace Maneuver
 
         // send a notify to controlling peer that the maneuver was activated
         dispatch(m_fref_state);
+
+        inf("waiting for first reference");
       }
 
       bool
@@ -345,7 +347,6 @@ namespace Maneuver
         bool still_same_reference = sameReference(ref, &m_last_ref);
         int prevMode = m_fref_state.state;
 
-        inf("at_z_target: %d, at_xy_target: %d, tgt_at_surface: %d, same_ref: %d", at_z_target, at_xy_target, target_at_surface, still_same_reference);
         if (still_same_reference)
         {
           switch (prevMode)
@@ -428,40 +429,35 @@ namespace Maneuver
 
         if (sameReference(ref, &m_last_ref) && m_fref_state.state == prevMode)
         {
-          inf("xy distance is %f, z distance is %f, near: %d, state: %d.", xy_dist, z_dist, near, m_fref_state.state);
+          // nothing to do
           return;
         }
-        else
-        {
-          inf("state changed, dispatching new desired path");
-        }
 
+        // dispatch new desired path
         switch(m_fref_state.state)
         {
           case (IMC::FollowRefState::FR_LOITER):
-            inf("loiter");
             desired_path.lradius = m_args.loitering_radius;
             enableMovement(true);
             dispatch(desired_path);
+            inf("loitering around (%f, %f, %f).", Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon), desired_path.end_z);
             break;
           case (IMC::FollowRefState::FR_ELEVATOR):
-            inf("elevator");
             desired_path.lradius = m_args.loitering_radius;
             enableMovement(true);
             dispatch(desired_path);
+            inf("loitering towards (%f, %f, %f).", Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon), desired_path.end_z);
             break;
           case (IMC::FollowRefState::FR_GOTO):
-            inf("goto");
             enableMovement(true);
             dispatch(desired_path);
+            inf("going towards (%f, %f, %f).", Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon), desired_path.end_z);
             break;
           default:
-            inf("stop");
+            inf("hovering next to (%f, %f).", Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon));
             enableMovement(false);
             break;
         }
-
-        inf("xy distance is %f, z distance is %f, near: %d, state: %d.", xy_dist, z_dist, near, m_fref_state.state);
       }
 
       //! Function for enabling and disabling the control loops
