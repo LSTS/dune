@@ -171,6 +171,17 @@ namespace DUNE
     void
     Task::acquireResources(void)
     {
+      std::map<std::string, Parameter*>::iterator aitr = m_params.find("Active");
+      if (aitr != m_params.end())
+      {
+        if (aitr->second->getScope() == Parameter::SCOPE_MANEUVER)
+        {
+          aitr->second->read("false");
+          aitr->second->commit();
+          aitr->second->setChanged(false);
+        }
+      }
+
       onResourceAcquisition();
     }
 
