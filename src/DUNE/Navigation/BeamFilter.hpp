@@ -80,7 +80,7 @@ namespace DUNE
       void
       updateBeam(size_t index, const IMC::Distance& msg)
       {
-        if (index > m_size)
+        if (index >= m_size)
           return;
 
         m_beams(0, index) = msg.value;
