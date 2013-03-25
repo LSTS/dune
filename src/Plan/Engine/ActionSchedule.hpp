@@ -73,6 +73,8 @@ namespace Plan
         float sched_time;
         //! Set Entity parameters to dispatch
         IMC::SetEntityParameters* list;
+        //! Flag to signal that this action was pre-scheduled
+        bool prescheduled;
       };
 
       //! Stack of timed actions
@@ -89,6 +91,11 @@ namespace Plan
 
       //! Map to address event based actions
       typedef std::map<std::string, EventActions> EventMap;
+
+      //! Map of entity names to entity activation states
+      typedef std::map<std::string, uint8_t> EASMap;
+      //! Pair for EASMap
+      typedef std::pair<std::string, uint8_t> EASPair;
 
       //! Default constructor
       //! @param[in] task pointer to task
@@ -187,10 +194,26 @@ namespace Plan
 
           dispatchActions(q->top().list);
 
-          if (m_reqs.find(next->first) != m_reqs.end())
-            m_reqs.erase(next->first);
+          EASMap::const_iterator itr = m_eas.find(next->first);
 
-          m_reqs.insert(std::pair<std::string, TimedAction>(next->first, q->top()));
+          if (q->top().type == TYPE_ACT)
+          {
+            bool active = (itr->second == IMC::EntityActivationState::EAS_ACTIVE ||
+                           itr->second == IMC::EntityActivationState::EAS_ACT_DONE);
+
+            // do not add request if device is already active
+            if (!active && q->top().prescheduled)
+              addRequest(next->first, q->top());
+          }
+          else
+          {
+            bool inactive = (itr->second == IMC::EntityActivationState::EAS_INACTIVE ||
+                             itr->second == IMC::EntityActivationState::EAS_DEACT_DONE);
+
+            // do not add request if device is already inactive
+            if (!inactive)
+              addRequest(next->first, q->top());
+          }
 
           q->pop();
 
@@ -204,12 +227,12 @@ namespace Plan
       planStarted(void)
       {
         // Order all entities to push their parameters
-        std::set<std::string>::const_iterator itr;
-        itr = m_ents_changed.begin();
-        for (; itr != m_ents_changed.end(); ++itr)
+        EASMap::const_iterator itr;
+        itr = m_eas.begin();
+        for (; itr != m_eas.end(); ++itr)
         {
           IMC::PushEntityParameters push;
-          push.name = *itr;
+          push.name = itr->first;
           m_task->dispatch(push);
         }
 
@@ -223,12 +246,12 @@ namespace Plan
         dispatchActions(m_plan_actions.end_actions);
 
         // Order all entities to pop their parameters
-        std::set<std::string>::const_iterator itr;
-        itr = m_ents_changed.begin();
-        for (; itr != m_ents_changed.end(); ++itr)
+        EASMap::const_iterator itr;
+        itr = m_eas.begin();
+        for (; itr != m_eas.end(); ++itr)
         {
           IMC::PopEntityParameters pop;
-          pop.name = *itr;
+          pop.name = itr->first;
           m_task->dispatch(pop);
         }
       }
@@ -269,6 +292,11 @@ namespace Plan
       void
       onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg)
       {
+        if (m_eas.empty())
+          return;
+
+        updateEAS(id, msg);
+
         if (m_reqs.empty())
           return;
 
@@ -282,10 +310,14 @@ namespace Plan
         {
           if (msg->state == IMC::EntityActivationState::EAS_ACT_DONE)
           {
-            if (m_time_left > itr->second.sched_time - getActivationTime(id))
-              m_task->debug("schedule: %s active on time", id.c_str());
+            float gap = m_time_left - (itr->second.sched_time - getActivationTime(id));
+
+            if (gap > 0)
+              m_task->inf(DTR("schedule: %s active on time, +%.1f seconds"),
+                          id.c_str(), gap);
             else
-              m_task->war("schedule: %s activation missed deadline", id.c_str());
+              m_task->war(DTR("schedule: %s activation missed deadline, %.1f seconds"),
+                          id.c_str(), gap);
 
             m_reqs.erase(id);
           }
@@ -385,7 +417,7 @@ namespace Plan
             continue;
 
           // Fill entities set
-          m_ents_changed.insert(sep->name);
+          m_eas.insert(EASPair(sep->name, IMC::EntityActivationState::EAS_INACTIVE));
 
           // true if event based, false if time based
           bool event_based = true;
@@ -465,28 +497,70 @@ namespace Plan
         return itr;
       }
 
+      //! Update entity activation states
+      //! @param[in] id name of the entity
+      //! @param[in] eas pointer to entity activation state
+      void
+      updateEAS(const std::string& id, const IMC::EntityActivationState* msg)
+      {
+        EASMap::iterator itr = m_eas.find(id);
+
+        if (itr == m_eas.end())
+          return;
+
+        itr->second = msg->state;
+      }
+
       //! Add action to map
       //! @param[in] action_map map of actions to which the action will be added
       //! @param[in] name name of the entity
       //! @param[in] action action that will be added
       void
       addTimedAction(std::map<std::string, TimedStack>& action_map,
-                     const std::string& name, const TimedAction& action)
+                     const std::string& name, const TimedAction& action,
+                     bool preschedule = false)
       {
         std::map<std::string, TimedStack>::iterator itr;
         itr = action_map.find(name);
 
+        TimedAction mod_action = action;
+
+        // If we need to preschedule, add activation time
+        if (preschedule)
+        {
+          mod_action.sched_time += getActivationTime(name);
+          mod_action.prescheduled = true;
+        }
+        else
+        {
+          mod_action.prescheduled = false;
+        }
+
         // Adding action to stack
         if (itr != action_map.end())
         {
-          itr->second.push(action);
+          itr->second.push(mod_action);
         }
         else
         {
           TimedStack q;
-          q.push(action);
+          q.push(mod_action);
           action_map.insert(std::pair<std::string, TimedStack>(name, q));
         }
+      }
+
+      //! Add action request to set of requests
+      //! @param[in] name entity name
+      //! @param[in] action TimedAction to add to requests
+      void
+      addRequest(const std::string name, const TimedAction& action)
+      {
+        if (m_reqs.find(name) != m_reqs.end())
+          m_reqs.erase(name);
+
+        m_reqs.insert(std::pair<std::string, TimedAction>(name, action));
+
+        m_task->war("adding req %s type %u", name.c_str(), (uint8_t)action.type);
       }
 
       //! Simply gather untimed actions in untimed stacks
@@ -532,8 +606,7 @@ namespace Plan
               if (us->empty())
               {
                 // pre-schedule
-                action.sched_time += getActivationTime(itr->first);
-                addTimedAction(m_timed, itr->first, action);
+                addTimedAction(m_timed, itr->first, action, true);
               }
               else
               {
@@ -551,8 +624,7 @@ namespace Plan
                     // check if the gap between 'de' and activation is big enough
                     if (prev_action.sched_time > act_eta)
                     {
-                      action.sched_time += act_time;
-                      addTimedAction(m_timed, itr->first, action);
+                      addTimedAction(m_timed, itr->first, action, true);
                       break;
                     }
                     else // previous action deactivation is voided
@@ -561,10 +633,7 @@ namespace Plan
 
                       // if stack becomes empty, then pre-schedule
                       if (us->empty())
-                      {
-                        action.sched_time += act_time;
-                        addTimedAction(m_timed, itr->first, action);
-                      }
+                        addTimedAction(m_timed, itr->first, action, true);
 
                       // proceed in inner loop to check previous action
                     }
@@ -664,8 +733,8 @@ namespace Plan
       const std::map<std::string, IMC::EntityInfo>* m_cinfo;
       //! Time of earliest scheduled actions
       float m_earliest;
-      //! Set of entities that will be changed during plan
-      std::set<std::string> m_ents_changed;
+      //! Set of entities that will be changed during plan and its activation state
+      EASMap m_eas;
       //! Estimated time left to finish plan
       float m_time_left;
       //! Set of activation requests yet to be confirmed
