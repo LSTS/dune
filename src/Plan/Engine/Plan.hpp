@@ -544,13 +544,24 @@ namespace Plan
         PlanDuration::ManeuverDuration::const_iterator itr;
         itr = m_durations.find(getCurrentId());
 
-        // If not found
+        // If not found, report last value of progress
         if (itr == m_durations.end())
-          return -1.0;
+        {
+          // If progress used to be valid set to 100%
+          if (m_progress > 0.0)
+          {
+            m_progress = 100.0;
+            return m_progress;
+          }
+          else
+          {
+            return -1.0;
+          }
+        }
 
-        // If durations for this maneuver is empty
+        // If durations vector for this maneuver is empty
         if (!itr->second.size())
-          return -1.0;
+          return m_progress;
 
         IMC::Message* man = m_graph.find(getCurrentId())->second.pman->data.get();
 
