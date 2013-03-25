@@ -237,8 +237,8 @@ namespace DUNE
       {
         double n, e;
         WGS84::displacement(lat1, lon1, 0, lat2, lon2, 0, &n, &e);
-        *bearing = std::atan2(e, n);
-        *range = std::sqrt(n * n + e * e);
+        *bearing = (Tb)std::atan2(e, n);
+        *range = (Tb)std::sqrt(n * n + e * e);
       }
 
     private:
