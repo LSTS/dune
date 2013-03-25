@@ -84,10 +84,14 @@ namespace Power
       double wdog_tout;
       //! Power channel name.
       std::string pwr_name;
+      //! CPU IPv4 address.
+      Address addr;
     };
 
     struct Task: public Tasks::Task
     {
+      //! CPU test port.
+      static const unsigned c_test_port = 22;
       //! Device protocol handler.
       Hardware::LUCL::Protocol m_proto;
       //! ADC Messages.
@@ -98,11 +102,16 @@ namespace Power
       IMC::Temperature m_temp;
       //! Power channel state.
       IMC::PowerChannelState m_power_state;
+      //! True if the task is activating.
+      bool m_activating;
       //! Task arguments.
       Arguments m_args;
+      //! Activation timer
+      Counter<double> m_act_timer;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx)
+        Tasks::Task(name, ctx),
+        m_activating(false)
       {
         std::memset(m_adcs, 0, sizeof(m_adcs));
 
@@ -115,7 +124,8 @@ namespace Power
         .description("Serial port device used to communicate with the device");
 
         param("Power Channel - Name", m_args.pwr_name)
-        .defaultValue("DOAM");
+        .defaultValue("DOAM")
+        .description("Name of device's power channel");
 
         param("ADC Reference Voltage", m_args.ref_volt)
         .units(Units::Volt)
@@ -139,6 +149,10 @@ namespace Power
           label = String::str("ADC Channel %d - Entity Label", i);
           param(label, m_args.adc_elabels[i]);
         }
+
+        param("CPU IPv4 Address", m_args.addr)
+        .defaultValue("10.0.0.0")
+        .description("IP address of the DOAM CPU");
 
         m_power_state.state = IMC::PowerChannelState::PCS_OFF;
 
@@ -312,9 +326,52 @@ namespace Power
       }
 
       void
+      checkActivation(void)
+      {
+        if (m_act_timer.overflow())
+        {
+          activationFailed(DTR("failed to contact device"));
+          m_activating = false;
+          return;
+        }
+
+        try
+        {
+          // Attempt connection to module's CPU
+          spew("attempting connection");
+          TCPSocket sock;
+          sock.connect(m_args.addr, c_test_port);
+          spew("connected successfuly");
+          activate();
+          debug("activation took %0.2f s", getActivationTime() - m_act_timer.getRemaining());
+        }
+        catch (...)
+        {
+          spew("failed to connect");
+        }
+      }
+
+      void
+      onRequestActivation(void)
+      {
+        setPowerChannelState(1);
+        m_activating = true;
+        m_act_timer.setTop(getActivationTime());
+        spew("my getActivationTime() is %d", getActivationTime());
+      }
+
+      void
+      onRequestDeactivation(void)
+      {
+        // NOTE: some CPUs may require proper shutdown, which is not implemented yet.
+        setPowerChannelState(0);
+      }
+
+      void
       onActivation(void)
       {
         setStrobeMode(STROBE_MODE_CAM);
+        m_activating = false;
       }
 
       void
@@ -401,6 +458,9 @@ namespace Power
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           else
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+          if (m_activating)
+            checkActivation();
         }
       }
     };
