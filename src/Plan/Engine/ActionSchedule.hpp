@@ -173,7 +173,7 @@ namespace Plan
       void
       updateSchedule(float time_left)
       {
-        if (time_left <= 0.0)
+        if (time_left < 0.0)
           return;
 
         m_time_left = time_left;
@@ -189,31 +189,39 @@ namespace Plan
           TimedStack* q = &next->second;
 
           // Check if the time is right
-          if (q->top().sched_time <= time_left)
+          if (q->top().sched_time < time_left)
             break;
 
           dispatchActions(q->top().list);
 
-          EASMap::const_iterator itr = m_eas.find(next->first);
+          processRequest(next->first, q->top());
 
-          if (q->top().type == TYPE_ACT)
-          {
-            bool active = (itr->second == IMC::EntityActivationState::EAS_ACTIVE ||
-                           itr->second == IMC::EntityActivationState::EAS_ACT_DONE);
+          q->pop();
 
-            // do not add request if device is already active
-            if (!active && q->top().prescheduled)
-              addRequest(next->first, q->top());
-          }
-          else
-          {
-            bool inactive = (itr->second == IMC::EntityActivationState::EAS_INACTIVE ||
-                             itr->second == IMC::EntityActivationState::EAS_DEACT_DONE);
+          if (q->empty())
+            m_timed.erase(next);
+        }
+      }
 
-            // do not add request if device is already inactive
-            if (!inactive)
-              addRequest(next->first, q->top());
-          }
+      //! Flush all remaining timed actions in the schedule
+      void
+      flushTimed(void)
+      {
+        while (1)
+        {
+          std::map<std::string, TimedStack>::iterator next;
+          next = nextSchedule();
+
+          if (next == m_timed.end())
+            break;
+
+          TimedStack* q = &next->second;
+
+          // do not check if the time is right
+
+          dispatchActions(q->top().list);
+
+          processRequest(next->first, q->top());
 
           q->pop();
 
@@ -458,7 +466,7 @@ namespace Plan
             if (eta >= 0.0)
               gatherUntimed(sep, type, eta);
             else
-              gatherUntimed(sep, type, 1.0);
+              gatherUntimed(sep, type, 0.0);
           }
         }
       }
@@ -549,6 +557,34 @@ namespace Plan
         }
       }
 
+      //! Add action request
+      //! @param[in] name entity name
+      //! @param[in] action TimedAction to add to requests
+      void
+      processRequest(const std::string& id, const TimedAction& action)
+      {
+        EASMap::const_iterator itr = m_eas.find(id);
+
+        if (action.type == TYPE_ACT)
+        {
+          bool active = (itr->second == IMC::EntityActivationState::EAS_ACTIVE ||
+                         itr->second == IMC::EntityActivationState::EAS_ACT_DONE);
+
+          // do not add request if device is already active
+          if (!active && action.prescheduled)
+            addRequest(id, action);
+        }
+        else
+        {
+          bool inactive = (itr->second == IMC::EntityActivationState::EAS_INACTIVE ||
+                           itr->second == IMC::EntityActivationState::EAS_DEACT_DONE);
+
+          // do not add request if device is already inactive
+          if (!inactive)
+            addRequest(id, action);
+        }
+      }
+
       //! Add action request to set of requests
       //! @param[in] name entity name
       //! @param[in] action TimedAction to add to requests
@@ -559,8 +595,6 @@ namespace Plan
           m_reqs.erase(name);
 
         m_reqs.insert(std::pair<std::string, TimedAction>(name, action));
-
-        m_task->war("adding req %s type %u", name.c_str(), (uint8_t)action.type);
       }
 
       //! Simply gather untimed actions in untimed stacks
@@ -688,7 +722,7 @@ namespace Plan
 
         for (; itr != m_timed.end(); ++itr)
         {
-          if (itr->second.top().sched_time > earliest)
+          if (itr->second.top().sched_time >= earliest)
           {
             earliest = itr->second.top().sched_time;
             next = itr;

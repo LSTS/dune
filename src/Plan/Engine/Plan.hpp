@@ -78,6 +78,7 @@ namespace Plan
         m_compute_progress(compute_progress),
         m_progress(0.0),
         m_calibration(0),
+        m_beyond_dur(false),
         m_sched(NULL)
       {
         m_speed_conv.rpm_factor = speed_rpm_factor;
@@ -107,6 +108,7 @@ namespace Plan
         m_durations.clear();
         m_progress = -1.0;
         m_calibration = 0;
+        m_beyond_dur = false;
       }
 
       //! Parse a given plan
@@ -266,6 +268,9 @@ namespace Plan
       void
       maneuverDone(void)
       {
+        if (m_curr_node->pman->maneuver_id == m_last_dur->first)
+          m_beyond_dur = true;
+
         if (m_sched == NULL)
           return;
 
@@ -365,8 +370,13 @@ namespace Plan
       {
         float prog = progress(mcs, calib);
 
-        if (prog > 0.0 && m_sched != NULL)
-          m_sched->updateSchedule(getPlanEta());
+        if (prog >= 0.0 && m_sched != NULL)
+        {
+          if (!m_beyond_dur)
+            m_sched->updateSchedule(getPlanEta());
+          else // if we're beyond computed durations, flush all timed actions
+            m_sched->flushTimed();
+        }
 
         return prog;
       }
@@ -543,11 +553,11 @@ namespace Plan
         Duration::ManeuverDuration::const_iterator itr;
         itr = m_durations.find(getCurrentId());
 
-        // If not found, report last value of progress
+        // If not found
         if (itr == m_durations.end())
         {
-          // If progress used to be valid set to 100%
-          if (m_progress > 0.0)
+          // If beyond the last maneuver with valid duration
+          if (m_beyond_dur)
           {
             m_progress = 100.0;
             return m_progress;
@@ -609,6 +619,8 @@ namespace Plan
       Duration::SpeedConversion m_speed_conv;
       //! Iterator to last maneuver with a valid duration
       Duration::ManeuverDuration::const_iterator m_last_dur;
+      //! Flag to signal that the plan is past the last maneuver with a valid duration
+      bool m_beyond_dur;
       //! Schedule for actions to take during plan
       ActionSchedule* m_sched;
     };
