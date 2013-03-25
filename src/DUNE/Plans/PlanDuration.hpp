@@ -40,11 +40,11 @@ namespace DUNE
   namespace Plans
   {
     //! Speed acquired by buoyancy
-    static const float c_buoyancy_speed = 0.3;
+    static const float c_buoyancy_speed = 0.3f;
     //! Average amount of time it takes to get a gps fix
-    static const float c_fix_time = 7.0;
+    static const float c_fix_time = 7.0f;
     //! Typical pitch value for elevator maneuver
-    static const float c_rated_pitch = Math::Angles::radians(15.0);
+    static const float c_rated_pitch = (float)Math::Angles::radians(15.0f);
 
     // Export DLL Symbol.
     class DUNE_DLL_SYM PlanDuration;

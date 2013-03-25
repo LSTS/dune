@@ -79,7 +79,7 @@ namespace DUNE
       compute(const IMC::ManeuverControlState* mcs, const std::vector<float>& durations,
               float total_duration)
       {
-        unsigned curr;
+        unsigned curr = 0;
 
         if (!getPoint(mcs, curr))
           return -1.0;
@@ -183,9 +183,9 @@ namespace DUNE
         if (time_left < 0.0)
           return -1.0;
 
-        time_left = trimValue(time_left, 0.0, total_duration);
+        time_left = trimValue(time_left, 0.0f, total_duration);
 
-        return 100.0 * trimValue((1.0 - time_left / total_duration), 0.0, 1.0);
+        return 100.0f * trimValue((1.0f - time_left / total_duration), 0.0f, 1.0f);
       };
     };
   }

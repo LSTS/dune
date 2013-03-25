@@ -42,15 +42,15 @@ using namespace DUNE::Coordinates;
 using namespace DUNE::Math;
 
 //! Distance tolerance to slope's top
-static const float c_dist_tol = 2.0;
+static const float c_dist_tol = 2.0f;
 //! Number of samples for slope top distance
 static const int c_stdist_samples = 5;
 //! Maximum range to consider when checking validity
-static const float c_max_range = 15.0;
+static const float c_max_range = 15.0f;
 //! Decay factor for slope when forward range is too high
-static const float c_decay_factor = 0.6;
+static const float c_decay_factor = 0.6f;
 //! Tolerance for assuming the echoes come from the surface
-static const float c_surface_tol = 5.0;
+static const float c_surface_tol = 5.0f;
 
 namespace DUNE
 {
@@ -220,7 +220,8 @@ namespace DUNE
         if (m_frange->mean() >= c_surface_tol)
           return false; // Could be surface, but we dont care
 
-        float upper_end = m_frange->mean() * std::sin(state.theta + m_beam_width / 2.0);
+        float upper_end;
+        upper_end = m_frange->mean() * (float)std::sin(state.theta + m_beam_width / 2.0);
 
         return (state.depth - upper_end < 0.0);
       }
@@ -272,15 +273,15 @@ namespace DUNE
         else
         {
           // bottom range is not exactly the same as altitude due to pitch angle
-          double brange = state.alt / std::cos(state.theta);
-          double z = - frange * std::sin(state.theta) - state.alt;
-          double x = frange * std::cos(state.theta) - brange * std::sin(state.theta);
-          m_curr_slope = -std::atan2(z, x);
+          float brange = state.alt / (float)std::cos(state.theta);
+          float z = - frange * (float)std::sin(state.theta) - state.alt;
+          float x = (float)(frange * std::cos(state.theta) - brange * std::sin(state.theta));
+          m_curr_slope = - (float)std::atan2(z, x);
         }
 
         // debug
         cparcel.p = frange;
-        cparcel.i = Angles::degrees(m_curr_slope);
+        cparcel.i = (float)Angles::degrees(m_curr_slope);
         cparcel.setTimeStamp();
       };
 
