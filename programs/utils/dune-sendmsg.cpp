@@ -212,15 +212,6 @@ main(int argc, char** argv)
     tmsg->lon = Angles::radians(atof(argv[5]));
     tmsg->height = atof(argv[6]);
   }
-  else if (strcmp(argv[3], "SonarConfig") == 0)
-  {
-    IMC::SonarConfig* tmsg = new IMC::SonarConfig;
-    msg = tmsg;
-    tmsg->setDestination(atoi(argv[4]));
-    tmsg->frequency = atoi(argv[5]);
-    tmsg->max_range = atoi(argv[6]);
-    tmsg->min_range = atoi(argv[7]);
-  }
   else if (strcmp(argv[3], "VehicleCommand") == 0)
   {
     IMC::VehicleCommand* tmsg = new IMC::VehicleCommand;
