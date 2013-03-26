@@ -123,6 +123,9 @@ namespace Simulators
       double qb = m_buoyancy_position[2] * W * std::sin(m_orientation[1]);
       double rb = 0;
 
+      // We will consider the AUV is neutrally buoyant in the x-axis.
+      xb = 0.0;
+
       addForces(xb, yb, zb, pb, qb, rb);
     }
 
