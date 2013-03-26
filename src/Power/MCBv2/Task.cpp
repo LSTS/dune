@@ -62,6 +62,10 @@ namespace Power
     static const unsigned c_adcs_count = 6;
     //! Number of power channels.
     static const unsigned c_pwrs_count = 17;
+    //! Id of the CPU power channel.
+    static const unsigned c_pwr_cpu = 8;
+    //! Id of the backlight power channel.
+    static const unsigned c_pwr_blight = 16;
 
     //! Commands to the device.
     enum Commands
@@ -347,8 +351,7 @@ namespace Power
 
         PowerChannel* pc = itr->second;
 
-#if FIXME
-        if (pc->id == PCH_CPU)
+        if (itr->second->id == c_pwr_cpu)
         {
           // We're dead after this but it might take a few moments, so
           // don't mess with the i2c bus.
@@ -356,16 +359,13 @@ namespace Power
           m_halt = true;
           return;
         }
-#endif
 
-#if FIXME
-        if (pc->id == PCH_LCD_BLIGHT)
+        if (itr->second->id == c_pwr_blight)
         {
           uint8_t state = (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_ON) ? 1 : 0;
           m_proto.sendCommand(CMD_BLIGHT, &state, 1);
           return;
         }
-#endif
 
         if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
         {
