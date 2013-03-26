@@ -261,7 +261,7 @@ namespace Control
               (int16_t)(1000 * m_acc_z / DUNE::Math::c_gravity));
           uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
-          spew(DTR("Simulation packet sent to Ardupilot"));
+          spew("Simulation packet sent to Ardupilot");
         }
 
         void
@@ -273,7 +273,7 @@ namespace Control
           mavlink_msg_set_roll_pitch_yaw_thrust_pack(255, 0, msg, 1, 1, (float)roll->value, 4.0, 4.0, 0); // 8.0 radians is more than 2pi (is ignored by ardupilot)
           uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
-          debug(DTR("DesiredRoll packet sent to Ardupilot"));
+          debug("DesiredRoll packet sent to Ardupilot");
         }
 
         void
@@ -287,7 +287,7 @@ namespace Control
                             0, // Empty
                             0, // Empty
                             desired_z->value); // Finish Altitude
-          debug(DTR("DesiredZ packet sent to Ardupilot"));
+          debug("DesiredZ packet sent to Ardupilot");
         }
 
         void
@@ -387,7 +387,7 @@ namespace Control
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
 
-          debug(DTR("Waypoint packet sent to Ardupilot"));
+          debug("Waypoint packet sent to Ardupilot");
         }
 
         void
@@ -413,7 +413,7 @@ namespace Control
                             servo->value, // PWM (microseconds, 1000 to 2000 typical)
                             0, // Empty
                             0); //Empty
-          debug(DTR("SetServo packet sent to Ardupilot"));
+          debug("SetServo packet sent to Ardupilot");
         }
 
         void
@@ -734,18 +734,32 @@ namespace Control
 
           mavlink_msg_gps_raw_int_decode(msg, &gps_raw);
 
-          m_fix.cog = gps_raw.cog;
-          m_fix.sog = 100 * gps_raw.vel;
-          m_fix.hdop = gps_raw.eph;
-          m_fix.vdop = gps_raw.epv;
-          m_fix.lat = gps_raw.lat;
-          m_fix.lon = gps_raw.lon;
-          m_fix.height = gps_raw.alt;
+          m_fix.cog = Angles::radians((double)gps_raw.cog * 0.01);
+          m_fix.sog = (float)gps_raw.vel * 0.01;
+          m_fix.hdop = (float)gps_raw.eph * 0.01;
+          m_fix.vdop = (float)gps_raw.epv * 0.01;
+          m_fix.lat = (double)gps_raw.lat * 1e-07;
+          m_fix.lon = (double)gps_raw.lon * 1e-07;
+          m_fix.height = (double)gps_raw.alt * 0.001;
           m_fix.satellites = gps_raw.satellites_visible;
+
+          time_t fix_time((double)gps_raw.time_usec * 1e-06);
+
+          struct tm* fix_utc = gmtime(&fix_time);
+
+          m_fix.utc_time = 3600 * fix_utc->tm_hour +
+                           60 * fix_utc->tm_min +
+                           fix_utc->tm_sec;
+
+          m_fix.utc_day = fix_utc->tm_mday;
+          m_fix.utc_month = fix_utc->tm_mon;
+          m_fix.utc_year = fix_utc->tm_year;
 
           m_fix.validity = 0;
           if(gps_raw.fix_type>1)
             m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
+          if(m_fix.utc_year>2012)
+            m_fix.validity |= IMC::GpsFix::GFV_VALID_TIME;
 
           dispatch(m_fix);
         }
