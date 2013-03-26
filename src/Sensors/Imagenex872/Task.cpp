@@ -175,29 +175,7 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.frequency))
-          setFrequency(m_args.frequency);
-
-        if (paramChanged(m_args.range))
-          setRange(m_args.range);
-
-        if (paramChanged(m_args.dat_gain))
-          setDataGain(m_args.dat_gain);
-
-        if (paramChanged(m_args.bal_gain))
-          setBalanceGain(m_args.bal_gain);
-
-        if (paramChanged(m_args.addr))
-        {
-          if (m_sock)
-            throw RestartNeeded(DTR("restarting to change IPv4 address"), 1);
-        }
-
-        if (paramChanged(m_args.port))
-        {
-          if (m_sock)
-            throw RestartNeeded(DTR("restarting to change TCP port"), 1);
-        }
+        setConfig();
       }
 
       void
@@ -218,6 +196,7 @@ namespace Sensors
         try
         {
           m_sock->connect(m_args.addr, m_args.port);
+          m_sock->setNoDelay(true);
           pingBoth();
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
@@ -231,6 +210,7 @@ namespace Sensors
       void
       onActivation(void)
       {
+        setConfig();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -238,6 +218,24 @@ namespace Sensors
       onDeactivation(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
+      setConfig(void)
+      {
+        if (m_sock == NULL)
+          return;
+
+        if (paramChanged(m_args.addr))
+          throw RestartNeeded(DTR("restarting to change IPv4 address"), 1);
+
+        if (paramChanged(m_args.port))
+          throw RestartNeeded(DTR("restarting to change TCP port"), 1);
+
+        setFrequency(m_args.frequency);
+        setRange(m_args.range);
+        setDataGain(m_args.dat_gain);
+        setBalanceGain(m_args.bal_gain);
       }
 
       unsigned
