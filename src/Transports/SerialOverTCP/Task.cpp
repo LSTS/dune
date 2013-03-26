@@ -81,9 +81,7 @@ namespace Transports
 
       ~Task(void)
       {
-        std::list<TCPSocket*>::iterator itr = m_clients.begin();
-        for (; itr != m_clients.end(); ++itr)
-          delete *itr;
+        onResourceRelease();
       }
 
       void
@@ -113,28 +111,21 @@ namespace Transports
       void
       dispatchToClients(const char* bfr, unsigned bfr_len)
       {
-        // List of nodes to remove if send fails.
-        std::vector<std::list<TCPSocket*>::iterator> m_remove;
-
         std::list<TCPSocket*>::iterator itr = m_clients.begin();
         for (; itr != m_clients.end(); ++itr)
         {
           try
           {
             (*itr)->write(bfr, bfr_len);
+            ++itr;
           }
           catch (std::runtime_error& e)
           {
             err("%s", e.what());
             (*itr)->delFromPoll(m_iom);
             delete *itr;
-            m_remove.push_back(itr);
+            itr = m_clients.erase(itr);
           }
-        }
-
-        for (unsigned i = 0; i < m_remove.size(); ++i)
-        {
-          m_clients.erase(m_remove[i]);
         }
       }
 
@@ -163,7 +154,7 @@ namespace Transports
         char bfr[1024];
 
         std::list<TCPSocket*>::iterator itr = m_clients.begin();
-        for (; itr != m_clients.end(); ++itr)
+        while (itr != m_clients.end())
         {
           if ((*itr)->wasTriggered(m_iom))
           {
@@ -178,12 +169,15 @@ namespace Transports
               (*itr)->delFromPoll(m_iom);
               delete *itr;
               itr = m_clients.erase(itr);
+              continue;
             }
             catch (std::runtime_error& e)
             {
               err("%s", e.what());
             }
           }
+
+          ++itr;
         }
       }
 
