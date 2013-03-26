@@ -170,8 +170,6 @@ namespace Sensors
         m_ping.type = IMC::SonarData::ST_SIDESCAN;
         m_ping.bits_per_point = 8;
         m_ping.scale_factor = 1.0f;
-
-        bind<IMC::SonarConfig>(this);
       }
 
       void
@@ -228,16 +226,6 @@ namespace Sensors
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           throw;
         }
-      }
-
-      void
-      consume(const IMC::SonarConfig* msg)
-      {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
-
-        setRange(msg->max_range);
-        setFrequency(msg->frequency);
       }
 
       void
