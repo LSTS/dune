@@ -138,8 +138,10 @@ namespace Transports
 
             delete msg;
           }
-          catch (...)
-          { }
+          catch (std::exception & e)
+          {
+            m_task.debug("error while unpacking message: %s",e.what());
+          }
         }
 
         delete [] bfr;
