@@ -241,6 +241,7 @@ namespace Power
           PowerChannel* pc = new PowerChannel;
           pc->id = i;
           pc->state.name = m_args.pwr_names[i];
+          pc->state.state = m_args.pwr_states[i];
 
           m_pwr_chs[m_args.pwr_names[i]] = pc;
         }
@@ -308,6 +309,15 @@ namespace Power
         {
           err("%s", e.what());
         }
+
+        PowerChannelMap::iterator itr = m_pwr_chs.begin();
+        for (; itr != m_pwr_chs.end(); ++itr)
+        {
+          if (itr->second->state.state == IMC::PowerChannelState::PCS_ON)
+            controlPowerChannel(itr->second, IMC::PowerChannelControl::PCC_OP_TURN_ON);
+          else
+            controlPowerChannel(itr->second, IMC::PowerChannelControl::PCC_OP_TURN_OFF);
+        }
       }
 
       //! Write value to position in a given buffer.
@@ -340,18 +350,12 @@ namespace Power
       }
 
       void
-      consume(const IMC::PowerChannelControl* msg)
+      controlPowerChannel(PowerChannel* channel, IMC::PowerChannelControl::OperationEnum op, double sched = -1.0)
       {
         if (m_halt)
           return;
 
-        PowerChannelMap::const_iterator itr = m_pwr_chs.find(msg->name);
-        if (itr == m_pwr_chs.end())
-          return;
-
-        PowerChannel* pc = itr->second;
-
-        if (itr->second->id == c_pwr_cpu)
+        if ((channel->id == c_pwr_cpu) && (op == IMC::PowerChannelControl::PCC_OP_TURN_OFF))
         {
           // We're dead after this but it might take a few moments, so
           // don't mess with the i2c bus.
@@ -360,34 +364,39 @@ namespace Power
           return;
         }
 
-        if (itr->second->id == c_pwr_blight)
+        if (channel->id == c_pwr_blight)
         {
-          uint8_t state = (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_ON) ? 1 : 0;
+          uint8_t state = (op == IMC::PowerChannelControl::PCC_OP_TURN_ON) ? 1 : 0;
           m_proto.sendCommand(CMD_BLIGHT, &state, 1);
+          if (op == IMC::PowerChannelControl::PCC_OP_TURN_ON)
+            channel->state.state = IMC::PowerChannelState::PCS_ON;
+          else
+            channel->state.state = IMC::PowerChannelState::PCS_OFF;
+
           return;
         }
 
-        if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
+        if (op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
         {
-          m_pwr_chns &= ~(1 << pc->id);
+          m_pwr_chns &= ~(1 << channel->id);
 
 #if FIXME
           if (!((m_pwr_chns & (1 << PCH_GPS)) || (m_pwr_chns & (1 << PCH_HSDPA))))
             m_pwr_chns &= ~(1 << PCH_USB_HUB);
 #endif
         }
-        else if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_ON)
+        else if (op == IMC::PowerChannelControl::PCC_OP_TURN_ON)
         {
-          m_pwr_chns |= (1 << pc->id);
+          m_pwr_chns |= (1 << channel->id);
 
 #if FIXME
           if (((m_pwr_chns & (1 << PCH_GPS)) || (m_pwr_chns & (1 << PCH_HSDPA))))
             m_pwr_chns |= (1 << PCH_USB_HUB);
 #endif
         }
-        else if (msg->op == IMC::PowerChannelControl::PCC_OP_TOGGLE)
+        else if (op == IMC::PowerChannelControl::PCC_OP_TOGGLE)
         {
-          m_pwr_chns ^= (1 << pc->id);
+          m_pwr_chns ^= (1 << channel->id);
 
 #if FIXME
           if (((m_pwr_chns & (1 << PCH_GPS)) || (m_pwr_chns & (1 << PCH_HSDPA))))
@@ -396,22 +405,34 @@ namespace Power
             m_pwr_chns &= ~(1 << PCH_USB_HUB);
 #endif
         }
-        else if (msg->op == IMC::PowerChannelControl::PCC_OP_SAVE)
+        else if (op == IMC::PowerChannelControl::PCC_OP_SAVE)
         {
           uint8_t data[2] = {(uint8_t)(m_pwr_chns >> 8), (uint8_t)m_pwr_chns};
           m_proto.sendCommand(CMD_SAVE, data, sizeof(data));
         }
-        else if (msg->op == IMC::PowerChannelControl::PCC_OP_SCHED_ON)
-          pc->sched_on = Clock::get() + msg->sched_time;
-        else if (msg->op == IMC::PowerChannelControl::PCC_OP_SCHED_OFF)
-          pc->sched_off = Clock::get() + msg->sched_time;
-        else if (msg->op == IMC::PowerChannelControl::PCC_OP_SCHED_RESET)
+        else if (op == IMC::PowerChannelControl::PCC_OP_SCHED_ON)
+          channel->sched_on = Clock::get() + sched;
+        else if (op == IMC::PowerChannelControl::PCC_OP_SCHED_OFF)
+          channel->sched_off = Clock::get() + sched;
+        else if (op == IMC::PowerChannelControl::PCC_OP_SCHED_RESET)
         {
-          pc->sched_on = -1;
-          pc->sched_off = -1;
+          channel->sched_on = -1;
+          channel->sched_off = -1;
         }
 
         m_gpios->setGPIOs(m_pwr_chns);
+      }
+
+      void
+      consume(const IMC::PowerChannelControl* msg)
+      {
+        PowerChannelMap::const_iterator itr = m_pwr_chs.find(msg->name);
+        if (itr == m_pwr_chs.end())
+          return;
+
+        IMC::PowerChannelControl::OperationEnum op = static_cast<IMC::PowerChannelControl::OperationEnum>(msg->op);
+
+        controlPowerChannel(itr->second, op, msg->sched_time);
       }
 
       void
@@ -614,6 +635,9 @@ namespace Power
         PowerChannelMap::iterator itr = m_pwr_chs.begin();
         for (; itr != m_pwr_chs.end(); ++itr)
         {
+          if (itr->second->id == c_pwr_blight)
+            continue;
+
           if (m_pwr_chns & (1 << itr->second->id))
             itr->second->state.state = IMC::PowerChannelState::PCS_ON;
           else
