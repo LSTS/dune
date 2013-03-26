@@ -523,6 +523,7 @@ namespace Plan
       //! @param[in] action_map map of actions to which the action will be added
       //! @param[in] name name of the entity
       //! @param[in] action action that will be added
+      //! @param[in] preschedule true if scheduled time should take activation into account
       void
       addTimedAction(std::map<std::string, TimedStack>& action_map,
                      const std::string& name, const TimedAction& action,
@@ -565,6 +566,8 @@ namespace Plan
       {
         EASMap::const_iterator itr = m_eas.find(id);
 
+        bool add_req = false;
+
         if (action.type == TYPE_ACT)
         {
           bool active = (itr->second == IMC::EntityActivationState::EAS_ACTIVE ||
@@ -572,7 +575,7 @@ namespace Plan
 
           // do not add request if device is already active
           if (!active && action.prescheduled)
-            addRequest(id, action);
+            add_req = true;
         }
         else
         {
@@ -581,20 +584,16 @@ namespace Plan
 
           // do not add request if device is already inactive
           if (!inactive)
-            addRequest(id, action);
+            add_req = true;
         }
-      }
 
-      //! Add action request to set of requests
-      //! @param[in] name entity name
-      //! @param[in] action TimedAction to add to requests
-      void
-      addRequest(const std::string name, const TimedAction& action)
-      {
-        if (m_reqs.find(name) != m_reqs.end())
-          m_reqs.erase(name);
+        if (add_req)
+        {
+          if (m_reqs.find(id) != m_reqs.end())
+            m_reqs.erase(id);
 
-        m_reqs.insert(std::pair<std::string, TimedAction>(name, action));
+          m_reqs.insert(std::pair<std::string, TimedAction>(id, action));
+        }
       }
 
       //! Simply gather untimed actions in untimed stacks
