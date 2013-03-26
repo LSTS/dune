@@ -237,10 +237,13 @@ namespace Sensors
                      "its return data to allow the commanding program"
                      "enough time to setup for the return of the data.");
 
-        param("Default Range", m_args.def_range)
+        param(DTR_RT("Range"), m_args.def_range)
         .defaultValue("30")
+        .values("5, 10, 20, 30, 40, 50, 60, 80, 100")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .units(Units::Meter)
-        .description("Default range");
+        .description("Operating range");
 
         param("Nadir Offset Angle", m_args.nadir)
         .defaultValue("0.0")
@@ -301,9 +304,14 @@ namespace Sensors
         m_ping.beam_config.clear();
         m_ping.beam_config.push_back(bc);
 
+        // Initialize return data.
+        m_ping.type = IMC::SonarData::ST_MULTIBEAM;
+        m_ping.bits_per_point = 8;
+        m_ping.scale_factor = 1.0f;
+        m_ping.min_range = 0;
+
         // Register consumers.
         bind<IMC::LoggingControl>(this);
-        bind<IMC::SonarConfig>(this);
         bind<IMC::SoundSpeed>(this);
       }
 
@@ -314,22 +322,6 @@ namespace Sensors
         m_args.data_points /= 1000;
         m_ping.data.resize(c_rdata_dat_size * m_args.data_points);
 
-        if (m_args.fill_state)
-          bind<IMC::EstimatedState>(this);
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
-        // Initialize return data.
-        m_ping.type = IMC::SonarData::ST_MULTIBEAM;
-        m_ping.bits_per_point = 8;
-        m_ping.scale_factor = 1.0f;
-        m_ping.min_range = 0;
-
-        // Set switch command.
-        setFrequency();
         setRange(m_args.def_range);
         setStartGain(m_args.start_gain);
         setSwitchDelay(m_args.switch_delay);
@@ -345,12 +337,25 @@ namespace Sensors
           setAutoGainValue(m_args.auto_gain_value);
         }
 
+        if (m_args.fill_state)
+          bind<IMC::EstimatedState>(this);
+      }
+
+      //! Initialize resources.
+      void
+      onResourceInitialization(void)
+      {
+        // Set switch command.
+        setFrequency();
+
         try
         {
+          m_sock.setNoDelay(true);
           m_sock.connect(m_args.addr, m_args.port);
+
           for (unsigned i = 0; i < m_args.data_points; ++i)
             ping(i);
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
         catch (...)
         {
@@ -403,15 +408,6 @@ namespace Sensors
             m_log_file.close();
             break;
         }
-      }
-
-      void
-      consume(const IMC::SonarConfig* msg)
-      {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
-
-        setRange(msg->max_range);
       }
 
       void

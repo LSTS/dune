@@ -170,42 +170,28 @@ namespace Sensors
         m_ping.type = IMC::SonarData::ST_SIDESCAN;
         m_ping.bits_per_point = 8;
         m_ping.scale_factor = 1.0f;
-
-        bind<IMC::SonarConfig>(this);
       }
 
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.frequency))
-          setFrequency(m_args.frequency);
+        setFrequency(m_args.frequency);
+        setRange(m_args.range);
+        setDataGain(m_args.dat_gain);
+        setBalanceGain(m_args.bal_gain);
 
-        if (paramChanged(m_args.range))
-          setRange(m_args.range);
+        if (paramChanged(m_args.addr) && m_sock != NULL)
+          throw RestartNeeded(DTR("restarting to change IPv4 address"), 1);
 
-        if (paramChanged(m_args.dat_gain))
-          setDataGain(m_args.dat_gain);
-
-        if (paramChanged(m_args.bal_gain))
-          setBalanceGain(m_args.bal_gain);
-
-        if (paramChanged(m_args.addr))
-        {
-          if (m_sock)
-            throw RestartNeeded(DTR("restarting to change IPv4 address"), 1);
-        }
-
-        if (paramChanged(m_args.port))
-        {
-          if (m_sock)
-            throw RestartNeeded(DTR("restarting to change TCP port"), 1);
-        }
+        if (paramChanged(m_args.port) && m_sock != NULL)
+          throw RestartNeeded(DTR("restarting to change TCP port"), 1);
       }
 
       void
       onResourceAcquisition(void)
       {
         m_sock = new TCPSocket();
+        m_sock->setNoDelay(true);
       }
 
       void
@@ -228,16 +214,6 @@ namespace Sensors
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           throw;
         }
-      }
-
-      void
-      consume(const IMC::SonarConfig* msg)
-      {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
-
-        setRange(msg->max_range);
-        setFrequency(msg->frequency);
       }
 
       void

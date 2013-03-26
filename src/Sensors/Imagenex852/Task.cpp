@@ -233,7 +233,12 @@ namespace Sensors
 
         m_dist.validity = IMC::Distance::DV_VALID;
 
-        bind<IMC::SonarConfig>(this);
+        // Filling constant Sonar Data.
+        m_profile.type = IMC::SonarData::ST_ECHOSOUNDER;
+        m_profile.frequency = c_frequency;
+        m_profile.bits_per_point = 8;
+        m_profile.scale_factor = 1.0f;
+
         bind<IMC::SoundSpeed>(this);
       }
 
@@ -247,15 +252,19 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        m_switch.setRange(m_args.range);
+        m_switch.setStartGain(m_args.start_gain);
+        m_switch.setPulseLength(m_args.pulse_length);
+        m_switch.setProfileMinRange(m_args.profile_range);
+        m_switch.setDataPoints(m_args.data_points);
         m_trigger.setSampleFrequency(m_args.sample_frequency);
+
+        if (paramChanged(m_args.uart_dev))
+          throw RestartNeeded(DTR("restarting to change UART device"), 1);
 
         m_sound_speed = m_args.sspeed;
         for (unsigned i = 0; i < m_args.orientation.size(); i++)
           m_args.orientation[i] = Math::Angles::radians(m_args.orientation[i]);
-
-        m_profile.beam_config.clear();
-        m_dist.beam_config.clear();
-        m_dist.location.clear();
 
         IMC::DeviceState ds;
         ds.x = m_args.position[0];
@@ -264,12 +273,16 @@ namespace Sensors
         ds.phi = m_args.orientation[0];
         ds.theta = m_args.orientation[1];
         ds.psi = m_args.orientation[2];
+        m_dist.location.clear();
         m_dist.location.push_back(ds);
 
         IMC::BeamConfig bc;
         bc.beam_width = Math::Angles::radians(c_beam_width);
         bc.beam_height = -1;
+        m_dist.beam_config.clear();
         m_dist.beam_config.push_back(bc);
+
+        m_profile.beam_config.clear();
         m_profile.beam_config.push_back(bc);
       }
 
@@ -307,43 +320,12 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
-        m_switch.setRange(m_args.range);
-        m_switch.setStartGain(m_args.start_gain);
-        m_switch.setPulseLength(m_args.pulse_length);
-        m_switch.setProfileMinRange(m_args.profile_range);
-        m_switch.setDataPoints(m_args.data_points);
-
         m_trigger.setActive(isActive());
         m_trigger.setUART(m_uart);
         m_trigger.setSwitchData(m_switch.data(), m_switch.size());
         m_trigger.start();
 
-        // Filling constant Sonar Data.
-        m_profile.type = IMC::SonarData::ST_ECHOSOUNDER;
-        m_profile.frequency = c_frequency;
-        m_profile.bits_per_point = 8;
-        m_profile.scale_factor = 1.0f;
-
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-      }
-
-      void
-      consume(const IMC::SonarConfig* msg)
-      {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
-
-        m_switch.setRange(msg->max_range);
-        m_switch.setProfileMinRange(msg->min_range);
-      }
-
-      void
-      consume(const IMC::SoundSpeed* msg)
-      {
-        if (msg->value < 0.0)
-          return;
-
-        m_sound_speed = msg->value;
       }
 
       void
@@ -358,6 +340,15 @@ namespace Sensors
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         m_trigger.setActive(false);
+      }
+
+      void
+      consume(const IMC::SoundSpeed* msg)
+      {
+        if (msg->value < 0.0)
+          return;
+
+        m_sound_speed = msg->value;
       }
 
       void
