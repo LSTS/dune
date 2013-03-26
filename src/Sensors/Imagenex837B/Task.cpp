@@ -411,15 +411,6 @@ namespace Sensors
       }
 
       void
-      consume(const IMC::SonarConfig* msg)
-      {
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
-
-        setRange(msg->max_range);
-      }
-
-      void
       consume(const IMC::SoundSpeed* msg)
       {
         // Do not use invalid readings.
