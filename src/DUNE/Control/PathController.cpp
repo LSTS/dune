@@ -901,8 +901,10 @@ namespace DUNE
         setEntityState(IMC::EntityState::ESTA_BOOT, DTR("waiting for position estimate from navigation"));
       else if (m_error)
         setEntityState(IMC::EntityState::ESTA_ERROR, msg);
-      else
+      else if (isActive())
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      else
+	setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
     }
 
     void
