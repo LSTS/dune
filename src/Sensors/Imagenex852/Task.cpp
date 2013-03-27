@@ -259,7 +259,7 @@ namespace Sensors
         m_switch.setDataPoints(m_args.data_points);
         m_trigger.setSampleFrequency(m_args.sample_frequency);
 
-        if (paramChanged(m_args.uart_dev))
+        if (paramChanged(m_args.uart_dev) && (m_uart != NULL))
           throw RestartNeeded(DTR("restarting to change UART device"), 1);
 
         m_sound_speed = m_args.sspeed;
