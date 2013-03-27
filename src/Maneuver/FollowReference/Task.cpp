@@ -249,6 +249,8 @@ namespace Maneuver
       guide(const IMC::PathControlState* pcs, const IMC::Reference* ref, const IMC::EstimatedState* state)
       {
 
+    	(void)pcs;
+
         // start building the DesiredPath message to be commanded
         IMC::DesiredPath desired_path;
 
@@ -256,7 +258,7 @@ namespace Maneuver
         double curlon = state->lon;
         WGS84::displace(state->x, state->y, &curlat, &curlon);
 
-        bool near = pcs == NULL ? false : (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
+        bool near = (pcs == NULL) ? false : (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
 
         // command start corresponds to current position
         desired_path.start_lat = curlat;
