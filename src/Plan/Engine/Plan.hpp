@@ -268,8 +268,14 @@ namespace Plan
       void
       maneuverDone(void)
       {
-        if (m_curr_node->pman->maneuver_id == m_last_dur->first)
-          m_beyond_dur = true;
+	if (m_curr_node == NULL)
+	  return;
+
+	if (m_last_dur != m_durations.end())
+        {
+          if (m_curr_node->pman->maneuver_id == m_last_dur->first)
+            m_beyond_dur = true;
+        }
 
         if (m_sched == NULL)
           return;
