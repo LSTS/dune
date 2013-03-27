@@ -249,16 +249,13 @@ namespace Maneuver
       guide(const IMC::PathControlState* pcs, const IMC::Reference* ref, const IMC::EstimatedState* state)
       {
 
-    	(void)pcs;
-
-        // start building the DesiredPath message to be commanded
+    	  // start building the DesiredPath message to be commanded
         IMC::DesiredPath desired_path;
-
         double curlat = state->lat;
         double curlon = state->lon;
-        WGS84::displace(state->x, state->y, &curlat, &curlon);
+        bool near_ref = (pcs == NULL) ? false : (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
 
-        bool near = (pcs == NULL) ? false : (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
+        WGS84::displace(state->x, state->y, &curlat, &curlon);
 
         // command start corresponds to current position
         desired_path.start_lat = curlat;
@@ -355,7 +352,7 @@ namespace Maneuver
           switch (prevMode)
           {
             case (IMC::FollowRefState::FR_GOTO):
-              if (near)
+              if (near_ref)
               {
                 if (at_z_target && target_at_surface)
                 {
