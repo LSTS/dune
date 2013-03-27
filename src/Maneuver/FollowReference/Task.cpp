@@ -50,7 +50,8 @@ namespace Maneuver
       //! Store maneuver specification
       IMC::FollowReference m_spec;
       //! Store latest received reference
-      IMC::Reference m_cur_ref, m_last_ref;
+      IMC::Reference m_cur_ref;
+      IMC::Reference m_last_ref;
       //! Estimated state
       IMC::EstimatedState m_estate;
       //! Path Control state
@@ -66,7 +67,7 @@ namespace Maneuver
       //! Task arguments.
       Arguments m_args;
 
-      Task(const std::string& name, Tasks::Context& ctx) :
+      Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Maneuvers::Maneuver(name, ctx),
         m_got_reference(false),
         m_moving(false),
@@ -140,10 +141,10 @@ namespace Maneuver
         if (msg1->lon != msg2->lon)
           return false;
 
-        const DesiredZ *z1 = msg1->z.get();
-        const DesiredZ *z2 = msg2->z.get();
-        const DesiredSpeed *s1 = msg1->speed.get();
-        const DesiredSpeed *s2 = msg2->speed.get();
+        const IMC::DesiredZ *z1 = msg1->z.get();
+        const IMC::DesiredZ *z2 = msg2->z.get();
+        const IMC::DesiredSpeed *s1 = msg1->speed.get();
+        const IMC::DesiredSpeed *s2 = msg2->speed.get();
 
         if (!z1->fieldsEqual(*z2))
           return false;
@@ -220,7 +221,7 @@ namespace Maneuver
         m_pcs = *pcs;
       }
 
-      SpeedUnits
+      IMC::SpeedUnits
       parseSpeedUnitsStr(std::string sunits_str)
       {
         if (sunits_str == "m/s")
@@ -231,7 +232,7 @@ namespace Maneuver
           return IMC::SUNITS_PERCENTAGE;
       }
 
-      ZUnits
+      IMC::ZUnits
       parseZUnitsStr(std::string zunits_str)
       {
         if (zunits_str == "HEIGHT")
@@ -245,11 +246,11 @@ namespace Maneuver
       }
 
       void
-      guide(const IMC::PathControlState * pcs, const IMC::Reference * ref, const IMC::EstimatedState * state)
+      guide(const IMC::PathControlState* pcs, const IMC::Reference* ref, const IMC::EstimatedState* state)
       {
 
         // start building the DesiredPath message to be commanded
-        DesiredPath desired_path;
+        IMC::DesiredPath desired_path;
 
         double curlat = state->lat;
         double curlon = state->lon;
@@ -320,22 +321,22 @@ namespace Maneuver
 
         // check to see if we are already at the target...
         double xy_dist = WGS84::distance(desired_path.end_lat,
-            desired_path.end_lon, 0, curlat,
-            curlon, 0);
+                                         desired_path.end_lon, 0, curlat,
+                                         curlon, 0);
 
         double z_dist;
 
         switch (desired_path.end_z_units)
         {
-          case (Z_DEPTH):
+          case (IMC::Z_DEPTH):
             z_dist = std::abs(desired_path.end_z - m_estate.depth);
-          break;
-          case (Z_ALTITUDE):
+            break;
+          case (IMC::Z_ALTITUDE):
             z_dist = std::abs(desired_path.end_z - m_estate.alt);
-          break;
-          case (Z_HEIGHT):
+            break;
+          case (IMC::Z_HEIGHT):
             z_dist = std::abs(desired_path.end_z - m_estate.height);
-          break;
+            break;
           default:
             z_dist = 0;
             break;
@@ -358,13 +359,13 @@ namespace Maneuver
                 {
                   m_fref_state.state = IMC::FollowRefState::FR_HOVER;
                   m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
-                      | IMC::FollowRefState::PROX_Z_NEAR;
+                  | IMC::FollowRefState::PROX_Z_NEAR;
                 }
                 else if (at_z_target && !target_at_surface)
                 {
                   m_fref_state.state = IMC::FollowRefState::FR_LOITER;
                   m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
-                      | IMC::FollowRefState::PROX_Z_NEAR;
+                  | IMC::FollowRefState::PROX_Z_NEAR;
                 }
                 else
                 {
@@ -385,13 +386,13 @@ namespace Maneuver
               {
                 m_fref_state.state = IMC::FollowRefState::FR_HOVER;
                 m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
-                    | IMC::FollowRefState::PROX_Z_NEAR;
+                | IMC::FollowRefState::PROX_Z_NEAR;
               }
               if (at_z_target && !target_at_surface)
               {
                 m_fref_state.state = IMC::FollowRefState::FR_LOITER;
                 m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
-                    | IMC::FollowRefState::PROX_Z_NEAR;
+                | IMC::FollowRefState::PROX_Z_NEAR;
               }
               break;
           }
@@ -402,8 +403,8 @@ namespace Maneuver
           {
             m_fref_state.state = IMC::FollowRefState::FR_GOTO;
             m_fref_state.proximity =
-                at_z_target ? IMC::FollowRefState::PROX_Z_NEAR :
-                    IMC::FollowRefState::PROX_FAR;
+            at_z_target ? IMC::FollowRefState::PROX_Z_NEAR :
+            IMC::FollowRefState::PROX_FAR;
           }
           if (at_xy_target && !at_z_target)
           {
@@ -414,13 +415,13 @@ namespace Maneuver
           {
             m_fref_state.state = IMC::FollowRefState::FR_HOVER;
             m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
-                | IMC::FollowRefState::PROX_Z_NEAR;
+            | IMC::FollowRefState::PROX_Z_NEAR;
           }
           if (at_z_target && at_xy_target && !target_at_surface)
           {
             m_fref_state.state = IMC::FollowRefState::FR_LOITER;
             m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
-                | IMC::FollowRefState::PROX_Z_NEAR;
+            | IMC::FollowRefState::PROX_Z_NEAR;
           }
         }
 
