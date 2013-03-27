@@ -272,6 +272,7 @@ namespace Control
             return;
 
           m_dspeed = *msg;
+          m_dspeed.setSourceEntity(getEntityId());
         }
 
         void
