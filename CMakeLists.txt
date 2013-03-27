@@ -120,6 +120,9 @@ if(DUNE_PROGRAM_PYTHON)
     ${PROJECT_SOURCE_DIR}/programs/generators/imc_code.py
     ${DUNE_MESSAGES_IMC_XML} ${PROJECT_SOURCE_DIR}/src/DUNE/IMC
     COMMAND ${DUNE_PROGRAM_PYTHON}
+    ${PROJECT_SOURCE_DIR}/programs/generators/imc_blob.py
+    ${DUNE_MESSAGES_IMC_XML} ${PROJECT_SOURCE_DIR}/src/DUNE/IMC
+    COMMAND ${DUNE_PROGRAM_PYTHON}
     ${PROJECT_SOURCE_DIR}/programs/generators/imc_tests.py
     ${DUNE_MESSAGES_IMC_XML} ${PROJECT_SOURCE_DIR}/programs/tests
     DEPENDS ${xml})
