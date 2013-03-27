@@ -58,9 +58,9 @@ namespace DUNE
     //! Maximum number of beacons.
     static const unsigned c_max_beacons = 4;
     //! Weighted Moving Average filter value.
-    static const float c_wma_filter = 0.1;
+    static const float c_wma_filter = 0.1f;
     //! Maximum artificial angular velocity value.
-    static const float c_max_av = 0.5;
+    static const float c_max_av = 0.5f;
 
     //! Navigation task states.
     enum SMStates
