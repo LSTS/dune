@@ -747,9 +747,10 @@ namespace Control
 
           struct tm* fix_utc = gmtime(&fix_time);
 
-          m_fix.utc_time = 3600 * fix_utc->tm_hour +
-                           60 * fix_utc->tm_min +
-                           fix_utc->tm_sec;
+          m_fix.utc_time = 3600 * (float)fix_utc->tm_hour +
+                           60 * (float)fix_utc->tm_min +
+                           (float)fix_utc->tm_sec +
+                           ((float)(gps_raw.time_usec % 1000000) / 1000000);
 
           m_fix.utc_day = fix_utc->tm_mday;
           m_fix.utc_month = fix_utc->tm_mon;
