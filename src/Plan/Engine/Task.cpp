@@ -527,17 +527,18 @@ namespace Plan
           else
           {
             // Quick plan
-            IMC::PlanManeuver mspec;
+            IMC::PlanManeuver spec_man;
             const IMC::Maneuver* man = dynamic_cast<const IMC::Maneuver*>(arg);
 
             if (man)
             {
-              mspec.maneuver_id = arg->getName();
-              mspec.data.set(*man);
+              spec_man.maneuver_id = arg->getName();
+              spec_man.data.set(*man);
               m_spec.clear();
+	      m_spec.maneuvers.setParent(&m_spec);
               m_spec.plan_id = plan_id;
               m_spec.start_man_id = arg->getName();
-              m_spec.maneuvers.push_back(mspec);
+              m_spec.maneuvers.push_back(spec_man);
             }
             else
             {
