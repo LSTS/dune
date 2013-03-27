@@ -231,18 +231,10 @@ namespace Transports
         dispatch(cc);
 
         // Copy IMC XML to log directory.
-        Path imc_dst = m_dir / "IMC.xml";
-        Path imc_src = m_ctx.dir_cfg / "xml" / "IMC.xml";
-
-        try
-        {
-          imc_src.copy(imc_dst);
-        }
-        catch (System::Error& e)
-        {
-          err(DTR("unable to copy IMC XML to '%s': %s"),
-              imc_dst.c_str(), e.what());
-        }
+        Path imc_dst = m_dir / "IMC.xml.gz";
+        std::ofstream imc_ofs(imc_dst.c_str(), std::ios::binary);
+        imc_ofs.write((char*)Blob::getData(), Blob::getSize());
+        imc_ofs.close();
 
         // Copy current configuration file to log directory.
         Path cfg_path = m_dir / "Config.ini";
