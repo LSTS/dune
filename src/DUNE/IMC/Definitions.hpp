@@ -12235,6 +12235,8 @@ namespace DUNE
       uint8_t enable;
       //! Control Loop Mask.
       uint32_t mask;
+      //! Scope Time Reference.
+      fp32_t scope_ref;
 
       static uint16_t
       getIdStatic(void)
@@ -12283,7 +12285,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 9;
       }
 
       void

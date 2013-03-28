@@ -5519,6 +5519,13 @@
         Control loop mask.
       </description>
     </field>
+    <field name="Scope Time Reference" abbrev="scope_ref" type="fp32_t" unit="s">
+      <description>
+        Time reference for the scope of the control loop message.
+	Scope reference should only be set by a maneuver.
+	Should be set to a monotonic reference at the start of the maneuver.
+      </description>
+    </field>
   </message>
 
   <message id="508" name="Vehicle Medium" abbrev="VehicleMedium" source="vehicle">
