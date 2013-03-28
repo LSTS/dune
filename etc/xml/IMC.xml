@@ -5523,7 +5523,9 @@
       <description>
         Time reference for the scope of the control loop message.
 	Scope reference should only be set by a maneuver.
-	Should be set to a monotonic reference at the start of the maneuver.
+	Should be set to a monotonic reference at the time of dispatching this message.
+	Lower level controllers must inherit the same scope reference time sent by maneuver.
+	This same scope reference time must be sent down to lower control layers.
       </description>
     </field>
   </message>
