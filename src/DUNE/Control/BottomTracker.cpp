@@ -146,6 +146,7 @@ namespace DUNE
       if (tobus)
       {
         zed.setTimeStamp();
+        zed.setSourceEntity(m_args->task->getEntityId());
         dispatch(zed);
       }
     }
