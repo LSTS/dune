@@ -108,6 +108,8 @@ namespace Control
         int m_current_wp;
         //! Critical WP
         bool m_critical;
+        //! Bitfield of enabled control loops.
+        uint32_t m_cloops;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -202,12 +204,51 @@ namespace Control
             m_TCP_sock->addToPoll(m_iom);
             inf(DTR("ArduPilot interface initialized"));
           }
-          catch(std::exception& e)
+          catch (...)
           {
             m_TCP_sock = 0;
-            war("Connection failed, will try again");
+            war("Connection failed, retrying...");
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
           }
+        }
+
+        void
+        info(uint32_t was, uint32_t is, uint32_t loop, const char* desc)
+        {
+          was &= loop;
+          is &= loop;
+
+          if (was && !is)
+            war(DTR("%s - deactivating"), desc);
+          else if (!was && is)
+            war(DTR("%s - activating"), desc);
+        }
+
+        void
+        consume(const IMC::ControlLoops* cloops)
+        {
+          if(m_external || m_critical)
+            return;
+
+          uint32_t prev = m_cloops;
+
+          if (cloops->enable)
+          {
+            m_cloops |= cloops->mask;
+            if((!m_args.ardu_tracker) && (cloops->mask & IMC::CL_PATH))
+            {
+              debug("tracker is NOT enabled");
+              m_cloops &= ~IMC::CL_PATH;
+            }
+          }
+          else
+            m_cloops &= ~cloops->mask;
+
+          info(prev, m_cloops, IMC::CL_SPEED, DTR("speed control"));
+          info(prev, m_cloops, IMC::CL_ALTITUDE, DTR("altitude control"));
+          info(prev, m_cloops, IMC::CL_ROLL, DTR("bank control"));
+          info(prev, m_cloops, IMC::CL_YAW, DTR("heading control"));
+          info(prev, m_cloops, IMC::CL_PATH, DTR("path control"));
         }
 
         void
@@ -267,6 +308,12 @@ namespace Control
         void
         consume(const IMC::DesiredRoll* roll)
         {
+          if (!(m_cloops & IMC::CL_ROLL))
+          {
+            err(DTR("bank control is NOT active"));
+            return;
+          }
+
           uint8_t buf[512];
 
           mavlink_message_t* msg = new mavlink_message_t;
@@ -279,6 +326,12 @@ namespace Control
         void
         consume(const IMC::DesiredZ* desired_z)
         {
+          if (!(m_cloops & IMC::CL_ALTITUDE))
+          {
+            err(DTR("altitude control is NOT active"));
+            return;
+          }
+
           sendCommandPacket(MAV_CMD_CONDITION_CHANGE_ALT, // Ascend/descend at rate.  Delay mission state machine until desired altitude reached.
                             2, // Descent / Ascend rate (m/s)
                             0, // Empty
@@ -295,6 +348,13 @@ namespace Control
         {
           if(!m_args.ardu_tracker)
             return;
+
+          if(!(m_cloops & IMC::CL_PATH))
+          {
+            err(DTR("path control is NOT active"));
+            return;
+          }
+
           sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_AUTO_DISARMED);
 
           uint8_t buf[512];
@@ -492,8 +552,9 @@ namespace Control
             {
               return m_TCP_sock->read((char*) buf, sizeof(buf));
             }
-            catch (std::exception& e) {
-              DUNE_DBG("Ardupilot", "connection lost, retrying");
+            catch (...)
+            {
+              war("Connection lost, retrying...");
               m_TCP_sock->delFromPoll(m_iom);
               delete m_TCP_sock;
 
@@ -738,12 +799,14 @@ namespace Control
           m_fix.sog = (float)gps_raw.vel * 0.01;
           m_fix.hdop = (float)gps_raw.eph * 0.01;
           m_fix.vdop = (float)gps_raw.epv * 0.01;
-          m_fix.lat = (double)gps_raw.lat * 1e-07;
-          m_fix.lon = (double)gps_raw.lon * 1e-07;
+          m_fix.lat = Angles::radians((double)gps_raw.lat * 1e-07);
+          m_fix.lon = Angles::radians((double)gps_raw.lon * 1e-07);
           m_fix.height = (double)gps_raw.alt * 0.001;
           m_fix.satellites = gps_raw.satellites_visible;
 
-          time_t fix_time((double)gps_raw.time_usec * 1e-06);
+          time_t fix_time(gps_raw.time_usec / 1e06);
+
+          debug("Raw Time: %llu", gps_raw.time_usec);
 
           struct tm* fix_utc = gmtime(&fix_time);
 
@@ -753,8 +816,8 @@ namespace Control
                            ((float)(gps_raw.time_usec % 1000000) / 1000000);
 
           m_fix.utc_day = fix_utc->tm_mday;
-          m_fix.utc_month = fix_utc->tm_mon;
-          m_fix.utc_year = fix_utc->tm_year;
+          m_fix.utc_month = fix_utc->tm_mon + 1;
+          m_fix.utc_year = 1900 + fix_utc->tm_year;
 
           m_fix.validity = 0;
           if(gps_raw.fix_type>1)
