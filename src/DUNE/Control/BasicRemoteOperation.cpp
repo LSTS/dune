@@ -103,10 +103,7 @@ namespace DUNE
 
       // If this scope is obsolete, ignore message
       if (msg->scope_ref < m_scope_ref)
-      {
-        debug("ignored");
         return;
-      }
 
       m_scope_ref = msg->scope_ref;
 
