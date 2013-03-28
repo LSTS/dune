@@ -54,8 +54,6 @@ namespace Control
         Matrix m_forces;
         // Desired Velocity message
         IMC::DesiredVelocity m_dvel;
-        // Control loops message.
-        IMC::ControlLoops m_cloops;
         // Task arguments.
         Arguments m_args;
 
@@ -96,9 +94,7 @@ namespace Control
         {
           if (m_args.speed_control)
           {
-            m_cloops.mask = IMC::CL_YAW_RATE | IMC::CL_SPEED | IMC::CL_VERTICAL_RATE;
-            m_cloops.enable = IMC::ControlLoops::CL_ENABLE;
-            dispatch(m_cloops);
+            enableControlLoops(IMC::CL_YAW_RATE | IMC::CL_SPEED | IMC::CL_VERTICAL_RATE);
 
             reset_dvel();
           }
