@@ -104,6 +104,8 @@ namespace Control
         bool m_last_try;
         //! Braking flag
         bool m_braking;
+        //! Control loops last reference time
+        float m_scope_ref;
         //! Task arguments.
         Arguments m_args;
 
@@ -112,7 +114,8 @@ namespace Control
           m_aloops(0),
           m_counter_solo(NULL),
           m_counter_step(NULL),
-          m_braking(false)
+          m_braking(false),
+          m_scope_ref(0.0)
         {
           param("Depth Tolerance", m_args.depth_tol)
           .defaultValue("0.5")
@@ -291,6 +294,11 @@ namespace Control
 
           if (!loops)
             return;
+
+          if (msg->scope_ref < m_scope_ref)
+            return;
+
+          m_scope_ref = msg->scope_ref;
 
           bool was_active = isActive();
 

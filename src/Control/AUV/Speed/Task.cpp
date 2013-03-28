@@ -106,13 +106,16 @@ namespace Control
         IMC::ControlParcel m_parcel_mps;
         //! Control Parcels for rpm controller
         IMC::ControlParcel m_parcel_rpm;
+        //! Control loops last reference time
+        float m_scope_ref;
         //! Task arguments
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Task(name, ctx),
           m_u_active(false),
-          m_previous_rpm(0.0)
+          m_previous_rpm(0.0),
+          m_scope_ref(0.0)
         {
           param("Hardware RPMs Control", m_args.hardrpms)
           .defaultValue("true")
@@ -285,7 +288,15 @@ namespace Control
         void
         consume(const IMC::ControlLoops* msg)
         {
-          if (!(msg->mask & IMC::CL_SPEED) || isActive() == msg->enable)
+          if (!(msg->mask & IMC::CL_SPEED))
+            return;
+
+          if (msg->scope_ref < m_scope_ref)
+            return;
+
+          m_scope_ref = msg->scope_ref;
+
+          if (isActive() == msg->enable)
             return;
 
           if (!msg->enable)
