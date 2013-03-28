@@ -523,6 +523,7 @@ namespace Plan
           if (given_plan)
           {
             m_spec = *given_plan;
+            m_spec.setSourceEntity(getEntityId());
           }
           else
           {
