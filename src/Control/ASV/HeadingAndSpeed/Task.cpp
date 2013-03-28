@@ -295,13 +295,16 @@ namespace Control
         void
         consume(const IMC::ControlLoops* msg)
         {
-          if (!(msg->mask & (IMC::CL_YAW | IMC::CL_SPEED)) || isActive() == msg->enable)
+          if (!(msg->mask & (IMC::CL_YAW | IMC::CL_SPEED)))
             return;
 
           if (msg->scope_ref < m_scope_ref)
             return;
 
           m_scope_ref = msg->scope_ref;
+
+          if (msg->enable == isActive())
+            return;
 
           if (msg->enable != 0)
             requestActivation();
