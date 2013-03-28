@@ -101,6 +101,23 @@ namespace DUNE
       virtual void
       onResourceInitialization(void);
 
+      //! Enable control loops.
+      //! @param mask control loop mask
+      void
+      enableControlLoops(uint32_t mask)
+      {
+        configureControlLoops(IMC::ControlLoops::CL_ENABLE, mask);
+      }
+
+      //! Disable control loops (need to use only if
+      //! control mode changes during path control, not on deactivation).
+      //! @param mask control loop mask
+      inline void
+      disableControlLoops(uint32_t mask)
+      {
+        configureControlLoops(IMC::ControlLoops::CL_DISABLE, mask);
+      }
+
     private:
       void
       task(void);
@@ -111,6 +128,9 @@ namespace DUNE
       void
       addRemoteAction(const std::string& action, const std::string& type);
 
+      void
+      configureControlLoops(uint8_t enable, uint32_t mask);
+
       //! True if we are receiving remote action commands.
       bool m_connection;
       //! Connection timeout in seconds.
@@ -119,6 +139,8 @@ namespace DUNE
       fp64_t m_last_action;
       //! Remote actions reply message;
       IMC::RemoteActionsRequest m_actions;
+      //! Control loops last reference time
+      float m_scope_ref;
     };
   }
 }

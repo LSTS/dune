@@ -27,6 +27,7 @@
 
 // DUNE headers.
 #include <DUNE/Maneuvers/Maneuver.hpp>
+#include <DUNE/Time/Clock.hpp>
 
 namespace DUNE
 {
@@ -153,6 +154,7 @@ namespace DUNE
       // Stop everything
       cloops.enable = IMC::ControlLoops::CL_DISABLE;
       cloops.mask = IMC::CL_ALL;
+      cloops.scope_ref = Time::Clock::get();
       dispatch(cloops);
       updateLoops(&cloops);
 
@@ -161,6 +163,7 @@ namespace DUNE
         // Enable controllers.
         cloops.enable = IMC::ControlLoops::CL_ENABLE;
         cloops.mask = mask;
+        cloops.scope_ref = Time::Clock::get();
         dispatch(cloops);
         updateLoops(&cloops);
       }

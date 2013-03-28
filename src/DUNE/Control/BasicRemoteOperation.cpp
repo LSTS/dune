@@ -48,7 +48,8 @@ namespace DUNE
       Tasks::Periodic(name, ctx),
       m_connection(false),
       m_connection_timeout(1.0),
-      m_last_action(-1.0)
+      m_last_action(-1.0),
+      m_scope_ref(0.0)
     {
       param("Connection Timeout", m_connection_timeout)
       .defaultValue("1.0")
@@ -97,7 +98,16 @@ namespace DUNE
     void
     BasicRemoteOperation::consume(const IMC::ControlLoops* msg)
     {
-      if (!(msg->mask & IMC::CL_TELEOPERATION) || msg->enable == isActive())
+      if (!(msg->mask & IMC::CL_TELEOPERATION))
+        return;
+
+      // If this scope is obsolete, ignore message
+      if (msg->scope_ref < m_scope_ref)
+        return;
+
+      m_scope_ref = msg->scope_ref;
+
+      if (msg->enable == isActive())
         return;
 
       if (msg->enable == IMC::ControlLoops::CL_ENABLE)
@@ -145,6 +155,16 @@ namespace DUNE
 
         m_connection = false;
       }
+    }
+
+    void
+    BasicRemoteOperation::configureControlLoops(uint8_t enable, uint32_t mask)
+    {
+      IMC::ControlLoops cloops;
+      cloops.enable = enable;
+      cloops.mask = mask;
+      cloops.scope_ref = m_scope_ref;
+      dispatch(cloops);
     }
 
     void

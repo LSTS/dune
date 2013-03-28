@@ -44,7 +44,6 @@ namespace Maneuver
       IMC::DesiredHeading m_heading_msg;
       double m_heading_v_desired;
       double m_heading_c_current;
-      IMC::ControlLoops m_loops;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Maneuvers::Maneuver(name, ctx)
@@ -63,9 +62,7 @@ namespace Maneuver
       void
       onResourceAcquisition(void)
       {
-        m_loops.enable = 1;
-        m_loops.mask = IMC::CL_YAW;
-        dispatch(m_loops);
+        setControl(IMC::CL_YAW);
         inf("yaw controller activated");
       }
 

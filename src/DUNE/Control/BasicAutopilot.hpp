@@ -253,6 +253,8 @@ namespace DUNE
       const uint32_t m_controllable_loops;
       //! Required loops for this controller
       const uint32_t m_required_loops;
+      //! Control loops last reference time
+      float m_scope_ref;
 
       // Configuration
       //! Bypass heading rate control

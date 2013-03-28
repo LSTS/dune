@@ -12668,6 +12668,7 @@ namespace DUNE
     {
       enable = 0;
       mask = 0;
+      scope_ref = 0;
     }
 
     bool
@@ -12676,6 +12677,7 @@ namespace DUNE
       const IMC::ControlLoops& other__ = dynamic_cast<const ControlLoops&>(msg__);
       if (enable != other__.enable) return false;
       if (mask != other__.mask) return false;
+      if (scope_ref != other__.scope_ref) return false;
       return true;
     }
 
@@ -12691,6 +12693,7 @@ namespace DUNE
       uint8_t* ptr__ = bfr__;
       ptr__ += IMC::serialize(enable, ptr__);
       ptr__ += IMC::serialize(mask, ptr__);
+      ptr__ += IMC::serialize(scope_ref, ptr__);
       return ptr__;
     }
 
@@ -12700,6 +12703,7 @@ namespace DUNE
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(enable, bfr__, size__);
       bfr__ += IMC::deserialize(mask, bfr__, size__);
+      bfr__ += IMC::deserialize(scope_ref, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -12709,6 +12713,7 @@ namespace DUNE
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(enable, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(mask, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(scope_ref, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -12717,6 +12722,7 @@ namespace DUNE
     {
       IMC::toJSON(os__, "enable", enable, nindent__);
       IMC::toJSON(os__, "mask", mask, nindent__);
+      IMC::toJSON(os__, "scope_ref", scope_ref, nindent__);
     }
 
     VehicleMedium::VehicleMedium(void)

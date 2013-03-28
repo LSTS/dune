@@ -68,12 +68,15 @@ namespace Control
         unsigned m_spos_ent;
         //! Servo positions
         float m_servo_pos[c_fins];
+        //! Control loops last reference time
+        float m_scope_ref;
         //! Task arguments.
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
-          m_braking(false)
+          m_braking(false),
+          m_scope_ref(0.0)
         {
           param(DTR_RT("Maximum Fin Rotation"), m_args.max_fin_rot)
           .defaultValue("25.0")
@@ -225,7 +228,15 @@ namespace Control
         void
         consume(const IMC::ControlLoops* msg)
         {
-          if (!(msg->mask & IMC::CL_TORQUE) || msg->enable == isActive())
+          if (!(msg->mask & IMC::CL_TORQUE))
+            return;
+
+          if (msg->scope_ref < m_scope_ref)
+            return;
+
+          m_scope_ref = msg->scope_ref;
+
+          if (msg->enable == isActive())
             return;
 
           if (msg->enable)

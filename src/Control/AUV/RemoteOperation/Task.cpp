@@ -65,8 +65,6 @@ namespace Control
         float m_thrust;
         //! Acceleration.
         int m_acceleration;
-        //! Control loops message.
-        IMC::ControlLoops m_cloops;
         //! Position of the vertical fins. (for torque control)
         float m_verfin;
         //! Position of the horizontal fins. (for torque control)
@@ -146,16 +144,9 @@ namespace Control
         onActivation(void)
         {
           if (!m_torque_control)
-          {
-            m_cloops.mask = IMC::CL_YAW_RATE | IMC::CL_PITCH | IMC::CL_SPEED;
-          }
+            enableControlLoops(IMC::CL_YAW_RATE | IMC::CL_PITCH | IMC::CL_SPEED);
           else
-          {
-            m_cloops.mask = IMC::CL_SPEED | IMC::CL_TORQUE;
-          }
-
-          m_cloops.enable = IMC::ControlLoops::CL_ENABLE;
-          dispatch(m_cloops);
+            enableControlLoops(IMC::CL_SPEED | IMC::CL_TORQUE);
 
           // for torque control
           m_verfin = 0;
@@ -177,7 +168,6 @@ namespace Control
           m_thrust = 0;
           m_hrate = 0;
           m_acceleration = 0;
-          actuate();
         }
 
         void
@@ -251,13 +241,9 @@ namespace Control
         activateTorqueControl(void)
         {
           // Change active controllers to torque and speed control.
-          m_cloops.enable = IMC::ControlLoops::CL_DISABLE;
-          m_cloops.mask = IMC::CL_PITCH | IMC::CL_YAW_RATE;
-          dispatch(m_cloops);
+          disableControlLoops(IMC::CL_PITCH | IMC::CL_YAW_RATE);
 
-          m_cloops.enable = IMC::ControlLoops::CL_ENABLE;
-          m_cloops.mask = IMC::CL_TORQUE;
-          dispatch(m_cloops);
+          enableControlLoops(IMC::CL_TORQUE);
 
           m_verfin = 0;
           m_horfin = m_args.horfin_pos;

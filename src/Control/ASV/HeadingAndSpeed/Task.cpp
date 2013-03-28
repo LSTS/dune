@@ -83,11 +83,14 @@ namespace Control
         Delta m_last_estate;
         // Motor Thrust.
         IMC::SetThrusterActuation m_motor[2];
+        //! Control loops last reference time
+        float m_scope_ref;
         // Task arguments.
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
-          Tasks::Task(name, ctx)
+          Tasks::Task(name, ctx),
+          m_scope_ref(0.0)
         {
           param("Maximum Motor Command", m_args.max_motor)
           .defaultValue("1.0")
@@ -294,6 +297,11 @@ namespace Control
         {
           if (!(msg->mask & (IMC::CL_YAW | IMC::CL_SPEED)) || isActive() == msg->enable)
             return;
+
+          if (msg->scope_ref < m_scope_ref)
+            return;
+
+          m_scope_ref = msg->scope_ref;
 
           if (msg->enable != 0)
             requestActivation();

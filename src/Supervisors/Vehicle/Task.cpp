@@ -74,13 +74,16 @@ namespace Supervisors
       IMC::StopManeuver m_stop;
       //! Idle maneuver message.
       IMC::IdleManeuver m_idle;
+      //! Control loops last reference time
+      float m_scope_ref;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
         m_switch_time(-1.0),
-        m_in_safe_plan(false)
+        m_in_safe_plan(false),
+        m_scope_ref(0.0)
       {
         param("Safe Entities", m_args.safe_ents)
         .defaultValue("")
@@ -141,6 +144,12 @@ namespace Supervisors
       void
       consume(const IMC::ControlLoops* msg)
       {
+        // If this scope is obsolete, ignore message
+        if (msg->scope_ref < m_scope_ref)
+          return;
+
+        m_scope_ref = msg->scope_ref;
+
         uint32_t was = m_vs.control_loops;
 
         if (msg->enable == IMC::ControlLoops::CL_ENABLE)

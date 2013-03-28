@@ -54,7 +54,6 @@ namespace Control
         IMC::DesiredRoll m_bank; // Bank reference.
         IMC::DesiredSpeed m_speed; // Speed reference.
         IMC::DesiredVerticalRate m_vrate; // Vertical rate reference.
-        IMC::ControlLoops m_cloops; // Control loop activation/deactivation.
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::BasicRemoteOperation(name, ctx)
@@ -96,9 +95,7 @@ namespace Control
         void
         onActivation(void)
         {
-          m_cloops.enable = IMC::ControlLoops::CL_ENABLE;
-          m_cloops.mask = IMC::CL_VERTICAL_RATE | IMC::CL_SPEED | IMC::CL_ROLL;
-          dispatch(m_cloops);
+          enableControlLoops(IMC::CL_VERTICAL_RATE | IMC::CL_SPEED | IMC::CL_ROLL);
           normalize();
         }
 
