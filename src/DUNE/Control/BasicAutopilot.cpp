@@ -52,7 +52,8 @@ namespace DUNE
       m_yaw_mode(YAW_MODE_NONE),
       m_aloops(0),
       m_controllable_loops(controllable_loops),
-      m_required_loops(required_loops)
+      m_required_loops(required_loops),
+      m_scope_ref(0.0)
     {
       param("Heading Rate Bypass", m_hrate_bypass)
       .defaultValue("false")
@@ -299,6 +300,15 @@ namespace DUNE
       if (!loops)
         return;
 
+      // If this scope is obsolete, ignore message
+      if (msg->scope_ref < m_scope_ref)
+      {
+        debug("ignored");
+        return;
+      }
+
+      m_scope_ref = msg->scope_ref;
+
       bool was_active = isActive();
 
       if (msg->enable)
@@ -329,6 +339,7 @@ namespace DUNE
           IMC::ControlLoops cloops;
           cloops.enable = IMC::ControlLoops::CL_ENABLE;
           cloops.mask = m_required_loops;
+          cloops.scope_ref = m_scope_ref;
           dispatch(cloops);
         }
         else
