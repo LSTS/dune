@@ -61,7 +61,8 @@ namespace DUNE
       m_braking(false),
       m_jump_monitors(false),
       m_aloops(0),
-      m_btrack(NULL)
+      m_btrack(NULL),
+      m_scope_ref(0.0)
     {
       param("Control Frequency", m_cperiod)
       .defaultValue("10")
@@ -824,6 +825,11 @@ namespace DUNE
     void
     PathController::consume(const IMC::ControlLoops* cloops)
     {
+      if (cloops->scope_ref < m_scope_ref)
+        return;
+
+      m_scope_ref = cloops->scope_ref;
+
       if (cloops->enable)
         m_aloops |= cloops->mask;
       else
@@ -927,6 +933,7 @@ namespace DUNE
 
       m_cloops.enable = enable;
       m_cloops.mask = mask;
+      m_cloops.scope_ref = m_scope_ref;
       dispatch(m_cloops);
     }
 
