@@ -939,7 +939,7 @@ namespace Plan
           return;
 
         m_pcs.plan_progress = m_plan->updateProgress(&m_mcs, m_calib);
-        m_pcs.plan_eta = m_plan->getPlanEta();
+        m_pcs.plan_eta = (int32_t)m_plan->getPlanEta();
       }
 
       void

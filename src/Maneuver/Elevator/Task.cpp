@@ -299,7 +299,7 @@ namespace Maneuver
           else
             loiter = Plans::c_max_eta;
 
-          signalProgress(pcs->eta + loiter);
+          signalProgress((uint16_t)Math::round(pcs->eta + loiter));
         }
       }
 

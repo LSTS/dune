@@ -231,7 +231,7 @@ namespace Maneuver
       {
         if (m_matched_criteria && mustWait())
         {
-          signalProgress(std::ceil(m_dur_timer.getRemaining()));
+          signalProgress((uint16_t)std::ceil(m_dur_timer.getRemaining()));
         }
         else if (m_matched_criteria)
         {
@@ -245,7 +245,7 @@ namespace Maneuver
           if (!m_at_surface)
           {
             if (m_state.vz != 0.0)
-              rising_time = std::ceil(std::fabs(m_state.depth / m_state.vz));
+              rising_time = (unsigned)std::ceil(std::fabs(m_state.depth / m_state.vz));
 
             // Might be heading to the waypoint
             if (!useCurr())
@@ -259,7 +259,7 @@ namespace Maneuver
           if (mustWait())
             steady_time = m_maneuver.duration;
           else
-            steady_time = Plans::c_fix_time;
+            steady_time = (unsigned)Plans::c_fix_time;
 
           signalProgress(rising_time + steady_time);
         }
