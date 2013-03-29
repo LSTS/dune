@@ -25,28 +25,30 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_IMC_HPP_INCLUDED_
-#define DUNE_IMC_HPP_INCLUDED_
+#ifndef DUNE_IMC_BLOB_HPP_INCLUDED_
+#define DUNE_IMC_BLOB_HPP_INCLUDED_
 
 namespace DUNE
 {
-  //! %IMC messages.
   namespace IMC
-  { }
-}
+  {
+    //! The IMC Blob is a byte array with the XML used to generate C++
+    //! code. The 'description' tags are removed and the XML document is
+    //! compressed with Gzip.
+    class Blob
+    {
+    public:
+      //! Retrieve pointer to blob data.
+      //! @return pointer to blob data.
+      static const unsigned char*
+      getData(void);
 
-#include <DUNE/IMC/Bus.hpp>
-#include <DUNE/IMC/Serialization.hpp>
-#include <DUNE/IMC/InlineMessage.hpp>
-#include <DUNE/IMC/MessageList.hpp>
-#include <DUNE/IMC/Message.hpp>
-#include <DUNE/IMC/Factory.hpp>
-#include <DUNE/IMC/Packet.hpp>
-#include <DUNE/IMC/Macros.hpp>
-#include <DUNE/IMC/AddressResolver.hpp>
-#include <DUNE/IMC/Parser.hpp>
-#include <DUNE/IMC/Exceptions.hpp>
-#include <DUNE/IMC/Definitions.hpp>
-#include <DUNE/IMC/Blob.hpp>
+      //! Retrieve size of the blob in bytes.
+      //! @return blob's size.
+      static unsigned int
+      getSize(void);
+    };
+  }
+}
 
 #endif
