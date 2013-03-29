@@ -134,7 +134,7 @@ namespace DUNE
         uint8_t
         getSize(void) const
         {
-          return name.size();
+          return (uint8_t)name.size();
         }
 
         void
