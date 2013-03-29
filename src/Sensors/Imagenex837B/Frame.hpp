@@ -382,7 +382,7 @@ namespace Sensors
 
         // Latitude.
         m_data[HDR_IDX_LATITUDE] = ' ';
-        m_data[HDR_IDX_LATITUDE + 1] = '0' + lat / 10;
+        m_data[HDR_IDX_LATITUDE + 1] = '0' + (uint8_t)lat / 10;
         m_data[HDR_IDX_LATITUDE + 2] = '0' + (uint8_t)lat % 10;
         m_data[HDR_IDX_LATITUDE + 3] = '.';
 
@@ -392,7 +392,7 @@ namespace Sensors
         m_data[HDR_IDX_LATITUDE + 6] = '.';
 
         unsigned dec = (unsigned)((min - (int)min) * 1e5);
-        m_data[HDR_IDX_LATITUDE + 7] = '0' + dec / 1e4;
+        m_data[HDR_IDX_LATITUDE + 7] = '0' + dec / 10000 % 10;
         m_data[HDR_IDX_LATITUDE + 8] = '0' + dec / 1000 % 10;
         m_data[HDR_IDX_LATITUDE + 9] = '0' + dec / 100 % 10;
         m_data[HDR_IDX_LATITUDE + 10] = '0' + dec / 10 % 10;
@@ -411,7 +411,7 @@ namespace Sensors
         m_data[HDR_IDX_LONGITUDE + 6] = '.';
 
         dec = (unsigned)((min - (int)min) * 1e5);
-        m_data[HDR_IDX_LONGITUDE + 7] = '0' + dec / 1e4;
+        m_data[HDR_IDX_LONGITUDE + 7] = '0' + dec / 10000 % 10;
         m_data[HDR_IDX_LONGITUDE + 8] = '0' + dec / 1000 % 10;
         m_data[HDR_IDX_LONGITUDE + 9] = '0' + dec / 100 % 10;
         m_data[HDR_IDX_LONGITUDE + 10] = '0' + dec / 10 % 10;
