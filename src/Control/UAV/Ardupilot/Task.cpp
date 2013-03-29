@@ -200,12 +200,12 @@ namespace Control
             m_TCP_sock = new TCPSocket;
             m_TCP_sock->connect(m_TCP_addr, m_TCP_port);
             m_TCP_sock->addToPoll(m_iom);
-            inf(DTR("ArduPilot interface initialized"));
+            inf(DTR("Ardupilot interface initialized"));
           }
           catch(std::exception& e)
           {
             m_TCP_sock = 0;
-            war("Connection failed, will try again");
+            war("Connection failed, will try again: %s", e.what());
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
           }
         }
@@ -492,8 +492,9 @@ namespace Control
             {
               return m_TCP_sock->read((char*) buf, sizeof(buf));
             }
-            catch (std::exception& e) {
-              DUNE_DBG("Ardupilot", "connection lost, retrying");
+            catch (std::exception& e)
+            {
+              DUNE_DBG("Ardupilot", "connection lost, retrying: " << e.what());
               m_TCP_sock->delFromPoll(m_iom);
               delete m_TCP_sock;
 
