@@ -106,7 +106,7 @@ namespace Maneuver
       void
       onInit(const IMC::FollowTrajectory* maneuver)
       {
-        int n = trajectory_points();
+        size_t n = trajectory_points();
 
         m_maneuver_speed.value = maneuver->speed;
         m_maneuver_speed.speed_units = maneuver->speed_units;
@@ -115,7 +115,7 @@ namespace Maneuver
 
         // if at least one of the waypoints has a time lower than zero
         // then trajectory's time constraints will be disregarded
-        for (int i = 0; i < n; i++)
+        for (size_t i = 0; i < n; i++)
         {
           if (point(i).t < 0)
           {
@@ -160,7 +160,7 @@ namespace Maneuver
         if (m_curr == 0)
           m_zero_time = Clock::get();
 
-        if (m_curr + 1 == trajectory_points())
+        if ((size_t)m_curr + 1 == trajectory_points())
         {
           signalCompletion();
           return;
@@ -243,7 +243,7 @@ namespace Maneuver
       bool
       isFeasible(void)
       {
-        int n = trajectory_points();
+        size_t n = trajectory_points();
 
         if (m_args.mps_control) // test feasibility and possible anomalies in trajectory
         {
@@ -252,7 +252,7 @@ namespace Maneuver
             return false;
 
           // testing for two dimensional trajectories
-          for (int i = 1; i < n; i++)
+          for (size_t i = 1; i < n; i++)
           {
             double required_speed = dist(i, i - 1) / (point(i).t - point(i - 1).t);
 

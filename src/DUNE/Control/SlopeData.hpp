@@ -274,13 +274,13 @@ namespace DUNE
         {
           // bottom range is not exactly the same as altitude due to pitch angle
           float brange = state.alt / (float)std::cos(state.theta);
-          float z = - frange * (float)std::sin(state.theta) - state.alt;
+          float z = - (float)frange * (float)std::sin(state.theta) - state.alt;
           float x = (float)(frange * std::cos(state.theta) - brange * std::sin(state.theta));
           m_curr_slope = - (float)std::atan2(z, x);
         }
 
         // debug
-        cparcel.p = frange;
+        cparcel.p = (float)frange;
         cparcel.i = (float)Angles::degrees(m_curr_slope);
         cparcel.setTimeStamp();
       };

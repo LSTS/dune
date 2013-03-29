@@ -285,7 +285,7 @@ namespace DUNE
 
         Coordinates::toPolar(v, &bearing, &range);
 
-        if (t_index < trajectory_points() - 1)
+        if ((size_t)t_index < trajectory_points() - 1)
           bearing += Coordinates::getBearing(p, m_traj[t_index + 1]);
         else
           bearing += Coordinates::getBearing(m_traj[t_index - 2], p);

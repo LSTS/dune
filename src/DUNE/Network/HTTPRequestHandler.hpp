@@ -104,7 +104,7 @@ namespace DUNE
       inline void
       sendData(TCPSocket* sock, const std::string& data, HeaderFieldsMap* hdr_fields = 0)
       {
-        sendData(sock, data.c_str(), data.size(), hdr_fields);
+        sendData(sock, data.c_str(), (int)data.size(), hdr_fields);
       }
 
       void

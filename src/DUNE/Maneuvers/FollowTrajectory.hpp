@@ -129,7 +129,7 @@ namespace DUNE
       }
 
       //! Get number of points in the trajetory.
-      inline int
+      inline size_t
       trajectory_points(void) const
       {
         return m_traj.size();

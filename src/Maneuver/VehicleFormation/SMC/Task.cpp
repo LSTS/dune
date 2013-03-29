@@ -191,7 +191,7 @@ namespace Maneuver
         {
           (void)maneuver;
 
-          int n = trajectory_points();
+          size_t n = trajectory_points();
 
           if (m_args.debug)
           {
@@ -222,7 +222,7 @@ namespace Maneuver
 
           // Log present and neighbor vehicle trajectories
 
-          for (int i = 0; i < n; i++)
+          for (size_t i = 0; i < n; i++)
           {
             if (m_args.debug)
             {
@@ -356,7 +356,7 @@ namespace Maneuver
             // finally update delta to be used on the function onPathCompletion()
             // m_delta += m_args.kf * (m_errf) - m_args.kt * m_delta;
             double traj_angle = std::atan2(point(trajectory_points() - 1, formation_index()).y - point(trajectory_points() - 2, formation_index()).y, point(trajectory_points() - 1, formation_index()).x - point(trajectory_points() - 2, formation_index()).x);
-            if (index + 1 < trajectory_points())
+            if ((size_t)index + 1 < trajectory_points())
               traj_angle = std::atan2(point(index + 1, formation_index()).y - point(index, formation_index()).y, point(index + 1, formation_index()).x - point(index, formation_index()).x);
 
             m_delta(0) = m_errf(0) * std::cos(traj_angle) + m_errf(1) * std::sin(traj_angle);
@@ -405,7 +405,7 @@ namespace Maneuver
           }
 
           // if the current waypoint is the last, then all is done
-          if (m_curr == trajectory_points())
+          if ((size_t)m_curr == trajectory_points())
           {
             if (m_args.mps_control)
               desiredSpeed(0.0, IMC::SUNITS_METERS_PS);

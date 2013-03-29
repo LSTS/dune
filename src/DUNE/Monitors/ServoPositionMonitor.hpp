@@ -34,7 +34,7 @@
 #include <DUNE/Monitors/DelayedTrigger.hpp>
 
 //! Minimum difference in degrees to account for accumulated change
-static const float c_min_diff = DUNE::Math::Angles::radians(3.0);
+static const float c_min_diff = (float)DUNE::Math::Angles::radians(3.0);
 
 namespace DUNE
 {

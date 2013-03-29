@@ -133,7 +133,7 @@ namespace DUNE
       point(int t_index, int f_index = -1) const;
 
       //! Get number of points in the trajetory.
-      inline int
+      inline size_t
       trajectory_points(void) const
       {
         return m_traj.size();
@@ -150,7 +150,7 @@ namespace DUNE
 
       //! Get number of participants in formation.
       //! @return number of participants in formation
-      inline int
+      inline size_t
       participants() const
       {
         return m_participants.size();
