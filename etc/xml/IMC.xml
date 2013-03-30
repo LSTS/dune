@@ -5208,43 +5208,6 @@
   	<field name="Longitude Reference" abbrev="lon" type="fp64_t"/>
   </message>
 
-  <message id="480" name="Follow Reference State" abbrev="FollowRefState" source="vehicle">
-
-  	<field name="Controlling Source" abbrev="control_src" type="uint16_t">
-  		<description>
-  	 	  The IMC identifier of the source system that is allowed to control the vehicle.
-  	 	  If the value ''0xFFFF'' is used, any system is allowed to command references.
-  		</description>
-  	</field>
-
-  	<field name="Controlling Entity" abbrev="control_ent" type="uint8_t">
-  		<description>
-  		  The entity identifier of the entity that is allowed to control the vehicle.
-  		  If the value ''0xFF'' is used, any entity is allowed to command references.
-  		</description>
-  	</field>
-
-  	<field name="Reference" abbrev="reference" type="message" message-type="Reference">
-  	  <description>Reference currently being followed.</description>
-  	</field>
-
-  	<field name="State" abbrev="state" type="uint8_t" unit="Enumerated" prefix="FR">
-  	  <value abbrev="WAIT" name="Waiting for first reference" id="1"/>
-  	  <value abbrev="GOTO" name="Going towards received reference" id="2"/>
-  	  <value abbrev="LOITER" name="Loitering after arriving at the reference" id="3"/>
-  	  <value abbrev="HOVER" name="Hovering after arriving at the reference" id="4"/>
-  	  <value abbrev="ELEVATOR" name="Moving in z after arriving at the target cylinder" id="5"/>
-  	  <value abbrev="TIMEOUT" name="Controlling system timed out" id="6"/>
-  	</field>
-
-  	<field name="Proximity" abbrev="proximity" type="uint8_t" unit="Bitfield" prefix="PROX">
-  	  <value abbrev="FAR" name="Far from the destination" id="0x01"/>
-  	  <value abbrev="XY_NEAR" name="Near in the horizontal plane" id="0x02"/>
-  	  <value abbrev="Z_NEAR" name="Near in the vertical plane" id="0x04"/>
-  	</field>
-
-  </message>
-  
  <message id="480" name="Follow Reference State" abbrev="FollowRefState" source="vehicle">
 
   	<field name="Controlling Source" abbrev="control_src" type="uint16_t">
