@@ -66,6 +66,8 @@ namespace Sensors
     {
       //! Serial port device.
       std::string uart_dev;
+      //! Sampling frequency.
+      unsigned sample_frq;
     };
 
     struct Task: public Tasks::Task
@@ -85,6 +87,11 @@ namespace Sensors
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
         .description("Serial port device used to communicate with the sensor");
+
+        param("Sampling Frequency", m_args.sample_frq)
+        .units(Units::Hertz)
+        .defaultValue("100")
+        .description("Sampling frequency");
       }
 
       ~Task(void)
