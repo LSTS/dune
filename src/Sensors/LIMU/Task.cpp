@@ -37,19 +37,21 @@ namespace Sensors
     //! Baud rate is constant.
     static const unsigned c_baud_rate = 115200;
 
-    //! Data structure.
-    struct Data
+    //! Sample.
+    struct Sample
     {
       //! Acceleration.
       float accel[3];
-      //! Angular Velocity.
-      float anvel[3];
+      //! Delta Angles.
+      float deltang[3];
+      //! Delta Velocity.
+      float deltvel[3];
       //! Euler Angles.
-      float euler[3];
-      //! Magnetometer.
       float magne[3];
       //! Temperature.
       float temp;
+      //! Flags.
+      uint16_t flags;
     };
 
     //! Calibration parameters.
