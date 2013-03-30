@@ -502,6 +502,18 @@ main(int argc, char** argv)
       }
     }
   }
+  else if (strcmp(argv[3], "PushEntityParameters") == 0)
+  {
+    IMC::PushEntityParameters* tmsg = new IMC::PushEntityParameters;
+    msg = tmsg;
+    tmsg->name = argv[4];
+  }
+  else if (strcmp(argv[3], "PopEntityParameters") == 0)
+  {
+    IMC::PopEntityParameters* tmsg = new IMC::PopEntityParameters;
+    msg = tmsg;
+    tmsg->name = argv[4];
+  }
 
   if (msg == NULL)
   {
