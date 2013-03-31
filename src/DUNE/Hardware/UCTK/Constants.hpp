@@ -42,7 +42,7 @@ namespace DUNE
       //! XOR checksum OR mask.
       static const uint8_t c_csum_mask = 0x80;
       //! Maximum size of message payload in bytes.
-      static const unsigned c_max_payload = 64;
+      static const unsigned c_max_payload = 96;
       //! Header size.
       static const unsigned c_header_size = 3;
 
