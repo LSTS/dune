@@ -56,6 +56,8 @@ namespace Sensors
       std::string uart_dev;
       //! Output frequency.
       unsigned output_frq;
+      //! Hard-iron correction factors.
+      std::vector<double> hard_iron;
     };
 
     struct Task: public Tasks::Task
@@ -89,6 +91,16 @@ namespace Sensors
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
         .description("Serial port device used to communicate with the sensor");
+
+        param("Output Frequency", m_args.output_frq)
+        .units(Units::Hertz)
+        .defaultValue("100")
+        .description("Output frequency");
+
+        param("Hard-Iron Calibration", m_args.hard_iron)
+        .units(Units::Gauss)
+        .size(3)
+        .description("Hard-Iron calibration parameters");
 
         param("Output Frequency", m_args.output_frq)
         .units(Units::Hertz)
@@ -134,6 +146,26 @@ namespace Sensors
           debug("failed");
 
         m_wdog.setTop(2.0);
+      }
+
+      void
+      getHardIronCorrection(double factors[3])
+      {
+        UCTK::Frame cmd;
+        int16_t tmp = 0;
+        for (unsigned i = 0; i < sizeof(factors) / sizeof(double); ++i)
+        {
+          cmd.get(tmp, i * 2);
+          factors[i] = tmp / 10e3;
+        }
+      }
+
+      void
+      setHardIronCorrection(const double factors[3])
+      {
+        UCTK::Frame cmd;
+        for (unsigned i = 0; i < sizeof(factors) / sizeof(double); ++i)
+          cmd.set<int16_t>(factors[i] * 10e3, i * 2);
       }
 
       void
