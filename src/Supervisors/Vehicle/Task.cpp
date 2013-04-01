@@ -323,7 +323,7 @@ namespace Supervisors
             break;
           case IMC::ManeuverControlState::MCS_ERROR:
             m_vs.last_error = IMC::Factory::getAbbrevFromId(m_vs.maneuver_type)
-            + " maneuver error: " + msg->info;
+            + DTR(" maneuver error: ") + msg->info;
             m_vs.last_error_time = msg->getTimeStamp();
             debug("%s", m_vs.last_error.c_str());
             changeMode(IMC::VehicleState::VS_SERVICE);
