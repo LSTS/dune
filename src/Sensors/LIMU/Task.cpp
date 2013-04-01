@@ -213,11 +213,11 @@ namespace Sensors
 
         // Angular Velocity.
         ptr += ByteCopy::fromLE(tmp, ptr);
-        m_ang_vel.x = tmp;
+        m_ang_vel.x = tmp * (Math::c_pi / 180.0);
         ptr += ByteCopy::fromLE(tmp, ptr);
-        m_ang_vel.y = tmp;
+        m_ang_vel.y = tmp * (Math::c_pi / 180.0);
         ptr += ByteCopy::fromLE(tmp, ptr);
-        m_ang_vel.z = tmp;
+        m_ang_vel.z = tmp * (Math::c_pi / 180.0);
         m_ang_vel.time = dev_tstamp;
         m_ang_vel.setTimeStamp(imc_tstamp);
         dispatch(m_ang_vel, DF_KEEP_TIME);
