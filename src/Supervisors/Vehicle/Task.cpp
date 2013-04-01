@@ -40,8 +40,9 @@ namespace Supervisors
     using DUNE_NAMESPACES;
 
     //! State description strings
-    static const char* c_state_desc[] =
-    {DTR("SERVICE"), DTR("CALIBRATION"), DTR("ERROR"), DTR("MANEUVERING"), DTR("EXTERNAL CONTROL")};
+    static const char* c_state_desc[] = {DTR("SERVICE"), DTR("CALIBRATION"),
+                                         DTR("ERROR"), DTR("MANEUVERING"),
+                                         DTR("EXTERNAL CONTROL")};
     //! Vehicle command description strings
     static const char* c_cmd_desc[] =
     {"maneuver start", "maneuver stop", "vehicle calibration"};
@@ -128,9 +129,9 @@ namespace Supervisors
       {
         (void)msg;
 
-        err(DTR("got abort request"));
         m_vs.last_error = DTR("got abort request");
         m_vs.last_error_time = Clock::getSinceEpoch();
+        err("%s", m_vs.last_error.c_str());
 
         if (!errorMode())
         {
@@ -312,7 +313,8 @@ namespace Supervisors
             }
             break;
           case IMC::ManeuverControlState::MCS_DONE:
-            debug("%s maneuver done", IMC::Factory::getAbbrevFromId(m_vs.maneuver_type).c_str());
+            debug("%s maneuver done",
+                  IMC::Factory::getAbbrevFromId(m_vs.maneuver_type).c_str());
             m_vs.maneuver_eta = 0;
             m_vs.flags |= IMC::VehicleState::VFLG_MANEUVER_DONE;
             dispatch(m_vs);
@@ -371,7 +373,8 @@ namespace Supervisors
       }
 
       void
-      answer(const IMC::VehicleCommand* cmd, IMC::VehicleCommand::TypeEnum type, const std::string& desc)
+      answer(const IMC::VehicleCommand* cmd, IMC::VehicleCommand::TypeEnum type,
+             const std::string& desc)
       {
         m_vc_reply.setDestination(cmd->getSource());
         m_vc_reply.setDestinationEntity(cmd->getSourceEntity());
