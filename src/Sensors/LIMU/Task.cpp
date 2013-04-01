@@ -166,14 +166,21 @@ namespace Sensors
         UCTK::Frame cmd;
         for (unsigned i = 0; i < sizeof(factors) / sizeof(double); ++i)
           cmd.set<int16_t>(factors[i] * 10e3, i * 2);
+        cmd.setSize(6);
+        // cmd.setId();
       }
 
       void
       decodeOutputData(const UCTK::Frame& frame)
       {
-        double tstamp = Clock::getSinceEpoch();
+        double imc_tstamp = Clock::getSinceEpoch();
         float tmp = 0;
         const uint8_t* ptr = frame.getData();
+
+        // Timestamp.
+        uint16_t tmp_u16 = 0;
+        ptr += ByteCopy::fromLE(tmp_u16, ptr);
+        double dev_tstamp = tmp_u16 / 1024.0;
 
         // Angular Velocity.
         ptr += ByteCopy::fromLE(tmp, ptr);
@@ -182,7 +189,8 @@ namespace Sensors
         m_ang_vel.y = tmp;
         ptr += ByteCopy::fromLE(tmp, ptr);
         m_ang_vel.z = tmp;
-        m_ang_vel.setTimeStamp(tstamp);
+        m_ang_vel.time = dev_tstamp;
+        m_ang_vel.setTimeStamp(imc_tstamp);
         dispatch(m_ang_vel, DF_KEEP_TIME);
 
         // Acceleration.
@@ -192,7 +200,8 @@ namespace Sensors
         m_accel.y = tmp;
         ptr += ByteCopy::fromLE(tmp, ptr);
         m_accel.z = tmp;
-        m_accel.setTimeStamp(tstamp);
+        m_accel.time = dev_tstamp;
+        m_accel.setTimeStamp(imc_tstamp);
         dispatch(m_accel, DF_KEEP_TIME);
 
         // Delta Angles.
@@ -202,7 +211,8 @@ namespace Sensors
         m_delt_ang.y = tmp;
         ptr += ByteCopy::fromLE(tmp, ptr);
         m_delt_ang.z = tmp;
-        m_delt_ang.setTimeStamp(tstamp);
+        m_delt_ang.time = dev_tstamp;
+        m_delt_ang.setTimeStamp(imc_tstamp);
         dispatch(m_delt_ang, DF_KEEP_TIME);
 
         // Delta Velocity.
@@ -212,7 +222,8 @@ namespace Sensors
         m_delt_vel.y = tmp;
         ptr += ByteCopy::fromLE(tmp, ptr);
         m_delt_vel.z = tmp;
-        m_delt_vel.setTimeStamp(tstamp);
+        m_delt_vel.time = dev_tstamp;
+        m_delt_vel.setTimeStamp(imc_tstamp);
         dispatch(m_delt_vel, DF_KEEP_TIME);
 
         // Magnetic Field.
@@ -222,7 +233,8 @@ namespace Sensors
         m_magn.y = tmp;
         ptr += ByteCopy::fromLE(tmp, ptr);
         m_magn.z = tmp;
-        m_magn.setTimeStamp(tstamp);
+        m_magn.time = dev_tstamp;
+        m_magn.setTimeStamp(imc_tstamp);
         dispatch(m_magn, DF_KEEP_TIME);
 
         // Euler Angles.
@@ -233,19 +245,21 @@ namespace Sensors
         ptr += ByteCopy::fromLE(tmp, ptr);
         m_euler.psi_magnetic = tmp;
         m_euler.psi = tmp;
-        m_euler.setTimeStamp(tstamp);
+        m_euler.time = dev_tstamp;
+        m_euler.setTimeStamp(imc_tstamp);
         dispatch(m_euler, DF_KEEP_TIME);
 
         // Temperature.
         ptr += ByteCopy::fromLE(tmp, ptr);
         m_temp.value = tmp;
-        m_temp.setTimeStamp(tstamp);
+        m_temp.setTimeStamp(imc_tstamp);
         dispatch(m_temp, DF_KEEP_TIME);
 
         // Error flags.
         uint8_t error = *ptr;
 
-        spew("%u | % 0.8f | % 0.8f | % 0.8f | % 0.8f | % 0.8f | % 0.8f | MAG: % 0.8f | % 0.8f | % 0.8f",
+        spew("%0.8f, %u, % 0.8f, % 0.8f, % 0.8f, % 0.8f, % 0.8f, % 0.8f, % 0.8f, % 0.8f, % 0.8f",
+             dev_tstamp,
              error,
              m_accel.x,
              m_accel.y,
