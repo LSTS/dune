@@ -60,6 +60,10 @@ namespace DUNE
         void
         write(const uint8_t* data, unsigned data_size)
         {
+          for (unsigned i = 0; i < data_size; ++i)
+            fprintf(stderr, " %02X", data[i]);
+          fprintf(stderr, "\n");
+
           doWrite(data, data_size);
         }
 
@@ -88,6 +92,9 @@ namespace DUNE
 
         bool
         command(UCTK::Message& msg, double timeout = 1.0);
+
+        bool
+        sendFrame(Frame& frame, double timeout = 1.0);
 
         void
         enterBootloader(void);
@@ -143,6 +150,9 @@ namespace DUNE
 
         bool
         readReply(Message& msg, double timeout);
+
+        bool
+        readReply(Frame& msg, double timeout);
       };
     }
   }
