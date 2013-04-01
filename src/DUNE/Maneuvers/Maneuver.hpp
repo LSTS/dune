@@ -74,23 +74,14 @@ namespace DUNE
       { }
 
       //! On task activation
+      //! Should be used only by parent class Maneuver
       void
-      onActivation(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        onManeuverActivation();
-      }
+      onActivation(void);
 
       //! On task deactivation
+      //! Should be used only by parent class Maneuver
       void
-      onDeactivation(void)
-      {
-        onManeuverDeactivation();
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-        debug("disabling");
-
-        unlock();
-      }
+      onDeactivation(void);
 
       //! Method fired on maneuver startup.
       //! It performs some initialization, then delegates handling on

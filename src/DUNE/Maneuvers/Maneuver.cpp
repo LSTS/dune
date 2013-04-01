@@ -46,6 +46,23 @@ namespace DUNE
     Maneuver::~Maneuver(void)
     { }
 
+    void
+    Maneuver::onActivation(void)
+    {
+      setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      onManeuverActivation();
+    }
+
+    void
+    Maneuver::onDeactivation(void)
+    {
+      onManeuverDeactivation();
+      setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      debug("disabling");
+
+      unlock();
+    }
+
     bool
     Maneuver::tryLock(void)
     {
