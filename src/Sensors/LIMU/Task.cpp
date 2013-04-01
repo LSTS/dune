@@ -28,6 +28,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "ErrorHandling.hpp"
+
 namespace Sensors
 {
   namespace LIMU
@@ -49,9 +52,7 @@ namespace Sensors
       //! Run self-test.
       PKT_ID_SELF_TEST    = 3,
       //! Hard-iron calibration parameters.
-      PKT_ID_HARD_IRON    = 4,
-      //! Raw sample data.
-      PKT_ID_OUTPUT_RAW   = 5
+      PKT_ID_HARD_IRON    = 4
     };
 
     //! %Task arguments.
@@ -85,10 +86,16 @@ namespace Sensors
       IMC::Temperature m_temp;
       //! Serial port device.
       UCTK::InterfaceUART* m_uart;
-      //! Watchdog.
-      Counter<double> m_wdog;
+      //! UCTK parser.
+      UCTK::Parser m_parser;
       //! Scratch frame.
       UCTK::Frame m_frame;
+      //! Scratch buffer.
+      uint8_t m_buffer[128];
+      //! Watchdog.
+      Counter<double> m_wdog;
+      //! Error counts.
+      ErrorCounts m_err_counts;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -121,12 +128,6 @@ namespace Sensors
       }
 
       void
-      onResourceRelease(void)
-      {
-        Memory::clear(m_uart);
-      }
-
-      void
       onResourceAcquisition(void)
       {
         try
@@ -140,13 +141,19 @@ namespace Sensors
       }
 
       void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_uart);
+      }
+
+      void
       onResourceInitialization(void)
       {
         if (!setOutputFrequency(m_args.output_frq))
-          throw RestartNeeded("failed to configure output frequency", 5);
+          throw RestartNeeded(DTR("failed to configure output frequency"), 5);
 
-        if (!setHardIronCorrection(m_args.hard_iron))
-          throw RestartNeeded("failed to set hard-iron correction factors", 5);
+        if (!setHardIronFactors(m_args.hard_iron))
+          throw RestartNeeded(DTR("failed to set hard-iron correction factors"), 5);
 
         m_wdog.setTop(2.0);
       }
@@ -154,25 +161,26 @@ namespace Sensors
       bool
       setOutputFrequency(uint8_t frequency)
       {
-        m_frame.setId(PKT_ID_OUTPUT_CONF);
-        m_frame.setPayloadSize(1);
-        m_frame.set(frequency, 0);
-        return m_uart->sendFrame(m_frame);
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_OUTPUT_CONF);
+        frame.setPayloadSize(1);
+        frame.set(frequency, 0);
+        return m_uart->sendFrame(frame);
       }
 
       std::vector<double>
-      getHardIronCorrection(void)
+      getHardIronFactors(void)
       {
         std::vector<double> factors;
 
-        m_frame.setId(PKT_ID_HARD_IRON);
-        m_frame.setPayloadSize(0);
-        if (m_uart->sendFrame(m_frame))
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_HARD_IRON);
+        if (m_uart->sendFrame(frame))
         {
           int16_t tmp = 0;
           for (unsigned i = 0; i < c_hard_iron_count; ++i)
           {
-            m_frame.get(tmp, i * 2);
+            frame.get(tmp, i * 2);
             factors.push_back(tmp / 10e3);
           }
         }
@@ -181,91 +189,14 @@ namespace Sensors
       }
 
       bool
-      setHardIronCorrection(const std::vector<double>& factors)
+      setHardIronFactors(const std::vector<double>& factors)
       {
-        m_frame.setId(PKT_ID_HARD_IRON);
-        m_frame.setPayloadSize(6);
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_HARD_IRON);
+        frame.setPayloadSize(6);
         for (unsigned i = 0; i < c_hard_iron_count; ++i)
-          m_frame.set<int16_t>(factors[i] * 10e3, i * 2);
-        return m_uart->sendFrame(m_frame);
-      }
-
-      void
-      decodeOutputRaw(const UCTK::Frame& frame)
-      {
-        uint16_t tmp_u16 = 0;
-        int16_t tmp_s16 = 0;
-        const uint8_t* ptr = frame.getPayload();
-
-        // sys_e_flag (12).
-        ptr += ByteCopy::fromLE(tmp_u16, ptr);
-        printf(", %04x", tmp_u16);
-
-        // gyro_x.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        // gyro_y.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        // gyro_z.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        // accl_x.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        // accl_y.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        // accl_z.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        // deltang_x.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        // deltang_y.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        // deltang_z.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        // deltvel_x.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        // deltvel_y.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        // deltvel_z.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        // magn_x.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        // magn_y.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        // magn_z.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        // temp.
-        ptr += ByteCopy::fromLE(tmp_s16, ptr);
-        printf(", %d", tmp_s16);
-
-        printf("\n");
+          frame.set<int16_t>(factors[i] * 10e3, i * 2);
+        return m_uart->sendFrame(frame);
       }
 
       void
@@ -273,10 +204,10 @@ namespace Sensors
       {
         double imc_tstamp = Clock::getSinceEpoch();
         float tmp = 0;
+        uint16_t tmp_u16 = 0;
         const uint8_t* ptr = frame.getPayload();
 
         // Timestamp.
-        uint16_t tmp_u16 = 0;
         ptr += ByteCopy::fromLE(tmp_u16, ptr);
         double dev_tstamp = tmp_u16 / 1024.0;
 
@@ -354,24 +285,19 @@ namespace Sensors
         dispatch(m_temp, DF_KEEP_TIME);
 
         // Error flags.
-        uint8_t error = *ptr;
+        ptr += ByteCopy::fromLE(tmp_u16, ptr);
 
-#if 1
-        printf("%0.8f, %u, % 0.8f, % 0.8f, % 0.8f, % 0.8f, % 0.8f, % 0.8f, % 0.8f, % 0.8f, % 0.8f",
-               dev_tstamp,
-               error,
-               m_accel.x,
-               m_accel.y,
-               m_accel.z,
-               Angles::degrees(m_euler.phi),
-               Angles::degrees(m_euler.theta),
-               Angles::degrees(m_euler.psi),
-               m_magn.x,
-               m_magn.y,
-               m_magn.z
-               );
-        printf("\n");
-#endif
+        if (tmp_u16 & ERR_FLAG_WDOG_TOUT)
+          m_err_counts.increment(ERR_FLAG_WDOG_TOUT);
+
+        if (tmp_u16 & ERR_FLAG_PROC_OVR)
+          m_err_counts.increment(ERR_FLAG_PROC_OVR);
+
+        if (tmp_u16 & ERR_FLAG_SENS_OVR)
+          m_err_counts.increment(ERR_FLAG_SENS_OVR);
+
+        if (tmp_u16 & ERR_FLAG_SPI_ERR)
+          m_err_counts.increment(ERR_FLAG_SPI_ERR);
 
         m_wdog.reset();
       }
@@ -381,37 +307,33 @@ namespace Sensors
       {
         if (frame.getId() == PKT_ID_OUTPUT_DATA)
           decodeOutputData(frame);
-        else if (frame.getId() == PKT_ID_OUTPUT_RAW)
-          decodeOutputRaw(frame);
+      }
+
+      void
+      readInput(void)
+      {
+        unsigned rv = m_uart->read(m_buffer, sizeof(m_buffer));
+        for (unsigned i = 0; i < rv; ++i)
+        {
+          if (m_parser.parse(m_buffer[i], m_frame))
+            decode(m_frame);
+        }
       }
 
       void
       onMain(void)
       {
-        uint8_t bfr[128];
-        UCTK::Parser parser;
-        UCTK::Frame frame;
-
         while (!stopping())
         {
           consumeMessages();
 
+          if (m_uart->poll(1.0))
+            readInput();
+
           if (m_wdog.overflow())
           {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-            throw RestartNeeded("input timeout", 1);
-          }
-
-          if (!m_uart->poll(1.0))
-            continue;
-
-          unsigned rv = m_uart->read(bfr, sizeof(bfr));
-          for (unsigned i = 0; i < rv; ++i)
-          {
-            if (parser.parse(bfr[i], frame))
-            {
-              decode(frame);
-            }
+            throw RestartNeeded(DTR(Status::getString(Status::CODE_COM_ERROR)), 5);
           }
         }
       }
