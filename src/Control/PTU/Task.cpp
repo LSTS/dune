@@ -140,7 +140,7 @@ namespace Control
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
-        inf("Estimated State arrived from %d", msg->getSource());
+        spew("Estimated State arrived from %d", msg->getSource());
         Matrix rel_pos_ned = Matrix(3,1);
         Matrix rel_vel_ned = Matrix(3,1);
         Matrix tmp_ptu_rot;
@@ -189,12 +189,12 @@ namespace Control
             m_ptu_lat *=  deg2rad;
             m_ptu_lon *=  deg2rad;
 
-            WGS84::displacement(m_estate_ref.lat, m_estate_ref.lon, -m_estate_ref.depth, m_ptu_lat, m_ptu_lon, m_ptu_height, &m_ptu_pos(0,0), &m_ptu_pos(1,0));
+            WGS84::displacement(m_estate_ref.lat, m_estate_ref.lon, -m_estate_ref.height, m_ptu_lat, m_ptu_lon, m_ptu_height, &m_ptu_pos(0,0), &m_ptu_pos(1,0));
 
             // Relative position.
             rel_pos_ned(0,0) = (m_trg_pos(0,0) - m_ptu_pos(0,0));
             rel_pos_ned(1,0) = (m_trg_pos(1,0) - m_ptu_pos(1,0));
-            rel_pos_ned(2,0) = (m_trg_pos(2,0) - m_ptu_height - m_estate.depth);
+            rel_pos_ned(2,0) = (m_trg_pos(2,0) - m_ptu_height - m_estate.height);
 
             // Relative velocity.
             rel_vel_ned(0,0) = m_trg_vel(0,0);
@@ -228,7 +228,7 @@ namespace Control
 
           // Pan and tilt computation.
           tmp_hor_dist_sq = (rel_pos_body(0,0) * rel_pos_body(0,0)) + (rel_pos_body(1,0)*rel_pos_body(1,0));
-          cmd_pan = std::atan2(rel_pos_body(1,0), rel_pos_body(2,0));
+          cmd_pan = std::atan2(rel_pos_body(1,0), rel_pos_body(0,0));
           cmd_tilt = std::atan(-rel_pos_body(2,0)/std::sqrt(tmp_hor_dist_sq)); // BENCATEL - Verificar se indice (2,0) está certo - era (3,0) que não existe
           // Generating PTU commands.
           m_ra.setSourceEntity(getEntityId());
@@ -273,8 +273,8 @@ namespace Control
           m_estate_ref = m_estate;
           m_trg_flag = true;
 
-          WGS84::displacement(m_estate.lat, m_estate.lon, -m_estate.depth, msg->lat, msg->lon, -msg->z, &m_trg_pos(0,0), &m_trg_pos(1,0));
-          m_trg_pos(2,0) = msg->z + m_estate.depth;
+          WGS84::displacement(m_estate.lat, m_estate.lon, -m_estate.height, msg->lat, msg->lon, -msg->z, &m_trg_pos(0,0), &m_trg_pos(1,0));
+          m_trg_pos(2,0) = msg->z + m_estate.height;
         }
       }
 
