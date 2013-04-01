@@ -46,5 +46,6 @@ namespace DUNE
 #include <DUNE/Utils/String.hpp>
 #include <DUNE/Utils/TupleList.hpp>
 #include <DUNE/Utils/Utils.hpp>
+#include <DUNE/Utils/XML.hpp>
 
 #endif
