@@ -50,18 +50,6 @@ namespace DUNE
         }
 
         void
-        setSize(uint8_t size)
-        {
-          m_data[1] = size;
-        }
-
-        uint8_t
-        getSize(void) const
-        {
-          return m_data[1];
-        }
-
-        void
         setId(uint8_t id)
         {
           m_data[2] = id;
@@ -73,20 +61,44 @@ namespace DUNE
           return m_data[2];
         }
 
+        const uint8_t*
+        getData(void) const
+        {
+          return m_data;
+        }
+
+        uint8_t
+        getSize(void) const
+        {
+          return c_header_size + c_footer_size + getPayloadSize();
+        }
+
+        void
+        setPayloadSize(uint8_t size)
+        {
+          m_data[1] = size;
+        }
+
+        uint8_t
+        getPayloadSize(void) const
+        {
+          return m_data[1];
+        }
+
         uint8_t*
-        getData(void)
+        getPayload(void)
         {
           return m_data + c_header_size;
         }
 
         const uint8_t*
-        getData(void) const
+        getPayload(void) const
         {
           return m_data + c_header_size;
         }
 
         void
-        setData(uint8_t byte, unsigned index)
+        setPayload(uint8_t byte, unsigned index)
         {
           m_data[c_header_size + index] = byte;
         }
@@ -108,7 +120,7 @@ namespace DUNE
         void
         computeCRC(void)
         {
-          uint8_t size = c_header_size + getSize();
+          uint8_t size = c_header_size + getPayloadSize();
           m_data[size] = Algorithms::XORChecksum::compute(m_data, size) | 0x80;
         }
 

@@ -45,9 +45,10 @@ namespace DUNE
       static const unsigned c_max_payload = 96;
       //! Header size.
       static const unsigned c_header_size = 3;
-
+      //! Footer size.
+      static const unsigned c_footer_size = 1;
       //! Framing overhead in bytes.
-      static const unsigned c_frame_overhead = 4;
+      static const unsigned c_frame_overhead = c_header_size + c_footer_size;
       //! Default baud rate.
       static const unsigned c_baud_default = 115200;
       //! Bootloader baud rate.

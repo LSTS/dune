@@ -70,6 +70,7 @@ namespace DUNE
       {
         uint8_t csum = (c_sync ^ msg.getId()) | 0x80;
         uint8_t frame[] = {c_sync, 0, msg.getId(), csum};
+
         write(frame, sizeof(frame));
 
         return readReply(msg, timeout);
@@ -94,6 +95,53 @@ namespace DUNE
       }
 
       bool
+      Interface::sendFrame(Frame& frame, double timeout)
+      {
+        frame.computeCRC();
+
+        write(frame.getData(), frame.getSize());
+
+        if (timeout < 0)
+          return true;
+
+        return readReply(frame, timeout);
+      }
+
+      bool
+      Interface::readReply(Frame& frame, double timeout)
+      {
+        unsigned reply_id = frame.getId();
+
+        Time::Counter<double> timer(timeout);
+        while (!timer.overflow())
+        {
+          if (!poll(timer.getRemaining()))
+            break;
+
+          unsigned rv = read(m_buffer, sizeof(m_buffer));
+          for (unsigned i = 0; i < rv; ++i)
+          {
+            if (!m_parser.parse(m_buffer[i], frame))
+              continue;
+
+            if (frame.getId() == MSG_ERR)
+            {
+              Error error;
+              error.deserialize(frame.getPayload(), frame.getPayloadSize());
+              throw std::runtime_error(error.error);
+            }
+
+            if (frame.getId() == reply_id)
+              return true;
+
+            m_queue.push(new Frame(frame));
+          }
+        }
+
+        return false;
+      }
+
+      bool
       Interface::readReply(Message& msg, double timeout)
       {
         Frame frame;
@@ -113,13 +161,13 @@ namespace DUNE
             if (frame.getId() == MSG_ERR)
             {
               Error error;
-              error.deserialize(frame.getData(), frame.getSize());
+              error.deserialize(frame.getPayload(), frame.getPayloadSize());
               throw std::runtime_error(error.error);
             }
 
             if (frame.getId() == msg.getId())
             {
-              msg.deserialize(frame.getData(), frame.getSize());
+              msg.deserialize(frame.getPayload(), frame.getPayloadSize());
               return true;
             }
 
