@@ -25,27 +25,36 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_UTILS_HPP_INCLUDED_
-#define DUNE_UTILS_HPP_INCLUDED_
+#ifndef DUNE_UTILS_XML_HPP_INCLUDED_
+#define DUNE_UTILS_XML_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <string>
+#include <ostream>
 
 namespace DUNE
 {
-  //! General purpose types and routines
   namespace Utils
-  { }
-}
+  {
+    class XML
+    {
+    public:
+      static std::string
+      escapePredefinedEntities(const std::string& str);
 
-#include <DUNE/Utils/ByteBuffer.hpp>
-#include <DUNE/Utils/ByteCopy.hpp>
-#include <DUNE/Utils/CircularBuffer.hpp>
-#include <DUNE/Utils/Exceptions.hpp>
-#include <DUNE/Utils/NMEAParser.hpp>
-#include <DUNE/Utils/OptionParser.hpp>
-#include <DUNE/Utils/RawFifo.hpp>
-#include <DUNE/Utils/StateMachine.hpp>
-#include <DUNE/Utils/String.hpp>
-#include <DUNE/Utils/TupleList.hpp>
-#include <DUNE/Utils/Utils.hpp>
-#include <DUNE/Utils/XML.hpp>
+      static void
+      writeTag(const std::string& name, const std::string& value, std::ostream& os)
+      {
+        os << "<" << name << ">" << escapePredefinedEntities(value) << "</" << name << ">";
+      }
+
+      static void
+      writeAttr(const std::string& name, const std::string& value, std::ostream& os)
+      {
+        os << " " << name << "=\"" << escapePredefinedEntities(value) << "\"";
+      }
+    };
+  }
+}
 
 #endif

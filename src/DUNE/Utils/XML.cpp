@@ -25,27 +25,43 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_UTILS_HPP_INCLUDED_
-#define DUNE_UTILS_HPP_INCLUDED_
+// DUNE headers.
+#include <DUNE/Utils/XML.hpp>
 
 namespace DUNE
 {
-  //! General purpose types and routines
   namespace Utils
-  { }
+  {
+    std::string
+    XML::escapePredefinedEntities(const std::string& str)
+    {
+      std::string escaped;
+      for (size_t i = 0; i < str.size(); ++i)
+      {
+        switch (str[i])
+        {
+          case '"':
+            escaped.append("&quot;");
+            break;
+          case '&':
+            escaped.append("&amp;");
+            break;
+          case '\'':
+            escaped.append("&apos;");
+            break;
+          case '<':
+            escaped.append("&lt;");
+            break;
+          case '>':
+            escaped.append("&gt;");
+            break;
+          default:
+            escaped.push_back(str[i]);
+            break;
+        }
+      }
+
+      return escaped;
+    }
+  }
 }
-
-#include <DUNE/Utils/ByteBuffer.hpp>
-#include <DUNE/Utils/ByteCopy.hpp>
-#include <DUNE/Utils/CircularBuffer.hpp>
-#include <DUNE/Utils/Exceptions.hpp>
-#include <DUNE/Utils/NMEAParser.hpp>
-#include <DUNE/Utils/OptionParser.hpp>
-#include <DUNE/Utils/RawFifo.hpp>
-#include <DUNE/Utils/StateMachine.hpp>
-#include <DUNE/Utils/String.hpp>
-#include <DUNE/Utils/TupleList.hpp>
-#include <DUNE/Utils/Utils.hpp>
-#include <DUNE/Utils/XML.hpp>
-
-#endif
