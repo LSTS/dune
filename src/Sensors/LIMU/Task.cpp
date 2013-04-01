@@ -213,11 +213,11 @@ namespace Sensors
 
         // Angular Velocity.
         ptr += ByteCopy::fromLE(tmp, ptr);
-        m_ang_vel.x = tmp * (Math::c_pi / 180.0);
+        m_ang_vel.x = Angles::radians(tmp);
         ptr += ByteCopy::fromLE(tmp, ptr);
-        m_ang_vel.y = tmp * (Math::c_pi / 180.0);
+        m_ang_vel.y = Angles::radians(tmp);
         ptr += ByteCopy::fromLE(tmp, ptr);
-        m_ang_vel.z = tmp * (Math::c_pi / 180.0);
+        m_ang_vel.z = Angles::radians(tmp);
         m_ang_vel.time = dev_tstamp;
         m_ang_vel.setTimeStamp(imc_tstamp);
         dispatch(m_ang_vel, DF_KEEP_TIME);
@@ -235,11 +235,11 @@ namespace Sensors
 
         // Delta Angles.
         ptr += ByteCopy::fromLE(tmp, ptr);
-        m_delt_ang.x = tmp;
+        m_delt_ang.x = Angles::radians(tmp);
         ptr += ByteCopy::fromLE(tmp, ptr);
-        m_delt_ang.y = tmp;
+        m_delt_ang.y = Angles::radians(tmp);
         ptr += ByteCopy::fromLE(tmp, ptr);
-        m_delt_ang.z = tmp;
+        m_delt_ang.z = Angles::radians(tmp);
         m_delt_ang.time = dev_tstamp;
         m_delt_ang.setTimeStamp(imc_tstamp);
         dispatch(m_delt_ang, DF_KEEP_TIME);
