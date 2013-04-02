@@ -120,7 +120,7 @@ namespace DUNE
           return false;
 
         port.read(&byte, 1);
-        //fprintf(stderr, "BYTE: %02X\n", byte);
+        //std::fprintf(stderr, "BYTE: %02X\n", byte);
         port.flushInput();
 
         return (byte == c_sync);

@@ -61,8 +61,8 @@ namespace DUNE
         write(const uint8_t* data, unsigned data_size)
         {
           for (unsigned i = 0; i < data_size; ++i)
-            fprintf(stderr, " %02X", data[i]);
-          fprintf(stderr, "\n");
+            std::fprintf(stderr, " %02X", data[i]);
+          std::fprintf(stderr, "\n");
 
           doWrite(data, data_size);
         }
