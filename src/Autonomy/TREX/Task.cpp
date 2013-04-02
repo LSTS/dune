@@ -45,7 +45,7 @@ namespace Autonomy
       unsigned trex_id;
     };
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task : public DUNE::Tasks::Task
     {
       //! Announce cache.
       std::map<unsigned int, IMC::Announce> lastAnnounces;
@@ -57,17 +57,31 @@ namespace Autonomy
       Arguments m_args;
       //! Last HeartBeat.
       double m_last_heartbeat;
+      //! Last vehicle state
+      IMC::VehicleState m_last_vehicle_state;
+      //! Last plan control state
+      IMC::PlanControlState m_last_plan_state;
+      //! Stores state of attached TREX
+      bool m_trex_connected;
+      //! Stores if TREX is currently controlling the vehicle
+      bool m_trex_control;
 
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
-        m_last_heartbeat(Time::Clock::get())
+      Task(const std::string& name, Tasks::Context& ctx) :
+          DUNE::Tasks::Task(name, ctx), m_last_heartbeat(Time::Clock::get()), m_trex_connected(
+              false), m_trex_control(false)
       {
-        param("TREX ID", m_args.trex_id)
-        .defaultValue("65000");
+        // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_USER, true);
+
+        param("TREX ID", m_args.trex_id).defaultValue("65000");
 
         // Register consumers.
         bind<IMC::Announce>(this);
         bind<IMC::Heartbeat>(this);
+        bind<IMC::VehicleState>(this);
+        bind<IMC::PlanControlState>(this);
+
       }
 
       void
@@ -78,8 +92,11 @@ namespace Autonomy
         if (latency > 10)
         {
           std::stringstream sstm;
-          sstm << String::str(DTR("TREX disconnected for more than %d seconds"), (int)latency);
+          sstm
+              << String::str(DTR("TREX disconnected for more than %d seconds"),
+                             (int)latency);
           setEntityState(IMC::EntityState::ESTA_ERROR, sstm.str());
+          m_trex_connected = false;
         }
         else
         {
@@ -93,6 +110,7 @@ namespace Autonomy
         if (msg->getSource() == m_args.trex_id)
         {
           m_last_heartbeat = Time::Clock::get();
+          m_trex_connected = true;
         }
 
         if (lastAnnounces.count(msg->getSource()))
@@ -112,6 +130,99 @@ namespace Autonomy
         m_mutex.lock();
         lastAnnounces[msg->getSource()] = *msg;
         m_mutex.unlock();
+      }
+
+      void
+      consume(const IMC::VehicleState * msg)
+      {
+        m_last_vehicle_state = *msg;
+      }
+
+      void
+      consume(const IMC::PlanControlState * msg)
+      {
+        m_last_plan_state = *msg;
+
+        m_trex_control = msg->state == IMC::PlanControlState::PCS_EXECUTING
+            && msg->plan_id == "trex_plan";
+      }
+
+      void
+      onActivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        checkState();
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        checkState();
+      }
+
+      // Start a FollowReference maneuver that is controlled by TREX
+      void
+      startExecution(void)
+      {
+        inf("Starting TREX plan...");
+        IMC::PlanControl startPlan;
+        startPlan.type = IMC::PlanControl::PC_REQUEST;
+        startPlan.op = IMC::PlanControl::PC_START;
+        startPlan.plan_id = "trex_plan";
+        IMC::FollowReference man;
+        man.control_ent = 255;
+        man.control_src = m_args.trex_id;
+        man.altitude_interval = 2;
+        man.timeout = 60;
+
+        IMC::PlanSpecification spec;
+
+        spec.plan_id = "trex_plan";
+        spec.start_man_id = "follow_trex";
+
+        IMC::PlanManeuver pm;
+        pm.data.set(man);
+        pm.maneuver_id = "follow_trex";
+        spec.maneuvers.push_back(pm);
+        startPlan.arg.set(spec);
+        startPlan.request_id = 0;
+        startPlan.flags = 0;
+
+        dispatch(startPlan);
+      }
+
+      // Stop ongoing FollowReference maneuver
+      void
+      stopExecution(void)
+      {
+        inf("Stopping...");
+        IMC::PlanControl stopPlan;
+        stopPlan.type = IMC::PlanControl::PC_REQUEST;
+        stopPlan.op = IMC::PlanControl::PC_STOP;
+        stopPlan.plan_id = "trex_plan";
+        dispatch(stopPlan);
+      }
+
+      void
+      checkState(void)
+      {
+        m_trex_control = m_last_plan_state.plan_id == "trex_plan"
+            && m_last_plan_state.state == IMC::PlanControlState::PCS_EXECUTING;
+
+        inf("isActive() = %d", isActive());
+        if (m_trex_control)
+        {
+//          if (!isActive())
+//            stopExecution();
+        }
+        else
+        {
+          if (/*isActive() &&*/ m_trex_connected
+              && m_last_vehicle_state.op_mode == IMC::VehicleState::VS_SERVICE)
+
+            startExecution();
+        }
       }
 
       void
@@ -153,6 +264,8 @@ namespace Autonomy
           }
 
           dispatch(links);
+
+          checkState();
 
           Delay::wait(1.0);
         }
