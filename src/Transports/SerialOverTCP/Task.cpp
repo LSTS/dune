@@ -106,13 +106,14 @@ namespace Transports
         std::list<TCPSocket*>::iterator itr = m_clients.begin();
         for (; itr != m_clients.end(); ++itr)
           delete *itr;
+        m_clients.clear();
       }
 
       void
       dispatchToClients(const char* bfr, unsigned bfr_len)
       {
         std::list<TCPSocket*>::iterator itr = m_clients.begin();
-        for (; itr != m_clients.end(); ++itr)
+        while (itr != m_clients.end())
         {
           try
           {
