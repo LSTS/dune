@@ -169,6 +169,7 @@ namespace Control
           bind<SimulatedState>(this);
           bind<Acceleration>(this);
           bind<IdleManeuver>(this);
+          bind<ControlLoops>(this);
 
           // Misc. initialization
           m_last_pkt_time = 0; // time of last packet from Ardupilot
@@ -720,6 +721,21 @@ namespace Control
           m_lon = (float)(gp.lon * 1e-07);
           m_alt = (float)(gp.alt * 1e-03);
 
+          time_t fix_time(gp.time_boot_ms / 1e03);
+
+          debug("Raw Time: %u", gp.time_boot_ms);
+
+          struct tm* fix_utc = gmtime(&fix_time);
+
+          m_fix.utc_time = 3600 * (float)fix_utc->tm_hour +
+                           60 * (float)fix_utc->tm_min +
+                           (float)fix_utc->tm_sec +
+                           ((float)(gp.time_boot_ms % 1000) / 1000);
+
+          m_fix.utc_day = fix_utc->tm_mday;
+          m_fix.utc_month = fix_utc->tm_mon + 1;
+          m_fix.utc_year = 1900 + fix_utc->tm_year;
+
 
           double distance_to_ref = WGS84::distance(ref_lat,ref_lon,ref_hei,
               lat,lon,hei);
@@ -804,20 +820,20 @@ namespace Control
           m_fix.height = (double)gps_raw.alt * 0.001;
           m_fix.satellites = gps_raw.satellites_visible;
 
-          time_t fix_time(gps_raw.time_usec / 1e06);
-
-          debug("Raw Time: %llu", gps_raw.time_usec);
-
-          struct tm* fix_utc = gmtime(&fix_time);
-
-          m_fix.utc_time = 3600 * (float)fix_utc->tm_hour +
-                           60 * (float)fix_utc->tm_min +
-                           (float)fix_utc->tm_sec +
-                           ((float)(gps_raw.time_usec % 1000000) / 1000000);
-
-          m_fix.utc_day = fix_utc->tm_mday;
-          m_fix.utc_month = fix_utc->tm_mon + 1;
-          m_fix.utc_year = 1900 + fix_utc->tm_year;
+//          time_t fix_time(gps_raw.time_usec / 1e06);
+//
+//          debug("Raw Time: %llu", gps_raw.time_usec);
+//
+//          struct tm* fix_utc = gmtime(&fix_time);
+//
+//          m_fix.utc_time = 3600 * (float)fix_utc->tm_hour +
+//                           60 * (float)fix_utc->tm_min +
+//                           (float)fix_utc->tm_sec +
+//                           ((float)(gps_raw.time_usec % 1000000) / 1000000);
+//
+//          m_fix.utc_day = fix_utc->tm_mday;
+//          m_fix.utc_month = fix_utc->tm_mon + 1;
+//          m_fix.utc_year = 1900 + fix_utc->tm_year;
 
           m_fix.validity = 0;
           if(gps_raw.fix_type>1)
