@@ -161,7 +161,7 @@ namespace DUNE
 
         using namespace std;
         fprintf(stderr, "\n%s\n", str);
-        printf(stderr, "------------------------------\n");
+        fprintf(stderr, "------------------------------\n");
       }
 
       void
