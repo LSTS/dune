@@ -111,10 +111,10 @@ if(DUNE_PROGRAM_MSGFMT)
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/i18n)
     add_dependencies(i18n_compile i18n_compile_${locale_name})
   endforeach(locale ${locales})
-endif(DUNE_PROGRAM_MSGFMT)
 
-# Install.
-install(DIRECTORY ${DUNE_GENERATED}/i18n DESTINATION .
-  PATTERN .svn EXCLUDE
-  PATTERN *.pot EXCLUDE
-  PATTERN *.po EXCLUDE)
+  # Install.
+  install(DIRECTORY ${DUNE_GENERATED}/i18n DESTINATION .
+    PATTERN .svn EXCLUDE
+    PATTERN *.pot EXCLUDE
+    PATTERN *.po EXCLUDE)
+endif(DUNE_PROGRAM_MSGFMT)
