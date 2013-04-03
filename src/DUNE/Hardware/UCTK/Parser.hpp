@@ -51,7 +51,9 @@ namespace DUNE
       {
       public:
         Parser(void):
-          m_state(STA_SYNC)
+          m_state(STA_SYNC),
+          m_frame_csum(0),
+          m_payload_idx(0)
         { }
 
         ~Parser(void)
