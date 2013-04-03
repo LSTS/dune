@@ -146,9 +146,10 @@ namespace DUNE
         if (!m_verbose)
           return;
 
-        std::va_list ap;
+        using namespace std;
+        va_list ap;
         va_start(ap, format);
-        std::vfprintf(stderr, format, ap);
+        vfprintf(stderr, format, ap);
         va_end(ap);
       }
 
@@ -158,8 +159,9 @@ namespace DUNE
         if (!m_verbose)
           return;
 
-        std::fprintf(stderr, "\n%s\n", str);
-        std::fprintf(stderr, "------------------------------\n");
+        using namespace std;
+        fprintf(stderr, "\n%s\n", str);
+        printf(stderr, "------------------------------\n");
       }
 
       void
