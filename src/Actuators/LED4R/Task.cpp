@@ -38,6 +38,8 @@ namespace Actuators
   //! @author Ricardo Martins
   namespace LED4R
   {
+    using DUNE_NAMESPACES;
+
     //! Packet identifiers.
     enum PacketIds
     {
@@ -52,11 +54,6 @@ namespace Actuators
       //! Constant parameters.
       PKT_ID_PARAMS      = 5
     };
-
-    using DUNE_NAMESPACES;
-
-    //! Number of LEDs.
-    static const unsigned c_led_count = 12;
 
     //! LED channel.
     struct LED
@@ -76,7 +73,16 @@ namespace Actuators
       std::vector<std::string> led_names;
       //! Serial port device.
       std::string uart_dev;
+      //! Watchdog timeout.
+      double wdog_tout;
     };
+
+    //! Number of LEDs.
+    static const unsigned c_led_count = 12;
+    //! Suffix of MCU voltage.
+    static const char* c_vdc_mcu_suffix = "(MCU)";
+    //! Amount of seconds to wait before restarting task.
+    static const unsigned c_restart_delay = 1;
 
     struct Task: public DUNE::Tasks::Task
     {
@@ -96,6 +102,10 @@ namespace Actuators
       IMC::Current m_current;
       //! Voltage.
       IMC::Voltage m_voltage;
+      //! MCU voltage.
+      IMC::Voltage m_voltage_mcu;
+      //! Watchdog.
+      Counter<double> m_wdog;
       //! Task arguments.
       Arguments m_args;
 
@@ -111,6 +121,11 @@ namespace Actuators
         .defaultValue("")
         .description("Serial port device used to communicate with the sensor");
 
+        param("Watchdog Timeout", m_args.wdog_tout)
+        .units(Units::Second)
+        .defaultValue("2.0")
+        .description("Watchdog timeout");
+
         param("LED - Names", m_args.led_names)
         .defaultValue("")
         .size(c_led_count)
@@ -123,6 +138,14 @@ namespace Actuators
       ~Task(void)
       {
         clearLEDs();
+      }
+
+      void
+      onEntityReservation(void)
+      {
+        std::string label = String::str("%s %s", getEntityLabel(), c_vdc_mcu_suffix);
+        unsigned eid = reserveEntity(label);
+        m_voltage_mcu.setSourceEntity(eid);
       }
 
       //! Update internal state with new parameter values.
@@ -140,6 +163,8 @@ namespace Actuators
           m_led_by_name[led->name] = led;
           m_led_by_id[led->id] = led;
         }
+
+        m_wdog.setTop(m_args.wdog_tout);
       }
 
       //! Acquire resources.
@@ -154,14 +179,17 @@ namespace Actuators
       onResourceInitialization(void)
       {
         if (!getConstantParameters())
-          throw RestartNeeded("failed to get constant parameters", 1);
+          throw RestartNeeded("failed to get constant parameters", c_restart_delay);
 
         if (!setExternalDriver(false))
-          throw RestartNeeded("failed to configured external LED driver", 1);
+          throw RestartNeeded("failed to configured external LED driver", c_restart_delay);
 
         std::map<std::string, LED*>::iterator itr = m_led_by_name.begin();
         for (unsigned i = 0; i < c_led_count; ++i)
           setBrightness(itr->second, 0);
+
+        m_wdog.reset();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       //! Release resources.
@@ -234,8 +262,6 @@ namespace Actuators
 
         m_dif_dur = m_max_dur - m_min_dur;
 
-        spew("parameters: %u, %u, %u", m_min_dur, m_max_dur, m_dif_dur);
-
         return true;
       }
 
@@ -252,7 +278,10 @@ namespace Actuators
         frame.set(ticks, 1);
 
         if (m_uart->sendFrame(frame))
+        {
           led->brightness.value = value;
+          m_wdog.reset();
+        }
       }
 
       bool
@@ -267,20 +296,23 @@ namespace Actuators
         if (frame.getPayloadSize() != 6)
           return false;
 
-        // MMON.
+        // MCU Voltage.
         uint16_t tmp_u16 = 0;
         frame.get(tmp_u16, 0);
-        spew("mmon: %u", tmp_u16);
+        m_voltage_mcu.value = tmp_u16 / 1000.0;
+        dispatch(m_voltage_mcu);
 
-        // VMON.
+        // Voltage.
         frame.get(tmp_u16, 2);
-        m_voltage.value = tmp_u16 / 10.0;
-        spew("vmon: %u", tmp_u16);
+        m_voltage.value = tmp_u16 / 1000.0;
+        dispatch(m_voltage);
 
-        // IMON.
+        // Current.
         frame.get(tmp_u16, 4);
-        m_current.value = tmp_u16 / 10.0;
-        spew("imon: %u", tmp_u16);
+        m_current.value = tmp_u16 / 1000.0;
+        dispatch(m_current);
+
+        m_wdog.reset();
         return true;
       }
 
@@ -294,13 +326,21 @@ namespace Actuators
         {
           waitForMessages(1.0);
 
+          if (m_wdog.overflow())
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(Status::getString(Status::CODE_COM_ERROR), c_restart_delay);
+          }
+          else
+          {
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          }
+
           if (m_mon_timer.overflow())
           {
             m_mon_timer.reset();
             getMonitors();
           }
-
-
         }
       }
     };
