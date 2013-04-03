@@ -41,8 +41,8 @@ namespace Actuators
     //! Packet identifiers.
     enum PacketIds
     {
-      //! Measurements.
-      PKT_ID_MEASURES    = 1,
+      //! State.
+      PKT_ID_STATE       = 1,
       //! LED external strobe driver.
       PKT_ID_LED_DRV_EXT = 2,
       //! Control internal LED driver.
@@ -50,7 +50,7 @@ namespace Actuators
       //! LED channel control.
       PKT_ID_LED_CTL     = 4,
       //! Constant parameters.
-      PKT_ID_PARAMS_CON  = 5
+      PKT_ID_PARAMS      = 5
     };
 
     using DUNE_NAMESPACES;
@@ -82,6 +82,8 @@ namespace Actuators
     {
       //! Map of LEDs by name.
       std::map<std::string, LED*> m_led_by_name;
+      //! Map of LEDs by id.
+      std::map<unsigned, LED*> m_led_by_id;
       //! Control interface.
       UCTK::InterfaceUART* m_uart;
       //! Minimum pulse duration in ticks.
@@ -90,6 +92,10 @@ namespace Actuators
       uint16_t m_max_dur;
       //! Difference between maximum and minimum pulse durations.
       uint16_t m_dif_dur;
+      //! Current.
+      IMC::Current m_current;
+      //! Voltage.
+      IMC::Voltage m_voltage;
       //! Task arguments.
       Arguments m_args;
 
@@ -131,19 +137,9 @@ namespace Actuators
           led->name = m_args.led_names[i];
           led->brightness.name = led->name;
           led->brightness.value = 0;
+          m_led_by_name[led->name] = led;
+          m_led_by_id[led->id] = led;
         }
-      }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
       }
 
       //! Acquire resources.
@@ -157,6 +153,15 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
+        if (!getConstantParameters())
+          throw RestartNeeded("failed to get constant parameters", 1);
+
+        if (!setExternalDriver(false))
+          throw RestartNeeded("failed to configured external LED driver", 1);
+
+        std::map<std::string, LED*>::iterator itr = m_led_by_name.begin();
+        for (unsigned i = 0; i < c_led_count; ++i)
+          setBrightness(itr->second, 0);
       }
 
       //! Release resources.
@@ -173,9 +178,7 @@ namespace Actuators
         if (itr == m_led_by_name.end())
           return;
 
-        itr->second->brightness.value = msg->value;
-
-        setBrightness(itr->second);
+        setBrightness(itr->second, msg->value);
       }
 
       void
@@ -194,14 +197,32 @@ namespace Actuators
         std::map<std::string, LED*>::iterator itr = m_led_by_name.begin();
         for (; itr != m_led_by_name.end(); ++itr)
           delete itr->second;
+
         m_led_by_name.clear();
+        m_led_by_id.clear();
+      }
+
+      //! Set external LED driver.
+      //! @param[in] value if true, the LEDs are driven by an external
+      //! module, if false the LEDs are driven by the MCU.
+      //! @return true if operation was successfull, false otherwise.
+      bool
+      setExternalDriver(bool value)
+      {
+        uint8_t v = value ? 1 : 0;
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_LED_DRV_EXT);
+        frame.setPayloadSize(1);
+        frame.set(v, 0);
+
+        return m_uart->sendFrame(frame);
       }
 
       bool
       getConstantParameters(void)
       {
         UCTK::Frame frame;
-        frame.setId(PKT_ID_PARAMS_CON);
+        frame.setId(PKT_ID_PARAMS);
         if (!m_uart->sendFrame(frame))
           return false;
 
@@ -213,30 +234,73 @@ namespace Actuators
 
         m_dif_dur = m_max_dur - m_min_dur;
 
+        spew("parameters: %u, %u, %u", m_min_dur, m_max_dur, m_dif_dur);
+
         return true;
       }
 
       void
-      setBrightness(LED* led)
+      setBrightness(LED* led, uint8_t value)
       {
         uint8_t id = led->id;
-        uint16_t ticks = ((led->brightness.value * m_dif_dur) / 255) + m_min_dur;
+        uint16_t ticks = ((value * m_dif_dur) / 255) + m_min_dur;
 
         UCTK::Frame frame;
         frame.setId(PKT_ID_LED_CTL);
         frame.setPayloadSize(3);
         frame.set(id, 0);
         frame.set(ticks, 1);
-        m_uart->sendFrame(frame, -1.0);
+
+        if (m_uart->sendFrame(frame))
+          led->brightness.value = value;
+      }
+
+      bool
+      getMonitors(void)
+      {
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_STATE);
+
+        if (!m_uart->sendFrame(frame))
+          return false;
+
+        if (frame.getPayloadSize() != 6)
+          return false;
+
+        // MMON.
+        uint16_t tmp_u16 = 0;
+        frame.get(tmp_u16, 0);
+        spew("mmon: %u", tmp_u16);
+
+        // VMON.
+        frame.get(tmp_u16, 2);
+        m_voltage.value = tmp_u16 / 10.0;
+        spew("vmon: %u", tmp_u16);
+
+        // IMON.
+        frame.get(tmp_u16, 4);
+        m_current.value = tmp_u16 / 10.0;
+        spew("imon: %u", tmp_u16);
+        return true;
       }
 
       //! Main loop.
       void
       onMain(void)
       {
+        Counter<double> m_mon_timer(1.0);
+
         while (!stopping())
         {
           waitForMessages(1.0);
+
+          if (m_mon_timer.overflow())
+          {
+            m_mon_timer.reset();
+            getMonitors();
+          }
+
+
         }
       }
     };
