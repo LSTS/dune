@@ -72,7 +72,7 @@ namespace Autonomy
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_USER, true);
+                    Tasks::Parameter::VISIBILITY_USER, false);
 
         param("TREX ID", m_args.trex_id).defaultValue("65000");
 
@@ -87,6 +87,11 @@ namespace Autonomy
       void
       onReportEntityState(void)
       {
+        if (!isActive()) {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+          return;
+        }
+
         double latency = Time::Clock::get() - m_last_heartbeat;
 
         if (latency > 10)
@@ -150,15 +155,17 @@ namespace Autonomy
       void
       onActivation(void)
       {
+        inf("TREX activated!");
+
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        checkState();
       }
 
       void
       onDeactivation(void)
       {
+        inf("TREX deactivated!");
+
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-        checkState();
       }
 
       // Start a FollowReference maneuver that is controlled by TREX
@@ -196,7 +203,6 @@ namespace Autonomy
       void
       stopExecution(void)
       {
-        inf("Stopping...");
         IMC::PlanControl stopPlan;
         stopPlan.type = IMC::PlanControl::PC_REQUEST;
         stopPlan.op = IMC::PlanControl::PC_STOP;
@@ -210,15 +216,14 @@ namespace Autonomy
         m_trex_control = m_last_plan_state.plan_id == "trex_plan"
             && m_last_plan_state.state == IMC::PlanControlState::PCS_EXECUTING;
 
-        inf("isActive() = %d", isActive());
         if (m_trex_control)
         {
-//          if (!isActive())
-//            stopExecution();
+          if (!isActive())
+            stopExecution();
         }
         else
         {
-          if (/*isActive() &&*/ m_trex_connected
+          if (isActive() && m_trex_connected
               && m_last_vehicle_state.op_mode == IMC::VehicleState::VS_SERVICE)
 
             startExecution();
