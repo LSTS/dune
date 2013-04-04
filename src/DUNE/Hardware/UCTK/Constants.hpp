@@ -37,6 +37,20 @@ namespace DUNE
   {
     namespace UCTK
     {
+      enum PacketIds
+      {
+        PKT_ID_ERR = 0xf0,
+        PKT_ID_NAME,
+        PKT_ID_VERSION,
+        PKT_ID_RESET,
+        PKT_ID_BOOT,
+        PKT_ID_BOOT_UPGRADE_START,
+        PKT_ID_BOOT_UPGRADE_END,
+        PKT_ID_BOOT_FLASH_FILL,
+        PKT_ID_BOOT_FLASH_WRITE,
+        PKT_ID_BOOT_FLASH_INFO
+      };
+
       //! Synchronization number.
       static const uint8_t c_sync = 0x2C;
       //! XOR checksum OR mask.

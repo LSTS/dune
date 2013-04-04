@@ -25,9 +25,14 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <cstdio>
+#include <cstdarg>
+
 // DUNE headers.
 #include <DUNE/Algorithms/CRC8.hpp>
 #include <DUNE/Hardware/UCTK/Bootloader.hpp>
+#include <DUNE/Hardware/UCTK/FirmwareInfo.hpp>
 
 namespace DUNE
 {
@@ -35,39 +40,21 @@ namespace DUNE
   {
     namespace UCTK
     {
+      //! Size of fill chunk.
+      static const unsigned c_fill_chunk_size = 32;
+
       Bootloader::Bootloader(Interface* itf, bool verbose):
         m_itf(itf),
         m_verbose(verbose)
       {
-        enter();
-
         title("Device");
 
-        if (!m_itf->request(m_fwm_name))
-          throw std::runtime_error("failed to retrieve firmware name");
+        const FirmwareInfo& info(m_itf->getFirmwareInfo());
+        print("%-20s: %s\n", "Firmware Name", info.name.c_str());
+        print("%-20s: %u.%u.%u\n", "Firmware Version", info.major, info.minor,
+              info.patch);
 
-        print("%-20s: %s\n", "Firmware Name", m_fwm_name.name.c_str());
-
-        if (!m_itf->request(m_fwm_version))
-          throw std::runtime_error("failed to retrieve firmware version");
-
-        print("%-20s: %u.%u.%u\n", "Firmware Version",
-              m_fwm_version.major, m_fwm_version.minor, m_fwm_version.patch);
-
-        if (!m_itf->request(m_flash_info))
-          throw std::runtime_error("failed to retrieve flash info");
-
-        print("%-20s: %u\n", "Flash Size", m_flash_info.flash_size);
-        print("%-20s: %u\n", "Flash Page Size", m_flash_info.page_size);
-      }
-
-      void
-      Bootloader::enter(void)
-      {
-        if (!m_itf->request(m_fwm_name))
-          throw std::runtime_error("failed to retrieve firmware name");
-
-        print("%-20s: %s\n", "Firmware Name", m_fwm_name.name.c_str());
+        getFlashInfo();
       }
 
       void
@@ -76,10 +63,10 @@ namespace DUNE
         title("Firmare");
 
         // Load iHEX file.
-        IntelHEX ihex(file_name, m_flash_info.page_size);
+        IntelHEX ihex(file_name, m_page_size);
 
         // Compute program size.
-        unsigned size = ihex.getTable().size() * m_flash_info.page_size;
+        uint32_t size = ihex.getTable().size() * m_page_size;
         print("%-20s: %u\n", "Intel HEX - Size", size);
 
         // Compute program CRC.
@@ -93,8 +80,11 @@ namespace DUNE
         title("Programming");
 
         // Start upgrade procedure.
-        BootUpgradeStart start(size, crc.get());
-        if (!m_itf->command(start))
+        m_frame.setId(PKT_ID_BOOT_UPGRADE_START);
+        m_frame.setPayloadSize(5);
+        m_frame.set(size, 0);
+        m_frame.set(crc.get(), 4);
+        if (!m_itf->sendFrame(m_frame))
           throw std::runtime_error("failed start upgrade procedure");
 
         // Program pages.
@@ -105,8 +95,9 @@ namespace DUNE
         }
 
         // End upgrade procedure.
-        BootUpgradeStart end;
-        if (!m_itf->command(start))
+        m_frame.setId(PKT_ID_BOOT_UPGRADE_END);
+        m_frame.setPayloadSize(0);
+        if (!m_itf->sendFrame(m_frame))
           throw std::runtime_error("failed to end upgrade procedure");
 
         reset();
@@ -117,24 +108,30 @@ namespace DUNE
       void
       Bootloader::fillPage(unsigned page, const std::vector<uint8_t>& contents)
       {
-        BootFlashFill msg;
-        unsigned chunk_size = sizeof(msg.contents);
-        unsigned chunk_count = contents.size() / chunk_size;
+        uint16_t offset = 0;
+        unsigned chunk_count = contents.size() / c_fill_chunk_size;
 
         print("Page %u: ", page);
 
+        m_frame.setId(PKT_ID_BOOT_FLASH_FILL);
         for (unsigned i = 0; i < chunk_count; ++i)
         {
-          msg.offset = i * chunk_size;
-          std::memcpy(msg.contents, &contents[msg.offset], chunk_size);
-          if (!m_itf->command(msg))
+          offset = i * c_fill_chunk_size;
+          m_frame.set(offset, 0);
+          std::memcpy(m_frame.getPayload() + 2, &contents[offset], c_fill_chunk_size);
+
+          m_frame.setPayloadSize(c_fill_chunk_size + 2);
+          if (!m_itf->sendFrame(m_frame))
             throw std::runtime_error("failed to fill page chunk");
 
           print(".");
         }
 
-        BootFlashWrite flash_write(page * m_flash_info.page_size);
-        if (!m_itf->command(flash_write))
+        // Write page.
+        m_frame.setId(PKT_ID_BOOT_FLASH_WRITE);
+        m_frame.setPayloadSize(4);
+        m_frame.set<uint32_t>(page * m_page_size, 0);
+        if (!m_itf->sendFrame(m_frame))
           throw std::runtime_error("failed to write flash page");
 
         print(" OK\n");
@@ -165,11 +162,26 @@ namespace DUNE
       {
         print("\nResetting Device...");
 
-        Reset msg;
-        if (!m_itf->command(msg))
+        m_frame.setId(PKT_ID_RESET);
+        m_frame.setPayloadSize(0);
+        if (!m_itf->sendFrame(m_frame))
           throw std::runtime_error("failed to reset device");
 
         print(" OK\n");
+      }
+
+      void
+      Bootloader::getFlashInfo(void)
+      {
+        m_frame.setId(PKT_ID_BOOT_FLASH_INFO);
+        m_frame.setPayloadSize(0);
+        if (!m_itf->sendFrame(m_frame))
+          throw std::runtime_error("failed to retrieve flash info");
+
+        m_frame.get(m_flash_size, 0);
+        print("%-20s: %u\n", "Flash Size", m_flash_size);
+        m_frame.get(m_page_size, 4);
+        print("%-20s: %u\n", "Flash Page Size", m_page_size);
       }
     }
   }

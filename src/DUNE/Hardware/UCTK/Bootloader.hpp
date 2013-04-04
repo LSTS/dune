@@ -34,7 +34,6 @@
 // DUNE headers.
 #include <DUNE/Hardware/IntelHEX.hpp>
 #include <DUNE/Hardware/UCTK/Interface.hpp>
-#include <DUNE/Hardware/UCTK/Messages.hpp>
 
 namespace DUNE
 {
@@ -53,12 +52,12 @@ namespace DUNE
       private:
         Interface* m_itf;
         bool m_verbose;
-        FirmwareName m_fwm_name;
-        FirmwareVersion m_fwm_version;
-        BootFlashInfo m_flash_info;
-
-        void
-        enter(void);
+        //! Flash size.
+        uint32_t m_flash_size;
+        //! Flash page size.
+        uint16_t m_page_size;
+        //! Scratch frame.
+        UCTK::Frame m_frame;
 
         void
         fillPage(unsigned page, const std::vector<uint8_t>& contents);
@@ -74,6 +73,9 @@ namespace DUNE
 
         void
         reset(void);
+
+        void
+        getFlashInfo(void);
       };
     }
   }

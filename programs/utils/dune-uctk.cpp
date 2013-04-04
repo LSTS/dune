@@ -44,7 +44,7 @@ main(int argc, char** argv)
     try
     {
       itf->open();
-      if (itf->getName() != "BOOT")
+      if (itf->getFirmwareInfo().name != "BOOT")
         itf->enterBootloader();
       else
         break;

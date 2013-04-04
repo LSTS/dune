@@ -28,6 +28,7 @@
 // DUNE headers.
 #include <DUNE/Algorithms/XORChecksum.hpp>
 #include <DUNE/Hardware/UCTK/Interface.hpp>
+#include <DUNE/Hardware/UCTK/Errors.hpp>
 
 namespace DUNE
 {
@@ -45,58 +46,30 @@ namespace DUNE
       Interface::open(void)
       {
         doOpen();
+        getFirmwareName();
+        getFirmwareVersion();
       }
 
-      std::string
-      Interface::getName(void)
+      const FirmwareInfo&
+      Interface::getFirmwareInfo(void) const
       {
-        UCTK::FirmwareName req;
-        if (!request(req))
-          throw std::runtime_error("failed to get name");
-
-        return req.name;
+        return m_info;
       }
 
       void
       Interface::enterBootloader(void)
       {
-        UCTK::Boot req;
-        if (!request(req))
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_BOOT);
+        frame.setPayloadSize(0);
+
+        if (!sendFrame(frame))
           throw std::runtime_error("failed to jump to bootloader");
 
         open();
 
-        if (getName() != "BOOT")
+        if (getFirmwareInfo().name != "BOOT")
           throw std::runtime_error("failed to enter bootloader");
-      }
-
-      bool
-      Interface::request(Message& msg, double timeout)
-      {
-        uint8_t csum = (c_sync ^ msg.getId()) | 0x80;
-        uint8_t frame[] = {c_sync, 0, msg.getId(), csum};
-
-        write(frame, sizeof(frame));
-
-        return readReply(msg, timeout);
-      }
-
-      bool
-      Interface::command(Message& msg, double timeout)
-      {
-        uint8_t size = msg.getSize();
-        uint8_t idx_crc = 3 + msg.getSize();
-        uint8_t frame[c_frame_overhead + c_max_payload] = {c_sync, size, msg.getId()};
-
-        msg.serialize(frame + 3, c_max_payload);
-        frame[idx_crc] = Algorithms::XORChecksum::compute(frame, idx_crc) | 0x80;
-
-        write(frame, size + c_frame_overhead);
-
-        if (timeout < 0)
-          return true;
-
-        return readReply(msg, timeout);
       }
 
       bool
@@ -129,11 +102,11 @@ namespace DUNE
             if (!m_parser.parse(m_buffer[i], frame))
               continue;
 
-            if (frame.getId() == MSG_ERR)
+            if (frame.getId() == PKT_ID_ERR)
             {
-              Error error;
-              error.deserialize(frame.getPayload(), frame.getPayloadSize());
-              throw std::runtime_error(error.error);
+              uint8_t code = 0;
+              frame.get(code, 0);
+              throw std::runtime_error(Errors::translate(code));
             }
 
             if (frame.getId() == reply_id)
@@ -146,41 +119,35 @@ namespace DUNE
         return false;
       }
 
-      bool
-      Interface::readReply(Message& msg, double timeout)
+      void
+      Interface::getFirmwareName(void)
       {
-        Frame frame;
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_NAME);
+        frame.setPayloadSize(0);
 
-        Time::Counter<double> timer(timeout);
-        while (!timer.overflow())
-        {
-          if (!poll(timer.getRemaining()))
-            break;
+        if (!sendFrame(frame))
+          throw std::runtime_error("failed to get firmware name");
 
-          unsigned rv = read(m_buffer, sizeof(m_buffer));
-          for (unsigned i = 0; i < rv; ++i)
-          {
-            if (!m_parser.parse(m_buffer[i], frame))
-              continue;
+        m_info.name.assign((const char*)frame.getPayload(), frame.getPayloadSize());
+      }
 
-            if (frame.getId() == MSG_ERR)
-            {
-              Error error;
-              error.deserialize(frame.getPayload(), frame.getPayloadSize());
-              throw std::runtime_error(error.error);
-            }
+      void
+      Interface::getFirmwareVersion(void)
+      {
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_VERSION);
+        frame.setPayloadSize(0);
 
-            if (frame.getId() == msg.getId())
-            {
-              msg.deserialize(frame.getPayload(), frame.getPayloadSize());
-              return true;
-            }
+        if (!sendFrame(frame))
+          throw std::runtime_error("failed to get firmware version");
 
-            m_queue.push(new Frame(frame));
-          }
-        }
+        if (frame.getPayloadSize() != 3)
+          throw std::runtime_error("invalid firmware version");
 
-        return false;
+        frame.get(m_info.major, 0);
+        frame.get(m_info.minor, 1);
+        frame.get(m_info.patch, 2);
       }
     }
   }
