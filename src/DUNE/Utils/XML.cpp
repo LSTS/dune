@@ -25,110 +25,43 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_HARDWARE_UCTK_FRAME_HPP_INCLUDED_
-#define DUNE_HARDWARE_UCTK_FRAME_HPP_INCLUDED_
-
 // DUNE headers.
-#include <DUNE/Utils/ByteCopy.hpp>
-#include <DUNE/Algorithms/XORChecksum.hpp>
-#include <DUNE/Hardware/UCTK/Constants.hpp>
+#include <DUNE/Utils/XML.hpp>
 
 namespace DUNE
 {
-  namespace Hardware
+  namespace Utils
   {
-    namespace UCTK
+    std::string
+    XML::escapePredefinedEntities(const std::string& str)
     {
-      class Frame
+      std::string escaped;
+      for (size_t i = 0; i < str.size(); ++i)
       {
-      public:
-        Frame(void)
+        switch (str[i])
         {
-          m_data[0] = c_sync;
-          m_data[1] = 0;
-          m_data[2] = 0;
+          case '"':
+            escaped.append("&quot;");
+            break;
+          case '&':
+            escaped.append("&amp;");
+            break;
+          case '\'':
+            escaped.append("&apos;");
+            break;
+          case '<':
+            escaped.append("&lt;");
+            break;
+          case '>':
+            escaped.append("&gt;");
+            break;
+          default:
+            escaped.push_back(str[i]);
+            break;
         }
+      }
 
-        void
-        setId(uint8_t id)
-        {
-          m_data[2] = id;
-        }
-
-        uint8_t
-        getId(void) const
-        {
-          return m_data[2];
-        }
-
-        const uint8_t*
-        getData(void) const
-        {
-          return m_data;
-        }
-
-        uint8_t
-        getSize(void) const
-        {
-          return c_header_size + c_footer_size + getPayloadSize();
-        }
-
-        void
-        setPayloadSize(uint8_t size)
-        {
-          m_data[1] = size;
-        }
-
-        uint8_t
-        getPayloadSize(void) const
-        {
-          return m_data[1];
-        }
-
-        uint8_t*
-        getPayload(void)
-        {
-          return m_data + c_header_size;
-        }
-
-        const uint8_t*
-        getPayload(void) const
-        {
-          return m_data + c_header_size;
-        }
-
-        void
-        setPayload(uint8_t byte, unsigned index)
-        {
-          m_data[c_header_size + index] = byte;
-        }
-
-        template <typename T>
-        void
-        set(const T& value, unsigned index)
-        {
-          Utils::ByteCopy::toLE(value, m_data + c_header_size + index);
-        }
-
-        template <typename T>
-        void
-        get(T& value, unsigned index) const
-        {
-          Utils::ByteCopy::fromLE(value, m_data + c_header_size + index);
-        }
-
-        void
-        computeCRC(void)
-        {
-          uint8_t size = c_header_size + getPayloadSize();
-          m_data[size] = Algorithms::XORChecksum::compute(m_data, size) | 0x80;
-        }
-
-      private:
-        uint8_t m_data[c_header_size + c_max_payload];
-      };
+      return escaped;
     }
   }
 }
-
-#endif

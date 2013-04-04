@@ -51,7 +51,9 @@ namespace DUNE
       {
       public:
         Parser(void):
-          m_state(STA_SYNC)
+          m_state(STA_SYNC),
+          m_frame_csum(0),
+          m_payload_idx(0)
         { }
 
         ~Parser(void)
@@ -79,7 +81,7 @@ namespace DUNE
               else
               {
                 m_frame_csum ^= byte;
-                frame.setSize(byte);
+                frame.setPayloadSize(byte);
                 m_state = STA_ID;
               }
               break;
@@ -87,13 +89,13 @@ namespace DUNE
             case STA_ID:
               m_frame_csum ^= byte;
               frame.setId(byte);
-              m_state = (frame.getSize() == 0) ? STA_CSUM : STA_PAYLOAD;
+              m_state = (frame.getPayloadSize() == 0) ? STA_CSUM : STA_PAYLOAD;
               break;
 
             case STA_PAYLOAD:
               m_frame_csum ^= byte;
-              frame.setData(byte, m_payload_idx++);
-              if (m_payload_idx == frame.getSize())
+              frame.setPayload(byte, m_payload_idx++);
+              if (m_payload_idx == frame.getPayloadSize())
                 m_state = STA_CSUM;
               break;
 

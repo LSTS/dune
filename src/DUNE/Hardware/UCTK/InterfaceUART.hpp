@@ -46,12 +46,14 @@ namespace DUNE
         ~InterfaceUART(void);
 
       private:
-        //! Baud rate.
-        unsigned m_baud_rate;
         //! Device name.
         std::string m_dev;
         //! Serial port handle.
         SerialPort* m_handle;
+        //! Baud rate.
+        unsigned m_baud_rate;
+        //! Baud rate in use.
+        unsigned m_baud_rate_used;
 
         void
         doOpen(void);

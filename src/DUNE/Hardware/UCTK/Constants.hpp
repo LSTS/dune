@@ -37,17 +37,32 @@ namespace DUNE
   {
     namespace UCTK
     {
+      enum PacketIds
+      {
+        PKT_ID_ERR = 0xf0,
+        PKT_ID_NAME,
+        PKT_ID_VERSION,
+        PKT_ID_RESET,
+        PKT_ID_BOOT,
+        PKT_ID_BOOT_UPGRADE_START,
+        PKT_ID_BOOT_UPGRADE_END,
+        PKT_ID_BOOT_FLASH_FILL,
+        PKT_ID_BOOT_FLASH_WRITE,
+        PKT_ID_BOOT_FLASH_INFO
+      };
+
       //! Synchronization number.
       static const uint8_t c_sync = 0x2C;
       //! XOR checksum OR mask.
       static const uint8_t c_csum_mask = 0x80;
       //! Maximum size of message payload in bytes.
-      static const unsigned c_max_payload = 64;
+      static const unsigned c_max_payload = 96;
       //! Header size.
       static const unsigned c_header_size = 3;
-
+      //! Footer size.
+      static const unsigned c_footer_size = 1;
       //! Framing overhead in bytes.
-      static const unsigned c_frame_overhead = 4;
+      static const unsigned c_frame_overhead = c_header_size + c_footer_size;
       //! Default baud rate.
       static const unsigned c_baud_default = 115200;
       //! Bootloader baud rate.

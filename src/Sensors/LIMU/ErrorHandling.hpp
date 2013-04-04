@@ -25,109 +25,64 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_HARDWARE_UCTK_FRAME_HPP_INCLUDED_
-#define DUNE_HARDWARE_UCTK_FRAME_HPP_INCLUDED_
+#ifndef SENSORS_LIMU_ERROR_HANDLING_HPP_INCLUDED_
+#define SENSORS_LIMU_ERROR_HANDLING_HPP_INCLUDED_
 
-// DUNE headers.
-#include <DUNE/Utils/ByteCopy.hpp>
-#include <DUNE/Algorithms/XORChecksum.hpp>
-#include <DUNE/Hardware/UCTK/Constants.hpp>
+// ISO C++ 98 headers.
+#include <map>
 
-namespace DUNE
+namespace Sensors
 {
-  namespace Hardware
+  namespace LIMU
   {
-    namespace UCTK
+    //! IMU error flags.
+    enum ErrorFlags
     {
-      class Frame
+      //! Watchdog timeout.
+      ERR_FLAG_WDOG_TOUT = (1 << 15),
+      //! Processing overrun.
+      ERR_FLAG_PROC_OVR = (1 << 7),
+      //! Sensor overrange.
+      ERR_FLAG_SENS_OVR = (1 << 4),
+      //! SPI communication error.
+      ERR_FLAG_SPI_ERR = (1 << 3)
+    };
+
+    //! Error counts.
+    class ErrorCounts
+    {
+    public:
+      void
+      clear(void)
       {
-      public:
-        Frame(void)
-        {
-          m_data[0] = c_sync;
-          m_data[1] = 0;
-          m_data[2] = 0;
-        }
+        std::map<ErrorFlags, unsigned>::iterator itr = m_counts.begin();
+        for (; itr != m_counts.end(); ++itr)
+          itr->second = 0;
+      }
 
-        void
-        setId(uint8_t id)
-        {
-          m_data[2] = id;
-        }
+      void
+      increment(ErrorFlags flag)
+      {
+        std::map<ErrorFlags, unsigned>::iterator itr = m_counts.find(flag);
+        if (itr == m_counts.end())
+          m_counts[flag] = 0;
+        else
+          ++m_counts[flag];
+      }
 
-        uint8_t
-        getId(void) const
-        {
-          return m_data[2];
-        }
+      unsigned
+      getTotal(void)
+      {
+        unsigned total = 0;
+        std::map<ErrorFlags, unsigned>::const_iterator itr = m_counts.begin();
+        for (; itr != m_counts.end(); ++itr)
+          total += itr->second;
+        return total;
+      }
 
-        const uint8_t*
-        getData(void) const
-        {
-          return m_data;
-        }
-
-        uint8_t
-        getSize(void) const
-        {
-          return c_header_size + c_footer_size + getPayloadSize();
-        }
-
-        void
-        setPayloadSize(uint8_t size)
-        {
-          m_data[1] = size;
-        }
-
-        uint8_t
-        getPayloadSize(void) const
-        {
-          return m_data[1];
-        }
-
-        uint8_t*
-        getPayload(void)
-        {
-          return m_data + c_header_size;
-        }
-
-        const uint8_t*
-        getPayload(void) const
-        {
-          return m_data + c_header_size;
-        }
-
-        void
-        setPayload(uint8_t byte, unsigned index)
-        {
-          m_data[c_header_size + index] = byte;
-        }
-
-        template <typename T>
-        void
-        set(const T& value, unsigned index)
-        {
-          Utils::ByteCopy::toLE(value, m_data + c_header_size + index);
-        }
-
-        template <typename T>
-        void
-        get(T& value, unsigned index) const
-        {
-          Utils::ByteCopy::fromLE(value, m_data + c_header_size + index);
-        }
-
-        void
-        computeCRC(void)
-        {
-          uint8_t size = c_header_size + getPayloadSize();
-          m_data[size] = Algorithms::XORChecksum::compute(m_data, size) | 0x80;
-        }
-
-      private:
-        uint8_t m_data[c_header_size + c_max_payload];
-      };
-    }
+    private:
+      std::map<ErrorFlags, unsigned> m_counts;
+    };
   }
 }
 

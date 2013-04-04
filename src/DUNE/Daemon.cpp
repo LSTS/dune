@@ -221,7 +221,7 @@ namespace DUNE
   {
     os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n"
        << "<config"
-       << " format=\"0\""
+       << " format=\"1\""
        << " version=\"" << DUNE_VERSION_STR << " (" << DUNE_GIT_SHA1_STR << ")\""
        << " system=\"" << getSystemName() << "\""
        << " i18n=\"" << I18N::getLanguage() << "\">\n";

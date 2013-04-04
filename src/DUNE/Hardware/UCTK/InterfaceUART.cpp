@@ -38,16 +38,16 @@ namespace DUNE
     namespace UCTK
     {
       InterfaceUART::InterfaceUART(const std::string& dev, unsigned baud_rate):
-        m_baud_rate(baud_rate),
         m_dev(dev),
-        m_handle(NULL)
-      {
-        doOpen();
-      }
+        m_handle(NULL),
+        m_baud_rate(baud_rate),
+        m_baud_rate_used(0)
+      { }
 
       InterfaceUART::~InterfaceUART(void)
       {
-        delete m_handle;
+        if (m_handle != NULL)
+          delete m_handle;
       }
 
       void
@@ -55,8 +55,11 @@ namespace DUNE
       {
         Memory::clear(m_handle);
         if (m_baud_rate == 0)
-          m_baud_rate = probeBaudRate(m_dev);
-        m_handle = new SerialPort(m_dev, m_baud_rate);
+          m_baud_rate_used = probeBaudRate(m_dev);
+        else
+          m_baud_rate_used = m_baud_rate;
+
+        m_handle = new SerialPort(m_dev, m_baud_rate_used);
       }
 
       bool
@@ -120,7 +123,6 @@ namespace DUNE
           return false;
 
         port.read(&byte, 1);
-        //fprintf(stderr, "BYTE: %02X\n", byte);
         port.flushInput();
 
         return (byte == c_sync);

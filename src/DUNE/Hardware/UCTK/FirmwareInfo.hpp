@@ -25,11 +25,14 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_HARDWARE_UCTK_MESSAGE_HPP_INCLUDED_
-#define DUNE_HARDWARE_UCTK_MESSAGE_HPP_INCLUDED_
+#ifndef DUNE_HARDWARE_UCTK_FIRMWARE_INFO_HPP_INCLUDED_
+#define DUNE_HARDWARE_UCTK_FIRMWARE_INFO_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <string>
 
 // DUNE headers.
-#include <DUNE/Utils/String.hpp>
+#include <DUNE/Config.hpp>
 
 namespace DUNE
 {
@@ -37,35 +40,16 @@ namespace DUNE
   {
     namespace UCTK
     {
-      //! Abstract class representing an UCTK message.
-      class Message
+      struct FirmwareInfo
       {
-      public:
-        //! Default destructor.
-        virtual
-        ~Message(void)
-        { }
-
-        //! Retrieve the identification number of the message.
-        //! @return message identification number.
-        virtual uint8_t
-        getId(void) const = 0;
-
-        virtual uint8_t
-        getSize(void) const = 0;
-
-        virtual void
-        deserialize(const uint8_t* buffer, unsigned buffer_size) = 0;
-
-        virtual void
-        serialize(uint8_t* buffer, unsigned buffer_size) const = 0;
-
-        virtual
-        std::string
-        str(void) const
-        {
-          return Utils::String::str("message %u", getId());
-        }
+        //! Firmware name.
+        std::string name;
+        //! Major version number.
+        uint8_t major;
+        //! Minor version number.
+        uint8_t minor;
+        //! Patch level.
+        uint8_t patch;
       };
     }
   }

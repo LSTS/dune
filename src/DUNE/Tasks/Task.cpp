@@ -39,6 +39,7 @@
 #include <DUNE/Tasks/Context.hpp>
 #include <DUNE/Tasks/Exceptions.hpp>
 #include <DUNE/Tasks/Task.hpp>
+#include <DUNE/Utils/XML.hpp>
 
 #if defined(DUNE_OS_LINUX)
 #  include <sys/prctl.h>
@@ -535,9 +536,12 @@ namespace DUNE
     void
     Task::writeParamsXML(std::ostream& os) const
     {
-      os << "<section name=\"" << getEntityLabel()
-         << "\" i18n-name=\"" << DTR(getEntityLabel()) << "\">"
-         << "\n";
+      using Utils::XML;
+
+      os << "<section";
+      XML::writeAttr("name", getEntityLabel(), os);
+      XML::writeAttr("name-i18n", DTR(getEntityLabel()), os);
+      os << ">\n";
 
       m_params.writeXML(os);
 

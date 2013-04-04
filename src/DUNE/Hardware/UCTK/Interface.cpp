@@ -28,6 +28,7 @@
 // DUNE headers.
 #include <DUNE/Algorithms/XORChecksum.hpp>
 #include <DUNE/Hardware/UCTK/Interface.hpp>
+#include <DUNE/Hardware/UCTK/Errors.hpp>
 
 namespace DUNE
 {
@@ -45,58 +46,49 @@ namespace DUNE
       Interface::open(void)
       {
         doOpen();
+        getFirmwareName();
+        getFirmwareVersion();
+      }
 
-        UCTK::FirmwareName req;
-        if (!request(req))
-          throw std::runtime_error("failed to get name");
-        m_name = req.name;
+      const FirmwareInfo&
+      Interface::getFirmwareInfo(void) const
+      {
+        return m_info;
       }
 
       void
       Interface::enterBootloader(void)
       {
-        UCTK::Boot req;
-        if (!request(req))
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_BOOT);
+        frame.setPayloadSize(0);
+
+        if (!sendFrame(frame))
           throw std::runtime_error("failed to jump to bootloader");
 
         open();
 
-        if (getName() != "BOOT")
+        if (getFirmwareInfo().name != "BOOT")
           throw std::runtime_error("failed to enter bootloader");
       }
 
       bool
-      Interface::request(Message& msg, double timeout)
+      Interface::sendFrame(Frame& frame, double timeout)
       {
-        uint8_t csum = (c_sync ^ msg.getId()) | 0x80;
-        uint8_t frame[] = {c_sync, 0, msg.getId(), csum};
-        write(frame, sizeof(frame));
+        frame.computeCRC();
 
-        return readReply(msg, timeout);
-      }
-
-      bool
-      Interface::command(Message& msg, double timeout)
-      {
-        uint8_t size = msg.getSize();
-        uint8_t idx_crc = 3 + msg.getSize();
-        uint8_t frame[c_frame_overhead + c_max_payload] = {c_sync, size, msg.getId()};
-
-        msg.serialize(frame + 3, c_max_payload);
-        frame[idx_crc] = Algorithms::XORChecksum::compute(frame, idx_crc) | 0x80;
-
-        write(frame, size + c_frame_overhead);
+        write(frame.getData(), frame.getSize());
 
         if (timeout < 0)
           return true;
 
-        return readReply(msg, timeout);
+        return readReply(frame, timeout);
       }
 
       bool
-      Interface::readReply(Message& msg, double timeout)
+      Interface::readReply(Frame& frame, double timeout)
       {
-        Frame frame;
+        unsigned reply_id = frame.getId();
 
         Time::Counter<double> timer(timeout);
         while (!timer.overflow())
@@ -110,24 +102,52 @@ namespace DUNE
             if (!m_parser.parse(m_buffer[i], frame))
               continue;
 
-            if (frame.getId() == MSG_ERR)
+            if (frame.getId() == PKT_ID_ERR)
             {
-              Error error;
-              error.deserialize(frame.getData(), frame.getSize());
-              throw std::runtime_error(error.error);
+              uint8_t code = 0;
+              frame.get(code, 0);
+              throw std::runtime_error(Errors::translate(code));
             }
 
-            if (frame.getId() == msg.getId())
-            {
-              msg.deserialize(frame.getData(), frame.getSize());
+            if (frame.getId() == reply_id)
               return true;
-            }
 
             m_queue.push(new Frame(frame));
           }
         }
 
         return false;
+      }
+
+      void
+      Interface::getFirmwareName(void)
+      {
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_NAME);
+        frame.setPayloadSize(0);
+
+        if (!sendFrame(frame))
+          throw std::runtime_error("failed to get firmware name");
+
+        m_info.name.assign((const char*)frame.getPayload(), frame.getPayloadSize());
+      }
+
+      void
+      Interface::getFirmwareVersion(void)
+      {
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_VERSION);
+        frame.setPayloadSize(0);
+
+        if (!sendFrame(frame))
+          throw std::runtime_error("failed to get firmware version");
+
+        if (frame.getPayloadSize() != 3)
+          throw std::runtime_error("invalid firmware version");
+
+        frame.get(m_info.major, 0);
+        frame.get(m_info.minor, 1);
+        frame.get(m_info.patch, 2);
       }
     }
   }

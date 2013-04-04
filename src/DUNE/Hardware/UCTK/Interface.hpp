@@ -31,10 +31,9 @@
 // DUNE headers.
 #include <DUNE/Time/Counter.hpp>
 #include <DUNE/Concurrency/TSQueue.hpp>
-#include <DUNE/Hardware/UCTK/Message.hpp>
 #include <DUNE/Hardware/UCTK/Parser.hpp>
-#include <DUNE/Hardware/UCTK/Factory.hpp>
 #include <DUNE/Hardware/UCTK/Frame.hpp>
+#include <DUNE/Hardware/UCTK/FirmwareInfo.hpp>
 
 namespace DUNE
 {
@@ -77,17 +76,11 @@ namespace DUNE
           doFlush();
         }
 
-        std::string
-        getName(void) const
-        {
-          return m_name;
-        }
+        const FirmwareInfo&
+        getFirmwareInfo(void) const;
 
         bool
-        request(UCTK::Message& msg, double timeout = 1.0);
-
-        bool
-        command(UCTK::Message& msg, double timeout = 1.0);
+        sendFrame(Frame& frame, double timeout = 1.0);
 
         void
         enterBootloader(void);
@@ -135,14 +128,20 @@ namespace DUNE
         //! Buffer frame.
         UCTK::Frame m_frame;
         UCTK::Parser m_parser;
-        UCTK::Factory m_factory;
         uint8_t m_buffer[128];
-        std::string m_name;
         //! Frame queue.
         Concurrency::TSQueue<UCTK::Frame*> m_queue;
+        //! Firmware info.
+        FirmwareInfo m_info;
 
         bool
-        readReply(Message& msg, double timeout);
+        readReply(Frame& msg, double timeout);
+
+        void
+        getFirmwareName(void);
+
+        void
+        getFirmwareVersion(void);
       };
     }
   }
