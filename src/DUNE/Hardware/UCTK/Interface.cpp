@@ -45,11 +45,16 @@ namespace DUNE
       Interface::open(void)
       {
         doOpen();
+      }
 
+      std::string
+      Interface::getName(void)
+      {
         UCTK::FirmwareName req;
         if (!request(req))
           throw std::runtime_error("failed to get name");
-        m_name = req.name;
+
+        return req.name;
       }
 
       void

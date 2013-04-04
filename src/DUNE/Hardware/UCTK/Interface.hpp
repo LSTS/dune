@@ -78,10 +78,7 @@ namespace DUNE
         }
 
         std::string
-        getName(void) const
-        {
-          return m_name;
-        }
+        getName(void);
 
         bool
         request(UCTK::Message& msg, double timeout = 1.0);
@@ -140,7 +137,6 @@ namespace DUNE
         UCTK::Parser m_parser;
         UCTK::Factory m_factory;
         uint8_t m_buffer[128];
-        std::string m_name;
         //! Frame queue.
         Concurrency::TSQueue<UCTK::Frame*> m_queue;
 
