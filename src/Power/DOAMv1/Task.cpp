@@ -292,7 +292,6 @@ namespace Power
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
         inf(DTR("version: %u.%u.%u"), major, minor, patch);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
@@ -373,12 +372,14 @@ namespace Power
       {
         setStrobeMode(STROBE_MODE_CAM);
         m_activating = false;
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
       onDeactivation(void)
       {
         setStrobeMode(STROBE_MODE_MCU);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       bool
@@ -456,9 +457,16 @@ namespace Power
           waitForCommand(CMD_STATE);
 
           if (m_wdog.overflow())
+          {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          }
           else
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          {
+            if (isActive())
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            else
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+          }
 
           if (m_activating)
             checkActivation();
