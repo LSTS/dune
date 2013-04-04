@@ -365,6 +365,7 @@ namespace Power
       {
         // NOTE: some CPUs may require proper shutdown, which is not implemented yet.
         setPowerChannelState(0);
+        deactivate();
       }
 
       void
