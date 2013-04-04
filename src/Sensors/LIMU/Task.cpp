@@ -133,6 +133,7 @@ namespace Sensors
         try
         {
           m_uart = new UCTK::InterfaceUART(m_args.uart_dev, c_baud_rate);
+          m_uart->open();
         }
         catch (std::runtime_error& e)
         {
