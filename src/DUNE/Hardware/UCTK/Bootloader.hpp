@@ -45,7 +45,7 @@ namespace DUNE
       class Bootloader
       {
       public:
-        Bootloader(Interface* itf);
+        Bootloader(Interface* itf, bool verbose = false);
 
         void
         program(const std::string& file_name);

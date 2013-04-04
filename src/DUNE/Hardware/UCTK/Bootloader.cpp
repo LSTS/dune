@@ -35,9 +35,9 @@ namespace DUNE
   {
     namespace UCTK
     {
-      Bootloader::Bootloader(Interface* itf):
+      Bootloader::Bootloader(Interface* itf, bool verbose):
         m_itf(itf),
-        m_verbose(true)
+        m_verbose(verbose)
       {
         enter();
 
@@ -156,12 +156,8 @@ namespace DUNE
       void
       Bootloader::title(const char* str) const
       {
-        if (!m_verbose)
-          return;
-
-        using namespace std;
-        fprintf(stderr, "\n%s\n", str);
-        fprintf(stderr, "------------------------------\n");
+        print("\n%s\n", str);
+        print("------------------------------\n");
       }
 
       void
