@@ -171,7 +171,15 @@ namespace Actuators
       void
       onResourceAcquisition(void)
       {
-        m_uart = new UCTK::InterfaceUART(m_args.uart_dev);
+        try
+        {
+          m_uart = new UCTK::InterfaceUART(m_args.uart_dev);
+          m_uart->open();
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), c_restart_delay);
+        }
       }
 
       //! Initialize resources.
