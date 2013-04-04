@@ -118,7 +118,7 @@ namespace Control
 
         spew("distance to target: %f", dist_hor);
 
-        float pan = std::atan2(delta_y, delta_x) - Math::c_pi + m_yaw;
+        float pan = std::atan2(delta_y, delta_x) + Math::c_pi + m_yaw;
 
         float tilt = - (Math::c_half_pi - std::atan(-delta_z / dist_hor));
 
