@@ -177,6 +177,8 @@ namespace Vision
       double m_exposure;
       //! Automatic exposure control.
       AutoExposure m_ae;
+      //! True if task is activating.
+      bool m_activating;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -185,7 +187,8 @@ namespace Vision
         m_kalive(0.5),
         m_log_dir(ctx.dir_log),
         m_debayer(BayerDecoder::TILE_GBRG),
-        m_white(c_width, c_height)
+        m_white(c_width, c_height),
+        m_activating(false)
       {
         // Retrieve configuration values.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -392,20 +395,44 @@ namespace Vision
 
         debug("starting streaming");
         m_gvcp->startStreaming();
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
       consume(const IMC::LoggingControl* msg)
       {
-        switch (msg->op)
+        if (!m_activating && (msg->getDestination() != getSystemId()))
+          return;
+
+        if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
         {
-          case IMC::LoggingControl::COP_STARTED:
-            m_log_dir = m_ctx.dir_log / msg->name / "Photos";
-            m_log_dir.create();
-            break;
-          case IMC::LoggingControl::COP_STOPPED:
-            break;
+          m_log_dir = m_ctx.dir_log / msg->name / "Photos";
+          activate();
         }
+      }
+
+      void
+      onRequestActivation(void)
+      {
+        m_activating = true;
+        IMC::LoggingControl log_ctl;
+        log_ctl.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
+        dispatch(log_ctl);
+      }
+
+      void
+      onActivation(void)
+      {
+        m_activating = false;
+        m_log_dir.create();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
