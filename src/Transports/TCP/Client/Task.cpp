@@ -137,10 +137,9 @@ namespace Transports
           {
             n_r = m_sock->read((char*)p, n);
           }
-          catch (std::runtime_error& e)
+          catch (std::exception& e)
           {
-            err("receive error: %s", e.what());
-            return;
+            throw RestartNeeded(e.what(), 5);
           }
 
           if (n_r > 0)
