@@ -110,6 +110,8 @@ namespace Control
         bool m_critical;
         //! Bitfield of enabled control loops.
         uint32_t m_cloops;
+        //! Parser Variables
+        mavlink_message_t m_msg;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -193,6 +195,7 @@ namespace Control
           m_TCP_addr = m_args.TCP_addr;
           m_TCP_port = m_args.TCP_port;
           openConnection();
+
         }
 
         void
@@ -357,6 +360,7 @@ namespace Control
           }
 
           sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_AUTO_DISARMED);
+          debug("Change to AUTO packet sent to Ardupilot");
 
           uint8_t buf[512];
           int seq = 1;
@@ -455,6 +459,7 @@ namespace Control
         loiterHere(void)
         {
           sendCommandPacket(MAV_CMD_NAV_LOITER_UNLIM);
+          debug("Sent LOITER packet to Ardupilot");
         }
 
         void
@@ -504,7 +509,7 @@ namespace Control
             }
             else
             {
-              Time::Delay::wait(1.0);
+              Time::Delay::wait(0.5);
               openConnection();
             }
 
@@ -539,19 +544,20 @@ namespace Control
         {
           if(m_TCP_sock)
           {
+        	debug("Sending something");
             return m_TCP_sock->write((char*)bfr, size);
           }
           return 0;
         }
 
         int
-        receiveData(uint8_t* buf)
+        receiveData(uint8_t* buf, size_t blen)
         {
           if(m_TCP_sock)
           {
             try
             {
-              return m_TCP_sock->read((char*) buf, sizeof(buf));
+              return m_TCP_sock->read((char*) buf, blen);
             }
             catch (...)
             {
@@ -571,15 +577,13 @@ namespace Control
         void
         handleArdupilotData(void)
         {
-          mavlink_message_t msg;
           mavlink_status_t status;
 
           double now = Clock::get();
 
           while (poll(0.01))
           {
-            int n = receiveData(m_buf);
-
+            int n = receiveData(m_buf, sizeof(m_buf));
             if (n < 0)
             {
               err(DTR("receive error"));
@@ -589,13 +593,45 @@ namespace Control
 
             for (int i = 0; i < n; i++)
             {
-
-              if (mavlink_parse_char(MAVLINK_COMM_0, m_buf[i], &msg, &status))
+              int rv = mavlink_parse_char(MAVLINK_COMM_0, m_buf[i], &m_msg, &status);
+              if (status.packet_rx_drop_count)
               {
-                switch ((int)msg.msgid)
+                  switch(status.parse_state)
+                  {
+                    case MAVLINK_PARSE_STATE_IDLE:
+                      err("failed at state IDLE");
+                      break;
+                    case MAVLINK_PARSE_STATE_GOT_STX:
+                      err("failed at state GOT_STX");
+                      break;
+                    case MAVLINK_PARSE_STATE_GOT_LENGTH:
+                      err("failed at state GOT_LENGTH");
+                      break;
+                    case MAVLINK_PARSE_STATE_GOT_SYSID:
+                      err("failed at state GOT_SYSID");
+                      break;
+                    case MAVLINK_PARSE_STATE_GOT_COMPID:
+                      err("failed at state GOT_COMPID");
+                      break;
+                    case MAVLINK_PARSE_STATE_GOT_MSGID:
+                      err("failed at state GOT_MSGID");
+                      break;
+                    case MAVLINK_PARSE_STATE_GOT_PAYLOAD:
+                      err("failed at state GOT_PAYLOAD");
+                      break;
+                    case MAVLINK_PARSE_STATE_GOT_CRC1:
+                      err("failed at state GOT_CRC1");
+                      break;
+                    default:
+                      err("failed OTHER");
+                  }
+              }
+              if (rv)
+              {
+                switch ((int)m_msg.msgid)
                 {
                   default:
-                    debug("UNDEF: %u", msg.msgid);
+                    debug("UNDEF: %u", m_msg.msgid);
                     break;
                   case MAVLINK_MSG_ID_HEARTBEAT:
                     trace("HEARTBEAT");
@@ -674,14 +710,14 @@ namespace Control
                     break;
                 }
 
-                PktHandler h = m_mlh[msg.msgid];
+                PktHandler h = m_mlh[m_msg.msgid];
 
                 if (!h)
                   continue;  // Ignore this packet (no handler for it)
 
                 // Call handler
-                (this->*h)(&msg);
-                m_sysid = msg.sysid;
+                (this->*h)(&m_msg);
+                m_sysid = m_msg.sysid;
 
                 m_last_pkt_time = now;
               }
@@ -704,7 +740,6 @@ namespace Control
           m_estate.p = att.rollspeed;
           m_estate.q = att.pitchspeed;
           m_estate.r = att.yawspeed;
-          dispatch(m_estate);
         }
 
         void
@@ -721,21 +756,20 @@ namespace Control
           m_lon = (float)(gp.lon * 1e-07);
           m_alt = (float)(gp.alt * 1e-03);
 
-          time_t fix_time(gp.time_boot_ms / 1e03);
-
-          debug("Raw Time: %u", gp.time_boot_ms);
-
-          struct tm* fix_utc = gmtime(&fix_time);
-
-          m_fix.utc_time = 3600 * (float)fix_utc->tm_hour +
-                           60 * (float)fix_utc->tm_min +
-                           (float)fix_utc->tm_sec +
-                           ((float)(gp.time_boot_ms % 1000) / 1000);
-
-          m_fix.utc_day = fix_utc->tm_mday;
-          m_fix.utc_month = fix_utc->tm_mon + 1;
-          m_fix.utc_year = 1900 + fix_utc->tm_year;
-
+//          time_t fix_time(gp.time_boot_ms / 1e03);
+//
+//          debug("Raw Time: %u", gp.time_boot_ms);
+//
+//          struct tm* fix_utc = gmtime(&fix_time);
+//
+//          m_fix.utc_time = 3600 * (float)fix_utc->tm_hour +
+//                           60 * (float)fix_utc->tm_min +
+//                           (float)fix_utc->tm_sec +
+//                           ((float)(gp.time_boot_ms % 1000) / 1000);
+//
+//          m_fix.utc_day = fix_utc->tm_mday;
+//          m_fix.utc_month = fix_utc->tm_mon + 1;
+//          m_fix.utc_year = 1900 + fix_utc->tm_year;
 
           double distance_to_ref = WGS84::distance(ref_lat,ref_lon,ref_hei,
               lat,lon,hei);
@@ -885,7 +919,7 @@ namespace Control
 
           mavlink_msg_mission_current_decode(msg, &miss_curr);
           m_current_wp = miss_curr.seq;
-          trace("Current mission item: %d", miss_curr.seq);
+          debug("Current mission item: %d", miss_curr.seq);
 
           uint8_t buf[512];
 
