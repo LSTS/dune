@@ -37,9 +37,9 @@ namespace Simulators
     struct Arguments
     {
       //! Stream speed North parameter (m/s).
-      double m_wx;
+      double wx;
       //! Stream speed East parameter (m/s).
-      double m_wy;
+      double wy;
       //! UAV Model Parameters
       std::string sim_type; //! Simulation type (3DOF, 4DOF_bank, 4DOF_alt, 5DOF, 6DOF_stabder, and 6DOF_geom)
       double gaccel;
@@ -64,7 +64,7 @@ namespace Simulators
     struct Task: public DUNE::Tasks::Task
     {
       //! Simulation vehicle.
-      UAVModel* m_model;
+      //UAVModel* m_model;
       //! Simulated position (X,Y,Z).
       IMC::SimulatedState m_sstate;
       //! Start time.
@@ -90,7 +90,7 @@ namespace Simulators
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_model(NULL),
+        //m_model(NULL),
         m_start_time(Clock::get()),
         m_last_update(Clock::get()),
         m_thruster_act(0.0),
@@ -101,7 +101,7 @@ namespace Simulators
         m_velocity(6, 1, 0.0)
       {
         // Definition of configuration parameters.
-        param("Stream Speed North", m_args.m_wx)
+        param("Stream Speed North", m_args.wx)
         .units(Units::MeterPerSecond)
         .defaultValue("0.0")
         .description("Wind speed along the North in the NED frame");
@@ -117,7 +117,7 @@ namespace Simulators
         param("Gravity Acceleration", m_args.gaccel)
         .defaultValue("9.8066")
         .units(Units::MeterPerSquareSecond)
-        .description("Gravity Acceleration at aicraft location");
+        .description("Gravity Acceleration at aircraft location");
 
         param("Bank Rate Gain", m_args.kbankrate)
         .defaultValue("1.0")
@@ -192,6 +192,7 @@ namespace Simulators
       onResourceAcquisition(void)
       {
         // Initialize the model model
+        /*
         DUNE::Control::ModelParameters par;
         if (m_args.sim_type == "4DOF_bank")
         {
@@ -212,6 +213,7 @@ namespace Simulators
         }
 
         m_model = new UAVModel(par);
+        */
       }
 
       ~Task(void)
@@ -222,7 +224,7 @@ namespace Simulators
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_model);
+        //Memory::clear(m_model);
       }
 
       void
@@ -296,8 +298,13 @@ namespace Simulators
         double sim_time;
         double cos_yaw;
         double sin_yaw;
+        double wind_x;
+        double wind_y;
+        double wind_z = 0;
         double tmp_vx_wind;
         double tmp_vy_wind;
+        double tmp_2wind;
+        Matrix uav2wind_GndFr;
         double tas;
 
         while (!stopping())
@@ -312,8 +319,10 @@ namespace Simulators
             //! Optimization variables
             cos_yaw = std::cos(m_position(5));
             sin_yaw = std::sin(m_position(5));
-            tmp_vx_wind = m_velocity(0) - m_wx;
-            tmp_vy_wind = m_velocity(1) - m_wy;
+            wind_x = m_args.wx;
+            wind_y = m_args.wy;
+            tmp_vx_wind = m_velocity(0) - wind_x;
+            tmp_vy_wind = m_velocity(1) - wind_y;
             tas = std::sqrt(tmp_vx_wind*tmp_vx_wind + tmp_vy_wind*tmp_vy_wind);
 
             //==========================================================================
@@ -328,11 +337,13 @@ namespace Simulators
             //! UAV velocity components on the flow field frame
             tmp_vx_wind = tas * cos_yaw;
             tmp_vy_wind = tas * sin_yaw;
+            tmp_2wind = {tmp_vx_wind, tmp_vy_wind, 0};
+            uav2wind_GndFr = Matrix(tmp_2wind, 3, 1);
             //! UAV velocity components on the fixed frame
-            m_velocity(0) = tas * cos_yaw + m_wx;
-            m_velocity(1) = tas * sin_yaw + m_wy;
+            m_velocity(0) = tmp_vx_wind + wind_x;
+            m_velocity(1) = tmp_vy_wind + wind_y;
             //! Turn rate
-            m_velocity(5) = m_arg.gaccel * std::tan(m_position(3))/tas;
+            m_velocity(5) = m_args.gaccel * std::tan(m_position(3))/tas;
 
             //! State vector update
             m_position += m_velocity*timestep;
@@ -343,15 +354,15 @@ namespace Simulators
 
             //! Air-relative UAV velocity components, on aircraft frame
             double ea[3] = {m_position(3), m_position(4), m_position(5)};
-            Matrix vd_UAV2Air_BodyVel = transpose(Matrix(ea, 3, 1).toDCM()) * vd_UAV2AirVel_GndFr;
+            Matrix uav2wind_BodyFr = transpose(Matrix(ea, 3, 1).toDCM()) * uav2wind_GndFr;
 
             //! UAV body-frame rotation rates
-            vd_UAVRotRates = UAVRotRatTrans_1_00(vd_State);
+            //vd_UAVRotRates = UAVRotRatTrans_1_00(vd_State);
 
             sim_time = time - m_start_time;
             // Fill position.
-            m_sstate.x = m_position(0) + sim_time * m_args.wx;
-            m_sstate.y = m_position(1) + sim_time * m_args.wy;
+            m_sstate.x = m_position(0);
+            m_sstate.y = m_position(1);
             m_sstate.z = m_position(2);
 
             // Fill attitude.
@@ -371,16 +382,18 @@ namespace Simulators
             m_sstate.r = m_velocity(5);
 
             // Fill stream velocity.
-            m_sstate.svx = m_args.wx;
-            m_sstate.svy = m_args.wy;
-            m_sstate.svz = 0;
+            m_sstate.svx = wind_x;
+            m_sstate.svy = wind_y;
+            m_sstate.svz = wind_z;
 
+            /*
             //! Absolute airspeed
             m_ias.value = tas;
             //! Alpha - Angle of Attack
-            m_alpha.value = std::atan(-wz/vd_UAV2Air_BodyVel(1));
+            m_alpha.value = std::atan(-wind_z/uav2wind_BodyFr(0));
             //! Beta - Slip angle
-            m_beta.value = std::atan2(vd_UAV2Air_BodyVel(2), vd_UAV2AirVel(1));
+            m_beta.value = std::atan2(uav2wind_BodyFr(1), uav2wind_BodyFr(0));
+            */
 
             dispatch(m_sstate);
             dispatch(m_ias);
