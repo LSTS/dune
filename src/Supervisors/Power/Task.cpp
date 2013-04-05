@@ -73,7 +73,7 @@ namespace Supervisors
       {
         // Define configuration parameters.
         param("Main Power Channel", m_args.pwr_main)
-        .defaultValue("")
+        .defaultValue("System")
         .description("Name of the main power channel");
 
         param("Command - On Power Down", m_args.cmd_pwr_down)
@@ -144,7 +144,7 @@ namespace Supervisors
             war("%s", DTR(Status::getString(Status::CODE_POWER_DOWN)));
             m_cmd->stopAndJoin();
             delete m_cmd;
-            m_cmd = 0;
+            m_cmd = NULL;
 
             Delay::wait(1.0);
             m_power_down_now = true;

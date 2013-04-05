@@ -236,6 +236,10 @@ namespace Transports
           try
           {
             c.socket = m_sock->accept(&c.address, &c.port);
+            c.socket->setKeepAlive(true);
+            c.socket->setNoDelay(true);
+            c.socket->setReceiveTimeout(5);
+            c.socket->setSendTimeout(5);
             c.socket->addToPoll(m_iom);
             m_clients.push_back(c);
             updateEntityState(m_clients.size());

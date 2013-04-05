@@ -35,6 +35,7 @@
 #include <DUNE/IMC.hpp>
 #include <DUNE/Maneuvers.hpp>
 #include <DUNE/Utils.hpp>
+#include <DUNE/Math/General.hpp>
 
 namespace DUNE
 {
@@ -183,9 +184,9 @@ namespace DUNE
         if (time_left < 0.0)
           return -1.0;
 
-        time_left = trimValue(time_left, 0.0f, total_duration);
+        time_left = Math::trimValue(time_left, 0.0f, total_duration);
 
-        return 100.0f * trimValue((1.0f - time_left / total_duration), 0.0f, 1.0f);
+        return 100.0f * Math::trimValue((1.0f - time_left / total_duration), 0.0f, 1.0f);
       };
     };
   }

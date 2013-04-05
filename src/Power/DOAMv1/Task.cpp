@@ -84,14 +84,14 @@ namespace Power
       double wdog_tout;
       //! Power channel name.
       std::string pwr_name;
-      //! CPU IPv4 address.
-      Address addr;
+      //! Slave system name.
+      std::string slave_system;
+      //! Slave entity name.
+      std::string slave_entity;
     };
 
     struct Task: public Tasks::Task
     {
-      //! CPU test port.
-      static const unsigned c_test_port = 22;
       //! Device protocol handler.
       Hardware::LUCL::Protocol m_proto;
       //! ADC Messages.
@@ -108,10 +108,15 @@ namespace Power
       Arguments m_args;
       //! Activation timer
       Counter<double> m_act_timer;
+      //! True if slave CPU is alive.
+      bool m_slave_alive;
+      //! System id of the slave DUNE instance.
+      unsigned m_slave_id;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_activating(false)
+        m_activating(false),
+        m_slave_alive(false)
       {
         std::memset(m_adcs, 0, sizeof(m_adcs));
 
@@ -136,6 +141,12 @@ namespace Power
         .defaultValue("2.0")
         .description("Watchdog timeout");
 
+        param("Slave System Name", m_args.slave_system)
+        .description("Name of the slave system");
+
+        param("Slave Entity Name", m_args.slave_entity)
+        .description("Name of the slave entity");
+
         for (unsigned i = 0; i < c_adcs_max; ++i)
         {
           std::string label = String::str("ADC Channel %d - Message", i);
@@ -150,16 +161,13 @@ namespace Power
           param(label, m_args.adc_elabels[i]);
         }
 
-        param("CPU IPv4 Address", m_args.addr)
-        .defaultValue("10.0.0.0")
-        .description("IP address of the DOAM CPU");
-
         m_power_state.state = IMC::PowerChannelState::PCS_OFF;
 
         // Register handler routines.
         bind<IMC::PowerOperation>(this);
         bind<IMC::PowerChannelControl>(this);
         bind<IMC::QueryPowerChannelState>(this);
+        bind<IMC::Heartbeat>(this);
       }
 
       ~Task(void)
@@ -174,6 +182,8 @@ namespace Power
       void
       onUpdateParameters(void)
       {
+        m_slave_id = resolveSystemName(m_args.slave_system);
+
         for (unsigned i = 0; i < c_adcs_max; ++i)
         {
           if (m_adcs[i] != NULL)
@@ -292,7 +302,19 @@ namespace Power
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
         inf(DTR("version: %u.%u.%u"), major, minor, patch);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      consume(const IMC::Heartbeat* msg)
+      {
+        if (!m_activating || (msg->getSource() != m_slave_id))
+          return;
+
+        if (std::abs(msg->getTimeStamp() - Clock::getSinceEpoch()) <= 1.0)
+        {
+          debug("slave is alive and synchronized");
+          m_slave_alive = true;
+        }
       }
 
       void
@@ -335,25 +357,25 @@ namespace Power
           return;
         }
 
-        try
+        if (m_slave_alive)
         {
-          // Attempt connection to module's CPU
-          spew("attempting connection");
-          TCPSocket sock;
-          sock.connect(m_args.addr, c_test_port);
-          spew("connected successfuly");
           activate();
           debug("activation took %0.2f s", getActivationTime() - m_act_timer.getRemaining());
-        }
-        catch (...)
-        {
-          spew("failed to connect");
+
+          IMC::SetEntityParameters ep;
+          ep.name = m_args.slave_entity;
+          IMC::EntityParameter ea;
+          ea.name = "Active";
+          ea.value = "true";
+          ep.params.push_back(ea);
+          dispatch(ep);
         }
       }
 
       void
       onRequestActivation(void)
       {
+        m_slave_alive = false;
         setPowerChannelState(1);
         m_activating = true;
         m_act_timer.setTop(getActivationTime());
@@ -365,19 +387,22 @@ namespace Power
       {
         // NOTE: some CPUs may require proper shutdown, which is not implemented yet.
         setPowerChannelState(0);
+        deactivate();
       }
 
       void
       onActivation(void)
       {
-        setStrobeMode(STROBE_MODE_CAM);
         m_activating = false;
+        setStrobeMode(STROBE_MODE_CAM);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
       onDeactivation(void)
       {
         setStrobeMode(STROBE_MODE_MCU);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       bool
@@ -455,9 +480,16 @@ namespace Power
           waitForCommand(CMD_STATE);
 
           if (m_wdog.overflow())
+          {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          }
           else
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          {
+            if (isActive())
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            else
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+          }
 
           if (m_activating)
             checkActivation();

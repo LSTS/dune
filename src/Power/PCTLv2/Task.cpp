@@ -119,6 +119,8 @@ namespace Power
       std::string pwr_names[c_pwrs_count];
       //! Power channels states.
       unsigned pwr_states[c_pwrs_count];
+      //! Main power channel.
+      std::string pwr_main;
       //! Leaks entity labels.
       std::string leak_elabels[c_leak_count];
       //! Watchdog timeout.
@@ -190,6 +192,10 @@ namespace Power
         param("LED - Names", m_args.leds)
         .size(c_led_count)
         .description("List of LED names");
+
+        param("Power Channel Main - Name", m_args.pwr_main)
+        .defaultValue("System")
+        .description("Name of the power channel that controls the system power");
 
         for (unsigned i = 0; i < c_adcs_count; ++i)
         {
@@ -584,6 +590,16 @@ namespace Power
       void
       consume(const IMC::PowerChannelControl* msg)
       {
+        // Handle requests to main power channel.
+        if (msg->name == m_args.pwr_main)
+        {
+          if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
+          {
+            m_proto.sendCommand(CMD_PWR_HLT, 0, 0);
+            return;
+          }
+        }
+
         std::map<std::string, PowerChannel*>::const_iterator itr = m_channels.find_by_name(msg->name);
         if (itr == m_channels.end_by_name())
           return;
@@ -592,17 +608,9 @@ namespace Power
 
         if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
         {
-          if (id == 255)
-          {
-            m_proto.sendCommand(CMD_PWR_HLT, 0, 0);
-            return;
-          }
-          else
-          {
-            uint8_t data[] = {id, 0};
-            m_proto.sendCommand(CMD_PWR_CTL, data, sizeof(data));
-            waitForCommand(CMD_PWR_CTL);
-          }
+          uint8_t data[] = {id, 0};
+          m_proto.sendCommand(CMD_PWR_CTL, data, sizeof(data));
+          waitForCommand(CMD_PWR_CTL);
         }
         else if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_ON)
         {

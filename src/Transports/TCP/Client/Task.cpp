@@ -87,6 +87,7 @@ namespace Transports
             m_iom = new IOMultiplexing;
             m_sock->addToPoll(*m_iom);
             inf("connected to %s:%u", m_args.address.c_str(), m_args.port);
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           }
           catch (std::runtime_error& e)
           {

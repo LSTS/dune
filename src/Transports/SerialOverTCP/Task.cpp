@@ -200,7 +200,7 @@ namespace Transports
         {
           if (m_iom.poll(1.0))
           {
-            checkSerialPort(),
+            checkSerialPort();
             checkMainSocket();
             checkClientSockets();
           }
