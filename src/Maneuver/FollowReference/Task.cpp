@@ -141,13 +141,20 @@ namespace Maneuver
         if (msg1->lon != msg2->lon)
           return false;
 
+        if (msg1->z.isNull() || msg2->z.isNull())
+          return false;
+
         const IMC::DesiredZ *z1 = msg1->z.get();
         const IMC::DesiredZ *z2 = msg2->z.get();
-        const IMC::DesiredSpeed *s1 = msg1->speed.get();
-        const IMC::DesiredSpeed *s2 = msg2->speed.get();
 
         if (!z1->fieldsEqual(*z2))
           return false;
+
+        if (msg1->speed.isNull() || msg2->speed.isNull())
+          return false;
+
+        const IMC::DesiredSpeed *s1 = msg1->speed.get();
+        const IMC::DesiredSpeed *s2 = msg2->speed.get();
 
         if (!s1->fieldsEqual(*s2))
           return false;
