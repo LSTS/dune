@@ -77,12 +77,15 @@ namespace Vision
       Path m_log_dir;
       // Timestamp for last frame
       double m_timestamp;
+      //! True if task is activating.
+      bool m_activating;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_http(NULL),
         m_boundary(""),
-        m_log_dir(ctx.dir_log)
+        m_log_dir(ctx.dir_log),
+        m_activating(false)
       {
         // Retrieve configuration values.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -121,6 +124,42 @@ namespace Vision
         .description("Enable Strobe");
 
         bind<IMC::LoggingControl>(this);
+      }
+
+      void
+      consume(const IMC::LoggingControl* msg)
+      {
+        if (!m_activating && (msg->getDestination() != getSystemId()))
+          return;
+
+        if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
+        {
+          m_log_dir = m_ctx.dir_log / msg->name / "Photos";
+          activate();
+        }
+      }
+
+      void
+      onRequestActivation(void)
+      {
+        m_activating = true;
+        IMC::LoggingControl log_ctl;
+        log_ctl.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
+        dispatch(log_ctl);
+      }
+
+      void
+      onActivation(void)
+      {
+        m_activating = false;
+        m_log_dir.create();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -316,20 +355,6 @@ namespace Vision
       onResourceRelease(void)
       {
         stopVideo();
-      }
-
-      void
-      consume(const IMC::LoggingControl* msg)
-      {
-        switch (msg->op)
-        {
-          case IMC::LoggingControl::COP_STARTED:
-            m_log_dir = m_ctx.dir_log / msg->name / "Photos";
-            m_log_dir.create();
-            break;
-          case IMC::LoggingControl::COP_STOPPED:
-            break;
-        }
       }
 
       void
