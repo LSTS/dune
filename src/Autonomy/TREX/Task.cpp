@@ -22,7 +22,7 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Ricardo Martins, Jose Pinto                                      *
+// Author: Jose Pinto                                      *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -43,6 +43,9 @@ namespace Autonomy
     {
       //! T-REX IMC identifier.
       unsigned trex_id;
+
+      //! Type of vehicle that TREX is controlling
+      std::string vehicle_type;
     };
 
     struct Task : public DUNE::Tasks::Task
@@ -75,6 +78,8 @@ namespace Autonomy
                     Tasks::Parameter::VISIBILITY_USER, false);
 
         param("TREX ID", m_args.trex_id).defaultValue("65000");
+
+        param("Vehicle Type", m_args.vehicle_type).defaultValue("AUV");
 
         // Register consumers.
         bind<IMC::Announce>(this);
