@@ -34,10 +34,10 @@ DUNE_TASK_BEGIN
 struct Arguments
 {
   double klon,
-                 klat,
-                 kbound,
-                 klead,
-                 kdeconfl;
+         klat,
+         kbound,
+         klead,
+         kdeconfl;
   int formframe;
   bool debug;
 };
