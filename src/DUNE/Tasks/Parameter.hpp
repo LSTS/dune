@@ -228,8 +228,8 @@ namespace DUNE
         return *this;
       }
 
-      //! Set parameter's scope.
-      //! @param[in] a_scope desired scope.
+      //! Set parameter's visibility.
+      //! @param[in] a_visibility desired visibility.
       //! @return parameter reference.
       Parameter&
       visibility(const std::string& a_visibility);
