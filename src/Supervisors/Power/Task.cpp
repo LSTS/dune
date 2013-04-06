@@ -98,6 +98,9 @@ namespace Supervisors
       void
       consume(const IMC::PowerOperation* msg)
       {
+        if (msg->getDestination() != getSystemId())
+          return;
+
         if (msg->op == IMC::PowerOperation::POP_PWR_DOWN_IP)
         {
           if (!m_power_down)
