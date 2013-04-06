@@ -219,6 +219,9 @@ namespace Plan
       void
       consume(const IMC::PowerOperation* po)
       {
+        if (po->getDestination() != getSystemId())
+          return;
+
         switch (po->op)
         {
           case IMC::PowerOperation::POP_PWR_DOWN_IP:
