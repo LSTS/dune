@@ -205,8 +205,14 @@ namespace Monitors
           return;
         }
 
+        // No way to detect medium properly.
         if (m_water_presence.overflow() && m_args.vtype != "UAV")
+        {
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
+          m_vm.medium = IMC::VehicleMedium::VM_UNKNOWN;
+          dispatch(m_vm);
+          return;
+        }
 
         if (getEntityState() == IMC::EntityState::ESTA_ERROR)
         {
