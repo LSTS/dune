@@ -11000,7 +11000,7 @@ namespace DUNE
     };
 
     //! Communications Relay.
-    class CommsRelay: public Message
+    class CommsRelay: public Maneuver
     {
     public:
       //! Latitude WGS-84.
@@ -12306,7 +12306,9 @@ namespace DUNE
         //! Water.
         VM_WATER = 2,
         //! Underwater.
-        VM_UNDERWATER = 3
+        VM_UNDERWATER = 3,
+        //! Unknown.
+        VM_UNKNOWN = 4
       };
 
       //! Medium.

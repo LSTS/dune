@@ -11,6 +11,7 @@
           name="IMC"
           long-name="Inter Module Communication"
           version="5.1.0">
+
   <description>
     This document describes the communications protocol associated
     with the LSTS software framework. Concepts such as *message*,
@@ -307,6 +308,7 @@
       <message-type abbrev="CompassCalibration"/>
       <message-type abbrev="CoverArea"/>
       <message-type abbrev="FollowReference"/>
+      <message-type abbrev="CommsRelay"/>
     </message-group>
 
     <message-group name="Control Command" abbrev="ControlCommand">
@@ -1462,10 +1464,10 @@
         Used to define the type of the operation this message holds.
       </description>
       <value abbrev="SET_CFG" name="Set LBL Configuration" id="0">
-      	<description>Set the beacons configuration aboard the vehicle.</description>
+        <description>Set the beacons configuration aboard the vehicle.</description>
       </value>
       <value abbrev="GET_CFG" name="Retrieve LBL Configuration" id="1">
-      	<description>Request the vehicle to send its current beacons configuration.</description>
+        <description>Request the vehicle to send its current beacons configuration.</description>
       </value>
       <value abbrev="CUR_CFG" name="Reply to a GET command" id="2"></value>
     </field>
@@ -1923,7 +1925,7 @@
         Rotation around the vehicle longitudinal axis.
       </description>
     </field>
-    <field name="Pitch Angle" abbrev="theta" type="fp64_t" unit="rad" min="-3.141592653589793" max="3.141592653589793">
+    <field name="Pitch Angle" abbrev="theta" type="fp64_t" unit="rad" min="-1.57079632679490" max="1.57079632679490">
       <description>
         Rotation around the vehicle lateral or transverse axis.
       </description>
@@ -2956,9 +2958,9 @@
       next:
 
       .. figure:: images/euler-lauv.png
-         :align:  center
+      :align:  center
 
-         Euler angles
+      Euler angles
     </description>
     <field name="Latitude (WGS-84)" abbrev="lat" type="fp64_t" unit="rad" min="-1.5707963267948966" max="1.5707963267948966">
       <description>
@@ -3109,16 +3111,16 @@
       covariance matrix of an Extended Kalman Filter.
     </description>
     <field name="Variance - x Position" abbrev="x" type="fp32_t" unit="m">
-        <description>The North offset variance of the North/East/Down
-        field with respect to LLH.</description>
+      <description>The North offset variance of the North/East/Down
+      field with respect to LLH.</description>
     </field>
     <field name="Variance - y Position" abbrev="y" type="fp32_t" unit="m">
-        <description>The East offset variance of the North/East/Down
-        field with respect to LLH.</description>
+      <description>The East offset variance of the North/East/Down
+      field with respect to LLH.</description>
     </field>
     <field name="Variance - z Position" abbrev="z" type="fp32_t" unit="m">
-        <description>The Down offset variance of the North/East/Down
-        field with respect to LLH.</description>
+      <description>The Down offset variance of the North/East/Down
+      field with respect to LLH.</description>
     </field>
     <field name="Variance - Roll" abbrev="phi" type="fp32_t" unit="rad">
       <description>
@@ -3166,11 +3168,11 @@
       </description>
     </field>
     <field name="Variance - Yaw Bias" abbrev="bias_psi" type="fp32_t" unit="rad">
-       <description>
+      <description>
         The psi Euler angle bias variance from the vehicle's sensed attitude.
       </description>
     </field>
-     <field name="Variance - Gyro. Yaw Rate Bias" abbrev="bias_r" type="fp32_t" unit="rad/s">
+    <field name="Variance - Gyro. Yaw Rate Bias" abbrev="bias_r" type="fp32_t" unit="rad/s">
       <description>
         The angular velocity over body-fixed zz axis bias variance from sensor.
       </description>
@@ -3185,7 +3187,7 @@
       that the user may refer for more information.
     </description>
     <field name="Yaw Bias" abbrev="bias_psi" type="fp32_t" unit="rad">
-       <description>
+      <description>
         The psi Euler angle bias from the vehicle's sensed attitude.
       </description>
     </field>
@@ -3993,16 +3995,16 @@
     </description>
     <field name="Operation" abbrev="op" type="uint8_t" unit="Enumerated" prefix="OP">
       <description>
-	Brake operation.
+        Brake operation.
       </description>
       <value id="0" abbrev="STOP" name="Stop Braking">
         <description>
-	  Stop braking procedures.
+          Stop braking procedures.
         </description>
       </value>
       <value id="1" abbrev="START" name="Start Braking">
         <description>
-	  Start braking procedures.
+          Start braking procedures.
         </description>
       </value>
     </field>
@@ -4139,7 +4141,7 @@
     <field name="Radius" abbrev="radius" type="fp32_t" unit="m" min="1" max="100000">
       <description>
         Radius of the maneuver.
-	Only used if flag STATION_KEEP is on.
+        Only used if flag STATION_KEEP is on.
       </description>
     </field>
     <field name="Flags" abbrev="flags" prefix="FLG" type="uint8_t" unit="Bitfield">
@@ -4156,14 +4158,14 @@
       <value id="0x02" abbrev="WAIT_AT_SURFACE" name="Wait at surface">
         <description>
           If this flag is set, duration field is used to hold position at surface
-	  for that amount of time.
+          for that amount of time.
         </description>
       </value>
       <value id="0x04" abbrev="STATION_KEEP" name="Station keeping">
         <description>
-	  This flag will only make sense if WAIT_AT_SURFACE is also set.
-	  While holding position at surface the vehicle will assume a
-	  station keeping behavior.
+          This flag will only make sense if WAIT_AT_SURFACE is also set.
+          While holding position at surface the vehicle will assume a
+          station keeping behavior.
         </description>
       </value>
     </field>
@@ -4453,7 +4455,7 @@
 
   <message id="458" name="Path Point" abbrev="PathPoint">
     <description>
-       Waypoint coordinate of a Follow Path maneuver.
+      Waypoint coordinate of a Follow Path maneuver.
     </description>
     <field name="North Offset (m)" abbrev="x" type="fp32_t" unit="m">
       <description>
@@ -4725,7 +4727,7 @@
 
   <message id="464" name="Trajectory Point" abbrev="TrajectoryPoint">
     <description>
-       Waypoint coordinate of a Follow Trajectory maneuver.
+      Waypoint coordinate of a Follow Trajectory maneuver.
     </description>
     <field name="North Offset (m)" abbrev="x" type="fp32_t" unit="m">
       <description>
@@ -5158,91 +5160,85 @@
 
   <!-- NOT YET IMPLEMENTED -->
   <message id="478" name="Follow Reference Maneuver" abbrev="FollowReference" source="ccu">
-  	<description>
-  	  This maneuver follows a reference given by an external entity.
-  	</description>
-  	<field name="Controlling Source" abbrev="control_src" type="uint16_t">
-  		<description>
-  	 	  The IMC identifier of the source system that is allowed to provide references to this maneuver.
-  	 	  If the value ''0xFFFF'' is used, any system is allowed to command references.
-  		</description>
-  	</field>
-  	<field name="Controlling Entity" abbrev="control_ent" type="uint8_t">
-  		<description>
-  		  The entity identifier of the entity that is allowed to provide references to this maneuver.
-  		  If the value ''0xFF'' is used, any entity is allowed to command references.
-  		</description>
-  	</field>
-  	<field name="Reference Update Timeout" abbrev="timeout" type="fp32_t">
-  		<description>
-  		  The ammount of time, in seconds, after which the maneuver will be terminated if no reference has
-  		  been received. In other words, the controlling entity should send reference updates in shorter periods than
-  		  'timeout'.
-  		</description>
-  	</field>
-  	<field name="Loiter Radius" abbrev="loiter_radius" type="fp32_t">
-  		<description>
-  		  Whenever an intended reference is achieved, this maneuver will maintain the vehicle in vaticiny of that
-  		  location. The loiter radius is used to define the radius of this (xy) area.
-  		</description>
-  	</field>
-  	<field name="Altitude Interval" abbrev="altitude_interval" type="fp32_t">
-  		<description>
-  		  Similarly to Loiter Radius, this field is used to define the "z" distance considered to be inside the vacitiny of
-  		  the target location. An AUV may, for instance, be floating until it more than z units above the current reference,
-  		  in which case it actively changes its position in order to achieve the desired depth / altitude.
-  		</description>
-  	</field>
+    <description>
+      This maneuver follows a reference given by an external entity.
+    </description>
+    <field name="Controlling Source" abbrev="control_src" type="uint16_t">
+      <description>
+        The IMC identifier of the source system that is allowed to provide references to this maneuver.
+        If the value ''0xFFFF'' is used, any system is allowed to command references.
+      </description>
+    </field>
+    <field name="Controlling Entity" abbrev="control_ent" type="uint8_t">
+      <description>
+        The entity identifier of the entity that is allowed to provide references to this maneuver.
+        If the value ''0xFF'' is used, any entity is allowed to command references.
+      </description>
+    </field>
+    <field name="Reference Update Timeout" abbrev="timeout" type="fp32_t">
+      <description>
+        The ammount of time, in seconds, after which the maneuver will be terminated if no reference has
+        been received. In other words, the controlling entity should send reference updates in shorter periods than
+        'timeout'.
+      </description>
+    </field>
+    <field name="Loiter Radius" abbrev="loiter_radius" type="fp32_t">
+      <description>
+        Whenever an intended reference is achieved, this maneuver will maintain the vehicle in vaticiny of that
+        location. The loiter radius is used to define the radius of this (xy) area.
+      </description>
+    </field>
+    <field name="Altitude Interval" abbrev="altitude_interval" type="fp32_t">
+      <description>
+        Similarly to Loiter Radius, this field is used to define the "z" distance considered to be inside the vacitiny of
+        the target location. An AUV may, for instance, be floating until it more than z units above the current reference,
+        in which case it actively changes its position in order to achieve the desired depth / altitude.
+      </description>
+    </field>
   </message>
 
   <message id="479" name="Reference To Follow" abbrev="Reference" source="ccu,vehicle">
-  	<field name="Flags" abbrev="flags" type="uint8_t" unit="Bitfield" prefix="FLAG">
-  		<value abbrev="LOCATION" name="Use Location Reference" id="0x01"/>
-  		<value abbrev="SPEED" name="Use Speed Reference" id="0x02"/>
-  		<value abbrev="Z" name="Use Z Reference" id="0x04"/>
-  		<value abbrev="MANDONE" name="Flag Maneuver Completion" id="0x80"/>
-  	</field>
-  	<field name="Speed Reference" abbrev="speed" type="message" message-type="DesiredSpeed"/>
-  	<field name="Z Reference" abbrev="z" type="message" message-type="DesiredZ"/>
-  	<field name="Latitude Reference" abbrev="lat" type="fp64_t"/>
-  	<field name="Longitude Reference" abbrev="lon" type="fp64_t"/>
+    <field name="Flags" abbrev="flags" type="uint8_t" unit="Bitfield" prefix="FLAG">
+      <value abbrev="LOCATION" name="Use Location Reference" id="0x01"/>
+      <value abbrev="SPEED" name="Use Speed Reference" id="0x02"/>
+      <value abbrev="Z" name="Use Z Reference" id="0x04"/>
+      <value abbrev="MANDONE" name="Flag Maneuver Completion" id="0x80"/>
+    </field>
+    <field name="Speed Reference" abbrev="speed" type="message" message-type="DesiredSpeed"/>
+    <field name="Z Reference" abbrev="z" type="message" message-type="DesiredZ"/>
+    <field name="Latitude Reference" abbrev="lat" type="fp64_t"/>
+    <field name="Longitude Reference" abbrev="lon" type="fp64_t"/>
   </message>
 
- <message id="480" name="Follow Reference State" abbrev="FollowRefState" source="vehicle">
-
-  	<field name="Controlling Source" abbrev="control_src" type="uint16_t">
-  		<description>
-  	 	  The IMC identifier of the source system that is allowed to control the vehicle.
-  	 	  If the value ''0xFFFF'' is used, any system is allowed to command references.
-  		</description>
-  	</field>
-
-  	<field name="Controlling Entity" abbrev="control_ent" type="uint8_t">
-  		<description>
-  		  The entity identifier of the entity that is allowed to control the vehicle.
-  		  If the value ''0xFF'' is used, any entity is allowed to command references.
-  		</description>
-  	</field>
-
-  	<field name="Reference" abbrev="reference" type="message" message-type="Reference">
-  	  <description>Reference currently being followed.</description>
-  	</field>
-
-  	<field name="State" abbrev="state" type="uint8_t" unit="Enumerated" prefix="FR">
-  	  <value abbrev="WAIT" name="Waiting for first reference" id="1"/>
-  	  <value abbrev="GOTO" name="Going towards received reference" id="2"/>
-  	  <value abbrev="LOITER" name="Loitering after arriving at the reference" id="3"/>
-  	  <value abbrev="HOVER" name="Hovering after arriving at the reference" id="4"/>
-  	  <value abbrev="ELEVATOR" name="Moving in z after arriving at the target cylinder" id="5"/>
-  	  <value abbrev="TIMEOUT" name="Controlling system timed out" id="6"/>
-  	</field>
-
-  	<field name="Proximity" abbrev="proximity" type="uint8_t" unit="Bitfield" prefix="PROX">
-  	  <value abbrev="FAR" name="Far from the destination" id="0x01"/>
-  	  <value abbrev="XY_NEAR" name="Near in the horizontal plane" id="0x02"/>
-  	  <value abbrev="Z_NEAR" name="Near in the vertical plane" id="0x04"/>
-  	</field>
-
+  <message id="480" name="Follow Reference State" abbrev="FollowRefState" source="vehicle">
+    <field name="Controlling Source" abbrev="control_src" type="uint16_t">
+      <description>
+        The IMC identifier of the source system that is allowed to control the vehicle.
+        If the value ''0xFFFF'' is used, any system is allowed to command references.
+      </description>
+    </field>
+    <field name="Controlling Entity" abbrev="control_ent" type="uint8_t">
+      <description>
+        The entity identifier of the entity that is allowed to control the vehicle.
+        If the value ''0xFF'' is used, any entity is allowed to command references.
+      </description>
+    </field>
+    <field name="Reference" abbrev="reference" type="message" message-type="Reference">
+      <description>Reference currently being followed.</description>
+    </field>
+    <field name="State" abbrev="state" type="uint8_t" unit="Enumerated" prefix="FR">
+      <value abbrev="WAIT" name="Waiting for first reference" id="1"/>
+      <value abbrev="GOTO" name="Going towards received reference" id="2"/>
+      <value abbrev="LOITER" name="Loitering after arriving at the reference" id="3"/>
+      <value abbrev="HOVER" name="Hovering after arriving at the reference" id="4"/>
+      <value abbrev="ELEVATOR" name="Moving in z after arriving at the target cylinder" id="5"/>
+      <value abbrev="TIMEOUT" name="Controlling system timed out" id="6"/>
+    </field>
+    <field name="Proximity" abbrev="proximity" type="uint8_t" unit="Bitfield" prefix="PROX">
+      <value abbrev="FAR" name="Far from the destination" id="0x01"/>
+      <value abbrev="XY_NEAR" name="Near in the horizontal plane" id="0x02"/>
+      <value abbrev="Z_NEAR" name="Near in the vertical plane" id="0x04"/>
+    </field>
   </message>
 
   <!-- Vehicle Supervision -->
@@ -5485,10 +5481,10 @@
     <field name="Scope Time Reference" abbrev="scope_ref" type="fp32_t" unit="s">
       <description>
         Time reference for the scope of the control loop message.
-	Scope reference should only be set by a maneuver.
-	Should be set to a monotonic reference at the time of dispatching this message.
-	Lower level controllers must inherit the same scope reference time sent by maneuver.
-	This same scope reference time must be sent down to lower control layers.
+        Scope reference should only be set by a maneuver.
+        Should be set to a monotonic reference at the time of dispatching this message.
+        Lower level controllers must inherit the same scope reference time sent by maneuver.
+        This same scope reference time must be sent down to lower control layers.
       </description>
     </field>
   </message>
@@ -5499,19 +5495,22 @@
     </description>
     <field name="Medium" abbrev="medium" type="uint8_t" prefix="VM" unit="Enumerated">
       <description>
-	Current medium.
+        Current medium.
       </description>
       <value id="0" abbrev="GROUND" name="Ground">
-	<description>Vehicle is on the ground</description>
+        <description>Vehicle is on the ground</description>
       </value>
       <value id="1" abbrev="AIR" name="Air">
-	<description>Vehicle is airborne</description>
+        <description>Vehicle is airborne</description>
       </value>
       <value id="2" abbrev="WATER" name="Water">
-	<description>Vehicle is at water surface</description>
+        <description>Vehicle is at water surface</description>
       </value>
       <value id="3" abbrev="UNDERWATER" name="Underwater">
-	<description>Vehicle is underwater</description>
+        <description>Vehicle is underwater</description>
+      </value>
+      <value id="4" abbrev="UNKNOWN" name="Unknown">
+        <description>Vehicle medium is unknown</description>
       </value>
     </field>
   </message>
@@ -5522,24 +5521,24 @@
     </description>
     <field name="Collision value" abbrev="value" type="fp32_t" unit="m/s/s">
       <description>
-	Estimated collision acceleration value.
+        Estimated collision acceleration value.
       </description>
     </field>
     <field name="Type" abbrev="type" type="uint8_t" unit="Bitfield" prefix="CD">
       <description>
-	Collision flags.
+        Collision flags.
       </description>
       <value id="0x01" abbrev="X" name="X-axis">
-	<description>Collision detected in the x-axis</description>
+        <description>Collision detected in the x-axis</description>
       </value>
       <value id="0x02" abbrev="Y" name="Y-axis">
-	<description>Collision detected in the y-axis</description>
+        <description>Collision detected in the y-axis</description>
       </value>
       <value id="0x04" abbrev="Z" name="Z-axis">
-	<description>Collision detected in the z-axis</description>
+        <description>Collision detected in the z-axis</description>
       </value>
       <value id="0x08" abbrev="IMPACT" name="Impact">
-	<description>Sudden impact detected</description>
+        <description>Sudden impact detected</description>
       </value>
     </field>
   </message>
@@ -5991,82 +5990,82 @@
     </description>
     <field name="State" abbrev="state" type="uint8_t" prefix="PCS" unit="Enumerated">
       <description>
-	Describes overall state.
+        Describes overall state.
       </description>
       <value id="0" name="Blocked" abbrev="BLOCKED">
-	<description>
+        <description>
           Plan execution is blocked e.g., due to a vehicle error,
           or if no plan is loaded.
-	</description>
+        </description>
       </value>
       <value id="1" name="Ready" abbrev="READY">
-	<description>
+        <description>
           Ready to start plan execution.
-	</description>
+        </description>
       </value>
       <value id="2" name="Initializing" abbrev="INITIALIZING">
-	<description>
+        <description>
           Initializing plan for execution.
-	</description>
+        </description>
       </value>
       <value id="3" name="Executing" abbrev="EXECUTING">
-	<description>
+        <description>
           Executing plan.
-	</description>
+        </description>
       </value>
     </field>
     <field name="Plan -- ID" abbrev="plan_id" type="plaintext">
       <description>
-	Identifier of plan currently loaded.
+        Identifier of plan currently loaded.
       </description>
     </field>
     <field name="Plan -- ETA" abbrev="plan_eta" type="int32_t" unit="s">
       <description>
-	Current plan estimated time to completion.
-	The value will be -1 if the time is unknown or undefined.
+        Current plan estimated time to completion.
+        The value will be -1 if the time is unknown or undefined.
       </description>
     </field>
     <field name="Plan -- Progress" abbrev="plan_progress" type="fp32_t" unit="%">
       <description>
-	Current plan estimated progress in percent.
-	The value will be negative if unknown or undefined.
+        Current plan estimated progress in percent.
+        The value will be negative if unknown or undefined.
       </description>
     </field>
     <field name="Maneuver -- ID" abbrev="man_id" type="plaintext">
       <description>
-	Current node ID, when executing a plan.
+        Current node ID, when executing a plan.
       </description>
     </field>
     <field name="Maneuver -- Type" abbrev="man_type" type="uint16_t">
       <description>
-	Type of maneuver being executed (IMC serialization id),
-	when executing a plan.
+        Type of maneuver being executed (IMC serialization id),
+        when executing a plan.
       </description>
     </field>
     <field name="Maneuver -- ETA" abbrev="man_eta" type="int32_t" unit="s">
       <description>
-	Current node estimated time to completion, when executing a plan.
-	The value will be -1 if the time is unknown or undefined.
+        Current node estimated time to completion, when executing a plan.
+        The value will be -1 if the time is unknown or undefined.
       </description>
     </field>
     <field name="Last Plan Outcome" abbrev="last_outcome" type="uint8_t" prefix="LPO" unit="Enumerated">
       <description>
-	Outcome of the last executed plan.
+        Outcome of the last executed plan.
       </description>
       <value id="0" name="None" abbrev="NONE">
-	<description>
-	  Unknown or not filled.
-	</description>
+        <description>
+          Unknown or not filled.
+        </description>
       </value>
       <value id="1" name="Success" abbrev="SUCCESS">
-	<description>
-	  Last plan execution was successful.
-	</description>
+        <description>
+          Last plan execution was successful.
+        </description>
       </value>
       <value id="2" name="Failure" abbrev="FAILURE">
-	<description>
-	  Last plan execution was a failure.
-	</description>
+        <description>
+          Last plan execution was a failure.
+        </description>
       </value>
     </field>
   </message>
