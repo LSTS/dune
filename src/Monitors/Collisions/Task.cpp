@@ -81,6 +81,8 @@ namespace Monitors
       Time::Counter<double> m_twindow;
       //! Collision detected.
       IMC::Collision m_collision;
+      //! Vehicle Medium.
+      IMC::VehicleMedium m_vm;
       //! Device entity id.
       unsigned m_device_eid;
       //! Depth value
@@ -151,6 +153,7 @@ namespace Monitors
         bind<IMC::Depth>(this);
         bind<IMC::Brake>(this);
         bind<IMC::Rpm>(this);
+        bind<IMC::VehicleMedium>(this);
       }
 
       ~Task(void)
@@ -251,6 +254,10 @@ namespace Monitors
           collided();
         }
 
+        // Ignore attitude if vehicle is on the ground.
+        if (m_vm.medium == IMC::VehicleMedium::VM_GROUND)
+          return;
+
         // Check absolute acceleration values in the x-axis.
         if ((mean_x_abs > m_args.max_x) || (mean_x_abs < - m_args.max_x))
         {
@@ -294,6 +301,12 @@ namespace Monitors
       consume(const IMC::Rpm* msg)
       {
         m_rpms = msg->value;
+      }
+
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        m_vm = *msg;
       }
 
       //! Check if the collision should be ignored
