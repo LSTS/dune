@@ -238,7 +238,8 @@ namespace Monitors
 
         if (noteworthy)
         {
-          if (r.state != IMC::EntityState::ESTA_NORMAL)
+          if (r.state != IMC::EntityState::ESTA_NORMAL &&
+              r.state != IMC::EntityState::ESTA_FAULT)
             setLastError(r.label + ": " + msg->description);
           reportState();
         }
@@ -401,6 +402,8 @@ namespace Monitors
           switch (r.state)
           {
             case IMC::EntityState::ESTA_NORMAL:
+              break;
+            case IMC::EntityState::ESTA_FAULT:
               break;
             case IMC::EntityState::ESTA_FAILURE:
               if (m_ems.ccount++ > 0)
