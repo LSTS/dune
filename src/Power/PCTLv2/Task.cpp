@@ -227,6 +227,8 @@ namespace Power
           param(option, m_args.leak_elabels[i]);
         }
 
+        m_pwr_op.setDestination(getSystemId());
+
         // Register handler routines.
         bind<IMC::QueryPowerChannelState>(this);
         bind<IMC::PowerChannelControl>(this);
