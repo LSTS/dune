@@ -475,6 +475,7 @@ namespace Power
           {
             m_pwr_down = true;
             IMC::PowerOperation pop;
+            pop.setDestination(getSystemId());
             pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
             pop.time_remain = (float)(data[8] & 0x1F);
             dispatch(pop);
@@ -483,6 +484,7 @@ namespace Power
           {
             m_pwr_down = false;
             IMC::PowerOperation pop;
+            pop.setDestination(getSystemId());
             pop.op = IMC::PowerOperation::POP_PWR_DOWN_ABORTED;
             dispatch(pop);
           }
