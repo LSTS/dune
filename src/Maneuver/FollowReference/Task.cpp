@@ -68,10 +68,7 @@ namespace Maneuver
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx),
-        m_got_reference(false),
-        m_moving(false),
-        m_last_ref_time(0)
+        DUNE::Maneuvers::Maneuver(name, ctx)
       {
         param("Loitering Radius", m_args.loitering_radius)
         .defaultValue("7.5")
@@ -105,6 +102,10 @@ namespace Maneuver
         .defaultValue("DEPTH")
         .units(Units::Meter)
         .description("Units to use for default z reference (one of 'DEPTH', 'ALTITUDE' or 'HEIGHT')");
+
+        m_got_reference = false;
+        m_moving = false;
+        m_last_ref_time = 0;
 
         bindToManeuver<Task, IMC::FollowReference>();
         bind<IMC::Reference>(this);
@@ -141,23 +142,27 @@ namespace Maneuver
         if (msg1->lon != msg2->lon)
           return false;
 
-        if (msg1->z.isNull() || msg2->z.isNull())
+        if (msg1->z.isNull() != msg2->z.isNull())
           return false;
+        else if (!msg1->z.isNull())
+        {
+          const IMC::DesiredZ *z1 = msg1->z.get();
+          const IMC::DesiredZ *z2 = msg2->z.get();
 
-        const IMC::DesiredZ *z1 = msg1->z.get();
-        const IMC::DesiredZ *z2 = msg2->z.get();
+          if (!z1->fieldsEqual(*z2))
+              return false;
+        }
 
-        if (!z1->fieldsEqual(*z2))
+        if (msg1->speed.isNull() != msg2->speed.isNull())
           return false;
+        else if (!msg1->speed.isNull())
+        {
+          const IMC::DesiredSpeed *s1 = msg1->speed.get();
+          const IMC::DesiredSpeed *s2 = msg2->speed.get();
 
-        if (msg1->speed.isNull() || msg2->speed.isNull())
-          return false;
-
-        const IMC::DesiredSpeed *s1 = msg1->speed.get();
-        const IMC::DesiredSpeed *s2 = msg2->speed.get();
-
-        if (!s1->fieldsEqual(*s2))
-          return false;
+          if (!s1->fieldsEqual(*s2))
+            return false;
+        }
 
         return true;
       }
