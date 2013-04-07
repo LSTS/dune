@@ -86,7 +86,14 @@ namespace Autonomy
         bind<IMC::Heartbeat>(this);
         bind<IMC::VehicleState>(this);
         bind<IMC::PlanControlState>(this);
+        bind<IMC::Abort>(this);
 
+      }
+
+      void
+      onEntityReservation(void)
+      {
+        reserveEntity("TREX (External)");
       }
 
       void
@@ -155,6 +162,14 @@ namespace Autonomy
 
         m_trex_control = msg->state == IMC::PlanControlState::PCS_EXECUTING
             && msg->plan_id == "trex_plan";
+      }
+
+      void
+      consume(const IMC::Abort * msg)
+      {
+        (void) msg;
+        war("Abort detected. Disabling TREX control...");
+        requestDeactivation();
       }
 
       void
