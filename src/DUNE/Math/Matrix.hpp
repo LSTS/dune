@@ -483,6 +483,7 @@ namespace DUNE
 
       //! Convert from Euler angles or quaternions to
       //! Direction Cosines Matrix attitude representation.
+      //! Used to transform vectors in the body frame to the fixed frame.
       //! @return DCM matrix
       Matrix
       toDCM(void) const;
