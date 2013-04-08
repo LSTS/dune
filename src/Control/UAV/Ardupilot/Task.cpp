@@ -58,6 +58,8 @@ namespace Control
         Address TCP_addr;
         //! Connection mode Serial/TCP
         bool tcp;
+        //! Telemetry Rate
+        uint8_t trate;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -142,11 +144,16 @@ namespace Control
 
           param("TCP - Port", m_args.TCP_port)
           .defaultValue("5760")
-          .description("Port for connection to SITL Simulation");
+          .description("Port for connection to Ardupilot");
 
           param("TCP - Address", m_args.TCP_addr)
           .defaultValue("127.0.0.1")
-          .description("Address for connection to SITL Simulation");
+          .description("Address for connection to Ardupilot");
+
+          param("Telemetry Rate", m_args.trate)
+          .defaultValue("10")
+          .units(Units::Hertz)
+          .description("Telemetry output rate from Ardupilot");
 
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
@@ -195,7 +202,6 @@ namespace Control
           m_TCP_addr = m_args.TCP_addr;
           m_TCP_port = m_args.TCP_port;
           openConnection();
-
         }
 
         void
@@ -214,6 +220,90 @@ namespace Control
             war("Connection failed, retrying...");
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
           }
+        }
+
+        void
+        setupRate(uint8_t rate)
+        {
+          uint8_t buf[512];
+          mavlink_message_t* msg = new mavlink_message_t;
+
+          mavlink_msg_request_data_stream_pack(255, 0, msg,
+              m_sysid,
+              0,
+              MAV_DATA_STREAM_EXTRA1,
+              rate,
+              1);
+
+          uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+          spew("ATTITUDE Stream setup to %d Hertz", rate);
+
+          mavlink_msg_request_data_stream_pack(255, 0, msg,
+              m_sysid,
+              0,
+              MAV_DATA_STREAM_EXTRA2,
+              rate,
+              1);
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+          spew("VFR Stream setup to %d Hertz", rate);
+
+          mavlink_msg_request_data_stream_pack(255, 0, msg,
+              m_sysid,
+              0,
+              MAV_DATA_STREAM_POSITION,
+              rate,
+              1);
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+          spew("POSITION Stream setup to %d Hertz", rate);
+
+          mavlink_msg_request_data_stream_pack(255, 0, msg,
+              m_sysid,
+              0,
+              MAV_DATA_STREAM_EXTENDED_STATUS,
+              1,
+              1);
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+          spew("STATUS Stream setup to 1 Hertz");
+
+          mavlink_msg_request_data_stream_pack(255, 0, msg,
+              m_sysid,
+              0,
+              MAV_DATA_STREAM_EXTRA3,
+              1,
+              1);
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+          spew("AHRS-HWSTATUS-WIND Stream setup to 1 Hertz");
+
+          mavlink_msg_request_data_stream_pack(255, 0, msg,
+              m_sysid,
+              0,
+              MAV_DATA_STREAM_RAW_SENSORS,
+              1,
+              1);
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+          spew("SENSORS Stream setup to 1 Hertz");
+
+          mavlink_msg_request_data_stream_pack(255, 0, msg,
+              m_sysid,
+              0,
+              MAV_DATA_STREAM_RC_CHANNELS,
+              0,
+              0);
+
+          n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+          spew("RC Stream disabled");
         }
 
         void
