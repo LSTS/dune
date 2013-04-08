@@ -109,8 +109,6 @@ namespace Control
         bool error_attitude;
         //! Log PID gain parcels
         bool log_parcels;
-        //! Compute angular rates
-        bool compute_rates;
         //! Altitude value below which altitude from DVL will be ignored
         float min_dvl_alt;
         //! Depth value below which altitude from DVL will be ignored
@@ -127,8 +125,6 @@ namespace Control
         IMC::DesiredPitch m_pitch_ref;
         //! PID parcels
         IMC::ControlParcel m_parcels[LP_MAX_LOOPS];
-        //! Previously received estimated state
-        IMC::EstimatedState m_prev_estate;
         //! Task Arguments
         Arguments m_args;
 
@@ -213,10 +209,6 @@ namespace Control
           .defaultValue("false")
           .description("Log the size of each PID parcel");
 
-          param("Compute Angular Rates", m_args.compute_rates)
-          .defaultValue("false")
-          .description("Compute angular rates when the compass is not providing them");
-
           param("Minimum DVL Depth", m_args.min_dvl_depth)
           .defaultValue("2.5")
           .description("Depth value below which altitude from DVL will be ignored");
@@ -256,7 +248,7 @@ namespace Control
           // Depth control parameters
           if (paramChanged(m_args.max_pitch))
             m_args.max_pitch = Angles::radians(m_args.max_pitch);
-          
+
           if (paramChanged(m_args.surface_pitch))
             m_args.surface_pitch = Angles::radians(m_args.surface_pitch);
 
@@ -326,17 +318,6 @@ namespace Control
           // Desired actuation torque vector.
           IMC::DesiredControl torques;
 
-          // If necessary compute rates
-          IMC::EstimatedState temp_estate = *msg;
-
-          if (m_args.compute_rates)
-          {
-            temp_estate.p = (msg->phi - m_prev_estate.phi) / timestep;
-            temp_estate.q = (msg->theta - m_prev_estate.theta) / timestep;
-            temp_estate.r = Angles::normalizeRadian(msg->psi - m_prev_estate.psi) / timestep;
-            msg = &temp_estate;
-          }
-
           if (!m_args.error_attitude)
           {
             torques.m = depthControl(timestep, msg);
@@ -373,9 +354,6 @@ namespace Control
           torques.flags = IMC::DesiredControl::FL_K | IMC::DesiredControl::FL_M | IMC::DesiredControl::FL_N;
 
           dispatch(torques);
-
-          // Save last estimated state message
-          m_prev_estate = *msg;
         }
 
         //! classical inner pitch/outter depth nested controller
