@@ -364,10 +364,15 @@ namespace Vision
 
         while (!stopping())
         {
-          consumeMessages();
-
-          if (!isActive())
+          if (isActive())
+          {
+            consumeMessages();
+          }
+          else
+          {
+            waitForMessages(1.0);
             continue;
+          }
 
           // Start the video if not already
           if (m_http == NULL)
