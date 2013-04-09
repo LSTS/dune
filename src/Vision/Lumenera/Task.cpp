@@ -60,6 +60,8 @@ namespace Vision
       bool median_filter;
       // Enable the LED strobe output
       bool strobe;
+      // Number of photos per volume.
+      unsigned volume_size;
     };
 
     //! Device driver task.
@@ -75,6 +77,12 @@ namespace Vision
       std::string m_boundary;
       // Destination log folder.
       Path m_log_dir;
+      // Current destination volume.
+      Path m_volume;
+      //! Current number of volumes.
+      unsigned m_volume_count;
+      //! Number of files in current volume.
+      unsigned m_file_count;
       // Timestamp for last frame
       double m_timestamp;
       //! True if task is activating.
@@ -85,6 +93,8 @@ namespace Vision
         m_http(NULL),
         m_boundary(""),
         m_log_dir(ctx.dir_log),
+        m_volume_count(0),
+        m_file_count(0),
         m_activating(false)
       {
         // Retrieve configuration values.
@@ -123,6 +133,10 @@ namespace Vision
         .defaultValue("true")
         .description("Enable Strobe");
 
+        param("Volume Size", m_args.volume_size)
+        .defaultValue("1000")
+        .description("Number of photos per volume");
+
         bind<IMC::LoggingControl>(this);
       }
 
@@ -152,7 +166,9 @@ namespace Vision
       onActivation(void)
       {
         m_activating = false;
-        m_log_dir.create();
+        m_file_count = 0;
+        m_volume_count = 0;
+        changeVolume();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -358,6 +374,14 @@ namespace Vision
       }
 
       void
+      changeVolume(void)
+      {
+        m_volume = m_log_dir / String::str("%06u", m_volume_count);
+        m_volume.create();
+        ++m_volume_count;
+      }
+
+      void
       onMain(void)
       {
         ByteBuffer dst;
@@ -392,13 +416,17 @@ namespace Vision
             throw RestartNeeded(e.what(), 5);
           }
 
+          if (m_file_count++ == m_args.volume_size)
+          {
+            m_file_count = 0;
+            changeVolume();
+          }
+
           // Save file
           double timestamp = Clock::getSinceEpoch();
-          Path file = m_log_dir / String::str("%0.4f.jpg", timestamp);
-          {
-            std::ofstream jpg(file.c_str(), std::ios::binary);
-            jpg.write(dst.getBufferSigned(), dst.getSize());
-          }
+          Path file = m_volume / String::str("%0.4f.jpg", timestamp);
+          std::ofstream jpg(file.c_str(), std::ios::binary);
+          jpg.write(dst.getBufferSigned(), dst.getSize());
         }
       }
     };
