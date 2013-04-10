@@ -182,6 +182,12 @@ main(int argc, char** argv)
       tmsg->speed_units = atoi(argv[5]);
     msg = tmsg;
   }
+  else if (strcmp(argv[3], "DesiredRoll") == 0)
+  {
+    IMC::DesiredRoll* tmsg = new IMC::DesiredRoll;
+    tmsg->value = DUNE::Math::Angles::radians(atof(argv[4]));
+    msg = tmsg;
+  }
   else if (strcmp(argv[3], "DesiredControl") == 0)
   {
     IMC::DesiredControl* tmsg = new IMC::DesiredControl;
