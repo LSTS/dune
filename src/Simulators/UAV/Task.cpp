@@ -36,34 +36,35 @@ namespace Simulators
 
     struct Arguments
     {
-      //! Stream speed North parameter (m/s).
+      // Stream speed North parameter (m/s).
       double wx;
-      //! Stream speed East parameter (m/s).
+      // Stream speed East parameter (m/s).
       double wy;
-      //! UAV Model Parameters
-      std::string sim_type; //! Simulation type (3DOF, 4DOF_bank, 4DOF_alt, 5DOF, 6DOF_stabder, and 6DOF_geom)
+      // UAV Model Parameters
+      std::string sim_type; // Simulation type (3DOF, 4DOF_bank, 4DOF_alt, 5DOF, 6DOF_stabder, and 6DOF_geom)
       double gaccel;
-      double kbankrate;
+      double c_speed;
+      double c_bank;
       double mass;
       double max_thrust;
-      Matrix aac; //! Wing aerodynamic center
-      Matrix wac; //! Wing aerodynamic center
-      Matrix tac; //! Tail aerodynamic center
-      Matrix fac; //! Fin aerodynamic center
+      Matrix aac; // Wing aerodynamic center
+      Matrix wac; // Wing aerodynamic center
+      Matrix tac; // Tail aerodynamic center
+      Matrix fac; // Fin aerodynamic center
       Matrix addedmass;
       Matrix inertia;
-      Matrix base_drag; //! Aircraft aerodynamic drag - Constant component
-      Matrix quadratic_drag; //! Aircraft aerodynamic drag - Quadratic component
-      Matrix lift; //! Aircraft aerodynamic Lift - Linear component
+      Matrix base_drag; // Aircraft aerodynamic drag - Constant component
+      Matrix quadratic_drag; // Aircraft aerodynamic drag - Quadratic component
+      Matrix lift; // Aircraft aerodynamic Lift - Linear component
       Matrix elev_lift;
       Matrix rud_lift;
-      //! Gps simulator entity id.
+      // Gps simulator entity id.
       std::string label_gps;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
-      //! Simulation vehicle.
+      // Simulation vehicle.
       //UAVModel* m_model;
       //! Simulated position (X,Y,Z).
       IMC::SimulatedState m_sstate;
@@ -76,13 +77,15 @@ namespace Simulators
       //! Set Servo positions
       Matrix m_servo_pos;
       //! Bank command
-      float m_bank_cmd;
-      //! Airspeed command
-      float m_speed_cmd;
+      IMC::DesiredRoll m_bank_cmd;
+      //! speed command
+      IMC::DesiredSpeed m_speed_cmd;
       //! Vehicle position
       Matrix m_position;
       //! Vehicle velocity vector
       Matrix m_velocity;
+      //! speed
+      double m_speed;
       //! Gps simulator entity id.
       unsigned m_gps_eid;
       //! Task arguments.
@@ -95,8 +98,6 @@ namespace Simulators
         m_last_update(Clock::get()),
         m_thruster_act(0.0),
         m_servo_pos(4, 1, 0.0),
-        m_bank_cmd(0.0),
-        m_speed_cmd(18.0),
         m_position(6, 1, 0.0),
         m_velocity(6, 1, 0.0)
       {
@@ -119,10 +120,15 @@ namespace Simulators
         .units(Units::MeterPerSquareSecond)
         .description("Gravity Acceleration at aircraft location");
 
-        param("Bank Rate Gain", m_args.kbankrate)
+        param("Speed Time Constant", m_args.c_speed)
         .defaultValue("1.0")
         .units(Units::Hertz)
-        .description("Bank rate gain to simulate bank dynamics");
+        .description("Speed controller first order time constant. Inverse of the speed rate gain to simulate speed dynamics");
+
+        param("Bank Time Constant", m_args.c_bank)
+        .defaultValue("1.0")
+        .units(Units::Hertz)
+        .description("Bank controller first order time constant. Inverse of the bank rate gain to simulate bank dynamics");
 
         param("Mass", m_args.mass)
         .defaultValue("10.0")
@@ -135,57 +141,70 @@ namespace Simulators
         .description("Maximum motor thrust allowed");
 
         param("Aircraft Aerodynamic Center", m_args.aac)
-        .defaultValue("")
+        .defaultValue("0")
         .description("Aircraft aerodynamic center  of the vehicle counting from the center of gravity");
 
         param("Wing Aerodynamic Center", m_args.wac)
-        .defaultValue("")
+        .defaultValue("0")
         .description("Wing aerodynamic center  of the vehicle counting from the center of gravity");
 
         param("Tail Aerodynamic Center", m_args.tac)
-        .defaultValue("")
+        .defaultValue("0")
         .description("Tail aerodynamic center  of the vehicle counting from the center of gravity");
 
         param("Fin Aerodynamic Center", m_args.fac)
-        .defaultValue("")
+        .defaultValue("0")
         .description("Fin aerodynamic center  of the vehicle counting from the center of gravity");
 
         param("Added Mass", m_args.addedmass)
-        .defaultValue("")
+        .defaultValue("0.0")
         .description("Diagonal elements of the added mass matrix");
 
         param("Inertia", m_args.inertia)
-        .defaultValue("")
+        .defaultValue("0")
         .description("Inertia of the vehicle (3 elements of main diagonal)");
 
         param("Base Drag", m_args.base_drag)
-        .defaultValue("")
+        .defaultValue("0")
         .description("Constant drag component of the vehicle");
 
         param("Quadratic Drag", m_args.quadratic_drag)
-        .defaultValue("")
+        .defaultValue("0")
         .description("Quadratic drag component of the vehicle");
 
         param("Lift Coefficients", m_args.lift)
-        .defaultValue("")
+        .defaultValue("0")
         .description("Lift coefficient of the vehicle");
 
         param("Elevator Coefficient", m_args.elev_lift)
-        .defaultValue("")
+        .defaultValue("0")
         .description("Elevator lift coefficient of the vehicle");
 
         param("Rudder Coefficient", m_args.rud_lift)
-        .defaultValue("")
+        .defaultValue("0")
         .description("Rudder lift coefficient of the vehicle");
 
         param("Entity Label - GPS", m_args.label_gps)
         .description("Entity label of simulated 'GpsFix' messages");
 
         // Register handler routines.
-        bind<IMC::SetServoPosition>(*this);
-        bind<IMC::SetThrusterActuation>(*this);
-        bind<IMC::DesiredRoll>(*this);
-        bind<IMC::DesiredVelocity>(*this);
+        /*
+        bind<IMC::SetServoPosition>(this);
+        bind<IMC::SetThrusterActuation>(this);
+        */
+        bind<IMC::GpsFix>(this);
+        bind<IMC::DesiredRoll>(this);
+        bind<IMC::DesiredSpeed>(this);
+
+        // Control and state initialization
+        double d_speed = 18.0;
+
+        m_position(5) = 0;
+        m_velocity(0) = d_speed*std::cos(m_position(5));
+        m_velocity(1) = d_speed*std::sin(m_position(5));
+
+        m_speed_cmd.value = d_speed;
+        m_bank_cmd.value = 0.0;
       }
 
       void
@@ -214,6 +233,13 @@ namespace Simulators
 
         m_model = new UAVModel(par);
         */
+        debug("UAV simulation initialized");
+      }
+
+      void
+      onEntityReservation(void)
+      {
+        debug("UAV simulation initialized");
       }
 
       ~Task(void)
@@ -228,23 +254,76 @@ namespace Simulators
       }
 
       void
-      consume(const IMC::DesiredRoll* msg)
+      consume(const IMC::GpsFix* msg)
       {
         if (!isActive())
+          requestActivation();
+
+        if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
           return;
 
-        m_bank_cmd = msg->value;
+        // Defining origin.
+        m_sstate.lat = msg->lat;
+        m_sstate.lon = msg->lon;
+        m_sstate.height = msg->height;
+
+        m_position(0) = 0.0;
+        m_position(1) = 0.0;
+        // Assuming vehicle starts at sea surface.
+        m_position(2) = 0.0;
+        m_position(3) = 0.0;
+        m_position(4) = 0.0;
+        m_position(5) = 0.0;
+
+        m_start_time = Clock::get();
+        m_last_update = Clock::get();
+
+        // Save message to cache.
+        IMC::CacheControl cop;
+        cop.op = IMC::CacheControl::COP_STORE;
+        cop.message.set(*msg);
+        dispatch(cop);
       }
 
       void
-      consume(const IMC::DesiredVelocity* msg)
+      consume(const IMC::DesiredRoll* msg)
       {
-        if (!isActive())
-          return;
+        debug("Consuming DesiredRoll");
 
-        m_speed_cmd = msg->value;
+        if (!isActive())
+        {
+          trace("Bank command rejected.");
+          trace("Simulation not active.");
+          trace("Missing GPS-Fix!");
+          return;
+        }
+
+        m_bank_cmd = *msg;
+
+        // ========= Debug ===========
+        trace("Bank command received (%1.2f)", m_bank_cmd.value);
       }
 
+      void
+      consume(const IMC::DesiredSpeed* msg)
+      {
+        debug("Consuming DesiredSpeed");
+
+        if (!isActive())
+        {
+          trace("Bank command rejected.");
+          trace("Simulation not active.");
+          trace("Missing GPS-Fix!");
+          return;
+        }
+
+        m_speed_cmd = *msg;
+
+        // ========= Debug ===========
+        trace("Speed command received (%1.2f)", m_speed_cmd.value);
+      }
+
+      /*
       void
       consume(const IMC::SetServoPosition* msg)
       {
@@ -262,11 +341,12 @@ namespace Simulators
 
         m_thruster_act = msg->value;
       }
+      */
 
       Matrix
       matrixRotRbody2gnd(float roll, float pitch, float yaw)
       {
-        //! Rotations rotation matrix
+        // Rotations rotation matrix
         double tmp_j2[9] = {1, std::sin(roll) * std::tan(pitch), std::cos(roll) * std::tan(pitch),
                             0, std::cos(roll),                   -std::sin(roll),
                             0, std::sin(roll) / std::cos(pitch), std::cos(roll) / std::cos(pitch)};
@@ -291,21 +371,23 @@ namespace Simulators
       void
       onMain(void)
       {
-        //! Initialization
-        IMC::DesiredVelocity m_ias;
+        // Initialization
         double time;
         double timestep;
+        double last_time_debug = Clock::get();
         double sim_time;
         double cos_yaw;
         double sin_yaw;
         double wind_x;
         double wind_y;
         double wind_z = 0;
-        double tmp_vx_wind;
-        double tmp_vy_wind;
-        double tmp_2wind;
+        double d_vx_wind;
+        double d_vy_wind;
+        double vd_wind[3] = {0};
         Matrix uav2wind_GndFr;
-        double tas;
+
+        double d_speed_rate;
+        double d_bank_rate;
 
         while (!stopping())
         {
@@ -316,47 +398,57 @@ namespace Simulators
 
           if (m_args.sim_type == "4DOF_bank")
           {
-            //! Optimization variables
+            // Optimization variables
             cos_yaw = std::cos(m_position(5));
             sin_yaw = std::sin(m_position(5));
             wind_x = m_args.wx;
             wind_y = m_args.wy;
-            tmp_vx_wind = m_velocity(0) - wind_x;
-            tmp_vy_wind = m_velocity(1) - wind_y;
-            tas = std::sqrt(tmp_vx_wind*tmp_vx_wind + tmp_vy_wind*tmp_vy_wind);
+            d_vx_wind = m_velocity(0) - wind_x;
+            d_vy_wind = m_velocity(1) - wind_y;
+            m_speed = std::sqrt(d_vx_wind*d_vx_wind + d_vy_wind*d_vy_wind);
+
+            // ========= Debug ===========
+            if (time >= last_time_debug + 1.0)
+            {
+              spew("Bank: %1.2f        - Commanded bank: %1.2f", m_position(3), m_bank_cmd.value);
+              spew("Speed: %1.2f       - Commanded speed: %1.2f", m_speed, m_speed_cmd.value);
+            }
 
             //==========================================================================
-            //! Dynamics
+            // Dynamics
             //==========================================================================
-            //! Command effect
-            //! - Horizontal acceleration command
-            tas += m_speed_cmd*timestep;
-            //! - Roll rate command
-            m_position(3) += m_bank_cmd*timestep;
+            // Command effect
+            // - Horizontal acceleration command
+            d_speed_rate = (m_speed_cmd.value - m_speed)/m_args.c_speed;
+            m_speed += d_speed_rate*timestep;
+            // - Roll rate command
+            d_bank_rate = (m_bank_cmd.value - m_position(3))/m_args.c_bank;
+            m_position(3) += d_bank_rate*timestep;
 
-            //! UAV velocity components on the flow field frame
-            tmp_vx_wind = tas * cos_yaw;
-            tmp_vy_wind = tas * sin_yaw;
-            tmp_2wind = {tmp_vx_wind, tmp_vy_wind, 0};
-            uav2wind_GndFr = Matrix(tmp_2wind, 3, 1);
-            //! UAV velocity components on the fixed frame
-            m_velocity(0) = tmp_vx_wind + wind_x;
-            m_velocity(1) = tmp_vy_wind + wind_y;
-            //! Turn rate
-            m_velocity(5) = m_args.gaccel * std::tan(m_position(3))/tas;
+            // UAV velocity components on the flow field frame
+            d_vx_wind = m_speed * cos_yaw;
+            d_vy_wind = m_speed * sin_yaw;
+            vd_wind[0] = d_vx_wind;
+            vd_wind[1] = d_vy_wind;
+            uav2wind_GndFr = Matrix(vd_wind, 3, 1);
+            // UAV velocity components on the fixed frame
+            m_velocity(0) = d_vx_wind + wind_x;
+            m_velocity(1) = d_vy_wind + wind_y;
+            // Turn rate
+            m_velocity(5) = m_args.gaccel * std::tan(m_position(3))/m_speed;
 
-            //! State vector update
+            // State vector update
             m_position += m_velocity*timestep;
 
             //==========================================================================
-            //! Output
+            // Output
             //==========================================================================
 
-            //! Air-relative UAV velocity components, on aircraft frame
+            // Air-relative UAV velocity components, on aircraft frame
             double ea[3] = {m_position(3), m_position(4), m_position(5)};
             Matrix uav2wind_BodyFr = transpose(Matrix(ea, 3, 1).toDCM()) * uav2wind_GndFr;
 
-            //! UAV body-frame rotation rates
+            // UAV body-frame rotation rates
             //vd_UAVRotRates = UAVRotRatTrans_1_00(vd_State);
 
             sim_time = time - m_start_time;
@@ -387,17 +479,30 @@ namespace Simulators
             m_sstate.svz = wind_z;
 
             /*
-            //! Absolute airspeed
-            m_ias.value = tas;
-            //! Alpha - Angle of Attack
+            // Absolute speed
+            m_speed.value = m_speed;
+            // Alpha - Angle of Attack
             m_alpha.value = std::atan(-wind_z/uav2wind_BodyFr(0));
-            //! Beta - Slip angle
+            // Beta - Slip angle
             m_beta.value = std::atan2(uav2wind_BodyFr(1), uav2wind_BodyFr(0));
             */
 
             dispatch(m_sstate);
-            dispatch(m_ias);
+            //dispatch(m_speed);
+
+            // ========= Debug ===========
+            if (time >= last_time_debug + 1.0)
+            {
+              last_time_debug = time;
+              //spew("Bank: %1.2f        - Commanded bank: %1.2f", m_position(3), m_bank_cmd.value);
+              spew("Bank rate command: %1.2f", d_bank_rate);
+              //spew("Speed: %1.2f       - Commanded speed: %1.2f", m_speed, m_speed_cmd.value);
+              spew("Speed rate command: %1.2f", d_speed_rate);
+            }
           }
+
+          // Handle IMC messages from bus
+          consumeMessages();
         }
       }
     };
