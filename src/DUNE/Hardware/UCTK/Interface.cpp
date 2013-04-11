@@ -65,11 +65,6 @@ namespace DUNE
 
         if (!sendFrame(frame))
           throw std::runtime_error("failed to jump to bootloader");
-
-        open();
-
-        if (getFirmwareInfo().name != "BOOT")
-          throw std::runtime_error("failed to enter bootloader");
       }
 
       bool
