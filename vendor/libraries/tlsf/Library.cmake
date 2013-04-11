@@ -1,9 +1,9 @@
 if(TLSF AND DUNE_OS_LINUX)
   file(GLOB DUNE_TLSF_FILES
-    external/libraries/tlsf/*.c)
+    vendor/libraries/tlsf/*.c)
 
   set_source_files_properties(${DUNE_TLSF_FILES}
     PROPERTIES COMPILE_FLAGS "${DUNE_CXX_FLAGS} ${DUNE_CXX_FLAGS_STRICT}")
 
-  list(APPEND DUNE_EXTERNAL_FILES ${DUNE_TLSF_FILES})
+  list(APPEND DUNE_VENDOR_FILES ${DUNE_TLSF_FILES})
 endif(TLSF AND DUNE_OS_LINUX)

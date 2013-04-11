@@ -43,7 +43,7 @@ def clean_whitespace(file):
     os.rename(file + '.bak', file)
 
 EXCLUDE = [
-    '.git', 'external', 'etc/xml/IMC.xml'
+    '.git', 'vendor', 'etc/xml/IMC.xml'
 ]
 
 INCLUDE_EXT = [

@@ -196,20 +196,20 @@ foreach(header ${DUNE_CORE_HEADERS})
 endforeach(header ${DUNE_CORE_HEADERS})
 
 # Bundled Libraries.
-file(GLOB extlibs ${PROJECT_SOURCE_DIR}/external/libraries/*/Library.cmake)
+file(GLOB extlibs ${PROJECT_SOURCE_DIR}/vendor/libraries/*/Library.cmake)
 foreach(extlib ${extlibs})
   include(${extlib})
 endforeach(extlib ${extlibs})
 
 # Private Libraries.
-file(GLOB extlibs ${PROJECT_SOURCE_DIR}/private/external/libraries/*/Library.cmake)
+file(GLOB extlibs ${PROJECT_SOURCE_DIR}/private/vendor/libraries/*/Library.cmake)
 foreach(extlib ${extlibs})
   include(${extlib})
 endforeach(extlib ${extlibs})
 
-include_directories(${DUNE_GENERATED}/src ${PROJECT_SOURCE_DIR}/src ${DUNE_EXTERNAL_INCS_DIR})
-link_directories(${DUNE_EXTERNAL_LIBS_DIR})
-set(DUNE_CORE_FILES ${DUNE_CORE_SOURCES} ${DUNE_EXTERNAL_FILES})
+include_directories(${DUNE_GENERATED}/src ${PROJECT_SOURCE_DIR}/src ${DUNE_VENDOR_INCS_DIR})
+link_directories(${DUNE_VENDOR_LIBS_DIR})
+set(DUNE_CORE_FILES ${DUNE_CORE_SOURCES} ${DUNE_VENDOR_FILES})
 
 if(DUNE_SHARED)
   message(STATUS "Building shared library")
@@ -253,7 +253,7 @@ set_source_files_properties(src/Main/Daemon.cpp
   PROPERTIES
   COMPILE_FLAGS "${DUNE_CXX_FLAGS}")
 target_link_libraries(dune dune-core ${DUNE_SYS_LIBS} ${DUNE_STATIC_TASKS}
-  ${DUNE_EXTERNAL_LIBS})
+  ${DUNE_VENDOR_LIBS})
 
 # Launcher.
 add_executable(dune-launcher
@@ -263,7 +263,7 @@ set_source_files_properties(src/Main/Launcher.cpp
   PROPERTIES
   COMPILE_FLAGS "${DUNE_CXX_FLAGS}")
 target_link_libraries(dune-launcher dune-core ${DUNE_SYS_LIBS}
-  ${DUNE_EXTERNAL_LIBS})
+  ${DUNE_VENDOR_LIBS})
 
 ##########################################################################
 #                          Simple programs                               #
@@ -277,7 +277,7 @@ macro(dune_program source exclude)
     set(DUNE_EXTRA_EXE ${DUNE_EXTRA_EXE} ${executable})
   endif(${exclude})
   set_target_properties(${executable} PROPERTIES COMPILE_FLAGS "${DUNE_CXX_FLAGS}")
-  target_link_libraries(${executable} dune-core ${DUNE_SYS_LIBS} ${DUNE_EXTERNAL_LIBS})
+  target_link_libraries(${executable} dune-core ${DUNE_SYS_LIBS} ${DUNE_VENDOR_LIBS})
 endmacro(dune_program source)
 
 file(GLOB programs programs/*.cpp)
@@ -399,7 +399,7 @@ if(TESTS)
     set_target_properties(${executable} PROPERTIES COMPILE_FLAGS
       "${DUNE_CXX_FLAGS}")
     target_link_libraries(${executable} dune-core ${DUNE_SYS_LIBS}
-      ${DUNE_EXTERNAL_LIBS})
+      ${DUNE_VENDOR_LIBS})
     ADD_TEST(${executable} ${executable})
   endmacro(dune_test source)
 
