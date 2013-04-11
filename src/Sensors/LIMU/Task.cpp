@@ -196,7 +196,7 @@ namespace Sensors
         frame.setId(PKT_ID_HARD_IRON);
         frame.setPayloadSize(6);
         for (unsigned i = 0; i < c_hard_iron_count; ++i)
-          frame.set<int16_t>(factors[i] * 10e3, i * 2);
+          frame.set<int16_t>(static_cast<int16_t>(factors[i] * 10e3), i * 2);
         return m_uart->sendFrame(frame);
       }
 
