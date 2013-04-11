@@ -494,7 +494,7 @@ namespace Control
             }
             catch (std::exception& e)
             {
-              DUNE_DBG("Ardupilot", "connection lost, retrying: " << e.what());
+              debug("connection lost: %s: retrying", e.what());
               m_TCP_sock->delFromPoll(m_iom);
               delete m_TCP_sock;
 
