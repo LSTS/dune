@@ -2453,13 +2453,14 @@ int WMM_GetTransverseMercator(WMMtype_CoordGeodetic CoordGeodetic, WMMtype_UTMPa
 
    double Eps, Epssq;
    double Acoeff[8];
-   double Lam0, K0, falseE, falseN = 0;
+   double Lam0 = 0;
+   double K0, falseE, falseN = 0;
    double K0R4, K0R4oa;
    double Lambda, Phi;
    int XYonly;
    double X, Y, pscale, CoM;
-   int Zone;
-   char Hemisphere;
+   int Zone = 0;
+   char Hemisphere = 'N';
 
 
 
