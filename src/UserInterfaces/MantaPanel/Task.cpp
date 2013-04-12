@@ -236,7 +236,7 @@ namespace UserInterfaces
         IMC::AcousticOperation acop;
         acop.system = sys;
         acop.op = IMC::AcousticOperation::AOP_ABORT;
-        consume(&acop);
+        dispatch(&acop, DF_LOOP_BACK);
       }
 
       void
@@ -245,7 +245,7 @@ namespace UserInterfaces
         IMC::AcousticOperation acop;
         acop.system = sys;
         acop.op = IMC::AcousticOperation::AOP_RANGE;
-        consume(&acop);
+        dispatch(&acop, DF_LOOP_BACK);
       }
 
       void
