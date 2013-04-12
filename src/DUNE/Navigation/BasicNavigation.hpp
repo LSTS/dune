@@ -595,6 +595,8 @@ namespace DUNE
       double m_last_z;
       //! Integrate yaw rate to get heading.
       bool m_integ_yrate;
+      //! Vehicle is aligned.
+      bool m_aligned;
       //! Angular velocity message entity id.
       unsigned m_agvel_eid;
       //! IMU entity id.

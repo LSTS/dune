@@ -169,6 +169,7 @@ namespace DUNE
       std::memset(m_beacons, 0, sizeof(m_beacons));
       m_num_beacons = 0;
       m_integ_yrate = false;
+      m_aligned = false;
       m_z_ref = 0;
       m_diving = false;
       m_rpm = 0;
@@ -1081,7 +1082,17 @@ namespace DUNE
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             break;
           case SM_STATE_NORMAL:
-            // do nothing;
+            if (m_integ_yrate)
+            {
+              if (m_aligned)
+                setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ALIGNED);
+              else
+                setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NOT_ALIGNED);
+            }
+            else
+            {
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            }
             break;
           case SM_STATE_UNSAFE:
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);

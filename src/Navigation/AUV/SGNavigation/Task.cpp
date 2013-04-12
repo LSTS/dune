@@ -142,6 +142,8 @@ namespace Navigation
         unsigned avg_speed_samples;
         //! Initial RPM to Speed multiplicative factor.
         float initial_rpm_to_speed;
+        //! Heading bias uncertainty alignment threshold.
+        double alignment_index;
         //! Use RPM information.
         bool use_rpm;
       };
@@ -199,6 +201,10 @@ namespace Navigation
           param("Use RPM Data", m_args.use_rpm)
           .defaultValue("false")
           .description("Use propeller's revolutions per minute information in the filter");
+
+          param("Heading Bias Alignment Index", m_args.alignment_index)
+          .defaultValue("5e-4")
+          .description("Heading bias uncertainty alignment threshold");
 
           param("Entity Label - IMU", m_args.elabel_imu)
           .description("Entity label of the IMU");
@@ -304,6 +310,7 @@ namespace Navigation
           {
             // Stop integrate heading rates and use AHRS data.
             m_integ_yrate = false;
+            m_aligned = false;
             m_agvel_eid = BasicNavigation::getAhrsId();
             debug("deactivating IMU");
 
@@ -498,6 +505,12 @@ namespace Navigation
             m_kal.setOutput(OUT_PSI, m_heading);
             double psi = m_kal.getState(STATE_PSI) + m_kal.getState(STATE_PSI_BIAS);
             m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - psi);
+
+            // Check alignment threshold index.
+            if (m_kal.getCovariance(STATE_PSI_BIAS,STATE_PSI_BIAS) < m_args.alignment_index)
+              m_aligned = true;
+            else
+              m_aligned = false;
           }
           else
           {
