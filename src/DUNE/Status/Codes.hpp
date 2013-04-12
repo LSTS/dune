@@ -62,30 +62,34 @@ namespace DUNE
       CODE_CALIBRATING = 9,
       //! Calibrated.
       CODE_CALIBRATED = 10,
+      //! Aligning.
+      CODE_ALIGNING = 11,
+      //! Aligned.
+      CODE_ALIGNED = 12,
       //! Powering down.
-      CODE_POWER_DOWN = 11,
+      CODE_POWER_DOWN = 13,
       //! Communication error.
-      CODE_COM_ERROR = 12,
+      CODE_COM_ERROR = 14,
       //! Synchronized.
-      CODE_SYNCHED = 13,
+      CODE_SYNCHED = 15,
       //! Synchronizing.
-      CODE_SYNCING = 14,
+      CODE_SYNCING = 16,
       //! Not synchronized.
-      CODE_NOT_SYNCHED = 15,
+      CODE_NOT_SYNCHED = 17,
       //! Waiting for GPS fix.
-      CODE_WAIT_GPS_FIX = 16,
+      CODE_WAIT_GPS_FIX = 18,
       //! Waiting for configuration of LBL beacons.
-      CODE_WAIT_LBL_CFG = 17,
+      CODE_WAIT_LBL_CFG = 19,
       //! Waiting for solution to converge.
-      CODE_WAIT_CONVERGE = 18,
+      CODE_WAIT_CONVERGE = 20,
       //! Missing data.
-      CODE_MISSING_DATA = 19,
+      CODE_MISSING_DATA = 21,
       //! Invalid checksum.
-      CODE_INVALID_CHECKSUM = 20,
+      CODE_INVALID_CHECKSUM = 22,
       //! Invalid version.
-      CODE_INVALID_VERSION = 21,
+      CODE_INVALID_VERSION = 23,
       //! Active but without bottom lock.
-      CODE_NO_BOTTOM_LOCK = 22
+      CODE_NO_BOTTOM_LOCK = 24
     };
   }
 }
