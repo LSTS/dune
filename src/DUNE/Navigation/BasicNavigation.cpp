@@ -42,7 +42,7 @@ namespace DUNE
     getUncertaintyMessage(double hpos_var)
     {
       using Utils::String;
-      return String::str(DTR("maximum horizontal position uncertainty is %0.2f m"),
+      return String::str(DTR("position uncertainty is %0.2f m"),
                          std::sqrt(hpos_var));
     }
 
@@ -1078,13 +1078,13 @@ namespace DUNE
         switch (m_navstate)
         {
           case SM_STATE_BOOT:
-            setEntityState(IMC::EntityState::ESTA_NORMAL, getUncertaintyMessage(hpos_var));
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             break;
           case SM_STATE_NORMAL:
             // do nothing;
             break;
           case SM_STATE_UNSAFE:
-            setEntityState(IMC::EntityState::ESTA_NORMAL, getUncertaintyMessage(hpos_var));
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             break;
           default:
             debug("caught unexpected navigation state transition");

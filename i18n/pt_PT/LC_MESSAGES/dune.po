@@ -1460,8 +1460,8 @@ msgstr  "número de servo fora dos limites: %u"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Navigation/BasicNavigation.cpp:45
 #, c-format
-msgid   "maximum horizontal position uncertainty is %0.2f m"
-msgstr  ""
+msgid   "position uncertainty is %0.2f m"
+msgstr  "incerteza posição é %0.2f m"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:47
 msgid   "Print this message and exit"

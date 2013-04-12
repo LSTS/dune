@@ -1418,7 +1418,7 @@ msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/DUNE/Navigation/BasicNavigation.cpp:45
 #, c-format
-msgid   "maximum horizontal position uncertainty is %0.2f m"
+msgid   "position uncertainty is %0.2f m"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:47
