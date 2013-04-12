@@ -361,6 +361,7 @@ namespace DUNE
       m_act_state.state = IMC::EntityActivationState::EAS_DEACT_DONE;
       dispatch(m_act_state);
       m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
+      dispatch(m_act_state);
     }
 
     void
