@@ -239,7 +239,7 @@ namespace Navigation
           else
           {
             if (getEntityState() == IMC::EntityState::ESTA_FAULT)
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATING);
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ALIGNING);
           }
 
           m_acc_x += msg->x;
@@ -274,7 +274,7 @@ namespace Navigation
             }
           }
 
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATING);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ALIGNING);
 
           if (!m_delay.overflow())
             return;
@@ -288,13 +288,13 @@ namespace Navigation
           {
             calibrate();
             dispatch(m_euler);
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATED);
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ALIGNED);
             m_calibrated = true;
             reset();
 
             IMC::DevCalibrationState state;
             state.step_number = 1;
-            state.step = DTR(Status::getString(Status::CODE_CALIBRATED));
+            state.step = DTR(Status::getString(Status::CODE_ALIGNED));
             state.total_steps = 2;
             state.flags = (IMC::DevCalibrationState::DCS_PREVIOUS_NOT_SUPPORTED |
                            IMC::DevCalibrationState::DCS_NEXT_NOT_SUPPORTED |
