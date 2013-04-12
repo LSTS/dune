@@ -507,7 +507,7 @@ namespace Navigation
             m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - psi);
 
             // Check alignment threshold index.
-            if (m_kal.getCovariance(STATE_PSI_BIAS,STATE_PSI_BIAS) < m_args.alignment_index)
+            if (m_kal.getCovariance(STATE_PSI_BIAS, STATE_PSI_BIAS) < m_args.alignment_index)
               m_aligned = true;
             else
               m_aligned = false;
@@ -651,7 +651,7 @@ namespace Navigation
 
           // Log Navigation Uncertainty.
           m_uncertainty.psi = m_kal.getCovariance(STATE_PSI, STATE_PSI);
-          m_uncertainty.bias_psi = m_kal.getCovariance(STATE_PSI_BIAS,STATE_PSI_BIAS);
+          m_uncertainty.bias_psi = m_kal.getCovariance(STATE_PSI_BIAS, STATE_PSI_BIAS);
           m_uncertainty.r = m_kal.getCovariance(STATE_R, STATE_R);
           m_uncertainty.u = m_kal.getCovariance(STATE_U, STATE_U);
           m_uncertainty.v = m_kal.getCovariance(STATE_V, STATE_V);
