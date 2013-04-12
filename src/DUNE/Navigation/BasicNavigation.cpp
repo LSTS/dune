@@ -146,8 +146,8 @@ namespace DUNE
       param("Entity Label - Compass", m_label_ahrs)
       .description("Entity label of 'AHRS' messages");
 
-      param("Entity Label - Alignment", m_label_calibration)
-      .description("Entity label of 'EulerAngles' calibration messages");
+      param("Entity Label - Alignment", m_label_alignment)
+      .description("Entity label of 'EulerAngles' alignment messages");
 
       param("Entity Label - Altitude - Hardware", m_elabel_alt_hard)
       .description("Entity label of the 'Distance' message for Hardware profile");
@@ -239,11 +239,11 @@ namespace DUNE
 
       try
       {
-        m_calibration_eid = resolveEntity(m_label_calibration);
+        m_alignment_eid = resolveEntity(m_label_alignment);
       }
       catch (...)
       {
-        m_calibration_eid = 0;
+        m_alignment_eid = 0;
       }
 
       try
@@ -370,7 +370,7 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::EulerAngles* msg)
     {
-      if (msg->getSourceEntity() == m_calibration_eid)
+      if (msg->getSourceEntity() == m_alignment_eid)
       {
         correctAlignment(msg->psi);
         m_phi_offset = msg->phi - getRoll();

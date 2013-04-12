@@ -601,8 +601,8 @@ namespace DUNE
       unsigned m_agvel_eid;
       //! IMU entity id.
       unsigned m_imu_eid;
-      //! Orientation calibration entity id.
-      unsigned m_calibration_eid;
+      //! Orientation alignment entity id.
+      unsigned m_alignment_eid;
       //! LBL threshold.
       float m_lbl_threshold;
       //! Heading value (rad).
@@ -659,7 +659,7 @@ namespace DUNE
       //! Entity labels.
       std::string m_label_depth;
       std::string m_label_ahrs;
-      std::string m_label_calibration;
+      std::string m_label_alignment;
       //! Task state machine.
       SMStates m_navstate;
       //! Time step delta.

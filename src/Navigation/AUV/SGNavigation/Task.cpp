@@ -456,7 +456,7 @@ namespace Navigation
         void
         correctAlignment(double psi)
         {
-          // Vehicle has orientation calibrated.
+          // Vehicle heading is coarse aligned.
           m_kal.setState(STATE_PSI, psi);
           m_kal.setState(STATE_PSI_BIAS, m_heading - psi);
           m_kal.resetCovariance(STATE_PSI_BIAS);
