@@ -35,7 +35,7 @@ namespace DUNE
 {
   namespace Status
   {
-    static const char* c_status_messages[25] =
+    static const char* c_status_messages[26] =
     {
       DTR_RT("initializing"),
       DTR_RT("idle"),
@@ -48,6 +48,7 @@ namespace DUNE
       DTR_RT("fuel reserve"),
       DTR_RT("calibrating"),
       DTR_RT("calibrated"),
+      DTR_RT("not aligned"),
       DTR_RT("aligning"),
       DTR_RT("aligned"),
       DTR_RT("powering down"),
