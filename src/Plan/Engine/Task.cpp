@@ -874,17 +874,21 @@ namespace Plan
         {
           debug(DTR("now in %s state"), c_state_desc[s]);
 
-          bool was_plan_exec = initMode() || execMode();
+          bool was_exec = execMode();
+
+          bool was_in_plan = initMode() || execMode();
 
           m_pcs.state = s;
 
-          bool is_plan_exec = initMode() || execMode();
+          bool is_in_plan = initMode() || execMode();
 
-          if (was_plan_exec && !is_plan_exec)
-          {
+          // if it was executing, then it no longer is,
+          // so the previous plan has stopped
+          if (was_exec)
             m_plan->planStopped();
+
+          if (was_in_plan && !is_in_plan)
             changeLog("idle");
-          }
         }
 
         if (maneuver)
