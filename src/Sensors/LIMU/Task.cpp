@@ -37,8 +37,6 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
-    //! Baud rate is constant.
-    static const unsigned c_baud_rate = 115200;
     //! Number of hard-iron correction factors.
     static const unsigned c_hard_iron_count = 3;
 
@@ -132,7 +130,7 @@ namespace Sensors
       {
         try
         {
-          m_uart = new UCTK::InterfaceUART(m_args.uart_dev, c_baud_rate);
+          m_uart = new UCTK::InterfaceUART(m_args.uart_dev);
           m_uart->open();
         }
         catch (std::runtime_error& e)
