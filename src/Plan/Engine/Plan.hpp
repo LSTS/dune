@@ -109,6 +109,7 @@ namespace Plan
         m_progress = -1.0;
         m_calibration = 0;
         m_beyond_dur = false;
+        m_last_dur = m_durations.end();
       }
 
       //! Parse a given plan
