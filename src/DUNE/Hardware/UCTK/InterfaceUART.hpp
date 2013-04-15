@@ -41,7 +41,7 @@ namespace DUNE
       class InterfaceUART: public Interface
       {
       public:
-        InterfaceUART(const std::string& dev, unsigned baud_rate = 0);
+        InterfaceUART(const std::string& dev);
 
         ~InterfaceUART(void);
 
@@ -50,10 +50,6 @@ namespace DUNE
         std::string m_dev;
         //! Serial port handle.
         SerialPort* m_handle;
-        //! Baud rate.
-        unsigned m_baud_rate;
-        //! Baud rate in use.
-        unsigned m_baud_rate_used;
 
         void
         doOpen(void);
@@ -69,12 +65,6 @@ namespace DUNE
 
         void
         doFlush(void);
-
-        static unsigned
-        probeBaudRate(const std::string& dev);
-
-        static bool
-        testBaudRate(const std::string& dev, unsigned baud_rate);
       };
     }
   }
