@@ -25,38 +25,64 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+// DUNE headers.
 #include <DUNE/DUNE.hpp>
 using DUNE_NAMESPACES;
 
 int
 main(int argc, char** argv)
 {
-  if (argc != 3)
+  OptionParser options;
+  options.executable(argv[0])
+  .program("DUNE UCTK Flash Programmer")
+  .copyright(DUNE_COPYRIGHT)
+  .email("Ricardo Martins <rasm@lsts.pt>")
+  .version(DUNE_COMPLETE_VERSION)
+  .date(DUNE_BUILD_TIME)
+  .arch(DUNE_SYSTEM_NAME)
+  .description("Utility to update the firmware of UCTK based devices.")
+  .add("-d", "--sys-device",
+       "System device", "DEVICE")
+  .add("-f", "--file",
+       "iHEX file", "IHEX_FILE");
+
+  // Parse command line arguments.
+  if (!options.parse(argc, argv))
   {
-    std::cerr << "Usage: " << argv[0] << " <device> <ihex>" << std::endl;
+    if (options.bad())
+      std::cerr << "ERROR: " << options.error() << std::endl;
+    options.usage();
     return 1;
   }
 
-  UCTK::Interface* itf = new UCTK::InterfaceUART(argv[1]);
-
-  while (true)
+  // Get iHEX file.
+  std::string ihex = options.value("--file");
+  if (ihex.empty())
   {
-    try
-    {
-      itf->open();
-      if (itf->getFirmwareInfo().name != "BOOT")
-        itf->enterBootloader();
-      else
-        break;
-    }
-    catch (std::exception& e)
-    {
-      std::cerr << "ERROR: " << e.what() << std::endl;
-    }
+    std::cerr << "ERROR: you must specify one iHEX file." << std::endl;
+    return 1;
   }
 
-  UCTK::Bootloader boot(itf, true);
-  boot.program(argv[2]);
+  if (Path(ihex).type() != Path::PT_FILE)
+  {
+    std::cerr << "ERROR: no such file: '" << ihex << "'" << std::endl;
+    return 1;
+  }
+
+  // Get system device.
+  std::string sys_dev = options.value("--sys-device");
+  if (sys_dev.empty())
+  {
+    std::cerr << "ERROR: you must specify one system device." << std::endl;
+    return 1;
+  }
+
+  UCTK::Interface* itf = new UCTK::InterfaceUART(sys_dev);
+  itf->open();
+
+  UCTK::Bootloader* boot = new UCTK::Bootloader(itf, true);
+  boot->program(ihex);
+  delete boot;
 
   delete itf;
 

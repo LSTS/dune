@@ -46,25 +46,39 @@ namespace DUNE
       Interface::open(void)
       {
         doOpen();
-        getFirmwareName();
-        getFirmwareVersion();
+        getFirmwareInfo();
       }
 
-      const FirmwareInfo&
-      Interface::getFirmwareInfo(void) const
+      FirmwareInfo
+      Interface::getFirmwareInfo(void)
       {
-        return m_info;
+        FirmwareInfo info;
+        getFirmwareName(info);
+        getFirmwareVersion(info);
+        return info;
       }
 
       void
-      Interface::enterBootloader(void)
+      Interface::resetDevice(void)
       {
         UCTK::Frame frame;
-        frame.setId(PKT_ID_BOOT);
+        frame.setId(PKT_ID_RESET);
         frame.setPayloadSize(0);
 
         if (!sendFrame(frame))
-          throw std::runtime_error("failed to jump to bootloader");
+          throw std::runtime_error("failed to reset device");
+      }
+
+      void
+      Interface::setBootStop(bool value)
+      {
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_BOOT);
+        frame.setPayloadSize(1);
+        frame.set<uint8_t>(value, 0);
+
+        if (!sendFrame(frame))
+          throw std::runtime_error("failed to set bootloader parameters");
       }
 
       bool
@@ -115,7 +129,7 @@ namespace DUNE
       }
 
       void
-      Interface::getFirmwareName(void)
+      Interface::getFirmwareName(FirmwareInfo& info)
       {
         UCTK::Frame frame;
         frame.setId(PKT_ID_NAME);
@@ -124,11 +138,11 @@ namespace DUNE
         if (!sendFrame(frame))
           throw std::runtime_error("failed to get firmware name");
 
-        m_info.name.assign((const char*)frame.getPayload(), frame.getPayloadSize());
+        info.name.assign((const char*)frame.getPayload(), frame.getPayloadSize());
       }
 
       void
-      Interface::getFirmwareVersion(void)
+      Interface::getFirmwareVersion(FirmwareInfo& info)
       {
         UCTK::Frame frame;
         frame.setId(PKT_ID_VERSION);
@@ -140,9 +154,9 @@ namespace DUNE
         if (frame.getPayloadSize() != 3)
           throw std::runtime_error("invalid firmware version");
 
-        frame.get(m_info.major, 0);
-        frame.get(m_info.minor, 1);
-        frame.get(m_info.patch, 2);
+        frame.get(info.major, 0);
+        frame.get(info.minor, 1);
+        frame.get(info.patch, 2);
       }
     }
   }

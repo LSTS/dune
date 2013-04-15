@@ -76,14 +76,17 @@ namespace DUNE
           doFlush();
         }
 
-        const FirmwareInfo&
-        getFirmwareInfo(void) const;
+        FirmwareInfo
+        getFirmwareInfo(void);
+
+        void
+        resetDevice(void);
 
         bool
         sendFrame(Frame& frame, double timeout = 1.0);
 
         void
-        enterBootloader(void);
+        setBootStop(bool value);
 
         Frame*
         pop(void)
@@ -131,17 +134,15 @@ namespace DUNE
         uint8_t m_buffer[128];
         //! Frame queue.
         Concurrency::TSQueue<UCTK::Frame*> m_queue;
-        //! Firmware info.
-        FirmwareInfo m_info;
 
         bool
         readReply(Frame& msg, double timeout);
 
         void
-        getFirmwareName(void);
+        getFirmwareName(FirmwareInfo& info);
 
         void
-        getFirmwareVersion(void);
+        getFirmwareVersion(FirmwareInfo& info);
       };
     }
   }
