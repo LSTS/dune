@@ -168,6 +168,42 @@ namespace Plan
           m_earliest = next->second.top().sched_time;
       }
 
+      //! Alternative constructor for when plan is not sequential.
+      //! There will be no pre-scheduling using this constructor.
+      //! @param[in] task pointer to task
+      //! @param[in] spec pointer to PlanSpecification message
+      //! @param[in] nodes vector of sequential PlanManeuvers that describe the plan
+      //! @param[in] cinfo map of components info
+      ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
+                     const std::vector<IMC::PlanManeuver*>& nodes,
+                     const std::map<std::string, IMC::EntityInfo>& cinfo):
+        m_task(task),
+        m_cinfo(&cinfo)
+      {
+        m_plan_duration = -1.0;
+
+        // start by adding "start" plan actions
+        parseStartActions(spec->start_actions, &m_plan_actions, m_plan_duration);
+
+        std::vector<IMC::PlanManeuver*>::const_iterator itr;
+        itr = nodes.begin();
+
+        // Iterate through plan maneuvers
+        for (; itr != nodes.end(); ++itr)
+        {
+          EventActions eact;
+
+          parseStartActions((*itr)->start_actions, &eact, -1.0);
+          parseEndActions((*itr)->end_actions, &eact, -1.0);
+
+          m_onevent.insert(std::pair<std::string, EventActions>((*itr)->maneuver_id, eact));
+        }
+
+        parseEndActions(spec->end_actions, &m_plan_actions, 0.0);
+
+        m_earliest = 0.0;
+      }
+
       //! Update timed actions in schedule
       //! @param[in] time_left estimated time left to finish the plan
       void
@@ -442,7 +478,7 @@ namespace Plan
             uint16_t act_time = getActivationTime(sep->name);
             uint16_t deact_time = getDeactivationTime(sep->name);
 
-            if (act_time > 0 || deact_time > 0)
+            if ((act_time > 0 || deact_time > 0) && (m_plan_duration >= 0.0))
             {
               event_based = false;
 
@@ -462,7 +498,7 @@ namespace Plan
           }
           else
           {
-            // if the eta is not valid, schedule action to last valid duration (1.0 sec)
+            // if the eta is not valid, schedule action to last valid duration (0.0 sec)
             if (eta >= 0.0)
               gatherUntimed(sep, type, eta);
             else

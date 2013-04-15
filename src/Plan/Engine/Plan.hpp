@@ -220,6 +220,13 @@ namespace Plan
             float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
             m_calibration = (uint16_t)trimValue(diff, 0.0, diff);
           }
+          else if (!m_sequential)
+          {
+            Memory::clear(m_sched);
+            m_sched = new ActionSchedule(task, m_spec, m_seq_nodes, cinfo);
+
+            m_calibration = 0;
+          }
         }
 
         m_last_id = m_spec->start_man_id;
