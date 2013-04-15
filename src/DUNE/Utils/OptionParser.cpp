@@ -123,7 +123,7 @@ namespace DUNE
     {
       using namespace std;
 
-      fprintf(stderr, "%s v%s [%s] / [%s]\n", m_program.c_str(), m_version.c_str(), m_build_time.c_str(), m_arch.c_str());
+      fprintf(stderr, "%s v%s [%s]\n", m_program.c_str(), m_version.c_str(), m_build_time.c_str());
       fprintf(stderr, "%s\n\n", m_copyright.c_str());
 
       if (!m_description.empty())
