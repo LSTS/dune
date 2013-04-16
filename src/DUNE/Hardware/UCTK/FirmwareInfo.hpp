@@ -50,6 +50,14 @@ namespace DUNE
         uint8_t minor;
         //! Patch level.
         uint8_t patch;
+
+        //! Test if firmware is a development version.
+        //! @return true if firmware is a development version.
+        bool
+        isDevelopment(void) const
+        {
+          return (major == 0) && (minor == 0) && (patch == 0);
+        }
       };
     }
   }
