@@ -50,7 +50,9 @@ namespace Sensors
       //! Run self-test.
       PKT_ID_SELF_TEST    = 3,
       //! Hard-iron calibration parameters.
-      PKT_ID_HARD_IRON    = 4
+      PKT_ID_HARD_IRON    = 4,
+      //! Raw sample data.
+      PKT_ID_OUTPUT_RAW   = 5
     };
 
     //! %Task arguments.
@@ -62,6 +64,8 @@ namespace Sensors
       unsigned output_frq;
       //! Hard-iron correction factors.
       std::vector<double> hard_iron;
+      //! Raw data output.
+      bool raw_data;
     };
 
     struct Task: public Tasks::Task
@@ -116,8 +120,14 @@ namespace Sensors
 
         param("Output Frequency", m_args.output_frq)
         .units(Units::Hertz)
+        .minimumValue("1")
+        .maximumValue("127")
         .defaultValue("100")
         .description("Output frequency");
+
+        param("Raw Data", m_args.raw_data)
+        .defaultValue("false")
+        .description("Set to true to enable raw data output");
       }
 
       ~Task(void)
@@ -132,6 +142,12 @@ namespace Sensors
         {
           m_uart = new UCTK::InterfaceUART(m_args.uart_dev);
           m_uart->open();
+          UCTK::FirmwareInfo info = m_uart->getFirmwareInfo();
+          if (info.isDevelopment())
+            war("device is using unstable firmware");
+          else
+            inf("firmware version %u.%u.%u", info.major,
+              info.minor, info.patch);
         }
         catch (std::runtime_error& e)
         {
@@ -160,6 +176,9 @@ namespace Sensors
       bool
       setOutputFrequency(uint8_t frequency)
       {
+        if (m_args.raw_data)
+          frequency |= 0x80;
+
         UCTK::Frame frame;
         frame.setId(PKT_ID_OUTPUT_CONF);
         frame.setPayloadSize(1);
@@ -302,10 +321,29 @@ namespace Sensors
       }
 
       void
+      decodeOutputRaw(const UCTK::Frame& frame)
+      {
+        IMC::DevDataBinary data;
+        data.value.assign(frame.getPayload(), frame.getPayload() + frame.getPayloadSize());
+        dispatch(data);
+      }
+
+      void
       decode(const UCTK::Frame& frame)
       {
-        if (frame.getId() == PKT_ID_OUTPUT_DATA)
-          decodeOutputData(frame);
+        switch (frame.getId())
+        {
+          case PKT_ID_OUTPUT_DATA:
+            decodeOutputData(frame);
+            break;
+
+          case PKT_ID_OUTPUT_RAW:
+            decodeOutputRaw(frame);
+            break;
+
+          default:
+            break;
+        }
       }
 
       void
