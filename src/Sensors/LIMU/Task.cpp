@@ -39,6 +39,8 @@ namespace Sensors
 
     //! Number of hard-iron correction factors.
     static const unsigned c_hard_iron_count = 3;
+    //! Power-up delay (s).
+    static const double c_power_up_delay = 2.0;
 
     //! Packet identifiers.
     enum PacketIds
@@ -66,6 +68,8 @@ namespace Sensors
       std::vector<double> hard_iron;
       //! Raw data output.
       bool raw_data;
+      //! Power channel name.
+      std::string pwr_name;
     };
 
     struct Task: public Tasks::Task
@@ -108,6 +112,10 @@ namespace Sensors
         .defaultValue("")
         .description("Serial port device used to communicate with the sensor");
 
+        param("Power Channel - Name", m_args.pwr_name)
+        .defaultValue("")
+        .description("Name of the power channel");
+
         param("Output Frequency", m_args.output_frq)
         .units(Units::Hertz)
         .defaultValue("100")
@@ -138,6 +146,15 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
+        if (!m_args.pwr_name.empty())
+        {
+          IMC::PowerChannelControl pcc;
+          pcc.name = m_args.pwr_name;
+          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+          dispatch(pcc);
+          Delay::wait(c_power_up_delay);
+        }
+
         try
         {
           m_uart = new UCTK::InterfaceUART(m_args.uart_dev);
