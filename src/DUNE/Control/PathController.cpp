@@ -506,6 +506,7 @@ namespace DUNE
           }
 
           signalError(e.what());
+          return;
         }
       }
 
