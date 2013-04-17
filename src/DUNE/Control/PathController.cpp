@@ -467,26 +467,7 @@ namespace DUNE
     PathController::consume(const IMC::Distance* dist)
     {
       if (m_btd.enabled)
-      {
-        try
-        {
-          m_btrack->onDistance(dist);
-        }
-        catch (std::runtime_error& e)
-        {
-          // If braking then stop braking
-          if (m_braking)
-          {
-            IMC::Brake brk;
-            brk.op = IMC::Brake::OP_STOP;
-            dispatch(brk);
-
-            m_braking = false;
-          }
-
-          signalError(e.what());
-        }
-      }
+        m_btrack->onDistance(dist);
     }
 
     void
@@ -507,7 +488,26 @@ namespace DUNE
     PathController::consume(const IMC::EstimatedState* es)
     {
       if (m_btd.enabled)
-        m_btrack->onEstimatedState(es);
+      {
+        try
+        {
+          m_btrack->onEstimatedState(es);
+        }
+        catch (std::runtime_error& e)
+        {
+          // If braking then stop braking
+          if (m_braking)
+          {
+            IMC::Brake brk;
+            brk.op = IMC::Brake::OP_STOP;
+            dispatch(brk);
+
+            m_braking = false;
+          }
+
+          signalError(e.what());
+        }
+      }
 
       if (m_setup)
       {
