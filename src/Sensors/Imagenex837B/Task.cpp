@@ -572,7 +572,7 @@ namespace Sensors
       {
         // Update information.
         updateState();
-        m_frame.setDateTime();
+        m_frame.setDateTime(Clock::getSinceEpochMsec());
         m_frame.setSerialStatus(m_rdata_hdr[4]);
         m_frame.setFirmwareVersion(m_rdata_hdr[6]);
 
