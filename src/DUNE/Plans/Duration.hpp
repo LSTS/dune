@@ -44,7 +44,7 @@ namespace DUNE
     //! Average amount of time it takes to get a gps fix
     static const float c_fix_time = 7.0f;
     //! Typical pitch value for elevator maneuver
-    static const float c_rated_pitch = (float)Math::Angles::radians(15.0f);
+    static const float c_rated_pitch = 0.2617993877991494f;
 
     // Export DLL Symbol.
     class DUNE_DLL_SYM Duration;
