@@ -28,6 +28,7 @@
 // ISO C++ 98 headers.
 #include <string>
 #include <fstream>
+#include <ctime>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -395,6 +396,20 @@ gps_fix_print(const gps_fix* fix)
             << std::endl;
 }
 
+time_t
+toEpoch(date* d)
+{
+  std::tm tcal;
+  tcal.tm_sec = d->second;
+  tcal.tm_min = d->minute;
+  tcal.tm_hour = d->hour;
+  tcal.tm_mday = d->day;
+  tcal.tm_mon = d->month - 1;
+  tcal.tm_year = d->year;
+
+  return mktime(&tcal);
+}
+
 int
 main(int argc, char** argv)
 {
@@ -455,6 +470,28 @@ main(int argc, char** argv)
 
   ByteBuffer buffer;
 
+  if (records.size() >= 5)
+  {
+    IMC::EstimatedState state;
+    IMC::GpsFix imcfix;
+    gps_fix temp_fix;
+    convertDataToFix(records[4].data, records[4].size, &temp_fix);
+    convertFixToIMC(&temp_fix, &imcfix);
+
+    state.lat = imcfix.lat;
+    state.lon = imcfix.lon;
+    state.height = imcfix.height;
+    state.x = 0.0;
+    state.y = 0.0;
+    state.z = 0.0;
+    state.depth = 0.0;
+
+    state.setTimeStamp(toEpoch(&temp_fix.utc));
+
+    IMC::Packet::serialize(&state, buffer);
+    lsf.write(buffer.getBufferSigned(), buffer.getSize());
+  }
+
   for (unsigned i = 0; i < records.size(); ++i)
   {
     gps_fix fix;
@@ -465,9 +502,9 @@ main(int argc, char** argv)
 
     convertFixToIMC(&fix, &msg);
 
-    fixes.push_back(msg);
+    msg.setTimeStamp(toEpoch(&fix.utc));
 
-    fixes[i].toText(std::cerr);
+    fixes.push_back(msg);
 
     IMC::Packet::serialize(&msg, buffer);
     lsf.write(buffer.getBufferSigned(), buffer.getSize());
