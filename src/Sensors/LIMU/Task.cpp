@@ -348,6 +348,8 @@ namespace Sensors
       void
       decode(const UCTK::Frame& frame)
       {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
         switch (frame.getId())
         {
           case PKT_ID_OUTPUT_DATA:
