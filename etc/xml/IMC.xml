@@ -6345,6 +6345,11 @@
   </message>
   
   <message id="656" abbrev="TrexAttribute" name="TREX Attribute" source="vehicle,ccu">
+   
+   <field name="Attribute Name" abbrev="name" type="plaintext">
+      <description>Name of this attribute.</description>
+    </field>
+    
     <field name="Attribute type" abbrev="attr_type" type="uint8_t" unit="Enumerated" prefix="TYPE">
    	  <value abbrev="BOOL" name="Boolean Domain" id="1"/>
       <value abbrev="INT" name="Integer Domain" id="2"/>

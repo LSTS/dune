@@ -15047,6 +15047,7 @@ namespace DUNE
     void
     TrexAttribute::clear(void)
     {
+      name.clear();
       attr_type = 0;
       min.clear();
       max.clear();
@@ -15056,6 +15057,7 @@ namespace DUNE
     TrexAttribute::fieldsEqual(const Message& msg__) const
     {
       const IMC::TrexAttribute& other__ = dynamic_cast<const TrexAttribute&>(msg__);
+      if (name != other__.name) return false;
       if (attr_type != other__.attr_type) return false;
       if (min != other__.min) return false;
       if (max != other__.max) return false;
@@ -15072,6 +15074,7 @@ namespace DUNE
     TrexAttribute::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(name, ptr__);
       ptr__ += IMC::serialize(attr_type, ptr__);
       ptr__ += IMC::serialize(min, ptr__);
       ptr__ += IMC::serialize(max, ptr__);
@@ -15082,6 +15085,7 @@ namespace DUNE
     TrexAttribute::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(name, bfr__, size__);
       bfr__ += IMC::deserialize(attr_type, bfr__, size__);
       bfr__ += IMC::deserialize(min, bfr__, size__);
       bfr__ += IMC::deserialize(max, bfr__, size__);
@@ -15092,6 +15096,7 @@ namespace DUNE
     TrexAttribute::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
       bfr__ += IMC::deserialize(attr_type, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(min, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(max, bfr__, size__);
@@ -15101,6 +15106,7 @@ namespace DUNE
     void
     TrexAttribute::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      IMC::toJSON(os__, "name", name, nindent__);
       IMC::toJSON(os__, "attr_type", attr_type, nindent__);
       IMC::toJSON(os__, "min", min, nindent__);
       IMC::toJSON(os__, "max", max, nindent__);

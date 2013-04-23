@@ -14506,6 +14506,8 @@ namespace DUNE
         TYPE_ENUM = 5
       };
 
+      //! Attribute Name.
+      std::string name;
       //! Attribute type.
       uint8_t attr_type;
       //! Minimum.
@@ -14566,7 +14568,7 @@ namespace DUNE
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(min) + IMC::getSerializationSize(max);
+        return IMC::getSerializationSize(name) + IMC::getSerializationSize(min) + IMC::getSerializationSize(max);
       }
 
       void
