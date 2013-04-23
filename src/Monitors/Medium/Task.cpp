@@ -83,7 +83,7 @@ namespace Monitors
       {
         param("Wet Data Timeout", m_args.water_timeout)
         .units(Units::Second)
-        .defaultValue("1.0")
+        .defaultValue("3.0")
         .description("No valid wet sensor data timeout");
 
         param("Wet Data Threshold", m_args.water_threshold)
