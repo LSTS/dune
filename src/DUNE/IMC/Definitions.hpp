@@ -14487,6 +14487,366 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! TREX Attribute.
+    class TrexAttribute: public Message
+    {
+    public:
+      //! Attribute type.
+      enum AttributetypeEnum
+      {
+        //! Boolean Domain.
+        TYPE_BOOL = 1,
+        //! Integer Domain.
+        TYPE_INT = 2,
+        //! Float Domain.
+        TYPE_FLOAT = 3,
+        //! String Domain.
+        TYPE_STRING = 4,
+        //! Enumerated Domain.
+        TYPE_ENUM = 5
+      };
+
+      //! Attribute type.
+      uint8_t attr_type;
+      //! Minimum.
+      std::string min;
+      //! Maximum.
+      std::string max;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 656;
+      }
+
+      TrexAttribute(void);
+
+      Message*
+      clone(void) const
+      {
+        return new TrexAttribute(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TrexAttribute::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TrexAttribute";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(min) + IMC::getSerializationSize(max);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! TREX Token.
+    class TrexToken: public Message
+    {
+    public:
+      //! Timeline.
+      std::string timeline;
+      //! Predicate.
+      std::string predicate;
+      //! Attributes.
+      MessageList<TrexAttribute> attributes;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 657;
+      }
+
+      TrexToken(void);
+
+      Message*
+      clone(void) const
+      {
+        return new TrexToken(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TrexToken::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TrexToken";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(timeline) + IMC::getSerializationSize(predicate) + attributes.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! TREX Operation.
+    class TrexOperation: public Message
+    {
+    public:
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Post Token.
+        OP_POST_TOKEN = 1,
+        //! Post Goal.
+        OP_POST_GOAL = 2,
+        //! Recall Goal.
+        OP_RECALL_GOAL = 3,
+        //! Request current plan.
+        OP_REQUEST_PLAN = 4,
+        //! Report current plan.
+        OP_REPORT_PLAN = 5
+      };
+
+      //! Operation.
+      uint8_t op;
+      //! Goal Id.
+      std::string goal_id;
+      //! Token.
+      InlineMessage<TrexToken> token;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 655;
+      }
+
+      TrexOperation(void);
+
+      Message*
+      clone(void) const
+      {
+        return new TrexOperation(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TrexOperation::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TrexOperation";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(goal_id) + token.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! TREX Plan.
+    class TrexPlan: public Message
+    {
+    public:
+      //! Reactor name.
+      std::string reactor;
+      //! Tokens.
+      MessageList<TrexToken> tokens;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 658;
+      }
+
+      TrexPlan(void);
+
+      Message*
+      clone(void) const
+      {
+        return new TrexPlan(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TrexPlan::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TrexPlan";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(reactor) + tokens.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
     //! Video Data.
     class VideoData: public Message
     {

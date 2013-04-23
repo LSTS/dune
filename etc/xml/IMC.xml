@@ -6292,7 +6292,7 @@
     </field>
   </message>
 
-  <message id="651" name="TREX Observation" abbrev="TrexObservation" source="vehicle,ccu">
+  <message id="651" name="TREX Observation" abbrev="TrexObservation" source="vehicle,ccu" flags="deprecated">
     <description>
       This message is sent to TREX to post timeline observations
     </description>
@@ -6301,7 +6301,7 @@
     <field name="Attributes" abbrev="attributes" type="plaintext" unit="TupleList" />
   </message>
 
-  <message id="652" name="TREX Command" abbrev="TrexCommand" source="vehicle,ccu">
+  <message id="652" name="TREX Command" abbrev="TrexCommand" source="vehicle,ccu" flags="deprecated">
     <description>
       This message is used to control TREX execution
     </description>
@@ -6320,6 +6320,57 @@
     <field name="Goal XML" abbrev="goal_xml" type="plaintext">
       <description>The goal encoded as XML, if applicable (OP == POST_GOAL)</description>
     </field>
+  </message>
+  
+  <message id="655" abbrev="TrexOperation" name="TREX Operation" source="vehicle,ccu">
+  	<description>
+      This message is used to control TREX execution
+    </description>
+    
+    <field name="Operation" abbrev="op" type="uint8_t" unit="Enumerated" prefix="OP">
+      <value abbrev="POST_TOKEN" name="Post Token" id="1"/>
+      <value abbrev="POST_GOAL" name="Post Goal" id="2"/>
+      <value abbrev="RECALL_GOAL" name="Recall Goal" id="3"/>
+      <value abbrev="REQUEST_PLAN" name="Request current plan" id="4"/>
+      <value abbrev="REPORT_PLAN" name="Report current plan" id="5"/>      
+    </field>
+    
+    <field name="Goal Id" abbrev="goal_id" type="plaintext">
+      <description>The id of the goal, if applicable (OP == POST_GOAL || OP == RECALL_GOAL)</description>
+    </field>
+    
+    <field name="Token" abbrev="token" type="message" message-type="TrexToken">
+      <description>Goal / observation to post, if applicable (OP == POST_GOAL || OP == POST_TOKEN)</description>
+    </field>
+  </message>
+  
+  <message id="656" abbrev="TrexAttribute" name="TREX Attribute" source="vehicle,ccu">
+    <field name="Attribute type" abbrev="attr_type" type="uint8_t" unit="Enumerated" prefix="TYPE">
+   	  <value abbrev="BOOL" name="Boolean Domain" id="1"/>
+      <value abbrev="INT" name="Integer Domain" id="2"/>
+      <value abbrev="FLOAT" name="Float Domain" id="3"/>
+      <value abbrev="STRING" name="String Domain" id="4"/>
+      <value abbrev="ENUM" name="Enumerated Domain" id="5"/>
+    </field>
+    
+    <field name="Minimum" abbrev="min" type="plaintext">
+      <description>Lower bound of this interval. Empty text means no bound.</description>
+    </field>
+    
+    <field name="Maximum" abbrev="max" type="plaintext">
+      <description>Upper bound of this interval. Empty text means no bound.</description>
+    </field>
+  </message>
+  
+  <message id="657" abbrev="TrexToken" name="TREX Token" source="vehicle,ccu">
+    <field name="Timeline" abbrev="timeline" type="plaintext" />
+    <field name="Predicate" abbrev="predicate" type="plaintext" />
+    <field name="Attributes" abbrev="attributes" type="message-list" message-type="TrexAttribute" />
+  </message>
+  
+  <message id="658" abbrev="TrexPlan" name="TREX Plan" source="vehicle,ccu">
+  	<field name="Reactor name" abbrev="reactor" type="plaintext" />
+  	<field name="Tokens" abbrev="tokens" type="message-list" message-type="TrexToken" />
   </message>
 
   <!-- Vision -->

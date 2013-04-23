@@ -396,6 +396,14 @@
 #define DUNE_IMC_TREXOBSERVATION 651
 //! TrexCommand identification number.
 #define DUNE_IMC_TREXCOMMAND 652
+//! TrexOperation identification number.
+#define DUNE_IMC_TREXOPERATION 655
+//! TrexAttribute identification number.
+#define DUNE_IMC_TREXATTRIBUTE 656
+//! TrexToken identification number.
+#define DUNE_IMC_TREXTOKEN 657
+//! TrexPlan identification number.
+#define DUNE_IMC_TREXPLAN 658
 //! VideoData identification number.
 #define DUNE_IMC_VIDEODATA 700
 //! RawImage identification number.

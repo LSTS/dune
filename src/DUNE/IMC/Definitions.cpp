@@ -15038,6 +15038,380 @@ namespace DUNE
       IMC::toJSON(os__, "goal_xml", goal_xml, nindent__);
     }
 
+    TrexAttribute::TrexAttribute(void)
+    {
+      m_header.mgid = 656;
+      clear();
+    }
+
+    void
+    TrexAttribute::clear(void)
+    {
+      attr_type = 0;
+      min.clear();
+      max.clear();
+    }
+
+    bool
+    TrexAttribute::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TrexAttribute& other__ = dynamic_cast<const TrexAttribute&>(msg__);
+      if (attr_type != other__.attr_type) return false;
+      if (min != other__.min) return false;
+      if (max != other__.max) return false;
+      return true;
+    }
+
+    int
+    TrexAttribute::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    TrexAttribute::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(attr_type, ptr__);
+      ptr__ += IMC::serialize(min, ptr__);
+      ptr__ += IMC::serialize(max, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TrexAttribute::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(attr_type, bfr__, size__);
+      bfr__ += IMC::deserialize(min, bfr__, size__);
+      bfr__ += IMC::deserialize(max, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TrexAttribute::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(attr_type, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(min, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(max, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    TrexAttribute::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "attr_type", attr_type, nindent__);
+      IMC::toJSON(os__, "min", min, nindent__);
+      IMC::toJSON(os__, "max", max, nindent__);
+    }
+
+    TrexToken::TrexToken(void)
+    {
+      m_header.mgid = 657;
+      clear();
+      attributes.setParent(this);
+    }
+
+    void
+    TrexToken::clear(void)
+    {
+      timeline.clear();
+      predicate.clear();
+      attributes.clear();
+    }
+
+    bool
+    TrexToken::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TrexToken& other__ = dynamic_cast<const TrexToken&>(msg__);
+      if (timeline != other__.timeline) return false;
+      if (predicate != other__.predicate) return false;
+      if (attributes != other__.attributes) return false;
+      return true;
+    }
+
+    int
+    TrexToken::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    TrexToken::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(timeline, ptr__);
+      ptr__ += IMC::serialize(predicate, ptr__);
+      ptr__ += attributes.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TrexToken::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(timeline, bfr__, size__);
+      bfr__ += IMC::deserialize(predicate, bfr__, size__);
+      bfr__ += attributes.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TrexToken::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(timeline, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(predicate, bfr__, size__);
+      bfr__ += attributes.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    TrexToken::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "timeline", timeline, nindent__);
+      IMC::toJSON(os__, "predicate", predicate, nindent__);
+      attributes.toJSON(os__, "attributes", nindent__);
+    }
+
+    void
+    TrexToken::setTimeStampNested(double value__)
+    {
+      attributes.setTimeStamp(value__);
+    }
+
+    void
+    TrexToken::setSourceNested(uint16_t value__)
+    {
+      attributes.setSource(value__);
+    }
+
+    void
+    TrexToken::setSourceEntityNested(uint8_t value__)
+    {
+      attributes.setSourceEntity(value__);
+    }
+
+    void
+    TrexToken::setDestinationNested(uint16_t value__)
+    {
+      attributes.setDestination(value__);
+    }
+
+    void
+    TrexToken::setDestinationEntityNested(uint8_t value__)
+    {
+      attributes.setDestinationEntity(value__);
+    }
+
+    TrexOperation::TrexOperation(void)
+    {
+      m_header.mgid = 655;
+      clear();
+      token.setParent(this);
+    }
+
+    void
+    TrexOperation::clear(void)
+    {
+      op = 0;
+      goal_id.clear();
+      token.clear();
+    }
+
+    bool
+    TrexOperation::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TrexOperation& other__ = dynamic_cast<const TrexOperation&>(msg__);
+      if (op != other__.op) return false;
+      if (goal_id != other__.goal_id) return false;
+      if (token != other__.token) return false;
+      return true;
+    }
+
+    int
+    TrexOperation::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    TrexOperation::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(goal_id, ptr__);
+      ptr__ += token.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TrexOperation::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(goal_id, bfr__, size__);
+      bfr__ += token.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TrexOperation::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(goal_id, bfr__, size__);
+      bfr__ += token.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    TrexOperation::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "op", op, nindent__);
+      IMC::toJSON(os__, "goal_id", goal_id, nindent__);
+      token.toJSON(os__, "token", nindent__);
+    }
+
+    void
+    TrexOperation::setTimeStampNested(double value__)
+    {
+      if (!token.isNull())
+      {
+        token.get()->setTimeStamp(value__);
+      }
+    }
+
+    void
+    TrexOperation::setSourceNested(uint16_t value__)
+    {
+      if (!token.isNull())
+      {
+        token.get()->setSource(value__);
+      }
+    }
+
+    void
+    TrexOperation::setSourceEntityNested(uint8_t value__)
+    {
+      if (!token.isNull())
+      {
+        token.get()->setSourceEntity(value__);
+      }
+    }
+
+    void
+    TrexOperation::setDestinationNested(uint16_t value__)
+    {
+      if (!token.isNull())
+      {
+        token.get()->setDestination(value__);
+      }
+    }
+
+    void
+    TrexOperation::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!token.isNull())
+      {
+        token.get()->setDestinationEntity(value__);
+      }
+    }
+
+    TrexPlan::TrexPlan(void)
+    {
+      m_header.mgid = 658;
+      clear();
+      tokens.setParent(this);
+    }
+
+    void
+    TrexPlan::clear(void)
+    {
+      reactor.clear();
+      tokens.clear();
+    }
+
+    bool
+    TrexPlan::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TrexPlan& other__ = dynamic_cast<const TrexPlan&>(msg__);
+      if (reactor != other__.reactor) return false;
+      if (tokens != other__.tokens) return false;
+      return true;
+    }
+
+    int
+    TrexPlan::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    TrexPlan::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(reactor, ptr__);
+      ptr__ += tokens.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TrexPlan::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(reactor, bfr__, size__);
+      bfr__ += tokens.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TrexPlan::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(reactor, bfr__, size__);
+      bfr__ += tokens.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    TrexPlan::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "reactor", reactor, nindent__);
+      tokens.toJSON(os__, "tokens", nindent__);
+    }
+
+    void
+    TrexPlan::setTimeStampNested(double value__)
+    {
+      tokens.setTimeStamp(value__);
+    }
+
+    void
+    TrexPlan::setSourceNested(uint16_t value__)
+    {
+      tokens.setSource(value__);
+    }
+
+    void
+    TrexPlan::setSourceEntityNested(uint8_t value__)
+    {
+      tokens.setSourceEntity(value__);
+    }
+
+    void
+    TrexPlan::setDestinationNested(uint16_t value__)
+    {
+      tokens.setDestination(value__);
+    }
+
+    void
+    TrexPlan::setDestinationEntityNested(uint8_t value__)
+    {
+      tokens.setDestinationEntity(value__);
+    }
+
     VideoData::VideoData(void)
     {
       m_header.mgid = 700;
