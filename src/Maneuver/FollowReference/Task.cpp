@@ -128,7 +128,7 @@ namespace Maneuver
 
         // send a notify to controlling peer that the maneuver was activated
         dispatch(m_fref_state);
-
+        m_last_ref = Reference();
         inf("waiting for first reference");
       }
 
