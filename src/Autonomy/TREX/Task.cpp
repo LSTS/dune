@@ -86,6 +86,7 @@ namespace Autonomy
         bind<IMC::Heartbeat>(this);
         bind<IMC::VehicleState>(this);
         bind<IMC::PlanControlState>(this);
+        bind<IMC::TrexOperation>(this);
         bind<IMC::Abort>(this);
 
       }
@@ -114,6 +115,8 @@ namespace Autonomy
                              (int)latency);
           setEntityState(IMC::EntityState::ESTA_ERROR, sstm.str());
           m_trex_connected = false;
+          if(isActive())
+            requestDeactivation();
         }
         else
         {
@@ -170,6 +173,24 @@ namespace Autonomy
         (void) msg;
         war("Abort detected. Disabling TREX control...");
         requestDeactivation();
+      }
+
+      void
+      consume(const IMC::TrexOperation * msg)
+      {
+        switch (msg->op)
+        {
+          case IMC::TrexOperation::OP_POST_TOKEN:
+
+            if (!msg->token.isNull())
+            {
+              IMC::TrexToken token(*msg->token.get());
+              dispatch(token);
+            }
+            break;
+          default:
+            break;
+        }
       }
 
       void
