@@ -349,7 +349,7 @@ namespace DUNE
       if (!hasSpecificZControl() && !(dpath->flags & IMC::DesiredPath::FL_NO_Z))
       {
         m_ts.z_control = true;
-        if (dpath->end_z_units == IMC::Z_ALTITUDE)
+        if (dpath->end_z_units == IMC::Z_ALTITUDE || dpath->end_z_units == IMC::Z_HEIGHT)
         {
           disableControlLoops(IMC::CL_DEPTH);
           enableControlLoops(IMC::CL_ALTITUDE);
