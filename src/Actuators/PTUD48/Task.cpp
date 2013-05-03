@@ -146,6 +146,7 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
+        debug("initializing");
         // Send execute immediatly command.
         sendCommand("i ");
         // Send reset.
