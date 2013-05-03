@@ -60,6 +60,10 @@ namespace Control
         bool tcp;
         //! Telemetry Rate
         uint8_t trate;
+        //! Default Altitude
+        float alt;
+        //! Default Speed
+        float speed;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -154,6 +158,16 @@ namespace Control
           .defaultValue("10")
           .units(Units::Hertz)
           .description("Telemetry output rate from Ardupilot");
+
+          param("Default altitude", m_args.alt)
+          .defaultValue("200.0")
+          .units(Units::Meter)
+          .description("Altitude to be used if desired Z has no units");
+
+          param("Default speed", m_args.speed)
+          .defaultValue("18.0")
+          .units(Units::MeterPerSecond)
+          .description("Speed to be used if desired speed is not specified");
 
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
@@ -454,6 +468,7 @@ namespace Control
 
           uint8_t buf[512];
           int seq = 1;
+          float alt = (path->end_z_units & IMC::Z_NONE) ? m_args.alt : (float)path->end_z;
 
           mavlink_message_t* msg = new mavlink_message_t;
 
@@ -529,7 +544,7 @@ namespace Control
               0, //! Not used
               (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
               (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
-              (float)(path->end_z));//! z PARAM7 / z position: global: altitude
+              alt);//! z PARAM7 / z position: global: altitude
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
