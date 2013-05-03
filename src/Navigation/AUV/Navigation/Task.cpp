@@ -126,14 +126,14 @@ namespace Navigation
 
           // Initialize process noise covariances matrix.
           double tstep = 1.0 / getFrequency();
-          m_kal.setProcessNoise(STATE_X, STATE_X, m_process_noise[0] * tstep);
-          m_kal.setProcessNoise(STATE_Y, STATE_Y, m_process_noise[0] * tstep);
-          m_kal.setProcessNoise(STATE_WX, STATE_WX, m_process_noise[1] * tstep);
-          m_kal.setProcessNoise(STATE_WY, STATE_WY, m_process_noise[1] * tstep);
+          m_kal.setProcessNoise(STATE_X, m_process_noise[0] * tstep);
+          m_kal.setProcessNoise(STATE_Y, m_process_noise[0] * tstep);
+          m_kal.setProcessNoise(STATE_WX, m_process_noise[1] * tstep);
+          m_kal.setProcessNoise(STATE_WY, m_process_noise[1] * tstep);
 
-          m_kal.setMeasurementNoise(OUT_GPS_X, OUT_GPS_X, m_measure_noise[0]);
-          m_kal.setMeasurementNoise(OUT_GPS_Y, OUT_GPS_Y, m_measure_noise[0]);
-          m_kal.setMeasurementNoise(OUT_LBL, OUT_LBL, m_measure_noise[0]);
+          m_kal.setMeasurementNoise(OUT_GPS_X, m_measure_noise[0]);
+          m_kal.setMeasurementNoise(OUT_GPS_Y, m_measure_noise[0]);
+          m_kal.setMeasurementNoise(OUT_LBL, m_measure_noise[0]);
         }
 
         ~Task(void)
@@ -166,11 +166,11 @@ namespace Navigation
 
           // Initialize state and covariance EKF matrices.
           m_kal.setState(STATE_K, m_args.initial_rpm_to_speed);
-          m_kal.setCovariance(STATE_X, STATE_X, m_state_cov[0]);
-          m_kal.setCovariance(STATE_Y, STATE_Y, m_state_cov[0]);
-          m_kal.setCovariance(STATE_K, STATE_K, m_state_cov[1]);
-          m_kal.setCovariance(STATE_WX, STATE_WX, m_state_cov[2]);
-          m_kal.setCovariance(STATE_WY, STATE_WY, m_state_cov[2]);
+          m_kal.setCovariance(STATE_X, m_state_cov[0]);
+          m_kal.setCovariance(STATE_Y, m_state_cov[0]);
+          m_kal.setCovariance(STATE_K, m_state_cov[1]);
+          m_kal.setCovariance(STATE_WX, m_state_cov[2]);
+          m_kal.setCovariance(STATE_WY, m_state_cov[2]);
           return true;
         }
 
@@ -234,23 +234,18 @@ namespace Navigation
           if (tstep < 0)
             return;
 
-          // Update estimated state.
-          BasicNavigation::onDispatchNavigation();
-
           m_heading += Angles::minimumSignedAngle(m_heading, BasicNavigation::getYaw());
           m_estate.psi = Angles::normalizeRadian(m_heading);
+
+          // Update estimated state.
+          BasicNavigation::onDispatchNavigation();
 
           // Update Euler Angles derivatives when
           // Angular Velocity readings are not available.
           if (!gotAngularReadings())
-          {
-            m_drv_yaw.update(m_estate.psi);
-            m_estate.r = BasicNavigation::produceAngularVelocity(AXIS_Z);
-          }
+            m_estate.r = BasicNavigation::getVirtualAngularVelocity(AXIS_Z);
           else
-          {
             m_estate.r = BasicNavigation::getAngularVelocity(AXIS_Z);
-          }
 
           // Some (experimental) sanity checks. This is not standard EKF!
           // If any of this conditions is met, some kind of warning should be raised.
@@ -259,14 +254,14 @@ namespace Navigation
           m_kal.setState(STATE_WX, wx);
           m_kal.setState(STATE_WY, wy);
 
-          if (m_kal.getCovariance(STATE_WX, STATE_WX) > std::pow(m_args.max_current, 2))
-            m_kal.setProcessNoise(STATE_WX, STATE_WX, 0);
+          if (m_kal.getCovariance(STATE_WX) > std::pow(m_args.max_current, 2))
+            m_kal.setProcessNoise(STATE_WX, 0);
           else
-            m_kal.setProcessNoise(STATE_WX, STATE_WX, m_process_noise[1] * tstep);
-          if (m_kal.getCovariance(STATE_WY, STATE_WY) > std::pow(m_args.max_current, 2))
-            m_kal.setProcessNoise(STATE_WY, STATE_WY, 0);
+            m_kal.setProcessNoise(STATE_WX, m_process_noise[1] * tstep);
+          if (m_kal.getCovariance(STATE_WY) > std::pow(m_args.max_current, 2))
+            m_kal.setProcessNoise(STATE_WY, 0);
           else
-            m_kal.setProcessNoise(STATE_WY, STATE_WY, m_process_noise[1] * tstep);
+            m_kal.setProcessNoise(STATE_WY, m_process_noise[1] * tstep);
 
           // Reset and discretize transition matrix function.
           Matrix a(NUM_STATE, NUM_STATE, 0.0);
@@ -290,11 +285,11 @@ namespace Navigation
           m_estate.vy += m_kal.getState(STATE_WY);
 
           // Log Navigation Uncertainty.
-          m_uncertainty.u = m_kal.getCovariance(STATE_K, STATE_K);
+          m_uncertainty.u = m_kal.getCovariance(STATE_K);
 
           // Log Navigation Data.
-          m_navdata.custom_x = m_kal.getCovariance(STATE_WX, STATE_WX);
-          m_navdata.custom_y = m_kal.getCovariance(STATE_WY, STATE_WY);
+          m_navdata.custom_x = m_kal.getCovariance(STATE_WX);
+          m_navdata.custom_y = m_kal.getCovariance(STATE_WY);
           m_navdata.custom_z = m_kal.getState(STATE_K);
           m_navdata.cog = std::atan2(m_estate.vy, m_estate.vx);
 

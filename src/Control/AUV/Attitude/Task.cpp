@@ -101,6 +101,8 @@ namespace Control
         float roll_offset;
         //! Maximum heading rate reference for heading controller
         float max_hrate;
+        //! Heading rate in open loop
+        bool hrate_oloop;
         //! Error attitude compensation
         bool error_attitude;
         //! Log PID gain parcels
@@ -189,6 +191,10 @@ namespace Control
           .defaultValue("0.0")
           .units(Units::Degree)
           .description("Roll reference offset value");
+
+          param("Heading Rate Open Loop", m_args.hrate_oloop)
+          .defaultValue("false")
+          .description("Dispatch heading rate commands directly to servos");
 
           param("Maximum Heading Rate", m_args.max_hrate)
           .defaultValue("45.0")
@@ -481,7 +487,11 @@ namespace Control
           if (m_args.error_attitude)
             return heading_err;
 
-          cmd = m_pid[LP_HRATE].step(timestep, heading_err);
+          if (!m_args.hrate_oloop)
+            cmd = m_pid[LP_HRATE].step(timestep, heading_err);
+          else
+            cmd = m_args.gains[LP_HRATE][0] * cmd;
+
           return cmd;
         }
       };

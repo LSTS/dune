@@ -70,13 +70,27 @@ namespace Plan
       //! Default constructor.
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] compute_progress true if progress should be computed
-      Plan(const IMC::PlanSpecification* spec, bool compute_progress):
+      //! @param[in] speed_rpm_factor factor to convert from RPMs to m/s
+      //! @param[in] speed_act_factor factor to convert from actuation to m/s
+      Plan(const IMC::PlanSpecification* spec, bool compute_progress,
+           float speed_rpm_factor, float speed_act_factor):
         m_spec(spec),
         m_curr_node(NULL),
         m_sequential(false),
         m_compute_progress(compute_progress),
         m_progress(0.0)
-      { }
+      {
+        m_speed_conv.rpm_factor = speed_rpm_factor;
+        m_speed_conv.act_factor = speed_act_factor;
+      }
+
+      //! No speed conversion constructor
+      //! @param[in] spec pointer to PlanSpecification message
+      //! @param[in] compute_progress true if progress should be computed
+      Plan(const IMC::PlanSpecification* spec, bool compute_progress)
+      {
+        *this = Plan(spec, compute_progress, 0.0, 0.0);
+      }
 
       //! Reset data
       void
@@ -382,7 +396,7 @@ namespace Plan
       void
       computeDurations(const IMC::EstimatedState* state)
       {
-        PlanDuration::parse(m_seq_nodes, state, m_durations);
+        PlanDuration::parse(m_seq_nodes, state, m_durations, m_speed_conv);
       }
 
       //! Get maneuver from id
@@ -422,6 +436,8 @@ namespace Plan
       std::vector<IMC::PlanManeuver*> m_seq_nodes;
       //! Maneuver durations
       ManeuverDuration m_durations;
+      //! Speed conversion factors for plan duration
+      PlanDuration::SpeedConversion m_speed_conv;
     };
   }
 }

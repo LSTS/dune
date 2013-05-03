@@ -188,7 +188,14 @@ namespace Sensors
       void
       onEntityResolution(void)
       {
-        m_calib_eid = resolveEntity(m_args.calib_elabel);
+        try
+        {
+          m_calib_eid = resolveEntity(m_args.calib_elabel);
+        }
+        catch (...)
+        {
+          m_calib_eid = 0;
+        }
       }
 
       //! Acquire resources.
@@ -369,7 +376,7 @@ namespace Sensors
           {
             m_timer.reset();
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATING);
-            debug(DTR("resetting device"));
+            debug("resetting device");
             poll(CMD_DEVICE_RESET, CMD_DEVICE_RESET_SIZE, 0, 0);
           }
         }

@@ -58,6 +58,8 @@ namespace Sensors
     static const unsigned c_iux_frame_size = 80;
     //! Meter per Second to Knots conversion.
     static const double c_ms_to_knots = 1.94384449;
+    // Euler angles conversion factor.
+    static const double c_euler_factor = (65536.0 / 360.0);
 
     //! Data logger to Imagenex .837 format.
     class Frame
@@ -108,6 +110,16 @@ namespace Sensors
         HDR_IDX_DATA_BYTES_LO = 111
       };
 
+      //! 837 Footer Indices.
+      enum FooterIndices
+      {
+        FTR_IDX_TYPE = 13,
+        FTR_IDX_PITCH = 14,
+        FTR_IDX_ROLL = 16,
+        FTR_IDX_HEADING = 18,
+        FTR_IDX_AZIMUTH_UP = 24
+      };
+
       //! Constructor.
       Frame(void)
       {
@@ -136,6 +148,14 @@ namespace Sensors
       getMessageData(void)
       {
         return &m_data[c_start_data];
+      }
+
+      //! Get footer start address.
+      //! @return pointer to address.
+      uint8_t*
+      getFooterData(void)
+      {
+        return &m_data[c_hdr_size + c_rhdr_size + getMessageSize()];
       }
 
       //! Retrieve the size of the frame.
@@ -274,6 +294,9 @@ namespace Sensors
 
         ByteCopy::toBE((uint16_t)(((int)(roll * 10 + 900) & 0x7fff) | 0x8000),
                        getData() + HDR_IDX_ROLL);
+
+        ByteCopy::toLE((uint16_t)(roll * c_euler_factor),
+                       getFooterData() + FTR_IDX_ROLL);
       }
 
       //! Set pitch.
@@ -285,6 +308,9 @@ namespace Sensors
 
         ByteCopy::toBE((uint16_t)(((int)(pitch * 10 + 900) & 0x7fff) | 0x8000),
                        getData() + HDR_IDX_PITCH);
+
+        ByteCopy::toLE((uint16_t)(pitch * c_euler_factor),
+                       getFooterData() + FTR_IDX_PITCH);
       }
 
       //! Set heading.
@@ -296,6 +322,9 @@ namespace Sensors
 
         ByteCopy::toBE((uint16_t)(((int)(heading * 10) & 0x7fff) | 0x8000),
                        getData() + HDR_IDX_HEADING);
+
+        ByteCopy::toLE((uint16_t)((heading - 180.0) * c_euler_factor),
+                       getFooterData() + FTR_IDX_HEADING);
       }
 
       //! Set repetition rate.
@@ -525,6 +554,9 @@ namespace Sensors
 
         for (unsigned i = 0; i < size; ++i)
           m_data[(addr + 1) + i] = (uint8_t) 0x00;
+
+        m_data[addr + FTR_IDX_TYPE] = 0x01;
+        m_data[addr + FTR_IDX_AZIMUTH_UP] = 0x01;
       }
 
       //! Set sonar return header mode.

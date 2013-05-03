@@ -85,6 +85,47 @@ namespace Navigation
         NUM_OUT = 6
       };
 
+      //! Process Noise parameters.
+      enum ProcessNoiseIndexes
+      {
+        PN_POSITION = 0,
+        PN_PSI = 1,
+        PN_YAWRATE = 2,
+        PN_SPEED = 3,
+        PN_YRATE_BIAS = 4,
+        PN_PSI_BIAS = 5
+      };
+
+      //! Measure Noise parameters.
+      enum MeasureNoiseIndexes
+      {
+        MN_U = 0,
+        MN_V = 1,
+        MN_PSI = 2,
+        MN_YAWRATE = 3,
+        MN_LBL = 4
+      };
+
+      //! State Covariance parameters.
+      enum StateCovarianceIndexes
+      {
+        SC_POSITION = 0,
+        SC_ANGLES = 1,
+        SC_SPEED = 2,
+        SC_BIASES = 3,
+        SC_RPM = 4
+      };
+
+      //! GPS accuracy parameters.
+      enum GpsAccuracyIndexes
+      {
+        GPS_ACC_BAD = 0,
+        GPS_ACC_AVERAGE = 1,
+        GPS_ACC_GOOD = 2,
+        GPS_ACC_PERFECT = 3
+      };
+
+      //! %Task arguments.
       struct Arguments
       {
         //! EKF process noise covariance value
@@ -176,24 +217,24 @@ namespace Navigation
           BasicNavigation::onUpdateParameters();
 
           // Initialize Process and Measure Covariances matrices
-          m_kal.setProcessNoise(STATE_X, STATE_X, m_process_noise[0]);
-          m_kal.setProcessNoise(STATE_Y, STATE_Y, m_process_noise[0]);
-          m_kal.setProcessNoise(STATE_PSI, STATE_PSI, m_process_noise[1]);
-          m_kal.setProcessNoise(STATE_R, STATE_R, m_process_noise[2]);
-          m_kal.setProcessNoise(STATE_U, STATE_U, m_process_noise[3]);
-          m_kal.setProcessNoise(STATE_V, STATE_V, m_process_noise[3]);
-          m_kal.setProcessNoise(STATE_R_BIAS, STATE_R_BIAS, m_process_noise[4]);
-          m_kal.setProcessNoise(STATE_PSI_BIAS, STATE_PSI_BIAS, 0.0);
+          m_kal.setProcessNoise(STATE_X, m_process_noise[PN_POSITION]);
+          m_kal.setProcessNoise(STATE_Y, m_process_noise[PN_POSITION]);
+          m_kal.setProcessNoise(STATE_PSI, m_process_noise[PN_PSI]);
+          m_kal.setProcessNoise(STATE_R, m_process_noise[PN_YAWRATE]);
+          m_kal.setProcessNoise(STATE_U, m_process_noise[PN_SPEED]);
+          m_kal.setProcessNoise(STATE_V, m_process_noise[PN_SPEED]);
+          m_kal.setProcessNoise(STATE_R_BIAS, m_process_noise[PN_YRATE_BIAS]);
+          m_kal.setProcessNoise(STATE_PSI_BIAS, m_process_noise[PN_PSI_BIAS]);
 
-          m_kal.setMeasurementNoise(OUT_U, OUT_U, m_measure_noise[0]);
-          m_kal.setMeasurementNoise(OUT_V, OUT_V, m_measure_noise[1]);
-          m_kal.setMeasurementNoise(OUT_PSI, OUT_PSI, m_measure_noise[2]);
-          m_kal.setMeasurementNoise(OUT_R, OUT_R, m_measure_noise[3]);
-          m_kal.setMeasurementNoise(OUT_GPS_X, OUT_GPS_X, m_args.gps_noise[2]);
-          m_kal.setMeasurementNoise(OUT_GPS_Y, OUT_GPS_Y, m_args.gps_noise[2]);
+          m_kal.setMeasurementNoise(OUT_U, m_measure_noise[MN_U]);
+          m_kal.setMeasurementNoise(OUT_V, m_measure_noise[MN_V]);
+          m_kal.setMeasurementNoise(OUT_PSI, m_measure_noise[MN_PSI]);
+          m_kal.setMeasurementNoise(OUT_R, m_measure_noise[MN_YAWRATE]);
+          m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_GOOD]);
+          m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_GOOD]);
 
           for (unsigned i = 0; i < m_num_beacons; i++)
-            m_kal.setMeasurementNoise(NUM_OUT + i, NUM_OUT + i, m_measure_noise[4]);
+            m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
         }
 
         void
@@ -238,26 +279,26 @@ namespace Navigation
 
           if (msg->op == IMC::EntityControl::ECO_ACTIVATE)
           {
-            // Start integrating heading rates and use IMU data.
+            // IMU already activated.
+            if (m_integ_yrate)
+              return;
+
+            // Start integrating heading rates from IMU data.
             m_integ_yrate = true;
             m_agvel_eid = m_imu_eid;
             debug("activating IMU");
 
-            if (!m_alignment)
-            {
-              // Reinitialize state covariance matrix value.
-              m_kal.resetCovariance(STATE_PSI_BIAS);
-              m_kal.setCovariance(STATE_PSI_BIAS, STATE_PSI_BIAS, m_state_cov[3]);
-              m_kal.setProcessNoise(STATE_PSI_BIAS, STATE_PSI_BIAS, m_process_noise[5]);
+            // Reinitialize state covariance matrix value.
+            m_kal.resetCovariance(STATE_PSI_BIAS);
+            m_kal.setCovariance(STATE_PSI_BIAS, m_state_cov[SC_BIASES]);
 
-              // Position process noise covariance value if IMU is available.
-              m_kal.setProcessNoise(STATE_X, STATE_X, m_args.position_noise_with_imu);
-              m_kal.setProcessNoise(STATE_Y, STATE_Y, m_args.position_noise_with_imu);
+            // Position process noise covariance value if IMU is available.
+            m_kal.setProcessNoise(STATE_X, m_args.position_noise_with_imu);
+            m_kal.setProcessNoise(STATE_Y, m_args.position_noise_with_imu);
 
-              // LBL noise.
-              for (unsigned i = 0; i < m_num_beacons; i++)
-                m_kal.setMeasurementNoise(NUM_OUT + i, NUM_OUT + i, m_args.lbl_noise_with_imu);
-            }
+            // LBL noise.
+            for (unsigned i = 0; i < m_num_beacons; i++)
+              m_kal.setMeasurementNoise(NUM_OUT + i, m_args.lbl_noise_with_imu);
           }
           else
           {
@@ -268,16 +309,13 @@ namespace Navigation
 
             // No heading offset estimation without IMU.
             m_kal.resetCovariance(STATE_PSI_BIAS);
-            m_kal.setProcessNoise(STATE_PSI_BIAS, STATE_PSI_BIAS, 0.0);
 
             // Reinitialize EKF variances.
-            m_kal.setProcessNoise(STATE_X, STATE_X, m_process_noise[0]);
-            m_kal.setProcessNoise(STATE_Y, STATE_Y, m_process_noise[0]);
+            m_kal.setProcessNoise(STATE_X, m_process_noise[PN_POSITION]);
+            m_kal.setProcessNoise(STATE_Y, m_process_noise[PN_POSITION]);
 
             for (unsigned i = 0; i < m_num_beacons; i++)
-              m_kal.setMeasurementNoise(NUM_OUT + i, NUM_OUT + i, m_measure_noise[4]);
-
-            m_alignment = false;
+              m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
           }
         }
 
@@ -289,17 +327,17 @@ namespace Navigation
           m_kal.setState(STATE_K, m_args.initial_rpm_to_speed);
 
           // Initial position covariances (GPS and LBL)
-          m_kal.setCovariance(STATE_X, STATE_X, m_state_cov[0]);
-          m_kal.setCovariance(STATE_Y, STATE_Y, m_state_cov[0]);
-          m_kal.setCovariance(STATE_PSI, STATE_PSI, m_state_cov[1]);
-          m_kal.setCovariance(STATE_R, STATE_R, m_state_cov[1]);
-          m_kal.setCovariance(STATE_U, STATE_U, m_state_cov[2]);
-          m_kal.setCovariance(STATE_V, STATE_V, m_state_cov[2]);
-          m_kal.setCovariance(STATE_R_BIAS, STATE_R_BIAS, m_state_cov[3]);
-          m_kal.setCovariance(STATE_K, STATE_K, m_state_cov[4]);
+          m_kal.setCovariance(STATE_X, m_state_cov[SC_POSITION]);
+          m_kal.setCovariance(STATE_Y, m_state_cov[SC_POSITION]);
+          m_kal.setCovariance(STATE_PSI, m_state_cov[SC_ANGLES]);
+          m_kal.setCovariance(STATE_R, m_state_cov[SC_ANGLES]);
+          m_kal.setCovariance(STATE_U, m_state_cov[SC_SPEED]);
+          m_kal.setCovariance(STATE_V, m_state_cov[SC_SPEED]);
+          m_kal.setCovariance(STATE_R_BIAS, m_state_cov[SC_BIASES]);
+          m_kal.setCovariance(STATE_K, m_state_cov[SC_RPM]);
 
           // No heading bias estimation without IMU.
-          m_kal.setCovariance(STATE_PSI_BIAS, STATE_PSI_BIAS, 0.0);
+          m_kal.setCovariance(STATE_PSI_BIAS, 0.0);
 
           return true;
         }
@@ -323,23 +361,23 @@ namespace Navigation
         {
           if (hacc > 10)
           {
-            m_kal.setMeasurementNoise(OUT_GPS_X, OUT_GPS_X, m_args.gps_noise[0]);
-            m_kal.setMeasurementNoise(OUT_GPS_Y, OUT_GPS_Y, m_args.gps_noise[0]);
+            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_BAD]);
+            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_BAD]);
           }
           if (hacc > 8 && hacc <= 10)
           {
-            m_kal.setMeasurementNoise(OUT_GPS_X, OUT_GPS_X, m_args.gps_noise[1]);
-            m_kal.setMeasurementNoise(OUT_GPS_Y, OUT_GPS_Y, m_args.gps_noise[1]);
+            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_AVERAGE]);
+            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_AVERAGE]);
           }
           if (hacc > 4 && hacc <= 8)
           {
-            m_kal.setMeasurementNoise(OUT_GPS_X, OUT_GPS_X, m_args.gps_noise[2]);
-            m_kal.setMeasurementNoise(OUT_GPS_Y, OUT_GPS_Y, m_args.gps_noise[2]);
+            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_GOOD]);
+            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_GOOD]);
           }
           if (hacc <= 4)
           {
-            m_kal.setMeasurementNoise(OUT_GPS_X, OUT_GPS_X, m_args.gps_noise[3]);
-            m_kal.setMeasurementNoise(OUT_GPS_Y, OUT_GPS_Y, m_args.gps_noise[3]);
+            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_PERFECT]);
+            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_PERFECT]);
           }
         }
 
@@ -414,9 +452,8 @@ namespace Navigation
           // Vehicle has orientation calibrated.
           m_kal.setState(STATE_PSI, psi);
           m_kal.setState(STATE_PSI_BIAS, m_heading - psi);
-
           m_kal.resetCovariance(STATE_PSI_BIAS);
-          m_kal.setProcessNoise(STATE_PSI_BIAS, STATE_PSI_BIAS, 0.0);
+          m_kal.setCovariance(STATE_PSI_BIAS, m_state_cov[SC_BIASES]);
         }
 
         void
@@ -443,13 +480,10 @@ namespace Navigation
           resetMatrixA(ax, x);
           resetMatrixA(ap, x);
 
-          if (!m_alignment)
-          {
-            ap(STATE_X, STATE_PSI) = (- x(STATE_U) * std::sin(x(STATE_PSI))
-                                      - x(STATE_V) * std::cos(x(STATE_PSI)));
-            ap(STATE_Y, STATE_PSI) = (x(STATE_U) * std::cos(x(STATE_PSI))
-                                      - x(STATE_V) * std::sin(x(STATE_PSI)));
-          }
+          ap(STATE_X, STATE_PSI) = (- x(STATE_U) * std::sin(x(STATE_PSI))
+                                    - x(STATE_V) * std::cos(x(STATE_PSI)));
+          ap(STATE_Y, STATE_PSI) = (x(STATE_U) * std::cos(x(STATE_PSI))
+                                    - x(STATE_V) * std::sin(x(STATE_PSI)));
 
           m_kal.setCovarianceTransition((ap * tstep).expmts());
           m_kal.setStateTransition((ax * tstep).expmts());
@@ -574,20 +608,16 @@ namespace Navigation
         void
         sendToBus(void)
         {
-          BasicNavigation::onDispatchNavigation();
-
           m_estate.psi = Angles::normalizeRadian(m_kal.getState(STATE_PSI));
+
+          BasicNavigation::onDispatchNavigation();
 
           // Update Euler Angles derivatives when
           // Angular Velocity readings are not available.
           if (!gotAngularReadings())
-          {
-            m_drv_yaw.update(m_estate.psi);
-            m_estate.r = BasicNavigation::produceAngularVelocity(AXIS_Z);
-          }
+            m_estate.r = BasicNavigation::getVirtualAngularVelocity(AXIS_Z);
           else
             m_estate.r = m_kal.getState(STATE_R);
-
 
           if (!m_args.use_rpm)
           {
