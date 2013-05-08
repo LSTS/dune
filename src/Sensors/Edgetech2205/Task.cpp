@@ -284,7 +284,7 @@ namespace Sensors
             openLog(m_ctx.dir_log / msg->name / "Data.jsf");
             break;
 
-          case IMC::LoggingControl::COP_REQUEST_STOP:
+          case IMC::LoggingControl::COP_STOPPED:
             closeLog();
             break;
         }
