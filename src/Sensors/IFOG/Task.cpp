@@ -69,14 +69,16 @@ namespace Sensors
       OFF_STA_FAIL = 20,
       //! IMU Status.
       OFF_STA_IMU = 22
-    }
+    };
 
     //! IMU address.
     static const uint8_t c_imu_addr = 0x01;
     //! Data Frame Size.
-    static const int c_frame_size = 18 + 1;
-    //! Amount of time, in seconds, between messages.
-    static const double c_message_delta = 1 / 600.0;
+    static const unsigned c_frame_size = 25;
+    //! Angles scaling.
+    static const double c_ang_scale = 0.1 / 206264.806247;
+    //! Velocity scaling.
+    static const double c_vel_scale = 0.05 / 32768.0;
 
     //! Task arguments.
     struct Arguments
@@ -110,8 +112,6 @@ namespace Sensors
       IMC::EulerAnglesDelta m_edelt;
       //! Velocity Delta.
       IMC::VelocityDelta m_vdelt;
-      //! Temperature.
-      IMC::Temperature m_temp;
       //! Input Watchdog.
       Counter<float> m_wdog;
       //! IMU timestamp.
@@ -135,8 +135,8 @@ namespace Sensors
 
         param("Trigger Frequency", m_args.trigger_freq)
         .units(Units::Hertz)
-        .minimumValue(100)
-        .maximumValue(400)
+        .minimumValue("100")
+        .maximumValue("400")
         .defaultValue("100")
         .description("Trigger frequency");
 
@@ -198,113 +198,34 @@ namespace Sensors
       bool
       decodeFrame(const uint8_t* bfr, unsigned bfr_len)
       {
+        if (bfr_len != c_frame_size)
+          return false;
+
         if (!(bfr[bfr_len - 1] & SAB82532_RSTA_VFR))
           return false;
 
-        if (bfr[0] != c_imu_addr && bfr[1] > 0x02)
+        if (bfr[0] != c_imu_addr)
           return false;
 
-        // Flight control data.
-        int16_t tmp16 = 0;
-
-        // Angular Rate Body X.
-        m_data.fill(0.0);
-        ByteCopy::fromLE(tmp16, bfr + 2);
-        m_data(0) = tmp16 * c_agvel_factor;
-
-        // Angular Rate Body Y.
-        ByteCopy::fromLE(tmp16, bfr + 4);
-        m_data(1) = tmp16 * c_agvel_factor;
-
-        // Angular Rate Body Z.
-        ByteCopy::fromLE(tmp16, bfr + 6);
-        m_data(2) = tmp16 * c_agvel_factor;
-
-        // Dispatch angular velocity.
-        m_data = m_rotation * m_data;
-        m_agvel.x = m_data(0);
-        m_agvel.y = m_data(1);
-        m_agvel.z = m_data(2);
-        dispatch(m_agvel, DF_KEEP_TIME);
-
-        // Linear Acceleration Body X.
-        m_data.fill(0.0);
-        ByteCopy::fromLE(tmp16, bfr + 8);
-        m_data(0) = tmp16 * c_accel_factor;
-        // Linear Acceleration Body Y.
-        ByteCopy::fromLE(tmp16, bfr + 10);
-        m_data(1) = tmp16 * c_accel_factor;
-        // Linear Acceleration Body Z.
-        ByteCopy::fromLE(tmp16, bfr + 12);
-        m_data(2) = tmp16 * c_accel_factor;
-
-        // Temperature.
-        m_temp.value = bfr[15];
-
-        // Dispatch acceleration.
-        m_data = m_rotation * m_data;
-        m_accel.x = m_data(0);
-        m_accel.y = m_data(1);
-        m_accel.z = m_data(2);
-        dispatch(m_accel, DF_KEEP_TIME);
-
-        // Inertial data.
-        if (bfr[1] == 0x02)
+        double ang_inc[3] =
         {
-          int32_t tmp32 = 0;
+          read24b(bfr + OFF_ANG_INC0) * c_ang_scale,
+          read24b(bfr + OFF_ANG_INC1) * c_ang_scale,
+          read24b(bfr + OFF_ANG_INC2) * c_ang_scale
+        };
 
-          // Delta angle - body X.
-          m_data.fill(0.0);
-          ByteCopy::fromLE(tmp32, bfr + 18);
-          m_data(0) = tmp32 * c_edelt_factor;
-
-          // Delta angle - body Y.
-          ByteCopy::fromLE(tmp32, bfr + 22);
-          m_data(1) = tmp32 * c_edelt_factor;
-
-          // Delta angle - body Z.
-          ByteCopy::fromLE(tmp32, bfr + 26);
-          m_data(2) = tmp32 * c_edelt_factor;
-
-          // Dispatch euler deltas.
-          m_data = m_rotation * m_data;
-          m_edelt.setTimeStamp(m_agvel.getTimeStamp());
-          m_edelt.time = m_imu_time;
-          m_edelt.x = m_data(0);
-          m_edelt.y = m_data(1);
-          m_edelt.z = m_data(2);
-          dispatch(m_edelt, DF_KEEP_TIME);
-
-          // Delta velocity - body X.
-          m_data.fill(0.0);
-          ByteCopy::fromLE(tmp32, bfr + 30);
-          m_data(0) = tmp32 * c_vdelt_factor;
-
-          // Delta velocity - body Y.
-          ByteCopy::fromLE(tmp32, bfr + 34);
-          m_data(1) = tmp32 * c_vdelt_factor;
-
-          // Delta velocity - body Z.
-          ByteCopy::fromLE(tmp32, bfr + 38);
-          m_data(2) = tmp32 * c_vdelt_factor;
-
-          // Dispatch velocity delta.
-          m_data = m_rotation * m_data;
-          m_vdelt.setTimeStamp(m_agvel.getTimeStamp());
-          m_vdelt.time = m_imu_time;
-          m_vdelt.x = m_data(0);
-          m_vdelt.y = m_data(1);
-          m_vdelt.z = m_data(2);
-          dispatch(m_vdelt, DF_KEEP_TIME);
-        }
-
-        // Check if IMU failed.
-        if (bfr[14] & (1 << 4))
+        double vel_inc[3] =
         {
-          setEntityState(IMC::EntityState::ESTA_ERROR,
-                         String::str("IMU failed (%02X)", bfr[14] & 0xf0));
-          return false;
-        }
+          read24b(bfr + OFF_VEL_INC0) * c_vel_scale,
+          read24b(bfr + OFF_VEL_INC1) * c_vel_scale,
+          read24b(bfr + OFF_VEL_INC2) * c_vel_scale
+        };
+
+#if 0
+        printf("%0.8f, %0.8f, %0.8f, %0.8f, %0.8f, %0.8f\n",
+               ang_inc[0], ang_inc[1], ang_inc[2],
+                vel_inc[0], vel_inc[1], vel_inc[2]);
+#endif
 
         return true;
       }
@@ -325,39 +246,31 @@ namespace Sensors
       void
       onMain(void)
       {
-        uint8_t bfr[128];
+        uint8_t bfr[c_frame_size];
 
         while (!stopping())
         {
-          if (!m_active)
-          {
-            waitForMessages(1.0);
-            continue;
-          }
+          // if (!m_active)
+          // {
+          //   waitForMessages(1.0);
+          //   continue;
+          // }
 
           consumeMessages();
-          if (!m_active)
-            continue;
+          // if (!m_active)
+          //   continue;
 
           if (hasData())
           {
             int rv = read(m_fd, bfr, sizeof(bfr));
-            if (rv != c_fcd_size && rv != c_fcdid_size)
+            if (rv <= 0)
               continue;
-
-            m_agvel.time = m_imu_time;
-            m_accel.time = m_imu_time;
-
-            m_agvel.setTimeStamp();
-            m_accel.setTimeStamp(m_agvel.getTimeStamp());
 
             if (decodeFrame(bfr, rv))
             {
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
               m_wdog.reset();
             }
-
-            m_imu_time += c_message_delta;
           }
 
           if (m_wdog.overflow())
