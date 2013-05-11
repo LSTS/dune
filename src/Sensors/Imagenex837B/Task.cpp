@@ -319,8 +319,11 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        m_args.data_points /= 1000;
-        m_ping.data.resize(c_rdata_dat_size * m_args.data_points);
+        if (paramChanged(m_args.data_points))
+        {
+          m_args.data_points /= 1000;
+          m_ping.data.resize(c_rdata_dat_size * m_args.data_points);
+        }
 
         setRange(m_args.def_range);
         setStartGain(m_args.start_gain);
