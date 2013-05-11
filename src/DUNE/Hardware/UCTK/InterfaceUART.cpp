@@ -79,7 +79,7 @@ namespace DUNE
       void
       InterfaceUART::doFlush(void)
       {
-        return m_handle->flushInput();
+        m_handle->flushInput();
       }
     }
   }
