@@ -99,7 +99,10 @@ namespace Control
         onUpdateParameters(void)
         {
           PathController::onUpdateParameters();
-          m_args.entry_angle = Angles::radians(m_args.entry_angle);
+
+          if (paramChanged(m_args.entry_angle))
+            m_args.entry_angle = Angles::radians(m_args.entry_angle);
+
           m_gain = std::tan(m_args.entry_angle) / m_args.corridor;
         }
 

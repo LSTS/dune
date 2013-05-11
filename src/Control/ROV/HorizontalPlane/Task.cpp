@@ -176,7 +176,8 @@ namespace Control
         onUpdateParameters(void)
         {
           // Heading control parameters.
-          m_args.max_hrate = Angles::radians(m_args.max_hrate);
+          if (paramChanged(m_args.max_hrate))
+            m_args.max_hrate = Angles::radians(m_args.max_hrate);
         }
 
         void

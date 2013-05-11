@@ -175,11 +175,20 @@ namespace Simulators
       {
         debug("dock coordinates lat: %0.6f, lon: %0.6f", m_args.lat, m_args.lon);
 
-        m_args.lat = Angles::radians(m_args.lat);
-        m_args.lon = Angles::radians(m_args.lon);
-        m_args.bearing = Angles::radians(m_args.bearing);
-        m_args.brate_stddev = Angles::radians(m_args.brate_stddev);
-        m_args.max_bearing_dev = Angles::radians(m_args.max_bearing_dev);
+        if (paramChanged(m_args.lat))
+          m_args.lat = Angles::radians(m_args.lat);
+
+        if (paramChanged(m_args.lon))
+          m_args.lon = Angles::radians(m_args.lon);
+
+        if (paramChanged(m_args.bearing))
+          m_args.bearing = Angles::radians(m_args.bearing);
+
+        if (paramChanged(m_args.brate_stddev))
+          m_args.brate_stddev = Angles::radians(m_args.brate_stddev);
+
+        if (paramChanged(m_args.max_bearing_dev))
+          m_args.max_bearing_dev = Angles::radians(m_args.max_bearing_dev);
 
         //! Initialize origin and position
         m_origin.depth = m_args.depth;

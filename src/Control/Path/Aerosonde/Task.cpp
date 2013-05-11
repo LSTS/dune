@@ -83,8 +83,11 @@ namespace Control
         {
           PathController::onUpdateParameters();
 
-          m_args.max_bank = Angles::radians(m_args.max_bank);
-          m_args.la_gain = m_args.la_gain / (Math::c_gravity * std::tan(m_args.max_bank));
+          if (paramChanged(m_args.max_bank))
+            m_args.max_bank = Angles::radians(m_args.max_bank);
+
+          if (paramChanged(m_args.max_bank) || paramChanged(m_args.la_gain))
+            m_args.la_gain = m_args.la_gain / (Math::c_gravity * std::tan(m_args.max_bank));
         }
 
         void

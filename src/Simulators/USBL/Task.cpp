@@ -143,10 +143,17 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        m_args.usbl_lat = Angles::radians(m_args.usbl_lat);
-        m_args.usbl_lon = Angles::radians(m_args.usbl_lon);
-        m_args.usbl_heading = Angles::normalizeRadian(Angles::radians(m_args.usbl_heading));
-        m_args.usbl_bearing_res = Angles::radians(m_args.usbl_bearing_res);
+        if (paramChanged(m_args.usbl_lat))
+          m_args.usbl_lat = Angles::radians(m_args.usbl_lat);
+
+        if (paramChanged(m_args.usbl_lon))
+          m_args.usbl_lon = Angles::radians(m_args.usbl_lon);
+
+        if (paramChanged(m_args.usbl_heading))
+          m_args.usbl_heading = Angles::normalizeRadian(Angles::radians(m_args.usbl_heading));
+
+        if (paramChanged(m_args.usbl_bearing_res))
+          m_args.usbl_bearing_res = Angles::radians(m_args.usbl_bearing_res);
 
         if (1 / getFrequency() <= m_args.trans_delay)
         {

@@ -138,7 +138,8 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        m_args.rotation = Angles::radians(m_args.rotation);
+        if (paramChanged(m_args.rotation))
+          m_args.rotation = Angles::radians(m_args.rotation);
       }
 
       ~Task(void)

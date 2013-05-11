@@ -81,16 +81,6 @@ namespace Vision
       }
 
       void
-      onUpdateParameters(void)
-      {
-      }
-
-      void
-      onEntityResolution(void)
-      {
-      }
-
-      void
       onResourceAcquisition(void)
       {
         // Get a list of all the cameras found.

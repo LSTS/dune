@@ -132,16 +132,6 @@ namespace Vision
       }
 
       void
-      onUpdateParameters(void)
-      {
-      }
-
-      void
-      onEntityResolution(void)
-      {
-      }
-
-      void
       onResourceAcquisition(void)
       {
         // Open factory and search for cameras on all the networks

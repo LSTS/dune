@@ -223,7 +223,8 @@ namespace Actuators
       void
       onUpdateParameters(void)
       {
-        m_args.state_per = 1.0 / m_args.state_per;
+        if (paramChanged(m_args.state_per))
+          m_args.state_per = 1.0 / m_args.state_per;
 
         if (m_args.thrust_ctl_mode == "none")
           m_thrust_ctl_mode = MODE_NONE;

@@ -155,7 +155,8 @@ namespace Plan
       void
       onUpdateParameters(void)
       {
-        m_args.speriod = 1.0 / m_args.speriod;
+        if (paramChanged(m_args.speriod))
+          m_args.speriod = 1.0 / m_args.speriod;
       }
 
       void

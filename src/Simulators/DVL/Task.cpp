@@ -129,7 +129,8 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        m_args.ir_prob *= 0.01;
+        if (paramChanged(m_args.ir_prob))
+          m_args.ir_prob *= 0.01;
       }
 
       void

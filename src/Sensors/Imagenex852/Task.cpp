@@ -264,7 +264,10 @@ namespace Sensors
 
         m_sound_speed = m_args.sspeed;
         for (unsigned i = 0; i < m_args.orientation.size(); i++)
-          m_args.orientation[i] = Math::Angles::radians(m_args.orientation[i]);
+        {
+          if (paramChanged(m_args.orientation[i]))
+            m_args.orientation[i] = Math::Angles::radians(m_args.orientation[i]);
+        }
 
         IMC::DeviceState ds;
         ds.x = m_args.position[0];

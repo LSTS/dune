@@ -89,7 +89,8 @@ namespace Control
         void
         onUpdateParameters(void)
         {
-          m_args.max_bank = Angles::radians(m_args.max_bank);
+          if (paramChanged(m_args.max_bank))
+            m_args.max_bank = Angles::radians(m_args.max_bank);
         }
 
         void

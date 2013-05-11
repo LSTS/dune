@@ -163,7 +163,8 @@ namespace Sensors
       onUpdateParameters(void)
       {
         // Depth conversion (bar to meters of fluid).
-        m_args.depth_conv = 100e3 / (9.8 * m_args.depth_conv);
+        if (paramChanged(m_args.depth_conv))
+          m_args.depth_conv = 100e3 / (9.8 * m_args.depth_conv);
 
         // Initialize serial messages.
         m_msg_read_pressure[0] = m_args.address;

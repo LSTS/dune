@@ -118,7 +118,8 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        m_args.yaw = Math::Angles::radians(m_args.yaw);
+        if (paramChanged(m_args.yaw))
+          m_args.yaw = Math::Angles::radians(m_args.yaw);
       }
 
       //! Release allocated resources.
