@@ -196,7 +196,7 @@ namespace DUNE
       if (paramChanged(m_cperiod))
         m_cperiod = 1.0 / m_cperiod;
 
-      if (paramChanged(m_cperiod))
+      if (paramChanged(m_speriod))
         m_speriod = 1.0 / m_speriod;
 
       m_ts.cc = m_course_ctl ? 1 : 0;
