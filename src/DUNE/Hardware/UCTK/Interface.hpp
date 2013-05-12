@@ -48,7 +48,7 @@ namespace DUNE
         ~Interface(void);
 
         void
-        open(void);
+        open(bool query = true);
 
         bool
         poll(double timeout)

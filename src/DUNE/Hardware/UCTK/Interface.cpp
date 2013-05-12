@@ -43,10 +43,11 @@ namespace DUNE
       }
 
       void
-      Interface::open(void)
+      Interface::open(bool query)
       {
         doOpen();
-        getFirmwareInfo();
+        if (query)
+          getFirmwareInfo();
       }
 
       FirmwareInfo
