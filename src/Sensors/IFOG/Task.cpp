@@ -46,6 +46,17 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
+    //! PSU Packet Identifiers.
+    enum PacketIds
+    {
+      //! State.
+      PKT_ID_STATE  = 1,
+      //! Power.
+      PKT_ID_PWR    = 2,
+      //! Trigger.
+      PKT_ID_TRG    = 3
+    };
+
     //! Data Frame Offsets.
     enum FrameOffsets
     {
@@ -83,14 +94,16 @@ namespace Sensors
     //! Task arguments.
     struct Arguments
     {
-      //! ESCC - Device.
-      std::string escc_dev;
+      //! ESCC - IMU.
+      std::string imu_dev;
+      //! ESCC - PSU.
+      std::string psu_dev;
       //! Input timeout.
       float input_tout;
       //! IMU rotation matrix values.
       std::vector<double> rotation_mx;
       //! Trigger frequency.
-      unsigned trigger_freq;
+      unsigned trigger_frq;
     };
 
     // Convenience function to throw the last system error.
@@ -102,38 +115,51 @@ namespace Sensors
 
     struct Task: public DUNE::Tasks::Task
     {
-      //! ESCC descriptor.
-      int m_fd;
       //! Rotation Matrix to correct IMU mounting position.
       Matrix m_rotation;
       //! Sensor data matrix.
       Matrix m_data;
       //! Euler Angles Delta.
-      IMC::EulerAnglesDelta m_edelt;
+      IMC::EulerAnglesDelta m_edelta;
       //! Velocity Delta.
-      IMC::VelocityDelta m_vdelt;
+      IMC::VelocityDelta m_vdelta;
       //! Input Watchdog.
       Counter<float> m_wdog;
       //! IMU timestamp.
       double m_imu_time;
+      // IMU handle.
+      UCTK::Interface* m_imu;
+      // PSU handle.
+      UCTK::Interface* m_psu;
+      //! Failure Status Word.
+      uint16_t m_sta_fail;
+      //! IMU Status Word.
+      uint16_t m_sta_imu;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_fd(-1),
-        m_imu_time(0)
+        m_imu_time(0),
+        m_imu(NULL),
+        m_psu(NULL),
+        m_sta_fail(0),
+        m_sta_imu(0)
       {
-        param("ESCC - Device", m_args.escc_dev)
+        param("ESCC - IMU Device", m_args.imu_dev)
         .defaultValue("")
-        .description("HG1700 ESCC Device parameter");
+        .description("ESCC device where IMU is connected");
+
+        param("ESCC - PSU Device", m_args.psu_dev)
+        .defaultValue("")
+        .description("ESCC device where PSU is connected");
 
         param("Input Timeout", m_args.input_tout)
         .units(Units::Second)
         .defaultValue("2")
         .description("Number of seconds for the watchdog");
 
-        param("Trigger Frequency", m_args.trigger_freq)
+        param("Trigger Frequency", m_args.trigger_frq)
         .units(Units::Hertz)
         .minimumValue("100")
         .maximumValue("400")
@@ -147,13 +173,13 @@ namespace Sensors
 
         // Resize sensor data matrix.
         m_data.resize(3, 1);
-        m_edelt.timestep = 0.01;
       }
 
       void
       onUpdateParameters(void)
       {
         m_rotation.fill(3, 3, &m_args.rotation_mx[0]);
+        m_edelta.timestep = 1.0 / m_args.trigger_frq;
       }
 
       ~Task(void)
@@ -164,26 +190,74 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
-        m_fd = open(m_args.escc_dev.c_str(), O_RDWR);
-        if (m_fd == -1)
-          throwLastError(DTR("failed to open ESCC device"));
+        try
+        {
+          // Open PSU.
+          m_psu = new UCTK::InterfaceESCC(m_args.psu_dev);
+          m_psu->open();
+
+          UCTK::FirmwareInfo info = m_psu->getFirmwareInfo();
+          if (info.isDevelopment())
+            war("device is using unstable firmware");
+          else
+            inf("firmware version %u.%u.%u", info.major,
+                info.minor, info.patch);
+
+          // Open IMU.
+          m_imu = new UCTK::InterfaceESCC(m_args.imu_dev);
+          m_imu->open(false);
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
       }
 
       void
       onResourceRelease(void)
       {
-        if (m_fd != -1)
+        if (m_psu != NULL)
         {
-          close(m_fd);
-          m_fd = -1;
+          setPower(false);
+          delete m_psu;
+          m_psu = NULL;
         }
+
+        Memory::clear(m_imu);
       }
 
       void
       onResourceInitialization(void)
       {
+        if (!setTriggerFrequency(m_args.trigger_frq))
+          throw RestartNeeded(DTR("failed to configure trigger frequency"), 5);
+
+        if (!setPower(true))
+          throw RestartNeeded(DTR("failed to turn on device"), 5);
+
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         m_wdog.setTop(m_args.input_tout);
+      }
+
+      bool
+      setTriggerFrequency(uint16_t frequency)
+      {
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_TRG);
+        frame.setPayloadSize(2);
+        frame.set(frequency, 0);
+        return m_psu->sendFrame(frame);
+      }
+
+      bool
+      setPower(bool on)
+      {
+        uint8_t value = on ? 1 : 0;
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_PWR);
+        frame.setPayloadSize(1);
+        frame.set(value, 0);
+        return m_psu->sendFrame(frame, 2.0);
       }
 
       int32_t
@@ -207,40 +281,29 @@ namespace Sensors
         if (bfr[0] != c_imu_addr)
           return false;
 
-        double ang_inc[3] =
-        {
-          read24b(bfr + OFF_ANG_INC0) * c_ang_scale,
-          read24b(bfr + OFF_ANG_INC1) * c_ang_scale,
-          read24b(bfr + OFF_ANG_INC2) * c_ang_scale
-        };
+        double tstamp = Clock::getSinceEpoch();
 
-        double vel_inc[3] =
-        {
-          read24b(bfr + OFF_VEL_INC0) * c_vel_scale,
-          read24b(bfr + OFF_VEL_INC1) * c_vel_scale,
-          read24b(bfr + OFF_VEL_INC2) * c_vel_scale
-        };
+        // Angles Increment.
+        m_edelta.setTimeStamp(tstamp);
+        m_edelta.time += m_edelta.timestep;
+        m_edelta.x = read24b(bfr + OFF_ANG_INC0) * c_ang_scale;
+        m_edelta.y = read24b(bfr + OFF_ANG_INC1) * c_ang_scale;
+        m_edelta.z = read24b(bfr + OFF_ANG_INC2) * c_ang_scale;
+        dispatch(m_edelta, DF_KEEP_TIME);
 
-#if 0
-        printf("%0.8f, %0.8f, %0.8f, %0.8f, %0.8f, %0.8f\n",
-               ang_inc[0], ang_inc[1], ang_inc[2],
-                vel_inc[0], vel_inc[1], vel_inc[2]);
-#endif
+        // Velocity Increment.
+        m_vdelta.setTimeStamp(tstamp);
+        m_vdelta.time += m_edelta.timestep;
+        m_vdelta.x = read24b(bfr + OFF_VEL_INC0) * c_vel_scale;
+        m_vdelta.y = read24b(bfr + OFF_VEL_INC1) * c_vel_scale;
+        m_vdelta.z = read24b(bfr + OFF_VEL_INC2) * c_vel_scale;
+        dispatch(m_vdelta, DF_KEEP_TIME);
+
+        // Status words.
+        m_sta_fail = bfr[OFF_STA_FAIL + 1] << 8 | bfr[OFF_STA_FAIL];
+        m_sta_imu = bfr[OFF_STA_IMU + 1] << 8 | bfr[OFF_STA_IMU];
 
         return true;
-      }
-
-      bool
-      hasData(void)
-      {
-        fd_set rfd;
-        FD_ZERO(&rfd);
-        FD_SET(m_fd, &rfd);
-
-        timeval tv = {1, 0};
-        int rv = select(m_fd + 1, &rfd, 0, 0, &tv);
-
-        return rv > 0;
       }
 
       void
@@ -260,15 +323,29 @@ namespace Sensors
           // if (!m_active)
           //   continue;
 
-          if (hasData())
+          if (m_imu->poll(1.0))
           {
-            int rv = read(m_fd, bfr, sizeof(bfr));
+            int rv = m_imu->read(bfr, sizeof(bfr));
             if (rv <= 0)
               continue;
 
             if (decodeFrame(bfr, rv))
             {
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+              if (m_sta_fail != 0)
+              {
+                std::string msg = String::str(DTR("IMU failure: %04X"), m_sta_fail);
+                setEntityState(IMC::EntityState::ESTA_NORMAL, msg);
+              }
+              else if (m_sta_imu != 0)
+              {
+                std::string msg = String::str(DTR("data might be unreliable: %04X"), m_sta_imu);
+                setEntityState(IMC::EntityState::ESTA_NORMAL, msg);
+              }
+              else
+              {
+                setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+              }
+
               m_wdog.reset();
             }
           }
