@@ -25,75 +25,49 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+#ifndef DUNE_HARDWARE_UCTK_INTERFACE_ESCC_HPP_INCLUDED_
+#define DUNE_HARDWARE_UCTK_INTERFACE_ESCC_HPP_INCLUDED_
+
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
-using DUNE_NAMESPACES;
+#include <DUNE/Hardware/SerialPort.hpp>
+#include <DUNE/Hardware/UCTK/Interface.hpp>
 
-int
-main(int argc, char** argv)
+namespace DUNE
 {
-  OptionParser options;
-  options.executable(argv[0])
-  .program("DUNE UCTK Flash Programmer")
-  .copyright(DUNE_COPYRIGHT)
-  .email("Ricardo Martins <rasm@lsts.pt>")
-  .version(DUNE_COMPLETE_VERSION)
-  .date(DUNE_BUILD_TIME)
-  .arch(DUNE_SYSTEM_NAME)
-  .description("Utility to update the firmware of UCTK based devices.")
-  .add("-d", "--dev",
-       "System device", "DEVICE")
-  .add("-t", "--dev-type",
-       "System device type", "TYPE")
-  .add("-f", "--file",
-       "iHEX file", "IHEX_FILE");
-
-  // Parse command line arguments.
-  if (!options.parse(argc, argv))
+  namespace Hardware
   {
-    if (options.bad())
-      std::cerr << "ERROR: " << options.error() << std::endl;
-    options.usage();
-    return 1;
+    namespace UCTK
+    {
+      class InterfaceESCC: public Interface
+      {
+      public:
+        InterfaceESCC(const std::string& dev);
+
+        ~InterfaceESCC(void);
+
+      private:
+        //! Device name.
+        std::string m_dev;
+        //! Low-level handle.
+        int m_handle;
+
+        void
+        doOpen(void);
+
+        bool
+        doPoll(double timeout);
+
+        void
+        doWrite(const uint8_t* data, unsigned data_size);
+
+        unsigned
+        doRead(uint8_t* data, unsigned data_size);
+
+        void
+        doFlush(void);
+      };
+    }
   }
-
-  // Get iHEX file.
-  std::string ihex = options.value("--file");
-  if (ihex.empty())
-  {
-    std::cerr << "ERROR: you must specify one iHEX file." << std::endl;
-    return 1;
-  }
-
-  if (Path(ihex).type() != Path::PT_FILE)
-  {
-    std::cerr << "ERROR: no such file: '" << ihex << "'" << std::endl;
-    return 1;
-  }
-
-  // Get system device.
-  std::string sys_dev = options.value("--dev");
-  if (sys_dev.empty())
-  {
-    std::cerr << "ERROR: you must specify one system device." << std::endl;
-    return 1;
-  }
-
-  // Get device type.
-  UCTK::Interface* itf = NULL;
-  std::string dev_type = options.value("--dev-type");
-  if (dev_type == "escc")
-    itf = new UCTK::InterfaceESCC(sys_dev);
-  else
-    itf = new UCTK::InterfaceUART(sys_dev);
-
-  itf->open();
-
-  UCTK::Bootloader* boot = new UCTK::Bootloader(itf, true);
-  boot->program(ihex);
-  delete boot;
-
-  delete itf;
-
-  return 0;
 }
+
+#endif
