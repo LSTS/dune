@@ -146,6 +146,9 @@ namespace Sensors
         m_sta_fail(0),
         m_sta_imu(0)
       {
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("ESCC - IMU Device", m_args.imu_dev)
         .defaultValue("")
         .description("ESCC device where IMU is connected");
@@ -232,11 +235,21 @@ namespace Sensors
         if (!setTriggerFrequency(m_args.trigger_frq))
           throw RestartNeeded(DTR("failed to configure trigger frequency"), 5);
 
-        if (!setPower(true))
-          throw RestartNeeded(DTR("failed to turn on device"), 5);
-
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         m_wdog.setTop(m_args.input_tout);
+      }
+
+      void
+      onActivation(void)
+      {
+        if (!setPower(true))
+          throw RestartNeeded(DTR("failed to turn on device"), 5);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setPower(false);
       }
 
       bool
@@ -313,15 +326,15 @@ namespace Sensors
 
         while (!stopping())
         {
-          // if (!m_active)
-          // {
-          //   waitForMessages(1.0);
-          //   continue;
-          // }
+          if (!isActive())
+          {
+            waitForMessages(1.0);
+            continue;
+          }
 
           consumeMessages();
-          // if (!m_active)
-          //   continue;
+          if (!isActive())
+            continue;
 
           if (m_imu->poll(1.0))
           {
