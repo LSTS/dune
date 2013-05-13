@@ -235,10 +235,10 @@ namespace Control
         void
         onUpdateParameters(void)
         {
-          for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
+          if (paramChanged(m_args.max_int))
           {
-            if (paramChanged(m_args.max_int[i]))
-              m_args.max_int[i] = Angles::radians(m_args.max_int[i]);
+            for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
+               m_args.max_int[i] = Angles::radians(m_args.max_int[i]);
           }
 
           // Pitch control parameters

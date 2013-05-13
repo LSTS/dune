@@ -224,10 +224,14 @@ namespace Actuators
         for (unsigned i = 0; i < c_servo_count; ++i)
         {
           m_servo_ref[i] = 256;
-          if (paramChanged(m_args.servo_middle[i]))
-            m_args.servo_middle[i] = Angles::radians(m_args.servo_middle[i]);
           m_last_ref[i] = 0;
           m_last_timestamp[i] = Clock::get();
+        }
+
+        if (paramChanged(m_args.servo_middle))
+        {
+          for (unsigned i = 0; i < c_servo_count; ++i)
+            m_args.servo_middle[i] = Angles::radians(m_args.servo_middle[i]);
         }
 
         // Convert rotation limits from degrees to radians.

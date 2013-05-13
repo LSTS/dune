@@ -263,9 +263,10 @@ namespace Sensors
           throw RestartNeeded(DTR("restarting to change UART device"), 1);
 
         m_sound_speed = m_args.sspeed;
-        for (unsigned i = 0; i < m_args.orientation.size(); i++)
+
+        if (paramChanged(m_args.orientation))
         {
-          if (paramChanged(m_args.orientation[i]))
+          for (unsigned i = 0; i < m_args.orientation.size(); i++)
             m_args.orientation[i] = Math::Angles::radians(m_args.orientation[i]);
         }
 

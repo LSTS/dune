@@ -244,12 +244,15 @@ namespace Simulators
         if (paramChanged(m_args.forward_width))
           m_args.forward_width = Angles::radians(m_args.forward_width);
 
-        for (unsigned i = 0; i < 3; ++i)
+        if (paramChanged(m_args.bottom_orientation))
         {
-          if (paramChanged(m_args.bottom_orientation[i]))
+          for (unsigned i = 0; i < 3; ++i)
             m_args.bottom_orientation[i] = Angles::radians(m_args.bottom_orientation[i]);
+        }
 
-          if (paramChanged(m_args.forward_orientation[i]))
+        if (paramChanged(m_args.forward_orientation))
+        {
+          for (unsigned i = 0; i < 3; ++i)
             m_args.forward_orientation[i] = Angles::radians(m_args.forward_orientation[i]);
         }
 
