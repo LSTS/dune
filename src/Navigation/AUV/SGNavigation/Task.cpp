@@ -146,6 +146,8 @@ namespace Navigation
         double alignment_index;
         //! Use RPM information.
         bool use_rpm;
+        //! Increment Euler Angles Delta (true) or integrate yaw rate (false)
+        bool increment_euler_delta;
       };
 
       struct Task: public DUNE::Navigation::BasicNavigation
@@ -201,6 +203,10 @@ namespace Navigation
           param("Use RPM Data", m_args.use_rpm)
           .defaultValue("false")
           .description("Use propeller's revolutions per minute information in the filter");
+
+          param("Update Heading with Euler Increments", m_args.increment_euler_delta)
+          .defaultValue("false")
+          .description("Use 'EulerAnglesDelta' or 'AngularVelocity' to update heading");
 
           param("Heading Bias Alignment Index", m_args.alignment_index)
           .defaultValue("5e-4")
@@ -286,11 +292,22 @@ namespace Navigation
           if (msg->state == IMC::EntityActivationState::EAS_ACTIVE)
           {
             // IMU already activated.
-            if (m_integ_yrate)
+            if (m_dead_reckoning)
               return;
 
-            // Start integrating heading rates from IMU data.
-            m_integ_yrate = true;
+            if (m_args.increment_euler_delta)
+            {
+              m_sum_euler_inc = true;
+              m_int_yaw_rate = false;
+            }
+            else
+            {
+              m_sum_euler_inc = false;
+              m_int_yaw_rate = true;
+            }
+
+            // Dead reckoning mode.
+            m_dead_reckoning = true;
             m_agvel_eid = m_imu_eid;
             debug("activating IMU");
 
@@ -309,7 +326,10 @@ namespace Navigation
           else if (msg->state == IMC::EntityActivationState::EAS_INACTIVE)
           {
             // Stop integrate heading rates and use AHRS data.
-            m_integ_yrate = false;
+            m_dead_reckoning = false;
+            m_int_yaw_rate = false;
+            m_sum_euler_inc = false;
+
             m_aligned = false;
             m_agvel_eid = BasicNavigation::getAhrsId();
             debug("deactivating IMU");
@@ -498,29 +518,40 @@ namespace Navigation
           // Kalman Prediction.
           m_kal.predict();
 
-          // Use compass readings or integrate yaw-rate data to compute heading.
-          if (m_integ_yrate)
+          // Euler Angles update modes.
+          if (m_int_yaw_rate)
           {
             m_heading += tstep * BasicNavigation::getHeadingRate();
-            m_kal.setOutput(OUT_PSI, m_heading);
-            double psi = m_kal.getState(STATE_PSI) + m_kal.getState(STATE_PSI_BIAS);
-            m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - psi);
+            m_kal.setOutput(OUT_R, BasicNavigation::getAngularVelocity(AXIS_Z));
+          }
+          else if (m_sum_euler_inc)
+          {
+            // Heading is incremented in consume function.
+            float ts = BasicNavigation::getEulerDeltaTimestep();
 
-            // Check alignment threshold index.
+            if (ts > 0.0)
+              m_kal.setOutput(OUT_R, BasicNavigation::getEulerDelta(AXIS_Z) / ts);
+          }
+          else
+          {
+            m_heading += Angles::minimumSignedAngle(m_heading, BasicNavigation::getYaw());
+            m_kal.setOutput(OUT_R, BasicNavigation::getAngularVelocity(AXIS_Z));
+          }
+
+          // Check alignment threshold index.
+          if (m_dead_reckoning)
+          {
             if (m_kal.getCovariance(STATE_PSI_BIAS, STATE_PSI_BIAS) < m_args.alignment_index)
               m_aligned = true;
             else
               m_aligned = false;
           }
-          else
-          {
-            m_heading += Angles::minimumSignedAngle(m_heading, BasicNavigation::getYaw());
-            m_kal.setOutput(OUT_PSI, m_heading);
-            double psi = m_kal.getState(STATE_PSI) + m_kal.getState(STATE_PSI_BIAS);
-            m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - psi);
-          }
 
-          m_kal.setOutput(OUT_R, BasicNavigation::getAngularVelocity(AXIS_Z));
+          // Update heading in Kalman filter.
+          m_kal.setOutput(OUT_PSI, m_heading);
+          double psi = m_kal.getState(STATE_PSI) + m_kal.getState(STATE_PSI_BIAS);
+          m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - psi);
+
           double r = m_kal.getState(STATE_R) + m_kal.getState(STATE_R_BIAS);
           m_kal.setInnovation(OUT_R,  m_kal.getOutput(OUT_R) - r);
 

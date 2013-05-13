@@ -176,6 +176,9 @@ namespace DUNE
       consume(const IMC::EulerAngles* msg);
 
       void
+      consume(const IMC::EulerAnglesDelta* msg);
+
+      void
       consume(const IMC::GpsFix* msg);
 
       void
@@ -356,6 +359,22 @@ namespace DUNE
           return m_heading_bfr / m_euler_readings;
         else
           return 0;
+      }
+
+      //! Get Euler Angles increment value along a specific axis.
+      //! @return euler angles increment value
+      inline double
+      getEulerDelta(Axes axis) const
+      {
+        return m_euler_delta[axis];
+      }
+
+      //! Get Euler Angles increment value along a specific axis.
+      //! @return euler angles increment value
+      inline float
+      getEulerDeltaTimestep(void) const
+      {
+        return m_euler_delta_ts;
       }
 
       //! Number of depth readings since last cycle plus constant filter gain.
@@ -593,8 +612,12 @@ namespace DUNE
       double m_gps_sog;
       //! Vertical displacement in the NED frame to the origin height above ellipsoid
       double m_last_z;
+      //! Dead reckoning mode.
+      bool m_dead_reckoning;
+      //! Sum euler increments to get heading.
+      bool m_sum_euler_inc;
       //! Integrate yaw rate to get heading.
-      bool m_integ_yrate;
+      bool m_int_yaw_rate;
       //! Vehicle is aligned.
       bool m_aligned;
       //! Angular velocity message entity id.
@@ -728,6 +751,10 @@ namespace DUNE
       double m_accel_x_bfr;
       double m_accel_y_bfr;
       double m_accel_z_bfr;
+      //! Euler Angles Delta.
+      double m_euler_delta[3];
+      //! Euler Angles Delta timestep.
+      float m_euler_delta_ts;
       // Moving Average for roll angle.
       Math::MovingAverage<double>* m_avg_phi;
       // Moving Average for pitch angle.

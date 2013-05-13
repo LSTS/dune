@@ -168,14 +168,20 @@ namespace DUNE
       m_declination_defined = false;
       std::memset(m_beacons, 0, sizeof(m_beacons));
       m_num_beacons = 0;
-      m_integ_yrate = false;
+      m_dead_reckoning = false;
+      m_int_yaw_rate = false;
+      m_sum_euler_inc = false;
       m_aligned = false;
       m_z_ref = 0;
       m_diving = false;
       m_rpm = 0;
       m_virtual_avel.resizeAndFill(3, 1, 0.0);
-
       m_gps_val_bits = 0;
+
+      for (unsigned i = 0; i < 3; ++i)
+        m_euler_delta[i] = 0.0;
+      m_euler_delta_ts = 0.0;
+
       m_gvel_val_bits = IMC::GroundVelocity::VAL_VEL_X
                         | IMC::GroundVelocity::VAL_VEL_Y
                         | IMC::GroundVelocity::VAL_VEL_Z;
@@ -192,6 +198,7 @@ namespace DUNE
       bind<IMC::DepthOffset>(this);
       bind<IMC::DesiredZ>(this);
       bind<IMC::EulerAngles>(this);
+      bind<IMC::EulerAnglesDelta>(this);
       bind<IMC::GpsFix>(this);
       bind<IMC::GroundVelocity>(this);
       bind<IMC::LblConfig>(this);
@@ -393,6 +400,22 @@ namespace DUNE
     }
 
     void
+    BasicNavigation::consume(const IMC::EulerAnglesDelta* msg)
+    {
+      if (msg->getSourceEntity() != m_imu_eid)
+        return;
+
+      m_euler_delta[0] = msg->x;
+      m_euler_delta[1] = msg->y;
+      m_euler_delta[2] = msg->z;
+      m_euler_delta_ts = msg->timestep;
+
+      // Increment heading.
+      if (m_sum_euler_inc)
+        m_heading += msg->z;
+    }
+
+    void
     BasicNavigation::consume(const IMC::GpsFix* msg)
     {
       // GpsFix validation.
@@ -415,11 +438,11 @@ namespace DUNE
         return;
       }
 
-      // Integrating yaw rate to get heading.
+      // Dead Reckoning mode
       // this means we need very accurate navigation so GPS fixes
       // will be rejected if any validaty bit is lost between
       // consecutive GPS fixes.
-      if (m_integ_yrate && m_diving)
+      if (m_dead_reckoning && m_diving)
       {
         // reinitialize if we exceed GPS timeout.
         if (m_time_without_gps.overflow())
@@ -1082,7 +1105,7 @@ namespace DUNE
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             break;
           case SM_STATE_NORMAL:
-            if (m_integ_yrate)
+            if (m_dead_reckoning)
             {
               if (m_aligned)
                 setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ALIGNED);
