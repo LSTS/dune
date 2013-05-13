@@ -289,7 +289,10 @@ namespace DUNE
       }
 
       // if reaching a limit in depth
-      if (m_estate.depth + m_estate.alt - m_z_ref.value > m_args->depth_limit + c_depth_hyst)
+      float depth_ref = m_estate.depth + m_estate.alt - m_z_ref.value;
+
+      if (depth_ref > m_args->depth_limit + c_depth_hyst &&
+          m_estate.depth > m_args->depth_limit)
       {
         debug("depth is reaching unacceptable values, forcing depth control");
 
