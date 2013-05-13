@@ -534,7 +534,7 @@ namespace Navigation
           }
           else
           {
-            m_heading += Angles::minimumSignedAngle(m_heading, BasicNavigation::getYaw());
+            m_heading += Angles::minimumSignedAngle(m_heading, BasicNavigation::getEuler(AXIS_Z));
             m_kal.setOutput(OUT_R, BasicNavigation::getAngularVelocity(AXIS_Z));
           }
 
@@ -613,8 +613,8 @@ namespace Navigation
         {
           A.fill(0.0);
 
-          double phi = getRoll();
-          double theta = getPitch();
+          double phi = getEuler(AXIS_X);
+          double theta = getEuler(AXIS_Y);
 
           A(STATE_PSI, STATE_R) = 1.0;
 
@@ -670,7 +670,7 @@ namespace Navigation
           }
           else
           {
-            m_estate.u = m_rpm * m_kal.getState(STATE_K) * std::cos(getPitch());
+            m_estate.u = m_rpm * m_kal.getState(STATE_K) * std::cos(getEuler(AXIS_Y));
             m_estate.v = 0.0;
           }
 

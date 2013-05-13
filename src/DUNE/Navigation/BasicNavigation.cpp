@@ -286,9 +286,9 @@ namespace DUNE
       if (msg->getSourceEntity() != m_agvel_eid)
         return;
 
-      m_accel_x_bfr += msg->x;
-      m_accel_y_bfr += msg->y;
-      m_accel_z_bfr += msg->z;
+      m_accel_bfr[AXIS_X] += msg->x;
+      m_accel_bfr[AXIS_Y] += msg->y;
+      m_accel_bfr[AXIS_Z] += msg->z;
       ++m_accel_readings;
     }
 
@@ -298,9 +298,9 @@ namespace DUNE
       if (msg->getSourceEntity() != m_agvel_eid)
         return;
 
-      m_p_bfr += msg->x;
-      m_q_bfr += msg->y;
-      m_r_bfr += msg->z;
+      m_agvel_bfr[AXIS_X] += msg->x;
+      m_agvel_bfr[AXIS_Y] += msg->y;
+      m_agvel_bfr[AXIS_Z] += msg->z;
       ++m_angular_readings;
     }
 
@@ -364,7 +364,7 @@ namespace DUNE
       float value = msg->value;
 
       if (m_alt_attitude_compensation)
-        value = value * std::cos(getRoll()) * std::cos(getPitch());
+        value = value * std::cos(getEuler(AXIS_X)) * std::cos(getEuler(AXIS_Y));
 
       // Initialize altitude.
       if (m_altitude == -1)
@@ -380,8 +380,8 @@ namespace DUNE
       if (msg->getSourceEntity() == m_alignment_eid)
       {
         correctAlignment(msg->psi);
-        m_phi_offset = msg->phi - getRoll();
-        m_theta_offset = msg->theta - getPitch();
+        m_phi_offset = msg->phi - getEuler(AXIS_X);
+        m_theta_offset = msg->theta - getEuler(AXIS_Y);
         debug("Euler Angles offset - phi, theta: %f | %f", m_phi_offset, m_theta_offset);
         return;
       }
@@ -389,14 +389,14 @@ namespace DUNE
       if (msg->getSourceEntity() != m_ahrs_eid)
         return;
 
-      m_roll_bfr += getRoll() + Math::Angles::minimumSignedAngle(getRoll(), msg->phi + m_phi_offset);
-      m_pitch_bfr += getPitch() + Math::Angles::minimumSignedAngle(getPitch(), msg->theta + m_theta_offset);
-      m_heading_bfr += getYaw() + Math::Angles::minimumSignedAngle(getYaw(), msg->psi);
+      m_euler_bfr[AXIS_X] += getEuler(AXIS_X) + Math::Angles::minimumSignedAngle(getEuler(AXIS_X), msg->phi + m_phi_offset);
+      m_euler_bfr[AXIS_Y] += getEuler(AXIS_Y) + Math::Angles::minimumSignedAngle(getEuler(AXIS_Y), msg->theta + m_theta_offset);
+      m_euler_bfr[AXIS_Z] += getEuler(AXIS_Z) + Math::Angles::minimumSignedAngle(getEuler(AXIS_Z), msg->psi);
 
       ++m_euler_readings;
 
       if (m_declination_defined && m_use_declination)
-        m_heading_bfr += m_declination;
+        m_euler_bfr[AXIS_Z] += m_declination;
     }
 
     void
@@ -405,9 +405,9 @@ namespace DUNE
       if (msg->getSourceEntity() != m_imu_eid)
         return;
 
-      m_euler_delta[0] = msg->x;
-      m_euler_delta[1] = msg->y;
-      m_euler_delta[2] = msg->z;
+      m_euler_delta[AXIS_X] = msg->x;
+      m_euler_delta[AXIS_Y] = msg->y;
+      m_euler_delta[AXIS_Z] = msg->z;
       m_euler_delta_ts = msg->timestep;
 
       // Increment heading.
@@ -517,7 +517,7 @@ namespace DUNE
                                        &x, &y, &m_last_z);
 
       // Correct for roll angle.
-      y += std::sin(getRoll()) * m_dist_gps_cg;
+      y += std::sin(getEuler(AXIS_X)) * m_dist_gps_cg;
 
       // Check distance to current LLH origin.
       if (Math::norm(x, y) > m_max_dis2ref)
@@ -678,8 +678,8 @@ namespace DUNE
       }
 
       // Compute expected range.
-      double dx = m_kal.getState(STATE_X) + m_dist_lbl_gps * std::cos(getYaw()) - m_beacons[beacon]->x;
-      double dy = m_kal.getState(STATE_Y) + m_dist_lbl_gps * std::sin(getYaw()) - m_beacons[beacon]->y;
+      double dx = m_kal.getState(STATE_X) + m_dist_lbl_gps * std::cos(getEuler(AXIS_Z)) - m_beacons[beacon]->x;
+      double dy = m_kal.getState(STATE_Y) + m_dist_lbl_gps * std::sin(getEuler(AXIS_Z)) - m_beacons[beacon]->y;
       double dz = getDepth() - m_beacons[beacon]->depth;
       double exp_range = std::sqrt(dx * dx + dy * dy + dz * dz);
 
@@ -900,8 +900,8 @@ namespace DUNE
       m_estate.x = m_kal.getState(STATE_X);
       m_estate.y = m_kal.getState(STATE_Y);
       m_estate.z = m_last_z + BasicNavigation::getDepth();
-      m_estate.phi = BasicNavigation::getRoll();
-      m_estate.theta = BasicNavigation::getPitch();
+      m_estate.phi = BasicNavigation::getEuler(AXIS_X);
+      m_estate.theta = BasicNavigation::getEuler(AXIS_Y);
 
       // Update Euler Angles derivatives when
       // Angular Velocity readings are not available.
@@ -980,9 +980,9 @@ namespace DUNE
         estate.lat = m_last_lat;
         estate.lon = m_last_lon;
         estate.height = m_last_hae;
-        estate.phi = getRoll();
-        estate.theta = getPitch();
-        estate.psi = getYaw();
+        estate.phi = getEuler(AXIS_X);
+        estate.theta = getEuler(AXIS_Y);
+        estate.psi = getEuler(AXIS_Z);
         estate.depth = getDepth();
         m_heading = estate.psi;
         updateEuler(c_wma_filter);
@@ -1030,18 +1030,18 @@ namespace DUNE
     void
     BasicNavigation::resetAcceleration(void)
     {
-      m_accel_x_bfr = 0;
-      m_accel_y_bfr = 0;
-      m_accel_z_bfr = 0;
+      m_accel_bfr[AXIS_X] = 0;
+      m_accel_bfr[AXIS_Y] = 0;
+      m_accel_bfr[AXIS_Z] = 0;
       m_accel_readings = 0;
     }
 
     void
     BasicNavigation::resetAngularVelocity(void)
     {
-      m_p_bfr = 0.0;
-      m_q_bfr = 0.0;
-      m_r_bfr = 0.0;
+      m_agvel_bfr[AXIS_X] = 0.0;
+      m_agvel_bfr[AXIS_Y] = 0.0;
+      m_agvel_bfr[AXIS_Z] = 0.0;
       m_angular_readings = 0.0;
     }
 
@@ -1056,9 +1056,9 @@ namespace DUNE
     void
     BasicNavigation::resetEulerAngles(void)
     {
-      m_heading_bfr = 0.0;
-      m_roll_bfr = 0.0;
-      m_pitch_bfr = 0.0;
+      m_euler_bfr[AXIS_X] = 0.0;
+      m_euler_bfr[AXIS_Y] = 0.0;
+      m_euler_bfr[AXIS_Z] = 0.0;
       m_euler_readings = 0.0;
     }
 
@@ -1146,9 +1146,9 @@ namespace DUNE
     {
       // Insert euler angles into row matrix.
       Math::Matrix ea(3,1);
-      ea(0) = getRoll();
-      ea(1) = getPitch();
-      ea(2) = getYaw();
+      ea(0) = getEuler(AXIS_X);
+      ea(1) = getEuler(AXIS_Y);
+      ea(2) = getEuler(AXIS_Z);
 
       // Earth rotation vector.
       Math::Matrix we(3,1);

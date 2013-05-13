@@ -222,43 +222,23 @@ namespace DUNE
       //! Get the acceleration along a specific axis.
       //! @return acceleration value.
       inline double
-      getAcceleration(Axes axis) const
+      getAcceleration(unsigned axis) const
       {
         if (!m_accel_readings)
           return 0;
 
-        switch (axis)
-        {
-          case AXIS_X:
-            return (m_accel_x_bfr / m_accel_readings);
-          case AXIS_Y:
-            return (m_accel_y_bfr / m_accel_readings);
-          case AXIS_Z:
-            return (m_accel_z_bfr / m_accel_readings);
-        }
-
-        return 0;
+        return m_accel_bfr[axis] / m_accel_readings;
       }
 
       //! Get angular velocity value along a specific axis.
       //! @return angular velocity value.
       inline double
-      getAngularVelocity(Axes axis) const
+      getAngularVelocity(unsigned axis) const
       {
         if (!m_angular_readings)
           return 0;
 
-        switch (axis)
-        {
-          case AXIS_X:
-            return (m_p_bfr / m_angular_readings);
-          case AXIS_Y:
-            return (m_q_bfr / m_angular_readings);
-          case AXIS_Z:
-            return (m_r_bfr / m_angular_readings);
-        }
-
-        return 0;
+        return m_agvel_bfr[axis] / m_angular_readings;
       }
 
       //! Produce virtual angular velocities.
@@ -270,14 +250,14 @@ namespace DUNE
           if (!gotEulerReadings())
             return;
 
-          double pitch = getPitch();
+          double pitch = getEuler(AXIS_Y);
           double cp = std::cos(pitch);
 
           // Avoid singularity
           if ((1e-2 - std::abs(cp)) > 0.0)
             return;
 
-          double roll = getRoll();
+          double roll = getEuler(AXIS_X);
           double sr = std::sin(roll);
           double cr = std::cos(roll);
           double tp = std::tan(pitch);
@@ -302,7 +282,7 @@ namespace DUNE
       //! @param[in] axis axis of rotation.
       //! @return angular velocity value.
       inline double
-      getVirtualAngularVelocity(Axes axis)
+      getVirtualAngularVelocity(unsigned axis)
       {
         return Math::trimValue(m_virtual_avel(axis), - c_max_av, c_max_av);
       }
@@ -312,13 +292,13 @@ namespace DUNE
       inline double
       getHeadingRate(void)
       {
-        double pitch = getPitch();
+        double pitch = getEuler(AXIS_Y);
 
         // Avoid division by zero.
         if (!std::cos(pitch))
           return 0;
 
-        double roll = getRoll();
+        double roll = getEuler(AXIS_X);
         double p = getAngularVelocity(AXIS_X);
         double q = getAngularVelocity(AXIS_Y);
         double r = getAngularVelocity(AXIS_Z);
@@ -327,44 +307,21 @@ namespace DUNE
         return (std::sin(roll) * q + std::cos(roll) * r) / std::cos(pitch);
       }
 
-      //! Get roll value.
-      //! @return roll.
+      //! Get Euler Angle value.
+      //! @return euler angle value.
       inline double
-      getRoll(void) const
+      getEuler(unsigned axis) const
       {
-        if (m_euler_readings)
-          return Math::Angles::normalizeRadian(m_roll_bfr / m_euler_readings);
-        else
+        if (!m_euler_readings)
           return 0;
-      }
 
-      //! Get pitch value.
-      //! @return pitch.
-      inline double
-      getPitch(void) const
-      {
-        if (m_euler_readings)
-          return Math::Angles::normalizeRadian(m_pitch_bfr / m_euler_readings);
-        else
-          return 0;
-      }
-
-      //! Get yaw value.
-      //! @return yaw.
-      inline double
-      getYaw(void) const
-      {
-        if (m_euler_readings)
-          // other navigation tasks are responsible to normalize yaw.
-          return m_heading_bfr / m_euler_readings;
-        else
-          return 0;
+        return Math::Angles::normalizeRadian(m_euler_bfr[axis] / m_euler_readings);
       }
 
       //! Get Euler Angles increment value along a specific axis.
       //! @return euler angles increment value
       inline double
-      getEulerDelta(Axes axis) const
+      getEulerDelta(unsigned axis) const
       {
         return m_euler_delta[axis];
       }
@@ -447,9 +404,9 @@ namespace DUNE
       inline void
       updateEuler(float filter)
       {
-        m_roll_bfr = getRoll() * filter;
-        m_pitch_bfr = getPitch() * filter;
-        m_heading_bfr = getYaw() * filter;
+        for (unsigned i = 0; i < 3; ++i)
+          m_euler_bfr[i] = getEuler(i) * filter;
+
         m_euler_readings = filter;
       }
 
@@ -458,9 +415,9 @@ namespace DUNE
       inline void
       updateAngularVelocities(float filter)
       {
-        m_p_bfr = getAngularVelocity(AXIS_X) * filter;
-        m_q_bfr = getAngularVelocity(AXIS_Y) * filter;
-        m_r_bfr = getAngularVelocity(AXIS_Z) * filter;
+        for (unsigned i = 0; i < 3; ++i)
+          m_agvel_bfr[i] =  getAngularVelocity(i) * filter;
+
         m_angular_readings = filter;
       }
 
@@ -469,9 +426,9 @@ namespace DUNE
       inline void
       updateAcceleration(float filter)
       {
-        m_accel_x_bfr = getAcceleration(AXIS_X) * filter;
-        m_accel_y_bfr = getAcceleration(AXIS_Y) * filter;
-        m_accel_z_bfr = getAcceleration(AXIS_Z) * filter;
+        for (unsigned i = 0; i < 3; ++i)
+          m_accel_bfr[i] =  getAcceleration(i) * filter;
+
         m_accel_readings = filter;
       }
 
@@ -740,26 +697,20 @@ namespace DUNE
       float m_euler_readings;
       float m_angular_readings;
       float m_accel_readings;
-      //! "Buffers" for sensor readings.
+      //! "Buffers" for sensors readings.
       double m_depth_bfr;
-      double m_p_bfr;
-      double m_q_bfr;
-      double m_r_bfr;
-      double m_roll_bfr;
-      double m_pitch_bfr;
-      double m_heading_bfr;
-      double m_accel_x_bfr;
-      double m_accel_y_bfr;
-      double m_accel_z_bfr;
+      double m_euler_bfr[3];
+      double m_agvel_bfr[3];
+      double m_accel_bfr[3];
       //! Euler Angles Delta.
       double m_euler_delta[3];
       //! Euler Angles Delta timestep.
       float m_euler_delta_ts;
-      // Moving Average for roll angle.
+      //! Moving Average for roll angle.
       Math::MovingAverage<double>* m_avg_phi;
-      // Moving Average for pitch angle.
+      //! Moving Average for pitch angle.
       Math::MovingAverage<double>* m_avg_theta;
-      // Moving Average for heading angle.
+      //! Moving Average for heading angle.
       Math::MovingAverage<double>* m_avg_psi;
       //! Number of samples to average euler angles.
       unsigned m_avg_euler_samples;

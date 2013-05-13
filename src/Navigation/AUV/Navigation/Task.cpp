@@ -234,7 +234,7 @@ namespace Navigation
           if (tstep < 0)
             return;
 
-          m_heading += Angles::minimumSignedAngle(m_heading, BasicNavigation::getYaw());
+          m_heading += Angles::minimumSignedAngle(m_heading, BasicNavigation::getEuler(AXIS_Z));
           m_estate.psi = Angles::normalizeRadian(m_heading);
 
           // Update estimated state.
