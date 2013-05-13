@@ -304,11 +304,11 @@ namespace Navigation
             {
               m_sum_euler_inc = false;
               m_int_yaw_rate = true;
+              m_agvel_eid = m_imu_eid;
             }
 
             // Dead reckoning mode.
             m_dead_reckoning = true;
-            m_agvel_eid = m_imu_eid;
             debug("activating IMU");
 
             // Reinitialize state covariance matrix value.

@@ -243,6 +243,7 @@ namespace DUNE
       m_depth_eid = resolveEntity(m_label_depth);
       m_ahrs_eid = resolveEntity(m_label_ahrs);
       m_agvel_eid = m_ahrs_eid;
+      m_accel_eid = m_ahrs_eid;
 
       try
       {
@@ -283,7 +284,7 @@ namespace DUNE
     BasicNavigation::consume(const IMC::Acceleration* msg)
     {
       // Acceleration and AngularVelocity share same sensor entity label id.
-      if (msg->getSourceEntity() != m_agvel_eid)
+      if (msg->getSourceEntity() != m_accel_eid)
         return;
 
       m_accel_bfr[AXIS_X] += msg->x;

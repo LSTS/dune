@@ -579,6 +579,8 @@ namespace DUNE
       bool m_aligned;
       //! Angular velocity message entity id.
       unsigned m_agvel_eid;
+      //! Accelaration message entity id.
+      unsigned m_accel_eid;
       //! IMU entity id.
       unsigned m_imu_eid;
       //! Orientation alignment entity id.
