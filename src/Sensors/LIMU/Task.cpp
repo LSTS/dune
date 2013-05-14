@@ -41,6 +41,8 @@ namespace Sensors
     static const unsigned c_hard_iron_count = 3;
     //! Power-up delay (s).
     static const double c_power_up_delay = 2.0;
+    //! Hard Iron calibration parameter name.
+    static const std::string c_hard_iron_param = "Hard-Iron Calibration";
 
     //! Packet identifiers.
     enum PacketIds
@@ -64,12 +66,14 @@ namespace Sensors
       std::string uart_dev;
       //! Output frequency.
       unsigned output_frq;
-      //! Hard-iron correction factors.
-      std::vector<double> hard_iron;
       //! Raw data output.
       bool raw_data;
       //! Power channel name.
       std::string pwr_name;
+      //! Hard-iron correction factors.
+      std::vector<double> hard_iron;
+      //! Incoming Calibration Parameters entity label.
+      std::string calib_elabel;
     };
 
     struct Task: public Tasks::Task
@@ -98,6 +102,8 @@ namespace Sensors
       UCTK::Frame m_frame;
       //! Scratch buffer.
       uint8_t m_buffer[128];
+      //! Compass Calibration maneuver entity id.
+      unsigned m_calib_eid;
       //! Watchdog.
       Counter<double> m_wdog;
       //! Error counts.
@@ -121,7 +127,7 @@ namespace Sensors
         .defaultValue("100")
         .description("Output frequency");
 
-        param("Hard-Iron Calibration", m_args.hard_iron)
+        param(c_hard_iron_param, m_args.hard_iron)
         .units(Units::Gauss)
         .size(c_hard_iron_count)
         .description("Hard-Iron calibration parameters");
@@ -136,6 +142,12 @@ namespace Sensors
         param("Raw Data", m_args.raw_data)
         .defaultValue("false")
         .description("Set to true to enable raw data output");
+
+        param("Calibration Maneuver - Entity Label", m_args.calib_elabel)
+        .defaultValue("")
+        .description("Entity label of maneuver responsible for compass calibration");
+
+        bind<IMC::MagneticField>(this);
       }
 
       ~Task(void)
@@ -143,6 +155,21 @@ namespace Sensors
         Task::onResourceRelease();
       }
 
+      //! Resolve entities.
+      void
+      onEntityResolution(void)
+      {
+        try
+        {
+          m_calib_eid = resolveEntity(m_args.calib_elabel);
+        }
+        catch (...)
+        {
+          m_calib_eid = 0;
+        }
+      }
+
+      //! Acquire resources.
       void
       onResourceAcquisition(void)
       {
@@ -172,12 +199,14 @@ namespace Sensors
         }
       }
 
+      //! Release resources.
       void
       onResourceRelease(void)
       {
         Memory::clear(m_uart);
       }
 
+      //! Initialize resources.
       void
       onResourceInitialization(void)
       {
@@ -190,6 +219,24 @@ namespace Sensors
         m_wdog.setTop(2.0);
       }
 
+      void
+      consume(const IMC::MagneticField* msg)
+      {
+        if (m_calib_eid != msg->getSourceEntity())
+          return;
+
+        m_args.hard_iron[0] += msg->x;
+        m_args.hard_iron[1] += msg->y;
+        m_args.hard_iron[2] = 0.0;
+
+        // Set hard iron parameters and save to configuration.
+        setHardIronFactors(m_args.hard_iron);
+        saveParameters(m_args.hard_iron);
+      }
+
+      //! Define sensor output frequency.
+      //! @param[in] frequency desired frequency.
+      //! @return true if successful, false otherwise.
       bool
       setOutputFrequency(uint8_t frequency)
       {
@@ -203,6 +250,8 @@ namespace Sensors
         return m_uart->sendFrame(frame);
       }
 
+      //! Get sensor current Hard-Iron calibration parameters.
+      //! @return hard-iron calibration parameters.
       std::vector<double>
       getHardIronFactors(void)
       {
@@ -223,6 +272,8 @@ namespace Sensors
         return factors;
       }
 
+      //! Set Hard-Iron calibration parameters.
+      //! @param[in] factors new calibration values.
       bool
       setHardIronFactors(const std::vector<double>& factors)
       {
@@ -234,6 +285,8 @@ namespace Sensors
         return m_uart->sendFrame(frame);
       }
 
+      //! Decode output data frame.
+      //! @param[in] frame data frame.
       void
       decodeOutputData(const UCTK::Frame& frame)
       {
@@ -337,6 +390,8 @@ namespace Sensors
         m_wdog.reset();
       }
 
+      //! Decode output raw data.
+      //! @param[in] frame raw data.
       void
       decodeOutputRaw(const UCTK::Frame& frame)
       {
@@ -345,6 +400,8 @@ namespace Sensors
         dispatch(data);
       }
 
+      //! Decode data frame.
+      //! @param[in] frame data frame.
       void
       decode(const UCTK::Frame& frame)
       {
@@ -365,6 +422,7 @@ namespace Sensors
         }
       }
 
+      //! Read input from sensor.
       void
       readInput(void)
       {
@@ -374,6 +432,26 @@ namespace Sensors
           if (m_parser.parse(m_buffer[i], m_frame))
             decode(m_frame);
         }
+      }
+
+      //! Save parameters to configuration.
+      void
+      saveParameters(const std::vector<double>& factors)
+      {
+        //! ParameterControl message.
+        IMC::ParameterControl pc;
+
+        pc.op = IMC::ParameterControl::OP_SAVE_PARAMS;
+        pc.params.clear();
+
+        IMC::Parameter p;
+        p.section = getName();
+        p.param = c_hard_iron_param;
+        p.value = String::str("%0.6f, %0.6f, %0.6f", factors[0], factors[1], factors[2]);
+
+        pc.params.push_back(p);
+
+        dispatch(pc);
       }
 
       void
