@@ -45,6 +45,9 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
+    //! Hard Iron calibration parameter name.
+    static const std::string c_hard_iron_param = "Hard-Iron Calibration";
+
     //! Commands to device.
     enum Commands
     {
@@ -88,7 +91,7 @@ namespace Sensors
       //! Calibration threshold.
       double calib_threshold;
       //! Hard iron calibration.
-      std::vector<float> calib_params;
+      std::vector<float> hard_iron;
       //! Incoming Calibration Parameters entity label.
       std::string calib_elabel;
       // Rotation matrix values.
@@ -110,7 +113,7 @@ namespace Sensors
       //! Rotation Matrix to correct mounting position.
       Math::Matrix m_rotation;
       //! Rotated calibration parameters.
-      float m_calib_params[3];
+      float m_hard_iron[3];
       //! Serial port.
       SerialPort* m_uart;
       //! Euler angles message.
@@ -121,10 +124,6 @@ namespace Sensors
       IMC::AngularVelocity m_agvel;
       //! Magnetometer Vector message.
       IMC::MagneticField m_magfield;
-      //! ParameterControl message.
-      IMC::ParameterControl m_pc;
-      //! Calibration parameter.
-      std::string m_param;
       //! Timer to wait for soft-reset without issuing error.
       Time::Counter<float> m_timer;
       //! Internal read buffer.
@@ -141,7 +140,6 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Periodic(name, ctx),
         m_uart(NULL),
-        m_param("Hard-Iron Calibration"),
         m_tstamp(0)
       {
         param("Serial Port - Device", m_args.uart_dev)
@@ -163,7 +161,7 @@ namespace Sensors
         .minimumValue("0.0")
         .description("Minimum magnetic field calibration values to reset hard iron parameters");
 
-        param(m_param, m_args.calib_params)
+        param(c_hard_iron_param, m_args.hard_iron)
         .units(Units::Gauss)
         .size(3)
         .description("Hard-Iron calibration parameters");
@@ -177,7 +175,6 @@ namespace Sensors
         .size(9)
         .description("IMU rotation matrix which is dependent of the mounting position");
 
-        m_pc.op = IMC::ParameterControl::OP_SAVE_PARAMS;
         m_timer.setTop(c_reset_tout);
 
         bind<IMC::MagneticField>(this);
@@ -199,12 +196,12 @@ namespace Sensors
         data.resize(3, 1);
 
         for (unsigned i = 0; i < 3; i++)
-          data(i) = m_args.calib_params[i];
+          data(i) = m_args.hard_iron[i];
 
         data = m_rotation * data;
 
         for (unsigned i = 0; i < 3; i++)
-          m_calib_params[i] = data(i);
+          m_hard_iron[i] = data(i);
       }
 
       //! Release resources.
@@ -275,21 +272,21 @@ namespace Sensors
             (std::abs(msg->y) < m_args.calib_threshold))
           return;
 
-        m_args.calib_params[0] += msg->x;
-        m_args.calib_params[1] += msg->y;
-        m_args.calib_params[2] = 0.0;
+        m_args.hard_iron[0] += msg->x;
+        m_args.hard_iron[1] += msg->y;
+        m_args.hard_iron[2] = 0.0;
 
         // Rotate calibration parameters.
         Math::Matrix data;
         data.resize(3, 1);
 
         for (unsigned i = 0; i < 3; i++)
-          data(i) = m_args.calib_params[i];
+          data(i) = m_args.hard_iron[i];
 
         data = m_rotation * data;
 
         for (unsigned i = 0; i < 3; i++)
-          m_calib_params[i] = data(i);
+          m_hard_iron[i] = data(i);
 
         runCalibration();
         saveParameters();
@@ -453,7 +450,7 @@ namespace Sensors
         for (unsigned i = 0; i <= 2; i++)
         {
           senCal[i] = hard_iron[i * 2 + 1] << 16 | hard_iron[i * 2];
-          std::memcpy(&cfgCal[i], &m_calib_params[i], sizeof(uint32_t));
+          std::memcpy(&cfgCal[i], &m_hard_iron[i], sizeof(uint32_t));
 
           if (senCal[i] != cfgCal[i])
           {
@@ -502,13 +499,13 @@ namespace Sensors
       bool
       setHardIron(void)
       {
-        debug("Hard-Iron Calibration: %f | %f", m_args.calib_params[0], m_args.calib_params[1]);
+        debug("Hard-Iron Calibration: %f | %f", m_args.hard_iron[0], m_args.hard_iron[1]);
         m_uart->setMinimumRead(CMD_WRITE_EEPROM_SIZE);
 
         for (unsigned i = 0; i <= c_num_addr / 3; i++)
         {
           uint32_t val;
-          std::memcpy(&val, &m_calib_params[i], sizeof(uint32_t));
+          std::memcpy(&val, &m_hard_iron[i], sizeof(uint32_t));
 
           if (!poll(CMD_WRITE_EEPROM, CMD_WRITE_EEPROM_SIZE, m_addr[i * 2], (uint16_t)(val & 0x0000ffff)))
             return false;
@@ -546,17 +543,22 @@ namespace Sensors
       void
       saveParameters(void)
       {
-        m_pc.params.clear();
+        //! ParameterControl message.
+        IMC::ParameterControl pc;
+
+        pc.op = IMC::ParameterControl::OP_SAVE_PARAMS;
+
+        pc.params.clear();
 
         IMC::Parameter p;
         p.section = getName();
-        p.param = m_param;
-        p.value = String::str("%0.6f, %0.6f, %0.6f", m_args.calib_params[0],
-                              m_args.calib_params[1], m_args.calib_params[2]);
+        p.param = c_hard_iron_param;
+        p.value = String::str("%0.6f, %0.6f, %0.6f", m_args.hard_iron[0],
+                              m_args.hard_iron[1], m_args.hard_iron[2]);
 
-        m_pc.params.push_back(p);
+        pc.params.push_back(p);
 
-        dispatch(m_pc);
+        dispatch(pc);
       }
 
       //! Correct data according with mounting position.
