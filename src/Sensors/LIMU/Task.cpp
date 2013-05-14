@@ -230,8 +230,10 @@ namespace Sensors
         m_args.hard_iron[2] = 0.0;
 
         // Set hard iron parameters and save to configuration.
-        setHardIronFactors(m_args.hard_iron);
         saveParameters(m_args.hard_iron);
+
+        if (!setHardIronFactors(m_args.hard_iron))
+          throw RestartNeeded(DTR("failed to set hard-iron correction factors"), 5);
       }
 
       //! Define sensor output frequency.
