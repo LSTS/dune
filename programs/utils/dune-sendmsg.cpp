@@ -88,6 +88,13 @@ main(int argc, char** argv)
     tmsg->setSourceEntity(atoi(argv[4]));
     tmsg->state = atoi(argv[5]);
   }
+  else if (strcmp(argv[3], "EntityActivationState") == 0)
+  {
+    IMC::EntityActivationState* tmsg = new IMC::EntityActivationState;
+    msg = tmsg;
+    tmsg->setSourceEntity(atoi(argv[4]));
+    tmsg->state = IMC::EntityActivationState::EAS_ACTIVE;
+  }
   else if (strcmp(argv[3], "MonitorEntityState") == 0)
   {
     IMC::MonitorEntityState* tmsg = new IMC::MonitorEntityState;
