@@ -93,6 +93,7 @@ namespace DUNE
 
         return rv > 0;
 #else
+        (void)timeout;
         return false;
 #endif
       }
@@ -102,6 +103,9 @@ namespace DUNE
       {
 #if defined(DUNE_OS_LINUX)
         ::write(m_handle, data, data_size);
+#else
+        (void)data;
+        (void)data_size;
 #endif
       }
 
@@ -114,6 +118,8 @@ namespace DUNE
           throwLastError("read failure");
         return (unsigned)rv;
 #else
+        (void)data;
+        (void)data_size;
         return 0;
 #endif
       }
