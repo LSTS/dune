@@ -595,6 +595,9 @@ namespace Power
         // Handle requests to main power channel.
         if (msg->name == m_args.pwr_main)
         {
+          if (msg->getDestination() != getSystemId())
+            return;
+
           if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
           {
             m_proto.sendCommand(CMD_PWR_HLT, 0, 0);
