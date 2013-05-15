@@ -138,6 +138,7 @@ namespace Supervisors
               {
                 war("%s", DTR(Status::getString(Status::CODE_POWER_DOWN)));
                 IMC::PowerChannelControl pcc;
+                pcc.setDestination(getSystemId());
                 pcc.name = m_args.pwr_main;
                 pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
                 dispatch(pcc);
