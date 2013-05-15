@@ -62,6 +62,8 @@ namespace Sensors
       std::string pwr_ss;
       //! Pulse auto selection mode.
       unsigned autosel_mode;
+      //! Trigger divisor.
+      unsigned trg_div;
     };
 
     struct Task: public Tasks::Task
@@ -150,6 +152,12 @@ namespace Sensors
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .units(Units::Meter)
         .description("Enable high frequency subsystem");
+
+        param("Trigger Divisor", m_args.trg_div)
+        .defaultValue("1")
+        .minimumValue("1")
+        .maximumValue("150")
+        .description("Trigger divisor");
 
         param("Pulse Autoselection Mode", m_args.autosel_mode)
         .defaultValue("2")
