@@ -202,7 +202,6 @@ namespace Power
       {
         m_slave_alive = false;
         sendPowerChannelControl(m_args.cam_pwr, true);
-        //sendPowerChannelControl(m_args.led_pwr, true);
         sendPowerChannelControl(m_args.cpu_pwr, true);
         m_activating = true;
         m_act_timer.setTop(getActivationTime());
@@ -212,13 +211,14 @@ namespace Power
       onActivation(void)
       {
         m_activating = false;
+        sendPowerChannelControl(m_args.led_pwr, true);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
       onRequestDeactivation(void)
       {
-        //sendPowerChannelControl(m_args.led_pwr, false);
+        sendPowerChannelControl(m_args.led_pwr, false);
         sendPowerChannelControl(m_args.cam_pwr, false);
         deactivate();
       }
