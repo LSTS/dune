@@ -62,8 +62,6 @@ namespace Power
     static const unsigned c_adcs_count = 6;
     //! Number of power channels.
     static const unsigned c_pwrs_count = 17;
-    //! Id of the CPU power channel.
-    static const unsigned c_pwr_cpu = 8;
     //! Id of the backlight power channel.
     static const unsigned c_pwr_blight = 16;
 
@@ -352,18 +350,6 @@ namespace Power
       void
       controlPowerChannel(PowerChannel* channel, IMC::PowerChannelControl::OperationEnum op, double sched = -1.0)
       {
-        if (m_halt)
-          return;
-
-        if ((channel->id == c_pwr_cpu) && (op == IMC::PowerChannelControl::PCC_OP_TURN_OFF))
-        {
-          // We're dead after this but it might take a few moments, so
-          // don't mess with the i2c bus.
-          m_proto.sendCommand(CMD_HALT);
-          m_halt = true;
-          return;
-        }
-
         if (channel->id == c_pwr_blight)
         {
           uint8_t state = (op == IMC::PowerChannelControl::PCC_OP_TURN_ON) ? 1 : 0;
@@ -426,6 +412,18 @@ namespace Power
       void
       consume(const IMC::PowerChannelControl* msg)
       {
+        if (m_halt)
+          return;
+
+        if (msg->name == "System")
+        {
+          // We're dead after this but it might take a few moments, so
+          // don't mess with the i2c bus.
+          m_proto.sendCommand(CMD_HALT);
+          m_halt = true;
+          return;
+        }
+
         PowerChannelMap::const_iterator itr = m_pwr_chs.find(msg->name);
         if (itr == m_pwr_chs.end())
           return;
