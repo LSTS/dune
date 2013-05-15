@@ -48,8 +48,8 @@ namespace Power
       std::string cpu_pwr;
       //! Camera power channel.
       std::string cam_pwr;
-      //! Camera strobe power channel.
-      std::string led_pwr;
+      //! LED strobe power channel.
+      std::string strobe_pwr;
       //! Slave system name.
       std::string slave_system;
       //! Slave entity name.
@@ -60,6 +60,8 @@ namespace Power
     {
       //! True if the task is activating.
       bool m_activating;
+      //! True if the task is deactivating.
+      bool m_deactivating;
       //! Task arguments.
       Arguments m_args;
       //! Activation timer
@@ -72,6 +74,7 @@ namespace Power
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_activating(false),
+        m_deactivating(false),
         m_slave_alive(false)
       {
         // Define configuration parameters.
@@ -84,7 +87,7 @@ namespace Power
         param("Power Channel - Camera", m_args.cam_pwr)
         .description("Power channel of the camera");
 
-        param("Power Channel - Strobe", m_args.led_pwr)
+        param("Power Channel - Strobe", m_args.strobe_pwr)
         .description("Power channel of the strobe");
 
         param("Slave System Name", m_args.slave_system)
@@ -98,34 +101,10 @@ namespace Power
         bind<IMC::Heartbeat>(this);
       }
 
-      ~Task(void)
-      {
-      }
-
       void
       onUpdateParameters(void)
       {
         m_slave_id = resolveSystemName(m_args.slave_system);
-      }
-
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      void
-      onResourceAcquisition(void)
-      {
-      }
-
-      void
-      onResourceRelease(void)
-      {
-      }
-
-      void
-      onResourceInitialization(void)
-      {
       }
 
       void
@@ -156,6 +135,18 @@ namespace Power
       }
 
       void
+      setActiveParameter(bool value)
+      {
+        IMC::SetEntityParameters ep;
+        ep.name = m_args.slave_entity;
+        IMC::EntityParameter ea;
+        ea.name = "Active";
+        ea.value = value ? "true" : "false";
+        ep.params.push_back(ea);
+        dispatch(ep);
+      }
+
+      void
       consume(const IMC::PowerOperation* msg)
       {
         if (msg->getDestination() == m_slave_id)
@@ -173,31 +164,6 @@ namespace Power
       }
 
       void
-      checkActivation(void)
-      {
-        if (m_act_timer.overflow())
-        {
-          activationFailed(DTR("failed to contact device"));
-          m_activating = false;
-          return;
-        }
-
-        if (m_slave_alive)
-        {
-          activate();
-          debug("activation took %0.2f s", getActivationTime() - m_act_timer.getRemaining());
-
-          IMC::SetEntityParameters ep;
-          ep.name = m_args.slave_entity;
-          IMC::EntityParameter ea;
-          ea.name = "Active";
-          ea.value = "true";
-          ep.params.push_back(ea);
-          dispatch(ep);
-        }
-      }
-
-      void
       onRequestActivation(void)
       {
         m_slave_alive = false;
@@ -208,25 +174,65 @@ namespace Power
       }
 
       void
+      checkActivation(void)
+      {
+        if (!m_activating)
+          return;
+
+        if (m_act_timer.overflow())
+        {
+          activationFailed(DTR("failed to contact device"));
+          m_activating = false;
+          return;
+        }
+
+        if (m_slave_alive)
+        {
+          activate();
+          setActiveParameter(true);
+          debug("activation took %0.2f s", getActivationTime() - m_act_timer.getRemaining());
+        }
+      }
+
+      void
       onActivation(void)
       {
         m_activating = false;
-        sendPowerChannelControl(m_args.led_pwr, true);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
       onRequestDeactivation(void)
       {
-        sendPowerChannelControl(m_args.led_pwr, false);
-        sendPowerChannelControl(m_args.cam_pwr, false);
-        deactivate();
+        setActiveParameter(false);
+
+        IMC::PowerOperation pop;
+        pop.setDestination(m_slave_id);
+        pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
+        dispatch(pop);
+
+        m_act_timer.setTop(getDeactivationTime());
+
+        m_deactivating = true;
+      }
+
+      void
+      checkDeactivation(void)
+      {
+        if (!m_deactivating)
+          return;
+
+        if (m_act_timer.overflow())
+          deactivate();
       }
 
       void
       onDeactivation(void)
       {
+        m_deactivating = false;
+        sendPowerChannelControl(m_args.cam_pwr, false);
         sendPowerChannelControl(m_args.cpu_pwr, false);
+        sendPowerChannelControl(m_args.strobe_pwr, false);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
@@ -242,8 +248,8 @@ namespace Power
           else
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
 
-          if (m_activating)
-            checkActivation();
+          checkActivation();
+          checkDeactivation();
         }
       }
     };
