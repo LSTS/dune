@@ -247,6 +247,17 @@ namespace Navigation
 
           for (unsigned i = 0; i < m_num_beacons; i++)
             m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
+
+          if (m_dead_reckoning)
+          {
+            // Position process noise covariance value if IMU is available.
+            m_kal.setProcessNoise(STATE_X, m_args.position_noise_with_imu);
+            m_kal.setProcessNoise(STATE_Y, m_args.position_noise_with_imu);
+
+            // LBL noise.
+            for (unsigned i = 0; i < m_num_beacons; i++)
+              m_kal.setMeasurementNoise(NUM_OUT + i, m_args.lbl_noise_with_imu);
+          }
         }
 
         void
