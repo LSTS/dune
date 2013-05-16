@@ -218,6 +218,12 @@ main(int argc, char** argv)
     tmsg->lon = Angles::radians(atof(argv[5]));
     tmsg->height = atof(argv[6]);
   }
+  else if (strcmp(argv[3], "Temperature") == 0)
+  {
+    IMC::Temperature* tmsg = new IMC::Temperature;
+    msg = tmsg;
+    tmsg->value = argv[4];
+  }
   else if (strcmp(argv[3], "VehicleCommand") == 0)
   {
     IMC::VehicleCommand* tmsg = new IMC::VehicleCommand;
