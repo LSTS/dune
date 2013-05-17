@@ -52,6 +52,7 @@ namespace DUNE
     static const char* c_scope_strs[] =
     {
       "global",
+      "idle",
       "plan",
       "maneuver"
     };
