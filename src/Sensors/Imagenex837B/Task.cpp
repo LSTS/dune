@@ -420,7 +420,7 @@ namespace Sensors
         if (msg->value < 0)
           return;
 
-        m_frame.setSoundVelocity(msg->value * 10.0);
+        m_frame.setSoundVelocity(msg->value);
       }
 
       //! Get index from table according with given value.

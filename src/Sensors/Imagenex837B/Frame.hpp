@@ -258,11 +258,8 @@ namespace Sensors
       void
       setSoundVelocity(float speed)
       {
-        if (speed == 1500)
-          ByteCopy::toBE((uint16_t)(0x0000), getData() + HDR_IDX_SOUND_SPEED);
-        else
-          ByteCopy::toBE((uint16_t)(((uint16_t)(speed * 10.0) & 0x7fff) | 0x8000),
-                         getData() + HDR_IDX_SOUND_SPEED);
+        ByteCopy::toBE((uint16_t)(((uint16_t)(speed * 10.0) & 0x7fff) | 0x8000),
+                       getData() + HDR_IDX_SOUND_SPEED);
       }
 
       //! Set GNSS ships speed.
