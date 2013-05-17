@@ -275,7 +275,10 @@ namespace Sensors
       void
       setCourse(float course)
       {
-        ByteCopy::toBE((uint16_t)(Angles::degrees(course) * 10), getData() + HDR_IDX_COURSE);
+        if (course >= 0.0)
+          ByteCopy::toBE((uint16_t)(Angles::degrees(course) * 10), getData() + HDR_IDX_COURSE);
+        else
+          ByteCopy::toBE((uint16_t)(Angles::degrees(2 * Math::c_pi + course) * 10), getData() + HDR_IDX_COURSE);
       }
 
       //! Set roll.
