@@ -372,7 +372,7 @@ namespace Sensors
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         if (!m_log_file.is_open())
-          m_log_file.open((m_ctx.dir_log / m_log_filename / "Data.837").c_str(), std::ios::binary);
+          m_log_file.open((m_ctx.dir_log / m_log_filename / "multibeam.837").c_str(), std::ios::binary);
       }
 
       void
@@ -405,7 +405,7 @@ namespace Sensors
               m_log_file.close();
 
             if (isActive())
-              m_log_file.open((m_ctx.dir_log / m_log_filename / "Data.837").c_str(), std::ios::binary);
+              m_log_file.open((m_ctx.dir_log / m_log_filename / "multibeam.837").c_str(), std::ios::binary);
             break;
           case IMC::LoggingControl::COP_REQUEST_STOP:
             m_log_file.close();
