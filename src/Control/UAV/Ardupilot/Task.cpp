@@ -529,6 +529,19 @@ namespace Control
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
 
+          if(path->lradius)
+          {
+            mavlink_msg_param_set_pack(255, 0, msg,
+                                       m_sysid, //! target_system System ID
+                                       0, //! target_component Component ID
+                                       "WP_LOITER_RAD", //! Parameter name
+                                       (int)(path->flags & IMC::DesiredPath::FL_CCLOCKW ? -1 * path->lradius : path->lradius), //! Parameter value
+                                       MAV_PARAM_TYPE_INT16); //! Parameter type
+
+            n = mavlink_msg_to_send_buffer(buf, msg);
+            sendData(buf, n);
+          }
+
           //! Destination
           mavlink_msg_mission_item_pack(255, 0, msg,
               m_sysid, //! target_system System ID
@@ -704,31 +717,31 @@ namespace Control
                   switch(status.parse_state)
                   {
                     case MAVLINK_PARSE_STATE_IDLE:
-                      err("failed at state IDLE");
+                      debug("failed at state IDLE");
                       break;
                     case MAVLINK_PARSE_STATE_GOT_STX:
-                      err("failed at state GOT_STX");
+                      debug("failed at state GOT_STX");
                       break;
                     case MAVLINK_PARSE_STATE_GOT_LENGTH:
-                      err("failed at state GOT_LENGTH");
+                      debug("failed at state GOT_LENGTH");
                       break;
                     case MAVLINK_PARSE_STATE_GOT_SYSID:
-                      err("failed at state GOT_SYSID");
+                      debug("failed at state GOT_SYSID");
                       break;
                     case MAVLINK_PARSE_STATE_GOT_COMPID:
-                      err("failed at state GOT_COMPID");
+                      debug("failed at state GOT_COMPID");
                       break;
                     case MAVLINK_PARSE_STATE_GOT_MSGID:
-                      err("failed at state GOT_MSGID");
+                      debug("failed at state GOT_MSGID");
                       break;
                     case MAVLINK_PARSE_STATE_GOT_PAYLOAD:
-                      err("failed at state GOT_PAYLOAD");
+                      debug("failed at state GOT_PAYLOAD");
                       break;
                     case MAVLINK_PARSE_STATE_GOT_CRC1:
-                      err("failed at state GOT_CRC1");
+                      debug("failed at state GOT_CRC1");
                       break;
                     default:
-                      err("failed OTHER");
+                      debug("failed OTHER");
                   }
               }
               if (rv)
@@ -904,9 +917,9 @@ namespace Control
             m_estate.height = ref_hei;
           }
 
-          m_estate.vx = 1e-03 * gp.vx;
-          m_estate.vy = 1e-03 * gp.vy;
-          m_estate.vz = 1e-03 * gp.vz;
+          m_estate.vx = 1e-02 * gp.vx;
+          m_estate.vy = 1e-02 * gp.vy;
+          m_estate.vz = 1e-02 * gp.vz;
 
           // Note: the following will yield body-fixed *ground* velocity
           // Maybe this can be fixed w/IAS readings (anyway not too important)
