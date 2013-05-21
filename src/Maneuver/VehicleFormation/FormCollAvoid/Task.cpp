@@ -40,9 +40,11 @@ struct Arguments
   double k_deconfliction;
   double safe_dist;
   double deconfliction_offset;
-  double accel_max_x;
+  double accel_lim_x;
+  double bank_lim;
   int formation_frame;
   int uav_n;
+  double gaccel;
   bool debug;
 };
 
@@ -100,13 +102,23 @@ struct Task: public DUNE::Tasks::Task
     .defaultValue("7")
     .description("Aircraft Deconfliction Distance Offset");
 
-    param("Max Long Accel", m_args.accel_max_x)
+    param("Long Accel Limit", m_args.accel_lim_x)
     .defaultValue("0.1")
-    .description("Aircraft Maximum Longitudinal Acceleration");
+    .description("Aircraft Longitudinal Acceleration Limit");
+
+    param("Bank Limit", m_args.bank_lim)
+    .defaultValue("30")
+    .description("Aircraft Bank Limit");
+    m_args.bank_lim = DUNE::Math::Angles::radians(m_args.bank_lim);
 
     param("UAV Number", m_args.uav_n)
     .defaultValue("1")
     .description("UAV Number");
+
+    param("Gravity Acceleration", m_args.gaccel)
+    .defaultValue("9.8066")
+    .units(Units::MeterPerSquareSecond)
+    .description("Gravity Acceleration at aircraft location");
 
     param("Debug", m_args.debug)
     .defaultValue("false")
@@ -179,6 +191,13 @@ struct Task: public DUNE::Tasks::Task
   {
     // ====== Variables initialization ======
 
+    // Miscellaneous
+    double d_g = m_args.gaccel;
+
+    // Control constraints
+    double d_bank_lim = m_args.bank_lim;
+    double d_accel_lim_x = m_args.accel_lim_x;
+
     // Control parameters
     double d_control_margin = m_args.deconfliction_offset;
     double d_deconfliction_dist = m_args.safe_dist + d_control_margin;
@@ -205,12 +224,8 @@ struct Task: public DUNE::Tasks::Task
     Matrix vd_body_y = md_rot_ground2yaw.row(2);
 
     // Maneuvering constrains
-    double d_accel_max_x = m_args.accel_max_x;
-    Matrix vd_body_accel_max_x = d_accel_max_x*vd_body_x;
-    Matrix vd_body_accel_max_y = d_g * std::tan(d_BankMax*0.6)*vd_BodyY;
-
-    // Other
-    double d_g = m_args.g;
+    Matrix vd_body_accel_lim_x = d_accel_lim_x*vd_body_x;
+    Matrix vd_body_accel_lim_y = d_g * std::tan(d_bank_lim*0.6)*vd_body_y;
 
     // ===========================================
     // Formation control
@@ -388,11 +403,11 @@ struct Task: public DUNE::Tasks::Task
 
         // Maneuvering constrains
         d_VProjX = (md_uav_state(4:5, ind_UAV2) - m_wind)'*vd_InterUAV_X;
-        d_AccelMaxProjX = abs(vd_body_accel_max_x*vd_InterUAV_X) + ...
-            abs(vd_body_accel_max_y*vd_InterUAV_X);
+        d_AccelMaxProjX = abs(vd_body_accel_lim_x*vd_InterUAV_X) + ...
+            abs(vd_body_accel_lim_y*vd_InterUAV_X);
         d_VProjY = (md_uav_state(4:5, ind_UAV2) - m_wind)'*vd_InterUAV_Y;
-        d_AccelMaxProjY = abs(vd_body_accel_max_x*vd_InterUAV_Y) + ...
-            abs(vd_body_accel_max_y*vd_InterUAV_Y);
+        d_AccelMaxProjY = abs(vd_body_accel_lim_x*vd_InterUAV_Y) + ...
+            abs(vd_body_accel_lim_y*vd_InterUAV_Y);
 
         // Sliding Surface parameters of the inter-UAV X projection
         d_C1 = max(d_TASMax - d_VProjX, 0.5); // Avoid negative maximum relative velocities
@@ -578,10 +593,10 @@ struct Task: public DUNE::Tasks::Task
     d_dErrY = vd_dErr(2);
 
     // Maneuvering constrains
-    d_AccelMaxProjX = abs(vd_body_accel_max_x(0)) + ...
-        abs(vd_body_accel_max_y(0));
-    d_AccelMaxProjY = abs(vd_body_accel_max_x(1)) + ...
-        abs(vd_body_accel_max_y(1));
+    d_AccelMaxProjX = abs(vd_body_accel_lim_x(0)) + ...
+        abs(vd_body_accel_lim_y(0));
+    d_AccelMaxProjY = abs(vd_body_accel_lim_x(1)) + ...
+        abs(vd_body_accel_lim_y(1));
 
     // Sliding Surface parameters of the inter-UAV X projection
     if d_ErrX < 0
@@ -743,8 +758,8 @@ struct Task: public DUNE::Tasks::Task
     // Speed control
     //-------------------------------------------
 
-    d_AccelXCmd = min(max(vd_Ctrl(1), -d_accel_max_x), ...
-        d_accel_max_x);
+    d_AccelXCmd = min(max(vd_Ctrl(1), -d_accel_lim_x), ...
+        d_accel_lim_x);
     vd_Ctrl(1) = d_AccelXCmd;
     d_airspeed_cmd += d_airspeed_cmd + d_TimeStep * d_AccelXCmd;
 
@@ -766,7 +781,7 @@ struct Task: public DUNE::Tasks::Task
     //d_AltCmd = std::min(std::max(d_AltCmd, d_AltMin), d_AltMax);
 
     // Bank limits
-    d_bank_cmd = std::min(std::max(d_bank_cmd, -d_BankMax), d_BankMax);
+    d_bank_cmd = std::min(std::max(d_bank_cmd, -d_bank_lim), d_bank_lim);
     vd_Ctrl(2) = d_g*std::tan(d_bank_cmd); // Real lateral acceleration command
 
     //===========================================
