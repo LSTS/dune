@@ -478,6 +478,15 @@ namespace DUNE
                   Parameter::Visibility def_visibility,
                   bool def_value = false);
 
+      //! Set the name of the parameter editor that should be used to
+      //! interact with the parameters of the task.
+      //! @param[in] name editor name (free-form string).
+      void
+      setParamSectionEditor(const std::string& name)
+      {
+        m_param_editor = name;
+      }
+
       //! Bind a message to a consumer method.
       //! @param task_obj consumer task.
       //! @param consumer consumer method.
@@ -688,6 +697,8 @@ namespace DUNE
       IMC::EntityActivationState m_act_state;
       //! True if task honours changes to 'Active' parameter.
       bool m_honours_active;
+      //! Name of parameter section editor.
+      std::string m_param_editor;
 
       //! Report current entity states by dispatching EntityState
       //! messages. This function will at least report the state of

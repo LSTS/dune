@@ -542,6 +542,8 @@ namespace DUNE
       os << "<section";
       XML::writeAttr("name", getEntityLabel(), os);
       XML::writeAttr("name-i18n", DTR(getEntityLabel()), os);
+      if (!m_param_editor.empty())
+        XML::writeAttr("editor", m_param_editor, os);
       os << ">\n";
 
       m_params.writeXML(os);
