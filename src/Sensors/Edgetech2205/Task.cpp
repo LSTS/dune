@@ -106,6 +106,8 @@ namespace Sensors
         m_deactivating(false)
       {
         // Define configuration parameters.
+        setParamSectionEditor("Edgetech2205");
+
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
