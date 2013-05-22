@@ -133,7 +133,8 @@ namespace Control
           m_alt(0.0),
           m_external(true),
           m_current_wp(0),
-          m_critical(true)
+          m_critical(true),
+          m_cloops(0)
         {
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
@@ -576,6 +577,19 @@ namespace Control
         void
         loiterHere(void)
         {
+          mavlink_message_t* msg = new mavlink_message_t;
+          uint8_t buf[512];
+
+          mavlink_msg_param_set_pack(255, 0, msg,
+              m_sysid, //! target_system System ID
+              0, //! target_component Component ID
+              "WP_LOITER_RAD", //! Parameter name
+              -200, //! Parameter value
+              MAV_PARAM_TYPE_INT16); //! Parameter type
+
+          int n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+
           sendCommandPacket(MAV_CMD_NAV_LOITER_UNLIM);
           debug("Sent LOITER packet to Ardupilot");
         }
