@@ -133,7 +133,7 @@ namespace Control
           m_alt(0.0),
           m_external(true),
           m_current_wp(0),
-          m_critical(true),
+          m_critical(false),
           m_cloops(0)
         {
           param("Communications Timeout", m_args.comm_timeout)
@@ -227,6 +227,7 @@ namespace Control
             m_TCP_sock = new TCPSocket;
             m_TCP_sock->connect(m_TCP_addr, m_TCP_port);
             m_TCP_sock->addToPoll(m_iom);
+            setupRate(10);
             inf(DTR("Ardupilot interface initialized"));
           }
           catch (...)
@@ -349,6 +350,20 @@ namespace Control
               debug("tracker is NOT enabled");
               m_cloops &= ~IMC::CL_PATH;
             }
+
+            if(!(m_args.ardu_tracker) && (cloops->mask & IMC::CL_ROLL))
+            {
+              uint8_t buf[512];
+              mavlink_message_t* msg = new mavlink_message_t;
+
+              mavlink_msg_set_mode_pack(255, 0, msg,
+                  m_sysid,
+                  1,
+                  13); //! DUNE mode on ardupilot is 13
+
+              uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
+              sendData(buf, n);
+            }
           }
           else
             m_cloops &= ~cloops->mask;
@@ -426,10 +441,16 @@ namespace Control
           uint8_t buf[512];
 
           mavlink_message_t* msg = new mavlink_message_t;
-          mavlink_msg_set_roll_pitch_yaw_thrust_pack(255, 0, msg, 1, 1, (float)roll->value, 4.0, 4.0, 0); // 8.0 radians is more than 2pi (is ignored by ardupilot)
+          mavlink_msg_set_roll_pitch_yaw_thrust_pack(255, 0, msg,
+              1,
+              1,
+              (float)roll->value,
+              0,
+              0,
+              0);
           uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
-          debug("DesiredRoll packet sent to Ardupilot");
+          debug("DesiredRoll packet sent to Ardupilot: %f", roll->value);
         }
 
         void
@@ -442,7 +463,7 @@ namespace Control
           }
 
           sendCommandPacket(MAV_CMD_CONDITION_CHANGE_ALT, // Ascend/descend at rate.  Delay mission state machine until desired altitude reached.
-                            2, // Descent / Ascend rate (m/s)
+                            0, // Descent / Ascend rate (m/s)
                             0, // Empty
                             0, // Empty
                             0, // Empty
@@ -1099,6 +1120,10 @@ namespace Control
               break;
             case 12:
               trace("LOITER");
+              m_external = false;
+              break;
+            case 13:
+              trace("DUNE");
               m_external = false;
               break;
             case 15:
