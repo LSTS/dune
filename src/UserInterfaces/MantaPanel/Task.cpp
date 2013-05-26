@@ -271,13 +271,13 @@ namespace UserInterfaces
           if (!m_power_down)
           {
             m_power_down = true;
+            m_lcd.op = IMC::LcdControl::OP_WRITE0;
+            m_lcd.text = center("> Power Down <");
+            dispatch(m_lcd);
           }
 
           if (!m_power_down_now)
           {
-            m_lcd.op = IMC::LcdControl::OP_WRITE0;
-            m_lcd.text = center("> Power Down <");
-            dispatch(m_lcd);
             m_lcd.op = IMC::LcdControl::OP_WRITE1;
             m_lcd.text = center(String::str("%d", (int)msg->time_remain));
             dispatch(m_lcd);
