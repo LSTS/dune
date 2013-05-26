@@ -410,30 +410,16 @@ toEpoch(date* d)
   return mktime(&tcal);
 }
 
-int
-main(int argc, char** argv)
+bool
+parseDebug(std::ifstream& ifs, std::vector<log_rec>& records)
 {
-  // Parse command line arguments.
-  if (argc != 2)
-  {
-    std::cerr << "Usage: " << argv[0] << " <path_to_file>" << std::endl;
-    std::cerr << "This program expects a wavy debug file" << std::endl;
-    return 1;
-  }
-
-  std::ifstream ifs(argv[1], std::ifstream::in);
-
   if (!ifs.good())
   {
     std::cerr << "failed to open file" << std::endl;
-    return 1;
+    return false;
   }
 
   std::string sample;
-
-  std::vector<log_rec> records;
-
-  bool success = true;
 
   while (!ifs.eof())
   {
@@ -444,29 +430,57 @@ main(int argc, char** argv)
       log_rec rec;
 
       if (!readRecord(ifs, rec))
-      {
-        success = false;
-        break;
-      }
+        return false;
 
       records.push_back(rec);
     }
   }
 
-  if (!records.size())
-    std::cerr << "Unable to find a match" << std::endl;
+  return true;
+}
 
-  if (!success)
-    std::cerr << "Parsing was unsuccessful" << std::endl;
-  else
-    std::cerr << "Parsing was successful. Got " << records.size() << " records." << std::endl;
-  ifs.close();
+bool
+parseBinary(std::ifstream& ifs, std::vector<log_rec>& records)
+{
+  if (!ifs.good())
+  {
+    std::cerr << "failed to open file" << std::endl;
+    return false;
+  }
 
-  // Converting to GPS Fix
+  while (!ifs.eof())
+  {
+    log_rec rec;
 
+    char* ptr = (char*)&rec.id;
+
+    // read id
+    ifs.read(ptr, sizeof(rec.id));
+    // read cookie
+    ptr = (char*)&rec.cookie;
+    ifs.read(ptr, sizeof(rec.cookie));
+    // read size
+    ptr = (char*)&rec.size;
+    ifs.read(ptr, sizeof(rec.size));
+
+    // read data
+    ptr = (char*)&rec.data[0];
+    ifs.read(ptr, rec.size);
+
+    // read crc
+    ptr = (char*)&rec.crc;
+    ifs.read(ptr, sizeof(rec.crc));
+  }
+
+  return true;
+}
+
+bool
+convertAndWrite(const char* name, std::vector<log_rec>& records)
+{
   std::vector<IMC::GpsFix> fixes;
 
-  std::ofstream lsf("WavyLog.lsf", std::ios::binary);
+  std::ofstream lsf(name, std::ios::binary);
 
   ByteBuffer buffer;
 
@@ -509,6 +523,65 @@ main(int argc, char** argv)
     IMC::Packet::serialize(&msg, buffer);
     lsf.write(buffer.getBufferSigned(), buffer.getSize());
   }
+}
+
+int
+main(int argc, char** argv)
+{
+  // Parse command line arguments.
+  if (argc != 2)
+  {
+    std::cerr << "Usage: " << argv[0] << " <path_to_file>" << std::endl;
+    std::cerr << "Extension should be .wdg for a wavy debug file" << std::endl;
+    std::cerr << "Extension should be .wlg for a wavy raw log file" << std::endl;
+    return 1;
+  }
+
+  FileSystem::Path file(argv[1]);
+
+  std::ifstream ifs;
+
+  std::vector<log_rec> records;
+
+  if (!file.extension().compare("wdg"))
+  {
+    ifs.open(file.c_str(), std::ifstream::in);
+    parseDebug(ifs, records);
+  }
+  if (!file.extension().compare("wlg"))
+  {
+    ifs.open(file.c_str(), std::ifstream::in | std::ifstream::binary);
+    parseBinary(ifs, records);
+  }
+  else
+  {
+    std::cerr << "unrecognized extension" << std::endl;
+    return 1;
+  }
+
+  bool success = parseDebug(ifs, records);
+
+  if (!records.size())
+  {
+    success = false;
+    std::cerr << "Unable to find a match" << std::endl;
+  }
+
+  if (!success)
+  {
+    std::cerr << "Parsing was unsuccessful" << std::endl;
+    ifs.close();
+    return 1;
+  }
+  else
+  {
+    std::cerr << "Parsing was successful. Got " << records.size() << " records." << std::endl;
+    ifs.close();
+  }
+
+  // Converting to GPS Fix and writing lsf file
+
+  convertAndWrite("WavyLog.lsf", records);
 
   return 0;
 }
