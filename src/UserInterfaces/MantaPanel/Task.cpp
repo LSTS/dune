@@ -271,9 +271,6 @@ namespace UserInterfaces
           if (!m_power_down)
           {
             m_power_down = true;
-            IMC::LoggingControl lctl;
-            lctl.op = IMC::LoggingControl::COP_REQUEST_STOP;
-            dispatch(lctl);
           }
 
           if (!m_power_down_now)
@@ -299,10 +296,6 @@ namespace UserInterfaces
           dispatch(m_lcd);
           if (std::system(m_args.cmd_pwr_down_abort.c_str()) == -1)
             err("failed to execute power down command");
-
-          IMC::LoggingControl lctl;
-          lctl.op = IMC::LoggingControl::COP_REQUEST_START;
-          dispatch(lctl);
 
           selectSystem(false);
         }
