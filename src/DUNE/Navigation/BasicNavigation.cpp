@@ -176,7 +176,6 @@ namespace DUNE
       m_diving = false;
       m_rpm = 0;
       m_virtual_avel.resizeAndFill(3, 1, 0.0);
-      m_gps_val_bits = 0;
 
       for (unsigned i = 0; i < 3; ++i)
         m_euler_delta[i] = 0.0;
@@ -344,10 +343,7 @@ namespace DUNE
       }
 
       if (std::abs(m_z_ref) < c_z_tol)
-      {
         m_diving = false;
-        m_reject_gps = false;
-      }
     }
 
     void
@@ -426,41 +422,6 @@ namespace DUNE
       // Speed over ground.
       if (msg->validity & IMC::GpsFix::GFV_VALID_SOG)
         m_gps_sog = msg->sog;
-
-      // After GPS timeout, stop rejecting GPS by default.
-      if (m_time_without_gps.overflow())
-        m_reject_gps = false;
-
-      // Rejecting GPS.
-      if (m_reject_gps)
-      {
-        m_gps_rej.reason = IMC::GpsFixRejection::RR_LOST_VAL_BIT;
-        dispatch(m_gps_rej, DF_KEEP_TIME);
-        return;
-      }
-
-      // Dead Reckoning mode
-      // this means we need very accurate navigation so GPS fixes
-      // will be rejected if any validaty bit is lost between
-      // consecutive GPS fixes.
-      if (m_dead_reckoning && m_diving)
-      {
-        // reinitialize if we exceed GPS timeout.
-        if (m_time_without_gps.overflow())
-          m_gps_val_bits = msg->validity;
-        else
-          m_gps_val_bits |= msg->validity;
-
-        // if different, at least one previous valid bit is now invalid.
-        if (m_gps_val_bits != msg->validity)
-        {
-          // Start rejecting GPS fixes.
-          m_reject_gps = true;
-          m_gps_rej.reason = IMC::GpsFixRejection::RR_LOST_VAL_BIT;
-          dispatch(m_gps_rej, DF_KEEP_TIME);
-          return;
-        }
-      }
 
       // Check fix validity.
       if ((msg->validity & IMC::GpsFix::GFV_VALID_POS) == 0)
@@ -797,7 +758,6 @@ namespace DUNE
       m_theta_offset = 0.0;
       m_altitude = -1;
 
-      m_reject_gps = false;
       m_lbl_log_beacons = false;
 
       m_navstate = SM_STATE_IDLE;

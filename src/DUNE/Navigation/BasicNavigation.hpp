@@ -577,6 +577,8 @@ namespace DUNE
       bool m_int_yaw_rate;
       //! Vehicle is aligned.
       bool m_aligned;
+      //! Vehicle is diving.
+      bool m_diving;
       //! Angular velocity message entity id.
       unsigned m_agvel_eid;
       //! Accelaration message entity id.
@@ -726,12 +728,6 @@ namespace DUNE
       unsigned m_avg_heave_samples;
       //! Z reference.
       double m_z_ref;
-      //! Reject GPS fixes based on desired depth.
-      bool m_reject_gps;
-      //! Received DesiredZ message to start diving.
-      bool m_diving;
-      //! Z units for this maneuver
-      IMC::ZUnits m_zunits;
       //! Entity Ids.
       unsigned m_depth_eid;
       unsigned m_ahrs_eid;
@@ -748,8 +744,6 @@ namespace DUNE
       uint8_t m_gvel_val_bits;
       //! DVL water velocity validation bits.
       uint8_t m_wvel_val_bits;
-      //! GPS validity bits.
-      uint16_t m_gps_val_bits;
       //! Euler Angles offset.
       double m_phi_offset;
       double m_theta_offset;
