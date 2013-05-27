@@ -66,7 +66,7 @@ struct date
   uint8_t minute;
   /** Second of the minute. */
   uint8_t second;
-};
+} __attribute__((packed));
 
 //! GPS fix structure.
 struct gps_fix
@@ -93,7 +93,14 @@ struct gps_fix
   uint16_t epe;
   //! UTC date/time.
   struct date utc;
-};
+} __attribute__((packed));
+
+//! A struct to define the data that is logged (just the fixes for now)
+struct logged_data
+{
+  //! A gps fix
+  struct gps_fix fix;
+} __attribute__((packed));
 
 bool
 getString(std::ifstream& ifs, std::string& str)
@@ -332,22 +339,7 @@ readRecord(std::ifstream& ifs, log_rec& rec)
 void
 convertDataToFix(uint8_t* data, uint8_t size, gps_fix* fix)
 {
-  fix->id = data[0];
-  fix->latitude = *(int32_t*)&data[1];
-  fix->longitude = *(int32_t*)&data[5];
-  fix->height = *(int32_t*)&data[9];
-  fix->speed = *(int32_t*)&data[13];
-  fix->heading = *(int32_t*)&data[17];
-  fix->satellites = data[21];
-  fix->validity = data[22];
-  fix->hdop = *(uint16_t*)&data[23];
-  fix->epe = *(uint16_t*)&data[25];
-  fix->utc.year = data[27];
-  fix->utc.month = data[28];
-  fix->utc.day = data[29];
-  fix->utc.hour = data[30];
-  fix->utc.minute = data[31];
-  fix->utc.second = data[32];
+  memcpy(fix, data, size);
 }
 
 void
@@ -411,13 +403,15 @@ toEpoch(date* d)
 }
 
 bool
-parseDebug(std::ifstream& ifs, std::vector<log_rec>& records)
+parseDebug(std::ifstream& ifs, std::vector<logged_data>& packets)
 {
   if (!ifs.good())
   {
     std::cerr << "failed to open file" << std::endl;
     return false;
   }
+
+  std::vector<log_rec> records;
 
   std::string sample;
 
@@ -428,11 +422,14 @@ parseDebug(std::ifstream& ifs, std::vector<log_rec>& records)
     if (strcmp(sample.c_str(), "RECORD") == 0)
     {
       log_rec rec;
+      logged_data packet;
 
       if (!readRecord(ifs, rec))
         return false;
 
-      records.push_back(rec);
+      convertDataToFix(rec.data, rec.size, &packet.fix);
+
+      packets.push_back(packet);
     }
   }
 
@@ -440,7 +437,7 @@ parseDebug(std::ifstream& ifs, std::vector<log_rec>& records)
 }
 
 bool
-parseBinary(std::ifstream& ifs, std::vector<log_rec>& records)
+parseBinary(std::ifstream& ifs, std::vector<logged_data>& packets)
 {
   if (!ifs.good())
   {
@@ -448,35 +445,30 @@ parseBinary(std::ifstream& ifs, std::vector<log_rec>& records)
     return false;
   }
 
+  // get length of file:
+  ifs.seekg (0, ifs.end);
+  int length = ifs.tellg();
+  ifs.seekg (0, ifs.beg);
+
   while (!ifs.eof())
   {
-    log_rec rec;
+    logged_data log;
 
-    char* ptr = (char*)&rec.id;
+    ifs.read((char*)&log.fix, sizeof(struct gps_fix));
 
-    // read id
-    ifs.read(ptr, sizeof(rec.id));
-    // read cookie
-    ptr = (char*)&rec.cookie;
-    ifs.read(ptr, sizeof(rec.cookie));
-    // read size
-    ptr = (char*)&rec.size;
-    ifs.read(ptr, sizeof(rec.size));
+    // convertDataToFix(temp, sizeof(struct gps_fix), &log.fix);
 
-    // read data
-    ptr = (char*)&rec.data[0];
-    ifs.read(ptr, rec.size);
+    packets.push_back(log);
 
-    // read crc
-    ptr = (char*)&rec.crc;
-    ifs.read(ptr, sizeof(rec.crc));
+    if (length - ifs.tellg() <= 0)
+      break;
   }
 
   return true;
 }
 
 bool
-convertAndWrite(const char* name, std::vector<log_rec>& records)
+convertAndWrite(const char* name, std::vector<logged_data>& packets)
 {
   std::vector<IMC::GpsFix> fixes;
 
@@ -484,13 +476,12 @@ convertAndWrite(const char* name, std::vector<log_rec>& records)
 
   ByteBuffer buffer;
 
-  if (records.size() >= 5)
+  if (packets.size() >= 5)
   {
     IMC::EstimatedState state;
     IMC::GpsFix imcfix;
-    gps_fix temp_fix;
-    convertDataToFix(records[4].data, records[4].size, &temp_fix);
-    convertFixToIMC(&temp_fix, &imcfix);
+
+    convertFixToIMC(&packets[4].fix, &imcfix);
 
     state.lat = imcfix.lat;
     state.lon = imcfix.lon;
@@ -500,23 +491,19 @@ convertAndWrite(const char* name, std::vector<log_rec>& records)
     state.z = 0.0;
     state.depth = 0.0;
 
-    state.setTimeStamp(toEpoch(&temp_fix.utc));
+    state.setTimeStamp(toEpoch(&packets[4].fix.utc));
 
     IMC::Packet::serialize(&state, buffer);
     lsf.write(buffer.getBufferSigned(), buffer.getSize());
   }
 
-  for (unsigned i = 0; i < records.size(); ++i)
+  for (unsigned i = 0; i < packets.size(); ++i)
   {
-    gps_fix fix;
-
-    convertDataToFix(records[i].data, records[i].size, &fix);
-
     IMC::GpsFix msg;
 
-    convertFixToIMC(&fix, &msg);
+    convertFixToIMC(&packets[i].fix, &msg);
 
-    msg.setTimeStamp(toEpoch(&fix.utc));
+    msg.setTimeStamp(toEpoch(&packets[i].fix.utc));
 
     fixes.push_back(msg);
 
@@ -541,17 +528,19 @@ main(int argc, char** argv)
 
   std::ifstream ifs;
 
-  std::vector<log_rec> records;
+  std::vector<logged_data> packets;
+
+  bool success = false;
 
   if (!file.extension().compare("wdg"))
   {
     ifs.open(file.c_str(), std::ifstream::in);
-    parseDebug(ifs, records);
+    success = parseDebug(ifs, packets);
   }
   if (!file.extension().compare("wlg"))
   {
     ifs.open(file.c_str(), std::ifstream::in | std::ifstream::binary);
-    parseBinary(ifs, records);
+    success = parseBinary(ifs, packets);
   }
   else
   {
@@ -559,9 +548,7 @@ main(int argc, char** argv)
     return 1;
   }
 
-  bool success = parseDebug(ifs, records);
-
-  if (!records.size())
+  if (!packets.size())
   {
     success = false;
     std::cerr << "Unable to find a match" << std::endl;
@@ -575,13 +562,13 @@ main(int argc, char** argv)
   }
   else
   {
-    std::cerr << "Parsing was successful. Got " << records.size() << " records." << std::endl;
+    std::cerr << "Parsing was successful. Got " << packets.size()
+              << " records." << std::endl;
     ifs.close();
   }
 
   // Converting to GPS Fix and writing lsf file
-
-  convertAndWrite("WavyLog.lsf", records);
+  convertAndWrite("WavyLog.lsf", packets);
 
   return 0;
 }
