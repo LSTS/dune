@@ -52,6 +52,8 @@ namespace Monitors
       float water_timeout;
       //! Wet measurements threshold.
       float water_threshold;
+      //! Initialization time.
+      float init_time;
       //! GPS timeout.
       float gps_timeout;
       //! Depth threshold.
@@ -65,12 +67,14 @@ namespace Monitors
     {
       //! Vehicle Medium.
       IMC::VehicleMedium m_vm;
-      //! Counter to check status of water measurements.
+      //! Timer to check status of water measurements.
       Time::Counter<float> m_water_status;
-      //! Counter to check presence of water measurements.
+      //! Timer to check presence of water measurements.
       Time::Counter<float> m_water_presence;
-      //! Counter to check presence of GPS fixes.
+      //! Timer to check presence of GPS fixes.
       Time::Counter<float> m_gps_status;
+      //! Initialization timer.
+      Time::Counter<float> m_init;
       //! GPS validation bits.
       uint16_t m_gps_val_bits;
       //! Vehicle depth.
@@ -81,6 +85,11 @@ namespace Monitors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx)
       {
+        param("Initialization Time", m_args.init_time)
+        .units(Units::Second)
+        .defaultValue("30.0")
+        .description("Time to wait at beginning before assessing vehicle medium");
+
         param("Wet Data Timeout", m_args.water_timeout)
         .units(Units::Second)
         .defaultValue("3.0")
@@ -128,6 +137,7 @@ namespace Monitors
       onResourceInitialization(void)
       {
         // Initialize timers.
+        m_init.setTop(m_args.init_time);
         m_water_status.setTop(m_args.water_timeout);
         m_gps_status.setTop(m_args.gps_timeout);
       }
@@ -191,13 +201,19 @@ namespace Monitors
       void
       task(void)
       {
+        // Wait to stabilize at beginning.
+        if (!m_init.overflow())
+          return;
+
         // Initialization.
         if (getEntityState() == IMC::EntityState::ESTA_BOOT)
         {
-          if (!isAcousticsAvailable())
+          if (!isAcousticsAvailable() && isGpsAvailable())
             m_vm.medium = IMC::VehicleMedium::VM_GROUND;
-          else
+          if (isAcousticsAvailable() && isGpsAvailable())
             m_vm.medium = IMC::VehicleMedium::VM_WATER;
+          if (isAcousticsAvailable() && !isGpsAvailable())
+            m_vm.medium = IMC::VehicleMedium::VM_UNDERWATER;
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           dispatch(m_vm);
