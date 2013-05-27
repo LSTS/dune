@@ -168,6 +168,7 @@ namespace DUNE
       m_declination_defined = false;
       std::memset(m_beacons, 0, sizeof(m_beacons));
       m_num_beacons = 0;
+      m_edelta_ts = 0.0;
       m_dead_reckoning = false;
       m_int_yaw_rate = false;
       m_sum_euler_inc = false;
@@ -176,10 +177,6 @@ namespace DUNE
       m_diving = false;
       m_rpm = 0;
       m_virtual_avel.resizeAndFill(3, 1, 0.0);
-
-      for (unsigned i = 0; i < 3; ++i)
-        m_euler_delta[i] = 0.0;
-      m_euler_delta_ts = 0.0;
 
       m_gvel_val_bits = IMC::GroundVelocity::VAL_VEL_X
                         | IMC::GroundVelocity::VAL_VEL_Y
@@ -402,10 +399,11 @@ namespace DUNE
       if (msg->getSourceEntity() != m_imu_eid)
         return;
 
-      m_euler_delta[AXIS_X] = msg->x;
-      m_euler_delta[AXIS_Y] = msg->y;
-      m_euler_delta[AXIS_Z] = msg->z;
-      m_euler_delta_ts = msg->timestep;
+      m_edelta_bfr[AXIS_X] += msg->x;
+      m_edelta_bfr[AXIS_Y] += msg->y;
+      m_edelta_bfr[AXIS_Z] += msg->z;
+      ++m_edelta_readings;
+      m_edelta_ts = msg->timestep;
 
       // Increment heading.
       if (m_sum_euler_inc)
@@ -979,6 +977,7 @@ namespace DUNE
       updateAngularVelocities(filter);
       updateDepth(filter);
       updateEuler(filter);
+      updateEulerDelta(filter);
     }
 
     void
@@ -1017,12 +1016,22 @@ namespace DUNE
     }
 
     void
+    BasicNavigation::resetEulerAnglesDelta(void)
+    {
+      m_edelta_bfr[AXIS_X] = 0.0;
+      m_edelta_bfr[AXIS_Y] = 0.0;
+      m_edelta_bfr[AXIS_Z] = 0.0;
+      m_edelta_readings = 0.0;
+    }
+
+    void
     BasicNavigation::resetBuffers(void)
     {
       resetAcceleration();
       resetAngularVelocity();
       resetDepth();
       resetEulerAngles();
+      resetEulerAnglesDelta();
     }
 
     void

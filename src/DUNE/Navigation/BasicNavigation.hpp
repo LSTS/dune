@@ -323,7 +323,10 @@ namespace DUNE
       inline double
       getEulerDelta(unsigned axis) const
       {
-        return m_euler_delta[axis];
+        if (!m_edelta_readings)
+          return 0;
+
+        return m_edelta_bfr[axis] / m_edelta_readings;
       }
 
       //! Get Euler Angles increment value along a specific axis.
@@ -331,7 +334,7 @@ namespace DUNE
       inline float
       getEulerDeltaTimestep(void) const
       {
-        return m_euler_delta_ts;
+        return m_edelta_ts;
       }
 
       //! Number of depth readings since last cycle plus constant filter gain.
@@ -408,6 +411,17 @@ namespace DUNE
           m_euler_bfr[i] = getEuler(i) * filter;
 
         m_euler_readings = filter;
+      }
+
+      //! Routine to clear euler angles delta buffer.
+      //! @param[in] filter filter value.
+      inline void
+      updateEulerDelta(float filter)
+      {
+        for (unsigned i = 0; i < 3; ++i)
+          m_edelta_bfr[i] =  getEulerDelta(i) * filter;
+
+        m_edelta_readings = filter;
       }
 
       //! Routine to clear angular velocities buffer.
@@ -515,6 +529,10 @@ namespace DUNE
       //! Routine to reset euler angles buffers.
       void
       resetEulerAngles(void);
+
+      //! Routine to reset euler angles delta buffers.
+      void
+      resetEulerAnglesDelta(void);
 
       //! Routine to check navigation uncertainty.
       void
@@ -699,6 +717,7 @@ namespace DUNE
       //! Sum of weights of sensor readings between prediction cycles.
       float m_depth_readings;
       float m_euler_readings;
+      float m_edelta_readings;
       float m_angular_readings;
       float m_accel_readings;
       //! "Buffers" for sensors readings.
@@ -707,9 +726,9 @@ namespace DUNE
       double m_agvel_bfr[3];
       double m_accel_bfr[3];
       //! Euler Angles Delta.
-      double m_euler_delta[3];
+      double m_edelta_bfr[3];
       //! Euler Angles Delta timestep.
-      float m_euler_delta_ts;
+      float m_edelta_ts;
       //! Moving Average for roll angle.
       Math::MovingAverage<double>* m_avg_phi;
       //! Moving Average for pitch angle.
