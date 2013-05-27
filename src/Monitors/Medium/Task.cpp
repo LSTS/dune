@@ -185,7 +185,7 @@ namespace Monitors
       //! Routine to check if we have recent wet sensor measurements.
       //! @return true if we have recent measurements, false otherwise.
       bool
-      isAcousticsAvailable(void)
+      hasWaterParameters(void)
       {
         return (!m_water_status.overflow());
       }
@@ -208,11 +208,11 @@ namespace Monitors
         // Initialization.
         if (getEntityState() == IMC::EntityState::ESTA_BOOT)
         {
-          if (!isAcousticsAvailable() && isGpsAvailable())
+          if (!hasWaterParameters() && isGpsAvailable())
             m_vm.medium = IMC::VehicleMedium::VM_GROUND;
-          if (isAcousticsAvailable() && isGpsAvailable())
+          if (hasWaterParameters() && isGpsAvailable())
             m_vm.medium = IMC::VehicleMedium::VM_WATER;
-          if (isAcousticsAvailable() && !isGpsAvailable())
+          if (hasWaterParameters() && !isGpsAvailable())
             m_vm.medium = IMC::VehicleMedium::VM_UNDERWATER;
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -243,14 +243,14 @@ namespace Monitors
             break;
 
           case (IMC::VehicleMedium::VM_GROUND):
-            if (isAcousticsAvailable())
+            if (hasWaterParameters())
               m_vm.medium = IMC::VehicleMedium::VM_WATER;
             break;
 
           case (IMC::VehicleMedium::VM_WATER):
             if ((m_depth > m_args.depth_threshold) && !isGpsAvailable())
               m_vm.medium = IMC::VehicleMedium::VM_UNDERWATER;
-            if (!isAcousticsAvailable())
+            if (!hasWaterParameters())
               m_vm.medium = IMC::VehicleMedium::VM_GROUND;
             break;
 
