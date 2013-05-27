@@ -645,14 +645,7 @@ namespace DUNE
       double dz = getDepth() - m_beacons[beacon]->depth;
       double exp_range = std::sqrt(dx * dx + dy * dy + dz * dz);
 
-      if (!exp_range)
-      {
-        // Singular point (don't use).
-        m_lbl_ac.acceptance = IMC::LblRangeAcceptance::RR_SINGULAR;
-        dispatch(m_lbl_ac, DF_KEEP_TIME);
-      }
-      else
-        runKalmanLBL((int)beacon, range, dx, dy, exp_range);
+      runKalmanLBL((int)beacon, range, dx, dy, exp_range);
     }
 
     void
