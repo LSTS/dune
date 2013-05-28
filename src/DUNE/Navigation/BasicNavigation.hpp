@@ -315,7 +315,7 @@ namespace DUNE
         if (!m_euler_readings)
           return 0;
 
-        return Math::Angles::normalizeRadian(m_euler_bfr[axis] / m_euler_readings);
+        return m_euler_bfr[axis] / m_euler_readings;
       }
 
       //! Get Euler Angles increment value along a specific axis.

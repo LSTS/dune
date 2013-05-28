@@ -374,8 +374,8 @@ namespace DUNE
       if (msg->getSourceEntity() == m_alignment_eid)
       {
         correctAlignment(msg->psi);
-        m_phi_offset = msg->phi - getEuler(AXIS_X);
-        m_theta_offset = msg->theta - getEuler(AXIS_Y);
+        m_phi_offset = msg->phi - Math::Angles::normalizeRadian(getEuler(AXIS_X));
+        m_theta_offset = msg->theta - Math::Angles::normalizeRadian(getEuler(AXIS_Y));
         debug("Euler Angles offset - phi, theta: %f | %f", m_phi_offset, m_theta_offset);
         return;
       }
@@ -383,10 +383,11 @@ namespace DUNE
       if (msg->getSourceEntity() != m_ahrs_eid)
         return;
 
-      m_euler_bfr[AXIS_X] += getEuler(AXIS_X) + Math::Angles::minSignedAngle(getEuler(AXIS_X), msg->phi + m_phi_offset);
-      m_euler_bfr[AXIS_Y] += getEuler(AXIS_Y) + Math::Angles::minSignedAngle(getEuler(AXIS_Y), msg->theta + m_theta_offset);
-      m_euler_bfr[AXIS_Z] += getEuler(AXIS_Z) + Math::Angles::minSignedAngle(getEuler(AXIS_Z), msg->psi);
+      m_euler_bfr[AXIS_X] += msg->phi + m_phi_offset;
+      m_euler_bfr[AXIS_Y] += msg->theta + m_theta_offset;
 
+      // Heading buffer maintains sign.
+      m_euler_bfr[AXIS_Z] += getEuler(AXIS_Z) + Math::Angles::minSignedAngle(getEuler(AXIS_Z), msg->psi);
       ++m_euler_readings;
 
       if (m_declination_defined && m_use_declination)
@@ -516,7 +517,7 @@ namespace DUNE
     {
       m_gvel = *msg;
       // Correct for the distance between center of gravity and dvl.
-      m_gvel.y = msg->y - m_dist_dvl_cg * BasicNavigation::getAngularVelocity(AXIS_Z);
+      m_gvel.y = msg->y - m_dist_dvl_cg * getAngularVelocity(AXIS_Z);
 
       if (msg->validity != m_gvel_val_bits)
         return;
@@ -622,7 +623,7 @@ namespace DUNE
       uint8_t beacon = msg->id;
       float range = msg->range;
 
-      if ((m_beacons[beacon] == 0) || (beacon > m_num_beacons - 1) || (BasicNavigation::rejectLbl()))
+      if ((m_beacons[beacon] == 0) || (beacon > m_num_beacons - 1) || (rejectLbl()))
       {
         m_lbl_ac.acceptance = IMC::LblRangeAcceptance::RR_NO_INFO;
         dispatch(m_lbl_ac, DF_KEEP_TIME);
@@ -657,7 +658,7 @@ namespace DUNE
     {
       m_wvel = *msg;
       // Correct for the distance between center of gravity and dvl.
-      m_wvel.y = msg->y - m_dist_dvl_cg * BasicNavigation::getAngularVelocity(AXIS_Z);
+      m_wvel.y = msg->y - m_dist_dvl_cg * getAngularVelocity(AXIS_Z);
 
       if (msg->validity != m_wvel_val_bits)
         return;
@@ -851,9 +852,9 @@ namespace DUNE
     {
       m_estate.x = m_kal.getState(STATE_X);
       m_estate.y = m_kal.getState(STATE_Y);
-      m_estate.z = m_last_z + BasicNavigation::getDepth();
-      m_estate.phi = BasicNavigation::getEuler(AXIS_X);
-      m_estate.theta = BasicNavigation::getEuler(AXIS_Y);
+      m_estate.z = m_last_z + getDepth();
+      m_estate.phi = Math::Angles::normalizeRadian(getEuler(AXIS_X));
+      m_estate.theta = Math::Angles::normalizeRadian(getEuler(AXIS_Y));
 
       // Update Euler Angles derivatives when
       // Angular Velocity readings are not available.
@@ -863,19 +864,19 @@ namespace DUNE
         m_deriv_pitch.update(m_avg_theta->update(m_estate.theta));
         m_deriv_yaw.update(m_avg_psi->update(m_estate.psi));
 
-        BasicNavigation::produceAngularVelocity();
-        m_estate.p = BasicNavigation::getVirtualAngularVelocity(AXIS_X);
-        m_estate.q = BasicNavigation::getVirtualAngularVelocity(AXIS_Y);
+        produceAngularVelocity();
+        m_estate.p = getVirtualAngularVelocity(AXIS_X);
+        m_estate.q = getVirtualAngularVelocity(AXIS_Y);
       }
       else
       {
-        m_estate.p = BasicNavigation::getAngularVelocity(AXIS_X);
-        m_estate.q = BasicNavigation::getAngularVelocity(AXIS_Y);
+        m_estate.p = getAngularVelocity(AXIS_X);
+        m_estate.q = getAngularVelocity(AXIS_Y);
       }
 
-      m_estate.alt = BasicNavigation::getAltitude();
+      m_estate.alt = getAltitude();
 
-      m_estate.depth = BasicNavigation::getDepth();
+      m_estate.depth = getDepth();
       m_estate.w = m_avg_heave->update(m_deriv_heave.update(m_estate.depth));
 
       // Velocity in the navigation frame.
@@ -932,9 +933,9 @@ namespace DUNE
         estate.lat = m_last_lat;
         estate.lon = m_last_lon;
         estate.height = m_last_hae;
-        estate.phi = getEuler(AXIS_X);
-        estate.theta = getEuler(AXIS_Y);
-        estate.psi = getEuler(AXIS_Z);
+        estate.phi = Math::Angles::normalizeRadian(getEuler(AXIS_X));
+        estate.theta = Math::Angles::normalizeRadian(getEuler(AXIS_Y));
+        estate.psi = Math::Angles::normalizeRadian(getEuler(AXIS_Z));
         estate.depth = getDepth();
         m_heading = estate.psi;
         updateEuler(c_wma_filter);
@@ -942,9 +943,9 @@ namespace DUNE
 
         if (gotAngularReadings())
         {
-          m_estate.p = BasicNavigation::getAngularVelocity(AXIS_X);
-          m_estate.q = BasicNavigation::getAngularVelocity(AXIS_Y);
-          m_estate.r = BasicNavigation::getAngularVelocity(AXIS_Z);
+          m_estate.p = getAngularVelocity(AXIS_X);
+          m_estate.q = getAngularVelocity(AXIS_Y);
+          m_estate.r = getAngularVelocity(AXIS_Z);
           updateAngularVelocities(c_wma_filter);
         }
 
@@ -1109,9 +1110,9 @@ namespace DUNE
     {
       // Insert euler angles into row matrix.
       Math::Matrix ea(3,1);
-      ea(0) = getEuler(AXIS_X);
-      ea(1) = getEuler(AXIS_Y);
-      ea(2) = getEuler(AXIS_Z);
+      ea(0) = Math::Angles::normalizeRadian(getEuler(AXIS_X));
+      ea(1) = Math::Angles::normalizeRadian(getEuler(AXIS_Y));
+      ea(2) = Math::Angles::normalizeRadian(getEuler(AXIS_Z));
 
       // Earth rotation vector.
       Math::Matrix we(3,1);

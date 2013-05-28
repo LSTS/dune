@@ -205,7 +205,7 @@ namespace Navigation
           m_kal.setObservation(OUT_LBL, STATE_Y, dy / exp_range);
 
           double k = (m_kal.getObservation() * m_kal.getCovariance() * transpose (m_kal.getObservation()))(0);
-          m_navdata.lbl_rej_level = std::max(BasicNavigation::getLblRejectionValue(exp_range), k);
+          m_navdata.lbl_rej_level = std::max(getLblRejectionValue(exp_range), k);
 
           m_kal.setMeasurementNoise(OUT_LBL, OUT_LBL, m_navdata.lbl_rej_level);
           m_kal.setInnovation(OUT_LBL, range - exp_range);
@@ -229,23 +229,23 @@ namespace Navigation
             return;
 
           // Compute time delta.
-          double tstep = BasicNavigation::getTimeStep();
+          double tstep = getTimeStep();
           // Check if we have a valid time delta.
           if (tstep < 0)
             return;
 
-          m_heading += Angles::minSignedAngle(m_heading, BasicNavigation::getEuler(AXIS_Z));
+          m_heading += Angles::minSignedAngle(m_heading, Angles::normalizeRadian(getEuler(AXIS_Z)));
           m_estate.psi = Angles::normalizeRadian(m_heading);
 
           // Update estimated state.
-          BasicNavigation::onDispatchNavigation();
+          onDispatchNavigation();
 
           // Update Euler Angles derivatives when
           // Angular Velocity readings are not available.
           if (!gotAngularReadings())
-            m_estate.r = BasicNavigation::getVirtualAngularVelocity(AXIS_Z);
+            m_estate.r = getVirtualAngularVelocity(AXIS_Z);
           else
-            m_estate.r = BasicNavigation::getAngularVelocity(AXIS_Z);
+            m_estate.r = getAngularVelocity(AXIS_Z);
 
           // Some (experimental) sanity checks. This is not standard EKF!
           // If any of this conditions is met, some kind of warning should be raised.
@@ -275,7 +275,7 @@ namespace Navigation
           // Run EKF prediction.
           m_kal.predict();
 
-          BasicNavigation::checkUncertainty();
+          checkUncertainty();
 
           // Fill and dispatch data.
           m_estate.u = m_rpm * m_kal.getState(STATE_K) * std::cos(m_estate.theta);
@@ -298,8 +298,8 @@ namespace Navigation
           m_ewvel.y = m_kal.getState(STATE_WY);
           m_ewvel.z = 0;
 
-          BasicNavigation::reportToBus();
-          BasicNavigation::updateBuffers(c_wma_filter);
+          reportToBus();
+          updateBuffers(c_wma_filter);
         }
       };
     }

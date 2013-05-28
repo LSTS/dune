@@ -342,7 +342,7 @@ namespace Navigation
             m_sum_euler_inc = false;
 
             m_aligned = false;
-            m_agvel_eid = BasicNavigation::getAhrsId();
+            m_agvel_eid = getAhrsId();
             debug("deactivating IMU");
 
             // No heading offset estimation without IMU.
@@ -440,7 +440,7 @@ namespace Navigation
           Matrix P(2, 2, 0.0);
           P = m_kal.getCovariance(STATE_X, STATE_Y, STATE_X, STATE_Y);
 
-          double k = BasicNavigation::getLblRejectionValue(exp_range);
+          double k = getLblRejectionValue(exp_range);
           double R = std::max(k, (H * P * transpose (H))(0));
 
           double d = range - exp_range;
@@ -501,7 +501,7 @@ namespace Navigation
             return;
 
           // Compute time delta.
-          double tstep = BasicNavigation::getTimeStep();
+          double tstep = getTimeStep();
           // Check if we have a valid time delta.
           if (tstep < 0)
             return;
@@ -535,21 +535,21 @@ namespace Navigation
           // Euler Angles update modes.
           if (m_int_yaw_rate)
           {
-            m_heading += tstep * BasicNavigation::getHeadingRate();
-            m_kal.setOutput(OUT_R, BasicNavigation::getAngularVelocity(AXIS_Z));
+            m_heading += tstep * getHeadingRate();
+            m_kal.setOutput(OUT_R, getAngularVelocity(AXIS_Z));
           }
           else if (m_sum_euler_inc)
           {
             // Heading is incremented in consume function.
-            float ts = BasicNavigation::getEulerDeltaTimestep();
+            float ts = getEulerDeltaTimestep();
 
             if (ts > 0.0)
-              m_kal.setOutput(OUT_R, BasicNavigation::getEulerDelta(AXIS_Z) / ts);
+              m_kal.setOutput(OUT_R, getEulerDelta(AXIS_Z) / ts);
           }
           else
           {
-            m_heading += Angles::minSignedAngle(m_heading, BasicNavigation::getEuler(AXIS_Z));
-            m_kal.setOutput(OUT_R, BasicNavigation::getAngularVelocity(AXIS_Z));
+            m_heading += Angles::minSignedAngle(m_heading, Angles::normalizeRadian(getEuler(AXIS_Z)));
+            m_kal.setOutput(OUT_R, getAngularVelocity(AXIS_Z));
           }
 
           // Check alignment threshold index.
@@ -608,13 +608,13 @@ namespace Navigation
           // Extended Kalman Filter update with no threshold defined.
           m_kal.update(0.0);
 
-          BasicNavigation::checkUncertainty();
+          checkUncertainty();
 
           sendToBus();
-          BasicNavigation::reportToBus();
+          reportToBus();
 
           // Reset variables.
-          BasicNavigation::updateBuffers(c_wma_filter);
+          updateBuffers(c_wma_filter);
           m_gps_reading = false;
           m_valid_gv = false;
           m_valid_wv = false;
@@ -627,8 +627,8 @@ namespace Navigation
         {
           A.fill(0.0);
 
-          double phi = getEuler(AXIS_X);
-          double theta = getEuler(AXIS_Y);
+          double phi = Angles::normalizeRadian(getEuler(AXIS_X));
+          double theta = Angles::normalizeRadian(getEuler(AXIS_Y));
 
           A(STATE_PSI, STATE_R) = 1.0;
 
@@ -668,12 +668,12 @@ namespace Navigation
         {
           m_estate.psi = Angles::normalizeRadian(m_kal.getState(STATE_PSI));
 
-          BasicNavigation::onDispatchNavigation();
+          onDispatchNavigation();
 
           // Update Euler Angles derivatives when
           // Angular Velocity readings are not available.
           if (!gotAngularReadings())
-            m_estate.r = BasicNavigation::getVirtualAngularVelocity(AXIS_Z);
+            m_estate.r = getVirtualAngularVelocity(AXIS_Z);
           else
             m_estate.r = m_kal.getState(STATE_R);
 
