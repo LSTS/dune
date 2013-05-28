@@ -667,10 +667,8 @@ namespace Navigation
         sendToBus(void)
         {
           m_estate.psi = Angles::normalizeRadian(m_kal.getState(STATE_PSI));
-
-          onDispatchNavigation();
-
           m_estate.r = m_kal.getState(STATE_R);
+          onDispatchNavigation();
 
           if (!m_args.use_rpm)
           {

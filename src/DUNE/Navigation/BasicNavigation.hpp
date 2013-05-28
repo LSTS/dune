@@ -202,10 +202,7 @@ namespace DUNE
       inline double
       getDepth(void) const
       {
-        if (m_depth_readings)
-          return (m_depth_bfr / m_depth_readings);
-        else
-          return 0;
+        return m_depth_readings ? (m_depth_bfr / m_depth_readings) : 0.0;
       }
 
       //! Get vehicle altitude.
@@ -215,7 +212,8 @@ namespace DUNE
       getAltitude(void)
       {
         if (m_time_without_bdist.overflow())
-          m_altitude = -1;
+          m_altitude = -1.0;
+
         return m_altitude;
       }
 
@@ -224,10 +222,7 @@ namespace DUNE
       inline double
       getAcceleration(unsigned axis) const
       {
-        if (!m_accel_readings)
-          return 0;
-
-        return m_accel_bfr[axis] / m_accel_readings;
+        return m_accel_readings ? (m_accel_bfr[axis] / m_accel_readings) : 0.0;
       }
 
       //! Get angular velocity value along a specific axis.
@@ -235,10 +230,7 @@ namespace DUNE
       inline double
       getAngularVelocity(unsigned axis) const
       {
-        if (!m_angular_readings)
-          return 0;
-
-        return m_agvel_bfr[axis] / m_angular_readings;
+        return m_angular_readings ? (m_agvel_bfr[axis] / m_angular_readings) : 0.0;
       }
 
       //! Get heading rate value.
@@ -266,10 +258,7 @@ namespace DUNE
       inline double
       getEuler(unsigned axis) const
       {
-        if (!m_euler_readings)
-          return 0;
-
-        return m_euler_bfr[axis] / m_euler_readings;
+        return m_euler_readings ? (m_euler_bfr[axis] / m_euler_readings) : 0.0;
       }
 
       //! Get Euler Angles increment value along a specific axis.
@@ -277,10 +266,7 @@ namespace DUNE
       inline double
       getEulerDelta(unsigned axis) const
       {
-        if (!m_edelta_readings)
-          return 0;
-
-        return m_edelta_bfr[axis] / m_edelta_readings;
+        return m_edelta_readings ? (m_edelta_bfr[axis] / m_edelta_readings) : 0.0;
       }
 
       //! Get Euler Angles increment value along a specific axis.

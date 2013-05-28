@@ -264,7 +264,6 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::Acceleration* msg)
     {
-      // Acceleration and AngularVelocity share same sensor entity label id.
       if (msg->getSourceEntity() != m_accel_eid)
         return;
 
@@ -343,14 +342,14 @@ namespace DUNE
       float value = msg->value;
 
       if (m_alt_attitude_compensation)
-        value = value * std::cos(getEuler(AXIS_X)) * std::cos(getEuler(AXIS_Y));
+        value *= std::cos(getEuler(AXIS_X)) * std::cos(getEuler(AXIS_Y));
 
       // Initialize altitude.
-      if (m_altitude == -1)
+      if (m_altitude < 0.0)
         m_altitude = value;
       else
         // Exponential moving average.
-        m_altitude = m_altitude + m_alt_ema_gain * (value - m_altitude);
+        m_altitude += m_alt_ema_gain * (value - m_altitude);
     }
 
     void
@@ -456,8 +455,8 @@ namespace DUNE
       }
 
       // Not sure about altitude.
-      double x = 0;
-      double y = 0;
+      double x = 0.0;
+      double y = 0.0;
       Coordinates::WGS84::displacement(m_origin->lat, m_origin->lon, m_origin->height,
                                        msg->lat, msg->lon, msg->height,
                                        &x, &y, &m_last_z);
@@ -541,7 +540,7 @@ namespace DUNE
       {
         m_dvl_rej.reason = IMC::DvlRejection::RR_ABS_THRESHOLD_X;
         m_dvl_rej.value = std::abs(m_gvel.x);
-        m_dvl_rej.timestep = 0;
+        m_dvl_rej.timestep = 0.0;
         dispatch(m_dvl_rej, DF_KEEP_TIME);
         return;
       }
@@ -550,7 +549,7 @@ namespace DUNE
       {
         m_dvl_rej.reason = IMC::DvlRejection::RR_ABS_THRESHOLD_Y;
         m_dvl_rej.value = std::abs(m_gvel.y);
-        m_dvl_rej.timestep = 0;
+        m_dvl_rej.timestep = 0.0;
         dispatch(m_dvl_rej, DF_KEEP_TIME);
         return;
       }
@@ -682,7 +681,7 @@ namespace DUNE
       {
         m_dvl_rej.reason = IMC::DvlRejection::RR_ABS_THRESHOLD_X;
         m_dvl_rej.value = std::abs(m_wvel.x);
-        m_dvl_rej.timestep = 0;
+        m_dvl_rej.timestep = 0.0;
         dispatch(m_dvl_rej, DF_KEEP_TIME);
         return;
       }
@@ -691,7 +690,7 @@ namespace DUNE
       {
         m_dvl_rej.reason = IMC::DvlRejection::RR_ABS_THRESHOLD_Y;
         m_dvl_rej.value = std::abs(m_wvel.y);
-        m_dvl_rej.timestep = 0;
+        m_dvl_rej.timestep = 0.0;
         dispatch(m_dvl_rej, DF_KEEP_TIME);
         return;
       }
@@ -724,12 +723,12 @@ namespace DUNE
     void
     BasicNavigation::reset(void)
     {
-      m_last_lat = 0;
-      m_last_lon = 0;
-      m_last_hae = 0;
-      m_last_z = 0;
+      m_last_lat = 0.0;
+      m_last_lon = 0.0;
+      m_last_hae = 0.0;
+      m_last_z = 0.0;
 
-      m_gps_sog = 0;
+      m_gps_sog = 0.0;
       m_heading = 0.0;
       m_phi_offset = 0.0;
       m_theta_offset = 0.0;
@@ -842,9 +841,7 @@ namespace DUNE
       m_estate.theta = Math::Angles::normalizeRadian(getEuler(AXIS_Y));
       m_estate.p = getAngularVelocity(AXIS_X);
       m_estate.q = getAngularVelocity(AXIS_Y);
-
       m_estate.alt = getAltitude();
-
       m_estate.depth = getDepth();
       m_estate.w = m_avg_heave->update(m_deriv_heave.update(m_estate.depth));
 
@@ -953,10 +950,10 @@ namespace DUNE
     void
     BasicNavigation::resetAcceleration(void)
     {
-      m_accel_bfr[AXIS_X] = 0;
-      m_accel_bfr[AXIS_Y] = 0;
-      m_accel_bfr[AXIS_Z] = 0;
-      m_accel_readings = 0;
+      m_accel_bfr[AXIS_X] = 0.0;
+      m_accel_bfr[AXIS_Y] = 0.0;
+      m_accel_bfr[AXIS_Z] = 0.0;
+      m_accel_readings = 0.0;
     }
 
     void
@@ -971,8 +968,8 @@ namespace DUNE
     void
     BasicNavigation::resetDepth(void)
     {
-      m_depth_bfr = 0;
-      m_depth_readings = 0;
+      m_depth_bfr = 0.0;
+      m_depth_readings = 0.0;
       m_depth_offset = 0.0;
     }
 

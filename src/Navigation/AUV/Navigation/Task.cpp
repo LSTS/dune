@@ -236,11 +236,10 @@ namespace Navigation
 
           m_heading += Angles::minSignedAngle(m_heading, Angles::normalizeRadian(getEuler(AXIS_Z)));
           m_estate.psi = Angles::normalizeRadian(m_heading);
+          m_estate.r = getAngularVelocity(AXIS_Z);
 
           // Update estimated state.
           onDispatchNavigation();
-
-          m_estate.r = getAngularVelocity(AXIS_Z);
 
           // Some (experimental) sanity checks. This is not standard EKF!
           // If any of this conditions is met, some kind of warning should be raised.
