@@ -164,17 +164,17 @@ namespace DUNE
       .description("Exponential moving average filter gain used in altitude");
 
       // Do not use the declination offset when simulating.
-      m_use_declination = (m_ctx.profiles.isSelected("Simulation") == true);
+      m_use_declination = !m_ctx.profiles.isSelected("Simulation");
       m_declination_defined = false;
-      std::memset(m_beacons, 0, sizeof(m_beacons));
-      m_num_beacons = 0;
-      m_edelta_ts = 0.0;
       m_dead_reckoning = false;
       m_int_yaw_rate = false;
       m_sum_euler_inc = false;
       m_aligned = false;
-      m_z_ref = 0;
       m_diving = false;
+      std::memset(m_beacons, 0, sizeof(m_beacons));
+      m_num_beacons = 0;
+      m_edelta_ts = 0.0;
+      m_z_ref = 0.0;
       m_rpm = 0;
       m_virtual_avel.resizeAndFill(3, 1, 0.0);
 
