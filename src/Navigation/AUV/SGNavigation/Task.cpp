@@ -518,10 +518,13 @@ namespace Navigation
           resetMatrixA(ax, x);
           resetMatrixA(ap, x);
 
-          ap(STATE_X, STATE_PSI) = (- x(STATE_U) * std::sin(x(STATE_PSI))
-                                    - x(STATE_V) * std::cos(x(STATE_PSI)));
-          ap(STATE_Y, STATE_PSI) = (x(STATE_U) * std::cos(x(STATE_PSI))
-                                    - x(STATE_V) * std::sin(x(STATE_PSI)));
+          if (!m_diving)
+          {
+            ap(STATE_X, STATE_PSI) = (- x(STATE_U) * std::sin(x(STATE_PSI))
+                                      - x(STATE_V) * std::cos(x(STATE_PSI)));
+            ap(STATE_Y, STATE_PSI) = (x(STATE_U) * std::cos(x(STATE_PSI))
+                                      - x(STATE_V) * std::sin(x(STATE_PSI)));
+          }
 
           m_kal.setCovarianceTransition((ap * tstep).expmts());
           m_kal.setStateTransition((ax * tstep).expmts());

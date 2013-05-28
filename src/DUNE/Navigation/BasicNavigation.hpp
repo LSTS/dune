@@ -323,7 +323,10 @@ namespace DUNE
       inline double
       getEulerDelta(unsigned axis) const
       {
-        return m_euler_delta[axis];
+        if (!m_edelta_readings)
+          return 0;
+
+        return m_edelta_bfr[axis] / m_edelta_readings;
       }
 
       //! Get Euler Angles increment value along a specific axis.
@@ -331,7 +334,7 @@ namespace DUNE
       inline float
       getEulerDeltaTimestep(void) const
       {
-        return m_euler_delta_ts;
+        return m_edelta_ts;
       }
 
       //! Number of depth readings since last cycle plus constant filter gain.
@@ -408,6 +411,17 @@ namespace DUNE
           m_euler_bfr[i] = getEuler(i) * filter;
 
         m_euler_readings = filter;
+      }
+
+      //! Routine to clear euler angles delta buffer.
+      //! @param[in] filter filter value.
+      inline void
+      updateEulerDelta(float filter)
+      {
+        for (unsigned i = 0; i < 3; ++i)
+          m_edelta_bfr[i] =  getEulerDelta(i) * filter;
+
+        m_edelta_readings = filter;
       }
 
       //! Routine to clear angular velocities buffer.
@@ -516,6 +530,10 @@ namespace DUNE
       void
       resetEulerAngles(void);
 
+      //! Routine to reset euler angles delta buffers.
+      void
+      resetEulerAnglesDelta(void);
+
       //! Routine to check navigation uncertainty.
       void
       checkUncertainty(void);
@@ -577,6 +595,8 @@ namespace DUNE
       bool m_int_yaw_rate;
       //! Vehicle is aligned.
       bool m_aligned;
+      //! Vehicle is diving.
+      bool m_diving;
       //! Angular velocity message entity id.
       unsigned m_agvel_eid;
       //! Accelaration message entity id.
@@ -697,6 +717,7 @@ namespace DUNE
       //! Sum of weights of sensor readings between prediction cycles.
       float m_depth_readings;
       float m_euler_readings;
+      float m_edelta_readings;
       float m_angular_readings;
       float m_accel_readings;
       //! "Buffers" for sensors readings.
@@ -705,9 +726,9 @@ namespace DUNE
       double m_agvel_bfr[3];
       double m_accel_bfr[3];
       //! Euler Angles Delta.
-      double m_euler_delta[3];
+      double m_edelta_bfr[3];
       //! Euler Angles Delta timestep.
-      float m_euler_delta_ts;
+      float m_edelta_ts;
       //! Moving Average for roll angle.
       Math::MovingAverage<double>* m_avg_phi;
       //! Moving Average for pitch angle.
@@ -726,12 +747,6 @@ namespace DUNE
       unsigned m_avg_heave_samples;
       //! Z reference.
       double m_z_ref;
-      //! Reject GPS fixes based on desired depth.
-      bool m_reject_gps;
-      //! Received DesiredZ message to start diving.
-      bool m_diving;
-      //! Z units for this maneuver
-      IMC::ZUnits m_zunits;
       //! Entity Ids.
       unsigned m_depth_eid;
       unsigned m_ahrs_eid;
@@ -748,8 +763,6 @@ namespace DUNE
       uint8_t m_gvel_val_bits;
       //! DVL water velocity validation bits.
       uint8_t m_wvel_val_bits;
-      //! GPS validity bits.
-      uint16_t m_gps_val_bits;
       //! Euler Angles offset.
       double m_phi_offset;
       double m_theta_offset;

@@ -68,6 +68,8 @@ namespace Sensors
 
     struct Task: public Tasks::Task
     {
+      //! Buffer size.
+      static const unsigned c_buffer_size = 256 * 1024;
       //! Data socket.
       TCPSocket* m_sock_dat;
       //! I/O multiplexing of data socket.
@@ -171,7 +173,7 @@ namespace Sensors
         .defaultValue("Sidescan")
         .description("Name of sidescan's power channel");
 
-        m_bfr.resize(256 * 1024);
+        m_bfr.resize(c_buffer_size);
 
         m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
 

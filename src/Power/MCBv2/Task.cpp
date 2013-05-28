@@ -72,7 +72,8 @@ namespace Power
       CMD_BLIGHT = 0x02,
       CMD_PARAMS = 0x03,
       CMD_SAVE = 0x04,
-      CMD_HALT = 0x05
+      CMD_HALT = 0x05,
+      CMD_LCD_LINE = 0x06
     };
 
     //! Power Bits.
@@ -124,6 +125,10 @@ namespace Power
       std::string pwr_names[c_pwrs_count];
       //! Initial power channels states.
       unsigned pwr_states[c_pwrs_count];
+      //! True to automatically upgrade firmware.
+      bool flash_upgrade;
+      //! True to drived LCD from MCB.
+      bool lcd;
     };
 
     struct Task: public Tasks::Task
@@ -199,7 +204,16 @@ namespace Power
           .defaultValue("0");
         }
 
+        param("Firmware Upgrade", m_args.flash_upgrade)
+        .defaultValue("false")
+        .description("Automatically upgrade firmware");
+
+        param("Drive LCD", m_args.lcd)
+        .defaultValue("false")
+        .description("LCD is controlled by MCB");
+
         // Register consumers.
+        bind<IMC::LcdControl>(this);
         bind<IMC::PowerChannelControl>(this);
         bind<IMC::QueryPowerChannelState>(this);
       }
@@ -410,6 +424,28 @@ namespace Power
       }
 
       void
+      writeLCD(unsigned line, const uint8_t* data, unsigned data_len)
+      {
+        std::vector<uint8_t> cmd;
+        cmd.push_back(line);
+        cmd.insert(cmd.begin() + 1, data, data + data_len);
+        m_proto.sendCommand(CMD_LCD_LINE, &cmd[0], cmd.size());
+        waitForCommand(CMD_LCD_LINE);
+      }
+
+      void
+      consume(const IMC::LcdControl* msg)
+      {
+        if (!m_args.lcd)
+          return;
+
+        if (msg->op == IMC::LcdControl::OP_WRITE0)
+          writeLCD(0, (const uint8_t*)&msg->text[0], msg->text.size());
+        else if (msg->op == IMC::LcdControl::OP_WRITE1)
+          writeLCD(1, (const uint8_t*)&msg->text[0], msg->text.size());
+      }
+
+      void
       consume(const IMC::PowerChannelControl* msg)
       {
         if (m_halt)
@@ -559,6 +595,9 @@ namespace Power
       void
       flashFirmware(const std::string& file)
       {
+        if (!m_args.flash_upgrade)
+          return;
+
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
         inf(DTR("updating firmware"));
         LUCL::BootLoader lucb(m_proto, true);

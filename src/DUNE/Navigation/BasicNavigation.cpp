@@ -168,6 +168,7 @@ namespace DUNE
       m_declination_defined = false;
       std::memset(m_beacons, 0, sizeof(m_beacons));
       m_num_beacons = 0;
+      m_edelta_ts = 0.0;
       m_dead_reckoning = false;
       m_int_yaw_rate = false;
       m_sum_euler_inc = false;
@@ -176,11 +177,6 @@ namespace DUNE
       m_diving = false;
       m_rpm = 0;
       m_virtual_avel.resizeAndFill(3, 1, 0.0);
-      m_gps_val_bits = 0;
-
-      for (unsigned i = 0; i < 3; ++i)
-        m_euler_delta[i] = 0.0;
-      m_euler_delta_ts = 0.0;
 
       m_gvel_val_bits = IMC::GroundVelocity::VAL_VEL_X
                         | IMC::GroundVelocity::VAL_VEL_Y
@@ -344,10 +340,7 @@ namespace DUNE
       }
 
       if (std::abs(m_z_ref) < c_z_tol)
-      {
         m_diving = false;
-        m_reject_gps = false;
-      }
     }
 
     void
@@ -406,10 +399,11 @@ namespace DUNE
       if (msg->getSourceEntity() != m_imu_eid)
         return;
 
-      m_euler_delta[AXIS_X] = msg->x;
-      m_euler_delta[AXIS_Y] = msg->y;
-      m_euler_delta[AXIS_Z] = msg->z;
-      m_euler_delta_ts = msg->timestep;
+      m_edelta_bfr[AXIS_X] += msg->x;
+      m_edelta_bfr[AXIS_Y] += msg->y;
+      m_edelta_bfr[AXIS_Z] += msg->z;
+      ++m_edelta_readings;
+      m_edelta_ts = msg->timestep;
 
       // Increment heading.
       if (m_sum_euler_inc)
@@ -426,41 +420,6 @@ namespace DUNE
       // Speed over ground.
       if (msg->validity & IMC::GpsFix::GFV_VALID_SOG)
         m_gps_sog = msg->sog;
-
-      // After GPS timeout, stop rejecting GPS by default.
-      if (m_time_without_gps.overflow())
-        m_reject_gps = false;
-
-      // Rejecting GPS.
-      if (m_reject_gps)
-      {
-        m_gps_rej.reason = IMC::GpsFixRejection::RR_LOST_VAL_BIT;
-        dispatch(m_gps_rej, DF_KEEP_TIME);
-        return;
-      }
-
-      // Dead Reckoning mode
-      // this means we need very accurate navigation so GPS fixes
-      // will be rejected if any validaty bit is lost between
-      // consecutive GPS fixes.
-      if (m_dead_reckoning && m_diving)
-      {
-        // reinitialize if we exceed GPS timeout.
-        if (m_time_without_gps.overflow())
-          m_gps_val_bits = msg->validity;
-        else
-          m_gps_val_bits |= msg->validity;
-
-        // if different, at least one previous valid bit is now invalid.
-        if (m_gps_val_bits != msg->validity)
-        {
-          // Start rejecting GPS fixes.
-          m_reject_gps = true;
-          m_gps_rej.reason = IMC::GpsFixRejection::RR_LOST_VAL_BIT;
-          dispatch(m_gps_rej, DF_KEEP_TIME);
-          return;
-        }
-      }
 
       // Check fix validity.
       if ((msg->validity & IMC::GpsFix::GFV_VALID_POS) == 0)
@@ -684,14 +643,7 @@ namespace DUNE
       double dz = getDepth() - m_beacons[beacon]->depth;
       double exp_range = std::sqrt(dx * dx + dy * dy + dz * dz);
 
-      if (!exp_range)
-      {
-        // Singular point (don't use).
-        m_lbl_ac.acceptance = IMC::LblRangeAcceptance::RR_SINGULAR;
-        dispatch(m_lbl_ac, DF_KEEP_TIME);
-      }
-      else
-        runKalmanLBL((int)beacon, range, dx, dy, exp_range);
+      runKalmanLBL((int)beacon, range, dx, dy, exp_range);
     }
 
     void
@@ -797,7 +749,6 @@ namespace DUNE
       m_theta_offset = 0.0;
       m_altitude = -1;
 
-      m_reject_gps = false;
       m_lbl_log_beacons = false;
 
       m_navstate = SM_STATE_IDLE;
@@ -1026,6 +977,7 @@ namespace DUNE
       updateAngularVelocities(filter);
       updateDepth(filter);
       updateEuler(filter);
+      updateEulerDelta(filter);
     }
 
     void
@@ -1064,12 +1016,22 @@ namespace DUNE
     }
 
     void
+    BasicNavigation::resetEulerAnglesDelta(void)
+    {
+      m_edelta_bfr[AXIS_X] = 0.0;
+      m_edelta_bfr[AXIS_Y] = 0.0;
+      m_edelta_bfr[AXIS_Z] = 0.0;
+      m_edelta_readings = 0.0;
+    }
+
+    void
     BasicNavigation::resetBuffers(void)
     {
       resetAcceleration();
       resetAngularVelocity();
       resetDepth();
       resetEulerAngles();
+      resetEulerAnglesDelta();
     }
 
     void
