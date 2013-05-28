@@ -50,9 +50,6 @@ namespace DUNE
       Tasks::Periodic(name, ctx),
       m_active(false),
       m_origin(NULL),
-      m_avg_phi(NULL),
-      m_avg_theta(NULL),
-      m_avg_psi(NULL),
       m_avg_heave(NULL)
     {
       // Declare configuration parameters.
@@ -132,10 +129,6 @@ namespace DUNE
       .maximumValue("20.0")
       .description("Maximum Horizontal Accuracy Estimate value accepted for GPS fixes");
 
-      param("Euler Angles Moving Average Samples", m_avg_euler_samples)
-      .defaultValue("10")
-      .description("Number of moving average samples to smooth euler angles");
-
       param("Heave Moving Average Samples", m_avg_heave_samples)
       .defaultValue("40")
       .description("Number of moving average samples to smooth heave");
@@ -176,7 +169,6 @@ namespace DUNE
       m_edelta_ts = 0.0;
       m_z_ref = 0.0;
       m_rpm = 0;
-      m_virtual_avel.resizeAndFill(3, 1, 0.0);
 
       m_gvel_val_bits = IMC::GroundVelocity::VAL_VEL_X
                         | IMC::GroundVelocity::VAL_VEL_Y
@@ -225,11 +217,7 @@ namespace DUNE
     void
     BasicNavigation::onResourceInitialization(void)
     {
-      m_avg_phi = new Math::MovingAverage<double>(m_avg_euler_samples);
-      m_avg_theta = new Math::MovingAverage<double>(m_avg_euler_samples);
-      m_avg_psi = new Math::MovingAverage<double>(m_avg_euler_samples);
       m_avg_heave = new Math::MovingAverage<double>(m_avg_heave_samples);
-
       reset();
     }
 
@@ -267,9 +255,6 @@ namespace DUNE
     BasicNavigation::onResourceRelease(void)
     {
       Memory::clear(m_origin);
-      Memory::clear(m_avg_phi);
-      Memory::clear(m_avg_theta);
-      Memory::clear(m_avg_psi);
       Memory::clear(m_avg_heave);
 
       for (unsigned i = 0; i < c_max_beacons; ++i)
@@ -855,24 +840,8 @@ namespace DUNE
       m_estate.z = m_last_z + getDepth();
       m_estate.phi = Math::Angles::normalizeRadian(getEuler(AXIS_X));
       m_estate.theta = Math::Angles::normalizeRadian(getEuler(AXIS_Y));
-
-      // Update Euler Angles derivatives when
-      // Angular Velocity readings are not available.
-      if (!gotAngularReadings())
-      {
-        m_deriv_roll.update(m_avg_phi->update(m_estate.phi));
-        m_deriv_pitch.update(m_avg_theta->update(m_estate.theta));
-        m_deriv_yaw.update(m_avg_psi->update(m_estate.psi));
-
-        produceAngularVelocity();
-        m_estate.p = getVirtualAngularVelocity(AXIS_X);
-        m_estate.q = getVirtualAngularVelocity(AXIS_Y);
-      }
-      else
-      {
-        m_estate.p = getAngularVelocity(AXIS_X);
-        m_estate.q = getAngularVelocity(AXIS_Y);
-      }
+      m_estate.p = getAngularVelocity(AXIS_X);
+      m_estate.q = getAngularVelocity(AXIS_Y);
 
       m_estate.alt = getAltitude();
 

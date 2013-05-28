@@ -670,12 +670,7 @@ namespace Navigation
 
           onDispatchNavigation();
 
-          // Update Euler Angles derivatives when
-          // Angular Velocity readings are not available.
-          if (!gotAngularReadings())
-            m_estate.r = getVirtualAngularVelocity(AXIS_Z);
-          else
-            m_estate.r = m_kal.getState(STATE_R);
+          m_estate.r = m_kal.getState(STATE_R);
 
           if (!m_args.use_rpm)
           {

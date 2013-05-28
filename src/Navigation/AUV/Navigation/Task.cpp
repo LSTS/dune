@@ -240,12 +240,7 @@ namespace Navigation
           // Update estimated state.
           onDispatchNavigation();
 
-          // Update Euler Angles derivatives when
-          // Angular Velocity readings are not available.
-          if (!gotAngularReadings())
-            m_estate.r = getVirtualAngularVelocity(AXIS_Z);
-          else
-            m_estate.r = getAngularVelocity(AXIS_Z);
+          m_estate.r = getAngularVelocity(AXIS_Z);
 
           // Some (experimental) sanity checks. This is not standard EKF!
           // If any of this conditions is met, some kind of warning should be raised.

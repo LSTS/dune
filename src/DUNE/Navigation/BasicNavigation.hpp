@@ -241,52 +241,6 @@ namespace DUNE
         return m_agvel_bfr[axis] / m_angular_readings;
       }
 
-      //! Produce virtual angular velocities.
-      inline void
-      produceAngularVelocity(void)
-      {
-        if (!gotAngularReadings())
-        {
-          if (!gotEulerReadings())
-            return;
-
-          double pitch = getEuler(AXIS_Y);
-          double cp = std::cos(pitch);
-
-          // Avoid singularity
-          if ((1e-2 - std::abs(cp)) > 0.0)
-            return;
-
-          double roll = getEuler(AXIS_X);
-          double sr = std::sin(roll);
-          double cr = std::cos(roll);
-          double tp = std::tan(pitch);
-
-          double j2_elements[9] = {1, sr * tp, cr * tp,
-                                   0, cr, -sr,
-                                   0, sr / cp, cr / cp};
-
-          Math::Matrix j2 = Math::Matrix(j2_elements, 3, 3);
-
-          double euler[3] = {m_deriv_roll.check(),
-                             m_deriv_pitch.check(),
-                             m_deriv_yaw.check()};
-
-          Math::Matrix ea = Math::Matrix(euler, 3, 1);
-
-          m_virtual_avel = inverse(j2) * ea;
-        }
-      }
-
-      //! Get virtual angular velocity
-      //! @param[in] axis axis of rotation.
-      //! @return angular velocity value.
-      inline double
-      getVirtualAngularVelocity(unsigned axis)
-      {
-        return Math::trimValue(m_virtual_avel(axis), - c_max_av, c_max_av);
-      }
-
       //! Get heading rate value.
       //! @return heading rate.
       inline double
@@ -613,12 +567,6 @@ namespace DUNE
       bool m_valid_gv;
       //! Received valid water velocity message.
       bool m_valid_wv;
-      //! Derivative for roll.
-      Math::Derivative<double> m_deriv_roll;
-      //! Derivative for pitch.
-      Math::Derivative<double> m_deriv_pitch;
-      //! Derivative for yaw.
-      Math::Derivative<double> m_deriv_yaw;
       //! Derivative for heave.
       Math::Derivative<double> m_deriv_heave;
 
@@ -729,16 +677,6 @@ namespace DUNE
       double m_edelta_bfr[3];
       //! Euler Angles Delta timestep.
       float m_edelta_ts;
-      //! Moving Average for roll angle.
-      Math::MovingAverage<double>* m_avg_phi;
-      //! Moving Average for pitch angle.
-      Math::MovingAverage<double>* m_avg_theta;
-      //! Moving Average for heading angle.
-      Math::MovingAverage<double>* m_avg_psi;
-      //! Number of samples to average euler angles.
-      unsigned m_avg_euler_samples;
-      //! Virtual Angular Velocities.
-      Math::Matrix m_virtual_avel;
       //! Depth offset value.
       float m_depth_offset;
       //! Moving Average for heave.
