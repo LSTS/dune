@@ -67,41 +67,35 @@ namespace Maneuver
       //! Task arguments.
       Arguments m_args;
 
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx)
+      Task(const std::string& name, Tasks::Context& ctx) :
+          DUNE::Maneuvers::Maneuver(name, ctx)
       {
-        param("Loitering Radius", m_args.loitering_radius)
-        .defaultValue("7.5")
-        .units(Units::Meter).
-        description("Radius of loitering circle after arriving at destination");
+        param("Loitering Radius", m_args.loitering_radius).defaultValue("7.5").units(
+            Units::Meter).description(
+            "Radius of loitering circle after arriving at destination");
 
-        param("Horizontal Tolerance", m_args.horizontal_tolerance)
-        .defaultValue("15.0")
-        .units(Units::Meter)
-        .description("Minimum distance required to consider that the vehicle has arrived at the reference (XY)");
+        param("Horizontal Tolerance", m_args.horizontal_tolerance).defaultValue(
+            "15.0").units(Units::Meter).description(
+            "Minimum distance required to consider that the vehicle has arrived at the reference (XY)");
 
-        param("Vertical Tolerance", m_args.vertical_tolerance)
-        .defaultValue("2.0")
-        .units(Units::Meter)
-        .description("Minimum distance required to consider that the vehicle has arrived at the reference (Z)");
+        param("Vertical Tolerance", m_args.vertical_tolerance).defaultValue(
+            "2.0").units(Units::Meter).description(
+            "Minimum distance required to consider that the vehicle has arrived at the reference (Z)");
 
-        param("Default Speed", m_args.default_speed)
-        .defaultValue("50")
-        .description("Speed to use in case no speed is given by reference source.");
+        param("Default Speed", m_args.default_speed).defaultValue("50").description(
+            "Speed to use in case no speed is given by reference source.");
 
-        param("Default Speed Units", m_args.default_speed_units)
-        .defaultValue("%")
-        .description("Units to use for default speed (one of 'm/s', 'rpm' or '%').");
+        param("Default Speed Units", m_args.default_speed_units).defaultValue(
+            "%").description(
+            "Units to use for default speed (one of 'm/s', 'rpm' or '%').");
 
-        param("Default Z", m_args.default_z)
-        .defaultValue("0")
-        .units(Units::Meter)
-        .description("Default z when no vertical reference is given.");
+        param("Default Z", m_args.default_z).defaultValue("0").units(
+            Units::Meter).description(
+            "Default z when no vertical reference is given.");
 
-        param("Default Z Units", m_args.default_z_units)
-        .defaultValue("DEPTH")
-        .units(Units::Meter)
-        .description("Units to use for default z reference (one of 'DEPTH', 'ALTITUDE' or 'HEIGHT')");
+        param("Default Z Units", m_args.default_z_units).defaultValue("DEPTH").units(
+            Units::Meter).description(
+            "Units to use for default z reference (one of 'DEPTH', 'ALTITUDE' or 'HEIGHT')");
 
         m_got_reference = false;
         m_moving = false;
@@ -150,7 +144,7 @@ namespace Maneuver
           const IMC::DesiredZ *z2 = msg2->z.get();
 
           if (!z1->fieldsEqual(*z2))
-              return false;
+            return false;
         }
 
         if (msg1->speed.isNull() != msg2->speed.isNull())
@@ -258,14 +252,17 @@ namespace Maneuver
       }
 
       void
-      guide(const IMC::PathControlState* pcs, const IMC::Reference* ref, const IMC::EstimatedState* state)
+      guide(const IMC::PathControlState* pcs, const IMC::Reference* ref,
+          const IMC::EstimatedState* state)
       {
 
-    	  // start building the DesiredPath message to be commanded
+        // start building the DesiredPath message to be commanded
         IMC::DesiredPath desired_path;
         double curlat = state->lat;
         double curlon = state->lon;
-        bool near_ref = (pcs == NULL) ? false : (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
+        bool near_ref =
+            (pcs == NULL) ? false :
+                (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
 
         WGS84::displace(state->x, state->y, &curlat, &curlon);
 
@@ -310,7 +307,8 @@ namespace Maneuver
         {
           // default speed
           desired_path.speed = m_args.default_speed;
-          desired_path.speed_units = parseSpeedUnitsStr(m_args.default_speed_units);
+          desired_path.speed_units = parseSpeedUnitsStr(
+              m_args.default_speed_units);
         }
 
         // set end_z according to received reference
@@ -355,11 +353,12 @@ namespace Maneuver
 
         bool at_z_target = z_dist < m_args.vertical_tolerance;
         bool at_xy_target = xy_dist < m_args.horizontal_tolerance;
-        bool target_at_surface = desired_path.end_z == 0 && desired_path.end_z_units == Z_DEPTH;
+        bool target_at_surface = desired_path.end_z == 0
+            && desired_path.end_z_units == Z_DEPTH;
         bool still_same_reference = sameReference(ref, &m_last_ref);
         int prevMode = m_fref_state.state;
 
-        if (still_same_reference)
+        if (still_same_reference && prevMode != IMC::FollowRefState::FR_WAIT)
         {
           switch (prevMode)
           {
@@ -367,106 +366,85 @@ namespace Maneuver
               if (near_ref)
               {
                 if (at_z_target && target_at_surface)
-                {
                   m_fref_state.state = IMC::FollowRefState::FR_HOVER;
-                  m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
-                  | IMC::FollowRefState::PROX_Z_NEAR;
-                }
                 else if (at_z_target && !target_at_surface)
-                {
                   m_fref_state.state = IMC::FollowRefState::FR_LOITER;
-                  m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
-                  | IMC::FollowRefState::PROX_Z_NEAR;
-                }
                 else
-                {
                   m_fref_state.state = IMC::FollowRefState::FR_ELEVATOR;
-                  m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR;
-                }
               }
               break;
             case (IMC::FollowRefState::FR_HOVER):
               if (!at_xy_target)
-              {
                 m_fref_state.state = IMC::FollowRefState::FR_GOTO;
-                m_fref_state.proximity = IMC::FollowRefState::PROX_Z_NEAR;
-              }
               break;
             case (IMC::FollowRefState::FR_ELEVATOR):
               if (at_z_target && target_at_surface)
-              {
                 m_fref_state.state = IMC::FollowRefState::FR_HOVER;
-                m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
-                | IMC::FollowRefState::PROX_Z_NEAR;
-              }
               if (at_z_target && !target_at_surface)
-              {
                 m_fref_state.state = IMC::FollowRefState::FR_LOITER;
-                m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
-                | IMC::FollowRefState::PROX_Z_NEAR;
-              }
               break;
           }
         }
         else
         {
           if (!at_xy_target)
-          {
             m_fref_state.state = IMC::FollowRefState::FR_GOTO;
-            m_fref_state.proximity =
-            at_z_target ? IMC::FollowRefState::PROX_Z_NEAR :
-            IMC::FollowRefState::PROX_FAR;
-          }
-          if (at_xy_target && !at_z_target)
-          {
+          else if (at_xy_target && !at_z_target)
             m_fref_state.state = IMC::FollowRefState::FR_ELEVATOR;
-            m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR;
-          }
-          if (at_z_target && at_xy_target && target_at_surface)
-          {
+          else if (at_z_target && at_xy_target && target_at_surface)
             m_fref_state.state = IMC::FollowRefState::FR_HOVER;
-            m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
-            | IMC::FollowRefState::PROX_Z_NEAR;
-          }
-          if (at_z_target && at_xy_target && !target_at_surface)
-          {
+          else if (at_z_target && at_xy_target && !target_at_surface)
             m_fref_state.state = IMC::FollowRefState::FR_LOITER;
-            m_fref_state.proximity = IMC::FollowRefState::PROX_XY_NEAR
-            | IMC::FollowRefState::PROX_Z_NEAR;
-          }
         }
+
+        if (at_z_target)
+          m_fref_state.proximity |= IMC::FollowRefState::PROX_Z_NEAR;
+        if (at_xy_target)
+          m_fref_state.proximity |= IMC::FollowRefState::PROX_XY_NEAR;
+
+        if (!at_z_target && !at_xy_target)
+          m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
 
         m_fref_state.reference.set(*ref);
         dispatch(m_fref_state);
 
-        if (sameReference(ref, &m_last_ref) && m_fref_state.state == prevMode)
+        if (sameReference(ref, &m_last_ref) && m_fref_state.state == prevMode
+            && m_fref_state.state != IMC::FollowRefState::FR_WAIT)
         {
           // nothing to do
           return;
         }
 
         // dispatch new desired path
-        switch(m_fref_state.state)
+        switch (m_fref_state.state)
         {
           case (IMC::FollowRefState::FR_LOITER):
             desired_path.lradius = m_args.loitering_radius;
             enableMovement(true);
             dispatch(desired_path);
-            inf("loitering around (%f, %f, %f).", Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon), desired_path.end_z);
+            inf("loitering around (%f, %f, %f).",
+                Angles::degrees(desired_path.end_lat),
+                Angles::degrees(desired_path.end_lon), desired_path.end_z);
             break;
           case (IMC::FollowRefState::FR_ELEVATOR):
             desired_path.lradius = m_args.loitering_radius;
             enableMovement(true);
             dispatch(desired_path);
-            inf("loitering towards (%f, %f, %f).", Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon), desired_path.end_z);
+            inf("loitering towards (%f, %f, %f).",
+                Angles::degrees(desired_path.end_lat),
+                Angles::degrees(desired_path.end_lon), desired_path.end_z);
             break;
           case (IMC::FollowRefState::FR_GOTO):
             enableMovement(true);
             dispatch(desired_path);
-            inf("going towards (%f, %f, %f).", Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon), desired_path.end_z);
+            inf("going towards (%f, %f, %f).",
+                Angles::degrees(desired_path.end_lat),
+                Angles::degrees(desired_path.end_lon), desired_path.end_z);
             break;
           default:
-            inf("hovering next to (%f, %f).", Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon));
+            inf("hovering next to (%f, %f).",
+                Angles::degrees(desired_path.end_lat),
+                Angles::degrees(desired_path.end_lon));
             enableMovement(false);
             break;
         }
