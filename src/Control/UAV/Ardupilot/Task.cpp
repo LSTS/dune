@@ -557,7 +557,7 @@ namespace Control
                                        m_sysid, //! target_system System ID
                                        0, //! target_component Component ID
                                        "WP_LOITER_RAD", //! Parameter name
-                                       (int)(path->flags & IMC::DesiredPath::FL_CCLOCKW ? -1 * path->lradius : path->lradius), //! Parameter value
+                                       path->lradius, //! Parameter value
                                        MAV_PARAM_TYPE_INT16); //! Parameter type
 
             n = mavlink_msg_to_send_buffer(buf, msg);
@@ -575,7 +575,7 @@ namespace Control
               0, //! autocontinue autocontinue to next wp
               0, //! Not used
               0, //! Not used
-              0, //! Not used
+              path->flags & DesiredPath::FL_CCLOCKW ? -1 : 0, //! If <0, then CCW loiter
               0, //! Not used
               (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
               (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
