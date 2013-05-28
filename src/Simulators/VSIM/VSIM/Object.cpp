@@ -163,7 +163,7 @@ namespace Simulators
     }
 
     void
-    Object::update(double timestep)
+    Object::update(double ts)
     {
       // Initialize variables.
       double c1 = std::cos(m_orientation[0]);
@@ -183,12 +183,12 @@ namespace Simulators
       double q = m_angular_velocity[1];
       double r = m_angular_velocity[2];
 
-      double dPosition[6];
-      double dVelocity[6];
+      double d_pos[6];
+      double d_vel[6];
 
       // Accelerations.
       for (unsigned i = 0; i < 6; ++i)
-        dVelocity[i] = m_forces[i] / m_inertia[i];
+        d_vel[i] = m_forces[i] / m_inertia[i];
 
       // Reset forces to zero.
       resetForces();
@@ -198,35 +198,35 @@ namespace Simulators
       //    J1=[ c3*c2   c3*s2*s1-s3*c1  s3*s1+c3*c1*s2
       //         s3*c2   c1*c3+s1*s2*s3  c1*s2*s3-c3*s1
       //          -s2        c2*s1           c1*c2     ];
-      dPosition[0] = (c3 * c2) * u + (c3 * s2 * s1 - s3 * c1) * v + (s3 * s1 + c3 * c1 * s2) * w;
-      dPosition[1] = (s3 * c2) * u + (c1 * c3 + s1 * s2 * s3) * v + (c1 * s2 * s3 - c3 * s1) * w;
-      dPosition[2] = (-s2) * u + (c2 * s1) * v + (c1 * c2) * w;
+      d_pos[0] = (c3 * c2) * u + (c3 * s2 * s1 - s3 * c1) * v + (s3 * s1 + c3 * c1 * s2) * w;
+      d_pos[1] = (s3 * c2) * u + (c1 * c3 + s1 * s2 * s3) * v + (c1 * s2 * s3 - c3 * s1) * w;
+      d_pos[2] = (-s2) * u + (c2 * s1) * v + (c1 * c2) * w;
 
       // Transformation Matrix: eta2dot = J1(eta2)*nu2
       //   J2=[ 1   s1*t2   c1*t2
       //        0    c1      -s1
       //        0   s1/c2   c1/c2 ];
-      dPosition[3] = p + (s1 * t2) * q + (c1 * t2) * r;
-      dPosition[4] = c1 * q + (-s1) * r;
-      dPosition[5] = (s1 / c2) * q + (c1 / c2) * r;
+      d_pos[3] = p + (s1 * t2) * q + (c1 * t2) * r;
+      d_pos[4] = c1 * q + (-s1) * r;
+      d_pos[5] = (s1 / c2) * q + (c1 / c2) * r;
 
       // Integrate using Euler's method.
       for (unsigned i = 0; i < 3; i++)
       {
-        m_position[i] = m_position[i] + dPosition[i] * timestep;
-
-        m_orientation[i] = m_orientation[i] + dPosition[i + 3] * timestep;
+        m_position[i] += d_pos[i] * ts;
+        m_orientation[i] += Angles::minSignedAngle(m_orientation[i],
+                                                   m_orientation[i] + d_pos[i + 3] * ts);
 
         if (m_integration_method)
         {
-          m_linear_velocity[i] = m_linear_velocity[i] + dVelocity[i] * timestep;
-          m_angular_velocity[i] = m_angular_velocity[i] + dVelocity[i + 3] * timestep;
+          m_linear_velocity[i] += d_vel[i] * ts;
+          m_angular_velocity[i] = m_angular_velocity[i] + d_vel[i + 3] * ts;
         }
         else
         {
           // ASV integration.
-          m_linear_velocity[i] = dVelocity[i];
-          m_angular_velocity[i] = dVelocity[i + 3];
+          m_linear_velocity[i] = d_vel[i];
+          m_angular_velocity[i] = d_vel[i + 3];
         }
       }
     }

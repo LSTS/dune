@@ -383,9 +383,9 @@ namespace DUNE
       if (msg->getSourceEntity() != m_ahrs_eid)
         return;
 
-      m_euler_bfr[AXIS_X] += getEuler(AXIS_X) + Math::Angles::minimumSignedAngle(getEuler(AXIS_X), msg->phi + m_phi_offset);
-      m_euler_bfr[AXIS_Y] += getEuler(AXIS_Y) + Math::Angles::minimumSignedAngle(getEuler(AXIS_Y), msg->theta + m_theta_offset);
-      m_euler_bfr[AXIS_Z] += getEuler(AXIS_Z) + Math::Angles::minimumSignedAngle(getEuler(AXIS_Z), msg->psi);
+      m_euler_bfr[AXIS_X] += getEuler(AXIS_X) + Math::Angles::minSignedAngle(getEuler(AXIS_X), msg->phi + m_phi_offset);
+      m_euler_bfr[AXIS_Y] += getEuler(AXIS_Y) + Math::Angles::minSignedAngle(getEuler(AXIS_Y), msg->theta + m_theta_offset);
+      m_euler_bfr[AXIS_Z] += getEuler(AXIS_Z) + Math::Angles::minSignedAngle(getEuler(AXIS_Z), msg->psi);
 
       ++m_euler_readings;
 

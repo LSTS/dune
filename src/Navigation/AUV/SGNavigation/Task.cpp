@@ -548,7 +548,7 @@ namespace Navigation
           }
           else
           {
-            m_heading += Angles::minimumSignedAngle(m_heading, BasicNavigation::getEuler(AXIS_Z));
+            m_heading += Angles::minSignedAngle(m_heading, BasicNavigation::getEuler(AXIS_Z));
             m_kal.setOutput(OUT_R, BasicNavigation::getAngularVelocity(AXIS_Z));
           }
 
