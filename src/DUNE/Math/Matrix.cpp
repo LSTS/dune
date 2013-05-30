@@ -579,10 +579,10 @@ namespace DUNE
       if (!m_size)
         return m_data[0];
 
-      split();
-
       if (i >= m_nrows || j >= m_ncols)
         throw Error("invalid index");
+
+      split();
 
       return m_data[i * m_ncols + j];
     }
@@ -605,10 +605,10 @@ namespace DUNE
       if (!m_size)
         return m_data[0];
 
-      split();
-
       if (i >= m_size)
         throw Error("invalid index");
+
+      split();
 
       return m_data[i];
     }
