@@ -83,6 +83,7 @@ namespace Simulators
       {
         if (msg->getSourceEntity() == getEntityId())
           return;
+        debug("Consuming GPS-Fix");
 
         requestActivation();
         m_origin = *msg;
@@ -93,6 +94,7 @@ namespace Simulators
       {
         if (!isActive())
           return;
+        spew("Consuming SimulatedState");
 
         if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
         {
@@ -105,6 +107,7 @@ namespace Simulators
       void
       task(void)
       {
+        spew("UAV Simulator: Running");
         // Handle IMC messages from bus
         consumeMessages();
 

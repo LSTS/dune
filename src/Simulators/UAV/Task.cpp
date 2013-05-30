@@ -195,11 +195,8 @@ namespace Simulators
         .description("Rudder lift coefficient of the vehicle");
 
         param("Entity Label - GPS", m_args.label_gps)
+        .defaultValue("Simulated GPS")
         .description("Entity label of simulated 'GpsFix' messages");
-
-        param("Initial Latitude", m_args.init_lat)
-        .defaultValue("39.09")
-        .description("Initial state latitude");
 
         param("Initial Latitude", m_args.init_lat)
         .defaultValue("39.09")
@@ -234,32 +231,41 @@ namespace Simulators
         bind<IMC::DesiredRoll>(this);
         bind<IMC::DesiredSpeed>(this);
 
-        // Control and state initialization
-        /*
-        IMC::GpsFix init_fix;
-        init_fix.lat = DUNE::Math::Angles::radians(m_args.init_lat);
-        init_fix.lon = DUNE::Math::Angles::radians(m_args.init_lon);
-        init_fix.height = m_args.init_alt;
-        m_sstate.lat = DUNE::Math::Angles::radians(m_args.init_lat);
-        m_sstate.lon = DUNE::Math::Angles::radians(m_args.init_lon);
-        m_sstate.height = m_args.init_alt;
-        dispatch(init_fix);
-        requestActivation();
-        */
-
-        m_position(2) = m_args.init_alt;
-        m_position(3) = DUNE::Math::Angles::radians(m_args.init_roll);
-        m_position(5) = DUNE::Math::Angles::radians(m_args.init_yaw);
-        m_velocity(0) = m_args.init_speed*std::cos(m_position(5));
-        m_velocity(1) = m_args.init_speed*std::sin(m_position(5));
-
-        m_speed_cmd.value = m_args.init_speed;
-        m_bank_cmd.value = m_position(3);
       }
 
       void
       onResourceAcquisition(void)
       {
+        // Control and state initialization
+
+        //! GPS position initialization
+        debug("GPS-Fix initialization");
+        IMC::GpsFix init_fix;
+        init_fix.lat = DUNE::Math::Angles::radians(m_args.init_lat);
+        init_fix.lon = DUNE::Math::Angles::radians(m_args.init_lon);
+        init_fix.height = m_args.init_alt;
+        m_sstate.lat = init_fix.lat;
+        m_sstate.lon = init_fix.lon;
+        m_sstate.height = m_args.init_alt;
+        dispatch(init_fix);
+        requestActivation();
+
+        debug("State initialization");
+        //! Altitude initialization
+        m_position(2) = m_args.init_alt;
+        //! Bank initialization
+        m_position(3) = DUNE::Math::Angles::radians(m_args.init_roll);
+        //! Heading initialization
+        m_position(5) = DUNE::Math::Angles::radians(m_args.init_yaw);
+        //! Velocity vector initialization
+        m_velocity(0) = m_args.init_speed*std::cos(m_position(5));
+        m_velocity(1) = m_args.init_speed*std::sin(m_position(5));
+
+        //! Commands initialization
+        debug("Commands initialization");
+        m_speed_cmd.value = m_args.init_speed;
+        m_bank_cmd.value = m_position(3);
+
         // Initialize the model model
         /*
         DUNE::Control::ModelParameters par;
@@ -307,8 +313,10 @@ namespace Simulators
         if (!isActive())
           requestActivation();
 
-        if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
-          return;
+        /*
+         * if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
+         * return;
+         */
         debug("Consuming GPS-Fix");
 
         // Defining origin.
@@ -318,7 +326,7 @@ namespace Simulators
 
         m_position(0) = 0.0;
         m_position(1) = 0.0;
-        // Assuming vehicle starts at sea surface.
+        // Assuming vehicle starts at ground surface.
         m_position(2) = 0.0;
         m_position(3) = 0.0;
         m_position(4) = 0.0;
@@ -360,7 +368,7 @@ namespace Simulators
 
         if (!isActive())
         {
-          trace("Bank command rejected.");
+          trace("Speed command rejected.");
           trace("Simulation not active.");
           trace("Missing GPS-Fix!");
           return;
@@ -393,7 +401,7 @@ namespace Simulators
       */
 
       Matrix
-      matrixRotRbody2gnd(float roll, float pitch, float yaw)
+      matrixRotRbody2gnd(float roll, float pitch)
       {
         // Rotations rotation matrix
         double tmp_j2[9] = {1, std::sin(roll) * std::tan(pitch),  std::cos(roll) * std::tan(pitch),
@@ -404,7 +412,7 @@ namespace Simulators
       }
 
       Matrix
-      matrixRotRgnd2body(float roll, float pitch, float yaw)
+      matrixRotRgnd2body(float roll, float pitch)
       {
         // Rotations rotation matrix
         double tmp_j2[9] = {1,               0,               -std::sin(pitch),
@@ -422,7 +430,7 @@ namespace Simulators
 
         j.vertCat(Matrix(3, 3, 0.0));
         Matrix cols456 = Matrix(3, 3, 0.0);
-        cols456.vertCat(matrixRotRbody2gnd(roll, pitch, yaw));
+        cols456.vertCat(matrixRotRbody2gnd(roll, pitch));
         j.horzCat(cols456);
 
         return j;
@@ -431,10 +439,13 @@ namespace Simulators
       void
       task(void)
       {
+        // Handle IMC messages from bus
+        consumeMessages();
+
         if (!isActive())
           return;
 
-        // Initialization
+        // Declaration
         double time;
         double timestep;
         double cos_yaw;
@@ -449,9 +460,6 @@ namespace Simulators
 
         double d_speed_rate;
         double d_bank_rate;
-
-        // Handle IMC messages from bus
-        consumeMessages();
 
         // Compute the time step
         time  = Clock::get();
@@ -472,9 +480,11 @@ namespace Simulators
           // ========= Debug ===========
           if (time >= m_last_time_debug + 1.0)
           {
+            spew("Simulating: 4DOF_bank");
             spew("Bank: %1.2fº        - Commanded bank: %1.2fº", DUNE::Math::Angles::degrees(m_position(3)),
                  DUNE::Math::Angles::degrees(m_bank_cmd.value));
             spew("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_speed, m_speed_cmd.value);
+            spew("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
           }
 
           //==========================================================================
