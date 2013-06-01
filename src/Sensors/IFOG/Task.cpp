@@ -147,8 +147,7 @@ namespace Sensors
         m_sta_imu(0)
       {
         paramActive(Tasks::Parameter::SCOPE_IDLE,
-                    Tasks::Parameter::VISIBILITY_USER,
-                    true);
+                    Tasks::Parameter::VISIBILITY_USER);
 
         param("ESCC - IMU Device", m_args.imu_dev)
         .defaultValue("")
