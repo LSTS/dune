@@ -397,6 +397,8 @@ namespace Maneuver
             m_fref_state.state = IMC::FollowRefState::FR_LOITER;
         }
 
+        m_fref_state.proximity = 0;
+
         if (at_z_target)
           m_fref_state.proximity |= IMC::FollowRefState::PROX_Z_NEAR;
         if (at_xy_target)
