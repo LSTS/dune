@@ -387,12 +387,9 @@ namespace DUNE
       m_edelta_bfr[AXIS_X] += msg->x;
       m_edelta_bfr[AXIS_Y] += msg->y;
       m_edelta_bfr[AXIS_Z] += msg->z;
+
       ++m_edelta_readings;
       m_edelta_ts = msg->timestep;
-
-      // Increment heading.
-      if (m_sum_euler_inc)
-        m_heading += msg->z;
     }
 
     void

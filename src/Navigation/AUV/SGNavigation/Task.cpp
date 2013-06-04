@@ -540,9 +540,9 @@ namespace Navigation
           }
           else if (m_sum_euler_inc)
           {
-            // Heading is incremented in consume function.
-            float ts = getEulerDeltaTimestep();
+            m_heading += tstep * getHeadingRate();
 
+            float ts = getEulerDeltaTimestep();
             if (ts > 0.0)
               m_kal.setOutput(OUT_R, getEulerDelta(AXIS_Z) / ts);
           }

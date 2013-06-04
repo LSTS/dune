@@ -245,9 +245,22 @@ namespace DUNE
           return 0;
 
         double roll = getEuler(AXIS_X);
-        double p = getAngularVelocity(AXIS_X);
-        double q = getAngularVelocity(AXIS_Y);
-        double r = getAngularVelocity(AXIS_Z);
+        double p, q, r;
+
+        if (m_sum_euler_inc)
+        {
+          // Make sure the following corresponds to angular velocity in all IMUs.
+          p = getEulerDelta(AXIS_X) / getEulerDeltaTimestep();
+          q = getEulerDelta(AXIS_Y) / getEulerDeltaTimestep();
+          r = getEulerDelta(AXIS_Z) / getEulerDeltaTimestep();
+        }
+        else
+        {
+          p = getAngularVelocity(AXIS_X);
+          q = getAngularVelocity(AXIS_Y);
+          r = getAngularVelocity(AXIS_Z);
+        }
+
         extractEarthRotation(p, q, r);
 
         return (std::sin(roll) * q + std::cos(roll) * r) / std::cos(pitch);
