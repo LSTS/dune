@@ -37,6 +37,8 @@
 // MAVLink headers.
 #include <mavlink/ardupilotmega/mavlink.h>
 
+#define GPS_EPOCH 315964800
+
 namespace Control
 {
   namespace UAV
@@ -999,16 +1001,24 @@ namespace Control
           m_fix.satellites = gps_raw.satellites_visible;
 
           long time_fix = gps_raw.time_usec % 1000000000;
+          long date = gps_raw.time_usec / 1e9;
 
           if(m_args.ublox)
           {
             m_fix.utc_time = (float)(time_fix % (3600 * 24 * 1000)) / 1000;
+
+            long gps_sec_since_1970 = GPS_EPOCH + 7 * 24 * 60 * 60 * date + time_fix / 1000;
+            time_t t = gps_sec_since_1970;
+            struct tm* utc;
+            utc = gmtime(&t);
+
+            m_fix.utc_year = utc->tm_year + 1900;
+            m_fix.utc_month = utc->tm_mon +1;
+            m_fix.utc_day = utc->tm_mday;
           }
           else
           {
             m_fix.utc_time = (float)time_fix / 1000;
-
-            long date = gps_raw.time_usec / 1e9;
 
             m_fix.utc_year = date % 100;
             m_fix.utc_month = ((date % 10000) - m_fix.utc_year) / 100;
