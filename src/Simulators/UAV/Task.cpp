@@ -60,9 +60,16 @@ namespace Simulators
       Matrix rud_lift;
       // Gps simulator entity id.
       std::string label_gps;
+      // Initial state
+      double init_lat;
+      double init_lon;
+      double init_alt;
+      double init_speed;
+      double init_roll;
+      double init_yaw;
     };
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task: public DUNE::Tasks::Periodic
     {
       // Simulation vehicle.
       //UAVModel* m_model;
@@ -72,6 +79,8 @@ namespace Simulators
       double m_start_time;
       //! Last time update was ran
       double m_last_update;
+      //! Last time debug information was shown
+      double m_last_time_debug;
       //! Actuation in the thruster
       float m_thruster_act;
       //! Set Servo positions
@@ -92,10 +101,11 @@ namespace Simulators
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
+        DUNE::Tasks::Periodic(name, ctx),
         //m_model(NULL),
         m_start_time(Clock::get()),
         m_last_update(Clock::get()),
+        m_last_time_debug(Clock::get()),
         m_thruster_act(0.0),
         m_servo_pos(4, 1, 0.0),
         m_position(6, 1, 0.0),
@@ -185,7 +195,32 @@ namespace Simulators
         .description("Rudder lift coefficient of the vehicle");
 
         param("Entity Label - GPS", m_args.label_gps)
+        .defaultValue("Simulated GPS")
         .description("Entity label of simulated 'GpsFix' messages");
+
+        param("Initial Latitude", m_args.init_lat)
+        .defaultValue("39.09")
+        .description("Initial state latitude");
+
+        param("Initial Longitude", m_args.init_lon)
+        .defaultValue("-8.964")
+        .description("Initial state longitude");
+
+        param("Initial Altitude", m_args.init_alt)
+        .defaultValue("147.3")
+        .description("Initial state WGS-84 geoid altitude");
+
+        param("Initial Speed", m_args.init_speed)
+        .defaultValue("18.0")
+        .description("Initial state airspeed");
+
+        param("Initial Roll", m_args.init_roll)
+        .defaultValue("0.0")
+        .description("Initial state bank");
+
+        param("Initial Yaw", m_args.init_yaw)
+        .defaultValue("0.0")
+        .description("Initial state yaw");
 
         // Register handler routines.
         /*
@@ -196,20 +231,41 @@ namespace Simulators
         bind<IMC::DesiredRoll>(this);
         bind<IMC::DesiredSpeed>(this);
 
-        // Control and state initialization
-        double d_speed = 18.0;
-
-        m_position(5) = 0;
-        m_velocity(0) = d_speed*std::cos(m_position(5));
-        m_velocity(1) = d_speed*std::sin(m_position(5));
-
-        m_speed_cmd.value = d_speed;
-        m_bank_cmd.value = 0.0;
       }
 
       void
       onResourceAcquisition(void)
       {
+        // Control and state initialization
+
+        //! GPS position initialization
+        debug("GPS-Fix initialization");
+        IMC::GpsFix init_fix;
+        init_fix.lat = DUNE::Math::Angles::radians(m_args.init_lat);
+        init_fix.lon = DUNE::Math::Angles::radians(m_args.init_lon);
+        init_fix.height = m_args.init_alt;
+        m_sstate.lat = init_fix.lat;
+        m_sstate.lon = init_fix.lon;
+        m_sstate.height = m_args.init_alt;
+        dispatch(init_fix);
+        requestActivation();
+
+        debug("State initialization");
+        //! Altitude initialization
+        m_position(2) = m_args.init_alt;
+        //! Bank initialization
+        m_position(3) = DUNE::Math::Angles::radians(m_args.init_roll);
+        //! Heading initialization
+        m_position(5) = DUNE::Math::Angles::radians(m_args.init_yaw);
+        //! Velocity vector initialization
+        m_velocity(0) = m_args.init_speed*std::cos(m_position(5));
+        m_velocity(1) = m_args.init_speed*std::sin(m_position(5));
+
+        //! Commands initialization
+        debug("Commands initialization");
+        m_speed_cmd.value = m_args.init_speed;
+        m_bank_cmd.value = m_position(3);
+
         // Initialize the model model
         /*
         DUNE::Control::ModelParameters par;
@@ -233,13 +289,11 @@ namespace Simulators
 
         m_model = new UAVModel(par);
         */
-        debug("UAV simulation initialized");
       }
 
       void
       onEntityReservation(void)
       {
-        debug("UAV simulation initialized");
       }
 
       ~Task(void)
@@ -259,8 +313,11 @@ namespace Simulators
         if (!isActive())
           requestActivation();
 
-        if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
-          return;
+        /*
+         * if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
+         * return;
+         */
+        debug("Consuming GPS-Fix");
 
         // Defining origin.
         m_sstate.lat = msg->lat;
@@ -269,7 +326,7 @@ namespace Simulators
 
         m_position(0) = 0.0;
         m_position(1) = 0.0;
-        // Assuming vehicle starts at sea surface.
+        // Assuming vehicle starts at ground surface.
         m_position(2) = 0.0;
         m_position(3) = 0.0;
         m_position(4) = 0.0;
@@ -301,7 +358,7 @@ namespace Simulators
         m_bank_cmd = *msg;
 
         // ========= Debug ===========
-        trace("Bank command received (%1.2f)", m_bank_cmd.value);
+        trace("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(m_bank_cmd.value));
       }
 
       void
@@ -311,7 +368,7 @@ namespace Simulators
 
         if (!isActive())
         {
-          trace("Bank command rejected.");
+          trace("Speed command rejected.");
           trace("Simulation not active.");
           trace("Missing GPS-Fix!");
           return;
@@ -320,7 +377,7 @@ namespace Simulators
         m_speed_cmd = *msg;
 
         // ========= Debug ===========
-        trace("Speed command received (%1.2f)", m_speed_cmd.value);
+        trace("Speed command received (%1.2fm/s)", m_speed_cmd.value);
       }
 
       /*
@@ -344,17 +401,28 @@ namespace Simulators
       */
 
       Matrix
-      matrixRotRbody2gnd(float roll, float pitch, float yaw)
+      matrixRotRbody2gnd(float roll, float pitch)
       {
         // Rotations rotation matrix
-        double tmp_j2[9] = {1, std::sin(roll) * std::tan(pitch), std::cos(roll) * std::tan(pitch),
-                            0, std::cos(roll),                   -std::sin(roll),
-                            0, std::sin(roll) / std::cos(pitch), std::cos(roll) / std::cos(pitch)};
+        double tmp_j2[9] = {1, std::sin(roll) * std::tan(pitch),  std::cos(roll) * std::tan(pitch),
+                            0,                   std::cos(roll),                   -std::sin(roll),
+                            0, std::sin(roll) / std::cos(pitch),  std::cos(roll) / std::cos(pitch)};
 
         return Matrix(tmp_j2, 3, 3);
       }
 
       Matrix
+      matrixRotRgnd2body(float roll, float pitch)
+      {
+        // Rotations rotation matrix
+        double tmp_j2[9] = {1,               0,               -std::sin(pitch),
+                            0,  std::cos(roll), std::cos(pitch)*std::sin(roll),
+                            0, -std::sin(roll), std::cos(pitch)*std::cos(roll)};
+
+        return Matrix(tmp_j2, 3, 3);
+      }
+
+     Matrix
       matrixJ(float roll, float pitch, float yaw)
       {
         double ea[3] = {roll, pitch, yaw};
@@ -362,20 +430,24 @@ namespace Simulators
 
         j.vertCat(Matrix(3, 3, 0.0));
         Matrix cols456 = Matrix(3, 3, 0.0);
-        cols456.vertCat(matrixRotRbody2gnd(roll, pitch, yaw));
+        cols456.vertCat(matrixRotRbody2gnd(roll, pitch));
         j.horzCat(cols456);
 
         return j;
       }
 
       void
-      onMain(void)
+      task(void)
       {
-        // Initialization
+        // Handle IMC messages from bus
+        consumeMessages();
+
+        if (!isActive())
+          return;
+
+        // Declaration
         double time;
         double timestep;
-        double last_time_debug = Clock::get();
-        double sim_time;
         double cos_yaw;
         double sin_yaw;
         double wind_x;
@@ -389,121 +461,104 @@ namespace Simulators
         double d_speed_rate;
         double d_bank_rate;
 
-        while (!stopping())
+        // Compute the time step
+        time  = Clock::get();
+        timestep = time - m_last_update;
+        m_last_update = time;
+
+        if (m_args.sim_type == "4DOF_bank")
         {
-          // Compute the time step
-          time  = Clock::get();
-          timestep = time - m_last_update;
-          m_last_update = time;
+          // Optimization variables
+          cos_yaw = std::cos(m_position(5));
+          sin_yaw = std::sin(m_position(5));
+          wind_x = m_args.wx;
+          wind_y = m_args.wy;
+          d_vx_wind = m_velocity(0) - wind_x;
+          d_vy_wind = m_velocity(1) - wind_y;
+          m_speed = std::sqrt(d_vx_wind*d_vx_wind + d_vy_wind*d_vy_wind);
 
-          if (m_args.sim_type == "4DOF_bank")
+          // ========= Debug ===========
+          if (time >= m_last_time_debug + 1.0)
           {
-            // Optimization variables
-            cos_yaw = std::cos(m_position(5));
-            sin_yaw = std::sin(m_position(5));
-            wind_x = m_args.wx;
-            wind_y = m_args.wy;
-            d_vx_wind = m_velocity(0) - wind_x;
-            d_vy_wind = m_velocity(1) - wind_y;
-            m_speed = std::sqrt(d_vx_wind*d_vx_wind + d_vy_wind*d_vy_wind);
-
-            // ========= Debug ===========
-            if (time >= last_time_debug + 1.0)
-            {
-              spew("Bank: %1.2f        - Commanded bank: %1.2f", m_position(3), m_bank_cmd.value);
-              spew("Speed: %1.2f       - Commanded speed: %1.2f", m_speed, m_speed_cmd.value);
-            }
-
-            //==========================================================================
-            // Dynamics
-            //==========================================================================
-            // Command effect
-            // - Horizontal acceleration command
-            d_speed_rate = (m_speed_cmd.value - m_speed)/m_args.c_speed;
-            m_speed += d_speed_rate*timestep;
-            // - Roll rate command
-            d_bank_rate = (m_bank_cmd.value - m_position(3))/m_args.c_bank;
-            m_position(3) += d_bank_rate*timestep;
-
-            // UAV velocity components on the flow field frame
-            d_vx_wind = m_speed * cos_yaw;
-            d_vy_wind = m_speed * sin_yaw;
-            vd_wind[0] = d_vx_wind;
-            vd_wind[1] = d_vy_wind;
-            uav2wind_GndFr = Matrix(vd_wind, 3, 1);
-            // UAV velocity components on the fixed frame
-            m_velocity(0) = d_vx_wind + wind_x;
-            m_velocity(1) = d_vy_wind + wind_y;
-            // Turn rate
-            m_velocity(5) = m_args.gaccel * std::tan(m_position(3))/m_speed;
-
-            // State vector update
-            m_position += m_velocity*timestep;
-
-            //==========================================================================
-            // Output
-            //==========================================================================
-
-            // Air-relative UAV velocity components, on aircraft frame
-            double ea[3] = {m_position(3), m_position(4), m_position(5)};
-            Matrix uav2wind_BodyFr = transpose(Matrix(ea, 3, 1).toDCM()) * uav2wind_GndFr;
-
-            // UAV body-frame rotation rates
-            //vd_UAVRotRates = UAVRotRatTrans_1_00(vd_State);
-
-            sim_time = time - m_start_time;
-            // Fill position.
-            m_sstate.x = m_position(0);
-            m_sstate.y = m_position(1);
-            m_sstate.z = m_position(2);
-
-            // Fill attitude.
-            m_sstate.phi = m_position(3);
-            m_sstate.theta = m_position(4);
-            m_position(5) = Angles::normalizeRadian(m_position(5));
-            m_sstate.psi = m_position(5);
-
-            // Fill linear velocity.
-            m_sstate.u = m_velocity(0);
-            m_sstate.v = m_velocity(1);
-            m_sstate.w = m_velocity(2);
-
-            // Fill angular velocity.
-            m_sstate.p = m_velocity(3);
-            m_sstate.q = m_velocity(4);
-            m_sstate.r = m_velocity(5);
-
-            // Fill stream velocity.
-            m_sstate.svx = wind_x;
-            m_sstate.svy = wind_y;
-            m_sstate.svz = wind_z;
-
-            /*
-            // Absolute speed
-            m_speed.value = m_speed;
-            // Alpha - Angle of Attack
-            m_alpha.value = std::atan(-wind_z/uav2wind_BodyFr(0));
-            // Beta - Slip angle
-            m_beta.value = std::atan2(uav2wind_BodyFr(1), uav2wind_BodyFr(0));
-            */
-
-            dispatch(m_sstate);
-            //dispatch(m_speed);
-
-            // ========= Debug ===========
-            if (time >= last_time_debug + 1.0)
-            {
-              last_time_debug = time;
-              //spew("Bank: %1.2f        - Commanded bank: %1.2f", m_position(3), m_bank_cmd.value);
-              spew("Bank rate command: %1.2f", d_bank_rate);
-              //spew("Speed: %1.2f       - Commanded speed: %1.2f", m_speed, m_speed_cmd.value);
-              spew("Speed rate command: %1.2f", d_speed_rate);
-            }
+            spew("Simulating: 4DOF_bank");
+            spew("Bank: %1.2fº        - Commanded bank: %1.2fº", DUNE::Math::Angles::degrees(m_position(3)),
+                 DUNE::Math::Angles::degrees(m_bank_cmd.value));
+            spew("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_speed, m_speed_cmd.value);
+            spew("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
           }
 
-          // Handle IMC messages from bus
-          consumeMessages();
+          //==========================================================================
+          // Dynamics
+          //==========================================================================
+          // Command effect
+          // - Horizontal acceleration command
+          d_speed_rate = (m_speed_cmd.value - m_speed)/m_args.c_speed;
+          m_speed += d_speed_rate*timestep;
+          // - Roll rate command
+          d_bank_rate = (m_bank_cmd.value - m_position(3))/m_args.c_bank;
+          m_position(3) += d_bank_rate*timestep;
+
+          // UAV velocity components on the flow field frame
+          d_vx_wind = m_speed * cos_yaw;
+          d_vy_wind = m_speed * sin_yaw;
+          vd_wind[0] = d_vx_wind;
+          vd_wind[1] = d_vy_wind;
+          uav2wind_GndFr = Matrix(vd_wind, 3, 1);
+          // UAV velocity components on the fixed frame
+          m_velocity(0) = d_vx_wind + wind_x;
+          m_velocity(1) = d_vy_wind + wind_y;
+          // Turn rate
+          m_velocity(5) = m_args.gaccel * std::tan(m_position(3))/m_speed;
+
+          // State vector update
+          m_position += m_velocity*timestep;
+
+          //==========================================================================
+          // Output
+          //==========================================================================
+
+          // Fill position.
+          m_sstate.x = m_position(0);
+          m_sstate.y = m_position(1);
+          m_sstate.z = m_position(2);
+
+          // Fill attitude.
+          m_sstate.phi = m_position(3);
+          m_sstate.theta = m_position(4);
+          m_position(5) = Angles::normalizeRadian(m_position(5));
+          m_sstate.psi = m_position(5);
+
+          // Fill linear velocity.
+          m_sstate.u = m_velocity(0);
+          m_sstate.v = m_velocity(1);
+          m_sstate.w = m_velocity(2);
+
+          // UAV body-frame rotation rates
+          // vd_UAVRotRates = UAVRotRatTrans_1_00(vd_State);
+
+          // Fill angular velocity.
+          m_sstate.p = m_velocity(3);
+          m_sstate.q = m_velocity(4);
+          m_sstate.r = m_velocity(5);
+
+          // Fill stream velocity.
+          m_sstate.svx = wind_x;
+          m_sstate.svy = wind_y;
+          m_sstate.svz = wind_z;
+
+          dispatch(m_sstate);
+
+          // ========= Debug ===========
+          if (time >= m_last_time_debug + 1.0)
+          {
+            m_last_time_debug = time;
+            //spew("Bank: %1.2f        - Commanded bank: %1.2f", m_position(3), m_bank_cmd.value);
+            spew("Bank rate command: %1.2fº/s", DUNE::Math::Angles::degrees(d_bank_rate));
+            //spew("Speed: %1.2f       - Commanded speed: %1.2f", m_speed, m_speed_cmd.value);
+            spew("Speed rate command: %1.2fm/s²", d_speed_rate);
+          }
         }
+
       }
     };
   }
