@@ -1000,7 +1000,6 @@ namespace Control
 
           long time_fix = gps_raw.time_usec % 1000000000;
 
-
           if(m_args.ublox)
           {
             m_fix.utc_time = (float)(time_fix % (3600 * 24 * 1000)) / 1000;
@@ -1021,7 +1020,7 @@ namespace Control
           if(gps_raw.fix_type>1)
             m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
           if(m_fix.utc_year>2012)
-            m_fix.validity |= IMC::GpsFix::GFV_VALID_TIME;
+            m_fix.validity |= (IMC::GpsFix::GFV_VALID_TIME | IMC::GpsFix::GFV_VALID_DATE);
 
           dispatch(m_fix);
         }
