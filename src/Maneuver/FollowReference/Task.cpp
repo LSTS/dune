@@ -271,85 +271,13 @@ namespace Maneuver
         desired_path.start_lon = curlon;
         desired_path.flags = IMC::DesiredPath::FL_DIRECT;
 
-        // set end location according to received reference
-        if (ref->flags & IMC::Reference::FLAG_LOCATION)
-        {
-          // use new reference
-          desired_path.end_lat = ref->lat;
-          desired_path.end_lon = ref->lon;
-        }
-        else if (m_got_reference)
-        {
-          // use previously received reference
-          desired_path.end_lat = m_cur_ref.lat;
-          desired_path.end_lon = m_cur_ref.lon;
-        }
-        else
-        {
-          // just stay where we are
-          desired_path.end_lat = curlat;
-          desired_path.end_lon = curlon;
-        }
-
-        // set speed according to received reference. If the reference does not
-        // provide a desired speed, use last sent speed
-        if ((ref->flags & IMC::Reference::FLAG_SPEED) && !(ref->speed.isNull()))
-        {
-          desired_path.speed = ref->speed->value;
-          desired_path.speed_units = ref->speed->speed_units;
-        }
-        else if (m_got_reference && !m_cur_ref.speed.isNull())
-        {
-          desired_path.speed = m_cur_ref.speed->value;
-          desired_path.speed_units = m_cur_ref.speed->speed_units;
-        }
-        else
-        {
-          // default speed
-          desired_path.speed = m_args.default_speed;
-          desired_path.speed_units = parseSpeedUnitsStr(
-              m_args.default_speed_units);
-        }
-
-        // set end_z according to received reference
-        if ((ref->flags & IMC::Reference::FLAG_Z) && !(ref->z.isNull()))
-        {
-          desired_path.end_z = ref->z->value;
-          desired_path.end_z_units = ref->z->z_units;
-        }
-        else if (m_got_reference && !m_cur_ref.z.isNull())
-        {
-          desired_path.end_z = m_cur_ref.z->value;
-          desired_path.end_z_units = m_cur_ref.z->z_units;
-        }
-        else
-        {
-          desired_path.end_z = m_args.default_z;
-          desired_path.end_z_units = parseZUnitsStr(m_args.default_z_units);
-        }
-
+        setEndLocation(ref, desired_path, curlat, curlon);
+        setSpeed(ref, desired_path);
         // check to see if we are already at the target...
         double xy_dist = WGS84::distance(desired_path.end_lat,
                                          desired_path.end_lon, 0, curlat,
                                          curlon, 0);
-
-        double z_dist;
-
-        switch (desired_path.end_z_units)
-        {
-          case (IMC::Z_DEPTH):
-            z_dist = std::abs(desired_path.end_z - m_estate.depth);
-            break;
-          case (IMC::Z_ALTITUDE):
-            z_dist = std::abs(desired_path.end_z - m_estate.alt);
-            break;
-          case (IMC::Z_HEIGHT):
-            z_dist = std::abs(desired_path.end_z - m_estate.height);
-            break;
-          default:
-            z_dist = 0;
-            break;
-        }
+        double z_dist = setDepth(ref, desired_path);
 
         bool at_z_target = z_dist < m_args.vertical_tolerance;
         bool at_xy_target = xy_dist < m_args.horizontal_tolerance;
@@ -471,7 +399,73 @@ namespace Maneuver
           setControl(0);
         }
       }
-    };
+
+private:
+  void setEndLocation(const IMC::Reference* ref, IMC::DesiredPath &desired_path,
+      double curlat, double curlon) {
+    // set end location according to received reference
+    if (ref->flags & IMC::Reference::FLAG_LOCATION) {
+      // use new reference
+      desired_path.end_lat = ref->lat;
+      desired_path.end_lon = ref->lon;
+    } else if (m_got_reference) {
+      // use previously received reference
+      desired_path.end_lat = m_cur_ref.lat;
+      desired_path.end_lon = m_cur_ref.lon;
+    } else {
+      // just stay where we are
+      desired_path.end_lat = curlat;
+      desired_path.end_lon = curlon;
+    }
+  }
+
+  void setSpeed(const IMC::Reference* ref, IMC::DesiredPath &desired_path) {
+    // set speed according to received reference. If the reference does not
+    // provide a desired speed, use last sent speed
+    if ((ref->flags & IMC::Reference::FLAG_SPEED) && !(ref->speed.isNull())) {
+      desired_path.speed = ref->speed->value;
+      desired_path.speed_units = ref->speed->speed_units;
+    } else if (m_got_reference && !m_cur_ref.speed.isNull()) {
+      desired_path.speed = m_cur_ref.speed->value;
+      desired_path.speed_units = m_cur_ref.speed->speed_units;
+    } else {
+      // default speed
+      desired_path.speed = m_args.default_speed;
+      desired_path.speed_units = parseSpeedUnitsStr(m_args.default_speed_units);
+    }
+  }
+
+  double setDepth(const IMC::Reference* ref, IMC::DesiredPath& desired_path) {
+    // set end_z according to received reference
+    if ((ref->flags & IMC::Reference::FLAG_Z) && !(ref->z.isNull())) {
+      desired_path.end_z = ref->z->value;
+      desired_path.end_z_units = ref->z->z_units;
+    } else if (m_got_reference && !m_cur_ref.z.isNull()) {
+      desired_path.end_z = m_cur_ref.z->value;
+      desired_path.end_z_units = m_cur_ref.z->z_units;
+    } else {
+      desired_path.end_z = m_args.default_z;
+      desired_path.end_z_units = parseZUnitsStr(m_args.default_z_units);
+    }
+
+    double z_dist;
+    switch (desired_path.end_z_units) {
+    case (IMC::Z_DEPTH):
+      z_dist = std::abs(desired_path.end_z - m_estate.depth);
+      break;
+    case (IMC::Z_ALTITUDE):
+      z_dist = std::abs(desired_path.end_z - m_estate.alt);
+      break;
+    case (IMC::Z_HEIGHT):
+      z_dist = std::abs(desired_path.end_z - m_estate.height);
+      break;
+    default:
+      z_dist = 0;
+      break;
+    }
+    return z_dist;
+  }
+};
   }
 }
 
