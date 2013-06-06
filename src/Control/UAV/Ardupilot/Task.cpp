@@ -955,6 +955,9 @@ namespace Control
               m_estate.vx, m_estate.vy, m_estate.vz,
               &m_estate.u, &m_estate.v, &m_estate.w);
 
+          m_estate.depth = -1;
+          m_estate.alt = -1;
+
           dispatch(m_estate);
         }
 
