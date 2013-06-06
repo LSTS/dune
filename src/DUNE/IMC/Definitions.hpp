@@ -11650,6 +11650,8 @@ namespace DUNE
         FLAG_SPEED = 0x02,
         //! Use Z Reference.
         FLAG_Z = 0x04,
+        //! Use Radius Reference.
+        FLAG_RADIUS = 0x05,
         //! Flag Maneuver Completion.
         FLAG_MANDONE = 0x80
       };

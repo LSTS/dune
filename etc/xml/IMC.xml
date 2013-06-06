@@ -5245,6 +5245,7 @@
       <value abbrev="LOCATION" name="Use Location Reference" id="0x01"/>
       <value abbrev="SPEED" name="Use Speed Reference" id="0x02"/>
       <value abbrev="Z" name="Use Z Reference" id="0x04"/>
+      <value abbrev="RADIUS" name="Use Radius Reference" id="0x05"/>
       <value abbrev="MANDONE" name="Flag Maneuver Completion" id="0x80"/>
     </field>
     <field name="Speed Reference" abbrev="speed" type="message" message-type="DesiredSpeed"/>
