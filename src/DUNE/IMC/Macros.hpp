@@ -98,6 +98,12 @@
 #define DUNE_IMC_SMSRX 158
 //! SmsState identification number.
 #define DUNE_IMC_SMSSTATE 159
+//! IridiumMsgRx identification number.
+#define DUNE_IMC_IRIDIUMMSGRX 170
+//! IridiumMsgTx identification number.
+#define DUNE_IMC_IRIDIUMMSGTX 171
+//! IridiumTxStatus identification number.
+#define DUNE_IMC_IRIDIUMTXSTATUS 172
 //! LblRange identification number.
 #define DUNE_IMC_LBLRANGE 200
 //! LblDetection identification number.

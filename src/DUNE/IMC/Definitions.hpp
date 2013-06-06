@@ -2681,6 +2681,236 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Received Iridium Message.
+    class IridiumMsgRx: public Message
+    {
+    public:
+      //! Origin Identifier.
+      std::string origin;
+      //! Timestamp.
+      fp64_t htime;
+      //! Latitude Reference.
+      fp64_t lat;
+      //! Longitude Reference.
+      fp64_t lon;
+      //! Data.
+      std::vector<char> data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 170;
+      }
+
+      IridiumMsgRx(void);
+
+      Message*
+      clone(void) const
+      {
+        return new IridiumMsgRx(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return IridiumMsgRx::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "IridiumMsgRx";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 24;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(origin) + IMC::getSerializationSize(data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Transmit Iridium Message.
+    class IridiumMsgTx: public Message
+    {
+    public:
+      //! Request Identifier.
+      uint16_t req_id;
+      //! Destination Identifier.
+      std::string destination;
+      //! Data.
+      std::vector<char> data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 171;
+      }
+
+      IridiumMsgTx(void);
+
+      Message*
+      clone(void) const
+      {
+        return new IridiumMsgTx(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return IridiumMsgTx::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "IridiumMsgTx";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 2;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(destination) + IMC::getSerializationSize(data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Iridium Transmission Status.
+    class IridiumTxStatus: public Message
+    {
+    public:
+      //! Status Code.
+      enum StatusCodeEnum
+      {
+        //! Successfull transmission.
+        TXSTATUS_OK = 1,
+        //! Error while trying to transmit message.
+        TXSTATUS_ERROR = 2,
+        //! Message has been queued for transmission.
+        TXSTATUS_QUEUED = 3,
+        //! Message is currently being transmitted.
+        TXSTATUS_TRANSMIT = 4
+      };
+
+      //! Request Identifier.
+      uint16_t req_id;
+      //! Status Code.
+      uint8_t status;
+      //! Status Text.
+      std::string text;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 172;
+      }
+
+      IridiumTxStatus(void);
+
+      Message*
+      clone(void) const
+      {
+        return new IridiumTxStatus(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return IridiumTxStatus::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "IridiumTxStatus";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 3;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(text);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! LBL Range.
     class LblRange: public Message
     {
@@ -11434,6 +11664,8 @@ namespace DUNE
       fp64_t lat;
       //! Longitude Reference.
       fp64_t lon;
+      //! Radius.
+      uint16_t  radius;
 
       static uint16_t
       getIdStatic(void)
@@ -11482,7 +11714,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 17;
+        return 19;
       }
 
       unsigned

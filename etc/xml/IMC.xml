@@ -1371,6 +1371,50 @@
     </field>
     <field name="Error Message" abbrev="error" type="plaintext"/>
   </message>
+  
+  <message id="170" name="Received Iridium Message" abbrev="IridiumMsgRx" source="vehicle,ccu">
+    <field name="Origin Identifier" abbrev="origin" type="plaintext">
+      <description>The unique identifier of this message's origin device (e.g. lauv-xtreme-2, manta-0).</description>
+    </field>
+    <field name="Timestamp" abbrev="htime" type="fp64_t" unit="s">
+        <description>Timestamp (Epoch time).</description>
+    </field>
+    <field name="Latitude Reference" abbrev="lat" type="fp64_t" unit="rad" />
+    <field name="Longitude Reference" abbrev="lon" type="fp64_t" unit="rad" />
+    <field name="Data" abbrev="data" type="rawdata">
+      <description>
+        Message data.
+      </description>
+    </field>
+  </message>
+  
+  <message id="171" name="Transmit Iridium Message" abbrev="IridiumMsgTx" source="vehicle,ccu">
+    <field name="Request Identifier" abbrev="req_id" type="uint16_t">
+        <description>The request identifier used to receive transmission updates.</description>
+    </field>
+    <field name="Destination Identifier" abbrev="destination" type="plaintext">
+      <description>The unique identifier of this message's destination (e.g. lauv-xtreme-2, manta-0).</description>
+    </field>
+    <field name="Data" abbrev="data" type="rawdata">
+      <description>
+        Message data.
+      </description>
+    </field>
+  </message>
+  
+  <message id="172" name="Iridium Transmission Status" abbrev="IridiumTxStatus" source="vehicle,ccu">
+    <field name="Request Identifier" abbrev="req_id" type="uint16_t">
+        <description>The request identifier used to receive transmission updates</description>
+    </field>
+    <field name="Status Code" abbrev="status" type="uint8_t" unit="Enumerated" prefix="TXSTATUS">
+        <value abbrev="OK" name="Successfull transmission" id="1"/>
+        <value abbrev="ERROR" name="Error while trying to transmit message" id="2"/>
+        <value abbrev="QUEUED" name="Message has been queued for transmission" id="3"/>
+        <value abbrev="TRANSMIT" name="Message is currently being transmitted" id="4"/>
+    </field>
+    <field name="Status Text" abbrev="text" type="plaintext"/>
+  </message>
+  
 
   <!-- Acoustic Networking -->
   <message id="200" name="LBL Range" abbrev="LblRange" source="vehicle" flags="periodic">
@@ -5158,7 +5202,6 @@
     </field>
   </message>
 
-  <!-- NOT YET IMPLEMENTED -->
   <message id="478" name="Follow Reference Maneuver" abbrev="FollowReference" source="ccu">
     <description>
       This maneuver follows a reference given by an external entity.
@@ -5208,6 +5251,7 @@
     <field name="Z Reference" abbrev="z" type="message" message-type="DesiredZ"/>
     <field name="Latitude Reference" abbrev="lat" type="fp64_t"/>
     <field name="Longitude Reference" abbrev="lon" type="fp64_t"/>
+    <field name="Radius" abbrev=" radius" type="uint16_t"/>
   </message>
 
   <message id="480" name="Follow Reference State" abbrev="FollowRefState" source="vehicle">
