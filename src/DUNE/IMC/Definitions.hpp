@@ -11651,7 +11651,7 @@ namespace DUNE
         //! Use Z Reference.
         FLAG_Z = 0x04,
         //! Use Radius Reference.
-        FLAG_RADIUS = 0x05,
+        FLAG_RADIUS = 0x08,
         //! Flag Maneuver Completion.
         FLAG_MANDONE = 0x80
       };
@@ -11667,7 +11667,7 @@ namespace DUNE
       //! Longitude Reference.
       fp64_t lon;
       //! Radius.
-      uint16_t  radius;
+      fp32_t  radius;
 
       static uint16_t
       getIdStatic(void)
@@ -11716,7 +11716,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 19;
+        return 21;
       }
 
       unsigned
