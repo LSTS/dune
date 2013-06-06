@@ -11667,7 +11667,7 @@ namespace DUNE
       //! Longitude Reference.
       fp64_t lon;
       //! Radius.
-      fp32_t  radius;
+      fp32_t radius;
 
       static uint16_t
       getIdStatic(void)

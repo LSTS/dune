@@ -12004,7 +12004,7 @@ namespace DUNE
       if (z != other__.z) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
-      if ( radius != other__. radius) return false;
+      if (radius != other__.radius) return false;
       return true;
     }
 
@@ -12023,7 +12023,7 @@ namespace DUNE
       ptr__ += z.serialize(ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
-      ptr__ += IMC::serialize( radius, ptr__);
+      ptr__ += IMC::serialize(radius, ptr__);
       return ptr__;
     }
 
@@ -12036,7 +12036,7 @@ namespace DUNE
       bfr__ += z.deserialize(bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
-      bfr__ += IMC::deserialize( radius, bfr__, size__);
+      bfr__ += IMC::deserialize(radius, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -12049,7 +12049,7 @@ namespace DUNE
       bfr__ += z.reverseDeserialize(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize( radius, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(radius, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -12061,7 +12061,7 @@ namespace DUNE
       z.toJSON(os__, "z", nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
-      IMC::toJSON(os__, " radius",  radius, nindent__);
+      IMC::toJSON(os__, "radius", radius, nindent__);
     }
 
     void

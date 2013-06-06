@@ -5252,7 +5252,7 @@
     <field name="Z Reference" abbrev="z" type="message" message-type="DesiredZ"/>
     <field name="Latitude Reference" abbrev="lat" type="fp64_t"/>
     <field name="Longitude Reference" abbrev="lon" type="fp64_t"/>
-    <field name="Radius" abbrev=" radius" type="fp32_t"/>
+    <field name="Radius" abbrev="radius" type="fp32_t"/>
   </message>
 
   <message id="480" name="Follow Reference State" abbrev="FollowRefState" source="vehicle">
