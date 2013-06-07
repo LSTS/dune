@@ -126,6 +126,7 @@ namespace Control
         uint32_t m_cloops;
         //! Parser Variables
         mavlink_message_t m_msg;
+        float m_desired_radius;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -142,7 +143,8 @@ namespace Control
           m_external(true),
           m_current_wp(0),
           m_critical(false),
-          m_cloops(0)
+          m_cloops(0),
+          m_desired_radius(0)
         {
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
@@ -613,6 +615,8 @@ namespace Control
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
+
+          m_desired_radius = path->lradius;
 
           m_pcs.end_lat = path->end_lat;
           m_pcs.end_lon = path->end_lon;
@@ -1182,6 +1186,11 @@ namespace Control
           mavlink_nav_controller_output_t nav_out;
           mavlink_msg_nav_controller_output_decode(msg, &nav_out);
           trace("WP Dist: %d", nav_out.wp_dist);
+          if((nav_out.wp_dist <= (uint16_t) m_desired_radius) && (m_current_wp == 3))
+          {
+            m_pcs.flags |= PathControlState::FL_NEAR;
+            dispatch(m_pcs);
+          }
         }
 
         void
