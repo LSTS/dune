@@ -68,6 +68,8 @@ namespace Control
         float speed;
         //! GPS is uBlox
         bool ublox;
+        //! GPS is uBlox
+        float lradius;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -98,6 +100,8 @@ namespace Control
         IMC::MagneticField m_mag_field;
         //! Servo PWM message
         IMC::SetServoPosition m_servo;
+        //! Path Control State
+        IMC::PathControlState m_pcs;
         //! Reference Lat and Lon and Hei to measure displacement
         fp64_t ref_lat, ref_lon;
         fp32_t ref_hei;
@@ -173,6 +177,11 @@ namespace Control
           .defaultValue("18.0")
           .units(Units::MeterPerSecond)
           .description("Speed to be used if desired speed is not specified");
+
+          param("Default loiter radius", m_args.lradius)
+          .defaultValue("-200.0")
+          .units(Units::Meter)
+          .description("Loiter radius used in LoiterHere (idle)");
 
           param("uBlox GPS", m_args.ublox)
           .defaultValue("false")
@@ -539,6 +548,11 @@ namespace Control
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
 
+          m_pcs.start_lat = Angles::radians(m_lat);
+          m_pcs.start_lon = Angles::radians(m_lon);
+          m_pcs.start_z = m_alt;
+          m_pcs.start_z_units = IMC::Z_HEIGHT;
+
           //! Desired speed
           mavlink_msg_mission_item_pack(255, 0, msg,
               m_sysid, //! target_system System ID
@@ -600,6 +614,16 @@ namespace Control
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
 
+          m_pcs.end_lat = path->end_lat;
+          m_pcs.end_lon = path->end_lon;
+          m_pcs.end_z = alt;
+          m_pcs.end_z_units = IMC::Z_HEIGHT;
+          m_pcs.flags = PathControlState::FL_3DTRACK | PathControlState::FL_CCLOCKW;
+          m_pcs.flags &= path->flags;
+          m_pcs.lradius = path->lradius;
+
+          dispatch(m_pcs);
+
           debug("Waypoint packet sent to Ardupilot");
         }
 
@@ -613,7 +637,7 @@ namespace Control
               m_sysid, //! target_system System ID
               0, //! target_component Component ID
               "WP_LOITER_RAD", //! Parameter name
-              -200, //! Parameter value
+              m_args.lradius, //! Parameter value
               MAV_PARAM_TYPE_INT16); //! Parameter type
 
           int n = mavlink_msg_to_send_buffer(buf, msg);
@@ -621,6 +645,19 @@ namespace Control
 
           sendCommandPacket(MAV_CMD_NAV_LOITER_UNLIM);
           debug("Sent LOITER packet to Ardupilot");
+
+          m_pcs.start_lat = m_fix.lat;
+          m_pcs.start_lon = m_fix.lon;
+          m_pcs.start_z = m_fix.height;
+
+          m_pcs.end_lat = m_fix.lat;
+          m_pcs.end_lon = m_fix.lon;
+          m_pcs.end_z = m_fix.height;
+
+          m_pcs.flags = PathControlState::FL_LOITERING | PathControlState::FL_NEAR | (m_args.lradius < 0 ? PathControlState::FL_CCLOCKW : 0);
+          m_pcs.lradius = m_args.lradius * (m_args.lradius < 0 ? -1 : 1);
+
+          dispatch(m_pcs);
         }
 
         void
@@ -1102,9 +1139,8 @@ namespace Control
           mavlink_msg_statustext_decode(msg, &stat_tex);
           if((!strcmp("out of commands!", stat_tex.text)) && (m_current_wp == 3))
           {
-            IMC::PathControlState path_cs;
-            path_cs.flags |= PathControlState::FL_NEAR;
-            dispatch(path_cs);
+            m_pcs.flags |= PathControlState::FL_NEAR;
+            dispatch(m_pcs);
           }
           debug("Status: %s", stat_tex.text);
         }
