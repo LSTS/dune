@@ -616,7 +616,7 @@ namespace Control
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
 
-          m_desired_radius = path->lradius;
+          m_desired_radius = (uint16_t) path->lradius;
 
           m_pcs.end_lat = path->end_lat;
           m_pcs.end_lon = path->end_lon;
@@ -1185,10 +1185,10 @@ namespace Control
         {
           mavlink_nav_controller_output_t nav_out;
           mavlink_msg_nav_controller_output_decode(msg, &nav_out);
-          trace("WP Dist: %d", nav_out.wp_dist);
-          if((nav_out.wp_dist <= (uint16_t) m_desired_radius) && (m_current_wp == 3))
+          inf("WP Dist: %d", nav_out.wp_dist);
+          if((nav_out.wp_dist <= m_desired_radius) && (m_current_wp == 3))
           {
-            m_pcs.flags |= PathControlState::FL_NEAR;
+            m_pcs.flags |= (PathControlState::FL_NEAR | PathControlState::FL_LOITERING);
             dispatch(m_pcs);
           }
         }
