@@ -40,11 +40,15 @@
 enum Channels
 {
   //! Channel with the current index of the 100 Hz pulse.
-  CHANNEL_IDX,
+  CHANNEL_IDX = 0x00,
   //! Channel with GPS data.
-  CHANNEL_GPS,
+  CHANNEL_GPS = 0x01,
   //! Channel with MTi data.
-  CHANNEL_MTI
+  CHANNEL_MTI = 0x02,
+  //! Channel with LIMU data.
+  CHANNEL_LIMU = 0x03,
+  //! Number of channels.
+  CHANNEL_COUNT = 0x04
 };
 
 class Parser
@@ -73,7 +77,7 @@ public:
         break;
 
       case STATE_CHAN:
-        if (byte <= 0x2)
+        if (byte < CHANNEL_COUNT)
         {
           m_channel = byte;
           m_state = STATE_BYTE;
@@ -112,7 +116,10 @@ public:
         }
         else if (m_sample != -1)
         {
-          m_buffer[m_channel - 1][m_sample].push_back(byte);
+          if ((m_sample < 100) || (m_channel < CHANNEL_COUNT))
+            m_buffer[m_channel - 1][m_sample].push_back(byte);
+          else
+            std::fprintf(stderr, "ERROR: sample %u, channel %u\n", m_sample, m_channel);
         }
         break;
     }
@@ -121,31 +128,46 @@ public:
   void
   filter(void)
   {
-    std::vector<uint8_t> data;
+    std::vector<uint8_t> data(0);
 
+    // GPS.
     for (unsigned i = 0; i < 100; ++i)
     {
       for (unsigned j = 0; j < m_buffer[CHANNEL_GPS - 1][i].size(); ++j)
         data.push_back(m_buffer[CHANNEL_GPS - 1][i][j]);
     }
 
+    if (data.size() == 0)
+    {
+      std::cerr << "ERROR: empty GPS data." << std::endl;
+      return;
+    }
+
     m_filter.putGPS(data);
 
+    // MTi.
     for (unsigned i = 0; i < 100; ++i)
     {
+      // MTi.
       data.clear();
-
       for (unsigned j = 0; j < m_buffer[CHANNEL_MTI - 1][i].size(); ++j)
         data.push_back(m_buffer[CHANNEL_MTI - 1][i][j]);
+      m_filter.putXMTI(data, i);
 
-      m_filter.putIMU(data, i);
+      // LIMU.
+      data.clear();
+      for (unsigned j = 0; j < m_buffer[CHANNEL_LIMU - 1][i].size(); ++j)
+        data.push_back(m_buffer[CHANNEL_LIMU - 1][i][j]);
+      m_filter.putLIMU(data, i);
+
+      m_filter.print(i);
     }
   }
 
   void
   clear(void)
   {
-    for (unsigned i = 0; i < 2; ++i)
+    for (unsigned i = 0; i < CHANNEL_COUNT - 1; ++i)
     {
       for (unsigned j = 0; j < 100; ++j)
       {
@@ -163,7 +185,7 @@ private:
   };
 
   unsigned m_block_cnt;
-  std::vector<uint8_t> m_buffer[2][100];
+  std::vector<uint8_t> m_buffer[CHANNEL_COUNT - 1][100];
   State m_state;
   int m_channel;
   int m_sample;

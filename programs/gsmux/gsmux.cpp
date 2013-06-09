@@ -73,8 +73,8 @@ main(int argc, char** argv)
 
   std::cerr << "Logging to '" << prefix << ".{bin,tsv}'" << std::endl;
 
-  SerialPort port(argv[1], 500000);
-  uint8_t bfr[1024];
+  SerialPort port(argv[1], 921600);
+  uint8_t bfr[1024] = {0};
   ::Parser parser(tsv);
 
   while (1)

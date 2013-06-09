@@ -44,16 +44,16 @@ class Filter
 {
 public:
   Filter(std::FILE* fd):
-    m_fd(fd)
+    m_fd(fd),
+    m_nav_status(m_nav_status_bfr)
   {
     printHeader();
-    m_nav_status = new char[6];
+    std::memset(m_nav_status_bfr, 0, sizeof(m_nav_status_bfr));
     std::memset(m_sync_status, 0, sizeof(m_sync_status));
   }
 
   ~Filter(void)
   {
-    delete [] m_nav_status;
   }
 
   void
@@ -73,7 +73,9 @@ public:
     {
       if (data[i] == '\n')
       {
-        interpret(std::string((char*)&data[off], size));
+        //std::cerr << "offset: " << off << " / " << size << std::endl;
+        std::string stn((const char*)&data[off], size);
+        interpret(stn);
         off = size + 1;
         size = 0;
       }
@@ -91,34 +93,120 @@ public:
   }
 
   void
-  putIMU(const std::vector<uint8_t>& data, unsigned index)
+  putXMTI(const std::vector<uint8_t>& data, unsigned index)
   {
     if (data.size() < 20)
+    {
+      std::cerr << "WARNING: XMTI short read: " << data.size() << std::endl;
+      dump(data);
       return;
+    }
 
     if (data[2] != 0x32)
     {
-      std::cerr << "WARNING: spurious data." << std::endl;
+      std::cerr << "WARNING: XMTI spurious data." << std::endl;
+      dump(data);
+      return;
     }
 
     const uint8_t* ptr = &data[4];
-    ByteCopy::fromBE(m_temp, ptr);
-    ByteCopy::fromBE(m_accel_x, ptr + 4);
-    ByteCopy::fromBE(m_accel_y, ptr + 8);
-    ByteCopy::fromBE(m_accel_z, ptr + 12);
-    ByteCopy::fromBE(m_agvel_x, ptr + 16);
-    ByteCopy::fromBE(m_agvel_y, ptr + 20);
-    ByteCopy::fromBE(m_agvel_z, ptr + 24);
-    ByteCopy::fromBE(m_phi, ptr + 28);
-    ByteCopy::fromBE(m_theta, ptr + 32);
-    ByteCopy::fromBE(m_psi, ptr + 36);
+    ByteCopy::fromBE(m_temp0, ptr);
+    ByteCopy::fromBE(m_accel_x0, ptr + 4);
+    ByteCopy::fromBE(m_accel_y0, ptr + 8);
+    ByteCopy::fromBE(m_accel_z0, ptr + 12);
+    ByteCopy::fromBE(m_agvel_x0, ptr + 16);
+    ByteCopy::fromBE(m_agvel_y0, ptr + 20);
+    ByteCopy::fromBE(m_agvel_z0, ptr + 24);
+    ByteCopy::fromBE(m_phi0, ptr + 28);
+    ByteCopy::fromBE(m_theta0, ptr + 32);
+    ByteCopy::fromBE(m_psi0, ptr + 36);
+    m_psi0 = Angles::normalizeRadian(m_psi0);
+  }
 
-    m_utc_tow = (m_utc_tow_msec + m_sample_msec) / 1000.0;
-    m_utc_second = (m_utc_second_msec + m_sample_msec) / 1000.0;
+  void
+  putLIMU(const std::vector<uint8_t>& data, unsigned index)
+  {
+    if (data.size() != 38)
+    {
+      std::cerr << "WARNING: LIMU short read: " << data.size() << std::endl;
+      dump(data);
+      return;
+    }
 
-    print(index);
+    if ((data[0] != 0x2c) || (data[1] != 0x22) || (data[2] != 0x05))
+    {
+      std::cerr << "WARNING: LIMU spurious data." << std::endl;
+      dump(data);
+      return;
+    }
 
-    m_sample_msec += 10;
+    int16_t s16;
+    double real;
+
+    const uint8_t* ptr = &data[3];
+    ByteCopy::fromLE(s16, ptr);
+
+    // Gyros.
+    ByteCopy::fromLE(s16, ptr + 2);
+    m_agvel_x1 = s16 * 0.02;
+    ByteCopy::fromLE(s16, ptr + 4);
+    m_agvel_y1 = s16 * 0.02;
+    ByteCopy::fromLE(s16, ptr + 6);
+    m_agvel_z1 = s16 * 0.02;
+
+    // Acceleration.
+    ByteCopy::fromLE(s16, ptr + 8);
+    double accl_x = s16 * 0.0008;
+    m_accel_x1 = accl_x * 9.7982543981;
+    ByteCopy::fromLE(s16, ptr + 10);
+    double accl_y = s16 * 0.0008;
+    m_accel_y1 = accl_y * 9.7982543981;
+    ByteCopy::fromLE(s16, ptr + 12);
+    double accl_z = s16 * 0.0008;
+    m_accel_z1 = accl_z * 9.7982543981;
+
+    // Magnetometer.
+    ByteCopy::fromLE(s16, ptr + 26);
+    double magn_x = s16 * 0.0001;
+    ByteCopy::fromLE(s16, ptr + 28);
+    double magn_y = s16 * 0.0001;
+    ByteCopy::fromLE(s16, ptr + 30);
+    double magn_z = s16 * 0.0001;
+
+    // Temperature.
+    ByteCopy::fromLE(s16, ptr + 32);
+    m_temp1 = (s16 * 0.00565) + 25.0;
+
+    computeLIMU(accl_x, accl_y, accl_z, magn_x, magn_y, magn_z);
+  }
+
+  void
+  computeLIMU(double a_accl_x, double a_accl_y, double a_accl_z,
+              double a_magn_x, double a_magn_y, double a_magn_z)
+  {
+    double accl_x = a_accl_x;
+    double accl_y = a_accl_y;
+    double accl_z = a_accl_z;
+
+    // Compute roll (phi).
+    double phi = atan2(accl_y, sqrt(accl_x * accl_x + accl_z * accl_z));
+    m_phi1 = Angles::degrees(phi);
+
+    // Compute pitch (theta).
+    double theta = atan2(-accl_x, accl_z);
+    m_theta1 = Angles::degrees(theta);
+
+    double Xh = a_magn_x * cos(theta) + a_magn_z * sin(theta);
+    double Yh = a_magn_x * sin(phi) * sin(theta) + a_magn_y * cos(phi) - a_magn_z * sin(phi) * cos(theta);
+    m_psi1 = -Angles::degrees(Angles::normalizeRadian(atan2(Yh, Xh)));
+  }
+
+  void
+  dump(const std::vector<uint8_t>& data)
+  {
+    for (unsigned i = 0; i < data.size(); ++i)
+      fprintf(stderr, "%02X ", data[i]);
+    fprintf(stderr, "\n");
   }
 
   void
@@ -150,6 +238,10 @@ public:
 #define FIELD(label, var, type, fmt) , var
 #include "Fields.def"
             );
+
+    m_utc_tow = (m_utc_tow_msec + m_sample_msec) / 1000.0;
+    m_utc_second = (m_utc_second_msec + m_sample_msec) / 1000.0;
+    m_sample_msec += 10;
   }
 
 private:
@@ -221,6 +313,7 @@ private:
     else
     {
       std::cerr << "ERROR: unknown NMEA message." << std::endl;
+      std::cerr << sanitize(stn) << std::endl;
     }
   }
 
@@ -299,7 +392,18 @@ private:
     readDecimal(parts[18], m_sats);
 
     // Navigation status.
-    std::strcpy(m_nav_status, parts[8].c_str());
+    if (parts[8].size() != 2)
+    {
+      m_nav_status[0] = 'U';
+      m_nav_status[1] = 'N';
+      m_nav_status[2] = 0;
+    }
+    else
+    {
+      m_nav_status[0] = parts[8][0];
+      m_nav_status[1] = parts[8][1];
+      m_nav_status[2] = 0;
+    }
 
     // HDOP.
     double hdop = 0;
@@ -345,6 +449,7 @@ private:
   unsigned m_sample_msec;
   unsigned m_utc_second_msec;
   unsigned m_utc_tow_msec;
+  char m_nav_status_bfr[6];
 
 #define FIELD(label, var, type, fmt)            \
   type var;
