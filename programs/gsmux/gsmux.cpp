@@ -47,15 +47,22 @@ main(int argc, char** argv)
     return 1;
   }
 
-  double now = Clock::getSinceEpoch();
-  std::string prefix(argv[2]);
-  prefix += "/";
-  prefix += Time::Format::getDateSafe(now);
-  prefix += "_";
-  prefix += Time::Format::getTimeSafe(now);
+  Path folder(argv[2]);
+  if (!folder.exists())
+    folder.create();
 
-  std::string bin_name = prefix + ".bin";
-  std::string tsv_name = prefix + ".tsv";
+  Path bin_name;
+  Path tsv_name;
+  unsigned nr = 0;
+
+  while (true)
+  {
+    bin_name = folder / String::str("%08u.bin", nr);
+    tsv_name = folder / String::str("%08u.tsv", nr);
+    if (!bin_name.exists() && !tsv_name.exists())
+      break;
+    ++nr;
+  }
 
   std::FILE* bin = std::fopen(bin_name.c_str(), "wb");
   if (bin == NULL)
@@ -63,6 +70,7 @@ main(int argc, char** argv)
     std::cerr << "ERROR: failed to open file '" << bin_name << "'" << std::endl;
     return 1;
   }
+  std::cerr << "Opened " << bin_name << std::endl;
 
   std::FILE* tsv = std::fopen(tsv_name.c_str(), "w");
   if (tsv == NULL)
@@ -70,8 +78,7 @@ main(int argc, char** argv)
     std::cerr << "ERROR: failed to open file '" << tsv_name << "'" << std::endl;
     return 1;
   }
-
-  std::cerr << "Logging to '" << prefix << ".{bin,tsv}'" << std::endl;
+  std::cerr << "Opened " << tsv_name << std::endl;
 
   SerialPort port(argv[1], 921600);
   uint8_t bfr[1024] = {0};
