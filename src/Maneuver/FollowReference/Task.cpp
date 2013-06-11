@@ -39,6 +39,7 @@ namespace Maneuver
       float vertical_tolerance;
       float horizontal_tolerance;
       float loitering_radius;
+      std::string vehicle_type;
       float default_speed;
       std::string default_speed_units;
       float default_z;
@@ -73,6 +74,10 @@ namespace Maneuver
         param("Loitering Radius", m_args.loitering_radius).defaultValue("7.5").units(
             Units::Meter).description(
             "Radius of loitering circle after arriving at destination");
+
+        param("Vehicle Type", m_args.vehicle_type).defaultValue("AUV")
+                    .description(
+                        "Vehicle type (AUV or UAV), default AUV");
 
         param("Horizontal Tolerance", m_args.horizontal_tolerance).defaultValue(
             "15.0").units(Units::Meter).description(
@@ -272,12 +277,10 @@ namespace Maneuver
         desired_path.flags = IMC::DesiredPath::FL_DIRECT;
 
         // set attributes in desired path according to flags
-        setEndLocation(ref, desired_path, curlat, curlon);
-        setSpeed(ref, desired_path);
-        setRadius(ref, desired_path);
-        double z_dist = setDepth(ref, desired_path);
-
-
+        updateEndLoc(ref, desired_path, curlat, curlon);
+        updateSpeed(ref, desired_path);
+        updateRadius(ref, desired_path);
+        double z_dist = updateEndZ(ref, desired_path);
 
         // check to see if we are already at the target...
         double xy_dist = WGS84::distance(desired_path.end_lat,
@@ -333,8 +336,12 @@ namespace Maneuver
 
         if (at_z_target)
           m_fref_state.proximity |= IMC::FollowRefState::PROX_Z_NEAR;
-        if (at_xy_target)
+        if (at_xy_target || (m_args.vehicle_type.compare("UAV") == 0 && near_ref ))
           m_fref_state.proximity |= IMC::FollowRefState::PROX_XY_NEAR;
+
+        //inf("PathControlState flags %#x, %d || (%s && %d) -> at_xy_target || (m_args.vehicle_type.compare(\"UAV\") && near_ref )", pcs->flags, at_xy_target,m_args.vehicle_type.c_str(), near_ref);
+        //inf("Distance XY: %f, Distance Z: %f, flags: %#x ", xy_dist, z_dist,  m_fref_state.proximity);
+
 
         if (!at_z_target && !at_xy_target)
           m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
@@ -373,7 +380,7 @@ namespace Maneuver
       }
 
     private:
-      void setEndLocation(const IMC::Reference* ref, IMC::DesiredPath &desired_path,
+      void updateEndLoc(const IMC::Reference* ref, IMC::DesiredPath &desired_path,
           double curlat, double curlon) {
         // set end location according to received reference
         if (ref->flags & IMC::Reference::FLAG_LOCATION)
@@ -396,7 +403,7 @@ namespace Maneuver
         }
       }
 
-      void setSpeed(const IMC::Reference* ref, IMC::DesiredPath &desired_path) {
+      void updateSpeed(const IMC::Reference* ref, IMC::DesiredPath &desired_path) {
         // set speed according to received reference. If the reference does not
         // provide a desired speed, use last sent speed
         if ((ref->flags & IMC::Reference::FLAG_SPEED) && !(ref->speed.isNull()))
@@ -417,7 +424,7 @@ namespace Maneuver
         }
       }
 
-      void setRadius(const IMC::Reference* ref, IMC::DesiredPath &desired_path) {
+      void updateRadius(const IMC::Reference* ref, IMC::DesiredPath &desired_path) {
 
         //std::cout<< " starting radius " << ref->radius << "  -  " << desired_path.lradius << "\n";
         // set speed according to received reference. If the reference does not
@@ -425,27 +432,21 @@ namespace Maneuver
         if (ref->flags & IMC::Reference::FLAG_RADIUS)
         {
           desired_path.lradius = ref->radius;
-          //std::cout << "flag radius" << "\n\n";
         } else if (m_got_reference ) {
           desired_path.lradius = m_cur_ref.radius;
-          //std::cout << "old radius ref\n";
         } else {
           // default radius
-          //std::cout << "default radius\n";
           desired_path.lradius = m_args.loitering_radius;
         }
-        //std::cout<< " Intermediate radius " << ref->radius << "  -  " << desired_path.lradius << "\n";
 
         if(desired_path.lradius < 0)
         {
-          //std::cout << "desired_path.lradius < 0 \n";
           desired_path.flags |= DesiredPath::FL_CCLOCKW;
           desired_path.lradius = desired_path.lradius * -1;
         }
-        //std::cout<< " final radius " << ref->radius << "  -  " << desired_path.lradius << "\n";
       }
 
-      double setDepth(const IMC::Reference* ref, IMC::DesiredPath& desired_path) {
+      double updateEndZ(const IMC::Reference* ref, IMC::DesiredPath& desired_path) {
         // set end_z according to received reference
         if ((ref->flags & IMC::Reference::FLAG_Z) && !(ref->z.isNull()))
         {
@@ -463,6 +464,8 @@ namespace Maneuver
           desired_path.end_z_units = parseZUnitsStr(m_args.default_z_units);
         }
 
+
+
         double z_dist;
         switch (desired_path.end_z_units)
         {
@@ -473,7 +476,7 @@ namespace Maneuver
           z_dist = std::abs(desired_path.end_z - m_estate.alt);
           break;
         case (IMC::Z_HEIGHT):
-          z_dist = std::abs(desired_path.end_z - m_estate.height);
+          z_dist = std::abs(desired_path.end_z - (m_estate.height - m_estate.z));
           break;
         default:
           z_dist = 0;
