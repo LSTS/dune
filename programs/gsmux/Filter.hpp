@@ -120,7 +120,7 @@ public:
     ByteCopy::fromBE(m_phi0, ptr + 28);
     ByteCopy::fromBE(m_theta0, ptr + 32);
     ByteCopy::fromBE(m_psi0, ptr + 36);
-    m_psi0 = Angles::normalizeRadian(m_psi0);
+    m_psi0 = Angles::degrees(Angles::normalizeRadian(Angles::radians(m_psi0)));
   }
 
   void
