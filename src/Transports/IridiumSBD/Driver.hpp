@@ -47,32 +47,49 @@ namespace Transports
     //! Maximum number of revision lines.
     static const unsigned c_max_rev_lines = 10;
 
-    class Driver
+    class Driver: public Concurrency::Thread
     {
     public:
       Driver(Tasks::Task* task, SerialPort* uart):
         m_task(task),
         m_uart(uart),
-        m_timeout(2.5)
+        m_timeout(2.5),
+        m_read_mode(READ_MODE_LINE)
       {
-        setEcho(false);
+        m_uart->flushInput();
       }
 
       ~Driver(void)
       { }
 
+      //! Initialize ISU.
+      void
+      initialize(void)
+      {
+        start();
+        setEcho(false);
+        setUnsolicited(true);
+        setReadMode(READ_MODE_LINE);
+      }
+
+      //! Query the ISU manufacturer.
+      //! @return ISU manufacturer name.
       std::string
       getManufacturer(void)
       {
         return readValue("+CGMI");
       }
 
+      //! Query the ISU model.
+      //! @return ISU model name.
       std::string
       getModel(void)
       {
         return readValue("+CGMM");
       }
 
+      //! Query the ISU revision.
+      //! @return ISU revision.
       std::string
       getRevision(void)
       {
@@ -90,21 +107,17 @@ namespace Transports
         return String::join(rev.begin(), rev.end(), " / ");
       }
 
+      //! Query the ISU serial number (IMEI).
+      //! @return ISU serial number (IMEI),
       std::string
       getIMEI(void)
       {
         return readValue("+CGSN");
       }
 
-      unsigned
-      getRSSI(void)
-      {
-        std::string value = readValue("+CSQ");
-        std::cerr << "value: " << value << std::endl;
-
-        return 0;
-      }
-
+      //! Write SBD binary data to the ISU.
+      //! @param[in] data binary data.
+      //! @param[in] data_size size of binary data.
       void
       writeSBD(const uint8_t* data, unsigned data_size)
       {
@@ -113,7 +126,7 @@ namespace Transports
 
         // Send command.
         sendAT(String::str("+SBDWB=%u", data_size));
-        readReady();
+        expectREADY();
 
         // Send data.
         sendRaw(data, data_size);
@@ -128,71 +141,287 @@ namespace Transports
         if (line != "0")
           throw SBDInvalidWrite(line);
 
-        readOK();
+        expectOK();
       }
 
+      //! Read SBD binary data to the ISU.
+      //! @param[in] data buffer to hold binary data.
+      //! @param[in] data_size size of binary data buffer.
+      //! @return number of bytes read.
       unsigned
       readSBD(uint8_t* data, unsigned data_size)
       {
-        Counter<double> timer(m_timeout);
+        ReadMode saved_read_mode = getReadMode();
+        Counter<double> timer(getTimeout());
         uint8_t bfr[2] = {0};
         uint8_t ccsum[2] = {0};
+        unsigned length = 0;
 
-        sendAT("+SBDRB");
-
-        // Read length.
-        readRaw(timer, bfr, 2);
-        unsigned length = (bfr[0] << 8) | bfr[1];
-
-        // Read data.
-        if (length > data_size)
-          throw BufferTooSmall(data_size, length);
-
-        if (length > 0)
+        try
         {
-          readRaw(timer, data, length);
-          computeChecksum(data, length, ccsum);
+          // Prepare to read raw data.
+          setReadMode(READ_MODE_RAW);
+
+          sendAT("+SBDRB");
+
+          // Read length.
+          readRaw(timer, bfr, 2);
+          length = (bfr[0] << 8) | bfr[1];
+          m_task->spew("reading %u bytes of SBD binary data", length);
+
+          // Read data.
+          if (length > data_size)
+            throw BufferTooSmall(data_size, length);
+
+          if (length > 0)
+          {
+            readRaw(timer, data, length);
+            computeChecksum(data, length, ccsum);
+          }
+
+          // Read and validate.
+          readRaw(timer, bfr, 2);
+          if ((bfr[0] != ccsum[0]) || (bfr[1] != ccsum[1]))
+            throw InvalidChecksum(bfr, ccsum);
+
+          setReadMode(saved_read_mode);
+          expectOK();
         }
-
-        // Read and validate.
-        readRaw(timer, bfr, 2);
-        if ((bfr[0] != ccsum[0]) || (bfr[1] != ccsum[1]))
-          throw InvalidChecksum(bfr, ccsum);
-
-        readOK();
+        catch (...)
+        {
+          setReadMode(saved_read_mode);
+          throw;
+        }
 
         return length;
       }
 
+      //! Enable or disable radio activity.
+      //! @param[in] value true to enable, false to disable.
       void
       setRadioActivity(bool value)
       {
         sendAT(value ? "*R1" : "*R0");
-        readOK();
+        expectOK();
       }
 
+      //! Enable or disable the ISU to echo characters to the DTE.
+      //! @param[in] value true to enable, false to disable.
       void
       setEcho(bool value)
       {
         sendAT(value ? "E1" : "E0");
-        readOK();
+        expectOK();
+      }
+
+      //! Enable or disable the ISU to listen for SBD Ring Alerts.
+      //! @param[in] value true to enable, false to disable.
+      void
+      setRingAlert(bool value)
+      {
+        sendAT(value ? "+SBDMTA=1" : "+SBDMTA=0");
+        expectOK();
       }
 
     private:
+      //! Message buffer types.
+      enum BufferType
+      {
+        //! Mobile originated SBD message buffer.
+        BFR_TYPE_ORIGINATED = 0,
+        //! Mobile terminated SBD message buffer.
+        BFR_TYPE_TERMINATED = 1,
+        //! Mobile originated SBD message buffer.
+        BFR_TYPE_BOTH = 2
+      };
+
+      //! Read mode.
+      enum ReadMode
+      {
+        //! Line oriented input.
+        READ_MODE_LINE,
+        //! Unprocessed sequence of bytes.
+        READ_MODE_RAW
+      };
+
       //! Parent task.
       Tasks::Task* m_task;
       //! Serial port handle.
       SerialPort* m_uart;
       //! Read timeout.
       double m_timeout;
-      //! Read buffer.
-      char m_buffer[512];
-      //! Character queue.
+      //! Queue of incoming characters.
       std::queue<char> m_queue;
-      //! Line buffer.
+      //! Current line being parsed.
       std::string m_line;
-      //! Last command.
+      //! Last command sent to modem.
       std::string m_last_cmd;
+      //! Queue of input lines.
+      Concurrency::TSQueue<std::string> m_lines;
+      //! Queue of raw input bytes.
+      Concurrency::TSQueue<uint8_t> m_bytes;
+      //! Read mode.
+      ReadMode m_read_mode;
+      //! Read mode lock.
+      Concurrency::Mutex m_mutex;
+
+      void
+      setUnsolicited(bool value)
+      {
+        //setRingAlert(value);
+        setIndicatorEventReporting(value);
+      }
+
+      bool
+      handleUnsolicited(const std::string& str)
+      {
+        std::cerr << "UNSOLICITED: " << sanitize(str) << std::endl;
+
+        if (String::startsWith(str, "+SBDRING"))
+          handleSBDRING(str);
+        else if (String::startsWith(str, "+CIEV"))
+          handleCIEV(str);
+        else if (String::startsWith(str, "+AREG"))
+          handleAREG(str);
+        else
+        {
+          std::cerr << "NOT UNSOLICITED: " << sanitize(str) << std::endl;
+          return false;
+        }
+
+        return true;
+      }
+
+      void
+      handleSBDRING(const std::string& str)
+      {
+        (void)str;
+        m_task->debug("SBD ring");
+      }
+
+      void
+      handleCIEV(const std::string& str)
+      {
+        unsigned ind = 0;
+        unsigned value = 0;
+
+        if (std::sscanf(str.c_str(), "+CIEV:%u,%u", &ind, &value) == 2)
+        {
+          if (ind == 0)
+          {
+            IMC::RSSI rssi;
+            rssi.value = (value * 100) / 5;
+            m_task->dispatch(rssi, DF_LOOP_BACK);
+          }
+        }
+        else
+        {
+          m_task->war("invalid unsolicited string %s", str.c_str());
+        }
+      }
+
+      void
+      handleAREG(const std::string& str)
+      {
+        (void)str;
+      }
+
+      void
+      setIndicatorEventReporting(bool value)
+      {
+        sendAT(value ? "+CIER=1,1,0" : "+CIER=0");
+        expectOK();
+      }
+
+      void
+      clearMessageBuffer(BufferType type)
+      {
+        std::string rv = readValue(String::str("+SBDD%u", type));
+        if (rv != "0")
+          throw std::runtime_error("error ocurred while clearing buffer");
+      }
+
+      void
+      clearSequenceNumber(void)
+      {
+        std::string rv = readValue("+SBDC");
+        if (rv != "0")
+          throw std::runtime_error("error ocurred while clearing the MOMSN");
+      }
+
+      ReadMode
+      getReadMode(void)
+      {
+        Concurrency::ScopedMutex l(m_mutex);
+        return m_read_mode;
+      }
+
+      void
+      setReadMode(ReadMode mode)
+      {
+        if ((getReadMode() == READ_MODE_LINE) && (mode == READ_MODE_RAW))
+        {
+          setUnsolicited(false);
+          m_mutex.lock();
+          m_read_mode = mode;
+          m_mutex.unlock();
+        }
+
+        if ((getReadMode() == READ_MODE_RAW) && (mode == READ_MODE_LINE))
+        {
+          m_mutex.lock();
+          m_read_mode = mode;
+          m_mutex.unlock();
+          setUnsolicited(true);
+        }
+      }
+
+      void
+      run(void)
+      {
+        char bfr[512];
+        std::string line;
+
+        while (!isStopping())
+        {
+          if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+            continue;
+
+          int rv = m_uart->read(bfr, sizeof(bfr));
+          if (rv <= 0)
+            throw std::runtime_error("short read");
+
+          for (int i = 0; i < rv; ++i)
+          {
+            if (bfr[i] == '\r')
+              fprintf(stderr, "\\r");
+            else if (bfr[i] == '\n')
+              fprintf(stderr, "\\n");
+            else
+              fprintf(stderr, "%c", bfr[i]);
+          }
+          fprintf(stderr, "\n");
+
+          if (getReadMode() == READ_MODE_RAW)
+          {
+            fprintf(stderr, "READ MODE RAW\n");
+            for (int i = 0; i < rv; ++i)
+              m_bytes.push(bfr[i]);
+          }
+          else
+          {
+            fprintf(stderr, "READ MODE LINE\n");
+            for (int i = 0; i < rv; ++i)
+              m_queue.push(bfr[i]);
+
+            while (processQueue(line))
+            {
+              if (!handleUnsolicited(line))
+                m_lines.push(line);
+            }
+          }
+        }
+      }
 
       void
       computeChecksum(const uint8_t* data, unsigned data_size, uint8_t* bfr) const
@@ -210,7 +439,7 @@ namespace Transports
       {
         sendAT(cmd);
         std::string str = readLine();
-        readOK();
+        expectOK();
         return str;
       }
 
@@ -221,7 +450,7 @@ namespace Transports
         cmd.append(str);
         m_last_cmd = cmd;
         cmd.append("\r\n");
-        m_task->debug("W %s", m_last_cmd.c_str());
+        m_task->spew("send: %s", m_last_cmd.c_str());
         sendRaw((const uint8_t*)cmd.c_str(), cmd.size());
       }
 
@@ -234,35 +463,42 @@ namespace Transports
       void
       setTimeout(double timeout)
       {
+        Concurrency::ScopedMutex l(m_mutex);
         m_timeout = timeout;
       }
 
       double
-      getTimeout(void) const
+      getTimeout(void)
       {
+        Concurrency::ScopedMutex l(m_mutex);
         return m_timeout;
       }
 
       void
-      readOK(void)
+      expect(const std::string& str)
       {
         std::string rv = readLine();
-        if (rv != "OK")
-          throw UnexpectedReply("OK", rv);
+        std::cerr << "EXPEDT: " << str << " / got " << rv << std::endl;
+        if (rv != str)
+          throw UnexpectedReply(str, rv);
       }
 
       void
-      readReady(void)
+      expectOK(void)
       {
-        std::string rv = readLine();
-        if (rv != "READY")
-          throw UnexpectedReply("READY", rv);
+        expect("OK");
+      }
+
+      void
+      expectREADY(void)
+      {
+        expect("READY");
       }
 
       std::string
       readLine(void)
       {
-        Counter<double> timer(m_timeout);
+        Counter<double> timer(getTimeout());
         return readLine(timer);
       }
 
@@ -273,18 +509,9 @@ namespace Transports
 
         while (!timer.overflow())
         {
-          if (m_uart->hasNewData(timer.getRemaining()) != IOMultiplexing::PRES_OK)
-            throw ReadTimeout();
+          if (m_bytes.waitForItems(timer.getRemaining()))
+            data[bytes_read++] = m_bytes.pop();
 
-          int rv = m_uart->read(data + bytes_read, data_size - bytes_read);
-          if (rv <= 0)
-            throw std::runtime_error("short read");
-
-          std::cerr << "READ: " << bytes_read << ", " << (data_size - bytes_read) << std::endl;
-          for (int i = 0; i < rv; ++i)
-            fprintf(stderr, "BYTE %02X\n", data[i]);
-
-          bytes_read += rv;
           if (bytes_read == data_size)
             return;
         }
@@ -300,6 +527,7 @@ namespace Transports
         while (!m_queue.empty())
         {
           char c = m_queue.front();
+
           m_queue.pop();
           if (c == '\n')
           {
@@ -321,13 +549,8 @@ namespace Transports
 
           if (!str.empty())
           {
+            m_task->spew("recv: %s", sanitize(str).c_str());
             m_line.clear();
-
-            if (str == m_last_cmd)
-              return false;
-
-            m_task->debug("LINE: %s", sanitize(str).c_str());
-
             return true;
           }
         }
@@ -338,31 +561,16 @@ namespace Transports
       std::string
       readLine(Counter<double>& timer)
       {
-        std::string str;
-
-        if (processQueue(str))
-          return str;
-
-        //! FIXME: check unsolicited messages.
-        while (!timer.overflow())
+        if (m_lines.waitForItems(timer.getRemaining()))
         {
-          if (m_uart->hasNewData(timer.getRemaining()) != IOMultiplexing::PRES_OK)
-            throw ReadTimeout();
-
-          int rv = m_uart->readString(m_buffer, sizeof(m_buffer));
-          if (rv <= 0)
-            throw std::runtime_error("short read");
-
-          m_task->debug("READ: %s", sanitize(m_buffer).c_str());
-
-          for (int i = 0; i < rv; ++i)
-            m_queue.push(m_buffer[i]);
-
-          if (processQueue(str))
-            break;
+          std::string line = m_lines.pop();
+          if (line != m_last_cmd)
+            return line;
+          else
+            return readLine(timer);
         }
 
-        return str;
+        throw ReadTimeout();
       }
     };
   }

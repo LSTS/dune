@@ -103,19 +103,19 @@ namespace Transports
       {
         m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
         m_driver = new Driver(this, m_uart);
+        m_driver->initialize();
 
         // debug("Manufacturer: %s", m_driver->getManufacturer().c_str());
         // debug("Model: %s", m_driver->getModel().c_str());
-        // //debug("Revision: %s", m_driver->getRevision().c_str());
+        // debug("Revision: %s", m_driver->getRevision().c_str());
         // debug("IMEI: %s", m_driver->getIMEI().c_str());
 
-        m_driver->writeSBD((const uint8_t*)"1234", 4);
+        // m_driver->writeSBD((const uint8_t*)"1234", 4);
 
-        // m_driver->setEcho(false);
+        // // m_driver->setEcho(false);
 
         uint8_t bfr[128];
         m_driver->readSBD(bfr, sizeof(bfr));
-
       }
 
       //! Release resources.
