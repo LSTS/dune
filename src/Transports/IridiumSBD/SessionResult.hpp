@@ -25,77 +25,98 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef TRANSPORTS_IRIDIUM_SBD_EXCEPTIONS_HPP_INCLUDED_
-#define TRANSPORTS_IRIDIUM_SBD_EXCEPTIONS_HPP_INCLUDED_
+#ifndef TRANSPORTS_IRIDIUM_SBD_SESSION_RESULT_HPP_INCLUDED_
+#define TRANSPORTS_IRIDIUM_SBD_SESSION_RESULT_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <cstdio>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+
+// Local headers.
+#include "Exceptions.hpp"
 
 namespace Transports
 {
   namespace IridiumSBD
   {
-    using DUNE_NAMESPACES;
-
-    class UnexpectedReply: public std::runtime_error
+    class SessionResult
     {
     public:
-      UnexpectedReply(const std::string& exp, const std::string& got):
-        std::runtime_error(String::str("expecting '%s' but received '%s'",
-                                       exp.c_str(),
-                                       got.c_str()))
+      SessionResult(void):
+        m_mo_status(0),
+        m_mo_msn(0),
+        m_mt_status(0),
+        m_mt_msn(0),
+        m_mt_length(0),
+        m_mt_queued(0)
       { }
-    };
 
-    class ReadTimeout: public std::runtime_error
-    {
-    public:
-      ReadTimeout(void):
-        std::runtime_error("timeout while reading reply")
-      { }
-    };
+      void
+      parse(const std::string& str)
+      {
+        int rv = std::sscanf(str.c_str(),
+                             "+SBDIX:%u,%u,%u,%u,%u,%u",
+                             &m_mo_status,
+                             &m_mo_msn,
+                             &m_mt_status,
+                             &m_mt_msn,
+                             &m_mt_length,
+                             &m_mt_queued);
+        if (rv != 6)
+          throw InvalidFormat(str);
+      }
 
-    class SBDInvalidSize: public std::runtime_error
-    {
-    public:
-      SBDInvalidSize(unsigned size):
-        std::runtime_error(String::str("invalid SBD size %u", size))
-      { }
-    };
+      bool
+      isSuccessMO(void) const
+      {
+        return (m_mo_status <= 4);
+      }
 
-    class SBDInvalidWrite: public std::runtime_error
-    {
-    public:
-      SBDInvalidWrite(const std::string& error):
-        std::runtime_error(String::str("invalid SBD write %s", error.c_str()))
-      { }
-    };
+      bool
+      isSuccessMT(void) const
+      {
+        return (m_mo_status < 4) && (m_mo_status != 1);
+      }
 
-    class BufferTooSmall: public std::runtime_error
-    {
-    public:
-      BufferTooSmall(unsigned has, unsigned need):
-        std::runtime_error(String::str("buffer has %u bytes, needed %u",
-                                       has, need))
-      { }
-    };
+      unsigned
+      getStatusMO(void) const
+      {
+        return m_mo_status;
+      }
 
-    class InvalidChecksum: public std::runtime_error
-    {
-    public:
-      InvalidChecksum(uint8_t* r, uint8_t* c):
-        std::runtime_error(String::str("invalid checksum: should be %02X%02X but received %02X%02X",
-                                       c[0], c[1],
-                                       r[0], r[1]))
-      { }
-    };
+      unsigned
+      getStatusMT(void) const
+      {
+        return m_mt_status;
+      }
 
-    class InvalidFormat: public std::runtime_error
-    {
-    public:
-      InvalidFormat(const std::string& str):
-        std::runtime_error(String::str("invalid format: %s", str.c_str()))
-      { }
+      unsigned
+      getSequenceMO(void) const
+      {
+        return m_mo_msn;
+      }
+
+      unsigned
+      getSequenceMT(void) const
+      {
+        return m_mt_msn;
+      }
+
+      unsigned
+      getLengthMT(void) const
+      {
+        return m_mt_length;
+      }
+
+    private:
+      unsigned m_mo_status;
+      unsigned m_mo_msn;
+      unsigned m_mt_status;
+      unsigned m_mt_msn;
+      unsigned m_mt_length;
+      unsigned m_mt_queued;
     };
   }
 }

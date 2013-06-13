@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef TRANSPORTS_IRIDIUM_SBD_EXCEPTIONS_HPP_INCLUDED_
-#define TRANSPORTS_IRIDIUM_SBD_EXCEPTIONS_HPP_INCLUDED_
+#ifndef TRANSPORTS_IRIDIUM_SBD_TX_REQUEST_HPP_INCLUDED_
+#define TRANSPORTS_IRIDIUM_SBD_TX_REQUEST_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -35,67 +35,62 @@ namespace Transports
 {
   namespace IridiumSBD
   {
-    using DUNE_NAMESPACES;
-
-    class UnexpectedReply: public std::runtime_error
+    class TxRequest
     {
     public:
-      UnexpectedReply(const std::string& exp, const std::string& got):
-        std::runtime_error(String::str("expecting '%s' but received '%s'",
-                                       exp.c_str(),
-                                       got.c_str()))
-      { }
-    };
+      //! Create a transmit request object.
+      //! @param[in] src_id originator IMC identifier.
+      //! @param[in] req_id request identifier.
+      //! @param[in] data to transmit.
+      TxRequest(uint16_t src_id, uint16_t req_id, const std::vector<char>& data):
+        m_src_id(src_id),
+        m_req_id(req_id)
+      {
+        m_data.push_back(m_src_id >> 8);
+        m_data.push_back(m_src_id & 0xff);
+        m_data.insert(m_data.end(), data.begin(), data.end());
+      }
 
-    class ReadTimeout: public std::runtime_error
-    {
-    public:
-      ReadTimeout(void):
-        std::runtime_error("timeout while reading reply")
-      { }
-    };
+      //! Retrieve a key that uniquely identifies the pair <source id,
+      //! request id>.
+      //! @return request key.
+      uint32_t
+      getKey(void) const
+      {
+        return m_src_id << 16 | m_req_id;
+      }
 
-    class SBDInvalidSize: public std::runtime_error
-    {
-    public:
-      SBDInvalidSize(unsigned size):
-        std::runtime_error(String::str("invalid SBD size %u", size))
-      { }
-    };
+      //! Retrieve request originator identifier.
+      //! @return IMC identifier.
+      uint16_t
+      getSource(void) const
+      {
+        return m_src_id;
+      }
 
-    class SBDInvalidWrite: public std::runtime_error
-    {
-    public:
-      SBDInvalidWrite(const std::string& error):
-        std::runtime_error(String::str("invalid SBD write %s", error.c_str()))
-      { }
-    };
+      //! Retrieve request identifier.
+      //! @return request identifier.
+      uint16_t
+      getId(void) const
+      {
+        return m_req_id;
+      }
 
-    class BufferTooSmall: public std::runtime_error
-    {
-    public:
-      BufferTooSmall(unsigned has, unsigned need):
-        std::runtime_error(String::str("buffer has %u bytes, needed %u",
-                                       has, need))
-      { }
-    };
+      //! Retrieve data.
+      //! @return data.
+      const std::vector<uint8_t>&
+      getData(void) const
+      {
+        return m_data;
+      }
 
-    class InvalidChecksum: public std::runtime_error
-    {
-    public:
-      InvalidChecksum(uint8_t* r, uint8_t* c):
-        std::runtime_error(String::str("invalid checksum: should be %02X%02X but received %02X%02X",
-                                       c[0], c[1],
-                                       r[0], r[1]))
-      { }
-    };
-
-    class InvalidFormat: public std::runtime_error
-    {
-    public:
-      InvalidFormat(const std::string& str):
-        std::runtime_error(String::str("invalid format: %s", str.c_str()))
-      { }
+    private:
+      //! Requester IMC system identifier.
+      uint16_t m_src_id;
+      //! Request identifier.
+      uint16_t m_req_id;
+      //! Data to be transmitted.
+      std::vector<uint8_t> m_data;
     };
   }
 }

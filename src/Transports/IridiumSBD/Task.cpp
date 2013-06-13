@@ -30,6 +30,7 @@
 
 // Local headers.
 #include "Driver.hpp"
+#include "TxRequest.hpp"
 
 namespace Transports
 {
@@ -52,7 +53,10 @@ namespace Transports
       SerialPort* m_uart;
       //! Driver handler.
       Driver* m_driver;
-
+      //! Queue of transmit requests.
+      std::queue<TxRequest*> m_queue;
+      //! RSSI value.
+      unsigned m_rssi;
       //! Task arguments.
       Arguments m_args;
 
@@ -71,6 +75,14 @@ namespace Transports
         param("Serial Port - Baud Rate", m_args.uart_baud)
         .defaultValue("19200")
         .description("Serial port baud rate");
+
+        bind<IMC::IridiumMsgTx>(this);
+        bind<IMC::RSSI>(this);
+      }
+
+      ~Task(void)
+      {
+        clearQueue();
       }
 
       //! Update internal state with new parameter values.
@@ -104,24 +116,77 @@ namespace Transports
         m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
         m_driver = new Driver(this, m_uart);
         m_driver->initialize();
-
-        // debug("Manufacturer: %s", m_driver->getManufacturer().c_str());
-        // debug("Model: %s", m_driver->getModel().c_str());
-        // debug("Revision: %s", m_driver->getRevision().c_str());
-        // debug("IMEI: %s", m_driver->getIMEI().c_str());
-
-        // m_driver->writeSBD((const uint8_t*)"1234", 4);
-
-        // // m_driver->setEcho(false);
-
-        uint8_t bfr[128];
-        m_driver->readSBD(bfr, sizeof(bfr));
+        m_driver->setRadioActivity(true);
+        debug("Manufacturer: %s", m_driver->getManufacturer().c_str());
+        debug("Model: %s", m_driver->getModel().c_str());
+        debug("Revision: %s", m_driver->getRevision().c_str());
+        debug("IMEI: %s", m_driver->getIMEI().c_str());
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
+      }
+
+      void
+      consume(const IMC::IridiumMsgTx* msg)
+      {
+        unsigned sys_id = resolveSystemName(msg->destination);
+        TxRequest* req = new TxRequest(sys_id, msg->req_id, msg->data);
+        m_queue.push(req);
+      }
+
+      void
+      consume(const IMC::RSSI* msg)
+      {
+        if (msg->getDestination() != getSystemId())
+          return;
+
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        m_rssi = msg->value;
+      }
+
+      void
+      processQueue(void)
+      {
+        if (m_driver->isBusy())
+          return;
+
+        if (m_driver->hasSessionResult())
+        {
+          const SessionResult& res = m_driver->getSessionResult();
+          if (res.isSuccessMO())
+          {
+            debug("dequeing message");
+            TxRequest* req = m_queue.front();
+            delete req;
+            m_queue.pop();
+          }
+        }
+
+        if (m_queue.empty())
+          return;
+
+        if (m_rssi == 0)
+          return;
+
+        debug("sending message");
+        TxRequest* req = m_queue.front();
+        m_driver->sendSBD(req->getData());
+      }
+
+      void
+      clearQueue(void)
+      {
+        while (!m_queue.empty())
+        {
+          TxRequest* req = m_queue.front();
+          delete req;
+          m_queue.pop();
+        }
       }
 
       //! Main loop.
@@ -131,6 +196,7 @@ namespace Transports
         while (!stopping())
         {
           waitForMessages(1.0);
+          processQueue();
         }
       }
     };
