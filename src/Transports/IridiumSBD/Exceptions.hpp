@@ -37,9 +37,13 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    //! An unexpected reply was received.
     class UnexpectedReply: public std::runtime_error
     {
     public:
+      //! Constructor.
+      //! @param[in] exp expected string.
+      //! @param[in] got recevied string.
       UnexpectedReply(const std::string& exp, const std::string& got):
         std::runtime_error(String::str("expecting '%s' but received '%s'",
                                        exp.c_str(),
@@ -47,54 +51,73 @@ namespace Transports
       { }
     };
 
+    //! Timeout while waiting for data.
     class ReadTimeout: public std::runtime_error
     {
     public:
+      //! Constructor.
       ReadTimeout(void):
-        std::runtime_error("timeout while reading reply")
+        std::runtime_error(DTR("timeout while reading reply"))
       { }
     };
 
+    //! Invalid SBD message size.
     class SBDInvalidSize: public std::runtime_error
     {
     public:
+      //! Constructor.
+      //! @param[in] size invalid size.
       SBDInvalidSize(unsigned size):
-        std::runtime_error(String::str("invalid SBD size %u", size))
+        std::runtime_error(String::str(DTR("invalid SBD size %u"), size))
       { }
     };
 
+    //! Invalid write to SBD message buffer.
     class SBDInvalidWrite: public std::runtime_error
     {
     public:
+      //! Constructor.
+      //! @param[in] error error message.
       SBDInvalidWrite(const std::string& error):
-        std::runtime_error(String::str("invalid SBD write %s", error.c_str()))
+        std::runtime_error(String::str(DTR("invalid SBD write %s"), error.c_str()))
       { }
     };
 
+    //! Supplied buffer is too small to be used.
     class BufferTooSmall: public std::runtime_error
     {
     public:
+      //! Constructor.
+      //! @param[in] has size of supplied buffer.
+      //! @param[in] need size needed to complete the operation.
       BufferTooSmall(unsigned has, unsigned need):
-        std::runtime_error(String::str("buffer has %u bytes, needed %u",
+        std::runtime_error(String::str(DTR("buffer has %u bytes, needed %u"),
                                        has, need))
       { }
     };
 
+    //! Invalid checksum.
     class InvalidChecksum: public std::runtime_error
     {
     public:
+      //! Constructor.
+      //! @param[in] r received checksum.
+      //! @param[in] c computed checksum.
       InvalidChecksum(uint8_t* r, uint8_t* c):
-        std::runtime_error(String::str("invalid checksum: should be %02X%02X but received %02X%02X",
+        std::runtime_error(String::str(DTR("invalid checksum: should be %02X%02X but received %02X%02X"),
                                        c[0], c[1],
                                        r[0], r[1]))
       { }
     };
 
+    //! Invalid command/response format.
     class InvalidFormat: public std::runtime_error
     {
     public:
+      //! Constructor.
+      //! @param[in] str invalid command/response.
       InvalidFormat(const std::string& str):
-        std::runtime_error(String::str("invalid format: %s", str.c_str()))
+        std::runtime_error(String::str(DTR("invalid format: %s"), str.c_str()))
       { }
     };
   }
