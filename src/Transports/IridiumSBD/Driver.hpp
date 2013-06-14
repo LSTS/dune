@@ -45,19 +45,23 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    //! Default AT command timeout.
+    static const double c_timeout = 3.0;
     //! Maximum number of revision lines.
     static const unsigned c_max_rev_lines = 10;
 
-    class Driver: public Concurrency::Thread
+    class Driver: public Thread
     {
     public:
       Driver(Tasks::Task* task, SerialPort* uart):
         m_task(task),
         m_uart(uart),
-        m_timeout(2.5),
+        m_timeout(c_timeout),
         m_read_mode(READ_MODE_LINE),
         m_busy(false),
-        m_session_result_read(true)
+        m_session_result_read(true),
+        m_sbd_ring(false),
+        m_queued_mt(0)
       {
         m_rssi.setDestination(m_task->getSystemId());
         m_rssi.setDestinationEntity(m_task->getEntityId());
@@ -77,6 +81,7 @@ namespace Transports
         setEcho(false);
         setRingAlert(true);
         setIndicatorEventReporting(true);
+        setAutomaticRegistration(true);
       }
 
       //! Query the ISU manufacturer.
@@ -128,7 +133,7 @@ namespace Transports
       void
       writeSBD(const uint8_t* data, unsigned data_size)
       {
-        if (data == NULL || data_size == 0)
+        if (data_size == 0)
         {
           clearMessageBuffer(BFR_TYPE_ORIGINATED);
           return;
@@ -238,25 +243,52 @@ namespace Transports
         expectOK();
       }
 
+      //! Start an SBD session to query the number of messages waiting
+      //! at the GSS. This function should be used in reply to a Ring
+      //! Alert.
       void
-      sendSBD(const std::vector<uint8_t>& data)
+      checkMailBoxAlert(void)
       {
-        writeSBD(&data[0], data.size());
-        sendAT("+SBDIX");
+        sendSBD(std::vector<uint8_t>(), true);
+      }
+
+      //! Start an SBD session to query the number of messages waiting
+      //! at the GSS.
+      void
+      checkMailBox(void)
+      {
+        sendSBD(std::vector<uint8_t>(), false);
+      }
+
+      void
+      sendSBD(const std::vector<uint8_t>& data, bool alert_reply = false)
+      {
+        m_task->debug("sending SBD with size %u", static_cast<unsigned>(data.size()));
+
+        if (data.size() == 0)
+          writeSBD(NULL, 0);
+        else
+          writeSBD(&data[0], data.size());
+
+        if (alert_reply)
+          sendAT("+SBDIXA");
+        else
+          sendAT("+SBDIX");
+
         setBusy(true);
       }
 
       bool
       isBusy(void)
       {
-        Concurrency::ScopedMutex l(m_mutex);
+        ScopedMutex l(m_mutex);
         return m_busy;
       }
 
       const SessionResult&
       getSessionResult(void)
       {
-        Concurrency::ScopedMutex l(m_mutex);
+        ScopedMutex l(m_mutex);
         m_session_result_read = true;
         return m_session_result;
       }
@@ -264,8 +296,57 @@ namespace Transports
       bool
       hasSessionResult(void)
       {
-        Concurrency::ScopedMutex l(m_mutex);
+        ScopedMutex l(m_mutex);
         return !m_session_result_read;
+      }
+
+      //! Clear Mobile Originated message buffer.
+      void
+      clearBufferMO(void)
+      {
+        std::string rv = readValue("+SBDD0");
+        if (rv != "0")
+          throw std::runtime_error("error ocurred while clearing MO buffer");
+      }
+
+      //! Clear Mobile Terminated message buffer.
+      void
+      clearBufferMT(void)
+      {
+        std::string rv = readValue("+SBDD1");
+        if (rv != "0")
+          throw std::runtime_error("error ocurred while clearing MT buffer");
+      }
+
+      bool
+      hasRingAlert(void)
+      {
+        ScopedMutex l(m_mutex);
+        if (m_sbd_ring)
+        {
+          m_sbd_ring = false;
+          return true;
+        }
+
+        return false;
+      }
+
+      void
+      setAutomaticRegistration(bool value)
+      {
+        if (value)
+          sendAT("+SBDAREG=1");
+        else
+          sendAT("+SBDAREG=0");
+
+        expectOK();
+      }
+
+      unsigned
+      getQueuedMT(void)
+      {
+        ScopedMutex l(m_mutex);
+        return m_queued_mt;
       }
 
     private:
@@ -310,9 +391,9 @@ namespace Transports
       //! Last command sent to modem.
       std::string m_last_cmd;
       //! Queue of input lines.
-      Concurrency::TSQueue<std::string> m_lines;
+      TSQueue<std::string> m_lines;
       //! Queue of raw input bytes.
-      Concurrency::TSQueue<uint8_t> m_bytes;
+      TSQueue<uint8_t> m_bytes;
       //! Read mode.
       ReadMode m_read_mode;
       //! True if ISU is busy.
@@ -321,12 +402,16 @@ namespace Transports
       SessionResult m_session_result;
       //! True if last session result was read.
       bool m_session_result_read;
+      //! True if Alert Ring was received.
+      bool m_sbd_ring;
       //! Contents of line to skip once.
       std::string m_skip_line;
       //! Last RSSI value.
       IMC::RSSI m_rssi;
+      //! Number of MT messages waiting at the GSS.
+      unsigned m_queued_mt;
       //! Read mode lock.
-      Concurrency::Mutex m_mutex;
+      Mutex m_mutex;
 
       void
       setSkipLine(const std::string& line)
@@ -337,14 +422,14 @@ namespace Transports
       void
       setBusy(bool value)
       {
-        Concurrency::ScopedMutex l(m_mutex);
+        ScopedMutex l(m_mutex);
         m_busy = value;
       }
 
       bool
       handleUnsolicited(const std::string& str)
       {
-        if (String::startsWith(str, "+SBDRING"))
+        if (String::startsWith(str, "SBDRING"))
           handleSBDRING(str);
         else if (String::startsWith(str, "+CIEV"))
           handleCIEV(str);
@@ -361,8 +446,10 @@ namespace Transports
       void
       handleSBDRING(const std::string& str)
       {
-        (void)str;
         m_task->debug("SBD ring");
+        (void)str;
+        ScopedMutex l(m_mutex);
+        m_sbd_ring = true;
       }
 
       void
@@ -395,11 +482,13 @@ namespace Transports
       handleSBDIX(const std::string& str)
       {
         {
-          Concurrency::ScopedMutex l(m_mutex);
+          ScopedMutex l(m_mutex);
           if (!m_session_result_read)
             m_task->err("new session result will overwrite previously unread value");
           m_session_result_read = false;
           m_session_result.parse(str);
+          if (m_session_result.isSuccessMT())
+            m_queued_mt = m_session_result.getQueuedMT();
         }
 
         setSkipLine("OK");
@@ -433,14 +522,14 @@ namespace Transports
       ReadMode
       getReadMode(void)
       {
-        Concurrency::ScopedMutex l(m_mutex);
+        ScopedMutex l(m_mutex);
         return m_read_mode;
       }
 
       void
       setReadMode(ReadMode mode)
       {
-        Concurrency::ScopedMutex l(m_mutex);
+        ScopedMutex l(m_mutex);
         m_read_mode = mode;
       }
 
@@ -518,14 +607,14 @@ namespace Transports
       void
       setTimeout(double timeout)
       {
-        Concurrency::ScopedMutex l(m_mutex);
+        ScopedMutex l(m_mutex);
         m_timeout = timeout;
       }
 
       double
       getTimeout(void)
       {
-        Concurrency::ScopedMutex l(m_mutex);
+        ScopedMutex l(m_mutex);
         return m_timeout;
       }
 
@@ -646,8 +735,8 @@ namespace Transports
         // Read first byte.
         readRaw(timer, bfr, 1);
 
-        // Handle start of unsolicited message.
-        if (bfr[0] == '+')
+        // Handle start of unsolicited messages and ring alerts.
+        if (bfr[0] == '+' || bfr[0] == 'S')
         {
           m_task->debug("handling unsolicited message in raw mode");
           std::string line((const char*)bfr, 1);

@@ -57,6 +57,8 @@ namespace Transports
       std::queue<TxRequest*> m_queue;
       //! RSSI value.
       unsigned m_rssi;
+      //! Number of MT messages queued at the GSS.
+      unsigned m_queued_mt;
       //! Task arguments.
       Arguments m_args;
 
@@ -119,7 +121,6 @@ namespace Transports
         m_driver->setRadioActivity(true);
         debug("Manufacturer: %s", m_driver->getManufacturer().c_str());
         debug("Model: %s", m_driver->getModel().c_str());
-        debug("Revision: %s", m_driver->getRevision().c_str());
         debug("IMEI: %s", m_driver->getIMEI().c_str());
       }
 
@@ -150,32 +151,66 @@ namespace Transports
       }
 
       void
+      handleSessionResult(void)
+      {
+        const SessionResult& res = m_driver->getSessionResult();
+        if (res.isSuccessMO())
+        {
+          //! FIXME: Check MSNs.
+          if (!m_queue.empty())
+          {
+            debug("dequeing message");
+            TxRequest* req = m_queue.front();
+            delete req;
+            m_queue.pop();
+            m_driver->clearBufferMO();
+          }
+        }
+
+        if (res.getStatusMT() == 1)
+        {
+          uint8_t bfr[340];
+          unsigned rv = m_driver->readSBD(bfr, sizeof(bfr));
+          if (rv > 2)
+          {
+            IMC::IridiumMsgRx sbd;
+            sbd.setSource((bfr[0] << 8) | bfr[1]);
+            sbd.setDestination(getSystemId());
+            sbd.data.assign(bfr + 2, bfr + rv);
+            sbd.toText(std::cerr);
+            dispatch(sbd, DF_KEEP_SRC_EID);
+          }
+          else
+          {
+            err("invalid SBD message of size %u", rv);
+          }
+        }
+      }
+
+      void
       processQueue(void)
       {
         if (m_driver->isBusy())
           return;
 
         if (m_driver->hasSessionResult())
-        {
-          const SessionResult& res = m_driver->getSessionResult();
-          if (res.isSuccessMO())
-          {
-            debug("dequeing message");
-            TxRequest* req = m_queue.front();
-            delete req;
-            m_queue.pop();
-          }
-        }
-
-        if (m_queue.empty())
-          return;
+          handleSessionResult();
 
         if (m_rssi == 0)
           return;
 
-        debug("sending message");
-        TxRequest* req = m_queue.front();
-        m_driver->sendSBD(req->getData());
+        if (m_queue.empty())
+        {
+          if (m_driver->hasRingAlert())
+            m_driver->checkMailBoxAlert();
+          else if (m_driver->getQueuedMT() > 0)
+            m_driver->checkMailBox();
+        }
+        else
+        {
+          TxRequest* req = m_queue.front();
+          m_driver->sendSBD(req->getData());
+        }
       }
 
       void
