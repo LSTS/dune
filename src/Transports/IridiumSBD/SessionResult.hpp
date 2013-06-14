@@ -77,7 +77,9 @@ namespace Transports
       bool
       isSuccessMT(void) const
       {
-        return (m_mo_status < 4) && (m_mo_status != 1);
+        return (m_mo_status < 4)
+        && (m_mo_status != 1)
+        && (m_mt_status < 2);
       }
 
       unsigned
@@ -108,6 +110,12 @@ namespace Transports
       getLengthMT(void) const
       {
         return m_mt_length;
+      }
+
+      unsigned
+      getQueuedMT(void) const
+      {
+        return m_mt_queued;
       }
 
     private:
