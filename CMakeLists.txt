@@ -79,9 +79,6 @@ dune_option(GUI "Include Qt based GUI")
 dune_option(DC1394 "Enable support for libdc1394")
 dune_option(V4L2 "Enable support for libv4l2")
 dune_option(JS "Enable support for SpiderMonkey javascript engine")
-dune_option(JAI "Enable JAI camera support")
-dune_option(FFMPEG "Enable FFmpeg support")
-dune_option(H264 "Enable H264 support")
 
 # Internationalization.
 if(DUNE_SYS_HAS_GETTEXT)

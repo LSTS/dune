@@ -75,8 +75,6 @@
 #cmakedefine DUNE_USING_V4L2
 //! DUNE was compiled with SpiderMonkey support.
 #cmakedefine DUNE_USING_SPIDERMONKEY
-//! DUNE was compiled with libtiff support.
-#cmakedefine DUNE_USING_TIFF
 //! DUNE was compiled with gettext support.
 #cmakedefine DUNE_USING_I18N
 
