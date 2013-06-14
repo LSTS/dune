@@ -31,7 +31,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Include Xeneth SDK headers
-#include <Xeneth/XCamera.h>
+#include <XCamera.h>
 
 #define MAX_BUFFER 1024
 
