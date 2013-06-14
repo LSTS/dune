@@ -41,9 +41,12 @@ namespace Transports
 {
   namespace IridiumSBD
   {
+    //! This class interprets and represents the result of an SBD
+    //! Session.
     class SessionResult
     {
     public:
+      //! Constructor.
       SessionResult(void):
         m_mo_status(0),
         m_mo_msn(0),
@@ -53,6 +56,9 @@ namespace Transports
         m_mt_queued(0)
       { }
 
+      //! Parse the response of the +SBDIX command.
+      //! @param[in] str +SBDIX response.
+      //! @throw InvalidFormat if response has invalid format.
       void
       parse(const std::string& str)
       {
@@ -68,12 +74,20 @@ namespace Transports
           throw InvalidFormat(str);
       }
 
+      //! Test if the MO status denotes that the MO SBD message, if any,
+      //! was transferred successfully.
+      //! @return true if the MO transaction was successful, false
+      //! otherwise.
       bool
       isSuccessMO(void) const
       {
         return (m_mo_status <= 4);
       }
 
+      //! Test if the MT status denotes that a mailbox check was
+      //! performed or an MT SBD message was received.
+      //! @return true if the MT transaction was successful, false
+      //! otherwise.
       bool
       isSuccessMT(void) const
       {
@@ -82,36 +96,50 @@ namespace Transports
         && (m_mt_status < 2);
       }
 
+      //! Retrieve the MO status code.
+      //! @return MO status code.
       unsigned
       getStatusMO(void) const
       {
         return m_mo_status;
       }
 
+      //! Retrieve the MT status code.
+      //! @return MT status code.
       unsigned
       getStatusMT(void) const
       {
         return m_mt_status;
       }
 
+      //! Retrieve the MO SBD message sequence number.
+      //! @return MO SBD message sequence number.
       unsigned
       getSequenceMO(void) const
       {
         return m_mo_msn;
       }
 
+      //! Retrieve the MT SBD message sequence number.
+      //! @return MT SBD message sequence number.
       unsigned
       getSequenceMT(void) const
       {
         return m_mt_msn;
       }
 
+      //! Retrieve the length in bytes of the MT SBD message received
+      //! from the GSS or zero if no message was received.
+      //! @return length of the MT SBD message.
       unsigned
       getLengthMT(void) const
       {
         return m_mt_length;
       }
 
+      //! Retrieve the count of MT SBD messages waiting at the GSS to
+      //! be transferred to the transceiver.
+      //! @return count of MT SBD messages.
       unsigned
       getQueuedMT(void) const
       {
@@ -119,11 +147,17 @@ namespace Transports
       }
 
     private:
+      //! MO status.
       unsigned m_mo_status;
+      //! MO message sequence number.
       unsigned m_mo_msn;
+      //! MT status.
       unsigned m_mt_status;
+      //! MT message sequence number.
       unsigned m_mt_msn;
+      //! MT SBD message length.
       unsigned m_mt_length;
+      //! Count of MT SBD messages queued at the GSS.
       unsigned m_mt_queued;
     };
   }
