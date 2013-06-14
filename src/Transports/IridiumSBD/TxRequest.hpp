@@ -35,11 +35,12 @@ namespace Transports
 {
   namespace IridiumSBD
   {
+    //! This class represents an SBD transmission request.
     class TxRequest
     {
     public:
-      //! Create a transmit request object.
-      //! @param[in] src_id originator IMC identifier.
+      //! Create a transmission request object.
+      //! @param[in] src_id IMC address of the source system.
       //! @param[in] req_id request identifier.
       //! @param[in] data to transmit.
       TxRequest(uint16_t src_id, uint16_t req_id, const std::vector<char>& data):
@@ -60,8 +61,8 @@ namespace Transports
         return m_src_id << 16 | m_req_id;
       }
 
-      //! Retrieve request originator identifier.
-      //! @return IMC identifier.
+      //! Retrieve the IMC address of the source system.
+      //! @return IMC address.
       uint16_t
       getSource(void) const
       {
@@ -85,7 +86,7 @@ namespace Transports
       }
 
     private:
-      //! Requester IMC system identifier.
+      //! Source IMC address.
       uint16_t m_src_id;
       //! Request identifier.
       uint16_t m_req_id;
