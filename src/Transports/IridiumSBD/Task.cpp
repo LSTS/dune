@@ -55,8 +55,6 @@ namespace Transports
       Driver* m_driver;
       //! Queue of transmit requests.
       std::queue<TxRequest*> m_queue;
-      //! RSSI value.
-      unsigned m_rssi;
       //! Number of MT messages queued at the GSS.
       unsigned m_queued_mt;
       //! Task arguments.
@@ -79,7 +77,6 @@ namespace Transports
         .description("Serial port baud rate");
 
         bind<IMC::IridiumMsgTx>(this);
-        bind<IMC::RSSI>(this);
       }
 
       ~Task(void)
@@ -118,7 +115,6 @@ namespace Transports
         m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
         m_driver = new Driver(this, m_uart);
         m_driver->initialize();
-        m_driver->setRadioActivity(true);
         debug("Manufacturer: %s", m_driver->getManufacturer().c_str());
         debug("Model: %s", m_driver->getModel().c_str());
         debug("IMEI: %s", m_driver->getIMEI().c_str());
@@ -136,18 +132,6 @@ namespace Transports
         unsigned sys_id = resolveSystemName(msg->destination);
         TxRequest* req = new TxRequest(sys_id, msg->req_id, msg->data);
         m_queue.push(req);
-      }
-
-      void
-      consume(const IMC::RSSI* msg)
-      {
-        if (msg->getDestination() != getSystemId())
-          return;
-
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
-
-        m_rssi = msg->value;
       }
 
       void
@@ -170,7 +154,7 @@ namespace Transports
         if (res.getStatusMT() == 1)
         {
           uint8_t bfr[340];
-          unsigned rv = m_driver->readSBD(bfr, sizeof(bfr));
+          unsigned rv = m_driver->readBufferMT(bfr, sizeof(bfr));
           if (rv > 2)
           {
             IMC::IridiumMsgRx sbd;
@@ -196,7 +180,7 @@ namespace Transports
         if (m_driver->hasSessionResult())
           handleSessionResult();
 
-        if (m_rssi == 0)
+        if (m_driver->getRSSI() == 0)
           return;
 
         if (m_queue.empty())

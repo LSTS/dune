@@ -53,6 +53,9 @@ namespace Transports
     class Driver: public Thread
     {
     public:
+      //! Constructor.
+      //! @param[in] task parent task.
+      //! @param[in] uart serial port connected to the ISU.
       Driver(Tasks::Task* task, SerialPort* uart):
         m_task(task),
         m_uart(uart),
@@ -68,17 +71,19 @@ namespace Transports
         m_uart->flushInput();
       }
 
+      //! Destructor.
       ~Driver(void)
-      {
-      }
+      { }
 
-      //! Initialize ISU.
+      //! Perform ISU initialization, this function must be called
+      //! before any other.
       void
       initialize(void)
       {
         setReadMode(READ_MODE_LINE);
         start();
         setEcho(false);
+        setRadioActivity(true);
         setRingAlert(true);
         setIndicatorEventReporting(true);
         setAutomaticRegistration(true);
@@ -127,49 +132,21 @@ namespace Transports
         return readValue("+CGSN");
       }
 
-      //! Write SBD binary data to the ISU.
-      //! @param[in] data binary data.
-      //! @param[in] data_size size of binary data.
-      void
-      writeSBD(const uint8_t* data, unsigned data_size)
+      //! Retrieve received signal strength indication (RSSI).
+      //! @return RSSI value.
+      unsigned
+      getRSSI(void)
       {
-        if (data_size == 0)
-        {
-          clearMessageBuffer(BFR_TYPE_ORIGINATED);
-          return;
-        }
-
-        if (data_size > 340)
-        {
-          throw SBDInvalidSize(data_size);
-        }
-
-        // Send command.
-        sendAT(String::str("+SBDWB=%u", data_size));
-        expectREADY();
-
-        // Send data.
-        sendRaw(data, data_size);
-
-        // Send checksum.
-        uint8_t csum[2] = {0};
-        computeChecksum(data, data_size, csum);
-        sendRaw(csum, sizeof(csum));
-
-        // Read response.
-        std::string line = readLine();
-        if (line != "0")
-          throw SBDInvalidWrite(line);
-
-        expectOK();
+        ScopedMutex l(m_mutex);
+        return m_rssi.value;
       }
 
-      //! Read SBD binary data to the ISU.
+      //! Read the contents of the MT SBD message buffer.
       //! @param[in] data buffer to hold binary data.
       //! @param[in] data_size size of binary data buffer.
       //! @return number of bytes read.
       unsigned
-      readSBD(uint8_t* data, unsigned data_size)
+      readBufferMT(uint8_t* data, unsigned data_size)
       {
         ReadMode saved_read_mode = getReadMode();
         Counter<double> timer(getTimeout());
@@ -186,7 +163,7 @@ namespace Transports
           sendAT("+SBDRB");
 
           // Read incoming data length.
-          length = readSBDLength(timer);
+          length = getBufferSizeMT(timer);
           m_task->spew("reading %u bytes of SBD binary data", length);
 
           // Read data.
@@ -216,36 +193,9 @@ namespace Transports
         return length;
       }
 
-      //! Enable or disable radio activity.
-      //! @param[in] value true to enable, false to disable.
-      void
-      setRadioActivity(bool value)
-      {
-        sendAT(value ? "*R1" : "*R0");
-        expectOK();
-      }
-
-      //! Enable or disable the ISU to echo characters to the DTE.
-      //! @param[in] value true to enable, false to disable.
-      void
-      setEcho(bool value)
-      {
-        sendAT(value ? "E1" : "E0");
-        expectOK();
-      }
-
-      //! Enable or disable the ISU to listen for SBD Ring Alerts.
-      //! @param[in] value true to enable, false to disable.
-      void
-      setRingAlert(bool value)
-      {
-        sendAT(value ? "+SBDMTA=1" : "+SBDMTA=0");
-        expectOK();
-      }
-
       //! Start an SBD session to query the number of messages waiting
-      //! at the GSS. This function should be used in reply to a Ring
-      //! Alert.
+      //! at the GSS. This function should be used when hasRingAlert
+      //! returns true.
       void
       checkMailBoxAlert(void)
       {
@@ -260,15 +210,19 @@ namespace Transports
         sendSBD(std::vector<uint8_t>(), false);
       }
 
+      //! Send MO SBD message.
+      //! @param[in] data data to send.
+      //! @param[in] alert_reply true if a ring alert was received,
+      //! false otherwise.
       void
       sendSBD(const std::vector<uint8_t>& data, bool alert_reply = false)
       {
         m_task->debug("sending SBD with size %u", static_cast<unsigned>(data.size()));
 
         if (data.size() == 0)
-          writeSBD(NULL, 0);
+          writeBufferMO(NULL, 0);
         else
-          writeSBD(&data[0], data.size());
+          writeBufferMO(&data[0], data.size());
 
         if (alert_reply)
           sendAT("+SBDIXA");
@@ -278,6 +232,8 @@ namespace Transports
         setBusy(true);
       }
 
+      //! Test if ISU is busy performing an SBD session.
+      //! @return true if ISU is busy, false otherwise.
       bool
       isBusy(void)
       {
@@ -285,6 +241,9 @@ namespace Transports
         return m_busy;
       }
 
+      //! Retrieve the result of the last SBD session. The function
+      //! should be called if hasSessionResult returns true.
+      //! @return session result.
       const SessionResult&
       getSessionResult(void)
       {
@@ -293,6 +252,9 @@ namespace Transports
         return m_session_result;
       }
 
+      //! Check if the result of an SBD session was received.
+      //! @return true if SBD session result is available, false
+      //! otherwise.
       bool
       hasSessionResult(void)
       {
@@ -300,7 +262,7 @@ namespace Transports
         return !m_session_result_read;
       }
 
-      //! Clear Mobile Originated message buffer.
+      //! Clear MO SBD message buffer.
       void
       clearBufferMO(void)
       {
@@ -309,7 +271,7 @@ namespace Transports
           throw std::runtime_error("error ocurred while clearing MO buffer");
       }
 
-      //! Clear Mobile Terminated message buffer.
+      //! Clear MT SBD message buffer.
       void
       clearBufferMT(void)
       {
@@ -318,6 +280,8 @@ namespace Transports
           throw std::runtime_error("error ocurred while clearing MT buffer");
       }
 
+      //! Check if a ring alert was received.
+      //! @return true if ring alert was received, false otherwise.
       bool
       hasRingAlert(void)
       {
@@ -331,17 +295,8 @@ namespace Transports
         return false;
       }
 
-      void
-      setAutomaticRegistration(bool value)
-      {
-        if (value)
-          sendAT("+SBDAREG=1");
-        else
-          sendAT("+SBDAREG=0");
-
-        expectOK();
-      }
-
+      //! Retrieve the count of MT SBD messages waiting at the GSS.
+      //! @return count of MT SBD messages queued at the GSS.
       unsigned
       getQueuedMT(void)
       {
@@ -368,14 +323,6 @@ namespace Transports
         READ_MODE_LINE,
         //! Unprocessed sequence of bytes.
         READ_MODE_RAW
-      };
-
-      enum RegistrationStatus
-      {
-        REG_STATUS_DETACHED,
-        REG_STATUS_NOT_REG,
-        REG_STATUS_REG,
-        REG_STATUS_DENIED
       };
 
       //! Parent task.
@@ -462,8 +409,9 @@ namespace Transports
         {
           if (ind == 0)
           {
+            ScopedMutex l(m_mutex);
             m_rssi.value = value * 20;
-            m_task->dispatch(m_rssi, DF_LOOP_BACK);
+            m_task->dispatch(m_rssi);
           }
         }
         else
@@ -494,6 +442,46 @@ namespace Transports
         setSkipLine("OK");
 
         setBusy(false);
+      }
+
+      //! Enable or disable the ISU to echo characters to the DTE.
+      //! @param[in] value true to enable, false to disable.
+      void
+      setEcho(bool value)
+      {
+        sendAT(value ? "E1" : "E0");
+        expectOK();
+      }
+
+      //! Enable or disable radio activity.
+      //! @param[in] value true to enable, false to disable.
+      void
+      setRadioActivity(bool value)
+      {
+        sendAT(value ? "*R1" : "*R0");
+        expectOK();
+      }
+
+      //! Enable or disable the ISU to listen for SBD Ring Alerts.
+      //! @param[in] value true to enable, false to disable.
+      void
+      setRingAlert(bool value)
+      {
+        sendAT(value ? "+SBDMTA=1" : "+SBDMTA=0");
+        expectOK();
+      }
+
+      //! Enable or disable automatic network registration.
+      //! @param[in] value true to enable, false to disable.
+      void
+      setAutomaticRegistration(bool value)
+      {
+        if (value)
+          sendAT("+SBDAREG=1");
+        else
+          sendAT("+SBDAREG=0");
+
+        expectOK();
       }
 
       void
@@ -722,13 +710,51 @@ namespace Transports
         throw ReadTimeout();
       }
 
+      //! Write SBD binary data to the ISU MO message buffer.
+      //! @param[in] data binary data.
+      //! @param[in] data_size size of binary data.
+      void
+      writeBufferMO(const uint8_t* data, unsigned data_size)
+      {
+        if (data_size == 0)
+        {
+          clearMessageBuffer(BFR_TYPE_ORIGINATED);
+          return;
+        }
+
+        if (data_size > 340)
+        {
+          throw SBDInvalidSize(data_size);
+        }
+
+        // Send command.
+        sendAT(String::str("+SBDWB=%u", data_size));
+        expectREADY();
+
+        // Send data.
+        sendRaw(data, data_size);
+
+        // Send checksum.
+        uint8_t csum[2] = {0};
+        computeChecksum(data, data_size, csum);
+        sendRaw(csum, sizeof(csum));
+
+        // Read response.
+        std::string line = readLine();
+        if (line != "0")
+          throw SBDInvalidWrite(line);
+
+        expectOK();
+      }
+
+
       //! Read the length of an SBD message. If unsolicited messages
       //! are enabled they might be issued while sending the "read
       //! SBD binary message", garbling the two bytes of message length.
       //! This function guarantees that unsolicited messages
       //! are properly handled and the length is read correctly.
       unsigned
-      readSBDLength(Counter<double>& timer)
+      getBufferSizeMT(Counter<double>& timer)
       {
         uint8_t bfr[2] = {0};
 
@@ -746,7 +772,7 @@ namespace Transports
             if (bfr[0] == '\n')
             {
               handleUnsolicited(String::trim(line));
-              return readSBDLength(timer);
+              return getBufferSizeMT(timer);
             }
           }
 
@@ -755,7 +781,7 @@ namespace Transports
         // Handle padding of an unsolicited message
         else if ((bfr[0] == '\r') || (bfr[0] == '\n'))
         {
-          return readSBDLength(timer);
+          return getBufferSizeMT(timer);
         }
 
         // Read second byte and handle SBD length.
