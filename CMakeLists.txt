@@ -79,6 +79,7 @@ dune_option(GUI "Include Qt based GUI")
 dune_option(DC1394 "Enable support for libdc1394")
 dune_option(V4L2 "Enable support for libv4l2")
 dune_option(JS "Enable support for SpiderMonkey javascript engine")
+dune_option(XENETH "Enable support for the Xeneth SDK")
 
 # Internationalization.
 if(DUNE_SYS_HAS_GETTEXT)
