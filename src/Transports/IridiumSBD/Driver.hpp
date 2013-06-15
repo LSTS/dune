@@ -83,6 +83,7 @@ namespace Transports
         setReadMode(READ_MODE_LINE);
         start();
         setEcho(false);
+        setFlowControl(false);
         setRadioActivity(true);
         setRingAlert(true);
         setIndicatorEventReporting(true);
@@ -130,6 +131,19 @@ namespace Transports
       getIMEI(void)
       {
         return readValue("+CGSN");
+      }
+
+      //! Retrieve MOMSN that will be used during the next mobile
+      //! originated SBD session.
+      //! @return MOMSN.
+      unsigned
+      getMOMSN(void)
+      {
+        std::string value = readValue("+SBDS");
+        unsigned momsn = 0;
+        if (std::sscanf(value.c_str(), "+SBDS:%*u,%u,%*u,%*u", &momsn) != 1)
+          throw InvalidFormat(value);
+        return momsn;
       }
 
       //! Retrieve received signal strength indication (RSSI).
@@ -359,6 +373,19 @@ namespace Transports
       unsigned m_queued_mt;
       //! Read mode lock.
       Mutex m_mutex;
+
+      //! Enable or disable RTS/CTS flow control.
+      //! @param[in] value true to enable flow control, false otherwise.
+      void
+      setFlowControl(bool value)
+      {
+        if (value)
+          sendAT("&K3");
+        else
+          sendAT("&K0");
+
+        expectOK();
+      }
 
       void
       setSkipLine(const std::string& line)
@@ -746,7 +773,6 @@ namespace Transports
 
         expectOK();
       }
-
 
       //! Read the length of an SBD message. If unsolicited messages
       //! are enabled they might be issued while sending the "read
