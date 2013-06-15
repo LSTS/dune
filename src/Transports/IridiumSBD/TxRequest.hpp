@@ -45,7 +45,8 @@ namespace Transports
       //! @param[in] data to transmit.
       TxRequest(uint16_t src_id, uint16_t req_id, const std::vector<char>& data):
         m_src_id(src_id),
-        m_req_id(req_id)
+        m_req_id(req_id),
+        m_msn(-1)
       {
         m_data.push_back(m_src_id >> 8);
         m_data.push_back(m_src_id & 0xff);
@@ -77,6 +78,35 @@ namespace Transports
         return m_req_id;
       }
 
+      //! Test if MSN is valid.
+      bool
+      hasValidMSN(void) const
+      {
+        return m_msn >= 0;
+      }
+
+      //! Retrieve MO message sequence number.
+      //! @return message sequence number.
+      uint16_t
+      getMSN(void) const
+      {
+        return static_cast<uint16_t>(m_msn);
+      }
+
+      //! Retrieve MO message sequence number.
+      //! @return message sequence number.
+      void
+      setMSN(uint16_t msn)
+      {
+        m_msn = msn;
+      }
+
+      void
+      invalidateMSN(void)
+      {
+        m_msn = -1;
+      }
+
       //! Retrieve data.
       //! @return data.
       const std::vector<uint8_t>&
@@ -90,6 +120,8 @@ namespace Transports
       uint16_t m_src_id;
       //! Request identifier.
       uint16_t m_req_id;
+      //! MO message sequence number.
+      int m_msn;
       //! Data to be transmitted.
       std::vector<uint8_t> m_data;
     };
