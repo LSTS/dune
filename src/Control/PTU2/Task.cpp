@@ -75,6 +75,8 @@ namespace Control
 
         // Register consumers.
         bind<IMC::EstimatedState>(this);
+        bind<IMC::EulerAngles>(this);
+        bind<IMC::GpsFix>(this);
       }
 
       ~Task(void)
@@ -90,6 +92,20 @@ namespace Control
         m_lon = Angles::radians(m_args.ptu_lon);
         m_hei = m_args.ptu_height;
         m_yaw = Angles::radians(m_args.yaw_offset);
+      }
+
+      void
+      consume(const IMC::EulerAngles* euangles)
+      {
+        m_yaw = Angles::radians(m_args.yaw_offset) + euangles->psi;
+      }
+
+      void
+      consume(const IMC::GpsFix* gpsfix)
+      {
+        m_lat = gpsfix->lat;
+        m_lon = gpsfix->lon;
+        m_hei = gpsfix->height;
       }
 
       void
@@ -132,7 +148,6 @@ namespace Control
         spew("%s", ss.str().c_str());
         ra.actions = ss.str();
         dispatch(ra);
-
       }
 
       void
