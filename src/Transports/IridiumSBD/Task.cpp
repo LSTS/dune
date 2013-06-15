@@ -158,10 +158,15 @@ namespace Transports
       void
       consume(const IMC::IridiumMsgTx* msg)
       {
+        // FIXME: check if req_id already exists.
+        // FIXME: check MTU.
         debug("queueing message");
-        unsigned sys_id = resolveSystemName(msg->destination);
-        TxRequest* req = new TxRequest(sys_id, msg->req_id, msg->data);
+        unsigned dst_adr = resolveSystemName(msg->destination);
+        unsigned src_adr = msg->getSource();
+        unsigned src_eid = msg->getSourceEntity();
+        TxRequest* req = new TxRequest(src_adr, src_eid, dst_adr, msg->req_id, msg->data);
         m_tx_requests.push_back(req);
+        sendTxRequestStatus(req, IMC::IridiumTxStatus::TXSTATUS_QUEUED);
       }
 
       void
@@ -171,6 +176,7 @@ namespace Transports
       {
         IMC::IridiumTxStatus status;
         status.setDestination(request->getSource());
+        status.setDestinationEntity(request->getSourceEntity());
         status.req_id = request->getId();
         status.status = code;
         status.text = text;
@@ -195,7 +201,7 @@ namespace Transports
       }
 
       void
-      invalidateTxRequest(unsigned msn)
+      invalidateTxRequest(unsigned msn, unsigned err_code)
       {
         if (m_tx_requests.empty())
           return;
@@ -206,6 +212,10 @@ namespace Transports
 
         debug("invalidating MSN");
         req->invalidateMSN();
+
+        sendTxRequestStatus(req,
+                            IMC::IridiumTxStatus::TXSTATUS_ERROR,
+                            String::str(DTR("failed with error %u"), err_code));
       }
 
       void
@@ -240,7 +250,7 @@ namespace Transports
         }
         else
         {
-          invalidateTxRequest(res.getSequenceMO());
+          invalidateTxRequest(res.getSequenceMO(), res.getStatusMO());
         }
 
         if (res.getStatusMT() == 1)
