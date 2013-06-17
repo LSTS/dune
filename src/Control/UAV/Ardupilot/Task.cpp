@@ -68,8 +68,12 @@ namespace Control
         float speed;
         //! GPS is uBlox
         bool ublox;
-        //! GPS is uBlox
+        //! LoiterHere (default) radius
         float lradius;
+        //! Near distance
+        int near;
+        //! Loitering tolerance
+        int ltolerance;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -180,14 +184,24 @@ namespace Control
           .units(Units::MeterPerSecond)
           .description("Speed to be used if desired speed is not specified");
 
+          param("uBlox GPS", m_args.ublox)
+          .defaultValue("false")
+          .description("The installed GPS is uBlox");
+
           param("Default loiter radius", m_args.lradius)
           .defaultValue("-200.0")
           .units(Units::Meter)
           .description("Loiter radius used in LoiterHere (idle)");
 
-          param("uBlox GPS", m_args.ublox)
-          .defaultValue("false")
-          .description("The installed GPS is uBlox");
+          param("Near distance", m_args.near)
+          .defaultValue("20")
+          .units(Units::Meter)
+          .description("Distance before WP at which the NEAR flag is sent");
+
+          param("Loitering tolerance", m_args.ltolerance)
+          .defaultValue("10")
+          .units(Units::Meter)
+          .description("Distance to consider loitering (radius + tolerance)");
 
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
@@ -1186,11 +1200,18 @@ namespace Control
           mavlink_nav_controller_output_t nav_out;
           mavlink_msg_nav_controller_output_decode(msg, &nav_out);
           inf("WP Dist: %d", nav_out.wp_dist);
-          if((nav_out.wp_dist <= m_desired_radius) && (m_current_wp == 3))
+
+          if((nav_out.wp_dist <= m_desired_radius + m_args.ltolerance) && (m_current_wp == 3))
           {
-            m_pcs.flags |= (PathControlState::FL_NEAR | PathControlState::FL_LOITERING);
-            dispatch(m_pcs);
+            m_pcs.flags |= PathControlState::FL_LOITERING;
           }
+
+          if((nav_out.wp_dist <= m_desired_radius + m_args.near) && (m_current_wp == 3))
+          {
+            m_pcs.flags |= PathControlState::FL_NEAR;
+          }
+
+          dispatch(m_pcs);
         }
 
         void
