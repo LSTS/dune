@@ -438,16 +438,25 @@ namespace DUNE
 
       // check if slope is safe right now and
       // check if buoyancy has pulled the vehicle up to a safe depth/altitude
-      if (!m_sdata->isTooSteep() && (m_z_ref.z_units == IMC::Z_ALTITUDE)
-          && (m_estate.alt >= m_z_ref.value))
+      if (!m_sdata->isTooSteep() && !m_sdata->isRangeLow())
       {
-        debug("above altitude reference and slope is safe");
+        if ((m_z_ref.z_units == IMC::Z_ALTITUDE) && (m_estate.alt >= m_z_ref.value))
+        {
+          debug("above altitude reference and slope is safe");
 
-        // Stop braking
-        brake(false);
-        dispatchSameZ();
-        m_mstate = SM_TRACKING;
-        return;
+          // Stop braking
+          brake(false);
+          dispatchSameZ();
+          m_mstate = SM_TRACKING;
+          return;
+        }
+        else if (m_z_ref.z_units == IMC::Z_DEPTH)
+        {
+          brake(false);
+          dispatchSameZ();
+          m_mstate = SM_TRACKING;
+          return;
+        }
       }
     }
 
