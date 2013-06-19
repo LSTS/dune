@@ -10,6 +10,9 @@
 
 # include <DUNE/Config.hpp>
 # include <DUNE/IMC/Serialization.hpp>
+# include <DUNE/IMC/Definitions.hpp>
+# include <DUNE/IMC/Message.hpp>
+# include <DUNE/IMC/Factory.hpp>
 
 namespace Transports
 {
@@ -31,6 +34,17 @@ namespace Transports
       int deserialize(uint8_t* data);
     };
 
+    // imc ids
+    class GenericIridiumMessage : IridiumMessage
+    {
+    public:
+      DUNE::IMC::Message * msg;
+      GenericIridiumMessage();
+      int serialize(uint8_t * buffer);
+      int deserialize(uint8_t* data);
+      ~GenericIridiumMessage();
+    };
+
     // 2001
     class SpotUpdate : IridiumMessage
     {
@@ -38,6 +52,7 @@ namespace Transports
       SpotUpdate();
       int serialize(uint8_t * buffer);
       int deserialize(uint8_t* data);
+      ~SpotUpdate();
     };
 
     // 2002
