@@ -87,8 +87,6 @@ namespace Sensors
 
     // Number of seconds to wait before setting an entity error.
     static const float c_expire_wdog = 2.0f;
-    // Conversion between bar and pascal
-    static const float c_pascal_per_bar = 100000.0f;
 
     struct Task: public Tasks::Periodic
     {
@@ -164,7 +162,7 @@ namespace Sensors
       {
         // Depth conversion (bar to meters of fluid).
         if (paramChanged(m_args.depth_conv))
-          m_args.depth_conv = 100e3 / (9.8 * m_args.depth_conv);
+          m_args.depth_conv = Math::c_pascal_per_bar / (Math::c_gravity * m_args.depth_conv);
 
         // Initialize serial messages.
         m_msg_read_pressure[0] = m_args.address;

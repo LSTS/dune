@@ -114,6 +114,8 @@ namespace Sensors
       IMC::Temperature m_temp;
       //! Pressure.
       IMC::Pressure m_pres;
+      //! Depth.
+      IMC::Depth m_depth;
       //! Sound Speed Moving Average.
       Math::MovingAverage<double>* m_avg_sspeed;
       //! Counter to output Speed of Sound.
@@ -419,6 +421,7 @@ namespace Sensors
               {
                 m_cond.setTimeStamp();
                 m_pres.setTimeStamp(m_cond.getTimeStamp());
+                m_depth.setTimeStamp(m_cond.getTimeStamp());
                 m_temp.setTimeStamp(m_cond.getTimeStamp());
                 m_sali.setTimeStamp(m_cond.getTimeStamp());
 
@@ -430,16 +433,20 @@ namespace Sensors
 
                 // Pressure.
                 double pres_bar = computePressure() / 10.0;
-                m_pres.value = pres_bar * 100000.0;
+                m_pres.value = pres_bar * Math::c_pascal_per_bar;
 
                 // Derived values.
                 m_sali.value = UNESCO1983::computeSalinity(m_cond.value, pres_bar, m_temp.value);
 
                 m_sspe.value = (m_sali.value < 0.0) ? -1.0 : m_avg_sspeed->update(UNESCO1983::computeSoundSpeed(m_sali.value, pres_bar, m_temp.value));
 
+                // Compute depth.
+                m_depth.value = (m_pres.value - Math::c_sea_level_pressure) / (Math::c_gravity * c_seawater_density);
+
                 dispatch(m_cond, DF_KEEP_TIME);
                 dispatch(m_temp, DF_KEEP_TIME);
                 dispatch(m_pres, DF_KEEP_TIME);
+                dispatch(m_depth, DF_KEEP_TIME);
                 dispatch(m_sali, DF_KEEP_TIME);
 
                 // Update watchdog and state.
