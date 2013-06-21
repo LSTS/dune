@@ -536,6 +536,10 @@ namespace DUNE
       Time::Counter<double> m_time_without_dvl;
       //! Time without bottom Distance readings deadline.
       Time::Counter<double> m_time_without_bdist;
+      //! Time without main depth provider.
+      Time::Counter<double> m_time_without_main_depth;
+      //! Time without depth readings.
+      Time::Counter<double> m_time_without_depth;
       //! Valid GPS speed over ground.
       double m_gps_sog;
       //! Vertical displacement in the NED frame to the origin height above ellipsoid
@@ -606,9 +610,9 @@ namespace DUNE
       //! Last GPS WGS-84 height above ellipsoid.
       double m_last_hae;
       //! Entity labels.
-      std::string m_label_depth;
       std::string m_label_ahrs;
       std::string m_label_alignment;
+      std::string m_label_depth;
       //! Task state machine.
       SMStates m_navstate;
       //! Time step delta.
@@ -696,6 +700,8 @@ namespace DUNE
       //! Sensors timeout.
       float m_without_gps_timeout;
       float m_without_dvl_timeout;
+      float m_without_main_depth_timeout;
+      float m_without_depth_timeout;
       //! DVL ground velocity validation bits.
       uint8_t m_gvel_val_bits;
       //! DVL water velocity validation bits.

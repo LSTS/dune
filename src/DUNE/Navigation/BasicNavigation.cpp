@@ -82,6 +82,16 @@ namespace DUNE
       .defaultValue("1.0")
       .description("No DVL readings timeout");
 
+      param("Depth timeout", m_without_depth_timeout)
+      .units(Units::Second)
+      .defaultValue("3.0")
+      .description("No Depth readings timeout");
+
+      param("Main Depth timeout", m_without_main_depth_timeout)
+      .units(Units::Second)
+      .defaultValue("1.0")
+      .description("No Depth readings from main provider timeout");
+
       param("Distance Between DVL and CG", m_dist_dvl_cg)
       .units(Units::Meter)
       .defaultValue("0.3")
@@ -134,9 +144,11 @@ namespace DUNE
       .description("Number of moving average samples to smooth heave");
 
       param("Entity Label - Depth", m_label_depth)
+      .defaultValue("Depth Sensor")
       .description("Entity label of 'Depth' messages");
 
       param("Entity Label - Compass", m_label_ahrs)
+      .defaultValue("AHRS")
       .description("Entity label of 'AHRS' messages");
 
       param("Entity Label - Alignment", m_label_alignment)
@@ -205,6 +217,8 @@ namespace DUNE
       m_time_without_gps.setTop(m_without_gps_timeout);
       m_time_without_dvl.setTop(m_without_dvl_timeout);
       m_time_without_bdist.setTop(m_without_dvl_timeout);
+      m_time_without_main_depth.setTop(m_without_main_depth_timeout);
+      m_time_without_depth.setTop(m_without_depth_timeout);
 
       // Distance DVL to vehicle Center of Gravity is 0 in Simulation.
       if (m_ctx.profiles.isSelected("Simulation"))
@@ -288,11 +302,15 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::Depth* msg)
     {
-      if (msg->getSourceEntity() != m_depth_eid)
+      if (msg->getSourceEntity() != m_depth_eid && !m_time_without_main_depth.overflow())
         return;
+
+      if (msg->getSourceEntity() == m_depth_eid)
+        m_time_without_main_depth.reset();
 
       m_depth_bfr += msg->value + m_depth_offset;
       ++m_depth_readings;
+      m_time_without_depth.reset();
     }
 
     void
@@ -1003,6 +1021,12 @@ namespace DUNE
     {
       // Compute maximum horizontal position variance value
       float hpos_var = std::max(m_kal.getCovariance(STATE_X, STATE_X), m_kal.getCovariance(STATE_Y, STATE_Y));
+
+      if (m_time_without_depth.overflow())
+      {
+        setEntityState(IMC::EntityState::ESTA_ERROR, DTR("No depth measurements available"));
+        return;
+      }
 
       // Check if it exceeds the specified threshold value.
       if (hpos_var > m_max_hpos_var)
