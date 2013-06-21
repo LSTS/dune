@@ -74,12 +74,6 @@ namespace Navigation
         double m_last_e;
         //! Last Vehicle Depth value (m).
         float m_last_depth;
-        //! Sum of weights of depth readings between prediction cycles.
-        float m_depth_readings;
-        //! "Buffers" for depth readings.
-        double m_depth_bfr;
-        //! Depth offset value.
-        float m_depth_offset;
         //! Vehicle heading.
         double m_yaw;
         //! LBL beacon information.
@@ -141,13 +135,17 @@ namespace Navigation
           std::memset(m_beacons, 0, sizeof(m_beacons));
           m_num_beacons = 0;
 
+          m_last_n = 0.0;
+          m_last_e = 0.0;
+          m_last_depth = 0.0;
+          m_yaw = 0.0;
+
           m_gps_val_bits = (IMC::GpsFix::GFV_VALID_POS |
                             IMC::GpsFix::GFV_VALID_HDOP |
                             IMC::GpsFix::GFV_VALID_HACC);
 
           // Register callbacks.
-          bind<IMC::Depth>(this);
-          bind<IMC::DepthOffset>(this);
+          bind<IMC::EstimatedState>(this);
           bind<IMC::EulerAngles>(this);
           bind<IMC::LblRange>(this);
           bind<IMC::LblConfig>(this);
@@ -163,13 +161,6 @@ namespace Navigation
         void
         onResourceInitialization(void)
         {
-          m_last_n = 0.0;
-          m_last_e = 0.0;
-          m_last_depth = 0.0;
-          m_yaw = 0.0;
-          m_depth_bfr = 0.0;
-          m_depth_offset = 0.0;
-          m_depth_readings = 0;
           m_lbl_log_beacons = false;
           setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
         }
@@ -189,16 +180,9 @@ namespace Navigation
         }
 
         void
-        consume(const IMC::Depth* msg)
+        consume(const IMC::EstimatedState* msg)
         {
-          m_depth_bfr += msg->value + m_depth_offset;
-          ++m_depth_readings;
-        }
-
-        void
-        consume(const IMC::DepthOffset* msg)
-        {
-          m_depth_offset = msg->value;
+          m_last_depth = msg->depth;
         }
 
         void
@@ -226,14 +210,6 @@ namespace Navigation
             // Navigation self-initialisation.
             startFilter(msg);
             return;
-          }
-
-          // Update vehicle position and depth.
-          if (m_depth_readings)
-          {
-            m_last_depth = (m_depth_bfr / m_depth_readings);
-            m_depth_bfr = m_last_depth * 0.1;
-            m_depth_readings = 0.1;
           }
 
           WGS84::displacement(m_origin->lat, m_origin->lon, m_origin->height,
