@@ -14,56 +14,51 @@
 # include <DUNE/IMC/Message.hpp>
 # include <DUNE/IMC/Factory.hpp>
 
+using DUNE_NAMESPACES;
+
 namespace Transports
 {
   namespace Iridium
   {
 
-    static const uint16_t ID_SPOTUPDATE = 2001;
-    static const uint16_t ID_TREXUPDATE = 2002;
+    static const uint16_t ID_DEVICEUPDATE = 2001;
     static const uint16_t ID_ACTIVATESUB = 2003;
     static const uint16_t ID_DEACTIVATESUB = 2004;
     static const uint16_t ID_IRIDIUMCMD = 2005;
 
-    virtual class IridiumMessage
+    class IridiumMessage
     {
     public:
-      uint16_t id;
-      uint16_t destination;
-      int serialize(uint8_t * buffer);
-      int deserialize(uint8_t* data);
+      uint16_t msg_id = 0;
+      uint16_t destination = 0;
+      static IridiumMessage * deserialize(DUNE::IMC::IridiumMsgRx * msg);
+      static DUNE::IMC::IridiumMsgTx * serialize();
+      virtual int serialize(uint8_t * buffer);
+      virtual int deserialize(uint8_t* data, uint16_t len);
+      virtual ~IridiumMessage();
     };
 
     // imc ids
     class GenericIridiumMessage : IridiumMessage
     {
     public:
-      DUNE::IMC::Message * msg;
       GenericIridiumMessage();
-      int serialize(uint8_t * buffer);
-      int deserialize(uint8_t* data);
-      ~GenericIridiumMessage();
+      GenericIridiumMessage(DUNE::IMC::Message * msg);
+      DUNE::IMC::Message * msg;
     };
+
+    typedef struct {
+      uint16_t id;
+      float time;
+      float lat, lon;
+    } DevicePosition;
 
     // 2001
-    class SpotUpdate : IridiumMessage
+    class DeviceUpdate : IridiumMessage
     {
     public:
-      SpotUpdate();
-      int serialize(uint8_t * buffer);
-      int deserialize(uint8_t* data);
-      ~SpotUpdate();
-    };
-
-    // 2002
-    class TrexUpdate : IridiumMessage
-    {
-    public:
-      enum state {ACTIVE, INACTIVE, ERROR};
-      fp32_t latitude_rads, longitude_rads;
-      TrexUpdate();
-      int serialize(uint8_t * buffer);
-      int deserialize(uint8_t* data);
+      std::vector<DevicePosition> positions;
+      DeviceUpdate();
     };
 
     // 2003
@@ -72,28 +67,22 @@ namespace Transports
     public:
       uint16_t imc_id;
       ActivateSpotSubscription();
-      int serialize(uint8_t * buffer);
-      int deserialize(uint8_t* data);
     };
 
     // 2004
     class DeactivateSpotSubscription : IridiumMessage
     {
     public:
-      uint16_t imc_id;
       DeactivateSpotSubscription();
-      int serialize(uint8_t * buffer);
-      int deserialize(uint8_t* data);
+      uint16_t imc_id;
     };
 
     // 2005
     class IridiumCommand : IridiumMessage
     {
     public:
-      std::string command;
       IridiumCommand();
-      int serialize(uint8_t * buffer);
-      int deserialize(uint8_t* data);
+      std::string command;
     };
 
   } /* namespace Iridium */
