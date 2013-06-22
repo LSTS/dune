@@ -144,8 +144,6 @@ namespace Navigation
         float initial_rpm_to_speed;
         //! Heading bias uncertainty alignment threshold.
         double alignment_index;
-        //! Use RPM information.
-        bool use_rpm;
         //! Increment Euler Angles Delta (true) or integrate yaw rate (false)
         bool increment_euler_delta;
       };
@@ -199,10 +197,6 @@ namespace Navigation
           param("RPM to Speed multiplicative factor", m_args.initial_rpm_to_speed)
           .defaultValue("1.2e-3")
           .description("Kalman Filter initial RPM to Speed multiplicative factor state value");
-
-          param("Use RPM Data", m_args.use_rpm)
-          .defaultValue("false")
-          .description("Use propeller's revolutions per minute information in the filter");
 
           param("Update Heading with Euler Increments", m_args.increment_euler_delta)
           .defaultValue("false")
@@ -584,7 +578,7 @@ namespace Navigation
           }
 
           // DVL innovation matrix.
-          if ((m_valid_gv || m_valid_wv) && m_time_without_gps.overflow() && !m_args.use_rpm)
+          if ((m_valid_gv || m_valid_wv) && m_time_without_gps.overflow() && !m_time_without_dvl.overflow())
           {
             runKalmanDVL();
             m_kal.setInnovation(OUT_U, m_kal.getOutput(OUT_U) - m_kal.getState(STATE_U));
@@ -632,7 +626,7 @@ namespace Navigation
 
           A(STATE_PSI, STATE_R) = 1.0;
 
-          if (!m_args.use_rpm)
+          if (!m_time_without_dvl.overflow())
           {
             A(STATE_X, STATE_U) = std::cos(X(STATE_PSI)) * std::cos(theta);
             A(STATE_X, STATE_V) = (std::cos(X(STATE_PSI)) * std::sin(theta) * std::sin(phi)
@@ -670,7 +664,7 @@ namespace Navigation
           m_estate.r = m_kal.getState(STATE_R);
           onDispatchNavigation();
 
-          if (!m_args.use_rpm)
+          if (!m_time_without_dvl.overflow())
           {
             m_estate.u = m_avg_speed->update(m_kal.getState(STATE_U));
             m_estate.v = m_kal.getState(STATE_V);
