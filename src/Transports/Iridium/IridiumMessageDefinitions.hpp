@@ -30,9 +30,8 @@ namespace Transports
     {
     public:
       uint16_t msg_id = 0;
-      uint16_t destination = 0;
-      static IridiumMessage * deserialize(DUNE::IMC::IridiumMsgRx * msg);
-      static DUNE::IMC::IridiumMsgTx * serialize();
+      IridiumMessage * deserialize(DUNE::IMC::IridiumMsgRx * msg);
+      DUNE::IMC::IridiumMsgTx * serialize();
       virtual int serialize(uint8_t * buffer);
       virtual int deserialize(uint8_t* data, uint16_t len);
       virtual ~IridiumMessage();
@@ -49,8 +48,8 @@ namespace Transports
 
     typedef struct {
       uint16_t id;
-      float time;
-      float lat, lon;
+      double time;
+      double lat, lon;
     } DevicePosition;
 
     // 2001
