@@ -26,44 +26,44 @@ namespace Transports
     }
 
     IridiumMessage *
-    IridiumMessage::deserialize(DUNE::IMC::IridiumMsgRx * msg)
+    IridiumMessage::deserialize(const DUNE::IMC::IridiumMsgRx * msg)
     {
-      uint8_t buffer[65535];
-      uint8_t * ptr = msg->data.data();
+      uint8_t * ptr = (uint8_t *) msg->data.data();
       IridiumMessage * ret = NULL;
+      uint16_t msg_id;
       memcpy(&msg_id, ptr, sizeof(msg_id));
 
       switch(msg_id) {
         case (ID_ACTIVATESUB):
-            ret = new ActivateSpotSubscription();
+            ret = (IridiumMessage *) new ActivateSpotSubscription();
             ret->deserialize(ptr, msg->data.size());
             return ret;
 
         case (ID_DEACTIVATESUB):
-            ret = new DeactivateSpotSubscription();
+            ret = (IridiumMessage *) new DeactivateSpotSubscription();
             ret->deserialize(ptr, msg->data.size());
             return ret;
 
         case (ID_DEVICEUPDATE):
-            ret = new DeviceUpdate();
+            ret = (IridiumMessage *) new DeviceUpdate();
             ret->deserialize(ptr, msg->data.size());
             return ret;
 
         case (ID_IRIDIUMCMD):
-            ret = new IridiumCommand();
+            ret = (IridiumMessage *) new IridiumCommand();
             ret->deserialize(ptr, msg->data.size());
             return ret;
         default:
-            ret = new GenericIridiumMessage();
+            ret = (IridiumMessage *) new GenericIridiumMessage();
             ret->deserialize(ptr, msg->data.size());
             return ret;
       }
     }
 
-    GenericIridiumMessage::GenericIridiumMessage(DUNE::IMC::Message * msg)
+    GenericIridiumMessage::GenericIridiumMessage(DUNE::IMC::Message * m)
     {
-      this->msg = msg;
-      msg_id = msg->getId();
+      msg = m;
+      msg_id = m->getId();
     }
 
     GenericIridiumMessage::GenericIridiumMessage()
@@ -89,7 +89,7 @@ namespace Transports
       uint8_t * start;
       start = buffer;
       buffer += DUNE::IMC::deserialize(msg_id, buffer, length);
-      DUNE::IMC::Message * msg = DUNE::IMC::Factory::produce(msg_id);
+      msg = DUNE::IMC::Factory::produce(msg_id);
       if (msg == NULL)
       {
         std::cerr << "ERROR parsing Iridium message: unknown msg id: " << msg_id << std::endl;
@@ -197,11 +197,11 @@ namespace Transports
     }
 
     int
-    ActivateSpotSubscription::serialize(uint8_t * buffer)
+    ActivateSpotSubscription::deserialize(uint8_t * buffer, uint16_t length)
     {
       uint8_t* start = buffer;
-      buffer += DUNE::IMC::serialize(msg_id, buffer);
-      buffer += DUNE::IMC::serialize(imc_id, buffer);
+      buffer += DUNE::IMC::deserialize(msg_id, buffer, length);
+      buffer += DUNE::IMC::deserialize(imc_id, buffer, length);
 
       return buffer - start;
     }
@@ -223,11 +223,11 @@ namespace Transports
     }
 
     int
-    DeactivateSpotSubscription::serialize(uint8_t * buffer)
+    DeactivateSpotSubscription::deserialize(uint8_t * buffer, uint16_t length)
     {
       uint8_t* start = buffer;
-      buffer += DUNE::IMC::serialize(msg_id, buffer);
-      buffer += DUNE::IMC::serialize(imc_id, buffer);
+      buffer += DUNE::IMC::deserialize(msg_id, buffer, length);
+      buffer += DUNE::IMC::deserialize(imc_id, buffer, length);
 
       return buffer - start;
     }
