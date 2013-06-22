@@ -577,12 +577,18 @@ namespace Navigation
             m_kal.setObservation(OUT_GPS_Y, STATE_Y, 0.0);
           }
 
-          // DVL innovation matrix.
+          // Speed innovation matrix.
           if ((m_valid_gv || m_valid_wv) && m_time_without_gps.overflow() && !m_time_without_dvl.overflow())
           {
-            runKalmanDVL();
-            m_kal.setInnovation(OUT_U, m_kal.getOutput(OUT_U) - m_kal.getState(STATE_U));
-            m_kal.setInnovation(OUT_V, m_kal.getOutput(OUT_V) - m_kal.getState(STATE_V));
+              runKalmanDVL();
+              m_kal.setInnovation(OUT_U, m_kal.getOutput(OUT_U) - m_kal.getState(STATE_U));
+              m_kal.setInnovation(OUT_V, m_kal.getOutput(OUT_V) - m_kal.getState(STATE_V));
+          }
+          else if (m_time_without_gps.overflow() && m_time_without_dvl.overflow())
+          {
+            double u = m_rpm * m_kal.getState(STATE_K) * std::cos(getEuler(AXIS_Y));
+            m_kal.setInnovation(OUT_U, u - m_kal.getState(STATE_U));
+            m_kal.setInnovation(OUT_V, 0 - m_kal.getState(STATE_V));
           }
           else
           {
@@ -664,16 +670,8 @@ namespace Navigation
           m_estate.r = m_kal.getState(STATE_R);
           onDispatchNavigation();
 
-          if (!m_time_without_dvl.overflow())
-          {
-            m_estate.u = m_avg_speed->update(m_kal.getState(STATE_U));
-            m_estate.v = m_kal.getState(STATE_V);
-          }
-          else
-          {
-            m_estate.u = m_rpm * m_kal.getState(STATE_K) * std::cos(getEuler(AXIS_Y));
-            m_estate.v = 0.0;
-          }
+          m_estate.u = m_avg_speed->update(m_kal.getState(STATE_U));
+          m_estate.v = m_kal.getState(STATE_V);
 
           // Water Velocity in the navigation frame.
           if (m_valid_gv && m_valid_wv && !m_time_without_dvl.overflow())
