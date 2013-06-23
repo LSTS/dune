@@ -632,7 +632,7 @@ namespace Navigation
 
           A(STATE_PSI, STATE_R) = 1.0;
 
-          if (!m_time_without_dvl.overflow())
+          if (!m_time_without_dvl.overflow() && !m_time_without_gps.overflow())
           {
             A(STATE_X, STATE_U) = std::cos(X(STATE_PSI)) * std::cos(theta);
             A(STATE_X, STATE_V) = (std::cos(X(STATE_PSI)) * std::sin(theta) * std::sin(phi)
