@@ -206,6 +206,7 @@ public:
   void
   dump(const std::vector<uint8_t>& data)
   {
+    using namespace std;
     for (unsigned i = 0; i < data.size(); ++i)
       fprintf(stderr, "%02X ", data[i]);
     fprintf(stderr, "\n");
