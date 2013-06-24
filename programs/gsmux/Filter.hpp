@@ -184,6 +184,8 @@ public:
   computeLIMU(double a_accl_x, double a_accl_y, double a_accl_z,
               double a_magn_x, double a_magn_y, double a_magn_z)
   {
+    using namespace std;
+
     double accl_x = a_accl_x;
     double accl_y = a_accl_y;
     double accl_z = a_accl_z;
