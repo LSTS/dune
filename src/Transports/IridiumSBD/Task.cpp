@@ -47,8 +47,8 @@ namespace Transports
       unsigned uart_baud;
       //! Mailbox check periodicity.
       double mbox_check_per;
-      //! SBD session timeout.
-      double sbd_timeout;
+      //! Maximum transmission rate.
+      unsigned max_tx_rate;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -64,7 +64,7 @@ namespace Transports
       //! Mailbox check timer.
       Counter<double> m_mbox_check_timer;
       //! SBD session timer.
-      Counter<double> m_sbd_timer;
+      Counter<double> m_tx_rate_timer;
       //! Task arguments.
       Arguments m_args;
 
@@ -90,10 +90,10 @@ namespace Transports
         .description("Amount of time without alert rings or "
                      "MT SBDs before doing a mailbox check");
 
-        param("SBD Session - Timeout", m_args.sbd_timeout)
+        param("Maximum Transmission Rate", m_args.max_tx_rate)
         .units(Units::Second)
-        .defaultValue("60")
-        .description("Amount of time to wait for an SBD session to finish");
+        .defaultValue("0")
+        .description("");
 
         bind<IMC::IridiumMsgTx>(this);
       }
@@ -117,6 +117,7 @@ namespace Transports
       onUpdateParameters(void)
       {
         m_mbox_check_timer.setTop(m_args.mbox_check_per);
+        m_tx_rate_timer.setTop(m_args.max_tx_rate);
       }
 
       //! Reserve entity identifiers.
@@ -269,6 +270,9 @@ namespace Transports
         if (m_driver->getRSSI() == 0)
           return;
 
+        if ((m_args.max_tx_rate > 0) && (!m_tx_rate_timer.overflow()))
+          return;
+
         if (m_tx_requests.empty())
         {
           if (m_driver->hasRingAlert())
@@ -283,6 +287,8 @@ namespace Transports
           req->setMSN(msn);
           m_driver->sendSBD(req->getData());
         }
+
+        m_tx_rate_timer.reset();
       }
 
       //! Main loop.
