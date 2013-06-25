@@ -127,7 +127,7 @@ namespace Monitors
 
         // Register consumers.
         bind<IMC::Conductivity>(this);
-        bind<IMC::Depth>(this);
+        bind<IMC::EstimatedState>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::Salinity>(this);
         bind<IMC::SoundSpeed>(this);
@@ -152,9 +152,9 @@ namespace Monitors
       }
 
       void
-      consume(const IMC::Depth* msg)
+      consume(const IMC::EstimatedState* msg)
       {
-        m_depth = msg->value;
+        m_depth = msg->depth;
       }
 
       void

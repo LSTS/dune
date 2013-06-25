@@ -150,8 +150,8 @@ namespace Monitors
 
         // Register consumers.
         bind<IMC::Acceleration>(this);
-        bind<IMC::Depth>(this);
         bind<IMC::Brake>(this);
+        bind<IMC::EstimatedState>(this);
         bind<IMC::Rpm>(this);
         bind<IMC::VehicleMedium>(this);
       }
@@ -283,9 +283,9 @@ namespace Monitors
       }
 
       void
-      consume(const IMC::Depth* msg)
+      consume(const IMC::EstimatedState* msg)
       {
-        m_depth = msg->value;
+        m_depth = msg->depth;
       }
 
       void

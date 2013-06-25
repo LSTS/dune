@@ -6257,6 +6257,62 @@ namespace DUNE
       IMC::toJSON(os__, "value", value, nindent__);
     }
 
+    DataSanity::DataSanity(void)
+    {
+      m_header.mgid = 284;
+      clear();
+    }
+
+    void
+    DataSanity::clear(void)
+    {
+      sane = 0;
+    }
+
+    bool
+    DataSanity::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::DataSanity& other__ = dynamic_cast<const DataSanity&>(msg__);
+      if (sane != other__.sane) return false;
+      return true;
+    }
+
+    int
+    DataSanity::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    DataSanity::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(sane, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    DataSanity::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(sane, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    DataSanity::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(sane, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    DataSanity::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "sane", sane, nindent__);
+    }
+
     CameraZoom::CameraZoom(void)
     {
       m_header.mgid = 300;

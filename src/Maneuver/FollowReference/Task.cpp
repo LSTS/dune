@@ -140,6 +140,8 @@ namespace Maneuver
           return false;
         if (msg1->lon != msg2->lon)
           return false;
+        if (msg1->radius != msg2->radius)
+          return false;
 
         if (msg1->z.isNull() != msg2->z.isNull())
           return false;

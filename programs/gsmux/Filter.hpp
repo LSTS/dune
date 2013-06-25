@@ -120,7 +120,7 @@ public:
     ByteCopy::fromBE(m_phi0, ptr + 28);
     ByteCopy::fromBE(m_theta0, ptr + 32);
     ByteCopy::fromBE(m_psi0, ptr + 36);
-    m_psi0 = Angles::degrees(Angles::normalizeRadian(Angles::radians(m_psi0)));
+    m_psi0 = (float)Angles::degrees(Angles::normalizeRadian(Angles::radians(m_psi0)));
   }
 
   void
@@ -141,29 +141,28 @@ public:
     }
 
     int16_t s16;
-    double real;
 
     const uint8_t* ptr = &data[3];
     ByteCopy::fromLE(s16, ptr);
 
     // Gyros.
     ByteCopy::fromLE(s16, ptr + 2);
-    m_agvel_x1 = s16 * 0.02;
+    m_agvel_x1 = (float)s16 * 0.02;
     ByteCopy::fromLE(s16, ptr + 4);
-    m_agvel_y1 = s16 * 0.02;
+    m_agvel_y1 = (float)s16 * 0.02;
     ByteCopy::fromLE(s16, ptr + 6);
-    m_agvel_z1 = s16 * 0.02;
+    m_agvel_z1 = (float)s16 * 0.02;
 
     // Acceleration.
     ByteCopy::fromLE(s16, ptr + 8);
     double accl_x = s16 * 0.0008;
-    m_accel_x1 = accl_x * 9.7982543981;
+    m_accel_x1 = (float)accl_x * 9.7982543981;
     ByteCopy::fromLE(s16, ptr + 10);
     double accl_y = s16 * 0.0008;
-    m_accel_y1 = accl_y * 9.7982543981;
+    m_accel_y1 = (float)accl_y * 9.7982543981;
     ByteCopy::fromLE(s16, ptr + 12);
     double accl_z = s16 * 0.0008;
-    m_accel_z1 = accl_z * 9.7982543981;
+    m_accel_z1 = (float)accl_z * 9.7982543981;
 
     // Magnetometer.
     ByteCopy::fromLE(s16, ptr + 26);
@@ -175,7 +174,7 @@ public:
 
     // Temperature.
     ByteCopy::fromLE(s16, ptr + 32);
-    m_temp1 = (s16 * 0.00565) + 25.0;
+    m_temp1 = (float)(s16 * 0.00565) + 25.0;
 
     computeLIMU(accl_x, accl_y, accl_z, magn_x, magn_y, magn_z);
   }
@@ -184,26 +183,29 @@ public:
   computeLIMU(double a_accl_x, double a_accl_y, double a_accl_z,
               double a_magn_x, double a_magn_y, double a_magn_z)
   {
+    using namespace std;
+
     double accl_x = a_accl_x;
     double accl_y = a_accl_y;
     double accl_z = a_accl_z;
 
     // Compute roll (phi).
     double phi = atan2(accl_y, sqrt(accl_x * accl_x + accl_z * accl_z));
-    m_phi1 = Angles::degrees(phi);
+    m_phi1 = (float)Angles::degrees(phi);
 
     // Compute pitch (theta).
     double theta = atan2(-accl_x, accl_z);
-    m_theta1 = Angles::degrees(theta);
+    m_theta1 = (float)Angles::degrees(theta);
 
     double Xh = a_magn_x * cos(theta) + a_magn_z * sin(theta);
     double Yh = a_magn_x * sin(phi) * sin(theta) + a_magn_y * cos(phi) - a_magn_z * sin(phi) * cos(theta);
-    m_psi1 = -Angles::degrees(Angles::normalizeRadian(atan2(Yh, Xh)));
+    m_psi1 = -(float)Angles::degrees(Angles::normalizeRadian(atan2(Yh, Xh)));
   }
 
   void
   dump(const std::vector<uint8_t>& data)
   {
+    using namespace std;
     for (unsigned i = 0; i < data.size(); ++i)
       fprintf(stderr, "%02X ", data[i]);
     fprintf(stderr, "\n");
