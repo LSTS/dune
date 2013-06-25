@@ -2631,6 +2631,27 @@
     </field>
   </message>
 
+  <message id="284" name="Data Sanity" abbrev="DataSanity">
+    <description>
+      Report sanity or lack of it in the data output by a sensor.
+    </description>
+    <field name="Sanity" abbrev="sane" type="uint8_t" unit="Enumerated" prefix="DS">
+      <description>
+        Whether the data is sane or not sane.
+      </description>
+      <value id="0" abbrev="SANE" name="Sane">
+        <description>
+          Data is sane.
+        </description>
+      </value>
+      <value id="1" abbrev="NOT_SANE" name="Not Sane">
+        <description>
+          Data is not sane.
+        </description>
+      </value>
+    </field>
+  </message>
+
   <!-- Actuation -->
   <message id="300" name="Camera Zoom" abbrev="CameraZoom" source="vehicle">
     <description>

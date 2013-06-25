@@ -200,6 +200,8 @@
 #define DUNE_IMC_DEVICESTATE 282
 //! BeamConfig identification number.
 #define DUNE_IMC_BEAMCONFIG 283
+//! DataSanity identification number.
+#define DUNE_IMC_DATASANITY 284
 //! CameraZoom identification number.
 #define DUNE_IMC_CAMERAZOOM 300
 //! SetThrusterActuation identification number.

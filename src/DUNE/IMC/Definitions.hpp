@@ -6398,6 +6398,76 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Data Sanity.
+    class DataSanity: public Message
+    {
+    public:
+      //! Sanity.
+      enum SanityEnum
+      {
+        //! Sane.
+        DS_SANE = 0,
+        //! Not Sane.
+        DS_NOT_SANE = 1
+      };
+
+      //! Sanity.
+      uint8_t sane;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 284;
+      }
+
+      DataSanity(void);
+
+      Message*
+      clone(void) const
+      {
+        return new DataSanity(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return DataSanity::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DataSanity";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Camera Zoom.
     class CameraZoom: public Message
     {
