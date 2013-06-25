@@ -241,7 +241,6 @@ namespace Sensors
 
         m_cmd->setPingTrigger(SUBSYS_SSH, TRIG_MODE_INTERNAL);
         m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_INTERNAL);
-        m_cmd->setPingCoupling(SUBSYS_SSL, SUBSYS_SSH, 1, 0);
 
         setConfig();
 
@@ -318,9 +317,14 @@ namespace Sensors
         m_cmd->setPingAutoselectMode(SUBSYS_SSL, m_args.autosel_mode);
 
         if ((m_args.channels_lf != "None") && (m_args.channels_hf != "None"))
-          m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_COUPLED);
+        {
+          m_cmd->setPingTrigger(SUBSYS_SSH, TRIG_MODE_COUPLED);
+          m_cmd->setPingCoupling(SUBSYS_SSH, SUBSYS_SSL, m_args.trg_div, 0);
+        }
         else
-          m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_INTERNAL);
+        {
+          m_cmd->setPingTrigger(SUBSYS_SSH, TRIG_MODE_INTERNAL);
+        }
 
         setPing(SUBSYS_SSH, m_args.channels_hf);
         setPing(SUBSYS_SSL, m_args.channels_lf);
