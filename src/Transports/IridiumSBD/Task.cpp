@@ -63,8 +63,6 @@ namespace Transports
       unsigned m_queued_mt;
       //! Mailbox check timer.
       Counter<double> m_mbox_check_timer;
-      //! SBD session timer.
-      Counter<double> m_tx_rate_timer;
       //! Task arguments.
       Arguments m_args;
 
@@ -117,7 +115,8 @@ namespace Transports
       onUpdateParameters(void)
       {
         m_mbox_check_timer.setTop(m_args.mbox_check_per);
-        m_tx_rate_timer.setTop(m_args.max_tx_rate);
+        if (m_driver != NULL)
+          m_driver->setTxRateMax(m_args.max_tx_rate);
       }
 
       //! Reserve entity identifiers.
@@ -145,6 +144,7 @@ namespace Transports
         m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
         m_driver = new Driver(this, m_uart);
         m_driver->initialize();
+        m_driver->setTxRateMax(m_args.max_tx_rate);
         debug("Manufacturer: %s", m_driver->getManufacturer().c_str());
         debug("Model: %s", m_driver->getModel().c_str());
         debug("IMEI: %s", m_driver->getIMEI().c_str());
@@ -154,6 +154,12 @@ namespace Transports
       void
       onResourceRelease(void)
       {
+        if (m_driver)
+        {
+          m_driver->stopAndJoin();
+          delete m_driver;
+          m_driver = NULL;
+        }
       }
 
       void
@@ -270,7 +276,7 @@ namespace Transports
         if (m_driver->getRSSI() == 0)
           return;
 
-        if ((m_args.max_tx_rate > 0) && (!m_tx_rate_timer.overflow()))
+        if (m_driver->isCooling())
           return;
 
         if (m_tx_requests.empty())
@@ -287,8 +293,6 @@ namespace Transports
           req->setMSN(msn);
           m_driver->sendSBD(req->getData());
         }
-
-        m_tx_rate_timer.reset();
       }
 
       //! Main loop.

@@ -64,7 +64,8 @@ namespace Transports
         m_busy(false),
         m_session_result_read(true),
         m_sbd_ring(false),
-        m_queued_mt(0)
+        m_queued_mt(0),
+        m_tx_rate_max(-1.0)
       {
         m_rssi.setDestination(m_task->getSystemId());
         m_rssi.setDestinationEntity(m_task->getEntityId());
@@ -255,6 +256,17 @@ namespace Transports
         return m_busy;
       }
 
+      //! Test if ISU is cooling down.
+      //! @return true if ISU is cooling down, false otherwise.
+      bool
+      isCooling(void)
+      {
+        ScopedMutex l(m_mutex);
+        if ((m_tx_rate_max >= 0.0) && (!m_tx_rate_timer.overflow()))
+          return true;
+        return false;
+      }
+
       //! Retrieve the result of the last SBD session. The function
       //! should be called if hasSessionResult returns true.
       //! @return session result.
@@ -318,6 +330,17 @@ namespace Transports
         return m_queued_mt;
       }
 
+      //! Set maximum transmission rate.
+      //! @param[in] rate transmission rate in second. Negative values
+      //! will disable transmission rate cap.
+      void
+      setTxRateMax(double rate)
+      {
+        ScopedMutex l(m_mutex);
+        m_tx_rate_max = rate;
+        m_tx_rate_timer.setTop(rate);
+      }
+
     private:
       //! Message buffer types.
       enum BufferType
@@ -371,6 +394,10 @@ namespace Transports
       IMC::RSSI m_rssi;
       //! Number of MT messages waiting at the GSS.
       unsigned m_queued_mt;
+      //! Maximum transmission rate value.
+      double m_tx_rate_max;
+      //! Maximum transmission rate timer.
+      Counter<double> m_tx_rate_timer;
       //! Read mode lock.
       Mutex m_mutex;
 
@@ -398,6 +425,8 @@ namespace Transports
       {
         ScopedMutex l(m_mutex);
         m_busy = value;
+        if (m_busy && (m_tx_rate_max >= 0))
+          m_tx_rate_timer.reset();
       }
 
       bool
