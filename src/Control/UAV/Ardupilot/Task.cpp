@@ -71,7 +71,7 @@ namespace Control
         //! LoiterHere (default) radius
         float lradius;
         //! Near distance
-        int near;
+        int lnear;
         //! Loitering tolerance
         int ltolerance;
       };
@@ -193,7 +193,7 @@ namespace Control
           .units(Units::Meter)
           .description("Loiter radius used in LoiterHere (idle)");
 
-          param("Near distance", m_args.near)
+          param("Near distance", m_args.lnear)
           .defaultValue("20")
           .units(Units::Meter)
           .description("Distance before WP at which the NEAR flag is sent");
@@ -1206,7 +1206,7 @@ namespace Control
             m_pcs.flags |= PathControlState::FL_LOITERING;
           }
 
-          if((nav_out.wp_dist <= m_desired_radius + m_args.near) && (m_current_wp == 3))
+          if((nav_out.wp_dist <= m_desired_radius + m_args.lnear) && (m_current_wp == 3))
           {
             m_pcs.flags |= PathControlState::FL_NEAR;
           }
