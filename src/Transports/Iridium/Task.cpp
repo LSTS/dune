@@ -40,6 +40,10 @@ namespace Transports
     {
       // Delay between announcements.
       double delay_between_device_updates;
+
+      // Destination to send all iridium messages
+      std::string iridium_destination;
+
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -55,12 +59,12 @@ namespace Transports
         DUNE::Tasks::Task(name, ctx),
         m_last_dev_update_time(Clock::get()),
         m_update_pool_empty(true),
-        m_dev_update_req_id(0),
+        m_dev_update_req_id(10),
         m_rnd(NULL)
       {
         param("Delay between announce update messages", m_args.delay_between_device_updates)
           .units(Units::Second)
-          .defaultValue("30")
+          .defaultValue("10")
           .description("Delay between announce update messages. 0 for no updates being sent.");
 
         bind<IMC::IridiumMsgRx>(this);
@@ -72,16 +76,13 @@ namespace Transports
       onResourceAcquisition(void)
       {
         m_rnd = Random::Factory::create("drand48", -1);
-        inf("onResourceAcquisition()");
       }
 
       void
       onResourceInitialization(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        inf("onResourceInitialization()");
       }
-
 
       void
       consume(const IMC::IridiumMsgRx* msg)
@@ -100,32 +101,56 @@ namespace Transports
         switch(m->msg_id)
         {
           case (ID_ACTIVATESUB):
-                        war("Received an Iridium subscription request. WTF?");
+            war("Received an Iridium subscription request. WTF?");
           break;
           case (ID_DEACTIVATESUB):
-                        war("Received an Iridium subscription end request. WTF?");
+            war("Received an Iridium subscription end request. WTF?");
           break;
           case (ID_IRIDIUMCMD):
-                        irCmd = dynamic_cast<IridiumCommand *>(m);
+            irCmd = dynamic_cast<IridiumCommand *>(m);
           inf("received this command via Iridium: %s.", irCmd->command.c_str());
+          //TODO create resulting TextMessage
+
           break;
           case (ID_DEVICEUPDATE):
-                        devUpt = dynamic_cast<DeviceUpdate *>(m);
+            devUpt = dynamic_cast<DeviceUpdate *>(m);
           it = devUpt->positions.begin();
           inf("received Iridium device update with %ld updates.", devUpt->positions.size());
           for (; it != devUpt->positions.end(); it++)
           {
             DevicePosition p = *it;
-            IMC::Announce ann;
-            ann.services="";
-            ann.lat = p.lat;
-            ann.lon = p.lon;
-            ann.setSource(p.id);
-            ann.setTimeStamp(p.time);
+            int selector = (p.id & 0xE0) >> 4;
+
+            IMC::RemoteSensorInfo sensorInfo;
+            sensorInfo.alt = -1;
+            sensorInfo.lat = p.lat;
+            sensorInfo.lon = p.lon;
+            sensorInfo.heading = 0;
+            switch (selector) {
+              case 0:
+                sensorInfo.sensor_class = "Unmanned Vehicle";
+                break;
+              case 2:
+                sensorInfo.sensor_class = "External Vehicle";
+                break;
+              case 4:
+                sensorInfo.sensor_class = "Console";
+                break;
+              case 6:
+                sensorInfo.sensor_class = "Sensor";
+                break;
+              case 8:
+                sensorInfo.sensor_class = "Manned Vehicle";
+                break;
+              default:
+                sensorInfo.sensor_class = "Unknown";
+                break;
+            }
+
             std::stringstream ss;
-            ss << "Iridium_" << p.id;
-            ann.sys_name = ss.str();
-            dispatch(ann);
+            ss << sensorInfo.sensor_class << "_" << p.id;
+            sensorInfo.id = ss.str();
+            dispatch(sensorInfo);
           }
           break;
           default:
@@ -156,7 +181,6 @@ namespace Transports
 
         if (!m_update_pool_empty)
         {
-          inf("last sent device update is still queued. not sending anymore");
           return false;
         }
         inf("sending device updates");
@@ -179,11 +203,12 @@ namespace Transports
         int len = msg.serialize(buffer);
         m->data.assign(buffer, buffer+len);
         m->req_id = m_rnd->random() % 65535;
-        //m->ttl = m_args.delay_between_device_updates - 10;
+        m->setTimeStamp();
+        //TODO set time to live accordingly
         m_dev_update_req_id = m->req_id;
-        m->toText(std::cout);
         dispatch(m);
         m_update_pool_empty = false;
+
         return true;
       }
 
@@ -194,15 +219,15 @@ namespace Transports
         {
           consumeMessages();
 
-          double now = Clock::get();
-
-          inf("%f < %f ?", (now - m_last_dev_update_time), m_args.delay_between_device_updates);
-          if ((now - m_last_dev_update_time) > m_args.delay_between_device_updates)
+          if (m_args.delay_between_device_updates > 0)
           {
-            if (send_device_updates())
-              m_last_dev_update_time = now;
+            double now = Clock::get();
+            if ((now - m_last_dev_update_time) > m_args.delay_between_device_updates)
+            {
+              if (send_device_updates())
+                m_last_dev_update_time = now;
+            }
           }
-
           Delay::wait(1.0);
         }
       }

@@ -90,6 +90,8 @@ namespace Transports
     int
     GenericIridiumMessage::serialize(uint8_t * buffer)
     {
+      if (msg != NULL)
+        msg_id = msg->getId();
       uint8_t * start;
       start = buffer;
 
@@ -160,8 +162,8 @@ namespace Transports
       for (it = positions.begin(); it != positions.end(); it++)
       {
         _time = (uint32_t) DUNE::Math::round(it->time);
-        _lat = (uint32_t) DUNE::Math::round(DUNE::Math::Angles::degrees(it->lat) * 1000000.0);
-        _lon = (uint32_t) DUNE::Math::round(DUNE::Math::Angles::degrees(it->lon) * 1000000.0);
+        _lat = (int32_t) DUNE::Math::round(DUNE::Math::Angles::degrees(it->lat) * 1000000.0);
+        _lon = (int32_t) DUNE::Math::round(DUNE::Math::Angles::degrees(it->lon) * 1000000.0);
         buffer += DUNE::IMC::serialize(it->id, buffer);
         buffer += DUNE::IMC::serialize(_time, buffer);
         buffer += DUNE::IMC::serialize(_lat, buffer);
@@ -175,10 +177,12 @@ namespace Transports
     DeviceUpdate::deserialize(uint8_t * buffer, uint16_t length)
     {
       uint8_t * start;
-      uint32_t _lat, _lon, _time;
+      uint32_t _time;
+      int32_t _lat, _lon;
+
       start = buffer;
       buffer += DUNE::IMC::deserialize(msg_id, buffer, length);
-      while (length > sizeof(DevicePosition)) {
+      while (length >= 14) { // id (2) + time (4) + lat(4) + lon(4)
         DevicePosition pos;
         buffer += DUNE::IMC::deserialize(pos.id, buffer, length);
         buffer += DUNE::IMC::deserialize(_time, buffer, length);
