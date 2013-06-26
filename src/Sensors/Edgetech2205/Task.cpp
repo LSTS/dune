@@ -161,6 +161,8 @@ namespace Sensors
         .defaultValue("1")
         .minimumValue("1")
         .maximumValue("150")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .description("Trigger divisor");
 
         param("Pulse Autoselection Mode", m_args.autosel_mode)
