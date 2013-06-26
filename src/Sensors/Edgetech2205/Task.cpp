@@ -320,8 +320,8 @@ namespace Sensors
 
         if ((m_args.channels_lf != "None") && (m_args.channels_hf != "None"))
         {
-          m_cmd->setPingTrigger(SUBSYS_SSH, TRIG_MODE_COUPLED);
-          m_cmd->setPingCoupling(SUBSYS_SSH, SUBSYS_SSL, m_args.trg_div, 0);
+          m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_COUPLED);
+          m_cmd->setPingCoupling(SUBSYS_SSL, SUBSYS_SSH, m_args.trg_div, 0);
         }
         else
         {
