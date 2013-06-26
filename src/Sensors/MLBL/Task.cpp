@@ -40,19 +40,21 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
-    // Duration of a Mini-Packet in seconds.
+    //! Duration of a Mini-Packet in seconds.
     static const double c_mpk_duration = 0.90;
-    // Cycle Init Timeout (s).
+    //! Default command reply timeout.
+    static const double c_cmd_reply_tout = 4.0;
+    //! Cycle Init Timeout (s).
     static const unsigned c_cto = 10;
-    // Input Timeout (s).
+    //! Input Timeout (s).
     static const double c_input_tout = c_cto + 5;
-    // Abort code.
+    //! Abort code.
     static const unsigned c_code_abort = 0x000a;
-    // Abort acked code.
+    //! Abort acked code.
     static const unsigned c_code_abort_ack = 0x000b;
-    // Restart system code.
+    //! Restart system code.
     static const unsigned c_code_sys_restart = 0x01a6;
-    // Restart system ack code.
+    //! Restart system ack code.
     static const unsigned c_code_sys_restart_ack = 0x01a7;
 
     enum EntityStates
@@ -668,7 +670,7 @@ namespace Sensors
       }
 
       void
-      processInput(double timeout = 1.0)
+      processInput(double timeout = c_cmd_reply_tout)
       {
         double deadline = Clock::get() + timeout;
 
