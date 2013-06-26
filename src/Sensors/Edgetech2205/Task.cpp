@@ -325,7 +325,7 @@ namespace Sensors
         }
         else
         {
-          m_cmd->setPingTrigger(SUBSYS_SSH, TRIG_MODE_INTERNAL);
+          m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_INTERNAL);
         }
 
         setPing(SUBSYS_SSH, m_args.channels_hf);
