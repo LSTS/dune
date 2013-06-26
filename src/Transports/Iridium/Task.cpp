@@ -22,7 +22,7 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Jose Pinto                                                       *
 //***************************************************************************
 
 // DUNE headers.
@@ -35,14 +35,28 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
-    std::map<std::string, IMC::Announce> m_last_announces;
+    struct Arguments
+    {
+      // Delay between announcements.
+      double delay_between_device_updates;
+    };
 
     struct Task: public DUNE::Tasks::Task
     {
+      std::map<std::string, IMC::Announce> m_last_announces;
+      double m_last_dev_update_time;
+      Arguments m_args;
+
 
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
+        DUNE::Tasks::Task(name, ctx),
+        m_last_dev_update_time(0)
       {
+        param("Delay between announce update messages", m_args.delay_between_device_updates)
+                .units(Units::Second)
+                .defaultValue("30")
+                .description("Delay between announce update messages. 0 for no updates being sent.");
+
         bind<IMC::IridiumMsgRx>(this);
         bind<IMC::Announce>(this);
       }
@@ -112,12 +126,51 @@ namespace Transports
         m_last_announces[msg->sys_name] = *msg;
       }
 
+
+      void
+      send_device_updates()
+      {
+        inf("sending device updates");
+        DeviceUpdate msg;
+        uint8_t buffer[65535];
+        std::map<std::string, IMC::Announce>::iterator it;
+
+        for (it = m_last_announces.begin(); it != m_last_announces.end(); it++)
+        {
+          DevicePosition pos;
+          pos.id = it->second.getSource();
+          pos.lat = it->second.lat;
+          pos.lon = it->second.lon;
+          pos.time = it->second.getTimeStamp();
+          msg.positions.push_back(pos);
+        }
+        m_last_announces.clear();
+
+        DUNE::IMC::IridiumMsgTx * m = new DUNE::IMC::IridiumMsgTx();
+        int len = msg.serialize(buffer);
+        m->data.assign(buffer, buffer+len);
+        m->toText(std::cout);
+        dispatch(m);
+
+      }
+
       void
       onMain(void)
       {
         while (!stopping())
         {
-          waitForMessages(1.0);
+          consumeMessages();
+
+
+          double now = Clock::get();
+
+          if ((now - m_last_dev_update_time) > m_args.delay_between_device_updates)
+          {
+
+            m_last_dev_update_time = now;
+          }
+
+          Delay::wait(1.0);
         }
       }
     };

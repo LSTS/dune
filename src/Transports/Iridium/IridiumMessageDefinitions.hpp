@@ -1,9 +1,30 @@
-/*
- * IridiumMessageDefinitions.hpp
- *
- *  Created on: Jun 19, 2013
- *      Author: zp
- */
+//***************************************************************************
+// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+//***************************************************************************
+// This file is part of DUNE: Unified Navigation Environment.               *
+//                                                                          *
+// Commercial Licence Usage                                                 *
+// Licencees holding valid commercial DUNE licences may use this file in    *
+// accordance with the commercial licence agreement provided with the       *
+// Software or, alternatively, in accordance with the terms contained in a  *
+// written agreement between you and Universidade do Porto. For licensing   *
+// terms, conditions, and further information contact lsts@fe.up.pt.        *
+//                                                                          *
+// European Union Public Licence - EUPL v.1.1 Usage                         *
+// Alternatively, this file may be used under the terms of the EUPL,        *
+// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// included in the packaging of this file. You may not use this work        *
+// except in compliance with the Licence. Unless required by applicable     *
+// law or agreed to in writing, software distributed under the Licence is   *
+// distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
+// ANY KIND, either express or implied. See the Licence for the specific    *
+// language governing permissions and limitations at                        *
+// https://www.lsts.pt/dune/licence.                                        *
+//***************************************************************************
+// Author: Jose Pinto                                                       *
+//***************************************************************************
+
 
 #ifndef IRIDIUMMESSAGEDEFINITIONS_HPP_
 #define IRIDIUMMESSAGEDEFINITIONS_HPP_
@@ -43,9 +64,6 @@ namespace Transports
       //! Parse a received message received into an Iridium message
       static IridiumMessage * deserialize(const DUNE::IMC::IridiumMsgRx * msg);
 
-      //! Translates this message into a message ready to be sent to an Iridium destination
-      DUNE::IMC::IridiumMsgTx * serialize();
-
       //! Serialize this message into a data buffer (to be sent via Iridium)
       virtual int serialize(uint8_t * buffer);
 
@@ -63,6 +81,7 @@ namespace Transports
       GenericIridiumMessage(DUNE::IMC::Message * msg);
       int serialize(uint8_t * buffer);
       int deserialize(uint8_t* data, uint16_t len);
+      ~GenericIridiumMessage();
       DUNE::IMC::Message * msg;
     };
 
@@ -74,6 +93,7 @@ namespace Transports
       int serialize(uint8_t * buffer);
       int deserialize(uint8_t* data, uint16_t len);
       DeviceUpdate();
+      ~DeviceUpdate(){};
     };
 
     //! Extension to the IMC protocol used request reception of device position updates
@@ -84,6 +104,7 @@ namespace Transports
       int serialize(uint8_t * buffer);
       int deserialize(uint8_t* data, uint16_t len);
       ActivateSpotSubscription();
+      ~ActivateSpotSubscription(){};
     };
 
     //! Extension to the IMC protocol used to stop receiving device position updates
@@ -94,6 +115,7 @@ namespace Transports
       int serialize(uint8_t * buffer);
       int deserialize(uint8_t* data, uint16_t len);
       uint16_t imc_id;
+      ~DeactivateSpotSubscription(){};
     };
 
     //! Extension to the IMC protocol used to send text commands to DUNE vehicles (these messages are reported as received SMS)
@@ -104,6 +126,7 @@ namespace Transports
       int serialize(uint8_t * buffer);
       int deserialize(uint8_t* data, uint16_t len);
       std::string command;
+      ~IridiumCommand(){};
     };
 
   } /* namespace Iridium */
