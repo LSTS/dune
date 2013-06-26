@@ -57,7 +57,6 @@ namespace Transports
     class IridiumMessage
     {
     public:
-
       //! The message id (can wither be an IMC id or an Iridium extension
       uint16_t msg_id;
 
@@ -65,12 +64,12 @@ namespace Transports
       static IridiumMessage * deserialize(const DUNE::IMC::IridiumMsgRx * msg);
 
       //! Serialize this message into a data buffer (to be sent via Iridium)
-      virtual int serialize(uint8_t * buffer);
+      virtual int serialize(uint8_t * buffer) = 0;
 
       //! Deserialize an Iridium data buffer
-      virtual int deserialize(uint8_t* data, uint16_t len);
+      virtual int deserialize(uint8_t* data, uint16_t len) = 0;
 
-      virtual ~IridiumMessage();
+      virtual ~IridiumMessage() {}
     };
 
     //! An Iridium message that encapsulates an IMC message
@@ -86,7 +85,7 @@ namespace Transports
     };
 
     //! Extension to the IMC protocol used to report a set of device positions
-    class DeviceUpdate : IridiumMessage
+    class DeviceUpdate : public IridiumMessage
     {
     public:
       std::vector<DevicePosition> positions;
