@@ -50,7 +50,8 @@ namespace DUNE
       Tasks::Periodic(name, ctx),
       m_active(false),
       m_origin(NULL),
-      m_avg_heave(NULL)
+      m_avg_heave(NULL),
+      m_avg_gps(NULL)
     {
       // Declare configuration parameters.
       param("Maximum distance to reference", m_max_dis2ref)
@@ -139,9 +140,19 @@ namespace DUNE
       .maximumValue("20.0")
       .description("Maximum Horizontal Accuracy Estimate value accepted for GPS fixes");
 
+      param("GPS Maximum Dynamic HACC factor", m_gps_hacc_factor)
+      .defaultValue("2.0")
+      .minimumValue("1.5")
+      .maximumValue("10.0")
+      .description("Maximum Horizontal Accuracy Estimate Moving Average factor");
+
       param("Heave Moving Average Samples", m_avg_heave_samples)
       .defaultValue("40")
       .description("Number of moving average samples to smooth heave");
+
+      param("GPS Moving Average Samples", m_avg_gps_samples)
+      .defaultValue("5")
+      .description("Number of moving average samples to smooth maximum GPS HACC.");
 
       param("Entity Label - Depth", m_label_depth)
       .defaultValue("Depth Sensor")
@@ -232,6 +243,7 @@ namespace DUNE
     BasicNavigation::onResourceInitialization(void)
     {
       m_avg_heave = new Math::MovingAverage<double>(m_avg_heave_samples);
+      m_avg_gps = new Math::MovingAverage<double>(m_avg_gps_samples);
       reset();
     }
 
@@ -270,6 +282,7 @@ namespace DUNE
     {
       Memory::clear(m_origin);
       Memory::clear(m_avg_heave);
+      Memory::clear(m_avg_gps);
 
       for (unsigned i = 0; i < c_max_beacons; ++i)
         Memory::clear(m_beacons[i]);
@@ -417,14 +430,21 @@ namespace DUNE
       m_gps_rej.utc_time = msg->utc_time;
       m_gps_rej.setTimeStamp(msg->getTimeStamp());
 
-      // Speed over ground.
-      if (msg->validity & IMC::GpsFix::GFV_VALID_SOG)
-        m_gps_sog = msg->sog;
-
       // Check fix validity.
       if ((msg->validity & IMC::GpsFix::GFV_VALID_POS) == 0)
       {
         m_gps_rej.reason = IMC::GpsFixRejection::RR_INVALID;
+        dispatch(m_gps_rej, DF_KEEP_TIME);
+        return;
+      }
+
+      double max_hacc = m_avg_gps->mean();
+
+      m_avg_gps->update(msg->hacc);
+
+      if (m_avg_gps->sampleSize() > 2 && msg->hacc > m_gps_hacc_factor * max_hacc)
+      {
+        m_gps_rej.reason = IMC::GpsFixRejection::RR_ABOVE_THRESHOLD;
         dispatch(m_gps_rej, DF_KEEP_TIME);
         return;
       }
@@ -453,6 +473,10 @@ namespace DUNE
           return;
         }
       }
+
+      // Speed over ground.
+      if (msg->validity & IMC::GpsFix::GFV_VALID_SOG)
+        m_gps_sog = msg->sog;
 
       // Check current declination value.
       checkDeclination(msg->lat, msg->lon, msg->height);

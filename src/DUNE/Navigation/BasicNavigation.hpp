@@ -665,6 +665,8 @@ namespace DUNE
       float m_max_hdop;
       //! Maximum valid horizontal accuracy estimate.
       float m_max_hacc;
+      //! Maximum HACC Moving Average factor.
+      float m_gps_hacc_factor;
       //! Sum of weights of sensor readings between prediction cycles.
       float m_depth_readings;
       float m_euler_readings;
@@ -684,8 +686,12 @@ namespace DUNE
       float m_depth_offset;
       //! Moving Average for heave.
       Math::MovingAverage<double>* m_avg_heave;
+      //! Moving Average for GpsFix.
+      Math::MovingAverage<double>* m_avg_gps;
       //! Number of samples to average heave.
       unsigned m_avg_heave_samples;
+      //! Number of samples to average GPS.
+      unsigned m_avg_gps_samples;
       //! Z reference.
       double m_z_ref;
       //! Entity Ids.
