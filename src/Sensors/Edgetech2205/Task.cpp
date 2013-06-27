@@ -157,13 +157,13 @@ namespace Sensors
         .units(Units::Meter)
         .description("Enable high frequency subsystem");
 
-        param("Trigger Divisor", m_args.trg_div)
+        param("Range Multiplier", m_args.trg_div)
         .defaultValue("1")
         .minimumValue("1")
         .maximumValue("150")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
-        .description("Trigger divisor");
+        .description("Range multiplier");
 
         param("Pulse Autoselection Mode", m_args.autosel_mode)
         .defaultValue("2")
