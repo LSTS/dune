@@ -521,6 +521,15 @@ main(int argc, char** argv)
     msg = tmsg;
     tmsg->name = argv[4];
   }
+  else if (strcmp(argv[3], "IridiumMsgTx") == 0)
+  {
+    IMC::IridiumMsgTx* tmsg = new IMC::IridiumMsgTx;
+    msg = tmsg;
+    tmsg->req_id = atoi(argv[4]);
+    tmsg->destination = argv[5];
+    std::string hex = String::fromHex(argv[6]);
+    tmsg->data.assign(hex.begin(), hex.end());
+  }
 
   if (msg == NULL)
   {
