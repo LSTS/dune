@@ -383,9 +383,11 @@ namespace Plan
       bool
       waitingForDevice(void)
       {
-        // if no requests are hanging then we're not waiting
-        if (m_reqs.empty())
-          return false;
+        // if there are any requests hanging, then we're waiting
+        if (!m_reqs.empty())
+        {
+          return true;
+        }
 
         std::map<std::string, TimedStack>::const_iterator next;
         next = nextSchedule();
