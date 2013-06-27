@@ -37,29 +37,279 @@
 #include <algorithm>
 
 // DUNE headers.
-#include <DUNE/Utils/String.hpp>
+//#include <DUNE/Utils/String.hpp>
 #include <DUNE/Simulation/UAV.hpp>
 #include <DUNE/Math/Matrix.hpp>
-#include <DUNE/Math/General.hpp>
-#include <DUNE/Parsers/Config.hpp>
+#include <DUNE/Math/Angles.hpp>
+//#include <DUNE/Math/General.hpp>
 
 namespace DUNE
 {
   namespace Simulation
   {
-    UAVSimulation::UAVSimulation(const Matrix& m)
+    UAVSimulation::UAVSimulation(const double& bank_time_cst, const double& speed_time_cst):
+          //! Simulation type
+          m_sim_type("4DOF_bank"),
+          //! Control commands
+          //! - Bank
+          m_bank_cmd(0),
+          //! - Airspeed
+          m_airspeed_cmd(0),
+          //! - Altitude
+          m_altitude_cmd(0),
+          //! Environment parameters
+          //! - Gravity acceleration
+          m_g(0)
     {
-      m_nrows = m.m_nrows;
-      m_ncols = m.m_ncols;
-      m_size = m.m_size;
+      //! Vehicle position
+      m_position = DUNE::Math::Matrix(6, 1, 0.0);
+      //! Vehicle velocity vector
+      m_velocity = DUNE::Math::Matrix(6, 1, 0.0);
+      //! Vehicle velocity vector relative to the wind, in the ground reference frame
+      m_uav2wind_gnd_frm = DUNE::Math::Matrix(3, 1, 0.0);
 
-      if (m_size)
-      {
-        m_data = m.m_data;
-        m_counter = m.m_counter;
-        ++(*m_counter);
-      }
+      //! Vehicle model parameters
+      //! - Bank time constant
+      m_bank_time_cst = bank_time_cst;
+      //! - Airspeed time constant
+      m_speed_time_cst = speed_time_cst;
+
     }
 
+    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst):
+          //! Simulation type
+          m_sim_type("4DOF_bank"),
+          //! Control commands
+          //! - Bank
+          m_bank_cmd(0),
+          //! - Airspeed
+          m_airspeed_cmd(0),
+          //! - Altitude
+          m_altitude_cmd(0),
+          //! Environment parameters
+          //! - Gravity acceleration
+          m_g(0)
+    {
+      int i_vel_size = vel.rows();
+      if (i_vel_size != 3 && i_vel_size != 6)
+        throw Error("Invalid velocity vector dimension");
+
+      //! Vehicle position
+      m_position = DUNE::Math::Matrix(6, 1, 0.0);
+      //! Vehicle velocity vector
+      /* Rever e implementar
+      if (i_vel_size == 3)
+        vel.vertCat(DUNE::Math::Matrix(3, 1, 0.0));
+       */
+      m_velocity = vel;
+      //! Wind state vector
+      m_wind = DUNE::Math::Matrix(3, 1, 0.0);
+      //! Vehicle velocity vector relative to the wind, in the ground reference frame
+      m_uav2wind_gnd_frm = DUNE::Math::Matrix(3, 1, 0.0);
+
+      //! Vehicle model parameters
+      //! - Bank time constant
+      m_bank_time_cst = bank_time_cst;
+      //! - Airspeed time constant
+      m_speed_time_cst = speed_time_cst;
+    }
+
+    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst):
+          //! Simulation type
+          m_sim_type("4DOF_bank"),
+          //! Control commands
+          //! - Bank
+          m_bank_cmd(0),
+          //! - Airspeed
+          m_airspeed_cmd(0),
+          //! - Altitude
+          m_altitude_cmd(0),
+          //! Environment parameters
+          //! - Gravity acceleration
+          m_g(0)
+    {
+      int i_pos_size = pos.rows();
+      if (i_pos_size != 3 && i_pos_size != 6)
+        throw Error("Invalid position vector dimension");
+
+      int i_vel_size = vel.rows();
+      if (i_vel_size != 3 && i_vel_size != 6)
+        throw Error("Invalid velocity vector dimension");
+
+      //! Vehicle position
+      /* Rever e implementar
+      if (i_pos_size == 3)
+        pos.vertCat(DUNE::Math::Matrix(3, 1, 0.0));
+       */
+      m_position = pos;
+      //! Vehicle velocity vector
+      /* Rever e implementar
+      if (i_vel_size == 3)
+        vel.vertCat(DUNE::Math::Matrix(3, 1, 0.0));
+       */
+      m_velocity = vel;
+      //! Wind state vector
+      m_wind = DUNE::Math::Matrix(3, 1, 0.0);
+      //! Vehicle velocity vector relative to the wind, in the ground reference frame
+      m_uav2wind_gnd_frm = DUNE::Math::Matrix(3, 1, 0.0);
+
+      //! Vehicle model parameters
+      //! - Bank time constant
+      m_bank_time_cst = bank_time_cst;
+      //! - Airspeed time constant
+      m_speed_time_cst = speed_time_cst;
+    }
+
+    UAVSimulation
+    UAVSimulation::update(const double& timestep)
+    {
+
+      if (m_sim_type == "4DOF_bank")
+      {
+        update4DOF_Bank(timestep);
+      }
+      return *this;
+    }
+
+    UAVSimulation
+    UAVSimulation::update(const double& timestep, const double& bank_cmd)
+    {
+      //! - Bank
+      m_bank_cmd = bank_cmd;
+
+      //! Computed the updated state
+      return update(timestep);
+    }
+
+    UAVSimulation
+    UAVSimulation::update(const double& timestep, const double& bank_cmd, const double& airspeed_cmd)
+    {
+      //! - Bank
+      m_bank_cmd = bank_cmd;
+      //! - Airspeed
+      m_airspeed_cmd = airspeed_cmd;
+
+      //! Computed the updated state
+      return update(timestep);
+    }
+
+    UAVSimulation
+    UAVSimulation::update(const double& timestep, const double& bank_cmd, const double& airspeed_cmd, const double& altitude_cmd)
+    {
+      //! - Bank
+      m_bank_cmd = bank_cmd;
+      //! - Airspeed
+      m_airspeed_cmd = airspeed_cmd;
+      //! - Altitude
+      m_altitude_cmd = altitude_cmd;
+
+      //! Computed the updated state
+      return update(timestep);
+    }
+
+    /*
+    UAVSimulation
+    UAVSimulation::update(const double& timestep, const double& wind)
+    {
+      //! Wind state vector
+      m_wind = wind;
+
+      //! Computed the updated state
+      return update(timestep);
+    }
+
+    UAVSimulation
+    UAVSimulation::update(const double& timestep, const double& bank_cmd, const double& wind)
+    {
+      //! - Bank
+      m_bank_cmd = bank_cmd;
+      //! Wind state vector
+      m_wind = wind;
+
+      //! Computed the updated state
+      return update(timestep);
+    }
+
+    UAVSimulation
+    UAVSimulation::update(const double& timestep, const double& bank_cmd, const double& airspeed_cmd, const double& wind)
+    {
+      //! - Bank
+      m_bank_cmd = bank_cmd;
+      //! - Airspeed
+      m_airspeed_cmd = airspeed_cmd;
+      //! Wind state vector
+      m_wind = wind;
+
+      //! Computed the updated state
+      return update(timestep);
+    }
+
+    UAVSimulation
+    UAVSimulation::update(const double& timestep, const double& bank_cmd, const double& airspeed_cmd, const double& altitude_cmd, const double& wind)
+    {
+      //! - Bank
+      m_bank_cmd = bank_cmd;
+      //! - Airspeed
+      m_airspeed_cmd = airspeed_cmd;
+      //! - Altitude
+      m_altitude_cmd = altitude_cmd;
+      //! Wind state vector
+      m_wind = wind;
+
+      //! Computed the updated state
+      return update(timestep);
+    }
+    */
+
+    void
+    UAVSimulation::update4DOF_Bank(const double& timestep)
+    {
+      //! Optimization variables
+      double cos_yaw = std::cos(m_position(5));
+      double sin_yaw = std::sin(m_position(5));
+
+      //! Wind effects
+      m_velocity(2) = m_wind(2);
+      m_uav2wind_gnd_frm = m_velocity.get(0, 2, 0, 0) - m_wind;
+      double airspeed = m_uav2wind_gnd_frm.norm_2();
+
+      //==========================================================================
+      //! Aircraft Dynamics
+      //==========================================================================
+      //! Command effect
+      //! - Horizontal acceleration command
+      double d_speed_rate = (m_airspeed_cmd - airspeed)/m_speed_time_cst;
+      airspeed += d_speed_rate*timestep;
+      //! - Roll rate command
+      double d_bank_rate = (m_bank_cmd - m_position(3))/m_bank_time_cst;
+      m_position(3) += d_bank_rate*timestep;
+
+      //! UAV velocity components relative to the wind over the ground reference frame
+      m_uav2wind_gnd_frm(0) = airspeed * cos_yaw;
+      m_uav2wind_gnd_frm(1) = airspeed * sin_yaw;
+      // UAV velocity components relative to the ground over the ground reference frame
+      m_velocity.set(0, 2, 0, 0, m_uav2wind_gnd_frm + m_wind);
+      // Turn rate
+      m_velocity(5) = m_g * std::tan(m_position(3))/airspeed;
+
+      // State vector update
+      m_position += m_velocity*timestep;
+
+      //==========================================================================
+      // Output
+      //==========================================================================
+
+      m_position(5) = DUNE::Math::Angles::normalizeRadian(m_position(5));
+    }
+
+    void
+    UAVSimulation::model(const double& bank_time_cst, const double& speed_time_cst)
+    {
+      //! Vehicle model parameters
+      //! - Bank time constant
+      m_bank_time_cst = bank_time_cst;
+      //! - Airspeed time constant
+      m_speed_time_cst = speed_time_cst;
+    }
   }
 }

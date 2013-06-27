@@ -35,12 +35,12 @@
 #include <vector>
 
 // DUNE headers.
-#include <DUNE/Config.hpp>
+#include <DUNE/Math/Matrix.hpp>
 
 namespace DUNE
 {
   // Forward declarations.
-  namespace Parsers { class Config; }
+  namespace Math {class Matrix; }
 
   namespace Simulation
   {
@@ -59,28 +59,130 @@ namespace DUNE
       };
 
       //! Constructor.
+      //! Create a simulated state with null initial state and the vehicle model parameters
+      //! @param[in] bank_time_cst - bank angle time constant
+      //! @param[in] speed_time_cst - airspeed time constant
+      UAVSimulation(const double& bank_time_cst, const double& speed_time_cst);
+
+      //! Constructor.
       //! Create a simulated state based on the initial state.
-      //! @param[in] m reference to matrix
-      UAVSimulation(const Matrix& m);
+      //! @param[in] vel - initial velocity vector
+      //! @param[in] bank_time_cst - bank angle time constant
+      //! @param[in] speed_time_cst - airspeed time constant
+      UAVSimulation(const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst);
+
+      //! Constructor.
+      //! Create a simulated state based on the initial state.
+      //! @param[in] pos - initial position vector
+      //! @param[in] vel - initial velocity vector
+      //! @param[in] bank_time_cst - bank angle time constant
+      //! @param[in] speed_time_cst - airspeed time constant
+      UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst);
+
+      //! This methods updates the simulated state with the defined time step.
+      //! @param[in] d_t time step for the update
+      //! @return the updated state
+      UAVSimulation
+      update(const double& timestep);
+
+      //! This methods updates the simulated state with the defined time step and controls.
+      //! @param[in] d_t - time step for the update
+      //! @param[in] bank_cmd - applied bank command
+      //! @return the updated state
+      UAVSimulation
+      update(const double& timestep, const double& bank_cmd);
+
+
+      //! This methods updates the simulated state with the defined time step and controls.
+      //! @param[in] d_t - time step for the update
+      //! @param[in] bank_cmd - applied bank command
+      //! @param[in] airspeed_cmd - applied airspeed command
+      //! @return the updated state
+      UAVSimulation
+      update(const double& timestep, const double& bank_cmd, const double& airspeed_cmd);
+
+      //! This methods updates the simulated state with the defined time step and controls.
+      //! @param[in] d_t - time step for the update
+      //! @param[in] bank_cmd - applied bank command
+      //! @param[in] airspeed_cmd - applied airspeed command
+      //! @param[in] altitude_cmd - applied altitude command
+      //! @return the updated state
+      UAVSimulation
+      update(const double& timestep, const double& bank_cmd, const double& airspeed_cmd, const double& altitude_cmd);
+
+      /*
+      //! This methods updates the simulated state with the defined time step, controls, and wind state.
+      //! @param[in] d_t - time step for the update
+      //! @param[in] vd_wind - vector of the wind state to be applied
+      //! @return the updated state
+      UAVSimulation
+      update(const double& timestep, const double& wind);
 
       //! This methods updates the simulated state with the defined time step, controls, and wind state.
-      //! @param[in] d_t time step for the update
-      //! @param[in] vd_ctrl vector of the controls to be applied
-      //! @param[in] vd_wind vector of the wind state to be applied
-      //! @return reference to the updated state
-      Matrix&
-      operator+=(const Matrix& m);
+      //! @param[in] d_t - time step for the update
+      //! @param[in] bank_cmd - applied bank command
+      //! @param[in] vd_wind - vector of the wind state to be applied
+      //! @return the updated state
+      UAVSimulation
+      update(const double& timestep, const double& bank_cmd, const double& wind);
 
+      //! This methods updates the simulated state with the defined time step, controls, and wind state.
+      //! @param[in] d_t - time step for the update
+      //! @param[in] bank_cmd - applied bank command
+      //! @param[in] airspeed_cmd - applied airspeed command
+      //! @param[in] vd_wind - vector of the wind state to be applied
+      //! @return the updated state
+      UAVSimulation
+      update(const double& timestep, const double& bank_cmd, const double& airspeed_cmd, const double& wind);
+
+      //! This methods updates the simulated state with the defined time step, controls, and wind state.
+      //! @param[in] d_t - time step for the update
+      //! @param[in] bank_cmd - applied bank command
+      //! @param[in] airspeed_cmd - applied airspeed command
+      //! @param[in] altitude_cmd - applied altitude command
+      //! @param[in] vd_wind - vector of the wind state to be applied
+      //! @return the updated state
+      UAVSimulation
+      update(const double& timestep, const double& bank_cmd, const double& airspeed_cmd, const double& altitude_cmd, const double& wind);
+      */
+
+      //! This methods updates the vehicle model parameters.
+      //! @param[in] bank_time_cst - bank angle time constant
+      //! @param[in] speed_time_cst - airspeed time constant
+      void
+      model(const double& bank_time_cst, const double& speed_time_cst);
+
+      //! Simulation type
+      std::string m_sim_type;
+      //! Control commands
+      //! - Bank
+      double m_bank_cmd;
+      //! - Airspeed
+      double m_airspeed_cmd;
+      //! - Altitude
+      double m_altitude_cmd;
+      //! Wind state vector
+      DUNE::Math::Matrix m_wind;
+      //! Gravity acceleration
+      double m_g;
 
     private:
-      static double precision;
+      //! Vehicle position
+      DUNE::Math::Matrix m_position;
+      //! Vehicle velocity vector
+      DUNE::Math::Matrix m_velocity;
+      //! Vehicle velocity vector relative to the wind, in the ground reference frame
+      DUNE::Math::Matrix m_uav2wind_gnd_frm;
+      //! Vehicle model parameters
+      //! - Bank time constant
+      double m_bank_time_cst;
+      //! - Airspeed time constant
+      double m_speed_time_cst;
 
-      size_t m_nrows;
-      size_t m_ncols;
-      size_t m_size;
-      double* m_data;
-      double* m_counter;
+      void
+      update4DOF_Bank(const double& timestep);
 
+      /*
       //! This method acts as destructor.
       void
       erase(void);
@@ -88,6 +190,7 @@ namespace DUNE
       //! This method creates a unique copy of the data of a Matrix.
       void
       split(void);
+      */
     };
   }
 }
