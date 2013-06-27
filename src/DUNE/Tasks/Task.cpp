@@ -266,12 +266,19 @@ namespace DUNE
         if (paramChanged(m_args.active_visibility))
           itr->second->visibility(m_args.active_visibility);
 
-        if (paramChanged(m_args.active) && act_deact)
+        if (act_deact)
         {
-          if (m_args.active)
-            requestActivation();
+          if (paramChanged(m_args.active))
+          {
+            if (m_args.active)
+              requestActivation();
+            else
+              requestDeactivation();
+          }
           else
-            requestDeactivation();
+          {
+            dispatch(m_act_state);
+          }
         }
       }
 
@@ -286,6 +293,7 @@ namespace DUNE
       if (m_act_state.state != IMC::EntityActivationState::EAS_INACTIVE)
       {
         spew("task is not inactive");
+        dispatch(m_act_state);
         return;
       }
 
@@ -337,6 +345,7 @@ namespace DUNE
       if (m_act_state.state != IMC::EntityActivationState::EAS_ACTIVE)
       {
         spew("task is not active");
+        dispatch(m_act_state);
         return;
       }
 
