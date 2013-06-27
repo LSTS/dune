@@ -251,9 +251,6 @@ namespace DUNE
       else
         m_debug_level = DEBUG_LEVEL_NONE;
 
-      spew("act time %u", m_args.act_time);
-      spew("deact time %u", m_args.deact_time);
-
       onUpdateParameters();
 
       if (m_honours_active)
