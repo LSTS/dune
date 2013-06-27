@@ -101,7 +101,7 @@ namespace DUNE
     Task::reserveEntity(const std::string& label)
     {
       debug("reserving entity '%s'", label.c_str());
-      return m_ctx.entities.reserve(label, getName());
+      return m_ctx.entities.reserve(label, getName(), m_args.act_time, m_args.deact_time);
     }
 
     unsigned int
@@ -122,7 +122,7 @@ namespace DUNE
       if (m_elabel.empty())
         throw std::runtime_error(DTR("entity label is not configured"));
 
-      m_eid = m_ctx.entities.reserve(m_elabel, getName());
+      m_eid = m_ctx.entities.reserve(m_elabel, getName(), m_args.act_time, m_args.deact_time);
       debug("reserving main entity '%s' -> '%u'", m_elabel.c_str(), m_eid);
       onEntityReservation();
     }
@@ -250,6 +250,9 @@ namespace DUNE
         m_debug_level = DEBUG_LEVEL_SPEW;
       else
         m_debug_level = DEBUG_LEVEL_NONE;
+
+      spew("act time %u", m_args.act_time);
+      spew("deact time %u", m_args.deact_time);
 
       onUpdateParameters();
 
