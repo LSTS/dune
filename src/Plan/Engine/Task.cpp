@@ -72,6 +72,8 @@ namespace Plan
       Calibration* m_calib;
       //! True if a stop for calibration has been requested
       bool m_stopped_calib;
+      //! True if just waiting for minimum time of calibration
+      bool m_wait_min;
       //! Plan control interface
       IMC::PlanControlState m_pcs;
       IMC::PlanControl m_reply;
@@ -110,6 +112,7 @@ namespace Plan
         m_plan(NULL),
         m_calib(NULL),
         m_stopped_calib(false),
+        m_wait_min(false),
         m_db(NULL),
         m_get_plan_stmt(NULL)
       {
@@ -242,15 +245,29 @@ namespace Plan
       {
         if (m_plan != NULL)
         {
-          m_plan->onEntityActivationState(resolveEntity(msg->getSourceEntity()), msg);
+          std::string id;
+
+          try
+          {
+            id = resolveEntity(msg->getSourceEntity());
+          }
+          catch (...)
+          {
+            return;
+          }
+
+          m_plan->onEntityActivationState(id, msg);
 
           // If calibration is in progress and we're not waiting for any device
           // and we have not yet send a request to stop calibration
           // then stop calibration and move on with plan
-          if (m_calib->inProgress() && m_calib->pastMinimum() &&
-              !m_plan->waitingForDevice() && !m_stopped_calib)
+          if (m_calib->inProgress() && !m_plan->waitingForDevice() && !m_stopped_calib)
           {
-            vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
+            // If we're past the minimum calibration time, then halt it
+            if (m_calib->pastMinimum())
+              vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
+            else // else, we just need to wait for the minimum time of calibration
+              m_wait_min = true;
           }
           else if (m_calib->hasFailed())
           {
@@ -349,10 +366,21 @@ namespace Plan
             break;
         }
 
+        // update calibration status
         if (vs->op_mode == IMC::VehicleState::VS_CALIBRATION && !m_calib->inProgress())
+        {
           m_calib->start();
+          m_wait_min = false;
+        }
         else if (vs->op_mode != IMC::VehicleState::VS_CALIBRATION && m_calib->inProgress())
+        {
           m_calib->stop();
+        }
+        else if (m_calib->inProgress() && m_calib->pastMinimum() && m_wait_min)
+        {
+          vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
+          m_wait_min = false;
+        }
       }
 
       void
