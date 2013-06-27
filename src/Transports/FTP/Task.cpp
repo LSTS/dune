@@ -160,13 +160,17 @@ namespace Transports
       cleanBusyList(void)
       {
         std::list<Session*>::iterator itr = m_busy_list.begin();
-        for (; itr != m_busy_list.end(); ++itr)
+        while (itr != m_busy_list.end())
         {
           if ((*itr)->isDead())
           {
             (*itr)->stopAndJoin();
             delete *itr;
             itr = m_busy_list.erase(itr);
+          }
+          else
+          {
+            ++itr;
           }
         }
       }
