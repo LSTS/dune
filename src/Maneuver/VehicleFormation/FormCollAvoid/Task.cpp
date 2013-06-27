@@ -318,7 +318,7 @@ namespace Maneuver
           double t_cos_gamma;
           double t_sin_gamma;
           double vt_form_dir[2];
-          Matrix vd_form_pos1 = Matrix(2, 1, 0);
+          Matrix vd_form_pos1 = Matrix(2, 1, 0.0);
 
           Matrix vd_inter_uav_state = Matrix(6, 1);
           Matrix vd_inter_uav_pos = Matrix(2, 1);
@@ -332,10 +332,10 @@ namespace Maneuver
           Matrix vd_inter_uav_y = Matrix(2, 1);
 
           double vt_form_pos2[2] = {0, 0};
-          Matrix vd_form_pos2 = Matrix(2, 1, 0);
-          Matrix vd_inter_uav_des_pos = Matrix(2, 1, 0);
-          Matrix vd_inter_uav_des_vel = Matrix(2, 1, 0);
-          Matrix vd_inter_uav_des_acc = Matrix(2, 1, 0);
+          Matrix vd_form_pos2 = Matrix(2, 1, 0.0);
+          Matrix vd_inter_uav_des_pos = Matrix(2, 1, 0.0);
+          Matrix vd_inter_uav_des_vel = Matrix(2, 1, 0.0);
+          Matrix vd_inter_uav_des_acc = Matrix(2, 1, 0.0);
 
           Matrix vd_err = Matrix(2, 1);
           Matrix vd_orig_err = Matrix(2, 1);
@@ -369,11 +369,11 @@ namespace Maneuver
           double t_surf_y;
 
           double d_inter_uav_angle_dot;
-          Matrix vt_surf_deriv =  Matrix(2, 1, 0);
+          Matrix vt_surf_deriv =  Matrix(2, 1, 0.0);
 
-          Matrix vd_surf_uav = Matrix(2, i_uav_n+1, 0);
-          Matrix vt_virt_err_uav = Matrix(2, i_uav_n+1, 0);
-          Matrix vd_weight_gain = Matrix(1, i_uav_n+1, 0);
+          Matrix vd_surf_uav = Matrix(2, i_uav_n+1, 0.0);
+          Matrix vt_virt_err_uav = Matrix(2, i_uav_n+1, 0.0);
+          Matrix vd_weight_gain = Matrix(1, i_uav_n+1, 0.0);
 
 
           // ===========================================
@@ -507,9 +507,9 @@ namespace Maneuver
               vd_inter_uav_des_pos = md_form_pos.get(0, 1, ind_uav-1, ind_uav-1) -
                   md_form_pos.get(0, 1, ind_uav2-1, ind_uav2-1);
               //! - Velocity
-              vd_inter_uav_des_vel = Matrix(2, 1, 0);
+              vd_inter_uav_des_vel = Matrix(2, 1, 0.0);
               //! - Acceleration
-              vd_inter_uav_des_acc = Matrix(2, 1, 0);
+              vd_inter_uav_des_acc = Matrix(2, 1, 0.0);
               /* Alternative computation
             vd_err = -vd_inter_uav_state.get(0, 1, 0, 0) - vd_inter_uav_des_pos;
             //! - Velocity
