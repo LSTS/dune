@@ -69,11 +69,11 @@ namespace Transports
         Tasks::Task(name, ctx)
       {
         param("Data Port", m_args.data_port)
-        .defaultValue("20")
+        .defaultValue("30020")
         .description("Data Port");
 
         param("Control Port", m_args.control_port)
-        .defaultValue("21")
+        .defaultValue("30021")
         .description("Control Port");
       }
 
