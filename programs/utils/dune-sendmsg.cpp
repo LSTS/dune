@@ -222,7 +222,7 @@ main(int argc, char** argv)
   {
     IMC::Temperature* tmsg = new IMC::Temperature;
     msg = tmsg;
-    tmsg->value = argv[4];
+    tmsg->value = atof(argv[4]);
   }
   else if (strcmp(argv[3], "VehicleCommand") == 0)
   {
