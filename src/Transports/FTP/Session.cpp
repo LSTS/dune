@@ -59,6 +59,21 @@ namespace Transports
       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     };
 
+    //! File/directory permissions.
+    enum Permissions
+    {
+      PERM_FILE = 0,
+      PERM_FOLDER = 1,
+      PERM_UNKNOWN = 2
+    };
+
+    static const char* c_perms[] =
+    {
+      "-rw-r--r--",
+      "drwxr-xr-x",
+      "----------"
+    };
+
     Session::Session(Tasks::Context& ctx, TCPSocket* sock, const Address& local_addr):
       m_ctx(ctx),
       m_sock(sock),
@@ -105,17 +120,22 @@ namespace Transports
     void
     Session::sendFileInfo(const Path& path, TCPSocket* sock, Time::BrokenDown& time_ref)
     {
-      char type_char = '-';
       Path::Type type = path.type();
       int64_t size = 0;
+      const char* perm = NULL;
 
       if (type == Path::PT_FILE)
       {
+        perm = c_perms[PERM_FILE];
         size = path.size();
       }
       else if (type == Path::PT_DIRECTORY)
       {
-        type_char = 'd';
+        perm = c_perms[PERM_FOLDER];
+      }
+      else
+      {
+        perm = c_perms[PERM_UNKNOWN];
       }
 
       time_t mod_time = path.getLastModifiedTime();
@@ -125,8 +145,8 @@ namespace Transports
       if (time_ref.year == time_mod.year)
       {
         String::format(m_bfr, sizeof(m_bfr),
-                       "%c---------  0 %-10s %-10s %10lu %s %u %02u:%02u %s\r\n",
-                       type_char, "unknown", "unknown",
+                       "%s  0 %-10s %-10s %10lu %s %u %02u:%02u %s\r\n",
+                       perm, "unknown", "unknown",
                        size,
                        c_months[time_mod.month - 1],
                        time_mod.day,
@@ -137,8 +157,8 @@ namespace Transports
       else
       {
         String::format(m_bfr, sizeof(m_bfr),
-                       "%c---------  0 %-10s %-10s %10lu %s %u %u %s\r\n",
-                       type_char, "unknown", "unknown",
+                       "%s  0 %-10s %-10s %10lu %s %u %u %s\r\n",
+                       perm, "unknown", "unknown",
                        size,
                        c_months[time_mod.month - 1],
                        time_mod.day,
