@@ -40,7 +40,7 @@ namespace DUNE
     (void)folder;
     (void)name;
 
-#if defined(DUNE_USING_I18N) && defined(LC_ALL)
+#if defined(DUNE_SYS_HAS_GETTEXT) && defined(LC_ALL)
     setlocale(LC_ALL, name.c_str());
     bindtextdomain("dune", folder.c_str());
     bind_textdomain_codeset("dune", "UTF-8");
@@ -51,7 +51,7 @@ namespace DUNE
   std::string
   I18N::getLanguage(void)
   {
-#if defined(DUNE_USING_I18N) && defined(LC_MESSAGES)
+#if defined(DUNE_SYS_HAS_GETTEXT) && defined(LC_MESSAGES)
     std::string name = setlocale(LC_MESSAGES, NULL);
     for (unsigned i = 0; i < name.size(); ++i)
     {

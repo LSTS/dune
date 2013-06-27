@@ -82,12 +82,6 @@ dune_option(JS "Enable support for SpiderMonkey javascript engine")
 dune_option(XENETH "Enable support for the Xeneth SDK")
 
 # Internationalization.
-if(DUNE_SYS_HAS_GETTEXT)
-  if(NOT DEFINED I18N)
-    set(I18N 1)
-  endif(NOT DEFINED I18N)
-  dune_option(I18N "Enable support for internationalization")
-endif(DUNE_SYS_HAS_GETTEXT)
 include(${PROJECT_SOURCE_DIR}/cmake/I18N.cmake)
 
 #############################################################################

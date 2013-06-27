@@ -75,8 +75,6 @@
 #cmakedefine DUNE_USING_V4L2
 //! DUNE was compiled with SpiderMonkey support.
 #cmakedefine DUNE_USING_SPIDERMONKEY
-//! DUNE was compiled with gettext support.
-#cmakedefine DUNE_USING_I18N
 //! DUNE was compiled with support for the Xeneth SDK.
 #cmakedefine DUNE_USING_XENETH
 
@@ -246,7 +244,7 @@ typedef float fp32_t;
 #endif
 
 // Internationalization.
-#if defined(DUNE_USING_I18N)
+#if defined(DUNE_SYS_HAS_GETTEXT)
 #  include <libintl.h>
 #  define DTR(str) gettext(str)
 #else
