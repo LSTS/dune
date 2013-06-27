@@ -352,7 +352,8 @@ namespace Plan
 
         if (itr->second.type == TYPE_ACT)
         {
-          if (msg->state == IMC::EntityActivationState::EAS_ACT_DONE)
+          if (msg->state == IMC::EntityActivationState::EAS_ACT_DONE ||
+              msg->state == IMC::EntityActivationState::EAS_ACTIVE)
           {
             float gap = m_time_left - (itr->second.sched_time - getActivationTime(id));
 
@@ -373,7 +374,8 @@ namespace Plan
         }
         else
         {
-          if (msg->state == IMC::EntityActivationState::EAS_DEACT_DONE)
+          if (msg->state == IMC::EntityActivationState::EAS_DEACT_DONE ||
+              msg->state == IMC::EntityActivationState::EAS_INACTIVE)
             m_reqs.erase(id);
         }
       }
@@ -385,9 +387,7 @@ namespace Plan
       {
         // if there are any requests hanging, then we're waiting
         if (!m_reqs.empty())
-        {
           return true;
-        }
 
         std::map<std::string, TimedStack>::const_iterator next;
         next = nextSchedule();
