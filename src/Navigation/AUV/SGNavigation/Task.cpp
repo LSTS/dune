@@ -314,6 +314,23 @@ namespace Navigation
         }
 
         void
+        onReportEntityState(void)
+        {
+          IMC::AlignmentState m_as;
+
+          if (m_aligned)
+            m_as.state = IMC::AlignmentState::AS_ALIGNED;
+          else
+            m_as.state = IMC::AlignmentState::AS_NOT_ALIGNED;
+
+          // No IMU unit available.
+          if (m_imu_eid == UINT_MAX)
+            m_as.state = IMC::AlignmentState::AS_NOT_SUPPORTED;
+
+          dispatch(m_as);
+        }
+
+        void
         consume(const IMC::EntityActivationState* msg)
         {
           if (msg->getSourceEntity() != m_imu_eid)
