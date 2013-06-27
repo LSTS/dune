@@ -2681,6 +2681,75 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Text Message.
+    class TextMessage: public Message
+    {
+    public:
+      //! Origin.
+      std::string origin;
+      //! Text.
+      std::string text;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 160;
+      }
+
+      TextMessage(void);
+
+      Message*
+      clone(void) const
+      {
+        return new TextMessage(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TextMessage::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TextMessage";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(origin) + IMC::getSerializationSize(text);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Received Iridium Message.
     class IridiumMsgRx: public Message
     {
@@ -2762,6 +2831,8 @@ namespace DUNE
     public:
       //! Request Identifier.
       uint16_t req_id;
+      //! Time to live.
+      uint16_t ttl;
       //! Destination Identifier.
       std::string destination;
       //! Data.
@@ -2814,7 +2885,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 4;
       }
 
       unsigned
@@ -2841,7 +2912,9 @@ namespace DUNE
         //! Message has been queued for transmission.
         TXSTATUS_QUEUED = 3,
         //! Message is currently being transmitted.
-        TXSTATUS_TRANSMIT = 4
+        TXSTATUS_TRANSMIT = 4,
+        //! Message's TTL has expired. Transmition cancelled..
+        TXSTATUS_EXPIRED = 5
       };
 
       //! Request Identifier.
@@ -8436,6 +8509,78 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(beacon);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Alignment State.
+    class AlignmentState: public Message
+    {
+    public:
+      //! State.
+      enum StateEnum
+      {
+        //! Not Aligned.
+        AS_NOT_ALIGNED = 0,
+        //! Aligned.
+        AS_ALIGNED = 1,
+        //! Not Supported.
+        AS_NOT_SUPPORTED = 2
+      };
+
+      //! State.
+      uint8_t state;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 361;
+      }
+
+      AlignmentState(void);
+
+      Message*
+      clone(void) const
+      {
+        return new AlignmentState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return AlignmentState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AlignmentState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
       }
 
       void

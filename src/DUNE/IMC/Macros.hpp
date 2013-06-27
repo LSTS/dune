@@ -98,6 +98,8 @@
 #define DUNE_IMC_SMSRX 158
 //! SmsState identification number.
 #define DUNE_IMC_SMSSTATE 159
+//! TextMessage identification number.
+#define DUNE_IMC_TEXTMESSAGE 160
 //! IridiumMsgRx identification number.
 #define DUNE_IMC_IRIDIUMMSGRX 170
 //! IridiumMsgTx identification number.
@@ -254,6 +256,8 @@
 #define DUNE_IMC_NAVIGATIONRESET 359
 //! LblEstimate identification number.
 #define DUNE_IMC_LBLESTIMATE 360
+//! AlignmentState identification number.
+#define DUNE_IMC_ALIGNMENTSTATE 361
 //! DesiredHeading identification number.
 #define DUNE_IMC_DESIREDHEADING 400
 //! DesiredZ identification number.

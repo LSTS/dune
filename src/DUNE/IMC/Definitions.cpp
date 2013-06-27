@@ -2463,6 +2463,68 @@ namespace DUNE
       IMC::toJSON(os__, "error", error, nindent__);
     }
 
+    TextMessage::TextMessage(void)
+    {
+      m_header.mgid = 160;
+      clear();
+    }
+
+    void
+    TextMessage::clear(void)
+    {
+      origin.clear();
+      text.clear();
+    }
+
+    bool
+    TextMessage::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TextMessage& other__ = dynamic_cast<const TextMessage&>(msg__);
+      if (origin != other__.origin) return false;
+      if (text != other__.text) return false;
+      return true;
+    }
+
+    int
+    TextMessage::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    TextMessage::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(origin, ptr__);
+      ptr__ += IMC::serialize(text, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TextMessage::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(origin, bfr__, size__);
+      bfr__ += IMC::deserialize(text, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TextMessage::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(origin, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(text, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    TextMessage::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "origin", origin, nindent__);
+      IMC::toJSON(os__, "text", text, nindent__);
+    }
+
     IridiumMsgRx::IridiumMsgRx(void)
     {
       m_header.mgid = 170;
@@ -2553,6 +2615,7 @@ namespace DUNE
     IridiumMsgTx::clear(void)
     {
       req_id = 0;
+      ttl = 0;
       destination.clear();
       data.clear();
     }
@@ -2562,6 +2625,7 @@ namespace DUNE
     {
       const IMC::IridiumMsgTx& other__ = dynamic_cast<const IridiumMsgTx&>(msg__);
       if (req_id != other__.req_id) return false;
+      if (ttl != other__.ttl) return false;
       if (destination != other__.destination) return false;
       if (data != other__.data) return false;
       return true;
@@ -2578,6 +2642,7 @@ namespace DUNE
     {
       uint8_t* ptr__ = bfr__;
       ptr__ += IMC::serialize(req_id, ptr__);
+      ptr__ += IMC::serialize(ttl, ptr__);
       ptr__ += IMC::serialize(destination, ptr__);
       ptr__ += IMC::serialize(data, ptr__);
       return ptr__;
@@ -2588,6 +2653,7 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(req_id, bfr__, size__);
+      bfr__ += IMC::deserialize(ttl, bfr__, size__);
       bfr__ += IMC::deserialize(destination, bfr__, size__);
       bfr__ += IMC::deserialize(data, bfr__, size__);
       return bfr__ - start__;
@@ -2598,6 +2664,7 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::reverseDeserialize(req_id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ttl, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(destination, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
       return bfr__ - start__;
@@ -2607,6 +2674,7 @@ namespace DUNE
     IridiumMsgTx::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "req_id", req_id, nindent__);
+      IMC::toJSON(os__, "ttl", ttl, nindent__);
       IMC::toJSON(os__, "destination", destination, nindent__);
       IMC::toJSON(os__, "data", data, nindent__);
     }
@@ -8297,6 +8365,62 @@ namespace DUNE
       IMC::toJSON(os__, "depth", depth, nindent__);
       IMC::toJSON(os__, "var_x", var_x, nindent__);
       IMC::toJSON(os__, "var_y", var_y, nindent__);
+    }
+
+    AlignmentState::AlignmentState(void)
+    {
+      m_header.mgid = 361;
+      clear();
+    }
+
+    void
+    AlignmentState::clear(void)
+    {
+      state = 0;
+    }
+
+    bool
+    AlignmentState::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::AlignmentState& other__ = dynamic_cast<const AlignmentState&>(msg__);
+      if (state != other__.state) return false;
+      return true;
+    }
+
+    int
+    AlignmentState::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    AlignmentState::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(state, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    AlignmentState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    AlignmentState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    AlignmentState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "state", state, nindent__);
     }
 
     DesiredHeading::DesiredHeading(void)

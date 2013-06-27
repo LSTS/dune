@@ -1372,6 +1372,22 @@
     <field name="Error Message" abbrev="error" type="plaintext"/>
   </message>
   
+  <message id="160" name="Text Message" abbrev="TextMessage" source="vehicle">
+    <description>
+      A text message has been received.
+    </description>
+    <field name="Origin" abbrev="origin" type="plaintext">
+      <description>
+        Message origin (if known).
+      </description>
+    </field>
+    <field name="Text" abbrev="text" type="plaintext">
+      <description>
+        Message contents.
+      </description>
+    </field>
+  </message>  
+  
   <message id="170" name="Received Iridium Message" abbrev="IridiumMsgRx" source="vehicle,ccu">
     <field name="Origin Identifier" abbrev="origin" type="plaintext">
       <description>The unique identifier of this message's origin device (e.g. lauv-xtreme-2, manta-0).</description>
@@ -1392,6 +1408,9 @@
     <field name="Request Identifier" abbrev="req_id" type="uint16_t">
         <description>The request identifier used to receive transmission updates.</description>
     </field>
+    <field name="Time to live" abbrev="ttl" type="uint16_t" unit="s">
+        <description>Time, in seconds, after which there will be no more atempts to transmit the message.</description>
+    </field>
     <field name="Destination Identifier" abbrev="destination" type="plaintext">
       <description>The unique identifier of this message's destination (e.g. lauv-xtreme-2, manta-0).</description>
     </field>
@@ -1411,6 +1430,7 @@
         <value abbrev="ERROR" name="Error while trying to transmit message" id="2"/>
         <value abbrev="QUEUED" name="Message has been queued for transmission" id="3"/>
         <value abbrev="TRANSMIT" name="Message is currently being transmitted" id="4"/>
+        <value abbrev="EXPIRED" name="Message's TTL has expired. Transmition cancelled." id="5"/>
     </field>
     <field name="Status Text" abbrev="text" type="plaintext"/>
   </message>
@@ -3502,6 +3522,20 @@
         The East offset variance of the North/East/Down
         field with respect to LLH.
       </description>
+    </field>
+  </message>
+
+  <message id="361" name="Alignment State" abbrev="AlignmentState" source="vehicle">
+    <description>
+      This message notifies the vehicle is ready for dead-reckoning missions.
+    </description>
+    <field name="State" abbrev="state" type="uint8_t" unit="Enumerated" prefix="AS">
+      <description>
+        Alignment State.
+      </description>
+      <value id="0" name="Not Aligned" abbrev="NOT_ALIGNED"/>
+      <value id="1" name="Aligned" abbrev="ALIGNED"/>
+      <value id="2" name="Not Supported" abbrev="NOT_SUPPORTED"/>
     </field>
   </message>
 
@@ -6389,7 +6423,7 @@
   </message>
   
   <message id="655" abbrev="TrexOperation" name="TREX Operation" source="vehicle,ccu">
-  	<description>
+    <description>
       This message is used to control TREX execution
     </description>
     
@@ -6417,7 +6451,7 @@
     </field>
     
     <field name="Attribute type" abbrev="attr_type" type="uint8_t" unit="Enumerated" prefix="TYPE">
-   	  <value abbrev="BOOL" name="Boolean Domain" id="1"/>
+      <value abbrev="BOOL" name="Boolean Domain" id="1"/>
       <value abbrev="INT" name="Integer Domain" id="2"/>
       <value abbrev="FLOAT" name="Float Domain" id="3"/>
       <value abbrev="STRING" name="String Domain" id="4"/>
@@ -6440,8 +6474,8 @@
   </message>
   
   <message id="658" abbrev="TrexPlan" name="TREX Plan" source="vehicle,ccu">
-  	<field name="Reactor name" abbrev="reactor" type="plaintext" />
-  	<field name="Tokens" abbrev="tokens" type="message-list" message-type="TrexToken" />
+    <field name="Reactor name" abbrev="reactor" type="plaintext" />
+    <field name="Tokens" abbrev="tokens" type="message-list" message-type="TrexToken" />
   </message>
 
   <!-- Vision -->
