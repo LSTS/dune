@@ -416,7 +416,7 @@ namespace Sensors
           {
             m_timer.reset();
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATING);
-            debug("resetting device");
+            inf(DTR("resetting device"));
             poll(CMD_DEVICE_RESET, CMD_DEVICE_RESET_SIZE, 0, 0);
           }
         }
@@ -499,7 +499,7 @@ namespace Sensors
       bool
       setHardIron(void)
       {
-        debug("Hard-Iron Calibration: %f | %f", m_args.hard_iron[0], m_args.hard_iron[1]);
+        inf(DTR("new hard-iron calibration parameters: %f | %f"), m_args.hard_iron[0], m_args.hard_iron[1]);
         m_uart->setMinimumRead(CMD_WRITE_EEPROM_SIZE);
 
         for (unsigned i = 0; i <= c_num_addr / 3; i++)
