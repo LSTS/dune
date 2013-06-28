@@ -51,9 +51,9 @@ namespace Transports
         m_src_eid(src_eid),
         m_dst_adr(dst_adr),
         m_req_id(req_id),
-        m_msn(-1),
-        m_ttl(ttl)
+        m_msn(-1)
       {
+        m_expiration = Clock::get() + ttl;
         m_data.push_back(m_dst_adr >> 8);
         m_data.push_back(m_dst_adr & 0xff);
         m_data.insert(m_data.end(), data.begin(), data.end());
@@ -128,20 +128,20 @@ namespace Transports
         return m_data;
       }
 
-      //! Get time to live.
-      //! @return time to live (s).
-      unsigned
-      getTimeToLive(void) const
+      //! Retrieve expiration time.
+      //! @return expiration time (s).
+      double
+      getExpiration(void) const
       {
-        return m_ttl;
+        return m_expiration;
       }
 
-      //! Set time to live.
-      //! @param[in] time to live value (s).
-      void
-      setTimeToLive(unsigned value)
+      //! Test if request expired.
+      //! @return true if request expired, false otherwise.
+      bool
+      hasExpired(void) const
       {
-        m_ttl = value;
+        return Clock::get() > getExpiration();
       }
 
     private:
@@ -155,8 +155,8 @@ namespace Transports
       uint16_t m_req_id;
       //! MO message sequence number.
       int m_msn;
-      //! Time to live.
-      unsigned m_ttl;
+      //! Expiration time.
+      double m_expiration;
       //! Data to be transmitted.
       std::vector<uint8_t> m_data;
     };

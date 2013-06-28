@@ -205,7 +205,7 @@ namespace Transports
         std::list<TxRequest*>::iterator itr = m_tx_requests.begin();
         for ( ; itr != m_tx_requests.end(); ++itr)
         {
-          if (request->getTimeToLive() < (*itr)->getTimeToLive())
+          if (request->getExpiration() < (*itr)->getExpiration())
           {
             m_tx_requests.insert(itr, request);
             return;
@@ -289,8 +289,25 @@ namespace Transports
       }
 
       void
+      cleanExpired(void)
+      {
+        std::list<TxRequest*>::iterator itr = m_tx_requests.begin();
+        while (itr != m_tx_requests.end())
+        {
+          if (!(*itr)->hasExpired())
+            break;
+
+          sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
+          delete *itr;
+          itr = m_tx_requests.erase(itr);
+        }
+      }
+
+      void
       processQueue(void)
       {
+        cleanExpired();
+
         if (m_driver->isBusy())
           return;
 
