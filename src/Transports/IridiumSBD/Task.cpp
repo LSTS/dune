@@ -175,11 +175,10 @@ namespace Transports
         // FIXME: check if req_id already exists.
         // FIXME: check MTU.
         debug("queueing message");
-        unsigned dst_adr = resolveSystemName(msg->destination);
         unsigned src_adr = msg->getSource();
         unsigned src_eid = msg->getSourceEntity();
-        TxRequest* request = new TxRequest(src_adr, src_eid, dst_adr,
-                                           msg->req_id, msg->ttl, msg->data);
+        TxRequest* request = new TxRequest(src_adr, src_eid, msg->req_id,
+                                           msg->ttl, msg->data);
 
         enqueueTxRequest(request);
         sendTxRequestStatus(request, IMC::IridiumTxStatus::TXSTATUS_QUEUED);
@@ -254,12 +253,11 @@ namespace Transports
       {
         uint8_t bfr[340];
         unsigned rv = m_driver->readBufferMT(bfr, sizeof(bfr));
-        if (rv > 2)
+        if (rv > 0)
         {
           IMC::IridiumMsgRx sbd;
-          sbd.setSource((bfr[0] << 8) | bfr[1]);
           sbd.setDestination(getSystemId());
-          sbd.data.assign(bfr + 2, bfr + rv);
+          sbd.data.assign(bfr, bfr + rv);
           sbd.toText(std::cerr);
           dispatch(sbd, DF_KEEP_SRC_EID);
         }

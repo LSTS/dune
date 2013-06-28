@@ -42,29 +42,17 @@ namespace Transports
       //! Create a transmission request object.
       //! @param[in] src_adr IMC address of the requester.
       //! @param[in] src_eid entity identifier of the requester.
-      //! @param[in] dst_adr destination IMC address.
       //! @param[in] req_id request identifier.
       //! @param[in] data to transmit.
-      TxRequest(uint16_t src_adr, uint8_t src_eid, uint16_t dst_adr,
-                uint16_t req_id, unsigned ttl, const std::vector<char>& data):
+      TxRequest(uint16_t src_adr, uint8_t src_eid, uint16_t req_id,
+                unsigned ttl, const std::vector<char>& data):
         m_src_adr(src_adr),
         m_src_eid(src_eid),
-        m_dst_adr(dst_adr),
         m_req_id(req_id),
         m_msn(-1)
       {
         m_expiration = Clock::get() + ttl;
-        m_data.push_back(m_dst_adr >> 8);
-        m_data.push_back(m_dst_adr & 0xff);
         m_data.insert(m_data.end(), data.begin(), data.end());
-      }
-
-      //! Retrieve the destination IMC address.
-      //! @return IMC address.
-      uint16_t
-      getDestination(void) const
-      {
-        return m_dst_adr;
       }
 
       //! Retrieve the IMC address of the requester.
@@ -149,8 +137,6 @@ namespace Transports
       uint16_t m_src_adr;
       //! Requester entity identifier.
       uint8_t m_src_eid;
-      //! Destination IMC address.
-      uint16_t m_dst_adr;
       //! Request identifier.
       uint16_t m_req_id;
       //! MO message sequence number.
