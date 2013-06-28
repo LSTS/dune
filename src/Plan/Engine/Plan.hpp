@@ -459,6 +459,17 @@ namespace Plan
         return m_seq_nodes.end();
       }
 
+      //! Returns calibration time left according to scheduler
+      //! @return calibration time left or -1 if no scheduler is active
+      float
+      calibTimeLeft(void) const
+      {
+        if (m_sched != NULL)
+          return m_sched->calibTimeLeft();
+
+        return -1.0;
+      }
+
     private:
       //! Check if a maneuver exists in the sequential nodes
       //! @param[in] id string id of the maneuver
