@@ -498,6 +498,15 @@ namespace DUNE
     }
 
     void
+    Task::consume(const IMC::QueryEntityActivationState* msg)
+    {
+      if (msg->getDestinationEntity() != getEntityId())
+        return;
+
+      dispatch(m_act_state);
+    }
+
+    void
     Task::consume(const IMC::QueryEntityParameters* msg)
     {
       if (msg->name != getEntityLabel())
