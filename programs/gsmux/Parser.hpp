@@ -119,7 +119,8 @@ public:
           if ((m_sample < 100) || (m_channel < CHANNEL_COUNT))
             m_buffer[m_channel - 1][m_sample].push_back(byte);
           else
-            std::fprintf(stderr, "ERROR: sample %u, channel %u\n", m_sample, m_channel);
+            std::cerr << "ERROR: sample " << m_sample << ", channel "
+                      << m_channel << std::endl;
         }
         break;
     }
