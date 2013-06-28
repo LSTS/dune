@@ -381,6 +381,9 @@ namespace Navigation
             m_agvel_eid = getAhrsId();
             debug("deactivating IMU");
 
+            m_kal.setState(STATE_PSI, getHeading());
+            m_kal.setState(STATE_PSI_BIAS, 0.0);
+
             // No heading offset estimation without IMU.
             m_kal.resetCovariance(STATE_PSI_BIAS);
 
@@ -428,6 +431,12 @@ namespace Navigation
         {
           BasicNavigation::reset();
           m_gps_reading = false;
+        }
+
+        double
+        getHeading(void)
+        {
+          return m_kal.getState(STATE_PSI) + m_kal.getState(STATE_PSI_BIAS);
         }
 
         void
@@ -558,16 +567,18 @@ namespace Navigation
           ap = m_kal.getCovarianceTransition();
           x = m_kal.getState();
 
-          resetMatrixA(ax, x);
-          resetMatrixA(ap, x);
+          resetMatrixA(ax);
+          resetMatrixA(ap);
+
+          double yaw = getHeading();
 
           if (!m_diving && !m_last_pcs.overflow() && (m_rpm > m_args.min_rpm)
               && (std::abs(m_course_error) < m_args.max_course_error))
           {
-            ap(STATE_X, STATE_PSI) = (- x(STATE_U) * std::sin(x(STATE_PSI))
-                                      - x(STATE_V) * std::cos(x(STATE_PSI)));
-            ap(STATE_Y, STATE_PSI) = (x(STATE_U) * std::cos(x(STATE_PSI))
-                                      - x(STATE_V) * std::sin(x(STATE_PSI)));
+            ap(STATE_X, STATE_PSI) = (- x(STATE_U) * std::sin(yaw)
+                                      - x(STATE_V) * std::cos(yaw));
+            ap(STATE_Y, STATE_PSI) = (x(STATE_U) * std::cos(yaw)
+                                      - x(STATE_V) * std::sin(yaw));
           }
 
           m_kal.setCovarianceTransition((ap * tstep).expmts());
@@ -607,8 +618,7 @@ namespace Navigation
 
           // Update heading in Kalman filter.
           m_kal.setOutput(OUT_PSI, m_heading);
-          double psi = m_kal.getState(STATE_PSI) + m_kal.getState(STATE_PSI_BIAS);
-          m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - psi);
+          m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - getHeading());
 
           double r = m_kal.getState(STATE_R) + m_kal.getState(STATE_R_BIAS);
           m_kal.setInnovation(OUT_R,  m_kal.getOutput(OUT_R) - r);
@@ -673,7 +683,7 @@ namespace Navigation
 
         // Reinitialize Extended Kalman Filter transition matrix function.
         void
-        resetMatrixA(Matrix& A, Matrix X)
+        resetMatrixA(Matrix& A)
         {
           A.fill(0.0);
 
@@ -682,19 +692,21 @@ namespace Navigation
 
           A(STATE_PSI, STATE_R) = 1.0;
 
+          double yaw = getHeading();
+
           if (!m_time_without_dvl.overflow() && !m_time_without_gps.overflow())
           {
-            A(STATE_X, STATE_U) = std::cos(X(STATE_PSI)) * std::cos(theta);
-            A(STATE_X, STATE_V) = (std::cos(X(STATE_PSI)) * std::sin(theta) * std::sin(phi)
-                                   - std::sin(X(STATE_PSI)) * std::cos(phi));
-            A(STATE_Y, STATE_U) = std::sin(X(STATE_PSI)) * std::cos(theta);
-            A(STATE_Y, STATE_V) = (std::sin(X(STATE_PSI)) * std::sin(theta) * std::sin(phi)
-                                   + std::cos(X(STATE_PSI)) * std::cos(phi));
+            A(STATE_X, STATE_U) = std::cos(yaw) * std::cos(theta);
+            A(STATE_X, STATE_V) = (std::cos(yaw) * std::sin(theta) * std::sin(phi)
+                                   - std::sin(yaw) * std::cos(phi));
+            A(STATE_Y, STATE_U) = std::sin(yaw) * std::cos(theta);
+            A(STATE_Y, STATE_V) = (std::sin(yaw) * std::sin(theta) * std::sin(phi)
+                                   + std::cos(yaw) * std::cos(phi));
           }
           else
           {
-            A(STATE_X, STATE_K) = m_rpm * std::cos(X(STATE_PSI)) * std::cos(theta);
-            A(STATE_Y, STATE_K) = m_rpm * std::sin(X(STATE_PSI)) * std::cos(theta);
+            A(STATE_X, STATE_K) = m_rpm * std::cos(yaw) * std::cos(theta);
+            A(STATE_Y, STATE_K) = m_rpm * std::sin(yaw) * std::cos(theta);
           }
         }
 
@@ -716,7 +728,7 @@ namespace Navigation
         void
         sendToBus(void)
         {
-          m_estate.psi = Angles::normalizeRadian(m_kal.getState(STATE_PSI));
+          m_estate.psi = Angles::normalizeRadian(getHeading());
           m_estate.r = m_kal.getState(STATE_R);
           onDispatchNavigation();
 
