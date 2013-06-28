@@ -401,6 +401,23 @@ namespace Plan
         return false;
       }
 
+      //! Compute a shorter time for calibration
+      //! @return time left for calibration according to devices to activate
+      float
+      calibTimeLeft(void)
+      {
+        if (!m_reqs.empty())
+          return -1.0;
+
+        std::map<std::string, TimedStack>::const_iterator next;
+        next = nextSchedule();
+
+        if (next != m_timed.end())
+          return next->second.top().sched_time - m_plan_duration;
+
+        return -1.0;
+      }
+
     private:
       //! Parse Start actions
       //! @param[in] actions message list of actions to parse
