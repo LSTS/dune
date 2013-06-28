@@ -59,7 +59,8 @@ namespace DUNE
       m_eid(DUNE_IMC_CONST_UNK_EID),
       m_debug_level(DEBUG_LEVEL_NONE),
       m_entity_state_code(-1),
-      m_honours_active(false)
+      m_honours_active(false),
+      m_next_act_state(NAS_SAME)
     {
       m_args.priority = 10;
       m_args.act_time = 0;
@@ -290,10 +291,21 @@ namespace DUNE
       if (m_act_state.state != IMC::EntityActivationState::EAS_INACTIVE)
       {
         spew("task is not inactive");
+
+        if ((m_act_state.state == IMC::EntityActivationState::EAS_DEACT_IP)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_DEACT_DONE)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_DEACT_FAIL)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_FAIL))
+        {
+          spew("saving activation request");
+          m_next_act_state = NAS_ACTIVE;
+        }
+
         dispatch(m_act_state);
         return;
       }
 
+      m_next_act_state = NAS_SAME;
       m_act_state.state = IMC::EntityActivationState::EAS_ACT_IP;
       dispatch(m_act_state);
 
@@ -320,6 +332,9 @@ namespace DUNE
 
       m_act_state.state = IMC::EntityActivationState::EAS_ACTIVE;
       dispatch(m_act_state);
+
+      if (m_next_act_state == NAS_INACTIVE)
+        requestDeactivation();
     }
 
     void
@@ -339,13 +354,25 @@ namespace DUNE
     Task::requestDeactivation(void)
     {
       spew("request deactivation");
+
       if (m_act_state.state != IMC::EntityActivationState::EAS_ACTIVE)
       {
         spew("task is not active");
+
+        if ((m_act_state.state == IMC::EntityActivationState::EAS_DEACT_FAIL)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_IP)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_DONE)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_FAIL))
+        {
+          spew("saving deactivation request");
+          m_next_act_state = NAS_INACTIVE;
+        }
+
         dispatch(m_act_state);
         return;
       }
 
+      m_next_act_state = NAS_SAME;
       m_act_state.state = IMC::EntityActivationState::EAS_DEACT_IP;
       dispatch(m_act_state);
 
@@ -371,6 +398,9 @@ namespace DUNE
       dispatch(m_act_state);
       m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
       dispatch(m_act_state);
+
+      if (m_next_act_state == NAS_ACTIVE)
+        requestActivation();
     }
 
     void

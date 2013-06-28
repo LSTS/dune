@@ -669,6 +669,16 @@ namespace DUNE
         std::string active_visibility;
       };
 
+      enum NextActivationState
+      {
+        //! Keep current activation state.
+        NAS_SAME,
+        //! Request activation.
+        NAS_ACTIVE,
+        //! Request deactivation.
+        NAS_INACTIVE
+      };
+
       //! Message recipient (queue).
       Recipient* m_recipient;
       //! Task name.
@@ -699,6 +709,8 @@ namespace DUNE
       bool m_honours_active;
       //! Name of parameter section editor.
       std::string m_param_editor;
+      //! Next activation state.
+      NextActivationState m_next_act_state;
 
       //! Report current entity states by dispatching EntityState
       //! messages. This function will at least report the state of
