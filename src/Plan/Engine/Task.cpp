@@ -258,10 +258,16 @@ namespace Plan
 
           m_plan->onEntityActivationState(id, msg);
 
+          bool waiting = m_plan->waitingForDevice();
+
+          // check if some calibration time can be skipped
+          if (m_calib->inProgress() && waiting)
+            m_calib->forceRemainingTime(m_plan->calibTimeLeft());
+
           // If calibration is in progress and we're not waiting for any device
           // and we have not yet send a request to stop calibration
           // then stop calibration and move on with plan
-          if (m_calib->inProgress() && !m_plan->waitingForDevice() && !m_stopped_calib)
+          if (m_calib->inProgress() && !waiting && !m_stopped_calib)
           {
             // If we're past the minimum calibration time, then halt it
             if (m_calib->pastMinimum())
@@ -903,21 +909,17 @@ namespace Plan
         {
           debug(DTR("now in %s state"), c_state_desc[s]);
 
-          bool was_exec = execMode();
-
           bool was_in_plan = initMode() || execMode();
 
           m_pcs.state = s;
 
           bool is_in_plan = initMode() || execMode();
 
-          // if it was executing, then it no longer is,
-          // so the previous plan has stopped
-          if (was_exec)
-            m_plan->planStopped();
-
           if (was_in_plan && !is_in_plan)
+          {
+            m_plan->planStopped();
             changeLog("idle");
+          }
         }
 
         if (maneuver)
