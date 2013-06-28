@@ -789,6 +789,13 @@
     </field>
   </message>
 
+  <message id="15" name="Query Entity Activation State" abbrev="QueryEntityActivationState" source="vehicle,ccu">
+    <description>
+      Query the activation/deactivation state of an entity. The
+      recipient shall reply with an EntityActivationState message.
+    </description>
+  </message>
+
   <!-- Simulation -->
   <message id="50" name="Simulated State" abbrev="SimulatedState" source="vehicle">
     <description>
@@ -1371,7 +1378,7 @@
     </field>
     <field name="Error Message" abbrev="error" type="plaintext"/>
   </message>
-  
+
   <message id="160" name="Text Message" abbrev="TextMessage" source="vehicle">
     <description>
       A text message has been received.
@@ -1386,8 +1393,8 @@
         Message contents.
       </description>
     </field>
-  </message>  
-  
+  </message>
+
   <message id="170" name="Received Iridium Message" abbrev="IridiumMsgRx" source="vehicle,ccu">
     <field name="Origin Identifier" abbrev="origin" type="plaintext">
       <description>The unique identifier of this message's origin device (e.g. lauv-xtreme-2, manta-0).</description>
@@ -1403,7 +1410,7 @@
       </description>
     </field>
   </message>
-  
+
   <message id="171" name="Transmit Iridium Message" abbrev="IridiumMsgTx" source="vehicle,ccu">
     <field name="Request Identifier" abbrev="req_id" type="uint16_t">
         <description>The request identifier used to receive transmission updates.</description>
@@ -1420,7 +1427,7 @@
       </description>
     </field>
   </message>
-  
+
   <message id="172" name="Iridium Transmission Status" abbrev="IridiumTxStatus" source="vehicle,ccu">
     <field name="Request Identifier" abbrev="req_id" type="uint16_t">
         <description>The request identifier used to receive transmission updates</description>
@@ -1434,7 +1441,7 @@
     </field>
     <field name="Status Text" abbrev="text" type="plaintext"/>
   </message>
-  
+
 
   <!-- Acoustic Networking -->
   <message id="200" name="LBL Range" abbrev="LblRange" source="vehicle" flags="periodic">
@@ -6421,35 +6428,35 @@
       <description>The goal encoded as XML, if applicable (OP == POST_GOAL)</description>
     </field>
   </message>
-  
+
   <message id="655" abbrev="TrexOperation" name="TREX Operation" source="vehicle,ccu">
     <description>
       This message is used to control TREX execution
     </description>
-    
+
     <field name="Operation" abbrev="op" type="uint8_t" unit="Enumerated" prefix="OP">
       <value abbrev="POST_TOKEN" name="Post Token" id="1"/>
       <value abbrev="POST_GOAL" name="Post Goal" id="2"/>
       <value abbrev="RECALL_GOAL" name="Recall Goal" id="3"/>
       <value abbrev="REQUEST_PLAN" name="Request current plan" id="4"/>
-      <value abbrev="REPORT_PLAN" name="Report current plan" id="5"/>      
+      <value abbrev="REPORT_PLAN" name="Report current plan" id="5"/>
     </field>
-    
+
     <field name="Goal Id" abbrev="goal_id" type="plaintext">
       <description>The id of the goal, if applicable (OP == POST_GOAL || OP == RECALL_GOAL)</description>
     </field>
-    
+
     <field name="Token" abbrev="token" type="message" message-type="TrexToken">
       <description>Goal / observation to post, if applicable (OP == POST_GOAL || OP == POST_TOKEN)</description>
     </field>
   </message>
-  
+
   <message id="656" abbrev="TrexAttribute" name="TREX Attribute" source="vehicle,ccu">
-   
+
    <field name="Attribute Name" abbrev="name" type="plaintext">
       <description>Name of this attribute.</description>
     </field>
-    
+
     <field name="Attribute type" abbrev="attr_type" type="uint8_t" unit="Enumerated" prefix="TYPE">
       <value abbrev="BOOL" name="Boolean Domain" id="1"/>
       <value abbrev="INT" name="Integer Domain" id="2"/>
@@ -6457,22 +6464,22 @@
       <value abbrev="STRING" name="String Domain" id="4"/>
       <value abbrev="ENUM" name="Enumerated Domain" id="5"/>
     </field>
-    
+
     <field name="Minimum" abbrev="min" type="plaintext">
       <description>Lower bound of this interval. Empty text means no bound.</description>
     </field>
-    
+
     <field name="Maximum" abbrev="max" type="plaintext">
       <description>Upper bound of this interval. Empty text means no bound.</description>
     </field>
   </message>
-  
+
   <message id="657" abbrev="TrexToken" name="TREX Token" source="vehicle,ccu">
     <field name="Timeline" abbrev="timeline" type="plaintext" />
     <field name="Predicate" abbrev="predicate" type="plaintext" />
     <field name="Attributes" abbrev="attributes" type="message-list" message-type="TrexAttribute" />
   </message>
-  
+
   <message id="658" abbrev="TrexPlan" name="TREX Plan" source="vehicle,ccu">
     <field name="Reactor name" abbrev="reactor" type="plaintext" />
     <field name="Tokens" abbrev="tokens" type="message-list" message-type="TrexToken" />
@@ -6679,4 +6686,5 @@
   <message id="812" name="Pop Entity Parameters" abbrev="PopEntityParameters" source="ccu,vehicle">
     <field name="Entity Name" abbrev="name" type="plaintext"/>
   </message>
+
 </messages>

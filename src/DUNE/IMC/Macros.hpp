@@ -58,6 +58,8 @@
 #define DUNE_IMC_DEVCALIBRATIONSTATE 13
 //! EntityActivationState identification number.
 #define DUNE_IMC_ENTITYACTIVATIONSTATE 14
+//! QueryEntityActivationState identification number.
+#define DUNE_IMC_QUERYENTITYACTIVATIONSTATE 15
 //! SimulatedState identification number.
 #define DUNE_IMC_SIMULATEDSTATE 50
 //! LeakSimulation identification number.

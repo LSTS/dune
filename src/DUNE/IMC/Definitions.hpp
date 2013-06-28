@@ -1103,6 +1103,59 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Query Entity Activation State.
+    class QueryEntityActivationState: public Message
+    {
+    public:
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 15;
+      }
+
+      QueryEntityActivationState(void);
+
+      Message*
+      clone(void) const
+      {
+        return new QueryEntityActivationState(*this);
+      }
+
+      void
+      clear(void);
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return QueryEntityActivationState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "QueryEntityActivationState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+    };
+
     //! Simulated State.
     class SimulatedState: public Message
     {

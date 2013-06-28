@@ -953,6 +953,45 @@ namespace DUNE
       IMC::toJSON(os__, "error", error, nindent__);
     }
 
+    QueryEntityActivationState::QueryEntityActivationState(void)
+    {
+      m_header.mgid = 15;
+      clear();
+    }
+
+    void
+    QueryEntityActivationState::clear(void)
+    {
+    }
+
+    int
+    QueryEntityActivationState::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    QueryEntityActivationState::serializeFields(uint8_t* bfr__) const
+    {
+      return bfr__;
+    }
+
+    uint16_t
+    QueryEntityActivationState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      (void)bfr__;
+      (void)size__;
+      return 0;
+    }
+
+    uint16_t
+    QueryEntityActivationState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      (void)bfr__;
+      (void)size__;
+      return 0;
+    }
+
     SimulatedState::SimulatedState(void)
     {
       m_header.mgid = 50;
