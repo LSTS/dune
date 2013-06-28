@@ -25,9 +25,11 @@
 // Author: Jose Pinto                                                       *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <cstring>
 
-# include "Transports/Iridium/IridiumMessageDefinitions.hpp"
-
+// Local headers.
+#include "IridiumMessageDefinitions.hpp"
 
 namespace Transports
 {
@@ -37,10 +39,10 @@ namespace Transports
     IridiumMessage *
     IridiumMessage::deserialize(const DUNE::IMC::IridiumMsgRx * msg)
     {
-      uint8_t * ptr = (uint8_t *) msg->data.data();
+      uint8_t* ptr = (uint8_t*)&msg->data[0];
       IridiumMessage * ret = NULL;
       uint16_t msg_id;
-      memcpy(&msg_id, ptr, sizeof(msg_id));
+      std::memcpy(&msg_id, ptr, sizeof(msg_id));
 
       switch(msg_id) {
         case (ID_ACTIVATESUB):
