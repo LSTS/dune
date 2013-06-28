@@ -114,6 +114,18 @@ namespace Plan
         m_state = CS_FAILED;
       }
 
+      //! Set new remaining time for calibration
+      //! Calibration time cannot decrease
+      //! @param[in] time new calibration time
+      void
+      forceRemainingTime(float time)
+      {
+        if (time < 0.0)
+          return;
+
+        m_timer.setTop(std::min(m_timer.getRemaining(), time));
+      }
+
       //! Get the calibration time
       //! @return calibration time
       uint16_t
