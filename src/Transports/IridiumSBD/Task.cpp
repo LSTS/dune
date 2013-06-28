@@ -25,6 +25,9 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <queue>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -65,6 +68,8 @@ namespace Transports
       Counter<double> m_mbox_check_timer;
       //! Task arguments.
       Arguments m_args;
+      //! Active transmission request.
+      TxRequest* m_tx_request;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -72,7 +77,8 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_driver(NULL)
+        m_driver(NULL),
+        m_tx_request(NULL)
       {
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
@@ -99,13 +105,14 @@ namespace Transports
       //! Destructor.
       ~Task(void)
       {
+        Memory::clear(m_tx_request);
+
         while (!m_tx_requests.empty())
         {
           TxRequest* req = m_tx_requests.front();
           m_tx_requests.pop_front();
-          sendTxRequestStatus(req,
-                              IMC::IridiumTxStatus::TXSTATUS_ERROR,
-                              "task unavailable");
+          sendTxRequestStatus(req, IMC::IridiumTxStatus::TXSTATUS_ERROR,
+                              DTR("task is shutting down"));
           delete req;
         }
       }
@@ -145,8 +152,8 @@ namespace Transports
         m_driver = new Driver(this, m_uart);
         m_driver->initialize();
         m_driver->setTxRateMax(m_args.max_tx_rate);
-        debug("Manufacturer: %s", m_driver->getManufacturer().c_str());
-        debug("Model: %s", m_driver->getModel().c_str());
+        debug("manufacturer: %s", m_driver->getManufacturer().c_str());
+        debug("model: %s", m_driver->getModel().c_str());
         debug("IMEI: %s", m_driver->getIMEI().c_str());
       }
 
@@ -171,9 +178,11 @@ namespace Transports
         unsigned dst_adr = resolveSystemName(msg->destination);
         unsigned src_adr = msg->getSource();
         unsigned src_eid = msg->getSourceEntity();
-        TxRequest* req = new TxRequest(src_adr, src_eid, dst_adr, msg->req_id, msg->data);
-        m_tx_requests.push_back(req);
-        sendTxRequestStatus(req, IMC::IridiumTxStatus::TXSTATUS_QUEUED);
+        TxRequest* request = new TxRequest(src_adr, src_eid, dst_adr,
+                                           msg->req_id, msg->ttl, msg->data);
+
+        enqueueTxRequest(request);
+        sendTxRequestStatus(request, IMC::IridiumTxStatus::TXSTATUS_QUEUED);
       }
 
       void
@@ -191,38 +200,53 @@ namespace Transports
       }
 
       void
+      enqueueTxRequest(TxRequest* request)
+      {
+        std::list<TxRequest*>::iterator itr = m_tx_requests.begin();
+        for ( ; itr != m_tx_requests.end(); ++itr)
+        {
+          if (request->getTimeToLive() < (*itr)->getTimeToLive())
+          {
+            m_tx_requests.insert(itr, request);
+            return;
+          }
+        }
+
+        m_tx_requests.insert(m_tx_requests.end(), request);
+      }
+
+      void
       dequeueTxRequest(unsigned msn)
       {
-        if (m_tx_requests.empty())
+        if (m_tx_request == NULL)
           return;
 
-        TxRequest* req = m_tx_requests.front();
-        if (!req->hasValidMSN() || (req->getMSN() != msn))
+        if (!m_tx_request->hasValidMSN() || (m_tx_request->getMSN() != msn))
           return;
 
         debug("dequeing message");
         m_driver->clearBufferMO();
-        m_tx_requests.pop_front();
-        sendTxRequestStatus(req, IMC::IridiumTxStatus::TXSTATUS_OK);
-        delete req;
+        sendTxRequestStatus(m_tx_request, IMC::IridiumTxStatus::TXSTATUS_OK);
+        Memory::clear(m_tx_request);
       }
 
       void
       invalidateTxRequest(unsigned msn, unsigned err_code)
       {
-        if (m_tx_requests.empty())
+        if (m_tx_request == NULL)
           return;
 
-        TxRequest* req = m_tx_requests.front();
-        if (!req->hasValidMSN() || (req->getMSN() != msn))
+        if (!m_tx_request->hasValidMSN() || (m_tx_request->getMSN() != msn))
           return;
 
         debug("invalidating MSN");
-        req->invalidateMSN();
+        m_tx_request->invalidateMSN();
 
-        sendTxRequestStatus(req,
-                            IMC::IridiumTxStatus::TXSTATUS_ERROR,
+        sendTxRequestStatus(m_tx_request, IMC::IridiumTxStatus::TXSTATUS_ERROR,
                             String::str(DTR("failed with error %u"), err_code));
+
+        enqueueTxRequest(m_tx_request);
+        m_tx_request = NULL;
       }
 
       void
@@ -288,10 +312,11 @@ namespace Transports
         }
         else
         {
-          TxRequest* req = m_tx_requests.front();
+          TxRequest* request = m_tx_requests.front();
+          m_tx_requests.pop_front();
           unsigned msn = m_driver->getMOMSN();
-          req->setMSN(msn);
-          m_driver->sendSBD(req->getData());
+          request->setMSN(msn);
+          m_driver->sendSBD(request->getData());
         }
       }
 

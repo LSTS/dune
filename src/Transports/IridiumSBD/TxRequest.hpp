@@ -46,12 +46,13 @@ namespace Transports
       //! @param[in] req_id request identifier.
       //! @param[in] data to transmit.
       TxRequest(uint16_t src_adr, uint8_t src_eid, uint16_t dst_adr,
-                uint16_t req_id, const std::vector<char>& data):
+                uint16_t req_id, unsigned ttl, const std::vector<char>& data):
         m_src_adr(src_adr),
         m_src_eid(src_eid),
         m_dst_adr(dst_adr),
         m_req_id(req_id),
-        m_msn(-1)
+        m_msn(-1),
+        m_ttl(ttl)
       {
         m_data.push_back(m_dst_adr >> 8);
         m_data.push_back(m_dst_adr & 0xff);
@@ -127,6 +128,22 @@ namespace Transports
         return m_data;
       }
 
+      //! Get time to live.
+      //! @return time to live (s).
+      unsigned
+      getTimeToLive(void) const
+      {
+        return m_ttl;
+      }
+
+      //! Set time to live.
+      //! @param[in] time to live value (s).
+      void
+      setTimeToLive(unsigned value)
+      {
+        m_ttl = value;
+      }
+
     private:
       //! Requester IMC address.
       uint16_t m_src_adr;
@@ -138,6 +155,8 @@ namespace Transports
       uint16_t m_req_id;
       //! MO message sequence number.
       int m_msn;
+      //! Time to live.
+      unsigned m_ttl;
       //! Data to be transmitted.
       std::vector<uint8_t> m_data;
     };
