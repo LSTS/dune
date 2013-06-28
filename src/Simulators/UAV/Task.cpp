@@ -517,21 +517,26 @@ namespace Simulators
           // Output
           //==========================================================================
 
-          // Fill position.
+          //! Fill position.
           m_sstate.x = m_position(0);
           m_sstate.y = m_position(1);
           m_sstate.z = m_position(2);
 
-          // Fill attitude.
+          //! Fill attitude.
           m_sstate.phi = m_position(3);
           m_sstate.theta = m_position(4);
           m_position(5) = Angles::normalizeRadian(m_position(5));
           m_sstate.psi = m_position(5);
 
-          // Fill linear velocity.
-          m_sstate.u = m_velocity(0);
-          m_sstate.v = m_velocity(1);
-          m_sstate.w = m_velocity(2);
+          //! Rotation matrix
+          double euler_ang[3] = {m_position(3), m_position(4), m_position(5)};
+          Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
+          //! UAV velocity rotation to the body frame
+          Matrix vd_body_vel = transpose(md_rot_body2gnd) * m_velocity.get(0, 2, 0, 0);
+          //! Fill body-frame linear velocity, relative to the ground.
+          m_sstate.u = vd_body_vel(0);
+          m_sstate.v = vd_body_vel(1);
+          m_sstate.w = vd_body_vel(2);
 
           // UAV body-frame rotation rates
           // vd_UAVRotRates = UAVRotRatTrans_1_00(vd_State);
