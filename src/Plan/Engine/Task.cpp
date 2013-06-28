@@ -257,30 +257,6 @@ namespace Plan
           }
 
           m_plan->onEntityActivationState(id, msg);
-
-          bool waiting = m_plan->waitingForDevice();
-
-          // check if some calibration time can be skipped
-          if (m_calib->inProgress() && waiting)
-            m_calib->forceRemainingTime(m_plan->calibTimeLeft());
-
-          // If calibration is in progress and we're not waiting for any device
-          // and we have not yet send a request to stop calibration
-          // then stop calibration and move on with plan
-          if (m_calib->inProgress() && !waiting && !m_stopped_calib)
-          {
-            // If we're past the minimum calibration time, then halt it
-            if (m_calib->pastMinimum())
-              vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
-            else // else, we just need to wait for the minimum time of calibration
-              m_wait_min = true;
-          }
-          else if (m_calib->hasFailed())
-          {
-            onFailure(m_calib->getInfo());
-            m_reply.plan_id = m_spec.plan_id;
-            changeMode(IMC::PlanControlState::PCS_BLOCKED, m_calib->getInfo());
-          }
         }
       }
 
@@ -382,10 +358,28 @@ namespace Plan
         {
           m_calib->stop();
         }
-        else if (m_calib->inProgress() && m_calib->pastMinimum() && m_wait_min)
+        else if (m_calib->inProgress())
         {
-          vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
-          m_wait_min = false;
+          if (m_plan != NULL)
+          {
+            // check if some calibration time can be skipped
+            if (m_plan->waitingForDevice())
+            {
+              m_calib->forceRemainingTime(m_plan->calibTimeLeft());
+            }
+            // If we're past the minimum calibration time and have not yet
+            // send a request to stop calibration
+            else if (!m_stopped_calib && m_calib->pastMinimum())
+            {
+              vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
+            }
+          }
+        }
+        else if (m_calib->hasFailed())
+        {
+          onFailure(m_calib->getInfo());
+          m_reply.plan_id = m_spec.plan_id;
+          changeMode(IMC::PlanControlState::PCS_BLOCKED, m_calib->getInfo());
         }
       }
 
