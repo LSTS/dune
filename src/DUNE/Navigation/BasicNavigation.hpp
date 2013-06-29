@@ -249,6 +249,9 @@ namespace DUNE
 
         if (m_sum_euler_inc)
         {
+          if (!m_edelta_readings)
+            return 0.0;
+
           // Make sure the following corresponds to angular velocity in all IMUs.
           p = getEulerDelta(AXIS_X) / getEulerDeltaTimestep();
           q = getEulerDelta(AXIS_Y) / getEulerDeltaTimestep();
