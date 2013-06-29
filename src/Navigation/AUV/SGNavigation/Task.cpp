@@ -567,7 +567,7 @@ namespace Navigation
           resetMatrixA(ax);
           resetMatrixA(ap);
 
-          double yaw = getHeading();
+          double yaw = m_kal.getState(STATE_PSI);
 
           ap(STATE_X, STATE_PSI) = (- x(STATE_U) * std::sin(yaw)
                                     - x(STATE_V) * std::cos(yaw));
