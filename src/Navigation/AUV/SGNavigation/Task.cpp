@@ -569,14 +569,10 @@ namespace Navigation
 
           double yaw = getHeading();
 
-          if (!m_diving && !m_last_pcs.overflow() && (m_rpm > m_args.min_rpm)
-              && (std::abs(m_course_error) < m_args.max_course_error))
-          {
-            ap(STATE_X, STATE_PSI) = (- x(STATE_U) * std::sin(yaw)
-                                      - x(STATE_V) * std::cos(yaw));
-            ap(STATE_Y, STATE_PSI) = (x(STATE_U) * std::cos(yaw)
-                                      - x(STATE_V) * std::sin(yaw));
-          }
+          ap(STATE_X, STATE_PSI) = (- x(STATE_U) * std::sin(yaw)
+                                    - x(STATE_V) * std::cos(yaw));
+          ap(STATE_Y, STATE_PSI) = (x(STATE_U) * std::cos(yaw)
+                                    - x(STATE_V) * std::sin(yaw));
 
           m_kal.setCovarianceTransition((ap * tstep).expmts());
           m_kal.setStateTransition((ax * tstep).expmts());
