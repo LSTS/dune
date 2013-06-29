@@ -188,7 +188,7 @@ namespace DUNE
       m_diving = false;
       std::memset(m_beacons, 0, sizeof(m_beacons));
       m_num_beacons = 0;
-      m_edelta_ts = 0.0;
+      m_edelta_ts = 0.1;
       m_z_ref = 0.0;
       m_rpm = 0;
 
