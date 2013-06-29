@@ -57,6 +57,10 @@ namespace Transports
     class IridiumMessage
     {
     public:
+      //! The imc id of this message's origin
+      uint16_t source;
+      //! The imc id of this message's destination
+      uint16_t destination;
       //! The message id (can wither be an IMC id or an Iridium extension
       uint16_t msg_id;
 
@@ -99,7 +103,6 @@ namespace Transports
     class ActivateSpotSubscription : public IridiumMessage
     {
     public:
-      uint16_t imc_id;
       int serialize(uint8_t * buffer);
       int deserialize(uint8_t* data, uint16_t len);
       ActivateSpotSubscription();
@@ -113,7 +116,6 @@ namespace Transports
       DeactivateSpotSubscription();
       int serialize(uint8_t * buffer);
       int deserialize(uint8_t* data, uint16_t len);
-      uint16_t imc_id;
       ~DeactivateSpotSubscription(){};
     };
 

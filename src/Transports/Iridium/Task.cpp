@@ -26,8 +26,8 @@
 //***************************************************************************
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
-#include "IridiumMessageDefinitions.hpp"
+# include <DUNE/DUNE.hpp>
+# include "IridiumMessageDefinitions.hpp"
 # include <DUNE/Math/Random.hpp>
 
 namespace Transports
@@ -35,7 +35,6 @@ namespace Transports
   namespace Iridium
   {
     using DUNE_NAMESPACES;
-
     struct Arguments
     {
       // Delay between announcements.
@@ -46,7 +45,7 @@ namespace Transports
 
     };
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task : public DUNE::Tasks::Task
     {
       std::map<std::string, IMC::Announce> m_last_announces;
       double m_last_dev_update_time;
@@ -55,17 +54,14 @@ namespace Transports
       Random::Generator* m_rnd;
       Arguments m_args;
 
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
-        m_last_dev_update_time(Clock::get()),
-        m_update_pool_empty(true),
-        m_dev_update_req_id(10),
-        m_rnd(NULL)
+      Task(const std::string& name, Tasks::Context& ctx) :
+          DUNE::Tasks::Task(name, ctx), m_last_dev_update_time(Clock::get()), m_update_pool_empty(
+              true), m_dev_update_req_id(10), m_rnd(NULL)
       {
-        param("Delay between announce update messages", m_args.delay_between_device_updates)
-          .units(Units::Second)
-          .defaultValue("10")
-          .description("Delay between announce update messages. 0 for no updates being sent.");
+        param("Delay between announce update messages",
+              m_args.delay_between_device_updates).units(Units::Second).defaultValue(
+            "10").description(
+            "Delay between announce update messages. 0 for no updates being sent.");
 
         bind<IMC::IridiumMsgRx>(this);
         bind<IMC::Announce>(this);
@@ -81,7 +77,68 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
+        IMC::AnnounceService announce;
+        announce.service = std::string("imc+any://iridium");
+        dispatch(announce);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      handleIridiumCommand(IridiumCommand * irCmd)
+      {
+        IMC::TextMessage tm;
+        inf("received this command via Iridium: %s.", irCmd->command.c_str());
+
+        tm.text = irCmd->command;
+        tm.origin = "Iridium";
+        tm.setSource(irCmd->source);
+        dispatch(tm);
+      }
+
+      void
+      handleDeviceUpdate(DeviceUpdate * devUpt)
+      {
+        std::vector<DevicePosition>::iterator it;
+        it = devUpt->positions.begin();
+        inf("received Iridium device update with %ld updates.",
+            devUpt->positions.size());
+        for (; it != devUpt->positions.end(); it++)
+        {
+          DevicePosition p = *it;
+          int selector = (p.id & 0xE0) >> 4;
+
+          IMC::RemoteSensorInfo sensorInfo;
+          sensorInfo.alt = -1;
+          sensorInfo.lat = p.lat;
+          sensorInfo.lon = p.lon;
+          sensorInfo.heading = 0;
+          switch (selector)
+          {
+            case 0:
+              sensorInfo.sensor_class = "Unmanned Vehicle";
+              break;
+            case 2:
+              sensorInfo.sensor_class = "External Vehicle";
+              break;
+            case 4:
+              sensorInfo.sensor_class = "Console";
+              break;
+            case 6:
+              sensorInfo.sensor_class = "Sensor";
+              break;
+            case 8:
+              sensorInfo.sensor_class = "Manned Vehicle";
+              break;
+            default:
+              sensorInfo.sensor_class = "Unknown";
+              break;
+          }
+
+          std::stringstream ss;
+          ss << sensorInfo.sensor_class << "_" << p.id;
+          sensorInfo.id = ss.str();
+          dispatch(sensorInfo);
+        }
       }
 
       void
@@ -94,67 +151,24 @@ namespace Transports
           war("Error while parsing Iridium message.");
           return;
         }
-        IridiumCommand * irCmd = NULL;
-        DeviceUpdate * devUpt = NULL;
-        std::vector<DevicePosition>::iterator it;
 
-        switch(m->msg_id)
+        switch (m->msg_id)
         {
           case (ID_ACTIVATESUB):
             war("Received an Iridium subscription request. WTF?");
-          break;
+            break;
           case (ID_DEACTIVATESUB):
             war("Received an Iridium subscription end request. WTF?");
-          break;
+            break;
           case (ID_IRIDIUMCMD):
-            irCmd = dynamic_cast<IridiumCommand *>(m);
-          inf("received this command via Iridium: %s.", irCmd->command.c_str());
-          //TODO create resulting TextMessage
-
-          break;
+            handleIridiumCommand(dynamic_cast<IridiumCommand *>(m));
+            break;
           case (ID_DEVICEUPDATE):
-            devUpt = dynamic_cast<DeviceUpdate *>(m);
-          it = devUpt->positions.begin();
-          inf("received Iridium device update with %ld updates.", devUpt->positions.size());
-          for (; it != devUpt->positions.end(); it++)
-          {
-            DevicePosition p = *it;
-            int selector = (p.id & 0xE0) >> 4;
-
-            IMC::RemoteSensorInfo sensorInfo;
-            sensorInfo.alt = -1;
-            sensorInfo.lat = p.lat;
-            sensorInfo.lon = p.lon;
-            sensorInfo.heading = 0;
-            switch (selector) {
-              case 0:
-                sensorInfo.sensor_class = "Unmanned Vehicle";
-                break;
-              case 2:
-                sensorInfo.sensor_class = "External Vehicle";
-                break;
-              case 4:
-                sensorInfo.sensor_class = "Console";
-                break;
-              case 6:
-                sensorInfo.sensor_class = "Sensor";
-                break;
-              case 8:
-                sensorInfo.sensor_class = "Manned Vehicle";
-                break;
-              default:
-                sensorInfo.sensor_class = "Unknown";
-                break;
-            }
-
-            std::stringstream ss;
-            ss << sensorInfo.sensor_class << "_" << p.id;
-            sensorInfo.id = ss.str();
-            dispatch(sensorInfo);
-          }
-          break;
+            handleDeviceUpdate(dynamic_cast<DeviceUpdate *>(m));
+            break;
           default:
-            GenericIridiumMessage * irMsg = dynamic_cast<GenericIridiumMessage *>(m);
+            GenericIridiumMessage * irMsg =
+                dynamic_cast<GenericIridiumMessage *>(m);
             dispatch(irMsg->msg);
             break;
         }
@@ -171,9 +185,9 @@ namespace Transports
       consume(const IMC::IridiumTxStatus* msg)
       {
         if (msg->req_id == m_dev_update_req_id)
-          m_update_pool_empty = msg->status == IridiumTxStatus::TXSTATUS_OK || msg->status == IridiumTxStatus::TXSTATUS_ERROR;
+          m_update_pool_empty = msg->status == IridiumTxStatus::TXSTATUS_OK
+              || msg->status == IridiumTxStatus::TXSTATUS_ERROR;
       }
-
 
       bool
       send_device_updates()
@@ -201,7 +215,7 @@ namespace Transports
 
         DUNE::IMC::IridiumMsgTx * m = new DUNE::IMC::IridiumMsgTx();
         int len = msg.serialize(buffer);
-        m->data.assign(buffer, buffer+len);
+        m->data.assign(buffer, buffer + len);
         m->req_id = m_rnd->random() % 65535;
         m->setTimeStamp();
         //TODO set time to live accordingly
@@ -222,7 +236,8 @@ namespace Transports
           if (m_args.delay_between_device_updates > 0)
           {
             double now = Clock::get();
-            if ((now - m_last_dev_update_time) > m_args.delay_between_device_updates)
+            if ((now - m_last_dev_update_time)
+                > m_args.delay_between_device_updates)
             {
               if (send_device_updates())
                 m_last_dev_update_time = now;
