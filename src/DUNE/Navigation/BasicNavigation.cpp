@@ -183,7 +183,6 @@ namespace DUNE
       m_use_declination = !m_ctx.profiles.isSelected("Simulation");
       m_declination_defined = false;
       m_dead_reckoning = false;
-      m_int_yaw_rate = false;
       m_sum_euler_inc = false;
       m_aligned = false;
       m_diving = false;

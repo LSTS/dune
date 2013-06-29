@@ -548,8 +548,6 @@ namespace DUNE
       bool m_dead_reckoning;
       //! Sum euler increments to get heading.
       bool m_sum_euler_inc;
-      //! Integrate yaw rate to get heading.
-      bool m_int_yaw_rate;
       //! Vehicle is aligned.
       bool m_aligned;
       //! Vehicle is diving.

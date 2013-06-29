@@ -345,12 +345,10 @@ namespace Navigation
             if (m_args.increment_euler_delta)
             {
               m_sum_euler_inc = true;
-              m_int_yaw_rate = false;
             }
             else
             {
               m_sum_euler_inc = false;
-              m_int_yaw_rate = true;
               m_agvel_eid = m_imu_eid;
             }
 
@@ -374,7 +372,6 @@ namespace Navigation
           {
             // Stop integrate heading rates and use AHRS data.
             m_dead_reckoning = false;
-            m_int_yaw_rate = false;
             m_sum_euler_inc = false;
 
             m_aligned = false;
@@ -588,24 +585,13 @@ namespace Navigation
           m_kal.predict();
 
           // Euler Angles update modes.
-          if (m_int_yaw_rate)
-          {
-            m_heading += tstep * getHeadingRate();
-            m_kal.setOutput(OUT_R, getAngularVelocity(AXIS_Z));
-          }
-          else if (m_sum_euler_inc)
-          {
-            m_heading += tstep * getHeadingRate();
+          double hrate = getHeadingRate();
+          m_kal.setOutput(OUT_R, hrate);
 
-            float ts = getEulerDeltaTimestep();
-            if (ts > 0.0)
-              m_kal.setOutput(OUT_R, getEulerDelta(AXIS_Z) / ts);
-          }
+          if (m_dead_reckoning)
+            m_heading += tstep * hrate;
           else
-          {
             m_heading += Angles::minSignedAngle(m_heading, Angles::normalizeRadian(getEuler(AXIS_Z)));
-            m_kal.setOutput(OUT_R, getAngularVelocity(AXIS_Z));
-          }
 
           // Check alignment threshold index.
           if (m_dead_reckoning)
