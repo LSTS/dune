@@ -43,6 +43,7 @@ namespace Transports
       //! @param[in] src_adr IMC address of the requester.
       //! @param[in] src_eid entity identifier of the requester.
       //! @param[in] req_id request identifier.
+      //! @param[in] ttl time-to-live (s).
       //! @param[in] data to transmit.
       TxRequest(uint16_t src_adr, uint8_t src_eid, uint16_t req_id,
                 unsigned ttl, const std::vector<char>& data):
@@ -51,7 +52,7 @@ namespace Transports
         m_req_id(req_id),
         m_msn(-1)
       {
-        m_expiration = Clock::get() + ttl;
+        m_expiration = DUNE::Time::Clock::get() + ttl;
         m_data.insert(m_data.end(), data.begin(), data.end());
       }
 
@@ -129,7 +130,7 @@ namespace Transports
       bool
       hasExpired(void) const
       {
-        return Clock::get() > getExpiration();
+        return DUNE::Time::Clock::get() > getExpiration();
       }
 
     private:
