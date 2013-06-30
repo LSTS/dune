@@ -157,8 +157,9 @@ namespace Transports
           pcc.name = m_args.pwr_name;
           pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
           dispatch(pcc);
-          Delay::wait(c_pwr_on_delay);
         }
+
+        Delay::wait(c_pwr_on_delay);
       }
 
       //! Initialize resources.
@@ -166,12 +167,14 @@ namespace Transports
       onResourceInitialization(void)
       {
         m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+        m_uart->flushInput();
         m_driver = new Driver(this, m_uart);
         m_driver->initialize();
         m_driver->setTxRateMax(m_args.max_tx_rate);
         debug("manufacturer: %s", m_driver->getManufacturer().c_str());
         debug("model: %s", m_driver->getModel().c_str());
         debug("IMEI: %s", m_driver->getIMEI().c_str());
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       //! Release resources.
@@ -184,6 +187,8 @@ namespace Transports
           delete m_driver;
           m_driver = NULL;
         }
+
+        Memory::clear(m_uart);
       }
 
       void
