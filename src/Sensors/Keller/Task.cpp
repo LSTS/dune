@@ -105,6 +105,8 @@ namespace Sensors
       IMC::Depth m_depth;
       // Measured temperature.
       IMC::Temperature m_temperature;
+      // Sensor is calibrated.
+      bool m_calibrated;
       // Entity ID.
       int m_entity_id;
       // Current parser state.
@@ -150,6 +152,11 @@ namespace Sensors
         param("Water Density", m_args.depth_conv)
         .units(Units::KilogramPerCubicMeter)
         .defaultValue("1025.0");
+
+        m_calibrated = false;
+
+        // Register consumers.
+        bind<IMC::VehicleMedium>(this);
       }
 
       ~Task(void)
@@ -198,7 +205,17 @@ namespace Sensors
       onResourceInitialization(void)
       {
         initialize();
-        zero();
+      }
+
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        if ((msg->medium == IMC::VehicleMedium::VM_WATER ||
+             msg->medium == IMC::VehicleMedium::VM_GROUND) && !m_calibrated)
+        {
+          zero();
+          m_calibrated = true;
+        }
       }
 
       bool
