@@ -151,7 +151,7 @@ namespace DUNE
       .description("Number of moving average samples to smooth heave");
 
       param("GPS Moving Average Samples", m_avg_gps_samples)
-      .defaultValue("5")
+      .defaultValue("7")
       .description("Number of moving average samples to smooth maximum GPS HACC.");
 
       param("Entity Label - Depth", m_label_depth)
