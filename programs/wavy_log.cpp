@@ -29,6 +29,7 @@
 #include <string>
 #include <fstream>
 #include <ctime>
+#include <stdlib.h>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -397,7 +398,7 @@ toEpoch(date* d)
   tcal.tm_hour = d->hour;
   tcal.tm_mday = d->day;
   tcal.tm_mon = d->month - 1;
-  tcal.tm_year = d->year;
+  tcal.tm_year = d->year + 100;
 
   return mktime(&tcal);
 }
@@ -472,13 +473,12 @@ convertAndWrite(const char* name, std::vector<logged_data>& packets)
 {
   std::vector<IMC::GpsFix> fixes;
 
-  std::ofstream lsf(name, std::ios::binary);
-
   ByteBuffer buffer;
+
+  IMC::EstimatedState state;
 
   if (packets.size() >= 5)
   {
-    IMC::EstimatedState state;
     IMC::GpsFix imcfix;
 
     convertFixToIMC(&packets[4].fix, &imcfix);
@@ -494,8 +494,28 @@ convertAndWrite(const char* name, std::vector<logged_data>& packets)
     state.setTimeStamp(toEpoch(&packets[4].fix.utc));
 
     IMC::Packet::serialize(&state, buffer);
-    lsf.write(buffer.getBufferSigned(), buffer.getSize());
+
+    std::cerr << "year " << (unsigned)packets[4].fix.utc.year << std::endl
+              << "month " << (unsigned)packets[4].fix.utc.month << std::endl
+              << "day " << (unsigned)packets[4].fix.utc.day << std::endl;
   }
+
+  Path dir = ("wavy_logs" /
+              Time::Format::getDateSafe(state.getTimeStamp()) /
+              Time::Format::getTimeSafe(state.getTimeStamp())
+              );
+
+  system(String::str("mkdir -p " + dir).c_str());
+
+  // Copy IMC XML to log directory.
+  Path imc_dst = dir / "IMC.xml.gz";
+  std::ofstream imc_ofs(imc_dst.c_str(), std::ios::binary);
+  imc_ofs.write((char*)Blob::getData(), Blob::getSize());
+  imc_ofs.close();
+
+  Path filename = dir / name;
+  std::ofstream lsf(filename.c_str(), std::ios::binary);
+  lsf.write(buffer.getBufferSigned(), buffer.getSize());
 
   for (unsigned i = 0; i < packets.size(); ++i)
   {
@@ -510,6 +530,8 @@ convertAndWrite(const char* name, std::vector<logged_data>& packets)
     IMC::Packet::serialize(&msg, buffer);
     lsf.write(buffer.getBufferSigned(), buffer.getSize());
   }
+
+  lsf.close();
 }
 
 int
@@ -568,7 +590,7 @@ main(int argc, char** argv)
   }
 
   // Converting to GPS Fix and writing lsf file
-  convertAndWrite("WavyLog.lsf", packets);
+  convertAndWrite("Data.lsf", packets);
 
   return 0;
 }
