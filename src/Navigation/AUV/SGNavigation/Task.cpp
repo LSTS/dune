@@ -142,12 +142,6 @@ namespace Navigation
         unsigned avg_speed_samples;
         //! Initial RPM to Speed multiplicative factor.
         float initial_rpm_to_speed;
-        //! PathControlState timeout value.
-        float pcs_timeout;
-        //! Maximum course error for alignment.
-        float max_course_error;
-        //! Minimum RPM for alignment.
-        float min_rpm;
         //! Heading bias uncertainty alignment threshold.
         double alignment_index;
         //! Increment Euler Angles Delta (true) or integrate yaw rate (false)
@@ -160,10 +154,6 @@ namespace Navigation
         bool m_gps_reading;
         //! Moving average for vehicle forward speed.
         MovingAverage<double>* m_avg_speed;
-        //! Last PathControlState message timeout.
-        Counter<float> m_last_pcs;
-        //! Last course error.
-        double m_course_error;
         //! Task arguments.
         Arguments m_args;
 
@@ -208,18 +198,6 @@ namespace Navigation
           .defaultValue("1.2e-3")
           .description("Kalman Filter initial RPM to Speed multiplicative factor state value");
 
-          param("Path Control State timeout", m_args.pcs_timeout)
-          .defaultValue("2.0")
-          .description("Timeout for last received PathControlState message");
-
-          param("Maximum Course Error for Alignment", m_args.max_course_error)
-          .defaultValue("0.1")
-          .description("Maximum allowed course error threshold align system");
-
-          param("Minimum RPM for Alignment", m_args.min_rpm)
-          .defaultValue("500.0")
-          .description("Minimum allowed RPM threshold to align system");
-
           param("Update Heading with Euler Increments", m_args.increment_euler_delta)
           .defaultValue("false")
           .description("Use 'EulerAnglesDelta' or 'AngularVelocity' to update heading");
@@ -237,15 +215,12 @@ namespace Navigation
 
           // Register callbacks
           bind<IMC::EntityActivationState>(this);
-          bind<IMC::PathControlState>(this);
         }
 
         void
         onUpdateParameters(void)
         {
           BasicNavigation::onUpdateParameters();
-
-          m_last_pcs.setTop(m_args.pcs_timeout);
 
           // Initialize Process and Measure Covariances matrices
           m_kal.setProcessNoise(STATE_X, m_process_noise[PN_POSITION]);
@@ -391,13 +366,6 @@ namespace Navigation
             for (unsigned i = 0; i < m_num_beacons; i++)
               m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
           }
-        }
-
-        void
-        consume(const IMC::PathControlState* msg)
-        {
-          m_last_pcs.reset();
-          m_course_error = msg->course_error;
         }
 
         bool

@@ -29,9 +29,6 @@
 // Local headers.
 #include <DUNE/Navigation/BasicNavigation.hpp>
 
-//! Z reference tolerance.
-static const float c_z_tol = 0.1;
-
 namespace DUNE
 {
   namespace Navigation
@@ -185,11 +182,9 @@ namespace DUNE
       m_dead_reckoning = false;
       m_sum_euler_inc = false;
       m_aligned = false;
-      m_diving = false;
       std::memset(m_beacons, 0, sizeof(m_beacons));
       m_num_beacons = 0;
       m_edelta_ts = 0.1;
-      m_z_ref = 0.0;
       m_rpm = 0;
 
       m_gvel_val_bits = IMC::GroundVelocity::VAL_VEL_X
@@ -206,7 +201,6 @@ namespace DUNE
       bind<IMC::Distance>(this);
       bind<IMC::Depth>(this);
       bind<IMC::DepthOffset>(this);
-      bind<IMC::DesiredZ>(this);
       bind<IMC::EulerAngles>(this);
       bind<IMC::EulerAnglesDelta>(this);
       bind<IMC::GpsFix>(this);
@@ -332,29 +326,6 @@ namespace DUNE
         return;
 
       m_depth_offset = msg->value;
-    }
-
-    void
-    BasicNavigation::consume(const IMC::DesiredZ* msg)
-    {
-      m_z_ref = msg->value;
-
-      switch (msg->z_units)
-      {
-        case (IMC::Z_NONE):
-          break;
-        case (IMC::Z_DEPTH):
-          if (m_z_ref > c_z_tol)
-            m_diving = true;
-        case (IMC::Z_ALTITUDE):
-          if ((getAltitude() > 0) && (m_z_ref < (getAltitude() - c_z_tol)))
-            m_diving = true;
-        case (IMC::Z_HEIGHT):
-          break;
-      }
-
-      if (std::abs(m_z_ref) < c_z_tol)
-        m_diving = false;
     }
 
     void

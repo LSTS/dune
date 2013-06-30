@@ -170,9 +170,6 @@ namespace DUNE
       consume(const IMC::DepthOffset* msg);
 
       void
-      consume(const IMC::DesiredZ* msg);
-
-      void
       consume(const IMC::EulerAngles* msg);
 
       void
@@ -553,8 +550,6 @@ namespace DUNE
       bool m_sum_euler_inc;
       //! Vehicle is aligned.
       bool m_aligned;
-      //! Vehicle is diving.
-      bool m_diving;
       //! Angular velocity message entity id.
       unsigned m_agvel_eid;
       //! Accelaration message entity id.
@@ -693,8 +688,6 @@ namespace DUNE
       unsigned m_avg_heave_samples;
       //! Number of samples to average GPS.
       unsigned m_avg_gps_samples;
-      //! Z reference.
-      double m_z_ref;
       //! Entity Ids.
       unsigned m_depth_eid;
       unsigned m_ahrs_eid;
