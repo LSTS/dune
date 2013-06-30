@@ -674,7 +674,7 @@ namespace Navigation
 
           A(STATE_PSI, STATE_R) = 1.0;
 
-          double yaw = getHeading();
+          double yaw = m_kal.getState(STATE_PSI);
 
           if (!m_time_without_dvl.overflow() && !m_time_without_gps.overflow())
           {
