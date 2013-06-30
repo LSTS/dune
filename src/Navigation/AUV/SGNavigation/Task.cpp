@@ -676,7 +676,7 @@ namespace Navigation
 
           double yaw = m_kal.getState(STATE_PSI);
 
-          if (!m_time_without_dvl.overflow() && !m_time_without_gps.overflow())
+          if (!m_time_without_dvl.overflow())
           {
             A(STATE_X, STATE_U) = std::cos(yaw) * std::cos(theta);
             A(STATE_X, STATE_V) = (std::cos(yaw) * std::sin(theta) * std::sin(phi)
