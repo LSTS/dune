@@ -27,6 +27,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Simulation/UAV.hpp>
 
 namespace Simulators
 {
@@ -71,8 +72,8 @@ namespace Simulators
 
     struct Task: public DUNE::Tasks::Periodic
     {
-      // Simulation vehicle.
-      //UAVModel* m_model;
+      //! Simulation vehicle.
+      DUNE::Simulation::UAVSimulation* m_model;
       //! Simulated position (X,Y,Z).
       IMC::SimulatedState m_sstate;
       //! Start time.
@@ -85,16 +86,10 @@ namespace Simulators
       float m_thruster_act;
       //! Set Servo positions
       Matrix m_servo_pos;
-      //! Bank command
-      IMC::DesiredRoll m_bank_cmd;
-      //! speed command
-      IMC::DesiredSpeed m_speed_cmd;
       //! Vehicle position
       Matrix m_position;
       //! Vehicle velocity vector
       Matrix m_velocity;
-      //! speed
-      double m_speed;
       //! Gps simulator entity id.
       unsigned m_gps_eid;
       //! Task arguments.
@@ -102,7 +97,7 @@ namespace Simulators
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Periodic(name, ctx),
-        //m_model(NULL),
+        m_model(),
         m_start_time(Clock::get()),
         m_last_update(Clock::get()),
         m_last_time_debug(Clock::get()),
@@ -250,28 +245,36 @@ namespace Simulators
         dispatch(init_fix);
         requestActivation();
 
-        debug("State initialization");
-        //! Altitude initialization
+        //! Model initialization
+        debug("Model initialization");
+        //! - Altitude initialization
         m_position(2) = m_args.init_alt;
-        //! Bank initialization
+        //! - Bank initialization
         m_position(3) = DUNE::Math::Angles::radians(m_args.init_roll);
-        //! Heading initialization
+        //! - Heading initialization
         m_position(5) = DUNE::Math::Angles::radians(m_args.init_yaw);
-        //! Velocity vector initialization
+        //! - Velocity vector initialization
         m_velocity(0) = m_args.init_speed*std::cos(m_position(5));
         m_velocity(1) = m_args.init_speed*std::sin(m_position(5));
-
-        //! Commands initialization
+        //! - State initialization
+        m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
+        debug("State initialization");
+        m_model->set(m_position, m_velocity);
+        //! - Control parameters initialization
+        debug("Control parameters initialization");
+        m_model->setCtrl(m_args.c_bank, m_args.c_speed);
+        //! - Commands initialization
         debug("Commands initialization");
-        m_speed_cmd.value = m_args.init_speed;
-        m_bank_cmd.value = m_position(3);
+        m_model->command(m_position(3), m_args.init_speed, m_position(2));
+        // - Simulation type
+        debug("Simulation type");
+        m_model->m_sim_type = m_args.sim_type;
 
-        // Initialize the model model
+
         /*
         DUNE::Control::ModelParameters par;
         if (m_args.sim_type == "4DOF_bank")
         {
-          return;
         }
         else if (m_args.sim_type == "6DOF_geom")
         {
@@ -304,7 +307,7 @@ namespace Simulators
       void
       onResourceRelease(void)
       {
-        //Memory::clear(m_model);
+        Memory::clear(m_model);
       }
 
       void
@@ -324,6 +327,7 @@ namespace Simulators
         m_sstate.lon = msg->lon;
         m_sstate.height = msg->height;
 
+        //! - State initialization
         m_position(0) = 0.0;
         m_position(1) = 0.0;
         // Assuming vehicle starts at ground surface.
@@ -331,6 +335,7 @@ namespace Simulators
         m_position(3) = 0.0;
         m_position(4) = 0.0;
         m_position(5) = 0.0;
+        m_model->set(m_position);
 
         m_start_time = Clock::get();
         m_last_update = Clock::get();
@@ -355,10 +360,10 @@ namespace Simulators
           return;
         }
 
-        m_bank_cmd = *msg;
+        m_model->m_bank_cmd = msg->value;
 
         // ========= Debug ===========
-        trace("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(m_bank_cmd.value));
+        trace("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
       }
 
       void
@@ -374,10 +379,10 @@ namespace Simulators
           return;
         }
 
-        m_speed_cmd = *msg;
+        m_model->m_airspeed_cmd = msg->value;
 
         // ========= Debug ===========
-        trace("Speed command received (%1.2fm/s)", m_speed_cmd.value);
+        trace("Speed command received (%1.2fm/s)", msg->value);
       }
 
       /*
@@ -448,121 +453,69 @@ namespace Simulators
         // Declaration
         double time;
         double timestep;
-        double cos_yaw;
-        double sin_yaw;
-        double wind_x;
-        double wind_y;
-        double wind_z = 0;
-        double d_vx_wind;
-        double d_vy_wind;
-        double vd_wind[3] = {0};
-        Matrix uav2wind_GndFr;
-
-        double d_speed_rate;
-        double d_bank_rate;
 
         // Compute the time step
         time  = Clock::get();
         timestep = time - m_last_update;
         m_last_update = time;
 
-        if (m_args.sim_type == "4DOF_bank")
+        /*
+        // ========= Debug ===========
+        if (time >= m_last_time_debug + 1.0)
         {
-          // Optimization variables
-          cos_yaw = std::cos(m_position(5));
-          sin_yaw = std::sin(m_position(5));
-          wind_x = m_args.wx;
-          wind_y = m_args.wy;
-          d_vx_wind = m_velocity(0) - wind_x;
-          d_vy_wind = m_velocity(1) - wind_y;
-          m_speed = std::sqrt(d_vx_wind*d_vx_wind + d_vy_wind*d_vy_wind);
-
-          // ========= Debug ===========
-          if (time >= m_last_time_debug + 1.0)
-          {
-            spew("Simulating: 4DOF_bank");
-            spew("Bank: %1.2fº        - Commanded bank: %1.2fº", DUNE::Math::Angles::degrees(m_position(3)),
-                 DUNE::Math::Angles::degrees(m_bank_cmd.value));
-            spew("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_speed, m_speed_cmd.value);
-            spew("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
-          }
-
-          //==========================================================================
-          // Dynamics
-          //==========================================================================
-          // Command effect
-          // - Horizontal acceleration command
-          d_speed_rate = (m_speed_cmd.value - m_speed)/m_args.c_speed;
-          m_speed += d_speed_rate*timestep;
-          // - Roll rate command
-          d_bank_rate = (m_bank_cmd.value - m_position(3))/m_args.c_bank;
-          m_position(3) += d_bank_rate*timestep;
-
-          // UAV velocity components on the flow field frame
-          d_vx_wind = m_speed * cos_yaw;
-          d_vy_wind = m_speed * sin_yaw;
-          vd_wind[0] = d_vx_wind;
-          vd_wind[1] = d_vy_wind;
-          uav2wind_GndFr = Matrix(vd_wind, 3, 1);
-          // UAV velocity components on the fixed frame
-          m_velocity(0) = d_vx_wind + wind_x;
-          m_velocity(1) = d_vy_wind + wind_y;
-          // Turn rate
-          m_velocity(5) = m_args.gaccel * std::tan(m_position(3))/m_speed;
-
-          // State vector update
-          m_position += m_velocity*timestep;
-
-          //==========================================================================
-          // Output
-          //==========================================================================
-
-          //! Fill position.
-          m_sstate.x = m_position(0);
-          m_sstate.y = m_position(1);
-          m_sstate.z = m_position(2);
-
-          //! Fill attitude.
-          m_sstate.phi = m_position(3);
-          m_sstate.theta = m_position(4);
-          m_position(5) = Angles::normalizeRadian(m_position(5));
-          m_sstate.psi = m_position(5);
-
-          //! Rotation matrix
-          double euler_ang[3] = {m_position(3), m_position(4), m_position(5)};
-          Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
-          //! UAV velocity rotation to the body frame
-          Matrix vd_body_vel = transpose(md_rot_body2gnd) * m_velocity.get(0, 2, 0, 0);
-          //! Fill body-frame linear velocity, relative to the ground.
-          m_sstate.u = vd_body_vel(0);
-          m_sstate.v = vd_body_vel(1);
-          m_sstate.w = vd_body_vel(2);
-
-          // UAV body-frame rotation rates
-          // vd_UAVRotRates = UAVRotRatTrans_1_00(vd_State);
-
-          // Fill angular velocity.
-          m_sstate.p = m_velocity(3);
-          m_sstate.q = m_velocity(4);
-          m_sstate.r = m_velocity(5);
-
-          // Fill stream velocity.
-          m_sstate.svx = wind_x;
-          m_sstate.svy = wind_y;
-          m_sstate.svz = wind_z;
-
-          dispatch(m_sstate);
-
-          // ========= Debug ===========
-          if (time >= m_last_time_debug + 1.0)
-          {
-            m_last_time_debug = time;
-            //spew("Bank: %1.2f        - Commanded bank: %1.2f", m_position(3), m_bank_cmd.value);
-            spew("Bank rate command: %1.2fº/s", DUNE::Math::Angles::degrees(d_bank_rate));
-            //spew("Speed: %1.2f       - Commanded speed: %1.2f", m_speed, m_speed_cmd.value);
-            spew("Speed rate command: %1.2fm/s²", d_speed_rate);
-          }
+          //spew("Simulating: %s", m_model->m_sim_type);
+          spew("Bank: %1.2fº        - Commanded bank: %1.2fº",
+              DUNE::Math::Angles::degrees(m_position(3)),
+              DUNE::Math::Angles::degrees(m_model->m_bank_cmd));
+          spew("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->m_airspeed, m_model->m_airspeed_cmd);
+          spew("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
         }
+         */
+        //==========================================================================
+        //! Dynamics
+        //==========================================================================
+
+        m_model->update(timestep);
+        m_model->get(m_position, m_velocity);
+
+        //==========================================================================
+        //! Output
+        //==========================================================================
+
+        //! Fill position.
+        m_sstate.x = m_position(0);
+        m_sstate.y = m_position(1);
+        m_sstate.z = m_position(2);
+
+        //! Fill attitude.
+        m_sstate.phi = m_position(3);
+        m_sstate.theta = m_position(4);
+        m_sstate.psi = m_position(5);
+
+        //! Rotation matrix
+        double euler_ang[3] = {m_position(3), m_position(4), m_position(5)};
+        Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
+        //! UAV velocity rotation to the body frame
+        Matrix vd_body_vel = transpose(md_rot_body2gnd) * m_velocity.get(0, 2, 0, 0);
+        //! Fill body-frame linear velocity, relative to the ground.
+        m_sstate.u = vd_body_vel(0);
+        m_sstate.v = vd_body_vel(1);
+        m_sstate.w = vd_body_vel(2);
+
+        // UAV body-frame rotation rates
+        // vd_UAVRotRates = UAVRotRatTrans_1_00(vd_State);
+
+        // Fill angular velocity.
+        m_sstate.p = m_velocity(3);
+        m_sstate.q = m_velocity(4);
+        m_sstate.r = m_velocity(5);
+
+        // Fill stream velocity.
+        m_sstate.svx = m_model->m_wind(0);
+        m_sstate.svy = m_model->m_wind(1);
+        m_sstate.svz = m_model->m_wind(2);
+
+        dispatch(m_sstate);
 
       }
     };
