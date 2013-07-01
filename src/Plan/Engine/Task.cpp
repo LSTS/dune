@@ -311,7 +311,10 @@ namespace Plan
 
         // Ignore failure if it failed to stop calibration
         if (vc->command == IMC::VehicleCommand::VC_STOP_CALIBRATION)
+        {
+          inf(vc->info);
           error = false;
+        }
 
         if (initMode() || execMode())
         {
