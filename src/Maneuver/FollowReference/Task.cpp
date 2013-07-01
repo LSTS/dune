@@ -492,20 +492,20 @@ namespace Maneuver
         switch (m_fref_state.state)
         {
         case (IMC::FollowRefState::FR_LOITER):
-          desired_path.lradius = m_args.loitering_radius;
+          //desired_path.lradius = m_args.loitering_radius;
           enableMovement(true);
           dispatch(desired_path);
-          inf("loitering around (%f, %f, %f).",
-              Angles::degrees(desired_path.end_lat),
-              Angles::degrees(desired_path.end_lon), desired_path.end_z);
+          inf("loitering around (%f, %f, %f, %f).",
+        		  Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon),
+        		                desired_path.end_z, desired_path.lradius);
           break;
         case (IMC::FollowRefState::FR_ELEVATOR):
-          desired_path.lradius = m_args.loitering_radius;
+          //desired_path.lradius = m_args.loitering_radius;
           enableMovement(true);
           dispatch(desired_path);
-          inf("loitering towards (%f, %f, %f).",
-              Angles::degrees(desired_path.end_lat),
-              Angles::degrees(desired_path.end_lon), desired_path.end_z);
+          inf("loitering (elevator) towards (%f, %f, %f, %f).",
+              Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon),
+              desired_path.end_z, desired_path.lradius);
           break;
         case (IMC::FollowRefState::FR_GOTO):
           enableMovement(true);
