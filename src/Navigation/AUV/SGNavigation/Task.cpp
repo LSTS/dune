@@ -644,7 +644,12 @@ namespace Navigation
 
           double yaw = m_kal.getState(STATE_PSI);
 
-          if (!m_time_without_dvl.overflow())
+          if (m_time_without_dvl.overflow() && m_time_without_gps.overflow())
+          {
+            A(STATE_X, STATE_K) = m_rpm * std::cos(yaw) * std::cos(theta);
+            A(STATE_Y, STATE_K) = m_rpm * std::sin(yaw) * std::cos(theta);
+          }
+          else
           {
             A(STATE_X, STATE_U) = std::cos(yaw) * std::cos(theta);
             A(STATE_X, STATE_V) = (std::cos(yaw) * std::sin(theta) * std::sin(phi)
@@ -652,11 +657,6 @@ namespace Navigation
             A(STATE_Y, STATE_U) = std::sin(yaw) * std::cos(theta);
             A(STATE_Y, STATE_V) = (std::sin(yaw) * std::sin(theta) * std::sin(phi)
                                    + std::cos(yaw) * std::cos(phi));
-          }
-          else
-          {
-            A(STATE_X, STATE_K) = m_rpm * std::cos(yaw) * std::cos(theta);
-            A(STATE_Y, STATE_K) = m_rpm * std::sin(yaw) * std::cos(theta);
           }
         }
 
