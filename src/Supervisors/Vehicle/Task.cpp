@@ -432,7 +432,7 @@ namespace Supervisors
       {
         if (!calibrationMode())
         {
-          requestFailed(msg, DTR("cannot stop calibration: vehicle is not calibrating"));
+          requestOK(msg, DTR("cannot stop calibration: vehicle is not calibrating"));
           return;
         }
 
