@@ -1029,7 +1029,8 @@ namespace Plan
         if (command == IMC::VehicleCommand::VC_START_CALIBRATION)
         {
           m_plan->calibrationStarted(m_calib);
-          m_vc.calib_time = m_calib->getTime();
+          // one second of tolerance for the vehicle supervisor
+          m_vc.calib_time = m_calib->getTime() + 1.0;
           m_stopped_calib = false;
         }
         else
