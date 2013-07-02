@@ -100,7 +100,7 @@ namespace Transports
       {
         std::vector<DevicePosition>::iterator it;
         it = devUpt->positions.begin();
-        inf("received Iridium device update with %ld updates.",
+        inf("received Iridium device update with %u updates.",
             devUpt->positions.size());
         for (; it != devUpt->positions.end(); it++)
         {
