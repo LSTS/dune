@@ -289,7 +289,10 @@ namespace Sensors
           m_hard_iron[i] = data(i);
 
         runCalibration();
-        saveParameters();
+
+        IMC::SaveEntityParameters params;
+        params.name = getName();
+        dispatch(params);
       }
 
       //! Send commands to the device.
@@ -537,28 +540,6 @@ namespace Sensors
 
         // Calibrate device.
         m_uart->write((uint8_t*)&bfr, 8);
-      }
-
-      //! Save parameters to configuration.
-      void
-      saveParameters(void)
-      {
-        //! ParameterControl message.
-        IMC::ParameterControl pc;
-
-        pc.op = IMC::ParameterControl::OP_SAVE_PARAMS;
-
-        pc.params.clear();
-
-        IMC::Parameter p;
-        p.section = getName();
-        p.param = c_hard_iron_param;
-        p.value = String::str("%0.6f, %0.6f, %0.6f", m_args.hard_iron[0],
-                              m_args.hard_iron[1], m_args.hard_iron[2]);
-
-        pc.params.push_back(p);
-
-        dispatch(pc);
       }
 
       //! Correct data according with mounting position.
