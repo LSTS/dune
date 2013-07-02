@@ -118,6 +118,7 @@ namespace Simulators
         .description("Wind speed along the East in the NED frame");
 
         param("Simulation type", m_args.sim_type)
+        .defaultValue("4DOF_bank")
         .description("Simulation type (DOF)");
 
         param("Gravity Acceleration", m_args.gaccel)
@@ -256,18 +257,11 @@ namespace Simulators
         //! - Velocity vector initialization
         m_velocity(0) = m_args.init_speed*std::cos(m_position(5));
         m_velocity(1) = m_args.init_speed*std::sin(m_position(5));
-        //! - State initialization
+        //! - State  and control parameters initialization
         m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
-        debug("State initialization");
-        m_model->set(m_position, m_velocity);
-        //! - Control parameters initialization
-        debug("Control parameters initialization");
-        m_model->setCtrl(m_args.c_bank, m_args.c_speed);
         //! - Commands initialization
-        debug("Commands initialization");
         m_model->command(m_position(3), m_args.init_speed, m_position(2));
         // - Simulation type
-        debug("Simulation type");
         m_model->m_sim_type = m_args.sim_type;
 
 
