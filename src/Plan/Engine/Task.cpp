@@ -1033,7 +1033,7 @@ namespace Plan
         {
           m_plan->calibrationStarted(m_calib);
           // one second of tolerance for the vehicle supervisor
-          m_vc.calib_time = m_calib->getTime() + 1.0;
+          m_vc.calib_time = (uint16_t)(m_calib->getTime() + 1.0);
           m_stopped_calib = false;
         }
         else

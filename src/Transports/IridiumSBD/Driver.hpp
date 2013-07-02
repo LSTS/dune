@@ -159,7 +159,7 @@ namespace Transports
       getRSSI(void)
       {
         ScopedMutex l(m_mutex);
-        return m_rssi.value;
+        return (unsigned)m_rssi.value;
       }
 
       //! Read the contents of the MT SBD message buffer.

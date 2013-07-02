@@ -258,7 +258,7 @@ namespace Plan
       void
       calibrationStarted(const Calibration* calib)
       {
-        m_calibration = calib->getTime();
+        m_calibration = (uint16_t)calib->getTime();
       }
 
       //! Signal that a maneuver has started

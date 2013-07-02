@@ -1059,7 +1059,7 @@ namespace Control
           m_fix.satellites = gps_raw.satellites_visible;
 
           long time_fix = gps_raw.time_usec % 1000000000;
-          long date = gps_raw.time_usec / 1e9;
+          long date = (long)gps_raw.time_usec / 1e9;
 
           if(m_args.ublox)
           {
