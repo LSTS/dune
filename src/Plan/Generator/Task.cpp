@@ -356,6 +356,7 @@ namespace Plan
           std::string loc = params.get("loc");
           double lat = Angles::radians(params.get("lat", 0.0));
           double lon = Angles::radians(params.get("lon", 0.0));
+          double depth = params.get("depth", m_args.travel_depth);
 
           // Searches for a beacon whose name matches given loc
           // in which case updates lat/lon with the beacon's location
@@ -401,7 +402,7 @@ namespace Plan
               IMC::Goto* go_near = new IMC::Goto();
               go_near->lat = lat;
               go_near->lon = lon;
-              go_near->z = m_args.travel_depth;
+              go_near->z = depth;
               go_near->z_units = IMC::Z_DEPTH;
               go_near->speed_units = IMC::SUNITS_RPM;
               go_near->speed = m_args.speed_rpms;
@@ -414,6 +415,8 @@ namespace Plan
             at_surface->duration = 0;
             at_surface->lat = lat;
             at_surface->lon = lon;
+            at_surface->z = depth;
+            at_surface->z_units = IMC::Z_DEPTH;
             at_surface->speed_units = IMC::SUNITS_RPM;
             at_surface->speed = m_args.speed_rpms;
             at_surface->radius = m_args.radius;
@@ -455,6 +458,7 @@ namespace Plan
           IMC::Goto* go_near = new IMC::Goto();
           go_near->lat = near_lat;
           go_near->lon = near_lon;
+
           go_near->z = m_args.travel_depth;
           go_near->z_units = IMC::Z_DEPTH;
           go_near->speed_units = IMC::SUNITS_RPM;

@@ -26,10 +26,10 @@
 //***************************************************************************
 
 // ISO C++ 98 headers.
-#include <stdexcept>
+# include <stdexcept>
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
+# include <DUNE/DUNE.hpp>
 
 namespace Autonomy
 {
@@ -41,7 +41,7 @@ namespace Autonomy
     struct Task : public DUNE::Tasks::Task
     {
 
-      Task(const std::string& name, Tasks::Context& ctx) :
+      Task(const std::string & name, Tasks::Context& ctx) :
         DUNE::Tasks::Task(name, ctx)
       {
         bind<IMC::TextMessage>(this);
@@ -76,24 +76,35 @@ namespace Autonomy
       handlePlanGeneratorCommand(std::string origin, std::string args)
       {
         IMC::PlanGeneration pg;
+        std::istringstream iss(args);
+        std::string temp, tlist;
+        getline(iss, temp, ' ');
+        if (iss.str().size() > temp.size())
+          tlist = std::string(iss.str(), temp.size()+1, iss.str().size() - temp.size()+1);
+
+        //TupleList tlist(msg->params, "=", ";", true);
+        //TupleList t(tlist, "=", ",", true);
+
         pg.cmd = IMC::PlanGeneration::CMD_EXECUTE;
         pg.op = IMC::PlanGeneration::OP_REQUEST;
-        // use only the last part of the message
-        char plan_id[32];
-        sscanf(args.c_str(), "%s", plan_id);
-        pg.plan_id = plan_id;
+        pg.params = tlist;
+        pg.plan_id = temp;
         dispatch(pg);
       }
 
       void
       consume(const IMC::TextMessage * msg)
       {
-        char cmd[100], args[500];
         spew("Processing text message from %s: \"%s\"", msg->origin.c_str(), sanitize(msg->text).c_str());
+        std::istringstream iss(msg->text);
+        std::string cmd, args = "";
+        getline(iss, cmd, ' ');
+        if (iss.str().size() > cmd.size())
+          args = std::string(iss.str(), cmd.size()+1, iss.str().size() - cmd.size()+1);
 
-        sscanf(msg->text.c_str(), cmd, args);
+        //std::transform(cmd, cmd, cmd, ::tolower);
 
-        std::transform(cmd, cmd+strlen(cmd), cmd, ::tolower);
+        spew("Command is %s, args are %s", cmd.c_str(), args.c_str());
 
         if (cmd == "plan")
         {
@@ -106,6 +117,9 @@ namespace Autonomy
         else if (cmd == "gen")
         {
           handlePlanGeneratorCommand(msg->origin, args);
+        }
+        else {
+
         }
       }
 
