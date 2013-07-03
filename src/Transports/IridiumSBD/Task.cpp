@@ -280,7 +280,6 @@ namespace Transports
           IMC::IridiumMsgRx sbd;
           sbd.setDestination(getSystemId());
           sbd.data.assign(bfr, bfr + rv);
-          sbd.toText(std::cerr);
           dispatch(sbd, DF_KEEP_SRC_EID);
         }
         else
@@ -317,6 +316,7 @@ namespace Transports
           if (!(*itr)->hasExpired())
             break;
 
+          spew("removing expired");
           sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
           delete *itr;
           itr = m_tx_requests.erase(itr);
@@ -340,7 +340,13 @@ namespace Transports
         if (m_driver->isCooling())
           return;
 
-        if (m_tx_requests.empty())
+        if (m_tx_request != NULL)
+        {
+          unsigned msn = m_driver->getMOMSN();
+          m_tx_request->setMSN(msn);
+          m_driver->sendSBD(m_tx_request->getData());
+        }
+        else if (m_tx_requests.empty())
         {
           if (m_driver->hasRingAlert())
             m_driver->checkMailBoxAlert();
@@ -349,11 +355,8 @@ namespace Transports
         }
         else
         {
-          TxRequest* request = m_tx_requests.front();
+          m_tx_request = m_tx_requests.front();
           m_tx_requests.pop_front();
-          unsigned msn = m_driver->getMOMSN();
-          request->setMSN(msn);
-          m_driver->sendSBD(request->getData());
         }
       }
 
