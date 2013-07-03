@@ -38,7 +38,7 @@ namespace Transports
     struct Arguments
     {
       // Delay between announcements.
-      double delay_between_device_updates;
+      int delay_between_device_updates;
 
       // Destination to send all iridium messages
       std::string iridium_destination;
@@ -58,9 +58,9 @@ namespace Transports
           DUNE::Tasks::Task(name, ctx), m_last_dev_update_time(Clock::get()), m_update_pool_empty(
               true), m_dev_update_req_id(10), m_rnd(NULL)
       {
-        param("Delay between announce update messages",
+        param("Device updates - Periodicity",
               m_args.delay_between_device_updates).units(Units::Second).defaultValue(
-            "10").description(
+            "600").description(
             "Delay between announce update messages. 0 for no updates being sent.");
 
         bind<IMC::IridiumMsgRx>(this);
@@ -88,10 +88,13 @@ namespace Transports
       {
         IMC::TextMessage tm;
         inf("received this command via Iridium: %s.", irCmd->command.c_str());
-
         tm.text = irCmd->command;
         tm.origin = "Iridium";
         tm.setSource(irCmd->source);
+        std::stringstream ss;
+        tm.toText(ss);
+        spew("sending this message to bus: %s", ss.str().c_str());
+
         dispatch(tm);
       }
 
@@ -100,8 +103,8 @@ namespace Transports
       {
         std::vector<DevicePosition>::iterator it;
         it = devUpt->positions.begin();
-        inf("received Iridium device update with %u updates.",
-            devUpt->positions.size());
+        inf("received Iridium device update with %d updates.",
+            (int)devUpt->positions.size());
         for (; it != devUpt->positions.end(); it++)
         {
           DevicePosition p = *it;
@@ -169,6 +172,7 @@ namespace Transports
           default:
             GenericIridiumMessage * irMsg =
                 dynamic_cast<GenericIridiumMessage *>(m);
+            inf("Received imc message of type %s from Iridium.", irMsg->msg->getName());
             dispatch(irMsg->msg);
             break;
         }
@@ -195,6 +199,7 @@ namespace Transports
 
         if (!m_update_pool_empty)
         {
+          spew("won't send device updates message because pool is not empty");
           return false;
         }
         inf("sending device updates");
@@ -213,14 +218,19 @@ namespace Transports
         }
         m_last_announces.clear();
 
+        msg.source = getSystemId();
+        msg.destination = 0xFFFF;
         DUNE::IMC::IridiumMsgTx * m = new DUNE::IMC::IridiumMsgTx();
         int len = msg.serialize(buffer);
         m->data.assign(buffer, buffer + len);
         m->req_id = m_rnd->random() % 65535;
+        m->ttl = m_args.delay_between_device_updates;
         m->setTimeStamp();
-        //TODO set time to live accordingly
         m_dev_update_req_id = m->req_id;
         dispatch(m);
+        std::stringstream ss;
+        m->toText(ss);
+        spew("sent the following message: %s", ss.str().c_str());
         m_update_pool_empty = false;
 
         return true;
