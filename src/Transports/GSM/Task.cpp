@@ -343,6 +343,7 @@ namespace Transports
       void
       processRxSMS(const int id, const char* from, const char* date, const char* msg)
       {
+
         // Invalid message, do nothing
         if (id < 0)
           return;
@@ -352,6 +353,13 @@ namespace Transports
         inf("%s = %s", DTR("timestamp"), sanitize(date).c_str());
         inf("%s = \"%s\"", DTR("msg"), sanitize(msg).c_str());
 
+
+        TextMessage tm;
+        tm.origin = from;
+        tm.text = msg;
+
+        dispatch(tm);
+/*
         // Parse the message
         if (std::strncmp(msg, "Plan ", 5) == 0)
         {
@@ -381,6 +389,7 @@ namespace Transports
           pg.plan_id = msg[4];
           dispatch(pg);
         }
+        */
       }
 
       //! Read SMS.
