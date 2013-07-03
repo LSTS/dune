@@ -312,7 +312,9 @@ namespace Sensors
         setDataActive(SUBSYS_SSH, m_args.channels_hf);
         setDataActive(SUBSYS_SSL, m_args.channels_lf);
 
+        m_cmd->setAGC(SUBSYS_SSH, 0);
         m_cmd->setPingRange(SUBSYS_SSH, m_args.range_hf);
+        m_cmd->setAGC(SUBSYS_SSL, 0);
         m_cmd->setPingRange(SUBSYS_SSL, m_args.range_lf);
 
         m_cmd->setPingAutoselectMode(SUBSYS_SSH, m_args.autosel_mode);

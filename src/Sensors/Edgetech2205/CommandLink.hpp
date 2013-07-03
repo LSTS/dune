@@ -128,6 +128,17 @@ namespace Sensors
         }
       }
 
+      void
+      setAGC(SubsystemId subsys, uint32_t value)
+      {
+        m_pkt.setMessageType(MSG_ID_ADC_AGC);
+        m_pkt.setCommandType(COMMAND_TYPE_SET);
+        m_pkt.setSubsystemNumber(subsys);
+        m_pkt.setChannel(0);
+        m_pkt.setValue(value);
+        sendPacket(m_pkt);
+      }
+
       unsigned
       getPingRange(SubsystemId subsys)
       {

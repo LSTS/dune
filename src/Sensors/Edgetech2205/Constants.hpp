@@ -100,7 +100,9 @@ namespace Sensors
       MSG_ID_PING_RANGE = 128,
       MSG_ID_PING_AUTOSEL_MODE = 133,
       //! Ping coupling parameters.
-      MSG_ID_PING_COUPLING_PARAMS = 129
+      MSG_ID_PING_COUPLING_PARAMS = 129,
+      //! Automatic Gain Control.
+      MSG_ID_ADC_AGC = 141
     };
 
     enum SonarDataIndices
