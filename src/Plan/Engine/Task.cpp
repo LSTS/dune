@@ -768,7 +768,12 @@ namespace Plan
 
         // Flag the plan as starting
         if (initMode() || execMode())
+        {
+          if (!stopped)
+            m_plan->planStopped();
+
           m_plan->planStarted();
+        }
 
         dispatch(m_spec);
 
