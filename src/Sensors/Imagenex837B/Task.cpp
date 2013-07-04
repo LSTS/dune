@@ -404,26 +404,13 @@ namespace Sensors
       void
       onActivation(void)
       {
-        try
-        {
-          m_sock->setNoDelay(true);
-          m_sock->connect(m_args.addr, m_args.port);
-
-          for (unsigned i = 0; i < m_args.data_points; ++i)
-            ping(i);
-        }
-        catch (...)
-        {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-          throw;
-        }
+        m_sock_dat = new TCPSocket;
+        m_sock->setNoDelay(true);
+        m_sock->connect(m_args.addr, m_args.port);
 
         inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_activating = false;
-
-        if (!m_log_file.is_open())
-          m_log_file.open((m_ctx.dir_log / m_log_filename / "multibeam.837").c_str(), std::ios::binary);
       }
 
       void
