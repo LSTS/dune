@@ -190,7 +190,7 @@ namespace Transports
       {
         if (msg->req_id == m_dev_update_req_id)
           m_update_pool_empty = msg->status == IridiumTxStatus::TXSTATUS_OK
-              || msg->status == IridiumTxStatus::TXSTATUS_ERROR;
+              || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
       }
 
       bool
