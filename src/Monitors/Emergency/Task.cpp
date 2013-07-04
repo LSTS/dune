@@ -92,7 +92,7 @@ namespace Monitors
 
         param(DTR_RT("SMS Recipient Number"), m_args.recipient)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .defaultValue("+351932811685")
+        .defaultValue("+351966575686")
         .description(DTR("Phone number of the SMS recipient"));
 
         param("In Mission Timeout", m_args.mission_tout)
