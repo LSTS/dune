@@ -71,7 +71,7 @@ namespace Transports
                              &m_mt_length,
                              &m_mt_queued);
         if (rv != 6)
-          throw Hardware::InvalidFormat(str);
+          throw DUNE::Hardware::InvalidFormat(str);
       }
 
       //! Test if the MO status denotes that the MO SBD message, if any,

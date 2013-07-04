@@ -82,7 +82,7 @@ namespace Transports
         std::string value = readValue("+SBDS");
         unsigned momsn = 0;
         if (std::sscanf(value.c_str(), "+SBDS:%*u,%u,%*u,%*u", &momsn) != 1)
-          throw Hardware::InvalidFormat(value);
+          throw DUNE::Hardware::InvalidFormat(value);
         return momsn;
       }
 
