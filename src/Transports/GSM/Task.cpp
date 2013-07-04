@@ -135,6 +135,7 @@ namespace Transports
         .description("Maximum amount of time to wait for SMS send completion");
 
         bind<IMC::Sms>(this);
+        bind<IMC::IoEvent>(this);
       }
 
       ~Task(void)
@@ -163,7 +164,6 @@ namespace Transports
           debug("manufacturer: %s", m_driver->getManufacturer().c_str());
           debug("model: %s", m_driver->getModel().c_str());
           debug("IMEI: %s", m_driver->getIMEI().c_str());
-          m_driver->checkMessages();
         }
         catch (std::runtime_error& e)
         {
@@ -188,6 +188,19 @@ namespace Transports
         }
 
         Memory::clear(m_uart);
+      }
+
+      void
+      consume(const IMC::IoEvent* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->getDestination() != getEntityId())
+          return;
+
+        if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
+          throw RestartNeeded("input error", 5);
       }
 
       void
