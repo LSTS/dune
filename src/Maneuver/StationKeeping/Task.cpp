@@ -94,6 +94,9 @@ namespace Maneuver
       void
       consume(const IMC::EstimatedState* state)
       {
+        if (m_skeep == NULL)
+          return;
+
         if (m_skeep->isInside() && (m_end_time < 0))
           m_end_time = Clock::get() + m_duration;
 
@@ -120,9 +123,10 @@ namespace Maneuver
           else
             signalProgress((uint16_t)Math::round(time_left));
         }
-        else if (m_skeep->isMoving())
+        else if (m_skeep != NULL)
         {
-          signalProgress(m_pcs.eta);
+          if (m_skeep->isMoving())
+            signalProgress(m_pcs.eta);
         }
       }
     };
