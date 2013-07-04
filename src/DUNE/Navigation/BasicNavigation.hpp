@@ -161,6 +161,9 @@ namespace DUNE
       consume(const IMC::AngularVelocity* msg);
 
       void
+      consume(const IMC::DataSanity* msg);
+
+      void
       consume(const IMC::Distance* msg);
 
       void
@@ -208,6 +211,16 @@ namespace DUNE
       inline double
       getAltitude(void)
       {
+        if (!m_alt_sanity)
+        {
+          if (m_dvl_sanity_timer.overflow())
+            m_altitude = -1.0;
+          else
+            m_altitude = 0.0;
+
+          return m_altitude;
+        }
+
         if (m_time_without_bdist.overflow())
           m_altitude = -1.0;
 
@@ -536,6 +549,8 @@ namespace DUNE
       Time::Counter<double> m_time_without_dvl;
       //! Time without bottom Distance readings deadline.
       Time::Counter<double> m_time_without_bdist;
+      //! DVL data sanity timeout.
+      Time::Counter<double> m_dvl_sanity_timer;
       //! Time without main depth provider.
       Time::Counter<double> m_time_without_main_depth;
       //! Time without depth readings.
@@ -657,6 +672,8 @@ namespace DUNE
       bool m_alt_attitude_compensation;
       //! Altitude Exponential Moving Average filter gain.
       float m_alt_ema_gain;
+      //! Altitude data sanity;
+      bool m_alt_sanity;
       //! Maximum horizontal dilution of precision.
       float m_max_hdop;
       //! Maximum valid horizontal accuracy estimate.
@@ -702,6 +719,7 @@ namespace DUNE
       float m_without_dvl_timeout;
       float m_without_main_depth_timeout;
       float m_without_depth_timeout;
+      float m_dvl_sanity_timeout;
       //! DVL ground velocity validation bits.
       uint8_t m_gvel_val_bits;
       //! DVL water velocity validation bits.

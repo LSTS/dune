@@ -90,6 +90,11 @@ namespace DUNE
       .defaultValue("1.0")
       .description("No Depth readings from main provider timeout");
 
+      param("DVL sanity timeout", m_dvl_sanity_timeout)
+      .units(Units::Second)
+      .defaultValue("10.0")
+      .description("DVL sanity timeout");
+
       param("Distance Between DVL and CG", m_dist_dvl_cg)
       .units(Units::Meter)
       .defaultValue("0.3")
@@ -181,6 +186,7 @@ namespace DUNE
       m_declination_defined = false;
       m_dead_reckoning = false;
       m_sum_euler_inc = false;
+      m_alt_sanity = true;
       m_aligned = false;
       std::memset(m_beacons, 0, sizeof(m_beacons));
       m_num_beacons = 0;
@@ -198,6 +204,7 @@ namespace DUNE
       // Register callbacks.
       bind<IMC::Acceleration>(this);
       bind<IMC::AngularVelocity>(this);
+      bind<IMC::DataSanity>(this);
       bind<IMC::Distance>(this);
       bind<IMC::Depth>(this);
       bind<IMC::DepthOffset>(this);
@@ -223,6 +230,7 @@ namespace DUNE
       m_time_without_bdist.setTop(m_without_dvl_timeout);
       m_time_without_main_depth.setTop(m_without_main_depth_timeout);
       m_time_without_depth.setTop(m_without_depth_timeout);
+      m_dvl_sanity_timer.setTop(m_dvl_sanity_timeout);
 
       // Distance DVL to vehicle Center of Gravity is 0 in Simulation.
       if (m_ctx.profiles.isSelected("Simulation"))
@@ -329,6 +337,23 @@ namespace DUNE
     }
 
     void
+    BasicNavigation::consume(const IMC::DataSanity* msg)
+    {
+      if (msg->getSourceEntity() != m_alt_eid)
+        return;
+
+      if (msg->sane == IMC::DataSanity::DS_NOT_SANE)
+      {
+        m_dvl_sanity_timer.reset();
+        m_alt_sanity = false;
+      }
+      else
+      {
+        m_alt_sanity = true;
+      }
+    }
+
+    void
     BasicNavigation::consume(const IMC::Distance* msg)
     {
       if (msg->getSourceEntity() != m_alt_eid)
@@ -339,6 +364,9 @@ namespace DUNE
 
       // Reset bottom Distance timer.
       m_time_without_bdist.reset();
+
+      if (!m_alt_sanity)
+        return;
 
       float value = msg->value;
 
