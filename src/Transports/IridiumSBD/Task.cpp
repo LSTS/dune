@@ -109,6 +109,7 @@ namespace Transports
         .description("");
 
         bind<IMC::IridiumMsgTx>(this);
+        bind<IMC::IoEvent>(this);
       }
 
       //! Destructor.
@@ -196,6 +197,19 @@ namespace Transports
         }
 
         Memory::clear(m_uart);
+      }
+
+      void
+      consume(const IMC::IoEvent* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->getDestination() != getEntityId())
+          return;
+
+        if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
+          throw RestartNeeded("input error", 5);
       }
 
       void
@@ -341,7 +355,7 @@ namespace Transports
         if (m_driver->hasSessionResult())
           handleSessionResult();
 
-        if (m_driver->getRSSI() == 0.0f)
+        if (m_driver->getRSSI() <= 0.1)
           return;
 
         if (m_driver->isCooling())
