@@ -67,15 +67,19 @@ namespace Transports
       checkMessages(void)
       {
         IMC::TextMessage sms;
+        std::string location;
         unsigned read_count = 0;
 
         sendAT("+CMGL=\"ALL\"");
 
         //! Read all messages.
-        while (readSMS(sms.origin, sms.text))
+        while (readSMS(location, sms.origin, sms.text))
         {
-          ++read_count;
-          getTask()->dispatch(sms);
+          if ((location == "\"REC UNREAD\"") || (location == "\"REC READ\""))
+          {
+            ++read_count;
+            getTask()->dispatch(sms);
+          }
         }
 
         // Remove read messages.
@@ -228,7 +232,7 @@ namespace Transports
       }
 
       bool
-      readSMS(std::string& origin, std::string& text)
+      readSMS(std::string& location, std::string& origin, std::string& text)
       {
         std::string header = readLine();
         if (header == "OK")
@@ -240,11 +244,20 @@ namespace Transports
         std::vector<std::string> parts;
         String::split(header, ",", parts);
         if (parts.size() != 6)
+        {
+          if (parts.size() >= 2)
+          {
+            location = parts[1];
+            return true;
+          }
+
           throw Hardware::UnexpectedReply();
+        }
 
         if (parts[2].size() <= 2)
           throw Hardware::UnexpectedReply();
 
+        location = parts[1];
         origin = std::string(parts[2], 1, parts[2].size() - 2);
         text = readLine();
         return true;
