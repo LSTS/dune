@@ -300,6 +300,11 @@ namespace DUNE
           spew("saving activation request");
           m_next_act_state = NAS_ACTIVE;
         }
+        else if (m_act_state.state == IMC::EntityActivationState::EAS_ACT_IP)
+        {
+          spew("activation is in progress");
+          m_next_act_state = NAS_ACTIVE;
+        }
 
         dispatch(m_act_state);
         return;
@@ -365,6 +370,11 @@ namespace DUNE
             || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_FAIL))
         {
           spew("saving deactivation request");
+          m_next_act_state = NAS_INACTIVE;
+        }
+        else if (m_act_state.state == IMC::EntityActivationState::EAS_DEACT_IP)
+        {
+          spew("deactivation is in progress");
           m_next_act_state = NAS_INACTIVE;
         }
 
