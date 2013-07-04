@@ -192,8 +192,6 @@ namespace Sensors
       std::ofstream m_log_file;
       //! Log filename
       std::string m_log_filename;
-      //! Power channel state.
-      IMC::PowerChannelState m_power_channel_state;
       //! Power channel control.
       IMC::PowerChannelControl m_power_channel_control;
       //! True if task is activating.
@@ -390,8 +388,7 @@ namespace Sensors
       void
       onRequestActivation(void)
       {
-        if (m_power_channel_state.state != IMC::PowerChannelState::PCS_ON)
-          m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+        m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
         dispatch(m_power_channel_control);
 
         m_activating = true;
@@ -413,8 +410,8 @@ namespace Sensors
 
         inf("%s", DTR(Status::getString(Status::CODE_IDLE)));
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-        if (m_power_channel_state.state != IMC::PowerChannelState::PCS_OFF)
-          m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+
+        m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
         dispatch(m_power_channel_control);
       }
 
@@ -472,15 +469,6 @@ namespace Sensors
             m_log_file.close();
             break;
         }
-      }
-
-      void
-      consume(const IMC::PowerChannelState* msg)
-      {
-        if (msg->name != m_args.power_channel)
-          return;
-
-        m_power_channel_state = *msg;
       }
 
       void
