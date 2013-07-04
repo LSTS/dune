@@ -55,13 +55,14 @@ namespace Autonomy
         pc.type = IMC::PlanControl::PC_REQUEST;
         pc.op = IMC::PlanControl::PC_START;
         char plan_id[32];
-        sscanf(args.c_str(), "%s", plan_id);
+        std::sscanf(args.c_str(), "%s", plan_id);
         pc.plan_id = plan_id;
 
         inf("%s (%s = %s)", DTR("Received SMS request to start plan"), DTR("id"), sanitize(pc.plan_id).c_str());
 
         // Send the plan start request
         dispatch(pc);
+        (void)origin;
       }
 
       void
@@ -70,6 +71,7 @@ namespace Autonomy
         err("Received abort via text from %s", origin.c_str());
         IMC::Abort abort;
         dispatch(abort);
+        (void)args;
       }
 
       void
@@ -90,6 +92,7 @@ namespace Autonomy
         pg.params = tlist;
         pg.plan_id = temp;
         dispatch(pg);
+        (void)origin;
       }
 
       void
