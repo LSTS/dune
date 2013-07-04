@@ -198,8 +198,6 @@ namespace Sensors
       IMC::PowerChannelControl m_power_channel_control;
       //! True if task is activating.
       bool m_activating;
-      //! True if task is deactivating.
-      bool m_deactivating;
       //! Activation/deactivation timer.
       Counter<double> m_countdown;
       //! Configuration parameters.
@@ -209,8 +207,7 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
         m_sock(NULL),
-        m_activating(false),
-        m_deactivating(false)
+        m_activating(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -410,23 +407,15 @@ namespace Sensors
       }
 
       void
-      onRequestDeactivation(void)
+      onDeactivation(void)
       {
         Memory::clear(m_sock);
 
-        m_deactivating = true;
-        m_countdown.setTop(getDeactivationTime());
-      }
-
-      void
-      onDeactivation(void)
-      {
         inf("%s", DTR(Status::getString(Status::CODE_IDLE)));
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         if (m_power_channel_state.state != IMC::PowerChannelState::PCS_OFF)
           m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
         dispatch(m_power_channel_control);
-        m_deactivating = false;
       }
 
       void
@@ -451,13 +440,6 @@ namespace Sensors
         }
         catch (...)
         { }
-      }
-
-      void
-      checkDeactivationProgress(void)
-      {
-        if (m_countdown.overflow())
-          deactivate();
       }
 
       void
@@ -718,8 +700,6 @@ namespace Sensors
           waitForMessages(1.0);
           if (m_activating)
             checkActivationProgress();
-          else if (m_deactivating)
-            checkDeactivationProgress();
         }
       }
     };
