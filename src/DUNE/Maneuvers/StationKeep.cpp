@@ -44,7 +44,7 @@ namespace DUNE
       m_radius = maneuver->radius;
 
       if (trimValueMod(m_radius, min_radius, m_radius))
-        m_task->war("forcing minimum radius %.1f", min_radius);
+        task->war("forcing minimum radius %.1f", min_radius);
 
       *this = StationKeep(task, maneuver->lat, maneuver->lon,
                           m_radius, maneuver->z, maneuver->z_units,
