@@ -404,10 +404,6 @@ namespace Sensors
       void
       onActivation(void)
       {
-        m_sock_dat = new TCPSocket;
-        m_sock->setNoDelay(true);
-        m_sock->connect(m_args.addr, m_args.port);
-
         inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_activating = false;
@@ -445,6 +441,10 @@ namespace Sensors
 
         try
         {
+          m_sock = new TCPSocket;
+          m_sock->setNoDelay(true);
+          m_sock->connect(m_args.addr, m_args.port);
+
           activate();
           debug("activation took %0.2f s", getActivationTime() -
                 m_countdown.getRemaining());
