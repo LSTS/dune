@@ -94,7 +94,7 @@ namespace Transports
         std::string value = readValue("+SBDS");
         unsigned momsn = 0;
         if (std::sscanf(value.c_str(), "+SBDS:%*u,%u,%*u,%*u", &momsn) != 1)
-          throw InvalidFormat(value);
+          throw Hardware::InvalidFormat(value);
         return momsn;
       }
 
@@ -136,7 +136,7 @@ namespace Transports
           // Read and validate.
           readRaw(timer, bfr, 2);
           if ((bfr[0] != ccsum[0]) || (bfr[1] != ccsum[1]))
-            throw InvalidChecksum(bfr, ccsum);
+            throw Hardware::InvalidChecksum(bfr, ccsum);
 
           setReadMode(saved_read_mode);
           expectOK();
