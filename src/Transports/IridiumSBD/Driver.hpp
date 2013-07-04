@@ -264,7 +264,7 @@ namespace Transports
       //! Perform ISU initialization, this function must be called
       //! before any other.
       void
-      onInitialization(void)
+      sendInitialization(void)
       {
         setFlowControl(false);
         setRadioActivity(true);
