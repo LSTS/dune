@@ -16631,6 +16631,76 @@ namespace DUNE
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
+
+    //! I/O Event.
+    class IoEvent: public Message
+    {
+    public:
+      //! Type.
+      enum TypeEnum
+      {
+        //! Input Available.
+        IOV_TYPE_INPUT = 1,
+        //! Input Error.
+        IOV_TYPE_INPUT_ERROR = 2
+      };
+
+      //! Type.
+      uint8_t type;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 813;
+      }
+
+      IoEvent(void);
+
+      Message*
+      clone(void) const
+      {
+        return new IoEvent(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return IoEvent::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "IoEvent";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
   }
 }
 

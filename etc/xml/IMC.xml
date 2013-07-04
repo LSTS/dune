@@ -6687,4 +6687,10 @@
     <field name="Entity Name" abbrev="name" type="plaintext"/>
   </message>
 
+  <message id="813" name="I/O Event" abbrev="IoEvent" source="ccu,vehicle">
+    <field name="Type" abbrev="type" type="uint8_t" unit="Enumerated" prefix="IOV_TYPE">
+      <value abbrev="INPUT" name="Input Available" id="1"/>
+      <value abbrev="INPUT_ERROR" name="Input Error" id="2"/>
+    </field>
+  </message>
 </messages>

@@ -454,5 +454,7 @@
 #define DUNE_IMC_PUSHENTITYPARAMETERS 811
 //! PopEntityParameters identification number.
 #define DUNE_IMC_POPENTITYPARAMETERS 812
+//! IoEvent identification number.
+#define DUNE_IMC_IOEVENT 813
 
 #endif

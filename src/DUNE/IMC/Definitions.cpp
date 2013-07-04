@@ -17132,5 +17132,61 @@ namespace DUNE
     {
       IMC::toJSON(os__, "name", name, nindent__);
     }
+
+    IoEvent::IoEvent(void)
+    {
+      m_header.mgid = 813;
+      clear();
+    }
+
+    void
+    IoEvent::clear(void)
+    {
+      type = 0;
+    }
+
+    bool
+    IoEvent::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::IoEvent& other__ = dynamic_cast<const IoEvent&>(msg__);
+      if (type != other__.type) return false;
+      return true;
+    }
+
+    int
+    IoEvent::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    IoEvent::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(type, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    IoEvent::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    IoEvent::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    IoEvent::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "type", type, nindent__);
+    }
   }
 }

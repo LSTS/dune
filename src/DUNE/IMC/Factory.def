@@ -239,4 +239,5 @@ MESSAGE(809, SessionKeepAlive)
 MESSAGE(810, SessionStatus)
 MESSAGE(811, PushEntityParameters)
 MESSAGE(812, PopEntityParameters)
+MESSAGE(813, IoEvent)
 #undef MESSAGE
