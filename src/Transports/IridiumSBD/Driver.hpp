@@ -73,18 +73,6 @@ namespace Transports
         sendAT("Z0");
       }
 
-      //! Perform ISU initialization, this function must be called
-      //! before any other.
-      void
-      initialize(void)
-      {
-        setFlowControl(false);
-        setRadioActivity(true);
-        setRingAlert(true);
-        setIndicatorEventReporting(true);
-        setAutomaticRegistration(true);
-      }
-
       //! Retrieve MOMSN that will be used during the next mobile
       //! originated SBD session.
       //! @return MOMSN.
@@ -272,6 +260,18 @@ namespace Transports
       bool m_sbd_ring;
       //! Number of MT messages waiting at the GSS.
       unsigned m_queued_mt;
+
+      //! Perform ISU initialization, this function must be called
+      //! before any other.
+      void
+      onInitialization(void)
+      {
+        setFlowControl(false);
+        setRadioActivity(true);
+        setRingAlert(true);
+        setIndicatorEventReporting(true);
+        setAutomaticRegistration(true);
+      }
 
       //! Enable or disable RTS/CTS flow control.
       //! @param[in] value true to enable flow control, false otherwise.
