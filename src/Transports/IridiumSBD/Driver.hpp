@@ -50,94 +50,39 @@ namespace Transports
     //! Maximum number of revision lines.
     static const unsigned c_max_rev_lines = 10;
 
-    class Driver: public Thread
+    class Driver: public HayesModem
     {
     public:
       //! Constructor.
       //! @param[in] task parent task.
       //! @param[in] uart serial port connected to the ISU.
       Driver(Tasks::Task* task, SerialPort* uart):
-        m_task(task),
-        m_uart(uart),
-        m_timeout(c_timeout),
-        m_read_mode(READ_MODE_LINE),
-        m_busy(false),
+        HayesModem(task, uart),
         m_session_result_read(true),
         m_sbd_ring(false),
-        m_queued_mt(0),
-        m_tx_rate_max(-1.0)
-      {
-        m_rssi.setDestination(m_task->getSystemId());
-        m_rssi.setDestinationEntity(m_task->getEntityId());
-        m_uart->flushInput();
-      }
+        m_queued_mt(0)
+      { }
 
       //! Destructor.
       ~Driver(void)
       { }
+
+      void
+      sendReset(void)
+      {
+        sendAT("Z0");
+      }
 
       //! Perform ISU initialization, this function must be called
       //! before any other.
       void
       initialize(void)
       {
-        // Reset and flush pending input.
-        sendAT("Z0");
-        Delay::wait(2.0);
-        m_uart->flushInput();
-
-        // Perform initialization.
-        setReadMode(READ_MODE_LINE);
-        start();
-        setEcho(false);
         setFlowControl(false);
         setRadioActivity(true);
         setRingAlert(true);
         setIndicatorEventReporting(true);
         setAutomaticRegistration(true);
-      }
-
-      //! Query the ISU manufacturer.
-      //! @return ISU manufacturer name.
-      std::string
-      getManufacturer(void)
-      {
-        return readValue("+CGMI");
-      }
-
-      //! Query the ISU model.
-      //! @return ISU model name.
-      std::string
-      getModel(void)
-      {
-        return readValue("+CGMM");
-      }
-
-      //! Query the ISU revision.
-      //! @return ISU revision.
-      std::string
-      getRevision(void)
-      {
-        sendAT("+CGMR");
-        std::vector<std::string> rev;
-
-        for (unsigned i = 0; i < c_max_rev_lines; ++i)
-        {
-          std::string line = readLine();
-          if (line == "OK")
-            break;
-          rev.push_back(line);
-        }
-
-        return String::join(rev.begin(), rev.end(), " / ");
-      }
-
-      //! Query the ISU serial number (IMEI).
-      //! @return ISU serial number (IMEI),
-      std::string
-      getIMEI(void)
-      {
-        return readValue("+CGSN");
       }
 
       //! Retrieve MOMSN that will be used during the next mobile
@@ -151,15 +96,6 @@ namespace Transports
         if (std::sscanf(value.c_str(), "+SBDS:%*u,%u,%*u,%*u", &momsn) != 1)
           throw InvalidFormat(value);
         return momsn;
-      }
-
-      //! Retrieve received signal strength indication (RSSI).
-      //! @return RSSI value.
-      unsigned
-      getRSSI(void)
-      {
-        ScopedMutex l(m_mutex);
-        return (unsigned)m_rssi.value;
       }
 
       //! Read the contents of the MT SBD message buffer.
@@ -185,7 +121,7 @@ namespace Transports
 
           // Read incoming data length.
           length = getBufferSizeMT(timer);
-          m_task->spew("reading %u bytes of SBD binary data", length);
+          getTask()->spew("reading %u bytes of SBD binary data", length);
 
           // Read data.
           if (length > data_size)
@@ -238,7 +174,7 @@ namespace Transports
       void
       sendSBD(const std::vector<uint8_t>& data, bool alert_reply = false)
       {
-        m_task->debug("sending SBD with size %u", static_cast<unsigned>(data.size()));
+        getTask()->debug("sending SBD with size %u", static_cast<unsigned>(data.size()));
 
         if (data.size() == 0)
           writeBufferMO(NULL, 0);
@@ -251,26 +187,6 @@ namespace Transports
           sendAT("+SBDIX");
 
         setBusy(true);
-      }
-
-      //! Test if ISU is busy performing an SBD session.
-      //! @return true if ISU is busy, false otherwise.
-      bool
-      isBusy(void)
-      {
-        ScopedMutex l(m_mutex);
-        return m_busy;
-      }
-
-      //! Test if ISU is cooling down.
-      //! @return true if ISU is cooling down, false otherwise.
-      bool
-      isCooling(void)
-      {
-        ScopedMutex l(m_mutex);
-        if ((m_tx_rate_max >= 0.0) && (!m_tx_rate_timer.overflow()))
-          return true;
-        return false;
       }
 
       //! Retrieve the result of the last SBD session. The function
@@ -336,17 +252,6 @@ namespace Transports
         return m_queued_mt;
       }
 
-      //! Set maximum transmission rate.
-      //! @param[in] rate transmission rate in second. Negative values
-      //! will disable transmission rate cap.
-      void
-      setTxRateMax(double rate)
-      {
-        ScopedMutex l(m_mutex);
-        m_tx_rate_max = rate;
-        m_tx_rate_timer.setTop(rate);
-      }
-
     private:
       //! Message buffer types.
       enum BufferType
@@ -359,53 +264,14 @@ namespace Transports
         BFR_TYPE_BOTH = 2
       };
 
-      //! Read mode.
-      enum ReadMode
-      {
-        //! Line oriented input.
-        READ_MODE_LINE,
-        //! Unprocessed sequence of bytes.
-        READ_MODE_RAW
-      };
-
-      //! Parent task.
-      Tasks::Task* m_task;
-      //! Serial port handle.
-      SerialPort* m_uart;
-      //! Read timeout.
-      double m_timeout;
-      //! Queue of incoming characters.
-      std::queue<char> m_chars;
-      //! Current line being parsed.
-      std::string m_line;
-      //! Last command sent to modem.
-      std::string m_last_cmd;
-      //! Queue of input lines.
-      TSQueue<std::string> m_lines;
-      //! Queue of raw input bytes.
-      TSQueue<uint8_t> m_bytes;
-      //! Read mode.
-      ReadMode m_read_mode;
-      //! True if ISU is busy.
-      bool m_busy;
       //! Result of last SBD session.
       SessionResult m_session_result;
       //! True if last session result was read.
       bool m_session_result_read;
       //! True if Alert Ring was received.
       bool m_sbd_ring;
-      //! Contents of line to skip once.
-      std::string m_skip_line;
-      //! Last RSSI value.
-      IMC::RSSI m_rssi;
       //! Number of MT messages waiting at the GSS.
       unsigned m_queued_mt;
-      //! Maximum transmission rate value.
-      double m_tx_rate_max;
-      //! Maximum transmission rate timer.
-      Counter<double> m_tx_rate_timer;
-      //! Read mode lock.
-      Mutex m_mutex;
 
       //! Enable or disable RTS/CTS flow control.
       //! @param[in] value true to enable flow control, false otherwise.
@@ -418,21 +284,6 @@ namespace Transports
           sendAT("&K0");
 
         expectOK();
-      }
-
-      void
-      setSkipLine(const std::string& line)
-      {
-        m_skip_line = line;
-      }
-
-      void
-      setBusy(bool value)
-      {
-        ScopedMutex l(m_mutex);
-        m_busy = value;
-        if (m_busy && (m_tx_rate_max >= 0))
-          m_tx_rate_timer.reset();
       }
 
       bool
@@ -455,7 +306,7 @@ namespace Transports
       void
       handleSBDRING(const std::string& str)
       {
-        m_task->debug("SBD ring");
+        getTask()->debug("SBD ring");
         (void)str;
         ScopedMutex l(m_mutex);
         m_sbd_ring = true;
@@ -470,15 +321,11 @@ namespace Transports
         if (std::sscanf(str.c_str(), "+CIEV:%u,%u", &ind, &value) == 2)
         {
           if (ind == 0)
-          {
-            ScopedMutex l(m_mutex);
-            m_rssi.value = value * 20;
-            m_task->dispatch(m_rssi);
-          }
+            setRSSI(value * 20);
         }
         else
         {
-          m_task->war("invalid unsolicited string %s", str.c_str());
+          getTask()->war("invalid unsolicited string %s", str.c_str());
         }
       }
 
@@ -494,7 +341,7 @@ namespace Transports
         {
           ScopedMutex l(m_mutex);
           if (!m_session_result_read)
-            m_task->err("new session result will overwrite previously unread value");
+            getTask()->err("new session result will overwrite previously unread value");
           m_session_result_read = false;
           m_session_result.parse(str);
           if (m_session_result.isSuccessMT())
@@ -504,15 +351,6 @@ namespace Transports
         setSkipLine("OK");
 
         setBusy(false);
-      }
-
-      //! Enable or disable the ISU to echo characters to the DTE.
-      //! @param[in] value true to enable, false to disable.
-      void
-      setEcho(bool value)
-      {
-        sendAT(value ? "E1" : "E0");
-        expectOK();
       }
 
       //! Enable or disable radio activity.
@@ -569,54 +407,6 @@ namespace Transports
           throw std::runtime_error("error ocurred while clearing the MOMSN");
       }
 
-      ReadMode
-      getReadMode(void)
-      {
-        ScopedMutex l(m_mutex);
-        return m_read_mode;
-      }
-
-      void
-      setReadMode(ReadMode mode)
-      {
-        ScopedMutex l(m_mutex);
-        m_read_mode = mode;
-      }
-
-      void
-      run(void)
-      {
-        char bfr[512];
-        std::string line;
-
-        while (!isStopping())
-        {
-          if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
-            continue;
-
-          int rv = m_uart->read(bfr, sizeof(bfr));
-          if (rv <= 0)
-            throw std::runtime_error("short read");
-
-          if (getReadMode() == READ_MODE_RAW)
-          {
-            for (int i = 0; i < rv; ++i)
-              m_bytes.push(bfr[i]);
-          }
-          else
-          {
-            for (int i = 0; i < rv; ++i)
-              m_chars.push(bfr[i]);
-
-            while (processQueue(line))
-            {
-              if (!handleUnsolicited(line))
-                m_lines.push(line);
-            }
-          }
-        }
-      }
-
       void
       computeChecksum(const uint8_t* data, unsigned data_size, uint8_t* bfr) const
       {
@@ -626,150 +416,6 @@ namespace Transports
 
         bfr[0] = csum >> 8;
         bfr[1] = csum & 0xff;
-      }
-
-      std::string
-      readValue(const std::string& cmd)
-      {
-        sendAT(cmd);
-        std::string str = readLine();
-        expectOK();
-        return str;
-      }
-
-      void
-      sendAT(const std::string& str)
-      {
-        std::string cmd("AT");
-        cmd.append(str);
-        m_last_cmd = cmd;
-        cmd.append("\r\n");
-        m_task->spew("send: %s", m_last_cmd.c_str());
-        sendRaw((const uint8_t*)cmd.c_str(), cmd.size());
-      }
-
-      void
-      sendRaw(const uint8_t* data, unsigned data_size)
-      {
-        m_uart->write(data, data_size);
-      }
-
-      void
-      setTimeout(double timeout)
-      {
-        ScopedMutex l(m_mutex);
-        m_timeout = timeout;
-      }
-
-      double
-      getTimeout(void)
-      {
-        ScopedMutex l(m_mutex);
-        return m_timeout;
-      }
-
-      void
-      expect(const std::string& str)
-      {
-        std::string rv = readLine();
-        if (rv != str)
-          throw UnexpectedReply(str, rv);
-      }
-
-      void
-      expectOK(void)
-      {
-        expect("OK");
-      }
-
-      void
-      expectREADY(void)
-      {
-        expect("READY");
-      }
-
-      std::string
-      readLine(void)
-      {
-        Counter<double> timer(getTimeout());
-        return readLine(timer);
-      }
-
-      void
-      readRaw(Counter<double>& timer, uint8_t* data, unsigned data_size)
-      {
-        unsigned bytes_read = 0;
-
-        while (!timer.overflow())
-        {
-          if (m_bytes.waitForItems(timer.getRemaining()))
-            data[bytes_read++] = m_bytes.pop();
-
-          if (bytes_read == data_size)
-            return;
-        }
-
-        throw ReadTimeout();
-      }
-
-      bool
-      processQueue(std::string& str)
-      {
-        bool got_line = false;
-
-        while (!m_chars.empty())
-        {
-          char c = m_chars.front();
-          m_chars.pop();
-          if (c == '\n')
-          {
-            if (!m_line.empty())
-            {
-              got_line = true;
-              break;
-            }
-          }
-          else
-          {
-            m_line.push_back(c);
-          }
-        }
-
-        if (!got_line)
-          return false;
-
-        str = String::trim(m_line);
-        if (str.empty())
-          return false;
-
-        m_task->spew("recv: %s", sanitize(str).c_str());
-        m_line.clear();
-
-        if (!m_skip_line.empty())
-        {
-          if (m_skip_line == str)
-          {
-            m_skip_line.clear();
-            return false;
-          }
-        }
-
-        return true;
-      }
-
-      std::string
-      readLine(Counter<double>& timer)
-      {
-        if (m_lines.waitForItems(timer.getRemaining()))
-        {
-          std::string line = m_lines.pop();
-          if (line != m_last_cmd)
-            return line;
-          else
-            return readLine(timer);
-        }
-
-        throw ReadTimeout();
       }
 
       //! Write SBD binary data to the ISU MO message buffer.
@@ -825,7 +471,7 @@ namespace Transports
         // Handle start of unsolicited messages and ring alerts.
         if (bfr[0] == '+' || bfr[0] == 'S')
         {
-          m_task->debug("handling unsolicited message in raw mode");
+          getTask()->debug("handling unsolicited message in raw mode");
           std::string line((const char*)bfr, 1);
           while (!timer.overflow())
           {

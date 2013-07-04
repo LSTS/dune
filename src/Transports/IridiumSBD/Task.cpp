@@ -160,20 +160,27 @@ namespace Transports
         }
 
         Delay::wait(c_pwr_on_delay);
+
+        try
+        {
+          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          m_driver = new Driver(this, m_uart);
+          m_driver->initialize();
+          m_driver->setTxRateMax(m_args.max_tx_rate);
+          debug("manufacturer: %s", m_driver->getManufacturer().c_str());
+          debug("model: %s", m_driver->getModel().c_str());
+          debug("IMEI: %s", m_driver->getIMEI().c_str());
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 5);
+        }
       }
 
       //! Initialize resources.
       void
       onResourceInitialization(void)
       {
-        m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-        m_uart->flushInput();
-        m_driver = new Driver(this, m_uart);
-        m_driver->initialize();
-        m_driver->setTxRateMax(m_args.max_tx_rate);
-        debug("manufacturer: %s", m_driver->getManufacturer().c_str());
-        debug("model: %s", m_driver->getModel().c_str());
-        debug("IMEI: %s", m_driver->getIMEI().c_str());
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -334,7 +341,7 @@ namespace Transports
         if (m_driver->hasSessionResult())
           handleSessionResult();
 
-        if (m_driver->getRSSI() == 0)
+        if (m_driver->getRSSI() == 0.0f)
           return;
 
         if (m_driver->isCooling())
