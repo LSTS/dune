@@ -392,12 +392,15 @@ namespace DUNE
           continue;
 
         int rv = m_uart->read(bfr, sizeof(bfr));
-
-        //! @todo: notify parent task.
         if (rv <= 0)
         {
-          m_task->war("short read %d", rv);
-          continue;
+          IMC::IoEvent iov;
+          iov.setSource(getTask()->getSystemId());
+          iov.setSourceEntity(getTask()->getEntityId());
+          iov.setDestinationEntity(getTask()->getEntityId());
+          iov.type = IMC::IoEvent::IOV_TYPE_INPUT_ERROR;
+          getTask()->receive(&iov);
+          break;
         }
 
         if (getReadMode() == READ_MODE_RAW)
