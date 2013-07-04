@@ -328,7 +328,6 @@ namespace Sensors
 
         // Register consumers.
         bind<IMC::LoggingControl>(this);
-        bind<IMC::PowerChannelState>(this);
         bind<IMC::SoundSpeed>(this);
       }
 
@@ -368,6 +367,8 @@ namespace Sensors
 
         m_power_channel_control.name = m_args.power_channel;
 
+        m_countdown.setTop(getActivationTime());
+
         if (m_args.fill_state)
           bind<IMC::EstimatedState>(this);
       }
@@ -391,8 +392,8 @@ namespace Sensors
         m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
         dispatch(m_power_channel_control);
 
+        m_countdown.reset();
         m_activating = true;
-        m_countdown.setTop(getActivationTime());
       }
 
       void
