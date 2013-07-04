@@ -526,7 +526,7 @@ main(int argc, char** argv)
     IMC::IridiumMsgTx* tmsg = new IMC::IridiumMsgTx;
     msg = tmsg;
     tmsg->req_id = atoi(argv[4]);
-    tmsg->destination = argv[5];
+    tmsg->ttl = atoi(argv[5]);
     std::string hex = String::fromHex(argv[6]);
     tmsg->data.assign(hex.begin(), hex.end());
   }
