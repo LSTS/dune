@@ -194,7 +194,7 @@ namespace Control
           .description("Loiter radius used in LoiterHere (idle)");
 
           param("Near distance", m_args.lnear)
-          .defaultValue("20")
+          .defaultValue("40")
           .units(Units::Meter)
           .description("Distance before WP at which the NEAR flag is sent");
 
@@ -522,44 +522,34 @@ namespace Control
           debug("Change to AUTO packet sent to Ardupilot");
 
           uint8_t buf[512];
-          int seq = 1;
-          float alt = (path->end_z_units & IMC::Z_NONE) ? m_args.alt : (float)path->end_z;
 
           mavlink_message_t* msg = new mavlink_message_t;
+
+          mavlink_msg_param_set_pack(255, 0, msg,
+              m_sysid, //! target_system System ID
+              0, //! target_component Component ID
+              "TRIM_ARSPD_CM", //! Parameter name
+              (int)(path->speed * 100), //! Parameter value
+              MAV_PARAM_TYPE_INT16); //! Parameter type
+
+          int n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+
+          float alt = (path->end_z_units & IMC::Z_NONE) ? m_args.alt : (float)path->end_z;
 
           mavlink_msg_mission_count_pack(255, 0, msg,
               m_sysid, //! target_system System ID
               0, //! target_component Component ID
-              4); //! size of Mission
+              2); //! size of Mission
 
-          uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
+          n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
 
           mavlink_msg_mission_write_partial_list_pack(255, 0, msg,
               m_sysid, //! target_system System ID
               0, //! target_component Component ID
-              seq, //! start_index Start index, 0 by default and smaller / equal to the largest index of the current onboard list
-              seq+2); //! end_index End index, equal or greater than start index
-
-          n = mavlink_msg_to_send_buffer(buf, msg);
-          sendData(buf, n);
-
-          //! Current position
-          mavlink_msg_mission_item_pack(255, 0, msg,
-              m_sysid, //! target_system System ID
-              0, //! target_component Component ID
-              seq++, //! seq Sequence
-              MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
-              MAV_CMD_NAV_WAYPOINT, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
-              1, //! current false:0, true:1
-              1, //! autocontinue autocontinue to next wp
-              0, //! Not used
-              0, //! Not used
-              0, //! Not used
-              0, //! Not used
-              m_lat, //! x PARAM5 / local: x position, global: latitude
-              m_lon, //! y PARAM6 / y position: global: longitude
-              m_alt);//! z PARAM7 / z position: global: altitude
+              1, //! start_index Start index, 0 by default and smaller / equal to the largest index of the current onboard list
+              1); //! end_index End index, equal or greater than start index
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
@@ -568,26 +558,6 @@ namespace Control
           m_pcs.start_lon = Angles::radians(m_lon);
           m_pcs.start_z = m_alt;
           m_pcs.start_z_units = IMC::Z_HEIGHT;
-
-          //! Desired speed
-          mavlink_msg_mission_item_pack(255, 0, msg,
-              m_sysid, //! target_system System ID
-              0, //! target_component Component ID
-              seq++, //! seq Sequence
-              MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
-              MAV_CMD_DO_CHANGE_SPEED, //! command The scheduled action for the MISSION. see MAV_CMD in common.xml MAVLink specs
-              0, //! current false:0, true:1
-              1, //! autocontinue autocontinue to next wp
-              0, //! Speed type (0=Airspeed, 1=Ground Speed)
-              (float)(path->speed_units == IMC::SUNITS_METERS_PS ? path->speed : -1), //! Speed  (m/s, -1 indicates no change)
-              (float)(path->speed_units == IMC::SUNITS_PERCENTAGE ? path->speed : -1), //! Throttle  ( Percent, -1 indicates no change)
-              0, //! Not used
-              0, //! Not used
-              0, //! Not used
-              0);//! Not used
-
-          n = mavlink_msg_to_send_buffer(buf, msg);
-          sendData(buf, n);
 
           if(path->lradius)
           {
@@ -606,7 +576,7 @@ namespace Control
           mavlink_msg_mission_item_pack(255, 0, msg,
               m_sysid, //! target_system System ID
               0, //! target_component Component ID
-              seq++, //! seq Sequence
+              1, //! seq Sequence
               MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
               (path->lradius ? MAV_CMD_NAV_LOITER_UNLIM : MAV_CMD_NAV_WAYPOINT), //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
               0, //! current false:0, true:1
@@ -1155,7 +1125,7 @@ namespace Control
           mavlink_statustext_t stat_tex;
 
           mavlink_msg_statustext_decode(msg, &stat_tex);
-          if((!strcmp("out of commands!", stat_tex.text)) && (m_current_wp == 3))
+          if((!strcmp("out of commands!", stat_tex.text)) && (m_current_wp == 1))
           {
             m_pcs.flags |= PathControlState::FL_NEAR;
             dispatch(m_pcs);
