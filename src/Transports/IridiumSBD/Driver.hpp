@@ -222,13 +222,15 @@ namespace Transports
       hasRingAlert(void)
       {
         ScopedMutex l(m_mutex);
-        if (m_sbd_ring)
-        {
-          m_sbd_ring = false;
-          return true;
-        }
+        return m_sbd_ring;
+      }
 
-        return false;
+      //! Clear ring alert notification.
+      void
+      clearRingAlert(void)
+      {
+        ScopedMutex l(m_mutex);
+        m_sbd_ring = false;
       }
 
       //! Retrieve the count of MT SBD messages waiting at the GSS.

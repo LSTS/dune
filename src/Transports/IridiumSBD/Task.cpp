@@ -318,6 +318,8 @@ namespace Transports
         {
           m_mbox_check_timer.reset();
           dequeueTxRequest(res.getSequenceMO());
+          if (m_driver->hasRingAlert())
+            m_driver->clearRingAlert();
         }
         else
         {
