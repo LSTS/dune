@@ -34,6 +34,7 @@
 // Local headers.
 #include "Driver.hpp"
 #include "TxRequest.hpp"
+#include "SessionResultCode.hpp"
 
 namespace Transports
 {
@@ -323,6 +324,9 @@ namespace Transports
         }
         else
         {
+          war(DTR("transmission failed: %s"),
+              SessionResultCode::translate(res.getStatusMO()).c_str());
+
           invalidateTxRequest(res.getSequenceMO(), res.getStatusMO());
         }
 
