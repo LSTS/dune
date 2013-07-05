@@ -142,10 +142,11 @@ namespace Transports
       Time::BrokenDown time_mod(mod_time);
       std::string path_name = path.basename().str();
 
+      m_bfr[0] = '\0';
       if (time_ref.year == time_mod.year)
       {
         String::format(m_bfr, sizeof(m_bfr),
-                       "%s  0 %-10s %-10s %10lu %s %u %02u:%02u %s\r\n",
+                       "%s  0 %-10s %-10s %10lld %s %u %02u:%02u %s\r\n",
                        perm, "unknown", "unknown",
                        size,
                        c_months[time_mod.month - 1],
@@ -157,7 +158,7 @@ namespace Transports
       else
       {
         String::format(m_bfr, sizeof(m_bfr),
-                       "%s  0 %-10s %-10s %10lu %s %u %u %s\r\n",
+                       "%s  0 %-10s %-10s %10lld %s %u %u %s\r\n",
                        perm, "unknown", "unknown",
                        size,
                        c_months[time_mod.month - 1],
