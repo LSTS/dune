@@ -144,6 +144,8 @@ namespace Sensors
       bool save_in_837;
       //! Save data in 837 format.
       bool fill_state;
+      // Power channel name.
+      std::string power_channel;
     };
 
     //! List of available ranges.
@@ -173,7 +175,7 @@ namespace Sensors
     struct Task: public Tasks::Periodic
     {
       //! TCP socket.
-      TCPSocket m_sock;
+      TCPSocket* m_sock;
       //! 837 Frame.
       Frame m_frame;
       //! Output switch data.
@@ -190,12 +192,20 @@ namespace Sensors
       std::ofstream m_log_file;
       //! Log filename
       std::string m_log_filename;
+      //! Power channel control.
+      IMC::PowerChannelControl m_power_channel_control;
+      //! True if task is activating.
+      bool m_activating;
+      //! Activation/deactivation timer.
+      Counter<double> m_countdown;
       //! Configuration parameters.
       Arguments m_args;
 
       //! Constructor.
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Periodic(name, ctx)
+        Tasks::Periodic(name, ctx),
+        m_sock(NULL),
+        m_activating(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -289,6 +299,10 @@ namespace Sensors
         .defaultValue("true")
         .description("Fill state data in Imagenex proprietary 837 format");
 
+        param("Power Channel", m_args.power_channel)
+        .defaultValue("Multibeam")
+        .description("Power channel that controls the power of the device");
+
         // Initialize switch data.
         std::memset(m_sdata, 0, sizeof(m_sdata));
         m_sdata[0] = 0xfe;
@@ -310,6 +324,8 @@ namespace Sensors
         m_ping.scale_factor = 1.0f;
         m_ping.min_range = 0;
 
+        setFrequency();
+
         // Register consumers.
         bind<IMC::LoggingControl>(this);
         bind<IMC::SoundSpeed>(this);
@@ -319,6 +335,15 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        if (isActive())
+        {
+          if (paramChanged(m_args.addr))
+            throw RestartNeeded(DTR("restarting to change IPv4 address"), 1);
+
+          if (paramChanged(m_args.port))
+            throw RestartNeeded(DTR("restarting to change TCP port"), 1);
+        }
+
         if (paramChanged(m_args.data_points))
         {
           m_args.data_points /= 1000;
@@ -340,45 +365,79 @@ namespace Sensors
           setAutoGainValue(m_args.auto_gain_value);
         }
 
+        m_power_channel_control.name = m_args.power_channel;
+
+        m_countdown.setTop(getActivationTime());
+
         if (m_args.fill_state)
           bind<IMC::EstimatedState>(this);
       }
 
-      //! Initialize resources.
       void
       onResourceInitialization(void)
       {
-        // Set switch command.
-        setFrequency();
+        requestDeactivation();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
 
-        try
-        {
-          m_sock.setNoDelay(true);
-          m_sock.connect(m_args.addr, m_args.port);
+      void
+      onResourceRelease(void)
+      {
+        requestDeactivation();
+      }
 
-          for (unsigned i = 0; i < m_args.data_points; ++i)
-            ping(i);
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-        }
-        catch (...)
-        {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-          throw;
-        }
+      void
+      onRequestActivation(void)
+      {
+        m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+        dispatch(m_power_channel_control);
+
+        m_countdown.reset();
+        m_activating = true;
       }
 
       void
       onActivation(void)
       {
+        inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        if (!m_log_file.is_open())
-          m_log_file.open((m_ctx.dir_log / m_log_filename / "multibeam.837").c_str(), std::ios::binary);
+        m_activating = false;
       }
 
       void
       onDeactivation(void)
       {
+        Memory::clear(m_sock);
+
+        inf("%s", DTR(Status::getString(Status::CODE_IDLE)));
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
+        m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+        dispatch(m_power_channel_control);
+      }
+
+      void
+      checkActivationProgress(void)
+      {
+        if (m_countdown.overflow())
+        {
+          activationFailed(DTR("failed to contact device"));
+          m_activating = false;
+          return;
+        }
+
+        try
+        {
+          m_sock = new TCPSocket;
+          m_sock->setNoDelay(true);
+          m_sock->connect(m_args.addr, m_args.port);
+
+          activate();
+          debug("activation took %0.2f s", getActivationTime() -
+                m_countdown.getRemaining());
+        }
+        catch (...)
+        { }
       }
 
       void
@@ -546,23 +605,23 @@ namespace Sensors
       ping(unsigned data_point)
       {
         m_sdata[SD_PACKET_NUM] = (uint8_t)data_point;
-        m_sock.write((char*)m_sdata, c_sdata_size);
+        m_sock->write((char*)m_sdata, c_sdata_size);
 
-        int rv = m_sock.read((char*)m_rdata_hdr, c_rdata_hdr_size);
+        int rv = m_sock->read((char*)m_rdata_hdr, c_rdata_hdr_size);
         if (rv != c_rdata_hdr_size)
           throw std::runtime_error(DTR("failed to read header"));
 
         unsigned dat_idx = data_point * c_rdata_dat_size;
 
         if (m_args.save_in_837)
-          rv = m_sock.read((char*)(m_frame.getMessageData() + dat_idx), c_rdata_dat_size);
+          rv = m_sock->read((char*)(m_frame.getMessageData() + dat_idx), c_rdata_dat_size);
         else
-          rv = m_sock.read(&m_ping.data[dat_idx], c_rdata_dat_size);
+          rv = m_sock->read(&m_ping.data[dat_idx], c_rdata_dat_size);
 
         if (rv != c_rdata_dat_size)
           throw std::runtime_error(DTR("failed to read data"));
 
-        rv = m_sock.read((char*)m_rdata_ftr, c_rdata_ftr_size);
+        rv = m_sock->read((char*)m_rdata_ftr, c_rdata_ftr_size);
         if (rv != c_rdata_ftr_size)
           throw std::runtime_error(DTR("failed to read footer"));
 
@@ -604,23 +663,34 @@ namespace Sensors
       void
       task(void)
       {
-        if (!isActive())
-          return;
-
-        try
+        while (!stopping())
         {
-          for (unsigned i = 0; i < m_args.data_points; ++i)
-            ping(i);
+          consumeMessages();
 
-          if (m_args.save_in_837)
-            handleSonarData();
+          if (isActive() && (m_sock != NULL))
+          {
+            try
+            {
+              for (unsigned i = 0; i < m_args.data_points; ++i)
+                ping(i);
+
+              if (m_args.save_in_837)
+                handleSonarData();
+              else
+                dispatch(m_ping);
+            }
+            catch (std::exception& e)
+            {
+              err("%s", e.what());
+              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            }
+          }
           else
-            dispatch(m_ping);
-        }
-        catch (std::exception& e)
-        {
-          err("%s", e.what());
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          {
+            waitForMessages(1.0);
+            if (m_activating)
+              checkActivationProgress();
+          }
         }
       }
     };
