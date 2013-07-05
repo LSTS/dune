@@ -293,6 +293,9 @@ namespace Transports
         if (!m_active)
           return;
 
+        if (m_lsf == NULL)
+          return;
+
         m_active = keep_logging;
 
         // Inform everyone that we stopped logging (if we were logging).
@@ -423,7 +426,16 @@ namespace Transports
         {
           waitForMessages(1.0);
           if (m_active)
-            tryFlush();
+          {
+            try
+            {
+              tryFlush();
+            }
+            catch(std::exception& e)
+            {
+              throw RestartNeeded(e.what(), 5);
+            }
+          }
         }
       }
     };
