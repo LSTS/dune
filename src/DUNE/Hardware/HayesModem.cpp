@@ -360,7 +360,7 @@ namespace DUNE
     }
 
     std::string
-    HayesModem::readLine(Timer::Counter<double>& timer)
+    HayesModem::readLine(Time::Counter<double>& timer)
     {
       if (m_lines.waitForItems(timer.getRemaining()))
       {
