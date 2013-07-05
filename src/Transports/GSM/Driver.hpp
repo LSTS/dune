@@ -54,6 +54,7 @@ namespace Transports
       //! Constructor.
       //! @param[in] task parent task.
       //! @param[in] uart serial port connected to the ISU.
+      //! @param[in] pin PIN number.
       Driver(Tasks::Task* task, SerialPort* uart, const std::string& pin = ""):
         HayesModem(task, uart),
         m_pin(pin)
