@@ -17143,6 +17143,7 @@ namespace DUNE
     IoEvent::clear(void)
     {
       type = 0;
+      error.clear();
     }
 
     bool
@@ -17150,6 +17151,7 @@ namespace DUNE
     {
       const IMC::IoEvent& other__ = dynamic_cast<const IoEvent&>(msg__);
       if (type != other__.type) return false;
+      if (error != other__.error) return false;
       return true;
     }
 
@@ -17164,6 +17166,7 @@ namespace DUNE
     {
       uint8_t* ptr__ = bfr__;
       ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(error, ptr__);
       return ptr__;
     }
 
@@ -17172,6 +17175,7 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(error, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -17180,6 +17184,7 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(error, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -17187,6 +17192,7 @@ namespace DUNE
     IoEvent::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "error", error, nindent__);
     }
   }
 }

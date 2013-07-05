@@ -16647,6 +16647,8 @@ namespace DUNE
 
       //! Type.
       uint8_t type;
+      //! Error Message.
+      std::string error;
 
       static uint16_t
       getIdStatic(void)
@@ -16696,6 +16698,12 @@ namespace DUNE
       getFixedSerializationSize(void) const
       {
         return 1;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(error);
       }
 
       void

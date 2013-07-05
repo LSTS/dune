@@ -6688,9 +6688,20 @@
   </message>
 
   <message id="813" name="I/O Event" abbrev="IoEvent" source="ccu,vehicle">
+    <description>
+      Notification of an I/O event.
+    </description>
     <field name="Type" abbrev="type" type="uint8_t" unit="Enumerated" prefix="IOV_TYPE">
+      <description>
+        Event type.
+      </description>
       <value abbrev="INPUT" name="Input Available" id="1"/>
       <value abbrev="INPUT_ERROR" name="Input Error" id="2"/>
+    </field>
+    <field name="Error Message" abbrev="error" type="plaintext">
+      <description>
+        Human-readable error message.
+      </description>
     </field>
   </message>
 </messages>
