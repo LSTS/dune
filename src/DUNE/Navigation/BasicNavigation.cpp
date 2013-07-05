@@ -940,6 +940,7 @@ namespace DUNE
         estate.theta = Math::Angles::normalizeRadian(getEuler(AXIS_Y));
         estate.psi = Math::Angles::normalizeRadian(getEuler(AXIS_Z));
         estate.depth = getDepth();
+        estate.alt = getAltitude();
         m_heading = estate.psi;
         updateEuler(c_wma_filter);
         updateDepth(c_wma_filter);
