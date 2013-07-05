@@ -663,32 +663,34 @@ namespace Sensors
       void
       task(void)
       {
-        if (!isActive())
-          return;
-
-        if (isActive() && (m_sock != NULL))
+        while (!stopping())
         {
-          try
-          {
-            for (unsigned i = 0; i < m_args.data_points; ++i)
-              ping(i);
+          consumeMessages();
 
-            if (m_args.save_in_837)
-              handleSonarData();
-            else
-              dispatch(m_ping);
-          }
-          catch (std::exception& e)
+          if (isActive() && (m_sock != NULL))
           {
-            err("%s", e.what());
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            try
+            {
+              for (unsigned i = 0; i < m_args.data_points; ++i)
+                ping(i);
+
+              if (m_args.save_in_837)
+                handleSonarData();
+              else
+                dispatch(m_ping);
+            }
+            catch (std::exception& e)
+            {
+              err("%s", e.what());
+              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            }
           }
-        }
-        else
-        {
-          waitForMessages(1.0);
-          if (m_activating)
-            checkActivationProgress();
+          else
+          {
+            waitForMessages(1.0);
+            if (m_activating)
+              checkActivationProgress();
+          }
         }
       }
     };
