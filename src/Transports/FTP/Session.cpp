@@ -74,18 +74,26 @@ namespace Transports
       "----------"
     };
 
-    Session::Session(Tasks::Context& ctx, TCPSocket* sock, const Address& local_addr):
+    Session::Session(Tasks::Context& ctx, TCPSocket* sock, const Address& local_addr, double timeout):
       m_ctx(ctx),
       m_sock(sock),
       m_local_addr(local_addr),
       m_data_pasv(false),
-      m_rest_offset(-1)
+      m_rest_offset(-1),
+      m_timer(timeout)
     {
       m_root = ctx.dir_log;
       m_path = "/";
 
+      m_sock->setNoDelay(true);
+      m_sock->setReceiveTimeout(5);
+      m_sock->setSendTimeout(5);
+
       // Initialize passive data socket.
       m_sock_data = new TCPSocket;
+      m_sock_data->setNoDelay(true);
+      m_sock_data->setReceiveTimeout(5);
+      m_sock_data->setSendTimeout(5);
       m_sock_data->bind(0, local_addr);
       m_sock_data->listen(5);
     }
@@ -112,7 +120,13 @@ namespace Transports
       if (m_sock == NULL)
         return;
 
-      sendReply(221, "Service closing control connection.");
+      try
+      {
+        sendReply(221, "Service closing control connection.");
+      }
+      catch (...)
+      { }
+
       delete m_sock;
       m_sock = NULL;
     }
@@ -503,6 +517,9 @@ namespace Transports
 
       while (!isStopping())
       {
+        if (m_timer.overflow())
+          break;
+
         try
         {
           if (!iom.poll(1.0))
@@ -518,7 +535,10 @@ namespace Transports
           for (int i = 0; i < rv; ++i)
           {
             if (m_parser.parse(m_bfr[i]))
+            {
               handleCommand(m_parser.getCode(), m_parser.getParameters());
+              m_timer.reset();
+            }
           }
         }
         catch (...)

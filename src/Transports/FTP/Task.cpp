@@ -44,10 +44,12 @@ namespace Transports
     //! Task arguments
     struct Arguments
     {
-      // Data port.
+      //! Data port.
       uint16_t data_port;
-      // Control port.
+      //! Control port.
       uint16_t control_port;
+      //! Session timeout.
+      double session_tout;
     };
 
     struct Task: public Tasks::Task
@@ -75,6 +77,11 @@ namespace Transports
         param("Control Port", m_args.control_port)
         .defaultValue("30021")
         .description("Control Port");
+
+        param("Session Timeout", m_args.session_tout)
+        .units(Units::Second)
+        .defaultValue("120")
+        .description("Timeout period of a session");
       }
 
       ~Task(void)
@@ -146,7 +153,8 @@ namespace Transports
           TCPSocket* client = sock->accept(&addr);
 
           debug("accepted connection from '%s'", addr.c_str());
-          Session* handler = new Session(m_ctx, client, local_addr);
+          Session* handler = new Session(m_ctx, client, local_addr,
+                                         m_args.session_tout);
           handler->start();
           m_busy_list.push_back(handler);
         }
@@ -164,6 +172,7 @@ namespace Transports
         {
           if ((*itr)->isDead())
           {
+            debug("cleaning client");
             (*itr)->stopAndJoin();
             delete *itr;
             itr = m_busy_list.erase(itr);
