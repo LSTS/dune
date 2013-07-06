@@ -39,7 +39,7 @@ namespace Transports
     {
     public:
       //! Translate session result code to human-readable message.
-      //! @param[in] numeric code.
+      //! @param[in] code numeric code.
       //! @result human-readable message.
       static std::string
       translate(unsigned code);
