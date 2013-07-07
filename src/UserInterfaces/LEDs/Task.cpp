@@ -29,6 +29,7 @@
 #include <map>
 #include <vector>
 #include <cstddef>
+#include <set>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -71,6 +72,8 @@ namespace UserInterfaces
       unsigned pp_addr;
       //! Start delay.
       double start_delay;
+      //! Entities whose failures are critical.
+      std::vector<std::string> critical;
     };
 
     struct Task: public Tasks::Task
@@ -87,6 +90,9 @@ namespace UserInterfaces
       uint8_t m_current_id;
       // Next pattern id.
       int m_next_id;
+      //! Critical entities.
+      std::set<unsigned> m_critical_eids;
+      bool m_critical_error;
       // Task arguments.
       Arguments m_args;
 
@@ -94,7 +100,9 @@ namespace UserInterfaces
         Tasks::Task(name, ctx),
         m_current(NULL),
         m_cursor(0),
-        m_next_id(-1)
+        m_current_id(PAT_NORMAL),
+        m_next_id(-1),
+        m_critical_error(false)
       {
         param("Interface", m_args.interface)
         .values("GPIO, Parallel Port, Emulator, Message")
@@ -109,8 +117,12 @@ namespace UserInterfaces
 
         param("Start Delay", m_args.start_delay)
         .units(Units::Second)
-        .defaultValue("2.0")
+        .defaultValue("4.0")
         .description("Amount of time to wait before start blinking LEDs");
+
+        param("Critical Entities", m_args.critical)
+        .defaultValue("")
+        .description("Entity names whose failures are considered critical");
 
 #define PATTERN(type, string)                   \
         param(string, m_patterns[type])         \
@@ -120,6 +132,7 @@ namespace UserInterfaces
         // Register message listeners.
         bind<IMC::VehicleState>(this);
         bind<IMC::PowerOperation>(this);
+        bind<IMC::EntityState>(this);
       }
 
       ~Task(void)
@@ -174,9 +187,23 @@ namespace UserInterfaces
       }
 
       void
+      onEntityResolution(void)
+      {
+        for (unsigned i = 0; i < m_args.critical.size(); ++i)
+        {
+          try
+          {
+            unsigned eid = resolveEntity(m_args.critical[i]);
+            m_critical_eids.insert(eid);
+          }
+          catch (...)
+          { }
+        }
+      }
+
+      void
       onResourceInitialization(void)
       {
-        Delay::wait(m_args.start_delay);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -204,21 +231,44 @@ namespace UserInterfaces
       }
 
       void
+      consume(const IMC::EntityState* msg)
+      {
+        if (msg->state != IMC::EntityState::ESTA_FAILURE)
+          return;
+
+        if (m_critical_eids.find(msg->getSourceEntity()) != m_critical_eids.end())
+        {
+          m_critical_error = true;
+          m_next_id = PAT_ERROR_FATAL;
+        }
+      }
+
+      void
       consume(const IMC::PowerOperation* msg)
       {
         if (msg->getDestination() != getSystemId())
           return;
 
-        if (msg->op == IMC::PowerOperation::POP_PWR_DOWN_IP)
-          m_next_id = PAT_SHUTDOWN;
-        else if (msg->op == IMC::PowerOperation::POP_PWR_DOWN_ABORTED)
-          m_next_id = PAT_NORMAL;
+        switch (msg->op)
+        {
+          case IMC::PowerOperation::POP_PWR_DOWN_IP:
+            m_next_id = PAT_SHUTDOWN;
+            break;
+          case IMC::PowerOperation::POP_PWR_DOWN_ABORTED:
+            m_next_id = PAT_NORMAL;
+            switchPattern();
+            break;
+        }
       }
 
       void
       consume(const IMC::VehicleState* msg)
       {
-        if (m_next_id == PAT_SHUTDOWN)
+        if (m_critical_error)
+          return;
+
+        // If system is shutting down don't update LEDs.
+        if ((m_next_id == PAT_SHUTDOWN) || (m_current_id == PAT_SHUTDOWN))
           return;
 
         switch (msg->op_mode)
@@ -240,8 +290,48 @@ namespace UserInterfaces
       }
 
       void
+      setLEDs(bool state)
+      {
+        std::vector<AbstractOutput*>::iterator itr = m_outs.begin();
+        for (; itr != m_outs.end(); ++itr)
+          (*itr)->setValue(state);
+      }
+
+      void
+      initializeLEDs(void)
+      {
+        Delay::wait(1.0);
+
+        setLEDs(true);
+
+        // Wait for vehicle state to settle.
+        Counter<double> timer(m_args.start_delay);
+        while (!stopping() && !timer.overflow())
+          waitForMessages(timer.getRemaining());
+
+        setLEDs(false);
+        if (m_next_id < 0)
+          m_next_id = PAT_NORMAL;
+
+        switchPattern();
+      }
+
+      void
+      switchPattern(void)
+      {
+        if (m_next_id >= 0)
+        {
+          m_current_id = (uint8_t)m_next_id;
+          m_current = &m_patterns[m_current_id];
+          m_next_id = -1;
+        }
+      }
+
+      void
       onMain(void)
       {
+        initializeLEDs();
+
         while (!stopping())
         {
           consumeMessages();
@@ -257,20 +347,12 @@ namespace UserInterfaces
 
           if (m_cursor == m_current->size())
           {
-            if (m_next_id >= 0)
-            {
-              m_current_id = (uint8_t)m_next_id;
-              m_current = &m_patterns[m_current_id];
-              m_next_id = -1;
-            }
+            switchPattern();
             m_cursor = 0;
           }
         }
 
-        // Shutdown LEDs.
-        std::vector<AbstractOutput*>::iterator itr = m_outs.begin();
-        for (; itr != m_outs.end(); ++itr)
-          (*itr)->setValue(0);
+        setLEDs(false);
       }
     };
   }
