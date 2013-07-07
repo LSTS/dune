@@ -147,34 +147,34 @@ public:
 
     // Gyros.
     ByteCopy::fromLE(s16, ptr + 2);
-    m_agvel_x1 = (float)s16 * 0.02;
+    m_agvel_x1 = (float)s16 * 0.02f;
     ByteCopy::fromLE(s16, ptr + 4);
-    m_agvel_y1 = (float)s16 * 0.02;
+    m_agvel_y1 = (float)s16 * 0.02f;
     ByteCopy::fromLE(s16, ptr + 6);
-    m_agvel_z1 = (float)s16 * 0.02;
+    m_agvel_z1 = (float)s16 * 0.02f;
 
     // Acceleration.
     ByteCopy::fromLE(s16, ptr + 8);
-    double accl_x = s16 * 0.0008;
+    double accl_x = s16 * 0.0008f;
     m_accel_x1 = (float)accl_x * 9.7982543981;
     ByteCopy::fromLE(s16, ptr + 10);
-    double accl_y = s16 * 0.0008;
+    double accl_y = s16 * 0.0008f;
     m_accel_y1 = (float)accl_y * 9.7982543981;
     ByteCopy::fromLE(s16, ptr + 12);
-    double accl_z = s16 * 0.0008;
+    double accl_z = s16 * 0.0008f;
     m_accel_z1 = (float)accl_z * 9.7982543981;
 
     // Magnetometer.
     ByteCopy::fromLE(s16, ptr + 26);
-    double magn_x = s16 * 0.0001;
+    double magn_x = s16 * 0.0001f;
     ByteCopy::fromLE(s16, ptr + 28);
-    double magn_y = s16 * 0.0001;
+    double magn_y = s16 * 0.0001f;
     ByteCopy::fromLE(s16, ptr + 30);
-    double magn_z = s16 * 0.0001;
+    double magn_z = s16 * 0.0001f;
 
     // Temperature.
     ByteCopy::fromLE(s16, ptr + 32);
-    m_temp1 = (float)(s16 * 0.00565) + 25.0;
+    m_temp1 = (float)(s16 * 0.00565) + 25.0f;
 
     computeLIMU(accl_x, accl_y, accl_z, magn_x, magn_y, magn_z);
   }
