@@ -102,7 +102,7 @@ namespace DUNE
       InterfaceESCC::doWrite(const uint8_t* data, unsigned data_size)
       {
 #if defined(DUNE_OS_LINUX)
-        ::write(m_handle, data, data_size);
+        (void)::write(m_handle, data, data_size);
 #else
         (void)data;
         (void)data_size;
