@@ -191,7 +191,7 @@ namespace Sensors
       //! Log file.
       std::ofstream m_log_file;
       //! Log filename
-      std::string m_log_filename;
+      Path m_log_path;
       //! Power channel control.
       IMC::PowerChannelControl m_power_channel_control;
       //! True if task is activating.
@@ -377,6 +377,7 @@ namespace Sensors
       onResourceInitialization(void)
       {
         requestDeactivation();
+        closeLog();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
@@ -407,6 +408,8 @@ namespace Sensors
       void
       onDeactivation(void)
       {
+        closeLog();
+
         Memory::clear(m_sock);
 
         inf("%s", DTR(Status::getString(Status::CODE_IDLE)));
@@ -441,6 +444,34 @@ namespace Sensors
       }
 
       void
+      openLog(const Path& path)
+      {
+        if (path == m_log_path)
+          return;
+
+        closeLog();
+
+        m_log_path = path;
+        m_log_file.open(m_log_path.c_str(), std::ios::binary);
+        debug("opening %s", m_log_path.c_str());
+      }
+
+      void
+      closeLog(void)
+      {
+        if (m_log_file.is_open())
+        {
+          m_log_file.close();
+          int64_t size = m_log_path.size();
+          if (size == 0)
+          {
+            debug("removing empty log '%s'", m_log_path.c_str());
+            m_log_path.remove();
+          }
+        }
+      }
+
+      void
       consume(const IMC::EstimatedState* msg)
       {
         m_estate = *msg;
@@ -455,19 +486,16 @@ namespace Sensors
         if (!m_args.save_in_837)
           return;
 
-        m_log_filename = msg->name;
-
         switch (msg->op)
         {
           case IMC::LoggingControl::COP_STARTED:
-            if (m_log_file.is_open())
-              m_log_file.close();
-
-            if (isActive())
-              m_log_file.open((m_ctx.dir_log / m_log_filename / "multibeam.837").c_str(), std::ios::binary);
+            closeLog();
+            debug("changing log file to %s", m_log_path.c_str());
+            openLog(m_ctx.dir_log / msg->name / "multibeam.837");
             break;
-          case IMC::LoggingControl::COP_REQUEST_STOP:
-            m_log_file.close();
+
+          case IMC::LoggingControl::COP_STOPPED:
+            closeLog();
             break;
         }
       }
