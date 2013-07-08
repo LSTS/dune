@@ -156,13 +156,13 @@ public:
     // Acceleration.
     ByteCopy::fromLE(s16, ptr + 8);
     double accl_x = s16 * 0.0008f;
-    m_accel_x1 = (float)accl_x * 9.7982543981;
+    m_accel_x1 = (float)accl_x * 9.7982543981f;
     ByteCopy::fromLE(s16, ptr + 10);
     double accl_y = s16 * 0.0008f;
-    m_accel_y1 = (float)accl_y * 9.7982543981;
+    m_accel_y1 = (float)accl_y * 9.7982543981f;
     ByteCopy::fromLE(s16, ptr + 12);
     double accl_z = s16 * 0.0008f;
-    m_accel_z1 = (float)accl_z * 9.7982543981;
+    m_accel_z1 = (float)accl_z * 9.7982543981f;
 
     // Magnetometer.
     ByteCopy::fromLE(s16, ptr + 26);
