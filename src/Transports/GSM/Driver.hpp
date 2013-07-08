@@ -255,7 +255,7 @@ namespace Transports
           throw Hardware::UnexpectedReply();
         }
 
-        if (parts[2].size() <= 2)
+        if ((parts[2] != "\"\"") && (parts[2].size() <= 2))
           throw Hardware::UnexpectedReply();
 
         location = parts[1];
