@@ -146,6 +146,12 @@ namespace Sensors
       bool fill_state;
       // Power channel name.
       std::string power_channel;
+      //! Range Modifier.
+      bool range_modifier;
+      //! Range Modifier Constant.
+      float range_modifier_constant;
+      //! Range Modifier Timer.
+      float range_modifier_timer;
     };
 
     //! List of available ranges.
@@ -198,6 +204,8 @@ namespace Sensors
       bool m_activating;
       //! Activation/deactivation timer.
       Counter<double> m_countdown;
+      //! Range adaptive modifier counter.
+      Counter<double> m_range_counter;
       //! Configuration parameters.
       Arguments m_args;
 
@@ -303,6 +311,20 @@ namespace Sensors
         .defaultValue("Multibeam")
         .description("Power channel that controls the power of the device");
 
+        param("Adaptive Range Modifier", m_args.range_modifier)
+        .defaultValue("true")
+        .description("Adaptive Multibeam range modifier");
+
+        param("Adaptive Range Modifier Constant", m_args.range_modifier_constant)
+        .defaultValue("10")
+        .minimumValue("0")
+        .description("Adaptive Multibeam range modifier constant");
+
+        param("Adaptive Range Modifier Timer", m_args.range_modifier_timer)
+        .defaultValue("10")
+        .minimumValue("0")
+        .description("Adaptive Multibeam range modifier timer");
+
         // Initialize switch data.
         std::memset(m_sdata, 0, sizeof(m_sdata));
         m_sdata[0] = 0xfe;
@@ -368,8 +390,9 @@ namespace Sensors
         m_power_channel_control.name = m_args.power_channel;
 
         m_countdown.setTop(getActivationTime());
+        m_range_counter.setTop(m_args.range_modifier_timer);
 
-        if (m_args.fill_state)
+        if (m_args.fill_state || m_args.range_modifier)
           bind<IMC::EstimatedState>(this);
       }
 
@@ -688,6 +711,17 @@ namespace Sensors
         m_frame.setHeading(m_estate.psi);
       }
 
+      //! Check current water column.
+      void
+      checkWaterColumn(void)
+      {
+        if (m_estate.alt > 0.5)
+        {
+          float height = m_estate.depth + m_estate.alt;
+          setRange(height + m_args.range_modifier_constant);
+        }
+      }
+
       void
       task(void)
       {
@@ -706,6 +740,15 @@ namespace Sensors
                 handleSonarData();
               else
                 dispatch(m_ping);
+
+              if (m_args.range_modifier)
+              {
+                if (m_range_counter.overflow())
+                {
+                  checkWaterColumn();
+                  m_range_counter.reset();
+                }
+              }
             }
             catch (std::exception& e)
             {
