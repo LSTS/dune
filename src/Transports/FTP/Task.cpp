@@ -112,6 +112,8 @@ namespace Transports
           if (addrs.find(addr) != addrs.end())
             continue;
 
+          addrs.insert(addr);
+
           std::stringstream os;
           os << "ftp://" << addr.str() << ":" << m_args.control_port << "/";
 
