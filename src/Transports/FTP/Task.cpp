@@ -28,6 +28,7 @@
 // ISO C++ 98 headers.
 #include <vector>
 #include <list>
+#include <set>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -104,10 +105,15 @@ namespace Transports
       {
         // Initialize and dispatch AnnounceService.
         std::vector<Interface> itfs = Interface::get();
+        std::set<Address> addrs;
         for (unsigned i = 0; i < itfs.size(); ++i)
         {
+          Address addr = itfs[i].address();
+          if (addrs.find(addr) != addrs.end())
+            continue;
+
           std::stringstream os;
-          os << "ftp://" << itfs[i].address().str() << ":" << m_args.control_port << "/";
+          os << "ftp://" << addr.str() << ":" << m_args.control_port << "/";
 
           TCPSocket* sock = createSocket(itfs[i].address(), m_args.control_port);
           sock->addToPoll(m_iom);
