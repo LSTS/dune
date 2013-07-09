@@ -713,13 +713,10 @@ namespace Sensors
 
       //! Check current water column.
       void
-      checkWaterColumn(void)
+      checkAltitude(void)
       {
         if (m_estate.alt > 0.5)
-        {
-          float height = m_estate.depth + m_estate.alt;
-          setRange(height + m_args.range_modifier_constant);
-        }
+          setRange(m_estate.alt + m_args.range_modifier_constant);
       }
 
       void
@@ -745,7 +742,7 @@ namespace Sensors
               {
                 if (m_range_counter.overflow())
                 {
-                  checkWaterColumn();
+                  checkAltitude();
                   m_range_counter.reset();
                 }
               }
