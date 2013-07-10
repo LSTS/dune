@@ -91,12 +91,24 @@ namespace Transports
       }
 
       TCPSocket*
-      createSocket(Address addr, uint16_t port)
+      createSocket(Address addr, uint16_t& port)
       {
         TCPSocket* sock = new TCPSocket;
-        sock->bind(port, addr);
-        sock->listen(5);
-        inf(DTR("bound to port %s:%u"), addr.c_str(), port);
+        while (true)
+        {
+          try
+          {
+            sock->bind(port, addr);
+            sock->listen(5);
+            inf(DTR("bound to port %s:%u"), addr.c_str(), port);
+            break;
+          }
+          catch (...)
+          {
+            ++port;
+          }
+        }
+
         return sock;
       }
 
@@ -106,6 +118,7 @@ namespace Transports
         // Initialize and dispatch AnnounceService.
         std::vector<Interface> itfs = Interface::get();
         std::set<Address> addrs;
+        uint16_t port = 0;
         for (unsigned i = 0; i < itfs.size(); ++i)
         {
           Address addr = itfs[i].address();
@@ -114,12 +127,13 @@ namespace Transports
 
           addrs.insert(addr);
 
-          std::stringstream os;
-          os << "ftp://" << addr.str() << ":" << m_args.control_port << "/";
-
-          TCPSocket* sock = createSocket(itfs[i].address(), m_args.control_port);
+          port = m_args.control_port;
+          TCPSocket* sock = createSocket(itfs[i].address(), port);
           sock->addToPoll(m_iom);
           m_sockets.push_back(sock);
+
+          std::stringstream os;
+          os << "ftp://" << addr.str() << ":" << port << "/";
 
           IMC::AnnounceService announce;
           announce.service = os.str();
