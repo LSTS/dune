@@ -48,5 +48,6 @@ namespace DUNE
 #include <DUNE/IMC/Exceptions.hpp>
 #include <DUNE/IMC/Definitions.hpp>
 #include <DUNE/IMC/Blob.hpp>
+#include <DUNE/IMC/IridiumMessageDefinitions.hpp>
 
 #endif

@@ -31,14 +31,16 @@
 // Local headers.
 #include "IridiumMessageDefinitions.hpp"
 
-namespace Transports
+namespace DUNE
 {
-  namespace Iridium
+  namespace IMC
   {
 
     IridiumMessage *
     IridiumMessage::deserialize(const DUNE::IMC::IridiumMsgRx * msg)
     {
+      msg->toText(std::cerr);
+
       uint8_t* ptr = (uint8_t*)&msg->data[0];
       IridiumMessage * ret = NULL;
       uint16_t msg_id;
@@ -114,6 +116,9 @@ namespace Transports
       buffer += DUNE::IMC::deserialize(destination, buffer, length);
       buffer += DUNE::IMC::deserialize(msg_id, buffer, length);
 
+      std::cerr << "parsing Iridium message... msg id: " << msg_id << "size: " << length << std::endl;
+
+
       msg = DUNE::IMC::Factory::produce(msg_id);
       if (msg == NULL)
       {
@@ -182,6 +187,8 @@ namespace Transports
         buffer += DUNE::IMC::serialize(_time, buffer);
         buffer += DUNE::IMC::serialize(_lat, buffer);
         buffer += DUNE::IMC::serialize(_lon, buffer);
+
+        std::cerr << it->id << " is at " << _lat << " / " << _lon;
       }
 
       return buffer - start;
@@ -270,5 +277,5 @@ namespace Transports
 
       return buffer - start;
     }
-  } /* namespace Iridium */
-} /* namespace Transports */
+  } /* namespace IMC */
+} /* namespace DUNE */

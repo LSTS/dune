@@ -37,9 +37,9 @@
 # include <DUNE/Math.hpp>
 # include <DUNE/Math/Angles.hpp>
 
-namespace Transports
+namespace DUNE
 {
-  namespace Iridium
+  namespace IMC
   {
 
     static const uint16_t ID_DEVICEUPDATE = 2001;
@@ -130,6 +130,6 @@ namespace Transports
       ~IridiumCommand(){};
     };
 
-  } /* namespace Iridium */
-} /* namespace Transports */
+  } /* namespace IMC */
+} /* namespace DUNE */
 #endif /* IRIDIUMMESSAGEDEFINITIONS_HPP_ */

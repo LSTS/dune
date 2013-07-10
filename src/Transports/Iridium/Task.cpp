@@ -27,7 +27,7 @@
 
 // DUNE headers.
 # include <DUNE/DUNE.hpp>
-# include "IridiumMessageDefinitions.hpp"
+# include <DUNE/IMC/IridiumMessageDefinitions.hpp>
 # include <DUNE/Math/Random.hpp>
 
 namespace Transports
@@ -147,7 +147,7 @@ namespace Transports
       void
       consume(const IMC::IridiumMsgRx* msg)
       {
-        IridiumMessage * m = IridiumMessage::deserialize(msg);
+        DUNE::IMC::IridiumMessage * m = DUNE::IMC::IridiumMessage::deserialize(msg);
 
         if (m == NULL)
         {
@@ -170,8 +170,8 @@ namespace Transports
             handleDeviceUpdate(dynamic_cast<DeviceUpdate *>(m));
             break;
           default:
-            GenericIridiumMessage * irMsg =
-                dynamic_cast<GenericIridiumMessage *>(m);
+            DUNE::IMC::GenericIridiumMessage * irMsg =
+                dynamic_cast<DUNE::IMC::GenericIridiumMessage *>(m);
             inf("Received imc message of type %s from Iridium.", irMsg->msg->getName());
             dispatch(irMsg->msg);
             break;
@@ -203,7 +203,7 @@ namespace Transports
           return false;
         }
         inf("sending device updates");
-        DeviceUpdate msg;
+        DUNE::IMC::DeviceUpdate msg;
         uint8_t buffer[65535];
         std::map<std::string, IMC::Announce>::iterator it;
 
@@ -215,11 +215,14 @@ namespace Transports
           pos.lon = it->second.lon;
           pos.time = it->second.getTimeStamp();
           msg.positions.push_back(pos);
+
+          spew("position to be sent: id:%d, lat: %f, lon: %f, time: %f", pos.id, pos.lat, pos.lon, pos.time);
         }
         m_last_announces.clear();
 
         msg.source = getSystemId();
         msg.destination = 0xFFFF;
+
         DUNE::IMC::IridiumMsgTx * m = new DUNE::IMC::IridiumMsgTx();
         int len = msg.serialize(buffer);
         m->data.assign(buffer, buffer + len);
