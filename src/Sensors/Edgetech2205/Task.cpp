@@ -451,7 +451,10 @@ namespace Sensors
         validity |= (1 << 2);
 
         // Heading.
-        u16 = static_cast<uint16_t>(Angles::degrees(m_estate.psi + Math::c_pi) * 100);
+        double heading = Angles::degrees(m_estate.psi);
+        if (heading < 0)
+          heading = 360.0 + heading;
+        u16 = static_cast<uint16_t>(heading * 100);
         pkt->set(u16, SDATA_IDX_HEADING);
         validity |= (1 << 3);
 
