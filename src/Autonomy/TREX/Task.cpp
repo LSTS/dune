@@ -46,6 +46,18 @@ namespace Autonomy
 
       //! Type of vehicle that TREX is controlling
       std::string vehicle_type;
+
+      //! Default loitering radius
+      fp32_t loiter_radius;
+
+      //! Time threshold after which communication with TREX is considered lost
+      uint16_t connection_timeout;
+
+      //! Threshold (meters) after which the vehicle is considered to have arrived
+      //! at destination in the vertical plane.
+      uint16_t altitude_interval;
+
+
     };
 
     struct Task : public DUNE::Tasks::Task
@@ -80,6 +92,10 @@ namespace Autonomy
         param("TREX ID", m_args.trex_id).defaultValue("65000");
 
         param("Vehicle Type", m_args.vehicle_type).defaultValue("AUV");
+
+        param("TREX Connection Timeout", m_args.connection_timeout).defaultValue("60");
+
+        param("FollowReference altitude interval", m_args.altitude_interval).defaultValue("2");
 
         // Register consumers.
         bind<IMC::Announce>(this);
@@ -221,8 +237,8 @@ namespace Autonomy
         IMC::FollowReference man;
         man.control_ent = 255;
         man.control_src = m_args.trex_id;
-        man.altitude_interval = 2;
-        man.timeout = 60;
+        man.altitude_interval = m_args.altitude_interval;
+        man.timeout = m_args.connection_timeout;
 
         IMC::PlanSpecification spec;
 

@@ -259,7 +259,7 @@ namespace Maneuver
       }
 
       void
-      guide(const IMC::PathControlState* pcs, const IMC::Reference* ref,
+      guide(const IMC::PathControlState* pcs, IMC::Reference* ref,
           const IMC::EstimatedState* state)
       {
 
@@ -281,7 +281,7 @@ namespace Maneuver
         // set attributes in desired path according to flags
         updateEndLoc(ref, desired_path, curlat, curlon);
         updateSpeed(ref, desired_path);
-        updateRadius(ref, desired_path);
+
         double z_dist = updateEndZ(ref, desired_path);
 
         // check to see if we are already at the target...
@@ -293,6 +293,8 @@ namespace Maneuver
         bool target_at_surface = desired_path.end_z == 0
             && desired_path.end_z_units == Z_DEPTH;
         bool still_same_reference = sameReference(ref, &m_last_ref);
+
+        updateRadius(ref, desired_path);
         int prevMode = m_fref_state.state;
 
         if (still_same_reference && prevMode != IMC::FollowRefState::FR_WAIT)
@@ -332,6 +334,12 @@ namespace Maneuver
             m_fref_state.state = IMC::FollowRefState::FR_HOVER;
           else if (at_z_target && at_xy_target && !target_at_surface)
             m_fref_state.state = IMC::FollowRefState::FR_LOITER;
+        }
+
+        if (m_fref_state.state == IMC::FollowRefState::FR_LOITER || m_fref_state.state == IMC::FollowRefState::FR_ELEVATOR)
+        {
+          if (desired_path.lradius == 0)
+            desired_path.lradius = m_args.loitering_radius;
         }
 
         m_fref_state.proximity = 0;
@@ -426,7 +434,7 @@ namespace Maneuver
         }
       }
 
-      void updateRadius(const IMC::Reference* ref, IMC::DesiredPath &desired_path) {
+      void updateRadius(IMC::Reference* ref, IMC::DesiredPath &desired_path) {
 
         //std::cout<< " starting radius " << ref->radius << "  -  " << desired_path.lradius << "\n";
         // set speed according to received reference. If the reference does not
@@ -434,7 +442,7 @@ namespace Maneuver
         if (ref->flags & IMC::Reference::FLAG_RADIUS)
         {
           desired_path.lradius = ref->radius;
-        } else if (m_got_reference ) {
+        } else if (m_got_reference && m_cur_ref.radius != 0) {
           desired_path.lradius = m_cur_ref.radius;
         } else {
           // default radius
