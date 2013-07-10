@@ -250,6 +250,7 @@ namespace Sensors
       onDeactivation(void)
       {
         setPower(false);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       bool
