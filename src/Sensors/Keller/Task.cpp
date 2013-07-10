@@ -90,7 +90,9 @@ namespace Sensors
 
     struct Task: public Tasks::Periodic
     {
-      static const int c_parser_data_size = 6;
+      static const unsigned c_parser_data_size = 6;
+      // Maximum number of consecutive CRC errors before bailing out.
+      static const unsigned c_max_crc_err = 10;
       // Serial port handle.
       SerialPort* m_uart;
       // True if serial port echoes sent commands.
@@ -127,10 +129,13 @@ namespace Sensors
       Time::Counter<float> m_error_wdog;
       // Task arguments.
       Arguments m_args;
+      // Unsigned CRC error counter.
+      unsigned m_crc_err_count;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
-        m_uart(NULL)
+        m_uart(NULL),
+        m_crc_err_count(0)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -281,15 +286,19 @@ namespace Sensors
           {
             m_error_wdog.reset();
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            m_crc_err_count = 0;
             return true;
+          }
+          else if (result == RES_EXCEPTION)
+          {
+            m_crc_err_count = 0;
+            return false;
           }
           else if (result == RES_CRC)
           {
             err(DTR("invalid CRC"));
-            return false;
-          }
-          else if (result == RES_EXCEPTION)
-          {
+            if (++m_crc_err_count > c_max_crc_err)
+              throw std::runtime_error(DTR("exceeded maximum consecutive CRC error count"));;
             return false;
           }
         }
