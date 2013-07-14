@@ -95,6 +95,15 @@ main(int argc, char** argv)
     tmsg->setSourceEntity(atoi(argv[4]));
     tmsg->state = IMC::EntityActivationState::EAS_ACTIVE;
   }
+  else if (strcmp(argv[3], "MagneticField") == 0)
+  {
+    IMC::MagneticField* tmsg = new IMC::MagneticField;
+    msg = tmsg;
+    tmsg->setSourceEntity(atoi(argv[4]));
+    tmsg->x = atoi(argv[5]);
+    tmsg->y = atoi(argv[6]);
+    tmsg->z = atoi(argv[7]);
+  }
   else if (strcmp(argv[3], "DataSanity") == 0)
   {
     IMC::DataSanity* tmsg = new IMC::DataSanity;
