@@ -267,14 +267,19 @@ namespace Plan
       }
 
       //! The plan has started
+      //! @param[out] affected vector of entities that will be (de)activated during the plan
       void
-      planStarted(void)
+      planStarted(std::vector<std::string>& affected)
       {
         // Order all entities to push their parameters
         EASMap::const_iterator itr;
         itr = m_eas.begin();
         for (; itr != m_eas.end(); ++itr)
         {
+	  // save the set of entities in the list
+	  affected.push_back(itr->first);
+
+	  // push entity parameters, so later they'll be popped
           IMC::PushEntityParameters push;
           push.name = itr->first;
           m_task->dispatch(push);
@@ -284,18 +289,19 @@ namespace Plan
       }
 
       //! The plan has stopped/ended
+      //! @param[in] affected vector of entities that were (de)activated during last executed plan
       void
-      planStopped(void)
+      planStopped(const std::vector<std::string>& affected)
       {
         dispatchActions(m_plan_actions.end_actions);
 
         // Order all entities to pop their parameters
-        EASMap::const_iterator itr;
-        itr = m_eas.begin();
-        for (; itr != m_eas.end(); ++itr)
+        std::vector<std::string>::const_iterator itr;
+        itr = affected.begin();
+        for (; itr != affected.end(); ++itr)
         {
           IMC::PopEntityParameters pop;
-          pop.name = itr->first;
+          pop.name = *itr;
           m_task->dispatch(pop);
         }
       }

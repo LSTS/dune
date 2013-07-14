@@ -241,7 +241,9 @@ namespace Plan
         if (m_sched == NULL)
           return;
 
-        m_sched->planStarted();
+	m_affected_ents.clear();
+
+        m_sched->planStarted(m_affected_ents);
       }
 
       //! Signal that the plan has stopped
@@ -251,7 +253,7 @@ namespace Plan
         if (m_sched == NULL)
           return;
 
-        m_sched->planStopped();
+        m_sched->planStopped(m_affected_ents);
       }
 
       //! Signal that calibration has started
@@ -648,6 +650,8 @@ namespace Plan
       bool m_beyond_dur;
       //! Schedule for actions to take during plan
       ActionSchedule* m_sched;
+      //! Vector of entity labels to push and pop entity parameters
+      std::vector<std::string> m_affected_ents;
     };
   }
 }
