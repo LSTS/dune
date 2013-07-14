@@ -229,8 +229,9 @@ namespace Sensors
         m_args.hard_iron[1] += msg->y;
         m_args.hard_iron[2] = 0.0;
 
-        // Set hard iron parameters and save to configuration.
-        saveParameters(m_args.hard_iron);
+        IMC::SaveEntityParameters params;
+        params.name = getName();
+        dispatch(params);
 
         if (!setHardIronFactors(m_args.hard_iron))
           throw RestartNeeded(DTR("failed to set hard-iron correction factors"), 5);
@@ -434,26 +435,6 @@ namespace Sensors
           if (m_parser.parse(m_buffer[i], m_frame))
             decode(m_frame);
         }
-      }
-
-      //! Save parameters to configuration.
-      void
-      saveParameters(const std::vector<double>& factors)
-      {
-        //! ParameterControl message.
-        IMC::ParameterControl pc;
-
-        pc.op = IMC::ParameterControl::OP_SAVE_PARAMS;
-        pc.params.clear();
-
-        IMC::Parameter p;
-        p.section = getName();
-        p.param = c_hard_iron_param;
-        p.value = String::str("%0.6f, %0.6f, %0.6f", factors[0], factors[1], factors[2]);
-
-        pc.params.push_back(p);
-
-        dispatch(pc);
       }
 
       void
