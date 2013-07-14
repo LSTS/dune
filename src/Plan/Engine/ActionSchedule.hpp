@@ -276,10 +276,10 @@ namespace Plan
         itr = m_eas.begin();
         for (; itr != m_eas.end(); ++itr)
         {
-	  // save the set of entities in the list
-	  affected.push_back(itr->first);
+          // save the set of entities in the list
+          affected.push_back(itr->first);
 
-	  // push entity parameters, so later they'll be popped
+          // push entity parameters, so later they'll be popped
           IMC::PushEntityParameters push;
           push.name = itr->first;
           m_task->dispatch(push);

@@ -571,7 +571,7 @@ namespace Plan
               spec_man.maneuver_id = arg->getName();
               spec_man.data.set(*man);
               m_spec.clear();
-	      m_spec.maneuvers.setParent(&m_spec);
+              m_spec.maneuvers.setParent(&m_spec);
               m_spec.plan_id = plan_id;
               m_spec.start_man_id = arg->getName();
               m_spec.maneuvers.push_back(spec_man);

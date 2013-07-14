@@ -241,7 +241,7 @@ namespace Plan
         if (m_sched == NULL)
           return;
 
-	m_affected_ents.clear();
+        m_affected_ents.clear();
 
         m_sched->planStarted(m_affected_ents);
       }
@@ -278,10 +278,10 @@ namespace Plan
       void
       maneuverDone(void)
       {
-	if (m_curr_node == NULL)
-	  return;
+        if (m_curr_node == NULL)
+          return;
 
-	if (m_last_dur != m_durations.end())
+        if (m_last_dur != m_durations.end())
         {
           if (m_curr_node->pman->maneuver_id == m_last_dur->first)
             m_beyond_dur = true;
