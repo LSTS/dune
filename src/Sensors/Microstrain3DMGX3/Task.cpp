@@ -134,6 +134,8 @@ namespace Sensors
       unsigned m_calib_eid;
       //! Read timestamp.
       double m_tstamp;
+      //! Watchdog.
+      Counter<double> m_wdog;
       //! Task arguments.
       Arguments m_args;
 
@@ -259,6 +261,7 @@ namespace Sensors
         // Prepare to read data frame.
         m_uart->setMinimumRead(CMD_DATA_SIZE);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_wdog.setTop(2.0);
       }
 
       void
@@ -288,11 +291,11 @@ namespace Sensors
         for (unsigned i = 0; i < 3; i++)
           m_hard_iron[i] = data(i);
 
-        runCalibration();
-
         IMC::SaveEntityParameters params;
         params.name = getName();
         dispatch(params);
+
+        runCalibration();
       }
 
       //! Send commands to the device.
@@ -340,37 +343,21 @@ namespace Sensors
           return true;
 
         if (m_uart->hasNewData(m_args.data_tout) != IOMultiplexing::PRES_OK)
-        {
-          if (m_timer.overflow())
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           return false;
-        }
 
         // Read response.
         int rv = m_uart->read(m_bfr, c_bfr_size);
         m_tstamp = Clock::getSinceEpoch();
 
         if (rv <= 0)
-        {
-          if (m_timer.overflow())
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           return false;
-        }
 
         if (rv != cmd_size)
-        {
-          if (m_timer.overflow())
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           return false;
-        }
 
         // Check if we have a response to our query.
         if (m_bfr[0] != cmd)
-        {
-          if (m_timer.overflow())
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           return false;
-        }
 
         // Validate checksum.
         if (!validateChecksum(m_bfr, cmd_size))
@@ -413,7 +400,7 @@ namespace Sensors
           // Set hard iron calibration parameters and reset device.
           if (!setHardIron())
           {
-            err(DTR("failed to calibrate device"));
+            throw RestartNeeded(DTR("failed to set hard-iron correction factors"), 5);
           }
           else
           {
@@ -593,73 +580,80 @@ namespace Sensors
         // Check for incoming messages.
         consumeMessages();
 
-        if (!poll(CMD_DATA, CMD_DATA_SIZE, 0, 0))
-          return;
+        if (poll(CMD_DATA, CMD_DATA_SIZE, 0, 0))
+        {
+          // Set timestamps so we have realistic times.
+          m_euler.setTimeStamp(m_tstamp);
+          m_accel.setTimeStamp(m_tstamp);
+          m_agvel.setTimeStamp(m_tstamp);
+          m_magfield.setTimeStamp(m_tstamp);
 
-        // Set timestamps so we have realistic times.
-        m_euler.setTimeStamp(m_tstamp);
-        m_accel.setTimeStamp(m_tstamp);
-        m_agvel.setTimeStamp(m_tstamp);
-        m_magfield.setTimeStamp(m_tstamp);
+          // Extract acceleration.
+          fp32_t accel[3] = {0};
+          ByteCopy::fromBE(accel[0], m_bfr + 1);
+          ByteCopy::fromBE(accel[1], m_bfr + 5);
+          ByteCopy::fromBE(accel[2], m_bfr + 9);
+          m_accel.x = Math::c_gravity * accel[0];
+          m_accel.y = Math::c_gravity * accel[1];
+          m_accel.z = Math::c_gravity * accel[2];
 
-        // Extract acceleration.
-        fp32_t accel[3] = {0};
-        ByteCopy::fromBE(accel[0], m_bfr + 1);
-        ByteCopy::fromBE(accel[1], m_bfr + 5);
-        ByteCopy::fromBE(accel[2], m_bfr + 9);
-        m_accel.x = Math::c_gravity * accel[0];
-        m_accel.y = Math::c_gravity * accel[1];
-        m_accel.z = Math::c_gravity * accel[2];
+          // Extract angular rates.
+          fp32_t arate[3] = {0};
+          ByteCopy::fromBE(arate[0], m_bfr + 13);
+          ByteCopy::fromBE(arate[1], m_bfr + 17);
+          ByteCopy::fromBE(arate[2], m_bfr + 21);
+          m_agvel.x = arate[0];
+          m_agvel.y = arate[1];
+          m_agvel.z = arate[2];
 
-        // Extract angular rates.
-        fp32_t arate[3] = {0};
-        ByteCopy::fromBE(arate[0], m_bfr + 13);
-        ByteCopy::fromBE(arate[1], m_bfr + 17);
-        ByteCopy::fromBE(arate[2], m_bfr + 21);
-        m_agvel.x = arate[0];
-        m_agvel.y = arate[1];
-        m_agvel.z = arate[2];
+          // Extract magnetic field.
+          fp32_t mfield[3] = {0};
+          ByteCopy::fromBE(mfield[0], m_bfr + 25);
+          ByteCopy::fromBE(mfield[1], m_bfr + 29);
+          ByteCopy::fromBE(mfield[2], m_bfr + 33);
+          m_magfield.x = mfield[0];
+          m_magfield.y = mfield[1];
+          m_magfield.z = mfield[2];
 
-        // Extract magnetic field.
-        fp32_t mfield[3] = {0};
-        ByteCopy::fromBE(mfield[0], m_bfr + 25);
-        ByteCopy::fromBE(mfield[1], m_bfr + 29);
-        ByteCopy::fromBE(mfield[2], m_bfr + 33);
-        m_magfield.x = mfield[0];
-        m_magfield.y = mfield[1];
-        m_magfield.z = mfield[2];
+          // Extract orientation matrix and compute Euler angles.
+          fp32_t omtrx[5] = {0};
+          ByteCopy::fromBE(omtrx[0], m_bfr + 37); // M11
+          ByteCopy::fromBE(omtrx[1], m_bfr + 41); // M12
+          ByteCopy::fromBE(omtrx[2], m_bfr + 45); // M13
+          ByteCopy::fromBE(omtrx[3], m_bfr + 57); // M23
+          ByteCopy::fromBE(omtrx[4], m_bfr + 69); // M33
+          m_euler.phi = static_cast<double>(std::atan2(omtrx[3], omtrx[4]));
+          m_euler.theta = static_cast<double>(std::asin(-omtrx[2]));
+          m_euler.psi = static_cast<double>(std::atan2(omtrx[1], omtrx[0]));
+          m_euler.psi_magnetic = m_euler.psi;
 
-        // Extract orientation matrix and compute Euler angles.
-        fp32_t omtrx[5] = {0};
-        ByteCopy::fromBE(omtrx[0], m_bfr + 37); // M11
-        ByteCopy::fromBE(omtrx[1], m_bfr + 41); // M12
-        ByteCopy::fromBE(omtrx[2], m_bfr + 45); // M13
-        ByteCopy::fromBE(omtrx[3], m_bfr + 57); // M23
-        ByteCopy::fromBE(omtrx[4], m_bfr + 69); // M33
-        m_euler.phi = static_cast<double>(std::atan2(omtrx[3], omtrx[4]));
-        m_euler.theta = static_cast<double>(std::asin(-omtrx[2]));
-        m_euler.psi = static_cast<double>(std::atan2(omtrx[1], omtrx[0]));
-        m_euler.psi_magnetic = m_euler.psi;
+          // Extract time.
+          uint32_t timer = 0;
+          ByteCopy::fromBE(timer, m_bfr + CMD_DATA_SIZE - 6);
+          m_euler.time = timer / 62500.0;
+          m_accel.time = m_euler.time;
+          m_agvel.time = m_euler.time;
+          m_magfield.time = m_euler.time;
 
-        // Extract time.
-        uint32_t timer = 0;
-        ByteCopy::fromBE(timer, m_bfr + CMD_DATA_SIZE - 6);
-        m_euler.time = timer / 62500.0;
-        m_accel.time = m_euler.time;
-        m_agvel.time = m_euler.time;
-        m_magfield.time = m_euler.time;
+          // Correct mounting position.
+          rotateData();
 
-        // Correct mounting position.
-        rotateData();
+          // Dispatch messages.
+          dispatch(m_euler, DF_KEEP_TIME);
+          dispatch(m_accel, DF_KEEP_TIME);
+          dispatch(m_agvel, DF_KEEP_TIME);
+          dispatch(m_magfield, DF_KEEP_TIME);
 
-        // Dispatch messages.
-        dispatch(m_euler, DF_KEEP_TIME);
-        dispatch(m_accel, DF_KEEP_TIME);
-        dispatch(m_agvel, DF_KEEP_TIME);
-        dispatch(m_magfield, DF_KEEP_TIME);
+          // Clear entity state.
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          m_wdog.reset();
+        }
 
-        // Clear entity state.
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        if (m_wdog.overflow() && m_timer.overflow())
+        {
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          throw RestartNeeded(DTR(Status::getString(Status::CODE_COM_ERROR)), 5);
+        }
       }
     };
   }
