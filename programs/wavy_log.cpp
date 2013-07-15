@@ -399,8 +399,11 @@ toEpoch(date* d)
   tcal.tm_mday = d->day;
   tcal.tm_mon = d->month - 1;
   tcal.tm_year = d->year + 100;
+  tcal.tm_isdst = 0;
 
-  return mktime(&tcal);
+  std::time_t lc = mktime(&tcal);
+
+  return mktime(gmtime(&lc));
 }
 
 bool
@@ -498,6 +501,13 @@ convertAndWrite(const char* name, std::vector<logged_data>& packets)
     std::cerr << "year " << (unsigned)packets[4].fix.utc.year << std::endl
               << "month " << (unsigned)packets[4].fix.utc.month << std::endl
               << "day " << (unsigned)packets[4].fix.utc.day << std::endl;
+    std::cerr << "hour " << (unsigned)packets[4].fix.utc.hour << std::endl
+              << "minute " << (unsigned)packets[4].fix.utc.minute << std::endl
+              << "second " << (unsigned)packets[4].fix.utc.second << std::endl;
+
+    std::cerr << "timestamp: " << std::setprecision(9)
+              << state.getTimeStamp()
+              << std::endl;
   }
 
   Path dir = ("wavy_logs" /
