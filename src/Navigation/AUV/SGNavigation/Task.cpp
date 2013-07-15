@@ -588,11 +588,11 @@ namespace Navigation
           }
 
           // Speed innovation matrix.
-          if ((m_valid_gv || m_valid_wv) && m_time_without_gps.overflow() && !m_time_without_dvl.overflow())
+          if (m_valid_gv || m_valid_wv)
           {
-              runKalmanDVL();
-              m_kal.setInnovation(OUT_U, m_kal.getOutput(OUT_U) - m_kal.getState(STATE_U));
-              m_kal.setInnovation(OUT_V, m_kal.getOutput(OUT_V) - m_kal.getState(STATE_V));
+            runKalmanDVL();
+            m_kal.setInnovation(OUT_U, m_kal.getOutput(OUT_U) - m_kal.getState(STATE_U));
+            m_kal.setInnovation(OUT_V, m_kal.getOutput(OUT_V) - m_kal.getState(STATE_V));
           }
           else if (m_time_without_gps.overflow() && m_time_without_dvl.overflow())
           {
@@ -603,7 +603,7 @@ namespace Navigation
           else
           {
             // Use GPS speed over ground.
-            if (m_gps_reading)
+            if (m_gps_reading && m_time_without_dvl.overflow())
             {
               m_kal.setInnovation(OUT_U, m_gps_sog - m_kal.getState(STATE_U));
               m_kal.setInnovation(OUT_V, 0 - m_kal.getState(STATE_V));
