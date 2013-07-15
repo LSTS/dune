@@ -362,7 +362,7 @@ convertFixToIMC(gps_fix* fix, IMC::GpsFix* msg)
   msg->height = (float)fix->height / 100.0;
   msg->satellites = fix->satellites;
   msg->cog = Angles::radians((float)fix->heading / 100.0);
-  msg->sog = (float)fix->speed / 3600.0 * 1000.0;
+  msg->sog = (float)fix->speed / 100.0 / 3600.0 * 1000.0;
   msg->hdop = (float)fix->hdop / 100.0;
   msg->hacc = (float)fix->epe / 100.0;
 }
