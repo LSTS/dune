@@ -97,10 +97,10 @@ namespace Simulators
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Periodic(name, ctx),
-        m_model(),
-        m_start_time(Clock::get()),
-        m_last_update(Clock::get()),
-        m_last_time_debug(Clock::get()),
+        m_model(NULL),
+        m_start_time(-1.0),
+        m_last_update(-1.0),
+        m_last_time_debug(-1.0),
         m_thruster_act(0.0),
         m_servo_pos(4, 1, 0.0),
         m_position(6, 1, 0.0),
@@ -286,6 +286,11 @@ namespace Simulators
 
         m_model = new UAVModel(par);
         */
+
+        //! Start the simulation time
+        m_start_time = Clock::get();
+        m_last_update = Clock::get();
+        m_last_time_debug = Clock::get();
       }
 
       void
@@ -421,7 +426,7 @@ namespace Simulators
         return Matrix(tmp_j2, 3, 3);
       }
 
-     Matrix
+      Matrix
       matrixJ(float roll, float pitch, float yaw)
       {
         double ea[3] = {roll, pitch, yaw};
@@ -438,17 +443,17 @@ namespace Simulators
       void
       task(void)
       {
-        // Handle IMC messages from bus
+        //! Handle IMC messages from bus
         consumeMessages();
 
         if (!isActive())
           return;
 
-        // Declaration
+        //! Declaration
         double time;
         double timestep;
 
-        // Compute the time step
+        //! Compute the time step
         time  = Clock::get();
         timestep = time - m_last_update;
         m_last_update = time;
@@ -496,15 +501,15 @@ namespace Simulators
         m_sstate.v = vd_body_vel(1);
         m_sstate.w = vd_body_vel(2);
 
-        // UAV body-frame rotation rates
+        //! UAV body-frame rotation rates
         // vd_UAVRotRates = UAVRotRatTrans_1_00(vd_State);
 
-        // Fill angular velocity.
+        //! Fill angular velocity.
         m_sstate.p = m_velocity(3);
         m_sstate.q = m_velocity(4);
         m_sstate.r = m_velocity(5);
 
-        // Fill stream velocity.
+        //! Fill stream velocity.
         m_sstate.svx = m_model->m_wind(0);
         m_sstate.svy = m_model->m_wind(1);
         m_sstate.svz = m_model->m_wind(2);
