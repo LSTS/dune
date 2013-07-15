@@ -29,7 +29,6 @@
 #include <cstring>
 #include <cmath>
 #include <vector>
-using std::vector;
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -71,7 +70,7 @@ namespace Maneuver
         int uav_n;
         int uav_ind;
         //! Leader flight plan
-        std::string plan
+        std::string plan;
         //! Environmental parameters
         double gaccel;
         double flow_accel_max;
@@ -83,8 +82,17 @@ namespace Maneuver
 
       struct Task: public DUNE::Tasks::Periodic
       {
-        // Task arguments
-        std::vector<UAVSimulation>* m_models;
+        //! Simulated vehicles' models
+        std::vector<UAVSimulation*> m_models;
+        //! Leader vehicle' model
+        UAVSimulation* m_model;
+        //! Simulated position (X,Y,Z).
+        IMC::SimulatedState m_sstate;
+        //! Start time.
+        double m_start_time;
+        //! Last time update was ran
+        double m_last_update;
+        //! Task arguments.
         Arguments m_args;
 
         // System state variables
@@ -100,17 +108,22 @@ namespace Maneuver
         // Other
         int m_uav_n;
         bool m_init_leader_state;
+        bool m_init_sim_state;
         bool m_valid_airspeed;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Periodic(name, ctx),
-          m_models(),
+          m_models(NULL),
+          m_model(NULL),
+          m_start_time(-1.0),
+          m_last_update(-1.0),
           m_uav_state(12, 1, 0.0),
           m_uav_accel(3, 1,  0.0),
           m_airspeed(1),
           m_wind(2, 1, 0.0),
           m_uav_n(1),
           m_init_leader_state(1),
+          m_init_sim_state(1),
           m_valid_airspeed(0)
         {
           param("Formation Long Gain", m_args.k_longitudinal)
@@ -240,25 +253,40 @@ namespace Maneuver
           //! Initial parameters checking
           checkParameters();
 
-          //! Initialize the leader and simulated vehicles models
-          UAVSimulation model;
-          for (int ind_uav = 0; ind_uav <= m_uav_n; ++ind_uav)
+          UAVSimulation* model;
+          if (m_args.uav_ind == 0)
           {
+            //! Initialize the leader vehicle models
             //! - State  and control parameters initialization
-            model = new UAVSimulation(m_args.c_bank, m_args.c_speed);
+            m_model = new UAVSimulation(m_args.c_bank, m_args.c_speed);
             //! - Simulation type
-            model.m_sim_type = m_args.sim_type;
-            //! Add model to the models vector
-            m_models->push_back(model);
+            m_model->m_sim_type = m_args.sim_type;
+
+            //! Initiate the leader vehicle plan
+            IMC::PlanControl p_control;
+            p_control.plan_id = m_args.plan;
+            p_control.op = IMC::PlanControl::PC_START;
+            p_control.type = IMC::PlanControl::PC_REQUEST;
+            p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
+            dispatch(p_control);
+          }
+          else
+          {
+            //! Initialize the simulated vehicles models
+            for (int ind_uav = 0; ind_uav <= m_uav_n; ++ind_uav)
+            {
+              //! - State  and control parameters initialization
+              model = new UAVSimulation(m_args.c_bank, m_args.c_speed);
+              //! - Simulation type
+              model->m_sim_type = m_args.sim_type;
+              //! Add model to the models vector
+              m_models.push_back(model);
+            }
           }
 
-          //! Initiate the leader vehicle plan
-          IMC::PlanControl p_control;
-          p_control.plan_id = m_args.plan;
-          p_control.op = IMC::PlanControl::PC_START;
-          p_control.type = IMC::PlanControl::PC_REQUEST;
-          p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
-          dispatch(p_control);
+          //! Start the simulation time
+          m_start_time = Clock::get();
+          m_last_update = Clock::get();
         }
 
         void
@@ -317,57 +345,141 @@ namespace Maneuver
         }
 
         void
+        consume(const IMC::DesiredRoll* msg)
+        {
+          if (!isActive())
+          {
+            trace("Bank command rejected.");
+            trace("Simulation not active.");
+            trace("Missing GPS-Fix!");
+            return;
+          }
+
+          m_model->m_bank_cmd = msg->value;
+
+          // ========= Debug ===========
+          trace("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
+        }
+
+        void
+        consume(const IMC::DesiredSpeed* msg)
+        {
+          if (!isActive())
+          {
+            trace("Speed command rejected.");
+            trace("Simulation not active.");
+            trace("Missing GPS-Fix!");
+            return;
+          }
+
+          m_model->m_airspeed_cmd = msg->value;
+
+          // ========= Debug ===========
+          trace("Speed command received (%1.2fm/s)", msg->value);
+        }
+
+        void
         consume(const IMC::EstimatedState* msg)
         {
-          if (msg->getSource() == getSystemId())
+          UAVSimulation* model;
+          //! Skip formation flight controller if running as the leader vehicle
+          if (m_args.uav_ind == 0)
           {
-            //! Get vehicle own updated state
-            double vt_uav_state[12] = {msg->x,   msg->y,     msg->z,
-                msg->vx,  msg->vy,    msg->vz,
-                msg->phi, msg->theta, msg->psi,
-                msg->p,   msg->q,     msg->r};
-            m_uav_state.set(0, 11, m_args.uav_ind, m_args.uav_ind, Matrix(vt_uav_state, 12, 1));
-          }
-          //! Get team vehicles updated state
-          //! - Check that the estimated state is from a team member
-          // m_uav_state.set(0, 11, m_args.uav_ind, m_args.uav_ind, Matrix(vt_uav_state, 12, 1));
-
-          if (m_init_leader_state)
-          {
-            UAVSimulation model;
-            m_init_leader_state = 0;
-            Matrix vd_horiz_vel = Matrix(3, 1, 0.0);
-            for (int ind_uav = 0; ind_uav <= m_uav_n; ++ind_uav)
+            if (m_init_leader_state)
             {
+              m_init_leader_state = 0;
+              Matrix vd_vel2wind = Matrix(3, 1, 0.0);
               //! Retrieve current vehicle model
-              model = *m_models[ind_uav];
+              model = m_models[0];
               //! - State  and control parameters initialization
-              model.set(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)),
+              model->set(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)),
                         m_uav_state.get(3, 5, ind_uav, ind_uav).vertCat(m_uav_state.get(9, 11, ind_uav, ind_uav)));
               //! - Commands initialization
-              vd_horiz_vel = m_uav_state.get(3, 5, ind_uav, ind_uav) - m_wind;
-              model.command(m_uav_state(6, ind_uav), vd_horiz_vel.norm_2(), m_uav_state(2, ind_uav));
+              vd_vel2wind = m_uav_state.get(3, 5, ind_uav, ind_uav) - m_wind;
+              model->command(m_uav_state(6, ind_uav), vd_vel2wind.norm_2(), m_uav_state(2, ind_uav));
               //! Update current vehicle model to the vector
-              *m_models[ind_uav] = model;
+              m_models[ind_uav-1] = model;
             }
+
+            //! GPS position initialization
+            debug("Formation leader GPS-Fix initialization");
+            IMC::GpsFix init_fix;
+            init_fix.lat = DUNE::Math::Angles::radians(m_args.init_lat);
+            init_fix.lon = DUNE::Math::Angles::radians(m_args.init_lon);
+            init_fix.height = m_args.init_alt;
+            m_sstate.lat = init_fix.lat;
+            m_sstate.lon = init_fix.lon;
+            m_sstate.height = m_args.init_alt;
+            dispatch(init_fix);
+            requestActivation();
+
+            //! Model initialization
+            debug("Formation leader model initialization");
+            //! - Altitude initialization
+            m_position(2) = m_args.init_alt;
+            //! - Bank initialization
+            m_position(3) = DUNE::Math::Angles::radians(m_args.init_roll);
+            //! - Heading initialization
+            m_position(5) = DUNE::Math::Angles::radians(m_args.init_yaw);
+            //! - Velocity vector initialization
+            m_velocity(0) = m_args.init_speed*std::cos(m_position(5));
+            m_velocity(1) = m_args.init_speed*std::sin(m_position(5));
+            //! - State  and control parameters initialization
+            m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
+            //! - Commands initialization
+            m_model->command(m_position(3), m_args.init_speed, m_position(2));
+            // - Simulation type
+            m_model->m_sim_type = m_args.sim_type;
           }
+          else
+          {
+            if (msg->getSource() == getSystemId())
+            {
+              //! Get vehicle own updated state
+              double vt_uav_state[12] = {msg->x,   msg->y,     msg->z,
+                  msg->vx,  msg->vy,    msg->vz,
+                  msg->phi, msg->theta, msg->psi,
+                  msg->p,   msg->q,     msg->r};
+              m_uav_state.set(0, 11, m_args.uav_ind, m_args.uav_ind, Matrix(vt_uav_state, 12, 1));
+            }
+            //! Get team vehicles updated state
+            //! - Check that the estimated state is from a team member
+            // m_uav_state.set(0, 11, m_args.uav_ind, m_args.uav_ind, Matrix(vt_uav_state, 12, 1));
 
-          double vd_cmd[3] = formationControl(m_uav_state, m_uav_accel, m_args.uav_ind, m_airspeed_cmd.value);
+            //! Simulation vehicles model initialization
+            if (m_init_sim_state)
+            {
+              Matrix vd_vel2wind = Matrix(3, 1, 0.0);
+              for (int ind_uav = 1; ind_uav <= m_uav_n; ++ind_uav)
+              {
+                //! Retrieve current vehicle model
+                model = *m_models[ind_uav-1];
+                //! - State  and control parameters initialization
+                model.set(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)),
+                          m_uav_state.get(3, 5, ind_uav, ind_uav).vertCat(m_uav_state.get(9, 11, ind_uav, ind_uav)));
+                //! - Commands initialization
+                vd_vel2wind = m_uav_state.get(3, 5, ind_uav, ind_uav) - m_wind;
+                model.command(m_uav_state(6, ind_uav), vd_vel2wind.norm_2(), m_uav_state(2, ind_uav));
+                //! Update current vehicle model to the vector
+                *m_models[ind_uav-1] = model;
+              }
+            }
 
-          //===========================================
-          // Output
-          //===========================================
+            double vd_cmd[3] = formationControl(m_uav_state, m_uav_accel, m_args.uav_ind, m_airspeed_cmd.value);
 
-          m_bank_cmd.value = vd_cmd[1];
-          dispatch(m_bank_cmd);
-          m_airspeed_cmd.value = vd_cmd[2];
-          dispatch(m_airspeed_cmd);
-          /*
-        m_altitude_cmd.value = vd_cmd[3];
-        dispatch(m_altitude_cmd);
-           */
+            //===========================================
+            // Output
+            //===========================================
 
-
+            m_bank_cmd.value = vd_cmd[1];
+            dispatch(m_bank_cmd);
+            m_airspeed_cmd.value = vd_cmd[2];
+            dispatch(m_airspeed_cmd);
+            /*
+             m_altitude_cmd.value = vd_cmd[3];
+             dispatch(m_altitude_cmd);
+             */
+          }
         }
 
         double
@@ -1146,13 +1258,24 @@ namespace Maneuver
           return vd_cmd;
         }
 
+        Matrix
+        matrixRotRbody2gnd(float roll, float pitch)
+        {
+          // Rotations rotation matrix
+          double tmp_j2[9] = {1, std::sin(roll) * std::tan(pitch),  std::cos(roll) * std::tan(pitch),
+                              0,                   std::cos(roll),                   -std::sin(roll),
+                              0, std::sin(roll) / std::cos(pitch),  std::cos(roll) / std::cos(pitch)};
+
+          return Matrix(tmp_j2, 3, 3);
+        }
+
         void
         checkParameters(void)
         {
           int m_uav_n = m_args.formation_pos.columns();
           if (m_uav_n != m_args.uav_n)
           {
-            warn("Number of the UAVs in the formation matrix (%d) is different from the total UAV count indicated (%d)!",
+            war("Number of the UAVs in the formation matrix (%d) is different from the total UAV count indicated (%d)!",
                  m_uav_n, m_args.uav_n);
             m_uav_n = (m_uav_n < m_args.uav_n)?m_uav_n:m_args.uav_n;
           }
@@ -1161,7 +1284,88 @@ namespace Maneuver
         void
         task(void)
         {
-          //! Update the leader and the simulated vehicles commands and states
+          if (m_args.uav_ind == 0)
+          {
+            //! Update the leader vehicle commands and states
+
+            //! Handle IMC messages from bus
+            consumeMessages();
+
+            if (!isActive())
+              return;
+
+            //! Declaration
+            double time;
+            double timestep;
+
+            //! Compute the time step
+            time  = Clock::get();
+            timestep = time - m_last_update;
+            m_last_update = time;
+
+            /*
+            // ========= Debug ===========
+            if (time >= m_last_time_debug + 1.0)
+            {
+              //spew("Simulating: %s", m_model->m_sim_type);
+              spew("Bank: %1.2fº        - Commanded bank: %1.2fº",
+                  DUNE::Math::Angles::degrees(m_position(3)),
+                  DUNE::Math::Angles::degrees(m_model->m_bank_cmd));
+              spew("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->m_airspeed, m_model->m_airspeed_cmd);
+              spew("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
+            }
+             */
+            //==========================================================================
+            //! Dynamics
+            //==========================================================================
+
+            m_model->update(timestep);
+            m_model->get(m_position, m_velocity);
+
+            //==========================================================================
+            //! Output
+            //==========================================================================
+
+            //! Fill position.
+            m_sstate.x = m_position(0);
+            m_sstate.y = m_position(1);
+            m_sstate.z = m_position(2);
+
+            //! Fill attitude.
+            m_sstate.phi = m_position(3);
+            m_sstate.theta = m_position(4);
+            m_sstate.psi = m_position(5);
+
+            //! Rotation matrix
+            double euler_ang[3] = {m_position(3), m_position(4), m_position(5)};
+            Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
+            //! UAV velocity rotation to the body frame
+            Matrix vd_body_vel = transpose(md_rot_body2gnd) * m_velocity.get(0, 2, 0, 0);
+            //! Fill body-frame linear velocity, relative to the ground.
+            m_sstate.u = vd_body_vel(0);
+            m_sstate.v = vd_body_vel(1);
+            m_sstate.w = vd_body_vel(2);
+
+            //! UAV body-frame rotation rates
+            // vd_UAVRotRates = UAVRotRatTrans_1_00(vd_State);
+
+            //! Fill angular velocity.
+            m_sstate.p = m_velocity(3);
+            m_sstate.q = m_velocity(4);
+            m_sstate.r = m_velocity(5);
+
+            //! Fill stream velocity.
+            m_sstate.svx = m_model->m_wind(0);
+            m_sstate.svy = m_model->m_wind(1);
+            m_sstate.svz = m_model->m_wind(2);
+
+            dispatch(m_sstate);
+          }
+          else
+          {
+            //! Update the simulated vehicles commands and states
+
+          }
         }
       };
     }
