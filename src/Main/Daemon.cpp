@@ -194,7 +194,7 @@ main(int argc, char** argv)
   .program(DUNE_SHORT_NAME)
   .copyright(DUNE_COPYRIGHT)
   .email(DUNE_CONTACT)
-  .version(DUNE_COMPLETE_VERSION)
+  .version(getFullVersion())
   .date(DUNE_BUILD_TIME)
   .arch(DUNE_SYSTEM_NAME)
   .add("-d", "--config-dir",

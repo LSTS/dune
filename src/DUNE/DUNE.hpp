@@ -30,6 +30,7 @@
 
 // DUNE module headers.
 #include <DUNE/Config.hpp>
+#include <DUNE/Version.hpp>
 #include <DUNE/Casts.hpp>
 #include <DUNE/Units.hpp>
 #include <DUNE/Memory.hpp>
@@ -85,7 +86,7 @@ namespace DUNE
   using namespace DUNE::Tasks;                  \
   using namespace DUNE::Media;                  \
   using namespace DUNE::Parsers;                \
-  using namespace DUNE::Plans;                   \
+  using namespace DUNE::Plans;                  \
   using namespace DUNE::Time;                   \
   using namespace DUNE::Utils;                  \
   using namespace DUNE::Navigation

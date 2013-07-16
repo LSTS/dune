@@ -24,16 +24,40 @@
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
-# Get SVN revision of source tree.                                         #
+# Retrieve basic git repository properties.                                #
 ############################################################################
 
-execute_process(COMMAND git rev-parse --short HEAD
-  WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-  OUTPUT_VARIABLE DUNE_GIT_SHA1_STR
-  ERROR_QUIET
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(DUNE_VERSION_TPL AND DUNE_VERSION_OUT)
+  execute_process(COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    OUTPUT_VARIABLE DUNE_GIT_SHA1_STR
+    ERROR_QUIET
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-string(COMPARE EQUAL "${DUNE_GIT_SHA1_STR}" "" empty_string)
-if(empty_string)
-  set(DUNE_GIT_SHA1_STR "unknown")
-endif(empty_string)
+  string(COMPARE EQUAL "${DUNE_GIT_SHA1_STR}" "" empty_string)
+  if(empty_string)
+    set(DUNE_GIT_SHA1_STR "unknown")
+  endif(empty_string)
+
+  configure_file("${DUNE_VERSION_TPL}" "${DUNE_VERSION_OUT}.tmp")
+
+  execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
+    "${DUNE_VERSION_OUT}.tmp" "${DUNE_VERSION_OUT}"
+    RESULT_VARIABLE files_cmp
+    OUTPUT_QUIET
+    ERROR_QUIET)
+
+  if(files_cmp)
+    file(RENAME "${DUNE_VERSION_OUT}.tmp" "${DUNE_VERSION_OUT}")
+  endif()
+else()
+  set(DUNE_CORE_SOURCES ${DUNE_CORE_SOURCES}
+    ${DUNE_GENERATED}/src/DUNE/Version.cpp)
+
+  add_custom_target(dune-version
+    COMMAND ${CMAKE_COMMAND} -DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR"}
+    -DDUNE_VERSION_TPL="src/DUNE/Version.cpp.in"
+    -DDUNE_VERSION_OUT="${DUNE_GENERATED}/src/DUNE/Version.cpp"
+    -P cmake/Git.cmake
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+endif()
