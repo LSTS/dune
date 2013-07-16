@@ -34,6 +34,10 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+//! Log synch number
+#define LOG_SYNCH            0xFC
+//! Initial IMC address
+
 //! Size in bytes of a record.
 #define LOG_REC_SIZE         (64)
 
@@ -441,7 +445,33 @@ parseDebug(std::ifstream& ifs, std::vector<logged_data>& packets)
 }
 
 bool
-parseBinary(std::ifstream& ifs, std::vector<logged_data>& packets)
+parseHeader(std::ifstream& ifs, std::string &name)
+{
+  uint8_t synch;
+
+  ifs.read((char*)&synch, 1);
+
+  std::cerr << "synch is " << (unsigned)synch << std::endl;
+  std::cerr << "should be " << (unsigned)LOG_SYNCH << std::endl;
+
+  if (synch != LOG_SYNCH)
+    return false;
+
+  uint16_t serial;
+
+  ifs.read((char*)&serial, 2);
+
+  std::stringstream ss;
+
+  ss << "wavy-" << serial;
+
+  name = ss.str();
+
+  return true;
+}
+
+bool
+parseBinary(std::ifstream& ifs, std::vector<logged_data>& packets, std::string& name)
 {
   if (!ifs.good())
   {
@@ -453,6 +483,12 @@ parseBinary(std::ifstream& ifs, std::vector<logged_data>& packets)
   ifs.seekg (0, ifs.end);
   int length = ifs.tellg();
   ifs.seekg (0, ifs.beg);
+
+  if (!parseHeader(ifs, name))
+  {
+    std::cerr << "failed to parse header" << std::endl;
+    return false;
+  }
 
   while (!ifs.eof())
   {
@@ -472,11 +508,14 @@ parseBinary(std::ifstream& ifs, std::vector<logged_data>& packets)
 }
 
 bool
-convertAndWrite(const char* name, std::vector<logged_data>& packets)
+convertAndWrite(const char* filename, std::vector<logged_data>& packets, const std::string name)
 {
   std::vector<IMC::GpsFix> fixes;
 
   ByteBuffer buffer;
+
+  IMC::AddressResolver res;
+  unsigned src = res.resolve(name);
 
   IMC::EstimatedState state;
 
@@ -494,6 +533,7 @@ convertAndWrite(const char* name, std::vector<logged_data>& packets)
     state.z = 0.0;
     state.depth = 0.0;
 
+    state.setSource(src);
     state.setTimeStamp(toEpoch(&packets[4].fix.utc));
 
     IMC::Packet::serialize(&state, buffer);
@@ -510,7 +550,7 @@ convertAndWrite(const char* name, std::vector<logged_data>& packets)
               << std::endl;
   }
 
-  Path dir = ("wavy_logs" /
+  Path dir = ("wavy_logs" / name /
               Time::Format::getDateSafe(state.getTimeStamp()) /
               Time::Format::getTimeSafe(state.getTimeStamp())
               );
@@ -523,8 +563,8 @@ convertAndWrite(const char* name, std::vector<logged_data>& packets)
   imc_ofs.write((char*)Blob::getData(), Blob::getSize());
   imc_ofs.close();
 
-  Path filename = dir / name;
-  std::ofstream lsf(filename.c_str(), std::ios::binary);
+  Path pathname = dir / filename;
+  std::ofstream lsf(pathname.c_str(), std::ios::binary);
   lsf.write(buffer.getBufferSigned(), buffer.getSize());
 
   for (unsigned i = 0; i < packets.size(); ++i)
@@ -533,6 +573,7 @@ convertAndWrite(const char* name, std::vector<logged_data>& packets)
 
     convertFixToIMC(&packets[i].fix, &msg);
 
+    msg.setSource(src);
     msg.setTimeStamp(toEpoch(&packets[i].fix.utc));
 
     fixes.push_back(msg);
@@ -564,15 +605,17 @@ main(int argc, char** argv)
 
   bool success = false;
 
+  std::string name = "wavy-65535";
+
   if (!file.extension().compare("wdg"))
   {
     ifs.open(file.c_str(), std::ifstream::in);
     success = parseDebug(ifs, packets);
   }
-  if (!file.extension().compare("wlg"))
+  else if (!file.extension().compare("wlg"))
   {
     ifs.open(file.c_str(), std::ifstream::in | std::ifstream::binary);
-    success = parseBinary(ifs, packets);
+    success = parseBinary(ifs, packets, name);
   }
   else
   {
@@ -600,7 +643,7 @@ main(int argc, char** argv)
   }
 
   // Converting to GPS Fix and writing lsf file
-  convertAndWrite("Data.lsf", packets);
+  convertAndWrite("Data.lsf", packets, name);
 
   return 0;
 }
