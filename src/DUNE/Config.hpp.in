@@ -42,18 +42,12 @@
 #define DUNE_VERSION_PAT @PROJECT_VERSION_PAT@
 //! DUNE's version release candidate number.
 #define DUNE_VERSION_RCN @PROJECT_VERSION_RCN@
-//! DUNE's Git SHA1 of last commit.
-#define DUNE_GIT_SHA1_STR "@DUNE_GIT_SHA1_STR@"
-//! DUNE's complete version string.
-#define DUNE_COMPLETE_VERSION DUNE_VERSION_STR " (" DUNE_GIT_SHA1_STR ")"
 //! DUNE's copyright.
 #define DUNE_COPYRIGHT "@PROJECT_COPYRIGHT@"
 //! DUNE's contact.
 #define DUNE_CONTACT "@PROJECT_CONTACT@"
 //! DUNE's build type.
 #define DUNE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
-//! DUNE's build time.
-#define DUNE_BUILD_TIME __DATE__ " - " __TIME__
 //! DUNE's system name.
 #define DUNE_SYSTEM_NAME "@DUNE_SYSTEM_NAME@"
 //! DUNE's source path.

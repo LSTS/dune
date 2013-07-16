@@ -62,7 +62,6 @@ set(PROJECT_VERSION_PARTS
 # This directory will hold generated files.
 set(DUNE_GENERATED ${CMAKE_BINARY_DIR}/DUNEGeneratedFiles)
 
-include(${PROJECT_SOURCE_DIR}/cmake/Git.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/Macros.cmake)
 
 # Define options.
@@ -175,6 +174,8 @@ configure_file(${PROJECT_SOURCE_DIR}/src/DUNE/Config.hpp.in
 install(FILES ${DUNE_GENERATED}/src/DUNE/Config.hpp
   DESTINATION include/DUNE)
 
+include(${PROJECT_SOURCE_DIR}/cmake/Version.cmake)
+
 set_source_files_properties(${DUNE_CORE_SOURCES}
   PROPERTIES COMPILE_FLAGS "${DUNE_CXX_FLAGS} ${DUNE_CXX_FLAGS_STRICT}")
 
@@ -225,6 +226,8 @@ else(DUNE_SHARED)
     endif(DUNE_CPU_32B)
   endif(DUNE_CXX_MICROSOFT AND DUNE_CPU_X86)
 endif(DUNE_SHARED)
+
+add_dependencies(dune-core dune-version)
 
 ##########################################################################
 #                          Tasks                                         #
