@@ -24,19 +24,39 @@
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
-# Retrieve basic git repository properties.                                #
+# Retrieve extra versioning information.                                   #
 ############################################################################
 
 if(DUNE_VERSION_TPL AND DUNE_VERSION_OUT)
-  execute_process(COMMAND git rev-parse --short HEAD
+  execute_process(COMMAND git rev-parse --symbolic-full-name --abbrev-ref HEAD
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    OUTPUT_VARIABLE DUNE_GIT_SHA1_STR
+    OUTPUT_VARIABLE branch
     ERROR_QUIET
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-  string(COMPARE EQUAL "${DUNE_GIT_SHA1_STR}" "" empty_string)
+  string(COMPARE EQUAL "${branch}" "" empty_string)
   if(empty_string)
-    set(DUNE_GIT_SHA1_STR "unknown")
+    set(branch "unknown")
+  endif(empty_string)
+  set(DUNE_GIT_INFO "${branch}")
+
+  execute_process(COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    OUTPUT_VARIABLE sha1
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  string(COMPARE EQUAL "${sha1}" "" empty_string)
+  if(empty_string)
+    set(branch "unknown")
+  endif(empty_string)
+  set(DUNE_GIT_INFO "${DUNE_GIT_INFO},${sha1}")
+
+  execute_process(COMMAND git status -s
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    OUTPUT_VARIABLE dirty
+    ERROR_QUIET
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  string(COMPARE NOTEQUAL "${dirty}" "" empty_string)
+  if(empty_string)
+    set(DUNE_GIT_INFO "${DUNE_GIT_INFO},dirty")
   endif(empty_string)
 
   configure_file("${DUNE_VERSION_TPL}" "${DUNE_VERSION_OUT}.tmp")
@@ -55,9 +75,9 @@ else()
     ${DUNE_GENERATED}/src/DUNE/Version.cpp)
 
   add_custom_target(dune-version
-    COMMAND ${CMAKE_COMMAND} -DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR"}
+    COMMAND ${CMAKE_COMMAND} -DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
     -DDUNE_VERSION_TPL="src/DUNE/Version.cpp.in"
     -DDUNE_VERSION_OUT="${DUNE_GENERATED}/src/DUNE/Version.cpp"
-    -P cmake/Git.cmake
+    -P "cmake/Version.cmake"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 endif()

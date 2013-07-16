@@ -34,6 +34,11 @@ namespace DUNE
   //! @return full version string.
   const char*
   getFullVersion(void);
+
+  //! Retrieve the compilation date as a string.
+  //! @return compilation date.
+  const char*
+  getCompileDate(void);
 }
 
 #endif

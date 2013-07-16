@@ -33,6 +33,12 @@ namespace DUNE
   const char*
   getFullVersion(void)
   {
-    return DUNE_VERSION_STR " (@DUNE_GIT_SHA1_STR@)";
+    return DUNE_VERSION_STR " (@DUNE_GIT_INFO@)";
+  }
+
+  const char*
+  getCompileDate(void)
+  {
+    return __DATE__ " - " __TIME__;
   }
 }

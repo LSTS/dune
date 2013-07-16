@@ -37,7 +37,7 @@ main(int argc, char** argv)
   .copyright(DUNE_COPYRIGHT)
   .email(DUNE_CONTACT)
   .version(getFullVersion())
-  .date(DUNE_BUILD_TIME)
+  .date(getCompileDate())
   .arch(DUNE_SYSTEM_NAME)
   .description("Utility to update firmware of LUCL based devices.")
   .add("-d", "--sys-device",

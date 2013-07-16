@@ -471,7 +471,7 @@ namespace Transports
         (void)uri;
 
         std::ostringstream os;
-        os << "var systemVersion = '" << getFullVersion() << " - " << DUNE_BUILD_TIME << "';";
+        os << "var systemVersion = '" << getFullVersion() << " - " << getCompileDate() << "';";
         HTTPRequestHandler::HeaderFieldsMap hdr;
         hdr["Content-Type"] = "text/javascript";
         sendData(sock, os.str(), &hdr);

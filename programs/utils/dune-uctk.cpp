@@ -38,7 +38,7 @@ main(int argc, char** argv)
   .copyright(DUNE_COPYRIGHT)
   .email("Ricardo Martins <rasm@lsts.pt>")
   .version(getFullVersion())
-  .date(DUNE_BUILD_TIME)
+  .date(getCompileDate())
   .arch(DUNE_SYSTEM_NAME)
   .description("Utility to update the firmware of UCTK based devices.")
   .add("-d", "--dev",

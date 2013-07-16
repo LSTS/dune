@@ -48,8 +48,6 @@
 #define DUNE_CONTACT "@PROJECT_CONTACT@"
 //! DUNE's build type.
 #define DUNE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
-//! DUNE's build time.
-#define DUNE_BUILD_TIME __DATE__ " - " __TIME__
 //! DUNE's system name.
 #define DUNE_SYSTEM_NAME "@DUNE_SYSTEM_NAME@"
 //! DUNE's source path.
