@@ -197,8 +197,7 @@ namespace Monitors
       {
         double now = Clock::get();
 
-        if ((now > (m_heartbeat_last + m_args.mission_tout) && m_in_mission) ||
-            now > (m_heartbeat_last + m_args.heartbeat_tout))
+        if (now > (m_heartbeat_last + m_args.heartbeat_tout))
         {
           sendMessages("T", (unsigned)m_args.lost_com_tout);
           m_heartbeat_last = now;
