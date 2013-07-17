@@ -203,8 +203,6 @@ namespace Sensors
       double m_last_range;
       // Internal buffer.
       char m_bfr[c_bfr_size];
-      // Last range report.
-      double m_last_range_report;
       // Task arguments.
       Arguments m_args;
       // Current state.
@@ -221,12 +219,13 @@ namespace Sensors
       int m_sound_speed_eid;
       // Estimated state.
       IMC::EstimatedState m_estate;
+      //! Report timer.
+      Counter<double> m_report_timer;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
         m_last_range(0),
-        m_last_range_report(0),
         m_result(RS_NONE),
         m_sound_speed_eid(-1)
       {
@@ -346,6 +345,7 @@ namespace Sensors
       onUpdateParameters(void)
       {
         m_sound_speed = m_args.sound_speed_def;
+        m_report_timer.setTop(m_args.report_period);
       }
 
       void
@@ -682,6 +682,7 @@ namespace Sensors
             continue;
 
           m_uart->readString(m_bfr, c_bfr_size);
+          inf("recv: %s", sanitize(m_bfr).c_str());
           m_last_input = Clock::get();
 
           if (m_state != STA_NO_BEACONS)
@@ -919,10 +920,24 @@ namespace Sensors
       void
       onMain(void)
       {
-        m_last_range_report = Clock::get();
+        m_report_timer.reset();
 
         while (!stopping())
         {
+          // Report.
+          if (m_args.report)
+          {
+            if (m_report_timer.overflow())
+            {
+              m_report_timer.reset();
+
+              if (m_args.report_verbose)
+                sendVerboseReport();
+              else
+                reportRanges(Clock::get());
+            }
+          }
+
           if (m_beacons.empty())
           {
             waitForMessages(1.0);
@@ -936,19 +951,6 @@ namespace Sensors
           if (isActive())
           {
             ping();
-
-            if (m_args.report)
-            {
-              double now = Clock::get();
-              if (now > (m_last_range_report + m_args.report_period))
-              {
-                m_last_range_report = now;
-                if (m_args.report_verbose)
-                  sendVerboseReport();
-                else
-                  reportRanges(now);
-              }
-            }
           }
           else
           {
