@@ -204,6 +204,25 @@ namespace Autonomy
               dispatch(token);
             }
             break;
+          case IMC::TrexOperation::OP_REQUEST_PLAN:
+          {
+            int i = system("/bin/sh /opt/lsts/trex/trex_restart.bash 1,2 > /dev/null &");
+            if (i == 0)
+              inf("T-REX has been started.");
+            else
+              war("Could not start T-REX: %d.", i);
+            break;
+          }
+          case IMC::TrexOperation::OP_REPORT_PLAN:
+          {
+            int i = system("/bin/sh /opt/lsts/trex/trex_stop.bash 1,2 > /dev/null &");
+            if (i == 0)
+              inf("T-REX has been stopped.");
+            else
+              war("Could not stop T-REX: %d.", i);
+
+            break;
+          }
           default:
             break;
         }
