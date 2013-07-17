@@ -107,6 +107,8 @@ struct logged_data
   struct gps_fix fix;
 } __attribute__((packed));
 
+IMC::AddressResolver g_resolver;
+
 bool
 getString(std::ifstream& ifs, std::string& str)
 {
@@ -514,8 +516,9 @@ convertAndWrite(const char* filename, std::vector<logged_data>& packets, const s
 
   ByteBuffer buffer;
 
-  IMC::AddressResolver res;
-  unsigned src = res.resolve(name);
+  unsigned src = g_resolver.resolve(name);
+
+  std::cerr << "resolved to " << src << std::endl;
 
   IMC::EstimatedState state;
 
@@ -589,12 +592,28 @@ int
 main(int argc, char** argv)
 {
   // Parse command line arguments.
-  if (argc != 2)
+  if (argc != 2 && argc != 3)
   {
-    std::cerr << "Usage: " << argv[0] << " <path_to_file>" << std::endl;
+    std::cerr << "Usage: " << argv[0] << " <path_to_file> <path_to_imc_addresses.ini (optional)>" << std::endl;
     std::cerr << "Extension should be .wdg for a wavy debug file" << std::endl;
     std::cerr << "Extension should be .wlg for a wavy raw log file" << std::endl;
     return 1;
+  }
+
+  if (argc == 3)
+  {
+    Config cfg(argv[2]);
+
+    std::vector<std::string> addrs = cfg.options("IMC Addresses");
+
+    for (unsigned i = 0; i < addrs.size(); ++i)
+    {
+      unsigned id = IMC::AddressResolver::invalid();
+
+      cfg.get("IMC Addresses", addrs[i], "", id);
+
+      g_resolver.insert(addrs[i], id);
+    }
   }
 
   FileSystem::Path file(argv[1]);
