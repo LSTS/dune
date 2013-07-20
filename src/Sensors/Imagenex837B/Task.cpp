@@ -148,8 +148,10 @@ namespace Sensors
       std::string power_channel;
       //! Range Modifier.
       bool range_modifier;
-      //! Range Modifier Constant.
-      float range_modifier_constant;
+      //! Range Modifier Additive Constant.
+      float range_modifier_add_k;
+      //! Range Modifier Multiplicative Constant.
+      float range_modifier_mul_k;
       //! Range Modifier Timer.
       float range_modifier_timer;
     };
@@ -317,10 +319,15 @@ namespace Sensors
         .defaultValue("true")
         .description("Adaptive Multibeam range modifier");
 
-        param("Adaptive Range Modifier Constant", m_args.range_modifier_constant)
-        .defaultValue("10")
+        param("Adaptive Range Modifier Additive Constant", m_args.range_modifier_add_k)
+        .defaultValue("0")
         .minimumValue("0")
-        .description("Adaptive Multibeam range modifier constant");
+        .description("Adaptive Multibeam range modifier additive constant");
+
+        param("Adaptive Range Modifier Multiplicative Constant", m_args.range_modifier_mul_k)
+        .defaultValue("2")
+        .minimumValue("1")
+        .description("Adaptive Multibeam range modifier multiplicative constant");
 
         param("Adaptive Range Modifier Timer", m_args.range_modifier_timer)
         .defaultValue("10")
@@ -718,7 +725,7 @@ namespace Sensors
       checkAltitude(void)
       {
         if (m_estate.alt > c_min_alt)
-          setRange(m_estate.alt + m_args.range_modifier_constant);
+          setRange(m_estate.alt * m_args.range_modifier_mul_k + m_args.range_modifier_add_k);
       }
 
       void
