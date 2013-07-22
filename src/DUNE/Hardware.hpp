@@ -43,6 +43,7 @@ namespace DUNE
 #include <DUNE/Hardware/Buttons.hpp>
 #include <DUNE/Hardware/PPS.hpp>
 #include <DUNE/Hardware/IntelHEX.hpp>
+#include <DUNE/Hardware/BasicModem.hpp>
 #include <DUNE/Hardware/HayesModem.hpp>
 #include <DUNE/Hardware/Exceptions.hpp>
 #include <DUNE/Hardware/UCTK/Constants.hpp>
