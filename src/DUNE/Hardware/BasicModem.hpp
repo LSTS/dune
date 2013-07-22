@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_HARDWARE_HAYES_MODEM_HPP_INCLUDED_
-#define DUNE_HARDWARE_HAYES_MODEM_HPP_INCLUDED_
+#ifndef DUNE_HARDWARE_BASIC_MODEM_HPP_INCLUDED_
+#define DUNE_HARDWARE_BASIC_MODEM_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>
@@ -35,55 +35,62 @@
 #include <DUNE/Concurrency/Thread.hpp>
 #include <DUNE/Concurrency/ScopedMutex.hpp>
 #include <DUNE/Concurrency/TSQueue.hpp>
+#include <DUNE/Hardware/SerialPort.hpp>
 #include <DUNE/Tasks/Task.hpp>
 #include <DUNE/Time/Counter.hpp>
-#include <DUNE/Hardware/SerialPort.hpp>
-#include <DUNE/Hardware/BasicModem.hpp>
 
 namespace DUNE
 {
   namespace Hardware
   {
-    class HayesModem: public BasicModem
+    class BasicModem: public Concurrency::Thread
     {
     public:
-      //! Constructor.
-      //! @param[in] task parent task.
-      //! @param[in] uart serial port connected to the ISU.
-      HayesModem(Tasks::Task* task, Hardware::SerialPort* uart);
+      BasicModem(Tasks::Task* task, Hardware::SerialPort* uart);
 
-      //! Destructor.
       virtual
-      ~HayesModem(void)
+      ~BasicModem(void)
       { }
 
       void
       initialize(void);
 
-      std::string
-      getManufacturer(void);
+      //! Set maximum transmission rate.
+      //! @param[in] rate transmission rate in second. Negative values
+      //! will disable transmission rate control.
+      void
+      setTxRateMax(double rate);
 
-      //! Query the ISU model.
-      //! @return ISU model name.
-      std::string
-      getModel(void);
+      //! Test if ISU is busy performing an SBD session.
+      //! @return true if ISU is busy, false otherwise.
+      bool
+      isBusy(void);
 
-      //! Query the ISU revision.
-      //! @return ISU revision.
-      std::string
-      getRevision(void);
-
-      //! Query the ISU serial number (IMEI).
-      //! @return ISU serial number (IMEI),
-      std::string
-      getIMEI(void);
-
-      //! Retrieve received signal strength indication (RSSI).
-      //! @return RSSI value.
-      float
-      getRSSI(void);
+      //! Test if ISU is cooling down.
+      //! @return true if ISU is cooling down, false otherwise.
+      bool
+      isCooling(void);
 
     protected:
+      //! Read mode.
+      enum ReadMode
+      {
+        //! Line oriented input.
+        READ_MODE_LINE,
+        //! Unprocessed sequence of bytes.
+        READ_MODE_RAW
+      };
+
+      //! Concurrency lock.
+      Concurrency::Mutex m_mutex;
+
+      virtual bool
+      handleUnsolicited(const std::string& str)
+      {
+        (void)str;
+        return false;
+      }
+
       virtual void
       sendInitialization(void)
       { }
@@ -92,44 +99,85 @@ namespace DUNE
       sendReset(void)
       { }
 
-      virtual void
-      queryRSSI(void)
-      { }
-
-      void
-      sendAT(const std::string& str);
-
       void
       sendRaw(const uint8_t* data, unsigned data_size);
+
+      void
+      send(const std::string& str);
+
+      void
+      setTimeout(double timeout);
+
+      double
+      getTimeout(void);
 
       void
       expect(const std::string& str);
 
       void
-      expectOK(void);
+      readRaw(Time::Counter<double>& timer, uint8_t* data, unsigned data_size);
+
+      ReadMode
+      getReadMode(void);
 
       void
-      expectREADY(void);
+      setReadMode(ReadMode mode);
 
       void
-      setRSSI(float value);
-
-      //! Enable or disable RTS/CTS flow control.
-      //! @param[in] value true to enable flow control, false otherwise.
-      void
-      setFlowControl(bool value);
-
-      //! Enable or disable the ISU to echo characters to the DTE.
-      //! @param[in] value true to enable, false to disable.
-      void
-      setEcho(bool value);
+      flushInput(void);
 
       std::string
-      readValue(const std::string& cmd);
+      readLine(void);
+
+      std::string
+      readLine(Time::Counter<double>& timer);
+
+      Tasks::Task*
+      getTask(void)
+      {
+        return m_task;
+      }
+
+      void
+      setSkipLine(const std::string& line);
+
+      void
+      setBusy(bool value);
+
+      //! Serial port handle.
+      Hardware::SerialPort* m_uart;
+      //! Last command sent to modem.
+      std::string m_last_cmd;
 
     private:
-      //! Last RSSI value.
-      IMC::RSSI m_rssi;
+      //! Parent task.
+      Tasks::Task* m_task;
+      //! Read timeout.
+      double m_timeout;
+      //! Queue of incoming characters.
+      std::queue<char> m_chars;
+      //! Current line being parsed.
+      std::string m_line;
+      //! Queue of input lines.
+      Concurrency::TSQueue<std::string> m_lines;
+      //! Queue of raw input bytes.
+      Concurrency::TSQueue<uint8_t> m_bytes;
+      //! Read mode.
+      ReadMode m_read_mode;
+      //! Contents of line to skip once.
+      std::string m_skip_line;
+      //! True if ISU is busy.
+      bool m_busy;
+      //! Maximum transmission rate value.
+      double m_tx_rate_max;
+      //! Maximum transmission rate timer.
+      Time::Counter<double> m_tx_rate_timer;
+
+      bool
+      processInput(std::string& str);
+
+      void
+      run(void);
     };
   }
 }
