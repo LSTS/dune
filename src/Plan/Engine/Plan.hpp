@@ -400,11 +400,14 @@ namespace Plan
       //! Pass EntityActivationState to scheduler
       //! @param[in] id entity label
       //! @param[in] msg pointer to EntityActivationState message
-      void
+      //! @return false if something failed to be activated, true otherwise
+      bool
       onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg)
       {
         if (m_sched != NULL)
-          m_sched->onEntityActivationState(id, msg);
+          return m_sched->onEntityActivationState(id, msg);
+        else
+          return true;
       }
 
       //! Check if scheduler is waiting for a device

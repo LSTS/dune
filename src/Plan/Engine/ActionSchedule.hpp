@@ -339,22 +339,23 @@ namespace Plan
       //! Check if the activation and deactivation requests are being complied
       //! @param[in] id entity label
       //! @param[in] msg pointer to EntityActivationState message
-      void
+      //! @return false if something failed to be activated, true otherwise
+      bool
       onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg)
       {
         if (m_eas.empty())
-          return;
+          return true;
 
         updateEAS(id, msg);
 
         if (m_reqs.empty())
-          return;
+          return true;
 
         std::map<std::string, TimedAction>::const_iterator itr;
         itr = m_reqs.find(id);
 
         if (itr == m_reqs.end())
-          return;
+          return true;
 
         if (itr->second.type == TYPE_ACT)
         {
@@ -374,8 +375,9 @@ namespace Plan
           }
           else if (msg->state == IMC::EntityActivationState::EAS_ACT_FAIL)
           {
-            m_task->err("schedule: failed to activate %s", id.c_str());
             m_reqs.erase(id);
+
+            return false;
           }
         }
         else
@@ -384,6 +386,8 @@ namespace Plan
               msg->state == IMC::EntityActivationState::EAS_INACTIVE)
             m_reqs.erase(id);
         }
+
+        return true;
       }
 
       //! Check if we are still waiting for a device in calibration process

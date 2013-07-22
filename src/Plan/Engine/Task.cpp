@@ -62,6 +62,8 @@ namespace Plan
       float speed_conv_act;
       //! Duration of vehicle calibration process.
       uint16_t calibration_time;
+      //! Abort when a payload fails to activate
+      bool actfail_abort;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -137,6 +139,10 @@ namespace Plan
         .defaultValue("10")
         .units(Units::Second)
         .description("Duration of vehicle calibration commands");
+
+        param("Abort On Activation Failed", m_args.actfail_abort)
+        .defaultValue("false")
+        .description("Abort when a payload fails to activate");
 
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
@@ -256,7 +262,21 @@ namespace Plan
             return;
           }
 
-          m_plan->onEntityActivationState(id, msg);
+          if (!m_plan->onEntityActivationState(id, msg))
+          {
+            std::string error = String::str("failed to activate %s: %s",
+                                            id.c_str(), msg->error.c_str());
+
+            if (m_args.actfail_abort)
+            {
+              onFailure(error);
+              changeMode(IMC::PlanControlState::PCS_READY, error, false);
+            }
+            else
+            {
+              err("%s", error.c_str());
+            }
+          }
         }
       }
 
