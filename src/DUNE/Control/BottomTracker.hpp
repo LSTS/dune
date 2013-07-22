@@ -215,7 +215,13 @@ namespace DUNE
       inline void
       dispatchLoop(IMC::Message& msg) const;
 
-      //! Temporary function for debug messages.
+      //! Function for info messages.
+      //! @param[in] msg string message to output.
+      void
+      info(const std::string& msg) const;
+
+
+      //! Function for debug messages.
       //! @param[in] msg string message to output.
       void
       debug(const std::string& msg) const;

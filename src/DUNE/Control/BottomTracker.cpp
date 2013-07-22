@@ -254,7 +254,7 @@ namespace DUNE
       // check if altitude value is becoming dangerous
       if (m_estate.alt < m_args->min_alt)
       {
-        debug(String::str("altitude is too low: %.2f. stopping motor.", m_estate.alt));
+        debug(String::str("altitude is too low: %.2f.", m_estate.alt));
 
         brake(true);
         m_mstate = SM_AVOIDING;
@@ -268,7 +268,7 @@ namespace DUNE
       // Check if forward range is too low
       if (m_sdata->isRangeLow())
       {
-        debug(String::str("frange is too low: %.2f. stopping motor.", m_sdata->getFRange()));
+        debug(String::str("frange is too low: %.2f.", m_sdata->getFRange()));
 
         brake(true);
         m_mstate = SM_AVOIDING;
@@ -294,7 +294,7 @@ namespace DUNE
       if (depth_ref > m_args->depth_limit + c_depth_hyst &&
           m_estate.depth > m_args->depth_limit)
       {
-        debug("depth is reaching unacceptable values, forcing depth control");
+        info("depth is reaching unacceptable values, forcing depth control");
 
         m_forced = FC_DEPTH;
         dispatchLimitDepth();
@@ -329,7 +329,7 @@ namespace DUNE
 
       if (m_sdata->isRangeLow())
       {
-        debug(String::str("frange is too low: %.2f. stopping motor.", m_sdata->getFRange()));
+        debug(String::str("frange is too low: %.2f.", m_sdata->getFRange()));
 
         m_forced = FC_NONE;
         brake(true);
@@ -380,9 +380,9 @@ namespace DUNE
       if ((m_estate.alt < m_args->min_alt) || m_sdata->isRangeLow())
       {
         if (m_estate.alt < m_args->min_alt)
-          debug(String::str("altitude is too low: %.2f. stopping motor.", m_estate.alt));
+          debug(String::str("altitude is too low: %.2f.", m_estate.alt));
         else
-          debug(String::str("frange is too low: %.2f. stopping motor.", m_sdata->getFRange()));
+          debug(String::str("frange is too low: %.2f.", m_sdata->getFRange()));
 
         brake(true);
         m_mstate = SM_AVOIDING;
@@ -469,9 +469,9 @@ namespace DUNE
       dispatchLoop(brk);
 
       if (start)
-        debug("Started braking");
+        info("Started braking");
       else
-        debug("Stopped braking");
+        info("Stopped braking");
     }
 
     void
@@ -555,6 +555,13 @@ namespace DUNE
     BottomTracker::dispatchLoop(IMC::Message& msg) const
     {
       m_args->task->dispatch(msg, Tasks::DF_LOOP_BACK);
+    }
+
+    void
+    BottomTracker::info(const std::string& msg) const
+    {
+      m_args->task->inf("[BottomTrack.%s] >> %s",
+                        c_str_states[m_mstate].c_str(), msg.c_str());
     }
 
     void
