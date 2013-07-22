@@ -61,13 +61,13 @@ namespace DUNE
       void
       setTxRateMax(double rate);
 
-      //! Test if ISU is busy performing an SBD session.
-      //! @return true if ISU is busy, false otherwise.
+      //! Test if the modem is busy.
+      //! @return true if the modem is busy, false otherwise.
       bool
       isBusy(void);
 
-      //! Test if ISU is cooling down.
-      //! @return true if ISU is cooling down, false otherwise.
+      //! Test if the modem is cooling down.
+      //! @return true if the modem is cooling down, false otherwise.
       bool
       isCooling(void);
 
