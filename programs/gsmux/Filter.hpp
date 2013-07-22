@@ -44,12 +44,16 @@ class Filter
 {
 public:
   Filter(std::FILE* fd):
-    m_fd(fd),
-    m_nav_status(m_nav_status_bfr)
+    m_fd(fd)
   {
-    printHeader();
-    std::memset(m_nav_status_bfr, 0, sizeof(m_nav_status_bfr));
+#define FIELD(label, var, type, fmt)            \
+    var = 0;
+#include "Fields.def"
+
+    std::memset(m_nav_status, 0, sizeof(m_nav_status));
     std::memset(m_sync_status, 0, sizeof(m_sync_status));
+
+    printHeader();
   }
 
   ~Filter(void)
@@ -73,7 +77,6 @@ public:
     {
       if (data[i] == '\n')
       {
-        //std::cerr << "offset: " << off << " / " << size << std::endl;
         std::string stn((const char*)&data[off], size);
         interpret(stn);
         off = size + 1;
@@ -217,7 +220,8 @@ public:
     using namespace std;
 
     fprintf(m_fd,
-            "Sync_Lost"
+            "Sync_Lost" "\t"
+            "Nav_Status"
 #define FIELD(label, var, type, fmt) "\t" label
 #include "Fields.def"
             "\r\n"
@@ -232,11 +236,13 @@ public:
     using namespace std;
 
     fprintf(m_fd,
-            "%u"
+            "%u" "\t"
+            "%s"
 #define FIELD(label, var, type, fmt) "\t" fmt
 #include "Fields.def"
             "\r\n",
-            m_sync_status[index]
+            m_sync_status[index],
+            m_nav_status
 #define FIELD(label, var, type, fmt) , var
 #include "Fields.def"
             );
@@ -302,6 +308,9 @@ private:
   void
   interpret(std::string stn)
   {
+    if (stn.size() < 5)
+      return;
+
     // Remove checksum.
     stn.resize(stn.size() - 4);
 
@@ -388,11 +397,6 @@ private:
       return;
     }
 
-    readLatitude(parts[3], parts[4], m_lat);
-    readLongitude(parts[5], parts[6], m_lon);
-    readNumber(parts[7], m_height);
-    readDecimal(parts[18], m_sats);
-
     // Navigation status.
     if (parts[8].size() != 2)
     {
@@ -406,6 +410,11 @@ private:
       m_nav_status[1] = parts[8][1];
       m_nav_status[2] = 0;
     }
+
+    readLatitude(parts[3], parts[4], m_lat);
+    readLongitude(parts[5], parts[6], m_lon);
+    readNumber(parts[7], m_height);
+    readDecimal(parts[18], m_sats);
 
     // HDOP.
     double hdop = 0;
@@ -451,8 +460,7 @@ private:
   unsigned m_sample_msec;
   unsigned m_utc_second_msec;
   unsigned m_utc_tow_msec;
-  char m_nav_status_bfr[6];
-
+  char m_nav_status[16];
 #define FIELD(label, var, type, fmt)            \
   type var;
 #include "Fields.def"

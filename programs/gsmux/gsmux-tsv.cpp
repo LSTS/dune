@@ -25,44 +25,60 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-FIELD("UTC_Year"    , m_utc_year  , unsigned, "%u")
-FIELD("UTC_Month"   , m_utc_month , unsigned, "%u")
-FIELD("UTC_Day"     , m_utc_day   , unsigned, "%u")
-FIELD("UTC_Hour"    , m_utc_hour  , unsigned, "%u")
-FIELD("UTC_Minute"  , m_utc_minute, unsigned, "%u")
-FIELD("UTC_Second"  , m_utc_second, double  , "%0.2f")
-FIELD("UTC_WNO"     , m_utc_wno   , unsigned, "%u")
-FIELD("UTC_TOW"     , m_utc_tow   , double  , "%0.2f")
-FIELD("Latitude"    , m_lat       , double  , "%0.8f")
-FIELD("Longitude"   , m_lon       , double  , "%0.8f")
-FIELD("Height"      , m_height    , double  , "%0.4f")
-FIELD("SOG"         , m_sog       , double  , "%0.4f")
-FIELD("COG"         , m_cog       , double  , "%0.4f")
-FIELD("Satellites"  , m_sats      , unsigned, "%u")
-FIELD("HDOP"        , m_hdop      , double  , "%0.4f")
-FIELD("VDOP"        , m_vdop      , double  , "%0.4f")
-FIELD("TDOP"        , m_tdop      , double  , "%0.4f")
+// ISO C++ 98 headers.
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <cstdio>
 
-FIELD("IMU0_Phi"    , m_phi0      , float   , "%f")
-FIELD("IMU0_Theta"  , m_theta0    , float   , "%f")
-FIELD("IMU0_Psi"    , m_psi0      , float   , "%f")
-FIELD("IMU0_Accel_X", m_accel_x0  , float   , "%f")
-FIELD("IMU0_Accel_Y", m_accel_y0  , float   , "%f")
-FIELD("IMU0_Accel_Z", m_accel_z0  , float   , "%f")
-FIELD("IMU0_Agvel_X", m_agvel_x0  , float   , "%f")
-FIELD("IMU0_Agvel_Y", m_agvel_y0  , float   , "%f")
-FIELD("IMU0_Agvel_Z", m_agvel_z0  , float   , "%f")
-FIELD("IMU0_Temp"   , m_temp0     , float   , "%f")
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
+using DUNE_NAMESPACES;
 
-FIELD("IMU1_Phi"    , m_phi1      , float   , "%f")
-FIELD("IMU1_Theta"  , m_theta1    , float   , "%f")
-FIELD("IMU1_Psi"    , m_psi1      , float   , "%f")
-FIELD("IMU1_Accel_X", m_accel_x1  , float   , "%f")
-FIELD("IMU1_Accel_Y", m_accel_y1  , float   , "%f")
-FIELD("IMU1_Accel_Z", m_accel_z1  , float   , "%f")
-FIELD("IMU1_Agvel_X", m_agvel_x1  , float   , "%f")
-FIELD("IMU1_Agvel_Y", m_agvel_y1  , float   , "%f")
-FIELD("IMU1_Agvel_Z", m_agvel_z1  , float   , "%f")
-FIELD("IMU1_Temp"   , m_temp1     , float   , "%f")
+// Local headers.
+#include "Parser.hpp"
 
-#undef FIELD
+int
+main(int argc, char** argv)
+{
+  if (argc != 2)
+  {
+    std::cerr << "Usage: " << argv[0] << " <bin_file>" << std::endl;
+    return 1;
+  }
+
+  Path bin_name(argv[1]);
+
+  std::FILE* bin = std::fopen(bin_name.c_str(), "rb");
+  if (bin == NULL)
+  {
+    std::cerr << "ERROR: failed to open file '" << bin_name << "'" << std::endl;
+    return 1;
+  }
+
+  Path tsv_name(bin_name + ".tsv");
+  std::FILE* tsv = std::fopen(tsv_name.c_str(), "w");
+  if (tsv == NULL)
+  {
+    std::cerr << "ERROR: failed to open file '" << tsv_name << "'" << std::endl;
+    return 1;
+  }
+
+  uint8_t bfr[1024] = {0};
+  ::Parser parser(tsv);
+
+  while (!std::feof(bin))
+  {
+    size_t rv = std::fread(bfr, 1, sizeof(bfr), bin);
+    if (rv <= 0)
+      break;
+
+    for (size_t i = 0; i < rv; ++i)
+      parser.parse(bfr[i]);
+  }
+
+  std::fclose(bin);
+  std::fclose(tsv);
+
+  return 0;
+}

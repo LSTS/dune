@@ -52,14 +52,12 @@ main(int argc, char** argv)
     folder.create();
 
   Path bin_name;
-  Path tsv_name;
   unsigned nr = 0;
 
   while (true)
   {
     bin_name = folder / String::str("%08u.bin", nr);
-    tsv_name = folder / String::str("%08u.tsv", nr);
-    if (!bin_name.exists() && !tsv_name.exists())
+    if (!bin_name.exists())
       break;
     ++nr;
   }
@@ -72,30 +70,19 @@ main(int argc, char** argv)
   }
   std::cerr << "Opened " << bin_name << std::endl;
 
-  std::FILE* tsv = std::fopen(tsv_name.c_str(), "w");
-  if (tsv == NULL)
-  {
-    std::cerr << "ERROR: failed to open file '" << tsv_name << "'" << std::endl;
-    return 1;
-  }
-  std::cerr << "Opened " << tsv_name << std::endl;
-
   SerialPort port(argv[1], 921600);
   uint8_t bfr[1024] = {0};
-  ::Parser parser(tsv);
 
-  while (1)
+  while (true)
   {
     if (port.hasNewData(1.0) != DUNE::System::IOMultiplexing::PRES_OK)
       continue;
 
     int rv = port.read(bfr, sizeof(bfr));
     std::fwrite(bfr, 1, rv, bin);
-    for (int i = 0; i < rv; ++i)
-    {
-      parser.parse(bfr[i]);
-    }
   }
+
+  std::fclose(bin);
 
   return 0;
 }

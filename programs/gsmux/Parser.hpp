@@ -110,17 +110,22 @@ public:
           {
             if (m_sample_count == 100)
               filter();
-            clear();
             m_sample_count = 0;
           }
         }
         else if (m_sample != -1)
         {
-          if ((m_sample < 100) || (m_channel < CHANNEL_COUNT))
+          if ((m_sample < 100) && (m_channel < CHANNEL_COUNT))
+          {
+            //fprintf(stderr, "%d / %d\n", m_channel - 1, m_sample);
+
             m_buffer[m_channel - 1][m_sample].push_back(byte);
+          }
           else
+          {
             std::cerr << "ERROR: sample " << m_sample << ", channel "
                       << m_channel << std::endl;
+          }
         }
         break;
     }
@@ -136,6 +141,7 @@ public:
     {
       for (unsigned j = 0; j < m_buffer[CHANNEL_GPS - 1][i].size(); ++j)
         data.push_back(m_buffer[CHANNEL_GPS - 1][i][j]);
+      m_buffer[CHANNEL_GPS - 1][i].clear();
     }
 
     if (data.size() == 0)
@@ -153,27 +159,17 @@ public:
       data.clear();
       for (unsigned j = 0; j < m_buffer[CHANNEL_MTI - 1][i].size(); ++j)
         data.push_back(m_buffer[CHANNEL_MTI - 1][i][j]);
+      m_buffer[CHANNEL_MTI - 1][i].clear();
       m_filter.putXMTI(data, i);
 
       // LIMU.
       data.clear();
       for (unsigned j = 0; j < m_buffer[CHANNEL_LIMU - 1][i].size(); ++j)
         data.push_back(m_buffer[CHANNEL_LIMU - 1][i][j]);
+      m_buffer[CHANNEL_LIMU - 1][i].clear();
       m_filter.putLIMU(data, i);
 
       m_filter.print(i);
-    }
-  }
-
-  void
-  clear(void)
-  {
-    for (unsigned i = 0; i < CHANNEL_COUNT - 1; ++i)
-    {
-      for (unsigned j = 0; j < 100; ++j)
-      {
-        m_buffer[i][j].clear();
-      }
     }
   }
 
