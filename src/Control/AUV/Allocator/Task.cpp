@@ -127,8 +127,6 @@ namespace Control
         {
           if (paramChanged(m_args.max_fin_rot))
             m_args.max_fin_rot = Angles::radians(m_args.max_fin_rot);
-
-          reset();
         }
 
         void
@@ -141,7 +139,7 @@ namespace Control
         void
         onResourceInitialization(void)
         {
-          requestDeactivation();
+          reset();
 
           // Initialize fin commands.
           for (int i = 0; i < c_fins; i++)
