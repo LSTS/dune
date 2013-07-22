@@ -141,7 +141,7 @@ namespace Sensors
       //! Transducer mounting position.
       bool xdcr;
       //! Save data in 837 format.
-      bool save_in_837;
+      bool save_to_file;
       //! Save data in 837 format.
       bool fill_state;
       // Power channel name.
@@ -303,7 +303,7 @@ namespace Sensors
         .defaultValue("true")
         .description("Mounting position of the multibeam");
 
-        param("Save Data in 837 Format", m_args.save_in_837)
+        param("Save Data in 837 Format", m_args.save_to_file)
         .defaultValue("true")
         .description("Save multibeam in Imagenex proprietary 837 format");
 
@@ -515,7 +515,7 @@ namespace Sensors
         if (msg->getSource() != getSystemId())
           return;
 
-        if (!m_args.save_in_837)
+        if (!m_args.save_to_file)
           return;
 
         switch (msg->op)
@@ -673,7 +673,7 @@ namespace Sensors
 
         unsigned dat_idx = data_point * c_rdata_dat_size;
 
-        if (m_args.save_in_837)
+        if (m_args.save_to_file)
           rv = m_sock->read((char*)(m_frame.getMessageData() + dat_idx), c_rdata_dat_size);
         else
           rv = m_sock->read(&m_ping.data[dat_idx], c_rdata_dat_size);
@@ -742,7 +742,7 @@ namespace Sensors
               for (unsigned i = 0; i < m_args.data_points; ++i)
                 ping(i);
 
-              if (m_args.save_in_837)
+              if (m_args.save_to_file)
                 handleSonarData();
               else
                 dispatch(m_ping);
