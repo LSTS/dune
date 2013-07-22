@@ -319,7 +319,7 @@ namespace Sensors
         ByteCopy::toBE((uint16_t)(((int)(heading * 10) & 0x7fff) | 0x8000),
                        getData() + HDR_IDX_HEADING);
 
-        ByteCopy::toLE((uint16_t)((heading - 180.0) * c_euler_factor),
+        ByteCopy::toLE((uint16_t)(heading * c_euler_factor),
                        getFooterData() + FTR_IDX_HEADING);
       }
 
