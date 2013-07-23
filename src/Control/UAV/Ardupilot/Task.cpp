@@ -133,6 +133,8 @@ namespace Control
         int m_desired_radius;
         int m_desired_speed;
         int m_mode;
+        bool m_changing_wp;
+        bool m_error_missing, m_error_ext;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -149,7 +151,10 @@ namespace Control
           m_cloops(0),
           m_desired_radius(0),
           m_desired_speed(0),
-          m_mode(0)
+          m_mode(0),
+          m_changing_wp(false),
+          m_error_missing(false),
+          m_error_ext(false)
         {
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
@@ -346,7 +351,7 @@ namespace Control
               m_sysid,
               0,
               MAV_DATA_STREAM_RC_CHANNELS,
-              0,
+              1,
               0);
 
           n = mavlink_msg_to_send_buffer(buf, msg);
@@ -530,6 +535,8 @@ namespace Control
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
 
+          m_changing_wp = true;
+
           m_pcs.start_lat = Angles::radians(m_lat);
           m_pcs.start_lon = Angles::radians(m_lon);
           m_pcs.start_z = m_alt;
@@ -637,11 +644,17 @@ namespace Control
 
             if(m_external || m_critical)
             {
-              if(getEntityState() != IMC::EntityState::ESTA_ERROR)
+              if(getEntityState() != IMC::EntityState::ESTA_ERROR && !m_error_ext)
+              {
                 setEntityState(IMC::EntityState::ESTA_ERROR, "External Control");
+                m_error_ext = true;
+              }
             }
             else if(getEntityState() != IMC::EntityState::ESTA_NORMAL)
+            {
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+              m_error_ext = false;
+            }
 
             // Handle IMC messages from bus
             consumeMessages();
@@ -807,8 +820,8 @@ namespace Control
                     spew("CMD_ACK");
                     break;
                   case MAVLINK_MSG_ID_BATTERY_STATUS:
-                	  spew("BATTERY_STAT");
-                	  break;
+                    spew("BATTERY_STAT");
+                    break;
                   case 150:
                     trace("SENSOR_OFFSETS");
                     break;
@@ -849,8 +862,16 @@ namespace Control
             }
           }
 
-          if (now - m_last_pkt_time >= m_args.comm_timeout)
+          m_critical = false;
+
+          if ((now - m_last_pkt_time >= m_args.comm_timeout) && !m_error_missing)
+          {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
+            m_critical = true;
+            m_error_missing = true;
+          }
+          else
+            m_error_missing = false;
         }
 
         void
@@ -994,8 +1015,12 @@ namespace Control
           m_fix.height = (double)gps_raw.alt * 0.001;
           m_fix.satellites = gps_raw.satellites_visible;
 
+          inf("%llu", gps_raw.time_usec);
+
           long time_fix = gps_raw.time_usec % 1000000000;
-          long date = (long)gps_raw.time_usec / 1e9;
+          unsigned int date = (unsigned int)(gps_raw.time_usec / 1e9);
+          inf("%u", date);
+          
 
           if(m_args.ublox)
           {
@@ -1052,6 +1077,7 @@ namespace Control
 
           mavlink_msg_command_ack_decode(msg, &cmd_ack);
           debug("Command %d was received, result is %d", cmd_ack.command, cmd_ack.result);
+          m_changing_wp = false;
         }
 
         void
@@ -1061,6 +1087,7 @@ namespace Control
 
           mavlink_msg_mission_ack_decode(msg, &miss_ack);
           debug("Mission was received, result is %d", miss_ack.type);
+          m_changing_wp = false;
         }
 
         void
@@ -1132,18 +1159,33 @@ namespace Control
           mavlink_nav_controller_output_t nav_out;
           mavlink_msg_nav_controller_output_decode(msg, &nav_out);
           debug("WP Dist: %d", nav_out.wp_dist);
+          IMC::DesiredRoll d_roll;
+          IMC::DesiredPitch d_pitch;
+          IMC::DesiredHeading d_head;
 
-          if((nav_out.wp_dist <= m_desired_radius + m_args.ltolerance) && (m_mode == 15))
+          d_roll.value = Angles::radians(nav_out.nav_roll);
+          d_pitch.value = Angles::radians(nav_out.nav_pitch);
+          d_head.value = Angles::radians(nav_out.nav_bearing);
+
+          if((nav_out.wp_dist <= m_desired_radius + m_args.ltolerance)
+             && (nav_out.wp_dist >= m_desired_radius - m_args.ltolerance)
+             && (m_mode == 15))
           {
             m_pcs.flags |= PathControlState::FL_LOITERING;
           }
 
-          if((nav_out.wp_dist <= m_desired_radius + 3 * m_desired_speed) && (m_mode == 15))
+          if(!m_changing_wp
+             && (nav_out.wp_dist <= m_desired_radius + 2 * m_desired_speed)
+             && (nav_out.wp_dist >= m_desired_radius - 2 * m_desired_speed)
+             && (m_mode == 15))
           {
             m_pcs.flags |= PathControlState::FL_NEAR;
           }
 
           dispatch(m_pcs);
+          dispatch(d_roll);
+          dispatch(d_pitch);
+          dispatch(d_head);
         }
 
         void
