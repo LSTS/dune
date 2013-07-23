@@ -682,7 +682,6 @@ namespace Sensors
             continue;
 
           m_uart->readString(m_bfr, c_bfr_size);
-          inf("recv: %s", sanitize(m_bfr).c_str());
           m_last_input = Clock::get();
 
           if (m_state != STA_NO_BEACONS)
