@@ -167,6 +167,9 @@ namespace DUNE
       param("Entity Label - Alignment", m_label_alignment)
       .description("Entity label of 'EulerAngles' alignment messages");
 
+      param("Entity Label - DVL", m_elabel_dvl)
+      .description("Entity label of the DVL device");
+
       param("Entity Label - Altitude - Hardware", m_elabel_alt_hard)
       .description("Entity label of the 'Distance' message for Hardware profile");
 
@@ -267,6 +270,15 @@ namespace DUNE
 
       try
       {
+        m_dvl_eid = resolveEntity(m_elabel_dvl);
+      }
+      catch (...)
+      {
+        m_dvl_eid = 0;
+      }
+
+      try
+      {
         if (m_ctx.profiles.isSelected("Simulation"))
           m_alt_eid = resolveEntity(m_elabel_alt_sim);
         else
@@ -339,7 +351,7 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::DataSanity* msg)
     {
-      if (msg->getSourceEntity() != m_alt_eid)
+      if (msg->getSourceEntity() != m_dvl_eid)
         return;
 
       if (msg->sane == IMC::DataSanity::DS_NOT_SANE)

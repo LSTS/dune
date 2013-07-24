@@ -665,6 +665,8 @@ namespace DUNE
       //! Altitude value.
       float m_altitude;
       //! Altitude entity label hardware.
+      std::string m_elabel_dvl;
+      //! Altitude entity label hardware.
       std::string m_elabel_alt_hard;
       //! Altitude entity label simulation.
       std::string m_elabel_alt_sim;
@@ -709,6 +711,7 @@ namespace DUNE
       unsigned m_depth_eid;
       unsigned m_ahrs_eid;
       unsigned m_alt_eid;
+      unsigned m_dvl_eid;
       //! Declination value.
       float m_declination;
       //! Declination variables.
