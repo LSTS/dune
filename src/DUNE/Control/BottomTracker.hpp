@@ -232,7 +232,6 @@ namespace DUNE
       void
       info(const std::string& msg) const;
 
-
       //! Function for debug messages.
       //! @param[in] msg string message to output.
       void

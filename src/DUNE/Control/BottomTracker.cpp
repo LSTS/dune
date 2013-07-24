@@ -327,7 +327,7 @@ namespace DUNE
     BottomTracker::onDepth(void)
     {
       // Render slope top as invalid here
-      m_sdata->renderSlopeInvalid(); 
+      m_sdata->renderSlopeInvalid();
 
       // if reference is for altitude now
       if (m_z_ref.z_units == IMC::Z_ALTITUDE)
@@ -531,11 +531,21 @@ namespace DUNE
           m_mstate = SM_TRACKING;
           return;
         }
+        else if (m_forced == FC_ALTITUDE)
+        {
+          debug("slope is safe, keep forcing altitude");
+
+          // Stop braking
+          brake(false);
+          dispatchAdmAltitude();
+          m_mstate = SM_TRACKING;
+          return;
+        }
         else if (m_z_ref.z_units == IMC::Z_DEPTH)
         {
           brake(false);
           dispatchSameZ();
-          m_mstate = SM_TRACKING;
+          m_mstate = SM_DEPTH;
           return;
         }
       }
