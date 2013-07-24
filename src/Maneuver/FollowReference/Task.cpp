@@ -267,6 +267,7 @@ namespace Maneuver
         IMC::DesiredPath desired_path;
         double curlat = state->lat;
         double curlon = state->lon;
+        bool near_ref = (pcs == NULL) ? false : (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
 
         WGS84::displace(state->x, state->y, &curlat, &curlon);
 
@@ -283,53 +284,59 @@ namespace Maneuver
 
         // check to see if we are already at the target...
         double xy_dist = WGS84::distance(desired_path.end_lat,
-                                         desired_path.end_lon, 0, curlat,
-                                         curlon, 0);
+            desired_path.end_lon, 0, curlat,
+            curlon, 0);
         bool at_z_target = z_dist < m_args.vertical_tolerance;
-        bool at_xy_target = xy_dist < m_args.horizontal_tolerance;
+        bool at_xy_target;
+
+        bool isUAV = m_args.vehicle_type.compare("UAV") == 0;
+        if(isUAV){
+          at_xy_target = (xy_dist > pcs->lradius - m_args.horizontal_tolerance)
+                  && (xy_dist < pcs->lradius + m_args.horizontal_tolerance)
+                  && (pcs->flags & IMC::PathControlState::FL_LOITERING != 0);
+        }
+        else{
+          at_xy_target = xy_dist < m_args.horizontal_tolerance;
+        }
+
         bool target_at_surface = desired_path.end_z == 0
             && desired_path.end_z_units == Z_DEPTH;
         bool still_same_reference = sameReference(ref, &m_last_ref);
-        int prevMode = m_fref_state.state;
+        int currMode = m_fref_state.state;
 
-
-        bool near_ref =
-            (pcs == NULL) ? false :
-                (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
-		bool isUAV = m_args.vehicle_type.compare("UAV") == 0;
-        if (still_same_reference && prevMode != IMC::FollowRefState::FR_WAIT)
+        if (still_same_reference && currMode != IMC::FollowRefState::FR_WAIT)
         {
-          switch (prevMode)
+          switch (currMode)
           {
             case (IMC::FollowRefState::FR_GOTO):
-              if (near_ref)
-              {
-				if (isUAV){
-            	  m_fref_state.state = IMC::FollowRefState::FR_LOITER;
-            	  inf("UAV says goto ");
-				}
-            	else if (at_z_target && target_at_surface)
-                  m_fref_state.state = IMC::FollowRefState::FR_HOVER;
-                else if (at_z_target && !target_at_surface)
-                  m_fref_state.state = IMC::FollowRefState::FR_LOITER;
-                else
-                  m_fref_state.state = IMC::FollowRefState::FR_ELEVATOR;
-              }
-              break;
+                  if(isUAV)
+                    uavUpdateStateProximity(at_xy_target, at_z_target);
+                  if (near_ref)
+                  {
+                    if (at_z_target && target_at_surface)
+                      m_fref_state.state = IMC::FollowRefState::FR_HOVER;
+                    else if (at_z_target && !target_at_surface)
+                      m_fref_state.state = IMC::FollowRefState::FR_LOITER;
+                    else
+                      m_fref_state.state = IMC::FollowRefState::FR_ELEVATOR;
+                  }
+            break;
             case (IMC::FollowRefState::FR_HOVER):
-              if (!at_xy_target)
-                m_fref_state.state = IMC::FollowRefState::FR_GOTO;
-              break;
+                  if (!at_xy_target)
+                    m_fref_state.state = IMC::FollowRefState::FR_GOTO;
+            break;
             case (IMC::FollowRefState::FR_ELEVATOR):
-			  if(isUAV){
-				  m_fref_state.state = IMC::FollowRefState::FR_LOITER;
-				  inf("UAV says elevator ");
-			  }
-			  else if (at_z_target && target_at_surface)
-                m_fref_state.state = IMC::FollowRefState::FR_HOVER;
-			  else if (at_z_target && (!target_at_surface && desired_path.end_z_units == Z_DEPTH))
-                m_fref_state.state = IMC::FollowRefState::FR_LOITER;
-              break;
+                  if(isUAV)
+                    uavUpdateStateProximity(at_xy_target, at_z_target);
+                  else{
+                    if (at_z_target && target_at_surface)
+                      m_fref_state.state = IMC::FollowRefState::FR_HOVER;
+                    if (at_z_target && (!target_at_surface && desired_path.end_z_units == Z_DEPTH))
+                      m_fref_state.state = IMC::FollowRefState::FR_LOITER;
+                    if (at_z_target && at_xy_target && desired_path.end_z_units == Z_HEIGHT)
+                      m_fref_state.state = IMC::FollowRefState::FR_HOVER;
+                  }
+            break;
           }
         }
         else
@@ -344,36 +351,13 @@ namespace Maneuver
             m_fref_state.state = IMC::FollowRefState::FR_LOITER;
         }
 
-        m_fref_state.proximity = 0;
-
-        if(isUAV){
-			if(near_ref){
-				m_fref_state.proximity |= IMC::FollowRefState::PROX_XY_NEAR;
-				inf("UAV says near");
-			}
-			else{
-				m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
-			}
+        if(!isUAV){
+          updateProximityAUV(at_z_target, at_xy_target, near_ref);
         }
-        else{
-			if (at_z_target)
-			  m_fref_state.proximity |= IMC::FollowRefState::PROX_Z_NEAR;
-			if (at_xy_target)
-			  m_fref_state.proximity |= IMC::FollowRefState::PROX_XY_NEAR;
-			if (!at_z_target && !at_xy_target)
-			  m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
-        }
-
-
-        //inf("PathControlState flags %#x, %d || (%s && %d) -> at_xy_target || (m_args.vehicle_type.compare(\"UAV\") && near_ref )", pcs->flags, at_xy_target,m_args.vehicle_type.c_str(), near_ref);
-        //inf("Distance XY: %f, Distance Z: %f, flags: %#x ", xy_dist, z_dist,  m_fref_state.proximity);
-
-
-
         m_fref_state.reference.set(*ref);
         dispatch(m_fref_state);
 
-        if (sameReference(ref, &m_last_ref) && m_fref_state.state == prevMode
+        if (sameReference(ref, &m_last_ref) && m_fref_state.state == currMode
             && m_fref_state.state != IMC::FollowRefState::FR_WAIT)
         {
           // nothing to do
@@ -540,6 +524,34 @@ namespace Maneuver
               Angles::degrees(desired_path.end_lon));
           enableMovement(false);
           break;
+        }
+      }
+
+      void
+      updateProximityAUV(bool at_z_target, bool at_xy_target, bool near_ref)
+      {
+        m_fref_state.proximity = 0;
+        if (at_z_target)
+          m_fref_state.proximity |= IMC::FollowRefState::PROX_Z_NEAR;
+
+        if (at_xy_target )
+          m_fref_state.proximity |= IMC::FollowRefState::PROX_XY_NEAR;
+
+        //inf("PathControlState flags %#x, %d || (%s && %d) -> at_xy_target || (m_args.vehicle_type.compare(\"UAV\") && near_ref )", pcs->flags, at_xy_target,m_args.vehicle_type.c_str(), near_ref);
+        //inf("Distance XY: %f, Distance Z: %f, flags: %#x ", xy_dist, z_dist,  m_fref_state.proximity);
+        if (!at_z_target && !at_xy_target)
+          m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
+      }
+
+      void
+      uavUpdateStateProximity(bool at_xy_target, bool at_z_target)
+      {
+        if (at_xy_target && at_z_target)
+        {
+          m_fref_state.state = IMC::FollowRefState::FR_LOITER;
+          m_fref_state.proximity |= IMC::FollowRefState::PROX_Z_NEAR;
+          m_fref_state.proximity |= IMC::FollowRefState::PROX_XY_NEAR;
+          inf("UAV says loiter, xy near, z near.");
         }
       }
     };
