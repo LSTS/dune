@@ -140,7 +140,7 @@ namespace Plan
         .units(Units::Second)
         .description("Duration of vehicle calibration commands");
 
-        param("Abort On Activation Failed", m_args.actfail_abort)
+        param("Abort On Failed Activation", m_args.actfail_abort)
         .defaultValue("false")
         .description("Abort when a payload fails to activate");
 
