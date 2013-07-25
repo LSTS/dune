@@ -46,7 +46,7 @@ using std::tan;
 //! Depth hysteresis for ignoring ranges and altitude
 static const float c_depth_hyst = 0.5;
 //! State to string for debug messages
-static const std::string c_str_states[] = {"Idle", "Tracking", "Depth", "Unsafe", "Avoiding"};
+static const std::string c_str_states[] = {DTR("Idle"), DTR("Tracking"), DTR("Depth"), DTR("Unsafe"), DTR("Avoiding")};
 
 namespace DUNE
 {
@@ -294,7 +294,7 @@ namespace DUNE
       if (depth_ref > m_args->depth_limit + c_depth_hyst &&
           m_estate.depth > m_args->depth_limit)
       {
-        info("depth is reaching unacceptable values, forcing depth control");
+        info(DTR("depth is reaching unacceptable values, forcing depth control"));
 
         m_forced = FC_DEPTH;
         dispatchLimitDepth();
@@ -432,7 +432,7 @@ namespace DUNE
       // If ranges or altitude cannot be used, then we're clueless
       if (m_sdata->isSurface(m_estate) || !isAltitudeValid())
       {
-        err("unable to avoid obstacle");
+        err(DTR("unable to avoid obstacle"));
         return;
       }
 
@@ -469,9 +469,9 @@ namespace DUNE
       dispatchLoop(brk);
 
       if (start)
-        info("Started braking");
+        info(DTR("Started braking"));
       else
-        info("Stopped braking");
+        info(DTR("Stopped braking"));
     }
 
     void
@@ -560,7 +560,7 @@ namespace DUNE
     void
     BottomTracker::info(const std::string& msg) const
     {
-      m_args->task->inf("[BottomTrack.%s] >> %s",
+      m_args->task->inf(DTR("[BottomTrack.%s] >> %s"),
                         c_str_states[m_mstate].c_str(), msg.c_str());
     }
 
@@ -574,7 +574,7 @@ namespace DUNE
     void
     BottomTracker::err(const std::string& msg) const
     {
-      throw std::runtime_error("[BottomTrack." + c_str_states[m_mstate] + "] >> " + msg);
+      throw std::runtime_error(DTR("[BottomTrack.") + c_str_states[m_mstate] + "] >> " + msg);
     }
   }
 }
