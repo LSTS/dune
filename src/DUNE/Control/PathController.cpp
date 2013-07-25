@@ -126,6 +126,12 @@ namespace DUNE
       .units(Units::MeterPerSecond)
       .description("Relation between monitor disabling time and position jump");
 
+      param("ETA Minimum Speed", m_eta_min_speed)
+      .defaultValue("1.0")
+      .minimumValue("0.1")
+      .units(Units::MeterPerSecond)
+      .description("ETA minimum admissible speed");
+
       param("Bottom Track -- Enabled", m_btd.enabled)
       .defaultValue("false")
       .description("Enable or disable bottom track control");
@@ -663,7 +669,7 @@ namespace DUNE
 
         double errx = std::fabs(m_ts.track_length - m_ts.track_pos.x);
         double erry = std::fabs(m_ts.track_pos.y);
-        double s = std::max(1.0, m_ts.speed);
+        double s = std::max((double)m_eta_min_speed, m_ts.speed);
 
         if (errx <= erry && erry < 2 * c_time_factor * s)
           m_ts.eta = errx / s;
@@ -911,7 +917,7 @@ namespace DUNE
       else if (isActive())
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       else
-	setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
     }
 
     void
