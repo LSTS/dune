@@ -1015,8 +1015,6 @@ namespace Control
           m_fix.height = (double)gps_raw.alt * 0.001;
           m_fix.satellites = gps_raw.satellites_visible;
 
-          inf("%llu", (long long unsigned int)gps_raw.time_usec);
-
           long time_fix = gps_raw.time_usec % 1000000000;
           unsigned int date = (unsigned int)(gps_raw.time_usec / 1e9);
           inf("%u", date);
