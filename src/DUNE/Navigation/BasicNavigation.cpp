@@ -23,7 +23,7 @@
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
 // Author: José Braga                                                       *
-// Author: Pedro Calado (Bottom Distance/Altitude filter)                   *
+// Author: Pedro Calado (Altitude filter)                                   *
 //***************************************************************************
 
 // Local headers.
@@ -79,6 +79,11 @@ namespace DUNE
       .units(Units::Second)
       .defaultValue("1.0")
       .description("No DVL readings timeout");
+
+      param("Altitude timeout", m_without_alt_timeout)
+      .units(Units::Second)
+      .defaultValue("5.0")
+      .description("No altitude readings timeout");
 
       param("Depth timeout", m_without_depth_timeout)
       .units(Units::Second)
@@ -156,15 +161,15 @@ namespace DUNE
       .defaultValue("7")
       .description("Number of moving average samples to smooth maximum GPS HACC.");
 
-      param("Entity Label - Depth", m_label_depth)
+      param("Entity Label - Depth", m_elabel_depth)
       .defaultValue("Depth Sensor")
       .description("Entity label of 'Depth' messages");
 
-      param("Entity Label - Compass", m_label_ahrs)
+      param("Entity Label - Compass", m_elabel_ahrs)
       .defaultValue("AHRS")
       .description("Entity label of 'AHRS' messages");
 
-      param("Entity Label - Alignment", m_label_alignment)
+      param("Entity Label - Alignment", m_elabel_alignment)
       .description("Entity label of 'EulerAngles' alignment messages");
 
       param("Entity Label - DVL", m_elabel_dvl)
@@ -230,7 +235,7 @@ namespace DUNE
       // Initialize timers.
       m_time_without_gps.setTop(m_without_gps_timeout);
       m_time_without_dvl.setTop(m_without_dvl_timeout);
-      m_time_without_bdist.setTop(m_without_dvl_timeout);
+      m_time_without_alt.setTop(m_without_alt_timeout);
       m_time_without_main_depth.setTop(m_without_main_depth_timeout);
       m_time_without_depth.setTop(m_without_depth_timeout);
       m_dvl_sanity_timer.setTop(m_dvl_sanity_timeout);
@@ -254,14 +259,14 @@ namespace DUNE
     void
     BasicNavigation::onEntityResolution(void)
     {
-      m_depth_eid = resolveEntity(m_label_depth);
-      m_ahrs_eid = resolveEntity(m_label_ahrs);
+      m_depth_eid = resolveEntity(m_elabel_depth);
+      m_ahrs_eid = resolveEntity(m_elabel_ahrs);
       m_agvel_eid = m_ahrs_eid;
       m_accel_eid = m_ahrs_eid;
 
       try
       {
-        m_alignment_eid = resolveEntity(m_label_alignment);
+        m_alignment_eid = resolveEntity(m_elabel_alignment);
       }
       catch (...)
       {
@@ -374,8 +379,8 @@ namespace DUNE
       if (msg->validity == IMC::Distance::DV_INVALID)
         return;
 
-      // Reset bottom Distance timer.
-      m_time_without_bdist.reset();
+      // Reset altitude timer.
+      m_time_without_alt.reset();
 
       if (!m_alt_sanity)
         return;
