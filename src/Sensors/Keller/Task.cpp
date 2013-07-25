@@ -209,6 +209,7 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
+        m_crc_err_count = 0;
         initialize();
       }
 
