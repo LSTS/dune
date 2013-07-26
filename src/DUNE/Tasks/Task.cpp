@@ -73,7 +73,8 @@ namespace DUNE
       .description(DTR("Main entity label"));
 
       param(DTR_RT("Execution Priority"), m_args.priority)
-      .defaultValue("10");
+      .defaultValue("10")
+      .description(DTR("Execution priority"));
 
       param(DTR_RT("Activation Time"), m_args.act_time)
       .defaultValue("0");
@@ -220,18 +221,21 @@ namespace DUNE
       param(DTR_RT("Active - Scope"), m_args.active_scope)
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue(scope_str);
+      .defaultValue(scope_str)
+      .description(DTR("Scoped of the 'Active' parameter"));
 
       std::string visibility_str = Parameter::visibilityToString(def_visibility);
       param(DTR_RT("Active - Visibility"), m_args.active_visibility)
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue(visibility_str);
+      .defaultValue(visibility_str)
+      .description(DTR("Visibility of the 'Active' parameter"));
 
       param(DTR_RT("Active"), m_args.active)
       .visibility(def_visibility)
       .scope(def_scope)
-      .defaultValue(uncastLexical(def_value));
+      .defaultValue(uncastLexical(def_value))
+      .description(DTR("True to activate task, false otherwise"));
     }
 
     void
