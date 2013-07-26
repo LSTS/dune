@@ -143,7 +143,7 @@ namespace Maneuver
 
         if (m_maneuver.radius < c_min_radius)
         {
-          war(DTR("invalid loiter radius, forcing a minimum of %0.2f"), c_min_radius);
+          war(DTR("forcing a minimum radius of %0.2f"), c_min_radius);
           m_maneuver.radius = c_min_radius;
         }
 
@@ -222,7 +222,7 @@ namespace Maneuver
           }
           else
           {
-            signalNoAltitude();
+            signalInvalidZ();
             return;
           }
 
@@ -273,7 +273,7 @@ namespace Maneuver
             {
               // water column is not deep enough so we bail
               m_done = true;
-              war("water column is not deep enough so the maneuver will not proceed.");
+              war(DTR("water column is not deep enough"));
             }
           }
 

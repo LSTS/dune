@@ -169,6 +169,11 @@ namespace DUNE
       void
       signalError(const std::string& msg);
 
+      //! Signal invalid Z reference
+      //! This method should be used by subclasses to signal an error condition.
+      void
+      signalInvalidZ(void);
+
       //! Signal no altitude error.
       //! This method should be used by subclasses to signal an error condition.
       void
