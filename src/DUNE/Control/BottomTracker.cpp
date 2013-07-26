@@ -46,7 +46,8 @@ using std::tan;
 //! Depth hysteresis for ignoring ranges and altitude
 static const float c_depth_hyst = 0.5;
 //! State to string for debug messages
-static const std::string c_str_states[] = {DTR("Idle"), DTR("Tracking"), DTR("Depth"), DTR("Unsafe"), DTR("Avoiding")};
+static const std::string c_str_states[] = {DTR("Idle"), DTR("Tracking"), DTR("Depth"),
+                                           DTR("Max Depth"), DTR("Unsafe"), DTR("Avoiding")};
 //! Bottom tracker name
 static const std::string c_bt_name = DTR("BottomTrack");
 
@@ -253,14 +254,28 @@ namespace DUNE
       // Render slope top as invalid here
       m_sdata->renderSlopeInvalid();
 
-      // if units are now altitude
-      if ((m_forced == FC_ALTITUDE) && (m_z_ref.z_units == IMC::Z_ALTITUDE))
-      {
-        debug("units are altitude now. moving to tracking");
+      float depth_ref = m_estate.depth + m_estate.alt - m_z_ref.value;
 
-        m_forced = FC_NONE;
-        m_mstate = SM_TRACKING;
-        return;
+      // if units are now altitude
+      if (m_forced == FC_ALTITUDE)
+      {
+        if  (m_z_ref.z_units == IMC::Z_ALTITUDE)
+        {
+          debug("units are altitude now. moving to tracking");
+
+          m_forced = FC_NONE;
+          m_mstate = SM_TRACKING;
+          return;
+        }
+        else if (depth_ref >= m_args->adm_alt + c_depth_hyst)
+        {
+          debug("depth reference is now safe");
+
+          m_forced = FC_NONE;
+          dispatchSameZ();
+          m_mstate = SM_DEPTH;
+          return;
+        }
       } // if reference is for depth now
       else if ((m_forced != FC_ALTITUDE) && (m_z_ref.z_units == IMC::Z_DEPTH))
       {
@@ -311,9 +326,7 @@ namespace DUNE
         return;
       }
 
-      // if reaching a limit in depth
-      float depth_ref = m_estate.depth + m_estate.alt - m_z_ref.value;
-
+      // if reaching a limit in altitude
       if (depth_ref > m_args->depth_limit + c_depth_hyst &&
           m_estate.depth > m_args->depth_limit)
       {
@@ -321,7 +334,7 @@ namespace DUNE
 
         m_forced = FC_DEPTH;
         dispatchLimitDepth();
-        m_mstate = SM_DEPTH;
+        m_mstate = SM_LIMITDEPTH;
         return;
       }
     }
@@ -536,7 +549,7 @@ namespace DUNE
           m_mstate = SM_TRACKING;
           return;
         }
-        else if (m_forced == FC_ALTITUDE)
+        else if ((m_forced == FC_ALTITUDE) && (m_estate.alt >= m_args->adm_alt))
         {
           debug("slope is safe, keep forcing altitude");
 
