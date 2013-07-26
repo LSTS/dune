@@ -102,6 +102,21 @@ namespace Navigation
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Navigation::BasicNavigation(name, ctx)
         {
+          param("Process Noise Covariance", m_process_noise)
+          .defaultValue("")
+          .size(2)
+          .description("Kalman Filter Process Noise Covariance values");
+
+          param("Measure Noise Covariance", m_measure_noise)
+          .defaultValue("")
+          .size(4)
+          .description("Kalman Filter Measurement Noise Covariance values");
+
+          param("State Covariance Initial State", m_state_cov)
+          .defaultValue("")
+          .size(2)
+          .description("Kalman Filter State Covariance initial values");
+
           // Extended Kalman Filter initialization.
           m_kal.reset(NUM_STATE, NUM_OUT);
         }
@@ -248,7 +263,7 @@ namespace Navigation
 
           double phi = Angles::normalizeRadian(getEuler(AXIS_X));
           double theta = Angles::normalizeRadian(getEuler(AXIS_Y));
-          double yaw = m_kal.getState(getEuler(AXIS_Z));
+          double yaw = Angles::normalizeRadian(getEuler(AXIS_Z));
 
           A(STATE_X, STATE_U) = std::cos(yaw) * std::cos(theta);
           A(STATE_X, STATE_V) = (std::cos(yaw) * std::sin(theta) * std::sin(phi)
