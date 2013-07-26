@@ -437,10 +437,10 @@ namespace Monitors
           {
             if (r.monitor)
             {
-              err(DTR("%s -- status not reported after %0.2f seconds"), r.label.c_str(),
-                  m_args.report_timeout);
+              err(DTR("%s -- status not reported after %0.2f seconds"),
+                  r.label.c_str(), m_args.report_timeout);
 
-              setLastError(r.label + ": entity state timeout");
+              setLastError(r.label + DTR(": entity state timeout"));
             }
 
             r.time = now;

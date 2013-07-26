@@ -264,7 +264,7 @@ namespace Plan
 
           if (!m_plan->onEntityActivationState(id, msg))
           {
-            std::string error = String::str("failed to activate %s: %s",
+            std::string error = String::str(DTR("failed to activate %s: %s"),
                                             id.c_str(), msg->error.c_str());
 
             if (m_args.actfail_abort)
@@ -516,7 +516,8 @@ namespace Plan
         if (blockedMode())
           return;
 
-        changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("vehicle in EXTERNAL mode"), false);
+        changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                   DTR("vehicle in EXTERNAL mode"), false);
       }
 
       void
@@ -598,7 +599,8 @@ namespace Plan
             }
             else
             {
-              changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("plan load failed: undefined maneuver or plan"));
+              changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                         DTR("plan load failed: undefined maneuver or plan"));
               return false;
             }
           }
@@ -610,14 +612,16 @@ namespace Plan
 
           if (!lookForPlan(plan_id, m_spec))
           {
-            changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("plan load failed: ") + m_reply.info);
+            changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                       DTR("plan load failed: ") + m_reply.info);
             return false;
           }
         }
 
         if (!parsePlan(plan_startup))
         {
-          changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("plan validation failed: ") + m_reply.info);
+          changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                     DTR("plan validation failed: ") + m_reply.info);
           return false;
         }
 
@@ -633,7 +637,8 @@ namespace Plan
           if (m_vehicle_ready)
             changeMode(IMC::PlanControlState::PCS_READY, DTR("plan loaded"));
           else
-            changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("plan loaded but vehicle not ready"));
+            changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                       DTR("plan loaded but vehicle not ready"));
         }
 
         return true;

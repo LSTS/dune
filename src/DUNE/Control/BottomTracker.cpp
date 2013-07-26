@@ -46,7 +46,9 @@ using std::tan;
 //! Depth hysteresis for ignoring ranges and altitude
 static const float c_depth_hyst = 0.5;
 //! State to string for debug messages
-static const std::string c_str_states[] = {"Idle", "Tracking", "Depth", "Unsafe", "Avoiding"};
+static const std::string c_str_states[] = {DTR("Idle"), DTR("Tracking"), DTR("Depth"), DTR("Unsafe"), DTR("Avoiding")};
+//! Bottom tracker name
+static const std::string c_bt_name = DTR("BottomTrack");
 
 namespace DUNE
 {
@@ -58,7 +60,8 @@ namespace DUNE
     {
       m_cparcel.setSourceEntity(m_args->eid);
 
-      m_sdata = new SlopeData(m_args->fsamples, m_args->min_range, m_args->safe_pitch, m_args->slope_hyst);
+      m_sdata = new SlopeData(m_args->fsamples, m_args->min_range,
+                              m_args->safe_pitch, m_args->slope_hyst);
 
       reset();
     }
@@ -314,7 +317,7 @@ namespace DUNE
       if (depth_ref > m_args->depth_limit + c_depth_hyst &&
           m_estate.depth > m_args->depth_limit)
       {
-        info("depth is reaching unacceptable values, forcing depth control");
+        info(DTR("depth is reaching unacceptable values, forcing depth control"));
 
         m_forced = FC_DEPTH;
         dispatchLimitDepth();
@@ -446,7 +449,8 @@ namespace DUNE
         {
           debug("cannot use altitude");
           debug("moving away from slope top or ");
-          debug(String::str("distance to slope top is short: %.2f", m_sdata->getDistanceToSlope()));
+          debug(String::str("distance to slope top is short: %.2f",
+                            m_sdata->getDistanceToSlope()));
           debug("moving to tracking");
 
           dispatchSameZ();
@@ -485,7 +489,8 @@ namespace DUNE
         if (away_top)
         {
           debug("moving away from slope top or ");
-          debug(String::str("distance to slope top is short: %.2f", m_sdata->getDistanceToSlope()));
+          debug(String::str("distance to slope top is short: %.2f",
+                            m_sdata->getDistanceToSlope()));
           debug("moving to tracking");
 
           // dispatch same z reference sent by upper layer
@@ -513,7 +518,7 @@ namespace DUNE
       // If ranges or altitude cannot be used, then we're clueless
       if (m_sdata->isSurface(m_estate) || !isAltitudeValid())
       {
-        err("unable to avoid obstacle");
+        err(DTR("unable to avoid obstacle"));
         return;
       }
 
@@ -560,9 +565,9 @@ namespace DUNE
       dispatchLoop(brk);
 
       if (start)
-        info("Started braking");
+        info(DTR("Started braking"));
       else
-        info("Stopped braking");
+        info(DTR("Stopped braking"));
     }
 
     void
@@ -662,21 +667,22 @@ namespace DUNE
     void
     BottomTracker::info(const std::string& msg) const
     {
-      m_args->task->inf("[BottomTrack.%s] >> %s",
+      m_args->task->inf("[%s.%s] >> %s", c_bt_name.c_str(),
                         c_str_states[m_mstate].c_str(), msg.c_str());
     }
 
     void
     BottomTracker::debug(const std::string& msg) const
     {
-      m_args->task->debug("[BottomTrack.%s] >> %s",
+      m_args->task->debug("[%s.%s] >> %s", c_bt_name.c_str(),
                           c_str_states[m_mstate].c_str(), msg.c_str());
     }
 
     void
     BottomTracker::err(const std::string& msg) const
     {
-      throw std::runtime_error("[BottomTrack." + c_str_states[m_mstate] + "] >> " + msg);
+      throw std::runtime_error(String::str("[%s.", c_bt_name.c_str())
+                               + c_str_states[m_mstate] + "] >> " + msg);
     }
   }
 }

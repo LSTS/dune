@@ -209,6 +209,7 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
+        m_crc_err_count = 0;
         initialize();
       }
 
@@ -486,14 +487,8 @@ namespace Sensors
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
 
           // The device seems to be dead.. attempt to restart
-          try
-          {
-            onResourceAcquisition();
-            onResourceInitialization();
-          }
-          catch (...)
-          {
-          }
+          onResourceAcquisition();
+          onResourceInitialization();
         }
       }
     };

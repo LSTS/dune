@@ -411,6 +411,8 @@ namespace DUNE
       float m_jump_threshold;
       //! Relation between monitor disabling time and position jump
       float m_jump_factor;
+      //! ETA minimum admissible speed
+      float m_eta_min_speed;
       //! Active loops
       uint32_t m_aloops;
 

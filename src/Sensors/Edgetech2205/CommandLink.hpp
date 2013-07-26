@@ -47,11 +47,22 @@ namespace Sensors
         m_avg_time_diff(0)
       {
         m_sock.setNoDelay(true);
-        m_sock.setReceiveTimeout(5);
-        m_sock.setSendTimeout(5);
+        setSocketTimeout(1.0);
         m_sock.connect(addr, port);
         m_sock.addToPoll(m_iom);
         m_bfr.resize(c_max_size);
+      }
+
+      ~CommandLink(void)
+      {
+        m_sock.delFromPoll(m_iom);
+      }
+
+      void
+      setSocketTimeout(double value)
+      {
+        m_sock.setSendTimeout(value);
+        m_sock.setReceiveTimeout(value);
       }
 
       int64_t

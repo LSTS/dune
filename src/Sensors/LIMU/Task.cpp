@@ -188,9 +188,9 @@ namespace Sensors
           m_uart->open();
           UCTK::FirmwareInfo info = m_uart->getFirmwareInfo();
           if (info.isDevelopment())
-            war("device is using unstable firmware");
+            war(DTR("device is using unstable firmware"));
           else
-            inf("firmware version %u.%u.%u", info.major,
+            inf(DTR("firmware version %u.%u.%u"), info.major,
               info.minor, info.patch);
         }
         catch (std::runtime_error& e)

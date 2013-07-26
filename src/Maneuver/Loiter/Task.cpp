@@ -34,15 +34,31 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
+    //! Task arguments
+    struct Arguments
+    {
+      //! Minimum radius to prevent incompatibility with path controller
+      double min_radius;
+    };
+
     struct Task: public DUNE::Maneuvers::Maneuver
     {
+      //! Desired path message
       IMC::DesiredPath m_path;
+      //! End time of the loiter
       double m_end_time;
+      //! Duration of the loiter in seconds
       uint16_t m_duration;
+      //! Task arguments
+      Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Maneuvers::Maneuver(name, ctx)
       {
+        param("Minimum Radius", m_args.min_radius)
+        .defaultValue("10.0")
+        .description("Minimum radius to prevent incompatibility with path controller");
+
         bindToManeuver<Task, IMC::Loiter>();
         bind<IMC::PathControlState>(this);
       }
@@ -52,17 +68,19 @@ namespace Maneuver
       {
         setControl(IMC::CL_PATH);
 
-        if (maneuver->radius < 0)
+        float radius = maneuver->radius;
+
+        if (radius < m_args.min_radius)
         {
-          signalError(DTR("invalid loiter radius"));
-          return;
+          war(DTR("forcing minimum radius of %.1f"), m_args.min_radius);
+          radius = m_args.min_radius;
         }
 
         m_path.end_lat = maneuver->lat;
         m_path.end_lon = maneuver->lon;
         m_path.end_z = maneuver->z;
         m_path.end_z_units = maneuver->z_units;
-        m_path.lradius = maneuver->radius;
+        m_path.lradius = radius;
 
         if (maneuver->direction == IMC::Loiter::LD_CCLOCKW)
           m_path.flags = IMC::DesiredPath::FL_CCLOCKW;

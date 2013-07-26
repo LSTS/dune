@@ -260,9 +260,14 @@ namespace Sensors
         setDataActive(SUBSYS_SSH, "None");
         setPing(SUBSYS_SSH, "None");
         m_cmd->shutdown();
-
         Memory::clear(m_cmd);
-        Memory::clear(m_sock_dat);
+
+        if (m_sock_dat != NULL)
+        {
+          m_sock_dat->delFromPoll(m_iom_dat);
+          delete m_sock_dat;
+          m_sock_dat = NULL;
+        }
 
         m_deactivating = true;
         m_countdown.setTop(getDeactivationTime());
@@ -516,15 +521,19 @@ namespace Sensors
           return;
         }
 
+        Counter<double> timer(1.0);
         try
         {
           m_cmd = new CommandLink(m_args.addr, m_args.port_cmd);
+          debug("activation took %0.2f s", m_countdown.getElapsed());
           activate();
-          debug("activation took %0.2f s", getActivationTime() -
-                m_countdown.getRemaining());
         }
         catch (...)
-        { }
+        {
+          double delay = timer.getRemaining();
+          if (delay > 0.0)
+            Delay::wait(delay);
+        }
       }
 
       void

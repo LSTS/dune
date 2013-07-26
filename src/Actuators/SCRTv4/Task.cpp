@@ -277,7 +277,7 @@ namespace Actuators
             break;
 
           case LUCL::CommandTypeError:
-            err("error");
+            err(DTR("error"));
             break;
 
           default:

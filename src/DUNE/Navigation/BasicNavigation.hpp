@@ -221,7 +221,7 @@ namespace DUNE
           return m_altitude;
         }
 
-        if (m_time_without_bdist.overflow())
+        if (m_time_without_alt.overflow())
           m_altitude = -1.0;
 
         return m_altitude;
@@ -547,8 +547,8 @@ namespace DUNE
       Time::Counter<double> m_time_without_gps;
       //! Time without DVL sensor readings deadline.
       Time::Counter<double> m_time_without_dvl;
-      //! Time without bottom Distance readings deadline.
-      Time::Counter<double> m_time_without_bdist;
+      //! Time without altitude readings deadline.
+      Time::Counter<double> m_time_without_alt;
       //! DVL data sanity timeout.
       Time::Counter<double> m_dvl_sanity_timer;
       //! Time without main depth provider.
@@ -621,9 +621,9 @@ namespace DUNE
       //! Last GPS WGS-84 height above ellipsoid.
       double m_last_hae;
       //! Entity labels.
-      std::string m_label_ahrs;
-      std::string m_label_alignment;
-      std::string m_label_depth;
+      std::string m_elabel_ahrs;
+      std::string m_elabel_alignment;
+      std::string m_elabel_depth;
       //! Task state machine.
       SMStates m_navstate;
       //! Time step delta.
@@ -664,6 +664,8 @@ namespace DUNE
       float m_dvl_time_rel_thresh;
       //! Altitude value.
       float m_altitude;
+      //! DVL entity label.
+      std::string m_elabel_dvl;
       //! Altitude entity label hardware.
       std::string m_elabel_alt_hard;
       //! Altitude entity label simulation.
@@ -709,6 +711,7 @@ namespace DUNE
       unsigned m_depth_eid;
       unsigned m_ahrs_eid;
       unsigned m_alt_eid;
+      unsigned m_dvl_eid;
       //! Declination value.
       float m_declination;
       //! Declination variables.
@@ -717,6 +720,7 @@ namespace DUNE
       //! Sensors timeout.
       float m_without_gps_timeout;
       float m_without_dvl_timeout;
+      float m_without_alt_timeout;
       float m_without_main_depth_timeout;
       float m_without_depth_timeout;
       float m_dvl_sanity_timeout;
