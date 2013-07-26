@@ -180,7 +180,10 @@ namespace DUNE
       XML::writeTag("scope", scopeToString(m_scope), os);
       XML::writeTag("default", m_value.empty() ? m_default : m_value, os);
       XML::writeTag("units", Units::getAbbrev(m_units), os);
-      XML::writeTag("desc", DTR(m_desc.c_str()), os);
+      if (m_desc.empty())
+        XML::writeTag("desc", m_desc, os);
+      else
+        XML::writeTag("desc", DTR(m_desc.c_str()), os);
 
       if (!m_min_value.empty())
         XML::writeTag("min", m_min_value, os);
