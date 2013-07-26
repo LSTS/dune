@@ -166,7 +166,7 @@ namespace DUNE
         if (m_vertical_ref > m_max_depth)
         {
           m_vertical_ref = m_max_depth;
-          war("limiting depth to %.1f", m_max_depth);
+          war(DTR("limiting depth to %.1f"), m_max_depth);
         }
       }
       else if (msg->z_units == IMC::Z_ALTITUDE)
