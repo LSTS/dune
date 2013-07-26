@@ -236,7 +236,7 @@ namespace DUNE
     void
     KalmanFilter::setInnovation(short pos, double value)
     {
-      if ((size_t)pos > m_state_count)
+      if (pos > m_innov.rows())
         throw std::runtime_error("invalid index while setting innovation matrix");
 
       m_innov(pos) = value;
