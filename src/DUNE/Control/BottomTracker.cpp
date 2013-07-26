@@ -47,6 +47,8 @@ using std::tan;
 static const float c_depth_hyst = 0.5;
 //! State to string for debug messages
 static const std::string c_str_states[] = {DTR("Idle"), DTR("Tracking"), DTR("Depth"), DTR("Unsafe"), DTR("Avoiding")};
+//! Bottom tracker name
+static const std::string c_bt_name = DTR("BottomTrack");
 
 namespace DUNE
 {
@@ -58,7 +60,8 @@ namespace DUNE
     {
       m_cparcel.setSourceEntity(m_args->eid);
 
-      m_sdata = new SlopeData(m_args->fsamples, m_args->min_range, m_args->safe_pitch, m_args->slope_hyst);
+      m_sdata = new SlopeData(m_args->fsamples, m_args->min_range,
+                              m_args->safe_pitch, m_args->slope_hyst);
 
       reset();
     }
@@ -365,7 +368,8 @@ namespace DUNE
         {
           debug("cannot use altitude");
           debug("moving away from slope top or ");
-          debug(String::str("distance to slope top is short: %.2f", m_sdata->getDistanceToSlope()));
+          debug(String::str("distance to slope top is short: %.2f",
+                            m_sdata->getDistanceToSlope()));
           debug("moving to tracking");
 
           dispatchSameZ();
@@ -404,7 +408,8 @@ namespace DUNE
         if (away_top)
         {
           debug("moving away from slope top or ");
-          debug(String::str("distance to slope top is short: %.2f", m_sdata->getDistanceToSlope()));
+          debug(String::str("distance to slope top is short: %.2f",
+                            m_sdata->getDistanceToSlope()));
           debug("moving to tracking");
 
           // dispatch same z reference sent by upper layer
@@ -560,21 +565,22 @@ namespace DUNE
     void
     BottomTracker::info(const std::string& msg) const
     {
-      m_args->task->inf(DTR("[BottomTrack.%s] >> %s"),
+      m_args->task->inf("[%s.%s] >> %s", c_bt_name.c_str(),
                         c_str_states[m_mstate].c_str(), msg.c_str());
     }
 
     void
     BottomTracker::debug(const std::string& msg) const
     {
-      m_args->task->debug("[BottomTrack.%s] >> %s",
+      m_args->task->debug("[%s.%s] >> %s", c_bt_name.c_str(),
                           c_str_states[m_mstate].c_str(), msg.c_str());
     }
 
     void
     BottomTracker::err(const std::string& msg) const
     {
-      throw std::runtime_error(DTR("[BottomTrack.") + c_str_states[m_mstate] + "] >> " + msg);
+      throw std::runtime_error(String::str("[%s.", c_bt_name.c_str())
+                               + c_str_states[m_mstate] + "] >> " + msg);
     }
   }
 }

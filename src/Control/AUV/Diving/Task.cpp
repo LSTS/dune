@@ -478,7 +478,7 @@ namespace Control
             }
             else if (m_counter_solo->overflow())
             {
-              std::string desc = "failed to submerge, given up";
+              std::string desc = DTR("failed to submerge");
               setEntityState(IMC::EntityState::ESTA_ERROR, desc);
               err("%s", desc.c_str());
 
