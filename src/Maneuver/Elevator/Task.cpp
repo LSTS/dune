@@ -34,8 +34,6 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
-    //! Minimum radius admissible for loitering or helicoiding
-    static const float c_min_radius = 5.0f;
     //! Number of samples for vertical monitor moving average
     static const unsigned c_vsamples = 10;
     //! Value to be consider at surface
@@ -48,6 +46,7 @@ namespace Maneuver
       float radius_tolerance;
       float vmonitor_speed;
       float vmonitor_timeout;
+      float min_radius;
     };
 
     //! Vertical monitor data
@@ -124,6 +123,10 @@ namespace Maneuver
         .defaultValue("15.0")
         .description("Timeout when progress is below the specified value");
 
+        param("Minimum Radius", m_args.min_radius)
+        .defaultValue("10.0")
+        .description("Minimum radius to prevent incompatibility with path controller");
+
         bindToManeuver<Task, IMC::Elevator>();
         bind<IMC::PathControlState>(this);
         bind<IMC::EstimatedState>(this);
@@ -141,10 +144,10 @@ namespace Maneuver
         m_maneuver = *maneuver;
         m_path.clear();
 
-        if (m_maneuver.radius < c_min_radius)
+        if (m_maneuver.radius < m_args.min_radius)
         {
-          war(DTR("forcing minimum radius of %.1f"), c_min_radius);
-          m_maneuver.radius = c_min_radius;
+          war(DTR("forcing minimum radius of %.1f"), m_args.min_radius);
+          m_maneuver.radius = m_args.min_radius;
         }
 
         // Enable movement
