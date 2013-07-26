@@ -116,7 +116,6 @@ namespace Navigation
 
           // Extended Kalman Filter initialization.
           m_kal.reset(NUM_STATE, NUM_OUT);
-          m_kal.resetOutputs();
         }
 
         void
