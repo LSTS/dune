@@ -144,7 +144,7 @@ namespace Maneuver
 
         if (maneuver->radius < c_min_radius)
         {
-          war(DTR("invalid loiter radius, forcing a minimum of %0.2f"), c_min_radius);
+          war(DTR("forcing minimum of %.1f"), c_min_radius);
           m_path.lradius = c_min_radius;
         }
         else

@@ -143,7 +143,7 @@ namespace Maneuver
 
         if (m_maneuver.radius < c_min_radius)
         {
-          war(DTR("forcing a minimum radius of %0.2f"), c_min_radius);
+          war(DTR("forcing minimum radius of %.1f"), c_min_radius);
           m_maneuver.radius = c_min_radius;
         }
 
