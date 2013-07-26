@@ -44,6 +44,8 @@ namespace DUNE
     static const float c_btrack_wrn_cooldown = 15.0f;
     //! No altitude measurements message
     static const char* c_no_alt = DTR("no valid altitude measurements");
+    //! Depth margin when checking for maximum admissible depth
+    static const float c_depth_margin = 1.0;
 
     BasicAutopilot::BasicAutopilot(const std::string& name, Tasks::Context& ctx,
                                    const uint32_t controllable_loops, const uint32_t required_loops):
@@ -58,6 +60,11 @@ namespace DUNE
       param("Heading Rate Bypass", m_hrate_bypass)
       .defaultValue("false")
       .description("Bypass heading rate controller and use reference directly on torques");
+
+      param("Maximum Depth", m_max_depth)
+      .defaultValue("50.0")
+      .units(Units::Meter)
+      .description("Maximum admissible depth that the vehicle may sustain");
 
       // Initialize entity state.
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
@@ -150,9 +157,17 @@ namespace DUNE
       if (!isActive())
         return;
 
+      m_vertical_ref = msg->value;
+
       if (msg->z_units == IMC::Z_DEPTH)
       {
         m_vertical_mode = VERTICAL_MODE_DEPTH;
+
+        if (m_vertical_ref > m_max_depth)
+        {
+          m_vertical_ref = m_max_depth;
+          war("limiting depth to %.1f", m_max_depth);
+        }
       }
       else if (msg->z_units == IMC::Z_ALTITUDE)
       {
@@ -164,8 +179,6 @@ namespace DUNE
       {
         m_vertical_mode = VERTICAL_MODE_NONE;
       }
-
-      m_vertical_ref = msg->value;
 
       // always clear delta timer after changing mode
       m_vmode_delta.clear();
@@ -259,6 +272,17 @@ namespace DUNE
         // Will not let the bottom follow depth be lower than zero
         // to avoid causing excessive controller integration
         m_bottom_follow_depth = std::max(m_bottom_follow_depth, (float)0.0);
+      }
+      else if (m_vertical_mode == VERTICAL_MODE_PITCH)
+      {
+        if (m_estate.depth >= m_max_depth - c_depth_margin)
+        {
+          const std::string desc = DTR("getting too close to maximum admissible depth");
+          setEntityState(IMC::EntityState::ESTA_ERROR, desc);
+          err("%s", desc.c_str());
+          requestDeactivation();
+          return;
+        }
       }
 
       // check if yaw control mode is valid
