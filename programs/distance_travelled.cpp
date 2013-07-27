@@ -42,27 +42,6 @@ using DUNE_NAMESPACES;
 int
 main(int32_t argc, char** argv)
 {
-  // Utils::OptionParser options;
-  // options.executable(argv[0])
-  // .program(argv[0])
-  // .copyright(DUNE_COPYRIGHT)
-  // .email(DUNE_CONTACT)
-  // .version("1.0")
-  // .date(DUNE_BUILD_TIME)
-  // .arch(DUNE_SYSTEM_NAME);
-  // .add("-f", "--file",
-  //      "Log file in .lsf or .lsf.gz format", "FILE");
-
-  // Parse command line arguments.
-  // if (!options.parse(argc, argv) || options.value("--file").empty())
-  // {
-  //   if (options.bad())
-  //     std::cerr << "ERROR: " << options.error() << std::endl;
-
-  //   options.usage();
-  //   return 1;
-  // }
-
   if (argc <= 1)
   {
     std::cerr << "Usage: " << argv[0] << "<path_to_file_1> ... <path_to_file_n>"
