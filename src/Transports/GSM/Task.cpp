@@ -84,7 +84,7 @@ namespace Transports
 
     struct Task: public DUNE::Tasks::Task
     {
-      //!! Serial port handle.
+      //! Serial port handle.
       SerialPort* m_uart;
       //! GSM driver.
       Driver* m_driver;
