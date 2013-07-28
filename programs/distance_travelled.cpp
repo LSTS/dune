@@ -39,6 +39,13 @@
 
 using DUNE_NAMESPACES;
 
+// Minimum rpm before starting to assume that the vehicle is moving
+const float c_min_rpm = 400.0;
+// Maximum speed between to consider when integrating
+const float c_max_speed = 6.0;
+// Timestep
+const float c_timestep = 0.5;
+
 int
 main(int32_t argc, char** argv)
 {
@@ -62,10 +69,6 @@ main(int32_t argc, char** argv)
 
     IMC::Message* msg = NULL;
 
-    // Maximum speed between to consider when integrating
-    float max_speed = 6.0;
-
-    uint16_t min_rpm = 400;
     uint16_t curr_rpm = 0;
 
     bool got_state = false;
@@ -101,7 +104,7 @@ main(int32_t argc, char** argv)
         }
         else if (msg->getId() == DUNE_IMC_ESTIMATEDSTATE)
         {
-          if (msg->getTimeStamp() - estate.getTimeStamp() > 0.5)
+          if (msg->getTimeStamp() - estate.getTimeStamp() > c_timestep)
           {
             IMC::EstimatedState* ptr = dynamic_cast<IMC::EstimatedState*>(msg);
 
@@ -112,7 +115,7 @@ main(int32_t argc, char** argv)
 
               got_state = true;
             }
-            else if (curr_rpm > min_rpm)
+            else if (curr_rpm > c_min_rpm)
             {
               double lat, lon;
               Coordinates::toWGS84(*ptr, lat, lon);
@@ -121,7 +124,7 @@ main(int32_t argc, char** argv)
                                                          lat, lon, 0.0);
 
               // Not faster than maximum considered speed
-              if (dist / (ptr->getTimeStamp() - estate.getTimeStamp()) < max_speed)
+              if (dist / (ptr->getTimeStamp() - estate.getTimeStamp()) < c_max_speed)
                 accum += dist;
 
               estate = *ptr;
