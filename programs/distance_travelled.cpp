@@ -137,6 +137,14 @@ main(int32_t argc, char** argv)
           IMC::Rpm* ptr = dynamic_cast<IMC::Rpm*>(msg);
           curr_rpm = ptr->value;
         }
+        else if (msg->getId() == DUNE_IMC_SIMULATEDSTATE)
+        {
+          // since it has simulated state let us ignore this log
+          ignore = true;
+          delete msg;
+          std::cerr << "this is a simulated log";
+          break;
+        }
 
         delete msg;
 
@@ -144,6 +152,7 @@ main(int32_t argc, char** argv)
         if (log_name.find("_idle") != std::string::npos)
         {
           ignore = true;
+          std::cerr << "this is an idle log";
           break;
         }
       }
@@ -157,7 +166,7 @@ main(int32_t argc, char** argv)
 
     if (ignore)
     {
-      std::cerr << "ignoring idle" << std::endl;
+      std::cerr << "... ignoring" << std::endl;
       continue;
     }
 
