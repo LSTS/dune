@@ -51,7 +51,7 @@ main(int32_t argc, char** argv)
 {
   if (argc <= 1)
   {
-    std::cerr << "Usage: " << argv[0] << "<path_to_file_1> ... <path_to_file_n>"
+    std::cerr << "Usage: " << argv[0] << " <path_to_log_1/Data.lsf[.gz]> ... <path_to_log_n/Data.lsf[.gz]>"
               << std::endl;
     return 1;
   }
