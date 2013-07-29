@@ -93,6 +93,7 @@ namespace DUNE
 
       bind<IMC::QueryEntityInfo>(this);
       bind<IMC::QueryEntityState>(this);
+      bind<IMC::QueryEntityActivationState>(this);
       bind<IMC::QueryEntityParameters>(this);
       bind<IMC::SetEntityParameters>(this);
       bind<IMC::PushEntityParameters>(this);
