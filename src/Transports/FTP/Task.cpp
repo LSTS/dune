@@ -145,6 +145,8 @@ namespace Transports
 
           dispatch(announce);
         }
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
@@ -211,6 +213,8 @@ namespace Transports
       {
         while (!stopping())
         {
+          consumeMessages();
+
           if (!m_iom.poll(1.0))
             continue;
 
