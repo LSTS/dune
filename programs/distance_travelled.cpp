@@ -24,7 +24,7 @@
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 //***************************************************************************
-// Utility to compute device's power consumption from LSF test log files.   *
+// Utility to compute distance travelled from LSF log files.                *
 //***************************************************************************
 
 // ISO C++ 98 headers.
