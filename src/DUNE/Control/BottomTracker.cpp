@@ -244,7 +244,10 @@ namespace DUNE
           onTracking();
           break;
         case SM_DEPTH:
-          onDepth();
+          if (m_args->depth_avoid)
+            onDepth();
+          else
+            onIdle();
           break;
         case SM_LIMITDEPTH:
           onLimitDepth();

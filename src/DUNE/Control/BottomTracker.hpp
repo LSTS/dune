@@ -73,6 +73,8 @@ namespace DUNE
         unsigned eid;
         //! Control period of execution for the bottom tracker
         float control_period;
+        //! Enable or disable obstacle avoidance during depth control
+        bool depth_avoid;
         //! Admissible altitude when doing depth control
         float adm_alt;
       };
