@@ -108,7 +108,7 @@ namespace DUNE
       unsigned
       sampleSize(void)
       {
-        return m_window.size();
+        return (unsigned)m_window.size();
       }
 
     private:
