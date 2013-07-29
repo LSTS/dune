@@ -154,6 +154,12 @@ namespace DUNE
         FC_ALTITUDE
       };
 
+      //! Check if vehicle's current situation is safe (check slope etc)
+      //! Take appropriate measures
+      //! @return true if safe, false if not safe or unable to tell
+      bool
+      checkSafety(void);
+
       //! Update bottom tracking state machine.
       void
       updateStateMachine(void);

@@ -182,6 +182,39 @@ namespace DUNE
       }
     }
 
+    bool
+    BottomTracker::checkSafety(void)
+    {
+      // Do not attempt to interfere if the echo can be the surface
+      if (m_sdata->isSurface(m_estate))
+        return false;
+
+      // Check if forward range is too low
+      if (m_sdata->isRangeLow())
+      {
+        debug(String::str("frange is too low: %.2f.", m_sdata->getFRange()));
+
+        brake(true);
+        m_mstate = SM_AVOIDING;
+        return false;
+      }
+
+      // if slope is too steep
+      if (m_sdata->isTooSteep())
+      {
+        debug(String::str("slope is too steep: %.2f > %.2f",
+                          Angles::degrees(m_sdata->getSlope()),
+                          Angles::degrees(m_args->safe_pitch)));
+
+        m_cparcel.d = m_sdata->updateSlopeTop(m_estate);
+        dispatchSafeDepth();
+        m_mstate = SM_UNSAFE;
+        return false;
+      }
+
+      return true;
+    }
+
     void
     BottomTracker::updateStateMachine(void)
     {
@@ -279,7 +312,7 @@ namespace DUNE
       } // if reference is for depth now
       else if ((m_forced != FC_ALTITUDE) && (m_z_ref.z_units == IMC::Z_DEPTH))
       {
-        debug("units are depth now. moving to idle");
+        debug("units are depth now");
 
         m_mstate = SM_DEPTH;
         return;
@@ -299,32 +332,9 @@ namespace DUNE
         return;
       }
 
-      // Do not attempt to interfere if the echo can be the surface
-      if (m_sdata->isSurface(m_estate))
+      // check safety
+      if (!checkSafety())
         return;
-
-      // Check if forward range is too low
-      if (m_sdata->isRangeLow())
-      {
-        debug(String::str("frange is too low: %.2f.", m_sdata->getFRange()));
-
-        brake(true);
-        m_mstate = SM_AVOIDING;
-        return;
-      }
-
-      // if slope is too steep
-      if (m_sdata->isTooSteep())
-      {
-        debug(String::str("slope is too steep: %.2f > %.2f",
-                          Angles::degrees(m_sdata->getSlope()),
-                          Angles::degrees(m_args->safe_pitch)));
-
-        m_cparcel.d = m_sdata->updateSlopeTop(m_estate);
-        dispatchSafeDepth();
-        m_mstate = SM_UNSAFE;
-        return;
-      }
 
       // if reaching a limit in altitude
       if (depth_ref > m_args->depth_limit + c_depth_hyst &&
@@ -372,32 +382,9 @@ namespace DUNE
         return;
       }
 
-      // Do not attempt to interfere if the echo can be the surface
-      if (m_sdata->isSurface(m_estate))
+      // check safety
+      if (!checkSafety())
         return;
-
-      // Check if forward range is too low
-      if (m_sdata->isRangeLow())
-      {
-        debug(String::str("frange is too low: %.2f.", m_sdata->getFRange()));
-
-        brake(true);
-        m_mstate = SM_AVOIDING;
-        return;
-      }
-
-      // if slope is too steep
-      if (m_sdata->isTooSteep())
-      {
-        debug(String::str("slope is too steep: %.2f > %.2f",
-                          Angles::degrees(m_sdata->getSlope()),
-                          Angles::degrees(m_args->safe_pitch)));
-
-        m_cparcel.d = m_sdata->updateSlopeTop(m_estate);
-        dispatchSafeDepth();
-        m_mstate = SM_UNSAFE;
-        return;
-      }
     }
 
     void
