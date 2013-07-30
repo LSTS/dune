@@ -96,6 +96,7 @@ namespace DUNE
       }
 
       //! Extract mean value of a moving average.
+      //! @param[in] j index of the moving average to be used
       //! @return mean value.
       T
       mean(unsigned j)
