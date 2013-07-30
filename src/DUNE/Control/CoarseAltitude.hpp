@@ -82,11 +82,11 @@ namespace DUNE
       isInCorridor(float depth, float desired_depth);
 
       //! Measure performace using current corridor and change it if necessary
-      //! @param[in] timestep time elapsed since last a measurement was received
       void
       measurePerformance(void);
 
       //! Update object with new depth value
+      //! @param[in] timestep time elapsed since last measurement was received
       //! @param[in] depth new depth value
       //! @param[in] desired_depth current depth reference
       //! @return depth value to be used as a reference
