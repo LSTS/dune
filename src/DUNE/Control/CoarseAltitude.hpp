@@ -30,6 +30,7 @@
 
 // DUNE headers.
 #include <DUNE/Math/MultiMovingAverage.hpp>
+#include <DUNE/Time/Counter.hpp>
 
 namespace DUNE
 {
@@ -43,6 +44,8 @@ namespace DUNE
     public:
       struct Arguments
       {
+        //! True if coarse altitude control is enabled
+        bool enabled;
         //! Vector of window sizes for the moving averages
         std::vector<unsigned> wsizes;
         //! Size of the upper part of the corridor
@@ -59,10 +62,52 @@ namespace DUNE
       //! Destructor.
       ~CoarseAltitude(void);
 
+      //! Reset variables
+      void
+      reset(void);
+
+      //! Activate coarse altitude control
+      void
+      activate(void);
+
+      //! Deactivate coarse altitude control
+      void
+      deactivate(void);
+
+      //! Check if the vehicle is inside the current corridor
+      //! @param[in] depth new depth value
+      //! @param[in] desired_depth current depth reference
+      //! @return true if inside, false otherwise
+      bool
+      isInCorridor(float depth, float desired_depth);
+
+      //! Measure performace using current corridor and change it if necessary
+      //! @param[in] timestep time elapsed since last a measurement was received
+      void
+      measurePerformance(void);
+
+      //! Update object with new depth value
+      //! @param[in] depth new depth value
+      //! @param[in] desired_depth current depth reference
+      //! @return depth value to be used as a reference
+      float
+      update(float timestep, float depth, float desired_depth);
+
     private:
+      //! True if coarse altitude control is active
+      bool m_active;
       //! Arguments
       const Arguments* m_args;
-
+      //! Tracking flag (true if already tracking)
+      bool m_tracking;
+      //! Number of corridor being used right now
+      unsigned m_corridor;
+      //! Multiple moving averages to filter the signal
+      Math::MultiMovingAverage<float>* m_mmav;
+      //! Time since last corridor check
+      Time::Counter<float> m_last_check;
+      //! Accumulated time outside the corridor
+      float m_time_outside;
     };
   }
 }

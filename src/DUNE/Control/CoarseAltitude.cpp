@@ -27,20 +27,104 @@
 
 // Local headers.
 #include <DUNE/Control/CoarseAltitude.hpp>
+#include <DUNE/Memory.hpp>
 
 namespace DUNE
 {
   namespace Control
   {
-    //! Constructor.
     CoarseAltitude::CoarseAltitude(const Arguments* args):
+      m_active(false),
       m_args(args)
     {
-
+      m_mmav = new Math::MultiMovingAverage<float>(args->wsizes);
+      reset();
     }
 
-    //! Destructor.
     CoarseAltitude::~CoarseAltitude(void)
-    { }
+    {
+      Memory::clear(m_mmav);
+    }
+
+    void
+    CoarseAltitude::reset(void)
+    {
+      m_corridor = 0;
+      m_tracking = false;
+      m_mmav->clear();
+      m_last_check.reset();
+      m_time_outside = 0.0;
+    }
+
+    void
+    CoarseAltitude::activate(void)
+    {
+      m_active = true;
+    }
+
+    void
+    CoarseAltitude::deactivate(void)
+    {
+      m_active = false;
+      reset();
+    }
+
+    bool
+    CoarseAltitude::isInCorridor(float depth, float desired_depth)
+    {
+      if (desired_depth > depth)
+      {
+        if (desired_depth - depth <= m_args->upper_gap[m_corridor])
+          return true;
+      }
+      else
+      {
+        if (depth - desired_depth <= m_args->upper_gap[m_corridor] / 2.0)
+          return true;
+      }
+
+      return false;
+    }
+
+    void
+    CoarseAltitude::measurePerformance(void)
+    {
+      // See if it's time to check
+      if (m_last_check.overflow())
+        return;
+
+      if (m_time_outside / m_args->period * 100.0 > m_args->max_outside)
+        m_corridor = std::min(m_corridor + 1, (unsigned)m_args->wsizes.size());
+      else if (m_corridor)
+        --m_corridor;
+
+      m_last_check.reset();
+      m_time_outside = 0.0;
+    }
+
+    float
+    CoarseAltitude::update(float timestep, float depth, float desired_depth)
+    {
+      bool in_corridor = isInCorridor(depth, desired_depth);
+
+      if (!m_tracking)
+      {
+        if (!in_corridor)
+          return desired_depth;
+
+        m_tracking = true;
+        m_last_check.setTop(m_args->period);
+      }
+
+      if (!in_corridor)
+        m_time_outside += timestep;
+
+      // check if we need to change corridor
+      measurePerformance();
+
+      m_mmav->update(desired_depth);
+
+      return m_mmav->mean(m_corridor);
+    }
   }
 }
