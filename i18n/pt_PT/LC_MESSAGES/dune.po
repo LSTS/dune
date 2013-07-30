@@ -71,24 +71,24 @@ msgid   ": invalid start maneuver"
 msgstr  ": manobra de início inválida"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Tasks/EntityDataBase.hpp:64
-#, fuzzy
+#,
 msgid   "invalid entity label: "
-msgstr  "Nome principal da entidade"
+msgstr  "etiqueta de entitidade inválida: "
 
 #: /home/rasm/git/dune/dune/src/DUNE/Tasks/EntityDataBase.hpp:68
-#, fuzzy
+#,
 msgid   "entity labels cannot be empty"
-msgstr  "etiqueta da entidade não foi configurado"
+msgstr  "etiqueta de entidades não podem ser vazias"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Tasks/EntityDataBase.hpp:75
-#, fuzzy
+#,
 msgid   "nonexistent entity label: "
-msgstr  "Nome principal da entidade"
+msgstr  "etiqueta de entidade inexistente: "
 
 #: /home/rasm/git/dune/dune/src/DUNE/Tasks/EntityDataBase.hpp:82
-#, fuzzy
+#,
 msgid   "invalid entity id: "
-msgstr  "unidade de Z inválida: %s"
+msgstr  "identificação de identidade inválida: "
 
 #: /home/rasm/git/dune/dune/src/DUNE/Tasks/EntityDataBase.hpp:89
 msgid   "an unique id was already reserved for entity label: "
@@ -2585,17 +2585,17 @@ msgstr  ""
 #: /home/rasm/git/dune/dune/src/Transports/Logging/Task.cpp:310
 #, c-format
 msgid   "log stopped '%s'"
-msgstr  ""
+msgstr  "registo parado '%s'"
 
 #: /home/rasm/git/dune/dune/src/Transports/Logging/Task.cpp:355
 #, c-format
 msgid   "log started '%s'"
-msgstr  ""
+msgstr  "registo iniciado '%s'"
 
 #: /home/rasm/git/dune/dune/src/Transports/Logging/Task.cpp:404
 #, c-format
 msgid   "failed to start log, check available storage: %s"
-msgstr  ""
+msgstr  "falha ao começar registo, verifique espaço disponível: %s'"
 
 #: /home/rasm/git/dune/dune/src/Transports/Logging/Task.cpp:407
 msgid   "waiting for human intervention"
@@ -2603,16 +2603,16 @@ msgstr  "à espera de intervenção humana"
 
 #: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:112
 msgid   "no available ports to listen to advertisements"
-msgstr  ""
+msgstr  "não existem portas disponíveis para anúncios"
 
 #: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:125
 msgid   "discarding spurious message"
-msgstr  ""
+msgstr  "a descartar mensagem espúria"
 
 #: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:132
 #, c-format
 msgid   "discarding spurious message '%s'"
-msgstr  ""
+msgstr  "a descartar mensagem espúria '%s'"
 
 #: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:187
 #, c-format
@@ -2622,12 +2622,12 @@ msgstr  ""
 #: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:198
 #, c-format
 msgid   "another node on this computer is advertising our node name '%s'"
-msgstr  ""
+msgstr  "outro nó neste computador está a anunciar o nosso nome '%s'"
 
 #: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:200
 #, c-format
 msgid   "another node on our network is advertising our node name '%s'"
-msgstr  ""
+msgstr  "outro nó na nossa rede está a anunciar o nosso nome '%s'"
 
 #: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:232
 #, c-format
@@ -2747,7 +2747,7 @@ msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:156
 msgid   "failed to find one available port"
-msgstr  ""
+msgstr  "não foi possível encontrar uma porta disponível"
 
 #: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:366
 #, c-format
@@ -2756,7 +2756,7 @@ msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Transports/SerialOverTCP/Task.cpp:138
 msgid   "accepting connection request"
-msgstr  ""
+msgstr  "a aceitar pedido de ligação"
 
 #: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:246
 msgid   "failed to configure strobe mode"
@@ -2770,7 +2770,7 @@ msgstr  ""
 #: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:250
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:14
 msgid   "Camera"
-msgstr  ""
+msgstr  "Câmara"
 
 #: /home/rasm/git/dune/dune/src/Power/MCBv2/Task.cpp:602
 msgid   "updating firmware"
@@ -2778,7 +2778,7 @@ msgstr  "a atualizar firmware"
 
 #: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:372
 msgid   "failed to update EEPROM"
-msgstr  ""
+msgstr  "erro ao atualizar a EEPROM"
 
 #: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:441
 msgid   "power down sequence aborted"
