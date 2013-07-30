@@ -125,7 +125,7 @@ namespace Transports
         {
           try
           {
-            inf(DTR("creating server on port %u"), port);
+            inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), port);
             m_server = new HTTPServer(port, m_args.threads, *this);
 
             // Initialize and dispatch AnnounceService.
