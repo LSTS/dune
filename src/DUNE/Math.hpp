@@ -45,5 +45,6 @@ namespace DUNE
 #include <DUNE/Math/Vector.hpp>
 #include <DUNE/Math/QPSolver.hpp>
 #include <DUNE/Math/MovingAverage.hpp>
+#include <DUNE/Math/MultiMovingAverage.hpp>
 
 #endif
