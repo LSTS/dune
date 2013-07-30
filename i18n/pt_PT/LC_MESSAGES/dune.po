@@ -2174,17 +2174,17 @@ msgstr  ""
 #: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:363
 #, c-format
 msgid   "entity %s: %s"
-msgstr  ""
+msgstr  "entidade %s: %s"
 
 #: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:440
 #, c-format
 msgid   "%s -- status not reported after %0.2f seconds"
-msgstr  ""
+msgstr  "%s -- estado não foi reportado depois de %0.2f segundos"
 
 #: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:443
 #, fuzzy
 msgid   ": entity state timeout"
-msgstr  "timeout do estado do veículo"
+msgstr  ": timeout do estado da entidade"
 
 #: /home/rasm/git/dune/dune/src/Monitors/Servos/Task.cpp:329
 #, fuzzy, c-format
@@ -2232,30 +2232,30 @@ msgstr  "Máxima rotação de lemes admissível"
 
 #: /home/rasm/git/dune/dune/src/Control/AUV/LMI/Task.cpp:148
 msgid   "Gain matrix has invalid dimensions"
-msgstr  ""
+msgstr  "Matriz de ganhos tem dimensões inválidas"
 
 #: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:58
 msgid   "Roll"
-msgstr  ""
+msgstr  "Roll"
 
 #: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:58
 #, fuzzy
 msgid   "Pitch"
-msgstr  "pitch"
+msgstr  "Pitch"
 
 #: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:58
 #, fuzzy
 msgid   "Heading"
-msgstr  "a iniciar"
+msgstr  "Heading"
 
 #: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:58
 msgid   "Heading Rate"
-msgstr  ""
+msgstr  "Rate de Heading"
 
 #: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:153
 #: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:155
 msgid   "Enable roll controller"
-msgstr  ""
+msgstr  "Habilitar controlador de roll"
 
 #: /home/rasm/git/dune/dune/src/Control/AUV/Diving/Task.cpp:481
 #, fuzzy
@@ -2524,12 +2524,12 @@ msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Transports/GSM/Task.cpp:211
 msgid   "SMS timeout cannot be zero"
-msgstr  ""
+msgstr  "o timeout da SMS não pode ser zero"
 
 #: /home/rasm/git/dune/dune/src/Transports/GSM/Task.cpp:234
 #, c-format
 msgid   "discarded expired SMS to recipient '%s'"
-msgstr  ""
+msgstr  "descartada SMS expirada para o destinatário '%s'"
 
 #: /home/rasm/git/dune/dune/src/Transports/IridiumSBD/Task.cpp:126
 msgid   "task is shutting down"
@@ -2543,39 +2543,39 @@ msgstr  "falha ao reportar distância para %s"
 #: /home/rasm/git/dune/dune/src/Transports/IridiumSBD/Task.cpp:327
 #, fuzzy, c-format
 msgid   "transmission failed: %s"
-msgstr  "a validaçao do plano falhou: "
+msgstr  "falhou a validaçao do plano: %s"
 
 #: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:179
 msgid   "operation not supported"
-msgstr  ""
+msgstr  "operação não suportada"
 
 #: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:203
 msgid   "is not a regular file"
-msgstr  ""
+msgstr  "este ficheiro é irregular"
 
 #: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:213
 msgid   "could not open"
-msgstr  ""
+msgstr  "não foi possível abrir"
 
 #: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:225
 msgid   "deserialization error"
-msgstr  ""
+msgstr  "erro de desserialização"
 
 #: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:232
 msgid   "empty LSF file"
-msgstr  ""
+msgstr  "ficheiro LSF vazio"
 
 #: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:239
 msgid   "invalid LSF file for replay"
-msgstr  ""
+msgstr  "ficheiro LSF inválido para repetição"
 
 #: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:264
 msgid   "started replay of"
-msgstr  ""
+msgstr  "iniciou a repetição de"
 
 #: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:271
 msgid   "stopped replay"
-msgstr  ""
+msgstr  "repetição parada"
 
 #: /home/rasm/git/dune/dune/src/Transports/Logging/Task.cpp:188
 #, c-format
@@ -2617,7 +2617,7 @@ msgstr  "a descartar mensagem espúria '%s'"
 #: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:187
 #, c-format
 msgid   "new node within range '%s' / %u / %s"
-msgstr  ""
+msgstr  "novo nó ao alcance '%s' / %u / %s"
 
 #: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:198
 #, c-format
@@ -2728,22 +2728,22 @@ msgstr  ""
 #: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:542
 #, c-format
 msgid   "unknown packet type: %u"
-msgstr  ""
+msgstr  "tipo de pacote desconhecido: %u"
 
 #: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:589
 #, c-format
 msgid   "received %d bytes"
-msgstr  ""
+msgstr  "a receber %d bytes"
 
 #: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:376
 #, c-format
 msgid   "activating transmission to node '%s'"
-msgstr  ""
+msgstr  "a ativar transmissão para o nó '%s'"
 
 #: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:381
 #, c-format
 msgid   "deactivating transmission to node '%s'"
-msgstr  ""
+msgstr  "a desativar transmissão para o nó '%s'"
 
 #: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:156
 msgid   "failed to find one available port"
@@ -2752,7 +2752,7 @@ msgstr  "não foi possível encontrar uma porta disponível"
 #: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:366
 #, c-format
 msgid   "removing log %s"
-msgstr  ""
+msgstr  "a remover log %s"
 
 #: /home/rasm/git/dune/dune/src/Transports/SerialOverTCP/Task.cpp:138
 msgid   "accepting connection request"
@@ -2760,7 +2760,7 @@ msgstr  "a aceitar pedido de ligação"
 
 #: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:246
 msgid   "failed to configure strobe mode"
-msgstr  ""
+msgstr  "falhou a configurar modo de strobe"
 
 #: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:250
 #, c-format
@@ -3161,12 +3161,12 @@ msgstr  "Motor de Planos"
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:81
 msgid   "Plan Generator"
-msgstr  ""
+msgstr  "Gerador de Planos"
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:82
 #, fuzzy
 msgid   "Pop Up Maneuver"
-msgstr  ": sem manobras"
+msgstr  "Manobra de Pop Up"
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:83
 msgid   "Port Bow Motor"
@@ -3182,7 +3182,7 @@ msgstr  "Supervisor de Energia"
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:86
 msgid   "Power Supply"
-msgstr  ""
+msgstr  "Fonte de Energia"
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:87
 msgid   "Remote Control"
@@ -3206,7 +3206,7 @@ msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:92
 msgid   "Service Announcer"
-msgstr  ""
+msgstr  "Serviço de Anúncio"
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:93
 msgid   "Service Discovery"
@@ -3219,7 +3219,7 @@ msgstr  "Monitor de Emergências"
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:95
 msgid   "Servos"
-msgstr  ""
+msgstr  "Servos"
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:96
 msgid   "Sidescan"
@@ -3231,7 +3231,7 @@ msgstr  "Motor de Simulação"
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:98
 msgid   "Sound Speed Sensor"
-msgstr  ""
+msgstr  "Sensor de Velocidade do Som"
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:99
 msgid   "Speed Control"
@@ -3248,7 +3248,7 @@ msgstr  ""
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:102
 #, fuzzy
 msgid   "Station Keeping Maneuver"
-msgstr  ": a executar manobra"
+msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:103
 msgid   "TASE"
