@@ -44,50 +44,6 @@ namespace DUNE
     //! Maximum number of transponders.
     static const unsigned c_max_transponders = 4;
 
-    //! Basic transceiver information.
-    struct BasicTransceiver
-    {
-      BasicTransceiver():
-        x(0),
-        y(0),
-        depth(0)
-      { }
-
-      double
-      getX(void)
-      {
-        return x;
-      }
-
-      double
-      getY(void)
-      {
-        return y;
-      }
-
-      double
-      getDepth(void)
-      {
-        return depth;
-      }
-
-      void
-      update(double a, double b, double c)
-      {
-        x = a;
-        y = b;
-        depth = c;
-      }
-
-    private:
-      //! Transceiver North displacement relative to given reference (m).
-      double x;
-      //! Transceiver East displacement relative to given reference (m).
-      double y;
-      //! Transceiver depth (m).
-      double depth;
-    };
-
     //! Basic transponder information.
     struct BasicTransponder
     {
@@ -98,24 +54,6 @@ namespace DUNE
         y(0),
         depth(0)
       { }
-
-      double
-      getX(void)
-      {
-        return x;
-      }
-
-      double
-      getY(void)
-      {
-        return y;
-      }
-
-      double
-      getDepth(void)
-      {
-        return depth;
-      }
 
       void
       initialize(IMC::GpsFix origin, double latitude, double longitude, double z)
@@ -137,7 +75,6 @@ namespace DUNE
                                          &x, &y);
       }
 
-    private:
       //! WGS-84 latitude coordinate.
       double lat;
       //! WGS-84 longitude coordinate.
@@ -213,9 +150,13 @@ namespace DUNE
         m_transponders[id]->initialize(*m_origin, msg->lat, msg->lon, msg->depth);
       }
 
+      unsigned
+      getSize(void)
+      {
+        return m_num_transponders;
+      }
+
     private:
-      //! Ranging transceiver.
-      BasicTransceiver m_transceiver;
       //! Ranging transponder configuration.
       BasicTransponder* m_transponders[c_max_transponders];
       //! Navigation origin.
