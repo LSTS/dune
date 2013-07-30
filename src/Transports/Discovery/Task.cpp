@@ -102,7 +102,7 @@ namespace Transports
           try
           {
             m_sock.bind(m_args.ports[i], Address::Any, false);
-            inf(DTR("listening for advertisements on port %u"), m_args.ports[i]);
+            inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), m_args.ports[i]);
             return;
           }
           catch (...)
