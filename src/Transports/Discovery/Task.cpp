@@ -102,14 +102,14 @@ namespace Transports
           try
           {
             m_sock.bind(m_args.ports[i], Address::Any, false);
-            inf("listening for advertisements on port %u", m_args.ports[i]);
+            inf(DTR("listening for advertisements on port %u"), m_args.ports[i]);
             return;
           }
           catch (...)
           { }
         }
 
-        throw std::runtime_error("no available ports to listen to advertisements");
+        throw std::runtime_error(DTR("no available ports to listen to advertisements"));
       }
 
       void
@@ -122,14 +122,14 @@ namespace Transports
         // Validate message.
         if (msg == 0)
         {
-          war("discarding spurious message");
+          war(DTR("discarding spurious message"));
           delete msg;
           return;
         }
 
         if (msg->getId() != DUNE_IMC_ANNOUNCE)
         {
-          war("discarding spurious message '%s'", msg->getName());
+          war(DTR("discarding spurious message '%s'"), msg->getName());
           delete msg;
           return;
         }
@@ -184,7 +184,7 @@ namespace Transports
         // Register node if not already registered.
         if (m_ctx.resolver.isUnknown(msg->getSource()))
         {
-          inf("new node within range '%s' / %u / %s", announce->sys_name.c_str(),
+          inf(DTR("new node within range '%s' / %u / %s"), announce->sys_name.c_str(),
               msg->getSource(), addr.c_str());
 
           m_ctx.resolver.insert(announce->sys_name, msg->getSource());
@@ -195,9 +195,9 @@ namespace Transports
         if (m_ctx.resolver.isLocal(msg->getSource()))
         {
           if (m_local)
-            war("another node on this computer is advertising our node name '%s'", node.c_str());
+            war(DTR("another node on this computer is advertising our node name '%s'"), node.c_str());
           else
-            war("another node on our network is advertising our node name '%s'", node.c_str());
+            war(DTR("another node on our network is advertising our node name '%s'"), node.c_str());
         }
 
         // Send to other tasks.
