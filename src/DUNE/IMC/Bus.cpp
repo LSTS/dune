@@ -94,10 +94,6 @@ namespace DUNE
     void
     Bus::unregisterRecipient(Tasks::AbstractTask* task, uint16_t id)
     {
-      DUNE_DBG("Message Bus", "unregistering recipient "
-               << task->getName()
-               << " <=> " << Factory::getAbbrevFromId(id));
-
       Concurrency::ScopedRWLock l(m_lock, true);
       m_recipients[id].remove(task);
     }
