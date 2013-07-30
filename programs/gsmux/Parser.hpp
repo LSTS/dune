@@ -117,6 +117,8 @@ public:
         {
           if ((m_sample < 100) && (m_channel < CHANNEL_COUNT))
           {
+            //printf("%d, %d\n", m_channel - 1, m_sample);
+
             //fprintf(stderr, "%d / %d\n", m_channel - 1, m_sample);
 
             m_buffer[m_channel - 1][m_sample].push_back(byte);
@@ -143,6 +145,9 @@ public:
         data.push_back(m_buffer[CHANNEL_GPS - 1][i][j]);
       m_buffer[CHANNEL_GPS - 1][i].clear();
     }
+
+    // for (unsigned i = 0; i < data.size(); ++i)
+    //   printf("%c", data[i]);
 
     if (data.size() == 0)
     {

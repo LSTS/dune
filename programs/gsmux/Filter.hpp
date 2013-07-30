@@ -50,8 +50,16 @@ public:
     var = 0;
 #include "Fields.def"
 
-    std::memset(m_nav_status, 0, sizeof(m_nav_status));
     std::memset(m_sync_status, 0, sizeof(m_sync_status));
+
+    m_fix_type["NF"] = 0;
+    m_fix_type["DR"] = 1;
+    m_fix_type["G2"] = 2;
+    m_fix_type["G3"] = 3;
+    m_fix_type["D2"] = 4;
+    m_fix_type["D3"] = 5;
+    m_fix_type["RK"] = 6;
+    m_fix_type["TT"] = 7;
 
     printHeader();
   }
@@ -221,7 +229,7 @@ public:
 
     fprintf(m_fd,
             "Sync_Lost" "\t"
-            "Nav_Status"
+            "Index"
 #define FIELD(label, var, type, fmt) "\t" label
 #include "Fields.def"
             "\r\n"
@@ -235,20 +243,21 @@ public:
   {
     using namespace std;
 
+    m_utc_tow = (m_utc_tow_msec + (index * 10)) / 1000.0;
+    m_utc_second = (m_utc_second_msec + (index * 10)) / 1000.0;
+
     fprintf(m_fd,
             "%u" "\t"
-            "%s"
+            "%u"
 #define FIELD(label, var, type, fmt) "\t" fmt
 #include "Fields.def"
             "\r\n",
             m_sync_status[index],
-            m_nav_status
+            index
 #define FIELD(label, var, type, fmt) , var
 #include "Fields.def"
             );
 
-    m_utc_tow = (m_utc_tow_msec + m_sample_msec) / 1000.0;
-    m_utc_second = (m_utc_second_msec + m_sample_msec) / 1000.0;
     m_sample_msec += 10;
   }
 
@@ -398,18 +407,11 @@ private:
     }
 
     // Navigation status.
-    if (parts[8].size() != 2)
-    {
-      m_nav_status[0] = 'U';
-      m_nav_status[1] = 'N';
-      m_nav_status[2] = 0;
-    }
+    std::map<std::string, unsigned>::iterator itr = m_fix_type.find(parts[8]);
+    if (itr == m_fix_type.end())
+      m_nav_status = 99;
     else
-    {
-      m_nav_status[0] = parts[8][0];
-      m_nav_status[1] = parts[8][1];
-      m_nav_status[2] = 0;
-    }
+      m_nav_status = itr->second;
 
     readLatitude(parts[3], parts[4], m_lat);
     readLongitude(parts[5], parts[6], m_lon);
@@ -458,9 +460,9 @@ private:
   uint8_t m_sync_status[100];
   //! Sample millisecond.
   unsigned m_sample_msec;
-  unsigned m_utc_second_msec;
-  unsigned m_utc_tow_msec;
-  char m_nav_status[16];
+  //! Fix type.
+  std::map<std::string, unsigned> m_fix_type;
+
 #define FIELD(label, var, type, fmt)            \
   type var;
 #include "Fields.def"
