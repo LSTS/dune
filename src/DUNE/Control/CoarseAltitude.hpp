@@ -22,27 +22,49 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_CONTROL_HPP_INCLUDED_
-#define DUNE_CONTROL_HPP_INCLUDED_
+#ifndef DUNE_CONTROL_COARSE_ALTITUDE_HPP_INCLUDED_
+#define DUNE_CONTROL_COARSE_ALTITUDE_HPP_INCLUDED_
+
+// DUNE headers.
+#include <DUNE/Math/MultiMovingAverage.hpp>
 
 namespace DUNE
 {
-  //! %Control related routines and classes.
   namespace Control
-  { }
-}
+  {
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM CoarseAltitude;
 
-#include <DUNE/Control/PathController.hpp>
-#include <DUNE/Control/BasicRemoteOperation.hpp>
-#include <DUNE/Control/BasicAutopilot.hpp>
-#include <DUNE/Control/BottomTracker.hpp>
-#include <DUNE/Control/DiscretePID.hpp>
-#include <DUNE/Control/YoYoMotion.hpp>
-#include <DUNE/Control/AUVModel.hpp>
-#include <DUNE/Control/LinearSystem.hpp>
-#include <DUNE/Control/CoarseAltitude.hpp>
+    class CoarseAltitude
+    {
+    public:
+      struct Arguments
+      {
+        //! Vector of window sizes for the moving averages
+        std::vector<unsigned> wsizes;
+        //! Size of the upper part of the corridor
+        std::vector<float> upper_gap;
+        //! Period for checking time spent outside the corridor
+        float period;
+        //! Percentage of time outside the corridor to change corridor size
+        float max_outside;
+      };
+
+      //! Constructor.
+      CoarseAltitude(const Arguments* args);
+
+      //! Destructor.
+      ~CoarseAltitude(void);
+
+    private:
+      //! Arguments
+      const Arguments* m_args;
+
+    };
+  }
+}
 
 #endif

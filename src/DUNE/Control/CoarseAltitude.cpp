@@ -22,27 +22,25 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_CONTROL_HPP_INCLUDED_
-#define DUNE_CONTROL_HPP_INCLUDED_
+// Local headers.
+#include <DUNE/Control/CoarseAltitude.hpp>
 
 namespace DUNE
 {
-  //! %Control related routines and classes.
   namespace Control
-  { }
+  {
+    //! Constructor.
+    CoarseAltitude::CoarseAltitude(const Arguments* args):
+      m_args(args)
+    {
+
+    }
+
+    //! Destructor.
+    CoarseAltitude::~CoarseAltitude(void)
+    { }
+  }
 }
-
-#include <DUNE/Control/PathController.hpp>
-#include <DUNE/Control/BasicRemoteOperation.hpp>
-#include <DUNE/Control/BasicAutopilot.hpp>
-#include <DUNE/Control/BottomTracker.hpp>
-#include <DUNE/Control/DiscretePID.hpp>
-#include <DUNE/Control/YoYoMotion.hpp>
-#include <DUNE/Control/AUVModel.hpp>
-#include <DUNE/Control/LinearSystem.hpp>
-#include <DUNE/Control/CoarseAltitude.hpp>
-
-#endif
