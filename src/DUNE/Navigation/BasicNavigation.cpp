@@ -628,16 +628,6 @@ namespace DUNE
       cop.message.set(*msg);
       dispatch(cop);
 
-      m_lbl_log_beacons = false;
-
-      if (m_origin == NULL)
-      {
-        debug("There is no reference yet. LBL configuration is stored. Waiting for GPS fix");
-        m_lbl_log_beacons = true;
-        m_lbl_cfg = *msg;
-        return;
-      }
-
       m_num_beacons = 0;
 
       IMC::MessageList<IMC::LblBeacon>::const_iterator itr = msg->beacons.begin();
@@ -787,8 +777,6 @@ namespace DUNE
       m_phi_offset = 0.0;
       m_theta_offset = 0.0;
       m_altitude = -1;
-
-      m_lbl_log_beacons = false;
 
       m_navstate = SM_STATE_IDLE;
 

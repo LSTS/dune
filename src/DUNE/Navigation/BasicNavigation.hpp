@@ -525,8 +525,6 @@ namespace DUNE
       IMC::EstimatedState m_estate;
       //! Estimated water velocity message.
       IMC::EstimatedStreamVelocity m_ewvel;
-      //! LblConfig buffer.
-      IMC::LblConfig m_lbl_cfg;
       //! LBL range acceptance.
       IMC::LblRangeAcceptance m_lbl_ac;
       //! GPS fix rejection.
@@ -642,8 +640,6 @@ namespace DUNE
       LblBeaconXYZ* m_beacons[c_max_beacons];
       //! Displacement between LBL and GPS.
       float m_dist_lbl_gps;
-      //! LblConfig data has been logged.
-      bool m_lbl_log_beacons;
       //! Always reject LblRanges.
       bool m_reject_all_lbl;
       //! LBL rejection constants.
