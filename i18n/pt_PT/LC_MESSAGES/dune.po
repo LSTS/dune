@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-07-26 15:47+0100\n"
+        "POT-Creation-Date: 2013-07-30 19:15+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,3200 +34,3271 @@ msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Content-Type: text/plain; charset=UTF-8\n"
         "Content-Transfer-Encoding: 8bit\n"
 
-#: /home/rasm/dolphin/dune/src/Plan/Engine/ActionSchedule.hpp:368
+#: /home/rasm/git/dune/dune/src/Plan/Engine/ActionSchedule.hpp:368
 #, c-format
 msgid   "schedule: %s active on time, +%.1f seconds"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Plan/Engine/ActionSchedule.hpp:371
+#: /home/rasm/git/dune/dune/src/Plan/Engine/ActionSchedule.hpp:371
 #, c-format
 msgid   "schedule: %s activation missed deadline, %.1f seconds"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Plan/Engine/ActionSchedule.hpp:484
+#: /home/rasm/git/dune/dune/src/Plan/Engine/ActionSchedule.hpp:484
 #, fuzzy, c-format
 msgid   "schedule: entity label %s not found"
 msgstr  "etiqueta da entidade não foi configurado"
 
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Plan.hpp:134
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Plan.hpp:134
 msgid   ": no maneuvers"
 msgstr  ": sem manobras"
 
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Plan.hpp:152
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Plan.hpp:152
 msgid   ": actual maneuver not specified"
 msgstr  ": manobra atual não especificada"
 
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Plan.hpp:160
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Plan.hpp:160
 #, fuzzy
 msgid   ": maneuver is not supported"
 msgstr  "suportada manobra %s"
 
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Plan.hpp:190
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Plan.hpp:190
 msgid   ": maneuver has no incoming transition and it's not the initial maneuver"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Plan.hpp:203
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Plan.hpp:203
 msgid   ": invalid start maneuver"
 msgstr  ": manobra de início inválida"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Monitors/MotorCurrentMonitor.hpp:52
-msgid   "motor monitor error: "
-msgstr  "erro no monitor do motor"
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/EntityDataBase.hpp:64
+#, fuzzy
+msgid   "invalid entity label: "
+msgstr  "Nome principal da entidade"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Monitors/MotorCurrentMonitor.hpp:97
-msgid   "number of linear points is not even"
-msgstr  "número de pontos não é par"
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/EntityDataBase.hpp:68
+#, fuzzy
+msgid   "entity labels cannot be empty"
+msgstr  "etiqueta da entidade não foi configurado"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Exceptions.hpp:90
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/EntityDataBase.hpp:75
+#, fuzzy
+msgid   "nonexistent entity label: "
+msgstr  "Nome principal da entidade"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/EntityDataBase.hpp:82
+#, fuzzy
+msgid   "invalid entity id: "
+msgstr  "unidade de Z inválida: %s"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/EntityDataBase.hpp:89
+msgid   "an unique id was already reserved for entity label: "
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Exceptions.hpp:90
 #, c-format
 msgid   "invalid task name '%s'"
 msgstr  "nome de tarefa inválido '%s'"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Exceptions.hpp:103
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Exceptions.hpp:103
 #, fuzzy, c-format
 msgid   "invalid value '%s' for parameter '%s': '%s'"
 msgstr  "parâmetro inválido '%s'"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Hardware/Exceptions.hpp:57
-#, fuzzy
-msgid   "unexpected reply"
-msgstr  "resposta inesperada"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Hardware/Exceptions.hpp:67
-#, fuzzy
-msgid   "timeout while reading reply"
-msgstr  "atingido timeout ao ler ângulos de Euler"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Hardware/Exceptions.hpp:79
-#, c-format
-msgid   "buffer has %u bytes, needed %u"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/DUNE/Hardware/Exceptions.hpp:92
-#, c-format
-msgid   "invalid checksum: should be %02X%02X but received %02X%02X"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/DUNE/Hardware/Exceptions.hpp:105
-#, fuzzy, c-format
-msgid   "invalid format: %s"
-msgstr  "unidade de Z inválida: %s"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Exceptions.hpp:63
-#, c-format
-msgid   "feature not implemented '%s'"
-msgstr  "funcionalidade não implementada '%s'"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/Exceptions.hpp:49
-#, c-format
-msgid   "unable to resolve hostname '%s'"
-msgstr  "não foi possível resolver hostname '%s'"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/Exceptions.hpp:58
-#, c-format
-msgid   "invalid network address '%s'"
-msgstr  "endereço de rede inválido '%s'"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/Exceptions.hpp:75
-#, c-format
-msgid   "network unreachable '%s'"
-msgstr  "rede inacessível '%s'"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/Exceptions.hpp:84
-#, c-format
-msgid   "host unreachable '%s'"
-msgstr  "anfitrião inacessível '%s'"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/Exceptions.hpp:93
-msgid   "connection closed"
-msgstr  "ligação terminada"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BasicAutopilot.hpp:148
-#, c-format
-msgid   "yaw control mode %d not supported"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BasicAutopilot.hpp:158
-#, c-format
-msgid   "vertical control mode %d not supported"
-msgstr  "modo de controlo vertical %d não é suportado"
-
-#: /home/rasm/dolphin/dune/src/DUNE/IMC/Exceptions.hpp:125
-#, c-format
-msgid   "invalid message size %u"
-msgstr  "tamanho de mensagem inválido %u"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Parsers/PlanConfigParser.hpp:285
+#: /home/rasm/git/dune/dune/src/DUNE/Parsers/PlanConfigParser.hpp:285
 #, c-format
 msgid   "invalid z unit: %s"
 msgstr  "unidade de Z inválida: %s"
 
-#: /home/rasm/dolphin/dune/src/Transports/IridiumSBD/Exceptions.hpp:47
-#, fuzzy, c-format
-msgid   "invalid SBD size %u"
+#: /home/rasm/git/dune/dune/src/DUNE/IMC/Exceptions.hpp:125
+#, c-format
+msgid   "invalid message size %u"
 msgstr  "tamanho de mensagem inválido %u"
 
-#: /home/rasm/dolphin/dune/src/Transports/IridiumSBD/Exceptions.hpp:58
+#: /home/rasm/git/dune/dune/src/DUNE/Monitors/MotorCurrentMonitor.hpp:52
+msgid   "motor monitor error: "
+msgstr  "erro no monitor do motor"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Monitors/MotorCurrentMonitor.hpp:97
+msgid   "number of linear points is not even"
+msgstr  "número de pontos não é par"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.hpp:148
+#, c-format
+msgid   "yaw control mode %d not supported"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.hpp:158
+#, c-format
+msgid   "vertical control mode %d not supported"
+msgstr  "modo de controlo vertical %d não é suportado"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Exceptions.hpp:63
+#, c-format
+msgid   "feature not implemented '%s'"
+msgstr  "funcionalidade não implementada '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:57
+#, fuzzy
+msgid   "unexpected reply"
+msgstr  "resposta inesperada"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:67
+#, fuzzy
+msgid   "timeout while reading reply"
+msgstr  "atingido timeout ao ler ângulos de Euler"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:79
+#, c-format
+msgid   "buffer has %u bytes, needed %u"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:92
+#, c-format
+msgid   "invalid checksum: should be %02X%02X but received %02X%02X"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:105
 #, fuzzy, c-format
-msgid   "invalid SBD write %s"
+msgid   "invalid format: %s"
 msgstr  "unidade de Z inválida: %s"
 
-#: /home/rasm/dolphin/dune/src/Transports/GSM/Driver.hpp:134
+#: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:49
+#, c-format
+msgid   "unable to resolve hostname '%s'"
+msgstr  "não foi possível resolver hostname '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:58
+#, c-format
+msgid   "invalid network address '%s'"
+msgstr  "endereço de rede inválido '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:75
+#, c-format
+msgid   "network unreachable '%s'"
+msgstr  "rede inacessível '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:84
+#, c-format
+msgid   "host unreachable '%s'"
+msgstr  "anfitrião inacessível '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:93
+msgid   "connection closed"
+msgstr  "ligação terminada"
+
+#: /home/rasm/git/dune/dune/src/Transports/GSM/Driver.hpp:134
 #, c-format
 msgid   "SMS transmission failed with error code %d"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Transports/Micromodem/Exceptions.hpp:45
+#: /home/rasm/git/dune/dune/src/Transports/IridiumSBD/Exceptions.hpp:47
+#, fuzzy, c-format
+msgid   "invalid SBD size %u"
+msgstr  "tamanho de mensagem inválido %u"
+
+#: /home/rasm/git/dune/dune/src/Transports/IridiumSBD/Exceptions.hpp:58
+#, fuzzy, c-format
+msgid   "invalid SBD write %s"
+msgstr  "unidade de Z inválida: %s"
+
+#: /home/rasm/git/dune/dune/src/Transports/Micromodem/Exceptions.hpp:45
 msgid   "transaction aborted"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Autonomy/TextActions/Task.cpp:65
-msgid   "received SMS request to start plan"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Autonomy/TextActions/Task.cpp:65
-msgid   "id"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Autonomy/TREX/Task.cpp:130
-#, c-format
-msgid   "TREX disconnected for more than %d seconds"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Simulators/VSIM/Task.cpp:140
-msgid   "error loading world parameters."
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Simulators/VSIM/Task.cpp:144
-msgid   "error loading vehicle parameters."
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Simulators/LBL/Task.cpp:225
-#, c-format
-msgid   "maximum amount of beacons is %u"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Simulators/Leaks/Task.cpp:125
-#: /home/rasm/dolphin/dune/src/Simulators/Leaks/Task.cpp:140
-#: /home/rasm/dolphin/dune/src/Power/PCTLv2/Task.cpp:549
-msgid   "leak detected"
-msgstr  "fuga detetada"
-
-#: /home/rasm/dolphin/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:215
-msgid   "not setup yet"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:225
-msgid   "can't handle this -- some nodes are not part of simulation (yet?)"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:255
-#: /home/rasm/dolphin/dune/src/Monitors/Collisions/Task.cpp:336
-msgid   "collision detected"
-msgstr  "colisão detetada"
-
-#: /home/rasm/dolphin/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:383
-#, c-format
-msgid   "unexpected simulation message: %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:390
-#, c-format
-msgid   "network/deserialization error: %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Navigation/General/LBL/Task.cpp:325
-#: /home/rasm/dolphin/dune/src/DUNE/Navigation/BasicNavigation.cpp:917
-#, c-format
-msgid   "beacon id %d is greater than %d"
-msgstr  "id beacon %d é maior que %d"
-
-#: /home/rasm/dolphin/dune/src/Navigation/General/Alignment/Task.cpp:193
-#: /home/rasm/dolphin/dune/src/Navigation/AUV/SGNavigation/Task.cpp:286
-#: /home/rasm/dolphin/dune/src/Monitors/Collisions/Task.cpp:190
-#, c-format
-msgid   "failed to resolve entity '%s': %s"
-msgstr  "erro ao resolver entidade '%s': %s"
-
-#: /home/rasm/dolphin/dune/src/Navigation/General/Alignment/Task.cpp:236
-msgid   "motion detected"
-msgstr  "movimento detectado"
-
-#: /home/rasm/dolphin/dune/src/Navigation/General/Alignment/Task.cpp:318
-#, fuzzy
-msgid   "device is not active"
-msgstr  "inativo"
-
-#: /home/rasm/dolphin/dune/src/Navigation/General/Alignment/Task.cpp:326
-msgid   "device is not in proper medium"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Navigation/General/Alignment/Task.cpp:338
-msgid   "calibrating: system must remain static"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/Gobi384/Task.cpp:90
-msgid   "no cameras found!"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/Gobi384/Task.cpp:104
-#, fuzzy
-msgid   "failed to open the camera"
-msgstr  "falhou ao ler header"
-
-#: /home/rasm/dolphin/dune/src/Vision/Gobi384/Task.cpp:117
-msgid   "failed to initialise the camera"
-msgstr  "falha ao inicializar câmara"
-
-#: /home/rasm/dolphin/dune/src/Vision/Gobi384/Task.cpp:128
-msgid   "failed to start capturing"
-msgstr  "falha ao iniciar captura"
-
-#: /home/rasm/dolphin/dune/src/Vision/Gobi384/Task.cpp:142
-msgid   "problem while fetching frame"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/Gobi384/Task.cpp:156
-msgid   "failed to stop capturing"
-msgstr  "falha a parar captura"
-
-#: /home/rasm/dolphin/dune/src/Vision/DFK51BG02H/Task.cpp:459
-msgid   "keep alive failed"
-msgstr  "falhou keep alive"
-
-#: /home/rasm/dolphin/dune/src/Vision/Lumenera/Task.cpp:319
-#: /home/rasm/dolphin/dune/src/Vision/Lumenera/Task.cpp:360
-#, fuzzy
-msgid   "failed to set property"
-msgstr  "falhou ao configurar placa: "
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:141
-msgid   "could not open the factory!"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:154
-msgid   "could not open the camera list!"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:163
-msgid   "could not get the number of cameras!"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:166
-#, c-format
-msgid   "%d camera(s) found"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:177
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:189
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:204
-msgid   "could not get the camera ID!"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:180
-#, c-format
-msgid   "camera index: %d, ID = %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:195
-msgid   "could not open the NIR camera"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:210
-msgid   "could not open the Visible camera"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:232
-msgid   "thread enabled"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:238
-msgid   "could not get the value for the 'Width' GeniCam node!"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:247
-msgid   "could not get the value for the 'Height' GeniCam node!"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:260
-msgid   "could not open the view window!"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:267
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:276
-msgid   "could not open the stream channel!"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:285
-msgid   "no thread enabled"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:293
-msgid   "could not execute the 'Aquisition Stop' command!"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:305
-msgid   "could not close the stream channel!"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Vision/AD080GE/Task.cpp:318
-msgid   "could not close the view window!"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Servos/Task.cpp:329
-#, fuzzy, c-format
-msgid   "potential fault in servo#%d, %s"
-msgstr  "possível falha no servo %d, consumo de corrente acima de %f"
-
-#: /home/rasm/dolphin/dune/src/Monitors/Servos/Task.cpp:360
-#, c-format
-msgid   "potential fault in servo#%d, current consumption above %f"
-msgstr  "possível falha no servo %d, consumo de corrente acima de %f"
-
-#: /home/rasm/dolphin/dune/src/Monitors/Emergency/Task.cpp:91
-#, fuzzy
-msgid   "Lost Communication SMS Timeout"
-msgstr  "erro comunicação"
-
-#: /home/rasm/dolphin/dune/src/Monitors/Emergency/Task.cpp:93
-msgid   "SMS Recipient Number"
-msgstr  "Número de Destino de Mensagens SMS"
-
-#: /home/rasm/dolphin/dune/src/Monitors/Emergency/Task.cpp:96
-msgid   "Phone number of the SMS recipient"
-msgstr  "Número de telefone do destinatário de mensagens SMS"
-
-#: /home/rasm/dolphin/dune/src/Monitors/Clock/Task.cpp:165
-#, c-format
-msgid   "adjusting CPU clock by %0.4f s"
-msgstr  "a ajustar relógio do CPU em %0.4f s"
-
-#: /home/rasm/dolphin/dune/src/Monitors/Clock/Task.cpp:168
-msgid   "failed to execute clock sync command"
-msgstr  "falha ao executar comando de sincronização"
-
-#: /home/rasm/dolphin/dune/src/Monitors/FuelLevel/Task.cpp:266
-#, fuzzy
-msgid   "invalid model"
-msgstr  "mensagem inválida"
-
-#: /home/rasm/dolphin/dune/src/Monitors/FuelLevel/Task.cpp:273
-msgid   "operation mode list labels and values have different sizes"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/FuelLevel/Task.cpp:281
-msgid   "invalid opmode value (zero)"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/OperationalLimits/Task.cpp:242
-#, c-format
-msgid   "%s -- operational limit breached: %0.2f > %0.2f"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/OperationalLimits/Task.cpp:255
-#, c-format
-msgid   "%s -- operational limit now sane: %0.2f <= %0.2f"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/OperationalLimits/Task.cpp:330
-msgid   "minimum speed"
-msgstr  "velocidade mínima"
-
-#: /home/rasm/dolphin/dune/src/Monitors/OperationalLimits/Task.cpp:331
-msgid   "maximum speed"
-msgstr  "velocidade máxima"
-
-#: /home/rasm/dolphin/dune/src/Monitors/OperationalLimits/Task.cpp:332
-msgid   "depth"
-msgstr  "profundidade"
-
-#: /home/rasm/dolphin/dune/src/Monitors/OperationalLimits/Task.cpp:333
-msgid   "vertical rate"
-msgstr  "taxa vertical"
-
-#: /home/rasm/dolphin/dune/src/Monitors/OperationalLimits/Task.cpp:337
-msgid   "maximum altitude"
-msgstr  "altitude máxima"
-
-#: /home/rasm/dolphin/dune/src/Monitors/OperationalLimits/Task.cpp:338
-msgid   "minimum altitude"
-msgstr  "altitude mínima"
-
-#: /home/rasm/dolphin/dune/src/Monitors/OperationalLimits/Task.cpp:369
-msgid   "Operational Area"
-msgstr  "Área Operacional"
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:43
-msgid   "Boot"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:43
-msgid   "Normal"
-msgstr  "Normal"
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:43
-msgid   "Fault"
-msgstr  "Falha"
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:43
-msgid   "Error"
-msgstr  "Erro"
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:43
-msgid   "Failure"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:184
-#, c-format
-msgid   "can not monitor %s (%s), is there a task failure or a configuration error?"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:195
-msgid   "EntityState message without source entity"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:217
-#, c-format
-msgid   "%s : %s -> %s | %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:222
-#, c-format
-msgid   "%s entity state is unstable (%s <-> %s), ignoring"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:232
-#, c-format
-msgid   "%s : State stabilized in %s | %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:258
-msgid   "reconfiguration command issued"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:271
-msgid   "invalid reconfiguration command"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:281
-msgid   "setting up configuration defaults"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:309
-#, c-format
-msgid   "%s - monitoring enabled"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:315
-#, c-format
-msgid   "%s - current state not normal - %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:319
-#, c-format
-msgid   "%s - monitoring previously enabled"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:332
-#, c-format
-msgid   "%s - monitoring disabled"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:339
-#, c-format
-msgid   "%s - monitoring previously disabled"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:363
-#, c-format
-msgid   "entity %s: %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:440
-#, c-format
-msgid   "%s -- status not reported after %0.2f seconds"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/Entities/Task.cpp:443
-#, fuzzy
-msgid   ": entity state timeout"
-msgstr  "timeout do estado do veículo"
-
-#: /home/rasm/dolphin/dune/src/Monitors/LostComms/Task.cpp:79
-msgid   "Lost Comms Plan"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Monitors/LostComms/Task.cpp:81
-msgid   "Plan to be executed in case of Lost Communications"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Maneuver/FollowReference/AUV/Task.cpp:138
-#, fuzzy
-msgid   "waiting for first reference"
-msgstr  "a espera da medição inicial"
-
-#: /home/rasm/dolphin/dune/src/Maneuver/FollowReference/AUV/Task.cpp:194
-#, c-format
-msgid   "ignored reference from non-authorized source: %d"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Maneuver/FollowReference/AUV/Task.cpp:203
-#, c-format
-msgid   "ignored reference from non-authorized entity: %d"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Maneuver/FollowReference/AUV/Task.cpp:528
-#, fuzzy, c-format
-msgid   "loitering around (%f, %f, %f, %f)."
-msgstr  "definir beacon %s (%0.2f, %0.2f, %0.2f)"
-
-#: /home/rasm/dolphin/dune/src/Maneuver/FollowReference/AUV/Task.cpp:536
-#, c-format
-msgid   "loitering (elevator) towards (%f, %f, %f, %f)."
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Maneuver/FollowReference/AUV/Task.cpp:543
-#, c-format
-msgid   "going towards (%f, %f, %f)."
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Maneuver/FollowReference/AUV/Task.cpp:547
-#, c-format
-msgid   "hovering next to (%f, %f)."
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Maneuver/CompassCalibration/Task.cpp:147
-#, fuzzy, c-format
-msgid   "forcing minimum of %.1f"
-msgstr  "raio de loiter inválido, a forçar o valor mínimo de %0.2f"
-
-#: /home/rasm/dolphin/dune/src/Maneuver/FollowSystem/Task.cpp:299
-msgid   "timeout to receive new remote info was exceeded."
-msgstr  "excedido timeout para receber nova info remota."
-
-#: /home/rasm/dolphin/dune/src/Maneuver/FollowTrajectory/Task.cpp:128
-msgid   "disregarding trajectory's time constraints"
-msgstr  "não considerar restrições temporais da manobra"
-
-#: /home/rasm/dolphin/dune/src/Maneuver/FollowTrajectory/Task.cpp:133
-msgid   "provided trajectory is not feasible by the current vehicle!"
-msgstr  "trajetória não é exequível pelo veículo atual"
-
-#: /home/rasm/dolphin/dune/src/Maneuver/Elevator/Task.cpp:149
-#: /home/rasm/dolphin/dune/src/Maneuver/Loiter/Task.cpp:75
-#: /home/rasm/dolphin/dune/src/DUNE/Maneuvers/StationKeep.cpp:47
-#, c-format
-msgid   "forcing minimum radius of %.1f"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Maneuver/Elevator/Task.cpp:279
-msgid   "water column is not deep enough"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Maneuver/Elevator/Task.cpp:331
-msgid   "vertical progress is too slow"
-msgstr  "progresso na vertical é demasiado lento"
-
-#: /home/rasm/dolphin/dune/src/Maneuver/Loiter/Task.cpp:110
-#, c-format
-msgid   "will now loiter for %d seconds"
-msgstr  "loiter durante %d segundos"
-
-#: /home/rasm/dolphin/dune/src/Maneuver/Dubin/Task.cpp:65
-msgid   "vertical control type not supported"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:47
-msgid   "Start Plan"
-msgstr  "Iniciar Plano"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:47
-msgid   "Stop Plan"
-msgstr  "Parar Plano"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:47
-msgid   "Load Plan"
-msgstr  "Plano Carregado"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:47
-msgid   "Get Plan"
-msgstr  "Obter Plano"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:49
-msgid   "BLOCKED"
-msgstr  "BLOQUEADO"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:49
-msgid   "READY"
-msgstr  "PRONTO"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:49
-msgid   "INITIALIZING"
-msgstr  "INICIALIZAÇÃO"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:49
-msgid   "EXECUTING"
-msgstr  "EXECUÇÃO"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:267
-#, fuzzy, c-format
-msgid   "failed to activate %s: %s"
-msgstr  "erro ao resolver entidade '%s': %s"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:293
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:137
-#, c-format
-msgid   "database file: '%s'"
-msgstr  "ficheiro de base de dados: '%s'"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:314
-msgid   "database connection closed"
-msgstr  "fechada ligação à base de dados"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:416
-msgid   "vehicle ready"
-msgstr  "veículo pronto"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:452
-msgid   "plan completed"
-msgstr  "plano completado"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:474
-msgid   "vehicle errors: "
-msgstr  "erros veículo: "
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:507
-msgid   "vehicle in CALIBRATION mode"
-msgstr  "veículo em modo de calibração"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:520
-msgid   "vehicle in EXTERNAL mode"
-msgstr  "veículo em modo EXTERNO"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:535
-#, c-format
-msgid   "request -- %s (%s)"
-msgstr  "pedido -- %s (%s)"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:539
-#, fuzzy
-msgid   "engine not ready: entity state not normal"
-msgstr  "engine não está pronto: "
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:571
-msgid   "cannot load plan now"
-msgstr  "incapaz de carregador plano agora"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:603
-msgid   "plan load failed: undefined maneuver or plan"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:616
-msgid   "plan load failed: "
-msgstr  "plano falhou ao carregar: "
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:624
-msgid   "plan validation failed: "
-msgstr  "a validaçao do plano falhou: "
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:633
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:638
-msgid   "plan loaded"
-msgstr  "plano carregado"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:641
-msgid   "plan loaded but vehicle not ready"
-msgstr  "plano carregado mas veículo não está pronto"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:653
-msgid   "no plan is loaded"
-msgstr  "nenhum plano está carregado"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:676
-msgid   "plan stopped"
-msgstr  "plano parado"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:680
-msgid   "switching to new plan"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:694
-msgid   "loaded plan is not running, request ignored"
-msgstr  "plano carregado não está a correr, pedido ignorado"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:699
-msgid   "no plan is even loaded, request ignored"
-msgstr  "nenhum plano está carregado, pedido ignorado"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:744
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:330
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:406
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:441
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:476
-msgid   "undefined plan id"
-msgstr  "plan ID não identificado"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:754
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:431
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:452
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:486
-msgid   "undefined plan"
-msgstr  "plano indefinido"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:787
-#, fuzzy
-msgid   "plan initializing: "
-msgstr  "plano a iniciar"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:839
-msgid   "cannot initialize plan in BLOCKED state"
-msgstr  "incapaz de iniciar plano em modo BLOQUEADO"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:855
-msgid   ": invalid maneuver ID"
-msgstr  ": maneuver ID inválido"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:862
-msgid   ": executing maneuver"
-msgstr  ": a executar manobra"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:881
-#, c-format
-msgid   "reply -- %s (%s) -- %s"
-msgstr  "resposta -- %s (%s) -- %s"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:907
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:619
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:486
-msgid   "OK"
-msgstr  "OK"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:937
-#, c-format
-msgid   "now in %s state"
-msgstr  "agora no estado %s"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:990
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:133
-#: /home/rasm/dolphin/dune/src/Sensors/OS4000/Task.cpp:146
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:303
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:40
-msgid   "initializing"
-msgstr  "a iniciar"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:1032
-msgid   "vehicle state timeout"
-msgstr  "timeout do estado do veículo"
-
-#: /home/rasm/dolphin/dune/src/Plan/Engine/Task.cpp:1047
-msgid   "vehicle reply timeout"
-msgstr  "timeout da resposta do veículo"
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:73
-msgid   "set plan"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:73
-#, fuzzy
-msgid   "delete plan"
-msgstr  "plano indefinido"
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:73
-#, fuzzy
-msgid   "get plan"
-msgstr  "a carregar plano"
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:73
-msgid   "get plan info"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:73
-msgid   "clear database"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:73
-msgid   "database state"
-msgstr  "estado da base de dados"
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:73
-msgid   "database initialization"
-msgstr  "inicialização da base de dados"
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:167
-msgid   "initialization complete"
-msgstr  "inicialização completa"
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:214
-#, c-format
-msgid   "storing plan '%s' issued through a PlanControl request"
-msgstr  "a guardar plano '%s' pedido através do PlanControl"
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:244
-msgid   "unexpected message"
-msgstr  "mensagem não esperada"
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:260
-#: /home/rasm/dolphin/dune/src/DUNE/Control/PathController.cpp:278
-msgid   "not active"
-msgstr  "inativo"
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:290
-msgid   "unsupported operation"
-msgstr  "operação não suportada"
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:322
-msgid   "database is corrupt"
-msgstr  "base de dados corrompida"
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:338
-msgid   "no plan specification given"
-msgstr  "especificação de plano não recebida"
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:344
-msgid   "plan id mismatch"
-msgstr  "incompatibilidade plan id"
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:398
-msgid   "OK (updated)"
-msgstr  "OK (atualizado)"
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:398
-msgid   "OK (new entry)"
-msgstr  "OK (nova entrada)"
-
-#: /home/rasm/dolphin/dune/src/Plan/DB/Task.cpp:607
-msgid   "in progress"
-msgstr  "em progresso"
-
-#: /home/rasm/dolphin/dune/src/Plan/Generator/Task.cpp:197
+#: /home/rasm/git/dune/dune/src/Plan/Generator/Task.cpp:197
 #, c-format
 msgid   "Unable to generate plan using template %s"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Plan/Generator/Task.cpp:219
+#: /home/rasm/git/dune/dune/src/Plan/Generator/Task.cpp:219
 msgid   "Plan generated automatically"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Plan/Generator/Task.cpp:311
-#: /home/rasm/dolphin/dune/src/Plan/Generator/Task.cpp:348
+#: /home/rasm/git/dune/dune/src/Plan/Generator/Task.cpp:311
+#: /home/rasm/git/dune/dune/src/Plan/Generator/Task.cpp:348
 msgid   "Plan generated automatically by DUNE."
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Plan/Generator/Task.cpp:350
+#: /home/rasm/git/dune/dune/src/Plan/Generator/Task.cpp:350
 #, c-format
 msgid   "generating plan from '%s' template..."
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:43
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:47
+msgid   "Start Plan"
+msgstr  "Iniciar Plano"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:47
+msgid   "Stop Plan"
+msgstr  "Parar Plano"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:48
+msgid   "Load Plan"
+msgstr  "Plano Carregado"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:48
+msgid   "Get Plan"
+msgstr  "Obter Plano"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:50
+msgid   "BLOCKED"
+msgstr  "BLOQUEADO"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:50
+msgid   "READY"
+msgstr  "PRONTO"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:51
+msgid   "INITIALIZING"
+msgstr  "INICIALIZAÇÃO"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:51
+msgid   "EXECUTING"
+msgstr  "EXECUÇÃO"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:269
+#, fuzzy, c-format
+msgid   "failed to activate %s: %s"
+msgstr  "erro ao resolver entidade '%s': %s"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:295
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:137
+#, c-format
+msgid   "database file: '%s'"
+msgstr  "ficheiro de base de dados: '%s'"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:316
+msgid   "database connection closed"
+msgstr  "fechada ligação à base de dados"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:418
+msgid   "vehicle ready"
+msgstr  "veículo pronto"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:454
+msgid   "plan completed"
+msgstr  "plano completado"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:476
+msgid   "vehicle errors: "
+msgstr  "erros veículo: "
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:509
+msgid   "vehicle in CALIBRATION mode"
+msgstr  "veículo em modo de calibração"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:522
+msgid   "vehicle in EXTERNAL mode"
+msgstr  "veículo em modo EXTERNO"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:537
+#, c-format
+msgid   "request -- %s (%s)"
+msgstr  "pedido -- %s (%s)"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:541
+#, fuzzy
+msgid   "engine not ready: entity state not normal"
+msgstr  "engine não está pronto: "
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:573
+msgid   "cannot load plan now"
+msgstr  "incapaz de carregador plano agora"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:605
+msgid   "plan load failed: undefined maneuver or plan"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:618
+msgid   "plan load failed: "
+msgstr  "plano falhou ao carregar: "
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:626
+msgid   "plan validation failed: "
+msgstr  "a validaçao do plano falhou: "
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:635
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:640
+msgid   "plan loaded"
+msgstr  "plano carregado"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:643
+msgid   "plan loaded but vehicle not ready"
+msgstr  "plano carregado mas veículo não está pronto"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:655
+msgid   "no plan is loaded"
+msgstr  "nenhum plano está carregado"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:678
+msgid   "plan stopped"
+msgstr  "plano parado"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:682
+msgid   "switching to new plan"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:696
+msgid   "loaded plan is not running, request ignored"
+msgstr  "plano carregado não está a correr, pedido ignorado"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:701
+msgid   "no plan is even loaded, request ignored"
+msgstr  "nenhum plano está carregado, pedido ignorado"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:746
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:330
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:406
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:441
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:476
+msgid   "undefined plan id"
+msgstr  "plan ID não identificado"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:756
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:431
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:452
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:486
+msgid   "undefined plan"
+msgstr  "plano indefinido"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:789
+#, fuzzy
+msgid   "plan initializing: "
+msgstr  "plano a iniciar"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:841
+msgid   "cannot initialize plan in BLOCKED state"
+msgstr  "incapaz de iniciar plano em modo BLOQUEADO"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:857
+msgid   ": invalid maneuver ID"
+msgstr  ": maneuver ID inválido"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:864
+msgid   ": executing maneuver"
+msgstr  ": a executar manobra"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:883
+#, c-format
+msgid   "reply -- %s (%s) -- %s"
+msgstr  "resposta -- %s (%s) -- %s"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:909
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:619
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:486
+msgid   "OK"
+msgstr  "OK"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:939
+#, c-format
+msgid   "now in %s state"
+msgstr  "agora no estado %s"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:992
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:133
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:40
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:303
+#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:146
+msgid   "initializing"
+msgstr  "a iniciar"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:1034
+msgid   "vehicle state timeout"
+msgstr  "timeout do estado do veículo"
+
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:1049
+msgid   "vehicle reply timeout"
+msgstr  "timeout da resposta do veículo"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:73
+msgid   "set plan"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:73
+#, fuzzy
+msgid   "delete plan"
+msgstr  "plano indefinido"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:73
+#, fuzzy
+msgid   "get plan"
+msgstr  "a carregar plano"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:73
+msgid   "get plan info"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:73
+msgid   "clear database"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:73
+msgid   "database state"
+msgstr  "estado da base de dados"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:73
+msgid   "database initialization"
+msgstr  "inicialização da base de dados"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:167
+msgid   "initialization complete"
+msgstr  "inicialização completa"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:214
+#, c-format
+msgid   "storing plan '%s' issued through a PlanControl request"
+msgstr  "a guardar plano '%s' pedido através do PlanControl"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:244
+msgid   "unexpected message"
+msgstr  "mensagem não esperada"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:260
+#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:278
+msgid   "not active"
+msgstr  "inativo"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:290
+msgid   "unsupported operation"
+msgstr  "operação não suportada"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:322
+msgid   "database is corrupt"
+msgstr  "base de dados corrompida"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:338
+msgid   "no plan specification given"
+msgstr  "especificação de plano não recebida"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:344
+msgid   "plan id mismatch"
+msgstr  "incompatibilidade plan id"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:398
+msgid   "OK (updated)"
+msgstr  "OK (atualizado)"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:398
+msgid   "OK (new entry)"
+msgstr  "OK (nova entrada)"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:607
+msgid   "in progress"
+msgstr  "em progresso"
+
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:43
 msgid   "SERVICE"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:43
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:43
 msgid   "CALIBRATION"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:44
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:44
 msgid   "ERROR"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:44
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:44
 msgid   "MANEUVERING"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:45
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:45
 msgid   "EXTERNAL CONTROL"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:132
-#: /home/rasm/dolphin/dune/src/Transports/Evologics/Task.cpp:345
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:132
+#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:345
 msgid   "got abort request"
 msgstr  "recebido pedido abort"
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:214
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:214
 #, c-format
 msgid   "now in '%s' mode"
 msgstr  "agora no modo '%s'"
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:263
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:263
 msgid   "entity errors cleared"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:267
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:267
 #, c-format
 msgid   "vehicle errors: %s"
 msgstr  "erros do veículo: %s"
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:326
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:326
 #, fuzzy
 msgid   " maneuver error: "
 msgstr  "erro de rede"
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:412
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:412
 msgid   "cannot calibrate: vehicle is in external mode"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:426
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:426
 #, fuzzy, c-format
 msgid   "calibrating vehicle for %u seconds"
 msgstr  "a calibrar veículo"
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:435
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:435
 msgid   "cannot stop calibration: vehicle is not calibrating"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:439
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:439
 #, fuzzy
 msgid   "stopped calibration"
 msgstr  "falhou calibração: "
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:455
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:455
 msgid   "no maneuver specified"
 msgstr  "nenhuma manobra foi especificada"
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:463
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:463
 msgid   " maneuver cannot be started in current mode"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:472
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:472
 #, fuzzy
 msgid   " maneuver started"
 msgstr  "suportada manobra %s"
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Vehicle/Task.cpp:521
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:521
 #, fuzzy
 msgid   "maneuver request timeout"
 msgstr  "Manobra excedeu timeout"
 
-#: /home/rasm/dolphin/dune/src/Supervisors/Power/Task.cpp:116
+#: /home/rasm/git/dune/dune/src/Supervisors/Power/Task.cpp:116
 #, fuzzy
 msgid   "failed to execute power down command"
 msgstr  "falha ao executar comando de sincronização"
 
-#: /home/rasm/dolphin/dune/src/Sensors/OS4000/Task.cpp:153
-msgid   "Level the device and hit NEXT"
-msgstr  ""
+#: /home/rasm/git/dune/dune/src/Navigation/AUV/SGNavigation/Task.cpp:286
+#: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:193
+#: /home/rasm/git/dune/dune/src/Monitors/Collisions/Task.cpp:190
+#, c-format
+msgid   "failed to resolve entity '%s': %s"
+msgstr  "erro ao resolver entidade '%s': %s"
 
-#: /home/rasm/dolphin/dune/src/Sensors/OS4000/Task.cpp:158
-msgid   "Rotate the device and keep it levelled (rotation must last +20s)"
-msgstr  ""
+#: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:236
+msgid   "motion detected"
+msgstr  "movimento detectado"
 
-#: /home/rasm/dolphin/dune/src/Sensors/OS4000/Task.cpp:163
+#: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:318
 #, fuzzy
-msgid   "Device is calibrated"
-msgstr  "dispositivo está calibrado"
+msgid   "device is not active"
+msgstr  "inativo"
 
-#: /home/rasm/dolphin/dune/src/Sensors/OS4000/Task.cpp:170
+#: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:326
+msgid   "device is not in proper medium"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:338
+msgid   "calibrating: system must remain static"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Navigation/General/LBL/Task.cpp:325
+#: /home/rasm/git/dune/dune/src/DUNE/Navigation/BasicNavigation.cpp:905
+#, c-format
+msgid   "beacon id %d is greater than %d"
+msgstr  "id beacon %d é maior que %d"
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:141
+msgid   "could not open the factory!"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:154
+msgid   "could not open the camera list!"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:163
+msgid   "could not get the number of cameras!"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:166
+#, c-format
+msgid   "%d camera(s) found"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:177
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:189
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:204
+msgid   "could not get the camera ID!"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:180
+#, c-format
+msgid   "camera index: %d, ID = %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:195
+msgid   "could not open the NIR camera"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:210
+msgid   "could not open the Visible camera"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:232
+msgid   "thread enabled"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:238
+msgid   "could not get the value for the 'Width' GeniCam node!"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:247
+msgid   "could not get the value for the 'Height' GeniCam node!"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:260
+msgid   "could not open the view window!"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:267
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:276
+msgid   "could not open the stream channel!"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:285
+msgid   "no thread enabled"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:293
+msgid   "could not execute the 'Aquisition Stop' command!"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:305
+msgid   "could not close the stream channel!"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/AD080GE/Task.cpp:318
+msgid   "could not close the view window!"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Vision/Lumenera/Task.cpp:319
+#: /home/rasm/git/dune/dune/src/Vision/Lumenera/Task.cpp:360
 #, fuzzy
-msgid   "Calibration error. Need to restart"
-msgstr  "erro de calibração, é necessário reiniciar o processo de calibração"
+msgid   "failed to set property"
+msgstr  "falhou ao configurar placa: "
 
-#: /home/rasm/dolphin/dune/src/Sensors/OS4000/Task.cpp:410
-#, c-format
-msgid   "Level the device and hit NEXT (Roll: %0.2f | Pitch: %0.2f)"
+#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:90
+msgid   "no cameras found!"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Sensors/Keller/Task.cpp:253
-msgid   "echo handling enabled, but got no RS-485 echo"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Keller/Task.cpp:263
-msgid   "received RS-485 echo doesn't match"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Keller/Task.cpp:300
-msgid   "invalid CRC"
-msgstr  "CRC inválido"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Keller/Task.cpp:302
-msgid   "exceeded maximum consecutive CRC error count"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Keller/Task.cpp:380
-msgid   "device not initialized, initializing"
-msgstr  "dispositivo não está inicializado, a inicializar"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Keller/Task.cpp:386
-#, c-format
-msgid   "got exception %d for command %d"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Keller/Task.cpp:397
-#, c-format
-msgid   "initialized device: class=%d.%d firmware=%d"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Keller/Task.cpp:403
-#, c-format
-msgid   "device serial number=%u"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Keller/Task.cpp:409
-msgid   "successfuly zeroed device"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Keller/Task.cpp:430
-msgid   "unable to initialize the device"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Keller/Task.cpp:438
-msgid   "unable to retrieve the serial number"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Keller/Task.cpp:456
-msgid   "unable to zero the device"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex837B/Task.cpp:262
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex872/Task.cpp:152
-msgid   "Range"
-msgstr  "Alcance"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex837B/Task.cpp:372
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex872/Task.cpp:184
-#: /home/rasm/dolphin/dune/src/Sensors/Edgetech2205/Task.cpp:196
-msgid   "restarting to change IPv4 address"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex837B/Task.cpp:375
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex872/Task.cpp:187
-msgid   "restarting to change TCP port"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex837B/Task.cpp:459
-#: /home/rasm/dolphin/dune/src/Sensors/Edgetech2205/Task.cpp:519
-#: /home/rasm/dolphin/dune/src/Power/DOAMv2/Task.cpp:184
-#: /home/rasm/dolphin/dune/src/Power/DOAMv1/Task.cpp:355
+#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:104
 #, fuzzy
-msgid   "failed to contact device"
-msgstr  "falha ao parar dispositivo"
+msgid   "failed to open the camera"
+msgstr  "falhou ao ler header"
 
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex837B/Task.cpp:670
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex872/Task.cpp:287
-msgid   "failed to read header"
-msgstr  "falhou ao ler cabeçalho"
+#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:117
+msgid   "failed to initialise the camera"
+msgstr  "falha ao inicializar câmara"
 
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex837B/Task.cpp:680
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex872/Task.cpp:292
-msgid   "failed to read data"
-msgstr  "falhou ao ler dados"
+#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:128
+msgid   "failed to start capturing"
+msgstr  "falha ao iniciar captura"
 
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex837B/Task.cpp:684
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex872/Task.cpp:296
-msgid   "failed to read footer"
-msgstr  "falhou ao ler footer"
-
-#: /home/rasm/dolphin/dune/src/Sensors/LIMU/Task.cpp:191
-msgid   "device is using unstable firmware"
+#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:142
+msgid   "problem while fetching frame"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Sensors/LIMU/Task.cpp:193
-#, fuzzy, c-format
-msgid   "firmware version %u.%u.%u"
-msgstr  "versão: %u.%u.%u"
-
-#: /home/rasm/dolphin/dune/src/Sensors/LIMU/Task.cpp:214
-#, fuzzy
-msgid   "failed to configure output frequency"
-msgstr  "incapaz de configurar output de tempo"
-
-#: /home/rasm/dolphin/dune/src/Sensors/LIMU/Task.cpp:217
-#: /home/rasm/dolphin/dune/src/Sensors/LIMU/Task.cpp:237
-#: /home/rasm/dolphin/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:403
-#, fuzzy
-msgid   "failed to set hard-iron correction factors"
-msgstr  "falhou ao definir endereço modem"
-
-#: /home/rasm/dolphin/dune/src/Sensors/GPS/Task.cpp:210
-msgid   "no reply to command"
-msgstr  "sem resposta ao comando"
-
-#: /home/rasm/dolphin/dune/src/Sensors/GPS/Task.cpp:211
-msgid   "failed to setup device"
-msgstr  "inicialização do dispositivo falhou"
-
-#: /home/rasm/dolphin/dune/src/Sensors/GPS/Task.cpp:460
-msgid   "invalid GPZDA sentence"
-msgstr  "frase GPZDA é inválida"
-
-#: /home/rasm/dolphin/dune/src/Sensors/GPS/Task.cpp:484
-msgid   "invalid GPGGA sentence"
-msgstr  "frase GPGGA é inválida"
-
-#: /home/rasm/dolphin/dune/src/Sensors/GPS/Task.cpp:532
-msgid   "invalid PUBX,00 sentence"
-msgstr  "frase PUBX,00 é inválida"
-
-#: /home/rasm/dolphin/dune/src/Sensors/GPS/Task.cpp:583
-msgid   "invalid GPVTG sentence"
-msgstr  "frase GPVTG é inválida"
-
-#: /home/rasm/dolphin/dune/src/Sensors/GPS/Task.cpp:607
-msgid   "invalid GPHDT sentence"
-msgstr  "frase GPHDT é inválida"
-
-#: /home/rasm/dolphin/dune/src/Sensors/GPS/Task.cpp:623
-msgid   "invalid GPHDM sentence"
-msgstr  "frase GPHDM é inválida"
-
-#: /home/rasm/dolphin/dune/src/Sensors/GPS/Task.cpp:641
-msgid   "invalid GPROT sentence"
-msgstr  "frase GPROT é inválida"
-
-#: /home/rasm/dolphin/dune/src/Sensors/GPS/Task.cpp:660
-msgid   "invalid PSATHPR sentence"
-msgstr  "frase PSATHPR é inválida"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex872/Task.cpp:144
-msgid   "Frequency"
-msgstr  "Frequência"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex872/Task.cpp:150
-msgid   "Operating frequency"
-msgstr  "Frequência de operação"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex872/Task.cpp:160
-msgid   "Operating range"
-msgstr  "Alcance de operação"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Antaris4/Task.cpp:319
-msgid   "unable to write full packet to device"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Antaris4/Task.cpp:355
-msgid   "message not acknowledged"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Antaris4/Task.cpp:475
-#: /home/rasm/dolphin/dune/src/Sensors/Antaris4/Task.cpp:489
-msgid   "checksum mismatch"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Antaris4/Task.cpp:494
-#: /home/rasm/dolphin/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:311
-msgid   "unexpected byte"
-msgstr  "byte não esperado"
-
-#: /home/rasm/dolphin/dune/src/Sensors/IFOG/Task.cpp:236
-#, fuzzy
-msgid   "failed to configure trigger frequency"
-msgstr  "falhou acknowledge ao pedido para reiniciar"
-
-#: /home/rasm/dolphin/dune/src/Sensors/IFOG/Task.cpp:246
-#, fuzzy
-msgid   "failed to turn on device"
-msgstr  "falhou ao parar disposito"
-
-#: /home/rasm/dolphin/dune/src/Sensors/IFOG/Task.cpp:350
-#, c-format
-msgid   "IMU failure: %04X"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/IFOG/Task.cpp:355
-#, c-format
-msgid   "data might be unreliable: %04X"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBLTracker/Task.cpp:240
-msgid   "restarting to change transducer detection GPIO"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBLTracker/Task.cpp:259
-#, c-format
-msgid   "unable to use GPIO %d for transducer detection"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBLTracker/Task.cpp:323
-msgid   "transducer not connected"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBLTracker/Task.cpp:606
-msgid   "range to"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/DLV3/Task.cpp:174
-msgid   "waking device"
-msgstr  "a arrancar dispositivo"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Edgetech2205/Task.cpp:128
-msgid   "High-Frequency Channels"
-msgstr  "Canais de Alta Frequência"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Edgetech2205/Task.cpp:129
-#: /home/rasm/dolphin/dune/src/Sensors/Edgetech2205/Task.cpp:145
-msgid   "None, Port, Starboard, Both"
-msgstr  "Nenhum, Bombordo, Estibordo, Ambos"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Edgetech2205/Task.cpp:135
-msgid   "High-Frequency Range"
-msgstr  "Alcance de Alta-Frequência"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Edgetech2205/Task.cpp:144
-msgid   "Low-Frequency Channels"
-msgstr  "Canais de Baixa Frequência"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Edgetech2205/Task.cpp:151
-msgid   "Low-Frequency Range"
-msgstr  "Alcance de Baixa-Frequência"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Edgetech2205/Task.cpp:199
-msgid   "restarting to change TCP command port"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Edgetech2205/Task.cpp:202
-msgid   "restarting to change TCP data port"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/XR620CTD/Task.cpp:460
-#, c-format
-msgid   "parse error: %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/SCH311X/Task.cpp:101
-#, c-format
-msgid   "file '%s' doesn't exist"
-msgstr  "ficheiro '%s' não existe"
-
-#: /home/rasm/dolphin/dune/src/Sensors/WorkhorseNavigator/Task.cpp:44
-msgid   "failed to set output format"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/WorkhorseNavigator/Task.cpp:45
-msgid   "failed to set flow control"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/WorkhorseNavigator/Task.cpp:46
-msgid   "failed to disable power saving"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/WorkhorseNavigator/Task.cpp:47
-msgid   "failed to disable low latency trigger"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/WorkhorseNavigator/Task.cpp:48
-#: /home/rasm/dolphin/dune/src/Sensors/WorkhorseNavigator/Task.cpp:49
-#: /home/rasm/dolphin/dune/src/Sensors/WorkhorseNavigator/Task.cpp:50
-#: /home/rasm/dolphin/dune/src/Sensors/WorkhorseNavigator/Task.cpp:51
-#: /home/rasm/dolphin/dune/src/Sensors/WorkhorseNavigator/Task.cpp:52
-#: /home/rasm/dolphin/dune/src/Sensors/WorkhorseNavigator/Task.cpp:53
-#: /home/rasm/dolphin/dune/src/Sensors/WorkhorseNavigator/Task.cpp:54
-msgid   "unexpected response"
-msgstr  "resposta inesperada"
-
-#: /home/rasm/dolphin/dune/src/Sensors/WorkhorseNavigator/Task.cpp:259
-msgid   "failed to wake device"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/WorkhorseNavigator/Task.cpp:275
-msgid   "unable to read prompt"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/WorkhorseNavigator/Task.cpp:289
-msgid   "failed to start data sampling"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/XchangeSV/Task.cpp:122
-#, fuzzy
-msgid   "failed to enter command mode"
-msgstr  "falhou ao definir endereço modem"
-
-#: /home/rasm/dolphin/dune/src/Sensors/XchangeSV/Task.cpp:125
-#, fuzzy
-msgid   "failed to set sampling rate"
-msgstr  "falhou ao definir endereço modem"
-
-#: /home/rasm/dolphin/dune/src/Sensors/XchangeSV/Task.cpp:128
-#, fuzzy
-msgid   "failed to enter monitor mode"
-msgstr  "falhou ao definir endereço modem"
-
-#: /home/rasm/dolphin/dune/src/Sensors/XchangeSV/Task.cpp:146
-#, fuzzy
-msgid   "input timeout"
-msgstr  "timeout"
-
-#: /home/rasm/dolphin/dune/src/Sensors/XchangeSV/Task.cpp:155
-msgid   "I/O error"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:203
-msgid   "failed to stop device"
-msgstr  "falhou ao parar disposito"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:212
-msgid   "failed to read EEPROM#130"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:222
-msgid   "failed to read EEPROM#230"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/SW100/Task.cpp:186
-#, c-format
-msgid   "depth offset is %0.2f m"
-msgstr  "compensação de profundidade de %0.2f m"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Imagenex852/Task.cpp:263
-#, fuzzy
-msgid   "restarting to change UART device"
-msgstr  "a arrancar dispositivo"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:305
-msgid   "waiting beacons configuration"
-msgstr  "à espera da configuração de faróis"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:307
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:41
-msgid   "idle"
-msgstr  "ocioso"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:309
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:42
-msgid   "active"
-msgstr  "activo"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:311
-msgid   "serial port communication error, modem not responding"
-msgstr  "erro comunicação de porta série, modem não responde"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:313
-msgid   "failed to configure modem, possible serial port communication error"
-msgstr  "falhou configuração de modem, possível erro de comunicação porta série"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:315
-msgid   "failed to set modem address"
-msgstr  "falhou ao definir endereço modem"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:358
-#, c-format
-msgid   "modem address for agent '%s' is invalid"
-msgstr  "endereço modem para agente '%s' é inválido"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:480
-msgid   "dynamic sound speed corrections are disabled"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:561
-msgid   "invalid change plan message"
-msgstr  "mensagem para mudar plano inválida"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:591
-msgid   "received system restart request"
-msgstr  "recebido pedido para reiniciar sistema"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:600
-msgid   "restart request acknowledged"
-msgstr  "acknowledge ao pedido de reinicialização"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:604
-msgid   "failed to acknowledge restart request"
-msgstr  "falhou acknowledge ao pedido para reiniciar"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:612
-msgid   "acoustic abort detected"
-msgstr  "detetado abort acústico"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:622
-msgid   "abort acknowledged"
-msgstr  "abort recebido"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:626
-msgid   "failed to acknowledge abort"
-msgstr  "falhou ao reconhecer abort"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:662
-#, c-format
-msgid   "discarded invalid range %0.2f"
-msgstr  "descartado range inválido %0.2f"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:744
-msgid   "failed to ping beacons, modem seems busy"
-msgstr  "falha ao pingar faróis, o modem parece ocupado"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:906
-#, c-format
-msgid   "reported range to %s = %u m"
-msgstr  "reportado distância para %s = %u m"
-
-#: /home/rasm/dolphin/dune/src/Sensors/MLBL/Task.cpp:910
-#, c-format
-msgid   "failed to report range to %s"
-msgstr  "falha ao reportar distância para %s"
-
-#: /home/rasm/dolphin/dune/src/Sensors/PTU300/Task.cpp:100
-msgid   "unable to stop continuous output"
-msgstr  "incapaz de parar output contínuo"
-
-#: /home/rasm/dolphin/dune/src/Sensors/PTU300/Task.cpp:106
-msgid   "unable to configure time output"
-msgstr  "incapaz de configurar output de tempo"
-
-#: /home/rasm/dolphin/dune/src/Sensors/PTU300/Task.cpp:112
-msgid   "unable to configure date output"
-msgstr  "incapaz de configurar output data"
-
-#: /home/rasm/dolphin/dune/src/Sensors/PTU300/Task.cpp:120
-#: /home/rasm/dolphin/dune/src/Sensors/PTU300/Task.cpp:128
-msgid   "unable to set output format"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/PTU300/Task.cpp:135
-msgid   "unable to request continuous output"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/PTU300/Task.cpp:157
-msgid   "unable to write full command to device"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/PTU300/Task.cpp:202
-msgid   "timeout waiting for device response"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/AIM104MultiIO/Task.cpp:150
-msgid   "invalid message"
-msgstr  "mensagem inválida"
-
-#: /home/rasm/dolphin/dune/src/Sensors/AIM104MultiIO/Task.cpp:195
-msgid   "timeout"
-msgstr  "timeout"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:409
-#, fuzzy
-msgid   "resetting device"
-msgstr  "a arrancar dispositivo"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:428
-#, fuzzy
-msgid   "failed to read magnetic calibration parameters from device"
-msgstr  "a devolver parâmetros de calibração"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:447
-#, fuzzy
-msgid   "different calibration parameters"
-msgstr  "a devolver parâmetros de calibração"
-
-#: /home/rasm/dolphin/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:492
-#, fuzzy, c-format
-msgid   "new hard-iron calibration parameters: %f | %f"
-msgstr  "a devolver parâmetros de calibração"
-
-#: /home/rasm/dolphin/dune/src/Sensors/SDCR/Task.cpp:174
-msgid   "version"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Sensors/SDCR/Task.cpp:205
-#: /home/rasm/dolphin/dune/src/Power/DOAMv1/Task.cpp:452
-#: /home/rasm/dolphin/dune/src/Power/MCBv2/Task.cpp:576
-#: /home/rasm/dolphin/dune/src/Power/PCTLv2/Task.cpp:516
-msgid   "device reported"
-msgstr  "reportado dispositivo"
-
-#: /home/rasm/dolphin/dune/src/Sensors/SDCR/Task.cpp:233
-msgid   "failed to receive state"
-msgstr  "falhou ao receber estado"
-
-#: /home/rasm/dolphin/dune/src/Actuators/Broom/Task.cpp:81
-msgid   "init"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Actuators/Broom/Task.cpp:82
-msgid   "i2c"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Actuators/Broom/Task.cpp:83
-msgid   "power"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Actuators/Broom/Task.cpp:84
-msgid   "hall"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Actuators/Broom/Task.cpp:85
-msgid   "rotor locked"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Actuators/Broom/Task.cpp:86
-msgid   "mcu temperature"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Actuators/Broom/Task.cpp:87
-msgid   "bridge temperature"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Actuators/Broom/Task.cpp:88
-msgid   "motor temperature"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Actuators/Broom/Task.cpp:238
-msgid   "Motor control mode must be one of 'none', 'voltage', 'current', 'rpm'"
-msgstr  "Controlo de motor tem de ser feito através de 'none', 'voltage', 'current', 'rpm'"
-
-#: /home/rasm/dolphin/dune/src/Actuators/Broom/Task.cpp:312
-#, c-format
-msgid   "device error: %s"
-msgstr  "erro do dispositivo: %s"
-
-#: /home/rasm/dolphin/dune/src/Actuators/Broom/Task.cpp:318
-msgid   "power is not good"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Actuators/Broom/Task.cpp:322
-msgid   "device init error, requesting reset"
-msgstr  "erro ao iniciar dispositivo, pedido reset"
-
-#: /home/rasm/dolphin/dune/src/Actuators/Broom/Task.cpp:332
-msgid   "CMD_ACTUATE Data size doesn't match!"
-msgstr  "CMD_ACTUATE Incompatibilidade tamanho Data"
-
-#: /home/rasm/dolphin/dune/src/Actuators/Broom/Task.cpp:358
-#: /home/rasm/dolphin/dune/src/Actuators/SCRT/Task.cpp:455
-#: /home/rasm/dolphin/dune/src/Power/DOAMv1/Task.cpp:304
-#: /home/rasm/dolphin/dune/src/Power/MCBv2/Task.cpp:626
-#: /home/rasm/dolphin/dune/src/Power/PCTLv2/Task.cpp:481
-#, c-format
-msgid   "version: %u.%u.%u"
-msgstr  "versão: %u.%u.%u"
-
-#: /home/rasm/dolphin/dune/src/Actuators/Broom/Task.cpp:478
-#: /home/rasm/dolphin/dune/src/Actuators/SCRT/Task.cpp:486
-#, c-format
-msgid   "device reported: %s"
-msgstr  "dispositivo reportado: %s"
-
-#: /home/rasm/dolphin/dune/src/Actuators/ROSInspector/Task.cpp:94
-msgid   "zoom reset"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Actuators/ROSInspector/Task.cpp:99
-msgid   "zoom stop"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Actuators/ROSInspector/Task.cpp:104
-msgid   "zoom in"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Actuators/ROSInspector/Task.cpp:109
-msgid   "zoom out"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Actuators/SingleSIMCT01/Task.cpp:144
-msgid   "invalid value for 'Motor Id'"
-msgstr  "valor inválido para 'Motor Id'"
-
-#: /home/rasm/dolphin/dune/src/Actuators/SingleSIMCT01/Task.cpp:147
-msgid   "invalid value for 'Thruster Id'"
-msgstr  "valor inválido para 'Thruster Id'"
-
-#: /home/rasm/dolphin/dune/src/Actuators/SCRTv4/Task.cpp:280
-#, fuzzy
-msgid   "error"
-msgstr  "Erro"
-
-#: /home/rasm/dolphin/dune/src/Actuators/SCRT/Task.cpp:350
-#, c-format
-msgid   "servo number out of bounds: %u"
-msgstr  "número de servo fora dos limites: %u"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Navigation/BasicNavigation.cpp:42
+#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:156
+msgid   "failed to stop capturing"
+msgstr  "falha a parar captura"
+
+#: /home/rasm/git/dune/dune/src/Vision/DFK51BG02H/Task.cpp:459
+msgid   "keep alive failed"
+msgstr  "falhou keep alive"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Navigation/BasicNavigation.cpp:42
 #, c-format
 msgid   "position uncertainty is %0.2f m"
 msgstr  "incerteza posição é %0.2f m"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Navigation/BasicNavigation.cpp:1067
+#: /home/rasm/git/dune/dune/src/DUNE/Navigation/BasicNavigation.cpp:1055
 msgid   "No depth measurements available"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Utils/OptionParser.cpp:47
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:71
+msgid   "Entity Label"
+msgstr  "Nome da Entidade"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:73
+msgid   "Main entity label"
+msgstr  "Nome principal da entidade"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:75
+msgid   "Execution Priority"
+msgstr  "Prioridade de Execução"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:77
+#, fuzzy
+msgid   "Execution priority"
+msgstr  "Prioridade de Execução"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:79
+#, fuzzy
+msgid   "Activation Time"
+msgstr  "a ativar"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:82
+#, fuzzy
+msgid   "Deactivation Time"
+msgstr  "falhou calibração: "
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:85
+msgid   "Debug Level"
+msgstr  "Nível de Depuração"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:126
+msgid   "entity label is not configured"
+msgstr  "etiqueta da entidade não foi configurado"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:222
+#, fuzzy
+msgid   "Active - Scope"
+msgstr  "activo"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:226
+msgid   "Scoped of the 'Active' parameter"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:229
+msgid   "Active - Visibility"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:233
+msgid   "Visibility of the 'Active' parameter"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:235
+#, fuzzy
+msgid   "Active"
+msgstr  "activo"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:239
+msgid   "True to activate task, false otherwise"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:462
+msgid   "restarting"
+msgstr  "a reiniciar"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:463
+#, c-format
+msgid   "restarting in %u seconds due to error: %s"
+msgstr  "a recomeçar em %u segundos devido a erro: %s"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:476
+#, fuzzy, c-format
+msgid   "task died with uncaught exception: %s: restarting"
+msgstr  "a tarefa morreu com uma exceção não apanhada: %s"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:560
+#, fuzzy, c-format
+msgid   "updating entity parameters: %s: '%s'"
+msgstr  "parâmetro inválido '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Task.cpp:756
+#, c-format
+msgid   "invalid parameter '%s'"
+msgstr  "parâmetro inválido '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Manager.cpp:94
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Manager.cpp:172
+msgid   "unknown exception"
+msgstr  "exceção desconhecida"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Manager.cpp:133
+msgid   "stopping"
+msgstr  "a parar"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Manager.cpp:135
+msgid   "stopped"
+msgstr  "parada"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Manager.cpp:139
+#, c-format
+msgid   "failed to join task %s"
+msgstr  "falha ao unir tarefa %s"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Manager.cpp:163
+msgid   "starting"
+msgstr  "a iniciar"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Periodic.cpp:48
+msgid   "Execution Frequency"
+msgstr  "Frequência de Execução"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Periodic.cpp:51
+msgid   "Frequency at which task is executed"
+msgstr  "Frequência com que a tarefa é executada"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/FollowTrajectory.cpp:87
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:146
+msgid   "too few trajectory points"
+msgstr  "poucos pontos trajetória"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/Maneuver.cpp:89
+#, fuzzy
+msgid   "unable to unlock"
+msgstr  "incapaz de conectar"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/Maneuver.cpp:139
+#, fuzzy
+msgid   "unsupported vertical reference"
+msgstr  "operação não suportada"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/Maneuver.cpp:145
+msgid   "no valid value for altitude has been received yet,maneuver will not proceed"
+msgstr  "não foi recebido valor de altitude válido, a manobra não irá prosseguir"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:47
+#: /home/rasm/git/dune/dune/src/Maneuver/Elevator/Task.cpp:149
+#: /home/rasm/git/dune/dune/src/Maneuver/Loiter/Task.cpp:75
+#, c-format
+msgid   "forcing minimum radius of %.1f"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:103
+#, fuzzy, c-format
+msgid   "%s safe region (distance: %.1f m)"
+msgstr  "dentro região segura (distância: %0.1f m)"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:112
+#, c-format
+msgid   "stopping (%0.1f m)"
+msgstr  "a parar (%0.1f m)"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:121
+#, c-format
+msgid   "moving (distance: %0.1f m)"
+msgstr  "em movimento (distância: %0.1f m)"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:68
+msgid   "parsing vehicle participants"
+msgstr  "receber veículos participantes"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:81
+msgid   "invalid formation participant"
+msgstr  "informação de participante inválida"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:95
+msgid   "repeated vehicles in participant list"
+msgstr  "veículos repetidos na lista de participantes"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:109
+msgid   "not enough vehicles in formation (at least 2 are required)"
+msgstr  "não existem veículos suficientes na formaçao (exigidos 2 no mínimo)"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:115
+msgid   "local vehicle is not part of formation"
+msgstr  "veículo local não faz parte da formação"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:41
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:307
+msgid   "idle"
+msgstr  "ocioso"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:42
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:309
+msgid   "active"
+msgstr  "activo"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:43
+msgid   "input/output error"
+msgstr  "erro de entrada/saída"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:44
+msgid   "internal error"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:45
+msgid   "CPU usage is too high"
+msgstr  "utilização do CPU é demasiado elevada"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:46
+msgid   "fuel is running low"
+msgstr  "combustível está baixo"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:47
+msgid   "fuel level estimation is not reliable"
+msgstr  "estimativa de nível do combústivel não é confiável"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:48
+msgid   "fuel reserve"
+msgstr  "reserva de combustível"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:49
+msgid   "calibrating"
+msgstr  "a calibrar"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:50
+msgid   "calibrated"
+msgstr  "calibrado"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:51
+#, fuzzy
+msgid   "not aligned"
+msgstr  "inativo"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:52
+msgid   "aligning"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:53
+#, fuzzy
+msgid   "aligned"
+msgstr  "Alinhamento"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:54
+msgid   "powering down"
+msgstr  "a desligar"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:55
+msgid   "communication error"
+msgstr  "erro de comunicação"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:56
+msgid   "synchronized"
+msgstr  "sincronizado"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:57
+msgid   "synchronizing"
+msgstr  "a sincronizar"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:58
+msgid   "not synchronized"
+msgstr  "não sincronizado"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:59
+msgid   "waiting for GPS fix"
+msgstr  "à espera de posição GPS"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:60
+msgid   "waiting for configuration of LBL beacons"
+msgstr  "à espera da configuração de faróis LBL"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:61
+msgid   "waiting for solution to converge"
+msgstr  "à espera que a solução convirja"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:62
+#, fuzzy
+msgid   "missing data"
+msgstr  "erro ao enviar dados"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:63
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:42
+msgid   "invalid checksum"
+msgstr  "checksum inválido"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:64
+#, fuzzy
+msgid   "invalid version"
+msgstr  "mensagem inválida"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:65
+#, fuzzy
+msgid   "active but without bottom lock"
+msgstr  "ativo mas sem posição válida"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:58
+msgid   "Pure Hardware"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:59
+msgid   "Pure Simulation"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:60
+msgid   "Simulation with Hardware-in-the-loop"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:67
+msgid   "No description given"
+msgstr  "Sem descrição"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:114
+#, c-format
+msgid   "system name: '%s' (%u)"
+msgstr  "nome do sistema: '%s' (%u)"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:115
+#, c-format
+msgid   "registered tasks: %d"
+msgstr  "tarefas registadas: %d"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:116
+#, c-format
+msgid   "base folder: '%s'"
+msgstr  "directório base: '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:117
+#, c-format
+msgid   "configuration folder: '%s'"
+msgstr  "directório de configuração: '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:118
+#, c-format
+msgid   "web server folder: '%s'"
+msgstr  "directório do servidor web: '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:119
+#, c-format
+msgid   "log folder: '%s'"
+msgstr  "directório de logs: '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:120
+#, c-format
+msgid   "library folder: '%s'"
+msgstr  "directório de bibliotecas: '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:121
+#, c-format
+msgid   "firmware folder: '%s'"
+msgstr  "directório de firmware: '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:125
+#, c-format
+msgid   "execution profiles: %s"
+msgstr  "perfil de execução: %s"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:140
+msgid   "clean shutdown"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:429
+#, fuzzy, c-format
+msgid   "path (lat/lon): %0.5f %0.5f to %0.5f %0.5f"
+msgstr  "waypoint lançado: lat %0.5f %0.5f %0.2f"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:594
+msgid   "expected new path control reference"
+msgstr  "esperada nova referência de path control"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:651
+msgid   "now loitering"
+msgstr  "a fazer loiter"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:788
+msgid   "along-track divergence error"
+msgstr  "erro por divergência ao longo do track"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:821
+msgid   "cross-track divergence error"
+msgstr  "erro de divergência por cross-track"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:914
+msgid   "waiting for position estimate from navigation"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:46
+msgid   "no valid altitude measurements"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:169
+#, c-format
+msgid   "limiting depth to %.1f"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:224
+#, fuzzy, c-format
+msgid   "bad vertical control mode %d"
+msgstr  "modo de controlo vertical %d não é suportado"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:236
+msgid   "timed out while waiting for vertical control mode"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:261
+#, c-format
+msgid   "bottom tracking not viable, water column is not deep enough ( %0.2f < %0.2f )"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:280
+msgid   "getting too close to maximum admissible depth"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:291
+#, c-format
+msgid   "bad yaw control mode %d"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:303
+msgid   "timed out waiting for yaw control mode"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:49
+msgid   "Idle"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:49
+msgid   "Tracking"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:49
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:58
+#, fuzzy
+msgid   "Depth"
+msgstr  "profundidade"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:49
+msgid   "Unsafe"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:49
+msgid   "Avoiding"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:51
+msgid   "BottomTrack"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:300
+msgid   "depth is reaching unacceptable values, forcing depth control"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:440
+#, fuzzy
+msgid   "unable to avoid obstacle"
+msgstr  "incapaz de ligar ao socket"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:477
+#, fuzzy
+msgid   "Started braking"
+msgstr  "Iniciar Plano"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:479
+#, fuzzy
+msgid   "Stopped braking"
+msgstr  "a parar"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:40
+#, fuzzy
+msgid   "invalid command"
+msgstr  "mensagem inválida"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:41
+#, fuzzy
+msgid   "invalid command arguments"
+msgstr  "informação de participante inválida"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:43
+#, fuzzy
+msgid   "lost synchronization"
+msgstr  "a sincronizar"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:44
+#, fuzzy
+msgid   "parser error"
+msgstr  "erro de servo"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:45
+msgid   "data overrun"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:46
+msgid   "buffer overflow"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:47
+#, fuzzy
+msgid   "unknown error"
+msgstr  "exceção desconhecida"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:56
+#, fuzzy
+msgid   "invalid error code"
+msgstr  "modelo optimista inválido"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/UDPSocket.cpp:101
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:128
+msgid   "unable to create socket"
+msgstr  "incapaz de criar socket"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/UDPSocket.cpp:114
+msgid   "setting up socket"
+msgstr  "a definir socket"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/UDPSocket.cpp:182
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:166
+msgid   "unable to bind to socket"
+msgstr  "incapaz de ligar ao socket"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/UDPSocket.cpp:204
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:225
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:357
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:546
+msgid   "error sending data"
+msgstr  "erro ao enviar dados"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/UDPSocket.cpp:220
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:243
+msgid   "error receiving data"
+msgstr  "erro ao receber dados"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:178
+msgid   "unable to connect"
+msgstr  "incapaz de conectar"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:185
+msgid   "unable to listen"
+msgstr  "incapaz de receber dados"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:196
+msgid   "failed to accept connection"
+msgstr  "falhou ao aceitar conexão"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:357
+#, fuzzy
+msgid   "unable to set receive timeout"
+msgstr  "incapaz de iniciar dispositivo"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:365
+#, fuzzy
+msgid   "unable to set send timeout"
+msgstr  "falha ao abrir porto de série"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:374
+#, fuzzy
+msgid   "unable to get bound address"
+msgstr  "falhou ao definir endereço modem"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:385
+#, fuzzy
+msgid   "unable to get bound port"
+msgstr  "falha ao abrir porto de série"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:47
 msgid   "Print this message and exit"
 msgstr  "Imprime esta mensagem e sai"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Utils/OptionParser.cpp:48
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:48
 msgid   "Print the version information and exit"
 msgstr  "Imprime esta info de versão e sai"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Utils/OptionParser.cpp:49
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:49
 msgid   "Print architecture information and exit"
 msgstr  "Imprime info de arquitetura e sai"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Utils/OptionParser.cpp:64
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:64
 #, c-format
 msgid   "short option '%s' already exists"
 msgstr  "opção '%s' já existe"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Utils/OptionParser.cpp:67
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:67
 #, c-format
 msgid   "long option '%s' already exists"
 msgstr  "opção '%s' já existe"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Utils/OptionParser.cpp:130
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:130
 #, c-format
 msgid   "Description:\n"
         "  %s\n"
         "\n"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Utils/OptionParser.cpp:132
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:132
 #, c-format
 msgid   "Usage:\n"
         "  %s [options]\n"
         "\n"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Utils/OptionParser.cpp:133
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:133
 msgid   "Options:\n"
 msgstr  "Opções:\n"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Utils/OptionParser.cpp:161
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:161
 #, c-format
 msgid   "This program is built for %s\n"
 msgstr  "Este programa foi compilado para %s\n"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Utils/OptionParser.cpp:162
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:162
 #, c-format
 msgid   "Report bugs to %s\n"
 msgstr  "Reportar erros para %s\n"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Utils/OptionParser.cpp:176
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:176
 #, c-format
 msgid   "unknown option '%s'"
 msgstr  "opção desconhecida '%s'"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Utils/OptionParser.cpp:189
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:189
 #, c-format
 msgid   "missing argument for option '%s'"
 msgstr  "argumento em falta para opção '%s'"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Manager.cpp:94
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Manager.cpp:172
-msgid   "unknown exception"
-msgstr  "exceção desconhecida"
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowSystem/Task.cpp:299
+msgid   "timeout to receive new remote info was exceeded."
+msgstr  "excedido timeout para receber nova info remota."
 
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Manager.cpp:133
-msgid   "stopping"
-msgstr  "a parar"
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowTrajectory/Task.cpp:128
+msgid   "disregarding trajectory's time constraints"
+msgstr  "não considerar restrições temporais da manobra"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Manager.cpp:135
-msgid   "stopped"
-msgstr  "parada"
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowTrajectory/Task.cpp:133
+msgid   "provided trajectory is not feasible by the current vehicle!"
+msgstr  "trajetória não é exequível pelo veículo atual"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Manager.cpp:139
-#, c-format
-msgid   "failed to join task %s"
-msgstr  "falha ao unir tarefa %s"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Manager.cpp:163
-msgid   "starting"
-msgstr  "a iniciar"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Task.cpp:71
-msgid   "Entity Label"
-msgstr  "Nome da Entidade"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Task.cpp:73
-msgid   "Main entity label"
-msgstr  "Nome principal da entidade"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Task.cpp:75
-msgid   "Execution Priority"
-msgstr  "Prioridade de Execução"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Task.cpp:78
-#, fuzzy
-msgid   "Activation Time"
-msgstr  "a ativar"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Task.cpp:81
-#, fuzzy
-msgid   "Deactivation Time"
-msgstr  "falhou calibração: "
-
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Task.cpp:84
-msgid   "Debug Level"
-msgstr  "Nível de Depuração"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Task.cpp:124
-msgid   "entity label is not configured"
-msgstr  "etiqueta da entidade não foi configurado"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Task.cpp:220
-#, fuzzy
-msgid   "Active - Scope"
-msgstr  "activo"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Task.cpp:226
-msgid   "Active - Visibility"
+#: /home/rasm/git/dune/dune/src/Maneuver/Dubin/Task.cpp:65
+msgid   "vertical control type not supported"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Task.cpp:231
-#, fuzzy
-msgid   "Active"
-msgstr  "activo"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Task.cpp:457
-msgid   "restarting"
-msgstr  "a reiniciar"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Task.cpp:458
-#, c-format
-msgid   "restarting in %u seconds due to error: %s"
-msgstr  "a recomeçar em %u segundos devido a erro: %s"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Task.cpp:471
+#: /home/rasm/git/dune/dune/src/Maneuver/CompassCalibration/Task.cpp:147
 #, fuzzy, c-format
-msgid   "task died with uncaught exception: %s: restarting"
-msgstr  "a tarefa morreu com uma exceção não apanhada: %s"
+msgid   "forcing minimum of %.1f"
+msgstr  "raio de loiter inválido, a forçar o valor mínimo de %0.2f"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Task.cpp:555
-#, fuzzy, c-format
-msgid   "updating entity parameters: %s: '%s'"
-msgstr  "parâmetro inválido '%s'"
+#: /home/rasm/git/dune/dune/src/Maneuver/Elevator/Task.cpp:279
+msgid   "water column is not deep enough"
+msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Task.cpp:751
+#: /home/rasm/git/dune/dune/src/Maneuver/Elevator/Task.cpp:331
+msgid   "vertical progress is too slow"
+msgstr  "progresso na vertical é demasiado lento"
+
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:138
+#, fuzzy
+msgid   "waiting for first reference"
+msgstr  "a espera da medição inicial"
+
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:194
 #, c-format
-msgid   "invalid parameter '%s'"
-msgstr  "parâmetro inválido '%s'"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Periodic.cpp:48
-msgid   "Execution Frequency"
-msgstr  "Frequência de Execução"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Tasks/Periodic.cpp:51
-msgid   "Frequency at which task is executed"
-msgstr  "Frequência com que a tarefa é executada"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Hardware/UCTK/Errors.cpp:40
-#, fuzzy
-msgid   "invalid command"
-msgstr  "mensagem inválida"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Hardware/UCTK/Errors.cpp:41
-#, fuzzy
-msgid   "invalid command arguments"
-msgstr  "informação de participante inválida"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Hardware/UCTK/Errors.cpp:42
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:63
-msgid   "invalid checksum"
-msgstr  "checksum inválido"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Hardware/UCTK/Errors.cpp:43
-#, fuzzy
-msgid   "lost synchronization"
-msgstr  "a sincronizar"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Hardware/UCTK/Errors.cpp:44
-#, fuzzy
-msgid   "parser error"
-msgstr  "erro de servo"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Hardware/UCTK/Errors.cpp:45
-msgid   "data overrun"
+msgid   "ignored reference from non-authorized source: %d"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Hardware/UCTK/Errors.cpp:46
-msgid   "buffer overflow"
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:203
+#, c-format
+msgid   "ignored reference from non-authorized entity: %d"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Hardware/UCTK/Errors.cpp:47
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:528
+#, fuzzy, c-format
+msgid   "loitering around (%f, %f, %f, %f)."
+msgstr  "definir beacon %s (%0.2f, %0.2f, %0.2f)"
+
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:536
+#, c-format
+msgid   "loitering (elevator) towards (%f, %f, %f, %f)."
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:543
+#, c-format
+msgid   "going towards (%f, %f, %f)."
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:547
+#, c-format
+msgid   "hovering next to (%f, %f)."
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Maneuver/Loiter/Task.cpp:110
+#, c-format
+msgid   "will now loiter for %d seconds"
+msgstr  "loiter durante %d segundos"
+
+#: /home/rasm/git/dune/dune/src/Actuators/SCRT/Task.cpp:350
+#, c-format
+msgid   "servo number out of bounds: %u"
+msgstr  "número de servo fora dos limites: %u"
+
+#: /home/rasm/git/dune/dune/src/Actuators/SCRT/Task.cpp:455
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:358
+#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:304
+#: /home/rasm/git/dune/dune/src/Power/MCBv2/Task.cpp:626
+#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:481
+#, c-format
+msgid   "version: %u.%u.%u"
+msgstr  "versão: %u.%u.%u"
+
+#: /home/rasm/git/dune/dune/src/Actuators/SCRT/Task.cpp:486
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:478
+#, c-format
+msgid   "device reported: %s"
+msgstr  "dispositivo reportado: %s"
+
+#: /home/rasm/git/dune/dune/src/Actuators/SCRTv4/Task.cpp:280
 #, fuzzy
-msgid   "unknown error"
-msgstr  "exceção desconhecida"
+msgid   "error"
+msgstr  "Erro"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Hardware/UCTK/Errors.cpp:56
+#: /home/rasm/git/dune/dune/src/Actuators/ROSInspector/Task.cpp:94
+msgid   "zoom reset"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Actuators/ROSInspector/Task.cpp:99
+msgid   "zoom stop"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Actuators/ROSInspector/Task.cpp:104
+msgid   "zoom in"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Actuators/ROSInspector/Task.cpp:109
+msgid   "zoom out"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Actuators/SingleSIMCT01/Task.cpp:144
+msgid   "invalid value for 'Motor Id'"
+msgstr  "valor inválido para 'Motor Id'"
+
+#: /home/rasm/git/dune/dune/src/Actuators/SingleSIMCT01/Task.cpp:147
+msgid   "invalid value for 'Thruster Id'"
+msgstr  "valor inválido para 'Thruster Id'"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:81
+msgid   "init"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:82
+msgid   "i2c"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:83
+msgid   "power"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:84
+msgid   "hall"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:85
+msgid   "rotor locked"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:86
+msgid   "mcu temperature"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:87
+msgid   "bridge temperature"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:88
+msgid   "motor temperature"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:238
+msgid   "Motor control mode must be one of 'none', 'voltage', 'current', 'rpm'"
+msgstr  "Controlo de motor tem de ser feito através de 'none', 'voltage', 'current', 'rpm'"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:312
+#, c-format
+msgid   "device error: %s"
+msgstr  "erro do dispositivo: %s"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:318
+msgid   "power is not good"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:322
+msgid   "device init error, requesting reset"
+msgstr  "erro ao iniciar dispositivo, pedido reset"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:332
+msgid   "CMD_ACTUATE Data size doesn't match!"
+msgstr  "CMD_ACTUATE Incompatibilidade tamanho Data"
+
+#: /home/rasm/git/dune/dune/src/Sensors/SW100/Task.cpp:186
+#, c-format
+msgid   "depth offset is %0.2f m"
+msgstr  "compensação de profundidade de %0.2f m"
+
+#: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:122
 #, fuzzy
-msgid   "invalid error code"
-msgstr  "modelo optimista inválido"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/UDPSocket.cpp:101
-#: /home/rasm/dolphin/dune/src/DUNE/Network/TCPSocket.cpp:128
-msgid   "unable to create socket"
-msgstr  "incapaz de criar socket"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/UDPSocket.cpp:114
-msgid   "setting up socket"
-msgstr  "a definir socket"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/UDPSocket.cpp:182
-#: /home/rasm/dolphin/dune/src/DUNE/Network/TCPSocket.cpp:166
-msgid   "unable to bind to socket"
-msgstr  "incapaz de ligar ao socket"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/UDPSocket.cpp:204
-#: /home/rasm/dolphin/dune/src/DUNE/Network/TCPSocket.cpp:225
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:357
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:546
-msgid   "error sending data"
-msgstr  "erro ao enviar dados"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/UDPSocket.cpp:220
-#: /home/rasm/dolphin/dune/src/DUNE/Network/TCPSocket.cpp:243
-msgid   "error receiving data"
-msgstr  "erro ao receber dados"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/TCPSocket.cpp:178
-msgid   "unable to connect"
-msgstr  "incapaz de conectar"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/TCPSocket.cpp:185
-msgid   "unable to listen"
-msgstr  "incapaz de receber dados"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/TCPSocket.cpp:196
-msgid   "failed to accept connection"
-msgstr  "falhou ao aceitar conexão"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/TCPSocket.cpp:357
-#, fuzzy
-msgid   "unable to set receive timeout"
-msgstr  "incapaz de iniciar dispositivo"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/TCPSocket.cpp:365
-#, fuzzy
-msgid   "unable to set send timeout"
-msgstr  "falha ao abrir porto de série"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Network/TCPSocket.cpp:374
-#, fuzzy
-msgid   "unable to get bound address"
+msgid   "failed to enter command mode"
 msgstr  "falhou ao definir endereço modem"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Network/TCPSocket.cpp:385
+#: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:125
 #, fuzzy
-msgid   "unable to get bound port"
-msgstr  "falha ao abrir porto de série"
+msgid   "failed to set sampling rate"
+msgstr  "falhou ao definir endereço modem"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:43
-msgid   "input/output error"
-msgstr  "erro de entrada/saída"
+#: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:128
+#, fuzzy
+msgid   "failed to enter monitor mode"
+msgstr  "falhou ao definir endereço modem"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:44
-msgid   "internal error"
+#: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:146
+#, fuzzy
+msgid   "input timeout"
+msgstr  "timeout"
+
+#: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:155
+msgid   "I/O error"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:45
-msgid   "CPU usage is too high"
-msgstr  "utilização do CPU é demasiado elevada"
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:305
+msgid   "waiting beacons configuration"
+msgstr  "à espera da configuração de faróis"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:46
-msgid   "fuel is running low"
-msgstr  "combustível está baixo"
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:311
+msgid   "serial port communication error, modem not responding"
+msgstr  "erro comunicação de porta série, modem não responde"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:47
-msgid   "fuel level estimation is not reliable"
-msgstr  "estimativa de nível do combústivel não é confiável"
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:313
+msgid   "failed to configure modem, possible serial port communication error"
+msgstr  "falhou configuração de modem, possível erro de comunicação porta série"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:48
-msgid   "fuel reserve"
-msgstr  "reserva de combustível"
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:315
+msgid   "failed to set modem address"
+msgstr  "falhou ao definir endereço modem"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:49
-msgid   "calibrating"
-msgstr  "a calibrar"
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:358
+#, c-format
+msgid   "modem address for agent '%s' is invalid"
+msgstr  "endereço modem para agente '%s' é inválido"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:50
-msgid   "calibrated"
-msgstr  "calibrado"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:51
-#, fuzzy
-msgid   "not aligned"
-msgstr  "inativo"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:52
-msgid   "aligning"
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:480
+msgid   "dynamic sound speed corrections are disabled"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:53
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:561
+msgid   "invalid change plan message"
+msgstr  "mensagem para mudar plano inválida"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:591
+msgid   "received system restart request"
+msgstr  "recebido pedido para reiniciar sistema"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:600
+msgid   "restart request acknowledged"
+msgstr  "acknowledge ao pedido de reinicialização"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:604
+msgid   "failed to acknowledge restart request"
+msgstr  "falhou acknowledge ao pedido para reiniciar"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:612
+msgid   "acoustic abort detected"
+msgstr  "detetado abort acústico"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:622
+msgid   "abort acknowledged"
+msgstr  "abort recebido"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:626
+msgid   "failed to acknowledge abort"
+msgstr  "falhou ao reconhecer abort"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:662
+#, c-format
+msgid   "discarded invalid range %0.2f"
+msgstr  "descartado range inválido %0.2f"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:744
+msgid   "failed to ping beacons, modem seems busy"
+msgstr  "falha ao pingar faróis, o modem parece ocupado"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:906
+#, c-format
+msgid   "reported range to %s = %u m"
+msgstr  "reportado distância para %s = %u m"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:910
+#, c-format
+msgid   "failed to report range to %s"
+msgstr  "falha ao reportar distância para %s"
+
+#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:153
+msgid   "Level the device and hit NEXT"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:158
+msgid   "Rotate the device and keep it levelled (rotation must last +20s)"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:163
 #, fuzzy
-msgid   "aligned"
-msgstr  "Alinhamento"
+msgid   "Device is calibrated"
+msgstr  "dispositivo está calibrado"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:54
-msgid   "powering down"
-msgstr  "a desligar"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:55
-msgid   "communication error"
-msgstr  "erro de comunicação"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:56
-msgid   "synchronized"
-msgstr  "sincronizado"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:57
-msgid   "synchronizing"
-msgstr  "a sincronizar"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:58
-msgid   "not synchronized"
-msgstr  "não sincronizado"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:59
-msgid   "waiting for GPS fix"
-msgstr  "à espera de posição GPS"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:60
-msgid   "waiting for configuration of LBL beacons"
-msgstr  "à espera da configuração de faróis LBL"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:61
-msgid   "waiting for solution to converge"
-msgstr  "à espera que a solução convirja"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:62
+#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:170
 #, fuzzy
-msgid   "missing data"
-msgstr  "erro ao enviar dados"
+msgid   "Calibration error. Need to restart"
+msgstr  "erro de calibração, é necessário reiniciar o processo de calibração"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:64
-#, fuzzy
-msgid   "invalid version"
+#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:410
+#, c-format
+msgid   "Level the device and hit NEXT (Roll: %0.2f | Pitch: %0.2f)"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:100
+msgid   "unable to stop continuous output"
+msgstr  "incapaz de parar output contínuo"
+
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:106
+msgid   "unable to configure time output"
+msgstr  "incapaz de configurar output de tempo"
+
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:112
+msgid   "unable to configure date output"
+msgstr  "incapaz de configurar output data"
+
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:120
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:128
+msgid   "unable to set output format"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:135
+msgid   "unable to request continuous output"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:157
+msgid   "unable to write full command to device"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:202
+msgid   "timeout waiting for device response"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/AIM104MultiIO/Task.cpp:150
+msgid   "invalid message"
 msgstr  "mensagem inválida"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Status/Messages.cpp:65
-#, fuzzy
-msgid   "active but without bottom lock"
-msgstr  "ativo mas sem posição válida"
+#: /home/rasm/git/dune/dune/src/Sensors/AIM104MultiIO/Task.cpp:195
+msgid   "timeout"
+msgstr  "timeout"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BottomTracker.cpp:49
-msgid   "Idle"
+#: /home/rasm/git/dune/dune/src/Sensors/SCH311X/Task.cpp:101
+#, c-format
+msgid   "file '%s' doesn't exist"
+msgstr  "ficheiro '%s' não existe"
+
+#: /home/rasm/git/dune/dune/src/Sensors/DLV3/Task.cpp:174
+msgid   "waking device"
+msgstr  "a arrancar dispositivo"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:210
+msgid   "no reply to command"
+msgstr  "sem resposta ao comando"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:211
+msgid   "failed to setup device"
+msgstr  "inicialização do dispositivo falhou"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:460
+msgid   "invalid GPZDA sentence"
+msgstr  "frase GPZDA é inválida"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:484
+msgid   "invalid GPGGA sentence"
+msgstr  "frase GPGGA é inválida"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:532
+msgid   "invalid PUBX,00 sentence"
+msgstr  "frase PUBX,00 é inválida"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:583
+msgid   "invalid GPVTG sentence"
+msgstr  "frase GPVTG é inválida"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:607
+msgid   "invalid GPHDT sentence"
+msgstr  "frase GPHDT é inválida"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:623
+msgid   "invalid GPHDM sentence"
+msgstr  "frase GPHDM é inválida"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:641
+msgid   "invalid GPROT sentence"
+msgstr  "frase GPROT é inválida"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:660
+msgid   "invalid PSATHPR sentence"
+msgstr  "frase PSATHPR é inválida"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:262
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:152
+msgid   "Range"
+msgstr  "Alcance"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:372
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:184
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:196
+msgid   "restarting to change IPv4 address"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BottomTracker.cpp:49
-msgid   "Tracking"
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:375
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:187
+msgid   "restarting to change TCP port"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BottomTracker.cpp:49
-#: /home/rasm/dolphin/dune/src/Control/AUV/Attitude/Task.cpp:58
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:459
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:519
+#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:355
+#: /home/rasm/git/dune/dune/src/Power/DOAMv2/Task.cpp:184
 #, fuzzy
-msgid   "Depth"
+msgid   "failed to contact device"
+msgstr  "falha ao parar dispositivo"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:670
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:287
+msgid   "failed to read header"
+msgstr  "falhou ao ler cabeçalho"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:680
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:292
+msgid   "failed to read data"
+msgstr  "falhou ao ler dados"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:684
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:296
+msgid   "failed to read footer"
+msgstr  "falhou ao ler footer"
+
+#: /home/rasm/git/dune/dune/src/Sensors/IFOG/Task.cpp:236
+#, fuzzy
+msgid   "failed to configure trigger frequency"
+msgstr  "falhou acknowledge ao pedido para reiniciar"
+
+#: /home/rasm/git/dune/dune/src/Sensors/IFOG/Task.cpp:246
+#, fuzzy
+msgid   "failed to turn on device"
+msgstr  "falhou ao parar disposito"
+
+#: /home/rasm/git/dune/dune/src/Sensors/IFOG/Task.cpp:350
+#, c-format
+msgid   "IMU failure: %04X"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/IFOG/Task.cpp:355
+#, c-format
+msgid   "data might be unreliable: %04X"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:203
+msgid   "failed to stop device"
+msgstr  "falhou ao parar disposito"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:212
+msgid   "failed to read EEPROM#130"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:222
+msgid   "failed to read EEPROM#230"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:311
+#: /home/rasm/git/dune/dune/src/Sensors/Antaris4/Task.cpp:494
+msgid   "unexpected byte"
+msgstr  "byte não esperado"
+
+#: /home/rasm/git/dune/dune/src/Sensors/XR620CTD/Task.cpp:460
+#, c-format
+msgid   "parse error: %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:144
+msgid   "Frequency"
+msgstr  "Frequência"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:150
+msgid   "Operating frequency"
+msgstr  "Frequência de operação"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:160
+msgid   "Operating range"
+msgstr  "Alcance de operação"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex852/Task.cpp:263
+#, fuzzy
+msgid   "restarting to change UART device"
+msgstr  "a arrancar dispositivo"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:128
+msgid   "High-Frequency Channels"
+msgstr  "Canais de Alta Frequência"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:129
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:145
+msgid   "None, Port, Starboard, Both"
+msgstr  "Nenhum, Bombordo, Estibordo, Ambos"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:135
+msgid   "High-Frequency Range"
+msgstr  "Alcance de Alta-Frequência"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:144
+msgid   "Low-Frequency Channels"
+msgstr  "Canais de Baixa Frequência"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:151
+msgid   "Low-Frequency Range"
+msgstr  "Alcance de Baixa-Frequência"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:199
+msgid   "restarting to change TCP command port"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:202
+msgid   "restarting to change TCP data port"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:44
+msgid   "failed to set output format"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:45
+msgid   "failed to set flow control"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:46
+msgid   "failed to disable power saving"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:47
+msgid   "failed to disable low latency trigger"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:48
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:49
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:50
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:51
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:52
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:53
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:54
+msgid   "unexpected response"
+msgstr  "resposta inesperada"
+
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:259
+msgid   "failed to wake device"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:275
+msgid   "unable to read prompt"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:289
+msgid   "failed to start data sampling"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/SDCR/Task.cpp:174
+msgid   "version"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/SDCR/Task.cpp:205
+#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:452
+#: /home/rasm/git/dune/dune/src/Power/MCBv2/Task.cpp:576
+#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:516
+msgid   "device reported"
+msgstr  "reportado dispositivo"
+
+#: /home/rasm/git/dune/dune/src/Sensors/SDCR/Task.cpp:233
+msgid   "failed to receive state"
+msgstr  "falhou ao receber estado"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:403
+#: /home/rasm/git/dune/dune/src/Sensors/LIMU/Task.cpp:217
+#: /home/rasm/git/dune/dune/src/Sensors/LIMU/Task.cpp:237
+#, fuzzy
+msgid   "failed to set hard-iron correction factors"
+msgstr  "falhou ao definir endereço modem"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:409
+#, fuzzy
+msgid   "resetting device"
+msgstr  "a arrancar dispositivo"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:428
+#, fuzzy
+msgid   "failed to read magnetic calibration parameters from device"
+msgstr  "a devolver parâmetros de calibração"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:447
+#, fuzzy
+msgid   "different calibration parameters"
+msgstr  "a devolver parâmetros de calibração"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:492
+#, fuzzy, c-format
+msgid   "new hard-iron calibration parameters: %f | %f"
+msgstr  "a devolver parâmetros de calibração"
+
+#: /home/rasm/git/dune/dune/src/Sensors/LIMU/Task.cpp:191
+msgid   "device is using unstable firmware"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/LIMU/Task.cpp:193
+#, fuzzy, c-format
+msgid   "firmware version %u.%u.%u"
+msgstr  "versão: %u.%u.%u"
+
+#: /home/rasm/git/dune/dune/src/Sensors/LIMU/Task.cpp:214
+#, fuzzy
+msgid   "failed to configure output frequency"
+msgstr  "incapaz de configurar output de tempo"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Antaris4/Task.cpp:319
+msgid   "unable to write full packet to device"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Antaris4/Task.cpp:355
+msgid   "message not acknowledged"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Antaris4/Task.cpp:475
+#: /home/rasm/git/dune/dune/src/Sensors/Antaris4/Task.cpp:489
+msgid   "checksum mismatch"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:253
+msgid   "echo handling enabled, but got no RS-485 echo"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:263
+msgid   "received RS-485 echo doesn't match"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:300
+msgid   "invalid CRC"
+msgstr  "CRC inválido"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:302
+msgid   "exceeded maximum consecutive CRC error count"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:380
+msgid   "device not initialized, initializing"
+msgstr  "dispositivo não está inicializado, a inicializar"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:386
+#, c-format
+msgid   "got exception %d for command %d"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:397
+#, c-format
+msgid   "initialized device: class=%d.%d firmware=%d"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:403
+#, c-format
+msgid   "device serial number=%u"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:409
+msgid   "successfuly zeroed device"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:430
+msgid   "unable to initialize the device"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:438
+msgid   "unable to retrieve the serial number"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:456
+msgid   "unable to zero the device"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBLTracker/Task.cpp:240
+msgid   "restarting to change transducer detection GPIO"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBLTracker/Task.cpp:259
+#, c-format
+msgid   "unable to use GPIO %d for transducer detection"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBLTracker/Task.cpp:323
+msgid   "transducer not connected"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBLTracker/Task.cpp:606
+msgid   "range to"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/Emergency/Task.cpp:91
+#, fuzzy
+msgid   "Lost Communication SMS Timeout"
+msgstr  "erro comunicação"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Emergency/Task.cpp:93
+msgid   "SMS Recipient Number"
+msgstr  "Número de Destino de Mensagens SMS"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Emergency/Task.cpp:96
+msgid   "Phone number of the SMS recipient"
+msgstr  "Número de telefone do destinatário de mensagens SMS"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Collisions/Task.cpp:336
+#: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:255
+msgid   "collision detected"
+msgstr  "colisão detetada"
+
+#: /home/rasm/git/dune/dune/src/Monitors/FuelLevel/Task.cpp:266
+#, fuzzy
+msgid   "invalid model"
+msgstr  "mensagem inválida"
+
+#: /home/rasm/git/dune/dune/src/Monitors/FuelLevel/Task.cpp:273
+msgid   "operation mode list labels and values have different sizes"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/FuelLevel/Task.cpp:281
+msgid   "invalid opmode value (zero)"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:242
+#, c-format
+msgid   "%s -- operational limit breached: %0.2f > %0.2f"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:255
+#, c-format
+msgid   "%s -- operational limit now sane: %0.2f <= %0.2f"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:330
+msgid   "minimum speed"
+msgstr  "velocidade mínima"
+
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:331
+msgid   "maximum speed"
+msgstr  "velocidade máxima"
+
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:332
+msgid   "depth"
 msgstr  "profundidade"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BottomTracker.cpp:49
-msgid   "Unsafe"
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:333
+msgid   "vertical rate"
+msgstr  "taxa vertical"
+
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:337
+msgid   "maximum altitude"
+msgstr  "altitude máxima"
+
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:338
+msgid   "minimum altitude"
+msgstr  "altitude mínima"
+
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:369
+msgid   "Operational Area"
+msgstr  "Área Operacional"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Clock/Task.cpp:165
+#, c-format
+msgid   "adjusting CPU clock by %0.4f s"
+msgstr  "a ajustar relógio do CPU em %0.4f s"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Clock/Task.cpp:168
+msgid   "failed to execute clock sync command"
+msgstr  "falha ao executar comando de sincronização"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
+msgid   "Boot"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BottomTracker.cpp:49
-msgid   "Avoiding"
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
+msgid   "Normal"
+msgstr  "Normal"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
+msgid   "Fault"
+msgstr  "Falha"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
+msgid   "Error"
+msgstr  "Erro"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
+msgid   "Failure"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BottomTracker.cpp:51
-msgid   "BottomTrack"
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:184
+#, c-format
+msgid   "can not monitor %s (%s), is there a task failure or a configuration error?"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BottomTracker.cpp:300
-msgid   "depth is reaching unacceptable values, forcing depth control"
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:195
+msgid   "EntityState message without source entity"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BottomTracker.cpp:440
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:217
+#, c-format
+msgid   "%s : %s -> %s | %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:222
+#, c-format
+msgid   "%s entity state is unstable (%s <-> %s), ignoring"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:232
+#, c-format
+msgid   "%s : State stabilized in %s | %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:258
+msgid   "reconfiguration command issued"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:271
+msgid   "invalid reconfiguration command"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:281
+msgid   "setting up configuration defaults"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:309
+#, c-format
+msgid   "%s - monitoring enabled"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:315
+#, c-format
+msgid   "%s - current state not normal - %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:319
+#, c-format
+msgid   "%s - monitoring previously enabled"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:332
+#, c-format
+msgid   "%s - monitoring disabled"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:339
+#, c-format
+msgid   "%s - monitoring previously disabled"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:363
+#, c-format
+msgid   "entity %s: %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:440
+#, c-format
+msgid   "%s -- status not reported after %0.2f seconds"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:443
 #, fuzzy
-msgid   "unable to avoid obstacle"
-msgstr  "incapaz de ligar ao socket"
+msgid   ": entity state timeout"
+msgstr  "timeout do estado do veículo"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BottomTracker.cpp:477
-#, fuzzy
-msgid   "Started braking"
-msgstr  "Iniciar Plano"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BottomTracker.cpp:479
-#, fuzzy
-msgid   "Stopped braking"
-msgstr  "a parar"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Control/PathController.cpp:429
+#: /home/rasm/git/dune/dune/src/Monitors/Servos/Task.cpp:329
 #, fuzzy, c-format
-msgid   "path (lat/lon): %0.5f %0.5f to %0.5f %0.5f"
-msgstr  "waypoint lançado: lat %0.5f %0.5f %0.2f"
+msgid   "potential fault in servo#%d, %s"
+msgstr  "possível falha no servo %d, consumo de corrente acima de %f"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/PathController.cpp:594
-msgid   "expected new path control reference"
-msgstr  "esperada nova referência de path control"
+#: /home/rasm/git/dune/dune/src/Monitors/Servos/Task.cpp:360
+#, c-format
+msgid   "potential fault in servo#%d, current consumption above %f"
+msgstr  "possível falha no servo %d, consumo de corrente acima de %f"
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/PathController.cpp:651
-msgid   "now loitering"
-msgstr  "a fazer loiter"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Control/PathController.cpp:788
-msgid   "along-track divergence error"
-msgstr  "erro por divergência ao longo do track"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Control/PathController.cpp:821
-msgid   "cross-track divergence error"
-msgstr  "erro de divergência por cross-track"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Control/PathController.cpp:914
-msgid   "waiting for position estimate from navigation"
+#: /home/rasm/git/dune/dune/src/Monitors/LostComms/Task.cpp:79
+msgid   "Lost Comms Plan"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BasicAutopilot.cpp:46
-msgid   "no valid altitude measurements"
+#: /home/rasm/git/dune/dune/src/Monitors/LostComms/Task.cpp:81
+msgid   "Plan to be executed in case of Lost Communications"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BasicAutopilot.cpp:211
-#, fuzzy, c-format
-msgid   "bad vertical control mode %d"
-msgstr  "modo de controlo vertical %d não é suportado"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BasicAutopilot.cpp:223
-msgid   "timed out while waiting for vertical control mode"
+#: /home/rasm/git/dune/dune/src/Autonomy/TREX/Task.cpp:130
+#, c-format
+msgid   "TREX disconnected for more than %d seconds"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BasicAutopilot.cpp:248
-#, c-format
-msgid   "bottom tracking not viable, water column is not deep enough ( %0.2f < %0.2f )"
+#: /home/rasm/git/dune/dune/src/Autonomy/TextActions/Task.cpp:65
+msgid   "received SMS request to start plan"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BasicAutopilot.cpp:267
-#, c-format
-msgid   "bad yaw control mode %d"
+#: /home/rasm/git/dune/dune/src/Autonomy/TextActions/Task.cpp:65
+msgid   "id"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/DUNE/Control/BasicAutopilot.cpp:279
-msgid   "timed out waiting for yaw control mode"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/DUNE/Daemon.cpp:58
-msgid   "Pure Hardware"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/DUNE/Daemon.cpp:59
-msgid   "Pure Simulation"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/DUNE/Daemon.cpp:60
-msgid   "Simulation with Hardware-in-the-loop"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/DUNE/Daemon.cpp:67
-msgid   "No description given"
-msgstr  "Sem descrição"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Daemon.cpp:114
-#, c-format
-msgid   "system name: '%s' (%u)"
-msgstr  "nome do sistema: '%s' (%u)"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Daemon.cpp:115
-#, c-format
-msgid   "registered tasks: %d"
-msgstr  "tarefas registadas: %d"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Daemon.cpp:116
-#, c-format
-msgid   "base folder: '%s'"
-msgstr  "directório base: '%s'"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Daemon.cpp:117
-#, c-format
-msgid   "configuration folder: '%s'"
-msgstr  "directório de configuração: '%s'"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Daemon.cpp:118
-#, c-format
-msgid   "web server folder: '%s'"
-msgstr  "directório do servidor web: '%s'"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Daemon.cpp:119
-#, c-format
-msgid   "log folder: '%s'"
-msgstr  "directório de logs: '%s'"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Daemon.cpp:120
-#, c-format
-msgid   "library folder: '%s'"
-msgstr  "directório de bibliotecas: '%s'"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Daemon.cpp:121
-#, c-format
-msgid   "firmware folder: '%s'"
-msgstr  "directório de firmware: '%s'"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Daemon.cpp:125
-#, c-format
-msgid   "execution profiles: %s"
-msgstr  "perfil de execução: %s"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Daemon.cpp:140
-msgid   "clean shutdown"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/DUNE/Maneuvers/FollowTrajectory.cpp:87
-#: /home/rasm/dolphin/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:146
-msgid   "too few trajectory points"
-msgstr  "poucos pontos trajetória"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Maneuvers/Maneuver.cpp:89
-#, fuzzy
-msgid   "unable to unlock"
-msgstr  "incapaz de conectar"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Maneuvers/Maneuver.cpp:139
-#, fuzzy
-msgid   "unsupported vertical reference"
-msgstr  "operação não suportada"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Maneuvers/Maneuver.cpp:145
-msgid   "no valid value for altitude has been received yet,maneuver will not proceed"
-msgstr  "não foi recebido valor de altitude válido, a manobra não irá prosseguir"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Maneuvers/StationKeep.cpp:103
-#, fuzzy, c-format
-msgid   "%s safe region (distance: %.1f m)"
-msgstr  "dentro região segura (distância: %0.1f m)"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Maneuvers/StationKeep.cpp:112
-#, c-format
-msgid   "stopping (%0.1f m)"
-msgstr  "a parar (%0.1f m)"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Maneuvers/StationKeep.cpp:121
-#, c-format
-msgid   "moving (distance: %0.1f m)"
-msgstr  "em movimento (distância: %0.1f m)"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:68
-msgid   "parsing vehicle participants"
-msgstr  "receber veículos participantes"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:81
-msgid   "invalid formation participant"
-msgstr  "informação de participante inválida"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:95
-msgid   "repeated vehicles in participant list"
-msgstr  "veículos repetidos na lista de participantes"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:109
-msgid   "not enough vehicles in formation (at least 2 are required)"
-msgstr  "não existem veículos suficientes na formaçao (exigidos 2 no mínimo)"
-
-#: /home/rasm/dolphin/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:115
-msgid   "local vehicle is not part of formation"
-msgstr  "veículo local não faz parte da formação"
-
-#: /home/rasm/dolphin/dune/src/Control/AUV/Allocator/Task.cpp:81
-#: /home/rasm/dolphin/dune/src/Control/AUV/LMI/Task.cpp:89
-#: /home/rasm/dolphin/dune/src/Control/AUV/Attitude/Task.cpp:148
+#: /home/rasm/git/dune/dune/src/Control/AUV/LMI/Task.cpp:89
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:148
+#: /home/rasm/git/dune/dune/src/Control/AUV/Allocator/Task.cpp:81
 msgid   "Maximum Fin Rotation"
 msgstr  "Máxima Rotação de Lemes"
 
-#: /home/rasm/dolphin/dune/src/Control/AUV/Allocator/Task.cpp:84
-#: /home/rasm/dolphin/dune/src/Control/AUV/LMI/Task.cpp:92
-#: /home/rasm/dolphin/dune/src/Control/AUV/Attitude/Task.cpp:151
+#: /home/rasm/git/dune/dune/src/Control/AUV/LMI/Task.cpp:92
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:151
+#: /home/rasm/git/dune/dune/src/Control/AUV/Allocator/Task.cpp:84
 #, fuzzy
 msgid   "Maximum admissible fin rotation"
 msgstr  "Máxima rotação de lemes admissível"
 
-#: /home/rasm/dolphin/dune/src/Control/AUV/LMI/Task.cpp:148
+#: /home/rasm/git/dune/dune/src/Control/AUV/LMI/Task.cpp:148
 msgid   "Gain matrix has invalid dimensions"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Control/AUV/Attitude/Task.cpp:58
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:58
 msgid   "Roll"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Control/AUV/Attitude/Task.cpp:58
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:58
 #, fuzzy
 msgid   "Pitch"
 msgstr  "pitch"
 
-#: /home/rasm/dolphin/dune/src/Control/AUV/Attitude/Task.cpp:58
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:58
 #, fuzzy
 msgid   "Heading"
 msgstr  "a iniciar"
 
-#: /home/rasm/dolphin/dune/src/Control/AUV/Attitude/Task.cpp:58
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:58
 msgid   "Heading Rate"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Control/AUV/Attitude/Task.cpp:153
-#: /home/rasm/dolphin/dune/src/Control/AUV/Attitude/Task.cpp:155
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:153
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:155
 msgid   "Enable roll controller"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Control/AUV/Diving/Task.cpp:481
+#: /home/rasm/git/dune/dune/src/Control/AUV/Diving/Task.cpp:481
 #, fuzzy
 msgid   "failed to submerge"
 msgstr  "falhou ao receber estado"
 
-#: /home/rasm/dolphin/dune/src/Control/UAV/Ardupilot/Task.cpp:268
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:268
 msgid   "Ardupilot interface initialized"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Control/UAV/Ardupilot/Task.cpp:369
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:369
 #, fuzzy, c-format
 msgid   "%s - deactivating"
 msgstr  "desativar IMU"
 
-#: /home/rasm/dolphin/dune/src/Control/UAV/Ardupilot/Task.cpp:371
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:371
 #, fuzzy, c-format
 msgid   "%s - activating"
 msgstr  "ativar IMU"
 
-#: /home/rasm/dolphin/dune/src/Control/UAV/Ardupilot/Task.cpp:408
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:408
 #, fuzzy
 msgid   "speed control"
 msgstr  "Controlo de Velocidade"
 
-#: /home/rasm/dolphin/dune/src/Control/UAV/Ardupilot/Task.cpp:409
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:409
 #, fuzzy
 msgid   "altitude control"
 msgstr  "Controlo de Caminho"
 
-#: /home/rasm/dolphin/dune/src/Control/UAV/Ardupilot/Task.cpp:410
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:410
 #, fuzzy
 msgid   "bank control"
 msgstr  "Controlo de Caminho"
 
-#: /home/rasm/dolphin/dune/src/Control/UAV/Ardupilot/Task.cpp:411
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:411
 #, fuzzy
 msgid   "heading control"
 msgstr  "Controlo de Velocidade"
 
-#: /home/rasm/dolphin/dune/src/Control/UAV/Ardupilot/Task.cpp:412
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:412
 #, fuzzy
 msgid   "path control"
 msgstr  "Controlo de Caminho"
 
-#: /home/rasm/dolphin/dune/src/Control/UAV/Ardupilot/Task.cpp:420
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:420
 msgid   "bank control is NOT active"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Control/UAV/Ardupilot/Task.cpp:444
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:444
 msgid   "altitude control is NOT active"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Control/UAV/Ardupilot/Task.cpp:467
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:467
 msgid   "path control is NOT active"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Control/UAV/Ardupilot/Task.cpp:724
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:724
 #, fuzzy
 msgid   "receive error"
 msgstr  "erro interno dispositivo"
 
-#: /home/rasm/dolphin/dune/src/Power/DOAMv1/Task.cpp:246
-msgid   "failed to configure strobe mode"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Power/DOAMv1/Task.cpp:250
-#, c-format
-msgid   "strobe mode set to: %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Power/DOAMv1/Task.cpp:250
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:14
-msgid   "Camera"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Power/MCBv2/Task.cpp:602
-msgid   "updating firmware"
-msgstr  "a atualizar firmware"
-
-#: /home/rasm/dolphin/dune/src/Power/PCTLv2/Task.cpp:372
-msgid   "failed to update EEPROM"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Power/PCTLv2/Task.cpp:441
-msgid   "power down sequence aborted"
-msgstr  "sequencia de desligar interrompida"
-
-#: /home/rasm/dolphin/dune/src/Power/PCTLv2/Task.cpp:556
-msgid   "no leak"
-msgstr  "sem fugas"
-
-#: /home/rasm/dolphin/dune/src/Transports/FTP/Task.cpp:103
-#, c-format
-msgid   "bound to port %s:%u"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/FTP/Task.cpp:185
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:311
-#: /home/rasm/dolphin/dune/src/Transports/TCP/Server/Task.cpp:254
-#, c-format
-msgid   "error accepting new client connection: %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:222
-msgid   "TDMA slot"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:275
-msgid   "TDMA slots"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:275
-msgid   "period"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:276
-msgid   "duration"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:277
-msgid   "total slots"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:278
-msgid   "my slot"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:279
-msgid   "next slot in"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:304
-msgid   "unknown system"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:312
-msgid   "handling abort to"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:323
-msgid   "handling range request to"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:330
-msgid   "queuing"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:330
-msgid   "para"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:440
-msgid   "RANGE: Issuing request - modem"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:445
-msgid   "RANGE"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:445
-msgid   "meters"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:450
-msgid   "RANGE: No response"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:488
-#, c-format
-msgid   "sending message to %s (length %u)"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:499
-#, c-format
-msgid   "sending hearbeat to %s (length %u)"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:508
-#, c-format
-msgid   "sending message '%s' (length %u)"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:518
-#, c-format
-msgid   "total %u"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:532
-#, c-format
-msgid   "compressed %u"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:537
-#, c-format
-msgid   "error compressing data: %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:542
-#, c-format
-msgid   "time %0.1f"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:560
-#, c-format
-msgid   "incoming data (length %u)"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:570
-msgid   "packet too short"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:585
-#, c-format
-msgid   "uncompressed %u"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:589
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:639
-#, c-format
-msgid   "corrupt data -- %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:613
-msgid   "discarded"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:660
-#, c-format
-msgid   "clock dev. estimate: %0.2f s, %0.2f, %0.2f"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Benthos/Task.cpp:665
-msgid   "adjusted"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/AirOS/Task.cpp:162
-msgid   "username failure"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/AirOS/Task.cpp:170
-msgid   "password failure"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/AirOS/Task.cpp:177
-msgid   "MOTD failure"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/AirOS/Task.cpp:186
-msgid   "PS1 failure"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/AirOS/Task.cpp:218
-msgid   "no mode"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/AirOS/Task.cpp:224
-msgid   "no mode2"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/AirOS/Task.cpp:243
-msgid   "command failure"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/AirOS/Task.cpp:247
-msgid   "command passed"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/AirOS/Task.cpp:265
-#, c-format
-msgid   "level %0.2f"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/IridiumSBD/Task.cpp:126
-msgid   "task is shutting down"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/IridiumSBD/Task.cpp:289
-#, fuzzy, c-format
-msgid   "failed with error %u"
-msgstr  "falha ao reportar distância para %s"
-
-#: /home/rasm/dolphin/dune/src/Transports/IridiumSBD/Task.cpp:327
-#, fuzzy, c-format
-msgid   "transmission failed: %s"
-msgstr  "a validaçao do plano falhou: "
-
-#: /home/rasm/dolphin/dune/src/Transports/Cache/Task.cpp:258
+#: /home/rasm/git/dune/dune/src/Transports/Cache/Task.cpp:258
 #, c-format
 msgid   "failed to copy cache snapshot: %s"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Transports/Replay/Task.cpp:179
-msgid   "operation not supported"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Replay/Task.cpp:203
-msgid   "is not a regular file"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Replay/Task.cpp:213
-msgid   "could not open"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Replay/Task.cpp:225
-msgid   "deserialization error"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Replay/Task.cpp:232
-msgid   "empty LSF file"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Replay/Task.cpp:239
-msgid   "invalid LSF file for replay"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Replay/Task.cpp:264
-msgid   "started replay of"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Replay/Task.cpp:271
-msgid   "stopped replay"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/GSM/Task.cpp:211
-msgid   "SMS timeout cannot be zero"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/GSM/Task.cpp:234
-#, c-format
-msgid   "discarded expired SMS to recipient '%s'"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Evologics/Task.cpp:232
-#, c-format
-msgid   "write: %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Evologics/Task.cpp:243
-#, c-format
-msgid   "discarding %d bytes"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Evologics/Task.cpp:334
-#, c-format
-msgid   "opening file '%s' with %u frames"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Evologics/Task.cpp:368
-msgid   "file is complete"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Evologics/Task.cpp:373
-msgid   "no file is open"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:239
-#, c-format
-msgid   "failed to bind to port %lu: %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:246
-msgid   "could not bind to a port"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:253
-#: /home/rasm/dolphin/dune/src/Transports/TCP/Server/Task.cpp:120
-#, c-format
-msgid   "bound to port %u"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:263
-#, c-format
-msgid   "disconnected - %s:%u -- %s -- clients now: %lu"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:303
-#, c-format
-msgid   "connected - %s:%u - clients now: %lu"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:357
-#, c-format
-msgid   "adding beacon %d, query channel %d"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:405
-#, c-format
-msgid   "sent %lu bytes"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:429
-msgid   "sent server OK"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:448
-msgid   "got range from unknown beacon"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:480
-#, c-format
-msgid   "received seacon position: id=%d latitude=%0.5f longitude=%0.5f depth=%0.2f"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:489
-#, c-format
-msgid   "node id set to %d"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:496
-msgid   "client ok"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:501
-msgid   "client error"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:506
-msgid   "client is busy"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:511
-msgid   "acoustic abort received"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:533
-#, c-format
-msgid   "received seacon range: id=%d distance=%0.2f ttime=%0.2f"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:542
-#, c-format
-msgid   "unknown packet type: %u"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/EvoRoma/Task.cpp:589
-#, c-format
-msgid   "received %d bytes"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/HTTP/Task.cpp:128
-#, c-format
-msgid   "creating server on port %u"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/HTTP/Task.cpp:156
-msgid   "failed to find one available port"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/HTTP/Task.cpp:366
-#, c-format
-msgid   "removing log %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/UDP/Task.cpp:255
-#, c-format
-msgid   "listening on port %u"
-msgstr  "a ouvir no porto '%u'"
-
-#: /home/rasm/dolphin/dune/src/Transports/UDP/Task.cpp:376
-#, c-format
-msgid   "activating transmission to node '%s'"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/UDP/Task.cpp:381
-#, c-format
-msgid   "deactivating transmission to node '%s'"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Logging/Task.cpp:188
-#, c-format
-msgid   "failed to remove cache snapshot: %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Logging/Task.cpp:310
-#, c-format
-msgid   "log stopped '%s'"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Logging/Task.cpp:355
-#, c-format
-msgid   "log started '%s'"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Logging/Task.cpp:404
-#, c-format
-msgid   "failed to start log, check available storage: %s"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/Logging/Task.cpp:407
-msgid   "waiting for human intervention"
-msgstr  "à espera de intervenção humana"
-
-#: /home/rasm/dolphin/dune/src/Transports/SerialOverTCP/Task.cpp:138
-msgid   "accepting connection request"
-msgstr  ""
-
-#: /home/rasm/dolphin/dune/src/Transports/TCP/Server/Task.cpp:106
+#: /home/rasm/git/dune/dune/src/Transports/TCP/Server/Task.cpp:106
 #, c-format
 msgid   "failed to bind to port %u: %s"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Transports/TCP/Server/Task.cpp:113
+#: /home/rasm/git/dune/dune/src/Transports/TCP/Server/Task.cpp:113
 msgid   "could not bind server socket"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/src/Transports/TCP/Server/Task.cpp:153
+#: /home/rasm/git/dune/dune/src/Transports/TCP/Server/Task.cpp:120
+#: /home/rasm/git/dune/dune/src/Transports/FTP/Task.cpp:103
+#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:105
+#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:255
+#: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:128
+#, c-format
+msgid   "listening on %s:%u"
+msgstr  "a ouvir em %s:%u"
+
+#: /home/rasm/git/dune/dune/src/Transports/TCP/Server/Task.cpp:153
 #, fuzzy, c-format
 msgid   "connected to %u clients"
 msgstr  "ligação terminada"
 
-#: /home/rasm/dolphin/dune/src/Main/Daemon.cpp:165
+#: /home/rasm/git/dune/dune/src/Transports/TCP/Server/Task.cpp:254
+#: /home/rasm/git/dune/dune/src/Transports/FTP/Task.cpp:187
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:311
+#, c-format
+msgid   "error accepting new client connection: %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:222
+msgid   "TDMA slot"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:275
+msgid   "TDMA slots"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:275
+msgid   "period"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:276
+msgid   "duration"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:277
+msgid   "total slots"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:278
+msgid   "my slot"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:279
+msgid   "next slot in"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:304
+msgid   "unknown system"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:312
+msgid   "handling abort to"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:323
+msgid   "handling range request to"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:330
+msgid   "queuing"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:330
+msgid   "para"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:440
+msgid   "RANGE: Issuing request - modem"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:445
+msgid   "RANGE"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:445
+msgid   "meters"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:450
+msgid   "RANGE: No response"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:488
+#, c-format
+msgid   "sending message to %s (length %u)"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:499
+#, c-format
+msgid   "sending hearbeat to %s (length %u)"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:508
+#, c-format
+msgid   "sending message '%s' (length %u)"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:518
+#, c-format
+msgid   "total %u"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:532
+#, c-format
+msgid   "compressed %u"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:537
+#, c-format
+msgid   "error compressing data: %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:542
+#, c-format
+msgid   "time %0.1f"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:560
+#, c-format
+msgid   "incoming data (length %u)"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:570
+msgid   "packet too short"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:585
+#, c-format
+msgid   "uncompressed %u"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:589
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:639
+#, c-format
+msgid   "corrupt data -- %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:613
+msgid   "discarded"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:660
+#, c-format
+msgid   "clock dev. estimate: %0.2f s, %0.2f, %0.2f"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Benthos/Task.cpp:665
+msgid   "adjusted"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/AirOS/Task.cpp:162
+msgid   "username failure"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/AirOS/Task.cpp:170
+msgid   "password failure"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/AirOS/Task.cpp:177
+msgid   "MOTD failure"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/AirOS/Task.cpp:186
+msgid   "PS1 failure"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/AirOS/Task.cpp:218
+msgid   "no mode"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/AirOS/Task.cpp:224
+msgid   "no mode2"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/AirOS/Task.cpp:243
+msgid   "command failure"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/AirOS/Task.cpp:247
+msgid   "command passed"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/AirOS/Task.cpp:265
+#, c-format
+msgid   "level %0.2f"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/GSM/Task.cpp:211
+msgid   "SMS timeout cannot be zero"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/GSM/Task.cpp:234
+#, c-format
+msgid   "discarded expired SMS to recipient '%s'"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/IridiumSBD/Task.cpp:126
+msgid   "task is shutting down"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/IridiumSBD/Task.cpp:289
+#, fuzzy, c-format
+msgid   "failed with error %u"
+msgstr  "falha ao reportar distância para %s"
+
+#: /home/rasm/git/dune/dune/src/Transports/IridiumSBD/Task.cpp:327
+#, fuzzy, c-format
+msgid   "transmission failed: %s"
+msgstr  "a validaçao do plano falhou: "
+
+#: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:179
+msgid   "operation not supported"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:203
+msgid   "is not a regular file"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:213
+msgid   "could not open"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:225
+msgid   "deserialization error"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:232
+msgid   "empty LSF file"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:239
+msgid   "invalid LSF file for replay"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:264
+msgid   "started replay of"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:271
+msgid   "stopped replay"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Logging/Task.cpp:188
+#, c-format
+msgid   "failed to remove cache snapshot: %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Logging/Task.cpp:310
+#, c-format
+msgid   "log stopped '%s'"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Logging/Task.cpp:355
+#, c-format
+msgid   "log started '%s'"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Logging/Task.cpp:404
+#, c-format
+msgid   "failed to start log, check available storage: %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Logging/Task.cpp:407
+msgid   "waiting for human intervention"
+msgstr  "à espera de intervenção humana"
+
+#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:112
+msgid   "no available ports to listen to advertisements"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:125
+msgid   "discarding spurious message"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:132
+#, c-format
+msgid   "discarding spurious message '%s'"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:187
+#, c-format
+msgid   "new node within range '%s' / %u / %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:198
+#, c-format
+msgid   "another node on this computer is advertising our node name '%s'"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:200
+#, c-format
+msgid   "another node on our network is advertising our node name '%s'"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:232
+#, c-format
+msgid   "write: %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:243
+#, c-format
+msgid   "discarding %d bytes"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:334
+#, c-format
+msgid   "opening file '%s' with %u frames"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:368
+msgid   "file is complete"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:373
+msgid   "no file is open"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:239
+#, c-format
+msgid   "failed to bind to port %lu: %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:246
+msgid   "could not bind to a port"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:253
+#, c-format
+msgid   "bound to port %u"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:263
+#, c-format
+msgid   "disconnected - %s:%u -- %s -- clients now: %lu"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:303
+#, c-format
+msgid   "connected - %s:%u - clients now: %lu"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:357
+#, c-format
+msgid   "adding beacon %d, query channel %d"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:405
+#, c-format
+msgid   "sent %lu bytes"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:429
+msgid   "sent server OK"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:448
+msgid   "got range from unknown beacon"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:480
+#, c-format
+msgid   "received seacon position: id=%d latitude=%0.5f longitude=%0.5f depth=%0.2f"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:489
+#, c-format
+msgid   "node id set to %d"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:496
+msgid   "client ok"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:501
+msgid   "client error"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:506
+msgid   "client is busy"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:511
+msgid   "acoustic abort received"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:533
+#, c-format
+msgid   "received seacon range: id=%d distance=%0.2f ttime=%0.2f"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:542
+#, c-format
+msgid   "unknown packet type: %u"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/EvoRoma/Task.cpp:589
+#, c-format
+msgid   "received %d bytes"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:376
+#, c-format
+msgid   "activating transmission to node '%s'"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:381
+#, c-format
+msgid   "deactivating transmission to node '%s'"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:156
+msgid   "failed to find one available port"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:366
+#, c-format
+msgid   "removing log %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/SerialOverTCP/Task.cpp:138
+msgid   "accepting connection request"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:246
+msgid   "failed to configure strobe mode"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:250
+#, c-format
+msgid   "strobe mode set to: %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:250
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:14
+msgid   "Camera"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Power/MCBv2/Task.cpp:602
+msgid   "updating firmware"
+msgstr  "a atualizar firmware"
+
+#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:372
+msgid   "failed to update EEPROM"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:441
+msgid   "power down sequence aborted"
+msgstr  "sequencia de desligar interrompida"
+
+#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:549
+#: /home/rasm/git/dune/dune/src/Simulators/Leaks/Task.cpp:125
+#: /home/rasm/git/dune/dune/src/Simulators/Leaks/Task.cpp:140
+msgid   "leak detected"
+msgstr  "fuga detetada"
+
+#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:556
+msgid   "no leak"
+msgstr  "sem fugas"
+
+#: /home/rasm/git/dune/dune/src/Main/Daemon.cpp:165
 msgid   "stopping tasks"
 msgstr  "a parar tarefas"
 
-#: /home/rasm/dolphin/dune/src/Main/Daemon.cpp:175
+#: /home/rasm/git/dune/dune/src/Main/Daemon.cpp:175
 msgid   "unhandled exception"
 msgstr  "exceção não tratada"
 
-#: /home/rasm/dolphin/dune/src/Main/Daemon.cpp:252
+#: /home/rasm/git/dune/dune/src/Main/Daemon.cpp:252
 msgid   "ERROR: no configuration file was given, see options --config-list and --config-file\n"
 msgstr  "ERRO: nenhum ficheiro de configuração foi dado, ver opções --config-list e --config-file\n"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:1
+#: /home/rasm/git/dune/dune/src/Simulators/LBL/Task.cpp:225
+#, c-format
+msgid   "maximum amount of beacons is %u"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Simulators/VSIM/Task.cpp:140
+msgid   "error loading world parameters."
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Simulators/VSIM/Task.cpp:144
+msgid   "error loading vehicle parameters."
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:215
+msgid   "not setup yet"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:225
+msgid   "can't handle this -- some nodes are not part of simulation (yet?)"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:383
+#, c-format
+msgid   "unexpected simulation message: %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:390
+#, c-format
+msgid   "network/deserialization error: %s"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:1
 msgid   "AHRS"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:2
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:2
 msgid   "AUV Simulator"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:3
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:3
 msgid   "Acoustic Modem"
 msgstr  "Modem Acústico"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:4
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:4
 msgid   "Allocator"
 msgstr  "Alocador"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:5
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:5
 msgid   "Announce"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:6
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:6
 msgid   "Arduino Serial"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:7
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:7
 msgid   "Attitude"
 msgstr  "Atitude"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:8
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:8
 msgid   "Autopilot"
 msgstr  "Piloto Automático"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:9
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:9
 msgid   "Autopilot Telemetry"
 msgstr  "Telemetria do Piloto Automático"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:10
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:10
 msgid   "Broom"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:11
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:11
 msgid   "CPU"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:12
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:12
 msgid   "CTD"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:13
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:13
 msgid   "Cache"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:15
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:15
 msgid   "Clock"
 msgstr  "Relógio"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:16
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:16
 #, fuzzy
 msgid   "Coarse Alignment"
 msgstr  "Alinhamento"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:17
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:17
 msgid   "Collisions"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:18
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:18
 msgid   "Communications Relay Maneuver"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:19
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:19
 msgid   "Compass"
 msgstr  "Bússola"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:20
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:20
 msgid   "Compass Calibration Maneuver"
 msgstr  "Manobra de Calibração de Bússola"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:21
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:21
 msgid   "DOAM"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:22
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:22
 msgid   "DVL"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:23
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:23
 msgid   "Depth Control"
 msgstr  "Controlo de Profundidade"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:24
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:24
 msgid   "Depth Sensor"
 msgstr  "Sensor de Profundidade"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:25
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:25
 msgid   "Discovery"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:26
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:26
 msgid   "Diving"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:27
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:27
 msgid   "Docking"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:28
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:28
 msgid   "Echo Sounder"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:29
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:29
 msgid   "Elevator Maneuver"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:30
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:30
 msgid   "Emergency Monitor"
 msgstr  "Monitor de Emergências"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:31
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:31
 msgid   "Emergency Supervisor"
 msgstr  "Supervisor de Emergências"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:32
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:32
 msgid   "Entity Monitor"
 msgstr  "Monitor de Entidades"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:33
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:33
 msgid   "Environment"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:34
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:34
 #, fuzzy
 msgid   "FTP Server"
 msgstr  "Servidor TCP"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:35
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:35
 msgid   "Follow Path Maneuver"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:36
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:36
 msgid   "Follow Reference"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:37
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:37
 #, fuzzy
 msgid   "Follow Reference Maneuver"
 msgstr  ": sem manobras"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:38
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:38
 msgid   "Follow System Maneuver"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:39
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:39
 msgid   "Frame Grabber"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:40
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:40
 msgid   "Fuel"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:41
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:41
 msgid   "GPS"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:42
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:42
 msgid   "GSM"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:43
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:43
 msgid   "Gimbal"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:44
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:44
 #, fuzzy
 msgid   "Goto Maneuver"
 msgstr  ": sem manobras"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:45
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:45
 msgid   "Groundstation Telemetry"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:46
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:46
 msgid   "HTTP Server"
 msgstr  "Servidor HTTP"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:47
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:47
 msgid   "Heave Motor"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:48
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:48
 msgid   "Horizontal Plane Control"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:49
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:49
 msgid   "IMU"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:50
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:50
 msgid   "INOV TCP"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:51
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:51
 msgid   "INOV Target"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:52
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:52
 msgid   "Idle Maneuver"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:53
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:53
 msgid   "Iridium Modem"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:54
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:54
 msgid   "Iridium Transport"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:55
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:55
 msgid   "LBL"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:56
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:56
 msgid   "LBL Estimator"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:57
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:57
 msgid   "LCD"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:58
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:58
 msgid   "LEDs"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:59
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:59
 msgid   "Leak Simulator"
 msgstr  "Simulador de Vazamento"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:60
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:60
 msgid   "Log Book"
 msgstr  "Diário de Bordo"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:61
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:61
 msgid   "Logger"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:62
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:62
 #, fuzzy
 msgid   "Loiter Maneuver"
 msgstr  ": sem manobras"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:63
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:63
 msgid   "Lost Comms"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:64
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:64
 msgid   "MCB"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:65
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:65
 msgid   "Mainboard"
 msgstr  "Placa Principal"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:66
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:66
 msgid   "Medium"
 msgstr  "Meio"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:67
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:67
 msgid   "Motor"
 msgstr  "Motor"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:68
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:68
 msgid   "Multibeam"
 msgstr  "Sonar Multifeixe"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:69
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:69
 msgid   "Navigation"
 msgstr  "Navegação"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:70
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:70
 msgid   "Operational Limits"
 msgstr  "Limites de Operação"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:71
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:71
 msgid   "PTU Transports"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:72
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:72
 msgid   "Panel"
 msgstr  "Painel"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:73
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:73
 msgid   "Panel Buttons"
 msgstr  "Botões do Painel"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:74
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:74
 msgid   "Path Control"
 msgstr  "Controlo de Caminho"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:75
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:75
 #, fuzzy
 msgid   "Piccolo Communications"
 msgstr  "erro comunicação"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:76
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:76
 msgid   "Piccolo Control Loops"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:77
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:77
 msgid   "Piccolo Gateway"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:78
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:78
 msgid   "Piccolo Supervision"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:79
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:79
 msgid   "Plan Database"
 msgstr  "Base de Dados de Planos"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:80
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:80
 msgid   "Plan Engine"
 msgstr  "Motor de Planos"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:81
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:81
 msgid   "Plan Generator"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:82
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:82
 #, fuzzy
 msgid   "Pop Up Maneuver"
 msgstr  ": sem manobras"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:83
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:83
 msgid   "Port Bow Motor"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:84
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:84
 msgid   "Port Stern Motor"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:85
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:85
 msgid   "Power Supervisor"
 msgstr  "Supervisor de Energia"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:86
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:86
 msgid   "Power Supply"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:87
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:87
 msgid   "Remote Control"
 msgstr  "Controlo Remoto"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:88
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:88
 msgid   "Remote Operation"
 msgstr  "Operação Remota"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:89
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:89
 msgid   "Rows Maneuver"
 msgstr  "Manobra de Linhas"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:90
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:90
 msgid   "SCRT"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:91
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:91
 msgid   "SVS"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:92
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:92
 msgid   "Service Announcer"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:93
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:93
 msgid   "Service Discovery"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:94
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:94
 #, fuzzy
 msgid   "Servo Monitor"
 msgstr  "Monitor de Emergências"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:95
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:95
 msgid   "Servos"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:96
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:96
 msgid   "Sidescan"
 msgstr  "Sonar de Varrimento Lateral"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:97
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:97
 msgid   "Simulation Engine"
 msgstr  "Motor de Simulação"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:98
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:98
 msgid   "Sound Speed Sensor"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:99
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:99
 msgid   "Speed Control"
 msgstr  "Controlo de Velocidade"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:100
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:100
 msgid   "Starboard Bow Motor"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:101
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:101
 msgid   "Starboard Stern Motor"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:102
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:102
 #, fuzzy
 msgid   "Station Keeping Maneuver"
 msgstr  ": a executar manobra"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:103
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:103
 msgid   "TASE"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:104
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:104
 msgid   "TCP Server"
 msgstr  "Servidor TCP"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:105
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:105
 msgid   "TCP to DOAM CPU"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:106
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:106
 msgid   "TCP to Master"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:107
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:107
 msgid   "TREX"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:108
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:108
 msgid   "Teleoperation Maneuver"
 msgstr  "Manobra de Teleoperação"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:109
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:109
 msgid   "Text Message Parser"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:110
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:110
 msgid   "Thermal Zone"
 msgstr  "Zona Térmica"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:111
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:111
 msgid   "UDP"
 msgstr  "UDP"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:112
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:112
 msgid   "UDP to TREX"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:113
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:113
 msgid   "USBL"
 msgstr  ""
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:114
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:114
 msgid   "Underwater Acoustics Simulator"
 msgstr  "Simulador de Comunicação Acústica Subaquática"
 
-#: /home/rasm/dolphin/dune/i18n/entity_labels.txt:115
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:115
 msgid   "Vehicle Supervisor"
 msgstr  "Supervisor de Veículo"
 
