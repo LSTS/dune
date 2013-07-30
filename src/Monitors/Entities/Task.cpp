@@ -40,7 +40,7 @@ namespace Monitors
     // Entity state description labels.
     static const char* c_state_desc[] =
     {
-      DTR("Boot"), DTR("Normal"), DTR("Fault"), DTR("Error"), DTR("Failure")
+      DTR_RT("Boot"), DTR_RT("Normal"), DTR_RT("Fault"), DTR_RT("Error"), DTR_RT("Failure")
     };
 
     // Datum for monitoring information per entity.
@@ -214,13 +214,13 @@ namespace Monitors
 
           if (r.transitions < m_args.max_transitions)
           {
-            war(DTR("%s : %s -> %s | %s"), r.label.c_str(), c_state_desc[r.state],
-                c_state_desc[msg->state], msg->description.c_str());
+            war(DTR("%s : %s -> %s | %s"), r.label.c_str(), DTR(c_state_desc[r.state]),
+                DTR(c_state_desc[msg->state]), msg->description.c_str());
           }
           else if (r.transitions == m_args.max_transitions)
           {
             war(DTR("%s entity state is unstable (%s <-> %s), ignoring"),
-                r.label.c_str(), c_state_desc[r.state], c_state_desc[msg->state]);
+                r.label.c_str(), DTR(c_state_desc[r.state]), DTR(c_state_desc[msg->state]));
           }
         }
 
@@ -230,7 +230,7 @@ namespace Monitors
           r.transitions = 0;
 
           war(DTR("%s : State stabilized in %s | %s"), r.label.c_str(),
-              c_state_desc[msg->state], msg->description.c_str());
+              DTR(c_state_desc[msg->state]), msg->description.c_str());
         }
 
         r.time = Clock::get();
@@ -312,7 +312,7 @@ namespace Monitors
           r.monitor = true;
 
           if (r.state != IMC::EntityState::ESTA_NORMAL && !startup)
-            err(DTR("%s - current state not normal - %s"), r.label.c_str(), c_state_desc[r.state]);
+            err(DTR("%s - current state not normal - %s"), r.label.c_str(), DTR(c_state_desc[r.state]));
         }
         else
         {

@@ -40,9 +40,9 @@ namespace Supervisors
     using DUNE_NAMESPACES;
 
     //! State description strings
-    static const char* c_state_desc[] = {DTR("SERVICE"), DTR("CALIBRATION"),
-                                         DTR("ERROR"), DTR("MANEUVERING"),
-                                         DTR("EXTERNAL CONTROL")};
+    static const char* c_state_desc[] = {DTR_RT("SERVICE"), DTR_RT("CALIBRATION"),
+                                         DTR_RT("ERROR"), DTR_RT("MANEUVERING"),
+                                         DTR_RT("EXTERNAL CONTROL")};
     //! Vehicle command description strings
     static const char* c_cmd_desc[] =
     {"maneuver start", "maneuver stop", "calibration start", "calibration stop"};
@@ -211,7 +211,7 @@ namespace Supervisors
 
           m_vs.op_mode = s;
 
-          war(DTR("now in '%s' mode"), c_state_desc[s]);
+          war(DTR("now in '%s' mode"), DTR(c_state_desc[s]));
 
           if (!maneuverMode())
           {

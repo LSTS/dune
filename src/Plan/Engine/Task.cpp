@@ -44,9 +44,11 @@ namespace Plan
     //! Timeout for the vehicle state
     const double c_vs_timeout = 2.5;
     //! Plan Command operation descriptions
-    const char* c_op_desc[] = {DTR("Start Plan"), DTR("Stop Plan"), DTR("Load Plan"), DTR("Get Plan")};
+    const char* c_op_desc[] = {DTR_RT("Start Plan"), DTR_RT("Stop Plan"),
+                               DTR_RT("Load Plan"), DTR_RT("Get Plan")};
     //! Plan state descriptions
-    const char* c_state_desc[] = {DTR("BLOCKED"), DTR("READY"), DTR("INITIALIZING"), DTR("EXECUTING")};
+    const char* c_state_desc[] = {DTR_RT("BLOCKED"), DTR_RT("READY"),
+                                  DTR_RT("INITIALIZING"), DTR_RT("EXECUTING")};
     //! DataBase statement
     static const char* c_get_plan_stmt = "select data from Plan where plan_id=?";
 
@@ -532,7 +534,7 @@ namespace Plan
         m_reply.op = pc->op;
         m_reply.plan_id = pc->plan_id;
 
-        inf(DTR("request -- %s (%s)"), c_op_desc[m_reply.op], m_reply.plan_id.c_str());
+        inf(DTR("request -- %s (%s)"), DTR(c_op_desc[m_reply.op]), m_reply.plan_id.c_str());
 
         if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
         {
@@ -878,7 +880,7 @@ namespace Plan
 
         if (print)
         {
-          std::string str = Utils::String::str(DTR("reply -- %s (%s) -- %s"), c_op_desc[m_reply.op], m_reply.plan_id.c_str(), desc.c_str());
+          std::string str = Utils::String::str(DTR("reply -- %s (%s) -- %s"), DTR(c_op_desc[m_reply.op]), m_reply.plan_id.c_str(), desc.c_str());
 
           if (type == IMC::PlanControl::PC_FAILURE)
             err("%s", str.c_str());
@@ -934,7 +936,7 @@ namespace Plan
 
         if (s != m_pcs.state)
         {
-          debug(DTR("now in %s state"), c_state_desc[s]);
+          debug(DTR("now in %s state"), DTR(c_state_desc[s]));
 
           bool was_in_plan = initMode() || execMode();
 
