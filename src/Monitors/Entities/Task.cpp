@@ -440,7 +440,8 @@ namespace Monitors
               err(DTR("%s -- status not reported after %0.2f seconds"),
                   DTR(r.label.c_str()), m_args.report_timeout);
 
-              setLastError(r.label + DTR(": entity state timeout"));
+              setLastError(String::str(DTR("%s: entity state timeout"),
+                                       DTR(r.label.c_str())));
             }
 
             r.time = now;
