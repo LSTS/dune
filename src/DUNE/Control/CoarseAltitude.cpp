@@ -94,7 +94,7 @@ namespace DUNE
         return;
 
       if (m_time_outside / m_args->period * 100.0 > m_args->max_outside)
-        m_corridor = std::min(m_corridor + 1, (unsigned)m_args->wsizes.size());
+        m_corridor = std::min(m_corridor + 1, (unsigned)m_args->wsizes.size() - 1);
       else if (m_corridor)
         --m_corridor;
 

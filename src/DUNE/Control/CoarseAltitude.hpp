@@ -74,6 +74,22 @@ namespace DUNE
       void
       deactivate(void);
 
+      //! Get current corridor number
+      inline unsigned
+      getCorridor(void)
+      {
+        return m_corridor;
+      };
+
+      //! Update object with new depth value
+      //! @param[in] timestep time elapsed since last measurement was received
+      //! @param[in] depth new depth value
+      //! @param[in] desired_depth current depth reference
+      //! @return depth value to be used as a reference
+      float
+      update(float timestep, float depth, float desired_depth);
+
+    private:
       //! Check if the vehicle is inside the current corridor
       //! @param[in] depth new depth value
       //! @param[in] desired_depth current depth reference
@@ -85,15 +101,6 @@ namespace DUNE
       void
       measurePerformance(void);
 
-      //! Update object with new depth value
-      //! @param[in] timestep time elapsed since last measurement was received
-      //! @param[in] depth new depth value
-      //! @param[in] desired_depth current depth reference
-      //! @return depth value to be used as a reference
-      float
-      update(float timestep, float depth, float desired_depth);
-
-    private:
       //! True if coarse altitude control is active
       bool m_active;
       //! Arguments
