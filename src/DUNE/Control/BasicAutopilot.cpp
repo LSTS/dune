@@ -221,7 +221,7 @@ namespace DUNE
       // check if vertical control mode is valid
       if (m_vertical_mode >= VERTICAL_MODE_SIZE)
       {
-        signalBadVertical(DTR("bad vertical control mode %d"));
+        signalBadVertical(DTR("invalid vertical control mode %d"));
         return;
       }
       else if (m_vertical_mode == VERTICAL_MODE_NONE)
@@ -288,7 +288,7 @@ namespace DUNE
       // check if yaw control mode is valid
       if (m_yaw_mode >= YAW_MODE_SIZE)
       {
-        signalBadYaw(DTR("bad yaw control mode %d"));
+        signalBadYaw(DTR("invalid yaw control mode %d"));
         return;
       }
       else if (m_yaw_mode == YAW_MODE_NONE)
