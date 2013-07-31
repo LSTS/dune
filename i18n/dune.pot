@@ -6,7 +6,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.3.0-rc1\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-07-31 18:42+0100\n"
+        "POT-Creation-Date: 2013-07-31 18:52+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -568,30 +568,6 @@ msgstr  ""
 #: /home/rasm/git/dune/dune/src/Vision/Lumenera/Task.cpp:319
 #: /home/rasm/git/dune/dune/src/Vision/Lumenera/Task.cpp:360
 msgid   "failed to set property"
-msgstr  ""
-
-#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:90
-msgid   "no cameras found!"
-msgstr  ""
-
-#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:104
-msgid   "failed to open the camera"
-msgstr  ""
-
-#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:117
-msgid   "failed to initialise the camera"
-msgstr  ""
-
-#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:128
-msgid   "failed to start capturing"
-msgstr  ""
-
-#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:142
-msgid   "problem while fetching frame"
-msgstr  ""
-
-#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:156
-msgid   "failed to stop capturing"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Vision/DFK51BG02H/Task.cpp:459

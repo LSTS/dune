@@ -25,8 +25,8 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-07-31 18:42+0100\n"
-        "PO-Revision-Date: 2013-07-31 18:40-0000\n"
+        "POT-Creation-Date: 2013-07-31 18:52+0100\n"
+        "PO-Revision-Date: 2013-07-31 18:44-0000\n"
         "Last-Translator: Ricardo Martins <rasm@fe.up.pt>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
         "Language: pt_PT\n"
@@ -589,30 +589,6 @@ msgstr  "em calibração: o sistema deve permanecer estático"
 #: /home/rasm/git/dune/dune/src/Vision/Lumenera/Task.cpp:360
 msgid   "failed to set property"
 msgstr  "falha ao configurar propriedade"
-
-#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:90
-msgid   "no cameras found!"
-msgstr  ""
-
-#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:104
-msgid   "failed to open the camera"
-msgstr  "falha ao abrir camâra"
-
-#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:117
-msgid   "failed to initialise the camera"
-msgstr  "falha ao inicializar câmara"
-
-#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:128
-msgid   "failed to start capturing"
-msgstr  "falha ao iniciar captura"
-
-#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:142
-msgid   "problem while fetching frame"
-msgstr  ""
-
-#: /home/rasm/git/dune/dune/src/Vision/Gobi384/Task.cpp:156
-msgid   "failed to stop capturing"
-msgstr  "falha a parar captura"
 
 #: /home/rasm/git/dune/dune/src/Vision/DFK51BG02H/Task.cpp:459
 msgid   "keep alive failed"
@@ -2454,7 +2430,7 @@ msgstr  "Alocador"
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:5
 msgid   "Announce"
-msgstr  ""
+msgstr  "Anunciador"
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:6
 msgid   "Arduino Serial"
@@ -2891,6 +2867,18 @@ msgstr  "Simulador de Comunicação Acústica Subaquática"
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:115
 msgid   "Vehicle Supervisor"
 msgstr  "Supervisor de Veículo"
+
+#~ msgid        "failed to open the camera"
+#~ msgstr       "falha ao abrir camâra"
+
+#~ msgid        "failed to initialise the camera"
+#~ msgstr       "falha ao inicializar câmara"
+
+#~ msgid        "failed to start capturing"
+#~ msgstr       "falha ao iniciar captura"
+
+#~ msgid        "failed to stop capturing"
+#~ msgstr       "falha a parar captura"
 
 #~ msgid        "could not open the factory!"
 #~ msgstr       "não foi possível abrir o factory"
