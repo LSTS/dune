@@ -1657,7 +1657,7 @@ msgstr  "остановили воспроизведение"
 #: /home/caladolsts/dune/src/Transports/TCP/Server/Task.cpp:120
 #, fuzzy, c-format
 msgid   "listening on %s:%u"
-msgstr  "прослушивает порт %u"
+msgstr  "прослушивает порт %s:%u"
 
 #: /home/caladolsts/dune/src/Transports/Discovery/Task.cpp:112
 msgid   "no available ports to listen to advertisements"
