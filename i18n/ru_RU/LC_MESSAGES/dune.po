@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-07-31 10:24+0100\n"
+        "POT-Creation-Date: 2013-07-31 10:28+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -79,12 +79,10 @@ msgid   "invalid value '%s' for parameter '%s': '%s'"
 msgstr  "недопустимое значение '%s' для параметра '%s': '%s'"
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/EntityDataBase.hpp:64
-#, fuzzy
 msgid   "invalid entity label: "
-msgstr  "Главным образом ярлык лица"
+msgstr  "Главным образом ярлык лица: "
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/EntityDataBase.hpp:68
-#, fuzzy
 msgid   "entity labels cannot be empty"
 msgstr  "лица этикетке не настроен"
 
@@ -93,9 +91,8 @@ msgid   "nonexistent entity label: "
 msgstr  "Главным образом ярлык лица: "
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/EntityDataBase.hpp:82
-#, fuzzy
 msgid   "invalid entity id: "
-msgstr  "недействительный блок Z: %s"
+msgstr  "недействительный блок Z: "
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/EntityDataBase.hpp:89
 msgid   "an unique id was already reserved for entity label: "
@@ -215,7 +212,7 @@ msgid   "can't handle this -- some nodes are not part of simulation (yet?)"
 msgstr  "не может справиться с этим - некоторые узлы не являются частью моделирования (пока?)"
 
 #: /home/caladolsts/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:255
-#: /home/caladolsts/dune/src/Monitors/Collisions/Task.cpp:337
+#: /home/caladolsts/dune/src/Monitors/Collisions/Task.cpp:336
 msgid   "collision detected"
 msgstr  "обнаруживается конфликт"
 
@@ -256,19 +253,19 @@ msgstr  "не удалось решить субъекта '%s': %s"
 msgid   "beacon id %d is greater than %d"
 msgstr  "маяк ID %d больше %d"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:237
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:236
 msgid   "motion detected"
 msgstr  "обнаружении движения"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:319
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:318
 msgid   "device is not active"
 msgstr  "Устройство не активно"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:327
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:326
 msgid   "device is not in proper medium"
 msgstr  "устройство не находится в соответствующей среде"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:339
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:338
 msgid   "calibrating: system must remain static"
 msgstr  "калибровки: система должна оставаться статической"
 
@@ -348,14 +345,14 @@ msgid   "vertical progress is too slow"
 msgstr  "вертикальная прогресс идет слишком медленными"
 
 #: /home/caladolsts/dune/src/Autonomy/TextActions/Task.cpp:65
-#, fuzzy, c-format
+#, c-format
 msgid   "received SMS request to start plan '%s'"
-msgstr  "получил SMS запрос на запуск плана"
+msgstr  "получил SMS запрос на запуск плана '%s'"
 
 #: /home/caladolsts/dune/src/Autonomy/TextActions/Task.cpp:76
-#, fuzzy, c-format
+#, c-format
 msgid   "got abort request from '%s'"
-msgstr  "получил прервать запрос"
+msgstr  "получил прервать запрос '%s'"
 
 #: /home/caladolsts/dune/src/Autonomy/TREX/Task.cpp:130
 #, c-format
@@ -724,7 +721,6 @@ msgid   "Execution Priority"
 msgstr  "Приоритет выполнения"
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:77
-#, fuzzy
 msgid   "Execution priority"
 msgstr  "Приоритет выполнения"
 
@@ -993,9 +989,9 @@ msgid   "timed out while waiting for vertical control mode"
 msgstr  "истекло время ожидания для вертикального режима управления"
 
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.cpp:261
-#, fuzzy, c-format
+#, c-format
 msgid   "water column not deep enough for altitude control ( %0.2f < %0.2f )"
-msgstr  "нижняя отслеживанию не жизнеспособна, толщу воды не достаточно глубоко (%0.2f <%0.2f)"
+msgstr  "нижняя отслеживанию не жизнеспособна, толщу воды не достаточно глубоко ( %0.2f < %0.2f )"
 
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.cpp:280
 msgid   "getting too close to maximum admissible depth"
@@ -1036,9 +1032,8 @@ msgid   "BottomTrack"
 msgstr  "BottomTrack"
 
 #: /home/caladolsts/dune/src/DUNE/Control/BottomTracker.cpp:302
-#, fuzzy
 msgid   "too deep, forcing depth control"
-msgstr  "Глубина достигает неприемлемых значений, заставляя контроль глубины"
+msgstr  "слишком глубоко, заставляя контроль глубины"
 
 #: /home/caladolsts/dune/src/DUNE/Control/BottomTracker.cpp:442
 msgid   "unable to avoid obstacle"
@@ -1663,9 +1658,8 @@ msgid   "no available ports to listen to advertisements"
 msgstr  "отсутствуют доступные порты не слушать рекламу"
 
 #: /home/caladolsts/dune/src/Transports/Discovery/Task.cpp:125
-#, fuzzy
 msgid   "discarding spurious message"
-msgstr  "отбрасывая %d байт"
+msgstr  "отбрасывая ложные сообщения"
 
 #: /home/caladolsts/dune/src/Transports/Discovery/Task.cpp:132
 #, c-format

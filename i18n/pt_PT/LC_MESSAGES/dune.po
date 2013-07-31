@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-07-31 10:15+0100\n"
+        "POT-Creation-Date: 2013-07-31 10:28+0100\n"
         "PO-Revision-Date: 2013-07-31 02:28-0000\n"
         "Last-Translator: Ricardo Martins <rasm@fe.up.pt>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -213,7 +213,7 @@ msgid   "can't handle this -- some nodes are not part of simulation (yet?)"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:255
-#: /home/caladolsts/dune/src/Monitors/Collisions/Task.cpp:337
+#: /home/caladolsts/dune/src/Monitors/Collisions/Task.cpp:336
 msgid   "collision detected"
 msgstr  "colisão detetada"
 
@@ -254,19 +254,19 @@ msgstr  "erro ao resolver entidade '%s': %s"
 msgid   "beacon id %d is greater than %d"
 msgstr  "id beacon %d é maior que %d"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:237
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:236
 msgid   "motion detected"
 msgstr  "movimento detectado"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:319
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:318
 msgid   "device is not active"
 msgstr  "dispositivo não está ativo"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:327
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:326
 msgid   "device is not in proper medium"
 msgstr  "dispositivo não está no meio apropriado"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:339
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:338
 msgid   "calibrating: system must remain static"
 msgstr  "em calibração: o sistema deve permanecer estático"
 
