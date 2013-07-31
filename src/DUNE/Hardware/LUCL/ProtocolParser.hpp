@@ -215,9 +215,6 @@ namespace DUNE
           return cmd.type;
         }
 
-        const char*
-        getErrorString(uint8_t error);
-
       private:
         //! State machine states.
         enum SMStates

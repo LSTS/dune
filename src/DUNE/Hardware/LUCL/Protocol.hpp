@@ -189,7 +189,7 @@ namespace DUNE
         std::string
         searchNewFirmware(const FileSystem::Path& path, unsigned ver = 0, unsigned rev = 0, unsigned pat = 0, bool ver_fixed = false);
 
-        const char*
+        static const char*
         getErrorString(uint8_t error);
 
       private:
