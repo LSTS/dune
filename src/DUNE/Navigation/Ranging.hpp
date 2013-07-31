@@ -56,21 +56,19 @@ namespace DUNE
       { }
 
       void
-      initialize(IMC::GpsFix origin, double latitude, double longitude, double z)
+      initialize(const IMC::GpsFix* origin, double latitude, double longitude, double z)
       {
         lat = latitude;
         lon = longitude;
         depth = z;
 
-        Coordinates::WGS84::displacement(origin.lat, origin.lon, 0.0,
-                                         latitude, longitude, z,
-                                         &x, &y);
+        update(origin);
       }
 
       void
-      update(IMC::GpsFix origin)
+      update(const IMC::GpsFix* origin)
       {
-        Coordinates::WGS84::displacement(origin.lat, origin.lon, 0.0,
+        Coordinates::WGS84::displacement(origin->lat, origin->lon, 0.0,
                                          lat, lon, depth,
                                          &x, &y);
       }
@@ -99,7 +97,9 @@ namespace DUNE
         m_origin(NULL)
       {
         m_num_transponders = 0;
-        std::memset(m_transponders, 0, sizeof(m_transponders));
+
+        for (unsigned i = 0; i < c_max_transponders; ++i)
+          m_transponders[i] = NULL;
       }
 
       ~Ranging(void)
@@ -119,7 +119,7 @@ namespace DUNE
         for (unsigned i = 0; i < c_max_transponders; i++)
         {
           if (m_transponders[i])
-            m_transponders[i]->update(*msg);
+            m_transponders[i]->update(msg);
         }
       }
 
@@ -133,23 +133,6 @@ namespace DUNE
           addTransponder(i, *itr);
       }
 
-      void
-      addTransponder(unsigned id, const IMC::LblBeacon* msg)
-      {
-        if (id >= c_max_transponders)
-          return;
-
-        Memory::clear(m_transponders[id]);
-
-        if (msg == NULL)
-          return;
-
-        if (id + 1 > m_num_transponders)
-          m_num_transponders = id + 1;
-
-        m_transponders[id]->initialize(*m_origin, msg->lat, msg->lon, msg->depth);
-      }
-
       unsigned
       getSize(void)
       {
@@ -159,7 +142,7 @@ namespace DUNE
       bool
       exists(unsigned id)
       {
-        return m_transponders[id] == 0;
+        return m_transponders[id] == NULL;
       }
 
       void
@@ -177,6 +160,26 @@ namespace DUNE
       }
 
     private:
+
+      void
+      addTransponder(unsigned id, const IMC::LblBeacon* msg)
+      {
+        if (id >= c_max_transponders)
+          return;
+
+        Memory::clear(m_transponders[id]);
+
+        if (msg == NULL)
+          return;
+
+        if (id + 1 > m_num_transponders)
+          m_num_transponders = id + 1;
+
+        Memory::replace(m_transponders[id], new BasicTransponder);
+
+        m_transponders[id]->initialize(m_origin, msg->lat, msg->lon, msg->depth);
+      }
+
       //! Ranging transponder configuration.
       BasicTransponder* m_transponders[c_max_transponders];
       //! Navigation origin.
