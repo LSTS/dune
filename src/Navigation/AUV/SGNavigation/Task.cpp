@@ -239,7 +239,7 @@ namespace Navigation
           m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_GOOD]);
           m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_GOOD]);
 
-          for (unsigned i = 0; i < m_num_beacons; i++)
+          for (unsigned i = 0; i < m_ranging.getSize(); i++)
             m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
 
           if (m_dead_reckoning)
@@ -249,7 +249,7 @@ namespace Navigation
             m_kal.setProcessNoise(STATE_Y, m_args.position_noise_with_imu);
 
             // LBL noise.
-            for (unsigned i = 0; i < m_num_beacons; i++)
+            for (unsigned i = 0; i < m_ranging.getSize(); i++)
               m_kal.setMeasurementNoise(NUM_OUT + i, m_args.lbl_noise_with_imu);
           }
         }
@@ -340,7 +340,7 @@ namespace Navigation
             m_kal.setProcessNoise(STATE_Y, m_args.position_noise_with_imu);
 
             // LBL noise.
-            for (unsigned i = 0; i < m_num_beacons; i++)
+            for (unsigned i = 0; i < m_ranging.getSize(); i++)
               m_kal.setMeasurementNoise(NUM_OUT + i, m_args.lbl_noise_with_imu);
           }
           else if (msg->state == IMC::EntityActivationState::EAS_INACTIVE)
@@ -363,7 +363,7 @@ namespace Navigation
             m_kal.setProcessNoise(STATE_X, m_process_noise[PN_POSITION]);
             m_kal.setProcessNoise(STATE_Y, m_process_noise[PN_POSITION]);
 
-            for (unsigned i = 0; i < m_num_beacons; i++)
+            for (unsigned i = 0; i < m_ranging.getSize(); i++)
               m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
           }
         }
@@ -407,7 +407,7 @@ namespace Navigation
         void
         onConsumeLblConfig(void)
         {
-          if (m_kal.resize(NUM_OUT + m_num_beacons))
+          if (m_kal.resize(NUM_OUT + m_ranging.getSize()))
             Task::onUpdateParameters();
         }
 

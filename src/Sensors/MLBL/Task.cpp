@@ -633,7 +633,7 @@ namespace Sensors
       {
         m_range.setTimeStamp();
 
-        for (unsigned i = 0; i < c_max_beacons; ++i)
+        for (unsigned i = 0; i < Navigation::c_max_transponders; ++i)
         {
           try
           {
@@ -719,7 +719,7 @@ namespace Sensors
       ping(void)
       {
         std::vector<unsigned> freqs;
-        for (unsigned i = 0; i < c_max_beacons; ++i)
+        for (unsigned i = 0; i < Navigation::c_max_transponders; ++i)
         {
           if (i < m_beacons.size())
             freqs.push_back(m_beacons[i].tx_frequency);

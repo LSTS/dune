@@ -156,6 +156,26 @@ namespace DUNE
         return m_num_transponders;
       }
 
+      bool
+      exists(unsigned id)
+      {
+        return m_transponders[id] == 0;
+      }
+
+      void
+      getLocation(unsigned id, double* i, double* j, double* k)
+      {
+        *i =  m_transponders[id]->x;
+        *j =  m_transponders[id]->y;
+        *k =  m_transponders[id]->depth;
+      }
+
+      double
+      getDepth(unsigned id)
+      {
+        return m_transponders[id]->depth;
+      }
+
     private:
       //! Ranging transponder configuration.
       BasicTransponder* m_transponders[c_max_transponders];

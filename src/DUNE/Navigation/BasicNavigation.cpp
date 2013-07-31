@@ -196,8 +196,6 @@ namespace DUNE
       m_sum_euler_inc = false;
       m_alt_sanity = true;
       m_aligned = false;
-      std::memset(m_beacons, 0, sizeof(m_beacons));
-      m_num_beacons = 0;
       m_edelta_ts = 0.1;
       m_rpm = 0;
 
@@ -301,9 +299,6 @@ namespace DUNE
       Memory::clear(m_origin);
       Memory::clear(m_avg_heave);
       Memory::clear(m_avg_gps);
-
-      for (unsigned i = 0; i < c_max_beacons; ++i)
-        Memory::clear(m_beacons[i]);
     }
 
     void
@@ -524,6 +519,9 @@ namespace DUNE
         // Redefine origin.
         Memory::replace(m_origin, new IMC::GpsFix(*msg));
 
+        // Recalculate LBL positions.
+        m_ranging.updateOrigin(msg);
+
         // Save message to cache.
         IMC::CacheControl cop;
         cop.op = IMC::CacheControl::COP_STORE;
@@ -538,9 +536,6 @@ namespace DUNE
         // Set position estimate at the origin.
         m_kal.setState(STATE_X, 0);
         m_kal.setState(STATE_Y, 0);
-
-        // Recalculate LBL positions.
-        correctLBL();
 
         debug("defined new navigation reference");
         return;
@@ -628,11 +623,8 @@ namespace DUNE
       cop.message.set(*msg);
       dispatch(cop);
 
-      m_num_beacons = 0;
+      m_ranging.setup(msg);
 
-      IMC::MessageList<IMC::LblBeacon>::const_iterator itr = msg->beacons.begin();
-      for (unsigned i = 0; itr != msg->beacons.end(); ++itr, ++i)
-        addBeacon(i, *itr);
       onConsumeLblConfig();
     }
 
@@ -651,7 +643,7 @@ namespace DUNE
       uint8_t beacon = msg->id;
       float range = msg->range;
 
-      if ((m_beacons[beacon] == 0) || (beacon > m_num_beacons - 1) || (rejectLbl()))
+      if (m_ranging.exists(beacon) || (beacon > m_ranging.getSize() - 1) || (rejectLbl()))
       {
         m_lbl_ac.acceptance = IMC::LblRangeAcceptance::RR_NO_INFO;
         dispatch(m_lbl_ac, DF_KEEP_TIME);
@@ -666,10 +658,16 @@ namespace DUNE
         return;
       }
 
+      double x = 0.0;
+      double y = 0.0;
+      double z = 0.0;
+
+      m_ranging.getLocation(beacon, &x, &y, &z);
+
       // Compute expected range.
-      double dx = m_kal.getState(STATE_X) + m_dist_lbl_gps * std::cos(getEuler(AXIS_Z)) - m_beacons[beacon]->x;
-      double dy = m_kal.getState(STATE_Y) + m_dist_lbl_gps * std::sin(getEuler(AXIS_Z)) - m_beacons[beacon]->y;
-      double dz = getDepth() - m_beacons[beacon]->depth;
+      double dx = m_kal.getState(STATE_X) + m_dist_lbl_gps * std::cos(getEuler(AXIS_Z)) - x;
+      double dy = m_kal.getState(STATE_Y) + m_dist_lbl_gps * std::sin(getEuler(AXIS_Z)) - y;
+      double dz = getDepth() - z;
       double exp_range = std::sqrt(dx * dx + dy * dy + dz * dz);
 
       runKalmanLBL((int)beacon, range, dx, dy, exp_range);
@@ -804,28 +802,10 @@ namespace DUNE
       m_kal.resetState();
 
       // Possibly correct LBL locations.
-      correctLBL();
+      m_ranging.updateOrigin(m_origin);
 
       debug("setup completed");
       return true;
-    }
-
-    void
-    BasicNavigation::correctLBL(void)
-    {
-      // Correct LBL positions.
-      for (unsigned i = 0; i < c_max_beacons; i++)
-      {
-        if (m_beacons[i])
-        {
-          // This is relative to surface, thus using 0.0 as height value.
-          Coordinates::WGS84::displacement(m_origin->lat, m_origin->lon, 0.0,
-                                           m_beacons[i]->lat, m_beacons[i]->lon, m_beacons[i]->depth,
-                                           &m_beacons[i]->x, &m_beacons[i]->y);
-
-          debug("correcting beacon %d position (%0.2f, %0.2f, %0.2f)", i, m_beacons[i]->x, m_beacons[i]->y, m_beacons[i]->depth);
-        }
-      }
     }
 
     void
@@ -895,38 +875,6 @@ namespace DUNE
       m_uncertainty.x = m_kal.getCovariance(STATE_X, STATE_X);
       m_uncertainty.y = m_kal.getCovariance(STATE_Y, STATE_Y);
       m_navdata.cyaw = m_heading;
-    }
-
-    void
-    BasicNavigation::addBeacon(unsigned id, const IMC::LblBeacon* msg)
-    {
-      if (id >= c_max_beacons)
-      {
-        err(DTR("beacon id %d is greater than %d"), id, c_max_beacons);
-        return;
-      }
-
-      Memory::clear(m_beacons[id]);
-
-      if (msg == NULL)
-        return;
-
-      if (id + 1 > m_num_beacons)
-        m_num_beacons = id + 1;
-
-      LblBeaconXYZ* bp = new LblBeaconXYZ;
-      bp->lat = msg->lat;
-      bp->lon = msg->lon;
-      bp->depth = msg->depth;
-      // This is relative to surface thus using 0.0 as height reference.
-      Coordinates::WGS84::displacement(m_origin->lat, m_origin->lon, 0.0,
-                                       msg->lat, msg->lon, msg->depth,
-                                       &(bp->x), &(bp->y));
-
-      m_beacons[id] = bp;
-
-      debug("setting beacon %s (%0.2f, %0.2f, %0.2f)", msg->beacon.c_str(),
-            m_beacons[id]->x, m_beacons[id]->y, m_beacons[id]->depth);
     }
 
     bool
