@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-07-31 09:45+0100\n"
+        "POT-Creation-Date: 2013-07-31 10:24+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -89,9 +89,8 @@ msgid   "entity labels cannot be empty"
 msgstr  "лица этикетке не настроен"
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/EntityDataBase.hpp:75
-#, fuzzy
 msgid   "nonexistent entity label: "
-msgstr  "Главным образом ярлык лица"
+msgstr  "Главным образом ярлык лица: "
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/EntityDataBase.hpp:82
 #, fuzzy
@@ -216,7 +215,7 @@ msgid   "can't handle this -- some nodes are not part of simulation (yet?)"
 msgstr  "не может справиться с этим - некоторые узлы не являются частью моделирования (пока?)"
 
 #: /home/caladolsts/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:255
-#: /home/caladolsts/dune/src/Monitors/Collisions/Task.cpp:336
+#: /home/caladolsts/dune/src/Monitors/Collisions/Task.cpp:337
 msgid   "collision detected"
 msgstr  "обнаруживается конфликт"
 
@@ -249,7 +248,7 @@ msgstr  "обнаружения утечки"
 #: /home/caladolsts/dune/src/Monitors/Collisions/Task.cpp:190
 #, c-format
 msgid   "failed to resolve entity '%s': %s"
-msgstr  "не удалось решить субъекта %s ': %s"
+msgstr  "не удалось решить субъекта '%s': %s"
 
 #: /home/caladolsts/dune/src/Navigation/General/LBL/Task.cpp:325
 #: /home/caladolsts/dune/src/DUNE/Navigation/BasicNavigation.cpp:905
@@ -257,19 +256,19 @@ msgstr  "не удалось решить субъекта %s ': %s"
 msgid   "beacon id %d is greater than %d"
 msgstr  "маяк ID %d больше %d"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:236
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:237
 msgid   "motion detected"
 msgstr  "обнаружении движения"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:318
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:319
 msgid   "device is not active"
 msgstr  "Устройство не активно"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:326
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:327
 msgid   "device is not in proper medium"
 msgstr  "устройство не находится в соответствующей среде"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:338
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:339
 msgid   "calibrating: system must remain static"
 msgstr  "калибровки: система должна оставаться статической"
 
@@ -1491,7 +1490,7 @@ msgstr  "не удалось проверить связь маяки, моде�
 #: /home/caladolsts/dune/src/Sensors/MLBL/Task.cpp:906
 #, c-format
 msgid   "reported range to %s = %u m"
-msgstr  "сообщили диапазона %s %u = м"
+msgstr  "сообщили диапазона %s = %u м"
 
 #: /home/caladolsts/dune/src/Sensors/MLBL/Task.cpp:910
 #, c-format
@@ -1655,7 +1654,7 @@ msgstr  "остановили воспроизведение"
 #: /home/caladolsts/dune/src/Transports/FTP/Task.cpp:103
 #: /home/caladolsts/dune/src/Transports/UDP/Task.cpp:255
 #: /home/caladolsts/dune/src/Transports/TCP/Server/Task.cpp:120
-#, fuzzy, c-format
+#, c-format
 msgid   "listening on %s:%u"
 msgstr  "прослушивает порт %s:%u"
 
@@ -1712,6 +1711,17 @@ msgstr  "удаление журнала %s"
 msgid   "error accepting new client connection: %s"
 msgstr  "Ошибка принимать новые соединения с клиентом: %s"
 
+#: /home/caladolsts/dune/src/Transports/UDP/Task.cpp:244
+#: /home/caladolsts/dune/src/Transports/TCP/Server/Task.cpp:106
+#, c-format
+msgid   "failed to bind to port %u: %s"
+msgstr  "Не удалось выполнить привязку к порту %u: %s"
+
+#: /home/caladolsts/dune/src/Transports/UDP/Task.cpp:251
+#: /home/caladolsts/dune/src/Transports/UDP/Task.cpp:252
+msgid   "could not bind to a port"
+msgstr  "не удалось выполнить привязку к порту"
+
 #: /home/caladolsts/dune/src/Transports/UDP/Task.cpp:376
 #, c-format
 msgid   "activating transmission to node '%s'"
@@ -1721,11 +1731,6 @@ msgstr  "активация передачи узла '%s'"
 #, c-format
 msgid   "deactivating transmission to node '%s'"
 msgstr  "отключение передачи узла '%s'"
-
-#: /home/caladolsts/dune/src/Transports/TCP/Server/Task.cpp:106
-#, c-format
-msgid   "failed to bind to port %u: %s"
-msgstr  "Не удалось выполнить привязку к порту %u: %s"
 
 #: /home/caladolsts/dune/src/Transports/TCP/Server/Task.cpp:113
 msgid   "could not bind server socket"
@@ -3092,9 +3097,6 @@ msgstr  "Автомобиль Supervisor"
 
 #~ msgid        "failed to bind to port %lu: %s"
 #~ msgstr       "Не удалось выполнить привязку к порту %lu: %s"
-
-#~ msgid        "could not bind to a port"
-#~ msgstr       "не удалось выполнить привязку к порту"
 
 #~ msgid        "bound to port %u"
 #~ msgstr       "привязан к порту %u"

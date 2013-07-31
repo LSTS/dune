@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-07-31 09:45+0100\n"
+        "POT-Creation-Date: 2013-07-31 10:15+0100\n"
         "PO-Revision-Date: 2013-07-31 02:28-0000\n"
         "Last-Translator: Ricardo Martins <rasm@fe.up.pt>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -213,7 +213,7 @@ msgid   "can't handle this -- some nodes are not part of simulation (yet?)"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:255
-#: /home/caladolsts/dune/src/Monitors/Collisions/Task.cpp:336
+#: /home/caladolsts/dune/src/Monitors/Collisions/Task.cpp:337
 msgid   "collision detected"
 msgstr  "colisão detetada"
 
@@ -254,19 +254,19 @@ msgstr  "erro ao resolver entidade '%s': %s"
 msgid   "beacon id %d is greater than %d"
 msgstr  "id beacon %d é maior que %d"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:236
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:237
 msgid   "motion detected"
 msgstr  "movimento detectado"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:318
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:319
 msgid   "device is not active"
 msgstr  "dispositivo não está ativo"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:326
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:327
 msgid   "device is not in proper medium"
 msgstr  "dispositivo não está no meio apropriado"
 
-#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:338
+#: /home/caladolsts/dune/src/Navigation/General/Alignment/Task.cpp:339
 msgid   "calibrating: system must remain static"
 msgstr  "em calibração: o sistema deve permanecer estático"
 
@@ -1712,6 +1712,18 @@ msgstr  "a remover log %s"
 msgid   "error accepting new client connection: %s"
 msgstr  "erro ao aceitar ligação a novo cliente: %s"
 
+#: /home/caladolsts/dune/src/Transports/UDP/Task.cpp:244
+#: /home/caladolsts/dune/src/Transports/TCP/Server/Task.cpp:106
+#, c-format
+msgid   "failed to bind to port %u: %s"
+msgstr  "falhou a associar porto %u: %s"
+
+#: /home/caladolsts/dune/src/Transports/UDP/Task.cpp:251
+#: /home/caladolsts/dune/src/Transports/UDP/Task.cpp:252
+#, fuzzy
+msgid   "could not bind to a port"
+msgstr  "não foi possível associar socket do servidor"
+
 #: /home/caladolsts/dune/src/Transports/UDP/Task.cpp:376
 #, c-format
 msgid   "activating transmission to node '%s'"
@@ -1721,11 +1733,6 @@ msgstr  "a ativar transmissão para o nó '%s'"
 #, c-format
 msgid   "deactivating transmission to node '%s'"
 msgstr  "a desativar transmissão para o nó '%s'"
-
-#: /home/caladolsts/dune/src/Transports/TCP/Server/Task.cpp:106
-#, c-format
-msgid   "failed to bind to port %u: %s"
-msgstr  "falhou a associar porto %u: %s"
 
 #: /home/caladolsts/dune/src/Transports/TCP/Server/Task.cpp:113
 msgid   "could not bind server socket"
