@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-07-31 10:28+0100\n"
+        "POT-Creation-Date: 2013-07-31 11:21+0100\n"
         "PO-Revision-Date: 2013-07-31 02:28-0000\n"
         "Last-Translator: Ricardo Martins <rasm@fe.up.pt>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -551,6 +551,14 @@ msgstr  "não foi recebido valor de altitude válido, a manobra não irá prosse
 #, c-format
 msgid   "%s safe region (distance: %.1f m)"
 msgstr  "%s região segura (distância: %0.1f m)"
+
+#: /home/caladolsts/dune/src/DUNE/Maneuvers/StationKeep.cpp:104
+msgid   "inside"
+msgstr  "dentro"
+
+#: /home/caladolsts/dune/src/DUNE/Maneuvers/StationKeep.cpp:104
+msgid   "outside"
+msgstr  "fora"
 
 #: /home/caladolsts/dune/src/DUNE/Maneuvers/StationKeep.cpp:112
 #, c-format

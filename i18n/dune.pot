@@ -6,7 +6,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.3.0-rc1\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-07-31 10:28+0100\n"
+        "POT-Creation-Date: 2013-07-31 11:26+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -525,6 +525,14 @@ msgstr  ""
 #: /home/caladolsts/dune/src/DUNE/Maneuvers/StationKeep.cpp:103
 #, c-format
 msgid   "%s safe region (distance: %.1f m)"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Maneuvers/StationKeep.cpp:104
+msgid   "inside"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Maneuvers/StationKeep.cpp:104
+msgid   "outside"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/DUNE/Maneuvers/StationKeep.cpp:112
