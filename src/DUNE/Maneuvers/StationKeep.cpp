@@ -101,7 +101,7 @@ namespace DUNE
 
       if (m_inside != was_inside)
         m_task->inf(DTR("%s safe region (distance: %.1f m)"),
-                    m_inside ? "inside" : "outside", range);
+                    m_inside ? DTR("inside") : DTR("outside"), range);
 
       if (near_on)
       {
