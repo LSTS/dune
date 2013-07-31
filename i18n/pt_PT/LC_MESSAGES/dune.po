@@ -1060,7 +1060,7 @@ msgstr "número de série do dispositivo=%u"
 
 #: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:409
 msgid "successfuly zeroed device"
-msgstr ""
+msgstr "dispositivo zerado com sucesso"
 
 #: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:430
 msgid "unable to initialize the device"
@@ -1913,7 +1913,7 @@ msgstr "não alinhado"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:52
 msgid "aligning"
-msgstr ""
+msgstr "a alinhar"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:53
 msgid "aligned"
@@ -1965,11 +1965,11 @@ msgstr "ativo mas sem \"bottom lock\""
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:49
 msgid "Idle"
-msgstr ""
+msgstr "Ocioso"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:49
 msgid "Tracking"
-msgstr ""
+msgstr "Seguimento"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:49
 #: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:58
@@ -1978,15 +1978,15 @@ msgstr "Profundidade"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:49
 msgid "Unsafe"
-msgstr ""
+msgstr "Inseguro"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:49
 msgid "Avoiding"
-msgstr ""
+msgstr "Desvio"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:51
 msgid "BottomTrack"
-msgstr ""
+msgstr "SeguirFundo"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:300
 msgid "depth is reaching unacceptable values, forcing depth control"
