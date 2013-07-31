@@ -214,13 +214,13 @@ namespace Monitors
 
           if (r.transitions < m_args.max_transitions)
           {
-            war("%s : %s -> %s | %s", r.label.c_str(), DTR(c_state_desc[r.state]),
+            war("%s : %s -> %s | %s", DTR(r.label.c_str()), DTR(c_state_desc[r.state]),
                 DTR(c_state_desc[msg->state]), msg->description.c_str());
           }
           else if (r.transitions == m_args.max_transitions)
           {
             war(DTR("%s entity state is unstable (%s <-> %s), ignoring"),
-                r.label.c_str(), DTR(c_state_desc[r.state]), DTR(c_state_desc[msg->state]));
+                DTR(r.label.c_str()), DTR(c_state_desc[r.state]), DTR(c_state_desc[msg->state]));
           }
         }
 
@@ -229,7 +229,7 @@ namespace Monitors
         {
           r.transitions = 0;
 
-          war(DTR("%s : State stabilized in %s | %s"), r.label.c_str(),
+          war(DTR("%s : State stabilized in %s | %s"), DTR(r.label.c_str()),
               DTR(c_state_desc[msg->state]), msg->description.c_str());
         }
 
@@ -306,17 +306,17 @@ namespace Monitors
 
         if (!r.monitor)
         {
-          inf(DTR("%s - monitoring enabled"), r.label.c_str());
+          inf(DTR("%s - monitoring enabled"), DTR(r.label.c_str()));
 
           m_current.insert(eid);
           r.monitor = true;
 
           if (r.state != IMC::EntityState::ESTA_NORMAL && !startup)
-            err(DTR("%s - current state not normal - %s"), r.label.c_str(), DTR(c_state_desc[r.state]));
+            err(DTR("%s - current state not normal - %s"), DTR(r.label.c_str()), DTR(c_state_desc[r.state]));
         }
         else
         {
-          inf(DTR("%s - monitoring previously enabled"), r.label.c_str());
+          inf(DTR("%s - monitoring previously enabled"), DTR(r.label.c_str()));
         }
       }
 
@@ -329,14 +329,14 @@ namespace Monitors
 
         if (r.monitor)
         {
-          inf(DTR("%s - monitoring disabled"), r.label.c_str());
+          inf(DTR("%s - monitoring disabled"), DTR(r.label.c_str()));
 
           m_current.erase(eid);
           r.monitor = false;
         }
         else
         {
-          inf(DTR("%s - monitoring previously disabled"), r.label.c_str());
+          inf(DTR("%s - monitoring previously disabled"), DTR(r.label.c_str()));
         }
       }
 
@@ -360,7 +360,7 @@ namespace Monitors
           }
           catch (std::exception& e)
           {
-            inf(DTR("entity %s: %s"), lst[i].c_str(), e.what());
+            inf(DTR("entity %s: %s"), DTR(lst[i].c_str()), e.what());
           }
         }
 
@@ -438,7 +438,7 @@ namespace Monitors
             if (r.monitor)
             {
               err(DTR("%s -- status not reported after %0.2f seconds"),
-                  r.label.c_str(), m_args.report_timeout);
+                  DTR(r.label.c_str()), m_args.report_timeout);
 
               setLastError(r.label + DTR(": entity state timeout"));
             }
