@@ -70,7 +70,10 @@ namespace Plan
     static const char* c_lastchange_query_stmt
     = "select change_time, change_sid, change_sname from LastChange";
 
-    static const char* c_op_desc[] = {DTR("set plan"), DTR("delete plan"), DTR("get plan"), DTR("get plan info"), DTR("clear database"), DTR("database state"), DTR("database initialization")};
+    static const char* c_op_desc[] = {DTR_RT("set plan"), DTR_RT("delete plan"),
+                                      DTR_RT("get plan"), DTR_RT("get plan info"),
+                                      DTR_RT("clear database"), DTR_RT("database state"),
+                                      DTR_RT("database initialization")};
 
     struct Arguments
     {
@@ -594,11 +597,14 @@ namespace Plan
           case IMC::PlanDB::DBOP_CLEAR:
             {
               if (type == IMC::PlanDB::DBT_FAILURE)
-                err("%s (%s) -- %s", c_op_desc[m_reply.op], m_reply.plan_id.c_str(), desc);
+                err("%s (%s) -- %s", DTR(c_op_desc[m_reply.op]),
+                    m_reply.plan_id.c_str(), desc);
               else if (type == IMC::PlanDB::DBT_SUCCESS)
-                inf("%s (%s) -- %s", c_op_desc[m_reply.op], m_reply.plan_id.c_str(), desc);
+                inf("%s (%s) -- %s", DTR(c_op_desc[m_reply.op]),
+                    m_reply.plan_id.c_str(), desc);
               else
-                debug("%s (%s) -- %s", c_op_desc[m_reply.op], m_reply.plan_id.c_str(), desc);
+                debug("%s (%s) -- %s", DTR(c_op_desc[m_reply.op]),
+                      m_reply.plan_id.c_str(), desc);
             }
         }
       }

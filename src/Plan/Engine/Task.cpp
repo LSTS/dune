@@ -947,7 +947,7 @@ namespace Plan
           if (was_in_plan && !is_in_plan)
           {
             m_plan->planStopped();
-            changeLog("idle");
+            changeLog(DTR("idle"));
           }
         }
 
