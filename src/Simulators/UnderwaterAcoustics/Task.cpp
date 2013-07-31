@@ -212,7 +212,7 @@ namespace Simulators
       {
         if (!m_setup)
         {
-          err(DTR("not setup yet"));
+          debug("not setup yet");
           return;
         }
 
@@ -222,7 +222,7 @@ namespace Simulators
 
         if (d < 0)
         {
-          err(DTR("can't handle this -- some nodes are not part of simulation (yet?)"));
+          debug("can't handle this -- some nodes are not part of simulation (yet?)");
           return;
         }
 
