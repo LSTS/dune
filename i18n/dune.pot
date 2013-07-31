@@ -6,7 +6,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.3.0-rc1\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-07-31 18:52+0100\n"
+        "POT-Creation-Date: 2013-07-31 19:07+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -959,7 +959,7 @@ msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:224
 #, c-format
-msgid   "bad vertical control mode %d"
+msgid   "invalid vertical control mode %d"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:236
@@ -977,7 +977,7 @@ msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:291
 #, c-format
-msgid   "bad yaw control mode %d"
+msgid   "invalid yaw control mode %d"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:303
@@ -1978,7 +1978,8 @@ msgid   "%s -- status not reported after %0.2f seconds"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:443
-msgid   ": entity state timeout"
+#, c-format
+msgid   "%s: entity state timeout"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Monitors/Servos/Task.cpp:329
@@ -2123,7 +2124,7 @@ msgstr  ""
 #: /home/rasm/git/dune/dune/src/Transports/TCP/Server/Task.cpp:120
 #: /home/rasm/git/dune/dune/src/Transports/FTP/Task.cpp:103
 #: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:105
-#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:255
+#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:254
 #: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:128
 #, c-format
 msgid   "listening on %s:%u"
@@ -2271,22 +2272,18 @@ msgid   "no file is open"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:251
-#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:252
-msgid   "could not bind to a port"
+#: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:156
+msgid   "failed to find one available port"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:376
+#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:375
 #, c-format
 msgid   "activating transmission to node '%s'"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:381
+#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:380
 #, c-format
 msgid   "deactivating transmission to node '%s'"
-msgstr  ""
-
-#: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:156
-msgid   "failed to find one available port"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:366

@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-07-31 18:52+0100\n"
+        "POT-Creation-Date: 2013-07-31 19:07+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -977,8 +977,8 @@ msgid   "limiting depth to %.1f"
 msgstr  "предельная глубина %.1f"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:224
-#, c-format
-msgid   "bad vertical control mode %d"
+#, fuzzy, c-format
+msgid   "invalid vertical control mode %d"
 msgstr  "плохо вертикальном режиме управления %d"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:236
@@ -995,8 +995,8 @@ msgid   "getting too close to maximum admissible depth"
 msgstr  "слишком близко к максимально допустимой глубины"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:291
-#, c-format
-msgid   "bad yaw control mode %d"
+#, fuzzy, c-format
+msgid   "invalid yaw control mode %d"
 msgstr  "Неправильный режим рыскания %d"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:303
@@ -2001,7 +2001,8 @@ msgid   "%s -- status not reported after %0.2f seconds"
 msgstr  "%s - статус не сообщается после %0.2f секунд"
 
 #: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:443
-msgid   ": entity state timeout"
+#, fuzzy, c-format
+msgid   "%s: entity state timeout"
 msgstr  ": Государственное образование тайм-аут"
 
 #: /home/rasm/git/dune/dune/src/Monitors/Servos/Task.cpp:329
@@ -2146,7 +2147,7 @@ msgstr  "не удалось выполнить привязку сокета с
 #: /home/rasm/git/dune/dune/src/Transports/TCP/Server/Task.cpp:120
 #: /home/rasm/git/dune/dune/src/Transports/FTP/Task.cpp:103
 #: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:105
-#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:255
+#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:254
 #: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:128
 #, c-format
 msgid   "listening on %s:%u"
@@ -2294,23 +2295,19 @@ msgid   "no file is open"
 msgstr  "файл не открыт"
 
 #: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:251
-#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:252
-msgid   "could not bind to a port"
-msgstr  "не удалось выполнить привязку к порту"
+#: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:156
+msgid   "failed to find one available port"
+msgstr  "не удалось найти свободный порт"
 
-#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:376
+#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:375
 #, c-format
 msgid   "activating transmission to node '%s'"
 msgstr  "активация передачи узла '%s'"
 
-#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:381
+#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:380
 #, c-format
 msgid   "deactivating transmission to node '%s'"
 msgstr  "отключение передачи узла '%s'"
-
-#: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:156
-msgid   "failed to find one available port"
-msgstr  "не удалось найти свободный порт"
 
 #: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:366
 #, c-format
@@ -2855,6 +2852,9 @@ msgstr  "Подводные Simulator акустика"
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:115
 msgid   "Vehicle Supervisor"
 msgstr  "Автомобиль Supervisor"
+
+#~ msgid        "could not bind to a port"
+#~ msgstr       "не удалось выполнить привязку к порту"
 
 #~ msgid        "no cameras found!"
 #~ msgstr       "камеры не найден!"
