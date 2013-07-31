@@ -39,12 +39,12 @@ msgstr ""
 #: /home/rasm/git/dune/dune/src/Plan/Engine/ActionSchedule.hpp:368
 #, c-format
 msgid "schedule: %s active on time, +%.1f seconds"
-msgstr ""
+msgstr "ações: %s ativo atempadamente, +%.1f segundos"
 
 #: /home/rasm/git/dune/dune/src/Plan/Engine/ActionSchedule.hpp:371
 #, c-format
 msgid "schedule: %s activation missed deadline, %.1f seconds"
-msgstr ""
+msgstr "ações: %s ativação atrasada, %.1f segundos"
 
 #: /home/rasm/git/dune/dune/src/Plan/Engine/ActionSchedule.hpp:484
 #, fuzzy, c-format
@@ -65,7 +65,7 @@ msgstr ": manobra não suportada"
 
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Plan.hpp:190
 msgid ": maneuver has no incoming transition and it's not the initial maneuver"
-msgstr ""
+msgstr ": a manobra não sucede a nenhuma transição e não é a manobra inicial"
 
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Plan.hpp:203
 msgid ": invalid start maneuver"
@@ -97,7 +97,7 @@ msgstr "identificação de identidade inválida: "
 
 #: /home/rasm/git/dune/dune/src/DUNE/Tasks/EntityDataBase.hpp:89
 msgid "an unique id was already reserved for entity label: "
-msgstr ""
+msgstr "já tinha sido reservado um id único para a etiqueta de entidade: "
 
 #: /home/rasm/git/dune/dune/src/DUNE/Tasks/Exceptions.hpp:90
 #, c-format
@@ -120,13 +120,12 @@ msgstr "tempo limite atingido ao ler resposta"
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:79
 #, c-format
 msgid "buffer has %u bytes, needed %u"
-msgstr ""
+msgstr "trama tem %u bytes, devia ter %u"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:92
 #, c-format
 msgid "invalid checksum: should be %02X%02X but received %02X%02X"
-msgstr ""
-"soma de verificação inválida: devia ser %02X%02X, mas foi recebido %02X%02X"
+msgstr "soma de verificação inválida: devia ser %02X%02X, mas foi recebido %02X%02X"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:105
 #, c-format
@@ -165,7 +164,7 @@ msgstr "ligação terminada"
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.hpp:148
 #, c-format
 msgid "yaw control mode %d not supported"
-msgstr ""
+msgstr "modo de controlo azimute %d não é suportado"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.hpp:158
 #, c-format
@@ -214,7 +213,7 @@ msgstr "recebido pedido de abortar de '%s'"
 #: /home/rasm/git/dune/dune/src/Autonomy/TREX/Task.cpp:130
 #, c-format
 msgid "TREX disconnected for more than %d seconds"
-msgstr ""
+msgstr "TREX desligado durante mais do que %d segundos"
 
 #: /home/rasm/git/dune/dune/src/Simulators/VSIM/Task.cpp:140
 msgid "error loading world parameters."
@@ -431,21 +430,21 @@ msgstr "modelo inválido"
 
 #: /home/rasm/git/dune/dune/src/Monitors/FuelLevel/Task.cpp:273
 msgid "operation mode list labels and values have different sizes"
-msgstr ""
+msgstr "lista de modos de operação e de valores têm tamanhos diferentes"
 
 #: /home/rasm/git/dune/dune/src/Monitors/FuelLevel/Task.cpp:281
 msgid "invalid opmode value (zero)"
-msgstr ""
+msgstr "modo de operação inválido (zero)"
 
 #: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:242
 #, c-format
 msgid "%s -- operational limit breached: %0.2f > %0.2f"
-msgstr ""
+msgstr "%s -- limite de operação violado: %0.2f > %0.2f"
 
 #: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:255
 #, c-format
 msgid "%s -- operational limit now sane: %0.2f <= %0.2f"
-msgstr ""
+msgstr "%s -- limite de operação já está são: %0.2f <= %0.2f"
 
 #: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:330
 msgid "minimum speed"
@@ -477,7 +476,7 @@ msgstr "Área Operacional"
 
 #: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
 msgid "Boot"
-msgstr ""
+msgstr "Arranque"
 
 #: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
 msgid "Normal"
@@ -497,9 +496,8 @@ msgstr "Falha"
 
 #: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:184
 #, c-format
-msgid ""
-"can not monitor %s (%s), is there a task failure or a configuration error?"
-msgstr ""
+msgid "can not monitor %s (%s), is there a task failure or a configuration error?"
+msgstr "incapaz de monitorizar %s (%s), haverá falha na tarefa ou erro de configuração?"
 
 #: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:195
 msgid "EntityState message without source entity"
@@ -728,7 +726,7 @@ msgstr "incapaz de carregador plano agora"
 
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:605
 msgid "plan load failed: undefined maneuver or plan"
-msgstr ""
+msgstr "carregamento de plano falhado: manobra ou plano não definidos"
 
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:618
 msgid "plan load failed: "
@@ -1027,11 +1025,11 @@ msgstr ""
 
 #: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:253
 msgid "echo handling enabled, but got no RS-485 echo"
-msgstr ""
+msgstr "habilitado processamento de eco, mas não foi recebido eco RS-485"
 
 #: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:263
 msgid "received RS-485 echo doesn't match"
-msgstr ""
+msgstr "eco RS-485 recebido não coincide"
 
 #: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:300
 msgid "invalid CRC"
@@ -1039,7 +1037,7 @@ msgstr "CRC inválido"
 
 #: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:302
 msgid "exceeded maximum consecutive CRC error count"
-msgstr ""
+msgstr "excedido número máximo de erros CRC consecutivos"
 
 #: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:380
 msgid "device not initialized, initializing"
@@ -1048,12 +1046,12 @@ msgstr "dispositivo não está inicializado, a inicializar"
 #: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:386
 #, c-format
 msgid "got exception %d for command %d"
-msgstr ""
+msgstr "lançada exceção %d para o comando %d"
 
 #: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:397
 #, c-format
 msgid "initialized device: class=%d.%d firmware=%d"
-msgstr ""
+msgstr "dispositivo inicializado: class=%d.%d firmware=%d""
 
 #: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:403
 #, c-format
@@ -1074,7 +1072,7 @@ msgstr "falha ao obter o número de série"
 
 #: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:456
 msgid "unable to zero the device"
-msgstr ""
+msgstr "incapaz de zerar o dispositivo"
 
 #: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:262
 #: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:152
@@ -1237,7 +1235,7 @@ msgstr "transdutor não está ligado"
 
 #: /home/rasm/git/dune/dune/src/Sensors/MLBLTracker/Task.cpp:606
 msgid "range to"
-msgstr ""
+msgstr "distância para"
 
 #: /home/rasm/git/dune/dune/src/Sensors/DLV3/Task.cpp:174
 msgid "waking device"
@@ -1275,7 +1273,7 @@ msgstr "a recomeçar para mudar porta TCP de dados"
 #: /home/rasm/git/dune/dune/src/Sensors/XR620CTD/Task.cpp:460
 #, c-format
 msgid "parse error: %s"
-msgstr ""
+msgstr "processamento do erro: %s"
 
 #: /home/rasm/git/dune/dune/src/Sensors/SCH311X/Task.cpp:101
 #, c-format
@@ -1334,7 +1332,7 @@ msgstr "falha ao entrar em modo de monitorização"
 
 #: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:146
 msgid "input timeout"
-msgstr ""
+msgstr "tempo para input excedido"
 
 #: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:155
 msgid "I/O error"
@@ -1523,15 +1521,15 @@ msgstr "i2c"
 
 #: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:83
 msgid "power"
-msgstr ""
+msgstr "fonte de energia"
 
 #: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:84
 msgid "hall"
-msgstr ""
+msgstr "sensores de hall"
 
 #: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:85
 msgid "rotor locked"
-msgstr ""
+msgstr "rótor bloqueado"
 
 #: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:86
 msgid "mcu temperature"
@@ -1539,7 +1537,7 @@ msgstr "temperatura do mcu"
 
 #: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:87
 msgid "bridge temperature"
-msgstr ""
+msgstr "temperatura da ponte"
 
 #: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:88
 msgid "motor temperature"
@@ -1547,9 +1545,7 @@ msgstr "temperatura do motor"
 
 #: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:238
 msgid "Motor control mode must be one of 'none', 'voltage', 'current', 'rpm'"
-msgstr ""
-"Controlo de motor tem de ser feito através de 'none', 'voltage', 'current', "
-"'rpm'"
+msgstr "Controlo de motor tem de ser feito através de 'none', 'voltage', 'current', 'rpm'"
 
 #: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:312
 #, c-format
@@ -1558,7 +1554,7 @@ msgstr "erro do dispositivo: %s"
 
 #: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:318
 msgid "power is not good"
-msgstr ""
+msgstr "fonte de energia não está sã"
 
 #: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:322
 msgid "device init error, requesting reset"
@@ -1594,7 +1590,7 @@ msgstr "valor inválido para 'Thruster Id'"
 #: /home/rasm/git/dune/dune/src/Actuators/SCRTv4/Task.cpp:280
 #, fuzzy
 msgid "error"
-msgstr "Erro"
+msgstr "erro"
 
 #: /home/rasm/git/dune/dune/src/Actuators/SCRT/Task.cpp:350
 #, c-format
@@ -1608,7 +1604,7 @@ msgstr "incerteza posição é %0.2f m"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Navigation/BasicNavigation.cpp:1055
 msgid "No depth measurements available"
-msgstr ""
+msgstr "Medidas de profundidade indisponíveis"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:47
 msgid "Print this message and exit"
