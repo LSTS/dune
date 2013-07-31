@@ -351,7 +351,7 @@ namespace Navigation
 
             m_aligned = false;
             m_agvel_eid = getAhrsId();
-            debug("deactivating IMU");
+            spew("deactivating IMU");
 
             m_kal.setState(STATE_PSI, getHeading());
             m_kal.setState(STATE_PSI_BIAS, 0.0);
