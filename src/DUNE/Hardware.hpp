@@ -39,7 +39,6 @@ namespace DUNE
 #include <DUNE/Hardware/I2C.hpp>
 #include <DUNE/Hardware/IOPort.hpp>
 #include <DUNE/Hardware/GPIO.hpp>
-#include <DUNE/Hardware/Modem.hpp>
 #include <DUNE/Hardware/Buttons.hpp>
 #include <DUNE/Hardware/PPS.hpp>
 #include <DUNE/Hardware/IntelHEX.hpp>
