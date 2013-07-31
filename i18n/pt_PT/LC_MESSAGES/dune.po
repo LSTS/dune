@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-07-31 09:09+0100\n"
+        "POT-Creation-Date: 2013-07-31 09:45+0100\n"
         "PO-Revision-Date: 2013-07-31 02:28-0000\n"
         "Last-Translator: Ricardo Martins <rasm@fe.up.pt>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -802,13 +802,14 @@ msgstr  "Frequência com que a tarefa é executada"
 #: /home/caladolsts/dune/src/DUNE/Status/Messages.cpp:40
 #: /home/caladolsts/dune/src/Sensors/MLBL/Task.cpp:303
 #: /home/caladolsts/dune/src/Sensors/OS4000/Task.cpp:146
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:133
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:136
 #: /home/caladolsts/dune/src/Plan/Engine/Task.cpp:992
 msgid   "initializing"
 msgstr  "a iniciar"
 
 #: /home/caladolsts/dune/src/DUNE/Status/Messages.cpp:41
 #: /home/caladolsts/dune/src/Sensors/MLBL/Task.cpp:307
+#: /home/caladolsts/dune/src/Plan/Engine/Task.cpp:950
 msgid   "idle"
 msgstr  "ocioso"
 
@@ -944,7 +945,7 @@ msgid   "invalid error code"
 msgstr  "código de erro inválido"
 
 #: /home/caladolsts/dune/src/DUNE/Control/PathController.cpp:278
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:260
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:263
 msgid   "not active"
 msgstr  "inativo"
 
@@ -993,7 +994,7 @@ msgstr  "tempo limite atingido à espera de modo de controlo vertical"
 
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.cpp:261
 #, c-format
-msgid   "bottom tracking not viable, water column is not deep enough ( %0.2f < %0.2f )"
+msgid   "water column not deep enough for altitude control ( %0.2f < %0.2f )"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.cpp:280
@@ -1018,7 +1019,7 @@ msgid   "Tracking"
 msgstr  "Seguimento"
 
 #: /home/caladolsts/dune/src/DUNE/Control/BottomTracker.cpp:50
-#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:58
+#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:59
 msgid   "Depth"
 msgstr  "Profundidade"
 
@@ -1762,89 +1763,89 @@ msgstr  "definir plano"
 msgid   "delete plan"
 msgstr  "apagar plano"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:73
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:74
 msgid   "get plan"
 msgstr  "obter plano"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:73
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:74
 msgid   "get plan info"
 msgstr  "obter informação de plano"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:73
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:75
 msgid   "clear database"
 msgstr  "limpar base de dados"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:73
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:75
 msgid   "database state"
 msgstr  "estado da base de dados"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:73
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:76
 msgid   "database initialization"
 msgstr  "inicialização da base de dados"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:137
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:140
 #: /home/caladolsts/dune/src/Plan/Engine/Task.cpp:295
 #, c-format
 msgid   "database file: '%s'"
 msgstr  "ficheiro de base de dados: '%s'"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:167
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:170
 msgid   "initialization complete"
 msgstr  "inicialização completa"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:214
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:217
 #, c-format
 msgid   "storing plan '%s' issued through a PlanControl request"
 msgstr  "a guardar plano '%s' pedido através do PlanControl"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:244
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:247
 msgid   "unexpected message"
 msgstr  "mensagem não esperada"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:290
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:293
 msgid   "unsupported operation"
 msgstr  "operação não suportada"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:322
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:325
 msgid   "database is corrupt"
 msgstr  "base de dados corrompida"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:330
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:406
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:441
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:476
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:333
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:409
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:444
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:479
 #: /home/caladolsts/dune/src/Plan/Engine/Task.cpp:746
 msgid   "undefined plan id"
 msgstr  "plan ID não identificado"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:338
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:341
 msgid   "no plan specification given"
 msgstr  "especificação de plano não recebida"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:344
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:347
 msgid   "plan id mismatch"
 msgstr  "incompatibilidade plan id"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:398
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:401
 msgid   "OK (updated)"
 msgstr  "OK (atualizado)"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:398
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:401
 msgid   "OK (new entry)"
 msgstr  "OK (nova entrada)"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:431
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:452
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:486
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:434
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:455
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:489
 #: /home/caladolsts/dune/src/Plan/Engine/Task.cpp:756
 msgid   "undefined plan"
 msgstr  "plano indefinido"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:607
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:613
 msgid   "in progress"
 msgstr  "em progresso"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:619
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:625
 #: /home/caladolsts/dune/src/Plan/Engine/Task.cpp:909
 #: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:486
 msgid   "OK"
@@ -2049,13 +2050,13 @@ msgid   "no leak"
 msgstr  "sem fugas"
 
 #: /home/caladolsts/dune/src/Control/AUV/LMI/Task.cpp:89
-#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:148
+#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:150
 #: /home/caladolsts/dune/src/Control/AUV/Allocator/Task.cpp:81
 msgid   "Maximum Fin Rotation"
 msgstr  "Máxima Rotação de Lemes"
 
 #: /home/caladolsts/dune/src/Control/AUV/LMI/Task.cpp:92
-#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:151
+#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:153
 #: /home/caladolsts/dune/src/Control/AUV/Allocator/Task.cpp:84
 msgid   "Maximum admissible fin rotation"
 msgstr  "Máxima rotação admissível de lemes"
@@ -2073,16 +2074,16 @@ msgstr  "Roll"
 msgid   "Pitch"
 msgstr  "Pitch"
 
-#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:58
+#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:59
 msgid   "Heading"
 msgstr  "Orientação"
 
-#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:58
+#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:60
 msgid   "Heading Rate"
 msgstr  "Rate de Orientação"
 
-#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:153
 #: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:155
+#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:157
 msgid   "Enable roll controller"
 msgstr  "Habilitar controlador de roll"
 

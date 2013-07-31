@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-07-31 09:09+0100\n"
+        "POT-Creation-Date: 2013-07-31 09:45+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -100,7 +100,7 @@ msgstr  "недействительный блок Z: %s"
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/EntityDataBase.hpp:89
 msgid   "an unique id was already reserved for entity label: "
-msgstr  ""
+msgstr  "уникальный идентификатор был уже зарезервирован для лица этикетке: "
 
 #: /home/caladolsts/dune/src/DUNE/Hardware/Exceptions.hpp:57
 msgid   "unexpected reply"
@@ -751,7 +751,7 @@ msgstr  "Активная - Сфера"
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:224
 msgid   "Scoped of the 'Active' parameter"
-msgstr  ""
+msgstr  "Сфера применения 'Активные' параметра"
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:227
 msgid   "Active - Visibility"
@@ -759,7 +759,7 @@ msgstr  "Активная - Видимость"
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:231
 msgid   "Visibility of the 'Active' parameter"
-msgstr  ""
+msgstr  "Видимость 'Активные' параметра"
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:233
 msgid   "Active"
@@ -767,7 +767,7 @@ msgstr  "Активный"
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:237
 msgid   "True to activate task, false otherwise"
-msgstr  ""
+msgstr  "Правда, чтобы активировать задачу, иначе ложь"
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:460
 msgid   "restarting"
@@ -804,13 +804,14 @@ msgstr  "Частота, на которой выполняется задача
 #: /home/caladolsts/dune/src/DUNE/Status/Messages.cpp:40
 #: /home/caladolsts/dune/src/Sensors/MLBL/Task.cpp:303
 #: /home/caladolsts/dune/src/Sensors/OS4000/Task.cpp:146
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:133
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:136
 #: /home/caladolsts/dune/src/Plan/Engine/Task.cpp:992
 msgid   "initializing"
 msgstr  "инициализации"
 
 #: /home/caladolsts/dune/src/DUNE/Status/Messages.cpp:41
 #: /home/caladolsts/dune/src/Sensors/MLBL/Task.cpp:307
+#: /home/caladolsts/dune/src/Plan/Engine/Task.cpp:950
 msgid   "idle"
 msgstr  "холостом ходу"
 
@@ -945,7 +946,7 @@ msgid   "invalid error code"
 msgstr  "неверный код ошибки"
 
 #: /home/caladolsts/dune/src/DUNE/Control/PathController.cpp:278
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:260
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:263
 msgid   "not active"
 msgstr  "не активна"
 
@@ -981,7 +982,7 @@ msgstr  "Нет действительных измерений высоты"
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.cpp:169
 #, c-format
 msgid   "limiting depth to %.1f"
-msgstr  ""
+msgstr  "предельная глубина %.1f"
 
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.cpp:224
 #, c-format
@@ -993,13 +994,13 @@ msgid   "timed out while waiting for vertical control mode"
 msgstr  "истекло время ожидания для вертикального режима управления"
 
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.cpp:261
-#, c-format
-msgid   "bottom tracking not viable, water column is not deep enough ( %0.2f < %0.2f )"
+#, fuzzy, c-format
+msgid   "water column not deep enough for altitude control ( %0.2f < %0.2f )"
 msgstr  "нижняя отслеживанию не жизнеспособна, толщу воды не достаточно глубоко (%0.2f <%0.2f)"
 
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.cpp:280
 msgid   "getting too close to maximum admissible depth"
-msgstr  ""
+msgstr  "слишком близко к максимально допустимой глубины"
 
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.cpp:291
 #, c-format
@@ -1019,7 +1020,7 @@ msgid   "Tracking"
 msgstr  "Отслеживание"
 
 #: /home/caladolsts/dune/src/DUNE/Control/BottomTracker.cpp:50
-#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:58
+#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:59
 msgid   "Depth"
 msgstr  "Глубина"
 
@@ -1660,7 +1661,7 @@ msgstr  "прослушивает порт %u"
 
 #: /home/caladolsts/dune/src/Transports/Discovery/Task.cpp:112
 msgid   "no available ports to listen to advertisements"
-msgstr  ""
+msgstr  "отсутствуют доступные порты не слушать рекламу"
 
 #: /home/caladolsts/dune/src/Transports/Discovery/Task.cpp:125
 #, fuzzy
@@ -1670,22 +1671,22 @@ msgstr  "отбрасывая %d байт"
 #: /home/caladolsts/dune/src/Transports/Discovery/Task.cpp:132
 #, c-format
 msgid   "discarding spurious message '%s'"
-msgstr  ""
+msgstr  "отбросив ложный '%s' сообщение"
 
 #: /home/caladolsts/dune/src/Transports/Discovery/Task.cpp:187
 #, c-format
 msgid   "new node within range '%s' / %u / %s"
-msgstr  ""
+msgstr  "Новый узел в пределах диапазона '%s' / %u / %s"
 
 #: /home/caladolsts/dune/src/Transports/Discovery/Task.cpp:198
 #, c-format
 msgid   "another node on this computer is advertising our node name '%s'"
-msgstr  ""
+msgstr  "другой узел на этом компьютере рекламы наших имя узла '%s'"
 
 #: /home/caladolsts/dune/src/Transports/Discovery/Task.cpp:200
 #, c-format
 msgid   "another node on our network is advertising our node name '%s'"
-msgstr  ""
+msgstr  "другой узел нашей сети рекламы наших имя узла '%s'"
 
 #: /home/caladolsts/dune/src/Transports/GSM/Task.cpp:211
 msgid   "SMS timeout cannot be zero"
@@ -1762,89 +1763,89 @@ msgstr  "установлен план"
 msgid   "delete plan"
 msgstr  "удалить плана"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:73
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:74
 msgid   "get plan"
 msgstr  "получить план"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:73
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:74
 msgid   "get plan info"
 msgstr  "получить план информация"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:73
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:75
 msgid   "clear database"
 msgstr  "очистить базу данных"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:73
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:75
 msgid   "database state"
 msgstr  "состояние базы данных"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:73
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:76
 msgid   "database initialization"
 msgstr  "инициализации базы данных"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:137
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:140
 #: /home/caladolsts/dune/src/Plan/Engine/Task.cpp:295
 #, c-format
 msgid   "database file: '%s'"
 msgstr  "Файл базы данных: '%s'"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:167
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:170
 msgid   "initialization complete"
 msgstr  "полная инициализация"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:214
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:217
 #, c-format
 msgid   "storing plan '%s' issued through a PlanControl request"
 msgstr  "хранение план »%s 'выпущены через PlanControl запросу"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:244
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:247
 msgid   "unexpected message"
 msgstr  "неожиданное сообщение"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:290
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:293
 msgid   "unsupported operation"
 msgstr  "недопустимую операцию"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:322
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:325
 msgid   "database is corrupt"
 msgstr  "база данных повреждена"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:330
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:406
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:441
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:476
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:333
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:409
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:444
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:479
 #: /home/caladolsts/dune/src/Plan/Engine/Task.cpp:746
 msgid   "undefined plan id"
 msgstr  "неопределенная ID плана"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:338
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:341
 msgid   "no plan specification given"
 msgstr  "Нет плана техническим требованиям, приведенным"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:344
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:347
 msgid   "plan id mismatch"
 msgstr  "несоответствие плана ID"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:398
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:401
 msgid   "OK (updated)"
 msgstr  "OK (обновлено)"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:398
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:401
 msgid   "OK (new entry)"
 msgstr  "OK (впервые в списке)"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:431
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:452
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:486
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:434
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:455
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:489
 #: /home/caladolsts/dune/src/Plan/Engine/Task.cpp:756
 msgid   "undefined plan"
 msgstr  "неопределенная плана"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:607
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:613
 msgid   "in progress"
 msgstr  "В прогрессе"
 
-#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:619
+#: /home/caladolsts/dune/src/Plan/DB/Task.cpp:625
 #: /home/caladolsts/dune/src/Plan/Engine/Task.cpp:909
 #: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:486
 msgid   "OK"
@@ -2049,13 +2050,13 @@ msgid   "no leak"
 msgstr  "Нет утечки"
 
 #: /home/caladolsts/dune/src/Control/AUV/LMI/Task.cpp:89
-#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:148
+#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:150
 #: /home/caladolsts/dune/src/Control/AUV/Allocator/Task.cpp:81
 msgid   "Maximum Fin Rotation"
 msgstr  "Максимальное вращение Fin"
 
 #: /home/caladolsts/dune/src/Control/AUV/LMI/Task.cpp:92
-#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:151
+#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:153
 #: /home/caladolsts/dune/src/Control/AUV/Allocator/Task.cpp:84
 msgid   "Maximum admissible fin rotation"
 msgstr  "Максимально допустимая вращения плавников"
@@ -2072,16 +2073,16 @@ msgstr  "Катиться"
 msgid   "Pitch"
 msgstr  "Шаг"
 
-#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:58
+#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:59
 msgid   "Heading"
 msgstr  "Заголовок"
 
-#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:58
+#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:60
 msgid   "Heading Rate"
 msgstr  "Заголовок Оценить"
 
-#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:153
 #: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:155
+#: /home/caladolsts/dune/src/Control/AUV/Attitude/Task.cpp:157
 msgid   "Enable roll controller"
 msgstr  "Включить рулон контроллера"
 
