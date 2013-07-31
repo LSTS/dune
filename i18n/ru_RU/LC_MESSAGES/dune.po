@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-07-31 19:07+0100\n"
+        "POT-Creation-Date: 2013-07-31 19:53+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -865,6 +865,7 @@ msgid   "missing data"
 msgstr  "недостающие данные"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:63
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:56
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:42
 msgid   "invalid checksum"
 msgstr  "неверной контрольной суммы"
@@ -1044,30 +1045,42 @@ msgstr  "Работы тормозной"
 msgid   "Stopped braking"
 msgstr  "Остановлено торможение"
 
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:51
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:40
 msgid   "invalid command"
 msgstr  "неверная команда"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:41
-msgid   "invalid command arguments"
-msgstr  "неверные аргументы команды"
-
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:52
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:43
 msgid   "lost synchronization"
 msgstr  "потерял синхронизацию"
 
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:53
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:44
 msgid   "parser error"
 msgstr  "синтаксической ошибке"
 
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:54
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:45
 msgid   "data overrun"
 msgstr  "Данные перерасход"
 
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:55
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:46
 msgid   "buffer overflow"
 msgstr  "переполнение буфера"
 
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:57
+#, fuzzy
+msgid   "parser bug"
+msgstr  "синтаксической ошибке"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:58
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:41
+msgid   "invalid command arguments"
+msgstr  "неверные аргументы команды"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:59
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:47
 msgid   "unknown error"
 msgstr  "Неизвестная ошибка"
@@ -1455,7 +1468,8 @@ msgid   "Device is calibrated"
 msgstr  "Прибор калибруется"
 
 #: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:170
-msgid   "Calibration error. Need to restart"
+#, fuzzy
+msgid   "Calibration error, calibration procedure must be restarted"
 msgstr  "Ошибка калибровки. Необходимо перезапустить"
 
 #: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:410
@@ -2015,14 +2029,6 @@ msgstr  "потенциальные неисправности сервопри�
 msgid   "potential fault in servo#%d, current consumption above %f"
 msgstr  "потенциальные неисправности сервопривода # %d, потребляемый ток выше %f"
 
-#: /home/rasm/git/dune/dune/src/Monitors/LostComms/Task.cpp:79
-msgid   "Lost Comms Plan"
-msgstr  "Забыли Comms плана"
-
-#: /home/rasm/git/dune/dune/src/Monitors/LostComms/Task.cpp:81
-msgid   "Plan to be executed in case of Lost Communications"
-msgstr  "План, который будет выполняться в случае потери связи"
-
 #: /home/rasm/git/dune/dune/src/Autonomy/TREX/Task.cpp:130
 #, c-format
 msgid   "TREX disconnected for more than %d seconds"
@@ -2378,14 +2384,6 @@ msgstr  "ошибка при загрузке мировых показател�
 #: /home/rasm/git/dune/dune/src/Simulators/VSIM/Task.cpp:144
 msgid   "error loading vehicle parameters."
 msgstr  "ошибка при загрузке параметров автомобиля."
-
-#: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:215
-msgid   "not setup yet"
-msgstr  "не установка еще"
-
-#: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:225
-msgid   "can't handle this -- some nodes are not part of simulation (yet?)"
-msgstr  "не может справиться с этим - некоторые узлы не являются частью моделирования (пока?)"
 
 #: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:383
 #, c-format
@@ -2852,6 +2850,18 @@ msgstr  "Подводные Simulator акустика"
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:115
 msgid   "Vehicle Supervisor"
 msgstr  "Автомобиль Supervisor"
+
+#~ msgid        "Lost Comms Plan"
+#~ msgstr       "Забыли Comms плана"
+
+#~ msgid        "Plan to be executed in case of Lost Communications"
+#~ msgstr       "План, который будет выполняться в случае потери связи"
+
+#~ msgid        "not setup yet"
+#~ msgstr       "не установка еще"
+
+#~ msgid        "can't handle this -- some nodes are not part of simulation (yet?)"
+#~ msgstr       "не может справиться с этим - некоторые узлы не являются частью моделирования (пока?)"
 
 #~ msgid        "could not bind to a port"
 #~ msgstr       "не удалось выполнить привязку к порту"

@@ -6,7 +6,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.3.0-rc1\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-07-31 19:07+0100\n"
+        "POT-Creation-Date: 2013-07-31 19:53+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -846,6 +846,7 @@ msgid   "missing data"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:63
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:56
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:42
 msgid   "invalid checksum"
 msgstr  ""
@@ -1025,30 +1026,41 @@ msgstr  ""
 msgid   "Stopped braking"
 msgstr  ""
 
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:51
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:40
 msgid   "invalid command"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:41
-msgid   "invalid command arguments"
-msgstr  ""
-
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:52
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:43
 msgid   "lost synchronization"
 msgstr  ""
 
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:53
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:44
 msgid   "parser error"
 msgstr  ""
 
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:54
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:45
 msgid   "data overrun"
 msgstr  ""
 
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:55
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:46
 msgid   "buffer overflow"
 msgstr  ""
 
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:57
+msgid   "parser bug"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:58
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:41
+msgid   "invalid command arguments"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:59
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:47
 msgid   "unknown error"
 msgstr  ""
@@ -1432,7 +1444,7 @@ msgid   "Device is calibrated"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:170
-msgid   "Calibration error. Need to restart"
+msgid   "Calibration error, calibration procedure must be restarted"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:410
@@ -1992,14 +2004,6 @@ msgstr  ""
 msgid   "potential fault in servo#%d, current consumption above %f"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Monitors/LostComms/Task.cpp:79
-msgid   "Lost Comms Plan"
-msgstr  ""
-
-#: /home/rasm/git/dune/dune/src/Monitors/LostComms/Task.cpp:81
-msgid   "Plan to be executed in case of Lost Communications"
-msgstr  ""
-
 #: /home/rasm/git/dune/dune/src/Autonomy/TREX/Task.cpp:130
 #, c-format
 msgid   "TREX disconnected for more than %d seconds"
@@ -2354,14 +2358,6 @@ msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Simulators/VSIM/Task.cpp:144
 msgid   "error loading vehicle parameters."
-msgstr  ""
-
-#: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:215
-msgid   "not setup yet"
-msgstr  ""
-
-#: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:225
-msgid   "can't handle this -- some nodes are not part of simulation (yet?)"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:383
