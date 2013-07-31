@@ -91,22 +91,22 @@ namespace Actuators
         switch (msg->action)
         {
           case IMC::CameraZoom::ACTION_ZOOM_RESET:
-            inf(DTR("zoom reset"));
+            spew("zoom reset");
             cmd = 'W';
             m_uart->write(&cmd, 1);
             break;
           case IMC::CameraZoom::ACTION_ZOOM_STOP:
-            inf(DTR("zoom stop"));
+            spew("zoom stop");
             cmd = 'Z';
             m_uart->write(&cmd, 1);
             break;
           case IMC::CameraZoom::ACTION_ZOOM_IN:
-            inf(DTR("zoom in"));
+            spew("zoom in");
             cmd = 'T';
             m_uart->write(&cmd, 1);
             break;
           case IMC::CameraZoom::ACTION_ZOOM_OUT:
-            inf(DTR("zoom out"));
+            spew("zoom out");
             cmd = 'W';
             m_uart->write(&cmd, 1);
             break;
