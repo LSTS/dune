@@ -62,7 +62,8 @@ namespace Autonomy
         std::sscanf(args.c_str(), "%s", plan_id);
         pc.plan_id = plan_id;
 
-        inf("%s (%s = %s)", DTR("received SMS request to start plan"), DTR("id"), sanitize(pc.plan_id).c_str());
+        inf(DTR("received SMS request to start plan '%s'"),
+            sanitize(pc.plan_id).c_str());
 
         // Send the plan start request
         dispatch(pc);
@@ -72,7 +73,7 @@ namespace Autonomy
       void
       handleAbortCommand(const std::string& origin, const std::string& args)
       {
-        err("received abort via text from %s", origin.c_str());
+        err(DTR("got abort request from '%s'"), origin.c_str());
         IMC::Abort abort;
         dispatch(abort);
         (void)args;
