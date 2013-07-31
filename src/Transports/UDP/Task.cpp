@@ -248,8 +248,7 @@ namespace Transports
 
         if (m_args.port == port_limit)
         {
-          err(DTR("could not bind to a port"));
-          throw std::runtime_error(DTR("could not bind to a port"));
+          throw std::runtime_error(DTR("failed to find one available port"));
         }
 
         inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), m_args.port);
