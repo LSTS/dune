@@ -34,10 +34,8 @@ namespace DUNE
   {
     using DUNE_NAMESPACES;
 
-    //! Default AT command timeout.
+    //! Default command timeout.
     static const double c_timeout = 5.0;
-    //! Maximum number of revision lines.
-    static const unsigned c_max_rev_lines = 10;
 
     //! Constructor.
     //! @param[in] task parent task.
