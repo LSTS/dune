@@ -387,7 +387,7 @@ namespace Simulators
         }
         catch (std::runtime_error& e)
         {
-          err(DTR("network/deserialization error: %s"), e.what());
+          err(DTR("read error: %s"), e.what());
         }
       }
     };
