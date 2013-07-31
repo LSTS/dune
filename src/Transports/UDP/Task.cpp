@@ -241,15 +241,15 @@ namespace Transports
           }
           catch (std::runtime_error& e)
           {
-            war("failed to bind to port %u: %s", m_args.port, e.what());
+            war(DTR("failed to bind to port %u: %s"), m_args.port, e.what());
             ++m_args.port;
           }
         }
 
         if (m_args.port == port_limit)
         {
-          err("could not bind to a port");
-          throw std::runtime_error("could not bind to a port");
+          err(DTR("could not bind to a port"));
+          throw std::runtime_error(DTR("could not bind to a port"));
         }
 
         inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), m_args.port);
