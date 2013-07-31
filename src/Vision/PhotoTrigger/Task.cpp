@@ -36,16 +36,17 @@ namespace Vision
 
     struct Arguments
     {
-      //! Trigger name.
-//      std::string trigger_name;
       //! Shooting Period.
-      float period;
+      float freq;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
       //! Task arguments.
       Arguments m_args;
+
+      //! Trigger period
+      float m_period;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -57,27 +58,31 @@ namespace Vision
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
-//        param("Trigger Name", m_args.trigger_name)
-//        .description("Name of the trigger channel");
-
-        param("Shooting Period", m_args.period)
+        param("Trigger Frequency", m_args.freq)
         .defaultValue("1.0")
-        .units(Units::Second)
-        .description("Period for shots");
+        .units(Units::Hertz)
+        .maximumValue("4.0")
+        .description("Frequency of photo shots");
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        m_period = 1.0 / m_args.freq;
       }
 
       void
       sendPulse(void)
       {
         IMC::PowerChannelControl pcc;
-//        pcc.name = m_args.trigger_name;
+
+        pcc.name = "Photo Trigger";
         pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
         dispatch(pcc);
-        Delay::wait(0.10);
+        Delay::wait(0.1);
         pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
         dispatch(pcc);
-        Delay::wait(m_args.period);
-        inf("Triggered");
+        Delay::wait(m_period - 0.1);
       }
 
       //! Main loop.
