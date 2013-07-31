@@ -167,7 +167,7 @@ namespace Sensors
                                             IMC::DevCalibrationState::DCS_COMPLETED);
 
         m_states[STA_ERROR].step_number = STA_BOOT;
-        m_states[STA_ERROR].step = DTR("Calibration error. Need to restart");
+        m_states[STA_ERROR].step = DTR("Calibration error, calibration procedure must be restarted");
         m_states[STA_ERROR].total_steps = STA_NUM_STEPS;
         m_states[STA_ERROR].flags = (IMC::DevCalibrationState::DCS_WAITING_CONTROL |
                                        IMC::DevCalibrationState::DCS_PREVIOUS_NOT_SUPPORTED |
