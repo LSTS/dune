@@ -138,7 +138,7 @@ namespace Navigation
           m_kal.setMeasurementNoise(OUT_GPS_X, m_measure_noise[MN_GPS]);
           m_kal.setMeasurementNoise(OUT_GPS_Y, m_measure_noise[MN_GPS]);
 
-          for (unsigned i = 0; i < m_num_beacons; i++)
+          for (unsigned i = 0; i < m_ranging.getSize(); i++)
             m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
         }
 
@@ -165,7 +165,7 @@ namespace Navigation
         void
         onConsumeLblConfig(void)
         {
-          if (m_kal.resize(NUM_OUT + m_num_beacons))
+          if (m_kal.resize(NUM_OUT + m_ranging.getSize()))
             Task::onUpdateParameters();
         }
 
