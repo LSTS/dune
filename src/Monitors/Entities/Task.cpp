@@ -214,7 +214,7 @@ namespace Monitors
 
           if (r.transitions < m_args.max_transitions)
           {
-            war(DTR("%s : %s -> %s | %s"), r.label.c_str(), DTR(c_state_desc[r.state]),
+            war("%s : %s -> %s | %s", r.label.c_str(), DTR(c_state_desc[r.state]),
                 DTR(c_state_desc[msg->state]), msg->description.c_str());
           }
           else if (r.transitions == m_args.max_transitions)
