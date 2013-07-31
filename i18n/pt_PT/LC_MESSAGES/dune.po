@@ -1051,7 +1051,7 @@ msgstr "lançada exceção %d para o comando %d"
 #: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:397
 #, c-format
 msgid "initialized device: class=%d.%d firmware=%d"
-msgstr "dispositivo inicializado: class=%d.%d firmware=%d""
+msgstr "dispositivo inicializado: class=%d.%d firmware=%d"
 
 #: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:403
 #, c-format
