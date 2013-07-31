@@ -43,7 +43,7 @@ namespace DUNE
     //! Cooldown for the warning thrown when bottom tracking cannot be done
     static const float c_btrack_wrn_cooldown = 15.0f;
     //! No altitude measurements message
-    static const char* c_no_alt = DTR("no valid altitude measurements");
+    static const char* c_no_alt = DTR_RT("no valid altitude measurements");
     //! Depth margin when checking for maximum admissible depth
     static const float c_depth_margin = 1.0;
 
@@ -247,8 +247,8 @@ namespace DUNE
         // check if we have altitude measurements
         if (msg->alt < 0.0)
         {
-          setEntityState(IMC::EntityState::ESTA_ERROR, c_no_alt);
-          err("%s", c_no_alt);
+          setEntityState(IMC::EntityState::ESTA_ERROR, DTR(c_no_alt));
+          err("%s", DTR(c_no_alt));
           return;
         }
 
@@ -258,7 +258,7 @@ namespace DUNE
         {
           if (m_btrack_wrn.overflow())
           {
-            std::string desc = String::str(DTR("bottom tracking not viable, water column is not deep enough ( %0.2f < %0.2f )"), msg->alt + m_estate.depth, m_vertical_ref);
+            std::string desc = String::str(DTR("water column not deep enough for altitude control ( %0.2f < %0.2f )"), msg->alt + m_estate.depth, m_vertical_ref);
             setEntityState(IMC::EntityState::ESTA_NORMAL, desc);
             war("%s", desc.c_str());
             m_btrack_wrn.reset();
