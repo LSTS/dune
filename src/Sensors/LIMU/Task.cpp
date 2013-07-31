@@ -195,7 +195,7 @@ namespace Sensors
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 30);
+          throw RestartNeeded(DTR(e.what()), 30);
         }
       }
 
