@@ -934,7 +934,7 @@ msgstr  "sincronização perdida"
 #: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Errors.cpp:44
 #, fuzzy
 msgid   "parser error"
-msgstr  "erro de servo"
+msgstr  "erro de parsing"
 
 #: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Errors.cpp:45
 msgid   "data overrun"
@@ -980,11 +980,11 @@ msgstr  "erro de divergência por cross-track"
 
 #: /home/caladolsts/dune/src/DUNE/Control/PathController.cpp:914
 msgid   "waiting for position estimate from navigation"
-msgstr  ""
+msgstr  "à espera de uma estimativa da posição pela navegação"
 
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.cpp:46
 msgid   "no valid altitude measurements"
-msgstr  ""
+msgstr  "sem valores válidos de altitude"
 
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.cpp:169
 #, c-format
@@ -1003,7 +1003,7 @@ msgstr  "tempo limite atingido à espera de modo de controlo vertical"
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.cpp:261
 #, c-format
 msgid   "water column not deep enough for altitude control ( %0.2f < %0.2f )"
-msgstr  ""
+msgstr  "coluna de água insuficiente para controlo de altitude ( %0.2f < %0.2f )"
 
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.cpp:280
 msgid   "getting too close to maximum admissible depth"
@@ -1428,7 +1428,7 @@ msgstr  "falha ao acordar dispositivo"
 
 #: /home/caladolsts/dune/src/Sensors/WorkhorseNavigator/Task.cpp:275
 msgid   "unable to read prompt"
-msgstr  ""
+msgstr  "incapaz de ler o prompt"
 
 #: /home/caladolsts/dune/src/Sensors/WorkhorseNavigator/Task.cpp:289
 msgid   "failed to start data sampling"
@@ -1534,11 +1534,11 @@ msgstr  "timeout"
 
 #: /home/caladolsts/dune/src/Sensors/OS4000/Task.cpp:153
 msgid   "Level the device and hit NEXT"
-msgstr  ""
+msgstr  "Nivele o dispositivo e pressione NEXT"
 
 #: /home/caladolsts/dune/src/Sensors/OS4000/Task.cpp:158
 msgid   "Rotate the device and keep it levelled (rotation must last +20s)"
-msgstr  ""
+msgstr  "Rode o dispositivo e mantenha-o nivelado (a rotação tem de durar +20s)"
 
 #: /home/caladolsts/dune/src/Sensors/OS4000/Task.cpp:163
 msgid   "Device is calibrated"
@@ -1552,7 +1552,7 @@ msgstr  "erro de calibração, é necessário reiniciar o processo de calibraç�
 #: /home/caladolsts/dune/src/Sensors/OS4000/Task.cpp:410
 #, c-format
 msgid   "Level the device and hit NEXT (Roll: %0.2f | Pitch: %0.2f)"
-msgstr  ""
+msgstr  "Nivele o dispositivo e clique NEXT (Roll: %0.2f | Pitch: %0.2f)"
 
 #: /home/caladolsts/dune/src/Sensors/Imagenex852/Task.cpp:263
 msgid   "restarting to change UART device"
@@ -1564,12 +1564,12 @@ msgstr  "falha ao escrever pacote para o dispositivo"
 
 #: /home/caladolsts/dune/src/Sensors/Antaris4/Task.cpp:355
 msgid   "message not acknowledged"
-msgstr  ""
+msgstr  "mensagem não compreendida"
 
 #: /home/caladolsts/dune/src/Sensors/Antaris4/Task.cpp:475
 #: /home/caladolsts/dune/src/Sensors/Antaris4/Task.cpp:489
 msgid   "checksum mismatch"
-msgstr  ""
+msgstr  "a soma do erro não coincide"
 
 #: /home/caladolsts/dune/src/Transports/Evologics/Task.cpp:232
 #, c-format
@@ -1593,7 +1593,7 @@ msgstr  "recebido pedido abort"
 
 #: /home/caladolsts/dune/src/Transports/Evologics/Task.cpp:368
 msgid   "file is complete"
-msgstr  ""
+msgstr  "o ficheiro está completo"
 
 #: /home/caladolsts/dune/src/Transports/Evologics/Task.cpp:373
 msgid   "no file is open"
@@ -1602,7 +1602,7 @@ msgstr  "não existe nenhum ficheiro aberto"
 #: /home/caladolsts/dune/src/Transports/Logging/Task.cpp:188
 #, c-format
 msgid   "failed to remove cache snapshot: %s"
-msgstr  ""
+msgstr  "falhou a remover o snapshots da cache: %s"
 
 #: /home/caladolsts/dune/src/Transports/Logging/Task.cpp:310
 #, c-format
@@ -1768,7 +1768,7 @@ msgstr  "transmissão falhada: %s"
 #: /home/caladolsts/dune/src/Transports/Cache/Task.cpp:258
 #, c-format
 msgid   "failed to copy cache snapshot: %s"
-msgstr  ""
+msgstr  "falhou a copiar o snapshot da cache: %s"
 
 #: /home/caladolsts/dune/src/Plan/DB/Task.cpp:73
 msgid   "set plan"
@@ -2159,35 +2159,35 @@ msgstr  "erro ao receber"
 
 #: /home/caladolsts/dune/src/Vision/AD080GE/Task.cpp:141
 msgid   "could not open the factory!"
-msgstr  ""
+msgstr  "não foi possível abrir o factory"
 
 #: /home/caladolsts/dune/src/Vision/AD080GE/Task.cpp:154
 msgid   "could not open the camera list!"
-msgstr  ""
+msgstr  "não conseguiu abrir a lista de câmaras"
 
 #: /home/caladolsts/dune/src/Vision/AD080GE/Task.cpp:163
 msgid   "could not get the number of cameras!"
-msgstr  ""
+msgstr  "não conseguiu obter o número de câmaras"
 
 #: /home/caladolsts/dune/src/Vision/AD080GE/Task.cpp:166
 #, c-format
 msgid   "%d camera(s) found"
-msgstr  ""
+msgstr  "%d câmara(s) encontradas"
 
 #: /home/caladolsts/dune/src/Vision/AD080GE/Task.cpp:177
 #: /home/caladolsts/dune/src/Vision/AD080GE/Task.cpp:189
 #: /home/caladolsts/dune/src/Vision/AD080GE/Task.cpp:204
 msgid   "could not get the camera ID!"
-msgstr  ""
+msgstr  "não conseguiu obter o ID da câmara!"
 
 #: /home/caladolsts/dune/src/Vision/AD080GE/Task.cpp:180
 #, c-format
 msgid   "camera index: %d, ID = %s"
-msgstr  ""
+msgstr  "índice da câmara: %d, ID = %s"
 
 #: /home/caladolsts/dune/src/Vision/AD080GE/Task.cpp:195
 msgid   "could not open the NIR camera"
-msgstr  ""
+msgstr  "não foi possível abrir a câmara NIR"
 
 #: /home/caladolsts/dune/src/Vision/AD080GE/Task.cpp:210
 msgid   "could not open the Visible camera"
