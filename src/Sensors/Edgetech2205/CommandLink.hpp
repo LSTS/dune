@@ -163,7 +163,7 @@ namespace Sensors
         const Packet* reply = read(MSG_ID_PING_RANGE, COMMAND_TYPE_REPLY, subsys, 0, 1.0);
 
         if (reply == NULL)
-          throw std::runtime_error(DTR("failed to set range"));
+          throw std::runtime_error(DTR("failed to get range"));
 
         return reply->getValue();
       }
