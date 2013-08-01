@@ -119,6 +119,8 @@ namespace DUNE
       float m_time_outside;
       //! Time since last used sample
       float m_since_last;
+      //! Last value given for desired depth
+      float m_depth_ref;
     };
   }
 }

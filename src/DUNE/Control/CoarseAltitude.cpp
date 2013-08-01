@@ -114,7 +114,10 @@ namespace DUNE
       if (!m_tracking)
       {
         if (!in_corridor)
-          return desired_depth;
+        {
+          m_depth_ref = desired_depth;
+          return m_depth_ref;
+        }
 
         m_tracking = true;
         m_last_check = 0.0;
@@ -134,9 +137,11 @@ namespace DUNE
       {
         m_since_last = 0.0;
         m_mmav->update(desired_depth);
+
+        m_depth_ref = m_mmav->mean(m_corridor);
       }
 
-      return m_mmav->mean(m_corridor);
+      return m_depth_ref;
     }
   }
 }
