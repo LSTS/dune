@@ -87,7 +87,7 @@ namespace Transports
       handleIridiumCommand(IridiumCommand * irCmd)
       {
         IMC::TextMessage tm;
-        inf(DTR("received this command via Iridium: %s."), irCmd->command.c_str());
+        debug("received this command via Iridium: %s", irCmd->command.c_str());
         tm.text = irCmd->command;
         tm.origin = "Iridium";
         tm.setSource(irCmd->source);
@@ -103,8 +103,8 @@ namespace Transports
       {
         std::vector<DevicePosition>::iterator it;
         it = devUpt->positions.begin();
-        inf(DTR("received Iridium device update with %d updates."),
-            (int)devUpt->positions.size());
+        debug("received Iridium device update with %d updates",
+              (int)devUpt->positions.size());
         for (; it != devUpt->positions.end(); it++)
         {
           DevicePosition p = *it;
@@ -171,8 +171,8 @@ namespace Transports
             break;
           default:
             DUNE::IMC::GenericIridiumMessage * irMsg =
-                dynamic_cast<DUNE::IMC::GenericIridiumMessage *>(m);
-            inf(DTR("Received imc message of type %s from Iridium."), irMsg->msg->getName());
+            dynamic_cast<DUNE::IMC::GenericIridiumMessage *>(m);
+            debug("received IMC message of type %s from Iridium.", irMsg->msg->getName());
             dispatch(irMsg->msg);
             break;
         }
@@ -196,13 +196,13 @@ namespace Transports
       bool
       send_device_updates()
       {
-
         if (!m_update_pool_empty)
         {
           spew("won't send device updates message because pool is not empty");
           return false;
         }
-        inf(DTR("sending device updates"));
+
+        debug("sending device updates");
         DUNE::IMC::DeviceUpdate msg;
         uint8_t buffer[65535];
         std::map<std::string, IMC::Announce>::iterator it;
