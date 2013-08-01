@@ -142,7 +142,7 @@ namespace Monitors
       void
       sendSMS(const char* prefix, unsigned timeout)
       {
-        inf("sending SMS %s | %u", prefix, timeout);
+        inf(DTR("sending SMS %s | %u"), prefix, timeout);
 
         if (!m_emsg.empty())
         {
