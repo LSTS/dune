@@ -87,7 +87,7 @@ namespace Transports
       handleIridiumCommand(IridiumCommand * irCmd)
       {
         IMC::TextMessage tm;
-        inf("received this command via Iridium: %s.", irCmd->command.c_str());
+        inf(DTR("received this command via Iridium: %s."), irCmd->command.c_str());
         tm.text = irCmd->command;
         tm.origin = "Iridium";
         tm.setSource(irCmd->source);
@@ -103,7 +103,7 @@ namespace Transports
       {
         std::vector<DevicePosition>::iterator it;
         it = devUpt->positions.begin();
-        inf("received Iridium device update with %d updates.",
+        inf(DTR("received Iridium device update with %d updates."),
             (int)devUpt->positions.size());
         for (; it != devUpt->positions.end(); it++)
         {
@@ -151,17 +151,17 @@ namespace Transports
 
         if (m == NULL)
         {
-          war("Error while parsing Iridium message.");
+          war(DTR("Error while parsing Iridium message."));
           return;
         }
 
         switch (m->msg_id)
         {
           case (ID_ACTIVATESUB):
-            war("Received an Iridium subscription request. WTF?");
+            debug("Received an Iridium subscription request. WTF?");
             break;
           case (ID_DEACTIVATESUB):
-            war("Received an Iridium subscription end request. WTF?");
+            debug("Received an Iridium subscription end request. WTF?");
             break;
           case (ID_IRIDIUMCMD):
             handleIridiumCommand(dynamic_cast<IridiumCommand *>(m));
@@ -172,7 +172,7 @@ namespace Transports
           default:
             DUNE::IMC::GenericIridiumMessage * irMsg =
                 dynamic_cast<DUNE::IMC::GenericIridiumMessage *>(m);
-            inf("Received imc message of type %s from Iridium.", irMsg->msg->getName());
+            inf(DTR("Received imc message of type %s from Iridium."), irMsg->msg->getName());
             dispatch(irMsg->msg);
             break;
         }
@@ -202,7 +202,7 @@ namespace Transports
           spew("won't send device updates message because pool is not empty");
           return false;
         }
-        inf("sending device updates");
+        inf(DTR("sending device updates"));
         DUNE::IMC::DeviceUpdate msg;
         uint8_t buffer[65535];
         std::map<std::string, IMC::Announce>::iterator it;

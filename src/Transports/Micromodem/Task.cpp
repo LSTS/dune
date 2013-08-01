@@ -240,7 +240,7 @@ namespace Transports
           execute(new SetParameter("SRC", m_address));
           execute(new HardReboot(m_address));
 
-          inf("setup complete");
+          inf(DTR("setup completed"));
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
         catch (std::runtime_error& e)
@@ -349,7 +349,7 @@ namespace Transports
 
         if (std::sscanf(stn.c_str(), "CARXD,%u,%u,%u,%u,%s", &src, &dst, &ack, &fnr, data) == 5)
         {
-          war("packet from %u to %u with data %s", src, dst, data);
+          war(DTR("packet from %u to %u with data %s"), src, dst, data);
         }
       }
 
@@ -362,7 +362,7 @@ namespace Transports
 
         if (std::sscanf(stn.c_str(), "CAMUA,%u,%u,%04X", &src, &dst, &data) == 3)
         {
-          inf("mini packet from %u with data %04X", src, data);
+          inf(DTR("mini packet from %u with data %04X"), src, data);
         }
       }
 
@@ -377,7 +377,7 @@ namespace Transports
         if (rv != 3)
           return;
 
-        inf("distance is %f", time);
+        inf(DTR("distance is %f"), time);
 
         //        double distance = time * m_sound_speed;
       }
@@ -422,9 +422,9 @@ namespace Transports
           if (m_transaction->ended())
           {
             if (m_transaction->failed())
-              err("transaction failed");
+              err(DTR("transaction failed"));
             else
-              war("transaction completed");
+              war(DTR("transaction completed"));
 
             clearTransaction();
           }
