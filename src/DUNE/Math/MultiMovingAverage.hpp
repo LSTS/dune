@@ -101,6 +101,9 @@ namespace DUNE
         if (j >= m_wsizes.size())
           std::runtime_error("multi moving average: invalid index");
 
+        if (!m_window.size())
+          return 0.0;
+
         if (m_wsizes[j] > m_window.size())
           return m_accum[j] / m_window.size();
         else
