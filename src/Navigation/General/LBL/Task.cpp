@@ -229,7 +229,7 @@ namespace Navigation
           if (m_time_without_gps.overflow())
             return;
 
-          if (m_ranging.exists(msg->id) || (msg->id > m_ranging.getSize() - 1))
+          if (!m_ranging.exists(msg->id) || (msg->id > m_ranging.getSize() - 1))
             return;
 
           float range = msg->range;

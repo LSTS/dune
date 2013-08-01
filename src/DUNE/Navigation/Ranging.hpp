@@ -148,7 +148,7 @@ namespace DUNE
       bool
       exists(unsigned id)
       {
-        return m_transponders[id] == NULL;
+        return m_transponders[id] != NULL;
       }
 
       void

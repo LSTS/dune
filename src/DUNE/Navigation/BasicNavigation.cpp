@@ -643,7 +643,7 @@ namespace DUNE
       uint8_t beacon = msg->id;
       float range = msg->range;
 
-      if (m_ranging.exists(beacon) || (beacon > m_ranging.getSize() - 1) || (rejectLbl()))
+      if (!m_ranging.exists(beacon) || (beacon > m_ranging.getSize() - 1) || (rejectLbl()))
       {
         m_lbl_ac.acceptance = IMC::LblRangeAcceptance::RR_NO_INFO;
         dispatch(m_lbl_ac, DF_KEEP_TIME);
