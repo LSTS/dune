@@ -47,6 +47,7 @@ namespace DUNE
     //! Basic transponder information.
     struct BasicTransponder
     {
+      //! Constructor.
       BasicTransponder():
         lat(0),
         lon(0),
@@ -55,6 +56,11 @@ namespace DUNE
         depth(0)
       { }
 
+      //! Initialize transponder position.
+      //! @param[in] origin navigation reference.
+      //! @param[in] latitude WGS-84 latitude.
+      //! @param[in] longitude WGS-84 longitude.
+      //! @param[in] z transponder depth.
       void
       initialize(const IMC::GpsFix* origin, double latitude, double longitude, double z)
       {
@@ -68,6 +74,8 @@ namespace DUNE
         update(origin);
       }
 
+      //! Update transponder navigation reference.
+      //! @param[in] origin new navigation reference.
       void
       update(const IMC::GpsFix* origin)
       {
@@ -99,6 +107,7 @@ namespace DUNE
     class Ranging
     {
     public:
+      //! Constructor.
       Ranging(void):
         m_origin(NULL)
       {
@@ -108,6 +117,7 @@ namespace DUNE
           m_transponders[i] = NULL;
       }
 
+      //! Destructor.
       ~Ranging(void)
       {
         Memory::clear(m_origin);
@@ -116,6 +126,8 @@ namespace DUNE
           Memory::clear(m_transponders[i]);
       }
 
+      //! Update setup navigation reference.
+      //! @param[in] msg new navigation reference.
       void
       updateOrigin(const IMC::GpsFix* msg)
       {
@@ -129,6 +141,8 @@ namespace DUNE
         }
       }
 
+      //! Set new LBL configuration.
+      //! @param[in] msg new LBL configuration.
       void
       setup(const IMC::LblConfig* msg)
       {
@@ -139,18 +153,28 @@ namespace DUNE
           addTransponder(i, *itr);
       }
 
+      //! Get size of acoustic setup.
+      //! @return size of setup.
       unsigned
       getSize(void)
       {
         return m_num_transponders;
       }
 
+      //! See if specific transponder exists.
+      //! @param[in] id transponder id.
+      //! @return true if it exists, false otherwise.
       bool
       exists(unsigned id)
       {
         return m_transponders[id] != NULL;
       }
 
+      //! Get 3D location of transponder.
+      //! @param[in] id transponder id.
+      //! @param[out] i North displacement.
+      //! @param[out] j East displacement.
+      //! @param[out] k transponder depth.
       void
       getLocation(unsigned id, double* i, double* j, double* k)
       {
@@ -162,6 +186,9 @@ namespace DUNE
         *k =  m_transponders[id]->depth;
       }
 
+      //! Get depth of transponder.
+      //! @param[in] id transponder id.
+      //! @return transponder depth.
       double
       getDepth(unsigned id)
       {
@@ -172,7 +199,9 @@ namespace DUNE
       }
 
     private:
-
+      //! Add new transponder to acoustic setup.
+      //! @param[in] id transponder id.
+      //! @param[in] msg new transponder configuration.
       void
       addTransponder(unsigned id, const IMC::LblBeacon* msg)
       {
