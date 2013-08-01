@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-08-01 11:44+0100\n"
+        "POT-Creation-Date: 2013-08-01 17:53+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,6 +33,25 @@ msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "MIME-Version: 1.0\n"
         "Content-Type: text/plain; charset=UTF-8\n"
         "Content-Transfer-Encoding: 8bit\n"
+
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.hpp:117
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.hpp:182
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.hpp:200
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.hpp:246
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.hpp:258
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:177
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:231
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:240
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:249
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:258
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:267
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:283
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:292
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:308
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:317
+#, fuzzy
+msgid   "invalid index"
+msgstr  "недействительным модели"
 
 #: /home/caladolsts/dune/src/DUNE/Network/Exceptions.hpp:49
 #, c-format
@@ -68,6 +87,11 @@ msgstr  "Возможность не реализована '%s'"
 msgid   "invalid z unit: %s"
 msgstr  "недействительный блок Z: %s"
 
+#: /home/caladolsts/dune/src/DUNE/Parsers/Config.hpp:127
+#, c-format
+msgid   "unable to convert the value under section '%s' option '%s' to the required type and no valid default was given"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/DUNE/Tasks/Exceptions.hpp:90
 #, c-format
 msgid   "invalid task name '%s'"
@@ -77,6 +101,40 @@ msgstr  "Неверное имя задачи '%s'"
 #, c-format
 msgid   "invalid value '%s' for parameter '%s': '%s'"
 msgstr  "недопустимое значение '%s' для параметра '%s': '%s'"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/ParameterTable.hpp:80
+#, fuzzy
+msgid   "variable does not exist"
+msgstr  "Файл '%s' не существует"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:75
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:168
+msgid   "value is not of the correct type"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:92
+msgid   "possible values are not of the correct type"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:115
+msgid   "value is below minimum"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:121
+msgid   "value is above maximum"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:127
+msgid   "value not in values set"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:199
+msgid   "too few elements"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:205
+msgid   "too many elements"
+msgstr  ""
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/EntityDataBase.hpp:64
 msgid   "invalid entity label: "
@@ -121,6 +179,10 @@ msgstr  "неверной контрольной суммы: должна быт
 msgid   "invalid format: %s"
 msgstr  "неверный формат: %s"
 
+#: /home/caladolsts/dune/src/DUNE/Math/General.hpp:204
+msgid   "piecewise linear interpolation needs equally sized vectors"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.hpp:148
 #, c-format
 msgid   "yaw control mode %d not supported"
@@ -136,6 +198,11 @@ msgstr  "вертикального режима управления %d не п
 msgid   "invalid message size %u"
 msgstr  "недействительный размер сообщения %u"
 
+#: /home/caladolsts/dune/src/DUNE/IMC/InlineMessage.hpp:103
+#: /home/caladolsts/dune/src/DUNE/IMC/InlineMessage.hpp:112
+msgid   "dereference of null inline message"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/DUNE/Monitors/MotorCurrentMonitor.hpp:52
 msgid   "motor monitor error: "
 msgstr  "Двигатель монитор ошибке:"
@@ -144,10 +211,41 @@ msgstr  "Двигатель монитор ошибке:"
 msgid   "number of linear points is not even"
 msgstr  "количество линейных пунктов даже не"
 
+#: /home/caladolsts/dune/src/Sensors/XR620CTD/Parser.hpp:201
+#, c-format
+msgid   "character value '%d' is not a valid nibble"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Sensors/Edgetech2205/CommandLink.hpp:82
+#, fuzzy
+msgid   "failed to get time"
+msgstr  "Не могу выполнить устройство"
+
+#: /home/caladolsts/dune/src/Sensors/Edgetech2205/CommandLink.hpp:138
+#, fuzzy
+msgid   "range mismatch"
+msgstr  "несоответствие плана ID"
+
+#: /home/caladolsts/dune/src/Sensors/Edgetech2205/CommandLink.hpp:166
+#, fuzzy
+msgid   "failed to set range"
+msgstr  "не удалось погрузить"
+
+#: /home/caladolsts/dune/src/Transports/GSM/Driver.hpp:124
+#: /home/caladolsts/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:59
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Errors.cpp:47
+msgid   "unknown error"
+msgstr  "Неизвестная ошибка"
+
 #: /home/caladolsts/dune/src/Transports/GSM/Driver.hpp:134
 #, c-format
 msgid   "SMS transmission failed with error code %d"
 msgstr  "Передача SMS ошибкой с кодом %d"
+
+#: /home/caladolsts/dune/src/Transports/UDP/NodeAddress.hpp:62
+#, fuzzy, c-format
+msgid   "invalid address: '%s'"
+msgstr  "'%s' Неверный сетевой адрес"
 
 #: /home/caladolsts/dune/src/Transports/IridiumSBD/Exceptions.hpp:47
 #, c-format
@@ -158,6 +256,22 @@ msgstr  "неверный размер SBD %u"
 #, c-format
 msgid   "invalid SBD write %s"
 msgstr  "недействительным SBD написать %s"
+
+#: /home/caladolsts/dune/src/Transports/IridiumSBD/Driver.hpp:207
+msgid   "error ocurred while clearing MO buffer"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/IridiumSBD/Driver.hpp:216
+msgid   "error ocurred while clearing MT buffer"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/IridiumSBD/Driver.hpp:401
+msgid   "error ocurred while clearing buffer"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/IridiumSBD/Driver.hpp:409
+msgid   "error ocurred while clearing the MOMSN"
+msgstr  ""
 
 #: /home/caladolsts/dune/src/Transports/Micromodem/Exceptions.hpp:45
 msgid   "transaction aborted"
@@ -197,6 +311,12 @@ msgstr  "График работы: %s активации пропущенног
 #, c-format
 msgid   "schedule: entity label %s not found"
 msgstr  "График работы: лица этикетке %s не найден"
+
+#: /home/caladolsts/dune/src/Vision/Lumenera/HTTPClient.hpp:125
+#: /home/caladolsts/dune/src/Vision/Lumenera/HTTPClient.hpp:181
+#, fuzzy
+msgid   "timed out while waiting for reply"
+msgstr  "таймаут при чтении ответа"
 
 #: /home/caladolsts/dune/src/Simulators/LBL/Task.cpp:225
 #, c-format
@@ -352,6 +472,29 @@ msgstr  "TREX отсоединен более чем %d секунд"
 msgid   "device reported: %s"
 msgstr  "Устройство сообщил: %s"
 
+#: /home/caladolsts/dune/src/Actuators/LED4R/Task.cpp:180
+#: /home/caladolsts/dune/src/Sensors/LIMU/Task.cpp:191
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:197
+msgid   "device is using unstable firmware"
+msgstr  "Устройство использует нестабильной прошивки"
+
+#: /home/caladolsts/dune/src/Actuators/LED4R/Task.cpp:182
+#: /home/caladolsts/dune/src/Sensors/LIMU/Task.cpp:193
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:199
+#, c-format
+msgid   "firmware version %u.%u.%u"
+msgstr  "версия прошивки %u. %u. %u"
+
+#: /home/caladolsts/dune/src/Actuators/LED4R/Task.cpp:196
+#, fuzzy
+msgid   "failed to get constant parameters"
+msgstr  "не удалось установить частоту дискретизации"
+
+#: /home/caladolsts/dune/src/Actuators/LED4R/Task.cpp:199
+#, fuzzy
+msgid   "failed to configured external LED driver"
+msgstr  "удалось настроить режим строба"
+
 #: /home/caladolsts/dune/src/Actuators/Broom/Task.cpp:81
 msgid   "init"
 msgstr  "инициализации"
@@ -427,6 +570,11 @@ msgstr  "недопустимое значение для 'дв-ля'"
 msgid   "invalid value for 'Thruster Id'"
 msgstr  "недопустимое значение для 'Thruster Id'"
 
+#: /home/caladolsts/dune/src/DUNE/Utils/String.cpp:284
+#, fuzzy
+msgid   "invalid escape sequence"
+msgstr  "недействительный размер сообщения %u"
+
 #: /home/caladolsts/dune/src/DUNE/Utils/OptionParser.cpp:47
 msgid   "Print this message and exit"
 msgstr  "Показать это сообщение и выйти"
@@ -491,6 +639,11 @@ msgstr  "неизвестный параметр '%s'"
 msgid   "missing argument for option '%s'"
 msgstr  "отсутствует аргумент для опции '%s'"
 
+#: /home/caladolsts/dune/src/DUNE/Algorithms/MD5.cpp:63
+#, fuzzy
+msgid   "failed to open file"
+msgstr  "не смогли остановить устройство"
+
 #: /home/caladolsts/dune/src/DUNE/Maneuvers/FollowTrajectory.cpp:87
 #: /home/caladolsts/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:146
 msgid   "too few trajectory points"
@@ -550,6 +703,26 @@ msgstr  "остановки (%0.1f м)"
 #, c-format
 msgid   "moving (distance: %0.1f m)"
 msgstr  "перемещения (расстояние: %0.1f м)"
+
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:90
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:93
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:109
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:126
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:129
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:132
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:135
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:207
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:210
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:219
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:222
+#, fuzzy
+msgid   "invalid dimensions"
+msgstr  "Неверная версия"
+
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:148
+#, fuzzy
+msgid   "matrix inversion error"
+msgstr  " маневра ошибке:"
 
 #: /home/caladolsts/dune/src/DUNE/Navigation/BasicNavigation.cpp:42
 #, c-format
@@ -677,6 +850,26 @@ msgstr  "выполнение анкетам: %s"
 msgid   "clean shutdown"
 msgstr  "чистого отключения"
 
+#: /home/caladolsts/dune/src/DUNE/Tasks/Profiles.cpp:76
+#: /home/caladolsts/dune/src/DUNE/Tasks/Profiles.cpp:92
+#, fuzzy, c-format
+msgid   "no such profile name '%s'"
+msgstr  "не в состоянии разрешить имя хоста '%s'"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/Parameter.cpp:71
+#, fuzzy
+msgid   "invalid visibility string"
+msgstr  "Неверная версия"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/Parameter.cpp:89
+#, fuzzy
+msgid   "invalid scope string"
+msgstr  "Неверная версия"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/Parameter.cpp:132
+msgid   "no available reader"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/DUNE/Tasks/Manager.cpp:94
 #: /home/caladolsts/dune/src/DUNE/Tasks/Manager.cpp:172
 msgid   "unknown exception"
@@ -698,6 +891,16 @@ msgstr  "не присоединились задача %s"
 #: /home/caladolsts/dune/src/DUNE/Tasks/Manager.cpp:163
 msgid   "starting"
 msgstr  "отправной"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/RateLimiters.cpp:85
+#, fuzzy, c-format
+msgid   "invalid rate limiter: %s"
+msgstr  "неверный параметр '%s'"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/ParameterTable.cpp:41
+#, fuzzy
+msgid   "invalid parameter"
+msgstr  "неверный параметр '%s'"
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:71
 msgid   "Entity Label"
@@ -754,6 +957,16 @@ msgstr  "Активный"
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:237
 msgid   "True to activate task, false otherwise"
 msgstr  "Правда, чтобы активировать задачу, иначе ложь"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:328
+#, fuzzy
+msgid   "activation is not in progress"
+msgstr  "устройство не находится в соответствующей среде"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:400
+#, fuzzy
+msgid   "deactivation is not in progress"
+msgstr  "устройство не находится в соответствующей среде"
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:460
 msgid   "restarting"
@@ -935,14 +1148,69 @@ msgstr  "синтаксической ошибке"
 msgid   "invalid command arguments"
 msgstr  "неверные аргументы команды"
 
-#: /home/caladolsts/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:59
-#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Errors.cpp:47
-msgid   "unknown error"
-msgstr  "Неизвестная ошибка"
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Interface.cpp:70
+#, fuzzy
+msgid   "failed to reset device"
+msgstr  "Не могу выполнить устройство"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Interface.cpp:82
+#, fuzzy
+msgid   "failed to set bootloader parameters"
+msgstr  "не удалось установить модем адрес"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Interface.cpp:140
+#, fuzzy
+msgid   "failed to get firmware name"
+msgstr  "не удалось установить модем адрес"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Interface.cpp:153
+#, fuzzy
+msgid   "failed to get firmware version"
+msgstr  "не удалось установить контроль потока"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Interface.cpp:156
+#, fuzzy
+msgid   "invalid firmware version"
+msgstr  "Неверная версия"
 
 #: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Errors.cpp:56
 msgid   "invalid error code"
 msgstr  "неверный код ошибки"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:68
+#, fuzzy
+msgid   "failed to enter bootloader"
+msgstr  "не в режим монитора"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:85
+#, fuzzy
+msgid   "failed to jump to application"
+msgstr  "не смогли остановить захват"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:124
+#, fuzzy
+msgid   "failed start upgrade procedure"
+msgstr  "удалось прочитать заголовок"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:135
+#, fuzzy
+msgid   "failed to end upgrade procedure"
+msgstr  "удалось прочитать заголовок"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:156
+#, fuzzy
+msgid   "failed to fill page chunk"
+msgstr  "Не удалось отключить энергосбережение"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:166
+#, fuzzy
+msgid   "failed to write flash page"
+msgstr  "не удалось получить государственную"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:198
+#, fuzzy
+msgid   "failed to retrieve flash info"
+msgstr  "не удалось установить контроль потока"
 
 #: /home/caladolsts/dune/src/DUNE/Control/PathController.cpp:278
 #: /home/caladolsts/dune/src/Plan/DB/Task.cpp:263
@@ -1138,15 +1406,6 @@ msgstr  "различные параметры калибровки"
 #, c-format
 msgid   "new hard-iron calibration parameters: %f | %f"
 msgstr  "Новый жесткий железа параметры калибровки: %f | %f"
-
-#: /home/caladolsts/dune/src/Sensors/LIMU/Task.cpp:191
-msgid   "device is using unstable firmware"
-msgstr  "Устройство использует нестабильной прошивки"
-
-#: /home/caladolsts/dune/src/Sensors/LIMU/Task.cpp:193
-#, c-format
-msgid   "firmware version %u.%u.%u"
-msgstr  "версия прошивки %u. %u. %u"
 
 #: /home/caladolsts/dune/src/Sensors/LIMU/Task.cpp:214
 msgid   "failed to configure output frequency"
@@ -1383,6 +1642,7 @@ msgid   "input timeout"
 msgstr  "входного тайм-аут"
 
 #: /home/caladolsts/dune/src/Sensors/XchangeSV/Task.cpp:155
+#: /home/caladolsts/dune/src/Sensors/MiniSVS/Task.cpp:110
 msgid   "I/O error"
 msgstr  "Ошибка ввода / вывода"
 
@@ -1498,20 +1758,20 @@ msgstr  "сообщили диапазона %s = %u м"
 msgid   "failed to report range to %s"
 msgstr  "не сообщил диапазоне %s"
 
-#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:236
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:229
 msgid   "failed to configure trigger frequency"
 msgstr  "удалось настроить Частота срабатывания"
 
-#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:246
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:239
 msgid   "failed to turn on device"
 msgstr  "не удалось включить устройство"
 
-#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:350
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:343
 #, c-format
 msgid   "IMU failure: %04X"
 msgstr  "ИДУ неудачи: %04X"
 
-#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:355
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:348
 #, c-format
 msgid   "data might be unreliable: %04X"
 msgstr  "данные могут быть ненадежны: %04X"
@@ -1562,6 +1822,15 @@ msgstr  "сообщение не подтверждено"
 #: /home/caladolsts/dune/src/Sensors/Antaris4/Task.cpp:489
 msgid   "checksum mismatch"
 msgstr  "несоответствие контрольной суммы"
+
+#: /home/caladolsts/dune/src/Transports/LogBook/Task.cpp:98
+msgid   "cleared logbook"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/LogBook/Task.cpp:101
+#, fuzzy
+msgid   "invalid or unsupported command"
+msgstr  "недопустимую команду реконфигурации"
 
 #: /home/caladolsts/dune/src/Transports/Evologics/Task.cpp:232
 #, c-format
@@ -1688,6 +1957,12 @@ msgstr  "другой узел на этом компьютере рекламы
 msgid   "another node on our network is advertising our node name '%s'"
 msgstr  "другой узел нашей сети рекламы наших имя узла '%s'"
 
+#: /home/caladolsts/dune/src/Transports/GSM/Task.cpp:203
+#: /home/caladolsts/dune/src/Transports/IridiumSBD/Task.cpp:213
+#, fuzzy
+msgid   "input error"
+msgstr  "Ошибка клиента"
+
 #: /home/caladolsts/dune/src/Transports/GSM/Task.cpp:211
 msgid   "SMS timeout cannot be zero"
 msgstr  "SMS тайм-аут не может быть нулевым"
@@ -1729,6 +2004,30 @@ msgstr  "активация передачи узла '%s'"
 msgid   "deactivating transmission to node '%s'"
 msgstr  "отключение передачи узла '%s'"
 
+#: /home/caladolsts/dune/src/Transports/Iridium/Task.cpp:90
+#, c-format
+msgid   "received this command via Iridium: %s."
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Iridium/Task.cpp:106
+#, c-format
+msgid   "received Iridium device update with %d updates."
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Iridium/Task.cpp:154
+msgid   "Error while parsing Iridium message."
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Iridium/Task.cpp:175
+#, c-format
+msgid   "Received imc message of type %s from Iridium."
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Iridium/Task.cpp:205
+#, fuzzy
+msgid   "sending device updates"
+msgstr  "сброс устройства"
+
 #: /home/caladolsts/dune/src/Transports/TCP/Server/Task.cpp:113
 msgid   "could not bind server socket"
 msgstr  "не удалось выполнить привязку сокета сервера"
@@ -1751,6 +2050,40 @@ msgstr  "с ошибкой %u"
 #, c-format
 msgid   "transmission failed: %s"
 msgstr  "Передача не удалась: %s"
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:243
+#, fuzzy
+msgid   "setup completed"
+msgstr  "план завершен"
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:262
+msgid   "failed"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:352
+#, c-format
+msgid   "packet from %u to %u with data %s"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:365
+#, c-format
+msgid   "mini packet from %u with data %04X"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:380
+#, c-format
+msgid   "distance is %f"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:425
+#, fuzzy
+msgid   "transaction failed"
+msgstr  "сделка отменяется"
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:427
+#, fuzzy
+msgid   "transaction completed"
+msgstr  "сделка отменяется"
 
 #: /home/caladolsts/dune/src/Transports/Cache/Task.cpp:258
 #, c-format
@@ -2155,6 +2488,15 @@ msgstr  "сообщение об ошибке"
 #: /home/caladolsts/dune/src/Vision/DFK51BG02H/Task.cpp:459
 msgid   "keep alive failed"
 msgstr  "оставьте в живых не удалось"
+
+#: /home/caladolsts/dune/src/Vision/Lumenera/Task.cpp:224
+#, fuzzy
+msgid   "Failed to start video stream"
+msgstr  "Не удалось запустить выборки данных"
+
+#: /home/caladolsts/dune/src/Vision/Lumenera/Task.cpp:241
+msgid   "Started video stream"
+msgstr  ""
 
 #: /home/caladolsts/dune/src/Vision/Lumenera/Task.cpp:319
 #: /home/caladolsts/dune/src/Vision/Lumenera/Task.cpp:360
@@ -3067,9 +3409,6 @@ msgstr  "Автомобиль Supervisor"
 #~ msgid        "problem while fetching frame"
 #~ msgstr       "Проблема при выборке кадров"
 
-#~ msgid        "failed to stop capturing"
-#~ msgstr       "не смогли остановить захват"
-
 #~ msgid        "could not open the factory!"
 #~ msgstr       "не могли открыть фабрику!"
 
@@ -3282,9 +3621,6 @@ msgstr  "Автомобиль Supervisor"
 
 #~ msgid        "client ok"
 #~ msgstr       "Клиент порядке"
-
-#~ msgid        "client error"
-#~ msgstr       "Ошибка клиента"
 
 #~ msgid        "client is busy"
 #~ msgstr       "клиент занят"

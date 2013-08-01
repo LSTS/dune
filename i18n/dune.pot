@@ -6,7 +6,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.3.0-rc1\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-08-01 11:44+0100\n"
+        "POT-Creation-Date: 2013-08-01 17:53+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -14,6 +14,24 @@ msgstr  "Project-Id-Version: DUNE 2.3.0-rc1\n"
         "MIME-Version: 1.0\n"
         "Content-Type: text/plain; charset=CHARSET\n"
         "Content-Transfer-Encoding: 8bit\n"
+
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.hpp:117
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.hpp:182
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.hpp:200
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.hpp:246
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.hpp:258
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:177
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:231
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:240
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:249
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:258
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:267
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:283
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:292
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:308
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:317
+msgid   "invalid index"
+msgstr  ""
 
 #: /home/caladolsts/dune/src/DUNE/Network/Exceptions.hpp:49
 #, c-format
@@ -49,6 +67,11 @@ msgstr  ""
 msgid   "invalid z unit: %s"
 msgstr  ""
 
+#: /home/caladolsts/dune/src/DUNE/Parsers/Config.hpp:127
+#, c-format
+msgid   "unable to convert the value under section '%s' option '%s' to the required type and no valid default was given"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/DUNE/Tasks/Exceptions.hpp:90
 #, c-format
 msgid   "invalid task name '%s'"
@@ -57,6 +80,39 @@ msgstr  ""
 #: /home/caladolsts/dune/src/DUNE/Tasks/Exceptions.hpp:103
 #, c-format
 msgid   "invalid value '%s' for parameter '%s': '%s'"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/ParameterTable.hpp:80
+msgid   "variable does not exist"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:75
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:168
+msgid   "value is not of the correct type"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:92
+msgid   "possible values are not of the correct type"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:115
+msgid   "value is below minimum"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:121
+msgid   "value is above maximum"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:127
+msgid   "value not in values set"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:199
+msgid   "too few elements"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:205
+msgid   "too many elements"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/EntityDataBase.hpp:64
@@ -102,6 +158,10 @@ msgstr  ""
 msgid   "invalid format: %s"
 msgstr  ""
 
+#: /home/caladolsts/dune/src/DUNE/Math/General.hpp:204
+msgid   "piecewise linear interpolation needs equally sized vectors"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.hpp:148
 #, c-format
 msgid   "yaw control mode %d not supported"
@@ -117,6 +177,11 @@ msgstr  ""
 msgid   "invalid message size %u"
 msgstr  ""
 
+#: /home/caladolsts/dune/src/DUNE/IMC/InlineMessage.hpp:103
+#: /home/caladolsts/dune/src/DUNE/IMC/InlineMessage.hpp:112
+msgid   "dereference of null inline message"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/DUNE/Monitors/MotorCurrentMonitor.hpp:52
 msgid   "motor monitor error: "
 msgstr  ""
@@ -125,9 +190,37 @@ msgstr  ""
 msgid   "number of linear points is not even"
 msgstr  ""
 
+#: /home/caladolsts/dune/src/Sensors/XR620CTD/Parser.hpp:201
+#, c-format
+msgid   "character value '%d' is not a valid nibble"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Sensors/Edgetech2205/CommandLink.hpp:82
+msgid   "failed to get time"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Sensors/Edgetech2205/CommandLink.hpp:138
+msgid   "range mismatch"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Sensors/Edgetech2205/CommandLink.hpp:166
+msgid   "failed to set range"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/GSM/Driver.hpp:124
+#: /home/caladolsts/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:59
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Errors.cpp:47
+msgid   "unknown error"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/Transports/GSM/Driver.hpp:134
 #, c-format
 msgid   "SMS transmission failed with error code %d"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/UDP/NodeAddress.hpp:62
+#, c-format
+msgid   "invalid address: '%s'"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/Transports/IridiumSBD/Exceptions.hpp:47
@@ -138,6 +231,22 @@ msgstr  ""
 #: /home/caladolsts/dune/src/Transports/IridiumSBD/Exceptions.hpp:58
 #, c-format
 msgid   "invalid SBD write %s"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/IridiumSBD/Driver.hpp:207
+msgid   "error ocurred while clearing MO buffer"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/IridiumSBD/Driver.hpp:216
+msgid   "error ocurred while clearing MT buffer"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/IridiumSBD/Driver.hpp:401
+msgid   "error ocurred while clearing buffer"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/IridiumSBD/Driver.hpp:409
+msgid   "error ocurred while clearing the MOMSN"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/Transports/Micromodem/Exceptions.hpp:45
@@ -177,6 +286,11 @@ msgstr  ""
 #: /home/caladolsts/dune/src/Plan/Engine/ActionSchedule.hpp:484
 #, c-format
 msgid   "schedule: entity label %s not found"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Vision/Lumenera/HTTPClient.hpp:125
+#: /home/caladolsts/dune/src/Vision/Lumenera/HTTPClient.hpp:181
+msgid   "timed out while waiting for reply"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/Simulators/LBL/Task.cpp:225
@@ -333,6 +447,27 @@ msgstr  ""
 msgid   "device reported: %s"
 msgstr  ""
 
+#: /home/caladolsts/dune/src/Actuators/LED4R/Task.cpp:180
+#: /home/caladolsts/dune/src/Sensors/LIMU/Task.cpp:191
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:197
+msgid   "device is using unstable firmware"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Actuators/LED4R/Task.cpp:182
+#: /home/caladolsts/dune/src/Sensors/LIMU/Task.cpp:193
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:199
+#, c-format
+msgid   "firmware version %u.%u.%u"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Actuators/LED4R/Task.cpp:196
+msgid   "failed to get constant parameters"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Actuators/LED4R/Task.cpp:199
+msgid   "failed to configured external LED driver"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/Actuators/Broom/Task.cpp:81
 msgid   "init"
 msgstr  ""
@@ -408,6 +543,10 @@ msgstr  ""
 msgid   "invalid value for 'Thruster Id'"
 msgstr  ""
 
+#: /home/caladolsts/dune/src/DUNE/Utils/String.cpp:284
+msgid   "invalid escape sequence"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/DUNE/Utils/OptionParser.cpp:47
 msgid   "Print this message and exit"
 msgstr  ""
@@ -468,6 +607,10 @@ msgstr  ""
 msgid   "missing argument for option '%s'"
 msgstr  ""
 
+#: /home/caladolsts/dune/src/DUNE/Algorithms/MD5.cpp:63
+msgid   "failed to open file"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/DUNE/Maneuvers/FollowTrajectory.cpp:87
 #: /home/caladolsts/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:146
 msgid   "too few trajectory points"
@@ -526,6 +669,24 @@ msgstr  ""
 #: /home/caladolsts/dune/src/DUNE/Maneuvers/StationKeep.cpp:121
 #, c-format
 msgid   "moving (distance: %0.1f m)"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:90
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:93
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:109
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:126
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:129
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:132
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:135
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:207
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:210
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:219
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:222
+msgid   "invalid dimensions"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:148
+msgid   "matrix inversion error"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/DUNE/Navigation/BasicNavigation.cpp:42
@@ -654,6 +815,24 @@ msgstr  ""
 msgid   "clean shutdown"
 msgstr  ""
 
+#: /home/caladolsts/dune/src/DUNE/Tasks/Profiles.cpp:76
+#: /home/caladolsts/dune/src/DUNE/Tasks/Profiles.cpp:92
+#, c-format
+msgid   "no such profile name '%s'"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/Parameter.cpp:71
+msgid   "invalid visibility string"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/Parameter.cpp:89
+msgid   "invalid scope string"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/Parameter.cpp:132
+msgid   "no available reader"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/DUNE/Tasks/Manager.cpp:94
 #: /home/caladolsts/dune/src/DUNE/Tasks/Manager.cpp:172
 msgid   "unknown exception"
@@ -674,6 +853,15 @@ msgstr  ""
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/Manager.cpp:163
 msgid   "starting"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/RateLimiters.cpp:85
+#, c-format
+msgid   "invalid rate limiter: %s"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/ParameterTable.cpp:41
+msgid   "invalid parameter"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:71
@@ -730,6 +918,14 @@ msgstr  ""
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:237
 msgid   "True to activate task, false otherwise"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:328
+msgid   "activation is not in progress"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:400
+msgid   "deactivation is not in progress"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:460
@@ -911,13 +1107,56 @@ msgstr  ""
 msgid   "invalid command arguments"
 msgstr  ""
 
-#: /home/caladolsts/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:59
-#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Errors.cpp:47
-msgid   "unknown error"
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Interface.cpp:70
+msgid   "failed to reset device"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Interface.cpp:82
+msgid   "failed to set bootloader parameters"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Interface.cpp:140
+msgid   "failed to get firmware name"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Interface.cpp:153
+msgid   "failed to get firmware version"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Interface.cpp:156
+msgid   "invalid firmware version"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Errors.cpp:56
 msgid   "invalid error code"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:68
+msgid   "failed to enter bootloader"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:85
+msgid   "failed to jump to application"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:124
+msgid   "failed start upgrade procedure"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:135
+msgid   "failed to end upgrade procedure"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:156
+msgid   "failed to fill page chunk"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:166
+msgid   "failed to write flash page"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:198
+msgid   "failed to retrieve flash info"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/DUNE/Control/PathController.cpp:278
@@ -1113,15 +1352,6 @@ msgstr  ""
 #: /home/caladolsts/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:492
 #, c-format
 msgid   "new hard-iron calibration parameters: %f | %f"
-msgstr  ""
-
-#: /home/caladolsts/dune/src/Sensors/LIMU/Task.cpp:191
-msgid   "device is using unstable firmware"
-msgstr  ""
-
-#: /home/caladolsts/dune/src/Sensors/LIMU/Task.cpp:193
-#, c-format
-msgid   "firmware version %u.%u.%u"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/Sensors/LIMU/Task.cpp:214
@@ -1359,6 +1589,7 @@ msgid   "input timeout"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/Sensors/XchangeSV/Task.cpp:155
+#: /home/caladolsts/dune/src/Sensors/MiniSVS/Task.cpp:110
 msgid   "I/O error"
 msgstr  ""
 
@@ -1474,20 +1705,20 @@ msgstr  ""
 msgid   "failed to report range to %s"
 msgstr  ""
 
-#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:236
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:229
 msgid   "failed to configure trigger frequency"
 msgstr  ""
 
-#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:246
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:239
 msgid   "failed to turn on device"
 msgstr  ""
 
-#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:350
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:343
 #, c-format
 msgid   "IMU failure: %04X"
 msgstr  ""
 
-#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:355
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:348
 #, c-format
 msgid   "data might be unreliable: %04X"
 msgstr  ""
@@ -1536,6 +1767,14 @@ msgstr  ""
 #: /home/caladolsts/dune/src/Sensors/Antaris4/Task.cpp:475
 #: /home/caladolsts/dune/src/Sensors/Antaris4/Task.cpp:489
 msgid   "checksum mismatch"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/LogBook/Task.cpp:98
+msgid   "cleared logbook"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/LogBook/Task.cpp:101
+msgid   "invalid or unsupported command"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/Transports/Evologics/Task.cpp:232
@@ -1663,6 +1902,11 @@ msgstr  ""
 msgid   "another node on our network is advertising our node name '%s'"
 msgstr  ""
 
+#: /home/caladolsts/dune/src/Transports/GSM/Task.cpp:203
+#: /home/caladolsts/dune/src/Transports/IridiumSBD/Task.cpp:213
+msgid   "input error"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/Transports/GSM/Task.cpp:211
 msgid   "SMS timeout cannot be zero"
 msgstr  ""
@@ -1704,6 +1948,29 @@ msgstr  ""
 msgid   "deactivating transmission to node '%s'"
 msgstr  ""
 
+#: /home/caladolsts/dune/src/Transports/Iridium/Task.cpp:90
+#, c-format
+msgid   "received this command via Iridium: %s."
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Iridium/Task.cpp:106
+#, c-format
+msgid   "received Iridium device update with %d updates."
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Iridium/Task.cpp:154
+msgid   "Error while parsing Iridium message."
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Iridium/Task.cpp:175
+#, c-format
+msgid   "Received imc message of type %s from Iridium."
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Iridium/Task.cpp:205
+msgid   "sending device updates"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/Transports/TCP/Server/Task.cpp:113
 msgid   "could not bind server socket"
 msgstr  ""
@@ -1725,6 +1992,37 @@ msgstr  ""
 #: /home/caladolsts/dune/src/Transports/IridiumSBD/Task.cpp:327
 #, c-format
 msgid   "transmission failed: %s"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:243
+msgid   "setup completed"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:262
+msgid   "failed"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:352
+#, c-format
+msgid   "packet from %u to %u with data %s"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:365
+#, c-format
+msgid   "mini packet from %u with data %04X"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:380
+#, c-format
+msgid   "distance is %f"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:425
+msgid   "transaction failed"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:427
+msgid   "transaction completed"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/Transports/Cache/Task.cpp:258
@@ -2129,6 +2427,14 @@ msgstr  ""
 
 #: /home/caladolsts/dune/src/Vision/DFK51BG02H/Task.cpp:459
 msgid   "keep alive failed"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Vision/Lumenera/Task.cpp:224
+msgid   "Failed to start video stream"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Vision/Lumenera/Task.cpp:241
+msgid   "Started video stream"
 msgstr  ""
 
 #: /home/caladolsts/dune/src/Vision/Lumenera/Task.cpp:319

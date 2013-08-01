@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-08-01 11:44+0100\n"
+        "POT-Creation-Date: 2013-08-01 17:53+0100\n"
         "PO-Revision-Date: 2013-08-01 02:27-0000\n"
         "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,6 +34,25 @@ msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Content-Type: text/plain; charset=UTF-8\n"
         "Content-Transfer-Encoding: 8bit\n"
         "X-Generator: Poedit 1.5.7\n"
+
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.hpp:117
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.hpp:182
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.hpp:200
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.hpp:246
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.hpp:258
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:177
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:231
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:240
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:249
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:258
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:267
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:283
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:292
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:308
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:317
+#, fuzzy
+msgid   "invalid index"
+msgstr  "modelo inválido"
 
 #: /home/caladolsts/dune/src/DUNE/Network/Exceptions.hpp:49
 #, c-format
@@ -69,6 +88,11 @@ msgstr  "funcionalidade não implementada '%s'"
 msgid   "invalid z unit: %s"
 msgstr  "unidade de Z inválida: %s"
 
+#: /home/caladolsts/dune/src/DUNE/Parsers/Config.hpp:127
+#, c-format
+msgid   "unable to convert the value under section '%s' option '%s' to the required type and no valid default was given"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/DUNE/Tasks/Exceptions.hpp:90
 #, c-format
 msgid   "invalid task name '%s'"
@@ -78,6 +102,40 @@ msgstr  "nome de tarefa inválido '%s'"
 #, c-format
 msgid   "invalid value '%s' for parameter '%s': '%s'"
 msgstr  "valor inválido '%s' para parâmetro  '%s': '%s'"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/ParameterTable.hpp:80
+#, fuzzy
+msgid   "variable does not exist"
+msgstr  "ficheiro '%s' não existe"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:75
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:168
+msgid   "value is not of the correct type"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:92
+msgid   "possible values are not of the correct type"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:115
+msgid   "value is below minimum"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:121
+msgid   "value is above maximum"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:127
+msgid   "value not in values set"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:199
+msgid   "too few elements"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/BasicParameterParser.hpp:205
+msgid   "too many elements"
+msgstr  ""
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/EntityDataBase.hpp:64
 msgid   "invalid entity label: "
@@ -122,6 +180,10 @@ msgstr  "soma de verificação inválida: devia ser %02X%02X, mas foi recebido %
 msgid   "invalid format: %s"
 msgstr  "formato inválido: %s"
 
+#: /home/caladolsts/dune/src/DUNE/Math/General.hpp:204
+msgid   "piecewise linear interpolation needs equally sized vectors"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/DUNE/Control/BasicAutopilot.hpp:148
 #, c-format
 msgid   "yaw control mode %d not supported"
@@ -137,6 +199,11 @@ msgstr  "modo de controlo vertical %d não é suportado"
 msgid   "invalid message size %u"
 msgstr  "tamanho de mensagem inválido %u"
 
+#: /home/caladolsts/dune/src/DUNE/IMC/InlineMessage.hpp:103
+#: /home/caladolsts/dune/src/DUNE/IMC/InlineMessage.hpp:112
+msgid   "dereference of null inline message"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/DUNE/Monitors/MotorCurrentMonitor.hpp:52
 msgid   "motor monitor error: "
 msgstr  "erro no monitor do motor"
@@ -145,10 +212,41 @@ msgstr  "erro no monitor do motor"
 msgid   "number of linear points is not even"
 msgstr  "número de pontos não é par"
 
+#: /home/caladolsts/dune/src/Sensors/XR620CTD/Parser.hpp:201
+#, c-format
+msgid   "character value '%d' is not a valid nibble"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Sensors/Edgetech2205/CommandLink.hpp:82
+#, fuzzy
+msgid   "failed to get time"
+msgstr  "inicialização do dispositivo falhou"
+
+#: /home/caladolsts/dune/src/Sensors/Edgetech2205/CommandLink.hpp:138
+#, fuzzy
+msgid   "range mismatch"
+msgstr  "incompatibilidade plan id"
+
+#: /home/caladolsts/dune/src/Sensors/Edgetech2205/CommandLink.hpp:166
+#, fuzzy
+msgid   "failed to set range"
+msgstr  "submersão falhada"
+
+#: /home/caladolsts/dune/src/Transports/GSM/Driver.hpp:124
+#: /home/caladolsts/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:59
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Errors.cpp:47
+msgid   "unknown error"
+msgstr  "erro desconhecido"
+
 #: /home/caladolsts/dune/src/Transports/GSM/Driver.hpp:134
 #, c-format
 msgid   "SMS transmission failed with error code %d"
 msgstr  "transmissão de SMS falhou com código de erro %d"
+
+#: /home/caladolsts/dune/src/Transports/UDP/NodeAddress.hpp:62
+#, fuzzy, c-format
+msgid   "invalid address: '%s'"
+msgstr  "endereço de rede inválido '%s'"
 
 #: /home/caladolsts/dune/src/Transports/IridiumSBD/Exceptions.hpp:47
 #, c-format
@@ -159,6 +257,22 @@ msgstr  "tamanho SBD inválido %u"
 #, c-format
 msgid   "invalid SBD write %s"
 msgstr  "escrita de SBD inválida %s"
+
+#: /home/caladolsts/dune/src/Transports/IridiumSBD/Driver.hpp:207
+msgid   "error ocurred while clearing MO buffer"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/IridiumSBD/Driver.hpp:216
+msgid   "error ocurred while clearing MT buffer"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/IridiumSBD/Driver.hpp:401
+msgid   "error ocurred while clearing buffer"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/IridiumSBD/Driver.hpp:409
+msgid   "error ocurred while clearing the MOMSN"
+msgstr  ""
 
 #: /home/caladolsts/dune/src/Transports/Micromodem/Exceptions.hpp:45
 msgid   "transaction aborted"
@@ -198,6 +312,12 @@ msgstr  "ações: %s ativação atrasada, %.1f segundos"
 #, c-format
 msgid   "schedule: entity label %s not found"
 msgstr  "ações: etiqueta de entidade %s não encontrada"
+
+#: /home/caladolsts/dune/src/Vision/Lumenera/HTTPClient.hpp:125
+#: /home/caladolsts/dune/src/Vision/Lumenera/HTTPClient.hpp:181
+#, fuzzy
+msgid   "timed out while waiting for reply"
+msgstr  "tempo limite atingido ao ler resposta"
 
 #: /home/caladolsts/dune/src/Simulators/LBL/Task.cpp:225
 #, c-format
@@ -353,6 +473,29 @@ msgstr  "TREX desligado durante mais do que %d segundos"
 msgid   "device reported: %s"
 msgstr  "dispositivo reportado: %s"
 
+#: /home/caladolsts/dune/src/Actuators/LED4R/Task.cpp:180
+#: /home/caladolsts/dune/src/Sensors/LIMU/Task.cpp:191
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:197
+msgid   "device is using unstable firmware"
+msgstr  "o dispositivo está a usar \"firmware\" instável"
+
+#: /home/caladolsts/dune/src/Actuators/LED4R/Task.cpp:182
+#: /home/caladolsts/dune/src/Sensors/LIMU/Task.cpp:193
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:199
+#, c-format
+msgid   "firmware version %u.%u.%u"
+msgstr  "versão de \"firmware\": %u.%u.%u"
+
+#: /home/caladolsts/dune/src/Actuators/LED4R/Task.cpp:196
+#, fuzzy
+msgid   "failed to get constant parameters"
+msgstr  "falha ao configurar taxa de amostragem"
+
+#: /home/caladolsts/dune/src/Actuators/LED4R/Task.cpp:199
+#, fuzzy
+msgid   "failed to configured external LED driver"
+msgstr  "falhou a configurar modo de strobe"
+
 #: /home/caladolsts/dune/src/Actuators/Broom/Task.cpp:81
 msgid   "init"
 msgstr  "inicialização"
@@ -428,6 +571,11 @@ msgstr  "valor inválido para 'Motor Id'"
 msgid   "invalid value for 'Thruster Id'"
 msgstr  "valor inválido para 'Thruster Id'"
 
+#: /home/caladolsts/dune/src/DUNE/Utils/String.cpp:284
+#, fuzzy
+msgid   "invalid escape sequence"
+msgstr  "tamanho de mensagem inválido %u"
+
 #: /home/caladolsts/dune/src/DUNE/Utils/OptionParser.cpp:47
 msgid   "Print this message and exit"
 msgstr  "Imprime esta mensagem e sai"
@@ -492,6 +640,11 @@ msgstr  "opção desconhecida '%s'"
 msgid   "missing argument for option '%s'"
 msgstr  "argumento em falta para opção '%s'"
 
+#: /home/caladolsts/dune/src/DUNE/Algorithms/MD5.cpp:63
+#, fuzzy
+msgid   "failed to open file"
+msgstr  "falhou ao abrir dispositivo ESCC"
+
 #: /home/caladolsts/dune/src/DUNE/Maneuvers/FollowTrajectory.cpp:87
 #: /home/caladolsts/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:146
 msgid   "too few trajectory points"
@@ -551,6 +704,26 @@ msgstr  "a parar (%0.1f m)"
 #, c-format
 msgid   "moving (distance: %0.1f m)"
 msgstr  "em movimento (distância: %0.1f m)"
+
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:90
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:93
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:109
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:126
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:129
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:132
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:135
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:207
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:210
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:219
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:222
+#, fuzzy
+msgid   "invalid dimensions"
+msgstr  "versão inválida"
+
+#: /home/caladolsts/dune/src/DUNE/Navigation/KalmanFilter.cpp:148
+#, fuzzy
+msgid   "matrix inversion error"
+msgstr  " erro de manobra:"
 
 #: /home/caladolsts/dune/src/DUNE/Navigation/BasicNavigation.cpp:42
 #, c-format
@@ -678,6 +851,26 @@ msgstr  "perfil de execução: %s"
 msgid   "clean shutdown"
 msgstr  "encerramento limpo"
 
+#: /home/caladolsts/dune/src/DUNE/Tasks/Profiles.cpp:76
+#: /home/caladolsts/dune/src/DUNE/Tasks/Profiles.cpp:92
+#, fuzzy, c-format
+msgid   "no such profile name '%s'"
+msgstr  "não foi possível resolver hostname '%s'"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/Parameter.cpp:71
+#, fuzzy
+msgid   "invalid visibility string"
+msgstr  "raio de loiter inválido"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/Parameter.cpp:89
+#, fuzzy
+msgid   "invalid scope string"
+msgstr  "versão inválida"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/Parameter.cpp:132
+msgid   "no available reader"
+msgstr  ""
+
 #: /home/caladolsts/dune/src/DUNE/Tasks/Manager.cpp:94
 #: /home/caladolsts/dune/src/DUNE/Tasks/Manager.cpp:172
 msgid   "unknown exception"
@@ -699,6 +892,16 @@ msgstr  "falha ao unir tarefa %s"
 #: /home/caladolsts/dune/src/DUNE/Tasks/Manager.cpp:163
 msgid   "starting"
 msgstr  "a iniciar"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/RateLimiters.cpp:85
+#, fuzzy, c-format
+msgid   "invalid rate limiter: %s"
+msgstr  "parâmetro inválido '%s'"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/ParameterTable.cpp:41
+#, fuzzy
+msgid   "invalid parameter"
+msgstr  "parâmetro inválido '%s'"
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:71
 msgid   "Entity Label"
@@ -755,6 +958,16 @@ msgstr  "Ativa"
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:237
 msgid   "True to activate task, false otherwise"
 msgstr  "Verdadeiro para ativar tarefa, falso caso contrário"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:328
+#, fuzzy
+msgid   "activation is not in progress"
+msgstr  "dispositivo não está no meio apropriado"
+
+#: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:400
+#, fuzzy
+msgid   "deactivation is not in progress"
+msgstr  "dispositivo não está no meio apropriado"
 
 #: /home/caladolsts/dune/src/DUNE/Tasks/Task.cpp:460
 msgid   "restarting"
@@ -935,14 +1148,69 @@ msgstr  "defeito do analisador"
 msgid   "invalid command arguments"
 msgstr  "argumentos de comando inválidos"
 
-#: /home/caladolsts/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:59
-#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Errors.cpp:47
-msgid   "unknown error"
-msgstr  "erro desconhecido"
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Interface.cpp:70
+#, fuzzy
+msgid   "failed to reset device"
+msgstr  "inicialização do dispositivo falhou"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Interface.cpp:82
+#, fuzzy
+msgid   "failed to set bootloader parameters"
+msgstr  "falhou ao definir endereço modem"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Interface.cpp:140
+#, fuzzy
+msgid   "failed to get firmware name"
+msgstr  "falhou ao definir endereço modem"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Interface.cpp:153
+#, fuzzy
+msgid   "failed to get firmware version"
+msgstr  "falha ao configurar controlo de fluxo"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Interface.cpp:156
+#, fuzzy
+msgid   "invalid firmware version"
+msgstr  "versão inválida"
 
 #: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Errors.cpp:56
 msgid   "invalid error code"
 msgstr  "código de erro inválido"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:68
+#, fuzzy
+msgid   "failed to enter bootloader"
+msgstr  "falha ao entrar em modo de monitorização"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:85
+#, fuzzy
+msgid   "failed to jump to application"
+msgstr  "falha a parar captura"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:124
+#, fuzzy
+msgid   "failed start upgrade procedure"
+msgstr  "falhou ao ler cabeçalho"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:135
+#, fuzzy
+msgid   "failed to end upgrade procedure"
+msgstr  "falhou ao ler cabeçalho"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:156
+#, fuzzy
+msgid   "failed to fill page chunk"
+msgstr  "falha ao desabilitar poupança de energia"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:166
+#, fuzzy
+msgid   "failed to write flash page"
+msgstr  "falhou ao receber estado"
+
+#: /home/caladolsts/dune/src/DUNE/Hardware/UCTK/Bootloader.cpp:198
+#, fuzzy
+msgid   "failed to retrieve flash info"
+msgstr  "falha ao configurar controlo de fluxo"
 
 #: /home/caladolsts/dune/src/DUNE/Control/PathController.cpp:278
 #: /home/caladolsts/dune/src/Plan/DB/Task.cpp:263
@@ -1138,15 +1406,6 @@ msgstr  "valores de calibração diferentes"
 #, c-format
 msgid   "new hard-iron calibration parameters: %f | %f"
 msgstr  "novos parâmetros de calibração \"hard-iron\": %f | %f"
-
-#: /home/caladolsts/dune/src/Sensors/LIMU/Task.cpp:191
-msgid   "device is using unstable firmware"
-msgstr  "o dispositivo está a usar \"firmware\" instável"
-
-#: /home/caladolsts/dune/src/Sensors/LIMU/Task.cpp:193
-#, c-format
-msgid   "firmware version %u.%u.%u"
-msgstr  "versão de \"firmware\": %u.%u.%u"
 
 #: /home/caladolsts/dune/src/Sensors/LIMU/Task.cpp:214
 msgid   "failed to configure output frequency"
@@ -1383,6 +1642,7 @@ msgid   "input timeout"
 msgstr  "tempo para input excedido"
 
 #: /home/caladolsts/dune/src/Sensors/XchangeSV/Task.cpp:155
+#: /home/caladolsts/dune/src/Sensors/MiniSVS/Task.cpp:110
 msgid   "I/O error"
 msgstr  "erro de entrada/saída"
 
@@ -1498,20 +1758,20 @@ msgstr  "reportado distância para %s = %u m"
 msgid   "failed to report range to %s"
 msgstr  "falha ao reportar distância para %s"
 
-#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:236
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:229
 msgid   "failed to configure trigger frequency"
 msgstr  "falha ao configurar frequência de disparo"
 
-#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:246
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:239
 msgid   "failed to turn on device"
 msgstr  "falha ao ligar dispositivo"
 
-#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:350
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:343
 #, c-format
 msgid   "IMU failure: %04X"
 msgstr  "falha do IMU: %04X"
 
-#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:355
+#: /home/caladolsts/dune/src/Sensors/IFOG/Task.cpp:348
 #, c-format
 msgid   "data might be unreliable: %04X"
 msgstr  "os dados podem não ser confiáveis: %04X"
@@ -1561,6 +1821,15 @@ msgstr  "mensagem não compreendida"
 #: /home/caladolsts/dune/src/Sensors/Antaris4/Task.cpp:489
 msgid   "checksum mismatch"
 msgstr  "a soma do erro não coincide"
+
+#: /home/caladolsts/dune/src/Transports/LogBook/Task.cpp:98
+msgid   "cleared logbook"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/LogBook/Task.cpp:101
+#, fuzzy
+msgid   "invalid or unsupported command"
+msgstr  "comando de reconfiguração inválido"
 
 #: /home/caladolsts/dune/src/Transports/Evologics/Task.cpp:232
 #, c-format
@@ -1687,6 +1956,12 @@ msgstr  "outro nó neste computador está a anunciar o nosso nome '%s'"
 msgid   "another node on our network is advertising our node name '%s'"
 msgstr  "outro nó na nossa rede está a anunciar o nosso nome '%s'"
 
+#: /home/caladolsts/dune/src/Transports/GSM/Task.cpp:203
+#: /home/caladolsts/dune/src/Transports/IridiumSBD/Task.cpp:213
+#, fuzzy
+msgid   "input error"
+msgstr  "erro de entrada/saída"
+
 #: /home/caladolsts/dune/src/Transports/GSM/Task.cpp:211
 msgid   "SMS timeout cannot be zero"
 msgstr  "o timeout da SMS não pode ser zero"
@@ -1728,6 +2003,30 @@ msgstr  "a ativar transmissão para o nó '%s'"
 msgid   "deactivating transmission to node '%s'"
 msgstr  "a desativar transmissão para o nó '%s'"
 
+#: /home/caladolsts/dune/src/Transports/Iridium/Task.cpp:90
+#, c-format
+msgid   "received this command via Iridium: %s."
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Iridium/Task.cpp:106
+#, c-format
+msgid   "received Iridium device update with %d updates."
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Iridium/Task.cpp:154
+msgid   "Error while parsing Iridium message."
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Iridium/Task.cpp:175
+#, c-format
+msgid   "Received imc message of type %s from Iridium."
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Iridium/Task.cpp:205
+#, fuzzy
+msgid   "sending device updates"
+msgstr  "a restabelecer dispositivo"
+
 #: /home/caladolsts/dune/src/Transports/TCP/Server/Task.cpp:113
 msgid   "could not bind server socket"
 msgstr  "não foi possível associar socket do servidor"
@@ -1750,6 +2049,39 @@ msgstr  "falha com erro %u"
 #, c-format
 msgid   "transmission failed: %s"
 msgstr  "transmissão falhada: %s"
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:243
+msgid   "setup completed"
+msgstr  "setup terminado"
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:262
+msgid   "failed"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:352
+#, c-format
+msgid   "packet from %u to %u with data %s"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:365
+#, c-format
+msgid   "mini packet from %u with data %04X"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:380
+#, c-format
+msgid   "distance is %f"
+msgstr  ""
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:425
+#, fuzzy
+msgid   "transaction failed"
+msgstr  "transação abortada"
+
+#: /home/caladolsts/dune/src/Transports/Micromodem/Task.cpp:427
+#, fuzzy
+msgid   "transaction completed"
+msgstr  "transação abortada"
 
 #: /home/caladolsts/dune/src/Transports/Cache/Task.cpp:258
 #, c-format
@@ -2154,6 +2486,16 @@ msgstr  "erro ao receber"
 #: /home/caladolsts/dune/src/Vision/DFK51BG02H/Task.cpp:459
 msgid   "keep alive failed"
 msgstr  "falhou keep alive"
+
+#: /home/caladolsts/dune/src/Vision/Lumenera/Task.cpp:224
+#, fuzzy
+msgid   "Failed to start video stream"
+msgstr  "falha ao começar amostragem de dados"
+
+#: /home/caladolsts/dune/src/Vision/Lumenera/Task.cpp:241
+#, fuzzy
+msgid   "Started video stream"
+msgstr  "a iniciar streaming"
 
 #: /home/caladolsts/dune/src/Vision/Lumenera/Task.cpp:319
 #: /home/caladolsts/dune/src/Vision/Lumenera/Task.cpp:360
@@ -3023,9 +3365,6 @@ msgstr  "Supervisor de Veículo"
 #~ msgid        "failed to start capturing"
 #~ msgstr       "falha ao iniciar captura"
 
-#~ msgid        "failed to stop capturing"
-#~ msgstr       "falha a parar captura"
-
 #~ msgid        "could not open the factory!"
 #~ msgstr       "não foi possível abrir o factory"
 
@@ -3064,9 +3403,6 @@ msgstr  "Supervisor de Veículo"
 
 #~ msgid        "vehicle is heading towards an obstacle"
 #~ msgstr       "o veículo está a ir em direção a um obstáculo"
-
-#~ msgid        "invalid loiter radius"
-#~ msgstr       "raio de loiter inválido"
 
 #, fuzzy
 #~ msgid        "failed to calibrate device"
@@ -3177,9 +3513,6 @@ msgstr  "Supervisor de Veículo"
 #~ msgid        "setting strobe delay to '%d'"
 #~ msgstr       "definido atraso strobe para '%d'"
 
-#~ msgid        "starting streaming"
-#~ msgstr       "a iniciar streaming"
-
 #~ msgid        "%s updated its position"
 #~ msgstr       "%s atualizou posição"
 
@@ -3188,9 +3521,6 @@ msgstr  "Supervisor de Veículo"
 
 #~ msgid        "arrived at the center"
 #~ msgstr       "atingiu o centro"
-
-#~ msgid        "setup completed"
-#~ msgstr       "setup terminado"
 
 #~ msgid        "waiting for initial GPS fix"
 #~ msgstr       "à espera da posição GPS inicial"
