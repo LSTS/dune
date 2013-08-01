@@ -264,7 +264,16 @@ namespace Supervisors
         }
         else if ((prev_count != m_vs.error_count) && m_err_timer.overflow())
         {
-          war(DTR("vehicle errors: %s"), m_vs.error_ents.c_str());
+          // Printing entities calling DTR() explicitly
+          std::vector<std::string> elist;
+          String::split(m_vs.error_ents, ",", elist);
+
+          for (unsigned i = 0; i < elist.size(); ++i)
+            elist[i] = DTR(elist[i].c_str());
+
+          war(DTR("vehicle errors: %s"),
+              DTR(String::join(elist.begin(), elist.end(), ",").c_str()));
+
           m_err_timer.reset();
         }
 
