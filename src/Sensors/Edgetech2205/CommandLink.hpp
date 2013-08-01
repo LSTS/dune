@@ -135,7 +135,7 @@ namespace Sensors
         uint32_t reply_range = getPingRange(subsys);
         if (reply_range != range)
         {
-          throw std::runtime_error(DTR("range mismatch"));
+          throw std::runtime_error(DTR("failed to set range"));
         }
       }
 
