@@ -151,7 +151,7 @@ namespace Transports
 
         if (m == NULL)
         {
-          war(DTR("Error while parsing Iridium message."));
+          war(DTR("error while parsing Iridium message."));
           return;
         }
 
