@@ -124,7 +124,7 @@ namespace DUNE
         // Correct transponders positions.
         for (unsigned i = 0; i < c_max_transponders; i++)
         {
-          if (m_transponders[i])
+          if (m_transponders[i] != NULL)
             m_transponders[i]->update(msg);
         }
       }
@@ -154,6 +154,9 @@ namespace DUNE
       void
       getLocation(unsigned id, double* i, double* j, double* k)
       {
+        if (m_transponders[id] == NULL)
+          return;
+
         *i =  m_transponders[id]->x;
         *j =  m_transponders[id]->y;
         *k =  m_transponders[id]->depth;
@@ -162,6 +165,9 @@ namespace DUNE
       double
       getDepth(unsigned id)
       {
+        if (m_transponders[id] == NULL)
+          return 0.0;
+
         return m_transponders[id]->depth;
       }
 
