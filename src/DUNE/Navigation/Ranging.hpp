@@ -62,12 +62,18 @@ namespace DUNE
         lon = longitude;
         depth = z;
 
+        if (origin == NULL)
+          return;
+
         update(origin);
       }
 
       void
       update(const IMC::GpsFix* origin)
       {
+        if (origin == NULL)
+          return;
+
         Coordinates::WGS84::displacement(origin->lat, origin->lon, 0.0,
                                          lat, lon, depth,
                                          &x, &y);
