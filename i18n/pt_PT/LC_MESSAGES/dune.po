@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-08-01 10:23+0100\n"
+        "POT-Creation-Date: 2013-08-01 11:44+0100\n"
         "PO-Revision-Date: 2013-08-01 02:27-0000\n"
         "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1848,7 +1848,7 @@ msgstr  "em progresso"
 
 #: /home/caladolsts/dune/src/Plan/DB/Task.cpp:625
 #: /home/caladolsts/dune/src/Plan/Engine/Task.cpp:909
-#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:486
+#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:495
 msgid   "OK"
 msgstr  "OK"
 
@@ -2168,6 +2168,11 @@ msgstr  "Número de Destino de Mensagens SMS"
 msgid   "Phone number of the SMS recipient"
 msgstr  "Número de telefone do destinatário de mensagens SMS"
 
+#: /home/caladolsts/dune/src/Monitors/Emergency/Task.cpp:145
+#, c-format
+msgid   "sending SMS %s | %u"
+msgstr  "a enviar SMS %s | %u"
+
 #: /home/caladolsts/dune/src/Monitors/Entities/Task.cpp:43
 msgid   "Boot"
 msgstr  "Arranque"
@@ -2357,45 +2362,45 @@ msgstr  "agora no modo '%s'"
 msgid   "entity errors cleared"
 msgstr  "erros de entidades limpos"
 
-#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:267
+#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:274
 #, c-format
 msgid   "vehicle errors: %s"
 msgstr  "erros do veículo: %s"
 
-#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:326
+#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:335
 msgid   " maneuver error: "
 msgstr  " erro de manobra:"
 
-#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:412
+#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:421
 msgid   "cannot calibrate: vehicle is in external mode"
 msgstr  "não é possível calibrar: veículo está em modo de controlo externo"
 
-#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:426
+#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:435
 #, c-format
 msgid   "calibrating vehicle for %u seconds"
 msgstr  "a calibrar veículo por %u segundos"
 
-#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:435
+#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:444
 msgid   "cannot stop calibration: vehicle is not calibrating"
 msgstr  "não é possível parar calibração: veículo não está a calibrar"
 
-#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:439
+#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:448
 msgid   "stopped calibration"
 msgstr  "calibração parada"
 
-#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:455
+#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:464
 msgid   "no maneuver specified"
 msgstr  "nenhuma manobra foi especificada"
 
-#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:463
+#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:472
 msgid   " maneuver cannot be started in current mode"
 msgstr  " manobras não podem ser iniciadas no modo atual"
 
-#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:472
+#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:481
 msgid   " maneuver started"
 msgstr  " manobra começada"
 
-#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:521
+#: /home/caladolsts/dune/src/Supervisors/Vehicle/Task.cpp:530
 msgid   "maneuver request timeout"
 msgstr  "pedido de manobra excedeu o tempo limite"
 
