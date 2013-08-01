@@ -87,10 +87,10 @@ namespace DUNE
     KalmanFilter::initialize(Math::Matrix& x0, Math::Matrix& P0)
     {
       if ((size_t)P0.rows() != m_state_count || (size_t)P0.columns() != m_state_count)
-        throw std::runtime_error("initialize(): P0 has incompatible dimensions");
+        throw std::runtime_error(DTR("invalid dimensions"));
 
       if ((size_t)x0.rows() != m_state_count || (size_t)x0.columns() != 1)
-        throw std::runtime_error("initialize(): x0 has incompatible dimensions");
+        throw std::runtime_error(DTR("invalid dimensions"));
 
       m_x = x0;
       m_p = P0;
@@ -106,7 +106,7 @@ namespace DUNE
     KalmanFilter::predict(Math::Matrix& b, Math::Matrix& u)
     {
       if (u.rows() != b.columns() || u.columns() != 1)
-        throw std::runtime_error("predict(): u has incompatible dimensions");
+        throw std::runtime_error(DTR("invalid dimensions"));
 
       m_x = m_ax * m_x + b * u;
       m_p = m_ap * m_p * transpose(m_ap) + m_q;
@@ -123,16 +123,16 @@ namespace DUNE
     KalmanFilter::update(float threshold)
     {
       if (m_c.rows() != m_innov.rows())
-        throw std::runtime_error("update(): C and Diff have incompatible dimensions");
+        throw std::runtime_error(DTR("invalid dimensions"));
 
       if (m_c.columns() != m_x.rows())
-        throw std::runtime_error("update(): C and X have incompatible dimensions");
+        throw std::runtime_error(DTR("invalid dimensions"));
 
       if (m_innov.columns() != 1)
-        throw std::runtime_error("update(): Diff is not a vector");
+        throw std::runtime_error(DTR("invalid dimensions"));
 
       if (m_r.rows() != m_r.columns() || m_r.rows() != m_innov.rows())
-        throw std::runtime_error("update(): R has incompatible dimensions");
+        throw std::runtime_error(DTR("invalid dimensions"));
 
       // Measurement prediction covariance.
       Math::Matrix S = (m_c * m_p * transpose(m_c)) + m_r;
@@ -145,7 +145,7 @@ namespace DUNE
       }
       catch (...)
       {
-        throw std::runtime_error("update(): matrix inversion error");
+        throw std::runtime_error(DTR("matrix inversion error"));
       }
 
       // Check if innovation is above a threshold value.
@@ -174,7 +174,7 @@ namespace DUNE
     KalmanFilter::setState(short pos, double value)
     {
       if ((size_t)pos > m_state_count)
-        throw std::runtime_error("invalid index while setting state");
+        throw std::runtime_error(DTR("invalid index"));
 
       m_x(pos) = value;
     }
@@ -204,10 +204,10 @@ namespace DUNE
     KalmanFilter::setStateTransition(Math::Matrix a)
     {
       if (a.rows() != a.columns())
-        throw std::runtime_error("transition matrix must be square");
+        throw std::runtime_error(DTR("invalid dimensions"));
 
       if ((size_t)a.rows() != m_state_count)
-        throw std::runtime_error("transition matrix has invalid size");
+        throw std::runtime_error(DTR("invalid dimensions"));
 
       m_ax = a;
     }
@@ -216,10 +216,10 @@ namespace DUNE
     KalmanFilter::setCovarianceTransition(Math::Matrix a)
     {
       if (a.rows() != a.columns())
-        throw std::runtime_error("transition matrix must be square");
+        throw std::runtime_error(DTR("invalid dimensions"));
 
       if ((size_t)a.rows() != m_state_count)
-        throw std::runtime_error("transition matrix has invalid size");
+        throw std::runtime_error(DTR("invalid dimensions"));
 
       m_ap = a;
     }
@@ -228,7 +228,7 @@ namespace DUNE
     KalmanFilter::setOutput(short pos, double value)
     {
       if (pos > m_y.rows())
-        throw std::runtime_error("invalid index while setting output");
+        throw std::runtime_error(DTR("invalid index"));
 
       m_y(pos) = value;
     }
@@ -237,7 +237,7 @@ namespace DUNE
     KalmanFilter::setInnovation(short pos, double value)
     {
       if (pos > m_innov.rows())
-        throw std::runtime_error("invalid index while setting innovation matrix");
+        throw std::runtime_error(DTR("invalid index"));
 
       m_innov(pos) = value;
     }
@@ -246,7 +246,7 @@ namespace DUNE
     KalmanFilter::setObservation(short ln, short cl, double value)
     {
       if (ln > m_c.rows() || cl > m_c.columns())
-        throw std::runtime_error("invalid index while setting observation matrix");
+        throw std::runtime_error(DTR("invalid index"));
 
       m_c(ln, cl) = value;
     }
@@ -255,7 +255,7 @@ namespace DUNE
     KalmanFilter::setProcessNoise(short ln, short cl, double value)
     {
       if (ln > m_q.rows() || cl > m_q.columns())
-        throw std::runtime_error("invalid index while setting process noise covariance matrix");
+        throw std::runtime_error(DTR("invalid index"));
 
       m_q(ln, cl) = value;
     }
@@ -264,7 +264,7 @@ namespace DUNE
     KalmanFilter::setProcessNoise(short in, double value)
     {
       if ((size_t)in > m_state_count)
-        throw std::runtime_error("invalid index while setting process noise covariance matrix");
+        throw std::runtime_error(DTR("invalid index"));
 
       m_q(in, in) = value;
     }
@@ -280,7 +280,7 @@ namespace DUNE
     KalmanFilter::setMeasurementNoise(short ln, short cl, double value)
     {
       if (ln > m_r.rows() || cl > m_r.columns())
-        throw std::runtime_error("invalid index while setting measurement noise covariance matrix");
+        throw std::runtime_error(DTR("invalid index"));
 
       m_r(ln, cl) = value;
     }
@@ -289,7 +289,7 @@ namespace DUNE
     KalmanFilter::setMeasurementNoise(short in, double value)
     {
       if (in > m_r.rows())
-        throw std::runtime_error("invalid index while setting measurement noise covariance matrix");
+        throw std::runtime_error(DTR("invalid index"));
 
       m_r(in, in) = value;
     }
@@ -305,7 +305,7 @@ namespace DUNE
     KalmanFilter::setCovariance(short ln, short cl, double value)
     {
       if (ln > m_p.rows() || cl > m_p.columns())
-        throw std::runtime_error("invalid index while setting state covariance matrix");
+        throw std::runtime_error(DTR("invalid index"));
 
       m_p(ln, cl) = value;
     }
@@ -314,7 +314,7 @@ namespace DUNE
     KalmanFilter::setCovariance(short in, double value)
     {
       if ((size_t)in > m_state_count)
-        throw std::runtime_error("invalid index while setting state covariance matrix");
+        throw std::runtime_error(DTR("invalid index"));
 
       m_p(in, in) = value;
     }
