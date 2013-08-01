@@ -259,7 +259,7 @@ namespace Transports
         }
 
         if (txn->failed())
-          throw std::runtime_error("failed");
+          throw std::runtime_error(DTR("failed"));
       }
 
       bool

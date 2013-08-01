@@ -79,7 +79,7 @@ namespace Sensors
 
         const Packet* reply = read(MSG_ID_SYSTEM_TIME, COMMAND_TYPE_REPLY, 0, 0, 1.0);
         if (reply == NULL)
-          throw std::runtime_error("failed to get time");
+          throw std::runtime_error(DTR("failed to get time"));
 
         int64_t recv_time = Clock::getSinceEpochMsec();
         int64_t rtt = static_cast<int64_t>((recv_time - send_time) / 2.0);
@@ -135,7 +135,7 @@ namespace Sensors
         uint32_t reply_range = getPingRange(subsys);
         if (reply_range != range)
         {
-          throw std::runtime_error("range mismatch");
+          throw std::runtime_error(DTR("range mismatch"));
         }
       }
 
@@ -163,7 +163,7 @@ namespace Sensors
         const Packet* reply = read(MSG_ID_PING_RANGE, COMMAND_TYPE_REPLY, subsys, 0, 1.0);
 
         if (reply == NULL)
-          throw std::runtime_error("failed to set range");
+          throw std::runtime_error(DTR("failed to set range"));
 
         return reply->getValue();
       }
