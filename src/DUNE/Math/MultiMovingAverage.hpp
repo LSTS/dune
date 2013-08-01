@@ -86,10 +86,7 @@ namespace DUNE
           m_accum[j] += value;
 
           if (m_wsizes[j] <= m_window.size())
-          {
-            unsigned oldest = m_window[m_wsizes[j] - 1];
-            m_accum[j] -= oldest;
-          }
+            m_accum[j] -= m_window[m_wsizes[j] - 1];
         }
 
         insertSample(value);
