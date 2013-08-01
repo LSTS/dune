@@ -319,7 +319,7 @@ namespace Navigation
           }
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          debug("setup completed");
+          spew("setup completed");
         }
 
         //! Start filtering.
