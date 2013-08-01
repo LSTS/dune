@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-08-01 00:29+0100\n"
+        "POT-Creation-Date: 2013-08-01 02:25+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -69,6 +69,73 @@ msgstr  ": Маневр не имеет входящих переходов и �
 msgid   ": invalid start maneuver"
 msgstr  ": Неверный начала маневра"
 
+#: /home/rasm/git/dune/dune/src/DUNE/IMC/Exceptions.hpp:125
+#, c-format
+msgid   "invalid message size %u"
+msgstr  "недействительный размер сообщения %u"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:57
+msgid   "unexpected reply"
+msgstr  "неожиданный ответ"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:67
+msgid   "timeout while reading reply"
+msgstr  "таймаут при чтении ответа"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:79
+#, c-format
+msgid   "buffer has %u bytes, needed %u"
+msgstr  "буфер имеет %u байт, необходимое %u"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:92
+#, c-format
+msgid   "invalid checksum: should be %02X%02X but received %02X%02X"
+msgstr  "неверной контрольной суммы: должна быть %02X %02X, но получил %02X %02X"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:105
+#, c-format
+msgid   "invalid format: %s"
+msgstr  "неверный формат: %s"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.hpp:148
+#, c-format
+msgid   "yaw control mode %d not supported"
+msgstr  "рыскания %d режиме не поддерживается"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.hpp:158
+#, c-format
+msgid   "vertical control mode %d not supported"
+msgstr  "вертикального режима управления %d не поддерживается"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:49
+#, c-format
+msgid   "unable to resolve hostname '%s'"
+msgstr  "не в состоянии разрешить имя хоста '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:58
+#, c-format
+msgid   "invalid network address '%s'"
+msgstr  "'%s' Неверный сетевой адрес"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:75
+#, c-format
+msgid   "network unreachable '%s'"
+msgstr  "недоступности сети '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:84
+#, c-format
+msgid   "host unreachable '%s'"
+msgstr  "недоступности хоста '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:93
+msgid   "connection closed"
+msgstr  "соединение закрыто"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Exceptions.hpp:63
+#, c-format
+msgid   "feature not implemented '%s'"
+msgstr  "Возможность не реализована '%s'"
+
 #: /home/rasm/git/dune/dune/src/DUNE/Monitors/MotorCurrentMonitor.hpp:52
 msgid   "motor monitor error: "
 msgstr  "Двигатель монитор ошибке:"
@@ -107,77 +174,19 @@ msgstr  "Неверное имя задачи '%s'"
 msgid   "invalid value '%s' for parameter '%s': '%s'"
 msgstr  "недопустимое значение '%s' для параметра '%s': '%s'"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:57
-msgid   "unexpected reply"
-msgstr  "неожиданный ответ"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:67
-msgid   "timeout while reading reply"
-msgstr  "таймаут при чтении ответа"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:79
-#, c-format
-msgid   "buffer has %u bytes, needed %u"
-msgstr  "буфер имеет %u байт, необходимое %u"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:92
-#, c-format
-msgid   "invalid checksum: should be %02X%02X but received %02X%02X"
-msgstr  "неверной контрольной суммы: должна быть %02X %02X, но получил %02X %02X"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/Exceptions.hpp:105
-#, c-format
-msgid   "invalid format: %s"
-msgstr  "неверный формат: %s"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Exceptions.hpp:63
-#, c-format
-msgid   "feature not implemented '%s'"
-msgstr  "Возможность не реализована '%s'"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:49
-#, c-format
-msgid   "unable to resolve hostname '%s'"
-msgstr  "не в состоянии разрешить имя хоста '%s'"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:58
-#, c-format
-msgid   "invalid network address '%s'"
-msgstr  "'%s' Неверный сетевой адрес"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:75
-#, c-format
-msgid   "network unreachable '%s'"
-msgstr  "недоступности сети '%s'"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:84
-#, c-format
-msgid   "host unreachable '%s'"
-msgstr  "недоступности хоста '%s'"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:93
-msgid   "connection closed"
-msgstr  "соединение закрыто"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.hpp:148
-#, c-format
-msgid   "yaw control mode %d not supported"
-msgstr  "рыскания %d режиме не поддерживается"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.hpp:158
-#, c-format
-msgid   "vertical control mode %d not supported"
-msgstr  "вертикального режима управления %d не поддерживается"
-
-#: /home/rasm/git/dune/dune/src/DUNE/IMC/Exceptions.hpp:125
-#, c-format
-msgid   "invalid message size %u"
-msgstr  "недействительный размер сообщения %u"
-
 #: /home/rasm/git/dune/dune/src/DUNE/Parsers/PlanConfigParser.hpp:285
 #, c-format
 msgid   "invalid z unit: %s"
 msgstr  "недействительный блок Z: %s"
+
+#: /home/rasm/git/dune/dune/src/Transports/Micromodem/Exceptions.hpp:45
+msgid   "transaction aborted"
+msgstr  "сделка отменяется"
+
+#: /home/rasm/git/dune/dune/src/Transports/GSM/Driver.hpp:134
+#, c-format
+msgid   "SMS transmission failed with error code %d"
+msgstr  "Передача SMS ошибкой с кодом %d"
 
 #: /home/rasm/git/dune/dune/src/Transports/IridiumSBD/Exceptions.hpp:47
 #, c-format
@@ -189,334 +198,642 @@ msgstr  "неверный размер SBD %u"
 msgid   "invalid SBD write %s"
 msgstr  "недействительным SBD написать %s"
 
-#: /home/rasm/git/dune/dune/src/Transports/GSM/Driver.hpp:134
+#: /home/rasm/git/dune/dune/src/Sensors/AIM104MultiIO/Task.cpp:150
+msgid   "invalid message"
+msgstr  "недопустимое сообщение"
+
+#: /home/rasm/git/dune/dune/src/Sensors/AIM104MultiIO/Task.cpp:195
+msgid   "timeout"
+msgstr  "Тайм-аут"
+
+#: /home/rasm/git/dune/dune/src/Sensors/XR620CTD/Task.cpp:460
 #, c-format
-msgid   "SMS transmission failed with error code %d"
-msgstr  "Передача SMS ошибкой с кодом %d"
-
-#: /home/rasm/git/dune/dune/src/Transports/Micromodem/Exceptions.hpp:45
-msgid   "transaction aborted"
-msgstr  "сделка отменяется"
-
-#: /home/rasm/git/dune/dune/src/Autonomy/TextActions/Task.cpp:65
-#, c-format
-msgid   "received SMS request to start plan '%s'"
-msgstr  "получил SMS запрос на запуск плана '%s'"
-
-#: /home/rasm/git/dune/dune/src/Autonomy/TextActions/Task.cpp:76
-#, c-format
-msgid   "got abort request from '%s'"
-msgstr  "получил прервать запрос '%s'"
-
-#: /home/rasm/git/dune/dune/src/Autonomy/TREX/Task.cpp:130
-#, c-format
-msgid   "TREX disconnected for more than %d seconds"
-msgstr  "TREX отсоединен более чем %d секунд"
-
-#: /home/rasm/git/dune/dune/src/Simulators/VSIM/Task.cpp:140
-msgid   "error loading world parameters."
-msgstr  "ошибка при загрузке мировых показателей."
-
-#: /home/rasm/git/dune/dune/src/Simulators/VSIM/Task.cpp:144
-msgid   "error loading vehicle parameters."
-msgstr  "ошибка при загрузке параметров автомобиля."
-
-#: /home/rasm/git/dune/dune/src/Simulators/LBL/Task.cpp:225
-#, c-format
-msgid   "maximum amount of beacons is %u"
-msgstr  "максимальное количество маяков %u"
-
-#: /home/rasm/git/dune/dune/src/Simulators/Leaks/Task.cpp:125
-#: /home/rasm/git/dune/dune/src/Simulators/Leaks/Task.cpp:140
-#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:549
-msgid   "leak detected"
-msgstr  "обнаружения утечки"
-
-#: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:255
-#: /home/rasm/git/dune/dune/src/Monitors/Collisions/Task.cpp:336
-msgid   "collision detected"
-msgstr  "обнаруживается конфликт"
-
-#: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:383
-#, c-format
-msgid   "unexpected simulation message: %s"
-msgstr  "неожиданное сообщение моделирования: %s"
-
-#: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:390
-#, fuzzy, c-format
-msgid   "read error: %s"
+msgid   "parse error: %s"
 msgstr  "Ошибка разбора: %s"
 
-#: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:193
-#: /home/rasm/git/dune/dune/src/Navigation/AUV/SGNavigation/Task.cpp:286
-#: /home/rasm/git/dune/dune/src/Monitors/Collisions/Task.cpp:190
+#: /home/rasm/git/dune/dune/src/Sensors/SDCR/Task.cpp:174
+msgid   "version"
+msgstr  "версия"
+
+#: /home/rasm/git/dune/dune/src/Sensors/SDCR/Task.cpp:205
+#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:452
+#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:516
+#: /home/rasm/git/dune/dune/src/Power/MCBv2/Task.cpp:576
+msgid   "device reported"
+msgstr  "Устройство сообщает"
+
+#: /home/rasm/git/dune/dune/src/Sensors/SDCR/Task.cpp:233
+msgid   "failed to receive state"
+msgstr  "не удалось получить государственную"
+
+#: /home/rasm/git/dune/dune/src/Sensors/SCH311X/Task.cpp:101
 #, c-format
-msgid   "failed to resolve entity '%s': %s"
-msgstr  "не удалось решить субъекта '%s': %s"
+msgid   "file '%s' doesn't exist"
+msgstr  "Файл '%s' не существует"
 
-#: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:236
-msgid   "motion detected"
-msgstr  "обнаружении движения"
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:100
+msgid   "unable to stop continuous output"
+msgstr  "не в состоянии остановить непрерывный выходной"
 
-#: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:318
-msgid   "device is not active"
-msgstr  "Устройство не активно"
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:106
+msgid   "unable to configure time output"
+msgstr  "не может его настроить время выхода"
 
-#: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:326
-msgid   "device is not in proper medium"
-msgstr  "устройство не находится в соответствующей среде"
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:112
+msgid   "unable to configure date output"
+msgstr  "невозможно настроить дату выхода"
 
-#: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:338
-msgid   "calibrating: system must remain static"
-msgstr  "калибровки: система должна оставаться статической"
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:120
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:128
+msgid   "unable to set output format"
+msgstr  "не можете установить выходной формат"
 
-#: /home/rasm/git/dune/dune/src/Vision/DFK51BG02H/Task.cpp:459
-msgid   "keep alive failed"
-msgstr  "оставьте в живых не удалось"
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:135
+msgid   "unable to request continuous output"
+msgstr  "не в состоянии запросить длительная мощность"
 
-#: /home/rasm/git/dune/dune/src/Vision/Lumenera/Task.cpp:319
-#: /home/rasm/git/dune/dune/src/Vision/Lumenera/Task.cpp:360
-msgid   "failed to set property"
-msgstr  "не удалось установить свойство"
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:157
+msgid   "unable to write full command to device"
+msgstr  "не в состоянии писать полную команду устройству"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Servos/Task.cpp:329
+#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:202
+msgid   "timeout waiting for device response"
+msgstr  "таймаут ожидания ответа устройства"
+
+#: /home/rasm/git/dune/dune/src/Sensors/LIMU/Task.cpp:191
+msgid   "device is using unstable firmware"
+msgstr  "Устройство использует нестабильной прошивки"
+
+#: /home/rasm/git/dune/dune/src/Sensors/LIMU/Task.cpp:193
 #, c-format
-msgid   "potential fault in servo#%d, %s"
-msgstr  "потенциальные неисправности сервопривода # %d, %s"
+msgid   "firmware version %u.%u.%u"
+msgstr  "версия прошивки %u. %u. %u"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Servos/Task.cpp:360
+#: /home/rasm/git/dune/dune/src/Sensors/LIMU/Task.cpp:214
+msgid   "failed to configure output frequency"
+msgstr  "удалось настроить выходной частоты"
+
+#: /home/rasm/git/dune/dune/src/Sensors/LIMU/Task.cpp:217
+#: /home/rasm/git/dune/dune/src/Sensors/LIMU/Task.cpp:237
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:403
+msgid   "failed to set hard-iron correction factors"
+msgstr  "не удалось установить Hard-Iron поправочных коэффициентов"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:144
+msgid   "Frequency"
+msgstr  "Частота"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:150
+msgid   "Operating frequency"
+msgstr  "Рабочая частота"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:152
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:262
+msgid   "Range"
+msgstr  "Диапазон"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:160
+msgid   "Operating range"
+msgstr  "Рабочий диапазон"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:184
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:372
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:196
+msgid   "restarting to change IPv4 address"
+msgstr  "перезапуска изменить адрес IPv4"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:187
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:375
+msgid   "restarting to change TCP port"
+msgstr  "перезапуска изменить TCP порт"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:287
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:670
+msgid   "failed to read header"
+msgstr  "удалось прочитать заголовок"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:292
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:680
+msgid   "failed to read data"
+msgstr  "Не удалось прочитать данные"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:296
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:684
+msgid   "failed to read footer"
+msgstr  "удалось прочитать нижний колонтитулы"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:210
+msgid   "no reply to command"
+msgstr  "Ответа не командовать"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:211
+msgid   "failed to setup device"
+msgstr  "Не могу выполнить устройство"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:460
+msgid   "invalid GPZDA sentence"
+msgstr  "недействительным приговор GPZDA"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:484
+msgid   "invalid GPGGA sentence"
+msgstr  "недействительным приговор GPGGA"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:532
+msgid   "invalid PUBX,00 sentence"
+msgstr  "недействительным PUBX, 00 предложение"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:583
+msgid   "invalid GPVTG sentence"
+msgstr  "недействительным GPVTG предложении"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:607
+msgid   "invalid GPHDT sentence"
+msgstr  "недействительным GPHDT предложении"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:623
+msgid   "invalid GPHDM sentence"
+msgstr  "недействительным GPHDM предложении"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:641
+msgid   "invalid GPROT sentence"
+msgstr  "недействительным GPROT предложении"
+
+#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:660
+msgid   "invalid PSATHPR sentence"
+msgstr  "недействительным PSATHPR предложении"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:459
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:519
+#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:355
+#: /home/rasm/git/dune/dune/src/Power/DOAMv2/Task.cpp:184
+msgid   "failed to contact device"
+msgstr  "не удалось связаться с устройством"
+
+#: /home/rasm/git/dune/dune/src/Sensors/DLV3/Task.cpp:174
+msgid   "waking device"
+msgstr  "пробуждения устройства"
+
+#: /home/rasm/git/dune/dune/src/Sensors/SW100/Task.cpp:186
 #, c-format
-msgid   "potential fault in servo#%d, current consumption above %f"
-msgstr  "потенциальные неисправности сервопривода # %d, потребляемый ток выше %f"
+msgid   "depth offset is %0.2f m"
+msgstr  "Глубина смещения %0.2f м"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Emergency/Task.cpp:75
-msgid   "SMS Recipient Number"
-msgstr  "SMS номер получателя"
+#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:146
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:303
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:136
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:992
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:40
+msgid   "initializing"
+msgstr  "инициализации"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Emergency/Task.cpp:78
-msgid   "Phone number of the SMS recipient"
-msgstr  "Телефонный номер SMS получатель"
+#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:153
+msgid   "Level the device and hit NEXT"
+msgstr  "Уровень устройства и нажмите Далее"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Clock/Task.cpp:165
+#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:158
+msgid   "Rotate the device and keep it levelled (rotation must last +20s)"
+msgstr  "Поверните устройство и сохранить его выровняли (вращение должно продолжаться +20 с)"
+
+#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:163
+msgid   "Device is calibrated"
+msgstr  "Прибор калибруется"
+
+#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:170
+#, fuzzy
+msgid   "Calibration error, calibration procedure must be restarted"
+msgstr  "Ошибка калибровки. Необходимо перезапустить"
+
+#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:410
 #, c-format
-msgid   "adjusting CPU clock by %0.4f s"
-msgstr  "регулировки частоты процессора по %0.4f с"
+msgid   "Level the device and hit NEXT (Roll: %0.2f | Pitch: %0.2f)"
+msgstr  "Уровень устройства и нажмите Далее (Рулон: %0.2f | Шаг: %0.2f)"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Clock/Task.cpp:168
-msgid   "failed to execute clock sync command"
-msgstr  "не удалось выполнить команду синхронизации часов"
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:44
+msgid   "failed to set output format"
+msgstr  "не удалось установить выходной формат"
 
-#: /home/rasm/git/dune/dune/src/Monitors/FuelLevel/Task.cpp:266
-msgid   "invalid model"
-msgstr  "недействительным модели"
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:45
+msgid   "failed to set flow control"
+msgstr  "не удалось установить контроль потока"
 
-#: /home/rasm/git/dune/dune/src/Monitors/FuelLevel/Task.cpp:273
-msgid   "operation mode list labels and values have different sizes"
-msgstr  "Режим списка меток и значений имеют различные размеры"
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:46
+msgid   "failed to disable power saving"
+msgstr  "Не удалось отключить энергосбережение"
 
-#: /home/rasm/git/dune/dune/src/Monitors/FuelLevel/Task.cpp:281
-msgid   "invalid opmode value (zero)"
-msgstr  "недопустимое значение OPMODE (ноль)"
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:47
+msgid   "failed to disable low latency trigger"
+msgstr  "Не удалось отключить триггер низкой латентностью"
 
-#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:242
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:48
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:49
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:50
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:51
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:52
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:53
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:54
+msgid   "unexpected response"
+msgstr  "неожиданный ответ"
+
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:259
+msgid   "failed to wake device"
+msgstr  "не смогли разбудить устройство"
+
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:275
+msgid   "unable to read prompt"
+msgstr  "не в состоянии читать быстрое"
+
+#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:289
+msgid   "failed to start data sampling"
+msgstr  "Не удалось запустить выборки данных"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBLTracker/Task.cpp:240
+msgid   "restarting to change transducer detection GPIO"
+msgstr  "перезапуска менять датчик обнаружения GPIO"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBLTracker/Task.cpp:259
 #, c-format
-msgid   "%s -- operational limit breached: %0.2f > %0.2f"
-msgstr  "%s - эксплуатационный предел нарушен: %0.2f> %0.2f"
+msgid   "unable to use GPIO %d for transducer detection"
+msgstr  "не в состоянии использовать GPIO %d для обнаружения преобразователя"
 
-#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:255
+#: /home/rasm/git/dune/dune/src/Sensors/MLBLTracker/Task.cpp:323
+msgid   "transducer not connected"
+msgstr  "датчик не подключен"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBLTracker/Task.cpp:606
+msgid   "range to"
+msgstr  "варьироваться в"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:253
+msgid   "echo handling enabled, but got no RS-485 echo"
+msgstr  "обработка эхо включено, но не получил RS-485 эхо"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:263
+msgid   "received RS-485 echo doesn't match"
+msgstr  "получили RS-485 эха не соответствует"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:300
+msgid   "invalid CRC"
+msgstr  "недействительным CRC"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:302
+msgid   "exceeded maximum consecutive CRC error count"
+msgstr  "превысил максимально последовательными ошибками контрольной суммы счета"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:380
+msgid   "device not initialized, initializing"
+msgstr  "Устройство не инициализирован, инициализация"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:386
 #, c-format
-msgid   "%s -- operational limit now sane: %0.2f <= %0.2f"
-msgstr  "%s - граница эксплуатационной сейчас здравомыслящий: %0.2f <%0.2f ="
+msgid   "got exception %d for command %d"
+msgstr  "возникло исключение %d для команды %d"
 
-#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:330
-msgid   "minimum speed"
-msgstr  "Минимальная скорость"
-
-#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:331
-msgid   "maximum speed"
-msgstr  "максимальная скорость"
-
-#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:332
-msgid   "depth"
-msgstr  "глубина"
-
-#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:333
-msgid   "vertical rate"
-msgstr  "вертикальная скорость"
-
-#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:337
-msgid   "maximum altitude"
-msgstr  "Максимальная высота"
-
-#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:338
-msgid   "minimum altitude"
-msgstr  "минимальная высота"
-
-#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:369
-msgid   "Operational Area"
-msgstr  "Район Оперативной"
-
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
-msgid   "Boot"
-msgstr  "Ботинок"
-
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
-msgid   "Normal"
-msgstr  "Нормальный"
-
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
-msgid   "Fault"
-msgstr  "Вина"
-
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
-msgid   "Error"
-msgstr  "Ошибка"
-
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
-msgid   "Failure"
-msgstr  "Провал"
-
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:184
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:397
 #, c-format
-msgid   "can not monitor %s (%s), is there a task failure or a configuration error?"
-msgstr  "не может контролировать %s (%s), есть задачи завершилось с ошибкой или ошибкой конфигурации?"
+msgid   "initialized device: class=%d.%d firmware=%d"
+msgstr  "инициализировать устройство: класс = %d. %d прошивки = %d"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:195
-msgid   "EntityState message without source entity"
-msgstr  "EntityState сообщения без исходный объект"
-
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:222
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:403
 #, c-format
-msgid   "%s entity state is unstable (%s <-> %s), ignoring"
-msgstr  "%s лицом состояние неустойчиво (%s <-> %s), не обращая внимания"
+msgid   "device serial number=%u"
+msgstr  "серийный номер устройства = %u"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:232
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:409
+msgid   "successfuly zeroed device"
+msgstr  "Устройство успешно обнулен"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:430
+msgid   "unable to initialize the device"
+msgstr  "не смог инициализировать устройство"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:438
+msgid   "unable to retrieve the serial number"
+msgstr  "удалось получить серийный номер"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:456
+msgid   "unable to zero the device"
+msgstr  "неспособный к нулю устройства"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:203
+msgid   "failed to stop device"
+msgstr  "не смогли остановить устройство"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:212
+msgid   "failed to read EEPROM#130"
+msgstr  "удалось прочитать EEPROM # 130"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:222
+msgid   "failed to read EEPROM#230"
+msgstr  "удалось прочитать EEPROM # 230"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:311
+#: /home/rasm/git/dune/dune/src/Sensors/Antaris4/Task.cpp:494
+msgid   "unexpected byte"
+msgstr  "неожиданные байт"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Imagenex852/Task.cpp:263
+msgid   "restarting to change UART device"
+msgstr  "перезапуска изменить устройство UART"
+
+#: /home/rasm/git/dune/dune/src/Sensors/IFOG/Task.cpp:236
+msgid   "failed to configure trigger frequency"
+msgstr  "удалось настроить Частота срабатывания"
+
+#: /home/rasm/git/dune/dune/src/Sensors/IFOG/Task.cpp:246
+msgid   "failed to turn on device"
+msgstr  "не удалось включить устройство"
+
+#: /home/rasm/git/dune/dune/src/Sensors/IFOG/Task.cpp:350
 #, c-format
-msgid   "%s : State stabilized in %s | %s"
-msgstr  "%s: Государственный стабилизировался в %s | %s"
+msgid   "IMU failure: %04X"
+msgstr  "ИДУ неудачи: %04X"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:258
-msgid   "reconfiguration command issued"
-msgstr  "выдается команда реконфигурации"
-
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:271
-msgid   "invalid reconfiguration command"
-msgstr  "недопустимую команду реконфигурации"
-
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:309
+#: /home/rasm/git/dune/dune/src/Sensors/IFOG/Task.cpp:355
 #, c-format
-msgid   "%s - monitoring enabled"
-msgstr  "%s - мониторинг поддержкой"
+msgid   "data might be unreliable: %04X"
+msgstr  "данные могут быть ненадежны: %04X"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:315
+#: /home/rasm/git/dune/dune/src/Sensors/Antaris4/Task.cpp:319
+msgid   "unable to write full packet to device"
+msgstr  "не в состоянии писать полный пакет на устройство"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Antaris4/Task.cpp:355
+msgid   "message not acknowledged"
+msgstr  "сообщение не подтверждено"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Antaris4/Task.cpp:475
+#: /home/rasm/git/dune/dune/src/Sensors/Antaris4/Task.cpp:489
+msgid   "checksum mismatch"
+msgstr  "несоответствие контрольной суммы"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:128
+msgid   "High-Frequency Channels"
+msgstr  "ВЧ каналов"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:129
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:145
+msgid   "None, Port, Starboard, Both"
+msgstr  "Нет, порт, борта, оба"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:135
+msgid   "High-Frequency Range"
+msgstr  "Высокочастотный диапазон"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:144
+msgid   "Low-Frequency Channels"
+msgstr  "Низкочастотных каналов"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:151
+msgid   "Low-Frequency Range"
+msgstr  "Низкочастотный диапазон"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:199
+msgid   "restarting to change TCP command port"
+msgstr  "перезапуска изменить TCP порт команды"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:202
+msgid   "restarting to change TCP data port"
+msgstr  "перезапуска изменить TCP порт"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:305
+msgid   "waiting beacons configuration"
+msgstr  "ожидания маяки конфигурации"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:307
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:950
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:41
+msgid   "idle"
+msgstr  "холостом ходу"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:309
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:42
+msgid   "active"
+msgstr  "активный"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:311
+msgid   "serial port communication error, modem not responding"
+msgstr  "Ошибка последовательного порта связи, модем не отвечает"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:313
+msgid   "failed to configure modem, possible serial port communication error"
+msgstr  "удалось настроить модем, возможно ошибку последовательного порта связи"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:315
+msgid   "failed to set modem address"
+msgstr  "не удалось установить модем адрес"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:358
 #, c-format
-msgid   "%s - current state not normal - %s"
-msgstr  "%s - текущее состояние не является нормальным - %s"
+msgid   "modem address for agent '%s' is invalid"
+msgstr  "адресом модема для агента '%s' недопустим"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:319
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:480
+msgid   "dynamic sound speed corrections are disabled"
+msgstr  "динамической корректировки скорости звук отключаются"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:561
+msgid   "invalid change plan message"
+msgstr  "недопустимое сообщение плана изменений"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:591
+msgid   "received system restart request"
+msgstr  "получил запрос перезагрузки системы"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:600
+msgid   "restart request acknowledged"
+msgstr  "перезапустить запрос признал"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:604
+msgid   "failed to acknowledge restart request"
+msgstr  "не признал перезапуска запроса"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:612
+msgid   "acoustic abort detected"
+msgstr  "акустических прервать обнаружены"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:622
+msgid   "abort acknowledged"
+msgstr  "прервать признал"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:626
+msgid   "failed to acknowledge abort"
+msgstr  "не признал прервать"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:662
 #, c-format
-msgid   "%s - monitoring previously enabled"
-msgstr  "%s - мониторинг ранее включенную"
+msgid   "discarded invalid range %0.2f"
+msgstr  "отбрасываются неверный диапазон %0.2f"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:332
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:744
+msgid   "failed to ping beacons, modem seems busy"
+msgstr  "не удалось проверить связь маяки, модем кажется занятым"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:906
 #, c-format
-msgid   "%s - monitoring disabled"
-msgstr  "%s - мониторинг инвалидов"
+msgid   "reported range to %s = %u m"
+msgstr  "сообщили диапазона %s = %u м"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:339
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:910
 #, c-format
-msgid   "%s - monitoring previously disabled"
-msgstr  "%s - мониторинг ранее отключенные"
+msgid   "failed to report range to %s"
+msgstr  "не сообщил диапазоне %s"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:363
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:409
+msgid   "resetting device"
+msgstr  "сброс устройства"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:428
+msgid   "failed to read magnetic calibration parameters from device"
+msgstr  "удалось прочитать магнитных параметров калибровки с устройства"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:447
+msgid   "different calibration parameters"
+msgstr  "различные параметры калибровки"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:492
 #, c-format
-msgid   "entity %s: %s"
-msgstr  "лица %s: %s"
+msgid   "new hard-iron calibration parameters: %f | %f"
+msgstr  "Новый жесткий железа параметры калибровки: %f | %f"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:440
+#: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:122
+msgid   "failed to enter command mode"
+msgstr  "не удалось войти командный режим"
+
+#: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:125
+msgid   "failed to set sampling rate"
+msgstr  "не удалось установить частоту дискретизации"
+
+#: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:128
+msgid   "failed to enter monitor mode"
+msgstr  "не в режим монитора"
+
+#: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:146
+msgid   "input timeout"
+msgstr  "входного тайм-аут"
+
+#: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:155
+msgid   "I/O error"
+msgstr  "Ошибка ввода / вывода"
+
+#: /home/rasm/git/dune/dune/src/Plan/Generator/Task.cpp:197
 #, c-format
-msgid   "%s -- status not reported after %0.2f seconds"
-msgstr  "%s - статус не сообщается после %0.2f секунд"
+msgid   "Unable to generate plan using template %s"
+msgstr  "Невозможно создать плану с использованием шаблона %s"
 
-#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:443
-#, fuzzy, c-format
-msgid   "%s: entity state timeout"
-msgstr  ": Государственное образование тайм-аут"
+#: /home/rasm/git/dune/dune/src/Plan/Generator/Task.cpp:219
+msgid   "Plan generated automatically"
+msgstr  "План формируется автоматически"
 
-#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:138
-msgid   "waiting for first reference"
-msgstr  "ждет первая ссылка"
+#: /home/rasm/git/dune/dune/src/Plan/Generator/Task.cpp:311
+#: /home/rasm/git/dune/dune/src/Plan/Generator/Task.cpp:348
+msgid   "Plan generated automatically by DUNE."
+msgstr  "План генерируется автоматически дюну."
 
-#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:194
+#: /home/rasm/git/dune/dune/src/Plan/Generator/Task.cpp:350
 #, c-format
-msgid   "ignored reference from non-authorized source: %d"
-msgstr  "игнорируют ссылки от несанкционированного Источник: %d"
+msgid   "generating plan from '%s' template..."
+msgstr  "генерации плана от '%s' шаблон..."
 
-#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:203
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:73
+msgid   "set plan"
+msgstr  "установлен план"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:73
+msgid   "delete plan"
+msgstr  "удалить плана"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:74
+msgid   "get plan"
+msgstr  "получить план"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:74
+msgid   "get plan info"
+msgstr  "получить план информация"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:75
+msgid   "clear database"
+msgstr  "очистить базу данных"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:75
+msgid   "database state"
+msgstr  "состояние базы данных"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:76
+msgid   "database initialization"
+msgstr  "инициализации базы данных"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:140
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:295
 #, c-format
-msgid   "ignored reference from non-authorized entity: %d"
-msgstr  "игнорируют ссылки от несанкционированного лица: %d"
+msgid   "database file: '%s'"
+msgstr  "Файл базы данных: '%s'"
 
-#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:528
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:170
+msgid   "initialization complete"
+msgstr  "полная инициализация"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:217
 #, c-format
-msgid   "loitering around (%f, %f, %f, %f)."
-msgstr  "слоняющихся без дела (%f, %f, %f, %f)."
+msgid   "storing plan '%s' issued through a PlanControl request"
+msgstr  "хранение план »%s 'выпущены через PlanControl запросу"
 
-#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:536
-#, c-format
-msgid   "loitering (elevator) towards (%f, %f, %f, %f)."
-msgstr  "слонялся (лифт) к (%f, %f, %f, %f)."
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:247
+msgid   "unexpected message"
+msgstr  "неожиданное сообщение"
 
-#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:543
-#, c-format
-msgid   "going towards (%f, %f, %f)."
-msgstr  "происходит в направлении (%f, %f, %f)."
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:263
+#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:278
+msgid   "not active"
+msgstr  "не активна"
 
-#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:547
-#, c-format
-msgid   "hovering next to (%f, %f)."
-msgstr  "парящей рядом (%f, %f)."
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:293
+msgid   "unsupported operation"
+msgstr  "недопустимую операцию"
 
-#: /home/rasm/git/dune/dune/src/Maneuver/CompassCalibration/Task.cpp:147
-#, c-format
-msgid   "forcing minimum of %.1f"
-msgstr  "заставляя минимум %.1f"
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:325
+msgid   "database is corrupt"
+msgstr  "база данных повреждена"
 
-#: /home/rasm/git/dune/dune/src/Maneuver/FollowSystem/Task.cpp:299
-msgid   "timeout to receive new remote info was exceeded."
-msgstr  "Тайм-аут, чтобы получать новые удаленные информация была превышена."
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:333
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:409
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:444
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:479
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:746
+msgid   "undefined plan id"
+msgstr  "неопределенная ID плана"
 
-#: /home/rasm/git/dune/dune/src/Maneuver/FollowTrajectory/Task.cpp:128
-msgid   "disregarding trajectory's time constraints"
-msgstr  "без учета времени траектории стесненность"
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:341
+msgid   "no plan specification given"
+msgstr  "Нет плана техническим требованиям, приведенным"
 
-#: /home/rasm/git/dune/dune/src/Maneuver/FollowTrajectory/Task.cpp:133
-msgid   "provided trajectory is not feasible by the current vehicle!"
-msgstr  "при условии траектории не представляется возможным действующим автомобиля!"
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:347
+msgid   "plan id mismatch"
+msgstr  "несоответствие плана ID"
 
-#: /home/rasm/git/dune/dune/src/Maneuver/Elevator/Task.cpp:149
-#: /home/rasm/git/dune/dune/src/Maneuver/Loiter/Task.cpp:75
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:47
-#, c-format
-msgid   "forcing minimum radius of %.1f"
-msgstr  "заставляя минимальный радиус %.1f"
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:401
+msgid   "OK (updated)"
+msgstr  "OK (обновлено)"
 
-#: /home/rasm/git/dune/dune/src/Maneuver/Elevator/Task.cpp:279
-msgid   "water column is not deep enough"
-msgstr  "толщи воды не достаточно глубоко"
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:401
+msgid   "OK (new entry)"
+msgstr  "OK (впервые в списке)"
 
-#: /home/rasm/git/dune/dune/src/Maneuver/Elevator/Task.cpp:331
-msgid   "vertical progress is too slow"
-msgstr  "вертикальная прогресс идет слишком медленными"
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:434
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:455
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:489
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:756
+msgid   "undefined plan"
+msgstr  "неопределенная плана"
 
-#: /home/rasm/git/dune/dune/src/Maneuver/Loiter/Task.cpp:110
-#, c-format
-msgid   "will now loiter for %d seconds"
-msgstr  "теперь будет слоняться по %d секунд"
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:613
+msgid   "in progress"
+msgstr  "В прогрессе"
 
-#: /home/rasm/git/dune/dune/src/Maneuver/Dubin/Task.cpp:65
-msgid   "vertical control type not supported"
-msgstr  "вертикальный тип управления не поддерживается"
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:625
+#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:909
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:486
+msgid   "OK"
+msgstr  "Хорошо"
 
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:47
 msgid   "Start Plan"
@@ -554,12 +871,6 @@ msgstr  "ВЫПОЛНЕНИЕ"
 #, c-format
 msgid   "failed to activate %s: %s"
 msgstr  "Не удалось активировать %s: %s"
-
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:295
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:140
-#, c-format
-msgid   "database file: '%s'"
-msgstr  "Файл базы данных: '%s'"
 
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:316
 msgid   "database connection closed"
@@ -639,21 +950,6 @@ msgstr  "загруженных план не работает, просим и�
 msgid   "no plan is even loaded, request ignored"
 msgstr  "план не загружается даже, запрос игнорируется"
 
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:746
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:333
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:409
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:444
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:479
-msgid   "undefined plan id"
-msgstr  "неопределенная ID плана"
-
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:756
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:434
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:455
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:489
-msgid   "undefined plan"
-msgstr  "неопределенная плана"
-
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:789
 msgid   "plan initializing: "
 msgstr  "План инициализации:"
@@ -675,30 +971,10 @@ msgstr  ": Выполнение маневра"
 msgid   "reply -- %s (%s) -- %s"
 msgstr  "Ответ - %s (%s) - %s"
 
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:909
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:625
-#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:486
-msgid   "OK"
-msgstr  "Хорошо"
-
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:939
 #, c-format
 msgid   "now in %s state"
 msgstr  "Сейчас в %s состоянии"
-
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:950
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:307
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:41
-msgid   "idle"
-msgstr  "холостом ходу"
-
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:992
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:136
-#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:146
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:303
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:40
-msgid   "initializing"
-msgstr  "инициализации"
 
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:1034
 msgid   "vehicle state timeout"
@@ -708,98 +984,271 @@ msgstr  "Тайм-аут состояние транспортного сред�
 msgid   "vehicle reply timeout"
 msgstr  "Тайм-аут автомобиля Ответить"
 
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:73
-msgid   "set plan"
-msgstr  "установлен план"
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:268
+msgid   "Ardupilot interface initialized"
+msgstr  "Ardupilot интерфейс инициализируется"
 
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:73
-msgid   "delete plan"
-msgstr  "удалить плана"
-
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:74
-msgid   "get plan"
-msgstr  "получить план"
-
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:74
-msgid   "get plan info"
-msgstr  "получить план информация"
-
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:75
-msgid   "clear database"
-msgstr  "очистить базу данных"
-
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:75
-msgid   "database state"
-msgstr  "состояние базы данных"
-
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:76
-msgid   "database initialization"
-msgstr  "инициализации базы данных"
-
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:170
-msgid   "initialization complete"
-msgstr  "полная инициализация"
-
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:217
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:369
 #, c-format
-msgid   "storing plan '%s' issued through a PlanControl request"
-msgstr  "хранение план »%s 'выпущены через PlanControl запросу"
+msgid   "%s - deactivating"
+msgstr  "%s - отключение"
 
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:247
-msgid   "unexpected message"
-msgstr  "неожиданное сообщение"
-
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:263
-#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:278
-msgid   "not active"
-msgstr  "не активна"
-
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:293
-msgid   "unsupported operation"
-msgstr  "недопустимую операцию"
-
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:325
-msgid   "database is corrupt"
-msgstr  "база данных повреждена"
-
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:341
-msgid   "no plan specification given"
-msgstr  "Нет плана техническим требованиям, приведенным"
-
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:347
-msgid   "plan id mismatch"
-msgstr  "несоответствие плана ID"
-
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:401
-msgid   "OK (updated)"
-msgstr  "OK (обновлено)"
-
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:401
-msgid   "OK (new entry)"
-msgstr  "OK (впервые в списке)"
-
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:613
-msgid   "in progress"
-msgstr  "В прогрессе"
-
-#: /home/rasm/git/dune/dune/src/Plan/Generator/Task.cpp:197
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:371
 #, c-format
-msgid   "Unable to generate plan using template %s"
-msgstr  "Невозможно создать плану с использованием шаблона %s"
+msgid   "%s - activating"
+msgstr  "%s - активирующий"
 
-#: /home/rasm/git/dune/dune/src/Plan/Generator/Task.cpp:219
-msgid   "Plan generated automatically"
-msgstr  "План формируется автоматически"
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:408
+msgid   "speed control"
+msgstr  "управление скоростью"
 
-#: /home/rasm/git/dune/dune/src/Plan/Generator/Task.cpp:311
-#: /home/rasm/git/dune/dune/src/Plan/Generator/Task.cpp:348
-msgid   "Plan generated automatically by DUNE."
-msgstr  "План генерируется автоматически дюну."
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:409
+msgid   "altitude control"
+msgstr  "руль высоты"
 
-#: /home/rasm/git/dune/dune/src/Plan/Generator/Task.cpp:350
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:410
+msgid   "bank control"
+msgstr  "регулирование угла крена"
+
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:411
+msgid   "heading control"
+msgstr  "управление курсом"
+
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:412
+msgid   "path control"
+msgstr  "управления траекторией"
+
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:420
+msgid   "bank control is NOT active"
+msgstr  "банковского контроля не участвует"
+
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:444
+msgid   "altitude control is NOT active"
+msgstr  "высота контроль будет выключен"
+
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:467
+msgid   "path control is NOT active"
+msgstr  "Путь контроль будет выключен,"
+
+#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:724
+msgid   "receive error"
+msgstr  "сообщение об ошибке"
+
+#: /home/rasm/git/dune/dune/src/Control/AUV/LMI/Task.cpp:89
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:150
+#: /home/rasm/git/dune/dune/src/Control/AUV/Allocator/Task.cpp:81
+msgid   "Maximum Fin Rotation"
+msgstr  "Максимальное вращение Fin"
+
+#: /home/rasm/git/dune/dune/src/Control/AUV/LMI/Task.cpp:92
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:153
+#: /home/rasm/git/dune/dune/src/Control/AUV/Allocator/Task.cpp:84
+msgid   "Maximum admissible fin rotation"
+msgstr  "Максимально допустимая вращения плавников"
+
+#: /home/rasm/git/dune/dune/src/Control/AUV/LMI/Task.cpp:148
+msgid   "Gain matrix has invalid dimensions"
+msgstr  "Усиление матрица имеет недопустимые размеры"
+
+#: /home/rasm/git/dune/dune/src/Control/AUV/Diving/Task.cpp:481
+msgid   "failed to submerge"
+msgstr  "не удалось погрузить"
+
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:58
+msgid   "Roll"
+msgstr  "Катиться"
+
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:58
+msgid   "Pitch"
+msgstr  "Шаг"
+
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:59
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:50
+msgid   "Depth"
+msgstr  "Глубина"
+
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:59
+msgid   "Heading"
+msgstr  "Заголовок"
+
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:60
+msgid   "Heading Rate"
+msgstr  "Заголовок Оценить"
+
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:155
+#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:157
+msgid   "Enable roll controller"
+msgstr  "Включить рулон контроллера"
+
+#: /home/rasm/git/dune/dune/src/Autonomy/TextActions/Task.cpp:65
 #, c-format
-msgid   "generating plan from '%s' template..."
-msgstr  "генерации плана от '%s' шаблон..."
+msgid   "received SMS request to start plan '%s'"
+msgstr  "получил SMS запрос на запуск плана '%s'"
+
+#: /home/rasm/git/dune/dune/src/Autonomy/TextActions/Task.cpp:76
+#, c-format
+msgid   "got abort request from '%s'"
+msgstr  "получил прервать запрос '%s'"
+
+#: /home/rasm/git/dune/dune/src/Autonomy/TREX/Task.cpp:130
+#, c-format
+msgid   "TREX disconnected for more than %d seconds"
+msgstr  "TREX отсоединен более чем %d секунд"
+
+#: /home/rasm/git/dune/dune/src/Actuators/SingleSIMCT01/Task.cpp:144
+msgid   "invalid value for 'Motor Id'"
+msgstr  "недопустимое значение для 'дв-ля'"
+
+#: /home/rasm/git/dune/dune/src/Actuators/SingleSIMCT01/Task.cpp:147
+msgid   "invalid value for 'Thruster Id'"
+msgstr  "недопустимое значение для 'Thruster Id'"
+
+#: /home/rasm/git/dune/dune/src/Actuators/SCRT/Task.cpp:350
+#, c-format
+msgid   "servo number out of bounds: %u"
+msgstr  "серво числа за пределами границ: %u"
+
+#: /home/rasm/git/dune/dune/src/Actuators/SCRT/Task.cpp:455
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:358
+#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:304
+#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:481
+#: /home/rasm/git/dune/dune/src/Power/MCBv2/Task.cpp:626
+#, c-format
+msgid   "version: %u.%u.%u"
+msgstr  "Версия: %u. %u. %u"
+
+#: /home/rasm/git/dune/dune/src/Actuators/SCRT/Task.cpp:486
+#: /home/rasm/git/dune/dune/src/Actuators/SCRTv4/Task.cpp:280
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:478
+#, c-format
+msgid   "device reported: %s"
+msgstr  "Устройство сообщил: %s"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:81
+msgid   "init"
+msgstr  "инициализации"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:82
+msgid   "i2c"
+msgstr  "I2C"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:83
+msgid   "power"
+msgstr  "мощность"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:84
+msgid   "hall"
+msgstr  "зал"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:85
+msgid   "rotor locked"
+msgstr  "Ротор блокирован"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:86
+msgid   "mcu temperature"
+msgstr  "MCU температуры"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:87
+msgid   "bridge temperature"
+msgstr  "Мост температуры"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:88
+msgid   "motor temperature"
+msgstr  "Температура двигателя"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:238
+msgid   "Motor control mode must be one of 'none', 'voltage', 'current', 'rpm'"
+msgstr  "Режим управления двигателем должен быть одним из 'None', 'напряжение', 'текущие', 'RPM'"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:312
+#, c-format
+msgid   "device error: %s"
+msgstr  "Устройство ошибке: %s"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:318
+msgid   "power is not good"
+msgstr  "мощности нехороши"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:322
+msgid   "device init error, requesting reset"
+msgstr  "Ошибка инициализации устройства с просьбой сбросить"
+
+#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:332
+msgid   "CMD_ACTUATE Data size doesn't match!"
+msgstr  "CMD_ACTUATE Данные размеры не совпадают!"
+
+#: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:193
+#: /home/rasm/git/dune/dune/src/Navigation/AUV/SGNavigation/Task.cpp:286
+#: /home/rasm/git/dune/dune/src/Monitors/Collisions/Task.cpp:190
+#, c-format
+msgid   "failed to resolve entity '%s': %s"
+msgstr  "не удалось решить субъекта '%s': %s"
+
+#: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:236
+msgid   "motion detected"
+msgstr  "обнаружении движения"
+
+#: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:318
+msgid   "device is not active"
+msgstr  "Устройство не активно"
+
+#: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:326
+msgid   "device is not in proper medium"
+msgstr  "устройство не находится в соответствующей среде"
+
+#: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:338
+msgid   "calibrating: system must remain static"
+msgstr  "калибровки: система должна оставаться статической"
+
+#: /home/rasm/git/dune/dune/src/Main/Daemon.cpp:165
+msgid   "stopping tasks"
+msgstr  "остановка задач"
+
+#: /home/rasm/git/dune/dune/src/Main/Daemon.cpp:175
+msgid   "unhandled exception"
+msgstr  "необработанное исключение"
+
+#: /home/rasm/git/dune/dune/src/Main/Daemon.cpp:252
+msgid   "ERROR: no configuration file was given, see options --config-list and --config-file\n"
+msgstr  "ОШИБКА: конфигурационный файл не был дан, см. опции - конфигурационный-лист и - конфигурационном файле \n"
+
+#: /home/rasm/git/dune/dune/src/Simulators/LBL/Task.cpp:225
+#, c-format
+msgid   "maximum amount of beacons is %u"
+msgstr  "максимальное количество маяков %u"
+
+#: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:255
+#: /home/rasm/git/dune/dune/src/Monitors/Collisions/Task.cpp:336
+msgid   "collision detected"
+msgstr  "обнаруживается конфликт"
+
+#: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:383
+#, c-format
+msgid   "unexpected simulation message: %s"
+msgstr  "неожиданное сообщение моделирования: %s"
+
+#: /home/rasm/git/dune/dune/src/Simulators/UnderwaterAcoustics/Task.cpp:390
+#, fuzzy, c-format
+msgid   "read error: %s"
+msgstr  "Ошибка разбора: %s"
+
+#: /home/rasm/git/dune/dune/src/Simulators/VSIM/Task.cpp:140
+msgid   "error loading world parameters."
+msgstr  "ошибка при загрузке мировых показателей."
+
+#: /home/rasm/git/dune/dune/src/Simulators/VSIM/Task.cpp:144
+msgid   "error loading vehicle parameters."
+msgstr  "ошибка при загрузке параметров автомобиля."
+
+#: /home/rasm/git/dune/dune/src/Simulators/Leaks/Task.cpp:125
+#: /home/rasm/git/dune/dune/src/Simulators/Leaks/Task.cpp:140
+#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:549
+msgid   "leak detected"
+msgstr  "обнаружения утечки"
+
+#: /home/rasm/git/dune/dune/src/Supervisors/Power/Task.cpp:116
+msgid   "failed to execute power down command"
+msgstr  "Не удалось выполнить команду отключения питания"
 
 #: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:43
 msgid   "SERVICE"
@@ -877,594 +1326,213 @@ msgstr  " маневр начался"
 msgid   "maneuver request timeout"
 msgstr  "Тайм-аут запроса маневра"
 
-#: /home/rasm/git/dune/dune/src/Supervisors/Power/Task.cpp:116
-msgid   "failed to execute power down command"
-msgstr  "Не удалось выполнить команду отключения питания"
+#: /home/rasm/git/dune/dune/src/Vision/Lumenera/Task.cpp:319
+#: /home/rasm/git/dune/dune/src/Vision/Lumenera/Task.cpp:360
+msgid   "failed to set property"
+msgstr  "не удалось установить свойство"
 
-#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:153
-msgid   "Level the device and hit NEXT"
-msgstr  "Уровень устройства и нажмите Далее"
+#: /home/rasm/git/dune/dune/src/Vision/DFK51BG02H/Task.cpp:459
+msgid   "keep alive failed"
+msgstr  "оставьте в живых не удалось"
 
-#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:158
-msgid   "Rotate the device and keep it levelled (rotation must last +20s)"
-msgstr  "Поверните устройство и сохранить его выровняли (вращение должно продолжаться +20 с)"
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:40
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:51
+msgid   "invalid command"
+msgstr  "неверная команда"
 
-#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:163
-msgid   "Device is calibrated"
-msgstr  "Прибор калибруется"
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:41
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:58
+msgid   "invalid command arguments"
+msgstr  "неверные аргументы команды"
 
-#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:170
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:42
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:56
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:63
+msgid   "invalid checksum"
+msgstr  "неверной контрольной суммы"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:43
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:52
+msgid   "lost synchronization"
+msgstr  "потерял синхронизацию"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:44
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:53
+msgid   "parser error"
+msgstr  "синтаксической ошибке"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:45
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:54
+msgid   "data overrun"
+msgstr  "Данные перерасход"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:46
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:55
+msgid   "buffer overflow"
+msgstr  "переполнение буфера"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:47
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:59
+msgid   "unknown error"
+msgstr  "Неизвестная ошибка"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:56
+msgid   "invalid error code"
+msgstr  "неверный код ошибки"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:57
 #, fuzzy
-msgid   "Calibration error, calibration procedure must be restarted"
-msgstr  "Ошибка калибровки. Необходимо перезапустить"
+msgid   "parser bug"
+msgstr  "синтаксической ошибке"
 
-#: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:410
+#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:429
 #, c-format
-msgid   "Level the device and hit NEXT (Roll: %0.2f | Pitch: %0.2f)"
-msgstr  "Уровень устройства и нажмите Далее (Рулон: %0.2f | Шаг: %0.2f)"
+msgid   "path (lat/lon): %0.5f %0.5f to %0.5f %0.5f"
+msgstr  "пути (широта / долгота): %0.5f %0.5f до %0.5f %0.5f"
 
-#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:253
-msgid   "echo handling enabled, but got no RS-485 echo"
-msgstr  "обработка эхо включено, но не получил RS-485 эхо"
+#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:594
+msgid   "expected new path control reference"
+msgstr  "Ожидается новая ссылка пути управления"
 
-#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:263
-msgid   "received RS-485 echo doesn't match"
-msgstr  "получили RS-485 эха не соответствует"
+#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:651
+msgid   "now loitering"
+msgstr  "теперь слонялся"
 
-#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:300
-msgid   "invalid CRC"
-msgstr  "недействительным CRC"
+#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:788
+msgid   "along-track divergence error"
+msgstr  "вдоль линии пути расхождение ошибке"
 
-#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:302
-msgid   "exceeded maximum consecutive CRC error count"
-msgstr  "превысил максимально последовательными ошибками контрольной суммы счета"
+#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:821
+msgid   "cross-track divergence error"
+msgstr  "боковое расхождение ошибке"
 
-#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:380
-msgid   "device not initialized, initializing"
-msgstr  "Устройство не инициализирован, инициализация"
+#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:914
+msgid   "waiting for position estimate from navigation"
+msgstr  "ждет от оценки местоположения навигации"
 
-#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:386
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:49
+msgid   "Idle"
+msgstr  "Idle"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:49
+msgid   "Tracking"
+msgstr  "Отслеживание"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:50
+msgid   "Unsafe"
+msgstr  "Небезопасный"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:51
+msgid   "Avoiding"
+msgstr  "Избегающий"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:53
+msgid   "BottomTrack"
+msgstr  "BottomTrack"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:302
+msgid   "too deep, forcing depth control"
+msgstr  "слишком глубоко, заставляя контроль глубины"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:442
+msgid   "unable to avoid obstacle"
+msgstr  "не смог избежать препятствий"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:479
+msgid   "Started braking"
+msgstr  "Работы тормозной"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:481
+msgid   "Stopped braking"
+msgstr  "Остановлено торможение"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:46
+msgid   "no valid altitude measurements"
+msgstr  "Нет действительных измерений высоты"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:169
 #, c-format
-msgid   "got exception %d for command %d"
-msgstr  "возникло исключение %d для команды %d"
+msgid   "limiting depth to %.1f"
+msgstr  "предельная глубина %.1f"
 
-#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:397
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:224
+#, fuzzy, c-format
+msgid   "invalid vertical control mode %d"
+msgstr  "плохо вертикальном режиме управления %d"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:236
+msgid   "timed out while waiting for vertical control mode"
+msgstr  "истекло время ожидания для вертикального режима управления"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:261
 #, c-format
-msgid   "initialized device: class=%d.%d firmware=%d"
-msgstr  "инициализировать устройство: класс = %d. %d прошивки = %d"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:403
-#, c-format
-msgid   "device serial number=%u"
-msgstr  "серийный номер устройства = %u"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:409
-msgid   "successfuly zeroed device"
-msgstr  "Устройство успешно обнулен"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:430
-msgid   "unable to initialize the device"
-msgstr  "не смог инициализировать устройство"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:438
-msgid   "unable to retrieve the serial number"
-msgstr  "удалось получить серийный номер"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Keller/Task.cpp:456
-msgid   "unable to zero the device"
-msgstr  "неспособный к нулю устройства"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:262
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:152
-msgid   "Range"
-msgstr  "Диапазон"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:372
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:184
-#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:196
-msgid   "restarting to change IPv4 address"
-msgstr  "перезапуска изменить адрес IPv4"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:375
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:187
-msgid   "restarting to change TCP port"
-msgstr  "перезапуска изменить TCP порт"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:459
-#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:519
-#: /home/rasm/git/dune/dune/src/Power/DOAMv2/Task.cpp:184
-#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:355
-msgid   "failed to contact device"
-msgstr  "не удалось связаться с устройством"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:670
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:287
-msgid   "failed to read header"
-msgstr  "удалось прочитать заголовок"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:680
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:292
-msgid   "failed to read data"
-msgstr  "Не удалось прочитать данные"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:684
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:296
-msgid   "failed to read footer"
-msgstr  "удалось прочитать нижний колонтитулы"
-
-#: /home/rasm/git/dune/dune/src/Sensors/LIMU/Task.cpp:191
-msgid   "device is using unstable firmware"
-msgstr  "Устройство использует нестабильной прошивки"
-
-#: /home/rasm/git/dune/dune/src/Sensors/LIMU/Task.cpp:193
-#, c-format
-msgid   "firmware version %u.%u.%u"
-msgstr  "версия прошивки %u. %u. %u"
-
-#: /home/rasm/git/dune/dune/src/Sensors/LIMU/Task.cpp:214
-msgid   "failed to configure output frequency"
-msgstr  "удалось настроить выходной частоты"
-
-#: /home/rasm/git/dune/dune/src/Sensors/LIMU/Task.cpp:217
-#: /home/rasm/git/dune/dune/src/Sensors/LIMU/Task.cpp:237
-#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:403
-msgid   "failed to set hard-iron correction factors"
-msgstr  "не удалось установить Hard-Iron поправочных коэффициентов"
-
-#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:210
-msgid   "no reply to command"
-msgstr  "Ответа не командовать"
-
-#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:211
-msgid   "failed to setup device"
-msgstr  "Не могу выполнить устройство"
-
-#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:460
-msgid   "invalid GPZDA sentence"
-msgstr  "недействительным приговор GPZDA"
-
-#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:484
-msgid   "invalid GPGGA sentence"
-msgstr  "недействительным приговор GPGGA"
-
-#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:532
-msgid   "invalid PUBX,00 sentence"
-msgstr  "недействительным PUBX, 00 предложение"
-
-#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:583
-msgid   "invalid GPVTG sentence"
-msgstr  "недействительным GPVTG предложении"
-
-#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:607
-msgid   "invalid GPHDT sentence"
-msgstr  "недействительным GPHDT предложении"
-
-#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:623
-msgid   "invalid GPHDM sentence"
-msgstr  "недействительным GPHDM предложении"
-
-#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:641
-msgid   "invalid GPROT sentence"
-msgstr  "недействительным GPROT предложении"
-
-#: /home/rasm/git/dune/dune/src/Sensors/GPS/Task.cpp:660
-msgid   "invalid PSATHPR sentence"
-msgstr  "недействительным PSATHPR предложении"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:144
-msgid   "Frequency"
-msgstr  "Частота"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:150
-msgid   "Operating frequency"
-msgstr  "Рабочая частота"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex872/Task.cpp:160
-msgid   "Operating range"
-msgstr  "Рабочий диапазон"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Antaris4/Task.cpp:319
-msgid   "unable to write full packet to device"
-msgstr  "не в состоянии писать полный пакет на устройство"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Antaris4/Task.cpp:355
-msgid   "message not acknowledged"
-msgstr  "сообщение не подтверждено"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Antaris4/Task.cpp:475
-#: /home/rasm/git/dune/dune/src/Sensors/Antaris4/Task.cpp:489
-msgid   "checksum mismatch"
-msgstr  "несоответствие контрольной суммы"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Antaris4/Task.cpp:494
-#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:311
-msgid   "unexpected byte"
-msgstr  "неожиданные байт"
-
-#: /home/rasm/git/dune/dune/src/Sensors/IFOG/Task.cpp:236
-msgid   "failed to configure trigger frequency"
-msgstr  "удалось настроить Частота срабатывания"
-
-#: /home/rasm/git/dune/dune/src/Sensors/IFOG/Task.cpp:246
-msgid   "failed to turn on device"
-msgstr  "не удалось включить устройство"
-
-#: /home/rasm/git/dune/dune/src/Sensors/IFOG/Task.cpp:350
-#, c-format
-msgid   "IMU failure: %04X"
-msgstr  "ИДУ неудачи: %04X"
-
-#: /home/rasm/git/dune/dune/src/Sensors/IFOG/Task.cpp:355
-#, c-format
-msgid   "data might be unreliable: %04X"
-msgstr  "данные могут быть ненадежны: %04X"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBLTracker/Task.cpp:240
-msgid   "restarting to change transducer detection GPIO"
-msgstr  "перезапуска менять датчик обнаружения GPIO"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBLTracker/Task.cpp:259
-#, c-format
-msgid   "unable to use GPIO %d for transducer detection"
-msgstr  "не в состоянии использовать GPIO %d для обнаружения преобразователя"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBLTracker/Task.cpp:323
-msgid   "transducer not connected"
-msgstr  "датчик не подключен"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBLTracker/Task.cpp:606
-msgid   "range to"
-msgstr  "варьироваться в"
-
-#: /home/rasm/git/dune/dune/src/Sensors/DLV3/Task.cpp:174
-msgid   "waking device"
-msgstr  "пробуждения устройства"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:128
-msgid   "High-Frequency Channels"
-msgstr  "ВЧ каналов"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:129
-#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:145
-msgid   "None, Port, Starboard, Both"
-msgstr  "Нет, порт, борта, оба"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:135
-msgid   "High-Frequency Range"
-msgstr  "Высокочастотный диапазон"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:144
-msgid   "Low-Frequency Channels"
-msgstr  "Низкочастотных каналов"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:151
-msgid   "Low-Frequency Range"
-msgstr  "Низкочастотный диапазон"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:199
-msgid   "restarting to change TCP command port"
-msgstr  "перезапуска изменить TCP порт команды"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:202
-msgid   "restarting to change TCP data port"
-msgstr  "перезапуска изменить TCP порт"
-
-#: /home/rasm/git/dune/dune/src/Sensors/XR620CTD/Task.cpp:460
-#, c-format
-msgid   "parse error: %s"
-msgstr  "Ошибка разбора: %s"
-
-#: /home/rasm/git/dune/dune/src/Sensors/SCH311X/Task.cpp:101
-#, c-format
-msgid   "file '%s' doesn't exist"
-msgstr  "Файл '%s' не существует"
-
-#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:44
-msgid   "failed to set output format"
-msgstr  "не удалось установить выходной формат"
-
-#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:45
-msgid   "failed to set flow control"
-msgstr  "не удалось установить контроль потока"
-
-#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:46
-msgid   "failed to disable power saving"
-msgstr  "Не удалось отключить энергосбережение"
-
-#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:47
-msgid   "failed to disable low latency trigger"
-msgstr  "Не удалось отключить триггер низкой латентностью"
-
-#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:48
-#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:49
-#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:50
-#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:51
-#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:52
-#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:53
-#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:54
-msgid   "unexpected response"
-msgstr  "неожиданный ответ"
-
-#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:259
-msgid   "failed to wake device"
-msgstr  "не смогли разбудить устройство"
-
-#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:275
-msgid   "unable to read prompt"
-msgstr  "не в состоянии читать быстрое"
-
-#: /home/rasm/git/dune/dune/src/Sensors/WorkhorseNavigator/Task.cpp:289
-msgid   "failed to start data sampling"
-msgstr  "Не удалось запустить выборки данных"
-
-#: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:122
-msgid   "failed to enter command mode"
-msgstr  "не удалось войти командный режим"
-
-#: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:125
-msgid   "failed to set sampling rate"
-msgstr  "не удалось установить частоту дискретизации"
-
-#: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:128
-msgid   "failed to enter monitor mode"
-msgstr  "не в режим монитора"
-
-#: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:146
-msgid   "input timeout"
-msgstr  "входного тайм-аут"
-
-#: /home/rasm/git/dune/dune/src/Sensors/XchangeSV/Task.cpp:155
-msgid   "I/O error"
-msgstr  "Ошибка ввода / вывода"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:203
-msgid   "failed to stop device"
-msgstr  "не смогли остановить устройство"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:212
-msgid   "failed to read EEPROM#130"
-msgstr  "удалось прочитать EEPROM # 130"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX1/Task.cpp:222
-msgid   "failed to read EEPROM#230"
-msgstr  "удалось прочитать EEPROM # 230"
-
-#: /home/rasm/git/dune/dune/src/Sensors/SW100/Task.cpp:186
-#, c-format
-msgid   "depth offset is %0.2f m"
-msgstr  "Глубина смещения %0.2f м"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Imagenex852/Task.cpp:263
-msgid   "restarting to change UART device"
-msgstr  "перезапуска изменить устройство UART"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:305
-msgid   "waiting beacons configuration"
-msgstr  "ожидания маяки конфигурации"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:309
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:42
-msgid   "active"
-msgstr  "активный"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:311
-msgid   "serial port communication error, modem not responding"
-msgstr  "Ошибка последовательного порта связи, модем не отвечает"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:313
-msgid   "failed to configure modem, possible serial port communication error"
-msgstr  "удалось настроить модем, возможно ошибку последовательного порта связи"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:315
-msgid   "failed to set modem address"
-msgstr  "не удалось установить модем адрес"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:358
-#, c-format
-msgid   "modem address for agent '%s' is invalid"
-msgstr  "адресом модема для агента '%s' недопустим"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:480
-msgid   "dynamic sound speed corrections are disabled"
-msgstr  "динамической корректировки скорости звук отключаются"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:561
-msgid   "invalid change plan message"
-msgstr  "недопустимое сообщение плана изменений"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:591
-msgid   "received system restart request"
-msgstr  "получил запрос перезагрузки системы"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:600
-msgid   "restart request acknowledged"
-msgstr  "перезапустить запрос признал"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:604
-msgid   "failed to acknowledge restart request"
-msgstr  "не признал перезапуска запроса"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:612
-msgid   "acoustic abort detected"
-msgstr  "акустических прервать обнаружены"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:622
-msgid   "abort acknowledged"
-msgstr  "прервать признал"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:626
-msgid   "failed to acknowledge abort"
-msgstr  "не признал прервать"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:662
-#, c-format
-msgid   "discarded invalid range %0.2f"
-msgstr  "отбрасываются неверный диапазон %0.2f"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:744
-msgid   "failed to ping beacons, modem seems busy"
-msgstr  "не удалось проверить связь маяки, модем кажется занятым"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:906
-#, c-format
-msgid   "reported range to %s = %u m"
-msgstr  "сообщили диапазона %s = %u м"
-
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:910
-#, c-format
-msgid   "failed to report range to %s"
-msgstr  "не сообщил диапазоне %s"
-
-#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:100
-msgid   "unable to stop continuous output"
-msgstr  "не в состоянии остановить непрерывный выходной"
-
-#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:106
-msgid   "unable to configure time output"
-msgstr  "не может его настроить время выхода"
-
-#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:112
-msgid   "unable to configure date output"
-msgstr  "невозможно настроить дату выхода"
-
-#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:120
-#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:128
-msgid   "unable to set output format"
-msgstr  "не можете установить выходной формат"
-
-#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:135
-msgid   "unable to request continuous output"
-msgstr  "не в состоянии запросить длительная мощность"
-
-#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:157
-msgid   "unable to write full command to device"
-msgstr  "не в состоянии писать полную команду устройству"
-
-#: /home/rasm/git/dune/dune/src/Sensors/PTU300/Task.cpp:202
-msgid   "timeout waiting for device response"
-msgstr  "таймаут ожидания ответа устройства"
-
-#: /home/rasm/git/dune/dune/src/Sensors/AIM104MultiIO/Task.cpp:150
-msgid   "invalid message"
-msgstr  "недопустимое сообщение"
-
-#: /home/rasm/git/dune/dune/src/Sensors/AIM104MultiIO/Task.cpp:195
-msgid   "timeout"
-msgstr  "Тайм-аут"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:409
-msgid   "resetting device"
-msgstr  "сброс устройства"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:428
-msgid   "failed to read magnetic calibration parameters from device"
-msgstr  "удалось прочитать магнитных параметров калибровки с устройства"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:447
-msgid   "different calibration parameters"
-msgstr  "различные параметры калибровки"
-
-#: /home/rasm/git/dune/dune/src/Sensors/Microstrain3DMGX3/Task.cpp:492
-#, c-format
-msgid   "new hard-iron calibration parameters: %f | %f"
-msgstr  "Новый жесткий железа параметры калибровки: %f | %f"
-
-#: /home/rasm/git/dune/dune/src/Sensors/SDCR/Task.cpp:174
-msgid   "version"
-msgstr  "версия"
-
-#: /home/rasm/git/dune/dune/src/Sensors/SDCR/Task.cpp:205
-#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:452
-#: /home/rasm/git/dune/dune/src/Power/MCBv2/Task.cpp:576
-#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:516
-msgid   "device reported"
-msgstr  "Устройство сообщает"
-
-#: /home/rasm/git/dune/dune/src/Sensors/SDCR/Task.cpp:233
-msgid   "failed to receive state"
-msgstr  "не удалось получить государственную"
-
-#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:81
-msgid   "init"
-msgstr  "инициализации"
-
-#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:82
-msgid   "i2c"
-msgstr  "I2C"
-
-#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:83
-msgid   "power"
-msgstr  "мощность"
-
-#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:84
-msgid   "hall"
-msgstr  "зал"
-
-#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:85
-msgid   "rotor locked"
-msgstr  "Ротор блокирован"
-
-#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:86
-msgid   "mcu temperature"
-msgstr  "MCU температуры"
-
-#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:87
-msgid   "bridge temperature"
-msgstr  "Мост температуры"
-
-#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:88
-msgid   "motor temperature"
-msgstr  "Температура двигателя"
-
-#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:238
-msgid   "Motor control mode must be one of 'none', 'voltage', 'current', 'rpm'"
-msgstr  "Режим управления двигателем должен быть одним из 'None', 'напряжение', 'текущие', 'RPM'"
-
-#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:312
-#, c-format
-msgid   "device error: %s"
-msgstr  "Устройство ошибке: %s"
-
-#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:318
-msgid   "power is not good"
-msgstr  "мощности нехороши"
-
-#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:322
-msgid   "device init error, requesting reset"
-msgstr  "Ошибка инициализации устройства с просьбой сбросить"
-
-#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:332
-msgid   "CMD_ACTUATE Data size doesn't match!"
-msgstr  "CMD_ACTUATE Данные размеры не совпадают!"
-
-#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:358
-#: /home/rasm/git/dune/dune/src/Actuators/SCRT/Task.cpp:455
-#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:304
-#: /home/rasm/git/dune/dune/src/Power/MCBv2/Task.cpp:626
-#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:481
-#, c-format
-msgid   "version: %u.%u.%u"
-msgstr  "Версия: %u. %u. %u"
-
-#: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:478
-#: /home/rasm/git/dune/dune/src/Actuators/SCRTv4/Task.cpp:280
-#: /home/rasm/git/dune/dune/src/Actuators/SCRT/Task.cpp:486
-#, c-format
-msgid   "device reported: %s"
-msgstr  "Устройство сообщил: %s"
-
-#: /home/rasm/git/dune/dune/src/Actuators/SingleSIMCT01/Task.cpp:144
-msgid   "invalid value for 'Motor Id'"
-msgstr  "недопустимое значение для 'дв-ля'"
-
-#: /home/rasm/git/dune/dune/src/Actuators/SingleSIMCT01/Task.cpp:147
-msgid   "invalid value for 'Thruster Id'"
-msgstr  "недопустимое значение для 'Thruster Id'"
-
-#: /home/rasm/git/dune/dune/src/Actuators/SCRT/Task.cpp:350
-#, c-format
-msgid   "servo number out of bounds: %u"
-msgstr  "серво числа за пределами границ: %u"
+msgid   "water column not deep enough for altitude control ( %0.2f < %0.2f )"
+msgstr  "нижняя отслеживанию не жизнеспособна, толщу воды не достаточно глубоко ( %0.2f < %0.2f )"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:280
+msgid   "getting too close to maximum admissible depth"
+msgstr  "слишком близко к максимально допустимой глубины"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:291
+#, fuzzy, c-format
+msgid   "invalid yaw control mode %d"
+msgstr  "Неправильный режим рыскания %d"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:303
+msgid   "timed out waiting for yaw control mode"
+msgstr  "Истекло время ожидания Режим рыскания"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:128
+#: /home/rasm/git/dune/dune/src/DUNE/Network/UDPSocket.cpp:101
+msgid   "unable to create socket"
+msgstr  "не удалось создать сокет"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:166
+#: /home/rasm/git/dune/dune/src/DUNE/Network/UDPSocket.cpp:182
+msgid   "unable to bind to socket"
+msgstr  "Невозможно связаться с сокетом"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:178
+msgid   "unable to connect"
+msgstr  "не удалось подключиться"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:185
+msgid   "unable to listen"
+msgstr  "неспособны слушать"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:196
+msgid   "failed to accept connection"
+msgstr  "не удалось принять соединение"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:225
+#: /home/rasm/git/dune/dune/src/DUNE/Network/UDPSocket.cpp:204
+msgid   "error sending data"
+msgstr  "Ошибка при отправке данных"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:243
+#: /home/rasm/git/dune/dune/src/DUNE/Network/UDPSocket.cpp:220
+msgid   "error receiving data"
+msgstr  "Ошибка приема данных"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:357
+msgid   "unable to set receive timeout"
+msgstr  "не можете установить ожидания приема"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:365
+msgid   "unable to set send timeout"
+msgstr  "не можете установить таймаута на передачу"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:374
+msgid   "unable to get bound address"
+msgstr  "не в состоянии получить связанное адрес"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:385
+msgid   "unable to get bound port"
+msgstr  "не в состоянии получить связанное порта"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Network/UDPSocket.cpp:114
+msgid   "setting up socket"
+msgstr  "создание сокета"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Navigation/BasicNavigation.cpp:42
 #, c-format
@@ -1475,69 +1543,233 @@ msgstr  "положение неопределенности %0.2f м"
 msgid   "No depth measurements available"
 msgstr  "Нет доступных измерений глубины"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:47
-msgid   "Print this message and exit"
-msgstr  "Показать это сообщение и выйти"
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:43
+msgid   "input/output error"
+msgstr  "ошибка ввода / вывода"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:48
-msgid   "Print the version information and exit"
-msgstr  "Распечатать информацию о версии и выйти"
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:44
+msgid   "internal error"
+msgstr  "внутренняя ошибка"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:49
-msgid   "Print architecture information and exit"
-msgstr  "Распечатать информационную архитектуру и выход"
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:45
+msgid   "CPU usage is too high"
+msgstr  "Загрузка процессора слишком высока"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:64
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:46
+msgid   "fuel is running low"
+msgstr  "топливо на исходе"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:47
+msgid   "fuel level estimation is not reliable"
+msgstr  "оценка уровня топлива не является надежным"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:48
+msgid   "fuel reserve"
+msgstr  "запас топлива"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:49
+msgid   "calibrating"
+msgstr  "калибровки"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:50
+msgid   "calibrated"
+msgstr  "калиброванный"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:51
+msgid   "not aligned"
+msgstr  "не выровнены"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:52
+msgid   "aligning"
+msgstr  "выравнивание"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:53
+msgid   "aligned"
+msgstr  "выровненный"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:54
+msgid   "powering down"
+msgstr  "выключением"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:55
+msgid   "communication error"
+msgstr  "Ошибка связи"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:56
+msgid   "synchronized"
+msgstr  "синхронизированный"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:57
+msgid   "synchronizing"
+msgstr  "синхронизирующий"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:58
+msgid   "not synchronized"
+msgstr  "не синхронизированы"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:59
+msgid   "waiting for GPS fix"
+msgstr  "ожидании исправления GPS"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:60
+msgid   "waiting for configuration of LBL beacons"
+msgstr  "ждет конфигурации LBL маяки"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:61
+msgid   "waiting for solution to converge"
+msgstr  "ждет решения сходятся"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:62
+msgid   "missing data"
+msgstr  "недостающие данные"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:64
+msgid   "invalid version"
+msgstr  "Неверная версия"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:65
+msgid   "active but without bottom lock"
+msgstr  "активно, но без нижний замок"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:58
+msgid   "Pure Hardware"
+msgstr  "Чистая оборудования"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:59
+msgid   "Pure Simulation"
+msgstr  "Чистая Моделирование"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:60
+msgid   "Simulation with Hardware-in-the-loop"
+msgstr  "Моделирование с аппаратно-контуром"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:67
+msgid   "No description given"
+msgstr  "Нет описание"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:114
 #, c-format
-msgid   "short option '%s' already exists"
-msgstr  "сокращенный вариант: '%s' уже существует"
+msgid   "system name: '%s' (%u)"
+msgstr  "Название системы: '%s' (%u)"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:67
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:115
 #, c-format
-msgid   "long option '%s' already exists"
-msgstr  "длинная опция '%s' уже существует"
+msgid   "registered tasks: %d"
+msgstr  "Зарегистрированные задачи: %d"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:130
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:116
 #, c-format
-msgid   "Description:\n"
-        "  %s\n"
-        "\n"
-msgstr  "Описание: \n"
-        "  %s \n"
-        "\n"
+msgid   "base folder: '%s'"
+msgstr  "Базовая папка: '%s'"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:132
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:117
 #, c-format
-msgid   "Usage:\n"
-        "  %s [options]\n"
-        "\n"
-msgstr  "Использование: \n"
-        "  %s [параметры] \n"
-        "\n"
+msgid   "configuration folder: '%s'"
+msgstr  "Папка конфигурации: '%s'"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:133
-msgid   "Options:\n"
-msgstr  "Опции: \n"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:161
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:118
 #, c-format
-msgid   "This program is built for %s\n"
-msgstr  "Эта программа создана для %s \n"
+msgid   "web server folder: '%s'"
+msgstr  "папка веб-сервера: '%s'"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:162
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:119
 #, c-format
-msgid   "Report bugs to %s\n"
-msgstr  "Сообщить ошибки в %s \n"
+msgid   "log folder: '%s'"
+msgstr  "Папка журнала: '%s'"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:176
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:120
 #, c-format
-msgid   "unknown option '%s'"
-msgstr  "неизвестный параметр '%s'"
+msgid   "library folder: '%s'"
+msgstr  "папки библиотеки: '%s'"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:189
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:121
 #, c-format
-msgid   "missing argument for option '%s'"
-msgstr  "отсутствует аргумент для опции '%s'"
+msgid   "firmware folder: '%s'"
+msgstr  "прошивку папку: '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:125
+#, c-format
+msgid   "execution profiles: %s"
+msgstr  "выполнение анкетам: %s"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:140
+msgid   "clean shutdown"
+msgstr  "чистого отключения"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:47
+#: /home/rasm/git/dune/dune/src/Maneuver/Elevator/Task.cpp:149
+#: /home/rasm/git/dune/dune/src/Maneuver/Loiter/Task.cpp:75
+#, c-format
+msgid   "forcing minimum radius of %.1f"
+msgstr  "заставляя минимальный радиус %.1f"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:103
+#, c-format
+msgid   "%s safe region (distance: %.1f m)"
+msgstr  "%s безопасной области (расстояние: %.1f м)"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:104
+msgid   "inside"
+msgstr  "внутри"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:104
+msgid   "outside"
+msgstr  "за пределами"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:112
+#, c-format
+msgid   "stopping (%0.1f m)"
+msgstr  "остановки (%0.1f м)"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:121
+#, c-format
+msgid   "moving (distance: %0.1f m)"
+msgstr  "перемещения (расстояние: %0.1f м)"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/Maneuver.cpp:89
+msgid   "unable to unlock"
+msgstr  "не в состоянии разблокировать"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/Maneuver.cpp:139
+msgid   "unsupported vertical reference"
+msgstr  "поддерживается вертикальной ссылки"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/Maneuver.cpp:145
+msgid   "no valid value for altitude has been received yet,maneuver will not proceed"
+msgstr  "нет допустимого значения для высоты не было получено не менее, маневр не будет продолжаться"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/FollowTrajectory.cpp:87
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:146
+msgid   "too few trajectory points"
+msgstr  "слишком мало точках траектории"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:68
+msgid   "parsing vehicle participants"
+msgstr  "разбора транспортных средств участников"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:81
+msgid   "invalid formation participant"
+msgstr  "недействительным участником формирования"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:95
+msgid   "repeated vehicles in participant list"
+msgstr  "повторяется транспортных средств в список участников"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:109
+msgid   "not enough vehicles in formation (at least 2 are required)"
+msgstr  "не хватает транспортных средств в образование (по крайней мере две требуются)"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:115
+msgid   "local vehicle is not part of formation"
+msgstr  "местное транспортное средство не является частью формирования"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Periodic.cpp:48
+msgid   "Execution Frequency"
+msgstr  "Частоты выполнения"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Periodic.cpp:51
+msgid   "Frequency at which task is executed"
+msgstr  "Частота, на которой выполняется задача"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Tasks/Manager.cpp:94
 #: /home/rasm/git/dune/dune/src/DUNE/Tasks/Manager.cpp:172
@@ -1641,557 +1873,239 @@ msgstr  "обновлении параметров объекта: %s: '%s'"
 msgid   "invalid parameter '%s'"
 msgstr  "неверный параметр '%s'"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Periodic.cpp:48
-msgid   "Execution Frequency"
-msgstr  "Частоты выполнения"
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:47
+msgid   "Print this message and exit"
+msgstr  "Показать это сообщение и выйти"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Tasks/Periodic.cpp:51
-msgid   "Frequency at which task is executed"
-msgstr  "Частота, на которой выполняется задача"
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:48
+msgid   "Print the version information and exit"
+msgstr  "Распечатать информацию о версии и выйти"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:51
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:40
-msgid   "invalid command"
-msgstr  "неверная команда"
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:49
+msgid   "Print architecture information and exit"
+msgstr  "Распечатать информационную архитектуру и выход"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:52
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:43
-msgid   "lost synchronization"
-msgstr  "потерял синхронизацию"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:53
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:44
-msgid   "parser error"
-msgstr  "синтаксической ошибке"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:54
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:45
-msgid   "data overrun"
-msgstr  "Данные перерасход"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:55
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:46
-msgid   "buffer overflow"
-msgstr  "переполнение буфера"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:56
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:42
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:63
-msgid   "invalid checksum"
-msgstr  "неверной контрольной суммы"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:57
-#, fuzzy
-msgid   "parser bug"
-msgstr  "синтаксической ошибке"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:58
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:41
-msgid   "invalid command arguments"
-msgstr  "неверные аргументы команды"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:59
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:47
-msgid   "unknown error"
-msgstr  "Неизвестная ошибка"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:56
-msgid   "invalid error code"
-msgstr  "неверный код ошибки"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/UDPSocket.cpp:101
-#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:128
-msgid   "unable to create socket"
-msgstr  "не удалось создать сокет"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/UDPSocket.cpp:114
-msgid   "setting up socket"
-msgstr  "создание сокета"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/UDPSocket.cpp:182
-#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:166
-msgid   "unable to bind to socket"
-msgstr  "Невозможно связаться с сокетом"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/UDPSocket.cpp:204
-#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:225
-msgid   "error sending data"
-msgstr  "Ошибка при отправке данных"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/UDPSocket.cpp:220
-#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:243
-msgid   "error receiving data"
-msgstr  "Ошибка приема данных"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:178
-msgid   "unable to connect"
-msgstr  "не удалось подключиться"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:185
-msgid   "unable to listen"
-msgstr  "неспособны слушать"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:196
-msgid   "failed to accept connection"
-msgstr  "не удалось принять соединение"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:357
-msgid   "unable to set receive timeout"
-msgstr  "не можете установить ожидания приема"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:365
-msgid   "unable to set send timeout"
-msgstr  "не можете установить таймаута на передачу"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:374
-msgid   "unable to get bound address"
-msgstr  "не в состоянии получить связанное адрес"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Network/TCPSocket.cpp:385
-msgid   "unable to get bound port"
-msgstr  "не в состоянии получить связанное порта"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:43
-msgid   "input/output error"
-msgstr  "ошибка ввода / вывода"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:44
-msgid   "internal error"
-msgstr  "внутренняя ошибка"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:45
-msgid   "CPU usage is too high"
-msgstr  "Загрузка процессора слишком высока"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:46
-msgid   "fuel is running low"
-msgstr  "топливо на исходе"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:47
-msgid   "fuel level estimation is not reliable"
-msgstr  "оценка уровня топлива не является надежным"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:48
-msgid   "fuel reserve"
-msgstr  "запас топлива"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:49
-msgid   "calibrating"
-msgstr  "калибровки"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:50
-msgid   "calibrated"
-msgstr  "калиброванный"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:51
-msgid   "not aligned"
-msgstr  "не выровнены"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:52
-msgid   "aligning"
-msgstr  "выравнивание"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:53
-msgid   "aligned"
-msgstr  "выровненный"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:54
-msgid   "powering down"
-msgstr  "выключением"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:55
-msgid   "communication error"
-msgstr  "Ошибка связи"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:56
-msgid   "synchronized"
-msgstr  "синхронизированный"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:57
-msgid   "synchronizing"
-msgstr  "синхронизирующий"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:58
-msgid   "not synchronized"
-msgstr  "не синхронизированы"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:59
-msgid   "waiting for GPS fix"
-msgstr  "ожидании исправления GPS"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:60
-msgid   "waiting for configuration of LBL beacons"
-msgstr  "ждет конфигурации LBL маяки"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:61
-msgid   "waiting for solution to converge"
-msgstr  "ждет решения сходятся"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:62
-msgid   "missing data"
-msgstr  "недостающие данные"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:64
-msgid   "invalid version"
-msgstr  "Неверная версия"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:65
-msgid   "active but without bottom lock"
-msgstr  "активно, но без нижний замок"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:49
-msgid   "Idle"
-msgstr  "Idle"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:49
-msgid   "Tracking"
-msgstr  "Отслеживание"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:50
-#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:59
-msgid   "Depth"
-msgstr  "Глубина"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:50
-msgid   "Unsafe"
-msgstr  "Небезопасный"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:51
-msgid   "Avoiding"
-msgstr  "Избегающий"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:53
-msgid   "BottomTrack"
-msgstr  "BottomTrack"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:302
-msgid   "too deep, forcing depth control"
-msgstr  "слишком глубоко, заставляя контроль глубины"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:442
-msgid   "unable to avoid obstacle"
-msgstr  "не смог избежать препятствий"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:479
-msgid   "Started braking"
-msgstr  "Работы тормозной"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BottomTracker.cpp:481
-msgid   "Stopped braking"
-msgstr  "Остановлено торможение"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:429
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:64
 #, c-format
-msgid   "path (lat/lon): %0.5f %0.5f to %0.5f %0.5f"
-msgstr  "пути (широта / долгота): %0.5f %0.5f до %0.5f %0.5f"
+msgid   "short option '%s' already exists"
+msgstr  "сокращенный вариант: '%s' уже существует"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:594
-msgid   "expected new path control reference"
-msgstr  "Ожидается новая ссылка пути управления"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:651
-msgid   "now loitering"
-msgstr  "теперь слонялся"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:788
-msgid   "along-track divergence error"
-msgstr  "вдоль линии пути расхождение ошибке"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:821
-msgid   "cross-track divergence error"
-msgstr  "боковое расхождение ошибке"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/PathController.cpp:914
-msgid   "waiting for position estimate from navigation"
-msgstr  "ждет от оценки местоположения навигации"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:46
-msgid   "no valid altitude measurements"
-msgstr  "Нет действительных измерений высоты"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:169
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:67
 #, c-format
-msgid   "limiting depth to %.1f"
-msgstr  "предельная глубина %.1f"
+msgid   "long option '%s' already exists"
+msgstr  "длинная опция '%s' уже существует"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:224
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:130
+#, c-format
+msgid   "Description:\n"
+        "  %s\n"
+        "\n"
+msgstr  "Описание: \n"
+        "  %s \n"
+        "\n"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:132
+#, c-format
+msgid   "Usage:\n"
+        "  %s [options]\n"
+        "\n"
+msgstr  "Использование: \n"
+        "  %s [параметры] \n"
+        "\n"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:133
+msgid   "Options:\n"
+msgstr  "Опции: \n"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:161
+#, c-format
+msgid   "This program is built for %s\n"
+msgstr  "Эта программа создана для %s \n"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:162
+#, c-format
+msgid   "Report bugs to %s\n"
+msgstr  "Сообщить ошибки в %s \n"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:176
+#, c-format
+msgid   "unknown option '%s'"
+msgstr  "неизвестный параметр '%s'"
+
+#: /home/rasm/git/dune/dune/src/DUNE/Utils/OptionParser.cpp:189
+#, c-format
+msgid   "missing argument for option '%s'"
+msgstr  "отсутствует аргумент для опции '%s'"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
+msgid   "Boot"
+msgstr  "Ботинок"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
+msgid   "Normal"
+msgstr  "Нормальный"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
+msgid   "Fault"
+msgstr  "Вина"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
+msgid   "Error"
+msgstr  "Ошибка"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:43
+msgid   "Failure"
+msgstr  "Провал"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:184
+#, c-format
+msgid   "can not monitor %s (%s), is there a task failure or a configuration error?"
+msgstr  "не может контролировать %s (%s), есть задачи завершилось с ошибкой или ошибкой конфигурации?"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:195
+msgid   "EntityState message without source entity"
+msgstr  "EntityState сообщения без исходный объект"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:222
+#, c-format
+msgid   "%s entity state is unstable (%s <-> %s), ignoring"
+msgstr  "%s лицом состояние неустойчиво (%s <-> %s), не обращая внимания"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:232
+#, c-format
+msgid   "%s : State stabilized in %s | %s"
+msgstr  "%s: Государственный стабилизировался в %s | %s"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:258
+msgid   "reconfiguration command issued"
+msgstr  "выдается команда реконфигурации"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:271
+msgid   "invalid reconfiguration command"
+msgstr  "недопустимую команду реконфигурации"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:309
+#, c-format
+msgid   "%s - monitoring enabled"
+msgstr  "%s - мониторинг поддержкой"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:315
+#, c-format
+msgid   "%s - current state not normal - %s"
+msgstr  "%s - текущее состояние не является нормальным - %s"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:319
+#, c-format
+msgid   "%s - monitoring previously enabled"
+msgstr  "%s - мониторинг ранее включенную"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:332
+#, c-format
+msgid   "%s - monitoring disabled"
+msgstr  "%s - мониторинг инвалидов"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:339
+#, c-format
+msgid   "%s - monitoring previously disabled"
+msgstr  "%s - мониторинг ранее отключенные"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:363
+#, c-format
+msgid   "entity %s: %s"
+msgstr  "лица %s: %s"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:440
+#, c-format
+msgid   "%s -- status not reported after %0.2f seconds"
+msgstr  "%s - статус не сообщается после %0.2f секунд"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Entities/Task.cpp:443
 #, fuzzy, c-format
-msgid   "invalid vertical control mode %d"
-msgstr  "плохо вертикальном режиме управления %d"
+msgid   "%s: entity state timeout"
+msgstr  ": Государственное образование тайм-аут"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:236
-msgid   "timed out while waiting for vertical control mode"
-msgstr  "истекло время ожидания для вертикального режима управления"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:261
+#: /home/rasm/git/dune/dune/src/Monitors/Servos/Task.cpp:329
 #, c-format
-msgid   "water column not deep enough for altitude control ( %0.2f < %0.2f )"
-msgstr  "нижняя отслеживанию не жизнеспособна, толщу воды не достаточно глубоко ( %0.2f < %0.2f )"
+msgid   "potential fault in servo#%d, %s"
+msgstr  "потенциальные неисправности сервопривода # %d, %s"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:280
-msgid   "getting too close to maximum admissible depth"
-msgstr  "слишком близко к максимально допустимой глубины"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:291
-#, fuzzy, c-format
-msgid   "invalid yaw control mode %d"
-msgstr  "Неправильный режим рыскания %d"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.cpp:303
-msgid   "timed out waiting for yaw control mode"
-msgstr  "Истекло время ожидания Режим рыскания"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:58
-msgid   "Pure Hardware"
-msgstr  "Чистая оборудования"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:59
-msgid   "Pure Simulation"
-msgstr  "Чистая Моделирование"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:60
-msgid   "Simulation with Hardware-in-the-loop"
-msgstr  "Моделирование с аппаратно-контуром"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:67
-msgid   "No description given"
-msgstr  "Нет описание"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:114
+#: /home/rasm/git/dune/dune/src/Monitors/Servos/Task.cpp:360
 #, c-format
-msgid   "system name: '%s' (%u)"
-msgstr  "Название системы: '%s' (%u)"
+msgid   "potential fault in servo#%d, current consumption above %f"
+msgstr  "потенциальные неисправности сервопривода # %d, потребляемый ток выше %f"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:115
+#: /home/rasm/git/dune/dune/src/Monitors/FuelLevel/Task.cpp:266
+msgid   "invalid model"
+msgstr  "недействительным модели"
+
+#: /home/rasm/git/dune/dune/src/Monitors/FuelLevel/Task.cpp:273
+msgid   "operation mode list labels and values have different sizes"
+msgstr  "Режим списка меток и значений имеют различные размеры"
+
+#: /home/rasm/git/dune/dune/src/Monitors/FuelLevel/Task.cpp:281
+msgid   "invalid opmode value (zero)"
+msgstr  "недопустимое значение OPMODE (ноль)"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Emergency/Task.cpp:75
+msgid   "SMS Recipient Number"
+msgstr  "SMS номер получателя"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Emergency/Task.cpp:78
+msgid   "Phone number of the SMS recipient"
+msgstr  "Телефонный номер SMS получатель"
+
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:242
 #, c-format
-msgid   "registered tasks: %d"
-msgstr  "Зарегистрированные задачи: %d"
+msgid   "%s -- operational limit breached: %0.2f > %0.2f"
+msgstr  "%s - эксплуатационный предел нарушен: %0.2f> %0.2f"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:116
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:255
 #, c-format
-msgid   "base folder: '%s'"
-msgstr  "Базовая папка: '%s'"
+msgid   "%s -- operational limit now sane: %0.2f <= %0.2f"
+msgstr  "%s - граница эксплуатационной сейчас здравомыслящий: %0.2f <%0.2f ="
 
-#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:117
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:330
+msgid   "minimum speed"
+msgstr  "Минимальная скорость"
+
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:331
+msgid   "maximum speed"
+msgstr  "максимальная скорость"
+
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:332
+msgid   "depth"
+msgstr  "глубина"
+
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:333
+msgid   "vertical rate"
+msgstr  "вертикальная скорость"
+
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:337
+msgid   "maximum altitude"
+msgstr  "Максимальная высота"
+
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:338
+msgid   "minimum altitude"
+msgstr  "минимальная высота"
+
+#: /home/rasm/git/dune/dune/src/Monitors/OperationalLimits/Task.cpp:369
+msgid   "Operational Area"
+msgstr  "Район Оперативной"
+
+#: /home/rasm/git/dune/dune/src/Monitors/Clock/Task.cpp:165
 #, c-format
-msgid   "configuration folder: '%s'"
-msgstr  "Папка конфигурации: '%s'"
+msgid   "adjusting CPU clock by %0.4f s"
+msgstr  "регулировки частоты процессора по %0.4f с"
 
-#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:118
-#, c-format
-msgid   "web server folder: '%s'"
-msgstr  "папка веб-сервера: '%s'"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:119
-#, c-format
-msgid   "log folder: '%s'"
-msgstr  "Папка журнала: '%s'"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:120
-#, c-format
-msgid   "library folder: '%s'"
-msgstr  "папки библиотеки: '%s'"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:121
-#, c-format
-msgid   "firmware folder: '%s'"
-msgstr  "прошивку папку: '%s'"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:125
-#, c-format
-msgid   "execution profiles: %s"
-msgstr  "выполнение анкетам: %s"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:140
-msgid   "clean shutdown"
-msgstr  "чистого отключения"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/FollowTrajectory.cpp:87
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:146
-msgid   "too few trajectory points"
-msgstr  "слишком мало точках траектории"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/Maneuver.cpp:89
-msgid   "unable to unlock"
-msgstr  "не в состоянии разблокировать"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/Maneuver.cpp:139
-msgid   "unsupported vertical reference"
-msgstr  "поддерживается вертикальной ссылки"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/Maneuver.cpp:145
-msgid   "no valid value for altitude has been received yet,maneuver will not proceed"
-msgstr  "нет допустимого значения для высоты не было получено не менее, маневр не будет продолжаться"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:103
-#, c-format
-msgid   "%s safe region (distance: %.1f m)"
-msgstr  "%s безопасной области (расстояние: %.1f м)"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:104
-msgid   "inside"
-msgstr  "внутри"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:104
-msgid   "outside"
-msgstr  "за пределами"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:112
-#, c-format
-msgid   "stopping (%0.1f m)"
-msgstr  "остановки (%0.1f м)"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/StationKeep.cpp:121
-#, c-format
-msgid   "moving (distance: %0.1f m)"
-msgstr  "перемещения (расстояние: %0.1f м)"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:68
-msgid   "parsing vehicle participants"
-msgstr  "разбора транспортных средств участников"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:81
-msgid   "invalid formation participant"
-msgstr  "недействительным участником формирования"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:95
-msgid   "repeated vehicles in participant list"
-msgstr  "повторяется транспортных средств в список участников"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:109
-msgid   "not enough vehicles in formation (at least 2 are required)"
-msgstr  "не хватает транспортных средств в образование (по крайней мере две требуются)"
-
-#: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:115
-msgid   "local vehicle is not part of formation"
-msgstr  "местное транспортное средство не является частью формирования"
-
-#: /home/rasm/git/dune/dune/src/Control/AUV/Allocator/Task.cpp:81
-#: /home/rasm/git/dune/dune/src/Control/AUV/LMI/Task.cpp:89
-#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:150
-msgid   "Maximum Fin Rotation"
-msgstr  "Максимальное вращение Fin"
-
-#: /home/rasm/git/dune/dune/src/Control/AUV/Allocator/Task.cpp:84
-#: /home/rasm/git/dune/dune/src/Control/AUV/LMI/Task.cpp:92
-#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:153
-msgid   "Maximum admissible fin rotation"
-msgstr  "Максимально допустимая вращения плавников"
-
-#: /home/rasm/git/dune/dune/src/Control/AUV/LMI/Task.cpp:148
-msgid   "Gain matrix has invalid dimensions"
-msgstr  "Усиление матрица имеет недопустимые размеры"
-
-#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:58
-msgid   "Roll"
-msgstr  "Катиться"
-
-#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:58
-msgid   "Pitch"
-msgstr  "Шаг"
-
-#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:59
-msgid   "Heading"
-msgstr  "Заголовок"
-
-#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:60
-msgid   "Heading Rate"
-msgstr  "Заголовок Оценить"
-
-#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:155
-#: /home/rasm/git/dune/dune/src/Control/AUV/Attitude/Task.cpp:157
-msgid   "Enable roll controller"
-msgstr  "Включить рулон контроллера"
-
-#: /home/rasm/git/dune/dune/src/Control/AUV/Diving/Task.cpp:481
-msgid   "failed to submerge"
-msgstr  "не удалось погрузить"
-
-#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:268
-msgid   "Ardupilot interface initialized"
-msgstr  "Ardupilot интерфейс инициализируется"
-
-#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:369
-#, c-format
-msgid   "%s - deactivating"
-msgstr  "%s - отключение"
-
-#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:371
-#, c-format
-msgid   "%s - activating"
-msgstr  "%s - активирующий"
-
-#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:408
-msgid   "speed control"
-msgstr  "управление скоростью"
-
-#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:409
-msgid   "altitude control"
-msgstr  "руль высоты"
-
-#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:410
-msgid   "bank control"
-msgstr  "регулирование угла крена"
-
-#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:411
-msgid   "heading control"
-msgstr  "управление курсом"
-
-#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:412
-msgid   "path control"
-msgstr  "управления траекторией"
-
-#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:420
-msgid   "bank control is NOT active"
-msgstr  "банковского контроля не участвует"
-
-#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:444
-msgid   "altitude control is NOT active"
-msgstr  "высота контроль будет выключен"
-
-#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:467
-msgid   "path control is NOT active"
-msgstr  "Путь контроль будет выключен,"
-
-#: /home/rasm/git/dune/dune/src/Control/UAV/Ardupilot/Task.cpp:724
-msgid   "receive error"
-msgstr  "сообщение об ошибке"
-
-#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:246
-msgid   "failed to configure strobe mode"
-msgstr  "удалось настроить режим строба"
-
-#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:250
-#, c-format
-msgid   "strobe mode set to: %s"
-msgstr  "Строб Установлен режим: %s"
-
-#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:250
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:14
-msgid   "Camera"
-msgstr  "Камера"
-
-#: /home/rasm/git/dune/dune/src/Power/MCBv2/Task.cpp:602
-msgid   "updating firmware"
-msgstr  "обновление прошивки"
-
-#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:372
-msgid   "failed to update EEPROM"
-msgstr  "не удалось обновить EEPROM"
-
-#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:441
-msgid   "power down sequence aborted"
-msgstr  "выключить последовательность прервана"
-
-#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:556
-msgid   "no leak"
-msgstr  "Нет утечки"
+#: /home/rasm/git/dune/dune/src/Monitors/Clock/Task.cpp:168
+msgid   "failed to execute clock sync command"
+msgstr  "не удалось выполнить команду синхронизации часов"
 
 #: /home/rasm/git/dune/dune/src/Transports/FTP/Task.cpp:103
 #: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:128
-#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:254
 #: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:105
 #: /home/rasm/git/dune/dune/src/Transports/TCP/Server/Task.cpp:120
+#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:254
 #, c-format
 msgid   "listening on %s:%u"
 msgstr  "прослушивает порт %s:%u"
@@ -2201,6 +2115,85 @@ msgstr  "прослушивает порт %s:%u"
 #, c-format
 msgid   "error accepting new client connection: %s"
 msgstr  "Ошибка принимать новые соединения с клиентом: %s"
+
+#: /home/rasm/git/dune/dune/src/Transports/GSM/Task.cpp:211
+msgid   "SMS timeout cannot be zero"
+msgstr  "SMS тайм-аут не может быть нулевым"
+
+#: /home/rasm/git/dune/dune/src/Transports/GSM/Task.cpp:234
+#, c-format
+msgid   "discarded expired SMS to recipient '%s'"
+msgstr  "отбрасываются истекшим SMS получателю '%s'"
+
+#: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:156
+#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:251
+msgid   "failed to find one available port"
+msgstr  "не удалось найти свободный порт"
+
+#: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:366
+#, c-format
+msgid   "removing log %s"
+msgstr  "удаление журнала %s"
+
+#: /home/rasm/git/dune/dune/src/Transports/Cache/Task.cpp:258
+#, c-format
+msgid   "failed to copy cache snapshot: %s"
+msgstr  "не удалось скопировать снимок кэша: %s"
+
+#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:112
+msgid   "no available ports to listen to advertisements"
+msgstr  "отсутствуют доступные порты не слушать рекламу"
+
+#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:125
+msgid   "discarding spurious message"
+msgstr  "отбрасывая ложные сообщения"
+
+#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:132
+#, c-format
+msgid   "discarding spurious message '%s'"
+msgstr  "отбросив ложный '%s' сообщение"
+
+#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:187
+#, c-format
+msgid   "new node within range '%s' / %u / %s"
+msgstr  "Новый узел в пределах диапазона '%s' / %u / %s"
+
+#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:198
+#, c-format
+msgid   "another node on this computer is advertising our node name '%s'"
+msgstr  "другой узел на этом компьютере рекламы наших имя узла '%s'"
+
+#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:200
+#, c-format
+msgid   "another node on our network is advertising our node name '%s'"
+msgstr  "другой узел нашей сети рекламы наших имя узла '%s'"
+
+#: /home/rasm/git/dune/dune/src/Transports/SerialOverTCP/Task.cpp:138
+msgid   "accepting connection request"
+msgstr  "принятие запроса на соединение"
+
+#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:232
+#, c-format
+msgid   "write: %s"
+msgstr  "пишут: %s"
+
+#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:243
+#, c-format
+msgid   "discarding %d bytes"
+msgstr  "отбрасывая %d байт"
+
+#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:334
+#, c-format
+msgid   "opening file '%s' with %u frames"
+msgstr  "открытии файла '%s' %u с кадрами"
+
+#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:368
+msgid   "file is complete"
+msgstr  "файл загружен полностью"
+
+#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:373
+msgid   "no file is open"
+msgstr  "файл не открыт"
 
 #: /home/rasm/git/dune/dune/src/Transports/IridiumSBD/Task.cpp:126
 msgid   "task is shutting down"
@@ -2215,11 +2208,6 @@ msgstr  "с ошибкой %u"
 #, c-format
 msgid   "transmission failed: %s"
 msgstr  "Передача не удалась: %s"
-
-#: /home/rasm/git/dune/dune/src/Transports/Cache/Task.cpp:258
-#, c-format
-msgid   "failed to copy cache snapshot: %s"
-msgstr  "не удалось скопировать снимок кэша: %s"
 
 #: /home/rasm/git/dune/dune/src/Transports/Replay/Task.cpp:179
 msgid   "operation not supported"
@@ -2253,53 +2241,20 @@ msgstr  "началось воспроизведение"
 msgid   "stopped replay"
 msgstr  "остановили воспроизведение"
 
-#: /home/rasm/git/dune/dune/src/Transports/GSM/Task.cpp:211
-msgid   "SMS timeout cannot be zero"
-msgstr  "SMS тайм-аут не может быть нулевым"
-
-#: /home/rasm/git/dune/dune/src/Transports/GSM/Task.cpp:234
-#, c-format
-msgid   "discarded expired SMS to recipient '%s'"
-msgstr  "отбрасываются истекшим SMS получателю '%s'"
-
-#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:232
-#, c-format
-msgid   "write: %s"
-msgstr  "пишут: %s"
-
-#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:243
-#, c-format
-msgid   "discarding %d bytes"
-msgstr  "отбрасывая %d байт"
-
-#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:334
-#, c-format
-msgid   "opening file '%s' with %u frames"
-msgstr  "открытии файла '%s' %u с кадрами"
-
-#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:368
-msgid   "file is complete"
-msgstr  "файл загружен полностью"
-
-#: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:373
-msgid   "no file is open"
-msgstr  "файл не открыт"
-
-#: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:156
-#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:251
-msgid   "failed to find one available port"
-msgstr  "не удалось найти свободный порт"
-
-#: /home/rasm/git/dune/dune/src/Transports/HTTP/Task.cpp:366
-#, c-format
-msgid   "removing log %s"
-msgstr  "удаление журнала %s"
-
-#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:244
 #: /home/rasm/git/dune/dune/src/Transports/TCP/Server/Task.cpp:106
+#: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:244
 #, c-format
 msgid   "failed to bind to port %u: %s"
 msgstr  "Не удалось выполнить привязку к порту %u: %s"
+
+#: /home/rasm/git/dune/dune/src/Transports/TCP/Server/Task.cpp:113
+msgid   "could not bind server socket"
+msgstr  "не удалось выполнить привязку сокета сервера"
+
+#: /home/rasm/git/dune/dune/src/Transports/TCP/Server/Task.cpp:153
+#, c-format
+msgid   "connected to %u clients"
+msgstr  "подключен к %u клиентов"
 
 #: /home/rasm/git/dune/dune/src/Transports/UDP/Task.cpp:375
 #, c-format
@@ -2335,58 +2290,103 @@ msgstr  "Не удалось запустить журнал, проверить
 msgid   "waiting for human intervention"
 msgstr  "ждет вмешательства человека"
 
-#: /home/rasm/git/dune/dune/src/Transports/SerialOverTCP/Task.cpp:138
-msgid   "accepting connection request"
-msgstr  "принятие запроса на соединение"
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowTrajectory/Task.cpp:128
+msgid   "disregarding trajectory's time constraints"
+msgstr  "без учета времени траектории стесненность"
 
-#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:112
-msgid   "no available ports to listen to advertisements"
-msgstr  "отсутствуют доступные порты не слушать рекламу"
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowTrajectory/Task.cpp:133
+msgid   "provided trajectory is not feasible by the current vehicle!"
+msgstr  "при условии траектории не представляется возможным действующим автомобиля!"
 
-#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:125
-msgid   "discarding spurious message"
-msgstr  "отбрасывая ложные сообщения"
+#: /home/rasm/git/dune/dune/src/Maneuver/Elevator/Task.cpp:279
+msgid   "water column is not deep enough"
+msgstr  "толщи воды не достаточно глубоко"
 
-#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:132
+#: /home/rasm/git/dune/dune/src/Maneuver/Elevator/Task.cpp:331
+msgid   "vertical progress is too slow"
+msgstr  "вертикальная прогресс идет слишком медленными"
+
+#: /home/rasm/git/dune/dune/src/Maneuver/Dubin/Task.cpp:65
+msgid   "vertical control type not supported"
+msgstr  "вертикальный тип управления не поддерживается"
+
+#: /home/rasm/git/dune/dune/src/Maneuver/CompassCalibration/Task.cpp:147
 #, c-format
-msgid   "discarding spurious message '%s'"
-msgstr  "отбросив ложный '%s' сообщение"
+msgid   "forcing minimum of %.1f"
+msgstr  "заставляя минимум %.1f"
 
-#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:187
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowSystem/Task.cpp:299
+msgid   "timeout to receive new remote info was exceeded."
+msgstr  "Тайм-аут, чтобы получать новые удаленные информация была превышена."
+
+#: /home/rasm/git/dune/dune/src/Maneuver/Loiter/Task.cpp:110
 #, c-format
-msgid   "new node within range '%s' / %u / %s"
-msgstr  "Новый узел в пределах диапазона '%s' / %u / %s"
+msgid   "will now loiter for %d seconds"
+msgstr  "теперь будет слоняться по %d секунд"
 
-#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:198
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:138
+msgid   "waiting for first reference"
+msgstr  "ждет первая ссылка"
+
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:194
 #, c-format
-msgid   "another node on this computer is advertising our node name '%s'"
-msgstr  "другой узел на этом компьютере рекламы наших имя узла '%s'"
+msgid   "ignored reference from non-authorized source: %d"
+msgstr  "игнорируют ссылки от несанкционированного Источник: %d"
 
-#: /home/rasm/git/dune/dune/src/Transports/Discovery/Task.cpp:200
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:203
 #, c-format
-msgid   "another node on our network is advertising our node name '%s'"
-msgstr  "другой узел нашей сети рекламы наших имя узла '%s'"
+msgid   "ignored reference from non-authorized entity: %d"
+msgstr  "игнорируют ссылки от несанкционированного лица: %d"
 
-#: /home/rasm/git/dune/dune/src/Transports/TCP/Server/Task.cpp:113
-msgid   "could not bind server socket"
-msgstr  "не удалось выполнить привязку сокета сервера"
-
-#: /home/rasm/git/dune/dune/src/Transports/TCP/Server/Task.cpp:153
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:528
 #, c-format
-msgid   "connected to %u clients"
-msgstr  "подключен к %u клиентов"
+msgid   "loitering around (%f, %f, %f, %f)."
+msgstr  "слоняющихся без дела (%f, %f, %f, %f)."
 
-#: /home/rasm/git/dune/dune/src/Main/Daemon.cpp:165
-msgid   "stopping tasks"
-msgstr  "остановка задач"
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:536
+#, c-format
+msgid   "loitering (elevator) towards (%f, %f, %f, %f)."
+msgstr  "слонялся (лифт) к (%f, %f, %f, %f)."
 
-#: /home/rasm/git/dune/dune/src/Main/Daemon.cpp:175
-msgid   "unhandled exception"
-msgstr  "необработанное исключение"
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:543
+#, c-format
+msgid   "going towards (%f, %f, %f)."
+msgstr  "происходит в направлении (%f, %f, %f)."
 
-#: /home/rasm/git/dune/dune/src/Main/Daemon.cpp:252
-msgid   "ERROR: no configuration file was given, see options --config-list and --config-file\n"
-msgstr  "ОШИБКА: конфигурационный файл не был дан, см. опции - конфигурационный-лист и - конфигурационном файле \n"
+#: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:547
+#, c-format
+msgid   "hovering next to (%f, %f)."
+msgstr  "парящей рядом (%f, %f)."
+
+#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:246
+msgid   "failed to configure strobe mode"
+msgstr  "удалось настроить режим строба"
+
+#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:250
+#, c-format
+msgid   "strobe mode set to: %s"
+msgstr  "Строб Установлен режим: %s"
+
+#: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:250
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:14
+msgid   "Camera"
+msgstr  "Камера"
+
+#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:372
+msgid   "failed to update EEPROM"
+msgstr  "не удалось обновить EEPROM"
+
+#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:441
+msgid   "power down sequence aborted"
+msgstr  "выключить последовательность прервана"
+
+#: /home/rasm/git/dune/dune/src/Power/PCTLv2/Task.cpp:556
+msgid   "no leak"
+msgstr  "Нет утечки"
+
+#: /home/rasm/git/dune/dune/src/Power/MCBv2/Task.cpp:602
+msgid   "updating firmware"
+msgstr  "обновление прошивки"
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:1
 msgid   "AHRS"
@@ -2666,168 +2666,169 @@ msgid   "Operational Limits"
 msgstr  "Пределы"
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:71
-msgid   "PTU Transports"
-msgstr  "ПТУ Транспорт"
-
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:72
 msgid   "Panel"
 msgstr  "Панель"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:73
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:72
 msgid   "Panel Buttons"
 msgstr  "Кнопки панели"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:74
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:73
 msgid   "Path Control"
 msgstr  "Пути управления"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:75
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:74
 msgid   "Piccolo Communications"
 msgstr  "Piccolo связи"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:76
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:75
 msgid   "Piccolo Control Loops"
 msgstr  "Петли Piccolo управления"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:77
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:76
 msgid   "Piccolo Gateway"
 msgstr  "Piccolo шлюз"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:78
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:77
 msgid   "Piccolo Supervision"
 msgstr  "Piccolo надзору"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:79
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:78
 msgid   "Plan Database"
 msgstr  "План баз данных"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:80
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:79
 msgid   "Plan Engine"
 msgstr  "План двигателя"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:81
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:80
 msgid   "Plan Generator"
 msgstr  "План Генератор"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:82
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:81
 msgid   "Pop Up Maneuver"
 msgstr  "Pop Up Маневр"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:83
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:82
 msgid   "Port Bow Motor"
 msgstr  "Левого борта двигателя"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:84
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:83
 msgid   "Port Stern Motor"
 msgstr  "Порт Стерн двигателя"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:85
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:84
 msgid   "Power Supervisor"
 msgstr  "Мощность Supervisor"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:86
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:85
 msgid   "Power Supply"
 msgstr  "Питание"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:87
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:86
 msgid   "Remote Control"
 msgstr  "Дистанционное управление"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:88
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:87
 msgid   "Remote Operation"
 msgstr  "Дистанционное управление"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:89
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:88
 msgid   "Rows Maneuver"
 msgstr  "Строки Маневр"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:90
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:89
 msgid   "SCRT"
 msgstr  "SCRT"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:91
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:90
 msgid   "SVS"
 msgstr  "SVS"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:92
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:91
 msgid   "Service Announcer"
 msgstr  "Служба Диктор"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:93
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:92
 msgid   "Service Discovery"
 msgstr  "Service Discovery"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:94
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:93
 msgid   "Servo Monitor"
 msgstr  "Servo монитор"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:95
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:94
 msgid   "Servos"
 msgstr  "Сервоприводы"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:96
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:95
 msgid   "Sidescan"
 msgstr  "Sidescan"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:97
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:96
 msgid   "Simulation Engine"
 msgstr  "Моделирование двигателя"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:98
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:97
 msgid   "Sound Speed Sensor"
 msgstr  "Датчик скорости звука"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:99
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:98
 msgid   "Speed Control"
 msgstr  "Управление скоростью"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:100
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:99
 msgid   "Starboard Bow Motor"
 msgstr  "Правый борт Лук Motor"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:101
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:100
 msgid   "Starboard Stern Motor"
 msgstr  "Правый борт Стерн двигателя"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:102
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:101
 msgid   "Station Keeping Maneuver"
 msgstr  "Маневр удержания на орбите"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:103
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:102
 msgid   "TASE"
 msgstr  "TASE"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:104
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:103
 msgid   "TCP Server"
 msgstr  "TCP сервера"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:105
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:104
 msgid   "TCP to DOAM CPU"
 msgstr  "TCP в DOAM CPU"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:106
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:105
 msgid   "TCP to Master"
 msgstr  "TCP мастеру"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:107
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:106
 msgid   "TREX"
 msgstr  "TREX"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:108
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:107
 msgid   "Teleoperation Maneuver"
 msgstr  "Маневр Teleoperation"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:109
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:108
 msgid   "Text Message Parser"
 msgstr  "Анализа текстовых сообщений"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:110
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:109
 msgid   "Thermal Zone"
 msgstr  "Термальная зона"
 
-#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:111
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:110
 msgid   "UDP"
 msgstr  "UDP"
+
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:111
+#, fuzzy
+msgid   "UDP to PTU"
+msgstr  "UDP для TREX"
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:112
 msgid   "UDP to TREX"
@@ -2844,6 +2845,9 @@ msgstr  "Подводные Simulator акустика"
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:115
 msgid   "Vehicle Supervisor"
 msgstr  "Автомобиль Supervisor"
+
+#~ msgid        "PTU Transports"
+#~ msgstr       "ПТУ Транспорт"
 
 #~ msgid        "Lost Communication SMS Timeout"
 #~ msgstr       "Потеряна связь SMS Тайм-аут"
