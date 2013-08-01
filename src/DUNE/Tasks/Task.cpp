@@ -325,7 +325,7 @@ namespace DUNE
     Task::activate(void)
     {
       if (m_act_state.state != IMC::EntityActivationState::EAS_ACT_IP)
-        throw std::runtime_error("activation is not in progress");
+        throw std::runtime_error(DTR("activation is not in progress"));
 
       spew("activate");
 
@@ -397,7 +397,7 @@ namespace DUNE
     Task::deactivate(void)
     {
       if (m_act_state.state != IMC::EntityActivationState::EAS_DEACT_IP)
-        throw std::runtime_error("deactivation is not in progress");
+        throw std::runtime_error(DTR("deactivation is not in progress"));
 
       spew("deactivate");
 

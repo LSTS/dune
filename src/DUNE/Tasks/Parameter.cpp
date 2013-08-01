@@ -68,7 +68,7 @@ namespace DUNE
           return static_cast<Visibility>(i);
       }
 
-      throw std::runtime_error("invalid visibility string");
+      throw std::runtime_error(DTR("invalid visibility string"));
     }
 
     const char*
@@ -86,7 +86,7 @@ namespace DUNE
           return static_cast<Scope>(i);
       }
 
-      throw std::runtime_error("invalid scope string");
+      throw std::runtime_error(DTR("invalid scope string"));
     }
 
     const char*
@@ -129,7 +129,7 @@ namespace DUNE
     Parameter::read(const std::string& val)
     {
       if (m_reader == NULL)
-        throw std::runtime_error("no available reader");
+        throw std::runtime_error(DTR("no available reader"));
 
       try
       {

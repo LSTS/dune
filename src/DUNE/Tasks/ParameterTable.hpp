@@ -77,7 +77,7 @@ namespace DUNE
       {
         std::map<void*, Parameter*>::iterator itr = m_pointers.find(ptr);
         if (itr == m_pointers.end())
-          throw std::runtime_error("variable does not exist");
+          throw std::runtime_error(DTR("variable does not exist"));
 
         return itr->second->changed();
       }
