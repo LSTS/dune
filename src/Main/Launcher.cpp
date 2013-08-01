@@ -54,7 +54,6 @@
 using DUNE_NAMESPACES;
 
 static bool s_stop = false;
-static const unsigned c_max_restarts = 5;
 static const double c_restart_period = 30.0;
 
 // POSIX implementation.
@@ -149,7 +148,6 @@ main(int argc, char** argv)
   setLauncherSignalHandlers();
 
   Counter<double> delta(c_restart_period);
-  unsigned restarts = 0;
 
   while (!s_stop)
   {
@@ -171,20 +169,11 @@ main(int argc, char** argv)
       DUNE_WRN("Launcher", "execution aborted");
     else
       DUNE_ERR("Launcher", "daemon crashed with signal " << rv);
-    Delay::wait(2.0);
-    ++restarts;
 
-    if (restarts > c_max_restarts)
-    {
-      DUNE_ERR("Launcher", "too many crashes, DUNE needs to fixed!");
-      return 1;
-    }
+    Delay::wait(2.0);
 
     if (delta.overflow())
-    {
-      restarts = 0;
       delta.reset();
-    }
   }
 #endif
 
