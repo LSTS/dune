@@ -54,6 +54,8 @@ namespace DUNE
         float period;
         //! Percentage of time outside the corridor to change corridor size
         float max_outside;
+        //! Limit of a fixed number of incoming samples per second
+        unsigned sample_limit;
       };
 
       //! Constructor.
@@ -112,9 +114,11 @@ namespace DUNE
       //! Multiple moving averages to filter the signal
       Math::MultiMovingAverage<float>* m_mmav;
       //! Time since last corridor check
-      Time::Counter<float> m_last_check;
+      float m_last_check;
       //! Accumulated time outside the corridor
       float m_time_outside;
+      //! Time since last used sample
+      float m_since_last;
     };
   }
 }

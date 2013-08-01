@@ -37,6 +37,9 @@ namespace DUNE
       m_active(false),
       m_args(args)
     {
+      if (m_args->sample_limit == 0)
+        std::runtime_error("coarse altitude: samples per second cannot be zero");
+
       m_mmav = new Math::MultiMovingAverage<float>(args->wsizes);
       reset();
     }
@@ -52,8 +55,9 @@ namespace DUNE
       m_corridor = 0;
       m_tracking = false;
       m_mmav->clear();
-      m_last_check.reset();
+      m_last_check = 0.0;
       m_time_outside = 0.0;
+      m_since_last = 0.0;
     }
 
     void
@@ -90,7 +94,7 @@ namespace DUNE
     CoarseAltitude::measurePerformance(void)
     {
       // See if it's time to check
-      if (m_last_check.overflow())
+      if (m_last_check < m_args->period)
         return;
 
       if (m_time_outside / m_args->period * 100.0 > m_args->max_outside)
@@ -98,7 +102,7 @@ namespace DUNE
       else if (m_corridor)
         --m_corridor;
 
-      m_last_check.reset();
+      m_last_check = 0.0;
       m_time_outside = 0.0;
     }
 
@@ -113,16 +117,24 @@ namespace DUNE
           return desired_depth;
 
         m_tracking = true;
-        m_last_check.setTop(m_args->period);
+        m_last_check = 0.0;
       }
 
       if (!in_corridor)
         m_time_outside += timestep;
 
+      m_last_check += timestep;
+
       // check if we need to change corridor
       measurePerformance();
 
-      m_mmav->update(desired_depth);
+      m_since_last += timestep;
+
+      if (m_since_last > 1.0 / (float)m_args->sample_limit)
+      {
+        m_since_last = 0.0;
+        m_mmav->update(desired_depth);
+      }
 
       return m_mmav->mean(m_corridor);
     }
