@@ -206,7 +206,7 @@ namespace Autonomy
             break;
           case IMC::TrexOperation::OP_REQUEST_PLAN:
           {
-            int i = system("/bin/sh /opt/lsts/trex/trex_restart.bash 1,2 > /dev/null &");
+            int i = system("services trex restart 1,2 > /dev/null &");
             if (i == 0)
               inf("T-REX has been started.");
             else
@@ -215,7 +215,7 @@ namespace Autonomy
           }
           case IMC::TrexOperation::OP_REPORT_PLAN:
           {
-            int i = system("/bin/sh /opt/lsts/trex/trex_stop.bash 1,2 > /dev/null &");
+            int i = system("services trex stop 1,2 > /dev/null &");
             if (i == 0)
               inf("T-REX has been stopped.");
             else
