@@ -40,8 +40,8 @@ namespace DUNE
     (void)folder;
     (void)name;
 
-#if defined(DUNE_SYS_HAS_GETTEXT) && defined(LC_ALL)
-    setlocale(LC_ALL, name.c_str());
+#if defined(DUNE_SYS_HAS_GETTEXT) && defined(LC_MESSAGES)
+    setlocale(LC_MESSAGES, name.c_str());
     bindtextdomain("dune", folder.c_str());
     bind_textdomain_codeset("dune", "UTF-8");
     textdomain("dune");
