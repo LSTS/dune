@@ -200,7 +200,7 @@ namespace Transports
           return;
 
         if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
-          throw RestartNeeded("input error", 5);
+          throw RestartNeeded(DTR("input error"), 5);
       }
 
       void

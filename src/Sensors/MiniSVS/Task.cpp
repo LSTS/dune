@@ -107,7 +107,7 @@ namespace Sensors
           if (rv <= 0)
           {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-            throw RestartNeeded("I/O error", 5);
+            throw RestartNeeded(DTR("I/O error"), 5);
           }
 
           if (std::sscanf(bfr, "%f", &m_sspeed.value) == 1)

@@ -201,9 +201,9 @@ namespace Sensors
 
           UCTK::FirmwareInfo info = m_psu->getFirmwareInfo();
           if (info.isDevelopment())
-            war("device is using unstable firmware");
+            war(DTR("device is using unstable firmware"));
           else
-            inf("firmware version %u.%u.%u", info.major,
+            inf(DTR("firmware version %u.%u.%u"), info.major,
                 info.minor, info.patch);
 
           // Open IMU.
