@@ -238,7 +238,7 @@ namespace Vision
           }
         }
 
-        inf(DTR("Started video stream"));
+        inf(DTR("started video stream"));
       }
 
       void
