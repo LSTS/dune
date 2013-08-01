@@ -401,7 +401,7 @@ namespace DUNE
         correctAlignment(msg->psi);
         m_phi_offset = msg->phi - Math::Angles::normalizeRadian(getEuler(AXIS_X));
         m_theta_offset = msg->theta - Math::Angles::normalizeRadian(getEuler(AXIS_Y));
-        debug("Euler Angles offset - phi, theta: %f | %f", m_phi_offset, m_theta_offset);
+        spew("Euler Angles offset - phi, theta: %f | %f", m_phi_offset, m_theta_offset);
         return;
       }
 
@@ -537,7 +537,7 @@ namespace DUNE
         m_kal.setState(STATE_X, 0);
         m_kal.setState(STATE_Y, 0);
 
-        debug("defined new navigation reference");
+        spew("defined new navigation reference");
         return;
       }
 
@@ -804,7 +804,7 @@ namespace DUNE
       // Possibly correct LBL locations.
       m_ranging.updateOrigin(m_origin);
 
-      debug("setup completed");
+      spew("setup completed");
       return true;
     }
 
@@ -1020,7 +1020,7 @@ namespace DUNE
             // do nothing;
             break;
           default:
-            debug("caught unexpected navigation state transition");
+            spew("caught unexpected navigation state transition");
             break;
         }
       }
@@ -1048,7 +1048,7 @@ namespace DUNE
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             break;
           default:
-            debug("caught unexpected navigation state transition");
+            spew("caught unexpected navigation state transition");
             break;
         }
         m_navstate = SM_STATE_NORMAL;

@@ -329,7 +329,7 @@ namespace Navigation
 
             // Dead reckoning mode.
             m_dead_reckoning = true;
-            debug("activating IMU");
+            spew("activating IMU");
 
             // Reinitialize state covariance matrix value.
             m_kal.resetCovariance(STATE_PSI_BIAS);
