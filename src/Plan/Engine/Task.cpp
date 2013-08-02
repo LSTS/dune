@@ -292,7 +292,7 @@ namespace Plan
 
         Path db_file = m_ctx.dir_db / "Plan.db";
 
-        inf(DTR("database file: '%s'"), db_file.c_str());
+        debug("database file: '%s'", db_file.c_str());
 
         m_db = new Database::Connection(db_file.c_str(), true);
         m_get_plan_stmt = new Database::Statement(c_get_plan_stmt, *m_db);
@@ -313,7 +313,7 @@ namespace Plan
         delete m_db;
         m_db = NULL;
 
-        inf(DTR("database connection closed"));
+        debug("database connection closed");
       }
 
       void
@@ -679,7 +679,7 @@ namespace Plan
           }
           else if (m_plan_loaded)
           {
-            inf(DTR("switching to new plan"));
+            debug("switching to new plan");
             return false;
           }
           else
@@ -947,7 +947,7 @@ namespace Plan
           if (was_in_plan && !is_in_plan)
           {
             m_plan->planStopped();
-            changeLog(DTR("idle"));
+            changeLog("");
           }
         }
 
