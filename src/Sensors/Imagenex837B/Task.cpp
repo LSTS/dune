@@ -723,7 +723,7 @@ namespace Sensors
       checkAltitude(void)
       {
         if (m_estate.alt > c_min_alt)
-          setRange(m_estate.alt * m_args.range_modifier_mul_k + m_args.range_modifier_add_k);
+          setRange((unsigned)(m_estate.alt * m_args.range_modifier_mul_k + m_args.range_modifier_add_k));
       }
 
       void
