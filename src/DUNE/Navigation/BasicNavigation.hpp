@@ -446,6 +446,26 @@ namespace DUNE
       virtual void
       correctAlignment(double psi);
 
+      //! Get EKF output matrix speed indexes.
+      //! @param[out] u forward speed state index.
+      //! @param[out] v transversal speed state index.
+      virtual void
+      getSpeedOutputStates(double* u, double* v)
+      {
+        // do nothing.
+        (void)*u;
+        (void)*v;
+      }
+
+      //! Get number of EKF outputs.
+      //! @return number of outputs.
+      virtual unsigned
+      getNumberOutputs(void)
+      {
+        // do nothing.
+        return 0;
+      }
+
       //! Routine called to assign common dispatch messages.
       void
       onDispatchNavigation(void);

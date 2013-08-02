@@ -179,60 +179,17 @@ namespace Navigation
           m_kal.setOutput(OUT_GPS_Y, y);
         }
 
-
-        void
-        runKalmanLBL(int beacon, float range, double dx, double dy, double exp_range)
+        unsigned
+        getNumberOutputs(void)
         {
-          // "Outlier Rejection for Autonomous Acoustic Navigation"
-          // Jerome Vaganay, John J. Leonard and James G. Bellingham. MIT
-          Matrix H(1, 2, 0.0);
-          H(0, 0) = dx / exp_range;
-          H(0, 1) = dy / exp_range;
-          Matrix P(2, 2, 0.0);
-          P = m_kal.getCovariance(STATE_X, STATE_Y, STATE_X, STATE_Y);
-
-          double k = getLblRejectionValue(exp_range);
-          double R = std::max(k, (H * P * transpose (H))(0));
-
-          double d = range - exp_range;
-          m_navdata.lbl_rej_level = (d * (1 / ((H * P * transpose (H))(0) + R)) * d);
-
-          // Is rejection level above maximum threshold?
-          if (m_navdata.lbl_rej_level >= m_lbl_threshold)
-          {
-            m_lbl_ac.acceptance = IMC::LblRangeAcceptance::RR_ABOVE_THRESHOLD;
-            dispatch(m_lbl_ac, DF_KEEP_TIME);
-            return;
-          }
-          else
-          {
-            // Define measurements matrix.
-            m_kal.setObservation(NUM_OUT + beacon, STATE_X, dx / exp_range);
-            m_kal.setObservation(NUM_OUT + beacon, STATE_Y, dy / exp_range);
-
-            // Define Output matrix.
-            m_kal.setOutput(NUM_OUT + beacon, range);
-            m_kal.setInnovation(NUM_OUT + beacon, range - exp_range);
-            m_lbl_ac.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
-            dispatch(m_lbl_ac, DF_KEEP_TIME);
-          }
+          return NUM_OUT;
         }
 
         void
-        runKalmanDVL(void)
+        getSpeedOutputStates(double* u, double* v)
         {
-          // Use Ground Velocity messages if they are valid.
-          // Water Velocity messages otherwise.
-          if (m_valid_gv)
-          {
-            m_kal.setOutput(OUT_U, m_gvel.x);
-            m_kal.setOutput(OUT_V, m_gvel.y);
-          }
-          else if (m_valid_wv)
-          {
-            m_kal.setOutput(OUT_U, m_wvel.x);
-            m_kal.setOutput(OUT_V, m_wvel.y);
-          }
+          *u = OUT_U;
+          *v = OUT_V;
         }
 
         bool
