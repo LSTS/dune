@@ -51,15 +51,16 @@ namespace DUNE
       m_avg_gps(NULL)
     {
       // Declare configuration parameters.
-      param("Maximum distance to reference", m_max_dis2ref)
+      param("Maximum Distance to Reference", m_max_dis2ref)
       .units(Units::Meter)
       .defaultValue("1000")
       .description("Maximum allowed distance to 'EstimatedState' reference");
 
-      param("Max. Horizontal Position Variance", m_max_hpos_var)
+      param(DTR_RT("Maximum Horizontal Position Variance"), m_max_hpos_var)
+      .visibility(Tasks::Parameter::VISIBILITY_USER)
       .units(Units::SquareMeter)
-      .defaultValue("240.0")
-      .description("Maximum allowed horizontal Position estimation covariance");
+      .defaultValue("500.0")
+      .description("Maximum allowed horizontal position estimation variance");
 
       param("Reject all LBL ranges", m_reject_all_lbl)
       .defaultValue("false")
