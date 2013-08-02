@@ -26,8 +26,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DUNE 2.0.0\n"
 "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-"POT-Creation-Date: 2013-08-02 08:59+0100\n"
-"PO-Revision-Date: 2013-08-02 09:01-0000\n"
+"POT-Creation-Date: 2013-08-02 09:08+0100\n"
+"PO-Revision-Date: 2013-08-02 09:09-0000\n"
 "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
 "Language-Team: LANGUAGE <dune.i18n@lsts.pt>\n"
 "Language: pt_PT\n"
@@ -1279,6 +1279,10 @@ msgstr "Canais do subsistema de baixa frequência"
 #: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:151
 msgid "Low-Frequency Range"
 msgstr "Alcance de Baixa-Frequência"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:160
+msgid "Range Multiplier"
+msgstr "Multiplicador de Distância"
 
 #: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:166
 msgid "Range multiplier"
