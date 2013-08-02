@@ -248,12 +248,10 @@ namespace Transports
       }
 
       void
-      onMain(void)
+      pollStatus(void)
       {
-        while (!stopping())
+        try
         {
-          waitForMessages(1.0);
-
           if (m_rssi_timer.overflow())
           {
             m_rssi_timer.reset();
@@ -265,7 +263,21 @@ namespace Transports
             m_rsms_timer.reset();
             m_driver->checkMessages();
           }
+        }
+        catch (std::exception& e)
+        {
+          throw RestartNeeded(String::str(DTR("failed to poll status: %s"),
+                                          e.what()), 5);
+        }
+      }
 
+      void
+      onMain(void)
+      {
+        while (!stopping())
+        {
+          waitForMessages(1.0);
+          pollStatus();
           processQueue();
         }
       }
