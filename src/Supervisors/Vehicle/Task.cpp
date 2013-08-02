@@ -77,6 +77,8 @@ namespace Supervisors
       IMC::IdleManeuver m_idle;
       //! Control loops last reference time
       float m_scope_ref;
+      //! Vector of labels from entities in error
+      std::vector<std::string> m_ents_in_error;
       //! Task arguments.
       Arguments m_args;
 
@@ -122,6 +124,8 @@ namespace Supervisors
         m_vs.last_error.clear();
         m_vs.last_error_time = -1;
         m_vs.control_loops = 0;
+
+        m_ents_in_error.clear();
       }
 
       void
@@ -237,6 +241,21 @@ namespace Supervisors
         dispatch(m_vs);
       }
 
+      //! Split comma separated list and translate labels, then join again
+      //! @param[in] list comma separated list of entity labels
+      //! @return 'comma + white space' separated list of translated entity labels
+      std::string
+      splitAndTranslate(const std::string& list)
+      {
+        std::vector<std::string> elist;
+        String::split(list, ",", elist);
+
+        for (unsigned i = 0; i < elist.size(); ++i)
+          elist[i] = DTR(elist[i].c_str());
+
+        return String::join(elist.begin(), elist.end(), ", ");
+      }
+
       void
       consume(const IMC::EntityMonitoringState* msg)
       {
@@ -251,6 +270,7 @@ namespace Supervisors
         }
 
         m_vs.error_ents = "";
+        m_ents_in_error.clear();
 
         if (msg->ccount)
           m_vs.error_ents = msg->cnames;
@@ -258,21 +278,18 @@ namespace Supervisors
         if (msg->ecount)
           m_vs.error_ents += (msg->ccount ? "," : "") + msg->enames;
 
+        // copy to list to vector
+        String::split(m_vs.error_ents, ",", m_ents_in_error);
+        // translate list for vehicle state message
+        m_vs.error_ents = splitAndTranslate(m_vs.error_ents);
+
         if (prev_count && !m_vs.error_count)
         {
           war(DTR("entity errors cleared"));
         }
         else if ((prev_count != m_vs.error_count) && m_err_timer.overflow())
         {
-          // Printing entities calling DTR() explicitly
-          std::vector<std::string> elist;
-          String::split(m_vs.error_ents, ",", elist);
-
-          for (unsigned i = 0; i < elist.size(); ++i)
-            elist[i] = DTR(elist[i].c_str());
-
-          war(DTR("vehicle errors: %s"),
-              DTR(String::join(elist.begin(), elist.end(), ", ").c_str()));
+          war(DTR("vehicle errors: %s"), m_vs.error_ents.c_str());
 
           m_err_timer.reset();
         }
