@@ -791,7 +791,7 @@ msgstr "plano indefinido"
 
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:789
 msgid "plan initializing: "
-msgstr "plano a iniciar:"
+msgstr "plano a iniciar: "
 
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:841
 msgid "cannot initialize plan in BLOCKED state"
