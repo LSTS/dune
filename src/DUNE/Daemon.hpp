@@ -60,9 +60,6 @@ namespace DUNE
     consume(const DUNE::IMC::RestartSystem* msg);
 
     void
-    consume(const DUNE::IMC::QueryEntityInfo* msg);
-
-    void
     consume(const DUNE::IMC::EntityList* msg);
 
     void
