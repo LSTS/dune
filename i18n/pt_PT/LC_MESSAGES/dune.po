@@ -764,7 +764,7 @@ msgstr "nenhum plano está carregado, pedido ignorado"
 #: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:444
 #: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:479
 msgid "undefined plan id"
-msgstr "plan ID não identificado"
+msgstr "plan ID indefinido"
 
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:756
 #: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:434
