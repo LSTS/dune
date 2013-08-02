@@ -329,7 +329,7 @@ msgstr "transmissão de SMS falhou com código de erro %d"
 #: /home/rasm/git/dune/dune/src/Transports/UDP/NodeAddress.hpp:62
 #, c-format
 msgid "invalid address: '%s'"
-msgstr "endereço inválido '%s'"
+msgstr "endereço inválido: '%s'"
 
 #: /home/rasm/git/dune/dune/src/Autonomy/TextActions/Task.cpp:65
 #, c-format
@@ -428,7 +428,7 @@ msgstr "possível falha no servo%d, %s"
 #: /home/rasm/git/dune/dune/src/Monitors/Servos/Task.cpp:360
 #, c-format
 msgid "potential fault in servo#%d, current consumption above %f"
-msgstr "possível falha no servo %d, consumo de corrente acima de %f"
+msgstr "possível falha no servo#%d, consumo de corrente acima de %f"
 
 #: /home/rasm/git/dune/dune/src/Monitors/Emergency/Task.cpp:75
 msgid "SMS Recipient Number"
@@ -619,7 +619,7 @@ msgstr "em loiter (elevador) em direção a (%f, %f, %f, %f)."
 #: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:543
 #, c-format
 msgid "going towards (%f, %f, %f)."
-msgstr "a ir em direção (%f, %f, %f)"
+msgstr "a ir em direção (%f, %f, %f)."
 
 #: /home/rasm/git/dune/dune/src/Maneuver/FollowReference/AUV/Task.cpp:547
 #, c-format
@@ -641,7 +641,7 @@ msgstr "não considerar restrições temporais da manobra"
 
 #: /home/rasm/git/dune/dune/src/Maneuver/FollowTrajectory/Task.cpp:133
 msgid "provided trajectory is not feasible by the current vehicle!"
-msgstr "trajetória não é exequível pelo veículo atual"
+msgstr "trajetória não é exequível pelo veículo atual!"
 
 #: /home/rasm/git/dune/dune/src/Maneuver/Elevator/Task.cpp:149
 #: /home/rasm/git/dune/dune/src/Maneuver/Loiter/Task.cpp:75
