@@ -133,7 +133,7 @@ namespace Plan
         m_reply.request_id = m_local_reqid++;
         m_reply.setDestination(getSystemId());
 
-        inProgress(DTR("initializing"));
+        inProgress("initializing");
 
         Path db_file = m_ctx.dir_db / "Plan.db";
 
@@ -610,7 +610,7 @@ namespace Plan
       }
 
       void
-      inProgress(const char* msg = DTR("in progress"))
+      inProgress(const char* msg = "in progress")
       {
         answer(IMC::PlanDB::DBT_IN_PROGRESS, msg);
       }
