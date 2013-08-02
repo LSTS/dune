@@ -149,7 +149,9 @@ main(int32_t argc, char** argv)
         delete msg;
 
         // ignore idles
-        if (log_name.find("_idle") != std::string::npos)
+        // either has the string _idle or has only 
+        if (log_name.find("_idle") != std::string::npos ||
+            log_name.size() == 15)
         {
           ignore = true;
           std::cerr << "this is an idle log";
