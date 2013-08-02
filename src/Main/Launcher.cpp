@@ -130,7 +130,7 @@ waitForDaemon(pid_t pid)
       continue;
 
     if (errno == ECHILD)
-      DUNE_ERR("Launcher", "daemon process no longer exists");
+      DUNE_ERR("Launcher", DTR("daemon process no longer exists"));
   }
 
   return 0;
@@ -166,9 +166,9 @@ main(int argc, char** argv)
       break;
 
     if (rv == SIGABRT)
-      DUNE_WRN("Launcher", "execution aborted");
+      DUNE_WRN("Launcher", DTR("execution aborted"));
     else
-      DUNE_ERR("Launcher", "daemon crashed with signal " << rv);
+      DUNE_ERR("Launcher", DTR("daemon crashed with signal ") << rv);
 
     Delay::wait(2.0);
 
