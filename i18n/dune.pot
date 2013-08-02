@@ -6,7 +6,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.3.0-rc1\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-08-02 09:43+0100\n"
+        "POT-Creation-Date: 2013-08-02 11:46+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -215,6 +215,22 @@ msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/DUNE/Network/Exceptions.hpp:93
 msgid   "connection closed"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Streams/Terminal.hpp:152
+msgid   "DBG"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Streams/Terminal.hpp:165
+msgid   "ERR"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Streams/Terminal.hpp:174
+msgid   "WRN"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/DUNE/Streams/Terminal.hpp:183
+msgid   "MSG"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/DUNE/Control/BasicAutopilot.hpp:148
@@ -767,7 +783,7 @@ msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:909
 #: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:625
-#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:495
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:512
 msgid   "OK"
 msgstr  ""
 
@@ -910,59 +926,59 @@ msgstr  ""
 msgid   "EXTERNAL CONTROL"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:132
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:136
 #: /home/rasm/git/dune/dune/src/Transports/Evologics/Task.cpp:345
 msgid   "got abort request"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:214
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:218
 #, c-format
 msgid   "now in '%s' mode"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:263
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:288
 msgid   "entity errors cleared"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:274
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:292
 #, c-format
 msgid   "vehicle errors: %s"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:335
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:352
 msgid   " maneuver error: "
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:421
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:438
 msgid   "cannot calibrate: vehicle is in external mode"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:435
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:452
 #, c-format
 msgid   "calibrating vehicle for %u seconds"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:444
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:461
 msgid   "cannot stop calibration: vehicle is not calibrating"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:448
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:465
 msgid   "stopped calibration"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:464
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:481
 msgid   "no maneuver specified"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:472
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:489
 msgid   " maneuver cannot be started in current mode"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:481
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:498
 msgid   " maneuver started"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:530
+#: /home/rasm/git/dune/dune/src/Supervisors/Vehicle/Task.cpp:547
 msgid   "maneuver request timeout"
 msgstr  ""
 

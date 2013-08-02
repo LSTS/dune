@@ -36,6 +36,7 @@
 #include <cstddef>
 
 // DUNE headers.
+#include <DUNE/Config.hpp>
 #include <DUNE/Time/Format.hpp>
 #include <DUNE/Concurrency/ScopedRWLock.hpp>
 #include <DUNE/Concurrency/Mutex.hpp>
@@ -148,7 +149,7 @@ namespace DUNE
 //! parameters. If the macro DEBUG is not set nothing is performed.
 #  define DUNE_DBG(module, code)                                        \
   ::DUNE::Streams::dune_term.lock()                                     \
-  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << "DBG"      \
+  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << DTR("DBG") \
   << " [" << module << "] >> " << code << "\n"                          \
   << ::DUNE::Streams::dune_term_flush
 #else
@@ -161,7 +162,7 @@ namespace DUNE
 //! parameters.
 #define DUNE_ERR(module, code)                                          \
   ::DUNE::Streams::dune_term.lock("\033[1;31m")                         \
-  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << "ERR"      \
+  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << DTR("ERR") \
   << " [" << module << "] >> " << code                                  \
   << "\n"                                                               \
   << ::DUNE::Streams::dune_term_flush
@@ -170,7 +171,7 @@ namespace DUNE
 //! parameters.
 #define DUNE_WRN(module, code)                                          \
   ::DUNE::Streams::dune_term.lock("\033[1;33m")                         \
-  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << "WRN"      \
+  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << DTR("WRN") \
   << " [" << module << "] >> " << code                                  \
   << "\n"                                                               \
   << ::DUNE::Streams::dune_term_flush
@@ -179,7 +180,7 @@ namespace DUNE
 //! parameters.
 #define DUNE_MSG(module, code)                                          \
   ::DUNE::Streams::dune_term.lock()                                     \
-  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << "MSG"      \
+  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << DTR("MSG") \
   << " [" << module << "] >> " << code << "\n"                          \
   << ::DUNE::Streams::dune_term_flush
 
