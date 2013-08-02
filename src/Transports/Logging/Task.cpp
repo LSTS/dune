@@ -324,7 +324,7 @@ namespace Transports
         String::replaceWhiteSpace(label, '_');
         std::string dir_label = label;
 
-        if (dir_label != "")
+        if (!dir_label.empty())
           dir_label = "_" + dir_label;
 
         m_dir = m_ctx.dir_log
@@ -393,7 +393,7 @@ namespace Transports
       }
 
       void
-      tryStartLog(const std::string& label = "idle")
+      tryStartLog(const std::string& label = "")
       {
         try
         {
