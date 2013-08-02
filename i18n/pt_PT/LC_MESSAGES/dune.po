@@ -26,8 +26,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DUNE 2.0.0\n"
 "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-"POT-Creation-Date: 2013-08-01 21:22+0100\n"
-"PO-Revision-Date: 2013-08-01 21:28-0000\n"
+"POT-Creation-Date: 2013-08-02 03:20+0100\n"
+"PO-Revision-Date: 2013-08-02 03:21-0000\n"
 "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
 "Language-Team: LANGUAGE <dune.i18n@lsts.pt>\n"
 "Language: pt_PT\n"
@@ -1108,7 +1108,7 @@ msgid "restarting to change TCP port"
 msgstr "a recomeçar para mudar a porta TCP"
 
 #: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:459
-#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:519
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:518
 #: /home/rasm/git/dune/dune/src/Power/DOAMv2/Task.cpp:184
 #: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:355
 msgid "failed to contact device"
@@ -2535,6 +2535,11 @@ msgstr "o timeout da SMS não pode ser zero"
 #, c-format
 msgid "discarded expired SMS to recipient '%s'"
 msgstr "descartada SMS expirada para o destinatário '%s'"
+
+#: /home/rasm/git/dune/dune/src/Transports/GSM/Task.cpp:269
+#, c-format
+msgid "failed to poll status: %s"
+msgstr "falha ao verificar estado: %s"
 
 #: /home/rasm/git/dune/dune/src/Transports/Iridium/Task.cpp:154
 msgid "error while parsing Iridium message"

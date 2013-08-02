@@ -6,7 +6,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.3.0-rc1\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-08-01 21:22+0100\n"
+        "POT-Creation-Date: 2013-08-02 03:20+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1079,7 +1079,7 @@ msgid   "restarting to change TCP port"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Sensors/Imagenex837B/Task.cpp:459
-#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:519
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:518
 #: /home/rasm/git/dune/dune/src/Power/DOAMv2/Task.cpp:184
 #: /home/rasm/git/dune/dune/src/Power/DOAMv1/Task.cpp:355
 msgid   "failed to contact device"
@@ -2492,6 +2492,11 @@ msgstr  ""
 #: /home/rasm/git/dune/dune/src/Transports/GSM/Task.cpp:234
 #, c-format
 msgid   "discarded expired SMS to recipient '%s'"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Transports/GSM/Task.cpp:269
+#, c-format
+msgid   "failed to poll status: %s"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Transports/Iridium/Task.cpp:154
