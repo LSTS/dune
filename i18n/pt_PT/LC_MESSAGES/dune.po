@@ -26,8 +26,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DUNE 2.0.0\n"
 "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-"POT-Creation-Date: 2013-08-02 03:20+0100\n"
-"PO-Revision-Date: 2013-08-02 03:21-0000\n"
+"POT-Creation-Date: 2013-08-02 08:59+0100\n"
+"PO-Revision-Date: 2013-08-02 09:01-0000\n"
 "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
 "Language-Team: LANGUAGE <dune.i18n@lsts.pt>\n"
 "Language: pt_PT\n"
@@ -688,16 +688,6 @@ msgstr "EXECUÇÃO"
 msgid "failed to activate %s: %s"
 msgstr "failha ao ativar %s: %s"
 
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:295
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:140
-#, c-format
-msgid "database file: '%s'"
-msgstr "ficheiro de base de dados: '%s'"
-
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:316
-msgid "database connection closed"
-msgstr "fechada ligação à base de dados"
-
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:418
 msgid "vehicle ready"
 msgstr "veículo pronto"
@@ -760,10 +750,6 @@ msgstr "nenhum plano está carregado"
 msgid "plan stopped"
 msgstr "plano parado"
 
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:682
-msgid "switching to new plan"
-msgstr "a mudar para novo plano"
-
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:696
 msgid "loaded plan is not running, request ignored"
 msgstr "plano carregado não está a correr, pedido ignorado"
@@ -819,12 +805,6 @@ msgstr "OK"
 msgid "now in %s state"
 msgstr "agora no estado %s"
 
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:950
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:307
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:41
-msgid "idle"
-msgstr "ocioso"
-
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:992
 #: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:136
 #: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:146
@@ -868,6 +848,11 @@ msgstr "estado da base de dados"
 #: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:76
 msgid "database initialization"
 msgstr "inicialização da base de dados"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:140
+#, c-format
+msgid "database file: '%s'"
+msgstr "ficheiro de base de dados: '%s'"
 
 #: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:170
 msgid "initialization complete"
@@ -1270,17 +1255,34 @@ msgstr "Canais de Alta Frequência"
 msgid "None, Port, Starboard, Both"
 msgstr "Nenhum, Bombordo, Estibordo, Ambos"
 
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:133
+msgid "High-frequency subsystem channels"
+msgstr "Canais do subsistema de alta frequência"
+
 #: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:135
 msgid "High-Frequency Range"
 msgstr "Alcance de Alta-Frequência"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:142
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:158
+msgid "Enable high frequency subsystem"
+msgstr "Habilitar subsistema de alta frequência"
 
 #: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:144
 msgid "Low-Frequency Channels"
 msgstr "Canais de Baixa Frequência"
 
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:149
+msgid "Low-frequency subsystem channels"
+msgstr "Canais do subsistema de baixa frequência"
+
 #: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:151
 msgid "Low-Frequency Range"
 msgstr "Alcance de Baixa-Frequência"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:166
+msgid "Range multiplier"
+msgstr "Multiplicador de distância"
 
 #: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:199
 msgid "restarting to change TCP command port"
@@ -1379,6 +1381,11 @@ msgstr "a recomeçar para mudar dispositivo UART"
 #: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:305
 msgid "waiting beacons configuration"
 msgstr "à espera da configuração de faróis"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:307
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:41
+msgid "idle"
+msgstr "ocioso"
 
 #: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:309
 #: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:42
@@ -3256,6 +3263,12 @@ msgstr "Simulador de Comunicação Acústica Subaquática"
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:115
 msgid "Vehicle Supervisor"
 msgstr "Supervisor de Veículo"
+
+#~ msgid "database connection closed"
+#~ msgstr "fechada ligação à base de dados"
+
+#~ msgid "switching to new plan"
+#~ msgstr "a mudar para novo plano"
 
 #, fuzzy
 #~ msgid "range mismatch"

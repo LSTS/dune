@@ -6,7 +6,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.3.0-rc1\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-08-02 03:20+0100\n"
+        "POT-Creation-Date: 2013-08-02 08:59+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -659,16 +659,6 @@ msgstr  ""
 msgid   "failed to activate %s: %s"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:295
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:140
-#, c-format
-msgid   "database file: '%s'"
-msgstr  ""
-
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:316
-msgid   "database connection closed"
-msgstr  ""
-
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:418
 msgid   "vehicle ready"
 msgstr  ""
@@ -731,10 +721,6 @@ msgstr  ""
 msgid   "plan stopped"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:682
-msgid   "switching to new plan"
-msgstr  ""
-
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:696
 msgid   "loaded plan is not running, request ignored"
 msgstr  ""
@@ -790,12 +776,6 @@ msgstr  ""
 msgid   "now in %s state"
 msgstr  ""
 
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:950
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:307
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:41
-msgid   "idle"
-msgstr  ""
-
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:992
 #: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:136
 #: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:146
@@ -838,6 +818,11 @@ msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:76
 msgid   "database initialization"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:140
+#, c-format
+msgid   "database file: '%s'"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:170
@@ -1241,16 +1226,33 @@ msgstr  ""
 msgid   "None, Port, Starboard, Both"
 msgstr  ""
 
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:133
+msgid   "High-frequency subsystem channels"
+msgstr  ""
+
 #: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:135
 msgid   "High-Frequency Range"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:142
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:158
+msgid   "Enable high frequency subsystem"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:144
 msgid   "Low-Frequency Channels"
 msgstr  ""
 
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:149
+msgid   "Low-frequency subsystem channels"
+msgstr  ""
+
 #: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:151
 msgid   "Low-Frequency Range"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:166
+msgid   "Range multiplier"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:199
@@ -1349,6 +1351,11 @@ msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:305
 msgid   "waiting beacons configuration"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:307
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:41
+msgid   "idle"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:309

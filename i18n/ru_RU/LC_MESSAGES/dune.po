@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.0.0\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-08-02 03:20+0100\n"
+        "POT-Creation-Date: 2013-08-02 08:59+0100\n"
         "PO-Revision-Date: 2013-08-01 21:28-0000\n"
         "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
         "Language-Team: LANGUAGE <dune.i18n@lsts.pt>\n"
@@ -687,16 +687,6 @@ msgstr  "ВЫПОЛНЕНИЕ"
 msgid   "failed to activate %s: %s"
 msgstr  "Не удалось активировать %s: %s"
 
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:295
-#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:140
-#, c-format
-msgid   "database file: '%s'"
-msgstr  "Файл базы данных: '%s'"
-
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:316
-msgid   "database connection closed"
-msgstr  "подключение к базе данных закрыты"
-
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:418
 msgid   "vehicle ready"
 msgstr  "транспортное средство готово"
@@ -759,10 +749,6 @@ msgstr  "план не загружается"
 msgid   "plan stopped"
 msgstr  "План остановилась"
 
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:682
-msgid   "switching to new plan"
-msgstr  "переход на новый план"
-
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:696
 msgid   "loaded plan is not running, request ignored"
 msgstr  "загруженных план не работает, просим игнорируются"
@@ -818,12 +804,6 @@ msgstr  "Хорошо"
 msgid   "now in %s state"
 msgstr  "Сейчас в %s состоянии"
 
-#: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:950
-#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:307
-#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:41
-msgid   "idle"
-msgstr  "холостом ходу"
-
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:992
 #: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:136
 #: /home/rasm/git/dune/dune/src/Sensors/OS4000/Task.cpp:146
@@ -867,6 +847,11 @@ msgstr  "состояние базы данных"
 #: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:76
 msgid   "database initialization"
 msgstr  "инициализации базы данных"
+
+#: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:140
+#, c-format
+msgid   "database file: '%s'"
+msgstr  "Файл базы данных: '%s'"
 
 #: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:170
 msgid   "initialization complete"
@@ -1270,17 +1255,36 @@ msgstr  "ВЧ каналов"
 msgid   "None, Port, Starboard, Both"
 msgstr  "Нет, порт, борта, оба"
 
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:133
+#, fuzzy
+msgid   "High-frequency subsystem channels"
+msgstr  "ВЧ каналов"
+
 #: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:135
 msgid   "High-Frequency Range"
 msgstr  "Высокочастотный диапазон"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:142
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:158
+msgid   "Enable high frequency subsystem"
+msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:144
 msgid   "Low-Frequency Channels"
 msgstr  "Низкочастотных каналов"
 
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:149
+#, fuzzy
+msgid   "Low-frequency subsystem channels"
+msgstr  "Низкочастотных каналов"
+
 #: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:151
 msgid   "Low-Frequency Range"
 msgstr  "Низкочастотный диапазон"
+
+#: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:166
+msgid   "Range multiplier"
+msgstr  ""
 
 #: /home/rasm/git/dune/dune/src/Sensors/Edgetech2205/Task.cpp:199
 msgid   "restarting to change TCP command port"
@@ -1379,6 +1383,11 @@ msgstr  "перезапуска изменить устройство UART"
 #: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:305
 msgid   "waiting beacons configuration"
 msgstr  "ожидания маяки конфигурации"
+
+#: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:307
+#: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:41
+msgid   "idle"
+msgstr  "холостом ходу"
 
 #: /home/rasm/git/dune/dune/src/Sensors/MLBL/Task.cpp:309
 #: /home/rasm/git/dune/dune/src/DUNE/Status/Messages.cpp:42
@@ -3288,6 +3297,12 @@ msgstr  "Подводные Simulator акустика"
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:115
 msgid   "Vehicle Supervisor"
 msgstr  "Автомобиль Supervisor"
+
+#~ msgid        "database connection closed"
+#~ msgstr       "подключение к базе данных закрыты"
+
+#~ msgid        "switching to new plan"
+#~ msgstr       "переход на новый план"
 
 #, fuzzy
 #~ msgid        "zoom_in"
