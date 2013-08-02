@@ -272,7 +272,7 @@ namespace Supervisors
             elist[i] = DTR(elist[i].c_str());
 
           war(DTR("vehicle errors: %s"),
-              DTR(String::join(elist.begin(), elist.end(), ",").c_str()));
+              DTR(String::join(elist.begin(), elist.end(), ", ").c_str()));
 
           m_err_timer.reset();
         }
