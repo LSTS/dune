@@ -373,7 +373,7 @@ msgstr "erro ao resolver entidade '%s': %s"
 
 #: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:236
 msgid "motion detected"
-msgstr "movimento detectado"
+msgstr "movimento detetado"
 
 #: /home/rasm/git/dune/dune/src/Navigation/General/Alignment/Task.cpp:318
 msgid "device is not active"
@@ -1552,7 +1552,7 @@ msgstr "sensores de hall"
 
 #: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:85
 msgid "rotor locked"
-msgstr "rótor bloqueado"
+msgstr "rotor bloqueado"
 
 #: /home/rasm/git/dune/dune/src/Actuators/Broom/Task.cpp:86
 msgid "mcu temperature"
@@ -1607,7 +1607,7 @@ msgstr "dispositivo reportado: %s"
 
 #: /home/rasm/git/dune/dune/src/Actuators/LED4R/Task.cpp:196
 msgid "failed to get constant parameters"
-msgstr "falha"
+msgstr "falha ao adquirir parâmetros constantes"
 
 #: /home/rasm/git/dune/dune/src/Actuators/LED4R/Task.cpp:199
 msgid "failed to configured external LED driver"
@@ -1723,7 +1723,7 @@ msgstr "argumento em falta para opção '%s'"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Utils/String.cpp:284
 msgid "invalid escape sequence"
-msgstr "sequencia de escape invalida"
+msgstr "sequência de escape invalida"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Tasks/Manager.cpp:94
 #: /home/rasm/git/dune/dune/src/DUNE/Tasks/Manager.cpp:172
@@ -2238,32 +2238,32 @@ msgstr "tarefas registadas: %d"
 #: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:116
 #, c-format
 msgid "base folder: '%s'"
-msgstr "directório base: '%s'"
+msgstr "diretório base: '%s'"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:117
 #, c-format
 msgid "configuration folder: '%s'"
-msgstr "directório de configuração: '%s'"
+msgstr "diretório de configuração: '%s'"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:118
 #, c-format
 msgid "web server folder: '%s'"
-msgstr "directório do servidor web: '%s'"
+msgstr "diretório do servidor web: '%s'"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:119
 #, c-format
 msgid "log folder: '%s'"
-msgstr "directório de logs: '%s'"
+msgstr "diretório de logs: '%s'"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:120
 #, c-format
 msgid "library folder: '%s'"
-msgstr "directório de bibliotecas: '%s'"
+msgstr "diretório de bibliotecas: '%s'"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:121
 #, c-format
 msgid "firmware folder: '%s'"
-msgstr "directório de firmware: '%s'"
+msgstr "diretório de firmware: '%s'"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Daemon.cpp:125
 #, c-format
@@ -2277,7 +2277,7 @@ msgstr "encerramento limpo"
 #: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/FollowTrajectory.cpp:87
 #: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/VehicleFormation.cpp:146
 msgid "too few trajectory points"
-msgstr "poucos pontos trajetória"
+msgstr "poucos pontos de trajetória"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Maneuvers/Maneuver.cpp:89
 msgid "unable to unlock"
