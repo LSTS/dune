@@ -578,7 +578,7 @@ namespace Navigation
 
           checkUncertainty();
 
-          sendToBus();
+          logData();
           reportToBus();
 
           // Reset variables.
@@ -634,7 +634,7 @@ namespace Navigation
         }
 
         void
-        sendToBus(void)
+        logData(void)
         {
           m_estate.psi = Angles::normalizeRadian(getHeading());
           m_estate.r = m_kal.getState(STATE_R);

@@ -242,7 +242,7 @@ namespace Navigation
         }
 
         void
-        sendToBus(void)
+        logData(void)
         {
           m_estate.psi = Angles::normalizeRadian(getEuler(AXIS_Z));
           m_estate.r = Angles::normalizeRadian(getAngularVelocity(AXIS_Z));
@@ -341,7 +341,7 @@ namespace Navigation
 
           checkUncertainty();
 
-          sendToBus();
+          logData();
           reportToBus();
 
           // Reset variables.
