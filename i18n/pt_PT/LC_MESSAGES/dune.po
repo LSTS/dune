@@ -113,7 +113,7 @@ msgstr "índice inválido"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Monitors/MotorCurrentMonitor.hpp:52
 msgid "motor monitor error: "
-msgstr "erro no monitor do motor"
+msgstr "erro no monitorizador do motor: "
 
 #: /home/rasm/git/dune/dune/src/DUNE/Monitors/MotorCurrentMonitor.hpp:97
 msgid "number of linear points is not even"
@@ -150,7 +150,7 @@ msgstr "demasiados elementos"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Tasks/EntityDataBase.hpp:64
 msgid "invalid entity label: "
-msgstr "etiqueta de entitidade inválida: "
+msgstr "etiqueta de entidade inválida: "
 
 #: /home/rasm/git/dune/dune/src/DUNE/Tasks/EntityDataBase.hpp:68
 msgid "entity labels cannot be empty"
@@ -815,11 +815,11 @@ msgstr "a iniciar"
 
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:1034
 msgid "vehicle state timeout"
-msgstr "timeout do estado do veículo"
+msgstr "excedido tempo limite do estado do veículo"
 
 #: /home/rasm/git/dune/dune/src/Plan/Engine/Task.cpp:1049
 msgid "vehicle reply timeout"
-msgstr "timeout da resposta do veículo"
+msgstr "excedido tempo limite da resposta do veículo"
 
 #: /home/rasm/git/dune/dune/src/Plan/DB/Task.cpp:73
 msgid "set plan"
@@ -1883,7 +1883,7 @@ msgstr "sincronização perdida"
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:53
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:44
 msgid "parser error"
-msgstr "erro do análisador"
+msgstr "erro do analisador"
 
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/LUCL/Protocol.cpp:54
 #: /home/rasm/git/dune/dune/src/DUNE/Hardware/UCTK/Errors.cpp:45
