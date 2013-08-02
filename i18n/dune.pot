@@ -6,7 +6,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.3.0-rc1\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-08-02 09:08+0100\n"
+        "POT-Creation-Date: 2013-08-02 09:43+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2819,405 +2819,413 @@ msgid   "Cache"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:15
-msgid   "Clock"
+msgid   "Camera Module"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:16
-msgid   "Coarse Alignment"
+msgid   "Clock"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:17
-msgid   "Collisions"
+msgid   "Coarse Alignment"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:18
-msgid   "Communications Relay Maneuver"
+msgid   "Collisions"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:19
-msgid   "Compass"
+msgid   "Communications Relay Maneuver"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:20
-msgid   "Compass Calibration Maneuver"
+msgid   "Compass"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:21
-msgid   "DOAM"
+msgid   "Compass Calibration Maneuver"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:22
-msgid   "DVL"
+msgid   "DOAM"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:23
-msgid   "Depth Control"
+msgid   "DVL"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:24
-msgid   "Depth Sensor"
+msgid   "Depth Control"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:25
-msgid   "Discovery"
+msgid   "Depth Sensor"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:26
-msgid   "Diving"
+msgid   "Discovery"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:27
-msgid   "Docking"
+msgid   "Diving"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:28
-msgid   "Echo Sounder"
+msgid   "Docking"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:29
-msgid   "Elevator Maneuver"
+msgid   "Echo Sounder"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:30
-msgid   "Emergency Monitor"
+msgid   "Elevator Maneuver"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:31
-msgid   "Emergency Supervisor"
+msgid   "Emergency Monitor"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:32
-msgid   "Entity Monitor"
+msgid   "Emergency Supervisor"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:33
-msgid   "Environment"
+msgid   "Entity Monitor"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:34
-msgid   "FTP Server"
+msgid   "Environment"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:35
-msgid   "Follow Path Maneuver"
+msgid   "FTP Server"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:36
-msgid   "Follow Reference"
+msgid   "Follow Path Maneuver"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:37
-msgid   "Follow Reference Maneuver"
+msgid   "Follow Reference"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:38
-msgid   "Follow System Maneuver"
+msgid   "Follow Reference Maneuver"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:39
-msgid   "Frame Grabber"
+msgid   "Follow System Maneuver"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:40
-msgid   "Fuel"
+msgid   "Frame Grabber"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:41
-msgid   "GPS"
+msgid   "Fuel"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:42
-msgid   "GSM"
+msgid   "GPS"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:43
-msgid   "Gimbal"
+msgid   "GSM"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:44
-msgid   "Goto Maneuver"
+msgid   "Gimbal"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:45
-msgid   "Groundstation Telemetry"
+msgid   "Goto Maneuver"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:46
-msgid   "HTTP Server"
+msgid   "Groundstation Telemetry"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:47
-msgid   "Heave Motor"
+msgid   "HTTP Server"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:48
-msgid   "Horizontal Plane Control"
+msgid   "Heave Motor"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:49
-msgid   "IMU"
+msgid   "Horizontal Plane Control"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:50
-msgid   "INOV TCP"
+msgid   "IMU"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:51
-msgid   "INOV Target"
+msgid   "INOV TCP"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:52
-msgid   "Idle Maneuver"
+msgid   "INOV Target"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:53
-msgid   "Iridium Modem"
+msgid   "Idle Maneuver"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:54
-msgid   "Iridium Transport"
+msgid   "Iridium Modem"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:55
-msgid   "LBL"
+msgid   "Iridium Transport"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:56
-msgid   "LBL Estimator"
+msgid   "LBL"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:57
-msgid   "LCD"
+msgid   "LBL Estimator"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:58
-msgid   "LEDs"
+msgid   "LCD"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:59
-msgid   "Leak Simulator"
+msgid   "LEDs"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:60
-msgid   "Log Book"
+msgid   "Leak Simulator"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:61
-msgid   "Logger"
+msgid   "Log Book"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:62
-msgid   "Loiter Maneuver"
+msgid   "Logger"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:63
-msgid   "Lost Comms Monitor"
+msgid   "Loiter Maneuver"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:64
-msgid   "MCB"
+msgid   "Lost Comms Monitor"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:65
-msgid   "Mainboard"
+msgid   "MCB"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:66
-msgid   "Medium"
+msgid   "Mainboard"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:67
-msgid   "Motor"
+msgid   "Medium"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:68
-msgid   "Multibeam"
+msgid   "Motor"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:69
-msgid   "Navigation"
+msgid   "Multibeam"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:70
-msgid   "Operational Limits"
+msgid   "Navigation"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:71
-msgid   "Panel"
+msgid   "Operational Limits"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:72
-msgid   "Panel Buttons"
+msgid   "Panel"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:73
-msgid   "Path Control"
+msgid   "Panel Buttons"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:74
-msgid   "Piccolo Communications"
+msgid   "Path Control"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:75
-msgid   "Piccolo Control Loops"
+msgid   "Piccolo Communications"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:76
-msgid   "Piccolo Gateway"
+msgid   "Piccolo Control Loops"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:77
-msgid   "Piccolo Supervision"
+msgid   "Piccolo Gateway"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:78
-msgid   "Plan Database"
+msgid   "Piccolo Supervision"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:79
-msgid   "Plan Engine"
+msgid   "Plan Database"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:80
-msgid   "Plan Generator"
+msgid   "Plan Engine"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:81
-msgid   "Pop Up Maneuver"
+msgid   "Plan Generator"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:82
-msgid   "Port Bow Motor"
+msgid   "Pop Up Maneuver"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:83
-msgid   "Port Stern Motor"
+msgid   "Port Bow Motor"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:84
-msgid   "Power Supervisor"
+msgid   "Port Stern Motor"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:85
-msgid   "Power Supply"
+msgid   "Power Supervisor"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:86
-msgid   "Remote Control"
+msgid   "Power Supply"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:87
-msgid   "Remote Operation"
+msgid   "Remote Control"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:88
-msgid   "Rows Maneuver"
+msgid   "Remote Operation"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:89
-msgid   "SCRT"
+msgid   "Rows Maneuver"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:90
-msgid   "SVS"
+msgid   "SCRT"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:91
-msgid   "Service Announcer"
+msgid   "SVS"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:92
-msgid   "Service Discovery"
+msgid   "Service Announcer"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:93
-msgid   "Servo Monitor"
+msgid   "Service Discovery"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:94
-msgid   "Servos"
+msgid   "Servo Monitor"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:95
-msgid   "Sidescan"
+msgid   "Servos"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:96
-msgid   "Simulation Engine"
+msgid   "Sidescan"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:97
-msgid   "Sound Speed Sensor"
+msgid   "Simulation Engine"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:98
-msgid   "Speed Control"
+msgid   "Sound Speed Sensor"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:99
-msgid   "Starboard Bow Motor"
+msgid   "Speed Control"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:100
-msgid   "Starboard Stern Motor"
+msgid   "Starboard Bow Motor"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:101
-msgid   "Station Keeping Maneuver"
+msgid   "Starboard Stern Motor"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:102
-msgid   "TASE"
+msgid   "Station Keeping Maneuver"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:103
-msgid   "TCP Server"
+msgid   "TASE"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:104
-msgid   "TCP to DOAM CPU"
+msgid   "TCP Server"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:105
-msgid   "TCP to Master"
+msgid   "TCP to Camera CPU"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:106
-msgid   "TREX"
+msgid   "TCP to DOAM CPU"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:107
-msgid   "Teleoperation Maneuver"
+msgid   "TCP to Master"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:108
-msgid   "Text Message Parser"
+msgid   "TREX"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:109
-msgid   "Thermal Zone"
+msgid   "Teleoperation Maneuver"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:110
-msgid   "UDP"
+msgid   "Text Message Parser"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:111
-msgid   "UDP to PTU"
+msgid   "Thermal Zone"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:112
-msgid   "UDP to TREX"
+msgid   "UDP"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:113
-msgid   "USBL"
+msgid   "UDP to PTU"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:114
-msgid   "Underwater Acoustics Simulator"
+msgid   "UDP to TREX"
 msgstr  ""
 
 #: /home/rasm/git/dune/dune/i18n/entity_labels.txt:115
+msgid   "USBL"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:116
+msgid   "Underwater Acoustics Simulator"
+msgstr  ""
+
+#: /home/rasm/git/dune/dune/i18n/entity_labels.txt:117
 msgid   "Vehicle Supervisor"
 msgstr  ""
