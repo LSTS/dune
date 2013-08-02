@@ -157,7 +157,7 @@ namespace Sensors
         .units(Units::Meter)
         .description(DTR("Enable high frequency subsystem"));
 
-        param("Range Multiplier", m_args.trg_div)
+        param(DTR_RT("Range Multiplier"), m_args.trg_div)
         .defaultValue("1")
         .minimumValue("1")
         .maximumValue("150")
