@@ -355,7 +355,7 @@ namespace Actuators
       void
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
-        inf(DTR("version: %u.%u.%u"), major, minor, patch);
+        inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
 
         // Enable legacy 1.0.0 protocol
         if (major == 1 && minor < 1)

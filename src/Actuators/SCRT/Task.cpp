@@ -452,7 +452,7 @@ namespace Actuators
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
         m_hw_major = major;
-        inf(DTR("version: %u.%u.%u"), major, minor, patch);
+        inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
