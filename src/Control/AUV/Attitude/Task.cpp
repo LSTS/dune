@@ -233,6 +233,7 @@ namespace Control
 
           param("Coarse Altitude -- Upper Gap", m_ca_args.upper_gap)
           .defaultValue("")
+          .units(Units::Meter)
           .description("Size of the upper part of the corridor");
 
           param("Coarse Altitude -- Period", m_ca_args.period)
