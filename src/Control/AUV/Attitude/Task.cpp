@@ -127,6 +127,10 @@ namespace Control
         IMC::DesiredPitch m_pitch_ref;
         //! PID parcels
         IMC::ControlParcel m_parcels[LP_MAX_LOOPS];
+        //! Coarse Altitude arguments
+        CoarseAltitude::Arguments m_ca_args;
+        //! Coarse Altitude pointer to object
+        CoarseAltitude* m_ca;
         //! Task Arguments
         Arguments m_args;
 
@@ -218,11 +222,38 @@ namespace Control
           param("Minimum DVL Altitude", m_args.min_dvl_alt)
           .defaultValue("0.50")
           .description("Altitude value below which altitude from DVL will be ignored");
+
+          param("Coarse Altitude -- Enabled", m_ca_args.enabled)
+          .defaultValue("false")
+          .description("Coarse Altitude arguments");
+
+          param("Coarse Altitude -- Window Sizes", m_ca_args.wsizes)
+          .defaultValue("")
+          .description("Vector of window sizes for the moving averages");
+
+          param("Coarse Altitude -- Upper Gap", m_ca_args.upper_gap)
+          .defaultValue("")
+          .description("Size of the upper part of the corridor");
+
+          param("Coarse Altitude -- Period", m_ca_args.period)
+          .defaultValue("20.0")
+          .units(Units::Second)
+          .description("Period for checking time spent outside the corridor");
+
+          param("Coarse Altitude -- Ratio Time Outside", m_ca_args.max_outside)
+          .defaultValue("60.0")
+          .units(Units::Percentage)
+          .description("Percentage of time outside the corridor to change corridor size");
+
+          param("Coarse Altitude -- Sample Limit", m_ca_args.sample_limit)
+          .defaultValue("10")
+          .description("Limit of a fixed number of incoming samples per second");
         }
 
         //! Destructor
         ~Task(void)
         {
+          Memory::clear(m_ca);
           BasicAutopilot::onResourceRelease();
         }
 
@@ -231,6 +262,32 @@ namespace Control
         onResourceInitialization(void)
         {
           BasicAutopilot::onResourceInitialization();
+        }
+
+        //! Acquire resources
+        void
+        onResourceAcquisition(void)
+        {
+          BasicAutopilot::onResourceAcquisition();
+
+          if (m_ca_args.enabled)
+            m_ca = new CoarseAltitude(&m_ca_args);
+        }
+
+        //! On activation
+        void
+        onAutopilotActivation(void)
+        {
+          if (m_ca_args.enabled)
+            m_ca->activate();
+        }
+
+        //! On deactivation
+        void
+        onAutopilotDeactivation(void)
+        {
+          if (m_ca_args.enabled)
+            m_ca->deactivate();
         }
 
         //! Update internal parameters.
@@ -390,9 +447,18 @@ namespace Control
                 break;
               case VERTICAL_MODE_ALTITUDE:
                 if (msg->alt < m_args.min_dvl_alt && msg->depth < m_args.min_dvl_depth)
+                {
                   z_error = c_min_depth_ref;
+                }
                 else
-                  z_error = getBottomFollowDepth() - msg->depth;
+                {
+                  float bfd = getBottomFollowDepth();
+
+                  if (m_ca_args.enabled)
+                    z_error = m_ca->update(timestep, msg->depth, bfd) - msg->depth;
+                  else
+                    z_error = bfd - msg->depth;
+                }
                 break;
               default:
                 signalBadVertical();
