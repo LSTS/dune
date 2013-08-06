@@ -265,14 +265,22 @@ namespace Sensors
         .defaultValue("2");
 
         param("Enable Reports", m_args.report)
-        .defaultValue("true");
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("true")
+        .description(DTR("Report data acoustically"));
 
         param("Enable Verbose Reports", m_args.report_verbose)
-        .defaultValue("false");
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("false")
+        .description(DTR("Report more verbose data acoustically"));
 
-        param("Range Reports Periodicity", m_args.report_period)
+        param("Reports Periodicity", m_args.report_period)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .units(Units::Second)
-        .defaultValue("20");
+        .defaultValue("60")
+        .minimumValue("30")
+        .maximumValue("600")
+        .description(DTR("Reports periodicity"));
 
         param("Good Range Age", m_args.good_range_age)
         .units(Units::Second)
