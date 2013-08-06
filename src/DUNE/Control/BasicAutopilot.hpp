@@ -60,7 +60,8 @@ namespace DUNE
       onResourceInitialization(void);
 
       virtual void
-      onResourceAcquisition(void);
+      onResourceAcquisition(void)
+      { }
 
       //! Reset to initial values
       virtual void
@@ -130,12 +131,14 @@ namespace DUNE
       //! On autopilot activation
       //! Does nothing by default
       virtual void
-      onAutopilotActivation(void);
+      onAutopilotActivation(void)
+      { }
 
       //! On autopilot deactivation
       //! Does nothing by default
       virtual void
-      onAutopilotDeactivation(void);
+      onAutopilotDeactivation(void)
+      { }
 
       //! On deactivation leave error or active entity state
       //! Method from parent class
