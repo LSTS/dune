@@ -875,8 +875,8 @@ namespace DUNE
     {
       // Use Ground Velocity messages if they are valid.
       // Water Velocity messages otherwise.
-      double u;
-      double v;
+      unsigned u;
+      unsigned v;
 
       getSpeedOutputStates(&u, &v);
 

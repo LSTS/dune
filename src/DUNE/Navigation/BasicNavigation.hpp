@@ -450,7 +450,7 @@ namespace DUNE
       //! @param[out] u forward speed state index.
       //! @param[out] v transversal speed state index.
       virtual void
-      getSpeedOutputStates(double* u, double* v)
+      getSpeedOutputStates(unsigned* u, unsigned* v)
       {
         // do nothing.
         (void)*u;
