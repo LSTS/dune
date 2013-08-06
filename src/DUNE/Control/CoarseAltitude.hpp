@@ -31,6 +31,7 @@
 // DUNE headers.
 #include <DUNE/Math/MultiMovingAverage.hpp>
 #include <DUNE/Time/Counter.hpp>
+#include <DUNE/IMC.hpp>
 
 namespace DUNE
 {
@@ -91,10 +92,26 @@ namespace DUNE
       float
       update(float timestep, float depth, float desired_depth);
 
+      //! Log parcels with coarse altitude data
+      //! @param[out] parcel ControlParcel message to use
+      //! @param[in] desired_depth current untreated depth reference for comparison
+      void
+      logParcel(IMC::ControlParcel& parcel, float desired_depth);
+
     private:
+      //! Size of the lower gap of a corridor
+      //! @param[in] corridor index of corridor to compute
+      //! @return size of the lower gap
+      float
+      lowerGapSize(unsigned corridor)
+      {
+        return m_args->upper_gap[corridor] / 2.0;
+      }
+
       //! Check if the vehicle is inside one of the corridors
       //! @param[in] depth new depth value
       //! @param[in] desired_depth current depth reference
+      //! @param[in] corridor index of corridor to test
       //! @return true if inside, false otherwise
       bool
       isInCorridor(float depth, float desired_depth, unsigned corridor);

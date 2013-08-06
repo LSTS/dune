@@ -84,7 +84,7 @@ namespace DUNE
       }
       else
       {
-        if (depth - desired_depth <= m_args->upper_gap[corridor] / 2.0)
+        if (depth - desired_depth <= lowerGapSize(corridor))
           return true;
       }
 
@@ -158,6 +158,15 @@ namespace DUNE
       }
 
       return m_depth_ref;
+    }
+
+    void
+    CoarseAltitude::logParcel(IMC::ControlParcel& parcel, float desired_depth)
+    {
+      parcel.p = desired_depth;
+      parcel.i = m_depth_ref;
+      parcel.d = lowerGapSize(m_corridor);
+      parcel.a = m_args->upper_gap[m_corridor];
     }
   }
 }
