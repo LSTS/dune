@@ -131,6 +131,8 @@ namespace Control
         CoarseAltitude::Arguments m_ca_args;
         //! Coarse Altitude pointer to object
         CoarseAltitude* m_ca;
+        //! Parcel for coarse altitude
+        IMC::ControlParcel m_ca_parcel;
         //! Task Arguments
         Arguments m_args;
 
@@ -365,8 +367,12 @@ namespace Control
         onEntityReservation(void)
         {
           if (m_args.log_parcels)
+          {
             for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
               m_parcels[i].setSourceEntity(reserveEntity(c_loop_name[i] + " Parcel"));
+
+            m_ca_parcel.setSourceEntity(reserveEntity("Coarse Altitude"));
+          }
         }
 
         //! Computes control values when receiving EstimatedState
@@ -456,9 +462,20 @@ namespace Control
                   float bfd = getBottomFollowDepth();
 
                   if (m_ca_args.enabled)
+                  {
                     z_error = m_ca->update(timestep, msg->depth, bfd) - msg->depth;
+
+                    if (m_args.log_parcels)
+                    {
+                      // Log data
+                      m_ca->logParcel(m_ca_parcel, bfd);
+                      dispatch(m_ca_parcel);
+                    }
+                  }
                   else
+                  {
                     z_error = bfd - msg->depth;
+                  }
                 }
                 break;
               default:
