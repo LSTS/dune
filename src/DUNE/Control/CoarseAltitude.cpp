@@ -56,7 +56,8 @@ namespace DUNE
       m_tracking = false;
       m_mmav->clear();
       m_last_check = 0.0;
-      m_time_outside = 0.0;
+      m_toutside_curr = 0.0;
+      m_toutside_tighter = 0.0;
       m_since_last = 0.0;
     }
 
@@ -74,16 +75,16 @@ namespace DUNE
     }
 
     bool
-    CoarseAltitude::isInCorridor(float depth, float desired_depth)
+    CoarseAltitude::isInCorridor(float depth, float desired_depth, unsigned corridor)
     {
       if (desired_depth > depth)
       {
-        if (desired_depth - depth <= m_args->upper_gap[m_corridor])
+        if (desired_depth - depth <= m_args->upper_gap[corridor])
           return true;
       }
       else
       {
-        if (depth - desired_depth <= m_args->upper_gap[m_corridor] / 2.0)
+        if (depth - desired_depth <= m_args->upper_gap[corridor] / 2.0)
           return true;
       }
 
@@ -97,13 +98,20 @@ namespace DUNE
       if (m_last_check < m_args->period)
         return;
 
-      if (m_time_outside / m_args->period * 100.0 > m_args->max_outside)
+      if (m_toutside_curr / m_args->period * 100.0 > m_args->max_outside)
+      {
         m_corridor = std::min(m_corridor + 1, (unsigned)m_args->wsizes.size() - 1);
+      }
       else if (m_corridor)
-        --m_corridor;
+      {
+        // check if it fits the tighter corridor
+        if (m_toutside_tighter / m_args->period * 100.0 < m_args->max_outside)
+          --m_corridor;
+      }
 
       m_last_check = 0.0;
-      m_time_outside = 0.0;
+      m_toutside_curr = 0.0;
+      m_toutside_tighter = 0.0;
     }
 
     float
@@ -123,8 +131,16 @@ namespace DUNE
         m_last_check = 0.0;
       }
 
+      // count time outside current corridor
       if (!in_corridor)
-        m_time_outside += timestep;
+        m_toutside_curr += timestep;
+
+      // count time outside tighter corridor (if any)
+      if (m_corridor)
+      {
+        if (!isInCorridor(depth, desired_depth, m_corridor - 1))
+          m_toutside_tighter += timestep;
+      }
 
       m_last_check += timestep;
 

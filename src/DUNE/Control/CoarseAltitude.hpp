@@ -92,12 +92,22 @@ namespace DUNE
       update(float timestep, float depth, float desired_depth);
 
     private:
+      //! Check if the vehicle is inside one of the corridors
+      //! @param[in] depth new depth value
+      //! @param[in] desired_depth current depth reference
+      //! @return true if inside, false otherwise
+      bool
+      isInCorridor(float depth, float desired_depth, unsigned corridor);
+
       //! Check if the vehicle is inside the current corridor
       //! @param[in] depth new depth value
       //! @param[in] desired_depth current depth reference
       //! @return true if inside, false otherwise
       bool
-      isInCorridor(float depth, float desired_depth);
+      isInCorridor(float depth, float desired_depth)
+      {
+        return isInCorridor(depth, desired_depth, m_corridor);
+      }
 
       //! Measure performace using current corridor and change it if necessary
       void
@@ -115,8 +125,10 @@ namespace DUNE
       Math::MultiMovingAverage<float>* m_mmav;
       //! Time since last corridor check
       float m_last_check;
-      //! Accumulated time outside the corridor
-      float m_time_outside;
+      //! Accumulated time outside the current corridor
+      float m_toutside_curr;
+      //! Accumulated time outside tighter corridor
+      float m_toutside_tighter;
       //! Time since last used sample
       float m_since_last;
       //! Last value given for desired depth
