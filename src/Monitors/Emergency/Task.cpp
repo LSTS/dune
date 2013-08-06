@@ -77,10 +77,11 @@ namespace Monitors
         .defaultValue("+351966575686")
         .description(DTR("Phone number of the SMS recipient"));
 
-        param("Heartbeat Timeout", m_args.heartbeat_tout)
+        param("Lost Communications Timeout", m_args.heartbeat_tout)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .units(Units::Second)
         .defaultValue("300.0")
-        .description("Heartbeat Timeout");
+        .description(DTR("Lost Communications Timeout"));
 
         param("Expiration Time - Abort SMS", m_args.sms_abort_ttl)
         .units(Units::Second)
