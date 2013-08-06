@@ -59,6 +59,9 @@ namespace DUNE
       virtual void
       onResourceInitialization(void);
 
+      virtual void
+      onResourceAcquisition(void);
+
       //! Reset to initial values
       virtual void
       reset(void);
@@ -124,6 +127,16 @@ namespace DUNE
         YAW_MODE_SIZE
       };
 
+      //! On autopilot activation
+      //! Does nothing by default
+      virtual void
+      onAutopilotActivation(void);
+
+      //! On autopilot deactivation
+      //! Does nothing by default
+      virtual void
+      onAutopilotDeactivation(void);
+
       //! On deactivation leave error or active entity state
       //! Method from parent class
       void
@@ -131,6 +144,7 @@ namespace DUNE
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         reset();
+        onAutopilotDeactivation();
       }
 
       //! On activation enter active entity state
@@ -140,6 +154,7 @@ namespace DUNE
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         reset();
+        onAutopilotActivation();
       }
 
       //! Signal a bad yaw mode or incompatible
