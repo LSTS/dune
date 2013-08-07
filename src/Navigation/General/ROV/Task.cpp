@@ -186,7 +186,7 @@ namespace Navigation
         }
 
         void
-        getSpeedOutputStates(double* u, double* v)
+        getSpeedOutputStates(unsigned* u, unsigned* v)
         {
           *u = OUT_U;
           *v = OUT_V;
