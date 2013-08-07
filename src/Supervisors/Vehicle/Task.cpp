@@ -42,7 +42,7 @@ namespace Supervisors
     //! State description strings
     static const char* c_state_desc[] = {DTR_RT("SERVICE"), DTR_RT("CALIBRATION"),
                                          DTR_RT("ERROR"), DTR_RT("MANEUVERING"),
-                                         DTR_RT("EXTERNAL CONTROL")};
+                                         DTR_RT("EXTERNAL CONTROL"), DTR_RT("BOOT")};
     //! Vehicle command description strings
     static const char* c_cmd_desc[] =
     {"maneuver start", "maneuver stop", "calibration start", "calibration stop"};
@@ -114,7 +114,7 @@ namespace Supervisors
         // Initialize entity state.
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
-        m_vs.op_mode = IMC::VehicleState::VS_SERVICE;
+        m_vs.op_mode = IMC::VehicleState::VS_BOOT;
         m_vs.maneuver_type = 0xFFFF;
         m_vs.maneuver_stime = -1;
         m_vs.maneuver_eta = 0xFFFF;
@@ -137,13 +137,7 @@ namespace Supervisors
         m_vs.last_error_time = Clock::getSinceEpoch();
         err("%s", m_vs.last_error.c_str());
 
-        if (!errorMode())
-        {
-          reset();
-
-          if (!externalMode() || !nonOverridableLoops())
-            changeMode(IMC::VehicleState::VS_SERVICE);
-        }
+        stopManeuver();
       }
 
       void
@@ -184,6 +178,7 @@ namespace Supervisors
             changeMode(IMC::VehicleState::VS_EXTERNAL);
             break;
           case IMC::VehicleState::VS_ERROR:
+          case IMC::VehicleState::VS_BOOT:
             if (nonOverridableLoops())
               changeMode(IMC::VehicleState::VS_EXTERNAL);
             else
@@ -294,7 +289,7 @@ namespace Supervisors
           m_err_timer.reset();
         }
 
-        if (errorMode())
+        if (errorMode() || bootMode())
         {
           if (!m_vs.error_count)
             changeMode(IMC::VehicleState::VS_SERVICE);
@@ -387,7 +382,8 @@ namespace Supervisors
             startManeuver(cmd);
             break;
           case IMC::VehicleCommand::VC_STOP_MANEUVER:
-            stopManeuver(cmd);
+            stopManeuver();
+            requestOK(cmd, DTR("OK"));
             break;
           case IMC::VehicleCommand::VC_START_CALIBRATION:
             startCalibration(cmd);
@@ -499,17 +495,15 @@ namespace Supervisors
       }
 
       void
-      stopManeuver(const IMC::VehicleCommand* cmd)
+      stopManeuver(void)
       {
-        if (!errorMode())
+        if (!errorMode() && !bootMode())
         {
           reset();
 
           if (!externalMode() || !nonOverridableLoops())
             changeMode(IMC::VehicleState::VS_SERVICE);
         }
-
-        requestOK(cmd, DTR("OK"));
       }
 
       void
@@ -618,6 +612,12 @@ namespace Supervisors
       calibrationMode(void) const
       {
         return modeIs(IMC::VehicleState::VS_CALIBRATION);
+      }
+
+      inline bool
+      bootMode(void) const
+      {
+        return modeIs(IMC::VehicleState::VS_BOOT);
       }
 
       inline bool
