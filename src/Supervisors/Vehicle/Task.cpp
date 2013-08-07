@@ -278,7 +278,7 @@ namespace Supervisors
         if (msg->ecount)
           m_vs.error_ents += (msg->ccount ? "," : "") + msg->enames;
 
-        // copy to list to vector
+        // copy list to vector
         String::split(m_vs.error_ents, ",", m_ents_in_error);
         // translate list for vehicle state message
         m_vs.error_ents = splitAndTranslate(m_vs.error_ents);
@@ -365,7 +365,7 @@ namespace Supervisors
             (msg->op == IMC::PlanControl::PC_START))
         {
           // check if plan is supposed to ignore some errors
-          if (msg->flags & IMC::PlanControl::FLG_IGNORE_ERRORS) // temporary
+          if (msg->flags & IMC::PlanControl::FLG_IGNORE_ERRORS)
             m_in_safe_plan = true;
           else
             m_in_safe_plan = false;
@@ -565,12 +565,9 @@ namespace Supervisors
         {
           if (m_args.safe_ents.size() && m_in_safe_plan)
           {
-            std::vector<std::string> ents;
-            String::split(m_vs.error_ents, ",", ents);
+            std::vector<std::string>::const_iterator it_ents = m_ents_in_error.begin();
 
-            std::vector<std::string>::const_iterator it_ents = ents.begin();
-
-            for (; it_ents != ents.end(); ++it_ents)
+            for (; it_ents != m_ents_in_error.end(); ++it_ents)
             {
               std::vector<std::string>::const_iterator it_safe = m_args.safe_ents.begin();
               for (; it_safe != m_args.safe_ents.end(); ++it_safe)
