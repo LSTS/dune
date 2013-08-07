@@ -363,6 +363,7 @@ namespace Plan
             onVehicleCalibration(vs);
             break;
           case IMC::VehicleState::VS_ERROR:
+          case IMC::VehicleState::VS_BOOT:
             onVehicleError(vs);
             break;
           case IMC::VehicleState::VS_MANEUVER:
