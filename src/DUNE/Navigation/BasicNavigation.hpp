@@ -450,21 +450,12 @@ namespace DUNE
       //! @param[out] u forward speed state index.
       //! @param[out] v transversal speed state index.
       virtual void
-      getSpeedOutputStates(unsigned* u, unsigned* v)
-      {
-        // do nothing.
-        (void)*u;
-        (void)*v;
-      }
+      getSpeedOutputStates(unsigned* u, unsigned* v) = 0;
 
       //! Get number of EKF outputs.
       //! @return number of outputs.
       virtual unsigned
-      getNumberOutputs(void)
-      {
-        // do nothing.
-        return 0;
-      }
+      getNumberOutputs(void) = 0;
 
       //! Routine called to assign common dispatch messages.
       void

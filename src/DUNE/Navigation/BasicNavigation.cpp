@@ -778,7 +778,6 @@ namespace DUNE
       m_altitude = -1;
 
       m_navstate = SM_STATE_IDLE;
-
       setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
 
       m_valid_gv = false;
@@ -1044,12 +1043,6 @@ namespace DUNE
       // Compute maximum horizontal position variance value
       float hpos_var = std::max(m_kal.getCovariance(STATE_X, STATE_X), m_kal.getCovariance(STATE_Y, STATE_Y));
 
-      if (m_time_without_depth.overflow())
-      {
-        setEntityState(IMC::EntityState::ESTA_ERROR, DTR("No depth measurements available"));
-        return;
-      }
-
       // Check if it exceeds the specified threshold value.
       if (hpos_var > m_max_hpos_var)
       {
@@ -1078,6 +1071,12 @@ namespace DUNE
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             break;
           case SM_STATE_NORMAL:
+            if (m_time_without_depth.overflow())
+            {
+              setEntityState(IMC::EntityState::ESTA_ERROR, DTR("No depth measurements available"));
+              return;
+            }
+
             if (m_dead_reckoning)
             {
               if (m_aligned)

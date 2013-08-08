@@ -222,6 +222,19 @@ namespace Navigation
         }
 
         void
+        getSpeedOutputStates(unsigned* u, unsigned* v)
+        {
+          (void)*u;
+          (void)*v;
+        }
+
+        unsigned
+        getNumberOutputs(void)
+        {
+          return NUM_OUT;
+        }
+
+        void
         task(void)
         {
           if(!BasicNavigation::isActive())
