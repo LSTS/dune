@@ -211,7 +211,7 @@ namespace Supervisors
       {
         debug("some control loops are enabled now");
 
-        switch (m_vs.op_mode)
+        switch ((IMC::VehicleState::OperationModeEnum)m_vs.op_mode)
         {
           case IMC::VehicleState::VS_SERVICE:
             changeMode(IMC::VehicleState::VS_EXTERNAL);
@@ -358,7 +358,7 @@ namespace Supervisors
         if (!maneuverMode())
           return;
 
-        switch (msg->state)
+        switch ((IMC::ManeuverControlState::StateEnum)msg->state)
         {
           case IMC::ManeuverControlState::MCS_EXECUTING:
             if (msg->eta != m_vs.maneuver_eta)
@@ -522,7 +522,7 @@ namespace Supervisors
         trace("%s request (%u/%u/%u)", c_cmd_desc[cmd->command],
               cmd->getSource(), cmd->getSourceEntity(), cmd->request_id);
 
-        switch (cmd->command)
+        switch ((IMC::VehicleCommand::CommandEnum)cmd->command)
         {
           case IMC::VehicleCommand::VC_EXEC_MANEUVER:
             startManeuver(cmd);
