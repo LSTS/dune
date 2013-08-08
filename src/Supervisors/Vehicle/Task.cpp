@@ -79,6 +79,10 @@ namespace Supervisors
       float m_scope_ref;
       //! Vector of labels from entities in error
       std::vector<std::string> m_ents_in_error;
+      //! Last vehicle state operation mode
+      IMC::VehicleState::OperationModeEnum m_last_op;
+      //! Entities booting
+      unsigned m_eboot;
       //! Task arguments.
       Arguments m_args;
 
@@ -140,6 +144,9 @@ namespace Supervisors
         m_vs.last_error_time = -1;
         m_vs.control_loops = 0;
 
+        m_last_op = (IMC::VehicleState::OperationModeEnum)m_vs.op_mode;
+        m_eboot = 0;
+
         m_ents_in_error.clear();
       }
 
@@ -148,8 +155,16 @@ namespace Supervisors
       {
         if (m_vs.op_mode != s)
         {
+          // if it's in service and some entities are in error
           if (s == IMC::VehicleState::VS_SERVICE && entityError())
             s = IMC::VehicleState::VS_ERROR;
+
+          // if previous state was boot and there are still entities booting
+          if ((s == IMC::VehicleState::VS_ERROR) && (m_eboot) &&
+              (m_last_op == IMC::VehicleState::VS_BOOT))
+            s = IMC::VehicleState::VS_BOOT;
+
+          m_last_op = (IMC::VehicleState::OperationModeEnum)m_vs.op_mode;
 
           m_vs.op_mode = s;
 
@@ -281,6 +296,7 @@ namespace Supervisors
 
         m_vs.error_ents = "";
         m_ents_in_error.clear();
+        m_eboot = msg->ecount;
 
         if (msg->ccount)
           m_vs.error_ents = msg->cnames;
@@ -308,6 +324,9 @@ namespace Supervisors
         {
           if (!m_vs.error_count)
             changeMode(IMC::VehicleState::VS_SERVICE);
+          else if (!m_eboot && bootMode())
+            changeMode(IMC::VehicleState::VS_ERROR);
+
           return;
         }
 
