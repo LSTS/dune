@@ -682,7 +682,7 @@ msgstr  "erro de inversão de matriz"
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:42
 #, c-format
 msgid   "position uncertainty is %0.2f m"
-msgstr  "incerteza posição é %0.2f m"
+msgstr  "incerteza de posição é %0.2f m"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:59
 msgid   "Maximum Horizontal Position Variance"
@@ -712,11 +712,11 @@ msgstr  "a fazer loiter"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:788
 msgid   "along-track divergence error"
-msgstr  "erro por divergência ao longo do track"
+msgstr  "erro por divergência ao longo do caminho"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:821
 msgid   "cross-track divergence error"
-msgstr  "erro de divergência por cross-track"
+msgstr  "erro por divergência perpendicular ao caminho"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:914
 msgid   "waiting for position estimate from navigation"
@@ -858,7 +858,7 @@ msgstr  "diretório de bibliotecas: '%s'"
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Daemon.cpp:121
 #, c-format
 msgid   "firmware folder: '%s'"
-msgstr  "diretório de firmware: '%s'"
+msgstr  "diretório de \"firmware\": '%s'"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Daemon.cpp:125
 #, c-format
@@ -977,7 +977,7 @@ msgstr  "em espera"
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:42
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:317
 msgid   "active"
-msgstr  "activo"
+msgstr  "ativo"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:43
 msgid   "input/output error"
@@ -993,15 +993,15 @@ msgstr  "utilização do CPU é demasiado elevada"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:46
 msgid   "fuel is running low"
-msgstr  "combustível está baixo"
+msgstr  "nível de energia baixo"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:47
 msgid   "fuel level estimation is not reliable"
-msgstr  "estimativa de nível do combústivel não é confiável"
+msgstr  "estimativa de nível de energia não é confiável"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:48
 msgid   "fuel reserve"
-msgstr  "reserva de combustível"
+msgstr  "reserva de energia"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:49
 msgid   "calibrating"
@@ -1049,7 +1049,7 @@ msgstr  "à espera de posição GPS"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:60
 msgid   "waiting for configuration of LBL beacons"
-msgstr  "à espera da configuração de faróis LBL"
+msgstr  "à espera da configuração de transdutores LBL"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:61
 msgid   "waiting for solution to converge"
@@ -1500,7 +1500,7 @@ msgstr  "erro de leitura: %s"
 #: /home/josebraga/workspace/dune/trunk/src/Simulators/LBL/Task.cpp:225
 #, c-format
 msgid   "maximum amount of beacons is %u"
-msgstr  "número máximo de faróis é %u"
+msgstr  "número máximo de transdutores é %u"
 
 #: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:268
 msgid   "Ardupilot interface initialized"
@@ -1862,7 +1862,7 @@ msgstr  "Periodicidade de Relatórios"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:313
 msgid   "waiting beacons configuration"
-msgstr  "à espera da configuração de faróis"
+msgstr  "à espera da configuração de transdutores"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:319
 msgid   "serial port communication error, modem not responding"
@@ -1921,7 +1921,7 @@ msgstr  "descartado range inválido %0.2f"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:752
 msgid   "failed to ping beacons, modem seems busy"
-msgstr  "falha ao pingar faróis, o modem parece ocupado"
+msgstr  "falha ao pingar transdutores, o modem parece ocupado"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:914
 #, c-format
@@ -2978,7 +2978,7 @@ msgstr  "Capturador de Tramas"
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:39
 msgid   "Fuel"
-msgstr  "Combustível"
+msgstr  "Energia"
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:40
 msgid   "GPS"
@@ -3577,7 +3577,7 @@ msgstr  "Supervisor de Veículo"
 #~ msgstr       "a calibrar ..."
 
 #~ msgid        "waiting for beacon setup"
-#~ msgstr       "à espera da configuração dos faróis"
+#~ msgstr       "à espera da configuração dos transdutores"
 
 #, fuzzy
 #~ msgid        "database boot"
