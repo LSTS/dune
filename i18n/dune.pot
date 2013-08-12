@@ -6,7 +6,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.3.0-rc1\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-08-12 16:35+0100\n"
+        "POT-Creation-Date: 2013-08-12 16:46+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1827,24 +1827,12 @@ msgstr  ""
 msgid   "Enable Reports"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:270
-msgid   "Report data acoustically"
-msgstr  ""
-
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:272
 msgid   "Make Reports Verbose"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:275
-msgid   "Report more verbose data acoustically"
-msgstr  ""
-
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:277
 msgid   "Reports Periodicity"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:283
-msgid   "Reports periodicity"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:313

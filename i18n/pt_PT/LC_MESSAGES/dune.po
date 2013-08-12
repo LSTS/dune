@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-08-12 16:33+0100\n"
+        "POT-Creation-Date: 2013-08-12 16:46+0100\n"
         "PO-Revision-Date: 2013-08-03 13:45-0000\n"
         "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
         "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -1852,25 +1852,13 @@ msgstr  "a recomeçar para mudar porta TCP de dados"
 msgid   "Enable Reports"
 msgstr  "Permitir Relatórios"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:270
-msgid   "Report data acoustically"
-msgstr  "Reportar dados acusticamente"
-
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:272
 msgid   "Make Reports Verbose"
 msgstr  "Fazer Relatórios Verbosos"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:275
-msgid   "Report more verbose data acoustically"
-msgstr  "Reportar dados acusticamente verbosamente"
-
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:277
 msgid   "Reports Periodicity"
 msgstr  "Periodicidade de Relatórios"
-
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:283
-msgid   "Reports periodicity"
-msgstr  "Periodicidade de relatórios"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:313
 msgid   "waiting beacons configuration"
@@ -3303,6 +3291,15 @@ msgstr  "Simulador de Comunicação Acústica Subaquática"
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:117
 msgid   "Vehicle Supervisor"
 msgstr  "Supervisor de Veículo"
+
+#~ msgid        "Report data acoustically"
+#~ msgstr       "Reportar dados acusticamente"
+
+#~ msgid        "Report more verbose data acoustically"
+#~ msgstr       "Reportar dados acusticamente verbosamente"
+
+#~ msgid        "Reports periodicity"
+#~ msgstr       "Periodicidade de relatórios"
 
 #~ msgid        "Broom"
 #~ msgstr       "Broom"
