@@ -264,17 +264,17 @@ namespace Sensors
         .units(Units::Second)
         .defaultValue("2");
 
-        param("Enable Reports", m_args.report)
+        param(DTR("Enable Reports"), m_args.report)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("true")
         .description(DTR("Report data acoustically"));
 
-        param("Make Reports Verbose", m_args.report_verbose)
+        param(DTR("Make Reports Verbose"), m_args.report_verbose)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("false")
         .description(DTR("Report more verbose data acoustically"));
 
-        param("Reports Periodicity", m_args.report_period)
+        param(DTR("Reports Periodicity"), m_args.report_period)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .units(Units::Second)
         .defaultValue("60")
