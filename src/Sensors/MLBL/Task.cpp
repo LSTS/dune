@@ -269,7 +269,7 @@ namespace Sensors
         .defaultValue("true")
         .description(DTR("Report data acoustically"));
 
-        param("Enable Verbose Reports", m_args.report_verbose)
+        param("Make Reports Verbose", m_args.report_verbose)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("false")
         .description(DTR("Report more verbose data acoustically"));
