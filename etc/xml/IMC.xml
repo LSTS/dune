@@ -336,7 +336,7 @@
       supplemental fields, it is always placed at the beginning of a
       packet.
     </description>
-    <field name="Synchronization Number" abbrev="sync" type="uint16_t" value="0xFE51" fixed="true">
+    <field name="Synchronization Number" abbrev="sync" type="uint16_t" value="0xFE52" fixed="true">
       <description>
         The synchronization number marks the beginning of a packet.
 
