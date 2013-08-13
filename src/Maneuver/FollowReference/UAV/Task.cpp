@@ -89,32 +89,16 @@ namespace Maneuver
         //!  - Reference with flag MANDONE
         //!  - PathControlState without flag NEAR
         IMC::FollowRefState m_fref_state;
-        //! Did we get a reference already?
-        //bool m_got_reference;
-        //! Are we moving or idle (floating)
-        //bool m_moving;
         //! Task arguments.
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx) :
-          DUNE::Maneuvers::Maneuver(name, ctx), m_pcs(PathControlState()), init_pcs(false)
+          DUNE::Maneuvers::Maneuver(name, ctx), init_pcs(false)
         {
           param("Loitering Radius", m_args.loitering_radius).defaultValue("7.5").units(
               Units::Meter).description(
                   "Radius of loitering circle after arriving at destination");
 
-          /*param("Vehicle Type", m_args.vehicle_type).defaultValue("AUV")
-                        .description(
-                            "Vehicle type (AUV or UAV), default AUV");
-
-          param("Horizontal Tolerance", m_args.horizontal_tolerance).defaultValue(
-              "15.0").units(Units::Meter).description(
-                  "Minimum distance required to consider that the vehicle has arrived at the reference (XY)");
-
-          param("Vertical Tolerance", m_args.vertical_tolerance).defaultValue(
-              "2.0").units(Units::Meter).description(
-                  "Minimum distance required to consider that the vehicle has arrived at the reference (Z)");
-*/
           param("Default Speed", m_args.default_speed)
           .defaultValue("50").
           description("Speed to use in case no speed is given by reference source.");
@@ -133,8 +117,6 @@ namespace Maneuver
           .units(Units::Meter)
           .description("Units to use for default z reference ('DEPTH', 'ALTITUDE' or 'HEIGHT')");
 
-          //m_got_reference = false;
-          //m_moving = false;
           m_last_ref_time = 0;
 
           bindToManeuver<Task, IMC::FollowReference>();
@@ -146,20 +128,287 @@ namespace Maneuver
         void
         consume(const IMC::FollowReference* msg)
         {
-          // Activating maneuver
-          //m_moving = false;
-          //m_got_reference = false;
+          // initialize maneuver definitions and time for timeout calculation
           m_spec = *msg;
           m_last_ref_time = Clock::get();
-
+          //Waiting for the first reference in the position the vehicle currently is on
+          m_cur_ref.flags = Reference::FLAG_LOCATION;
+          m_cur_ref.lat = m_estate.lat;
+          m_cur_ref.lon = m_estate.lon;
+          WGS84::displace(m_estate.x, m_estate.y, &(m_cur_ref.lat), &(m_cur_ref.lon));
+          inf(DTR("lat lon = 0 ? %f"), m_cur_ref.lat);
           // create a message to notify that the maneuver was activated
+          m_fref_state.reference.set(m_cur_ref);
           m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
           m_fref_state.state = IMC::FollowRefState::FR_WAIT;
           m_fref_state.control_ent = msg->control_ent;
           m_fref_state.control_src = msg->control_src;
           dispatch(m_fref_state);
-          inf(DTR("waiting for first reference"));
-          //m_last_ref = Reference(); -> init in constructor
+          processDesiredPath();
+        }
+
+        //! Consume Reference messages and generate DesiredPath messages accordingly
+        //! Whenever a new Reference is received from a valid source, a new desired_path
+        //! gets commanded to the vehicle.
+        //! @see https://!whale.fe.up.pt/imc/doc/trunk/Maneuvering.html#follow-reference-maneuver
+        //! @param msg the Reference message to be processed
+        void
+        consume(const IMC::Reference* msg)
+        {
+          // verify that the source is either all or the one designated at
+          // the start of the maneuver
+          if (m_spec.control_src != 0xFFFF
+              && m_spec.control_src != msg->getSource())
+          {
+            inf(DTR("ignored reference from non-authorized source: %d"),
+                msg->getSource());
+            return;
+          }
+          // verify that the source entity is either all or the one designated
+          // at the start of the maneuver
+          if (m_spec.control_ent != 0xFF
+              && m_spec.control_ent != msg->getSourceEntity())
+          {
+            inf(DTR("ignored reference from non-authorized entity: %d"),
+                msg->getSourceEntity());
+            return;
+          }
+          inf(DTR("Got reference."));
+          //m_got_reference = true;
+          m_last_ref_time = Clock::get();
+          m_cur_ref = *msg;
+          // verify if maneuver is done
+          if (m_cur_ref.flags & IMC::Reference::FLAG_MANDONE)
+          {
+            m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
+            m_fref_state.state = IMC::FollowRefState::FR_WAIT;
+            signalCompletion("maneuver terminated by reference source");
+          }
+          // propagate the new reference
+          processDesiredPath();
+          // Add the new reference to the FollowReferenceState
+          m_fref_state.reference.set(m_cur_ref);
+        }
+
+        void
+        consume(const IMC::EstimatedState* msg)
+        {
+          m_estate = *msg;
+          // as EstimatedState is received regularly, use this event to process regularly!?
+          checkTimeout();
+        }
+
+        void
+        consume(const IMC::PathControlState* pcs)
+        {
+          m_pcs = *pcs;
+          init_pcs = true;
+          updateFollowRefStateFlags();
+          inf(DTR("received PathControlState with flags %#x"), m_pcs.flags);
+        }
+
+      private:
+        IMC::SpeedUnits
+        parseSpeedUnitsStr(std::string sunits_str)
+        {
+          if (sunits_str == "m/s")
+            return IMC::SUNITS_METERS_PS;
+          else if (sunits_str == "rpm")
+            return IMC::SUNITS_RPM;
+          else
+            return IMC::SUNITS_PERCENTAGE;
+        }
+
+        IMC::ZUnits
+        parseZUnitsStr(std::string zunits_str)
+        {
+          if (zunits_str == "HEIGHT")
+            return IMC::Z_HEIGHT;
+          else if (zunits_str == "ALTITUDE")
+            return IMC::Z_ALTITUDE;
+          else if (zunits_str == "DEPTH")
+            return IMC::Z_DEPTH;
+          else
+            return IMC::Z_NONE;
+        }
+
+        //! Generate and dispatch a DesiredPath based on the received reference
+        void
+        processDesiredPath()
+        {
+          // start building the DesiredPath message to be commanded
+          IMC::DesiredPath desired_path;
+          updateCoordinates(desired_path);
+          // set attributes according to flags
+          updateEndLoc(desired_path);
+          updateSpeed(desired_path);
+          updateEndZ(desired_path);
+          updateRadius(desired_path);
+          dispatchDesiredPath(desired_path);
+        }
+
+        //! Function for enabling and disabling the control loops
+        void
+        enableMovement(bool enable)
+        {
+          const uint32_t mask = IMC::CL_PATH;
+
+          if (enable)
+          {
+            // set control loops in order to move
+            setControl(mask);
+          }
+          else
+          {
+            // stop moving by setting control loops to zero
+            setControl(0);
+          }
+        }
+
+        void updateEndLoc(IMC::DesiredPath &desired_path)
+        {
+          // set end location according to received reference
+          if (m_cur_ref.flags & IMC::Reference::FLAG_LOCATION)
+          {
+            // use new reference
+            desired_path.end_lat = m_cur_ref.lat;
+            desired_path.end_lon = m_cur_ref.lon;
+          }
+          else
+          {
+            // just stay where we are
+            desired_path.end_lat = desired_path.start_lat;
+            desired_path.end_lon = desired_path.start_lon;
+          }
+        }
+
+        void updateSpeed(IMC::DesiredPath &desired_path)
+        {
+          // set speed according to received reference. If the reference does not
+          // provide a desired speed, use default
+          if ((m_cur_ref.flags & IMC::Reference::FLAG_SPEED) && !(m_cur_ref.speed.isNull()))
+          {
+            desired_path.speed = m_cur_ref.speed->value;
+            desired_path.speed_units = m_cur_ref.speed->speed_units;
+          }
+          else
+          {
+            // default speed
+            desired_path.speed = m_args.default_speed;
+            desired_path.speed_units = parseSpeedUnitsStr(m_args.default_speed_units);
+          }
+        }
+
+        void updateRadius(IMC::DesiredPath &desired_path)
+        {
+          // set radius according to received reference. If the reference does not
+          // provide a desired radius, use default
+          if (m_cur_ref.flags & IMC::Reference::FLAG_RADIUS)
+          {
+            desired_path.lradius = m_cur_ref.radius;
+          }
+          else
+          {
+            desired_path.lradius = m_args.loitering_radius;
+          }
+          // traduce negative radius in desiredPath (from received Reference) to a
+          // positive one with CCLOCW flag
+          if(desired_path.lradius < 0)
+          {
+            desired_path.flags |= DesiredPath::FL_CCLOCKW;
+            desired_path.lradius = desired_path.lradius * -1;
+          }
+        }
+
+        void updateEndZ(IMC::DesiredPath& desired_path) {
+          // set end_z according to received reference
+          if ((m_cur_ref.flags & IMC::Reference::FLAG_Z) && !(m_cur_ref.z.isNull()))
+          {
+            desired_path.end_z = m_cur_ref.z->value;
+            desired_path.end_z_units = m_cur_ref.z->z_units;
+          }
+          else
+          {
+            desired_path.end_z = m_args.default_z;
+            desired_path.end_z_units = parseZUnitsStr(m_args.default_z_units);
+          }
+        }
+
+        void updateCoordinates(IMC::DesiredPath& desired_path)
+        {
+          // calculate coordinates taking into account the offsets
+          double curlat = m_estate.lat;
+          double curlon = m_estate.lon;
+          WGS84::displace(m_estate.x, m_estate.y, &curlat, &curlon);
+          // command start corresponds to current position
+          desired_path.start_lat = curlat;
+          desired_path.start_lon = curlon;
+          desired_path.flags = IMC::DesiredPath::FL_DIRECT;
+        }
+
+        void dispatchDesiredPath(IMC::DesiredPath desired_path)
+        {
+          enableMovement(true);
+          dispatch(desired_path);
+          // dispatch new desired path
+          switch (m_fref_state.state)
+          {
+            case (IMC::FollowRefState::FR_LOITER):
+              inf(DTR("Loitering around (%f, %f, %f, %f)."),
+                  Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon),
+                  desired_path.end_z, desired_path.lradius);
+              break;
+            case (IMC::FollowRefState::FR_GOTO):
+              inf(DTR("Going towards (%f, %f, %f)."), Angles::degrees(desired_path.end_lat),
+                  Angles::degrees(desired_path.end_lon), desired_path.end_z);
+              break;
+            case (IMC::FollowRefState::FR_WAIT):
+              inf(DTR("Waiting for next reference."));
+              break;
+            case (IMC::FollowRefState::FR_TIMEOUT):
+              inf(DTR("Bad connection, too long since last EstimatedState was received."));
+              break;
+            default:
+              inf(DTR("Unexpected state %#x"), m_fref_state.state);
+              enableMovement(false);
+              break;
+          }
+        }
+
+        void updateFollowRefStateFlags()
+        {
+          if(pcsNotEmpty())
+          {
+            if((m_pcs.flags & IMC::PathControlState::FL_LOITERING) != 0)
+            {
+              m_fref_state.proximity = IMC::FollowRefState::PROX_Z_NEAR;
+              m_fref_state.proximity |= IMC::FollowRefState::PROX_XY_NEAR;
+              m_fref_state.state = IMC::FollowRefState::FR_LOITER;
+            }
+            else
+            {
+              m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
+              m_fref_state.state = IMC::FollowRefState::FR_GOTO;
+            }
+          }
+        }
+
+        void checkTimeout() {
+          // as EstimatedState is received regularly, use this event to process regularly!?
+          double delta = 0;
+          if (m_spec.timeout != 0)
+            delta = Clock::get() - m_last_ref_time;
+
+          if (delta > m_spec.timeout) {
+            m_fref_state.state = IMC::FollowRefState::FR_TIMEOUT;
+            signalError("reference source timed out");
+            dispatch(m_fref_state);
+          }
+        }
+
+        bool pcsNotEmpty()
+        {
+          return init_pcs;
         }
 
         bool
@@ -197,300 +446,6 @@ namespace Maneuver
           }
 
           return true;
-        }
-
-        //! Consume Reference messages and generate DesiredPath messages accordingly
-        //! Whenever a new Reference is received from a valid source, a new desired_path
-        //! gets commanded to the vehicle.
-        //! @see https://!whale.fe.up.pt/imc/doc/trunk/Maneuvering.html#follow-reference-maneuver
-        //! @param msg the Reference message to be processed
-        void
-        consume(const IMC::Reference* msg)
-        {
-          // verify that the source is either all or the one designated at
-          // the start of the maneuver
-          if (m_spec.control_src != 0xFFFF
-              && m_spec.control_src != msg->getSource())
-          {
-            inf(DTR("ignored reference from non-authorized source: %d"),
-                msg->getSource());
-            return;
-          }
-          // verify that the source entity is either all or the one designated
-          // at the start of the maneuver
-          if (m_spec.control_ent != 0xFF
-              && m_spec.control_ent != msg->getSourceEntity())
-          {
-            inf(DTR("ignored reference from non-authorized entity: %d"),
-                msg->getSourceEntity());
-            return;
-          }
-
-          //m_got_reference = true;
-          m_last_ref_time = Clock::get();
-          m_cur_ref = *msg;
-          // verify if maneuver is done
-          if (m_cur_ref.flags & IMC::Reference::FLAG_MANDONE)
-          {
-            m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
-            m_fref_state.state = IMC::FollowRefState::FR_WAIT;
-            signalCompletion("maneuver terminated by reference source");
-          }
-          // propagate the new reference
-          guide();
-        }
-
-        void
-        consume(const IMC::EstimatedState* msg)
-        {
-          m_estate = *msg;
-          double delta = 0;
-
-          if (m_spec.timeout != 0)
-            delta = Clock::get() - m_last_ref_time;
-
-          if (delta > m_spec.timeout)
-          {
-            m_fref_state.state = IMC::FollowRefState::FR_TIMEOUT;
-            dispatch(m_fref_state);
-            signalError("reference source timed out");
-          }
-        }
-
-        void
-        consume(const IMC::PathControlState* pcs)
-        {
-          m_pcs = *pcs;
-          init_pcs = true;
-        }
-
-        IMC::SpeedUnits
-        parseSpeedUnitsStr(std::string sunits_str)
-        {
-          if (sunits_str == "m/s")
-            return IMC::SUNITS_METERS_PS;
-          else if (sunits_str == "rpm")
-            return IMC::SUNITS_RPM;
-          else
-            return IMC::SUNITS_PERCENTAGE;
-        }
-
-        IMC::ZUnits
-        parseZUnitsStr(std::string zunits_str)
-        {
-          if (zunits_str == "HEIGHT")
-            return IMC::Z_HEIGHT;
-          else if (zunits_str == "ALTITUDE")
-            return IMC::Z_ALTITUDE;
-          else if (zunits_str == "DEPTH")
-            return IMC::Z_DEPTH;
-          else
-            return IMC::Z_NONE;
-        }
-
-        //! Generate and dispatch a DesiredPath based on the received reference
-        void
-        guide(/*const IMC::PathControlState* pcs - m_pcs, IMC::Reference* ref - m_cur_ref,
-            const IMC::EstimatedState* state - m_estate*/)
-        {
-          // start building the DesiredPath message to be commanded
-          IMC::DesiredPath desired_path;
-          updateCoordinates(desired_path);
-          // set attributes according to flags
-          updateEndLoc(desired_path);
-          updateSpeed(desired_path);
-          updateEndZ(desired_path);
-          updateRadius(desired_path);
-          updateFollowRefStateFlags();
-          // Add the new reference to the FollowReferenceState
-          m_fref_state.reference.set(m_cur_ref);
-          dispatch(m_fref_state);
-          dispatchDesiredPath(desired_path);
-        }
-
-        //! Function for enabling and disabling the control loops
-        void
-        enableMovement(bool enable)
-        {
-          const uint32_t mask = IMC::CL_PATH;
-
-          if (enable)
-          {
-            // set control loops in order to move
-            setControl(mask);
-            //m_moving = true;
-          }
-          else
-          {
-            // stop moving by setting control loops to zero
-            //m_moving = false;
-            setControl(0);
-          }
-        }
-
-      private:
-        void updateEndLoc(IMC::DesiredPath &desired_path)
-        {
-          // set end location according to received reference
-          if (m_cur_ref.flags & IMC::Reference::FLAG_LOCATION)
-          {
-            // use new reference
-            desired_path.end_lat = m_cur_ref.lat;
-            desired_path.end_lon = m_cur_ref.lon;
-          }
-          /*else if (m_got_reference)
-          {
-            // use previously received reference
-            desired_path.end_lat = m_cur_ref.lat;
-            desired_path.end_lon = m_cur_ref.lon;
-          }*/
-          else
-          {
-            // just stay where we are
-            desired_path.end_lat = desired_path.start_lat;
-            desired_path.end_lon = desired_path.start_lon;
-          }
-        }
-
-        void updateSpeed(IMC::DesiredPath &desired_path)
-        {
-          // set speed according to received reference. If the reference does not
-          // provide a desired speed, use default
-          if ((m_cur_ref.flags & IMC::Reference::FLAG_SPEED) && !(m_cur_ref.speed.isNull()))
-          {
-            desired_path.speed = m_cur_ref.speed->value;
-            desired_path.speed_units = m_cur_ref.speed->speed_units;
-          }
-          /*else if (/*m_got_reference && *//*!m_cur_ref.speed.isNull())
-          {
-            desired_path.speed = m_cur_ref.speed->value;
-            desired_path.speed_units = m_cur_ref.speed->speed_units;
-          }*/
-          else
-          {
-            // default speed
-            desired_path.speed = m_args.default_speed;
-            desired_path.speed_units = parseSpeedUnitsStr(m_args.default_speed_units);
-          }
-        }
-
-        void updateRadius(IMC::DesiredPath &desired_path)
-        {
-          //std::cout<< " starting radius " << ref->radius << "  -  " << desired_path.lradius << "\n";
-          // set radius according to received reference. If the reference does not
-          // provide a desired radius, use default
-          if (m_cur_ref.flags & IMC::Reference::FLAG_RADIUS)
-          {
-            desired_path.lradius = m_cur_ref.radius;
-          }
-          /*else if (/*m_got_reference && m_cur_ref.radius != 0)
-          {
-            desired_path.lradius = m_cur_ref.radius;
-          }*/
-          else
-          {
-            desired_path.lradius = m_args.loitering_radius;
-          }
-          // traduce negative radius in desiredPath (from received Reference) to a
-          // positive one with CCLOCW flag
-          if(desired_path.lradius < 0)
-          {
-            desired_path.flags |= DesiredPath::FL_CCLOCKW;
-            desired_path.lradius = desired_path.lradius * -1;
-          }
-        }
-
-        void updateEndZ(IMC::DesiredPath& desired_path) {
-          // set end_z according to received reference
-          if ((m_cur_ref.flags & IMC::Reference::FLAG_Z) && !(m_cur_ref.z.isNull()))
-          {
-            desired_path.end_z = m_cur_ref.z->value;
-            desired_path.end_z_units = m_cur_ref.z->z_units;
-          }
-          /*else if (/*m_got_reference && *//*!m_cur_ref.z.isNull())
-          {
-            desired_path.end_z = m_cur_ref.z->value;
-            desired_path.end_z_units = m_cur_ref.z->z_units;
-          }*/
-          else
-          {
-            desired_path.end_z = m_args.default_z;
-            desired_path.end_z_units = parseZUnitsStr(m_args.default_z_units);
-          }
-        }
-
-        void updateCoordinates(IMC::DesiredPath& desired_path)
-        {
-          // calculate coordinates taking into account the offsets
-          double curlat = m_estate.lat;
-          double curlon = m_estate.lon;
-          WGS84::displace(m_estate.x, m_estate.y, &curlat, &curlon);
-          // command start corresponds to current position
-          desired_path.start_lat = curlat;
-          desired_path.start_lon = curlon;
-          desired_path.flags = IMC::DesiredPath::FL_DIRECT;
-        }
-
-        void dispatchDesiredPath(IMC::DesiredPath desired_path)
-        {
-          enableMovement(true);
-          dispatch(desired_path);
-          // dispatch new desired path
-          switch (m_fref_state.state)
-          {
-            case (IMC::FollowRefState::FR_LOITER):
-              //desired_path.lradius = m_args.loitering_radius;
-              inf(DTR("Loitering around (%f, %f, %f, %f)."),
-                  Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon),
-                  desired_path.end_z, desired_path.lradius);
-              break;
-            case (IMC::FollowRefState::FR_GOTO):
-              inf(DTR("Going towards (%f, %f, %f)."), Angles::degrees(desired_path.end_lat),
-                  Angles::degrees(desired_path.end_lon), desired_path.end_z);
-              break;
-            case (IMC::FollowRefState::FR_WAIT):
-              inf(DTR("Waiting for next reference."));
-              break;
-            case (IMC::FollowRefState::FR_TIMEOUT):
-              inf(DTR("Bad connection, too long since last EstimatedState was received."));
-              break;
-            default:
-              inf(DTR("Unexpected state %#x"), m_fref_state.state);
-              enableMovement(false);
-              break;
-          }
-        }
-
-        void updateFollowRefStateFlags()
-        {
-          // Update flags
-          if (pcsNotEmpty() && (m_pcs.flags & IMC::PathControlState::FL_NEAR) != 0)
-          {
-            m_fref_state.proximity |= IMC::FollowRefState::PROX_Z_NEAR;
-            m_fref_state.proximity |= IMC::FollowRefState::PROX_XY_NEAR;
-          } else
-          {
-            m_fref_state.proximity |= IMC::FollowRefState::PROX_FAR;
-          }
-          // If it was on WAIT it should start and if it was on TIMEOUT it should also
-          // start since connection was restored (as this is called by consume(Reference))
-          if ((m_fref_state.proximity & IMC::FollowRefState::PROX_FAR) != 0)
-          {
-            // FAR => GOTO
-            m_fref_state.state = IMC::FollowRefState::FR_GOTO;
-          }
-          else
-          {
-            // (proximity sets both nears or none at all)
-            // NEAR_Z and NEAR_XY => LOITER
-            m_fref_state.state = IMC::FollowRefState::FR_LOITER;
-          }
-        }
-
-        //!
-        bool pcsNotEmpty()
-        {
-          return init_pcs;
         }
       };
     }
