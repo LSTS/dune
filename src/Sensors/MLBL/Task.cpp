@@ -221,6 +221,8 @@ namespace Sensors
       IMC::EstimatedState m_estate;
       //! Report timer.
       Counter<double> m_report_timer;
+      //! Stop reports on the ground
+      bool m_stop_reports;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -322,11 +324,14 @@ namespace Sensors
         m_states[STA_ERR_SRC].state = IMC::EntityState::ESTA_ERROR;
         m_states[STA_ERR_SRC].description = DTR("failed to set modem address");
 
+	m_stop_reports = false;
+
         // Register handlers.
+        bind<IMC::EstimatedState>(this);
         bind<IMC::LblConfig>(this);
         bind<IMC::QueryEntityState>(this);
         bind<IMC::SoundSpeed>(this);
-        bind<IMC::EstimatedState>(this);
+        bind<IMC::VehicleMedium>(this);
       }
 
       ~Task(void)
@@ -885,6 +890,15 @@ namespace Sensors
       }
 
       void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        if (msg->medium == IMC::VehicleMedium::VM_GROUND)
+	  m_stop_reports = true;
+	else
+	  m_stop_reports = false;
+      }
+
+      void
       reportRanges(double now)
       {
         bool first = true;
@@ -932,7 +946,7 @@ namespace Sensors
         while (!stopping())
         {
           // Report.
-          if (m_args.report)
+          if (m_args.report && !m_stop_reports)
           {
             if (m_report_timer.overflow())
             {
