@@ -515,15 +515,6 @@ namespace Navigation
           else
             m_heading += Angles::minSignedAngle(m_heading, Angles::normalizeRadian(getEuler(AXIS_Z)));
 
-          // Check alignment threshold index.
-          if (m_dead_reckoning)
-          {
-            if (m_kal.getCovariance(STATE_PSI_BIAS, STATE_PSI_BIAS) < m_args.alignment_index)
-              m_aligned = true;
-            else
-              m_aligned = false;
-          }
-
           // Update heading in Kalman filter.
           m_kal.setOutput(OUT_PSI, m_heading);
           m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - getHeading());
@@ -575,6 +566,15 @@ namespace Navigation
 
           // Extended Kalman Filter update with no threshold defined.
           m_kal.update(0.0);
+
+          // Check alignment threshold index.
+          if (m_dead_reckoning)
+          {
+            if (m_kal.getCovariance(STATE_PSI_BIAS, STATE_PSI_BIAS) < m_args.alignment_index)
+              m_aligned = true;
+            else
+              m_aligned = false;
+          }
 
           checkUncertainty();
 
