@@ -134,6 +134,63 @@ namespace Actuators
       FINGER_RV       = 1
     };
 
+    //! Board state parameters
+    struct BoardState
+    {
+      //! ADC line 24 volt
+      uint16_t v24;
+      //! ADC line 12 volt
+      uint16_t v12;
+      //! ADC line 3.3 volt
+      uint16_t v3_3;
+      //! ADC line tilt eol
+      uint16_t tilt_eol;
+      //! ADC line itilt
+      uint16_t itilt;
+      //! ADC line pan eol
+      uint16_t pan_eol;
+      //! ADC line ipan
+      uint16_t ipan;
+      //! ADC line ipulse
+      uint16_t ipulse;
+      //! ADC line ifinger
+      uint16_t ifinger;
+      //! ADC line isys
+      uint16_t isys;
+    } __attribute__((packed));
+
+    enum StateVoltages
+    {
+      //! 24V
+      SV_24,
+      //! 12V
+      SV_12,
+      //! 3.3V
+      SV_3V3,
+      //! Tilt EOL
+      SV_TILT_EOL,
+      //! Pan EOL
+      SV_PAN_EOL,
+      //! Number of voltages
+      SV_TOTAL
+    };
+
+    enum StateCurrents
+    {
+      //! Tilt current
+      SC_ITILT,
+      //! Pan current
+      SC_IPAN,
+      //! Pulse current
+      SC_IPULSE,
+      //! Finger current
+      SC_IFINGER,
+      //! System current
+      SC_ISYS,
+      //! Total number of currents
+      SC_TOTAL
+    };
+
     //! Task arguments.
     struct Arguments
     {
@@ -147,15 +204,25 @@ namespace Actuators
 
     //! Amount of seconds to wait before restarting task.
     static const unsigned c_restart_delay = 1;
+    //! Names for states voltages
+    const char* c_voltage_labels[] =
+    {
+      "24V", "12V", "3V3", "TILT_EOL", "PAN_EOL"
+    };
+    //! Labels for state currents
+    const char* c_current_labels[] =
+    {
+      "ITILT", "IPAN", "IPULSE", "IFINGER", "ISYS"
+    };
 
     struct Task: public DUNE::Tasks::Task
     {
       //! Control interface.
       UCTK::InterfaceUART* m_uart;
       //! Current.
-      IMC::Current m_current;
+      IMC::Current m_current[SC_TOTAL];
       //! Voltage.
-      IMC::Voltage m_voltage;
+      IMC::Voltage m_voltage[SV_TOTAL];
       //! MCU voltage.
       IMC::Voltage m_voltage_mcu;
       //! Watchdog.
@@ -193,7 +260,21 @@ namespace Actuators
 
       void
       onEntityReservation(void)
-      { }
+      {
+        for (unsigned i = 0; i < SV_TOTAL; ++i)
+        {
+          std::string vlabel = String::str("%s - %s", getEntityLabel(),
+                                           c_voltage_labels[i]);
+          m_voltage[i].setSourceEntity(reserveEntity(vlabel));
+        }
+
+        for (unsigned i = 0; i < SC_TOTAL; ++i)
+        {
+          std::string clabel = String::str("%s - %s", getEntityLabel(),
+                                           c_current_labels[i]);
+          m_current[i].setSourceEntity(reserveEntity(clabel));
+        }
+      }
 
       //! Update internal state with new parameter values.
       void
@@ -305,6 +386,42 @@ namespace Actuators
       armFinger(FingerCommands dir)
       {
         return actCommand(ACT_ARM_FINGER, dir);
+      }
+
+      //! Get raw board state
+      bool
+      dispatchState(void)
+      {
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_STATE);
+
+        if (!m_uart->sendFrame(frame))
+          return false;
+
+        if (frame.getPayloadSize() != sizeof(struct BoardState))
+          return false;
+
+        struct BoardState* ptr = (struct BoardState*)frame.getPayload();
+
+        m_voltage[SV_24].value = ptr->v24;
+        m_voltage[SV_12].value = ptr->v12;
+        m_voltage[SV_3V3].value = ptr->v3_3;
+        m_voltage[SV_TILT_EOL].value = ptr->tilt_eol;
+        m_voltage[SV_PAN_EOL].value = ptr->pan_eol;
+
+        m_current[SC_ITILT].value = ptr->itilt;
+        m_current[SC_IPAN].value = ptr->ipan;
+        m_current[SC_IPULSE].value = ptr->ipulse;
+        m_current[SC_IFINGER].value = ptr->ifinger;
+        m_current[SC_ISYS].value = ptr->isys;
+
+        for (unsigned i = 0; i < SV_TOTAL; i++)
+          dispatch(m_voltage[i]);
+
+        for (unsigned i = 0; i < SC_TOTAL; i++)
+          dispatch(m_current[i]);
+
+        return true;
       }
 
       void
