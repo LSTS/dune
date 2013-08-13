@@ -33,6 +33,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "Driver.hpp"
+
 namespace Transports
 {
   //! Device driver for ETSI GSM 07.07 compatible GSM modems.
@@ -81,28 +84,23 @@ namespace Transports
 
     struct Task: public DUNE::Tasks::Task
     {
-      //!! Internal buffer size.
-      static const int c_buffer_size = 4096;
-      //!! Internal buffer.
-      char m_buffer[c_buffer_size];
-      //!! Writting index of the internal buffer.
-      int m_widx;
-      //!! Serial port handle.
+      //! Serial port handle.
       SerialPort* m_uart;
+      //! GSM driver.
+      Driver* m_driver;
       //! SMS queue.
       std::priority_queue<SMS> m_queue;
-      //! RSSI message.
-      IMC::RSSI m_rssi;
       //! RSSI query timer.
-      Counter<double> m_rssi_ctr;
+      Counter<double> m_rssi_timer;
       //! SMS reception query timer.
-      Counter<double> m_rsms_ctr;
+      Counter<double> m_rsms_timer;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_uart(NULL)
+        m_uart(NULL),
+        m_driver(NULL)
       {
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
@@ -137,6 +135,7 @@ namespace Transports
         .description("Maximum amount of time to wait for SMS send completion");
 
         bind<IMC::Sms>(this);
+        bind<IMC::IoEvent>(this);
       }
 
       ~Task(void)
@@ -145,319 +144,63 @@ namespace Transports
       }
 
       void
+      onUpdateParameters(void)
+      {
+        if (paramChanged(m_args.rsms_per))
+          m_rsms_timer.setTop(m_args.rsms_per);
+
+        if (paramChanged(m_args.rssi_per))
+          m_rssi_timer.setTop(m_args.rssi_per);
+      }
+
+      void
       onResourceAcquisition(void)
       {
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-
         try
         {
           m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          m_driver = new Driver(this, m_uart, m_args.pin);
+          m_driver->initialize();
+          debug("manufacturer: %s", m_driver->getManufacturer().c_str());
+          debug("model: %s", m_driver->getModel().c_str());
+          debug("IMEI: %s", m_driver->getIMEI().c_str());
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 30u);
+          throw RestartNeeded(e.what(), 5);
         }
       }
 
       void
       onResourceInitialization(void)
       {
-        if (!sendCommand("AT\r", "AT\r\r\nOK\r\n", 5.0))
-          throw std::runtime_error(DTR("unable to get device's attention"));
-
-        if (!sendCommand("ATZ\r", "ATZ\r\r\nOK\r\n"))
-          throw std::runtime_error(DTR("unable to perform a soft reset"));
-
-        if (!sendCommand("AT+CMEE=2\r", "AT+CMEE=2\r\r\nOK\r\n"))
-          throw std::runtime_error(DTR("unable to configure verbose error messages"));
-
-        if (!sendCommand("AT+CPIN?\r", "AT+CPIN?\r\r\n+CPIN: READY\r\n\r\nOK\r\n", 2.0))
-        {
-          std::string pin_cmd = "AT+CPIN=" + m_args.pin + "\r";
-
-          if (!sendCommand(pin_cmd.c_str()))
-            throw std::runtime_error(DTR("unable to configure pin"));
-        }
-
-        if (!sendCommand("AT+CMGF=1\r"))
-          throw std::runtime_error(DTR("unable to set SMS message format"));
-
-        m_rssi_ctr.setTop(m_args.rssi_per);
-
-        m_rsms_ctr.setTop(m_args.rsms_per);
-
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
       onResourceRelease(void)
       {
+        if (m_driver)
+        {
+          m_driver->stopAndJoin();
+          delete m_driver;
+          m_driver = NULL;
+        }
+
         Memory::clear(m_uart);
       }
 
-      //! Send command to GSM modem.
-      //! @param[in] cmd command to be sent.
-      //! @param[out] ack device acknowledge.
-      //! @param[in] timeout timeout for communication.
-      //! @return true if successful, false otherwise.
-      bool
-      sendCommand(const char* cmd, const char* ack = 0, double timeout = 2.0)
-      {
-        std::string ack_str;
-
-        // If no specific ack string was given we construct a standard
-        // one.
-        if (!ack)
-        {
-          ack_str = cmd;
-          ack_str += "\r\nOK\r\n";
-          ack = ack_str.c_str();
-        }
-
-        // Send command
-        inf("%s: %s", DTR("sending command"), sanitize(cmd).c_str());
-        int sv = std::strlen(cmd);
-        int rv = m_uart->write(cmd, sv);
-
-        double deadline = Clock::get() + timeout;
-        m_widx = 0;
-
-        while ((Clock::get() < deadline) && m_widx < (c_buffer_size - 1))
-        {
-          consumeMessages();
-
-          Delay::wait(0.1);
-          rv = m_uart->read(m_buffer + m_widx, 64);
-
-          if (rv > 0)
-          {
-            m_widx += rv;
-            if (m_widx > c_buffer_size - 1)
-              m_widx = c_buffer_size - 1;
-            m_buffer[m_widx] = 0;
-            inf("%s: %s", DTR("receiving"), sanitize(m_buffer).c_str());
-            if (std::strstr(m_buffer, ack))
-              return true;
-          }
-        }
-
-        return false;
-      }
-
-      //! Get RSSI value.
-      //! @return RSSI.
-      float
-      readRSSI(void)
-      {
-        char bfr[32];
-        int rssi = 0;
-        int ber = 0;
-        float value = -1.0f;
-
-        m_uart->setCanonicalInput(true);
-
-        // Send command.
-        m_uart->write("AT+CSQ\r");
-
-        if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
-          goto recover;
-
-        // Read echo.
-        if (m_uart->readString(bfr, sizeof(bfr)) < 0)
-          goto recover;
-
-        if (std::strcmp(bfr, "AT+CSQ\r\r\n") != 0)
-          goto recover;
-
-        // Read response.
-        if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
-          goto recover;
-
-        if (m_uart->readString(bfr, sizeof(bfr)) < 0)
-          goto recover;
-
-        // Parse response.
-        if (std::sscanf(bfr, "+CSQ: %d,%d\r\n", &rssi, &ber) != 2)
-          goto recover;
-
-        if (rssi >= 0 && rssi <= 9)
-          value = (rssi / 9.0) * 25.0f;
-        else if (rssi >= 10 && rssi <= 14)
-          value = 25.0f + (((rssi - 10) / 4.0f) * 25.0f);
-        else if (rssi >= 15 && rssi <= 19)
-          value = 50.0f + (((rssi - 15) / 4.0f) * 25.0f);
-        else if (rssi >= 20)
-        {
-          if (rssi >= 31)
-            rssi = 31;
-
-          value = 75.0f + (((rssi - 20) / 11.0f) * 25.0f);
-        }
-
-      recover:
-        m_uart->setCanonicalInput(false);
-        m_uart->flush();
-
-        return value;
-      }
-
-      //! Send SMS.
-      //! @param[in] number recipient number.
-      //! @param[in] msg content of the  message to be sent.
-      //! @return true if sucessful, false otherwise.
-      bool
-      sendSMS(const std::string& number, const std::string& msg)
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
-        std::string cmd = "AT+CMGS=\"" + number + "\"\r";
-        std::string ack = cmd + "\r\n>";
-        std::string sms = msg + "\x1A";
-        std::string sms_ack = String::str("\r\n%s\r\n+CMGS:", msg.c_str());
-
-        inf("%s '%s'", DTR("sending SMS to"), number.c_str());
-
-        // Try sending the SMS.
-        bool sms_sent = false;
-        if (sendCommand(cmd.c_str(), ack.c_str(), 10.0))
-        {
-          if (sendCommand(sms.c_str(), sms_ack.c_str(), m_args.sms_tout))
-            sms_sent = true;
-        }
-
-        if (sms_sent)
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-          return true;
-        }
-
-        setEntityState(IMC::EntityState::ESTA_ERROR, DTR("failed to send SMS"));
-        return false;
-      }
-
-      //! Process received SMS.
-      //! @param[in] id author identifier.
-      //! @param[in] from author number.
-      //! @param[in] date date of the message.
-      //! @param[in] msg content of the received message.
       void
-      processRxSMS(const int id, const char* from, const char* date, const char* msg)
+      consume(const IMC::IoEvent* msg)
       {
-        // Invalid message, do nothing
-        if (id < 0)
+        if (msg->getSource() != getSystemId())
           return;
 
-        // Print the message
-        inf("%s %d = %s = %s", DTR("Received SMS: id"), id, DTR("from"), sanitize(from).c_str());
-        inf("%s = %s", DTR("timestamp"), sanitize(date).c_str());
-        inf("%s = \"%s\"", DTR("msg"), sanitize(msg).c_str());
+        if (msg->getDestination() != getEntityId())
+          return;
 
-        // Parse the message
-        if (std::strncmp(msg, "Plan ", 5) == 0)
-        {
-          // Plan control message!
-          IMC::PlanControl pc;
-          pc.type = IMC::PlanControl::PC_REQUEST;
-          pc.op = IMC::PlanControl::PC_START;
-          char plan_id[32];
-
-          // Parse the plan id
-          std::sscanf(msg, "Plan %s", plan_id);
-          pc.plan_id = plan_id;
-
-          inf("%s (%s = %s)", DTR("Received SMS request to start plan"), DTR("id"), sanitize(pc.plan_id).c_str());
-
-          // Send the plan start request
-          dispatch(pc);
-        }
-
-        // If message starts with 'cmd', send the corresponding PlanGeneration message
-        if (std::strncmp(msg, "Cmd ", 4) == 0)
-        {
-          IMC::PlanGeneration pg;
-          pg.cmd = IMC::PlanGeneration::CMD_EXECUTE;
-          pg.op = IMC::PlanGeneration::OP_REQUEST;
-          // use only the last part of the message
-          pg.plan_id = msg[4];
-          dispatch(pg);
-        }
-      }
-
-      //! Read SMS.
-      void
-      readSMS(void)
-      {
-        char bfr[128];
-        bool checkok = false;
-        // Message data
-        int id = -1;
-        char from[32], time[21];
-        std::string txt;
-        std::vector<unsigned> to_delete;
-
-        m_uart->setCanonicalInput(true);
-
-        // Send command.
-        m_uart->write("AT+CMGL=\"REC UNREAD\"\r");
-
-        if (m_uart->hasNewData(2.0) != IOMultiplexing::PRES_OK)
-          goto recover;
-
-        // Read echo.
-        if (m_uart->readString(bfr, sizeof(bfr)) < 0)
-          goto recover;
-
-        if (std::strcmp(bfr, "AT+CMGL=\"REC UNREAD\"\r\r\n") != 0)
-          goto recover;
-
-        // Read messages.
-        while (m_uart->hasNewData(2.0) == IOMultiplexing::PRES_OK)
-        {
-          if (m_uart->readString(bfr, sizeof(bfr)) < 0)
-            goto recover;
-
-          // Check for a new message header, or for the end of the list
-          if ((std::strncmp(bfr, "+CMGL", 5) == 0) ||
-              (checkok == true && (std::strncmp(bfr, "OK\r\n", 4) == 0)))
-          {
-            if (id >= 0)
-            {
-              // Process the previous message
-              processRxSMS(id, from, time, txt.c_str());
-
-              // Add the id to the delete list
-              to_delete.push_back(id);
-            }
-
-            // Parse header and clear the previous text
-            std::sscanf(bfr, "+CMGL: %d,\"REC UNREAD\",\"%[^\"]\",,\"%[^\"]\"", &id, from, time);
-            txt.clear();
-          }
-          // Check for newline (message list may have ended)
-          else if (std::strncmp(bfr, "\r", 1) == 0)
-          {
-            checkok = true;
-          }
-          else
-          {
-            // Store the message contents
-            txt.append(bfr);
-          }
-        }
-
-      recover:
-        m_uart->setCanonicalInput(false);
-        m_uart->flush();
-
-        // Delete the messages after we're done parsing them
-        while (to_delete.size() > 0)
-        {
-          std::string command = "AT+CMGD=" + uncastLexical(to_delete.back()) + "\r";
-          to_delete.pop_back();
-
-          if (!sendCommand(command.c_str()))
-            err("%s", DTR("failed to delete stored SMS message"));
-        }
+        if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
+          throw RestartNeeded(DTR("input error"), 5);
       }
 
       void
@@ -477,49 +220,65 @@ namespace Transports
       }
 
       void
+      processQueue(void)
+      {
+        if (m_queue.empty())
+          return;
+
+        SMS sms = m_queue.top();
+        m_queue.pop();
+
+        // Message is too old, discard it.
+        if (Clock::get() >= sms.deadline)
+        {
+          war(DTR("discarded expired SMS to recipient '%s'"), sms.recipient.c_str());
+          return;
+        }
+
+        try
+        {
+          m_driver->getRSSI();
+          m_driver->sendSMS(sms.recipient, sms.message, m_args.sms_tout);
+        }
+        catch (std::exception& e)
+        {
+          inf(DTR("failed to send SMS: %s"), e.what());
+          m_queue.push(sms);
+        }
+      }
+
+      void
+      pollStatus(void)
+      {
+        try
+        {
+          if (m_rssi_timer.overflow())
+          {
+            m_rssi_timer.reset();
+            m_driver->getRSSI();
+          }
+
+          if (m_rsms_timer.overflow())
+          {
+            m_rsms_timer.reset();
+            m_driver->checkMessages();
+          }
+        }
+        catch (std::exception& e)
+        {
+          throw RestartNeeded(String::str(DTR("failed to poll status: %s"),
+                                          e.what()), 5);
+        }
+      }
+
+      void
       onMain(void)
       {
         while (!stopping())
         {
-          waitForMessages(0.5);
-
-          if (m_rssi_ctr.overflow())
-          {
-            m_rssi_ctr.reset();
-            m_rssi.value = readRSSI();
-            dispatch(m_rssi);
-          }
-
-          if (m_rsms_ctr.overflow())
-          {
-            m_rsms_ctr.reset();
-            readSMS();
-          }
-
-          if (!m_queue.empty())
-          {
-            SMS sms = m_queue.top();
-            m_queue.pop();
-
-            // Message is too old, discard it.
-            if (Clock::get() >= sms.deadline)
-            {
-              war(DTR("discarded expired SMS to recipient '%s'"), sms.recipient.c_str());
-            }
-            else
-            {
-              if (sendSMS(sms.recipient, sms.message))
-              {
-                inf(DTR("SMS sent"));
-              }
-              // We failed, push message back into the queue.
-              else
-              {
-                m_queue.push(sms);
-                err(DTR("SMS error"));
-              }
-            }
-          }
+          waitForMessages(1.0);
+          pollStatus();
+          processQueue();
         }
       }
     };

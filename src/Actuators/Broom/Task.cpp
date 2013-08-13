@@ -76,16 +76,16 @@ namespace Actuators
       ERR_MOTOR_TEMPERATURE = (1 << 7)
     };
 
-    const char* DevErrorStrings[] =
+    const char* c_dev_error_strings[] =
     {
-      DTR("init"),
-      DTR("i2c"),
-      DTR("power"),
-      DTR("hall"),
-      DTR("rotor locked"),
-      DTR("mcu temperature"),
-      DTR("bridge temperature"),
-      DTR("motor temperature")
+      DTR_RT("init"),
+      DTR_RT("i2c"),
+      DTR_RT("power"),
+      DTR_RT("hall"),
+      DTR_RT("rotor locked"),
+      DTR_RT("mcu temperature"),
+      DTR_RT("bridge temperature"),
+      DTR_RT("motor temperature")
     };
 
     //! Device Control Modes
@@ -223,7 +223,8 @@ namespace Actuators
       void
       onUpdateParameters(void)
       {
-        m_args.state_per = 1.0 / m_args.state_per;
+        if (paramChanged(m_args.state_per))
+          m_args.state_per = 1.0 / m_args.state_per;
 
         if (m_args.thrust_ctl_mode == "none")
           m_thrust_ctl_mode = MODE_NONE;
@@ -308,7 +309,7 @@ namespace Actuators
               for (int i = 0; i < 8; i++)
               {
                 if (data[0] & (1 << i))
-                  err(DTR("device error: %s"), DevErrorStrings[i]);
+                  err(DTR("device error: %s"), DTR(c_dev_error_strings[i]));
               }
 
               // FIXME: report this error properly
@@ -354,7 +355,7 @@ namespace Actuators
       void
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
-        inf(DTR("version: %u.%u.%u"), major, minor, patch);
+        inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
 
         // Enable legacy 1.0.0 protocol
         if (major == 1 && minor < 1)

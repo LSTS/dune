@@ -62,7 +62,6 @@ set(PROJECT_VERSION_PARTS
 # This directory will hold generated files.
 set(DUNE_GENERATED ${CMAKE_BINARY_DIR}/DUNEGeneratedFiles)
 
-include(${PROJECT_SOURCE_DIR}/cmake/Git.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/Macros.cmake)
 
 # Define options.
@@ -79,17 +78,9 @@ dune_option(GUI "Include Qt based GUI")
 dune_option(DC1394 "Enable support for libdc1394")
 dune_option(V4L2 "Enable support for libv4l2")
 dune_option(JS "Enable support for SpiderMonkey javascript engine")
-dune_option(JAI "Enable JAI camera support")
-dune_option(FFMPEG "Enable FFmpeg support")
-dune_option(H264 "Enable H264 support")
+dune_option(XENETH "Enable support for the Xeneth SDK")
 
 # Internationalization.
-if(DUNE_SYS_HAS_GETTEXT)
-  if(NOT DEFINED I18N)
-    set(I18N 1)
-  endif(NOT DEFINED I18N)
-  dune_option(I18N "Enable support for internationalization")
-endif(DUNE_SYS_HAS_GETTEXT)
 include(${PROJECT_SOURCE_DIR}/cmake/I18N.cmake)
 
 #############################################################################
@@ -165,6 +156,12 @@ else(SHARED)
   set(DUNE_STATIC 1)
 endif(SHARED)
 
+if(TLSF)
+  set(DUNE_USING_TLSF 1 CACHE INTERNAL "TLSF allocator")
+else(TLSF)
+  set(DUNE_USING_TLSF 0 CACHE INTERNAL "TLSF allocator")
+endif(TLSF)
+
 file(GLOB_RECURSE DUNE_CORE_SOURCES "${PROJECT_SOURCE_DIR}/src/DUNE/*.cpp")
 file(GLOB_RECURSE DUNE_CORE_HEADERS "${PROJECT_SOURCE_DIR}/src/DUNE/*.hpp"
   "${PROJECT_SOURCE_DIR}/src/DUNE/*.def")
@@ -176,6 +173,8 @@ configure_file(${PROJECT_SOURCE_DIR}/src/DUNE/Config.hpp.in
 
 install(FILES ${DUNE_GENERATED}/src/DUNE/Config.hpp
   DESTINATION include/DUNE)
+
+include(${PROJECT_SOURCE_DIR}/cmake/Version.cmake)
 
 set_source_files_properties(${DUNE_CORE_SOURCES}
   PROPERTIES COMPILE_FLAGS "${DUNE_CXX_FLAGS} ${DUNE_CXX_FLAGS_STRICT}")
@@ -227,6 +226,8 @@ else(DUNE_SHARED)
     endif(DUNE_CPU_32B)
   endif(DUNE_CXX_MICROSOFT AND DUNE_CPU_X86)
 endif(DUNE_SHARED)
+
+add_dependencies(dune-core dune-version)
 
 ##########################################################################
 #                          Tasks                                         #

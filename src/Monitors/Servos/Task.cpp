@@ -198,7 +198,8 @@ namespace Monitors
       void
       onUpdateParameters(void)
       {
-        m_args.max_rotation_rate = Angles::radians(m_args.max_rotation_rate);
+        if (paramChanged(m_args.max_rotation_rate))
+          m_args.max_rotation_rate = Angles::radians(m_args.max_rotation_rate);
 
         if (!m_args.pos_fault_detect && !m_args.curr_fault_detect)
           requestDeactivation();

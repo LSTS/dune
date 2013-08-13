@@ -233,10 +233,8 @@ namespace Sensors
       {
         for (unsigned i = 0; i < table_size; ++i)
         {
-          if (value == table[i])
+          if (value <= table[i])
             return i;
-          else if (value < table[i])
-            return (i == 0) ? 0 : i - 1;
         }
 
         return table_size - 1;

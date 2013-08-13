@@ -44,40 +44,42 @@ namespace Vision
     //! %Task arguments.
     struct Arguments
     {
-      // Camera IP address
+      //! Camera IP address.
       Address address;
-      // Maximum Frames Per Second
+      //! Maximum Frames Per Second.
       unsigned fps;
-      // Maximum Exposure
+      //! Maximum Exposure.
       float exposure_max;
-      // Exposure Knee
+      //! Exposure Knee.
       float exposure_knee;
-      // Maximum Gain
+      //! Maximum Gain.
       float gain_max;
-      // Gain knee
+      //! Gain knee.
       float gain_knee;
-      // Enable median filtering (helps with noise in low light/high gain settings)
+      //! Enable median filtering (helps with noise in low light/high gain settings).
       bool median_filter;
-      // Enable the LED strobe output
+      //! Enable the LED strobe output.
       bool strobe;
-      // Number of photos per volume.
+      //! LED strobe power channel.
+      std::string strobe_pwr;
+      //! Number of photos per volume.
       unsigned volume_size;
     };
 
     //! Device driver task.
     struct Task: public DUNE::Tasks::Task
     {
-      // HTTP camera port
+      //! HTTP camera port
       static const unsigned c_port = 80;
-      // Configuration parameters
+      //! Configuration parameters
       Arguments m_args;
-      // Video stream HTTP connection
+      //! Video stream HTTP connection
       HTTPClient* m_http;
-      // MJPEG boundary string
+      //! MJPEG boundary string
       std::string m_boundary;
-      // Destination log folder.
+      //! Destination log folder.
       Path m_log_dir;
-      // Current destination volume.
+      //! Current destination volume.
       Path m_volume;
       //! Current number of volumes.
       unsigned m_volume_count;
@@ -133,6 +135,9 @@ namespace Vision
         .defaultValue("true")
         .description("Enable Strobe");
 
+        param("Power Channel - Strobe", m_args.strobe_pwr)
+        .description("Power channel of the strobe");
+
         param("Volume Size", m_args.volume_size)
         .defaultValue("1000")
         .description("Number of photos per volume");
@@ -163,18 +168,41 @@ namespace Vision
       }
 
       void
+      setStrobePower(bool value)
+      {
+        if (!m_args.strobe)
+          return;
+
+        if (m_args.strobe_pwr.empty())
+          return;
+
+        IMC::PowerChannelControl pcc;
+        pcc.name = m_args.strobe_pwr;
+
+        if (value)
+          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+        else
+          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+
+        dispatch(pcc);
+        pcc.toText(std::cerr);
+      }
+
+      void
       onActivation(void)
       {
         m_activating = false;
         m_file_count = 0;
         m_volume_count = 0;
         changeVolume();
+        setStrobePower(true);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
       onDeactivation(void)
       {
+        setStrobePower(false);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
@@ -193,7 +221,7 @@ namespace Vision
 
         if (header[0] != "HTTP/1.0 200 OK\r\n")
         {
-          err("Failed to start video stream");
+          err(DTR("failed to start video stream"));
           stopVideo();
           return;
         }
@@ -210,7 +238,7 @@ namespace Vision
           }
         }
 
-        inf("Started video stream");
+        inf(DTR("started video stream"));
       }
 
       void

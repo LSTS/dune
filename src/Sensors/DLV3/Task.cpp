@@ -171,7 +171,7 @@ namespace Sensors
 
           if (no_data == 30)
           {
-            inf(DTR("waking device"));
+            inf(DTR("waking up device"));
             onResourceInitialization();
             m_uart->sendBreak(100);
             no_data = 0;

@@ -47,11 +47,22 @@ namespace Sensors
         m_avg_time_diff(0)
       {
         m_sock.setNoDelay(true);
-        m_sock.setReceiveTimeout(5);
-        m_sock.setSendTimeout(5);
+        setSocketTimeout(1.0);
         m_sock.connect(addr, port);
         m_sock.addToPoll(m_iom);
         m_bfr.resize(c_max_size);
+      }
+
+      ~CommandLink(void)
+      {
+        m_sock.delFromPoll(m_iom);
+      }
+
+      void
+      setSocketTimeout(double value)
+      {
+        m_sock.setSendTimeout(value);
+        m_sock.setReceiveTimeout(value);
       }
 
       int64_t
@@ -68,7 +79,7 @@ namespace Sensors
 
         const Packet* reply = read(MSG_ID_SYSTEM_TIME, COMMAND_TYPE_REPLY, 0, 0, 1.0);
         if (reply == NULL)
-          throw std::runtime_error("failed to get time");
+          throw std::runtime_error(DTR("failed to get time"));
 
         int64_t recv_time = Clock::getSinceEpochMsec();
         int64_t rtt = static_cast<int64_t>((recv_time - send_time) / 2.0);
@@ -124,8 +135,19 @@ namespace Sensors
         uint32_t reply_range = getPingRange(subsys);
         if (reply_range != range)
         {
-          throw std::runtime_error("range mismatch");
+          throw std::runtime_error(DTR("failed to set range"));
         }
+      }
+
+      void
+      setAGC(SubsystemId subsys, uint32_t value)
+      {
+        m_pkt.setMessageType(MSG_ID_ADC_AGC);
+        m_pkt.setCommandType(COMMAND_TYPE_SET);
+        m_pkt.setSubsystemNumber(subsys);
+        m_pkt.setChannel(0);
+        m_pkt.setValue(value);
+        sendPacket(m_pkt);
       }
 
       unsigned
@@ -141,7 +163,7 @@ namespace Sensors
         const Packet* reply = read(MSG_ID_PING_RANGE, COMMAND_TYPE_REPLY, subsys, 0, 1.0);
 
         if (reply == NULL)
-          throw std::runtime_error("failed to set range");
+          throw std::runtime_error(DTR("failed to get range"));
 
         return reply->getValue();
       }

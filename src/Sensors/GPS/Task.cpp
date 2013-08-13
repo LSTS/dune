@@ -60,6 +60,8 @@ namespace Sensors
     static const unsigned c_gprot_fields = 3;
     //! Minimum number of fields of PSATHPR sentence.
     static const unsigned c_psathpr_fields = 7;
+    //! Power on delay.
+    static const double c_pwr_on_delay = 5.0;
 
     struct Arguments
     {
@@ -75,6 +77,8 @@ namespace Sensors
       std::string init_cmds[c_max_init_cmds];
       //! Initialization replies.
       std::string init_rpls[c_max_init_cmds];
+      //! Power channels.
+      std::vector<std::string> pwr_channels;
     };
 
     struct Task: public Tasks::Task
@@ -116,6 +120,10 @@ namespace Sensors
         .defaultValue("4.0")
         .description("Input timeout");
 
+        param("Power Channel - Names", m_args.pwr_channels)
+        .defaultValue("")
+        .description("Device's power channels");
+
         param("Sentence Order", m_args.stn_order)
         .defaultValue("")
         .description("Sentence order");
@@ -151,6 +159,21 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
+        if (m_args.pwr_channels.size() > 0)
+        {
+          IMC::PowerChannelControl pcc;
+          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+          for (size_t i = 0; i < m_args.pwr_channels.size(); ++i)
+          {
+            pcc.name = m_args.pwr_channels[i];
+            dispatch(pcc);
+          }
+        }
+
+        Counter<double> timer(c_pwr_on_delay);
+        while (!stopping() && !timer.overflow())
+          waitForMessages(timer.getRemaining());
+
         try
         {
           m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);

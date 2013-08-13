@@ -44,9 +44,11 @@ namespace Plan
     //! Timeout for the vehicle state
     const double c_vs_timeout = 2.5;
     //! Plan Command operation descriptions
-    const char* c_op_desc[] = {DTR("Start Plan"), DTR("Stop Plan"), DTR("Load Plan"), DTR("Get Plan")};
+    const char* c_op_desc[] = {DTR_RT("Start Plan"), DTR_RT("Stop Plan"),
+                               DTR_RT("Load Plan"), DTR_RT("Get Plan")};
     //! Plan state descriptions
-    const char* c_state_desc[] = {DTR("BLOCKED"), DTR("READY"), DTR("INITIALIZING"), DTR("EXECUTING")};
+    const char* c_state_desc[] = {DTR_RT("BLOCKED"), DTR_RT("READY"),
+                                  DTR_RT("INITIALIZING"), DTR_RT("EXECUTING")};
     //! DataBase statement
     static const char* c_get_plan_stmt = "select data from Plan where plan_id=?";
 
@@ -62,6 +64,8 @@ namespace Plan
       float speed_conv_act;
       //! Duration of vehicle calibration process.
       uint16_t calibration_time;
+      //! Abort when a payload fails to activate
+      bool actfail_abort;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -72,6 +76,8 @@ namespace Plan
       Calibration* m_calib;
       //! True if a stop for calibration has been requested
       bool m_stopped_calib;
+      //! True if just waiting for minimum time of calibration
+      bool m_wait_min;
       //! Plan control interface
       IMC::PlanControlState m_pcs;
       IMC::PlanControl m_reply;
@@ -110,6 +116,7 @@ namespace Plan
         m_plan(NULL),
         m_calib(NULL),
         m_stopped_calib(false),
+        m_wait_min(false),
         m_db(NULL),
         m_get_plan_stmt(NULL)
       {
@@ -135,6 +142,10 @@ namespace Plan
         .units(Units::Second)
         .description("Duration of vehicle calibration commands");
 
+        param("Abort On Failed Activation", m_args.actfail_abort)
+        .defaultValue("false")
+        .description("Abort when a payload fails to activate");
+
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::EstimatedState>(this);
@@ -155,7 +166,8 @@ namespace Plan
       void
       onUpdateParameters(void)
       {
-        m_args.speriod = 1.0 / m_args.speriod;
+        if (paramChanged(m_args.speriod))
+          m_args.speriod = 1.0 / m_args.speriod;
       }
 
       void
@@ -241,21 +253,31 @@ namespace Plan
       {
         if (m_plan != NULL)
         {
-          m_plan->onEntityActivationState(resolveEntity(msg->getSourceEntity()), msg);
+          std::string id;
 
-          // If calibration is in progress and we're not waiting for any device
-          // and we have not yet send a request to stop calibration
-          // then stop calibration and move on with plan
-          if (m_calib->inProgress() && m_calib->pastMinimum() &&
-              !m_plan->waitingForDevice() && !m_stopped_calib)
+          try
           {
-            vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
+            id = resolveEntity(msg->getSourceEntity());
           }
-          else if (m_calib->hasFailed())
+          catch (...)
           {
-            onFailure(m_calib->getInfo());
-            m_reply.plan_id = m_spec.plan_id;
-            changeMode(IMC::PlanControlState::PCS_BLOCKED, m_calib->getInfo());
+            return;
+          }
+
+          if (!m_plan->onEntityActivationState(id, msg))
+          {
+            std::string error = String::str(DTR("failed to activate %s: %s"),
+                                            id.c_str(), msg->error.c_str());
+
+            if (m_args.actfail_abort)
+            {
+              onFailure(error);
+              changeMode(IMC::PlanControlState::PCS_READY, error, false);
+            }
+            else
+            {
+              err("%s", error.c_str());
+            }
           }
         }
       }
@@ -270,7 +292,7 @@ namespace Plan
 
         Path db_file = m_ctx.dir_db / "Plan.db";
 
-        inf(DTR("database file: '%s'"), db_file.c_str());
+        debug("database file: '%s'", db_file.c_str());
 
         m_db = new Database::Connection(db_file.c_str(), true);
         m_get_plan_stmt = new Database::Statement(c_get_plan_stmt, *m_db);
@@ -291,7 +313,7 @@ namespace Plan
         delete m_db;
         m_db = NULL;
 
-        inf(DTR("database connection closed"));
+        debug("database connection closed");
       }
 
       void
@@ -311,7 +333,10 @@ namespace Plan
 
         // Ignore failure if it failed to stop calibration
         if (vc->command == IMC::VehicleCommand::VC_STOP_CALIBRATION)
+        {
+          debug("%s", vc->info.c_str());
           error = false;
+        }
 
         if (initMode() || execMode())
         {
@@ -348,10 +373,39 @@ namespace Plan
             break;
         }
 
+        // update calibration status
         if (vs->op_mode == IMC::VehicleState::VS_CALIBRATION && !m_calib->inProgress())
+        {
           m_calib->start();
+          m_wait_min = false;
+        }
         else if (vs->op_mode != IMC::VehicleState::VS_CALIBRATION && m_calib->inProgress())
+        {
           m_calib->stop();
+        }
+        else if (m_calib->inProgress())
+        {
+          if (m_plan != NULL)
+          {
+            // check if some calibration time can be skipped
+            if (m_plan->waitingForDevice())
+            {
+              m_calib->forceRemainingTime(m_plan->calibTimeLeft());
+            }
+            // If we're past the minimum calibration time and have not yet
+            // send a request to stop calibration
+            else if (!m_stopped_calib && m_calib->pastMinimum())
+            {
+              vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
+            }
+          }
+        }
+        else if (m_calib->hasFailed())
+        {
+          onFailure(m_calib->getInfo());
+          m_reply.plan_id = m_spec.plan_id;
+          changeMode(IMC::PlanControlState::PCS_BLOCKED, m_calib->getInfo());
+        }
       }
 
       void
@@ -464,7 +518,8 @@ namespace Plan
         if (blockedMode())
           return;
 
-        changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("vehicle in EXTERNAL mode"), false);
+        changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                   DTR("vehicle in EXTERNAL mode"), false);
       }
 
       void
@@ -479,7 +534,7 @@ namespace Plan
         m_reply.op = pc->op;
         m_reply.plan_id = pc->plan_id;
 
-        inf(DTR("request -- %s (%s)"), c_op_desc[m_reply.op], m_reply.plan_id.c_str());
+        inf(DTR("request -- %s (%s)"), DTR(c_op_desc[m_reply.op]), m_reply.plan_id.c_str());
 
         if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
         {
@@ -539,14 +594,15 @@ namespace Plan
               spec_man.maneuver_id = arg->getName();
               spec_man.data.set(*man);
               m_spec.clear();
-	      m_spec.maneuvers.setParent(&m_spec);
+              m_spec.maneuvers.setParent(&m_spec);
               m_spec.plan_id = plan_id;
               m_spec.start_man_id = arg->getName();
               m_spec.maneuvers.push_back(spec_man);
             }
             else
             {
-              changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("plan load failed: undefined maneuver or plan"));
+              changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                         DTR("plan load failed: undefined maneuver or plan"));
               return false;
             }
           }
@@ -558,14 +614,16 @@ namespace Plan
 
           if (!lookForPlan(plan_id, m_spec))
           {
-            changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("plan load failed: ") + m_reply.info);
+            changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                       DTR("plan load failed: ") + m_reply.info);
             return false;
           }
         }
 
         if (!parsePlan(plan_startup))
         {
-          changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("plan validation failed: ") + m_reply.info);
+          changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                     DTR("plan validation failed: ") + m_reply.info);
           return false;
         }
 
@@ -581,7 +639,8 @@ namespace Plan
           if (m_vehicle_ready)
             changeMode(IMC::PlanControlState::PCS_READY, DTR("plan loaded"));
           else
-            changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("plan loaded but vehicle not ready"));
+            changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                       DTR("plan loaded but vehicle not ready"));
         }
 
         return true;
@@ -620,7 +679,7 @@ namespace Plan
           }
           else if (m_plan_loaded)
           {
-            inf(DTR("switching to new plan"));
+            debug("switching to new plan");
             return false;
           }
           else
@@ -736,7 +795,12 @@ namespace Plan
 
         // Flag the plan as starting
         if (initMode() || execMode())
+        {
+          if (!stopped)
+            m_plan->planStopped();
+
           m_plan->planStarted();
+        }
 
         dispatch(m_spec);
 
@@ -816,7 +880,7 @@ namespace Plan
 
         if (print)
         {
-          std::string str = Utils::String::str(DTR("reply -- %s (%s) -- %s"), c_op_desc[m_reply.op], m_reply.plan_id.c_str(), desc.c_str());
+          std::string str = Utils::String::str(DTR("reply -- %s (%s) -- %s"), DTR(c_op_desc[m_reply.op]), m_reply.plan_id.c_str(), desc.c_str());
 
           if (type == IMC::PlanControl::PC_FAILURE)
             err("%s", str.c_str());
@@ -872,9 +936,7 @@ namespace Plan
 
         if (s != m_pcs.state)
         {
-          debug(DTR("now in %s state"), c_state_desc[s]);
-
-          bool was_exec = execMode();
+          debug(DTR("now in %s state"), DTR(c_state_desc[s]));
 
           bool was_in_plan = initMode() || execMode();
 
@@ -882,13 +944,11 @@ namespace Plan
 
           bool is_in_plan = initMode() || execMode();
 
-          // if it was executing, then it no longer is,
-          // so the previous plan has stopped
-          if (was_exec)
-            m_plan->planStopped();
-
           if (was_in_plan && !is_in_plan)
-            changeLog("idle");
+          {
+            m_plan->planStopped();
+            changeLog("");
+          }
         }
 
         if (maneuver)
@@ -1004,7 +1064,8 @@ namespace Plan
         if (command == IMC::VehicleCommand::VC_START_CALIBRATION)
         {
           m_plan->calibrationStarted(m_calib);
-          m_vc.calib_time = m_calib->getTime();
+          // one second of tolerance for the vehicle supervisor
+          m_vc.calib_time = (uint16_t)(m_calib->getTime() + 1.0);
           m_stopped_calib = false;
         }
         else

@@ -46,7 +46,11 @@ using std::tan;
 //! Depth hysteresis for ignoring ranges and altitude
 static const float c_depth_hyst = 0.5;
 //! State to string for debug messages
-static const std::string c_str_states[] = {"Idle", "Tracking", "Depth", "Unsafe", "Avoiding"};
+static const std::string c_str_states[] = {DTR_RT("Idle"), DTR_RT("Tracking"),
+                                           DTR_RT("Depth"), DTR_RT("Unsafe"),
+                                           DTR_RT("Avoiding")};
+//! Bottom tracker name
+static const std::string c_bt_name = DTR_RT("BottomTrack");
 
 namespace DUNE
 {
@@ -58,7 +62,8 @@ namespace DUNE
     {
       m_cparcel.setSourceEntity(m_args->eid);
 
-      m_sdata = new SlopeData(m_args->fsamples, m_args->min_range, m_args->safe_pitch, m_args->slope_hyst);
+      m_sdata = new SlopeData(m_args->fsamples, m_args->min_range,
+                              m_args->safe_pitch, m_args->slope_hyst);
 
       reset();
     }
@@ -254,7 +259,7 @@ namespace DUNE
       // check if altitude value is becoming dangerous
       if (m_estate.alt < m_args->min_alt)
       {
-        debug(String::str("altitude is too low: %.2f. stopping motor.", m_estate.alt));
+        debug(String::str("altitude is too low: %.2f.", m_estate.alt));
 
         brake(true);
         m_mstate = SM_AVOIDING;
@@ -268,7 +273,7 @@ namespace DUNE
       // Check if forward range is too low
       if (m_sdata->isRangeLow())
       {
-        debug(String::str("frange is too low: %.2f. stopping motor.", m_sdata->getFRange()));
+        debug(String::str("frange is too low: %.2f.", m_sdata->getFRange()));
 
         brake(true);
         m_mstate = SM_AVOIDING;
@@ -289,9 +294,12 @@ namespace DUNE
       }
 
       // if reaching a limit in depth
-      if (m_estate.depth + m_estate.alt - m_z_ref.value > m_args->depth_limit + c_depth_hyst)
+      float depth_ref = m_estate.depth + m_estate.alt - m_z_ref.value;
+
+      if (depth_ref > m_args->depth_limit + c_depth_hyst &&
+          m_estate.depth > m_args->depth_limit)
       {
-        debug("depth is reaching unacceptable values, forcing depth control");
+        info(DTR("too deep, forcing depth control"));
 
         m_forced = FC_DEPTH;
         dispatchLimitDepth();
@@ -326,7 +334,7 @@ namespace DUNE
 
       if (m_sdata->isRangeLow())
       {
-        debug(String::str("frange is too low: %.2f. stopping motor.", m_sdata->getFRange()));
+        debug(String::str("frange is too low: %.2f.", m_sdata->getFRange()));
 
         m_forced = FC_NONE;
         brake(true);
@@ -362,7 +370,8 @@ namespace DUNE
         {
           debug("cannot use altitude");
           debug("moving away from slope top or ");
-          debug(String::str("distance to slope top is short: %.2f", m_sdata->getDistanceToSlope()));
+          debug(String::str("distance to slope top is short: %.2f",
+                            m_sdata->getDistanceToSlope()));
           debug("moving to tracking");
 
           dispatchSameZ();
@@ -377,9 +386,9 @@ namespace DUNE
       if ((m_estate.alt < m_args->min_alt) || m_sdata->isRangeLow())
       {
         if (m_estate.alt < m_args->min_alt)
-          debug(String::str("altitude is too low: %.2f. stopping motor.", m_estate.alt));
+          debug(String::str("altitude is too low: %.2f.", m_estate.alt));
         else
-          debug(String::str("frange is too low: %.2f. stopping motor.", m_sdata->getFRange()));
+          debug(String::str("frange is too low: %.2f.", m_sdata->getFRange()));
 
         brake(true);
         m_mstate = SM_AVOIDING;
@@ -401,7 +410,8 @@ namespace DUNE
         if (away_top)
         {
           debug("moving away from slope top or ");
-          debug(String::str("distance to slope top is short: %.2f", m_sdata->getDistanceToSlope()));
+          debug(String::str("distance to slope top is short: %.2f",
+                            m_sdata->getDistanceToSlope()));
           debug("moving to tracking");
 
           // dispatch same z reference sent by upper layer
@@ -429,22 +439,31 @@ namespace DUNE
       // If ranges or altitude cannot be used, then we're clueless
       if (m_sdata->isSurface(m_estate) || !isAltitudeValid())
       {
-        err("unable to avoid obstacle");
+        err(DTR("unable to avoid obstacle"));
         return;
       }
 
       // check if slope is safe right now and
       // check if buoyancy has pulled the vehicle up to a safe depth/altitude
-      if (!m_sdata->isTooSteep() && (m_z_ref.z_units == IMC::Z_ALTITUDE)
-          && (m_estate.alt >= m_z_ref.value))
+      if (!m_sdata->isTooSteep() && !m_sdata->isRangeLow())
       {
-        debug("above altitude reference and slope is safe");
+        if ((m_z_ref.z_units == IMC::Z_ALTITUDE) && (m_estate.alt >= m_z_ref.value))
+        {
+          debug("above altitude reference and slope is safe");
 
-        // Stop braking
-        brake(false);
-        dispatchSameZ();
-        m_mstate = SM_TRACKING;
-        return;
+          // Stop braking
+          brake(false);
+          dispatchSameZ();
+          m_mstate = SM_TRACKING;
+          return;
+        }
+        else if (m_z_ref.z_units == IMC::Z_DEPTH)
+        {
+          brake(false);
+          dispatchSameZ();
+          m_mstate = SM_TRACKING;
+          return;
+        }
       }
     }
 
@@ -457,9 +476,9 @@ namespace DUNE
       dispatchLoop(brk);
 
       if (start)
-        debug("Started braking");
+        info(DTR("Started braking"));
       else
-        debug("Stopped braking");
+        info(DTR("Stopped braking"));
     }
 
     void
@@ -546,16 +565,25 @@ namespace DUNE
     }
 
     void
+    BottomTracker::info(const std::string& msg) const
+    {
+      m_args->task->inf("[%s.%s] >> %s", DTR(c_bt_name.c_str()),
+                        DTR(c_str_states[m_mstate].c_str()), msg.c_str());
+    }
+
+    void
     BottomTracker::debug(const std::string& msg) const
     {
-      m_args->task->debug("[BottomTrack.%s] >> %s",
-                          c_str_states[m_mstate].c_str(), msg.c_str());
+      m_args->task->debug("[%s.%s] >> %s", DTR(c_bt_name.c_str()),
+                          DTR(c_str_states[m_mstate].c_str()), msg.c_str());
     }
 
     void
     BottomTracker::err(const std::string& msg) const
     {
-      throw std::runtime_error("[BottomTrack." + c_str_states[m_mstate] + "] >> " + msg);
+      throw std::runtime_error(String::str("[%s.%s] >> %s", DTR(c_bt_name.c_str()),
+                                           DTR(c_str_states[m_mstate].c_str()),
+                                           msg.c_str()));
     }
   }
 }

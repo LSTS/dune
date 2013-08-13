@@ -10,7 +10,7 @@
           xsi:noNamespaceSchemaLocation="IMC.xsd"
           name="IMC"
           long-name="Inter Module Communication"
-          version="5.1.0">
+          version="5.2.0">
 
   <description>
     This document describes the communications protocol associated
@@ -336,7 +336,7 @@
       supplemental fields, it is always placed at the beginning of a
       packet.
     </description>
-    <field name="Synchronization Number" abbrev="sync" type="uint16_t" value="0xFE51" fixed="true">
+    <field name="Synchronization Number" abbrev="sync" type="uint16_t" value="0xFE52" fixed="true">
       <description>
         The synchronization number marks the beginning of a packet.
 
@@ -787,6 +787,13 @@
         Human-readable error message.
       </description>
     </field>
+  </message>
+
+  <message id="15" name="Query Entity Activation State" abbrev="QueryEntityActivationState" source="vehicle,ccu">
+    <description>
+      Query the activation/deactivation state of an entity. The
+      recipient shall reply with an EntityActivationState message.
+    </description>
   </message>
 
   <!-- Simulation -->
@@ -1371,6 +1378,70 @@
     </field>
     <field name="Error Message" abbrev="error" type="plaintext"/>
   </message>
+
+  <message id="160" name="Text Message" abbrev="TextMessage" source="vehicle">
+    <description>
+      A text message has been received.
+    </description>
+    <field name="Origin" abbrev="origin" type="plaintext">
+      <description>
+        Message origin (if known).
+      </description>
+    </field>
+    <field name="Text" abbrev="text" type="plaintext">
+      <description>
+        Message contents.
+      </description>
+    </field>
+  </message>
+
+  <message id="170" name="Received Iridium Message" abbrev="IridiumMsgRx" source="vehicle,ccu">
+    <field name="Origin Identifier" abbrev="origin" type="plaintext">
+      <description>The unique identifier of this message's origin device (e.g. lauv-xtreme-2, manta-0).</description>
+    </field>
+    <field name="Timestamp" abbrev="htime" type="fp64_t" unit="s">
+        <description>Timestamp (Epoch time).</description>
+    </field>
+    <field name="Latitude Reference" abbrev="lat" type="fp64_t" unit="rad" />
+    <field name="Longitude Reference" abbrev="lon" type="fp64_t" unit="rad" />
+    <field name="Data" abbrev="data" type="rawdata">
+      <description>
+        Message data.
+      </description>
+    </field>
+  </message>
+
+  <message id="171" name="Transmit Iridium Message" abbrev="IridiumMsgTx" source="vehicle,ccu">
+    <field name="Request Identifier" abbrev="req_id" type="uint16_t">
+        <description>The request identifier used to receive transmission updates.</description>
+    </field>
+    <field name="Time to live" abbrev="ttl" type="uint16_t" unit="s">
+        <description>Time, in seconds, after which there will be no more atempts to transmit the message.</description>
+    </field>
+    <field name="Destination Identifier" abbrev="destination" type="plaintext">
+      <description>The unique identifier of this message's destination (e.g. lauv-xtreme-2, manta-0).</description>
+    </field>
+    <field name="Data" abbrev="data" type="rawdata">
+      <description>
+        Message data.
+      </description>
+    </field>
+  </message>
+
+  <message id="172" name="Iridium Transmission Status" abbrev="IridiumTxStatus" source="vehicle,ccu">
+    <field name="Request Identifier" abbrev="req_id" type="uint16_t">
+        <description>The request identifier used to receive transmission updates</description>
+    </field>
+    <field name="Status Code" abbrev="status" type="uint8_t" unit="Enumerated" prefix="TXSTATUS">
+        <value abbrev="OK" name="Successfull transmission" id="1"/>
+        <value abbrev="ERROR" name="Error while trying to transmit message" id="2"/>
+        <value abbrev="QUEUED" name="Message has been queued for transmission" id="3"/>
+        <value abbrev="TRANSMIT" name="Message is currently being transmitted" id="4"/>
+        <value abbrev="EXPIRED" name="Message's TTL has expired. Transmition cancelled." id="5"/>
+    </field>
+    <field name="Status Text" abbrev="text" type="plaintext"/>
+  </message>
+
 
   <!-- Acoustic Networking -->
   <message id="200" name="LBL Range" abbrev="LblRange" source="vehicle" flags="periodic">
@@ -2587,6 +2658,27 @@
     </field>
   </message>
 
+  <message id="284" name="Data Sanity" abbrev="DataSanity">
+    <description>
+      Report sanity or lack of it in the data output by a sensor.
+    </description>
+    <field name="Sanity" abbrev="sane" type="uint8_t" unit="Enumerated" prefix="DS">
+      <description>
+        Whether the data is sane or not sane.
+      </description>
+      <value id="0" abbrev="SANE" name="Sane">
+        <description>
+          Data is sane.
+        </description>
+      </value>
+      <value id="1" abbrev="NOT_SANE" name="Not Sane">
+        <description>
+          Data is not sane.
+        </description>
+      </value>
+    </field>
+  </message>
+
   <!-- Actuation -->
   <message id="300" name="Camera Zoom" abbrev="CameraZoom" source="vehicle">
     <description>
@@ -3437,6 +3529,20 @@
         The East offset variance of the North/East/Down
         field with respect to LLH.
       </description>
+    </field>
+  </message>
+
+  <message id="361" name="Alignment State" abbrev="AlignmentState" source="vehicle">
+    <description>
+      This message notifies the vehicle is ready for dead-reckoning missions.
+    </description>
+    <field name="State" abbrev="state" type="uint8_t" unit="Enumerated" prefix="AS">
+      <description>
+        Alignment State.
+      </description>
+      <value id="0" name="Not Aligned" abbrev="NOT_ALIGNED"/>
+      <value id="1" name="Aligned" abbrev="ALIGNED"/>
+      <value id="2" name="Not Supported" abbrev="NOT_SUPPORTED"/>
     </field>
   </message>
 
@@ -5158,7 +5264,6 @@
     </field>
   </message>
 
-  <!-- NOT YET IMPLEMENTED -->
   <message id="478" name="Follow Reference Maneuver" abbrev="FollowReference" source="ccu">
     <description>
       This maneuver follows a reference given by an external entity.
@@ -5202,12 +5307,14 @@
       <value abbrev="LOCATION" name="Use Location Reference" id="0x01"/>
       <value abbrev="SPEED" name="Use Speed Reference" id="0x02"/>
       <value abbrev="Z" name="Use Z Reference" id="0x04"/>
+      <value abbrev="RADIUS" name="Use Radius Reference" id="0x08"/>
       <value abbrev="MANDONE" name="Flag Maneuver Completion" id="0x80"/>
     </field>
     <field name="Speed Reference" abbrev="speed" type="message" message-type="DesiredSpeed"/>
     <field name="Z Reference" abbrev="z" type="message" message-type="DesiredZ"/>
     <field name="Latitude Reference" abbrev="lat" type="fp64_t"/>
     <field name="Longitude Reference" abbrev="lon" type="fp64_t"/>
+    <field name="Radius" abbrev="radius" type="fp32_t"/>
   </message>
 
   <message id="480" name="Follow Reference State" abbrev="FollowRefState" source="vehicle">
@@ -6292,7 +6399,7 @@
     </field>
   </message>
 
-  <message id="651" name="TREX Observation" abbrev="TrexObservation" source="vehicle,ccu">
+  <message id="651" name="TREX Observation" abbrev="TrexObservation" source="vehicle,ccu" flags="deprecated">
     <description>
       This message is sent to TREX to post timeline observations
     </description>
@@ -6301,7 +6408,7 @@
     <field name="Attributes" abbrev="attributes" type="plaintext" unit="TupleList" />
   </message>
 
-  <message id="652" name="TREX Command" abbrev="TrexCommand" source="vehicle,ccu">
+  <message id="652" name="TREX Command" abbrev="TrexCommand" source="vehicle,ccu" flags="deprecated">
     <description>
       This message is used to control TREX execution
     </description>
@@ -6320,6 +6427,62 @@
     <field name="Goal XML" abbrev="goal_xml" type="plaintext">
       <description>The goal encoded as XML, if applicable (OP == POST_GOAL)</description>
     </field>
+  </message>
+
+  <message id="655" abbrev="TrexOperation" name="TREX Operation" source="vehicle,ccu">
+    <description>
+      This message is used to control TREX execution
+    </description>
+
+    <field name="Operation" abbrev="op" type="uint8_t" unit="Enumerated" prefix="OP">
+      <value abbrev="POST_TOKEN" name="Post Token" id="1"/>
+      <value abbrev="POST_GOAL" name="Post Goal" id="2"/>
+      <value abbrev="RECALL_GOAL" name="Recall Goal" id="3"/>
+      <value abbrev="REQUEST_PLAN" name="Request current plan" id="4"/>
+      <value abbrev="REPORT_PLAN" name="Report current plan" id="5"/>
+    </field>
+
+    <field name="Goal Id" abbrev="goal_id" type="plaintext">
+      <description>The id of the goal, if applicable (OP == POST_GOAL || OP == RECALL_GOAL)</description>
+    </field>
+
+    <field name="Token" abbrev="token" type="message" message-type="TrexToken">
+      <description>Goal / observation to post, if applicable (OP == POST_GOAL || OP == POST_TOKEN)</description>
+    </field>
+  </message>
+
+  <message id="656" abbrev="TrexAttribute" name="TREX Attribute" source="vehicle,ccu">
+
+   <field name="Attribute Name" abbrev="name" type="plaintext">
+      <description>Name of this attribute.</description>
+    </field>
+
+    <field name="Attribute type" abbrev="attr_type" type="uint8_t" unit="Enumerated" prefix="TYPE">
+      <value abbrev="BOOL" name="Boolean Domain" id="1"/>
+      <value abbrev="INT" name="Integer Domain" id="2"/>
+      <value abbrev="FLOAT" name="Float Domain" id="3"/>
+      <value abbrev="STRING" name="String Domain" id="4"/>
+      <value abbrev="ENUM" name="Enumerated Domain" id="5"/>
+    </field>
+
+    <field name="Minimum" abbrev="min" type="plaintext">
+      <description>Lower bound of this interval. Empty text means no bound.</description>
+    </field>
+
+    <field name="Maximum" abbrev="max" type="plaintext">
+      <description>Upper bound of this interval. Empty text means no bound.</description>
+    </field>
+  </message>
+
+  <message id="657" abbrev="TrexToken" name="TREX Token" source="vehicle,ccu">
+    <field name="Timeline" abbrev="timeline" type="plaintext" />
+    <field name="Predicate" abbrev="predicate" type="plaintext" />
+    <field name="Attributes" abbrev="attributes" type="message-list" message-type="TrexAttribute" />
+  </message>
+
+  <message id="658" abbrev="TrexPlan" name="TREX Plan" source="vehicle,ccu">
+    <field name="Reactor name" abbrev="reactor" type="plaintext" />
+    <field name="Tokens" abbrev="tokens" type="message-list" message-type="TrexToken" />
   </message>
 
   <!-- Vision -->
@@ -6522,5 +6685,23 @@
 
   <message id="812" name="Pop Entity Parameters" abbrev="PopEntityParameters" source="ccu,vehicle">
     <field name="Entity Name" abbrev="name" type="plaintext"/>
+  </message>
+
+  <message id="813" name="I/O Event" abbrev="IoEvent" source="ccu,vehicle">
+    <description>
+      Notification of an I/O event.
+    </description>
+    <field name="Type" abbrev="type" type="uint8_t" unit="Enumerated" prefix="IOV_TYPE">
+      <description>
+        Event type.
+      </description>
+      <value abbrev="INPUT" name="Input Available" id="1"/>
+      <value abbrev="INPUT_ERROR" name="Input Error" id="2"/>
+    </field>
+    <field name="Error Message" abbrev="error" type="plaintext">
+      <description>
+        Human-readable error message.
+      </description>
+    </field>
   </message>
 </messages>

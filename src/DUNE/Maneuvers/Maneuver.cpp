@@ -86,7 +86,7 @@ namespace DUNE
       }
       catch (...)
       {
-        throw std::runtime_error("unable to unlock");
+        throw std::runtime_error(DTR("unable to unlock"));
       }
     }
 
@@ -131,6 +131,12 @@ namespace DUNE
       m_mcs.info = msg;
       m_mcs.eta = 0;
       dispatch(m_mcs);
+    }
+
+    void
+    Maneuver::signalInvalidZ(void)
+    {
+      signalError(DTR("unsupported vertical reference"));
     }
 
     void

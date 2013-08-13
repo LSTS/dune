@@ -55,7 +55,9 @@ namespace Control
       //! Required loops
       static const uint32_t c_required = IMC::CL_TORQUE;
       //! Loops names
-      static const std::string c_loop_name[] = {DTR("Roll"), DTR("Pitch"), DTR("Depth"), DTR("Heading"), DTR("Heading Rate")};
+      static const std::string c_loop_name[] = {DTR_RT("Roll"), DTR_RT("Pitch"),
+                                                DTR_RT("Depth"), DTR_RT("Heading"),
+                                                DTR_RT("Heading Rate")};
       //! Loops units
       static const unsigned c_loop_unit[] = {Units::Degree, Units::Degree, Units::Meter, Units::DegreePerSecond, Units::Degree};
 

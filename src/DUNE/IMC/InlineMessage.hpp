@@ -100,7 +100,7 @@ namespace DUNE
       get(void) const
       {
         if (isNull())
-          throw std::runtime_error("dereference of null inline message");
+          throw std::runtime_error(DTR("dereference of null inline message"));
 
         return m_msg;
       }
@@ -109,7 +109,7 @@ namespace DUNE
       get(void)
       {
         if (isNull())
-          throw std::runtime_error("dereference of null inline message");
+          throw std::runtime_error(DTR("dereference of null inline message"));
         return m_msg;
       }
 

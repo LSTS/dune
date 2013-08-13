@@ -59,18 +59,41 @@ namespace Transports
       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     };
 
-    Session::Session(Tasks::Context& ctx, TCPSocket* sock, const Address& local_addr):
+    //! File/directory permissions.
+    enum Permissions
+    {
+      PERM_FILE = 0,
+      PERM_FOLDER = 1,
+      PERM_UNKNOWN = 2
+    };
+
+    static const char* c_perms[] =
+    {
+      "-rw-r--r--",
+      "drwxr-xr-x",
+      "----------"
+    };
+
+    Session::Session(Tasks::Context& ctx, TCPSocket* sock, const Address& local_addr, double timeout):
       m_ctx(ctx),
       m_sock(sock),
       m_local_addr(local_addr),
       m_data_pasv(false),
-      m_rest_offset(-1)
+      m_rest_offset(-1),
+      m_timer(timeout)
     {
       m_root = ctx.dir_log;
       m_path = "/";
 
+      m_sock->setNoDelay(true);
+      m_sock->setReceiveTimeout(5);
+      m_sock->setSendTimeout(5);
+
       // Initialize passive data socket.
       m_sock_data = new TCPSocket;
+      m_sock_data->setNoDelay(true);
+      m_sock_data->setReceiveTimeout(5);
+      m_sock_data->setSendTimeout(5);
       m_sock_data->bind(0, local_addr);
       m_sock_data->listen(5);
     }
@@ -97,7 +120,13 @@ namespace Transports
       if (m_sock == NULL)
         return;
 
-      sendReply(221, "Service closing control connection.");
+      try
+      {
+        sendReply(221, "Service closing control connection.");
+      }
+      catch (...)
+      { }
+
       delete m_sock;
       m_sock = NULL;
     }
@@ -105,28 +134,34 @@ namespace Transports
     void
     Session::sendFileInfo(const Path& path, TCPSocket* sock, Time::BrokenDown& time_ref)
     {
-      char type_char = '-';
       Path::Type type = path.type();
       int64_t size = 0;
+      const char* perm = NULL;
 
       if (type == Path::PT_FILE)
       {
+        perm = c_perms[PERM_FILE];
         size = path.size();
       }
       else if (type == Path::PT_DIRECTORY)
       {
-        type_char = 'd';
+        perm = c_perms[PERM_FOLDER];
+      }
+      else
+      {
+        perm = c_perms[PERM_UNKNOWN];
       }
 
       time_t mod_time = path.getLastModifiedTime();
       Time::BrokenDown time_mod(mod_time);
       std::string path_name = path.basename().str();
 
+      m_bfr[0] = '\0';
       if (time_ref.year == time_mod.year)
       {
         String::format(m_bfr, sizeof(m_bfr),
-                       "%c---------  0 %-10s %-10s %10lu %s %u %02u:%02u %s\r\n",
-                       type_char, "unknown", "unknown",
+                       "%s  0 %-10s %-10s %10lld %s %u %02u:%02u %s\r\n",
+                       perm, "unknown", "unknown",
                        size,
                        c_months[time_mod.month - 1],
                        time_mod.day,
@@ -137,8 +172,8 @@ namespace Transports
       else
       {
         String::format(m_bfr, sizeof(m_bfr),
-                       "%c---------  0 %-10s %-10s %10lu %s %u %u %s\r\n",
-                       type_char, "unknown", "unknown",
+                       "%s  0 %-10s %-10s %10lld %s %u %u %s\r\n",
+                       perm, "unknown", "unknown",
                        size,
                        c_months[time_mod.month - 1],
                        time_mod.day,
@@ -408,7 +443,7 @@ namespace Transports
       try
       {
         Path path = getAbsolutePath(arg);
-        path.remove();
+        path.remove(Path::MODE_RECURSIVE);
         sendReply(250, "Requested file action okay, completed.");
       }
       catch (...)
@@ -482,6 +517,9 @@ namespace Transports
 
       while (!isStopping())
       {
+        if (m_timer.overflow())
+          break;
+
         try
         {
           if (!iom.poll(1.0))
@@ -497,7 +535,10 @@ namespace Transports
           for (int i = 0; i < rv; ++i)
           {
             if (m_parser.parse(m_bfr[i]))
+            {
               handleCommand(m_parser.getCode(), m_parser.getParameters());
+              m_timer.reset();
+            }
           }
         }
         catch (...)

@@ -118,7 +118,8 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        m_args.yaw = Math::Angles::radians(m_args.yaw);
+        if (paramChanged(m_args.yaw))
+          m_args.yaw = Math::Angles::radians(m_args.yaw);
       }
 
       //! Release allocated resources.
@@ -205,9 +206,9 @@ namespace Simulators
 
         // Fill attitude.
         double* attitude = m_vehicle->getOrientation();
-        m_sstate.phi = attitude[0];
-        m_sstate.theta = attitude[1];
-        m_sstate.psi = attitude[2];
+        m_sstate.phi = Angles::normalizeRadian(attitude[0]);
+        m_sstate.theta = Angles::normalizeRadian(attitude[1]);
+        m_sstate.psi = Angles::normalizeRadian(attitude[2]);
 
         // Fill angular velocity.
         double* av = m_vehicle->getAngularVelocity();

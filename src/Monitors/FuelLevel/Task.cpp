@@ -254,7 +254,8 @@ namespace Monitors
       void
       onUpdateParameters(void)
       {
-        m_args.decay_factor *= 0.01f;
+        if (paramChanged(m_args.decay_factor))
+          m_args.decay_factor *= 0.01f;
 
         // Validate models.
         for (unsigned i = 0; i < MDL_TOTAL; ++i)

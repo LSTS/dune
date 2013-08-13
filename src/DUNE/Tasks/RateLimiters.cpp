@@ -82,7 +82,7 @@ namespace DUNE
             continue;
           }
         }
-        throw std::runtime_error("invalid rate limiter: " + spec[i]);
+        throw std::runtime_error(Utils::String::str(DTR("invalid rate limiter: %s"), spec[i].c_str()));
       }
     }
   }

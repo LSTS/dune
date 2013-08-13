@@ -65,6 +65,7 @@ namespace Plan
       //! Default constructor.
       Calibration(uint16_t min_time):
         m_min_time(min_time),
+        m_time(-1.0),
         m_state(CS_NONE)
       {
 
@@ -73,9 +74,9 @@ namespace Plan
       //! Set the calibration time
       //! @param[in] time time to set in calibration
       void
-      setTime(uint16_t time)
+      setTime(float time)
       {
-        m_time = std::max(m_min_time, time);
+        m_time = std::max((float)m_min_time, time);
 
         if (m_time > 0)
           m_state = CS_NOT_STARTED;
@@ -87,7 +88,7 @@ namespace Plan
       void
       start(void)
       {
-        if (m_time)
+        if (m_time >= 0.0)
         {
           m_state = CS_IN_PROGRESS;
           m_timer.setTop(m_time);
@@ -114,9 +115,26 @@ namespace Plan
         m_state = CS_FAILED;
       }
 
+      //! Set new remaining time for calibration
+      //! Calibration time cannot increase
+      //! @param[in] time new calibration time
+      void
+      forceRemainingTime(float time)
+      {
+        if (time < 0.0)
+          return;
+
+        float elapsed = std::max(m_time - m_timer.getRemaining(), 0.0f);
+
+        float new_top = std::min(m_timer.getRemaining(), time);
+
+        m_timer.setTop(new_top);
+        m_time = new_top + elapsed;
+      }
+
       //! Get the calibration time
       //! @return calibration time
-      uint16_t
+      float
       getTime(void) const
       {
         return m_time;
@@ -182,7 +200,7 @@ namespace Plan
       //! Minimum time for the calibration
       uint16_t m_min_time;
       //! Current plan's calibration time if any
-      uint16_t m_time;
+      float m_time;
       //! Calibration state
       CalibrationState m_state;
       //! Timer to estimate time left in calibration

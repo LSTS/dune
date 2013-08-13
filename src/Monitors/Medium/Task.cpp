@@ -52,6 +52,8 @@ namespace Monitors
       float water_timeout;
       //! Wet measurements threshold.
       float water_threshold;
+      //! Initialization time.
+      float init_time;
       //! GPS timeout.
       float gps_timeout;
       //! Depth threshold.
@@ -65,12 +67,14 @@ namespace Monitors
     {
       //! Vehicle Medium.
       IMC::VehicleMedium m_vm;
-      //! Counter to check status of water measurements.
+      //! Timer to check status of water measurements.
       Time::Counter<float> m_water_status;
-      //! Counter to check presence of water measurements.
+      //! Timer to check presence of water measurements.
       Time::Counter<float> m_water_presence;
-      //! Counter to check presence of GPS fixes.
+      //! Timer to check presence of GPS fixes.
       Time::Counter<float> m_gps_status;
+      //! Initialization timer.
+      Time::Counter<float> m_init;
       //! GPS validation bits.
       uint16_t m_gps_val_bits;
       //! Vehicle depth.
@@ -81,9 +85,14 @@ namespace Monitors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx)
       {
+        param("Initialization Time", m_args.init_time)
+        .units(Units::Second)
+        .defaultValue("30.0")
+        .description("Time to wait at beginning before assessing vehicle medium");
+
         param("Wet Data Timeout", m_args.water_timeout)
         .units(Units::Second)
-        .defaultValue("1.0")
+        .defaultValue("3.0")
         .description("No valid wet sensor data timeout");
 
         param("Wet Data Threshold", m_args.water_threshold)
@@ -118,7 +127,7 @@ namespace Monitors
 
         // Register consumers.
         bind<IMC::Conductivity>(this);
-        bind<IMC::Depth>(this);
+        bind<IMC::EstimatedState>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::Salinity>(this);
         bind<IMC::SoundSpeed>(this);
@@ -128,6 +137,7 @@ namespace Monitors
       onResourceInitialization(void)
       {
         // Initialize timers.
+        m_init.setTop(m_args.init_time);
         m_water_status.setTop(m_args.water_timeout);
         m_gps_status.setTop(m_args.gps_timeout);
       }
@@ -142,9 +152,9 @@ namespace Monitors
       }
 
       void
-      consume(const IMC::Depth* msg)
+      consume(const IMC::EstimatedState* msg)
       {
-        m_depth = msg->value;
+        m_depth = msg->depth;
       }
 
       void
@@ -175,7 +185,7 @@ namespace Monitors
       //! Routine to check if we have recent wet sensor measurements.
       //! @return true if we have recent measurements, false otherwise.
       bool
-      isAcousticsAvailable(void)
+      hasWaterParameters(void)
       {
         return (!m_water_status.overflow());
       }
@@ -191,13 +201,19 @@ namespace Monitors
       void
       task(void)
       {
+        // Wait to stabilize at beginning.
+        if (!m_init.overflow())
+          return;
+
         // Initialization.
         if (getEntityState() == IMC::EntityState::ESTA_BOOT)
         {
-          if (!isAcousticsAvailable())
+          if (!hasWaterParameters() && isGpsAvailable())
             m_vm.medium = IMC::VehicleMedium::VM_GROUND;
-          else
+          if (hasWaterParameters() && isGpsAvailable())
             m_vm.medium = IMC::VehicleMedium::VM_WATER;
+          if (hasWaterParameters() && !isGpsAvailable())
+            m_vm.medium = IMC::VehicleMedium::VM_UNDERWATER;
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           dispatch(m_vm);
@@ -227,14 +243,14 @@ namespace Monitors
             break;
 
           case (IMC::VehicleMedium::VM_GROUND):
-            if (isAcousticsAvailable())
+            if (hasWaterParameters())
               m_vm.medium = IMC::VehicleMedium::VM_WATER;
             break;
 
           case (IMC::VehicleMedium::VM_WATER):
             if ((m_depth > m_args.depth_threshold) && !isGpsAvailable())
               m_vm.medium = IMC::VehicleMedium::VM_UNDERWATER;
-            if (!isAcousticsAvailable())
+            if (!hasWaterParameters())
               m_vm.medium = IMC::VehicleMedium::VM_GROUND;
             break;
 

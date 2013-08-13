@@ -150,8 +150,8 @@ namespace Monitors
 
         // Register consumers.
         bind<IMC::Acceleration>(this);
-        bind<IMC::Depth>(this);
         bind<IMC::Brake>(this);
+        bind<IMC::EstimatedState>(this);
         bind<IMC::Rpm>(this);
         bind<IMC::VehicleMedium>(this);
       }
@@ -233,8 +233,6 @@ namespace Monitors
         // Check collision in the x-axis.
         if ((std_x > m_args.min_std) && (x > m_args.k_std * std_x))
         {
-          err(DTR("collision in the x-axis: %.2f times the standard deviation %f"), (x / std_x), std_x);
-
           m_collision.value = msg->x;
           m_collision.type = (IMC::Collision::CD_IMPACT |
                               IMC::Collision::CD_X);
@@ -245,8 +243,6 @@ namespace Monitors
         // Check collision in the z-axis.
         if ((std_z > m_args.min_std) && (z > m_args.k_std * std_z))
         {
-          err(DTR("collision in the z-axis: %.2f times the standard deviation %f"), (z / std_z), std_z);
-
           m_collision.value = msg->z;
           m_collision.type = (IMC::Collision::CD_IMPACT |
                               IMC::Collision::CD_Z);
@@ -261,8 +257,6 @@ namespace Monitors
         // Check absolute acceleration values in the x-axis.
         if ((mean_x_abs > m_args.max_x) || (mean_x_abs < - m_args.max_x))
         {
-          err(DTR("x-axis acceleration breached limits: %.2f"), mean_x_abs);
-
           m_collision.value = mean_x_abs;
           m_collision.type = IMC::Collision::CD_X;
 
@@ -273,8 +267,6 @@ namespace Monitors
         if ((std::abs(mean_z_abs) > Math::c_gravity + m_args.max_z) ||
             (std::abs(mean_z_abs) < Math::c_gravity - m_args.max_z))
         {
-          err(DTR("z-axis acceleration breached limits: %.2f"), mean_z_abs);
-
           m_collision.value = mean_z_abs;
           m_collision.type = IMC::Collision::CD_Z;
 
@@ -283,9 +275,9 @@ namespace Monitors
       }
 
       void
-      consume(const IMC::Depth* msg)
+      consume(const IMC::EstimatedState* msg)
       {
-        m_depth = msg->value;
+        m_depth = msg->depth;
       }
 
       void

@@ -55,7 +55,7 @@ namespace DUNE
       //! threads.
       //! @param v variable to insert.
       inline void
-      push(T v)
+      push(const T& v)
       {
         ScopedCondition l(m_cond);
         m_queue.push(v);

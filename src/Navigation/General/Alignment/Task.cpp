@@ -461,10 +461,10 @@ namespace Navigation
           // Convert DCM to Euler Angles.
           Matrix euler = transpose(dcm).toEulerAngles();
 
-          debug("Result: %f | %f | %f",
-                Angles::degrees(euler(0)),
-                Angles::degrees(euler(1)),
-                Angles::degrees(euler(2)));
+          spew("Result: %f | %f | %f",
+               Angles::degrees(euler(0)),
+               Angles::degrees(euler(1)),
+               Angles::degrees(euler(2)));
 
           m_euler.phi = euler(0);
           m_euler.theta = euler(1);

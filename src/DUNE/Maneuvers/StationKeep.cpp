@@ -44,7 +44,7 @@ namespace DUNE
       m_radius = maneuver->radius;
 
       if (trimValueMod(m_radius, min_radius, m_radius))
-        m_task->war("forcing minimum radius %.1f", min_radius);
+        task->war(DTR("forcing minimum radius of %.1f"), min_radius);
 
       *this = StationKeep(task, maneuver->lat, maneuver->lon,
                           m_radius, maneuver->z, maneuver->z_units,
@@ -101,7 +101,7 @@ namespace DUNE
 
       if (m_inside != was_inside)
         m_task->inf(DTR("%s safe region (distance: %.1f m)"),
-                    m_inside ? "inside" : "outside", range);
+                    m_inside ? DTR("inside") : DTR("outside"), range);
 
       if (near_on)
       {

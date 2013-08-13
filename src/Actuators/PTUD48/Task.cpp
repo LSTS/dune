@@ -146,6 +146,7 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
+        debug("initializing");
         // Send execute immediatly command.
         sendCommand("i ");
         // Send reset.
@@ -214,7 +215,7 @@ namespace Actuators
         float tilt_rad =  tuples.get("Tilt", 0.0f);
         //float pan_rate_rad =  tuples.get("PanRate", 0.0f);
         //float tilt_rate_rad =  tuples.get("TiltRate", 0.0f);
-
+        pan_rad = Angles::normalizeRadian(pan_rad);
         int pan_pos = panRadToPos(pan_rad);
         int tilt_pos = tiltRadToPos(tilt_rad);
         //int pan_rate_pos = radToPos(pan_rate_rad);
@@ -267,7 +268,8 @@ namespace Actuators
       void
       boundPan(int& val)
       {
-        val = val < PAN_MIN ? PAN_MIN : val; val = val > PAN_MAX ? PAN_MAX : val;
+        val = val < PAN_MIN ? PAN_MIN : val; 
+        val = val > PAN_MAX ? PAN_MAX : val;
       }
 
       void

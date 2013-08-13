@@ -46,6 +46,18 @@ namespace Autonomy
 
       //! Type of vehicle that TREX is controlling
       std::string vehicle_type;
+
+      //! Default loitering radius
+      fp32_t loiter_radius;
+
+      //! Time threshold after which communication with TREX is considered lost
+      uint16_t connection_timeout;
+
+      //! Threshold (meters) after which the vehicle is considered to have arrived
+      //! at destination in the vertical plane.
+      uint16_t altitude_interval;
+
+
     };
 
     struct Task : public DUNE::Tasks::Task
@@ -81,11 +93,16 @@ namespace Autonomy
 
         param("Vehicle Type", m_args.vehicle_type).defaultValue("AUV");
 
+        param("TREX Connection Timeout", m_args.connection_timeout).defaultValue("60");
+
+        param("FollowReference altitude interval", m_args.altitude_interval).defaultValue("2");
+
         // Register consumers.
         bind<IMC::Announce>(this);
         bind<IMC::Heartbeat>(this);
         bind<IMC::VehicleState>(this);
         bind<IMC::PlanControlState>(this);
+        bind<IMC::TrexOperation>(this);
         bind<IMC::Abort>(this);
 
       }
@@ -114,6 +131,8 @@ namespace Autonomy
                              (int)latency);
           setEntityState(IMC::EntityState::ESTA_ERROR, sstm.str());
           m_trex_connected = false;
+          if(isActive())
+            requestDeactivation();
         }
         else
         {
@@ -173,9 +192,46 @@ namespace Autonomy
       }
 
       void
+      consume(const IMC::TrexOperation * msg)
+      {
+        switch (msg->op)
+        {
+          case IMC::TrexOperation::OP_POST_TOKEN:
+
+            if (!msg->token.isNull())
+            {
+              IMC::TrexToken token(*msg->token.get());
+              dispatch(token);
+            }
+            break;
+          case IMC::TrexOperation::OP_REQUEST_PLAN:
+          {
+            int i = system("services trex restart 1,2 > /dev/null &");
+            if (i == 0)
+              inf("T-REX has been started.");
+            else
+              war("Could not start T-REX: %d.", i);
+            break;
+          }
+          case IMC::TrexOperation::OP_REPORT_PLAN:
+          {
+            int i = system("services trex stop 1,2 > /dev/null &");
+            if (i == 0)
+              inf("T-REX has been stopped.");
+            else
+              war("Could not stop T-REX: %d.", i);
+
+            break;
+          }
+          default:
+            break;
+        }
+      }
+
+      void
       onActivation(void)
       {
-        inf("TREX activated!");
+        inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
@@ -183,7 +239,7 @@ namespace Autonomy
       void
       onDeactivation(void)
       {
-        inf("TREX deactivated!");
+        inf("%s", DTR(Status::getString(Status::CODE_IDLE)));
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
@@ -200,8 +256,8 @@ namespace Autonomy
         IMC::FollowReference man;
         man.control_ent = 255;
         man.control_src = m_args.trex_id;
-        man.altitude_interval = 2;
-        man.timeout = 60;
+        man.altitude_interval = m_args.altitude_interval;
+        man.timeout = m_args.connection_timeout;
 
         IMC::PlanSpecification spec;
 

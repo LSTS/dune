@@ -96,16 +96,6 @@ namespace Simulators
         m_deact_timer.setTop(m_args.actual_deact_time);
       }
 
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      { }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      { }
-
       //! On activation
       void
       onRequestActivation(void)

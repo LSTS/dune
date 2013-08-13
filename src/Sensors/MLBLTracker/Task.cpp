@@ -146,7 +146,7 @@ namespace Sensors
       // Current operation.
       Operation m_op;
       // Transducer detection GPIO.
-      GPIO* m_txd_gpio;
+      GPIO* m_gpio_txd;
       // Time of last sentence from modem.
       Counter<double> m_last_stn;
 
@@ -155,7 +155,7 @@ namespace Sensors
         m_uart(NULL),
         m_op_deadline(-1.0),
         m_op(OP_NONE),
-        m_txd_gpio(0)
+        m_gpio_txd(NULL)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -236,19 +236,8 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        // Configure transducer GPIO (if any).
-        if (m_args.gpio_txd > 0)
-        {
-          try
-          {
-            m_txd_gpio = new GPIO((unsigned)m_args.gpio_txd);
-            m_txd_gpio->setDirection(GPIO::GPIO_DIR_INPUT);
-          }
-          catch (...)
-          {
-            err(DTR("unable to use GPIO %d for transducer detection"), m_args.gpio_txd);
-          }
-        }
+        if ((m_gpio_txd != NULL) && paramChanged(m_args.gpio_txd) )
+          throw RestartNeeded(DTR("restarting to change transducer detection GPIO"), 1);
 
         // Input timeout.
         m_last_stn.setTop(m_args.tout_input);
@@ -257,6 +246,20 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
+        // Configure transducer GPIO (if any).
+        if (m_args.gpio_txd > 0)
+        {
+          try
+          {
+            m_gpio_txd = new GPIO((unsigned)m_args.gpio_txd);
+            m_gpio_txd->setDirection(GPIO::GPIO_DIR_INPUT);
+          }
+          catch (...)
+          {
+            err(DTR("unable to use GPIO %d for transducer detection"), m_args.gpio_txd);
+          }
+        }
+
         m_uart = new SerialPort(m_args.uart_dev.c_str(), m_args.uart_baud);
         m_uart->setCanonicalInput(true);
         m_uart->flush();
@@ -288,6 +291,7 @@ namespace Sensors
       void
       onResourceRelease(void)
       {
+        Memory::clear(m_gpio_txd);
         Memory::clear(m_uart);
       }
 
@@ -310,10 +314,10 @@ namespace Sensors
       bool
       hasTransducer(void)
       {
-        if (m_txd_gpio == 0)
+        if (m_gpio_txd == NULL)
           return true;
 
-        if (m_txd_gpio->getValue() == false)
+        if (m_gpio_txd->getValue() == false)
           return true;
 
         err("%s", DTR("transducer not connected"));

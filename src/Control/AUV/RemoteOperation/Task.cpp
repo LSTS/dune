@@ -133,9 +133,15 @@ namespace Control
         void
         onUpdateParameters(void)
         {
-          m_args.pitch_ref = Angles::radians(m_args.pitch_ref);
-          m_args.max_hrate = Angles::radians(m_args.max_hrate);
-          m_args.horfin_pos = Angles::radians(m_args.horfin_pos);
+          if (paramChanged(m_args.pitch_ref))
+            m_args.pitch_ref = Angles::radians(m_args.pitch_ref);
+
+          if (paramChanged(m_args.max_hrate))
+            m_args.max_hrate = Angles::radians(m_args.max_hrate);
+
+          if (paramChanged(m_args.horfin_pos))
+            m_args.horfin_pos = Angles::radians(m_args.horfin_pos);
+
           m_args.max_thrust = Math::trimValue(m_args.max_thrust, 0.0, 1.0);
           m_last_estate.setTop(m_args.estate_tout);
         }

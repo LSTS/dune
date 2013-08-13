@@ -59,7 +59,7 @@ namespace Transports
         }
         else
         {
-          throw std::runtime_error(String::str("invalid address: '%s'", addr_port.c_str()));
+          throw std::runtime_error(String::str(DTR("invalid address: '%s'"), addr_port.c_str()));
         }
       }
 

@@ -201,7 +201,7 @@ namespace DUNE
     piecewiseLI(const std::vector<Type>& x_vec, const std::vector<Type>& t_vec, Type t)
     {
       if (x_vec.size() != t_vec.size())
-        throw std::runtime_error("piecewise linear interpolation needs equally sized vectors");
+        throw std::runtime_error(DTR("piecewise linear interpolation needs equally sized vectors"));
 
       if (x_vec.size() == 1)
         return x_vec[0];

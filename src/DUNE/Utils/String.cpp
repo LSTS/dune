@@ -281,7 +281,7 @@ namespace DUNE
         if (*src == '\\')
         {
           if (++src == end)
-            throw std::runtime_error("invalid escape sequence");
+            throw std::runtime_error(DTR("invalid escape sequence"));
 
           switch (*src)
           {

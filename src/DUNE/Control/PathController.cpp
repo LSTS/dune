@@ -126,6 +126,12 @@ namespace DUNE
       .units(Units::MeterPerSecond)
       .description("Relation between monitor disabling time and position jump");
 
+      param("ETA Minimum Speed", m_eta_min_speed)
+      .defaultValue("1.0")
+      .minimumValue("0.1")
+      .units(Units::MeterPerSecond)
+      .description("ETA minimum admissible speed");
+
       param("Bottom Track -- Enabled", m_btd.enabled)
       .defaultValue("false")
       .description("Enable or disable bottom track control");
@@ -196,7 +202,7 @@ namespace DUNE
       if (paramChanged(m_cperiod))
         m_cperiod = 1.0 / m_cperiod;
 
-      if (paramChanged(m_cperiod))
+      if (paramChanged(m_speriod))
         m_speriod = 1.0 / m_speriod;
 
       m_ts.cc = m_course_ctl ? 1 : 0;
@@ -349,7 +355,7 @@ namespace DUNE
       if (!hasSpecificZControl() && !(dpath->flags & IMC::DesiredPath::FL_NO_Z))
       {
         m_ts.z_control = true;
-        if (dpath->end_z_units == IMC::Z_ALTITUDE)
+        if (dpath->end_z_units == IMC::Z_ALTITUDE || dpath->end_z_units == IMC::Z_HEIGHT)
         {
           disableControlLoops(IMC::CL_DEPTH);
           enableControlLoops(IMC::CL_ALTITUDE);
@@ -467,26 +473,7 @@ namespace DUNE
     PathController::consume(const IMC::Distance* dist)
     {
       if (m_btd.enabled)
-      {
-        try
-        {
-          m_btrack->onDistance(dist);
-        }
-        catch (std::runtime_error& e)
-        {
-          // If braking then stop braking
-          if (m_braking)
-          {
-            IMC::Brake brk;
-            brk.op = IMC::Brake::OP_STOP;
-            dispatch(brk);
-
-            m_braking = false;
-          }
-
-          signalError(e.what());
-        }
-      }
+        m_btrack->onDistance(dist);
     }
 
     void
@@ -507,7 +494,27 @@ namespace DUNE
     PathController::consume(const IMC::EstimatedState* es)
     {
       if (m_btd.enabled)
-        m_btrack->onEstimatedState(es);
+      {
+        try
+        {
+          m_btrack->onEstimatedState(es);
+        }
+        catch (std::runtime_error& e)
+        {
+          // If braking then stop braking
+          if (m_braking)
+          {
+            IMC::Brake brk;
+            brk.op = IMC::Brake::OP_STOP;
+            dispatch(brk);
+
+            m_braking = false;
+          }
+
+          signalError(e.what());
+          return;
+        }
+      }
 
       if (m_setup)
       {
@@ -662,7 +669,7 @@ namespace DUNE
 
         double errx = std::fabs(m_ts.track_length - m_ts.track_pos.x);
         double erry = std::fabs(m_ts.track_pos.y);
-        double s = std::max(1.0, m_ts.speed);
+        double s = std::max((double)m_eta_min_speed, m_ts.speed);
 
         if (errx <= erry && erry < 2 * c_time_factor * s)
           m_ts.eta = errx / s;
@@ -910,7 +917,7 @@ namespace DUNE
       else if (isActive())
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       else
-	setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
     }
 
     void

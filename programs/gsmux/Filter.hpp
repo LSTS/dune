@@ -46,14 +46,26 @@ public:
   Filter(std::FILE* fd):
     m_fd(fd)
   {
-    printHeader();
-    m_nav_status = new char[6];
+#define FIELD(label, var, type, fmt)            \
+    var = 0;
+#include "Fields.def"
+
     std::memset(m_sync_status, 0, sizeof(m_sync_status));
+
+    m_fix_type["NF"] = 0;
+    m_fix_type["DR"] = 1;
+    m_fix_type["G2"] = 2;
+    m_fix_type["G3"] = 3;
+    m_fix_type["D2"] = 4;
+    m_fix_type["D3"] = 5;
+    m_fix_type["RK"] = 6;
+    m_fix_type["TT"] = 7;
+
+    printHeader();
   }
 
   ~Filter(void)
   {
-    delete [] m_nav_status;
   }
 
   void
@@ -73,7 +85,8 @@ public:
     {
       if (data[i] == '\n')
       {
-        interpret(std::string((char*)&data[off], size));
+        std::string stn((const char*)&data[off], size);
+        interpret(stn);
         off = size + 1;
         size = 0;
       }
@@ -91,34 +104,122 @@ public:
   }
 
   void
-  putIMU(const std::vector<uint8_t>& data, unsigned index)
+  putXMTI(const std::vector<uint8_t>& data, unsigned index)
   {
     if (data.size() < 20)
+    {
+      std::cerr << "WARNING: XMTI short read: " << data.size() << std::endl;
+      dump(data);
       return;
+    }
 
     if (data[2] != 0x32)
     {
-      std::cerr << "WARNING: spurious data." << std::endl;
+      std::cerr << "WARNING: XMTI spurious data." << std::endl;
+      dump(data);
+      return;
     }
 
     const uint8_t* ptr = &data[4];
-    ByteCopy::fromBE(m_temp, ptr);
-    ByteCopy::fromBE(m_accel_x, ptr + 4);
-    ByteCopy::fromBE(m_accel_y, ptr + 8);
-    ByteCopy::fromBE(m_accel_z, ptr + 12);
-    ByteCopy::fromBE(m_agvel_x, ptr + 16);
-    ByteCopy::fromBE(m_agvel_y, ptr + 20);
-    ByteCopy::fromBE(m_agvel_z, ptr + 24);
-    ByteCopy::fromBE(m_phi, ptr + 28);
-    ByteCopy::fromBE(m_theta, ptr + 32);
-    ByteCopy::fromBE(m_psi, ptr + 36);
+    ByteCopy::fromBE(m_temp0, ptr);
+    ByteCopy::fromBE(m_accel_x0, ptr + 4);
+    ByteCopy::fromBE(m_accel_y0, ptr + 8);
+    ByteCopy::fromBE(m_accel_z0, ptr + 12);
+    ByteCopy::fromBE(m_agvel_x0, ptr + 16);
+    ByteCopy::fromBE(m_agvel_y0, ptr + 20);
+    ByteCopy::fromBE(m_agvel_z0, ptr + 24);
+    ByteCopy::fromBE(m_phi0, ptr + 28);
+    ByteCopy::fromBE(m_theta0, ptr + 32);
+    ByteCopy::fromBE(m_psi0, ptr + 36);
+    m_psi0 = (float)Angles::degrees(Angles::normalizeRadian(Angles::radians(m_psi0)));
+  }
 
-    m_utc_tow = (m_utc_tow_msec + m_sample_msec) / 1000.0;
-    m_utc_second = (m_utc_second_msec + m_sample_msec) / 1000.0;
+  void
+  putLIMU(const std::vector<uint8_t>& data, unsigned index)
+  {
+    if (data.size() != 38)
+    {
+      std::cerr << "WARNING: LIMU short read: " << data.size() << std::endl;
+      dump(data);
+      return;
+    }
 
-    print(index);
+    if ((data[0] != 0x2c) || (data[1] != 0x22) || (data[2] != 0x05))
+    {
+      std::cerr << "WARNING: LIMU spurious data." << std::endl;
+      dump(data);
+      return;
+    }
 
-    m_sample_msec += 10;
+    int16_t s16;
+
+    const uint8_t* ptr = &data[3];
+    ByteCopy::fromLE(s16, ptr);
+
+    // Gyros.
+    ByteCopy::fromLE(s16, ptr + 2);
+    m_agvel_x1 = (float)s16 * 0.02f;
+    ByteCopy::fromLE(s16, ptr + 4);
+    m_agvel_y1 = (float)s16 * 0.02f;
+    ByteCopy::fromLE(s16, ptr + 6);
+    m_agvel_z1 = (float)s16 * 0.02f;
+
+    // Acceleration.
+    ByteCopy::fromLE(s16, ptr + 8);
+    double accl_x = s16 * 0.0008f;
+    m_accel_x1 = (float)accl_x * 9.7982543981f;
+    ByteCopy::fromLE(s16, ptr + 10);
+    double accl_y = s16 * 0.0008f;
+    m_accel_y1 = (float)accl_y * 9.7982543981f;
+    ByteCopy::fromLE(s16, ptr + 12);
+    double accl_z = s16 * 0.0008f;
+    m_accel_z1 = (float)accl_z * 9.7982543981f;
+
+    // Magnetometer.
+    ByteCopy::fromLE(s16, ptr + 26);
+    double magn_x = s16 * 0.0001f;
+    ByteCopy::fromLE(s16, ptr + 28);
+    double magn_y = s16 * 0.0001f;
+    ByteCopy::fromLE(s16, ptr + 30);
+    double magn_z = s16 * 0.0001f;
+
+    // Temperature.
+    ByteCopy::fromLE(s16, ptr + 32);
+    m_temp1 = (float)(s16 * 0.00565) + 25.0f;
+
+    computeLIMU(accl_x, accl_y, accl_z, magn_x, magn_y, magn_z);
+  }
+
+  void
+  computeLIMU(double a_accl_x, double a_accl_y, double a_accl_z,
+              double a_magn_x, double a_magn_y, double a_magn_z)
+  {
+    using namespace std;
+
+    double accl_x = a_accl_x;
+    double accl_y = a_accl_y;
+    double accl_z = a_accl_z;
+
+    // Compute roll (phi).
+    double phi = atan2(accl_y, sqrt(accl_x * accl_x + accl_z * accl_z));
+    m_phi1 = (float)Angles::degrees(phi);
+
+    // Compute pitch (theta).
+    double theta = atan2(-accl_x, accl_z);
+    m_theta1 = (float)Angles::degrees(theta);
+
+    double Xh = a_magn_x * cos(theta) + a_magn_z * sin(theta);
+    double Yh = a_magn_x * sin(phi) * sin(theta) + a_magn_y * cos(phi) - a_magn_z * sin(phi) * cos(theta);
+    m_psi1 = -(float)Angles::degrees(Angles::normalizeRadian(atan2(Yh, Xh)));
+  }
+
+  void
+  dump(const std::vector<uint8_t>& data)
+  {
+    using namespace std;
+    for (unsigned i = 0; i < data.size(); ++i)
+      fprintf(stderr, "%02X ", data[i]);
+    fprintf(stderr, "\n");
   }
 
   void
@@ -127,7 +228,8 @@ public:
     using namespace std;
 
     fprintf(m_fd,
-            "Sync_Lost"
+            "Sync_Lost" "\t"
+            "Index"
 #define FIELD(label, var, type, fmt) "\t" label
 #include "Fields.def"
             "\r\n"
@@ -141,15 +243,22 @@ public:
   {
     using namespace std;
 
+    m_utc_tow = (m_utc_tow_msec + (index * 10)) / 1000.0;
+    m_utc_second = (m_utc_second_msec + (index * 10)) / 1000.0;
+
     fprintf(m_fd,
+            "%u" "\t"
             "%u"
 #define FIELD(label, var, type, fmt) "\t" fmt
 #include "Fields.def"
             "\r\n",
-            m_sync_status[index]
+            m_sync_status[index],
+            index
 #define FIELD(label, var, type, fmt) , var
 #include "Fields.def"
             );
+
+    m_sample_msec += 10;
   }
 
 private:
@@ -208,6 +317,9 @@ private:
   void
   interpret(std::string stn)
   {
+    if (stn.size() < 5)
+      return;
+
     // Remove checksum.
     stn.resize(stn.size() - 4);
 
@@ -221,6 +333,7 @@ private:
     else
     {
       std::cerr << "ERROR: unknown NMEA message." << std::endl;
+      std::cerr << sanitize(stn) << std::endl;
     }
   }
 
@@ -293,13 +406,17 @@ private:
       return;
     }
 
+    // Navigation status.
+    std::map<std::string, unsigned>::iterator itr = m_fix_type.find(parts[8]);
+    if (itr == m_fix_type.end())
+      m_nav_status = 99;
+    else
+      m_nav_status = itr->second;
+
     readLatitude(parts[3], parts[4], m_lat);
     readLongitude(parts[5], parts[6], m_lon);
     readNumber(parts[7], m_height);
     readDecimal(parts[18], m_sats);
-
-    // Navigation status.
-    std::strcpy(m_nav_status, parts[8].c_str());
 
     // HDOP.
     double hdop = 0;
@@ -343,8 +460,8 @@ private:
   uint8_t m_sync_status[100];
   //! Sample millisecond.
   unsigned m_sample_msec;
-  unsigned m_utc_second_msec;
-  unsigned m_utc_tow_msec;
+  //! Fix type.
+  std::map<std::string, unsigned> m_fix_type;
 
 #define FIELD(label, var, type, fmt)            \
   type var;

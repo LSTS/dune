@@ -30,10 +30,7 @@
 
 // ISO C++ 98 headers.
 #include <cstring>
-
-#if defined(DUNE_SYS_HAS_SYS_TIME_H)
-#  include <sys/time.h>
-#endif
+#include <ctime>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -76,12 +73,8 @@ namespace Sensors
         HDR_IDX_TBYTES_LO = 5,
         HDR_IDX_BYTES_TO_READ_HI = 6,
         HDR_IDX_BYTES_TO_READ_LO = 7,
-        HDR_IDX_DAY = 8,
-        HDR_IDX_MONTH = 11,
-        HDR_IDX_YEAR = 15,
-        HDR_IDX_HOUR = 20,
-        HDR_IDX_MINUTES = 23,
-        HDR_IDX_SECONDS = 26,
+        HDR_IDX_DATE = 8,
+        HDR_IDX_TIME = 20,
         HDR_IDX_TIME_HSEC = 29,
         HDR_IDX_VIDEO_FRAME = 33,
         HDR_IDX_DISPLAY_MODE = 37,
@@ -265,11 +258,8 @@ namespace Sensors
       void
       setSoundVelocity(float speed)
       {
-        if (speed == 1500)
-          ByteCopy::toBE((uint16_t)(0x0000), getData() + HDR_IDX_SOUND_SPEED);
-        else
-          ByteCopy::toBE((uint16_t)(((uint16_t)(speed * 10.0) & 0x7fff) | 0x8000),
-                         getData() + HDR_IDX_SOUND_SPEED);
+        ByteCopy::toBE((uint16_t)(((uint16_t)(speed * 10.0) & 0x7fff) | 0x8000),
+                       getData() + HDR_IDX_SOUND_SPEED);
       }
 
       //! Set GNSS ships speed.
@@ -285,7 +275,10 @@ namespace Sensors
       void
       setCourse(float course)
       {
-        ByteCopy::toBE((uint16_t)(Angles::degrees(course) * 10), getData() + HDR_IDX_COURSE);
+        if (course >= 0.0)
+          ByteCopy::toBE((uint16_t)(Angles::degrees(course) * 10), getData() + HDR_IDX_COURSE);
+        else
+          ByteCopy::toBE((uint16_t)(Angles::degrees(2 * Math::c_pi + course) * 10), getData() + HDR_IDX_COURSE);
       }
 
       //! Set roll.
@@ -326,7 +319,7 @@ namespace Sensors
         ByteCopy::toBE((uint16_t)(((int)(heading * 10) & 0x7fff) | 0x8000),
                        getData() + HDR_IDX_HEADING);
 
-        ByteCopy::toLE((uint16_t)((heading - 180.0) * c_euler_factor),
+        ByteCopy::toLE((uint16_t)(heading * c_euler_factor),
                        getFooterData() + FTR_IDX_HEADING);
       }
 
@@ -420,49 +413,29 @@ namespace Sensors
       }
 
       //! Set frame date and time.
+      //! @param[in] now millisecond since epoch.
       void
-      setDateTime(void)
+      setDateTime(uint64_t now)
       {
-        // Data.
-        DUNE::Time::BrokenDown bdt;
-        m_data[HDR_IDX_DAY] = '0' + bdt.day / 10;
-        m_data[HDR_IDX_DAY + 1] = '0' + bdt.day % 10;
-        m_data[HDR_IDX_MONTH - 1] = '-';
-        std::memcpy(getData() + HDR_IDX_MONTH, c_months_strings[bdt.month - 1], 3 * sizeof(uint8_t));
-        m_data[HDR_IDX_YEAR - 1] = '-';
-        m_data[HDR_IDX_YEAR] = '0' + bdt.year / 1000 ;
-        m_data[HDR_IDX_YEAR + 1] = '0' + (bdt.year / 100) % 10;
-        m_data[HDR_IDX_YEAR + 2] = '0' + (bdt.year / 10) % 10;
-        m_data[HDR_IDX_YEAR + 3] = '0' + bdt.year % 10;
+        time_t now_sec = now / 1000;
+        unsigned now_msec = now % 1000;
+        Time::BrokenDown bdt(now_sec);
 
-        // Time.
-        m_data[HDR_IDX_HOUR] = '0' + bdt.hour / 10;
-        m_data[HDR_IDX_HOUR + 1] = '0' + bdt.hour % 10;
-        m_data[HDR_IDX_MINUTES - 1] = ':';
-        m_data[HDR_IDX_MINUTES] = '0' + bdt.minutes / 10;
-        m_data[HDR_IDX_MINUTES + 1] = '0' + bdt.minutes % 10;
-        m_data[HDR_IDX_SECONDS - 1] = ':';
-        m_data[HDR_IDX_SECONDS] = '0' + bdt.seconds / 10;
-        m_data[HDR_IDX_SECONDS + 1] = '0' + bdt.seconds % 10;
+        // Date - null terminated date string (12 bytes).
+        String::format((char*)&m_data[HDR_IDX_DATE], 12, "%02u-%3s-%04u",
+                       bdt.day, c_months_strings[bdt.month - 1], bdt.year);
 
-        // Hundreth of Seconds.
-        unsigned usec = 0;
-#if defined(DUNE_SYS_HAS_SYS_TIME_H)
-        struct timeval tv;
-        struct timezone tz;
-        gettimeofday(&tv, &tz);
-        usec = tv.tv_usec;
-#endif
+        // Time - null terminated time string (9 bytes).
+        String::format((char*)&m_data[HDR_IDX_TIME], 9, "%02u:%02u:%02u",
+                       bdt.hour, bdt.minutes, bdt.seconds);
 
-        m_data[HDR_IDX_TIME_HSEC] = '.';
-        m_data[HDR_IDX_TIME_HSEC + 1] = '0' + usec / 100000;
-        m_data[HDR_IDX_TIME_HSEC + 2] = '0' + (usec / 10000) % 10;
+        // Hundredth of Seconds - null terminated string (4 bytes).
+        String::format((char*)&m_data[HDR_IDX_TIME_HSEC], 4, ".%02u",
+                       now_msec / 10);
 
-        // Milliseconds.
-        m_data[HDR_IDX_MILLI] = '.';
-        m_data[HDR_IDX_MILLI + 1] = '0' + (usec / 100000);
-        m_data[HDR_IDX_MILLI + 2] = '0' + (usec / 10000) % 10;
-        m_data[HDR_IDX_MILLI + 3] = '0' + (usec / 1000) % 10;
+        // Milliseconds - null terminated string (5 bytes).
+        String::format((char*)&m_data[HDR_IDX_MILLI], 5, ".%03u",
+                       now_msec);
       }
 
       //! Change mode according with data points.

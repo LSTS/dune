@@ -135,9 +135,7 @@ namespace Navigation
           }
 
           if (msg->getSourceEntity() == m_yaw_eid)
-          {
             m_estate.psi = msg->psi;
-          }
         }
 
         void

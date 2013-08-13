@@ -124,9 +124,9 @@ namespace DUNE
         }
 
         using Utils::String;
-        throw std::runtime_error(String::str("unable to convert the value under "
-                                             "section '%s' option '%s' to the required "
-                                             "type and no valid default was given",
+        throw std::runtime_error(String::str(DTR("unable to convert the value under "
+                                                 "section '%s' option '%s' to the required "
+                                                 "type and no valid default was given"),
                                              sec.c_str(), opt.c_str()));
       }
 

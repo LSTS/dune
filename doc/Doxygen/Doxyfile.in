@@ -252,13 +252,6 @@ EXTENSION_MAPPING      =
 
 MARKDOWN_SUPPORT       = YES
 
-# When enabled doxygen tries to link words that correspond to documented classes,
-# or namespaces to their corresponding documentation. Such a link can be
-# prevented in individual cases by by putting a % sign in front of the word or
-# globally by setting AUTOLINK_SUPPORT to NO.
-
-AUTOLINK_SUPPORT       = YES
-
 # If you use STL classes (i.e. std::string, std::vector, etc.) but do not want
 # to include (a tag file for) the STL sources as input, then you should
 # set this tag to YES in order to let doxygen match functions declarations and
@@ -328,22 +321,6 @@ INLINE_SIMPLE_STRUCTS  = NO
 # types are typedef'ed and only the typedef is referenced, never the tag name.
 
 TYPEDEF_HIDES_STRUCT   = NO
-
-# The SYMBOL_CACHE_SIZE determines the size of the internal cache use to
-# determine which symbols to keep in memory and which to flush to disk.
-# When the cache is full, less often used symbols will be written to disk.
-# For small to medium size projects (<1000 input files) the default value is
-# probably good enough. For larger projects a too small cache size can cause
-# doxygen to be busy swapping symbols to and from disk most of the time
-# causing a significant performance penalty.
-# If the system has enough physical memory increasing the cache will improve the
-# performance by keeping more symbols in memory. Note that the value works on
-# a logarithmic scale so increasing the size by one will roughly double the
-# memory usage. The cache size is given by this formula:
-# 2^(16+SYMBOL_CACHE_SIZE). The valid range is 0..9, the default is 0,
-# corresponding to a cache size of 2^16 = 65536 symbols.
-
-SYMBOL_CACHE_SIZE      = 0
 
 # Similar to the SYMBOL_CACHE_SIZE the size of the symbol lookup cache can be
 # set using LOOKUP_CACHE_SIZE. This cache is used to resolve symbols given
@@ -912,16 +889,6 @@ HTML_FOOTER            =
 
 HTML_STYLESHEET        = @PROJECT_SOURCE_DIR@/doc/Doxygen/Style.css
 
-# The HTML_EXTRA_STYLESHEET tag can be used to specify an additional
-# user-defined cascading style sheet that is included after the standard
-# style sheets created by doxygen. Using this option one can overrule
-# certain style aspects. This is preferred over using HTML_STYLESHEET
-# since it does not replace the standard style sheet and is therefor more
-# robust against future updates. Doxygen will copy the style sheet file to
-# the output directory.
-
-HTML_EXTRA_STYLESHEET  =
-
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note
 # that these files will be copied to the base HTML output directory. Use the
@@ -967,17 +934,6 @@ HTML_TIMESTAMP         = YES
 # page has loaded.
 
 HTML_DYNAMIC_SECTIONS  = NO
-
-# With HTML_INDEX_NUM_ENTRIES one can control the preferred number of
-# entries shown in the various tree structured indices initially; the user
-# can expand and collapse entries dynamically later on. Doxygen will expand
-# the tree to such a level that at most the specified number of entries are
-# visible (unless a fully collapsed tree already exceeds this amount).
-# So setting the number of entries 1 will produce a full collapsed tree by
-# default. 0 is a special value representing an infinite number of entries
-# and will result in a full expanded tree by default.
-
-HTML_INDEX_NUM_ENTRIES = 100
 
 # If the GENERATE_DOCSET tag is set to YES, additional index files
 # will be generated that can be used as input for Apple's Xcode 3
@@ -1625,15 +1581,6 @@ HAVE_DOT               = YES
 # between CPU load and processing speed.
 
 DOT_NUM_THREADS        = 0
-
-# By default doxygen will use the Helvetica font for all dot files that
-# doxygen generates. When you want a differently looking font you can specify
-# the font name using DOT_FONTNAME. You need to make sure dot is able to find
-# the font, which can be done by putting it in a standard location or by setting
-# the DOTFONTPATH environment variable or by setting DOT_FONTPATH to the
-# directory containing the font.
-
-DOT_FONTNAME           = FreeSans
 
 # The DOT_FONTSIZE tag can be used to set the size of the font of dot graphs.
 # The default size is 10pt.

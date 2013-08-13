@@ -220,9 +220,9 @@ namespace Simulators
       void
       addBeacon(unsigned id, const IMC::LblBeacon* msg)
       {
-        if (m_beacons.size() >= c_max_beacons)
+        if (m_beacons.size() >= Navigation::c_max_transponders)
         {
-          err(DTR("maximum amount of beacons is %u"), c_max_beacons);
+          err(DTR("maximum amount of beacons is %u"), Navigation::c_max_transponders);
           return;
         }
 

@@ -40,12 +40,12 @@ namespace Supervisors
     using DUNE_NAMESPACES;
 
     //! State description strings
-    static const char* c_state_desc[] = {DTR("SERVICE"), DTR("CALIBRATION"),
-                                         DTR("ERROR"), DTR("MANEUVERING"),
-                                         DTR("EXTERNAL CONTROL")};
+    static const char* c_state_desc[] = {DTR_RT("SERVICE"), DTR_RT("CALIBRATION"),
+                                         DTR_RT("ERROR"), DTR_RT("MANEUVERING"),
+                                         DTR_RT("EXTERNAL CONTROL")};
     //! Vehicle command description strings
     static const char* c_cmd_desc[] =
-    {"maneuver start", "maneuver stop", "vehicle calibration"};
+    {"maneuver start", "maneuver stop", "calibration start", "calibration stop"};
     //! Printing errors period
     static const float c_error_period = 2.0;
     //! Maneuver request timeout
@@ -77,6 +77,8 @@ namespace Supervisors
       IMC::IdleManeuver m_idle;
       //! Control loops last reference time
       float m_scope_ref;
+      //! Vector of labels from entities in error
+      std::vector<std::string> m_ents_in_error;
       //! Task arguments.
       Arguments m_args;
 
@@ -122,6 +124,8 @@ namespace Supervisors
         m_vs.last_error.clear();
         m_vs.last_error_time = -1;
         m_vs.control_loops = 0;
+
+        m_ents_in_error.clear();
       }
 
       void
@@ -211,7 +215,7 @@ namespace Supervisors
 
           m_vs.op_mode = s;
 
-          war(DTR("now in '%s' mode"), c_state_desc[s]);
+          war(DTR("now in '%s' mode"), DTR(c_state_desc[s]));
 
           if (!maneuverMode())
           {
@@ -237,6 +241,21 @@ namespace Supervisors
         dispatch(m_vs);
       }
 
+      //! Split comma separated list and translate labels, then join again
+      //! @param[in] list comma separated list of entity labels
+      //! @return 'comma + white space' separated list of translated entity labels
+      std::string
+      splitAndTranslate(const std::string& list)
+      {
+        std::vector<std::string> elist;
+        String::split(list, ",", elist);
+
+        for (unsigned i = 0; i < elist.size(); ++i)
+          elist[i] = DTR(elist[i].c_str());
+
+        return String::join(elist.begin(), elist.end(), ", ");
+      }
+
       void
       consume(const IMC::EntityMonitoringState* msg)
       {
@@ -251,12 +270,18 @@ namespace Supervisors
         }
 
         m_vs.error_ents = "";
+        m_ents_in_error.clear();
 
         if (msg->ccount)
           m_vs.error_ents = msg->cnames;
 
         if (msg->ecount)
           m_vs.error_ents += (msg->ccount ? "," : "") + msg->enames;
+
+        // copy list to vector
+        String::split(m_vs.error_ents, ",", m_ents_in_error);
+        // translate list for vehicle state message
+        m_vs.error_ents = splitAndTranslate(m_vs.error_ents);
 
         if (prev_count && !m_vs.error_count)
         {
@@ -265,6 +290,7 @@ namespace Supervisors
         else if ((prev_count != m_vs.error_count) && m_err_timer.overflow())
         {
           war(DTR("vehicle errors: %s"), m_vs.error_ents.c_str());
+
           m_err_timer.reset();
         }
 
@@ -339,7 +365,7 @@ namespace Supervisors
             (msg->op == IMC::PlanControl::PC_START))
         {
           // check if plan is supposed to ignore some errors
-          if (msg->flags & IMC::PlanControl::FLG_IGNORE_ERRORS) // temporary
+          if (msg->flags & IMC::PlanControl::FLG_IGNORE_ERRORS)
             m_in_safe_plan = true;
           else
             m_in_safe_plan = false;
@@ -432,7 +458,7 @@ namespace Supervisors
       {
         if (!calibrationMode())
         {
-          requestFailed(msg, DTR("cannot stop calibration: vehicle is not calibrating"));
+          requestOK(msg, DTR("cannot stop calibration: vehicle is not calibrating"));
           return;
         }
 
@@ -539,12 +565,9 @@ namespace Supervisors
         {
           if (m_args.safe_ents.size() && m_in_safe_plan)
           {
-            std::vector<std::string> ents;
-            String::split(m_vs.error_ents, ",", ents);
+            std::vector<std::string>::const_iterator it_ents = m_ents_in_error.begin();
 
-            std::vector<std::string>::const_iterator it_ents = ents.begin();
-
-            for (; it_ents != ents.end(); ++it_ents)
+            for (; it_ents != m_ents_in_error.end(); ++it_ents)
             {
               std::vector<std::string>::const_iterator it_safe = m_args.safe_ents.begin();
               for (; it_safe != m_args.safe_ents.end(); ++it_safe)

@@ -62,10 +62,14 @@ namespace Sensors
       std::string pwr_ss;
       //! Pulse auto selection mode.
       unsigned autosel_mode;
+      //! Trigger divisor.
+      unsigned trg_div;
     };
 
     struct Task: public Tasks::Task
     {
+      //! Buffer size.
+      static const unsigned c_buffer_size = 256 * 1024;
       //! Data socket.
       TCPSocket* m_sock_dat;
       //! I/O multiplexing of data socket.
@@ -104,6 +108,8 @@ namespace Sensors
         m_deactivating(false)
       {
         // Define configuration parameters.
+        setParamSectionEditor("Edgetech2205");
+
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
@@ -124,7 +130,7 @@ namespace Sensors
         .defaultValue("Both")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
-        .description("High-frequency subsystem channels");
+        .description(DTR("High-frequency subsystem channels"));
 
         param(DTR_RT("High-Frequency Range"), m_args.range_hf)
         .defaultValue("50")
@@ -133,14 +139,14 @@ namespace Sensors
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .units(Units::Meter)
-        .description("Enable high frequency subsystem");
+        .description(DTR("Enable high frequency subsystem"));
 
         param(DTR_RT("Low-Frequency Channels"), m_args.channels_lf)
         .values(DTR_RT("None, Port, Starboard, Both"))
         .defaultValue("None")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
-        .description("Low-frequency subsystem channels");
+        .description(DTR("Low-frequency subsystem channels"));
 
         param(DTR_RT("Low-Frequency Range"), m_args.range_lf)
         .defaultValue("50")
@@ -149,7 +155,15 @@ namespace Sensors
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .units(Units::Meter)
-        .description("Enable high frequency subsystem");
+        .description(DTR("Enable high frequency subsystem"));
+
+        param(DTR_RT("Range Multiplier"), m_args.trg_div)
+        .defaultValue("1")
+        .minimumValue("1")
+        .maximumValue("150")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .description(DTR("Range multiplier"));
 
         param("Pulse Autoselection Mode", m_args.autosel_mode)
         .defaultValue("2")
@@ -161,7 +175,7 @@ namespace Sensors
         .defaultValue("Sidescan")
         .description("Name of sidescan's power channel");
 
-        m_bfr.resize(256 * 1024);
+        m_bfr.resize(c_buffer_size);
 
         m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
 
@@ -229,7 +243,6 @@ namespace Sensors
 
         m_cmd->setPingTrigger(SUBSYS_SSH, TRIG_MODE_INTERNAL);
         m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_INTERNAL);
-        m_cmd->setPingCoupling(SUBSYS_SSL, SUBSYS_SSH, 1, 0);
 
         setConfig();
 
@@ -247,9 +260,14 @@ namespace Sensors
         setDataActive(SUBSYS_SSH, "None");
         setPing(SUBSYS_SSH, "None");
         m_cmd->shutdown();
-
         Memory::clear(m_cmd);
-        Memory::clear(m_sock_dat);
+
+        if (m_sock_dat != NULL)
+        {
+          m_sock_dat->delFromPoll(m_iom_dat);
+          delete m_sock_dat;
+          m_sock_dat = NULL;
+        }
 
         m_deactivating = true;
         m_countdown.setTop(getDeactivationTime());
@@ -280,11 +298,10 @@ namespace Sensors
         {
           case IMC::LoggingControl::COP_STARTED:
             closeLog();
-            debug("changing log file to %s", m_log_path.c_str());
             openLog(m_ctx.dir_log / msg->name / "Data.jsf");
             break;
 
-          case IMC::LoggingControl::COP_REQUEST_STOP:
+          case IMC::LoggingControl::COP_STOPPED:
             closeLog();
             break;
         }
@@ -306,9 +323,14 @@ namespace Sensors
         m_cmd->setPingAutoselectMode(SUBSYS_SSL, m_args.autosel_mode);
 
         if ((m_args.channels_lf != "None") && (m_args.channels_hf != "None"))
+        {
           m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_COUPLED);
+          m_cmd->setPingCoupling(SUBSYS_SSL, SUBSYS_SSH, m_args.trg_div, 0);
+        }
         else
+        {
           m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_INTERNAL);
+        }
 
         setPing(SUBSYS_SSH, m_args.channels_hf);
         setPing(SUBSYS_SSL, m_args.channels_lf);
@@ -431,7 +453,10 @@ namespace Sensors
         validity |= (1 << 2);
 
         // Heading.
-        u16 = static_cast<uint16_t>(Angles::degrees(m_estate.psi + Math::c_pi) * 100);
+        double heading = Angles::degrees(m_estate.psi);
+        if (heading < 0)
+          heading = 360.0 + heading;
+        u16 = static_cast<uint16_t>(heading * 100);
         pkt->set(u16, SDATA_IDX_HEADING);
         validity |= (1 << 3);
 
@@ -495,15 +520,19 @@ namespace Sensors
           return;
         }
 
+        Counter<double> timer(1.0);
         try
         {
           m_cmd = new CommandLink(m_args.addr, m_args.port_cmd);
+          debug("activation took %0.2f s", m_countdown.getElapsed());
           activate();
-          debug("activation took %0.2f s", getActivationTime() -
-                m_countdown.getRemaining());
         }
         catch (...)
-        { }
+        {
+          double delay = timer.getRemaining();
+          if (delay > 0.0)
+            Delay::wait(delay);
+        }
       }
 
       void

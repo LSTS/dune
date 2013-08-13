@@ -214,24 +214,33 @@ namespace Actuators
       void
       onUpdateParameters(void)
       {
-        m_args.adc_sper = 1 / m_args.adc_sper;
-        m_last_adc.setTop(m_args.adc_sper);
+        if (paramChanged(m_args.adc_sper))
+        {
+          m_args.adc_sper = 1 / m_args.adc_sper;
+          m_last_adc.setTop(m_args.adc_sper);
+        }
 
         // Initialize data structures.
         for (unsigned i = 0; i < c_servo_count; ++i)
         {
           m_servo_ref[i] = 256;
-          m_args.servo_middle[i] = Angles::radians(m_args.servo_middle[i]);
+          if (paramChanged(m_args.servo_middle[i]))
+            m_args.servo_middle[i] = Angles::radians(m_args.servo_middle[i]);
+
           m_last_ref[i] = 0;
           m_last_timestamp[i] = Clock::get();
         }
 
         // Convert rotation limits from degrees to radians.
-        m_args.servo_min = Angles::radians(m_args.servo_min);
-        m_args.servo_max = Angles::radians(m_args.servo_max);
+        if (paramChanged(m_args.servo_min))
+          m_args.servo_min = Angles::radians(m_args.servo_min);
+
+        if (paramChanged(m_args.servo_max))
+          m_args.servo_max = Angles::radians(m_args.servo_max);
 
         // Convert maximum rotation rate to radians
-        m_args.servo_rate_max = Angles::radians(m_args.servo_rate_max);
+        if (paramChanged(m_args.servo_rate_max))
+          m_args.servo_rate_max = Angles::radians(m_args.servo_rate_max);
       }
 
       void
@@ -443,7 +452,7 @@ namespace Actuators
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
         m_hw_major = major;
-        inf(DTR("version: %u.%u.%u"), major, minor, patch);
+        inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 

@@ -39,6 +39,10 @@ namespace Sensors
 
     //! Number of hard-iron correction factors.
     static const unsigned c_hard_iron_count = 3;
+    //! Power-up delay (s).
+    static const double c_power_up_delay = 2.0;
+    //! Hard Iron calibration parameter name.
+    static const std::string c_hard_iron_param = "Hard-Iron Calibration";
 
     //! Packet identifiers.
     enum PacketIds
@@ -62,10 +66,14 @@ namespace Sensors
       std::string uart_dev;
       //! Output frequency.
       unsigned output_frq;
-      //! Hard-iron correction factors.
-      std::vector<double> hard_iron;
       //! Raw data output.
       bool raw_data;
+      //! Power channel name.
+      std::string pwr_name;
+      //! Hard-iron correction factors.
+      std::vector<double> hard_iron;
+      //! Incoming Calibration Parameters entity label.
+      std::string calib_elabel;
     };
 
     struct Task: public Tasks::Task
@@ -94,6 +102,8 @@ namespace Sensors
       UCTK::Frame m_frame;
       //! Scratch buffer.
       uint8_t m_buffer[128];
+      //! Compass Calibration maneuver entity id.
+      unsigned m_calib_eid;
       //! Watchdog.
       Counter<double> m_wdog;
       //! Error counts.
@@ -108,12 +118,16 @@ namespace Sensors
         .defaultValue("")
         .description("Serial port device used to communicate with the sensor");
 
+        param("Power Channel - Name", m_args.pwr_name)
+        .defaultValue("")
+        .description("Name of the power channel");
+
         param("Output Frequency", m_args.output_frq)
         .units(Units::Hertz)
         .defaultValue("100")
         .description("Output frequency");
 
-        param("Hard-Iron Calibration", m_args.hard_iron)
+        param(c_hard_iron_param, m_args.hard_iron)
         .units(Units::Gauss)
         .size(c_hard_iron_count)
         .description("Hard-Iron calibration parameters");
@@ -128,6 +142,12 @@ namespace Sensors
         param("Raw Data", m_args.raw_data)
         .defaultValue("false")
         .description("Set to true to enable raw data output");
+
+        param("Calibration Maneuver - Entity Label", m_args.calib_elabel)
+        .defaultValue("")
+        .description("Entity label of maneuver responsible for compass calibration");
+
+        bind<IMC::MagneticField>(this);
       }
 
       ~Task(void)
@@ -135,32 +155,58 @@ namespace Sensors
         Task::onResourceRelease();
       }
 
+      //! Resolve entities.
+      void
+      onEntityResolution(void)
+      {
+        try
+        {
+          m_calib_eid = resolveEntity(m_args.calib_elabel);
+        }
+        catch (...)
+        {
+          m_calib_eid = 0;
+        }
+      }
+
+      //! Acquire resources.
       void
       onResourceAcquisition(void)
       {
+        if (!m_args.pwr_name.empty())
+        {
+          IMC::PowerChannelControl pcc;
+          pcc.name = m_args.pwr_name;
+          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+          dispatch(pcc);
+          Delay::wait(c_power_up_delay);
+        }
+
         try
         {
           m_uart = new UCTK::InterfaceUART(m_args.uart_dev);
           m_uart->open();
           UCTK::FirmwareInfo info = m_uart->getFirmwareInfo();
           if (info.isDevelopment())
-            war("device is using unstable firmware");
+            war(DTR("device is using unstable firmware"));
           else
-            inf("firmware version %u.%u.%u", info.major,
-              info.minor, info.patch);
+            inf(DTR("firmware version %u.%u.%u"), info.major,
+                info.minor, info.patch);
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 30);
+          throw RestartNeeded(DTR(e.what()), 30);
         }
       }
 
+      //! Release resources.
       void
       onResourceRelease(void)
       {
         Memory::clear(m_uart);
       }
 
+      //! Initialize resources.
       void
       onResourceInitialization(void)
       {
@@ -173,6 +219,27 @@ namespace Sensors
         m_wdog.setTop(2.0);
       }
 
+      void
+      consume(const IMC::MagneticField* msg)
+      {
+        if (m_calib_eid != msg->getSourceEntity())
+          return;
+
+        m_args.hard_iron[0] += msg->x;
+        m_args.hard_iron[1] += msg->y;
+        m_args.hard_iron[2] = 0.0;
+
+        IMC::SaveEntityParameters params;
+        params.name = getName();
+        dispatch(params);
+
+        if (!setHardIronFactors(m_args.hard_iron))
+          throw RestartNeeded(DTR("failed to set hard-iron correction factors"), 5);
+      }
+
+      //! Define sensor output frequency.
+      //! @param[in] frequency desired frequency.
+      //! @return true if successful, false otherwise.
       bool
       setOutputFrequency(uint8_t frequency)
       {
@@ -186,6 +253,8 @@ namespace Sensors
         return m_uart->sendFrame(frame);
       }
 
+      //! Get sensor current Hard-Iron calibration parameters.
+      //! @return hard-iron calibration parameters.
       std::vector<double>
       getHardIronFactors(void)
       {
@@ -206,6 +275,8 @@ namespace Sensors
         return factors;
       }
 
+      //! Set Hard-Iron calibration parameters.
+      //! @param[in] factors new calibration values.
       bool
       setHardIronFactors(const std::vector<double>& factors)
       {
@@ -217,6 +288,8 @@ namespace Sensors
         return m_uart->sendFrame(frame);
       }
 
+      //! Decode output data frame.
+      //! @param[in] frame data frame.
       void
       decodeOutputData(const UCTK::Frame& frame)
       {
@@ -320,6 +393,8 @@ namespace Sensors
         m_wdog.reset();
       }
 
+      //! Decode output raw data.
+      //! @param[in] frame raw data.
       void
       decodeOutputRaw(const UCTK::Frame& frame)
       {
@@ -328,9 +403,13 @@ namespace Sensors
         dispatch(data);
       }
 
+      //! Decode data frame.
+      //! @param[in] frame data frame.
       void
       decode(const UCTK::Frame& frame)
       {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
         switch (frame.getId())
         {
           case PKT_ID_OUTPUT_DATA:
@@ -346,6 +425,7 @@ namespace Sensors
         }
       }
 
+      //! Read input from sensor.
       void
       readInput(void)
       {

@@ -95,7 +95,6 @@ macro(dune_option name description)
 
   if(${name})
     message(STATUS "Module ${name}: Enabled")
-    set(DUNE_USING_${name} 1)
   else(${name})
     message(STATUS "Module ${name}: Disabled")
   endif(${name})

@@ -89,6 +89,12 @@ static std::pair<int, int> brate_pairs[] =
 #  if defined(B500000)
   , std::pair<int, int>(500000, B500000)
 #  endif
+#  if defined(B576000)
+  , std::pair<int, int>(576000, B576000)
+#  endif
+#  if defined(B921600)
+  , std::pair<int, int>(921600, B921600)
+#  endif
 };
 
 // Microsoft Windows implementation.

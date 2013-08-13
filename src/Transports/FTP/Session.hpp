@@ -45,7 +45,9 @@ namespace Transports
     class Session: public DUNE::Concurrency::Thread
     {
     public:
-      Session(DUNE::Tasks::Context& ctx, DUNE::Network::TCPSocket* sock, const DUNE::Network::Address& local_addr);
+      Session(DUNE::Tasks::Context& ctx, DUNE::Network::TCPSocket* sock,
+              const DUNE::Network::Address& local_addr,
+              double timeout);
 
       ~Session(void);
 
@@ -74,6 +76,8 @@ namespace Transports
       char m_bfr[1024];
       //! File offset (used by REST/RETR commands).
       int64_t m_rest_offset;
+      //! Idle timer.
+      DUNE::Time::Counter<double> m_timer;
 
       DUNE::FileSystem::Path
       getAbsolutePath(const std::string& path);

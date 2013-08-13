@@ -478,7 +478,7 @@ namespace Power
       void
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
-        inf(DTR("version: %u.%u.%u"), major, minor, patch);
+        inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
       }
 
       //! Wait for command.
@@ -595,6 +595,9 @@ namespace Power
         // Handle requests to main power channel.
         if (msg->name == m_args.pwr_main)
         {
+          if (msg->getDestination() != getSystemId())
+            return;
+
           if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
           {
             m_proto.sendCommand(CMD_PWR_HLT, 0, 0);

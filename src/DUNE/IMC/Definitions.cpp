@@ -953,6 +953,45 @@ namespace DUNE
       IMC::toJSON(os__, "error", error, nindent__);
     }
 
+    QueryEntityActivationState::QueryEntityActivationState(void)
+    {
+      m_header.mgid = 15;
+      clear();
+    }
+
+    void
+    QueryEntityActivationState::clear(void)
+    {
+    }
+
+    int
+    QueryEntityActivationState::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    QueryEntityActivationState::serializeFields(uint8_t* bfr__) const
+    {
+      return bfr__;
+    }
+
+    uint16_t
+    QueryEntityActivationState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      (void)bfr__;
+      (void)size__;
+      return 0;
+    }
+
+    uint16_t
+    QueryEntityActivationState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      (void)bfr__;
+      (void)size__;
+      return 0;
+    }
+
     SimulatedState::SimulatedState(void)
     {
       m_header.mgid = 50;
@@ -2461,6 +2500,290 @@ namespace DUNE
       IMC::toJSON(os__, "seq", seq, nindent__);
       IMC::toJSON(os__, "state", state, nindent__);
       IMC::toJSON(os__, "error", error, nindent__);
+    }
+
+    TextMessage::TextMessage(void)
+    {
+      m_header.mgid = 160;
+      clear();
+    }
+
+    void
+    TextMessage::clear(void)
+    {
+      origin.clear();
+      text.clear();
+    }
+
+    bool
+    TextMessage::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TextMessage& other__ = dynamic_cast<const TextMessage&>(msg__);
+      if (origin != other__.origin) return false;
+      if (text != other__.text) return false;
+      return true;
+    }
+
+    int
+    TextMessage::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    TextMessage::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(origin, ptr__);
+      ptr__ += IMC::serialize(text, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TextMessage::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(origin, bfr__, size__);
+      bfr__ += IMC::deserialize(text, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TextMessage::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(origin, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(text, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    TextMessage::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "origin", origin, nindent__);
+      IMC::toJSON(os__, "text", text, nindent__);
+    }
+
+    IridiumMsgRx::IridiumMsgRx(void)
+    {
+      m_header.mgid = 170;
+      clear();
+    }
+
+    void
+    IridiumMsgRx::clear(void)
+    {
+      origin.clear();
+      htime = 0;
+      lat = 0;
+      lon = 0;
+      data.clear();
+    }
+
+    bool
+    IridiumMsgRx::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::IridiumMsgRx& other__ = dynamic_cast<const IridiumMsgRx&>(msg__);
+      if (origin != other__.origin) return false;
+      if (htime != other__.htime) return false;
+      if (lat != other__.lat) return false;
+      if (lon != other__.lon) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    IridiumMsgRx::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    IridiumMsgRx::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(origin, ptr__);
+      ptr__ += IMC::serialize(htime, ptr__);
+      ptr__ += IMC::serialize(lat, ptr__);
+      ptr__ += IMC::serialize(lon, ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    IridiumMsgRx::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(origin, bfr__, size__);
+      bfr__ += IMC::deserialize(htime, bfr__, size__);
+      bfr__ += IMC::deserialize(lat, bfr__, size__);
+      bfr__ += IMC::deserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    IridiumMsgRx::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(origin, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(htime, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    IridiumMsgRx::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "origin", origin, nindent__);
+      IMC::toJSON(os__, "htime", htime, nindent__);
+      IMC::toJSON(os__, "lat", lat, nindent__);
+      IMC::toJSON(os__, "lon", lon, nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
+    }
+
+    IridiumMsgTx::IridiumMsgTx(void)
+    {
+      m_header.mgid = 171;
+      clear();
+    }
+
+    void
+    IridiumMsgTx::clear(void)
+    {
+      req_id = 0;
+      ttl = 0;
+      destination.clear();
+      data.clear();
+    }
+
+    bool
+    IridiumMsgTx::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::IridiumMsgTx& other__ = dynamic_cast<const IridiumMsgTx&>(msg__);
+      if (req_id != other__.req_id) return false;
+      if (ttl != other__.ttl) return false;
+      if (destination != other__.destination) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    IridiumMsgTx::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    IridiumMsgTx::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(req_id, ptr__);
+      ptr__ += IMC::serialize(ttl, ptr__);
+      ptr__ += IMC::serialize(destination, ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    IridiumMsgTx::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(req_id, bfr__, size__);
+      bfr__ += IMC::deserialize(ttl, bfr__, size__);
+      bfr__ += IMC::deserialize(destination, bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    IridiumMsgTx::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(req_id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ttl, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(destination, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    IridiumMsgTx::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "req_id", req_id, nindent__);
+      IMC::toJSON(os__, "ttl", ttl, nindent__);
+      IMC::toJSON(os__, "destination", destination, nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
+    }
+
+    IridiumTxStatus::IridiumTxStatus(void)
+    {
+      m_header.mgid = 172;
+      clear();
+    }
+
+    void
+    IridiumTxStatus::clear(void)
+    {
+      req_id = 0;
+      status = 0;
+      text.clear();
+    }
+
+    bool
+    IridiumTxStatus::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::IridiumTxStatus& other__ = dynamic_cast<const IridiumTxStatus&>(msg__);
+      if (req_id != other__.req_id) return false;
+      if (status != other__.status) return false;
+      if (text != other__.text) return false;
+      return true;
+    }
+
+    int
+    IridiumTxStatus::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    IridiumTxStatus::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(req_id, ptr__);
+      ptr__ += IMC::serialize(status, ptr__);
+      ptr__ += IMC::serialize(text, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    IridiumTxStatus::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(req_id, bfr__, size__);
+      bfr__ += IMC::deserialize(status, bfr__, size__);
+      bfr__ += IMC::deserialize(text, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    IridiumTxStatus::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(req_id, bfr__, size__);
+      bfr__ += IMC::deserialize(status, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(text, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    IridiumTxStatus::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "req_id", req_id, nindent__);
+      IMC::toJSON(os__, "status", status, nindent__);
+      IMC::toJSON(os__, "text", text, nindent__);
     }
 
     LblRange::LblRange(void)
@@ -6041,6 +6364,62 @@ namespace DUNE
       IMC::toJSON(os__, "value", value, nindent__);
     }
 
+    DataSanity::DataSanity(void)
+    {
+      m_header.mgid = 284;
+      clear();
+    }
+
+    void
+    DataSanity::clear(void)
+    {
+      sane = 0;
+    }
+
+    bool
+    DataSanity::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::DataSanity& other__ = dynamic_cast<const DataSanity&>(msg__);
+      if (sane != other__.sane) return false;
+      return true;
+    }
+
+    int
+    DataSanity::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    DataSanity::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(sane, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    DataSanity::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(sane, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    DataSanity::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(sane, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    DataSanity::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "sane", sane, nindent__);
+    }
+
     CameraZoom::CameraZoom(void)
     {
       m_header.mgid = 300;
@@ -8025,6 +8404,62 @@ namespace DUNE
       IMC::toJSON(os__, "depth", depth, nindent__);
       IMC::toJSON(os__, "var_x", var_x, nindent__);
       IMC::toJSON(os__, "var_y", var_y, nindent__);
+    }
+
+    AlignmentState::AlignmentState(void)
+    {
+      m_header.mgid = 361;
+      clear();
+    }
+
+    void
+    AlignmentState::clear(void)
+    {
+      state = 0;
+    }
+
+    bool
+    AlignmentState::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::AlignmentState& other__ = dynamic_cast<const AlignmentState&>(msg__);
+      if (state != other__.state) return false;
+      return true;
+    }
+
+    int
+    AlignmentState::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    AlignmentState::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(state, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    AlignmentState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    AlignmentState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    AlignmentState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "state", state, nindent__);
     }
 
     DesiredHeading::DesiredHeading(void)
@@ -11776,6 +12211,7 @@ namespace DUNE
       z.clear();
       lat = 0;
       lon = 0;
+      radius = 0;
     }
 
     bool
@@ -11787,6 +12223,7 @@ namespace DUNE
       if (z != other__.z) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
+      if (radius != other__.radius) return false;
       return true;
     }
 
@@ -11805,6 +12242,7 @@ namespace DUNE
       ptr__ += z.serialize(ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
+      ptr__ += IMC::serialize(radius, ptr__);
       return ptr__;
     }
 
@@ -11817,6 +12255,7 @@ namespace DUNE
       bfr__ += z.deserialize(bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(radius, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -11829,6 +12268,7 @@ namespace DUNE
       bfr__ += z.reverseDeserialize(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(radius, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -11840,6 +12280,7 @@ namespace DUNE
       z.toJSON(os__, "z", nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
+      IMC::toJSON(os__, "radius", radius, nindent__);
     }
 
     void
@@ -15038,6 +15479,386 @@ namespace DUNE
       IMC::toJSON(os__, "goal_xml", goal_xml, nindent__);
     }
 
+    TrexAttribute::TrexAttribute(void)
+    {
+      m_header.mgid = 656;
+      clear();
+    }
+
+    void
+    TrexAttribute::clear(void)
+    {
+      name.clear();
+      attr_type = 0;
+      min.clear();
+      max.clear();
+    }
+
+    bool
+    TrexAttribute::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TrexAttribute& other__ = dynamic_cast<const TrexAttribute&>(msg__);
+      if (name != other__.name) return false;
+      if (attr_type != other__.attr_type) return false;
+      if (min != other__.min) return false;
+      if (max != other__.max) return false;
+      return true;
+    }
+
+    int
+    TrexAttribute::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    TrexAttribute::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(name, ptr__);
+      ptr__ += IMC::serialize(attr_type, ptr__);
+      ptr__ += IMC::serialize(min, ptr__);
+      ptr__ += IMC::serialize(max, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TrexAttribute::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(name, bfr__, size__);
+      bfr__ += IMC::deserialize(attr_type, bfr__, size__);
+      bfr__ += IMC::deserialize(min, bfr__, size__);
+      bfr__ += IMC::deserialize(max, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TrexAttribute::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
+      bfr__ += IMC::deserialize(attr_type, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(min, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(max, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    TrexAttribute::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "name", name, nindent__);
+      IMC::toJSON(os__, "attr_type", attr_type, nindent__);
+      IMC::toJSON(os__, "min", min, nindent__);
+      IMC::toJSON(os__, "max", max, nindent__);
+    }
+
+    TrexToken::TrexToken(void)
+    {
+      m_header.mgid = 657;
+      clear();
+      attributes.setParent(this);
+    }
+
+    void
+    TrexToken::clear(void)
+    {
+      timeline.clear();
+      predicate.clear();
+      attributes.clear();
+    }
+
+    bool
+    TrexToken::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TrexToken& other__ = dynamic_cast<const TrexToken&>(msg__);
+      if (timeline != other__.timeline) return false;
+      if (predicate != other__.predicate) return false;
+      if (attributes != other__.attributes) return false;
+      return true;
+    }
+
+    int
+    TrexToken::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    TrexToken::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(timeline, ptr__);
+      ptr__ += IMC::serialize(predicate, ptr__);
+      ptr__ += attributes.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TrexToken::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(timeline, bfr__, size__);
+      bfr__ += IMC::deserialize(predicate, bfr__, size__);
+      bfr__ += attributes.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TrexToken::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(timeline, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(predicate, bfr__, size__);
+      bfr__ += attributes.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    TrexToken::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "timeline", timeline, nindent__);
+      IMC::toJSON(os__, "predicate", predicate, nindent__);
+      attributes.toJSON(os__, "attributes", nindent__);
+    }
+
+    void
+    TrexToken::setTimeStampNested(double value__)
+    {
+      attributes.setTimeStamp(value__);
+    }
+
+    void
+    TrexToken::setSourceNested(uint16_t value__)
+    {
+      attributes.setSource(value__);
+    }
+
+    void
+    TrexToken::setSourceEntityNested(uint8_t value__)
+    {
+      attributes.setSourceEntity(value__);
+    }
+
+    void
+    TrexToken::setDestinationNested(uint16_t value__)
+    {
+      attributes.setDestination(value__);
+    }
+
+    void
+    TrexToken::setDestinationEntityNested(uint8_t value__)
+    {
+      attributes.setDestinationEntity(value__);
+    }
+
+    TrexOperation::TrexOperation(void)
+    {
+      m_header.mgid = 655;
+      clear();
+      token.setParent(this);
+    }
+
+    void
+    TrexOperation::clear(void)
+    {
+      op = 0;
+      goal_id.clear();
+      token.clear();
+    }
+
+    bool
+    TrexOperation::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TrexOperation& other__ = dynamic_cast<const TrexOperation&>(msg__);
+      if (op != other__.op) return false;
+      if (goal_id != other__.goal_id) return false;
+      if (token != other__.token) return false;
+      return true;
+    }
+
+    int
+    TrexOperation::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    TrexOperation::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(goal_id, ptr__);
+      ptr__ += token.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TrexOperation::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(goal_id, bfr__, size__);
+      bfr__ += token.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TrexOperation::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(goal_id, bfr__, size__);
+      bfr__ += token.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    TrexOperation::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "op", op, nindent__);
+      IMC::toJSON(os__, "goal_id", goal_id, nindent__);
+      token.toJSON(os__, "token", nindent__);
+    }
+
+    void
+    TrexOperation::setTimeStampNested(double value__)
+    {
+      if (!token.isNull())
+      {
+        token.get()->setTimeStamp(value__);
+      }
+    }
+
+    void
+    TrexOperation::setSourceNested(uint16_t value__)
+    {
+      if (!token.isNull())
+      {
+        token.get()->setSource(value__);
+      }
+    }
+
+    void
+    TrexOperation::setSourceEntityNested(uint8_t value__)
+    {
+      if (!token.isNull())
+      {
+        token.get()->setSourceEntity(value__);
+      }
+    }
+
+    void
+    TrexOperation::setDestinationNested(uint16_t value__)
+    {
+      if (!token.isNull())
+      {
+        token.get()->setDestination(value__);
+      }
+    }
+
+    void
+    TrexOperation::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!token.isNull())
+      {
+        token.get()->setDestinationEntity(value__);
+      }
+    }
+
+    TrexPlan::TrexPlan(void)
+    {
+      m_header.mgid = 658;
+      clear();
+      tokens.setParent(this);
+    }
+
+    void
+    TrexPlan::clear(void)
+    {
+      reactor.clear();
+      tokens.clear();
+    }
+
+    bool
+    TrexPlan::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TrexPlan& other__ = dynamic_cast<const TrexPlan&>(msg__);
+      if (reactor != other__.reactor) return false;
+      if (tokens != other__.tokens) return false;
+      return true;
+    }
+
+    int
+    TrexPlan::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    TrexPlan::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(reactor, ptr__);
+      ptr__ += tokens.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TrexPlan::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(reactor, bfr__, size__);
+      bfr__ += tokens.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TrexPlan::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(reactor, bfr__, size__);
+      bfr__ += tokens.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    TrexPlan::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "reactor", reactor, nindent__);
+      tokens.toJSON(os__, "tokens", nindent__);
+    }
+
+    void
+    TrexPlan::setTimeStampNested(double value__)
+    {
+      tokens.setTimeStamp(value__);
+    }
+
+    void
+    TrexPlan::setSourceNested(uint16_t value__)
+    {
+      tokens.setSource(value__);
+    }
+
+    void
+    TrexPlan::setSourceEntityNested(uint8_t value__)
+    {
+      tokens.setSourceEntity(value__);
+    }
+
+    void
+    TrexPlan::setDestinationNested(uint16_t value__)
+    {
+      tokens.setDestination(value__);
+    }
+
+    void
+    TrexPlan::setDestinationEntityNested(uint8_t value__)
+    {
+      tokens.setDestinationEntity(value__);
+    }
+
     VideoData::VideoData(void)
     {
       m_header.mgid = 700;
@@ -16310,6 +17131,68 @@ namespace DUNE
     PopEntityParameters::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "name", name, nindent__);
+    }
+
+    IoEvent::IoEvent(void)
+    {
+      m_header.mgid = 813;
+      clear();
+    }
+
+    void
+    IoEvent::clear(void)
+    {
+      type = 0;
+      error.clear();
+    }
+
+    bool
+    IoEvent::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::IoEvent& other__ = dynamic_cast<const IoEvent&>(msg__);
+      if (type != other__.type) return false;
+      if (error != other__.error) return false;
+      return true;
+    }
+
+    int
+    IoEvent::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    IoEvent::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(error, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    IoEvent::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(error, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    IoEvent::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(error, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    IoEvent::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "error", error, nindent__);
     }
   }
 }

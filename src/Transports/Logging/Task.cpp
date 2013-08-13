@@ -256,6 +256,8 @@ namespace Transports
           info.id = devs[i]->id;
           info.label = devs[i]->label;
           info.component = devs[i]->task_name;
+          info.act_time = devs[i]->act_time;
+          info.deact_time = devs[i]->deact_time;
           logMessage(&info);
         }
 
@@ -291,6 +293,9 @@ namespace Transports
         if (!m_active)
           return;
 
+        if (m_lsf == NULL)
+          return;
+
         m_active = keep_logging;
 
         // Inform everyone that we stopped logging (if we were logging).
@@ -319,7 +324,7 @@ namespace Transports
         String::replaceWhiteSpace(label, '_');
         std::string dir_label = label;
 
-        if (dir_label != "")
+        if (!dir_label.empty())
           dir_label = "_" + dir_label;
 
         m_dir = m_ctx.dir_log
@@ -388,7 +393,7 @@ namespace Transports
       }
 
       void
-      tryStartLog(const std::string& label = "idle")
+      tryStartLog(const std::string& label = "")
       {
         try
         {
@@ -421,7 +426,16 @@ namespace Transports
         {
           waitForMessages(1.0);
           if (m_active)
-            tryFlush();
+          {
+            try
+            {
+              tryFlush();
+            }
+            catch(std::exception& e)
+            {
+              throw RestartNeeded(e.what(), 5);
+            }
+          }
         }
       }
     };

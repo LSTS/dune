@@ -136,8 +136,11 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        m_args.max_angle = Angles::radians(m_args.max_angle);
-        m_args.max_rate = Angles::radians(m_args.max_rate);
+        if (paramChanged(m_args.max_angle))
+          m_args.max_angle = Angles::radians(m_args.max_angle);
+
+        if (paramChanged(m_args.max_rate))
+          m_args.max_rate = Angles::radians(m_args.max_rate);
       }
 
       //! Acquire resources

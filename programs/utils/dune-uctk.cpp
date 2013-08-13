@@ -37,12 +37,14 @@ main(int argc, char** argv)
   .program("DUNE UCTK Flash Programmer")
   .copyright(DUNE_COPYRIGHT)
   .email("Ricardo Martins <rasm@lsts.pt>")
-  .version(DUNE_COMPLETE_VERSION)
-  .date(DUNE_BUILD_TIME)
+  .version(getFullVersion())
+  .date(getCompileDate())
   .arch(DUNE_SYSTEM_NAME)
   .description("Utility to update the firmware of UCTK based devices.")
-  .add("-d", "--sys-device",
+  .add("-d", "--dev",
        "System device", "DEVICE")
+  .add("-t", "--dev-type",
+       "System device type", "TYPE")
   .add("-f", "--file",
        "iHEX file", "IHEX_FILE");
 
@@ -70,14 +72,21 @@ main(int argc, char** argv)
   }
 
   // Get system device.
-  std::string sys_dev = options.value("--sys-device");
+  std::string sys_dev = options.value("--dev");
   if (sys_dev.empty())
   {
     std::cerr << "ERROR: you must specify one system device." << std::endl;
     return 1;
   }
 
-  UCTK::Interface* itf = new UCTK::InterfaceUART(sys_dev);
+  // Get device type.
+  UCTK::Interface* itf = NULL;
+  std::string dev_type = options.value("--dev-type");
+  if (dev_type == "escc")
+    itf = new UCTK::InterfaceESCC(sys_dev);
+  else
+    itf = new UCTK::InterfaceUART(sys_dev);
+
   itf->open();
 
   UCTK::Bootloader* boot = new UCTK::Bootloader(itf, true);

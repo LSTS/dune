@@ -88,6 +88,29 @@ main(int argc, char** argv)
     tmsg->setSourceEntity(atoi(argv[4]));
     tmsg->state = atoi(argv[5]);
   }
+  else if (strcmp(argv[3], "EntityActivationState") == 0)
+  {
+    IMC::EntityActivationState* tmsg = new IMC::EntityActivationState;
+    msg = tmsg;
+    tmsg->setSourceEntity(atoi(argv[4]));
+    tmsg->state = IMC::EntityActivationState::EAS_ACTIVE;
+  }
+  else if (strcmp(argv[3], "MagneticField") == 0)
+  {
+    IMC::MagneticField* tmsg = new IMC::MagneticField;
+    msg = tmsg;
+    tmsg->setSourceEntity(atoi(argv[4]));
+    tmsg->x = atof(argv[5]);
+    tmsg->y = atof(argv[6]);
+    tmsg->z = atof(argv[7]);
+  }
+  else if (strcmp(argv[3], "DataSanity") == 0)
+  {
+    IMC::DataSanity* tmsg = new IMC::DataSanity;
+    msg = tmsg;
+    tmsg->setSourceEntity(atoi(argv[4]));
+    tmsg->sane = atoi(argv[5]);
+  }
   else if (strcmp(argv[3], "MonitorEntityState") == 0)
   {
     IMC::MonitorEntityState* tmsg = new IMC::MonitorEntityState;
@@ -513,6 +536,15 @@ main(int argc, char** argv)
     IMC::PopEntityParameters* tmsg = new IMC::PopEntityParameters;
     msg = tmsg;
     tmsg->name = argv[4];
+  }
+  else if (strcmp(argv[3], "IridiumMsgTx") == 0)
+  {
+    IMC::IridiumMsgTx* tmsg = new IMC::IridiumMsgTx;
+    msg = tmsg;
+    tmsg->req_id = atoi(argv[4]);
+    tmsg->ttl = atoi(argv[5]);
+    std::string hex = String::fromHex(argv[6]);
+    tmsg->data.assign(hex.begin(), hex.end());
   }
 
   if (msg == NULL)

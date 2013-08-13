@@ -285,6 +285,9 @@ namespace Transports
           std::set<std::string>::iterator iitr = m_uris_loc.begin();
           for (; iitr != m_uris_loc.end(); ++iitr)
           {
+            if (String::startsWith(*iitr, "imc+info"))
+              continue;
+
             if (iitr->compare(0, 4, "imc+", 4) == 0)
               addLocalURI(*iitr + *itr);
           }
@@ -292,6 +295,9 @@ namespace Transports
           iitr = m_uris_ext.begin();
           for (; iitr != m_uris_ext.end(); ++iitr)
           {
+            if (String::startsWith(*iitr, "imc+info"))
+              continue;
+
             if (iitr->compare(0, 4, "imc+", 4) == 0)
               addExternalURI(*iitr + *itr);
           }

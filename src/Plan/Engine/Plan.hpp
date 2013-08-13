@@ -241,7 +241,9 @@ namespace Plan
         if (m_sched == NULL)
           return;
 
-        m_sched->planStarted();
+        m_affected_ents.clear();
+
+        m_sched->planStarted(m_affected_ents);
       }
 
       //! Signal that the plan has stopped
@@ -251,14 +253,14 @@ namespace Plan
         if (m_sched == NULL)
           return;
 
-        m_sched->planStopped();
+        m_sched->planStopped(m_affected_ents);
       }
 
       //! Signal that calibration has started
       void
       calibrationStarted(const Calibration* calib)
       {
-        m_calibration = calib->getTime();
+        m_calibration = (uint16_t)calib->getTime();
       }
 
       //! Signal that a maneuver has started
@@ -276,10 +278,10 @@ namespace Plan
       void
       maneuverDone(void)
       {
-	if (m_curr_node == NULL)
-	  return;
+        if (m_curr_node == NULL)
+          return;
 
-	if (m_last_dur != m_durations.end())
+        if (m_last_dur != m_durations.end())
         {
           if (m_curr_node->pman->maneuver_id == m_last_dur->first)
             m_beyond_dur = true;
@@ -398,11 +400,14 @@ namespace Plan
       //! Pass EntityActivationState to scheduler
       //! @param[in] id entity label
       //! @param[in] msg pointer to EntityActivationState message
-      void
+      //! @return false if something failed to be activated, true otherwise
+      bool
       onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg)
       {
         if (m_sched != NULL)
-          m_sched->onEntityActivationState(id, msg);
+          return m_sched->onEntityActivationState(id, msg);
+        else
+          return true;
       }
 
       //! Check if scheduler is waiting for a device
@@ -457,6 +462,17 @@ namespace Plan
       end(void) const
       {
         return m_seq_nodes.end();
+      }
+
+      //! Returns calibration time left according to scheduler
+      //! @return calibration time left or -1 if no scheduler is active
+      float
+      calibTimeLeft(void) const
+      {
+        if (m_sched != NULL)
+          return m_sched->calibTimeLeft();
+
+        return -1.0;
       }
 
     private:
@@ -637,6 +653,8 @@ namespace Plan
       bool m_beyond_dur;
       //! Schedule for actions to take during plan
       ActionSchedule* m_sched;
+      //! Vector of entity labels to push and pop entity parameters
+      std::vector<std::string> m_affected_ents;
     };
   }
 }

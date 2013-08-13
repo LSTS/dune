@@ -238,16 +238,23 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        m_args.bottom_width = Angles::radians(m_args.bottom_width);
-        m_args.forward_width = Angles::radians(m_args.forward_width);
+        if (paramChanged(m_args.bottom_width))
+          m_args.bottom_width = Angles::radians(m_args.bottom_width);
 
-        m_args.bottom_orientation[0] = Angles::radians(m_args.bottom_orientation[0]);
-        m_args.bottom_orientation[1] = Angles::radians(m_args.bottom_orientation[1]);
-        m_args.bottom_orientation[2] = Angles::radians(m_args.bottom_orientation[2]);
+        if (paramChanged(m_args.forward_width))
+          m_args.forward_width = Angles::radians(m_args.forward_width);
 
-        m_args.forward_orientation[0] = Angles::radians(m_args.forward_orientation[0]);
-        m_args.forward_orientation[1] = Angles::radians(m_args.forward_orientation[1]);
-        m_args.forward_orientation[2] = Angles::radians(m_args.forward_orientation[2]);
+        if (paramChanged(m_args.bottom_orientation))
+        {
+          for (unsigned i = 0; i < 3; ++i)
+            m_args.bottom_orientation[i] = Angles::radians(m_args.bottom_orientation[i]);
+        }
+
+        if (paramChanged(m_args.forward_orientation))
+        {
+          for (unsigned i = 0; i < 3; ++i)
+            m_args.forward_orientation[i] = Angles::radians(m_args.forward_orientation[i]);
+        }
 
         debug("pier point A lat: %0.6f, lon: %0.6f", m_args.pier[0], m_args.pier[1]);
         debug("pier point B lat: %0.6f, lon: %0.6f", m_args.pier[2], m_args.pier[3]);
