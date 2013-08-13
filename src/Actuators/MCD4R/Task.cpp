@@ -68,6 +68,72 @@ namespace Actuators
       ACT_ARM_FINGER = 6
     };
 
+    //! Camera pan directions
+    enum PanCommands
+    {
+      //! Pan reverse
+      PAN_DIR_RV     = 1,
+      //! Pan stop
+      PAN_DIR_ST     = 0,
+      //! Pan forward
+      PAN_DIR_FW     = -1
+    };
+
+    //! Camera tilt directions
+    enum TiltCommands
+    {
+      //! Tilt reverse
+      TILT_DIR_RV    = 1,
+      //! Tilt stop
+      TILT_DIR_ST    = 0,
+      //! Tilt forward
+      TILT_DIR_FW    = -1
+    };
+
+    //! Camera zoom commands
+    enum ZoomCommands
+    {
+      //! Zoom decrease
+      ZOOM_DEC       = -1,
+      //! Zoom stop
+      ZOOM_STOP      = 0,
+      //! Zoom increase
+      ZOOM_INC       = 1
+    };
+
+    //! Camera exposure commands
+    enum ExposureCommands
+    {
+      //! Exposure decrease
+      EXPO_DEC       = -1,
+      //! Exposure stop
+      EXPO_STOP      = 0,
+      //! Exposure increase
+      EXPO_INC       = 1
+    };
+
+    //! Arm pulse commands
+    enum PulseCommands
+    {
+      //! Pulse forward
+      PULSE_FW       = -1,
+      //! Pulse stop
+      PULSE_ST       = 0,
+      //! Pulse reverse
+      PULSE_RV       = 1
+    };
+
+    //! Arm finger commands
+    enum FingerCommands
+    {
+      //! Finger forward
+      FINGER_FW       = -1,
+      //! Finger stop
+      FINGER_ST       = 0,
+      //! Finger reverse
+      FINGER_RV       = 1
+    };
+
     //! Task arguments.
     struct Arguments
     {
@@ -170,6 +236,75 @@ namespace Actuators
       onResourceRelease(void)
       {
         Memory::clear(m_uart);
+      }
+
+      bool
+      actCommand(ActuateCommands cmd, int8_t dir)
+      {
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_ACTUATE);
+        frame.setPayloadSize(1);
+        frame.set((uint8_t)cmd, 0);
+        frame.set((int)dir, 1);
+
+        if (!m_uart->sendFrame(frame))
+          return false;
+
+        return true;
+      }
+
+      //! Pan camera forward, reverse or stop
+      //! @param[in] dir direction to which it should pan
+      //! @return true if successful in sending command
+      inline bool
+      cameraPan(PanCommands dir)
+      {
+        return actCommand(ACT_CAM_PAN, dir);
+      }
+
+      //! Tilt camera forward reverse or stop
+      //! @param[in] dir direction to which it should tilt
+      //! @return true if successful in sending command
+      inline bool
+      cameraTilt(TiltCommands dir)
+      {
+        return actCommand(ACT_CAM_TILT, dir);
+      }
+
+      //! Zoom camera
+      //! @param[in] dir zoom direction
+      //! @return true if successful in sending command
+      inline bool
+      cameraZoom(ZoomCommands dir)
+      {
+        return actCommand(ACT_CAM_ZOOM, dir);
+      }
+
+      //! Command camera's exposure
+      //! @param[in] cmd exposure command
+      //! @return true if successful in sending command
+      inline bool
+      cameraExposure(ExposureCommands cmd)
+      {
+        return actCommand(ACT_CAM_EXPO, cmd);
+      }
+
+      //! Command arm's pulse
+      //! @param[in] dir arm's pulse direction
+      //! @return true if successful in sending command
+      inline bool
+      armPulse(PulseCommands dir)
+      {
+        return actCommand(ACT_ARM_PULSE, dir);
+      }
+
+      //! Command arm's finger
+      //! @param[in] dir arm's finger direction
+      //! @return true if successful in sending command
+      inline bool
+      armFinger(FingerCommands dir)
+      {
+        return actCommand(ACT_ARM_FINGER, dir);
       }
 
       void
