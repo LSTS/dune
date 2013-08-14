@@ -173,7 +173,7 @@ namespace DUNE
     void
     KalmanFilter::setState(short pos, double value)
     {
-      if ((size_t)pos > m_state_count)
+      if ((size_t)pos >= m_state_count)
         throw std::runtime_error(DTR("invalid index"));
 
       m_x(pos) = value;
@@ -227,7 +227,7 @@ namespace DUNE
     void
     KalmanFilter::setOutput(short pos, double value)
     {
-      if (pos > m_y.rows())
+      if (pos >= m_y.rows())
         throw std::runtime_error(DTR("invalid index"));
 
       m_y(pos) = value;
@@ -236,7 +236,7 @@ namespace DUNE
     void
     KalmanFilter::setInnovation(short pos, double value)
     {
-      if (pos > m_innov.rows())
+      if (pos >= m_innov.rows())
         throw std::runtime_error(DTR("invalid index"));
 
       m_innov(pos) = value;
@@ -245,7 +245,7 @@ namespace DUNE
     void
     KalmanFilter::setObservation(short ln, short cl, double value)
     {
-      if (ln > m_c.rows() || cl > m_c.columns())
+      if (ln >= m_c.rows() || cl >= m_c.columns())
         throw std::runtime_error(DTR("invalid index"));
 
       m_c(ln, cl) = value;
@@ -254,7 +254,7 @@ namespace DUNE
     void
     KalmanFilter::setProcessNoise(short ln, short cl, double value)
     {
-      if (ln > m_q.rows() || cl > m_q.columns())
+      if (ln >= m_q.rows() || cl >= m_q.columns())
         throw std::runtime_error(DTR("invalid index"));
 
       m_q(ln, cl) = value;
@@ -263,7 +263,7 @@ namespace DUNE
     void
     KalmanFilter::setProcessNoise(short in, double value)
     {
-      if ((size_t)in > m_state_count)
+      if ((size_t)in >= m_state_count)
         throw std::runtime_error(DTR("invalid index"));
 
       m_q(in, in) = value;
@@ -279,7 +279,7 @@ namespace DUNE
     void
     KalmanFilter::setMeasurementNoise(short ln, short cl, double value)
     {
-      if (ln > m_r.rows() || cl > m_r.columns())
+      if (ln >= m_r.rows() || cl >= m_r.columns())
         throw std::runtime_error(DTR("invalid index"));
 
       m_r(ln, cl) = value;
@@ -288,7 +288,7 @@ namespace DUNE
     void
     KalmanFilter::setMeasurementNoise(short in, double value)
     {
-      if (in > m_r.rows())
+      if (in >= m_r.rows())
         throw std::runtime_error(DTR("invalid index"));
 
       m_r(in, in) = value;
@@ -304,7 +304,7 @@ namespace DUNE
     void
     KalmanFilter::setCovariance(short ln, short cl, double value)
     {
-      if (ln > m_p.rows() || cl > m_p.columns())
+      if (ln >= m_p.rows() || cl >= m_p.columns())
         throw std::runtime_error(DTR("invalid index"));
 
       m_p(ln, cl) = value;
@@ -313,7 +313,7 @@ namespace DUNE
     void
     KalmanFilter::setCovariance(short in, double value)
     {
-      if ((size_t)in > m_state_count)
+      if ((size_t)in >= m_state_count)
         throw std::runtime_error(DTR("invalid index"));
 
       m_p(in, in) = value;
