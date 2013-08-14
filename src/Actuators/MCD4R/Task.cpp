@@ -204,7 +204,7 @@ namespace Actuators
 
     //! Amount of seconds to wait before restarting task.
     static const unsigned c_restart_delay = 1;
-    //! Names for states voltages
+    //! Labels for states voltages
     const char* c_voltage_labels[] =
     {
       "24V", "12V", "3V3", "TILT_EOL", "PAN_EOL"
@@ -213,6 +213,16 @@ namespace Actuators
     const char* c_current_labels[] =
     {
       "ITILT", "IPAN", "IPULSE", "IFINGER", "ISYS"
+    };
+    //! Voltages index in for each measure in the received buffer
+    const uint8_t c_voltage_idx[] =
+    {
+      0, 1, 2, 3, 5
+    };
+    //! Currents index in for each measure in the received buffer
+    const uint8_t c_current_idx[] =
+    {
+      4, 6, 7, 8, 9
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -407,25 +417,19 @@ namespace Actuators
 
         inf("%s", str.c_str());
 
-        struct BoardState* ptr = (struct BoardState*)frame.getPayload();
-
-        m_voltage[SV_24].value = ptr->v24;
-        m_voltage[SV_12].value = ptr->v12;
-        m_voltage[SV_3V3].value = ptr->v3_3;
-        m_voltage[SV_TILT_EOL].value = ptr->tilt_eol;
-        m_voltage[SV_PAN_EOL].value = ptr->pan_eol;
-
-        m_current[SC_ITILT].value = ptr->itilt;
-        m_current[SC_IPAN].value = ptr->ipan;
-        m_current[SC_IPULSE].value = ptr->ipulse;
-        m_current[SC_IFINGER].value = ptr->ifinger;
-        m_current[SC_ISYS].value = ptr->isys;
+        uint16_t* ptr = (uint16_t*)frame.getPayload();
 
         for (unsigned i = 0; i < SV_TOTAL; i++)
+        {
+          m_voltage[i].value = *(ptr + c_voltage_idx[i]);
           dispatch(m_voltage[i]);
+        }
 
         for (unsigned i = 0; i < SC_TOTAL; i++)
+        {
+          m_current[i].value = *(ptr + c_current_idx[i]);
           dispatch(m_current[i]);
+        }
 
         return true;
       }
