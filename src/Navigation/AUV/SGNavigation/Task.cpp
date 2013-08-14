@@ -203,7 +203,7 @@ namespace Navigation
           .description("Use 'EulerAnglesDelta' or 'AngularVelocity' to update heading");
 
           param("Heading Bias Alignment Index", m_args.alignment_index)
-          .defaultValue("5e-4")
+          .defaultValue("1e-5")
           .description("Heading bias uncertainty alignment threshold");
 
           param("Entity Label - IMU", m_args.elabel_imu)
@@ -570,7 +570,8 @@ namespace Navigation
           // Check alignment threshold index.
           if (m_dead_reckoning)
           {
-            if (m_kal.getCovariance(STATE_PSI_BIAS, STATE_PSI_BIAS) < m_args.alignment_index)
+
+            if (m_kal.getCovariance(STATE_PSI_BIAS) < m_args.alignment_index)
               m_aligned = true;
             else
               m_aligned = false;
@@ -650,11 +651,11 @@ namespace Navigation
                                             &m_ewvel.x, &m_ewvel.y, &m_ewvel.z);
 
           // Log Navigation Uncertainty.
-          m_uncertainty.psi = m_kal.getCovariance(STATE_PSI, STATE_PSI);
-          m_uncertainty.bias_psi = m_kal.getCovariance(STATE_PSI_BIAS, STATE_PSI_BIAS);
-          m_uncertainty.r = m_kal.getCovariance(STATE_R, STATE_R);
-          m_uncertainty.u = m_kal.getCovariance(STATE_U, STATE_U);
-          m_uncertainty.v = m_kal.getCovariance(STATE_V, STATE_V);
+          m_uncertainty.psi = m_kal.getCovariance(STATE_PSI);
+          m_uncertainty.bias_psi = m_kal.getCovariance(STATE_PSI_BIAS);
+          m_uncertainty.r = m_kal.getCovariance(STATE_R);
+          m_uncertainty.u = m_kal.getCovariance(STATE_U);
+          m_uncertainty.v = m_kal.getCovariance(STATE_V);
 
           // Log Navigation Data.
           m_navdata.cog = (std::abs(m_kal.getState(STATE_U)) > 0.2 ?
@@ -666,7 +667,7 @@ namespace Navigation
           m_navdata.custom_x = Math::norm(m_kal.getInnovation(OUT_GPS_X),
                                           m_kal.getInnovation(OUT_GPS_Y));
           m_navdata.custom_y = m_kal.getState(STATE_K);
-          m_navdata.custom_z = m_kal.getCovariance(STATE_K, STATE_K);
+          m_navdata.custom_z = m_kal.getCovariance(STATE_K);
         }
       };
     }
