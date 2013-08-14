@@ -324,7 +324,7 @@ namespace Actuators
       {
         UCTK::Frame frame;
         frame.setId(PKT_ID_ACTUATE);
-        frame.setPayloadSize(1);
+        frame.setPayloadSize(2);
         frame.set((uint8_t)cmd, 0);
         frame.set((int)dir, 1);
 
@@ -401,6 +401,12 @@ namespace Actuators
         if (frame.getPayloadSize() != sizeof(struct BoardState))
           return false;
 
+        std::string str;
+        for (uint i = 0; i < frame.getPayloadSize(); ++i)
+          str += String::str("%u ", *(frame.getPayload() + i));
+
+        inf("%s", str.c_str());
+
         struct BoardState* ptr = (struct BoardState*)frame.getPayload();
 
         m_voltage[SV_24].value = ptr->v24;
@@ -427,8 +433,19 @@ namespace Actuators
       void
       consume(const IMC::SetLedBrightness* msg)
       {
-        if (msg->name != m_args.laser_name)
-          return;
+        if (msg->name.compare("Pan") == 0)
+        {
+          inf("pan");
+          cameraPan((PanCommands)msg->value);
+        }
+        else if (msg->name.compare("Tilt") == 0)
+        {
+          inf("tilt");
+          cameraTilt((TiltCommands)msg->value);
+        }
+
+        // if (msg->name != m_args.laser_name)
+        //   return;
       }
 
       void
