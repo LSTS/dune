@@ -388,7 +388,7 @@ namespace Actuators
         return actCommand(ACT_ARM_FINGER, dir);
       }
 
-      //! Get raw board state
+      //! Dispatch raw board state
       bool
       dispatchState(void)
       {
@@ -453,7 +453,11 @@ namespace Actuators
           }
           else
           {
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            if (dispatchState())
+            {
+              m_wdog.reset();
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            }
           }
         }
       }
