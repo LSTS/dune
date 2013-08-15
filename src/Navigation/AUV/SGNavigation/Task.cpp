@@ -230,7 +230,7 @@ namespace Navigation
           m_kal.setProcessNoise(STATE_U, m_process_noise[PN_SPEED]);
           m_kal.setProcessNoise(STATE_V, m_process_noise[PN_SPEED]);
           m_kal.setProcessNoise(STATE_R_BIAS, m_process_noise[PN_YRATE_BIAS]);
-          m_kal.setProcessNoise(STATE_PSI_BIAS, m_process_noise[PN_PSI_BIAS]);
+          m_kal.setProcessNoise(STATE_PSI_BIAS, 0.0);
 
           m_kal.setMeasurementNoise(OUT_U, m_measure_noise[MN_U]);
           m_kal.setMeasurementNoise(OUT_V, m_measure_noise[MN_V]);
@@ -247,6 +247,7 @@ namespace Navigation
             // Position process noise covariance value if IMU is available.
             m_kal.setProcessNoise(STATE_X, m_args.position_noise_with_imu);
             m_kal.setProcessNoise(STATE_Y, m_args.position_noise_with_imu);
+            m_kal.setProcessNoise(STATE_PSI_BIAS, m_process_noise[PN_PSI_BIAS]);
 
             // LBL noise.
             for (unsigned i = 0; i < m_ranging.getSize(); i++)
@@ -338,6 +339,7 @@ namespace Navigation
             // Position process noise covariance value if IMU is available.
             m_kal.setProcessNoise(STATE_X, m_args.position_noise_with_imu);
             m_kal.setProcessNoise(STATE_Y, m_args.position_noise_with_imu);
+            m_kal.setProcessNoise(STATE_PSI_BIAS, m_process_noise[PN_PSI_BIAS]);
 
             // LBL noise.
             for (unsigned i = 0; i < m_ranging.getSize(); i++)
@@ -362,6 +364,7 @@ namespace Navigation
             // Reinitialize EKF variances.
             m_kal.setProcessNoise(STATE_X, m_process_noise[PN_POSITION]);
             m_kal.setProcessNoise(STATE_Y, m_process_noise[PN_POSITION]);
+            m_kal.setProcessNoise(STATE_PSI_BIAS, 0.0);
 
             for (unsigned i = 0; i < m_ranging.getSize(); i++)
               m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
