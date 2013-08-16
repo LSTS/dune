@@ -545,7 +545,14 @@ namespace Actuators
       void
       consume(const IMC::RemoteActions* msg)
       {
-        (void)msg;
+        Utils::TupleList tuples(msg->actions);
+
+        for (unsigned i = 0; i < ACT_TOTAL; ++i)
+        {
+          int op = tuples.get(c_action_names[i], 0);
+
+          actCommand((ActuateCommands)i, op);
+        }
       }
 
       void
