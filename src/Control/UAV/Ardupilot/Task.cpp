@@ -231,6 +231,7 @@ namespace Control
           bind<SetServoPosition>(this);
           bind<IdleManeuver>(this);
           bind<ControlLoops>(this);
+          bind<PowerChannelControl>(this);
 
           // Misc. initialization
           m_last_pkt_time = 0; // time of last packet from Ardupilot
@@ -609,6 +610,17 @@ namespace Control
                             0, // Empty
                             0); //Empty
           debug("SetServo packet sent to Ardupilot");
+        }
+
+        void
+        consume(const IMC::PowerChannelControl* pcc)
+        {
+          debug("Trigger Request Received");
+
+          if(pcc->op & IMC::PowerChannelControl::PCC_OP_TURN_ON)
+            sendCommandPacket(MAV_CMD_DO_SET_RELAY, 1);
+          else
+            sendCommandPacket(MAV_CMD_DO_SET_RELAY, 0);
         }
 
         void
@@ -1015,9 +1027,9 @@ namespace Control
           m_fix.height = (double)gps_raw.alt * 0.001;
           m_fix.satellites = gps_raw.satellites_visible;
 
+
           long time_fix = gps_raw.time_usec % 1000000000;
           unsigned int date = (unsigned int)(gps_raw.time_usec / 1e9);
-          inf("%u", date);
           
 
           if(m_args.ublox)
