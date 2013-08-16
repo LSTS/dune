@@ -340,6 +340,10 @@ namespace Actuators
         Memory::clear(m_uart);
       }
 
+      //! Generic actuation command
+      //! @param[in] cmd actuator to interface with
+      //! @param[in] dir command to apply to actuator
+      //! @return true if successful in sending command
       bool
       actCommand(ActuateCommands cmd, int8_t dir)
       {
@@ -432,23 +436,17 @@ namespace Actuators
         if (frame.getPayloadSize() != sizeof(struct BoardState))
           return false;
 
-        std::string str;
-        for (unsigned i = 0; i < frame.getPayloadSize(); ++i)
-          str += String::str("%u ", *(frame.getPayload() + i));
-
-        inf("%s", str.c_str());
-
         uint16_t* ptr = (uint16_t*)frame.getPayload();
 
         for (unsigned i = 0; i < SV_TOTAL; i++)
         {
-          m_voltage[i].value = *(ptr + c_voltage_idx[i]);
+          m_voltage[i].value = *(ptr + c_voltage_idx[i]) / 1000.0;
           dispatch(m_voltage[i]);
         }
 
         for (unsigned i = 0; i < SC_TOTAL; i++)
         {
-          m_current[i].value = *(ptr + c_current_idx[i]);
+          m_current[i].value = *(ptr + c_current_idx[i]) / 1000.0;
           dispatch(m_current[i]);
         }
 
