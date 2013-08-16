@@ -67,7 +67,9 @@ namespace Actuators
       //! Camera finger.
       ACT_ARM_FINGER = 6,
       //! Lasers.
-      ACT_LASER      = 7
+      ACT_LASER      = 7,
+      //! Total number of commands
+      ACT_TOTAL      = 8
     };
 
     //! Camera pan directions
@@ -101,6 +103,19 @@ namespace Actuators
       ZOOM_STOP      = 0,
       //! Zoom increase
       ZOOM_INC       = 1
+    };
+
+    //! Camera focus commands
+    enum FocusCommands
+    {
+      //! Far
+      FOCUS_FAR      = -1,
+      //! Stop
+      FOCUS_STOP     = 0,
+      //! Near
+      FOCUS_NEAR     = 1,
+      //! Auto
+      FOCUS_AUTO     = 127
     };
 
     //! Camera exposure commands
@@ -237,6 +252,18 @@ namespace Actuators
     {
       4, 6, 7, 8, 9
     };
+    //! Action names for each actuation command
+    const std::string c_action_names[] =
+    {
+      "Cam Pan", "Cam Tilt", "Cam Zoom", "Cam Focus",
+      "Cam Expo", "Arm Pulse", "Arm Finger", "Laser"
+    };
+    //! Action names for each actuation command
+    const std::string c_action_types[] =
+    {
+      "Hat", "Hat", "Hat", "Hat",
+      "Hat", "Hat", "Hat", "Button"
+    };
 
     struct Task: public DUNE::Tasks::Task
     {
@@ -248,6 +275,8 @@ namespace Actuators
       IMC::Voltage m_voltage[SV_TOTAL];
       //! Watchdog.
       Counter<double> m_wdog;
+      //! Set of remote actions
+      IMC::RemoteActionsRequest m_actions;
       //! Task arguments.
       Arguments m_args;
 
@@ -274,6 +303,8 @@ namespace Actuators
 
         bind<IMC::SetLedBrightness>(this);
         bind<IMC::QueryLedBrightness>(this);
+        bind<IMC::RemoteActions>(this);
+        bind<IMC::RemoteActionsRequest>(this);
       }
 
       ~Task(void)
@@ -329,6 +360,11 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
+        m_actions.op = IMC::RemoteActionsRequest::OP_REPORT;
+
+        for (unsigned i = 0; i < ACT_TOTAL; ++i)
+          addRemoteAction(c_action_names[i], c_action_types[i]);
+
         m_wdog.reset();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
@@ -338,6 +374,20 @@ namespace Actuators
       onResourceRelease(void)
       {
         Memory::clear(m_uart);
+      }
+
+      //! Add a new remote action
+      //! @param[in] action name of the action to add
+      //! @param[in] type type of the action to add
+      void
+      addRemoteAction(const std::string& action, const std::string& type)
+      {
+        std::string tuple = action + "=" + type;
+
+        if (m_actions.actions.size() != 0)
+          m_actions.actions.append(";");
+
+        m_actions.actions.append(tuple);
       }
 
       //! Generic actuation command
@@ -384,6 +434,15 @@ namespace Actuators
       cameraZoom(ZoomCommands dir)
       {
         return actCommand(ACT_CAM_ZOOM, dir);
+      }
+
+      //! Command camera's focus
+      //! @param[in] cmd focus command
+      //! @return true if successful in sending command
+      inline bool
+      cameraFocus(FocusCommands cmd)
+      {
+        return actCommand(ACT_CAM_FOCUS, cmd);
       }
 
       //! Command camera's exposure
@@ -481,6 +540,21 @@ namespace Actuators
       {
         if (msg->name != m_args.laser_name)
           return;
+      }
+
+      void
+      consume(const IMC::RemoteActions* msg)
+      {
+        (void)msg;
+      }
+
+      void
+      consume(const IMC::RemoteActionsRequest* msg)
+      {
+        if (msg->op != IMC::RemoteActionsRequest::OP_QUERY)
+          return;
+
+        dispatch(m_actions);
       }
 
       //! Main loop.
