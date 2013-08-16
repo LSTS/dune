@@ -119,7 +119,8 @@ namespace Control
         //! System ID
         uint8_t m_sysid;
         //! Last received position
-        float m_lat, m_lon, m_alt;
+        double m_lat, m_lon;
+        float m_alt;
         //! External control
         bool m_external;
         //! Current waypoint
@@ -521,7 +522,7 @@ namespace Control
               m_sysid, //! target_system System ID
               0, //! target_component Component ID
               1, //! seq Sequence
-              MAV_FRAME_GLOBAL_RELATIVE_ALT, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+              MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
               MAV_CMD_NAV_LOITER_UNLIM, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
               2, //! current false:0, true:1
               0, //! autocontinue to next wp
@@ -906,13 +907,13 @@ namespace Control
           mavlink_global_position_int_t gp;
           mavlink_msg_global_position_int_decode(msg, &gp);
 
-          fp64_t lat = Angles::radians((fp64_t)gp.lat * 1e-07);
-          fp64_t lon = Angles::radians((fp64_t)gp.lon * 1e-07);
-          fp32_t hei = gp.alt * 1e-03;
+          double lat = Angles::radians((double)gp.lat * 1e-07);
+          double lon = Angles::radians((double)gp.lon * 1e-07);
+          float hei = (float)gp.alt * 1e-03;
 
-          m_lat = (float)(gp.lat * 1e-07);
-          m_lon = (float)(gp.lon * 1e-07);
-          m_alt = (float)(gp.alt * 1e-03);
+          m_lat = (double)gp.lat * 1e-07;
+          m_lon = (double)gp.lon * 1e-07;
+          m_alt = (float)gp.alt * 1e-03;
 
           double distance_to_ref = WGS84::distance(ref_lat,ref_lon,ref_hei,
               lat,lon,hei);
