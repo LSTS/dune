@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-08-12 16:46+0100\n"
+        "POT-Creation-Date: 2013-08-16 13:09+0100\n"
         "PO-Revision-Date: 2013-08-03 13:45-0000\n"
         "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
         "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -688,9 +688,21 @@ msgstr  "incerteza de posição é %0.2f m"
 msgid   "Maximum Horizontal Position Variance"
 msgstr  "Máxima Variância Horizontal de Posição"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1076
-msgid   "No depth measurements available"
-msgstr  "Medidas de profundidade indisponíveis"
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1084
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1090
+#, c-format
+msgid   "no measurements available: %s"
+msgstr  "valores não disponíveis: %s"
+
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1084
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:50
+#: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:59
+msgid   "Depth"
+msgstr  "Profundidade"
+
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1090
+msgid   "Euler Angles"
+msgstr  "Ângulos de Euler"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:278
 #: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:263
@@ -765,11 +777,6 @@ msgstr  "Em Espera"
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:49
 msgid   "Tracking"
 msgstr  "Seguimento"
-
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:50
-#: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:59
-msgid   "Depth"
-msgstr  "Profundidade"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:50
 msgid   "Unsafe"
@@ -963,19 +970,19 @@ msgid   "parser bug"
 msgstr  "defeito do analisador"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:40
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:311
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:313
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/OS4000/Task.cpp:146
 #: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:992
 msgid   "initializing"
 msgstr  "a iniciar"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:41
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:315
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:317
 msgid   "idle"
 msgstr  "em espera"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:42
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:317
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:319
 msgid   "active"
 msgstr  "ativo"
 
@@ -1214,7 +1221,7 @@ msgid   "maneuver request timeout"
 msgstr  "pedido de manobra excedeu o tempo limite"
 
 #: /home/josebraga/workspace/dune/trunk/src/Navigation/General/Alignment/Task.cpp:193
-#: /home/josebraga/workspace/dune/trunk/src/Navigation/AUV/SGNavigation/Task.cpp:286
+#: /home/josebraga/workspace/dune/trunk/src/Navigation/AUV/SGNavigation/Task.cpp:287
 #: /home/josebraga/workspace/dune/trunk/src/Monitors/Collisions/Task.cpp:190
 #, c-format
 msgid   "failed to resolve entity '%s': %s"
@@ -1848,87 +1855,87 @@ msgstr  "a recomeçar para mudar porta TCP de comandos"
 msgid   "restarting to change TCP data port"
 msgstr  "a recomeçar para mudar porta TCP de dados"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:267
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:269
 msgid   "Enable Reports"
 msgstr  "Permitir Relatórios"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:272
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:274
 msgid   "Make Reports Verbose"
 msgstr  "Fazer Relatórios Verbosos"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:277
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:279
 msgid   "Reports Periodicity"
 msgstr  "Periodicidade de Relatórios"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:313
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:315
 msgid   "waiting beacons configuration"
 msgstr  "à espera da configuração de transdutores"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:319
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:321
 msgid   "serial port communication error, modem not responding"
 msgstr  "erro comunicação de porta série, modem não responde"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:321
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:323
 msgid   "failed to configure modem, possible serial port communication error"
 msgstr  "falhou configuração de modem, possível erro de comunicação porta série"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:323
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:325
 msgid   "failed to set modem address"
 msgstr  "falhou ao definir endereço modem"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:366
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:371
 #, c-format
 msgid   "modem address for agent '%s' is invalid"
 msgstr  "endereço modem para agente '%s' é inválido"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:488
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:493
 #: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:443
 msgid   "dynamic sound speed corrections are disabled"
 msgstr  "correção dinâmica de velocidade do som está desativada"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:569
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:574
 msgid   "invalid change plan message"
 msgstr  "mensagem para mudar plano inválida"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:599
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:604
 msgid   "received system restart request"
 msgstr  "recebido pedido para reiniciar sistema"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:608
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:613
 msgid   "restart request acknowledged"
 msgstr  "acknowledge ao pedido de reinicialização"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:612
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:617
 msgid   "failed to acknowledge restart request"
 msgstr  "falhou acknowledge ao pedido para reiniciar"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:620
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:625
 msgid   "acoustic abort detected"
 msgstr  "detetado abort acústico"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:630
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:635
 msgid   "abort acknowledged"
 msgstr  "abort recebido"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:634
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:639
 msgid   "failed to acknowledge abort"
 msgstr  "falhou ao reconhecer abort"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:670
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:675
 #, c-format
 msgid   "discarded invalid range %0.2f"
 msgstr  "descartado range inválido %0.2f"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:752
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:757
 msgid   "failed to ping beacons, modem seems busy"
 msgstr  "falha ao pingar transdutores, o modem parece ocupado"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:914
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:928
 #, c-format
 msgid   "reported range to %s = %u m"
 msgstr  "reportado distância para %s = %u m"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:918
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:932
 #, c-format
 msgid   "failed to report range to %s"
 msgstr  "falha ao reportar distância para %s"
@@ -3748,10 +3755,6 @@ msgstr  "Supervisor de Veículo"
 #, fuzzy
 #~ msgid        "Maximum expected currents"
 #~ msgstr       "resposta inesperada"
-
-#, fuzzy
-#~ msgid        "Measures Euler Angles"
-#~ msgstr       "atingido timeout ao ler ângulos de Euler"
 
 #, fuzzy
 #~ msgid        "Minimum Calibration Time"

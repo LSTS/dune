@@ -548,6 +548,8 @@ namespace DUNE
       Time::Counter<double> m_time_without_main_depth;
       //! Time without depth readings.
       Time::Counter<double> m_time_without_depth;
+      //! Time without euler angles readings.
+      Time::Counter<double> m_time_without_euler;
       //! Valid GPS speed over ground.
       double m_gps_sog;
       //! Vertical displacement in the NED frame to the origin height above ellipsoid
@@ -706,6 +708,7 @@ namespace DUNE
       float m_without_alt_timeout;
       float m_without_main_depth_timeout;
       float m_without_depth_timeout;
+      float m_without_euler_timeout;
       float m_dvl_sanity_timeout;
       //! DVL ground velocity validation bits.
       uint8_t m_gvel_val_bits;
