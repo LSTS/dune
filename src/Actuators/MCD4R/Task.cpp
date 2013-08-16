@@ -65,7 +65,9 @@ namespace Actuators
       //! Camera pulse.
       ACT_ARM_PULSE  = 5,
       //! Camera finger.
-      ACT_ARM_FINGER = 6
+      ACT_ARM_FINGER = 6,
+      //! Lasers.
+      ACT_LASER      = 7
     };
 
     //! Camera pan directions
@@ -132,6 +134,15 @@ namespace Actuators
       FINGER_ST       = 0,
       //! Finger reverse
       FINGER_RV       = 1
+    };
+
+    //! Laser commands
+    enum LaserCommands
+    {
+      //! Enable Laser
+      LASER_ON        = 1,
+      //! Disable laser
+      LASER_OFF       = 0
     };
 
     //! Board state parameters
@@ -398,6 +409,15 @@ namespace Actuators
         return actCommand(ACT_ARM_FINGER, dir);
       }
 
+      //! Command laser
+      //! @param[in] value laser command to apply
+      //! @return true if successful in sending command
+      inline bool
+      actuateLaser(LaserCommands value)
+      {
+        return actCommand(ACT_LASER, value);
+      }
+
       //! Dispatch raw board state
       bool
       dispatchState(void)
@@ -446,6 +466,11 @@ namespace Actuators
         {
           inf("tilt");
           cameraTilt((TiltCommands)msg->value);
+        }
+        else if (msg->name.compare("Laser") == 0)
+        {
+          inf("laser");
+          actuateLaser((LaserCommands)msg->value);
         }
 
         // if (msg->name != m_args.laser_name)
