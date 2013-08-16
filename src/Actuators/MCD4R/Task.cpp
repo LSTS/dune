@@ -170,6 +170,7 @@ namespace Actuators
       uint16_t isys;
     } __attribute__((packed));
 
+    //! Voltages in the state array
     enum StateVoltages
     {
       //! 24V
@@ -186,6 +187,7 @@ namespace Actuators
       SV_TOTAL
     };
 
+    //! Currents in the state array
     enum StateCurrents
     {
       //! Tilt current
@@ -244,8 +246,6 @@ namespace Actuators
       IMC::Current m_current[SC_TOTAL];
       //! Voltage.
       IMC::Voltage m_voltage[SV_TOTAL];
-      //! MCU voltage.
-      IMC::Voltage m_voltage_mcu;
       //! Watchdog.
       Counter<double> m_wdog;
       //! Task arguments.
@@ -419,6 +419,7 @@ namespace Actuators
       }
 
       //! Dispatch raw board state
+      //! @return true if successfully dispatched state
       bool
       dispatchState(void)
       {
@@ -432,7 +433,7 @@ namespace Actuators
           return false;
 
         std::string str;
-        for (uint i = 0; i < frame.getPayloadSize(); ++i)
+        for (unsigned i = 0; i < frame.getPayloadSize(); ++i)
           str += String::str("%u ", *(frame.getPayload() + i));
 
         inf("%s", str.c_str());
@@ -459,17 +460,17 @@ namespace Actuators
       {
         if (msg->name.compare("Pan") == 0)
         {
-          inf("pan");
+          debug("pan");
           cameraPan((PanCommands)msg->value);
         }
         else if (msg->name.compare("Tilt") == 0)
         {
-          inf("tilt");
+          debug("tilt");
           cameraTilt((TiltCommands)msg->value);
         }
-        else if (msg->name.compare("Laser") == 0)
+        else if (msg->name.compare(m_args.laser_name) == 0)
         {
-          inf("laser");
+          debug("laser");
           actuateLaser((LaserCommands)msg->value);
         }
 
