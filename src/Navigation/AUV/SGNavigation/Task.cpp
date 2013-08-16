@@ -486,25 +486,23 @@ namespace Navigation
 
           // Kalman Filter
           // Reset and Discretize A matrix
-          Matrix ax(NUM_STATE, NUM_STATE, 0.0);
-          Matrix ap(NUM_STATE, NUM_STATE, 0.0);
+          Matrix a(NUM_STATE, NUM_STATE, 0.0);
+          setTransition(a);
+
           Matrix x(NUM_STATE, 1, 0.0);
-          ax = m_kal.getStateTransition();
-          ap = m_kal.getCovarianceTransition();
           x = m_kal.getState();
 
-          resetMatrixA(ax);
-          resetMatrixA(ap);
+          m_kal.setStateTransition((a * tstep).expmts());
 
+          // Modify covariance state transition matrix.
           double yaw = m_kal.getState(STATE_PSI);
 
-          ap(STATE_X, STATE_PSI) = (- x(STATE_U) * std::sin(yaw)
-                                    - x(STATE_V) * std::cos(yaw));
-          ap(STATE_Y, STATE_PSI) = (x(STATE_U) * std::cos(yaw)
-                                    - x(STATE_V) * std::sin(yaw));
+          a(STATE_X, STATE_PSI) = (- x(STATE_U) * std::sin(yaw)
+                                   - x(STATE_V) * std::cos(yaw));
+          a(STATE_Y, STATE_PSI) = (x(STATE_U) * std::cos(yaw)
+                                   - x(STATE_V) * std::sin(yaw));
 
-          m_kal.setCovarianceTransition((ap * tstep).expmts());
-          m_kal.setStateTransition((ax * tstep).expmts());
+          m_kal.setCovarianceTransition((a * tstep).expmts());
 
           // Kalman Prediction.
           m_kal.predict();
@@ -595,7 +593,7 @@ namespace Navigation
 
         // Reinitialize Extended Kalman Filter transition matrix function.
         void
-        resetMatrixA(Matrix& A)
+        setTransition(Matrix& A)
         {
           A.fill(0.0);
 

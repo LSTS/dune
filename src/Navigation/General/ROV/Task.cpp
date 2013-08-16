@@ -214,7 +214,7 @@ namespace Navigation
 
         // Reinitialize Extended Kalman Filter transition matrix function.
         void
-        resetMatrixA(Matrix& A)
+        setTransition(Matrix& A)
         {
           A.fill(0.0);
 
@@ -285,17 +285,14 @@ namespace Navigation
 
           // Kalman Filter
           // Reset and Discretize A matrix
-          Matrix ax(NUM_STATE, NUM_STATE, 0.0);
-          Matrix ap(NUM_STATE, NUM_STATE, 0.0);
+          Matrix a(NUM_STATE, NUM_STATE, 0.0);
+          setTransition(a);
+
           Matrix x(NUM_STATE, 1, 0.0);
-          ax = m_kal.getStateTransition();
-          ap = m_kal.getCovarianceTransition();
           x = m_kal.getState();
 
-          resetMatrixA(ax);
-          resetMatrixA(ap);
-          m_kal.setCovarianceTransition((ap * tstep).expmts());
-          m_kal.setStateTransition((ax * tstep).expmts());
+          m_kal.setCovarianceTransition((a * tstep).expmts());
+          m_kal.setStateTransition((a * tstep).expmts());
 
           // Kalman Prediction.
           m_kal.predict();
