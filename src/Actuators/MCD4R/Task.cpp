@@ -160,31 +160,6 @@ namespace Actuators
       LASER_OFF       = 0
     };
 
-    //! Board state parameters
-    struct BoardState
-    {
-      //! ADC line 24 volt
-      uint16_t v24;
-      //! ADC line 12 volt
-      uint16_t v12;
-      //! ADC line 3.3 volt
-      uint16_t v3_3;
-      //! ADC line tilt eol
-      uint16_t tilt_eol;
-      //! ADC line itilt
-      uint16_t itilt;
-      //! ADC line pan eol
-      uint16_t pan_eol;
-      //! ADC line ipan
-      uint16_t ipan;
-      //! ADC line ipulse
-      uint16_t ipulse;
-      //! ADC line ifinger
-      uint16_t ifinger;
-      //! ADC line isys
-      uint16_t isys;
-    } __attribute__((packed));
-
     //! Voltages in the state array
     enum StateVoltages
     {
@@ -232,6 +207,8 @@ namespace Actuators
 
     //! Amount of seconds to wait before restarting task.
     static const unsigned c_restart_delay = 1;
+    //! Size in bytes of the board's state
+    static const unsigned c_state_size = 20;
     //! Labels for states voltages
     const char* c_voltage_labels[] =
     {
@@ -492,7 +469,7 @@ namespace Actuators
         if (!m_uart->sendFrame(frame))
           return false;
 
-        if (frame.getPayloadSize() != sizeof(struct BoardState))
+        if (frame.getPayloadSize() != c_state_size)
           return false;
 
         uint16_t* ptr = (uint16_t*)frame.getPayload();
