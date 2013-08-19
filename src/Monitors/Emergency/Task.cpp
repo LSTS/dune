@@ -134,24 +134,24 @@ namespace Monitors
 
           m_emsg += m_in_mission? String::str(" / p:%u", (int)m_progress) : "";
         }
-        else
-        {
-          m_emsg.clear();
-        }
       }
 
       void
       sendSMS(const char* prefix, unsigned timeout)
       {
-        inf(DTR("sending SMS %s | %u"), prefix, timeout);
-
         if (!m_emsg.empty())
         {
+          inf(DTR("sending SMS %s | %u"), prefix, timeout);
+
           IMC::Sms sms;
           sms.number = m_args.recipient;
           sms.timeout = timeout;
           sms.contents = String::str("(%s) %s", prefix, m_emsg.c_str());
           dispatch(sms);
+        }
+        else
+        {
+          war(DTR("unknown location"));
         }
       }
 
