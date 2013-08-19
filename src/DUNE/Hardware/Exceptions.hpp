@@ -45,7 +45,7 @@ namespace DUNE
     public:
       //! Constructor.
       //! @param[in] exp expected string.
-      //! @param[in] got recevied string.
+      //! @param[in] got received string.
       UnexpectedReply(const std::string& exp, const std::string& got):
         std::runtime_error(DUNE::Utils::String::str("expecting '%s' but received '%s'",
                                        exp.c_str(),
