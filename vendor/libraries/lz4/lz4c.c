@@ -1,5 +1,5 @@
 /*
-  LZ4c - LZ4 Compression CLI program 
+  LZ4c - LZ4 Compression CLI program
   Copyright (C) Yann Collet 2011-2013
   GPL v2 License
 
@@ -34,7 +34,9 @@
 //**************************************
 // Disable some Visual warning messages
 #ifdef _MSC_VER  // Visual Studio
+#  if !defined(_CRT_SECURE_NO_WARNINGS)
 #  define _CRT_SECURE_NO_WARNINGS
+#  endif
 #  define _CRT_SECURE_NO_DEPRECATE     // VS2005
 #  pragma warning(disable : 4127)      // disable: C4127: conditional expression is constant
 #endif
@@ -70,7 +72,7 @@
 #elif GCC_VERSION >= 403
 #  define swap32 __builtin_bswap32
 #else
-  static inline unsigned int swap32(unsigned int x) 
+  static inline unsigned int swap32(unsigned int x)
   {
     return ((x << 24) & 0xff000000 ) |
            ((x <<  8) & 0x00ff0000 ) |
@@ -241,39 +243,39 @@ static int          LZ4S_isSkippableMagicNumber(unsigned int magic) { return (ma
 int get_fileHandle(char* input_filename, char* output_filename, FILE** pfinput, FILE** pfoutput)
 {
 
-    if (!strcmp (input_filename, stdinmark)) 
+    if (!strcmp (input_filename, stdinmark))
     {
         if (verbose) DISPLAY( "Using stdin for input\n");
         *pfinput = stdin;
 #ifdef _WIN32 // Need to set stdin/stdout to binary mode specifically for windows
         _setmode( _fileno( stdin ), _O_BINARY );
 #endif
-    } 
-    else 
+    }
+    else
     {
         *pfinput = fopen(input_filename, "rb");
     }
 
-    if (!strcmp (output_filename, stdoutmark)) 
+    if (!strcmp (output_filename, stdoutmark))
     {
         if (verbose) DISPLAY( "Using stdout for output\n");
         *pfoutput = stdout;
 #ifdef _WIN32 // Need to set stdin/stdout to binary mode specifically for windows
         _setmode( _fileno( stdout ), _O_BINARY );
 #endif
-    } 
-    else 
+    }
+    else
     {
         // Check if destination file already exists
         *pfoutput=0;
         if (output_filename != nulmark) *pfoutput = fopen( output_filename, "rb" );
-        if (*pfoutput!=0) 
-        { 
-            fclose(*pfoutput); 
+        if (*pfoutput!=0)
+        {
+            fclose(*pfoutput);
             if (!overwrite)
             {
                 char ch;
-                DISPLAY( "Warning : %s already exists\n", output_filename); 
+                DISPLAY( "Warning : %s already exists\n", output_filename);
                 DISPLAY( "Overwrite ? (Y/N) : ");
                 ch = (char)getchar();
                 if ((ch!='Y') && (ch!='y')) EXM_THROW(11, "Operation aborted : %s already exists", output_filename);
@@ -283,7 +285,7 @@ int get_fileHandle(char* input_filename, char* output_filename, FILE** pfinput, 
     }
 
     if ( *pfinput==0 ) EXM_THROW(12, "Pb opening %s", input_filename);
-    if ( *pfoutput==0) EXM_THROW(13, "Pb opening %s", output_filename); 
+    if ( *pfoutput==0) EXM_THROW(13, "Pb opening %s", output_filename);
 
     return 0;
 }
@@ -676,7 +678,7 @@ unsigned long long decodeLegacyStream(FILE* finput, FILE* foutput)
         uselessRet = fread(&blockSize, 1, 4, finput);
         if( uselessRet==0 ) break;                 // Nothing to read : file read is completed
         blockSize = LITTLE_ENDIAN_32(blockSize);   // Convert to Little Endian
-        if (blockSize > LZ4_COMPRESSBOUND(LEGACY_BLOCKSIZE)) 
+        if (blockSize > LZ4_COMPRESSBOUND(LEGACY_BLOCKSIZE))
         {   // Cannot read next block : maybe new stream ?
             fseek(finput, -4, SEEK_CUR);
             break;
@@ -738,11 +740,11 @@ unsigned long long decodeLZ4S(FILE* finput, FILE* foutput)
         streamChecksumFlag= (descriptor[0] >> 2) & _1BIT;
 
         if (version != 1)       EXM_THROW(62, "Wrong version number");
-        if (streamSize == 1)    EXM_THROW(64, "Does not support stream size");  
+        if (streamSize == 1)    EXM_THROW(64, "Does not support stream size");
         if (reserved1 != 0)     EXM_THROW(65, "Wrong value for reserved bits");
-        if (dictionary == 1)    EXM_THROW(66, "Does not support dictionary"); 
+        if (dictionary == 1)    EXM_THROW(66, "Does not support dictionary");
         if (reserved2 != 0)     EXM_THROW(67, "Wrong value for reserved bits");
-        if (blockSizeId < 4)    EXM_THROW(68, "Unsupported block size"); 
+        if (blockSizeId < 4)    EXM_THROW(68, "Unsupported block size");
         if (reserved3 != 0)     EXM_THROW(67, "Wrong value for reserved bits");
         maxBlockSize = LZ4S_GetBlockSize_FromBlockId(blockSizeId);
         // Checkbits verification
@@ -763,7 +765,7 @@ unsigned long long decodeLZ4S(FILE* finput, FILE* foutput)
         unsigned int outbuffSize = prefix64k+maxBlockSize;
         in_buff  = (char*)malloc(maxBlockSize);
         if (outbuffSize < MIN_STREAM_BUFSIZE) outbuffSize = MIN_STREAM_BUFSIZE;
-        out_buff = (char*)malloc(outbuffSize); 
+        out_buff = (char*)malloc(outbuffSize);
         out_end = out_buff + outbuffSize;
         out_start = out_buff + prefix64k;
         if (!in_buff || !out_buff) EXM_THROW(70, "Allocation error : not enough memory");
@@ -837,10 +839,10 @@ unsigned long long decodeLZ4S(FILE* finput, FILE* foutput)
         if (!blockIndependenceFlag)
         {
             out_start += decodedBytes;
-            if (out_start + maxBlockSize > out_end) 
+            if (out_start + maxBlockSize > out_end)
             {
-                memcpy(out_buff, out_start - prefix64k, prefix64k); 
-                out_start = out_buff + prefix64k; 
+                memcpy(out_buff, out_start - prefix64k, prefix64k);
+                out_start = out_buff + prefix64k;
             }
         }
     }
@@ -912,7 +914,7 @@ int decodeFile(char* input_filename, char* output_filename)
     get_fileHandle(input_filename, output_filename, &finput, &foutput);
 
     // Loop over multiple streams
-    do 
+    do
     {
         decodedSize = selectDecoder(finput, foutput);
         filesize += decodedSize;
@@ -999,10 +1001,10 @@ int main(int argc, char** argv)
                     case '5':
                     case '6':
                     case '7':
-                    { 
-                        int B = argument[1] - '0'; 
-                        int S = 1 << (8 + 2*B); 
-                        BMK_SetBlocksize(S); 
+                    {
+                        int B = argument[1] - '0';
+                        int S = 1 << (8 + 2*B);
+                        BMK_SetBlocksize(S);
                         blockSizeId = B;
                         argument++;
                         break;
@@ -1018,16 +1020,16 @@ _exit_blockProperties:
                 case 'S': if (argument[1]=='x') { streamChecksum=0; argument++; break; } else { badusage(); }
 
                     // Bench
-                case 'b': bench=1; 
-                    if ((argument[1] >='0') && (argument[1] <='1')) { cLevel=argument[1] - '0'; argument++; } 
+                case 'b': bench=1;
+                    if ((argument[1] >='0') && (argument[1] <='1')) { cLevel=argument[1] - '0'; argument++; }
                     break;
 
                     // Modify Nb Iterations (benchmark only)
-                case 'i': 
+                case 'i':
                     if ((argument[1] >='1') && (argument[1] <='9'))
                     {
-                        int iters = argument[1] - '0'; 
-                        BMK_SetNbIterations(iters); 
+                        int iters = argument[1] - '0';
+                        BMK_SetNbIterations(iters);
                         argument++;
                     }
                     break;
@@ -1069,7 +1071,7 @@ _exit_blockProperties:
     if (bench) return BMK_benchFile(argv+filenamesStart, argc-filenamesStart, cLevel);
 
     // No output filename ==> select one automatically (when possible)
-    if (!output_filename) 
+    if (!output_filename)
     {
         if (input_filename == stdinmark) { output_filename=stdoutmark; silence=1; }
         else if (!decode)   // compression
@@ -1112,7 +1114,7 @@ _exit_blockProperties:
     if (legacy_format)
     {
         if (!silence) DISPLAY("! Generating compressed LZ4 using Legacy format (deprecated !) ! \n");
-        return legacy_compress_file(input_filename, output_filename, cLevel);   
+        return legacy_compress_file(input_filename, output_filename, cLevel);
     }
     else
     {

@@ -26,8 +26,9 @@
 //**************************************
 // Remove Visual warning messages
 //**************************************
+#if !defined(_CRT_SECURE_NO_WARNINGS)
 #define _CRT_SECURE_NO_WARNINGS  // fgets
-
+#endif
 
 //**************************************
 // Includes
@@ -151,12 +152,12 @@ int main() {
         for (i = 0; i < 2048; i++)
                 cbuf[FUZ_avail + i] = cbuf[FUZ_avail + 2048 + i] = FUZ_rand(&randState) >> 16;
 
-        for (attemptNb = 0; attemptNb < NB_ATTEMPTS; attemptNb++) 
+        for (attemptNb = 0; attemptNb < NB_ATTEMPTS; attemptNb++)
         {
             int testNb = 0;
 
             printf("\r%7i /%7i   - ", attemptNb, NB_ATTEMPTS);
-            
+
             for (j = 0; j < NUM_SEQ; j++) {
                     seeds[j] = FUZ_rand(&randState) << 8;
                     seeds[j] ^= (FUZ_rand(&randState) >> 8) & 65535;
