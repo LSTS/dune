@@ -70,6 +70,8 @@ namespace Control
         IMC::DesiredHeading m_heading;
         //! Task arguments.
         Arguments m_args;
+	bool out_vec;
+	bool out_LOS;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::PathController(name, ctx)
@@ -87,6 +89,14 @@ namespace Control
           .defaultValue("15")
           .units(Units::Degree)
           .description("Attack angle when lateral track error equals corridor width");
+
+	  param("Corridor -- Out Vector Field", out_vec)
+          .defaultValue("false")
+          .description("Out of corridor guidance law: vector field");
+
+	  param("Corridor -- Out LOS", out_LOS)
+          .defaultValue("false")
+          .description("Out of corridor guidance law: LOS");
 
           param("ILOS Lookahead Distance", m_args.lookahead)
           .minimumValue("1.0")
@@ -163,24 +173,46 @@ namespace Control
 	  double loc_1 = m_args.lookahead*ts.track_pos.y;
 	  double loc_2 = std::pow(m_args.lookahead,2);
 	  double timestep = m_last_step.getDelta();
+	  double kcorr = ts.track_pos.y / m_args.corridor;
+          double akcorr = std::fabs(kcorr);
 	  
-	  // RK4 integratin
-	  k1 = loc_1/(std::pow(ts.track_pos.y+m_args.int_gain*integrator,2)+loc_2);
-	  k2 = loc_1/(std::pow(ts.track_pos.y+m_args.int_gain*(integrator+k1/2),2)+loc_2);
-	  k3 = loc_1/(std::pow(ts.track_pos.y+m_args.int_gain*(integrator+k2/2),2)+loc_2);
-	  k4 = loc_1/(std::pow(ts.track_pos.y+m_args.int_gain*(integrator+k3),2)+loc_2);
+	  if (akcorr > 1)
+       	  {
+	    // Outside corridor, integrator OFF
+	    integrator = 0.0;
+	  }
+	  else
+	  {
+	    // Inside corridor, integrator ON
+	    // RK4 integratin
+	    k1 = loc_1/(std::pow(ts.track_pos.y+m_args.int_gain*integrator,2)+loc_2);
+	    k2 = loc_1/(std::pow(ts.track_pos.y+m_args.int_gain*(integrator+k1/2),2)+loc_2);
+	    k3 = loc_1/(std::pow(ts.track_pos.y+m_args.int_gain*(integrator+k2/2),2)+loc_2);
+	    k4 = loc_1/(std::pow(ts.track_pos.y+m_args.int_gain*(integrator+k3),2)+loc_2);
 
-	  integrator += timestep*(k1 + 2*k2 + 2*k3 + k4)/6;
+	    integrator += timestep*(k1 + 2*k2 + 2*k3 + k4)/6;
+	  }
 	  
 	  // ILOS guidance
-          if (ts.track_pos.x < ts.track_length)
+          if (ts.track_pos.x > ts.track_length)
           {
-	    ref = ts.track_bearing-std::atan((ts.track_pos.y+m_args.int_gain*integrator)/m_args.lookahead);
-          }
-          else
-          {
-            // Past the track goal: this should never happen but ...
+	    // Past the track goal: this should never happen but ...
             ref = getBearing(state, ts.end);
+          }
+          else if (akcorr > 1 && out_vec && !out_LOS)
+          {
+            // Outside corridor, integrator OFF, vector field guidance
+	    ref = ts.track_bearing - std::atan(m_gain * ts.track_pos.y);
+          }
+          else if (akcorr > 1 && out_vec && out_LOS)
+          {
+            // Outside corridor, integrator OFF, LOS guidance
+	    ref = ts.track_bearing - std::atan(ts.track_pos.y/m_args.lookahead);
+          }
+	  else
+	  {
+   	    // Inside corridor, integrator ON, ILOS guidance
+	    ref = ts.track_bearing - std::atan((ts.track_pos.y+m_args.int_gain*integrator)/m_args.lookahead);
           }
 
           // Dispatch heading reference
