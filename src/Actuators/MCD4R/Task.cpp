@@ -323,9 +323,9 @@ namespace Actuators
           m_uart->open();
           UCTK::FirmwareInfo info = m_uart->getFirmwareInfo();
           if (info.isDevelopment())
-            war("device is using unstable firmware");
+            war(DTR("device is using unstable firmware"));
           else
-            inf("firmware version %u.%u.%u", info.major,
+            inf(DTR("firmware version %u.%u.%u"), info.major,
                 info.minor, info.patch);
         }
         catch (std::runtime_error& e)
@@ -493,24 +493,8 @@ namespace Actuators
       void
       consume(const IMC::SetLedBrightness* msg)
       {
-        if (msg->name.compare("Pan") == 0)
-        {
-          debug("pan");
-          cameraPan((PanCommands)msg->value);
-        }
-        else if (msg->name.compare("Tilt") == 0)
-        {
-          debug("tilt");
-          cameraTilt((TiltCommands)msg->value);
-        }
-        else if (msg->name.compare(m_args.laser_name) == 0)
-        {
-          debug("laser");
-          actuateLaser((LaserCommands)msg->value);
-        }
-
-        // if (msg->name != m_args.laser_name)
-        //   return;
+        if (msg->name != m_args.laser_name)
+          return;
       }
 
       void
