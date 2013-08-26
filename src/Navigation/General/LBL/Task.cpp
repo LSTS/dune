@@ -239,8 +239,6 @@ namespace Navigation
             Memory::replace(m_estimate[i], new IMC::LblEstimate);
 
             m_estimate[i]->beacon.set(IMC::LblBeacon());
-            m_estimate[i]->var_x = m_args.state_cov;
-            m_estimate[i]->var_y = m_args.state_cov;
           }
 
           setup();
@@ -309,6 +307,7 @@ namespace Navigation
             m_estimate[msg->id]->var_y = m_kal.getCovariance(msg->id * 2 + 1);
             m_estimate[msg->id]->distance = Coordinates::WGS84::distance(lat, lon, 0.0, m_ranging.getLat(msg->id),
                                                                          m_ranging.getLon(msg->id), 0.0);
+            dispatch(m_estimate[msg->id]);
 
             spew("beacon %d WGS: %f | %f", msg->id, lat, lon);
             spew("beacon %d NE: %f | %f :: distance: %f", msg->id,
