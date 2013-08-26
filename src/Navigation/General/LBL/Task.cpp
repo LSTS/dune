@@ -310,8 +310,8 @@ namespace Navigation
             m_estimate[msg->id]->distance = Coordinates::WGS84::distance(lat, lon, 0.0, m_ranging.getLat(msg->id),
                                                                          m_ranging.getLon(msg->id), 0.0);
 
-            spew("beacon %d WGS estimate: %f | %f", msg->id, lat, lon);
-            spew("beacon %d NE estimate: %f | %f :: distance: %f", msg->id,
+            spew("beacon %d WGS: %f | %f", msg->id, lat, lon);
+            spew("beacon %d NE: %f | %f :: distance: %f", msg->id,
                  m_estimate[msg->id]->x, m_estimate[msg->id]->y,
                  m_estimate[msg->id]->distance);
           }
@@ -371,15 +371,18 @@ namespace Navigation
 
           requestActivation();
 
-          // Get vehicle fix.
-          double vlat = m_origin->lat;
-          double vlon = m_origin->lon;
-          Coordinates::WGS84::displace(m_last_n, m_last_e, &vlat, &vlon);
+          if (m_origin != NULL)
+          {
+            // Get vehicle fix.
+            double vlat = m_origin->lat;
+            double vlon = m_origin->lon;
+            Coordinates::WGS84::displace(m_last_n, m_last_e, &vlat, &vlon);
 
-          // Update current vehicle displacement according to new origin.
-          WGS84::displacement(msg->lat, msg->lon, 0.0,
-                              vlat, vlon, 0.0,
-                              &m_last_n, &m_last_e);
+            // Update current vehicle displacement according to new origin.
+            WGS84::displacement(msg->lat, msg->lon, 0.0,
+                                vlat, vlon, 0.0,
+                                &m_last_n, &m_last_e);
+          }
 
           Memory::replace(m_origin, new IMC::GpsFix(*msg));
 
