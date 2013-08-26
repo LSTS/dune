@@ -54,8 +54,10 @@ namespace Navigation
         float lbl_threshold;
         //! State covariance.
         float state_cov;
-        //! Covariance of the LBL noise.
-        float lbl_noise;
+        //! Measurement noise covariance.
+        float lbl_mnoise;
+        //! Process noise covariance.
+        float lbl_pnoise;
         //! GPS timeout.
         float gps_timeout;
         //! Maximum Valid Horizontal Accuracy index.
@@ -103,9 +105,13 @@ namespace Navigation
           .defaultValue("4.0")
           .description("LBL Threshold value for the LBL level check rejection scheme");
 
-          param("LBL Measure Noise Covariance", m_args.lbl_noise)
+          param("LBL Measure Noise Covariance", m_args.lbl_mnoise)
           .defaultValue("10.0")
           .description("Kalman Filter LBL Measurement Noise Covariance value");
+
+          param("LBL Process Noise Covariance", m_args.lbl_pnoise)
+          .defaultValue("1e-5")
+          .description("Kalman Filter LBL Process Noise Covariance value");
 
           param("LBL Expected Range Rejection Constants", m_args.k_rej)
           .size(2)
@@ -177,6 +183,9 @@ namespace Navigation
         consume(const IMC::EstimatedState* msg)
         {
           m_last_depth = msg->depth;
+
+          // Increment process noise covariance.
+          m_kal.predict();
         }
 
         void
@@ -328,7 +337,8 @@ namespace Navigation
           if (!m_ranging.getSize())
           {
             m_kal.reset(1, 1);
-            m_kal.setMeasurementNoise(m_args.lbl_noise);
+            m_kal.setMeasurementNoise(m_args.lbl_mnoise);
+            m_kal.setProcessNoise(m_args.lbl_pnoise);
             m_kal.setCovariance(m_args.state_cov);
             m_kal.resetState();
             return;
@@ -337,7 +347,8 @@ namespace Navigation
           m_kal.reset(m_ranging.getSize() * 2, m_ranging.getSize());
 
           // Initialize Kalman Filter.
-          m_kal.setMeasurementNoise(m_args.lbl_noise);
+          m_kal.setMeasurementNoise(m_args.lbl_mnoise);
+          m_kal.setProcessNoise(m_args.lbl_pnoise);
           m_kal.setCovariance(m_args.state_cov);
           m_kal.resetState();
 
