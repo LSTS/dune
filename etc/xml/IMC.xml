@@ -10,7 +10,7 @@
           xsi:noNamespaceSchemaLocation="IMC.xsd"
           name="IMC"
           long-name="Inter Module Communication"
-          version="5.2.0">
+          version="5.3.x">
 
   <description>
     This document describes the communications protocol associated
@@ -336,7 +336,7 @@
       supplemental fields, it is always placed at the beginning of a
       packet.
     </description>
-    <field name="Synchronization Number" abbrev="sync" type="uint16_t" value="0xFE52" fixed="true">
+    <field name="Synchronization Number" abbrev="sync" type="uint16_t" value="0xFE53" fixed="true">
       <description>
         The synchronization number marks the beginning of a packet.
 
@@ -3498,36 +3498,36 @@
     <description>
       LBL Beacon position estimate.
     </description>
-    <field name="Beacon Name" abbrev="beacon" type="plaintext">
+    <field name="LBL Beacon Configuration" abbrev="beacon" type="message" message-type="LblBeacon">
       <description>
-        Name/Label of the acoustic transponder.
+	LBL Beacon configuration estimate.
       </description>
     </field>
-    <field name="North position" abbrev="x" type="fp64_t" unit="m">
+    <field name="North position" abbrev="x" type="fp32_t" unit="m">
       <description>
-        The North offset of the North/East/Down field.
+        The North position offset of the NED field with respect to origin.
       </description>
     </field>
-    <field name="East position" abbrev="y" type="fp64_t" unit="m">
+    <field name="East position" abbrev="y" type="fp32_t" unit="m">
       <description>
-        The East offset of the North/East/Down field.
+        The East position offset of the NED field with respect to origin.
       </description>
     </field>
-    <field name="Depth" abbrev="depth" type="fp32_t" unit="m">
-      <description>
-        The beacon's depth.
-      </description>
-    </field>
-    <field name="North position variance" abbrev="var_x" type="fp64_t" unit="m">
+    <field name="North position variance" abbrev="var_x" type="fp32_t" unit="m">
       <description>
         The North offset variance of the North/East/Down
         field with respect to LLH.
       </description>
     </field>
-    <field name="East position variance" abbrev="var_y" type="fp64_t" unit="m">
+    <field name="East position variance" abbrev="var_y" type="fp32_t" unit="m">
       <description>
         The East offset variance of the North/East/Down
         field with respect to LLH.
+      </description>
+    </field>
+    <field name="Distance" abbrev="distance" type="fp32_t" unit="m">
+      <description>
+	Distance between current LBL Beacon position and filter estimation.
       </description>
     </field>
   </message>
