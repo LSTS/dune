@@ -190,7 +190,7 @@ namespace Control
           else
           {
             // Inside corridor, m_integrator ON
-            // RK4 integratin
+            // RK4 integration
             k1 = computeK(loc_1, loc_2, ts.track_pos.y, 0.0);
             k2 = computeK(loc_1, loc_2, ts.track_pos.y, k1/2);
             k3 = computeK(loc_1, loc_2, ts.track_pos.y, k2/2);
@@ -210,7 +210,7 @@ namespace Control
             // Outside corridor, m_integrator OFF, vector field guidance
             ref = ts.track_bearing - std::atan(m_gain * ts.track_pos.y);
           }
-          else if (akcorr > 1 && m_args.out_vec && m_args.out_los)
+          else if (akcorr > 1 && !m_args.out_vec && m_args.out_los)
           {
             // Outside corridor, m_integrator OFF, LOS guidance
             ref = ts.track_bearing - std::atan(ts.track_pos.y / m_args.lookahead);
