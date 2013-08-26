@@ -65,6 +65,9 @@ namespace DUNE
       m_r.resizeAndFill(num_outputs, num_outputs, 0.0);
       m_innov.resizeAndFill(num_outputs, 1, 0.0);
       m_state_count = m_ax.rows();
+
+      m_ax.identity();
+      m_ap.identity();
     }
 
     bool
