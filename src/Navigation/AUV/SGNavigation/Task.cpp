@@ -571,7 +571,6 @@ namespace Navigation
           // Check alignment threshold index.
           if (m_dead_reckoning)
           {
-
             if (m_kal.getCovariance(STATE_PSI_BIAS) < m_args.alignment_index)
               m_aligned = true;
             else
