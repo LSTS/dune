@@ -105,13 +105,13 @@ namespace Control
           .units(Units::Meter)
           .description("Integral Line-of-Sight look ahead distance");
 
-          param("ILOS M_Integrator Gain", m_args.int_gain)
+          param("ILOS Integrator Gain", m_args.int_gain)
           .minimumValue("0")
           .maximumValue("4")
           .defaultValue("0")
           .description("Integral Line-of-Sight integral gain");
 
-          param("ILOS M_Integrator Initial Value", m_args.int_init)
+          param("ILOS Integrator Initial Value", m_args.int_init)
           .minimumValue("0")
           .maximumValue("10")
           .defaultValue("0")
