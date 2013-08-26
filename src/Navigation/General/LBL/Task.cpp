@@ -80,6 +80,8 @@ namespace Navigation
         DUNE::Navigation::Ranging m_ranging;
         //! Navigation origin.
         IMC::GpsFix* m_origin;
+        //! LBL position estimates.
+        IMC::LblEstimate* m_estimate[DUNE::Navigation::c_max_transponders];
         //! GPS validity bits.
         uint16_t m_gps_val_bits;
         //! Time without GPS sensor readings deadline.
@@ -125,6 +127,9 @@ namespace Navigation
           .defaultValue("0.50")
           .description("Distance between LBL receiver and GPS in the vehicle");
 
+          for (unsigned i = 0; i < DUNE::Navigation::c_max_transponders; ++i)
+            m_estimate[i] = NULL;
+
           m_last_n = 0.0;
           m_last_e = 0.0;
           m_last_depth = 0.0;
@@ -163,6 +168,9 @@ namespace Navigation
         onResourceRelease(void)
         {
           Memory::clear(m_origin);
+
+          for (unsigned i = 0; i < DUNE::Navigation::c_max_transponders; ++i)
+            Memory::clear(m_estimate[i]);
         }
 
         void
@@ -217,6 +225,24 @@ namespace Navigation
 
           m_ranging.setup(msg);
 
+          IMC::MessageList<IMC::LblBeacon>::const_iterator itr = msg->beacons.begin();
+          for (unsigned i = 0; itr != msg->beacons.end(); ++itr, ++i)
+          {
+            if (i >= DUNE::Navigation::c_max_transponders)
+              return;
+
+            Memory::clear(m_estimate[i]);
+
+            if (*itr == NULL)
+              return;
+
+            Memory::replace(m_estimate[i], new IMC::LblEstimate);
+
+            m_estimate[i]->beacon.set(IMC::LblBeacon());
+            m_estimate[i]->var_x = m_args.state_cov;
+            m_estimate[i]->var_y = m_args.state_cov;
+          }
+
           setup();
         }
 
@@ -266,18 +292,28 @@ namespace Navigation
             // Run Kalman Filter.
             m_kal.update(0.0);
 
-            // Log data.
-            IMC::LblEstimate est;
-            est.beacon = String::str("%d", msg->id);
-            est.x = m_kal.getState(msg->id * 2);
-            est.y = m_kal.getState(msg->id * 2 + 1);
-            est.depth = m_ranging.getDepth(msg->id);
-            est.var_x = m_kal.getCovariance(msg->id * 2);
-            est.var_y = m_kal.getCovariance(msg->id * 2 + 1);
-            dispatch(est);
+            // Use displacement to get current position fix.
+            double x = m_kal.getState(msg->id * 2);
+            double y = m_kal.getState(msg->id * 2 + 1);
 
-            spew("estimation for beacon %d: %f | %f", msg->id,
-                 m_kal.getState(msg->id * 2), m_kal.getState(msg->id * 2 + 1));
+            double lat = m_origin->lat;
+            double lon = m_origin->lon;
+            Coordinates::WGS84::displace(x, y, &lat, &lon);
+
+            // Update estimate.
+            m_estimate[msg->id]->beacon->lat = lat;
+            m_estimate[msg->id]->beacon->lon = lon;
+            m_estimate[msg->id]->x = m_kal.getState(msg->id * 2);
+            m_estimate[msg->id]->y = m_kal.getState(msg->id * 2 + 1);
+            m_estimate[msg->id]->var_x = m_kal.getCovariance(msg->id * 2);
+            m_estimate[msg->id]->var_y = m_kal.getCovariance(msg->id * 2 + 1);
+            m_estimate[msg->id]->distance = Coordinates::WGS84::distance(lat, lon, 0.0, m_ranging.getLat(msg->id),
+                                                                         m_ranging.getLon(msg->id), 0.0);
+
+            spew("beacon %d WGS estimate: %f | %f", msg->id, lat, lon);
+            spew("beacon %d NE estimate: %f | %f :: distance: %f", msg->id,
+                 m_estimate[msg->id]->x, m_estimate[msg->id]->y,
+                 m_estimate[msg->id]->distance);
           }
           else
             spew("rejected range from %d", msg->id);
@@ -334,6 +370,16 @@ namespace Navigation
           dispatch(cop);
 
           requestActivation();
+
+          // Get vehicle fix.
+          double vlat = m_origin->lat;
+          double vlon = m_origin->lon;
+          Coordinates::WGS84::displace(m_last_n, m_last_e, &vlat, &vlon);
+
+          // Update current vehicle displacement according to new origin.
+          WGS84::displacement(msg->lat, msg->lon, 0.0,
+                              vlat, vlon, 0.0,
+                              &m_last_n, &m_last_e);
 
           Memory::replace(m_origin, new IMC::GpsFix(*msg));
 
