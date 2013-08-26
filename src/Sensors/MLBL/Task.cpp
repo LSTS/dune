@@ -334,7 +334,9 @@ namespace Sensors
 
         // Register handlers.
         bind<IMC::EstimatedState>(this);
+        bind<IMC::FuelLevel>(this);
         bind<IMC::LblConfig>(this);
+        bind<IMC::PlanControlState>(this);
         bind<IMC::QueryEntityState>(this);
         bind<IMC::SoundSpeed>(this);
         bind<IMC::VehicleMedium>(this);
