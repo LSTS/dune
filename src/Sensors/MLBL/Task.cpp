@@ -221,8 +221,14 @@ namespace Sensors
       IMC::EstimatedState m_estate;
       //! Report timer.
       Counter<double> m_report_timer;
-      //! Stop reports on the ground
+      //! Stop reports on the ground.
       bool m_stop_reports;
+      //! Last progress.
+      float m_progress;
+      //! Last fuel level.
+      float m_fuel_level;
+      //! Last fuel level confidence.
+      float m_fuel_conf;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -787,6 +793,9 @@ namespace Sensors
         std::memcpy(&msg[12], &f_yaw, 4);
         std::memcpy(&msg[16], &ranges[0], 2);
         std::memcpy(&msg[18], &ranges[1], 2);
+        std::memcpy(&msg[20], &m_progress, 4);
+        std::memcpy(&msg[24], &m_fuel_level, 4);
+        std::memcpy(&msg[28], &m_fuel_conf, 4);
 
         std::string hex = String::toHex(msg);
         std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n",
@@ -896,6 +905,19 @@ namespace Sensors
 	  m_stop_reports = true;
 	else
 	  m_stop_reports = false;
+      }
+
+      void
+      consume(const IMC::PlanControlState* msg)
+      {
+        m_progress = msg->plan_progress;
+      }
+
+      void
+      consume(const IMC::FuelLevel* msg)
+      {
+        m_fuel_level = msg->value;
+        m_fuel_conf = msg->confidence;
       }
 
       void
