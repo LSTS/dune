@@ -256,11 +256,10 @@ namespace Control
         //! Destructor
         ~Task(void)
         {
-          Memory::clear(m_ca);
-          BasicAutopilot::onResourceRelease();
+          Task::onResourceRelease();
         }
 
-        //! Initialize resources and start capturing frames.
+        //! Initialize resources
         void
         onResourceInitialization(void)
         {
@@ -275,6 +274,15 @@ namespace Control
 
           if (m_ca_args.enabled)
             m_ca = new CoarseAltitude(&m_ca_args);
+        }
+
+        //! Release Resources
+        void
+        onResourceRelease(void)
+        {
+          Memory::clear(m_ca);
+
+          BasicAutopilot::onResourceRelease();
         }
 
         //! On activation
