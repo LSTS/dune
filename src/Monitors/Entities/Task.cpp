@@ -399,18 +399,18 @@ namespace Monitors
 
           m_ems.mnames += r.label;
 
-          switch (r.state)
+          switch ((IMC::EntityState::StateEnum)r.state)
           {
             case IMC::EntityState::ESTA_NORMAL:
               break;
             case IMC::EntityState::ESTA_FAULT:
-              break;
+            case IMC::EntityState::ESTA_ERROR:
             case IMC::EntityState::ESTA_FAILURE:
               if (m_ems.ccount++ > 0)
                 m_ems.cnames += ',';
               m_ems.cnames += r.label;
               break;
-            default:
+            case IMC::EntityState::ESTA_BOOT:
               if (m_ems.ecount++ > 0)
                 m_ems.enames += ',';
               m_ems.enames += r.label;

@@ -322,7 +322,9 @@ namespace Plan
         if (vc->type == IMC::VehicleCommand::VC_REQUEST)
           return;
 
-        if ((vc->getDestination() != getSystemId()) || vc->getDestinationEntity() != getEntityId() || m_vreq_ctr != vc->request_id)
+        if ((vc->getDestination() != getSystemId()) ||
+            (vc->getDestinationEntity() != getEntityId()) ||
+            (m_vreq_ctr != vc->request_id))
           return;
 
         if (!pendingReply())
@@ -363,6 +365,7 @@ namespace Plan
             onVehicleCalibration(vs);
             break;
           case IMC::VehicleState::VS_ERROR:
+          case IMC::VehicleState::VS_BOOT:
             onVehicleError(vs);
             break;
           case IMC::VehicleState::VS_MANEUVER:
@@ -534,7 +537,9 @@ namespace Plan
         m_reply.op = pc->op;
         m_reply.plan_id = pc->plan_id;
 
-        inf(DTR("request -- %s (%s)"), DTR(c_op_desc[m_reply.op]), m_reply.plan_id.c_str());
+        inf(DTR("request -- %s (%s)"),
+            DTR(c_op_desc[m_reply.op]),
+            m_reply.plan_id.c_str());
 
         if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
         {
@@ -566,7 +571,8 @@ namespace Plan
       //! @param[in] plan_startup true if a plan will start right after
       //! @return true if plan is successfully loaded
       bool
-      loadPlan(const std::string& plan_id, const IMC::Message* arg, bool plan_startup = false)
+      loadPlan(const std::string& plan_id, const IMC::Message* arg,
+               bool plan_startup = false)
       {
         if ((initMode() && !plan_startup) || execMode())
         {
@@ -576,7 +582,8 @@ namespace Plan
 
         if (arg)
         {
-          const IMC::PlanSpecification* given_plan = dynamic_cast<const IMC::PlanSpecification*>(arg);
+          const IMC::PlanSpecification* given_plan;
+          given_plan = dynamic_cast<const IMC::PlanSpecification*>(arg);
 
           if (given_plan)
           {
@@ -880,7 +887,10 @@ namespace Plan
 
         if (print)
         {
-          std::string str = Utils::String::str(DTR("reply -- %s (%s) -- %s"), DTR(c_op_desc[m_reply.op]), m_reply.plan_id.c_str(), desc.c_str());
+          std::string str = Utils::String::str(DTR("reply -- %s (%s) -- %s"),
+                                               DTR(c_op_desc[m_reply.op]),
+                                               m_reply.plan_id.c_str(),
+                                               desc.c_str());
 
           if (type == IMC::PlanControl::PC_FAILURE)
             err("%s", str.c_str());

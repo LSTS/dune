@@ -273,6 +273,7 @@ namespace UserInterfaces
 
         switch (msg->op_mode)
         {
+          case IMC::VehicleState::VS_BOOT:
           case IMC::VehicleState::VS_ERROR:
             m_next_id = PAT_ERROR;
             break;

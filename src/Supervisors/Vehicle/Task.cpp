@@ -42,7 +42,7 @@ namespace Supervisors
     //! State description strings
     static const char* c_state_desc[] = {DTR_RT("SERVICE"), DTR_RT("CALIBRATION"),
                                          DTR_RT("ERROR"), DTR_RT("MANEUVERING"),
-                                         DTR_RT("EXTERNAL CONTROL")};
+                                         DTR_RT("EXTERNAL CONTROL"), DTR_RT("BOOT")};
     //! Vehicle command description strings
     static const char* c_cmd_desc[] =
     {"maneuver start", "maneuver stop", "calibration start", "calibration stop"};
@@ -79,6 +79,10 @@ namespace Supervisors
       float m_scope_ref;
       //! Vector of labels from entities in error
       std::vector<std::string> m_ents_in_error;
+      //! Last vehicle state operation mode
+      IMC::VehicleState::OperationModeEnum m_last_op;
+      //! Entities booting
+      unsigned m_eboot;
       //! Task arguments.
       Arguments m_args;
 
@@ -109,12 +113,27 @@ namespace Supervisors
       }
 
       void
+      reset(void)
+      {
+        if (maneuverMode())
+          dispatch(m_stop);
+
+        m_in_safe_plan = false;
+
+        m_err_timer.reset();
+
+        m_vs.control_loops = 0;
+
+        dispatch(m_idle);
+      }
+
+      void
       setInitialState(void)
       {
         // Initialize entity state.
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
-        m_vs.op_mode = IMC::VehicleState::VS_SERVICE;
+        m_vs.op_mode = IMC::VehicleState::VS_BOOT;
         m_vs.maneuver_type = 0xFFFF;
         m_vs.maneuver_stime = -1;
         m_vs.maneuver_eta = 0xFFFF;
@@ -125,84 +144,10 @@ namespace Supervisors
         m_vs.last_error_time = -1;
         m_vs.control_loops = 0;
 
+        m_last_op = (IMC::VehicleState::OperationModeEnum)m_vs.op_mode;
+        m_eboot = 0;
+
         m_ents_in_error.clear();
-      }
-
-      void
-      consume(const IMC::Abort* msg)
-      {
-        (void)msg;
-
-        m_vs.last_error = DTR("got abort request");
-        m_vs.last_error_time = Clock::getSinceEpoch();
-        err("%s", m_vs.last_error.c_str());
-
-        if (!errorMode())
-        {
-          reset();
-
-          if (!externalMode() || !nonOverridableLoops())
-            changeMode(IMC::VehicleState::VS_SERVICE);
-        }
-      }
-
-      void
-      consume(const IMC::ControlLoops* msg)
-      {
-        // If this scope is obsolete, ignore message
-        if (msg->scope_ref < m_scope_ref)
-          return;
-
-        m_scope_ref = msg->scope_ref;
-
-        uint32_t was = m_vs.control_loops;
-
-        if (msg->enable == IMC::ControlLoops::CL_ENABLE)
-        {
-          m_vs.control_loops |= msg->mask;
-
-          if (!was && m_vs.control_loops)
-            onEnabledControlLoops();
-        }
-        else
-        {
-          m_vs.control_loops &= ~msg->mask;
-
-          if (was && !m_vs.control_loops)
-            onDisabledControlLoops();
-        }
-      }
-
-      void
-      onEnabledControlLoops(void)
-      {
-        debug("some control loops are enabled now");
-
-        switch (m_vs.op_mode)
-        {
-          case IMC::VehicleState::VS_SERVICE:
-            changeMode(IMC::VehicleState::VS_EXTERNAL);
-            break;
-          case IMC::VehicleState::VS_ERROR:
-            if (nonOverridableLoops())
-              changeMode(IMC::VehicleState::VS_EXTERNAL);
-            else
-              reset();  // try to disable the control loops
-            break;
-          default:
-            break; // ignore
-        }
-      }
-
-      void
-      onDisabledControlLoops(void)
-      {
-        debug("no control loops are enabled now");
-
-        if (externalMode())
-          changeMode(IMC::VehicleState::VS_SERVICE);
-
-        // ignore otherwise
       }
 
       void
@@ -210,8 +155,16 @@ namespace Supervisors
       {
         if (m_vs.op_mode != s)
         {
+          // if it's in service and some entities are in error
           if (s == IMC::VehicleState::VS_SERVICE && entityError())
             s = IMC::VehicleState::VS_ERROR;
+
+          // if previous state was boot and there are still entities booting
+          if ((s == IMC::VehicleState::VS_ERROR) && (m_eboot) &&
+              (m_last_op == IMC::VehicleState::VS_BOOT))
+            s = IMC::VehicleState::VS_BOOT;
+
+          m_last_op = (IMC::VehicleState::OperationModeEnum)m_vs.op_mode;
 
           m_vs.op_mode = s;
 
@@ -239,6 +192,78 @@ namespace Supervisors
 
         m_switch_time = -1.0;
         dispatch(m_vs);
+      }
+
+      void
+      consume(const IMC::Abort* msg)
+      {
+        (void)msg;
+
+        m_vs.last_error = DTR("got abort request");
+        m_vs.last_error_time = Clock::getSinceEpoch();
+        err("%s", m_vs.last_error.c_str());
+
+        stopManeuver();
+      }
+
+      void
+      onEnabledControlLoops(void)
+      {
+        debug("some control loops are enabled now");
+
+        switch ((IMC::VehicleState::OperationModeEnum)m_vs.op_mode)
+        {
+          case IMC::VehicleState::VS_SERVICE:
+            changeMode(IMC::VehicleState::VS_EXTERNAL);
+            break;
+          case IMC::VehicleState::VS_ERROR:
+          case IMC::VehicleState::VS_BOOT:
+            if (nonOverridableLoops())
+              changeMode(IMC::VehicleState::VS_EXTERNAL);
+            else
+              reset();  // try to disable the control loops
+            break;
+          default:
+            break; // ignore
+        }
+      }
+
+      void
+      onDisabledControlLoops(void)
+      {
+        debug("no control loops are enabled now");
+
+        if (externalMode())
+          changeMode(IMC::VehicleState::VS_SERVICE);
+
+        // ignore otherwise
+      }
+
+      void
+      consume(const IMC::ControlLoops* msg)
+      {
+        // If this scope is obsolete, ignore message
+        if (msg->scope_ref < m_scope_ref)
+          return;
+
+        m_scope_ref = msg->scope_ref;
+
+        uint32_t was = m_vs.control_loops;
+
+        if (msg->enable == IMC::ControlLoops::CL_ENABLE)
+        {
+          m_vs.control_loops |= msg->mask;
+
+          if (!was && m_vs.control_loops)
+            onEnabledControlLoops();
+        }
+        else
+        {
+          m_vs.control_loops &= ~msg->mask;
+
+          if (was && !m_vs.control_loops)
+            onDisabledControlLoops();
+        }
       }
 
       //! Split comma separated list and translate labels, then join again
@@ -271,6 +296,7 @@ namespace Supervisors
 
         m_vs.error_ents = "";
         m_ents_in_error.clear();
+        m_eboot = msg->ecount;
 
         if (msg->ccount)
           m_vs.error_ents = msg->cnames;
@@ -294,10 +320,13 @@ namespace Supervisors
           m_err_timer.reset();
         }
 
-        if (errorMode())
+        if (errorMode() || bootMode())
         {
           if (!m_vs.error_count)
             changeMode(IMC::VehicleState::VS_SERVICE);
+          else if (!m_eboot && bootMode())
+            changeMode(IMC::VehicleState::VS_ERROR);
+
           return;
         }
 
@@ -329,7 +358,7 @@ namespace Supervisors
         if (!maneuverMode())
           return;
 
-        switch (msg->state)
+        switch ((IMC::ManeuverControlState::StateEnum)msg->state)
         {
           case IMC::ManeuverControlState::MCS_EXECUTING:
             if (msg->eta != m_vs.maneuver_eta)
@@ -369,32 +398,6 @@ namespace Supervisors
             m_in_safe_plan = true;
           else
             m_in_safe_plan = false;
-        }
-      }
-
-      void
-      consume(const IMC::VehicleCommand* cmd)
-      {
-        if (cmd->type != IMC::VehicleCommand::VC_REQUEST)
-          return;
-
-        trace("%s request (%u/%u/%u)", c_cmd_desc[cmd->command],
-              cmd->getSource(), cmd->getSourceEntity(), cmd->request_id);
-
-        switch (cmd->command)
-        {
-          case IMC::VehicleCommand::VC_EXEC_MANEUVER:
-            startManeuver(cmd);
-            break;
-          case IMC::VehicleCommand::VC_STOP_MANEUVER:
-            stopManeuver(cmd);
-            break;
-          case IMC::VehicleCommand::VC_START_CALIBRATION:
-            startCalibration(cmd);
-            break;
-          case IMC::VehicleCommand::VC_STOP_CALIBRATION:
-            stopCalibration(cmd);
-            break;
         }
       }
 
@@ -499,32 +502,42 @@ namespace Supervisors
       }
 
       void
-      stopManeuver(const IMC::VehicleCommand* cmd)
+      stopManeuver(void)
       {
-        if (!errorMode())
+        if (!errorMode() && !bootMode())
         {
           reset();
 
           if (!externalMode() || !nonOverridableLoops())
             changeMode(IMC::VehicleState::VS_SERVICE);
         }
-
-        requestOK(cmd, DTR("OK"));
       }
 
       void
-      reset(void)
+      consume(const IMC::VehicleCommand* cmd)
       {
-        if (maneuverMode())
-          dispatch(m_stop);
+        if (cmd->type != IMC::VehicleCommand::VC_REQUEST)
+          return;
 
-        m_in_safe_plan = false;
+        trace("%s request (%u/%u/%u)", c_cmd_desc[cmd->command],
+              cmd->getSource(), cmd->getSourceEntity(), cmd->request_id);
 
-        m_err_timer.reset();
-
-        m_vs.control_loops = 0;
-
-        dispatch(m_idle);
+        switch ((IMC::VehicleCommand::CommandEnum)cmd->command)
+        {
+          case IMC::VehicleCommand::VC_EXEC_MANEUVER:
+            startManeuver(cmd);
+            break;
+          case IMC::VehicleCommand::VC_STOP_MANEUVER:
+            stopManeuver();
+            requestOK(cmd, DTR("OK"));
+            break;
+          case IMC::VehicleCommand::VC_START_CALIBRATION:
+            startCalibration(cmd);
+            break;
+          case IMC::VehicleCommand::VC_STOP_CALIBRATION:
+            stopCalibration(cmd);
+            break;
+        }
       }
 
       void
@@ -561,33 +574,25 @@ namespace Supervisors
       bool
       entityError(void)
       {
-        if (m_vs.error_count)
-        {
-          if (m_args.safe_ents.size() && m_in_safe_plan)
-          {
-            std::vector<std::string>::const_iterator it_ents = m_ents_in_error.begin();
-
-            for (; it_ents != m_ents_in_error.end(); ++it_ents)
-            {
-              std::vector<std::string>::const_iterator it_safe = m_args.safe_ents.begin();
-              for (; it_safe != m_args.safe_ents.end(); ++it_safe)
-              {
-                if (!(*it_ents).compare((*it_safe)))
-                  return true;
-              }
-            }
-
-            return false;
-          }
-          else
-          {
-            return true;
-          }
-        }
-        else
-        {
+        if (!m_vs.error_count)
           return false;
+
+        if (!m_args.safe_ents.size() || !m_in_safe_plan)
+          return true;
+
+        std::vector<std::string>::const_iterator it_ents = m_ents_in_error.begin();
+
+        for (; it_ents != m_ents_in_error.end(); ++it_ents)
+        {
+          std::vector<std::string>::const_iterator it_safe = m_args.safe_ents.begin();
+          for (; it_safe != m_args.safe_ents.end(); ++it_safe)
+          {
+            if (!(*it_ents).compare((*it_safe)))
+              return true;
+          }
         }
+
+        return false;
       }
 
       inline bool
@@ -618,6 +623,12 @@ namespace Supervisors
       calibrationMode(void) const
       {
         return modeIs(IMC::VehicleState::VS_CALIBRATION);
+      }
+
+      inline bool
+      bootMode(void) const
+      {
+        return modeIs(IMC::VehicleState::VS_BOOT);
       }
 
       inline bool
