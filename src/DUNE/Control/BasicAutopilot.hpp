@@ -63,6 +63,10 @@ namespace DUNE
       onResourceAcquisition(void)
       { }
 
+      virtual void
+      onResourceRelease(void)
+      { }
+
       //! Reset to initial values
       virtual void
       reset(void);
