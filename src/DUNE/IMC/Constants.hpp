@@ -31,13 +31,13 @@
 #define DUNE_IMC_CONSTANTS_HPP_INCLUDED_
 
 //! IMC version string.
-#define DUNE_IMC_CONST_VERSION "5.2.0"
+#define DUNE_IMC_CONST_VERSION "5.3.x"
 //! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "47d1a0f5ab3119961a1d8f6ffdfc77a3"
+#define DUNE_IMC_CONST_MD5 "dca3db07ddc95eaa40979f7b92d42e7a"
 //! Synchronization number.
-#define DUNE_IMC_CONST_SYNC 0xFE51
+#define DUNE_IMC_CONST_SYNC 0xFE53
 //! Reversed synchronization number.
-#define DUNE_IMC_CONST_SYNC_REV 0x51FE
+#define DUNE_IMC_CONST_SYNC_REV 0x53FE
 //! Size of the header in bytes.
 #define DUNE_IMC_CONST_HEADER_SIZE 20
 //! Size of the footer in bytes.

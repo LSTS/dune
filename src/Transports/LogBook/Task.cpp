@@ -95,10 +95,10 @@ namespace Transports
           case IMC::LogBookControl::LBC_CLEAR:
             m_logbook.clear();
             m_elogbook.clear();
-            inf("cleared logbook");
+            inf(DTR("cleared logbook"));
             break;
           default:
-            err("invalid or unsupported command");
+            err(DTR("invalid or unsupported command"));
             break;
         }
       }

@@ -51,6 +51,8 @@ endif(DUNE_PROGRAM_PYTHON)
 if(DUNE_PROGRAM_XGETTEXT)
   file(GLOB_RECURSE headers "${PROJECT_SOURCE_DIR}/src/*.hpp")
   file(GLOB_RECURSE sources "${PROJECT_SOURCE_DIR}/src/*.cpp")
+  file(GLOB_RECURSE private_headers "${PROJECT_SOURCE_DIR}/private/src/*.hpp")
+  file(GLOB_RECURSE private_sources "${PROJECT_SOURCE_DIR}/private/src/*.cpp")
   file(GLOB_RECURSE texts   "${PROJECT_SOURCE_DIR}/i18n/*.txt")
 
   add_custom_target(i18n_extract
@@ -66,7 +68,7 @@ if(DUNE_PROGRAM_XGETTEXT)
     --keyword=DTR_RT
     --no-wrap
     --indent
-    -o dune.pot ${headers} ${sources} ${texts}
+    -o dune.pot ${headers} ${sources} ${private_headers} ${private_sources} ${texts}
     DEPENDS i18n_texts
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/i18n)
 endif(DUNE_PROGRAM_XGETTEXT)

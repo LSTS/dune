@@ -61,32 +61,32 @@ namespace DUNE
       struct InvalidLabel: public std::runtime_error
       {
         InvalidLabel(const std::string& label):
-          std::runtime_error("invalid entity label: " + label)
+          std::runtime_error(DTR("invalid entity label: ") + label)
         { }
 
         InvalidLabel(void):
-          std::runtime_error("entity labels cannot be empty")
+          std::runtime_error(DTR("entity labels cannot be empty"))
         { }
       };
 
       struct NonexistentLabel: public std::runtime_error
       {
         NonexistentLabel(const std::string& label):
-          std::runtime_error("nonexistent entity label: " + label)
+          std::runtime_error(DTR("nonexistent entity label: ") + label)
         { }
       };
 
       struct InvalidId: public std::runtime_error
       {
         InvalidId(unsigned int id):
-          std::runtime_error("invalid entity id: " + Utils::String::str(id))
+          std::runtime_error(DTR("invalid entity id: ") + Utils::String::str(id))
         { }
       };
 
       struct ReservedUnique: public std::runtime_error
       {
         ReservedUnique(const std::string& label):
-          std::runtime_error("an unique id was already reserved for entity label: " + label)
+          std::runtime_error(DTR("an unique id was already reserved for entity label: ") + label)
         { }
       };
 

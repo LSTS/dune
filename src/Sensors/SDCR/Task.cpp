@@ -171,7 +171,7 @@ namespace Sensors
       void
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
-        inf("%s: %u.%u.%d", DTR("version"), major, minor, (int)patch);
+        inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 

@@ -191,11 +191,11 @@ namespace Sensors
             war(DTR("device is using unstable firmware"));
           else
             inf(DTR("firmware version %u.%u.%u"), info.major,
-              info.minor, info.patch);
+                info.minor, info.patch);
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 30);
+          throw RestartNeeded(DTR(e.what()), 30);
         }
       }
 

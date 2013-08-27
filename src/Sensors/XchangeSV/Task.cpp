@@ -143,7 +143,7 @@ namespace Sensors
           if (m_wdog.overflow())
           {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-            throw RestartNeeded(DTR("input timeout"), 5);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
           }
 
           if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)

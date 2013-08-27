@@ -122,7 +122,7 @@ namespace Vision
           if (m_bfr_len == 0)
           {
             if (!m_iom.poll(timeout))
-              throw std::runtime_error("timed out while waiting for reply");
+              throw std::runtime_error(DTR("timed out while waiting for reply"));
 
             // Read to buffer
             m_bfr_len = m_socket.read(m_bfr, c_bfrlen);
@@ -178,7 +178,7 @@ namespace Vision
         while (len > 0)
         {
           if (!m_iom.poll(timeout))
-            throw std::runtime_error("timed out while waiting for reply");
+            throw std::runtime_error(DTR("timed out while waiting for reply"));
 
           rdlen = m_socket.read(bfr, len);
 

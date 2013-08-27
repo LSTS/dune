@@ -38,7 +38,7 @@ namespace DUNE
       std::map<std::string, Parameter*>::const_iterator itr = m_names.find(name);
 
       if (itr == m_names.end())
-        throw std::runtime_error("invalid parameter");
+        throw std::runtime_error(DTR("invalid parameter"));
 
       Parameter* parameter = itr->second;
       if (!value.empty())

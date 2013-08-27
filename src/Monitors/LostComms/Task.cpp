@@ -76,9 +76,9 @@ namespace Monitors
         .defaultValue("10.0")
         .description("Timeout if executing plan");
 
-        param(DTR_RT("Lost Comms Plan"), m_args.plan)
+        param("Lost Comms Plan", m_args.plan)
         .defaultValue("lost_comms")
-        .description(DTR("Plan to be executed in case of Lost Communications"));
+        .description("Plan to be executed in case of Lost Communications");
 
         bind<IMC::Heartbeat>(this);
         bind<IMC::PlanControlState>(this);

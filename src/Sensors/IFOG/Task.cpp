@@ -106,13 +106,6 @@ namespace Sensors
       unsigned trigger_frq;
     };
 
-    // Convenience function to throw the last system error.
-    inline void
-    throwLastError(const std::string& msg)
-    {
-      throw std::runtime_error(msg + System::Error::getLastMessage());
-    }
-
     struct Task: public DUNE::Tasks::Task
     {
       //! Rotation Matrix to correct IMU mounting position.
@@ -201,9 +194,9 @@ namespace Sensors
 
           UCTK::FirmwareInfo info = m_psu->getFirmwareInfo();
           if (info.isDevelopment())
-            war("device is using unstable firmware");
+            war(DTR("device is using unstable firmware"));
           else
-            inf("firmware version %u.%u.%u", info.major,
+            inf(DTR("firmware version %u.%u.%u"), info.major,
                 info.minor, info.patch);
 
           // Open IMU.

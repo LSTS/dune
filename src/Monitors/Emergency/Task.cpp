@@ -43,30 +43,28 @@ namespace Monitors
     {
       //! Heartbeat timeout.
       float heartbeat_tout;
-      //! Abort SMS timeout.
-      float abort_tout;
-      //! Lost Communication SMS timeout.
-      float lost_com_tout;
+      //! Expiration time of abort ackowledged SMS.
+      unsigned sms_abort_ttl;
+      //! Expiration time of lost communication SMS.
+      unsigned sms_lost_coms_ttl;
       //! Default SMS recipient.
       std::string recipient;
-      //! Timeout if executing plan
-      float mission_tout;
     };
 
     struct Task: public DUNE::Tasks::Periodic
     {
       //! Emergency message.
       std::string m_emsg;
-      //! Time of last heartbeat.
-      double m_heartbeat_last;
-      //! Fuel level
+      //! Fuel level.
       float m_fuel;
-      //! Confidence in fuel level
+      //! Confidence in fuel level.
       float m_fuel_conf;
-      //! True if executing plan
+      //! True if executing plan.
       bool m_in_mission;
-      //! Executing plan's progress
+      //! Executing plan's progress.
       float m_progress;
+      //! Lost communications timer.
+      Counter<double> m_lost_coms_timer;
       //! Task arguments.
       Arguments m_args;
 
@@ -74,31 +72,26 @@ namespace Monitors
         Tasks::Periodic(name, ctx),
         m_in_mission(false)
       {
-        param("Heartbeat Timeout", m_args.heartbeat_tout)
-        .units(Units::Second)
-        .defaultValue("300.0")
-        .description("Heartbeat Timeout");
-
-        param("Abort SMS Timeout", m_args.abort_tout)
-        .units(Units::Second)
-        .defaultValue("0.0")
-        .description("Abort SMS Timeout");
-
-        param("Lost Communication SMS Timeout", m_args.lost_com_tout)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .units(Units::Second)
-        .defaultValue("30.0")
-        .description(DTR("Lost Communication SMS Timeout"));
-
         param(DTR_RT("SMS Recipient Number"), m_args.recipient)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("+351966575686")
         .description(DTR("Phone number of the SMS recipient"));
 
-        param("In Mission Timeout", m_args.mission_tout)
+        param("Lost Communications Timeout", m_args.heartbeat_tout)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .units(Units::Second)
-        .defaultValue("10.0")
-        .description("Timeout if executing plan");
+        .defaultValue("300.0")
+        .description(DTR("Lost Communications Timeout"));
+
+        param("Expiration Time - Abort SMS", m_args.sms_abort_ttl)
+        .units(Units::Second)
+        .defaultValue("30.0")
+        .description("Abort SMS Timeout");
+
+        param("Expiration Time - Lost Communications", m_args.sms_lost_coms_ttl)
+        .units(Units::Second)
+        .defaultValue("30.0")
+        .description("Expiration time of lost communications SMS");
 
         bind<IMC::Abort>(this);
         bind<IMC::GpsFix>(this);
@@ -112,8 +105,7 @@ namespace Monitors
       {
         // Initialize entity state.
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
-        m_heartbeat_last = Clock::get();
+        m_lost_coms_timer.setTop(m_args.heartbeat_tout);
         m_fuel = -1.0;
         m_fuel_conf = -1.0;
         m_progress = -1.0;
@@ -142,31 +134,32 @@ namespace Monitors
 
           m_emsg += m_in_mission? String::str(" / p:%u", (int)m_progress) : "";
         }
-        else
-        {
-          m_emsg.clear();
-        }
       }
 
       void
-      sendMessages(const char* prefix, unsigned timeout)
+      sendSMS(const char* prefix, unsigned timeout)
       {
         if (!m_emsg.empty())
         {
+          inf(DTR("sending SMS %s | %u"), prefix, timeout);
+
           IMC::Sms sms;
           sms.number = m_args.recipient;
           sms.timeout = timeout;
           sms.contents = String::str("(%s) %s", prefix, m_emsg.c_str());
           dispatch(sms);
         }
-        (void)timeout;
+        else
+        {
+          war(DTR("unknown location"));
+        }
       }
 
       void
       consume(const IMC::Abort* msg)
       {
         (void)msg;
-        sendMessages("A", (unsigned)m_args.abort_tout);
+        sendSMS("A", m_args.sms_abort_ttl);
       }
 
       void
@@ -175,7 +168,10 @@ namespace Monitors
         if (msg->getSource() == getSystemId())
           return;
 
-        m_heartbeat_last = Clock::get();
+        if ((msg->getSource() & 0x4000) == 0)
+          return;
+
+        m_lost_coms_timer.reset();
       }
 
       void
@@ -195,12 +191,10 @@ namespace Monitors
       void
       task(void)
       {
-        double now = Clock::get();
-
-        if (now > (m_heartbeat_last + m_args.heartbeat_tout))
+        if (m_lost_coms_timer.overflow())
         {
-          sendMessages("T", (unsigned)m_args.lost_com_tout);
-          m_heartbeat_last = now;
+          sendSMS("T", m_args.sms_lost_coms_ttl);
+          m_lost_coms_timer.reset();
         }
       }
     };

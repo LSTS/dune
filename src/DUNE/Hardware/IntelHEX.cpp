@@ -58,7 +58,7 @@ namespace DUNE
       std::ifstream ifs(m_file_name.c_str());
       if (ifs.fail())
       {
-        throw std::runtime_error(Utils::String::str("failed to open file: %s",
+        throw std::runtime_error(Utils::String::str("%s: %s", DTR("failed to open file"),
                                                     m_file_name.c_str()));
       }
 
@@ -104,7 +104,7 @@ namespace DUNE
         uint8_t csum = (uint8_t)tmp;
 
         if (csum != ccsum)
-          throw std::runtime_error("invalid checksum");
+          throw std::runtime_error(DTR("invalid checksum"));
 
         // Check for end of file record.
         if (rec_type == 1)

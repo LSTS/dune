@@ -117,7 +117,7 @@ namespace Transports
 
           m_sock->listen(5);
           m_sock->addToPoll(m_iom);
-          inf(DTR("bound to port %u"), m_args.port);
+          inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), m_args.port);
 
           if (m_args.announce)
           {

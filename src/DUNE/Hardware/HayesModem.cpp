@@ -34,8 +34,6 @@ namespace DUNE
   {
     using DUNE_NAMESPACES;
 
-    //! Default AT command timeout.
-    static const double c_timeout = 5.0;
     //! Maximum number of revision lines.
     static const unsigned c_max_rev_lines = 10;
 
@@ -43,16 +41,10 @@ namespace DUNE
     //! @param[in] task parent task.
     //! @param[in] uart serial port connected to the ISU.
     HayesModem::HayesModem(Tasks::Task* task, SerialPort* uart):
-      m_task(task),
-      m_uart(uart),
-      m_timeout(c_timeout),
-      m_read_mode(READ_MODE_LINE),
-      m_busy(false),
-      m_tx_rate_max(-1.0)
+      BasicModem(task, uart)
     {
-      m_rssi.setDestination(m_task->getSystemId());
-      m_rssi.setDestinationEntity(m_task->getEntityId());
-      m_uart->flushInput();
+      m_rssi.setDestination(getTask()->getSystemId());
+      m_rssi.setDestinationEntity(getTask()->getEntityId());
     }
 
     //! Perform ISU initialization, this function must be called
@@ -69,7 +61,6 @@ namespace DUNE
       setReadMode(READ_MODE_LINE);
       start();
       setEcho(false);
-      //setFlowControl(false);
       sendInitialization();
     }
 
@@ -135,45 +126,6 @@ namespace DUNE
       getTask()->dispatch(m_rssi);
     }
 
-    //! Test if ISU is busy performing an SBD session.
-    //! @return true if ISU is busy, false otherwise.
-    bool
-    HayesModem::isBusy(void)
-    {
-      ScopedMutex l(m_mutex);
-      return m_busy;
-    }
-
-    //! Test if ISU is cooling down.
-    //! @return true if ISU is cooling down, false otherwise.
-    bool
-    HayesModem::isCooling(void)
-    {
-      ScopedMutex l(m_mutex);
-      if ((m_tx_rate_max >= 0.0) && (!m_tx_rate_timer.overflow()))
-        return true;
-      return false;
-    }
-
-    //! Set maximum transmission rate.
-    //! @param[in] rate transmission rate in second. Negative values
-    //! will disable transmission rate cap.
-    void
-    HayesModem::setTxRateMax(double rate)
-    {
-      ScopedMutex l(m_mutex);
-      m_tx_rate_max = rate;
-      m_tx_rate_timer.setTop(rate);
-    }
-
-    //! @todo: ^SYSSTART
-    bool
-    HayesModem::handleUnsolicited(const std::string& str)
-    {
-      (void)str;
-      return false;
-    }
-
     //! Enable or disable RTS/CTS flow control.
     //! @param[in] value true to enable flow control, false otherwise.
     void
@@ -187,21 +139,6 @@ namespace DUNE
       expectOK();
     }
 
-    void
-    HayesModem::setSkipLine(const std::string& line)
-    {
-      m_skip_line = line;
-    }
-
-    void
-    HayesModem::setBusy(bool value)
-    {
-      ScopedMutex l(m_mutex);
-      m_busy = value;
-      if (m_busy && (m_tx_rate_max >= 0))
-        m_tx_rate_timer.reset();
-    }
-
     //! Enable or disable the ISU to echo characters to the DTE.
     //! @param[in] value true to enable, false to disable.
     void
@@ -209,20 +146,6 @@ namespace DUNE
     {
       sendAT(value ? "E1" : "E0");
       expectOK();
-    }
-
-    HayesModem::ReadMode
-    HayesModem::getReadMode(void)
-    {
-      ScopedMutex l(m_mutex);
-      return m_read_mode;
-    }
-
-    void
-    HayesModem::setReadMode(HayesModem::ReadMode mode)
-    {
-      ScopedMutex l(m_mutex);
-      m_read_mode = mode;
     }
 
     std::string
@@ -241,7 +164,7 @@ namespace DUNE
       cmd.append(str);
       m_last_cmd = cmd;
       cmd.append("\r\n");
-      m_task->spew("send: %s", m_last_cmd.c_str());
+      getTask()->spew("send: %s", m_last_cmd.c_str());
       sendRaw((const uint8_t*)cmd.c_str(), cmd.size());
     }
 
@@ -249,20 +172,6 @@ namespace DUNE
     HayesModem::sendRaw(const uint8_t* data, unsigned data_size)
     {
       m_uart->write(data, data_size);
-    }
-
-    void
-    HayesModem::setTimeout(double timeout)
-    {
-      ScopedMutex l(m_mutex);
-      m_timeout = timeout;
-    }
-
-    double
-    HayesModem::getTimeout(void)
-    {
-      ScopedMutex l(m_mutex);
-      return m_timeout;
     }
 
     void
@@ -283,151 +192,6 @@ namespace DUNE
     HayesModem::expectREADY(void)
     {
       expect("READY");
-    }
-
-    std::string
-    HayesModem::readLine(void)
-    {
-      Counter<double> timer(getTimeout());
-      return readLine(timer);
-    }
-
-    void
-    HayesModem::readRaw(Counter<double>& timer, uint8_t* data, unsigned data_size)
-    {
-      unsigned bytes_read = 0;
-
-      while (!timer.overflow())
-      {
-        if (m_bytes.waitForItems(timer.getRemaining()))
-          data[bytes_read++] = m_bytes.pop();
-
-        if (bytes_read == data_size)
-          return;
-      }
-
-      throw ReadTimeout();
-    }
-
-    bool
-    HayesModem::processInput(std::string& str)
-    {
-      bool got_line = false;
-
-      while (!m_chars.empty())
-      {
-        char c = m_chars.front();
-        m_chars.pop();
-
-        if (c == '\n')
-        {
-          if (!m_line.empty())
-          {
-            got_line = true;
-            break;
-          }
-        }
-        else
-        {
-          m_line.push_back(c);
-        }
-      }
-
-      // No complete line is available.
-      if (!got_line)
-        return false;
-
-      // Clean line.
-      str = String::trim(m_line);
-
-      // Got a complete line, but it's empty.
-      if (str.empty())
-        return true;
-
-      m_task->spew("recv: %s", sanitize(str).c_str());
-      m_line.clear();
-
-      if (!m_skip_line.empty())
-      {
-        if (m_skip_line == str)
-        {
-          str.clear();
-          m_skip_line.clear();
-        }
-      }
-
-      return true;
-    }
-
-    std::string
-    HayesModem::readLine(Time::Counter<double>& timer)
-    {
-      if (m_lines.waitForItems(timer.getRemaining()))
-      {
-        std::string line = m_lines.pop();
-        if (line != m_last_cmd)
-          return line;
-        else
-          return readLine(timer);
-      }
-
-      throw ReadTimeout();
-    }
-
-    void
-    HayesModem::flushInput(void)
-    {
-      m_uart->flushInput();
-    }
-
-    void
-    HayesModem::run(void)
-    {
-      char bfr[512];
-      std::string line;
-
-      while (!isStopping())
-      {
-        if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
-          continue;
-
-        int rv = m_uart->read(bfr, sizeof(bfr));
-        if (rv <= 0)
-        {
-          IMC::IoEvent iov;
-          iov.setSource(getTask()->getSystemId());
-          iov.setSourceEntity(getTask()->getEntityId());
-          iov.setDestinationEntity(getTask()->getEntityId());
-          iov.type = IMC::IoEvent::IOV_TYPE_INPUT_ERROR;
-          getTask()->receive(&iov);
-          break;
-        }
-
-        if (getReadMode() == READ_MODE_RAW)
-        {
-          for (int i = 0; i < rv; ++i)
-            m_bytes.push(bfr[i]);
-        }
-        else
-        {
-          bfr[rv] = 0;
-          m_task->spew("%s", sanitize(bfr).c_str());
-
-          for (int i = 0; i < rv; ++i)
-          {
-            m_chars.push(bfr[i]);
-          }
-
-          while (processInput(line))
-          {
-            if (!line.empty())
-            {
-              if (!handleUnsolicited(line))
-                m_lines.push(line);
-            }
-          }
-        }
-      }
     }
   }
 }

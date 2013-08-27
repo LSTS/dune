@@ -665,12 +665,19 @@ namespace Sensors
         float yaw;
         uint16_t ranges[2];
 
+        float progress;
+        float fuel_level;
+        float fuel_conf;
+
         std::memcpy(&lat, msg_raw + 0, 4);
         std::memcpy(&lon, msg_raw + 4, 4);
         std::memcpy(&depth, msg_raw + 8, 4);
         std::memcpy(&yaw, msg_raw + 12, 4);
         std::memcpy(&ranges[0], msg_raw + 16, 2);
         std::memcpy(&ranges[1], msg_raw + 18, 2);
+        std::memcpy(&progress, msg_raw + 20, 4);
+        std::memcpy(&fuel_level, msg_raw + 24, 4);
+        std::memcpy(&fuel_conf, msg_raw + 28, 4);
 
         for (int i = 0; i < 2; ++i)
         {
@@ -692,6 +699,17 @@ namespace Sensors
         es.depth = depth;
         es.psi = yaw;
         dispatch(es);
+
+        IMC::PlanControlState pcs;
+        pcs.setSource(m_mimap[src]);
+        pcs.plan_progress = progress;
+        dispatch(pcs);
+
+        IMC::FuelLevel fuel;
+        fuel.setSource(m_mimap[src]);
+        fuel.value = fuel_level;
+        fuel.confidence = fuel_conf;
+        dispatch(fuel);
       }
 
       void

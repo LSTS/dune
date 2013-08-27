@@ -35,15 +35,16 @@
 #include <DUNE/Concurrency/Thread.hpp>
 #include <DUNE/Concurrency/ScopedMutex.hpp>
 #include <DUNE/Concurrency/TSQueue.hpp>
-#include <DUNE/Hardware/SerialPort.hpp>
 #include <DUNE/Tasks/Task.hpp>
 #include <DUNE/Time/Counter.hpp>
+#include <DUNE/Hardware/SerialPort.hpp>
+#include <DUNE/Hardware/BasicModem.hpp>
 
 namespace DUNE
 {
   namespace Hardware
   {
-    class HayesModem: public Concurrency::Thread
+    class HayesModem: public BasicModem
     {
     public:
       //! Constructor.
@@ -82,38 +83,7 @@ namespace DUNE
       float
       getRSSI(void);
 
-      //! Test if ISU is busy performing an SBD session.
-      //! @return true if ISU is busy, false otherwise.
-      bool
-      isBusy(void);
-
-      //! Test if ISU is cooling down.
-      //! @return true if ISU is cooling down, false otherwise.
-      bool
-      isCooling(void);
-
-      //! Set maximum transmission rate.
-      //! @param[in] rate transmission rate in second. Negative values
-      //! will disable transmission rate cap.
-      void
-      setTxRateMax(double rate);
-
     protected:
-      //! Read mode.
-      enum ReadMode
-      {
-        //! Line oriented input.
-        READ_MODE_LINE,
-        //! Unprocessed sequence of bytes.
-        READ_MODE_RAW
-      };
-
-      //! Concurrency lock.
-      Concurrency::Mutex m_mutex;
-
-      virtual bool
-      handleUnsolicited(const std::string& str);
-
       virtual void
       sendInitialization(void)
       { }
@@ -126,20 +96,11 @@ namespace DUNE
       queryRSSI(void)
       { }
 
-      std::string
-      readValue(const std::string& cmd);
-
       void
       sendAT(const std::string& str);
 
       void
       sendRaw(const uint8_t* data, unsigned data_size);
-
-      void
-      setTimeout(double timeout);
-
-      double
-      getTimeout(void);
 
       void
       expect(const std::string& str);
@@ -151,22 +112,7 @@ namespace DUNE
       expectREADY(void);
 
       void
-      readRaw(Time::Counter<double>& timer, uint8_t* data, unsigned data_size);
-
-      void
-      setBusy(bool value);
-
-      ReadMode
-      getReadMode(void);
-
-      void
-      setReadMode(ReadMode mode);
-
-      void
       setRSSI(float value);
-
-      void
-      flushInput(void);
 
       //! Enable or disable RTS/CTS flow control.
       //! @param[in] value true to enable flow control, false otherwise.
@@ -179,55 +125,11 @@ namespace DUNE
       setEcho(bool value);
 
       std::string
-      readLine(void);
-
-      std::string
-      readLine(Time::Counter<double>& timer);
-
-      Tasks::Task*
-      getTask(void)
-      {
-        return m_task;
-      }
-
-      void
-      setSkipLine(const std::string& line);
+      readValue(const std::string& cmd);
 
     private:
-      //! Parent task.
-      Tasks::Task* m_task;
-      //! Serial port handle.
-      Hardware::SerialPort* m_uart;
-      //! Read timeout.
-      double m_timeout;
-      //! Queue of incoming characters.
-      std::queue<char> m_chars;
-      //! Current line being parsed.
-      std::string m_line;
-      //! Last command sent to modem.
-      std::string m_last_cmd;
-      //! Queue of input lines.
-      Concurrency::TSQueue<std::string> m_lines;
-      //! Queue of raw input bytes.
-      Concurrency::TSQueue<uint8_t> m_bytes;
-      //! Read mode.
-      ReadMode m_read_mode;
-      //! True if ISU is busy.
-      bool m_busy;
-      //! Contents of line to skip once.
-      std::string m_skip_line;
       //! Last RSSI value.
       IMC::RSSI m_rssi;
-      //! Maximum transmission rate value.
-      double m_tx_rate_max;
-      //! Maximum transmission rate timer.
-      Time::Counter<double> m_tx_rate_timer;
-
-      bool
-      processInput(std::string& str);
-
-      void
-      run(void);
     };
   }
 }

@@ -51,15 +51,16 @@ namespace DUNE
       m_avg_gps(NULL)
     {
       // Declare configuration parameters.
-      param("Maximum distance to reference", m_max_dis2ref)
+      param("Maximum Distance to Reference", m_max_dis2ref)
       .units(Units::Meter)
       .defaultValue("1000")
       .description("Maximum allowed distance to 'EstimatedState' reference");
 
-      param("Max. Horizontal Position Variance", m_max_hpos_var)
+      param(DTR_RT("Maximum Horizontal Position Variance"), m_max_hpos_var)
+      .visibility(Tasks::Parameter::VISIBILITY_USER)
       .units(Units::SquareMeter)
-      .defaultValue("240.0")
-      .description("Maximum allowed horizontal Position estimation covariance");
+      .defaultValue("500.0")
+      .description("Maximum allowed horizontal position estimation variance");
 
       param("Reject all LBL ranges", m_reject_all_lbl)
       .defaultValue("false")
@@ -84,6 +85,11 @@ namespace DUNE
       .units(Units::Second)
       .defaultValue("5.0")
       .description("No altitude readings timeout");
+
+      param("Euler timeout", m_without_euler_timeout)
+      .units(Units::Second)
+      .defaultValue("10.0")
+      .description("No EulerAngles readings timeout");
 
       param("Depth timeout", m_without_depth_timeout)
       .units(Units::Second)
@@ -196,8 +202,6 @@ namespace DUNE
       m_sum_euler_inc = false;
       m_alt_sanity = true;
       m_aligned = false;
-      std::memset(m_beacons, 0, sizeof(m_beacons));
-      m_num_beacons = 0;
       m_edelta_ts = 0.1;
       m_rpm = 0;
 
@@ -238,6 +242,7 @@ namespace DUNE
       m_time_without_alt.setTop(m_without_alt_timeout);
       m_time_without_main_depth.setTop(m_without_main_depth_timeout);
       m_time_without_depth.setTop(m_without_depth_timeout);
+      m_time_without_euler.setTop(m_without_euler_timeout);
       m_dvl_sanity_timer.setTop(m_dvl_sanity_timeout);
 
       // Distance DVL to vehicle Center of Gravity is 0 in Simulation.
@@ -301,9 +306,6 @@ namespace DUNE
       Memory::clear(m_origin);
       Memory::clear(m_avg_heave);
       Memory::clear(m_avg_gps);
-
-      for (unsigned i = 0; i < c_max_beacons; ++i)
-        Memory::clear(m_beacons[i]);
     }
 
     void
@@ -406,7 +408,7 @@ namespace DUNE
         correctAlignment(msg->psi);
         m_phi_offset = msg->phi - Math::Angles::normalizeRadian(getEuler(AXIS_X));
         m_theta_offset = msg->theta - Math::Angles::normalizeRadian(getEuler(AXIS_Y));
-        debug("Euler Angles offset - phi, theta: %f | %f", m_phi_offset, m_theta_offset);
+        spew("Euler Angles offset - phi, theta: %f | %f", m_phi_offset, m_theta_offset);
         return;
       }
 
@@ -422,6 +424,8 @@ namespace DUNE
 
       if (m_declination_defined && m_use_declination)
         m_euler_bfr[AXIS_Z] += m_declination;
+
+      m_time_without_euler.reset();
     }
 
     void
@@ -524,6 +528,9 @@ namespace DUNE
         // Redefine origin.
         Memory::replace(m_origin, new IMC::GpsFix(*msg));
 
+        // Recalculate LBL positions.
+        m_ranging.updateOrigin(msg);
+
         // Save message to cache.
         IMC::CacheControl cop;
         cop.op = IMC::CacheControl::COP_STORE;
@@ -539,10 +546,7 @@ namespace DUNE
         m_kal.setState(STATE_X, 0);
         m_kal.setState(STATE_Y, 0);
 
-        // Recalculate LBL positions.
-        correctLBL();
-
-        debug("defined new navigation reference");
+        spew("defined new navigation reference");
         return;
       }
 
@@ -628,21 +632,8 @@ namespace DUNE
       cop.message.set(*msg);
       dispatch(cop);
 
-      m_lbl_log_beacons = false;
+      m_ranging.setup(msg);
 
-      if (m_origin == NULL)
-      {
-        debug("There is no reference yet. LBL configuration is stored. Waiting for GPS fix");
-        m_lbl_log_beacons = true;
-        m_lbl_cfg = *msg;
-        return;
-      }
-
-      m_num_beacons = 0;
-
-      IMC::MessageList<IMC::LblBeacon>::const_iterator itr = msg->beacons.begin();
-      for (unsigned i = 0; itr != msg->beacons.end(); ++itr, ++i)
-        addBeacon(i, *itr);
       onConsumeLblConfig();
     }
 
@@ -661,7 +652,7 @@ namespace DUNE
       uint8_t beacon = msg->id;
       float range = msg->range;
 
-      if ((m_beacons[beacon] == 0) || (beacon > m_num_beacons - 1) || (rejectLbl()))
+      if (!m_ranging.exists(beacon) || (beacon > m_ranging.getSize() - 1) || (rejectLbl()))
       {
         m_lbl_ac.acceptance = IMC::LblRangeAcceptance::RR_NO_INFO;
         dispatch(m_lbl_ac, DF_KEEP_TIME);
@@ -676,10 +667,16 @@ namespace DUNE
         return;
       }
 
+      double x = 0.0;
+      double y = 0.0;
+      double z = 0.0;
+
+      m_ranging.getLocation(beacon, &x, &y, &z);
+
       // Compute expected range.
-      double dx = m_kal.getState(STATE_X) + m_dist_lbl_gps * std::cos(getEuler(AXIS_Z)) - m_beacons[beacon]->x;
-      double dy = m_kal.getState(STATE_Y) + m_dist_lbl_gps * std::sin(getEuler(AXIS_Z)) - m_beacons[beacon]->y;
-      double dz = getDepth() - m_beacons[beacon]->depth;
+      double dx = m_kal.getState(STATE_X) + m_dist_lbl_gps * std::cos(getEuler(AXIS_Z)) - x;
+      double dy = m_kal.getState(STATE_Y) + m_dist_lbl_gps * std::sin(getEuler(AXIS_Z)) - y;
+      double dz = getDepth() - z;
       double exp_range = std::sqrt(dx * dx + dy * dy + dz * dz);
 
       runKalmanLBL((int)beacon, range, dx, dy, exp_range);
@@ -788,10 +785,7 @@ namespace DUNE
       m_theta_offset = 0.0;
       m_altitude = -1;
 
-      m_lbl_log_beacons = false;
-
       m_navstate = SM_STATE_IDLE;
-
       setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
 
       m_valid_gv = false;
@@ -816,28 +810,10 @@ namespace DUNE
       m_kal.resetState();
 
       // Possibly correct LBL locations.
-      correctLBL();
+      m_ranging.updateOrigin(m_origin);
 
-      debug("setup completed");
+      spew("setup completed");
       return true;
-    }
-
-    void
-    BasicNavigation::correctLBL(void)
-    {
-      // Correct LBL positions.
-      for (unsigned i = 0; i < c_max_beacons; i++)
-      {
-        if (m_beacons[i])
-        {
-          // This is relative to surface, thus using 0.0 as height value.
-          Coordinates::WGS84::displacement(m_origin->lat, m_origin->lon, 0.0,
-                                           m_beacons[i]->lat, m_beacons[i]->lon, m_beacons[i]->depth,
-                                           &m_beacons[i]->x, &m_beacons[i]->y);
-
-          debug("correcting beacon %d position (%0.2f, %0.2f, %0.2f)", i, m_beacons[i]->x, m_beacons[i]->y, m_beacons[i]->depth);
-        }
-      }
     }
 
     void
@@ -864,18 +840,63 @@ namespace DUNE
     void
     BasicNavigation::runKalmanLBL(int beacon, float range, double dx, double dy, double exp_range)
     {
-      // do nothing.
-      (void)beacon;
-      (void)range;
-      (void)dx;
-      (void)dy;
-      (void)exp_range;
+      // "Outlier Rejection for Autonomous Acoustic Navigation"
+      // Jerome Vaganay, John J. Leonard and James G. Bellingham. MIT
+      Math::Matrix H(1, 2, 0.0);
+      H(0, 0) = dx / exp_range;
+      H(0, 1) = dy / exp_range;
+      Math::Matrix P(2, 2, 0.0);
+      P = m_kal.getCovariance(STATE_X, STATE_Y, STATE_X, STATE_Y);
+
+      double k = getLblRejectionValue(exp_range);
+      double R = std::max(k, (H * P * transpose (H))(0));
+
+      double d = range - exp_range;
+      m_navdata.lbl_rej_level = (d * (1 / ((H * P * transpose (H))(0) + R)) * d);
+
+      // Is rejection level above maximum threshold?
+      if (m_navdata.lbl_rej_level >= m_lbl_threshold)
+      {
+        m_lbl_ac.acceptance = IMC::LblRangeAcceptance::RR_ABOVE_THRESHOLD;
+        dispatch(m_lbl_ac, DF_KEEP_TIME);
+        return;
+      }
+      else
+      {
+        unsigned states = getNumberOutputs() + beacon;
+
+        // Define measurements matrix.
+        m_kal.setObservation(states, STATE_X, dx / exp_range);
+        m_kal.setObservation(states, STATE_Y, dy / exp_range);
+
+        // Define Output matrix.
+        m_kal.setOutput(states, range);
+        m_kal.setInnovation(states, range - exp_range);
+        m_lbl_ac.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
+        dispatch(m_lbl_ac, DF_KEEP_TIME);
+      }
     }
 
     void
     BasicNavigation::runKalmanDVL(void)
     {
-      // do nothing.
+      // Use Ground Velocity messages if they are valid.
+      // Water Velocity messages otherwise.
+      unsigned u;
+      unsigned v;
+
+      getSpeedOutputStates(&u, &v);
+
+      if (m_valid_gv)
+      {
+        m_kal.setOutput(u, m_gvel.x);
+        m_kal.setOutput(v, m_gvel.y);
+      }
+      else if (m_valid_wv)
+      {
+        m_kal.setOutput(u, m_wvel.x);
+        m_kal.setOutput(v, m_wvel.y);
+      }
     }
 
     void
@@ -907,38 +928,6 @@ namespace DUNE
       m_uncertainty.x = m_kal.getCovariance(STATE_X, STATE_X);
       m_uncertainty.y = m_kal.getCovariance(STATE_Y, STATE_Y);
       m_navdata.cyaw = m_heading;
-    }
-
-    void
-    BasicNavigation::addBeacon(unsigned id, const IMC::LblBeacon* msg)
-    {
-      if (id >= c_max_beacons)
-      {
-        err(DTR("beacon id %d is greater than %d"), id, c_max_beacons);
-        return;
-      }
-
-      Memory::clear(m_beacons[id]);
-
-      if (msg == NULL)
-        return;
-
-      if (id + 1 > m_num_beacons)
-        m_num_beacons = id + 1;
-
-      LblBeaconXYZ* bp = new LblBeaconXYZ;
-      bp->lat = msg->lat;
-      bp->lon = msg->lon;
-      bp->depth = msg->depth;
-      // This is relative to surface thus using 0.0 as height reference.
-      Coordinates::WGS84::displacement(m_origin->lat, m_origin->lon, 0.0,
-                                       msg->lat, msg->lon, msg->depth,
-                                       &(bp->x), &(bp->y));
-
-      m_beacons[id] = bp;
-
-      debug("setting beacon %s (%0.2f, %0.2f, %0.2f)", msg->beacon.c_str(),
-            m_beacons[id]->x, m_beacons[id]->y, m_beacons[id]->depth);
     }
 
     bool
@@ -1062,12 +1051,6 @@ namespace DUNE
       // Compute maximum horizontal position variance value
       float hpos_var = std::max(m_kal.getCovariance(STATE_X, STATE_X), m_kal.getCovariance(STATE_Y, STATE_Y));
 
-      if (m_time_without_depth.overflow())
-      {
-        setEntityState(IMC::EntityState::ESTA_ERROR, DTR("No depth measurements available"));
-        return;
-      }
-
       // Check if it exceeds the specified threshold value.
       if (hpos_var > m_max_hpos_var)
       {
@@ -1084,7 +1067,7 @@ namespace DUNE
             // do nothing;
             break;
           default:
-            debug("caught unexpected navigation state transition");
+            spew("caught unexpected navigation state transition");
             break;
         }
       }
@@ -1096,6 +1079,18 @@ namespace DUNE
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             break;
           case SM_STATE_NORMAL:
+            if (m_time_without_depth.overflow())
+            {
+              setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("no measurements available: %s"), DTR("Depth")));
+              return;
+            }
+
+            if (m_time_without_euler.overflow())
+            {
+              setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("no measurements available: %s"), DTR("Euler Angles")));
+              return;
+            }
+
             if (m_dead_reckoning)
             {
               if (m_aligned)
@@ -1112,7 +1107,7 @@ namespace DUNE
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             break;
           default:
-            debug("caught unexpected navigation state transition");
+            spew("caught unexpected navigation state transition");
             break;
         }
         m_navstate = SM_STATE_NORMAL;

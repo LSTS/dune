@@ -54,7 +54,6 @@
 using DUNE_NAMESPACES;
 
 static bool s_stop = false;
-static const unsigned c_max_restarts = 5;
 static const double c_restart_period = 30.0;
 
 // POSIX implementation.
@@ -131,7 +130,7 @@ waitForDaemon(pid_t pid)
       continue;
 
     if (errno == ECHILD)
-      DUNE_ERR("Launcher", "daemon process no longer exists");
+      DUNE_ERR("Launcher", DTR("daemon process no longer exists"));
   }
 
   return 0;
@@ -149,7 +148,6 @@ main(int argc, char** argv)
   setLauncherSignalHandlers();
 
   Counter<double> delta(c_restart_period);
-  unsigned restarts = 0;
 
   while (!s_stop)
   {
@@ -168,23 +166,14 @@ main(int argc, char** argv)
       break;
 
     if (rv == SIGABRT)
-      DUNE_WRN("Launcher", "execution aborted");
+      DUNE_WRN("Launcher", DTR("execution aborted"));
     else
-      DUNE_ERR("Launcher", "daemon crashed with signal " << rv);
-    Delay::wait(2.0);
-    ++restarts;
+      DUNE_ERR("Launcher", DTR("daemon crashed with signal ") << rv);
 
-    if (restarts > c_max_restarts)
-    {
-      DUNE_ERR("Launcher", "too many crashes, DUNE needs to fixed!");
-      return 1;
-    }
+    Delay::wait(2.0);
 
     if (delta.overflow())
-    {
-      restarts = 0;
       delta.reset();
-    }
   }
 #endif
 

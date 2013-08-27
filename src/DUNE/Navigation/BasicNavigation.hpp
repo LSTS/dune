@@ -41,6 +41,7 @@
 #include <DUNE/Math/Derivative.hpp>
 #include <DUNE/Math/MovingAverage.hpp>
 #include <DUNE/Navigation/KalmanFilter.hpp>
+#include <DUNE/Navigation/Ranging.hpp>
 #include <DUNE/Time/Clock.hpp>
 #include <DUNE/Time/Counter.hpp>
 #include <DUNE/Time/Delta.hpp>
@@ -55,8 +56,6 @@ namespace DUNE
     // Export DLL Symbol.
     class DUNE_DLL_SYM BasicNavigation;
 
-    //! Maximum number of beacons.
-    static const unsigned c_max_beacons = 4;
     //! Weighted Moving Average filter value.
     static const float c_wma_filter = 0.1f;
     //! Maximum artificial angular velocity value.
@@ -93,21 +92,6 @@ namespace DUNE
       AXIS_Y = 1,
       //! Z-axis.
       AXIS_Z = 2
-    };
-
-    //! Beacon configuration information.
-    struct LblBeaconXYZ
-    {
-      //! WGS-84 latitude.
-      double lat;
-      //! WGS-84 longitude.
-      double lon;
-      //! Beacon north displacement relative to reference (m).
-      double x;
-      //! Beacon east displacement relative to reference (m).
-      double y;
-      //! Beacon depth (m).
-      double depth;
     };
 
     //! Abstract base class for navigation tasks.
@@ -462,6 +446,17 @@ namespace DUNE
       virtual void
       correctAlignment(double psi);
 
+      //! Get EKF output matrix speed indexes.
+      //! @param[out] u forward speed state index.
+      //! @param[out] v transversal speed state index.
+      virtual void
+      getSpeedOutputStates(unsigned* u, unsigned* v) = 0;
+
+      //! Get number of EKF outputs.
+      //! @return number of outputs.
+      virtual unsigned
+      getNumberOutputs(void) = 0;
+
       //! Routine called to assign common dispatch messages.
       void
       onDispatchNavigation(void);
@@ -513,6 +508,8 @@ namespace DUNE
 
       //! Kalman Filter matrices.
       Navigation::KalmanFilter m_kal;
+      //! Ranging data.
+      Navigation::Ranging m_ranging;
       //! Propeller speed (RPM)
       int16_t m_rpm;
       //! Kalman Filter process noise covariance matrix parameters.
@@ -525,8 +522,6 @@ namespace DUNE
       IMC::EstimatedState m_estate;
       //! Estimated water velocity message.
       IMC::EstimatedStreamVelocity m_ewvel;
-      //! LblConfig buffer.
-      IMC::LblConfig m_lbl_cfg;
       //! LBL range acceptance.
       IMC::LblRangeAcceptance m_lbl_ac;
       //! GPS fix rejection.
@@ -541,8 +536,6 @@ namespace DUNE
       IMC::GroundVelocity m_gvel;
       //! Current velocity relative to the water message.
       IMC::WaterVelocity m_wvel;
-      //! Number of beacons.
-      unsigned m_num_beacons;
       //! Time without GPS sensor readings deadline.
       Time::Counter<double> m_time_without_gps;
       //! Time without DVL sensor readings deadline.
@@ -555,6 +548,8 @@ namespace DUNE
       Time::Counter<double> m_time_without_main_depth;
       //! Time without depth readings.
       Time::Counter<double> m_time_without_depth;
+      //! Time without euler angles readings.
+      Time::Counter<double> m_time_without_euler;
       //! Valid GPS speed over ground.
       double m_gps_sog;
       //! Vertical displacement in the NED frame to the origin height above ellipsoid
@@ -585,12 +580,6 @@ namespace DUNE
       Math::Derivative<double> m_deriv_heave;
 
     private:
-      //! Routine to add a new beacon.
-      //! @param[in] id beacon id.
-      //! @param[in] msg inline msg.
-      void
-      addBeacon(unsigned id, const IMC::LblBeacon* msg);
-
       //! Routine to filter earth rotation effect from angular velocity values.
       //! @param[out] p angular velocity along the x-axis.
       //! @param[out] q angular velocity along the y-axis.
@@ -638,12 +627,8 @@ namespace DUNE
       IMC::WaterVelocity m_wvel_previous;
       //! Navigation Startup point.
       IMC::GpsFix* m_origin;
-      //! LBL beacon configuration.
-      LblBeaconXYZ* m_beacons[c_max_beacons];
       //! Displacement between LBL and GPS.
       float m_dist_lbl_gps;
-      //! LblConfig data has been logged.
-      bool m_lbl_log_beacons;
       //! Always reject LblRanges.
       bool m_reject_all_lbl;
       //! LBL rejection constants.
@@ -723,6 +708,7 @@ namespace DUNE
       float m_without_alt_timeout;
       float m_without_main_depth_timeout;
       float m_without_depth_timeout;
+      float m_without_euler_timeout;
       float m_dvl_sanity_timeout;
       //! DVL ground velocity validation bits.
       uint8_t m_gvel_val_bits;

@@ -198,7 +198,7 @@ namespace Sensors
         if ((c >= '0') && (c <= '9'))
           return c - '0';
 
-        throw std::runtime_error(String::str("character value '%d' is not a valid nibble", c));
+        throw std::runtime_error(String::str(DTR("character value '%d' is not a valid nibble"), c));
       }
 
       static uint8_t

@@ -8324,6 +8324,7 @@ namespace DUNE
     {
       m_header.mgid = 360;
       clear();
+      beacon.setParent(this);
     }
 
     void
@@ -8332,9 +8333,9 @@ namespace DUNE
       beacon.clear();
       x = 0;
       y = 0;
-      depth = 0;
       var_x = 0;
       var_y = 0;
+      distance = 0;
     }
 
     bool
@@ -8344,9 +8345,9 @@ namespace DUNE
       if (beacon != other__.beacon) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
-      if (depth != other__.depth) return false;
       if (var_x != other__.var_x) return false;
       if (var_y != other__.var_y) return false;
+      if (distance != other__.distance) return false;
       return true;
     }
 
@@ -8360,12 +8361,12 @@ namespace DUNE
     LblEstimate::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(beacon, ptr__);
+      ptr__ += beacon.serialize(ptr__);
       ptr__ += IMC::serialize(x, ptr__);
       ptr__ += IMC::serialize(y, ptr__);
-      ptr__ += IMC::serialize(depth, ptr__);
       ptr__ += IMC::serialize(var_x, ptr__);
       ptr__ += IMC::serialize(var_y, ptr__);
+      ptr__ += IMC::serialize(distance, ptr__);
       return ptr__;
     }
 
@@ -8373,12 +8374,12 @@ namespace DUNE
     LblEstimate::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(beacon, bfr__, size__);
+      bfr__ += beacon.deserialize(bfr__, size__);
       bfr__ += IMC::deserialize(x, bfr__, size__);
       bfr__ += IMC::deserialize(y, bfr__, size__);
-      bfr__ += IMC::deserialize(depth, bfr__, size__);
       bfr__ += IMC::deserialize(var_x, bfr__, size__);
       bfr__ += IMC::deserialize(var_y, bfr__, size__);
+      bfr__ += IMC::deserialize(distance, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -8386,24 +8387,69 @@ namespace DUNE
     LblEstimate::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::reverseDeserialize(beacon, bfr__, size__);
+      bfr__ += beacon.reverseDeserialize(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(x, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(y, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(depth, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(var_x, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(var_y, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(distance, bfr__, size__);
       return bfr__ - start__;
     }
 
     void
     LblEstimate::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
-      IMC::toJSON(os__, "beacon", beacon, nindent__);
+      beacon.toJSON(os__, "beacon", nindent__);
       IMC::toJSON(os__, "x", x, nindent__);
       IMC::toJSON(os__, "y", y, nindent__);
-      IMC::toJSON(os__, "depth", depth, nindent__);
       IMC::toJSON(os__, "var_x", var_x, nindent__);
       IMC::toJSON(os__, "var_y", var_y, nindent__);
+      IMC::toJSON(os__, "distance", distance, nindent__);
+    }
+
+    void
+    LblEstimate::setTimeStampNested(double value__)
+    {
+      if (!beacon.isNull())
+      {
+        beacon.get()->setTimeStamp(value__);
+      }
+    }
+
+    void
+    LblEstimate::setSourceNested(uint16_t value__)
+    {
+      if (!beacon.isNull())
+      {
+        beacon.get()->setSource(value__);
+      }
+    }
+
+    void
+    LblEstimate::setSourceEntityNested(uint8_t value__)
+    {
+      if (!beacon.isNull())
+      {
+        beacon.get()->setSourceEntity(value__);
+      }
+    }
+
+    void
+    LblEstimate::setDestinationNested(uint16_t value__)
+    {
+      if (!beacon.isNull())
+      {
+        beacon.get()->setDestination(value__);
+      }
+    }
+
+    void
+    LblEstimate::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!beacon.isNull())
+      {
+        beacon.get()->setDestinationEntity(value__);
+      }
     }
 
     AlignmentState::AlignmentState(void)

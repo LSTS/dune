@@ -478,7 +478,7 @@ namespace Power
       void
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
-        inf(DTR("version: %u.%u.%u"), major, minor, patch);
+        inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
       }
 
       //! Wait for command.

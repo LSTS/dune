@@ -46,10 +46,12 @@ using std::tan;
 //! Depth hysteresis for ignoring ranges and altitude
 static const float c_depth_hyst = 0.5;
 //! State to string for debug messages
-static const std::string c_str_states[] = {DTR("Idle"), DTR("Tracking"), DTR("Depth"),
-                                           DTR("Max Depth"), DTR("Unsafe"), DTR("Avoiding")};
+static const std::string c_str_states[] = {DTR_RT("Idle"), DTR_RT("Tracking"),
+                                           DTR_RT("Depth"), DTR_RT("Unsafe"),
+                                           DTR_RT("Avoiding")};
+
 //! Bottom tracker name
-static const std::string c_bt_name = DTR("BottomTrack");
+static const std::string c_bt_name = DTR_RT("BottomTrack");
 
 namespace DUNE
 {
@@ -670,22 +672,23 @@ namespace DUNE
     void
     BottomTracker::info(const std::string& msg) const
     {
-      m_args->task->inf("[%s.%s] >> %s", c_bt_name.c_str(),
-                        c_str_states[m_mstate].c_str(), msg.c_str());
+      m_args->task->inf("[%s.%s] >> %s", DTR(c_bt_name.c_str()),
+                        DTR(c_str_states[m_mstate].c_str()), msg.c_str());
     }
 
     void
     BottomTracker::debug(const std::string& msg) const
     {
-      m_args->task->debug("[%s.%s] >> %s", c_bt_name.c_str(),
-                          c_str_states[m_mstate].c_str(), msg.c_str());
+      m_args->task->debug("[%s.%s] >> %s", DTR(c_bt_name.c_str()),
+                          DTR(c_str_states[m_mstate].c_str()), msg.c_str());
     }
 
     void
     BottomTracker::err(const std::string& msg) const
     {
-      throw std::runtime_error(String::str("[%s.", c_bt_name.c_str())
-                               + c_str_states[m_mstate] + "] >> " + msg);
+      throw std::runtime_error(String::str("[%s.%s] >> %s", DTR(c_bt_name.c_str()),
+                                           DTR(c_str_states[m_mstate].c_str()),
+                                           msg.c_str()));
     }
   }
 }

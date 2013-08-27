@@ -277,7 +277,7 @@ namespace Simulators
             (relative.psi < Math::c_half_pi) && // coming from the front
             (aoa > Math::c_half_pi)) // facing the dock
         {
-          inf("Docking successful");
+          inf(DTR("Success"));
         }
       }
 

@@ -60,7 +60,7 @@ namespace DUNE
       std::ifstream ifs(path, std::ios::binary);
 
       if (!ifs.is_open())
-        throw std::runtime_error("failed to open file");
+        throw std::runtime_error(DTR("failed to open file"));
 
       MD5_CTX context;
       MD5Init(&context);

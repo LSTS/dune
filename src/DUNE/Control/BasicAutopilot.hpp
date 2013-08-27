@@ -255,6 +255,8 @@ namespace DUNE
       const uint32_t m_required_loops;
       //! Control loops last reference time
       float m_scope_ref;
+      //! Maximum admissible depth that the vehicle may sustain
+      float m_max_depth;
 
       // Configuration
       //! Bypass heading rate control

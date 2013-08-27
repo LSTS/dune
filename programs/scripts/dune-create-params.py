@@ -62,6 +62,8 @@ for i18n in list_i18n:
     for ini in list_ini:
         out =  ini + '.' + i18n + '.xml'
         os.environ['LC_ALL'] = i18n
+        os.environ['LANG'] = i18n
+        os.environ['LANGUAGE'] = i18n
         subprocess.check_call(['./dune', '-c', ini, '-p', 'Hardware', '-X', '.'])
         if os.path.exists(out):
             subprocess.check_call(['xmllint', '--format', out, '-o', 'tmp.xml'])

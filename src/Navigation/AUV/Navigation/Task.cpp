@@ -116,7 +116,6 @@ namespace Navigation
 
           // Extended Kalman Filter initialization.
           m_kal.reset(NUM_STATE, NUM_OUT);
-          m_kal.resetOutputs();
         }
 
         void
@@ -220,6 +219,19 @@ namespace Navigation
           m_kal.resetOutputs();
           m_lbl_ac.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
           dispatch(m_lbl_ac, DF_KEEP_TIME);
+        }
+
+        void
+        getSpeedOutputStates(unsigned* u, unsigned* v)
+        {
+          (void)*u;
+          (void)*v;
+        }
+
+        unsigned
+        getNumberOutputs(void)
+        {
+          return NUM_OUT;
         }
 
         void

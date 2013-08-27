@@ -106,8 +106,8 @@ namespace Maneuver
 
             if (m_end_time < 0)
             {
+              debug("will now loiter for %d seconds", m_duration);
               m_end_time = now + m_duration;
-              inf(DTR("will now loiter for %d seconds"), m_duration);
             }
             else if (now >= m_end_time)
             {

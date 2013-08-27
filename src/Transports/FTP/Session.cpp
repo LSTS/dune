@@ -443,7 +443,7 @@ namespace Transports
       try
       {
         Path path = getAbsolutePath(arg);
-        path.remove();
+        path.remove(Path::MODE_RECURSIVE);
         sendReply(250, "Requested file action okay, completed.");
       }
       catch (...)
