@@ -184,6 +184,15 @@ namespace DUNE
       .units(Units::Hertz)
       .description("Bottom tracker's execution frequency");
 
+      param("Bottom Track -- Depth Avoidance", m_btd.args.depth_avoid)
+      .defaultValue("true")
+      .description("Enable or disable obstacle avoidance during depth control");
+
+      param("Bottom Track -- Admissible Altitude", m_btd.args.adm_alt)
+      .defaultValue("3.0")
+      .units(Units::Meter)
+      .description("Admissible altitude when doing depth control");
+
       bind<IMC::Brake>(this);
       bind<IMC::ControlLoops>(this);
       bind<IMC::DesiredPath>(this);
