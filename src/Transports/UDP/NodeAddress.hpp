@@ -78,7 +78,9 @@ namespace Transports
       bool
       operator<(const NodeAddress& other) const
       {
-        return (m_addr < other.m_addr) && (m_port < other.m_port);
+        if(m_addr < other.m_add)  return true;
+        if(m_port < other.m_port) return true;
+        return false;
       }
 
     private:
