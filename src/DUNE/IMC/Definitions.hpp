@@ -12164,7 +12164,9 @@ namespace DUNE
         //! Maneuver.
         VS_MANEUVER = 3,
         //! External Control.
-        VS_EXTERNAL = 4
+        VS_EXTERNAL = 4,
+        //! Boot.
+        VS_BOOT = 5
       };
 
       //! Flags.

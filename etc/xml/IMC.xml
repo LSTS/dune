@@ -5388,6 +5388,11 @@
           External control is active.
         </description>
       </value>
+      <value id="5" name="Boot" abbrev="BOOT">
+        <description>
+          Booting system.
+        </description>
+      </value>
     </field>
     <field name="Errors -- Count" abbrev="error_count" type="uint8_t">
       <description>
