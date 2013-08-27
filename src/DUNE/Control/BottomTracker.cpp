@@ -47,8 +47,8 @@ using std::tan;
 static const float c_depth_hyst = 0.5;
 //! State to string for debug messages
 static const std::string c_str_states[] = {DTR_RT("Idle"), DTR_RT("Tracking"),
-                                           DTR_RT("Depth"), DTR_RT("Unsafe"),
-                                           DTR_RT("Avoiding")};
+                                           DTR_RT("Depth"), DTR_RT("LimitDepth"),
+                                           DTR_RT("Unsafe"), DTR_RT("Avoiding")};
 
 //! Bottom tracker name
 static const std::string c_bt_name = DTR_RT("BottomTrack");
@@ -549,8 +549,11 @@ namespace DUNE
           m_mstate = SM_TRACKING;
           return;
         }
-        else if (m_z_ref.z_units == IMC::Z_DEPTH)
+        else if ((m_z_ref.z_units == IMC::Z_DEPTH) && (!m_args->depth_avoid))
         {
+          debug("units are depth, carry on");
+
+          // Stop braking
           brake(false);
           dispatchSameZ();
           m_mstate = SM_DEPTH;
