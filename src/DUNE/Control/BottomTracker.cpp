@@ -277,8 +277,6 @@ namespace DUNE
       }
       else if (m_z_ref.z_units == IMC::Z_DEPTH)
       {
-        debug("units are now depth. moving to depth control");
-
         m_mstate = SM_DEPTH;
 
         m_valid_alt = (m_estate.depth > m_args->depth_tol);
