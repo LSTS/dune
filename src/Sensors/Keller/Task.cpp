@@ -406,7 +406,7 @@ namespace Sensors
             ByteCopy::fromBE(m_channel_readout, m_parser_data);
             break;
           case CMD_ZERO_CHANNEL:
-            inf(DTR("successfuly zeroed device"));
+            inf("%s", DTR(Status::getString(Status::CODE_CALIBRATED)));
         }
 
         // Everything correctly interpreted, so return true

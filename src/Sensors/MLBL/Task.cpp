@@ -221,6 +221,14 @@ namespace Sensors
       IMC::EstimatedState m_estate;
       //! Report timer.
       Counter<double> m_report_timer;
+      //! Stop reports on the ground.
+      bool m_stop_reports;
+      //! Last progress.
+      float m_progress;
+      //! Last fuel level.
+      float m_fuel_level;
+      //! Last fuel level confidence.
+      float m_fuel_conf;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -264,23 +272,23 @@ namespace Sensors
         .units(Units::Second)
         .defaultValue("2");
 
-        param("Enable Reports", m_args.report)
+        param(DTR_RT("Enable Reports"), m_args.report)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("true")
-        .description(DTR("Report data acoustically"));
+        .description("Report data acoustically");
 
-        param("Enable Verbose Reports", m_args.report_verbose)
+        param(DTR_RT("Make Reports Verbose"), m_args.report_verbose)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("false")
-        .description(DTR("Report more verbose data acoustically"));
+        .description("Report more verbose data acoustically");
 
-        param("Reports Periodicity", m_args.report_period)
+        param(DTR_RT("Reports Periodicity"), m_args.report_period)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .units(Units::Second)
         .defaultValue("60")
         .minimumValue("30")
         .maximumValue("600")
-        .description(DTR("Reports periodicity"));
+        .description("Reports periodicity");
 
         param("Good Range Age", m_args.good_range_age)
         .units(Units::Second)
@@ -322,11 +330,16 @@ namespace Sensors
         m_states[STA_ERR_SRC].state = IMC::EntityState::ESTA_ERROR;
         m_states[STA_ERR_SRC].description = DTR("failed to set modem address");
 
+	m_stop_reports = false;
+
         // Register handlers.
+        bind<IMC::EstimatedState>(this);
+        bind<IMC::FuelLevel>(this);
         bind<IMC::LblConfig>(this);
+        bind<IMC::PlanControlState>(this);
         bind<IMC::QueryEntityState>(this);
         bind<IMC::SoundSpeed>(this);
-        bind<IMC::EstimatedState>(this);
+        bind<IMC::VehicleMedium>(this);
       }
 
       ~Task(void)
@@ -782,6 +795,9 @@ namespace Sensors
         std::memcpy(&msg[12], &f_yaw, 4);
         std::memcpy(&msg[16], &ranges[0], 2);
         std::memcpy(&msg[18], &ranges[1], 2);
+        std::memcpy(&msg[20], &m_progress, 4);
+        std::memcpy(&msg[24], &m_fuel_level, 4);
+        std::memcpy(&msg[28], &m_fuel_conf, 4);
 
         std::string hex = String::toHex(msg);
         std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n",
@@ -885,6 +901,28 @@ namespace Sensors
       }
 
       void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        if (msg->medium == IMC::VehicleMedium::VM_GROUND)
+	  m_stop_reports = true;
+	else
+	  m_stop_reports = false;
+      }
+
+      void
+      consume(const IMC::PlanControlState* msg)
+      {
+        m_progress = msg->plan_progress;
+      }
+
+      void
+      consume(const IMC::FuelLevel* msg)
+      {
+        m_fuel_level = msg->value;
+        m_fuel_conf = msg->confidence;
+      }
+
+      void
       reportRanges(double now)
       {
         bool first = true;
@@ -932,7 +970,7 @@ namespace Sensors
         while (!stopping())
         {
           // Report.
-          if (m_args.report)
+          if (m_args.report && !m_stop_reports)
           {
             if (m_report_timer.overflow())
             {

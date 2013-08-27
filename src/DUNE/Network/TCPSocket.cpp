@@ -262,12 +262,12 @@ namespace DUNE
     TCPSocket::writeFile(const char* filename, int64_t off_end, int64_t off_beg)
     {
 #if defined(DUNE_OS_LINUX)
-      int fd = open(filename, O_RDONLY);
+      int fd = open64(filename, O_RDONLY);
       if (fd == -1)
         return false;
 
       int64_t remaining = off_end;
-      off_t offset = 0;
+      off64_t offset = 0;
       if (off_beg > 0)
       {
         offset = off_beg;
@@ -276,7 +276,8 @@ namespace DUNE
 
       while (remaining >= 0)
       {
-        ssize_t rv = sendfile(m_handle, fd, &offset, c_block_size);
+        ssize_t rv = sendfile64(m_handle, fd, &offset, c_block_size);
+
         if (rv == -1)
         {
           close(fd);

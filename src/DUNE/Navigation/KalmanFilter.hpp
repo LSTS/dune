@@ -113,7 +113,7 @@ namespace DUNE
       inline double
       getState(short pos) const
       {
-        if ((size_t)pos > m_state_count)
+        if ((size_t)pos >= m_state_count)
           throw std::runtime_error(DTR("invalid index"));
 
         return m_x(pos);
@@ -178,7 +178,7 @@ namespace DUNE
       inline double
       getOutput(short pos) const
       {
-        if (pos > m_y.rows())
+        if (pos >= m_y.rows())
           throw std::runtime_error(DTR("invalid index"));
 
         return m_y(pos);
@@ -196,7 +196,7 @@ namespace DUNE
       inline double
       getInnovation(short pos) const
       {
-        if ((size_t)pos > m_state_count)
+        if ((size_t)pos >= m_state_count)
           throw std::runtime_error(DTR("invalid index"));
 
         return m_innov(pos);
@@ -242,7 +242,7 @@ namespace DUNE
       inline double
       getCovariance(short ln, short cl) const
       {
-        if (ln > m_p.rows() || cl > m_p.columns())
+        if (ln >= m_p.rows() || cl >= m_p.columns())
           throw std::runtime_error(DTR("invalid index"));
 
         return m_p(ln, cl);
@@ -254,7 +254,7 @@ namespace DUNE
       inline double
       getCovariance(short in) const
       {
-        if ((size_t)in > m_state_count)
+        if ((size_t)in >= m_state_count)
           throw std::runtime_error(DTR("invalid index"));
 
         return m_p(in, in);

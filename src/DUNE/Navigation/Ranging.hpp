@@ -186,6 +186,30 @@ namespace DUNE
         *k =  m_transponders[id]->depth;
       }
 
+      //! Get latitude of transponder.
+      //! @param[in] id transponder id.
+      //! @return transponder latitude.
+      double
+      getLat(unsigned id)
+      {
+        if (m_transponders[id] == NULL)
+          return 0.0;
+
+        return m_transponders[id]->lat;
+      }
+
+      //! Get longitude of transponder.
+      //! @param[in] id transponder id.
+      //! @return transponder longitude.
+      double
+      getLon(unsigned id)
+      {
+        if (m_transponders[id] == NULL)
+          return 0.0;
+
+        return m_transponders[id]->lon;
+      }
+
       //! Get depth of transponder.
       //! @param[in] id transponder id.
       //! @return transponder depth.

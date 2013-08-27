@@ -86,6 +86,11 @@ namespace DUNE
       .defaultValue("5.0")
       .description("No altitude readings timeout");
 
+      param("Euler timeout", m_without_euler_timeout)
+      .units(Units::Second)
+      .defaultValue("10.0")
+      .description("No EulerAngles readings timeout");
+
       param("Depth timeout", m_without_depth_timeout)
       .units(Units::Second)
       .defaultValue("3.0")
@@ -237,6 +242,7 @@ namespace DUNE
       m_time_without_alt.setTop(m_without_alt_timeout);
       m_time_without_main_depth.setTop(m_without_main_depth_timeout);
       m_time_without_depth.setTop(m_without_depth_timeout);
+      m_time_without_euler.setTop(m_without_euler_timeout);
       m_dvl_sanity_timer.setTop(m_dvl_sanity_timeout);
 
       // Distance DVL to vehicle Center of Gravity is 0 in Simulation.
@@ -418,6 +424,8 @@ namespace DUNE
 
       if (m_declination_defined && m_use_declination)
         m_euler_bfr[AXIS_Z] += m_declination;
+
+      m_time_without_euler.reset();
     }
 
     void
@@ -1073,7 +1081,13 @@ namespace DUNE
           case SM_STATE_NORMAL:
             if (m_time_without_depth.overflow())
             {
-              setEntityState(IMC::EntityState::ESTA_ERROR, DTR("No depth measurements available"));
+              setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("no measurements available: %s"), DTR("Depth")));
+              return;
+            }
+
+            if (m_time_without_euler.overflow())
+            {
+              setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("no measurements available: %s"), DTR("Euler Angles")));
               return;
             }
 
