@@ -105,7 +105,7 @@ namespace DUNE
       float
       lowerGapSize(unsigned corridor)
       {
-        return m_args->upper_gap[corridor] / 2.0;
+        return m_args->upper_gap[corridor] / 2.0f;
       }
 
       //! Check if the vehicle is inside one of the corridors
