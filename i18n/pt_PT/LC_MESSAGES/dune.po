@@ -779,9 +779,8 @@ msgid   "Tracking"
 msgstr  "Seguimento"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:50
-#, fuzzy
 msgid   "LimitDepth"
-msgstr  "Profundidade"
+msgstr  "LimitaProfundidade"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:51
 msgid   "Unsafe"
@@ -3084,7 +3083,7 @@ msgstr  "Monitor de Perda de Comunicação"
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:62
 msgid   "MCD4R"
-msgstr  ""
+msgstr  "MCD4R"
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:63
 msgid   "Mainboard"
