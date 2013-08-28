@@ -166,8 +166,8 @@ static int blockIndependence = 1;
 //**************************************
 // Exceptions
 //**************************************
-#define DEBUG 0
-#define DEBUGOUTPUT(...) if (DEBUG) DISPLAY(__VA_ARGS__);
+#define DEBUG_LZ4 0
+#define DEBUGOUTPUT(...) if (DEBUG_LZ4) DISPLAY(__VA_ARGS__);
 #define EXM_THROW(error, ...)                                             \
 {                                                                         \
     DEBUGOUTPUT("Error defined at %s, line %i : \n", __FILE__, __LINE__); \
