@@ -473,17 +473,19 @@ namespace Actuators
         if (frame.getPayloadSize() != c_state_size)
           return false;
 
-        uint16_t* ptr = (uint16_t*)frame.getPayload();
-
         for (unsigned i = 0; i < SV_TOTAL; i++)
         {
-          m_voltage[i].value = *(ptr + c_voltage_idx[i]) / 1000.0;
+          uint16_t value;
+          frame.get(value, c_voltage_idx[i] * sizeof(uint16_t));
+          m_voltage[i].value = value / 1000.0;
           dispatch(m_voltage[i]);
         }
 
         for (unsigned i = 0; i < SC_TOTAL; i++)
         {
-          m_current[i].value = *(ptr + c_current_idx[i]) / 1000.0;
+          uint16_t value;
+          frame.get(value, c_current_idx[i] * sizeof(uint16_t));
+          m_current[i].value = value / 1000.0;
           dispatch(m_current[i]);
         }
 
