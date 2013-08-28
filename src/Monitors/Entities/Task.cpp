@@ -77,8 +77,6 @@ namespace Monitors
       std::vector<std::string> defmon;
       //! Additional default entities to monitor in Hardware profile
       std::vector<std::string> defmon_hw;
-      //! Enable verbose output
-      bool trace;
       //! Minimum gap for state transitioning
       float transition_gap;
       //! Maximum number of consecutive transitions before starting to ignore
@@ -116,10 +114,6 @@ namespace Monitors
         param("Default Monitoring -- Hardware", m_args.defmon_hw)
         .defaultValue("")
         .description("Additional default entities to monitor in Hardware profile");
-
-        param("Trace", m_args.trace)
-        .defaultValue("false")
-        .description("Enable verbose output");
 
         param("Transition Time Gap", m_args.transition_gap)
         .units(Units::Second)
@@ -199,9 +193,6 @@ namespace Monitors
         ESRecord& r = m_record[msg->getSourceEntity()];
 
         bool noteworthy = r.monitor && r.state != msg->state;
-
-        if (m_args.trace)
-          msg->toText(std::cerr);
 
         if (noteworthy)
         {
@@ -418,9 +409,6 @@ namespace Monitors
           }
         }
         dispatch(m_ems);
-
-        if (m_args.trace)
-          m_ems.toText(std::cerr);
       }
 
       //! Check if any entity has timedout
