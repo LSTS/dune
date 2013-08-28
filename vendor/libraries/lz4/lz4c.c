@@ -351,7 +351,11 @@ int legacy_compress_file(char* input_filename, char* output_filename, int compre
 
     // Status
     end = clock();
+#if !defined(__MINGW32__)
     if (!silence) DISPLAY( "Compressed %llu bytes into %llu bytes ==> %.2f%%\n",
+#else
+    if (!silence) DISPLAY( "Compressed %l64u bytes into %l64u bytes ==> %.2f%%\n",
+#endif
         (unsigned long long) filesize, (unsigned long long) compressedfilesize, (double)compressedfilesize/filesize*100);
     {
         double seconds = (double)(end - start)/CLOCKS_PER_SEC;
@@ -497,7 +501,11 @@ int compress_file_blockDependency(char* input_filename, char* output_filename, i
 
     // Status
     end = clock();
+#if !defined(__MINGW32__)
     if (!silence) DISPLAY( "Compressed %llu bytes into %llu bytes ==> %.2f%%\n",
+#else
+    if (!silence) DISPLAY( "Compressed %l64u bytes into %l64u bytes ==> %.2f%%\n",
+#endif
         (unsigned long long) filesize, (unsigned long long) compressedfilesize, (double)compressedfilesize/filesize*100);
     {
         double seconds = (double)(end - start)/CLOCKS_PER_SEC;
@@ -645,7 +653,11 @@ int compress_file(char* input_filename, char* output_filename, int compressionle
 
     // Final Status
     end = clock();
+#if !defined(__MINGW32__)
     if (!silence) DISPLAY( "Compressed %llu bytes into %llu bytes ==> %.2f%%\n",
+#else
+    if (!silence) DISPLAY( "Compressed %l64u bytes into %l64u bytes ==> %.2f%%\n",
+#endif
         (unsigned long long) filesize, (unsigned long long) compressedfilesize, (double)compressedfilesize/filesize*100);
     {
         double seconds = (double)(end - start)/CLOCKS_PER_SEC;
