@@ -37,7 +37,9 @@
 #  if !defined(_CRT_SECURE_NO_WARNINGS)
 #  define _CRT_SECURE_NO_WARNINGS
 #  endif
+#  if !defined(_CRT_SECURE_NO_DEPRECATE)
 #  define _CRT_SECURE_NO_DEPRECATE     // VS2005
+#  endif
 #  pragma warning(disable : 4127)      // disable: C4127: conditional expression is constant
 #endif
 
