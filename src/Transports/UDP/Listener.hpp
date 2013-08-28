@@ -113,6 +113,12 @@ namespace Transports
             uint16_t rv = m_sock.read((char*)bfr, c_bfr_size, &addr);
             IMC::Message* msg = IMC::Packet::deserialize(bfr, rv);
 
+            if(m_task.getSystemId() == msg->getSource())
+            {
+              delete msg;
+              continue;
+            }
+
             if (m_lcomms->isActive())
             {
               if (msg->getId() == DUNE_IMC_ANNOUNCE)
