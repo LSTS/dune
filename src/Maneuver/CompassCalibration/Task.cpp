@@ -133,7 +133,15 @@ namespace Maneuver
       void
       onEntityResolution(void)
       {
-        m_ahrs_eid = resolveEntity(m_args.label_ahrs);
+        try
+        {
+          m_ahrs_eid = resolveEntity(m_args.label_ahrs);
+        }
+        catch (...)
+        {
+          m_ahrs_eid = 0;
+        }
+
         m_mfield.setDestinationEntity(m_ahrs_eid);
       }
 

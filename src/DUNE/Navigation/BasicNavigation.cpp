@@ -264,8 +264,25 @@ namespace DUNE
     void
     BasicNavigation::onEntityResolution(void)
     {
-      m_depth_eid = resolveEntity(m_elabel_depth);
-      m_ahrs_eid = resolveEntity(m_elabel_ahrs);
+      // Resolve entities.
+      try
+      {
+        m_depth_eid = resolveEntity(m_elabel_depth);
+      }
+      catch (...)
+      {
+        m_depth_eid = 0;
+      }
+
+      try
+      {
+        m_ahrs_eid = resolveEntity(m_elabel_ahrs);
+      }
+      catch (...)
+      {
+        m_ahrs_eid = 0;
+      }
+
       m_agvel_eid = m_ahrs_eid;
       m_accel_eid = m_ahrs_eid;
 
