@@ -173,19 +173,25 @@ namespace Maneuver
                 msg->getSourceEntity());
             return;
           }
-          inf(DTR("Got reference."));
-          //m_got_reference = true;
+          // update time
           m_last_ref_time = Clock::get();
-          m_cur_ref = *msg;
           // verify if maneuver is done
-          if (m_cur_ref.flags & IMC::Reference::FLAG_MANDONE)
+          if (msg->flags & IMC::Reference::FLAG_MANDONE)
           {
             m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
             m_fref_state.state = IMC::FollowRefState::FR_WAIT;
             signalCompletion("maneuver terminated by reference source");
           }
-          // propagate the new reference
-          processDesiredPath();
+          else{
+            m_fref_state.state = IMC::FollowRefState::FR_GOTO;
+          }
+
+          // if it is a different ref, propagate
+          if(!sameReference(msg, &m_cur_ref)){
+            m_cur_ref = *msg;
+            // propagate the new reference
+            processDesiredPath();
+          }
           // Add the new reference to the FollowReferenceState
           m_fref_state.reference.set(m_cur_ref);
         }
@@ -204,10 +210,44 @@ namespace Maneuver
           m_pcs = *pcs;
           init_pcs = true;
           updateFollowRefStateFlags();
-          inf(DTR("received PathControlState with flags %#x"), m_pcs.flags);
         }
 
       private:
+        bool sameReference(const IMC::Reference *msg1, const IMC::Reference *msg2)
+        {
+          if (msg1->flags != msg2->flags)
+            return false;
+          if (msg1->lat != msg2->lat)
+            return false;
+          if (msg1->lon != msg2->lon)
+            return false;
+          if (msg1->radius != msg2->radius)
+            return false;
+
+          if (msg1->z.isNull() != msg2->z.isNull())
+            return false;
+          else if (!msg1->z.isNull())
+          {
+            const IMC::DesiredZ *z1 = msg1->z.get();
+            const IMC::DesiredZ *z2 = msg2->z.get();
+
+            if (!z1->fieldsEqual(*z2))
+              return false;
+          }
+          if (msg1->speed.isNull() != msg2->speed.isNull())
+            return false;
+          else if (!msg1->speed.isNull())
+          {
+            const IMC::DesiredSpeed *s1 = msg1->speed.get();
+            const IMC::DesiredSpeed *s2 = msg2->speed.get();
+
+            if (!s1->fieldsEqual(*s2))
+              return false;
+          }
+
+          return true;
+        }
+
         IMC::SpeedUnits
         parseSpeedUnitsStr(std::string sunits_str)
         {
@@ -383,13 +423,20 @@ namespace Maneuver
             {
               m_fref_state.proximity = IMC::FollowRefState::PROX_Z_NEAR;
               m_fref_state.proximity |= IMC::FollowRefState::PROX_XY_NEAR;
-              m_fref_state.state = IMC::FollowRefState::FR_LOITER;
+              if( (m_fref_state.state & IMC::FollowRefState::FR_TIMEOUT) != 0 && (m_fref_state.state & IMC::FollowRefState::FR_WAIT) != 0 )
+              {
+                m_fref_state.state = IMC::FollowRefState::FR_LOITER;
+              }
             }
             else
             {
               m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
-              m_fref_state.state = IMC::FollowRefState::FR_GOTO;
+              if( (m_fref_state.state & IMC::FollowRefState::FR_TIMEOUT) != 0 && (m_fref_state.state & IMC::FollowRefState::FR_WAIT) != 0 )
+              {
+                m_fref_state.state = IMC::FollowRefState::FR_GOTO;
+              }
             }
+
           }
         }
 
@@ -409,43 +456,6 @@ namespace Maneuver
         bool pcsNotEmpty()
         {
           return init_pcs;
-        }
-
-        bool
-        sameReference(const IMC::Reference *msg1, const IMC::Reference *msg2)
-        {
-          if (msg1->flags != msg2->flags)
-            return false;
-          if (msg1->lat != msg2->lat)
-            return false;
-          if (msg1->lon != msg2->lon)
-            return false;
-          if (msg1->radius != msg2->radius)
-            return false;
-
-          if (msg1->z.isNull() != msg2->z.isNull())
-            return false;
-          else if (!msg1->z.isNull())
-          {
-            const IMC::DesiredZ *z1 = msg1->z.get();
-            const IMC::DesiredZ *z2 = msg2->z.get();
-
-            if (!z1->fieldsEqual(*z2))
-              return false;
-          }
-
-          if (msg1->speed.isNull() != msg2->speed.isNull())
-            return false;
-          else if (!msg1->speed.isNull())
-          {
-            const IMC::DesiredSpeed *s1 = msg1->speed.get();
-            const IMC::DesiredSpeed *s2 = msg2->speed.get();
-
-            if (!s1->fieldsEqual(*s2))
-              return false;
-          }
-
-          return true;
         }
       };
     }
