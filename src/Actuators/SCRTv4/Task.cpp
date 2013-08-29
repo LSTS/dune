@@ -277,7 +277,11 @@ namespace Actuators
             break;
 
           case LUCL::CommandTypeError:
-            err("error");
+            err(DTR("device reported: %s"), LUCL::Protocol::getErrorString(cmd->error.code));
+            break;
+
+          case LUCL::CommandTypeInvalidChecksum:
+            err("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
             break;
 
           default:

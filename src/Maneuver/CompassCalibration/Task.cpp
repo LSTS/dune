@@ -36,6 +36,8 @@ namespace Maneuver
 
     //! Minimum radius admissible for loitering
     static const float c_min_radius = 5.0f;
+    //! Minimum admissible amplitude to check yoyoing motion
+    static const float c_min_amplitude = 0.5f;
 
     struct Arguments
     {
@@ -79,6 +81,8 @@ namespace Maneuver
       float m_last_psi;
       //! Accumulated psi variation
       float m_accum_psi;
+      //! Yoyo's amplitude
+      float m_amplitude;
       //! Task arguments.
       Arguments m_args;
 
@@ -129,7 +133,15 @@ namespace Maneuver
       void
       onEntityResolution(void)
       {
-        m_ahrs_eid = resolveEntity(m_args.label_ahrs);
+        try
+        {
+          m_ahrs_eid = resolveEntity(m_args.label_ahrs);
+        }
+        catch (...)
+        {
+          m_ahrs_eid = 0;
+        }
+
         m_mfield.setDestinationEntity(m_ahrs_eid);
       }
 
@@ -140,7 +152,7 @@ namespace Maneuver
 
         if (maneuver->radius < c_min_radius)
         {
-          war(DTR("invalid loiter radius, forcing a minimum of %0.2f"), c_min_radius);
+          war(DTR("forcing minimum of %.1f"), c_min_radius);
           m_path.lradius = c_min_radius;
         }
         else
@@ -165,6 +177,8 @@ namespace Maneuver
 
         m_duration = maneuver->duration;
 
+        m_amplitude = maneuver->amplitude;
+
         // set but do not send
         m_pitch.value = 0;
 
@@ -186,7 +200,7 @@ namespace Maneuver
         }
         else
         {
-          signalError("unsupported vertical reference");
+          signalInvalidZ();
           return;
         }
 
@@ -242,7 +256,10 @@ namespace Maneuver
         {
           bool inbounds = false;
 
-          if (m_path.end_z_units == IMC::Z_ALTITUDE)
+          // if amplitude is too short, do not check if between bounds
+          if (m_amplitude <= c_min_amplitude)
+            inbounds = true;
+          else if (m_path.end_z_units == IMC::Z_ALTITUDE)
             inbounds = m_yoyo->isBetweenBounds(-m_estate.alt);
           else if (m_path.end_z_units == IMC::Z_DEPTH)
             inbounds = m_yoyo->isBetweenBounds(m_estate.depth);

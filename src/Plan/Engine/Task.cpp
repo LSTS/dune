@@ -44,9 +44,11 @@ namespace Plan
     //! Timeout for the vehicle state
     const double c_vs_timeout = 2.5;
     //! Plan Command operation descriptions
-    const char* c_op_desc[] = {DTR("Start Plan"), DTR("Stop Plan"), DTR("Load Plan"), DTR("Get Plan")};
+    const char* c_op_desc[] = {DTR_RT("Start Plan"), DTR_RT("Stop Plan"),
+                               DTR_RT("Load Plan"), DTR_RT("Get Plan")};
     //! Plan state descriptions
-    const char* c_state_desc[] = {DTR("BLOCKED"), DTR("READY"), DTR("INITIALIZING"), DTR("EXECUTING")};
+    const char* c_state_desc[] = {DTR_RT("BLOCKED"), DTR_RT("READY"),
+                                  DTR_RT("INITIALIZING"), DTR_RT("EXECUTING")};
     //! DataBase statement
     static const char* c_get_plan_stmt = "select data from Plan where plan_id=?";
 
@@ -140,7 +142,7 @@ namespace Plan
         .units(Units::Second)
         .description("Duration of vehicle calibration commands");
 
-        param("Abort On Activation Failed", m_args.actfail_abort)
+        param("Abort On Failed Activation", m_args.actfail_abort)
         .defaultValue("false")
         .description("Abort when a payload fails to activate");
 
@@ -264,7 +266,7 @@ namespace Plan
 
           if (!m_plan->onEntityActivationState(id, msg))
           {
-            std::string error = String::str("failed to activate %s: %s",
+            std::string error = String::str(DTR("failed to activate %s: %s"),
                                             id.c_str(), msg->error.c_str());
 
             if (m_args.actfail_abort)
@@ -290,7 +292,7 @@ namespace Plan
 
         Path db_file = m_ctx.dir_db / "Plan.db";
 
-        inf(DTR("database file: '%s'"), db_file.c_str());
+        debug("database file: '%s'", db_file.c_str());
 
         m_db = new Database::Connection(db_file.c_str(), true);
         m_get_plan_stmt = new Database::Statement(c_get_plan_stmt, *m_db);
@@ -311,7 +313,7 @@ namespace Plan
         delete m_db;
         m_db = NULL;
 
-        inf(DTR("database connection closed"));
+        debug("database connection closed");
       }
 
       void
@@ -320,7 +322,9 @@ namespace Plan
         if (vc->type == IMC::VehicleCommand::VC_REQUEST)
           return;
 
-        if ((vc->getDestination() != getSystemId()) || vc->getDestinationEntity() != getEntityId() || m_vreq_ctr != vc->request_id)
+        if ((vc->getDestination() != getSystemId()) ||
+            (vc->getDestinationEntity() != getEntityId()) ||
+            (m_vreq_ctr != vc->request_id))
           return;
 
         if (!pendingReply())
@@ -361,6 +365,7 @@ namespace Plan
             onVehicleCalibration(vs);
             break;
           case IMC::VehicleState::VS_ERROR:
+          case IMC::VehicleState::VS_BOOT:
             onVehicleError(vs);
             break;
           case IMC::VehicleState::VS_MANEUVER:
@@ -516,7 +521,8 @@ namespace Plan
         if (blockedMode())
           return;
 
-        changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("vehicle in EXTERNAL mode"), false);
+        changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                   DTR("vehicle in EXTERNAL mode"), false);
       }
 
       void
@@ -531,7 +537,9 @@ namespace Plan
         m_reply.op = pc->op;
         m_reply.plan_id = pc->plan_id;
 
-        inf(DTR("request -- %s (%s)"), c_op_desc[m_reply.op], m_reply.plan_id.c_str());
+        inf(DTR("request -- %s (%s)"),
+            DTR(c_op_desc[m_reply.op]),
+            m_reply.plan_id.c_str());
 
         if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
         {
@@ -563,7 +571,8 @@ namespace Plan
       //! @param[in] plan_startup true if a plan will start right after
       //! @return true if plan is successfully loaded
       bool
-      loadPlan(const std::string& plan_id, const IMC::Message* arg, bool plan_startup = false)
+      loadPlan(const std::string& plan_id, const IMC::Message* arg,
+               bool plan_startup = false)
       {
         if ((initMode() && !plan_startup) || execMode())
         {
@@ -573,7 +582,8 @@ namespace Plan
 
         if (arg)
         {
-          const IMC::PlanSpecification* given_plan = dynamic_cast<const IMC::PlanSpecification*>(arg);
+          const IMC::PlanSpecification* given_plan;
+          given_plan = dynamic_cast<const IMC::PlanSpecification*>(arg);
 
           if (given_plan)
           {
@@ -598,7 +608,8 @@ namespace Plan
             }
             else
             {
-              changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("plan load failed: undefined maneuver or plan"));
+              changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                         DTR("plan load failed: undefined maneuver or plan"));
               return false;
             }
           }
@@ -610,14 +621,16 @@ namespace Plan
 
           if (!lookForPlan(plan_id, m_spec))
           {
-            changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("plan load failed: ") + m_reply.info);
+            changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                       DTR("plan load failed: ") + m_reply.info);
             return false;
           }
         }
 
         if (!parsePlan(plan_startup))
         {
-          changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("plan validation failed: ") + m_reply.info);
+          changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                     DTR("plan validation failed: ") + m_reply.info);
           return false;
         }
 
@@ -633,7 +646,8 @@ namespace Plan
           if (m_vehicle_ready)
             changeMode(IMC::PlanControlState::PCS_READY, DTR("plan loaded"));
           else
-            changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("plan loaded but vehicle not ready"));
+            changeMode(IMC::PlanControlState::PCS_BLOCKED,
+                       DTR("plan loaded but vehicle not ready"));
         }
 
         return true;
@@ -672,7 +686,7 @@ namespace Plan
           }
           else if (m_plan_loaded)
           {
-            inf(DTR("switching to new plan"));
+            debug("switching to new plan");
             return false;
           }
           else
@@ -873,7 +887,10 @@ namespace Plan
 
         if (print)
         {
-          std::string str = Utils::String::str(DTR("reply -- %s (%s) -- %s"), c_op_desc[m_reply.op], m_reply.plan_id.c_str(), desc.c_str());
+          std::string str = Utils::String::str(DTR("reply -- %s (%s) -- %s"),
+                                               DTR(c_op_desc[m_reply.op]),
+                                               m_reply.plan_id.c_str(),
+                                               desc.c_str());
 
           if (type == IMC::PlanControl::PC_FAILURE)
             err("%s", str.c_str());
@@ -929,7 +946,7 @@ namespace Plan
 
         if (s != m_pcs.state)
         {
-          debug(DTR("now in %s state"), c_state_desc[s]);
+          debug(DTR("now in %s state"), DTR(c_state_desc[s]));
 
           bool was_in_plan = initMode() || execMode();
 
@@ -940,7 +957,7 @@ namespace Plan
           if (was_in_plan && !is_in_plan)
           {
             m_plan->planStopped();
-            changeLog("idle");
+            changeLog("");
           }
         }
 

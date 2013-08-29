@@ -100,7 +100,7 @@ namespace Transports
           {
             sock->bind(port, addr);
             sock->listen(5);
-            inf(DTR("bound to port %s:%u"), addr.c_str(), port);
+            inf(DTR("listening on %s:%u"), addr.c_str(), port);
             break;
           }
           catch (...)
@@ -145,6 +145,8 @@ namespace Transports
 
           dispatch(announce);
         }
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
@@ -211,6 +213,8 @@ namespace Transports
       {
         while (!stopping())
         {
+          consumeMessages();
+
           if (!m_iom.poll(1.0))
             continue;
 

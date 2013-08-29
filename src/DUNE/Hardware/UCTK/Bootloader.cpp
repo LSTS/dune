@@ -65,7 +65,7 @@ namespace DUNE
           Time::Delay::wait(c_jump_boot_delay);
           info = m_itf->getFirmwareInfo();
           if (info.name != c_boot_name)
-            throw std::runtime_error("failed to enter bootloader");
+            throw std::runtime_error(DTR("failed to enter bootloader"));
           printOK();
         }
 
@@ -82,7 +82,7 @@ namespace DUNE
           Time::Delay::wait(c_jump_appl_delay);
           FirmwareInfo info = m_itf->getFirmwareInfo();
           if (info.name == c_boot_name)
-            throw std::runtime_error("failed to jump to application");
+            throw std::runtime_error(DTR("failed to jump to application"));
           printOK();
           printFirmwareInfo(info);
           printSuccess();
@@ -121,7 +121,7 @@ namespace DUNE
         m_frame.set(size, 0);
         m_frame.set(crc.get(), 4);
         if (!m_itf->sendFrame(m_frame))
-          throw std::runtime_error("failed start upgrade procedure");
+          throw std::runtime_error(DTR("failed start upgrade procedure"));
 
         // Program pages.
         IntelHEX::PageTable::const_iterator pitr = table.begin();
@@ -132,7 +132,7 @@ namespace DUNE
         m_frame.setId(PKT_ID_BOOT_UPGRADE_END);
         m_frame.setPayloadSize(0);
         if (!m_itf->sendFrame(m_frame))
-          throw std::runtime_error("failed to end upgrade procedure");
+          throw std::runtime_error(DTR("failed to end upgrade procedure"));
       }
 
       void
@@ -153,7 +153,7 @@ namespace DUNE
 
           m_frame.setPayloadSize(c_fill_chunk_size + 2);
           if (!m_itf->sendFrame(m_frame))
-            throw std::runtime_error("failed to fill page chunk");
+            throw std::runtime_error(DTR("failed to fill page chunk"));
 
           print(".");
         }
@@ -163,7 +163,7 @@ namespace DUNE
         m_frame.setPayloadSize(4);
         m_frame.set<uint32_t>(page * m_page_size, 0);
         if (!m_itf->sendFrame(m_frame))
-          throw std::runtime_error("failed to write flash page");
+          throw std::runtime_error(DTR("failed to write flash page"));
         print(" ");
 
         printOK();
@@ -195,7 +195,7 @@ namespace DUNE
         m_frame.setId(PKT_ID_BOOT_FLASH_INFO);
         m_frame.setPayloadSize(0);
         if (!m_itf->sendFrame(m_frame))
-          throw std::runtime_error("failed to retrieve flash info");
+          throw std::runtime_error(DTR("failed to retrieve flash info"));
 
         title("Flash Info");
 

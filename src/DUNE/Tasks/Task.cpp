@@ -73,7 +73,8 @@ namespace DUNE
       .description(DTR("Main entity label"));
 
       param(DTR_RT("Execution Priority"), m_args.priority)
-      .defaultValue("10");
+      .defaultValue("10")
+      .description(DTR("Execution priority"));
 
       param(DTR_RT("Activation Time"), m_args.act_time)
       .defaultValue("0");
@@ -92,6 +93,7 @@ namespace DUNE
 
       bind<IMC::QueryEntityInfo>(this);
       bind<IMC::QueryEntityState>(this);
+      bind<IMC::QueryEntityActivationState>(this);
       bind<IMC::QueryEntityParameters>(this);
       bind<IMC::SetEntityParameters>(this);
       bind<IMC::PushEntityParameters>(this);
@@ -101,7 +103,6 @@ namespace DUNE
     unsigned int
     Task::reserveEntity(const std::string& label)
     {
-      debug("reserving entity '%s'", label.c_str());
       return m_ctx.entities.reserve(label, getName(), m_args.act_time, m_args.deact_time);
     }
 
@@ -124,7 +125,6 @@ namespace DUNE
         throw std::runtime_error(DTR("entity label is not configured"));
 
       m_eid = m_ctx.entities.reserve(m_elabel, getName(), m_args.act_time, m_args.deact_time);
-      debug("reserving main entity '%s' -> '%u'", m_elabel.c_str(), m_eid);
       onEntityReservation();
     }
 
@@ -220,18 +220,21 @@ namespace DUNE
       param(DTR_RT("Active - Scope"), m_args.active_scope)
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue(scope_str);
+      .defaultValue(scope_str)
+      .description(DTR("Scoped of the 'Active' parameter"));
 
       std::string visibility_str = Parameter::visibilityToString(def_visibility);
       param(DTR_RT("Active - Visibility"), m_args.active_visibility)
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue(visibility_str);
+      .defaultValue(visibility_str)
+      .description(DTR("Visibility of the 'Active' parameter"));
 
       param(DTR_RT("Active"), m_args.active)
       .visibility(def_visibility)
       .scope(def_scope)
-      .defaultValue(uncastLexical(def_value));
+      .defaultValue(uncastLexical(def_value))
+      .description(DTR("True to activate task, false otherwise"));
     }
 
     void
@@ -322,7 +325,7 @@ namespace DUNE
     Task::activate(void)
     {
       if (m_act_state.state != IMC::EntityActivationState::EAS_ACT_IP)
-        throw std::runtime_error("activation is not in progress");
+        throw std::runtime_error(DTR("activation is not in progress"));
 
       spew("activate");
 
@@ -394,7 +397,7 @@ namespace DUNE
     Task::deactivate(void)
     {
       if (m_act_state.state != IMC::EntityActivationState::EAS_DEACT_IP)
-        throw std::runtime_error("deactivation is not in progress");
+        throw std::runtime_error(DTR("deactivation is not in progress"));
 
       spew("deactivate");
 

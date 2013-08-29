@@ -303,7 +303,16 @@ namespace Monitors
       onEntityResolution(void)
       {
         for (unsigned i = 0; i < BatteryData::BM_TOTAL; ++i)
-          m_eids[i] = resolveEntity(m_args.elb[i]);
+        {
+          try
+          {
+            m_eids[i] = resolveEntity(m_args.elb[i]);
+          }
+          catch (...)
+          {
+            m_eids[i] = 0;
+          }
+        }
       }
 
       void

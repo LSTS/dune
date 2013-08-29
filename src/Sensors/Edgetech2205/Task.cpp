@@ -130,7 +130,7 @@ namespace Sensors
         .defaultValue("Both")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
-        .description("High-frequency subsystem channels");
+        .description(DTR("High-frequency subsystem channels"));
 
         param(DTR_RT("High-Frequency Range"), m_args.range_hf)
         .defaultValue("50")
@@ -139,14 +139,14 @@ namespace Sensors
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .units(Units::Meter)
-        .description("Enable high frequency subsystem");
+        .description(DTR("Enable high frequency subsystem"));
 
         param(DTR_RT("Low-Frequency Channels"), m_args.channels_lf)
         .values(DTR_RT("None, Port, Starboard, Both"))
         .defaultValue("None")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
-        .description("Low-frequency subsystem channels");
+        .description(DTR("Low-frequency subsystem channels"));
 
         param(DTR_RT("Low-Frequency Range"), m_args.range_lf)
         .defaultValue("50")
@@ -155,15 +155,15 @@ namespace Sensors
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .units(Units::Meter)
-        .description("Enable high frequency subsystem");
+        .description(DTR("Enable high frequency subsystem"));
 
-        param("Range Multiplier", m_args.trg_div)
+        param(DTR_RT("Range Multiplier"), m_args.trg_div)
         .defaultValue("1")
         .minimumValue("1")
         .maximumValue("150")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
-        .description("Range multiplier");
+        .description(DTR("Range multiplier"));
 
         param("Pulse Autoselection Mode", m_args.autosel_mode)
         .defaultValue("2")
@@ -260,9 +260,14 @@ namespace Sensors
         setDataActive(SUBSYS_SSH, "None");
         setPing(SUBSYS_SSH, "None");
         m_cmd->shutdown();
-
         Memory::clear(m_cmd);
-        Memory::clear(m_sock_dat);
+
+        if (m_sock_dat != NULL)
+        {
+          m_sock_dat->delFromPoll(m_iom_dat);
+          delete m_sock_dat;
+          m_sock_dat = NULL;
+        }
 
         m_deactivating = true;
         m_countdown.setTop(getDeactivationTime());
@@ -293,7 +298,6 @@ namespace Sensors
         {
           case IMC::LoggingControl::COP_STARTED:
             closeLog();
-            debug("changing log file to %s", m_log_path.c_str());
             openLog(m_ctx.dir_log / msg->name / "Data.jsf");
             break;
 
@@ -516,15 +520,19 @@ namespace Sensors
           return;
         }
 
+        Counter<double> timer(1.0);
         try
         {
           m_cmd = new CommandLink(m_args.addr, m_args.port_cmd);
+          debug("activation took %0.2f s", m_countdown.getElapsed());
           activate();
-          debug("activation took %0.2f s", getActivationTime() -
-                m_countdown.getRemaining());
         }
         catch (...)
-        { }
+        {
+          double delay = timer.getRemaining();
+          if (delay > 0.0)
+            Delay::wait(delay);
+        }
       }
 
       void

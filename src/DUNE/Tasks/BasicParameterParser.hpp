@@ -72,7 +72,7 @@ namespace DUNE
       read(const std::string& value)
       {
         if (!castLexical(value, m_copy))
-          throw std::runtime_error("value is not of the correct type");
+          throw std::runtime_error(DTR("value is not of the correct type"));
       }
 
       bool
@@ -89,7 +89,7 @@ namespace DUNE
       values(const std::string& list)
       {
         if (!castLexical(list, m_values))
-          throw std::runtime_error("possible values are not of the correct type");
+          throw std::runtime_error(DTR("possible values are not of the correct type"));
       }
 
       void
@@ -112,19 +112,19 @@ namespace DUNE
         if (m_min_set)
         {
           if (m_copy < m_min)
-            throw std::runtime_error("value is below minimum");
+            throw std::runtime_error(DTR("value is below minimum"));
         }
 
         if (m_max_set)
         {
           if (m_copy > m_max)
-            throw std::runtime_error("value is above maximum");
+            throw std::runtime_error(DTR("value is above maximum"));
         }
 
         if (!m_values.empty())
         {
           if (std::find(m_values.begin(), m_values.end(), m_copy) == m_values.end())
-            throw std::runtime_error("value not in values set");
+            throw std::runtime_error(DTR("value not in values set"));
         }
       }
 
@@ -165,7 +165,7 @@ namespace DUNE
         m_copy.clear();
 
         if (!castLexical(value, m_copy))
-          throw std::runtime_error("value is not of the correct type");
+          throw std::runtime_error(DTR("value is not of the correct type"));
       }
 
       bool
@@ -196,13 +196,13 @@ namespace DUNE
         if (m_min_size < UINT_MAX)
         {
           if (m_copy.size() < m_min_size)
-            throw std::runtime_error("too few elements");
+            throw std::runtime_error(DTR("too few elements"));
         }
 
         if (m_max_size < UINT_MAX)
         {
           if (m_copy.size() > m_max_size)
-            throw std::runtime_error("too many elements");
+            throw std::runtime_error(DTR("too many elements"));
         }
       }
 

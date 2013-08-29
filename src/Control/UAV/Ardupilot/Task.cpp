@@ -119,7 +119,8 @@ namespace Control
         //! System ID
         uint8_t m_sysid;
         //! Last received position
-        float m_lat, m_lon, m_alt;
+        double m_lat, m_lon;
+        float m_alt;
         //! External control
         bool m_external;
         //! Current waypoint
@@ -231,6 +232,7 @@ namespace Control
           bind<SetServoPosition>(this);
           bind<IdleManeuver>(this);
           bind<ControlLoops>(this);
+          bind<PowerChannelControl>(this);
 
           // Misc. initialization
           m_last_pkt_time = 0; // time of last packet from Ardupilot
@@ -520,7 +522,7 @@ namespace Control
               m_sysid, //! target_system System ID
               0, //! target_component Component ID
               1, //! seq Sequence
-              MAV_FRAME_GLOBAL_RELATIVE_ALT, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+              MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
               MAV_CMD_NAV_LOITER_UNLIM, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
               2, //! current false:0, true:1
               0, //! autocontinue to next wp
@@ -553,6 +555,7 @@ namespace Control
           dispatch(m_pcs);
 
           debug("Waypoint packet sent to Ardupilot");
+          inf(DTR("Dispatch pcs after consuming DesiredPath"));
         }
 
         void
@@ -590,6 +593,7 @@ namespace Control
           m_pcs.lradius = m_args.lradius * (m_args.lradius < 0 ? -1 : 1);
 
           dispatch(m_pcs);
+          inf(DTR("Dispatch pcs after consuming IdleManeuver"));
         }
 
         void
@@ -609,6 +613,17 @@ namespace Control
                             0, // Empty
                             0); //Empty
           debug("SetServo packet sent to Ardupilot");
+        }
+
+        void
+        consume(const IMC::PowerChannelControl* pcc)
+        {
+          debug("Trigger Request Received");
+
+          if(pcc->op & IMC::PowerChannelControl::PCC_OP_TURN_ON)
+            sendCommandPacket(MAV_CMD_DO_SET_RELAY, 1);
+          else
+            sendCommandPacket(MAV_CMD_DO_SET_RELAY, 0);
         }
 
         void
@@ -894,13 +909,13 @@ namespace Control
           mavlink_global_position_int_t gp;
           mavlink_msg_global_position_int_decode(msg, &gp);
 
-          fp64_t lat = Angles::radians((fp64_t)gp.lat * 1e-07);
-          fp64_t lon = Angles::radians((fp64_t)gp.lon * 1e-07);
-          fp32_t hei = gp.alt * 1e-03;
+          double lat = Angles::radians((double)gp.lat * 1e-07);
+          double lon = Angles::radians((double)gp.lon * 1e-07);
+          float hei = (float)gp.alt * 1e-03;
 
-          m_lat = (float)(gp.lat * 1e-07);
-          m_lon = (float)(gp.lon * 1e-07);
-          m_alt = (float)(gp.alt * 1e-03);
+          m_lat = (double)gp.lat * 1e-07;
+          m_lon = (double)gp.lon * 1e-07;
+          m_alt = (float)gp.alt * 1e-03;
 
           double distance_to_ref = WGS84::distance(ref_lat,ref_lon,ref_hei,
               lat,lon,hei);
@@ -1015,11 +1030,9 @@ namespace Control
           m_fix.height = (double)gps_raw.alt * 0.001;
           m_fix.satellites = gps_raw.satellites_visible;
 
-          inf("%llu", gps_raw.time_usec);
 
           long time_fix = gps_raw.time_usec % 1000000000;
           unsigned int date = (unsigned int)(gps_raw.time_usec / 1e9);
-          inf("%u", date);
           
 
           if(m_args.ublox)
@@ -1167,20 +1180,28 @@ namespace Control
           d_pitch.value = Angles::radians(nav_out.nav_pitch);
           d_head.value = Angles::radians(nav_out.nav_bearing);
 
+          bool loitering = false;
           if((nav_out.wp_dist <= m_desired_radius + m_args.ltolerance)
              && (nav_out.wp_dist >= m_desired_radius - m_args.ltolerance)
              && (m_mode == 15))
           {
+            loitering = true;
             m_pcs.flags |= PathControlState::FL_LOITERING;
           }
 
+          bool near = false;
           if(!m_changing_wp
              && (nav_out.wp_dist <= m_desired_radius + 2 * m_desired_speed)
              && (nav_out.wp_dist >= m_desired_radius - 2 * m_desired_speed)
              && (m_mode == 15))
           {
+            near = true;
             m_pcs.flags |= PathControlState::FL_NEAR;
           }
+
+          //inf(DTR("LOITERING %s: wp_dist %d -- desired_radius %d +- %d"), (loitering)?"true":"false",nav_out.wp_dist, m_desired_radius,m_args.ltolerance);
+          //inf(DTR("NEAR %s: wp_dist %d -- desired_radius %d +- %d"), (near)?"true":"false", nav_out.wp_dist, m_desired_radius,m_args.ltolerance*2);
+          inf(DTR("%s %s %d"), (loitering)?"LOITERING":"", (near)?"NEAR":"", nav_out.wp_dist);
 
           dispatch(m_pcs);
           dispatch(d_roll);

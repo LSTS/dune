@@ -623,7 +623,7 @@ namespace Power
       void
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
-        inf(DTR("version: %u.%u.%u"), major, minor, patch);
+        inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
 
         std::string fmw = m_proto.searchNewFirmware(m_ctx.dir_fmw, 2, minor, patch);
         if (!fmw.empty())

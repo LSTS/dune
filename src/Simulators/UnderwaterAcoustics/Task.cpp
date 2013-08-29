@@ -212,7 +212,7 @@ namespace Simulators
       {
         if (!m_setup)
         {
-          err(DTR("not setup yet"));
+          debug("not setup yet");
           return;
         }
 
@@ -222,7 +222,7 @@ namespace Simulators
 
         if (d < 0)
         {
-          err(DTR("can't handle this -- some nodes are not part of simulation (yet?)"));
+          debug("can't handle this -- some nodes are not part of simulation (yet?)");
           return;
         }
 
@@ -387,7 +387,7 @@ namespace Simulators
         }
         catch (std::runtime_error& e)
         {
-          err(DTR("network/deserialization error: %s"), e.what());
+          err(DTR("read error: %s"), e.what());
         }
       }
     };

@@ -67,7 +67,7 @@ namespace DUNE
         frame.setPayloadSize(0);
 
         if (!sendFrame(frame))
-          throw std::runtime_error("failed to reset device");
+          throw std::runtime_error(DTR("failed to reset device"));
       }
 
       void
@@ -79,7 +79,7 @@ namespace DUNE
         frame.set<uint8_t>(value, 0);
 
         if (!sendFrame(frame))
-          throw std::runtime_error("failed to set bootloader parameters");
+          throw std::runtime_error(DTR("failed to set bootloader parameters"));
       }
 
       bool
@@ -137,7 +137,7 @@ namespace DUNE
         frame.setPayloadSize(0);
 
         if (!sendFrame(frame))
-          throw std::runtime_error("failed to get firmware name");
+          throw std::runtime_error(DTR("failed to get firmware name"));
 
         info.name.assign((const char*)frame.getPayload(), frame.getPayloadSize());
       }
@@ -150,10 +150,10 @@ namespace DUNE
         frame.setPayloadSize(0);
 
         if (!sendFrame(frame))
-          throw std::runtime_error("failed to get firmware version");
+          throw std::runtime_error(DTR("failed to get firmware version"));
 
         if (frame.getPayloadSize() != 3)
-          throw std::runtime_error("invalid firmware version");
+          throw std::runtime_error(DTR("invalid firmware version"));
 
         frame.get(info.major, 0);
         frame.get(info.minor, 1);

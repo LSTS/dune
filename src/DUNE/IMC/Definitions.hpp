@@ -8495,18 +8495,18 @@ namespace DUNE
     class LblEstimate: public Message
     {
     public:
-      //! Beacon Name.
-      std::string beacon;
+      //! LBL Beacon Configuration.
+      InlineMessage<LblBeacon> beacon;
       //! North position.
-      fp64_t x;
+      fp32_t x;
       //! East position.
-      fp64_t y;
-      //! Depth.
-      fp32_t depth;
+      fp32_t y;
       //! North position variance.
-      fp64_t var_x;
+      fp32_t var_x;
       //! East position variance.
-      fp64_t var_y;
+      fp32_t var_y;
+      //! Distance.
+      fp32_t distance;
 
       static uint16_t
       getIdStatic(void)
@@ -8555,17 +8555,33 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 36;
+        return 20;
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(beacon);
+        return beacon.getSerializationSize();
       }
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
     };
 
     //! Alignment State.
@@ -12148,7 +12164,9 @@ namespace DUNE
         //! Maneuver.
         VS_MANEUVER = 3,
         //! External Control.
-        VS_EXTERNAL = 4
+        VS_EXTERNAL = 4,
+        //! Boot.
+        VS_BOOT = 5
       };
 
       //! Flags.

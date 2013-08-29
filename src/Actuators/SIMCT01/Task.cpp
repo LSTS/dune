@@ -312,7 +312,8 @@ namespace Actuators
           return false;
 
         m_wdogs[index].reset();
-        m_amps[index].value = value;
+        m_amps[index].value = (double)value / 10.0;
+
         dispatch(m_amps[index]);
         return true;
       }

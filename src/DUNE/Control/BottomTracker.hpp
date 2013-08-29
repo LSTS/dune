@@ -73,6 +73,10 @@ namespace DUNE
         unsigned eid;
         //! Control period of execution for the bottom tracker
         float control_period;
+        //! Enable or disable obstacle avoidance during depth control
+        bool depth_avoid;
+        //! Admissible altitude when doing depth control
+        float adm_alt;
       };
 
       //! Constructor.
@@ -133,6 +137,8 @@ namespace DUNE
         SM_TRACKING,
         //! Depth control.
         SM_DEPTH,
+        //! On limit depth control.
+        SM_LIMITDEPTH,
         //! In an unsafe yet controllable state.
         SM_UNSAFE,
         //! Avoiding unsurpassable obstacle.
@@ -150,6 +156,12 @@ namespace DUNE
         FC_ALTITUDE
       };
 
+      //! Check if vehicle's current situation is safe (check slope etc)
+      //! Take appropriate measures
+      //! @return true if safe, false if not safe or unable to tell
+      bool
+      checkSafety(void);
+
       //! Update bottom tracking state machine.
       void
       updateStateMachine(void);
@@ -158,13 +170,17 @@ namespace DUNE
       void
       onIdle(void);
 
-      //! On tracking state.
+      //! On altitude tracking state.
       void
       onTracking(void);
 
-      //! On tracking state.
+      //! On depth tracking state.
       void
       onDepth(void);
+
+      //! Near depth limit.
+      void
+      onLimitDepth(void);
 
       //! On unsafe state.
       void
@@ -195,6 +211,10 @@ namespace DUNE
       void
       dispatchAltitude(void) const;
 
+      //! Dispatch admissible altitude.
+      void
+      dispatchAdmAltitude(void) const;
+
       //! Check if forward range measurement could be the surface.
       //! @return true if it can be the surface.
       bool
@@ -219,7 +239,6 @@ namespace DUNE
       //! @param[in] msg string message to output.
       void
       info(const std::string& msg) const;
-
 
       //! Function for debug messages.
       //! @param[in] msg string message to output.

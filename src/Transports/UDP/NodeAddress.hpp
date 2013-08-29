@@ -59,7 +59,7 @@ namespace Transports
         }
         else
         {
-          throw std::runtime_error(String::str("invalid address: '%s'", addr_port.c_str()));
+          throw std::runtime_error(String::str(DTR("invalid address: '%s'"), addr_port.c_str()));
         }
       }
 
@@ -78,7 +78,13 @@ namespace Transports
       bool
       operator<(const NodeAddress& other) const
       {
-        return (m_addr < other.m_addr) && (m_port < other.m_port);
+        if (m_addr < other.m_addr)
+          return true;
+
+        if (m_port < other.m_port)
+          return true;
+
+        return false;
       }
 
     private:

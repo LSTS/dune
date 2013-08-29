@@ -48,15 +48,15 @@ namespace DUNE
     {
       const char* Protocol::c_error_strs[] =
       {
-        "invalid command",
-        "lost synchronization",
-        "parser error",
-        "data overrun",
-        "buffer overflow",
-        "invalid checksum",
-        "parser bug",
-        "invalid command arguments",
-        "unknown error"
+        DTR_RT("invalid command"),
+        DTR_RT("lost synchronization"),
+        DTR_RT("parser error"),
+        DTR_RT("data overrun"),
+        DTR_RT("buffer overflow"),
+        DTR_RT("invalid checksum"),
+        DTR_RT("parser bug"),
+        DTR_RT("invalid command arguments"),
+        DTR_RT("unknown error")
       };
 
       const int Protocol::c_error_last = 8;

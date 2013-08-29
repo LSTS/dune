@@ -140,7 +140,7 @@ namespace Maneuver
         }
         else
         {
-          signalError("unsupported vertical reference");
+          signalInvalidZ();
           return;
         }
 

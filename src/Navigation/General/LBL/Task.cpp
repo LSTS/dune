@@ -54,8 +54,10 @@ namespace Navigation
         float lbl_threshold;
         //! State covariance.
         float state_cov;
-        //! Covariance of the LBL noise.
-        float lbl_noise;
+        //! Measurement noise covariance.
+        float lbl_mnoise;
+        //! Process noise covariance.
+        float lbl_pnoise;
         //! GPS timeout.
         float gps_timeout;
         //! Maximum Valid Horizontal Accuracy index.
@@ -77,15 +79,11 @@ namespace Navigation
         //! Vehicle heading.
         double m_yaw;
         //! LBL beacon information.
-        DUNE::Navigation::LblBeaconXYZ* m_beacons[DUNE::Navigation::c_max_beacons];
-        //! LblConfig data has been logged.
-        bool m_lbl_log_beacons;
-        //! LblConfig buffer.
-        IMC::LblConfig m_lbl_cfg;
-        //! Number of beacons.
-        unsigned m_num_beacons;
+        DUNE::Navigation::Ranging m_ranging;
         //! Navigation origin.
         IMC::GpsFix* m_origin;
+        //! LBL position estimates.
+        IMC::LblEstimate* m_estimate[DUNE::Navigation::c_max_transponders];
         //! GPS validity bits.
         uint16_t m_gps_val_bits;
         //! Time without GPS sensor readings deadline.
@@ -107,9 +105,13 @@ namespace Navigation
           .defaultValue("4.0")
           .description("LBL Threshold value for the LBL level check rejection scheme");
 
-          param("LBL Measure Noise Covariance", m_args.lbl_noise)
+          param("LBL Measure Noise Covariance", m_args.lbl_mnoise)
           .defaultValue("10.0")
           .description("Kalman Filter LBL Measurement Noise Covariance value");
+
+          param("LBL Process Noise Covariance", m_args.lbl_pnoise)
+          .defaultValue("1e-5")
+          .description("Kalman Filter LBL Process Noise Covariance value");
 
           param("LBL Expected Range Rejection Constants", m_args.k_rej)
           .size(2)
@@ -131,9 +133,8 @@ namespace Navigation
           .defaultValue("0.50")
           .description("Distance between LBL receiver and GPS in the vehicle");
 
-          // Initialize some variables.
-          std::memset(m_beacons, 0, sizeof(m_beacons));
-          m_num_beacons = 0;
+          for (unsigned i = 0; i < DUNE::Navigation::c_max_transponders; ++i)
+            m_estimate[i] = NULL;
 
           m_last_n = 0.0;
           m_last_e = 0.0;
@@ -161,7 +162,6 @@ namespace Navigation
         void
         onResourceInitialization(void)
         {
-          m_lbl_log_beacons = false;
           setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
         }
 
@@ -175,14 +175,17 @@ namespace Navigation
         {
           Memory::clear(m_origin);
 
-          for (unsigned i = 0; i < c_max_beacons; ++i)
-            Memory::clear(m_beacons[i]);
+          for (unsigned i = 0; i < DUNE::Navigation::c_max_transponders; ++i)
+            Memory::clear(m_estimate[i]);
         }
 
         void
         consume(const IMC::EstimatedState* msg)
         {
           m_last_depth = msg->depth;
+
+          // Increment process noise covariance.
+          m_kal.predict();
         }
 
         void
@@ -229,22 +232,23 @@ namespace Navigation
           cop.message.set(*msg);
           dispatch(cop);
 
-          m_lbl_log_beacons = false;
-
-          if (m_origin == NULL)
-          {
-            debug("No initial GPS fix has been received, storing beacon configuration");
-            m_lbl_log_beacons = true;
-            m_lbl_cfg = *msg;
-            setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
-            return;
-          }
-
-          m_num_beacons = 0;
+          m_ranging.setup(msg);
 
           IMC::MessageList<IMC::LblBeacon>::const_iterator itr = msg->beacons.begin();
           for (unsigned i = 0; itr != msg->beacons.end(); ++itr, ++i)
-            addBeacon(i, *itr);
+          {
+            if (i >= DUNE::Navigation::c_max_transponders)
+              return;
+
+            Memory::clear(m_estimate[i]);
+
+            if (*itr == NULL)
+              return;
+
+            Memory::replace(m_estimate[i], new IMC::LblEstimate);
+
+            m_estimate[i]->beacon.set(IMC::LblBeacon());
+          }
 
           setup();
         }
@@ -258,14 +262,14 @@ namespace Navigation
           if (m_time_without_gps.overflow())
             return;
 
-          if ((m_beacons[msg->id] == 0) || (msg->id > m_num_beacons - 1))
+          if (!m_ranging.exists(msg->id) || (msg->id > m_ranging.getSize() - 1))
             return;
 
           float range = msg->range;
 
           double dx = m_args.dist_lbl_gps * std::cos(m_yaw) - m_last_n + m_kal.getState(msg->id * 2);
           double dy = m_args.dist_lbl_gps * std::sin(m_yaw) - m_last_e + m_kal.getState(msg->id * 2 + 1);
-          double dz = m_beacons[msg->id]->depth - m_last_depth;
+          double dz = m_ranging.getDepth(msg->id) - m_last_depth;
           double exp_range = std::sqrt(dx * dx + dy * dy + dz * dz);
 
           m_kal.setObservation(msg->id, msg->id * 2, dx / exp_range);
@@ -295,18 +299,29 @@ namespace Navigation
             // Run Kalman Filter.
             m_kal.update(0.0);
 
-            // Log data.
-            IMC::LblEstimate est;
-            est.beacon = String::str("%d", msg->id);
-            est.x = m_kal.getState(msg->id * 2);
-            est.y = m_kal.getState(msg->id * 2 + 1);
-            est.depth = m_beacons[msg->id]->depth;
-            est.var_x = m_kal.getCovariance(msg->id * 2);
-            est.var_y = m_kal.getCovariance(msg->id * 2 + 1);
-            dispatch(est);
+            // Use displacement to get current position fix.
+            double x = m_kal.getState(msg->id * 2);
+            double y = m_kal.getState(msg->id * 2 + 1);
 
-            spew("estimation for beacon %d: %f | %f", msg->id,
-                 m_kal.getState(msg->id * 2), m_kal.getState(msg->id * 2 + 1));
+            double lat = m_origin->lat;
+            double lon = m_origin->lon;
+            Coordinates::WGS84::displace(x, y, &lat, &lon);
+
+            // Update estimate.
+            m_estimate[msg->id]->beacon->lat = lat;
+            m_estimate[msg->id]->beacon->lon = lon;
+            m_estimate[msg->id]->x = m_kal.getState(msg->id * 2);
+            m_estimate[msg->id]->y = m_kal.getState(msg->id * 2 + 1);
+            m_estimate[msg->id]->var_x = m_kal.getCovariance(msg->id * 2);
+            m_estimate[msg->id]->var_y = m_kal.getCovariance(msg->id * 2 + 1);
+            m_estimate[msg->id]->distance = Coordinates::WGS84::distance(lat, lon, 0.0, m_ranging.getLat(msg->id),
+                                                                         m_ranging.getLon(msg->id), 0.0);
+            dispatch(m_estimate[msg->id]);
+
+            spew("beacon %d WGS: %f | %f", msg->id, lat, lon);
+            spew("beacon %d NE: %f | %f :: distance: %f", msg->id,
+                 m_estimate[msg->id]->x, m_estimate[msg->id]->y,
+                 m_estimate[msg->id]->distance);
           }
           else
             spew("rejected range from %d", msg->id);
@@ -314,70 +329,43 @@ namespace Navigation
           m_kal.resetOutputs();
         }
 
-        //! Add beacon.
-        //! @param[in] id beacon id number
-        //! @param[in] msg beacon information.
-        void
-        addBeacon(unsigned id, const IMC::LblBeacon* msg)
-        {
-          if (id >= c_max_beacons)
-          {
-            err(DTR("beacon id %d is greater than %d"), id, c_max_beacons);
-            return;
-          }
-
-          Memory::clear(m_beacons[id]);
-
-          if (msg == NULL)
-            return;
-
-          if (id + 1 > m_num_beacons)
-            m_num_beacons = id + 1;
-
-          LblBeaconXYZ* bp = new LblBeaconXYZ;
-          bp->lat = msg->lat;
-          bp->lon = msg->lon;
-          bp->depth = msg->depth;
-          // This is relative to surface thus using 0.0 as height reference.
-          WGS84::displacement(m_origin->lat, m_origin->lon, 0.0,
-                              msg->lat, msg->lon, msg->depth,
-                              &(bp->x), &(bp->y));
-
-          m_beacons[id] = bp;
-
-          debug("setting beacon %s (%0.2f, %0.2f, %0.2f)", msg->beacon.c_str(),
-                m_beacons[id]->x, m_beacons[id]->y, m_beacons[id]->depth);
-        }
-
         //! Setup filter.
         //! @return true if successful, false otherwise.
         void
         setup(void)
         {
-          if (!m_num_beacons)
+          if (!m_ranging.getSize())
           {
             m_kal.reset(1, 1);
-            m_kal.setMeasurementNoise(m_args.lbl_noise);
+            m_kal.setMeasurementNoise(m_args.lbl_mnoise);
+            m_kal.setProcessNoise(m_args.lbl_pnoise);
             m_kal.setCovariance(m_args.state_cov);
             m_kal.resetState();
             return;
           }
 
-          m_kal.reset(m_num_beacons * 2, m_num_beacons);
+          m_kal.reset(m_ranging.getSize() * 2, m_ranging.getSize());
 
           // Initialize Kalman Filter.
-          m_kal.setMeasurementNoise(m_args.lbl_noise);
+          m_kal.setMeasurementNoise(m_args.lbl_mnoise);
+          m_kal.setProcessNoise(m_args.lbl_pnoise);
           m_kal.setCovariance(m_args.state_cov);
           m_kal.resetState();
 
-          for (unsigned i = 0; i < m_num_beacons; i++)
+          for (unsigned i = 0; i < m_ranging.getSize(); i++)
           {
-            m_kal.setState(i * 2, m_beacons[i]->x);
-            m_kal.setState(i * 2 + 1, m_beacons[i]->y);
+            double x = 0.0;
+            double y = 0.0;
+            double z = 0.0;
+
+            m_ranging.getLocation(i, &x, &y, &z);
+
+            m_kal.setState(i * 2, x);
+            m_kal.setState(i * 2 + 1, y);
           }
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          debug("setup completed");
+          spew("setup completed");
         }
 
         //! Start filtering.
@@ -393,15 +381,22 @@ namespace Navigation
 
           requestActivation();
 
+          if (m_origin != NULL)
+          {
+            // Get vehicle fix.
+            double vlat = m_origin->lat;
+            double vlon = m_origin->lon;
+            Coordinates::WGS84::displace(m_last_n, m_last_e, &vlat, &vlon);
+
+            // Update current vehicle displacement according to new origin.
+            WGS84::displacement(msg->lat, msg->lon, 0.0,
+                                vlat, vlon, 0.0,
+                                &m_last_n, &m_last_e);
+          }
+
           Memory::replace(m_origin, new IMC::GpsFix(*msg));
 
-          // Set beacons if data is logged.
-          if (m_lbl_log_beacons)
-          {
-            consume(&m_lbl_cfg);
-            debug("setting logged beacon configuration");
-            return;
-          }
+          m_ranging.updateOrigin(m_origin);
 
           // Initial state
           setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_LBL_CFG);

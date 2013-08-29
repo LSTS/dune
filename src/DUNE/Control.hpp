@@ -43,5 +43,6 @@ namespace DUNE
 #include <DUNE/Control/YoYoMotion.hpp>
 #include <DUNE/Control/AUVModel.hpp>
 #include <DUNE/Control/LinearSystem.hpp>
+#include <DUNE/Control/CoarseAltitude.hpp>
 
 #endif

@@ -242,6 +242,8 @@ namespace Sensors
         int wvval = 0;
         int gvval = 0;
 
+        double tstamp = Clock::getSinceEpoch();
+
         int rv = std::sscanf(m_buffer,
                         "%*d %*d %*d %*d %*d %*d" // Date
                         " %lf %lf %lf %d"         // Water Velocity
@@ -271,14 +273,16 @@ namespace Sensors
         if (wvval == 1)
         {
           m_wvel.validity = c_wvel_valid_flag;
-          m_wvel.x *= 0.001;
-          m_wvel.y *= 0.001;
-          m_wvel.z *= 0.001;
+          m_wvel.x *= 0.01;
+          m_wvel.y *= 0.01;
+          m_wvel.z *= 0.01;
         }
         else
         {
           m_wvel.clear();
         }
+
+        m_wvel.setTimeStamp(tstamp);
         dispatch(m_wvel, DF_KEEP_TIME);
 
         // Ground velocity.
@@ -286,15 +290,17 @@ namespace Sensors
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           m_gvel.validity = gvval ? c_gvel_valid_flag : 0;
-          m_gvel.x *= 0.001;
-          m_gvel.y *= 0.001;
-          m_gvel.z *= 0.001;
+          m_gvel.x *= 0.01;
+          m_gvel.y *= 0.01;
+          m_gvel.z *= 0.01;
         }
         else
         {
-          setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_NO_BOTTOM_LOCK);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NO_BOTTOM_LOCK);
           m_gvel.clear();
         }
+
+        m_gvel.setTimeStamp(tstamp);
         dispatch(m_gvel, DF_KEEP_TIME);
 
         // Beam distances.
@@ -304,10 +310,12 @@ namespace Sensors
             m_dist[i].validity = IMC::Distance::DV_INVALID;
           else
             m_dist[i].validity = IMC::Distance::DV_VALID;
-          m_dist[i].value *= 0.01;
+
+          m_dist[i].setTimeStamp(tstamp);
           dispatch(m_dist[i], DF_KEEP_TIME);
         }
 
+        m_temp.setTimeStamp(tstamp);
         dispatch(m_temp, DF_KEEP_TIME);
       }
 

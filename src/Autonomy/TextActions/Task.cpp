@@ -22,33 +22,37 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Jose Pinto                                      *
+// Author: Jose Pinto                                                       *
 //***************************************************************************
 
 // ISO C++ 98 headers.
-# include <stdexcept>
+#include <stdexcept>
 
 // DUNE headers.
-# include <DUNE/DUNE.hpp>
+#include <DUNE/DUNE.hpp>
 
 namespace Autonomy
 {
-  //! %TREX is responsible to interact with MBARI's T-REX
   namespace TextActions
   {
     using DUNE_NAMESPACES;
 
-    struct Task : public DUNE::Tasks::Task
+    struct Task: public DUNE::Tasks::Task
     {
-
-      Task(const std::string & name, Tasks::Context& ctx) :
+      Task(const std::string & name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
       {
         bind<IMC::TextMessage>(this);
       }
 
       void
-      handlePlanCommand(std::string origin, std::string args)
+      onResourceInitialization(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      handlePlanCommand(const std::string& origin, const std::string& args)
       {
         // Plan control message!
         IMC::PlanControl pc;
@@ -58,7 +62,8 @@ namespace Autonomy
         std::sscanf(args.c_str(), "%s", plan_id);
         pc.plan_id = plan_id;
 
-        inf("%s (%s = %s)", DTR("Received SMS request to start plan"), DTR("id"), sanitize(pc.plan_id).c_str());
+        inf(DTR("received SMS request to start plan '%s'"),
+            sanitize(pc.plan_id).c_str());
 
         // Send the plan start request
         dispatch(pc);
@@ -66,16 +71,16 @@ namespace Autonomy
       }
 
       void
-      handleAbortCommand(std::string origin, std::string args)
+      handleAbortCommand(const std::string& origin, const std::string& args)
       {
-        err("Received abort via text from %s", origin.c_str());
+        err(DTR("got abort request from '%s'"), origin.c_str());
         IMC::Abort abort;
         dispatch(abort);
         (void)args;
       }
 
       void
-      handlePlanGeneratorCommand(std::string origin, std::string args)
+      handlePlanGeneratorCommand(const std::string& origin, const std::string& args)
       {
         IMC::PlanGeneration pg;
         std::istringstream iss(args);
@@ -96,9 +101,9 @@ namespace Autonomy
       }
 
       void
-      consume(const IMC::TextMessage * msg)
+      consume(const IMC::TextMessage* msg)
       {
-        spew("Processing text message from %s: \"%s\"", msg->origin.c_str(), sanitize(msg->text).c_str());
+        spew("processing text message from %s: \"%s\"", msg->origin.c_str(), sanitize(msg->text).c_str());
         std::istringstream iss(msg->text);
         std::string cmd, args = "";
         getline(iss, cmd, ' ');
@@ -107,7 +112,7 @@ namespace Autonomy
 
         //std::transform(cmd, cmd, cmd, ::tolower);
 
-        spew("Command is %s, args are %s", cmd.c_str(), args.c_str());
+        spew("command is %s, args are %s", cmd.c_str(), args.c_str());
 
         if (cmd == "plan")
         {
@@ -121,7 +126,8 @@ namespace Autonomy
         {
           handlePlanGeneratorCommand(msg->origin, args);
         }
-        else {
+        else
+        {
 
         }
       }

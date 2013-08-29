@@ -204,7 +204,7 @@ namespace Transports
       {
         std::string rv = readValue("+SBDD0");
         if (rv != "0")
-          throw std::runtime_error("error ocurred while clearing MO buffer");
+          throw std::runtime_error(DTR("error ocurred while clearing MO buffer"));
       }
 
       //! Clear MT SBD message buffer.
@@ -213,7 +213,7 @@ namespace Transports
       {
         std::string rv = readValue("+SBDD1");
         if (rv != "0")
-          throw std::runtime_error("error ocurred while clearing MT buffer");
+          throw std::runtime_error(DTR("error ocurred while clearing MT buffer"));
       }
 
       //! Check if a ring alert was received.
@@ -398,7 +398,7 @@ namespace Transports
       {
         std::string rv = readValue(String::str("+SBDD%u", type));
         if (rv != "0")
-          throw std::runtime_error("error ocurred while clearing buffer");
+          throw std::runtime_error(DTR("error ocurred while clearing buffer"));
       }
 
       void
@@ -406,7 +406,7 @@ namespace Transports
       {
         std::string rv = readValue("+SBDC");
         if (rv != "0")
-          throw std::runtime_error("error ocurred while clearing the MOMSN");
+          throw std::runtime_error(DTR("error ocurred while clearing the MOMSN"));
       }
 
       void

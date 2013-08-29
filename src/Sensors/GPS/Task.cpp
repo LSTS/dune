@@ -77,8 +77,8 @@ namespace Sensors
       std::string init_cmds[c_max_init_cmds];
       //! Initialization replies.
       std::string init_rpls[c_max_init_cmds];
-      //! Power channel name.
-      std::string pwr_channel;
+      //! Power channels.
+      std::vector<std::string> pwr_channels;
     };
 
     struct Task: public Tasks::Task
@@ -120,9 +120,9 @@ namespace Sensors
         .defaultValue("4.0")
         .description("Input timeout");
 
-        param("Power Channel - Name", m_args.pwr_channel)
+        param("Power Channel - Names", m_args.pwr_channels)
         .defaultValue("")
-        .description("Device's power channel");
+        .description("Device's power channels");
 
         param("Sentence Order", m_args.stn_order)
         .defaultValue("")
@@ -159,12 +159,15 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
-        if (!m_args.pwr_channel.empty())
+        if (m_args.pwr_channels.size() > 0)
         {
           IMC::PowerChannelControl pcc;
-          pcc.name = m_args.pwr_channel;
           pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
-          dispatch(pcc);
+          for (size_t i = 0; i < m_args.pwr_channels.size(); ++i)
+          {
+            pcc.name = m_args.pwr_channels[i];
+            dispatch(pcc);
+          }
         }
 
         Counter<double> timer(c_pwr_on_delay);
@@ -695,7 +698,10 @@ namespace Sensors
           }
 
           if (m_wdog.overflow())
+          {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          }
         }
       }
     };

@@ -221,7 +221,7 @@ namespace Vision
 
         if (header[0] != "HTTP/1.0 200 OK\r\n")
         {
-          err("Failed to start video stream");
+          err(DTR("failed to start video stream"));
           stopVideo();
           return;
         }
@@ -238,7 +238,7 @@ namespace Vision
           }
         }
 
-        inf("Started video stream");
+        inf(DTR("started video stream"));
       }
 
       void

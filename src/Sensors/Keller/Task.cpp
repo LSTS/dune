@@ -209,6 +209,7 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
+        m_crc_err_count = 0;
         initialize();
       }
 
@@ -405,7 +406,7 @@ namespace Sensors
             ByteCopy::fromBE(m_channel_readout, m_parser_data);
             break;
           case CMD_ZERO_CHANNEL:
-            inf(DTR("successfuly zeroed device"));
+            inf("%s", DTR(Status::getString(Status::CODE_CALIBRATED)));
         }
 
         // Everything correctly interpreted, so return true
@@ -486,14 +487,8 @@ namespace Sensors
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
 
           // The device seems to be dead.. attempt to restart
-          try
-          {
-            onResourceAcquisition();
-            onResourceInitialization();
-          }
-          catch (...)
-          {
-          }
+          onResourceAcquisition();
+          onResourceInitialization();
         }
       }
     };

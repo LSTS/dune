@@ -89,7 +89,7 @@ namespace DUNE
       }
 
       //! Get remaining time.
-      //! @return time remaining.
+      //! @return time remaining (s).
       inline T
       getRemaining(void) const
       {
@@ -97,6 +97,14 @@ namespace DUNE
           return 0;
 
         return m_top - (Clock::get() - m_last);
+      }
+
+      //! Get elapsed time.
+      //! @return elapsed time (s).
+      inline T
+      getElapsed(void) const
+      {
+        return Clock::get() - m_last;
       }
 
     private:

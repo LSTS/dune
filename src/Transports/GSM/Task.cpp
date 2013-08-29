@@ -84,7 +84,7 @@ namespace Transports
 
     struct Task: public DUNE::Tasks::Task
     {
-      //!! Serial port handle.
+      //! Serial port handle.
       SerialPort* m_uart;
       //! GSM driver.
       Driver* m_driver;
@@ -200,7 +200,7 @@ namespace Transports
           return;
 
         if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
-          throw RestartNeeded("input error", 5);
+          throw RestartNeeded(DTR("input error"), 5);
       }
 
       void
@@ -242,18 +242,16 @@ namespace Transports
         }
         catch (std::exception& e)
         {
-          inf("failed to send SMS: %s", e.what());
+          inf(DTR("failed to send SMS: %s"), e.what());
           m_queue.push(sms);
         }
       }
 
       void
-      onMain(void)
+      pollStatus(void)
       {
-        while (!stopping())
+        try
         {
-          waitForMessages(1.0);
-
           if (m_rssi_timer.overflow())
           {
             m_rssi_timer.reset();
@@ -265,7 +263,21 @@ namespace Transports
             m_rsms_timer.reset();
             m_driver->checkMessages();
           }
+        }
+        catch (std::exception& e)
+        {
+          throw RestartNeeded(String::str(DTR("failed to poll status: %s"),
+                                          e.what()), 5);
+        }
+      }
 
+      void
+      onMain(void)
+      {
+        while (!stopping())
+        {
+          waitForMessages(1.0);
+          pollStatus();
           processQueue();
         }
       }

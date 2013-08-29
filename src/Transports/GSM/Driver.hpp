@@ -121,7 +121,7 @@ namespace Transports
         std::string reply = readLine(timer);
         if (reply == "ERROR")
         {
-          throw std::runtime_error("unknown error");
+          throw std::runtime_error(DTR("unknown error"));
         }
         else if (String::startsWith(reply, "+CMGS:"))
         {

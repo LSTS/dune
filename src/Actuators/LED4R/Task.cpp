@@ -177,9 +177,9 @@ namespace Actuators
           m_uart->open();
           UCTK::FirmwareInfo info = m_uart->getFirmwareInfo();
           if (info.isDevelopment())
-            war("device is using unstable firmware");
+            war(DTR("device is using unstable firmware"));
           else
-            inf("firmware version %u.%u.%u", info.major,
+            inf(DTR("firmware version %u.%u.%u"), info.major,
                 info.minor, info.patch);
         }
         catch (std::runtime_error& e)
@@ -193,10 +193,10 @@ namespace Actuators
       onResourceInitialization(void)
       {
         if (!getConstantParameters())
-          throw RestartNeeded("failed to get constant parameters", c_restart_delay);
+          throw RestartNeeded(DTR("failed to get constant parameters"), c_restart_delay);
 
         if (!setExternalDriver(false))
-          throw RestartNeeded("failed to configured external LED driver", c_restart_delay);
+          throw RestartNeeded(DTR("failed to configured external LED driver"), c_restart_delay);
 
         std::map<std::string, LED*>::iterator itr = m_led_by_name.begin();
         for (unsigned i = 0; i < c_led_count; ++i)
