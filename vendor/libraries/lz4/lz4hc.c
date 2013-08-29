@@ -153,7 +153,7 @@
 #endif
 
 #if !defined(LZ4_FORCE_UNALIGNED_ACCESS) && !defined(__GNUC__)
-#  ifdef __IBMC__
+#  if defined(__IBMC__) || defined(__sun)
 #    pragma pack(1)
 #  else
 #    pragma pack(push, 1)
@@ -165,7 +165,11 @@ typedef struct _U32_S { U32 v; } _PACKED U32_S;
 typedef struct _U64_S { U64 v; } _PACKED U64_S;
 
 #if !defined(LZ4_FORCE_UNALIGNED_ACCESS) && !defined(__GNUC__)
-#  pragma pack(pop)
+#  ifdef __sun
+#    pragma pack
+#  else
+#    pragma pack(pop)
+#  endif
 #endif
 
 #define A64(x) (((U64_S *)(x))->v)
