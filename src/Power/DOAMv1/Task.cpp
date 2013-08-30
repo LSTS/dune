@@ -129,7 +129,7 @@ namespace Power
         .description("Serial port device used to communicate with the device");
 
         param("Power Channel - Name", m_args.pwr_name)
-        .defaultValue("DOAM")
+        .defaultValue("Camera Module")
         .description("Name of device's power channel");
 
         param("ADC Reference Voltage", m_args.ref_volt)
