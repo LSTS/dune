@@ -209,7 +209,9 @@ namespace Maneuver
         {
           m_pcs = *pcs;
           init_pcs = true;
+          inf("consume PathControlState");
           updateFollowRefStateFlags();
+          dispatch(m_fref_state);
         }
 
       private:
@@ -417,23 +419,26 @@ namespace Maneuver
 
         void updateFollowRefStateFlags()
         {
+          // try to remove this!! TODO
           if(pcsNotEmpty())
           {
-            if((m_pcs.flags & IMC::PathControlState::FL_LOITERING) != 0)
+            if(m_pcs.flags & IMC::PathControlState::FL_LOITERING)
             {
               m_fref_state.proximity = IMC::FollowRefState::PROX_Z_NEAR;
               m_fref_state.proximity |= IMC::FollowRefState::PROX_XY_NEAR;
-              if( (m_fref_state.state & IMC::FollowRefState::FR_TIMEOUT) != 0 && (m_fref_state.state & IMC::FollowRefState::FR_WAIT) != 0 )
+              if (!offlineOrWaiting())
               {
                 m_fref_state.state = IMC::FollowRefState::FR_LOITER;
+                inf("LOITER, XY and Z NEAR");
               }
             }
             else
             {
               m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
-              if( (m_fref_state.state & IMC::FollowRefState::FR_TIMEOUT) != 0 && (m_fref_state.state & IMC::FollowRefState::FR_WAIT) != 0 )
+              if(!offlineOrWaiting() )
               {
                 m_fref_state.state = IMC::FollowRefState::FR_GOTO;
+                inf("GOTO, FAR");
               }
             }
 
@@ -456,6 +461,13 @@ namespace Maneuver
         bool pcsNotEmpty()
         {
           return init_pcs;
+        }
+
+        bool
+        offlineOrWaiting()
+        {
+          return (m_fref_state.state & IMC::FollowRefState::FR_TIMEOUT)
+              && (m_fref_state.state & IMC::FollowRefState::FR_WAIT) ;
         }
       };
     }
