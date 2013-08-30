@@ -6,7 +6,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.4.0-rc1\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-08-28 17:25+0100\n"
+        "POT-Creation-Date: 2013-08-30 16:05+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -366,7 +366,7 @@ msgstr  ""
 msgid   "timeout to receive new remote info was exceeded."
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:147
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:155
 #, c-format
 msgid   "forcing minimum of %.1f"
 msgstr  ""
@@ -663,19 +663,19 @@ msgstr  ""
 msgid   "Maximum Horizontal Position Variance"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1084
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1090
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1101
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1107
 #, c-format
 msgid   "no measurements available: %s"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1084
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1101
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:50
 #: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:59
 msgid   "Depth"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1090
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1107
 msgid   "Euler Angles"
 msgstr  ""
 
@@ -949,19 +949,19 @@ msgid   "parser bug"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:40
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:319
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:321
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/OS4000/Task.cpp:146
 #: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1002
 msgid   "initializing"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:41
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:323
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:325
 msgid   "idle"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:42
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:325
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:327
 msgid   "active"
 msgstr  ""
 
@@ -1835,87 +1835,99 @@ msgstr  ""
 msgid   "restarting to change TCP data port"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:275
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:277
 msgid   "Enable Reports"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:280
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:282
 msgid   "Make Reports Verbose"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:285
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:287
 msgid   "Reports Periodicity"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:321
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:323
 msgid   "waiting beacons configuration"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:327
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:329
 msgid   "serial port communication error, modem not responding"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:329
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:331
 msgid   "failed to configure modem, possible serial port communication error"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:331
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:333
 msgid   "failed to set modem address"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:379
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:381
 #, c-format
 msgid   "modem address for agent '%s' is invalid"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:501
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:503
 #: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:443
 msgid   "dynamic sound speed corrections are disabled"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:582
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:584
 msgid   "invalid change plan message"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:612
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:603
+msgid   "start plan detected"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:611
+msgid   "plan acknowledged"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:613
+msgid   "failed to acknowledge plan start"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:627
 msgid   "received system restart request"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:621
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:635
 msgid   "restart request acknowledged"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:625
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:637
 msgid   "failed to acknowledge restart request"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:633
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:644
 msgid   "acoustic abort detected"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:643
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:654
 msgid   "abort acknowledged"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:647
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:658
 msgid   "failed to acknowledge abort"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:683
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:694
 #, c-format
 msgid   "discarded invalid range %0.2f"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:765
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:776
 msgid   "failed to ping beacons, modem seems busy"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:952
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:963
 #, c-format
 msgid   "reported range to %s = %u m"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:956
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:967
 #, c-format
 msgid   "failed to report range to %s"
 msgstr  ""
@@ -2065,20 +2077,24 @@ msgstr  ""
 msgid   "new hard-iron calibration parameters: %f | %f"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:240
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:245
 msgid   "restarting to change transducer detection GPIO"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:259
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:264
 #, c-format
 msgid   "unable to use GPIO %d for transducer detection"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:323
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:329
 msgid   "transducer not connected"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:606
+msgid   "plan started"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:625
 msgid   "range to"
 msgstr  ""
 
