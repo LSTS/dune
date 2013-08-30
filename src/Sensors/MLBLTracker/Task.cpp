@@ -111,6 +111,8 @@ namespace Sensors
       static const unsigned c_code_abort = 0x000a;
       // Abort acked code.
       static const unsigned c_code_abort_ack = 0x000b;
+      //! Start plan acknowledge code.
+      static const unsigned c_code_plan_ack = 0x000c;
       // Address used to send change plan messages.
       static const unsigned c_plan_addr = 15;
       // Quick tracking mask.
@@ -143,6 +145,8 @@ namespace Sensors
       IMC::AcousticOperation m_acop_out;
       // Save modem commands.
       IMC::DevDataText m_dev_data;
+      // Saved Plan Control.
+      IMC::PlanControl* m_pc;
       // Current operation.
       Operation m_op;
       // Transducer detection GPIO.
@@ -154,6 +158,7 @@ namespace Sensors
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
         m_op_deadline(-1.0),
+        m_pc(NULL),
         m_op(OP_NONE),
         m_gpio_txd(NULL)
       {
@@ -291,6 +296,7 @@ namespace Sensors
       void
       onResourceRelease(void)
       {
+        Memory::clear(m_pc);
         Memory::clear(m_gpio_txd);
         Memory::clear(m_uart);
       }
@@ -386,6 +392,8 @@ namespace Sensors
         if (msg->getId() == DUNE_IMC_PLANCONTROL)
         {
           const IMC::PlanControl* pc = static_cast<const IMC::PlanControl*>(msg);
+          Memory::replace(m_pc, new IMC::PlanControl(*pc));
+
           if (pc->op == IMC::PlanControl::PC_START)
           {
             if (pc->plan_id.size() == 1)
@@ -592,6 +600,17 @@ namespace Sensors
           m_acop_out.system = m_acop.system;
           dispatch(m_acop_out);
           resetOp();
+        }
+        if (value == c_code_plan_ack)
+        {
+          inf(DTR("plan started"));
+          m_pc->setDestination(m_pc->getSource());
+          m_pc->setDestinationEntity(m_pc->getSourceEntity());
+          m_pc->setSource(getSystemId());
+          m_pc->setSourceEntity(getEntityId());
+          m_pc->type = IMC::PlanControl::PC_SUCCESS;
+          m_pc->flags = 0;
+          dispatch(*m_pc);
         }
         else if (value & c_mask_qtrack)
         {

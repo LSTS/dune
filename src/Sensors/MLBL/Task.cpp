@@ -52,6 +52,8 @@ namespace Sensors
     static const unsigned c_code_abort = 0x000a;
     //! Abort acked code.
     static const unsigned c_code_abort_ack = 0x000b;
+    //! Start plan acknowledge code.
+    static const unsigned c_code_plan_ack = 0x000c;
     //! Restart system code.
     static const unsigned c_code_sys_restart = 0x01a6;
     //! Restart system ack code.
@@ -597,6 +599,19 @@ namespace Sensors
           pc.plan_id.assign(plan_name);
           pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
           dispatch(pc);
+
+          war(DTR("start plan detected"));
+
+          std::string cmd = String::str("$CCMUC,%u,%u,%04x\r\n", m_addr, src, c_code_plan_ack);
+          processInput(m_args.mpk_delay_bef);
+          m_uart->write(cmd.c_str(), cmd.size());
+          processInput(c_mpk_duration + m_args.mpk_delay_aft);
+
+          if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
+            inf(DTR("plan acknowledged"));
+          else
+            inf(DTR("failed to acknowledge plan start"));
+
           return;
         }
 
@@ -617,13 +632,9 @@ namespace Sensors
           processInput(c_mpk_duration + m_args.mpk_delay_aft);
 
           if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
-          {
             inf(DTR("restart request acknowledged"));
-          }
           else
-          {
             inf(DTR("failed to acknowledge restart request"));
-          }
 
           IMC::RestartSystem restart;
           dispatch(restart);
