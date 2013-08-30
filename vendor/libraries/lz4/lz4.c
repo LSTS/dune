@@ -178,7 +178,7 @@ typedef const BYTE* Ptr;
 #endif
 
 #if !defined(LZ4_FORCE_UNALIGNED_ACCESS) && !defined(__GNUC__)
-#  if defined(__IBMC__) || defined(__sun)
+#  if defined(__IBMC__) || defined(__SUNPRO_CC) || defined(__SUNPRO_C)
 #    pragma pack(1)
 #  else
 #    pragma pack(push, 1)
@@ -191,8 +191,8 @@ typedef struct { U64 v; }  _PACKED U64_S;
 typedef struct {size_t v;} _PACKED size_t_S;
 
 #if !defined(LZ4_FORCE_UNALIGNED_ACCESS) && !defined(__GNUC__)
-#  ifdef __sun
-#    pragma pack
+#  if defined(__SUNPRO_CC) || defined(__SUNPRO_C)
+#    pragma pack()
 #  else
 #    pragma pack(pop)
 #  endif
