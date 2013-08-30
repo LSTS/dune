@@ -66,8 +66,6 @@ namespace Maneuver
         IMC::EstimatedState m_estate;
         //! Path Control state
         IMC::PathControlState m_pcs;
-        //! keep track if m_pcs was initialized yet
-        bool init_pcs;
         //! FollowRefState, dispatch on arrival of Reference, FollowReference
         //! and EstimatedState.
         //! --- State
@@ -93,7 +91,7 @@ namespace Maneuver
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx) :
-          DUNE::Maneuvers::Maneuver(name, ctx), init_pcs(false)
+          DUNE::Maneuvers::Maneuver(name, ctx)
         {
           param("Loitering Radius", m_args.loitering_radius).defaultValue("7.5").units(
               Units::Meter).description(
@@ -208,7 +206,6 @@ namespace Maneuver
         consume(const IMC::PathControlState* pcs)
         {
           m_pcs = *pcs;
-          init_pcs = true;
           inf("consume PathControlState");
           updateFollowRefStateFlags();
           dispatch(m_fref_state);
@@ -419,29 +416,24 @@ namespace Maneuver
 
         void updateFollowRefStateFlags()
         {
-          // try to remove this!! TODO
-          if(pcsNotEmpty())
+          if(m_pcs.flags & IMC::PathControlState::FL_LOITERING)
           {
-            if(m_pcs.flags & IMC::PathControlState::FL_LOITERING)
+            m_fref_state.proximity = IMC::FollowRefState::PROX_Z_NEAR;
+            m_fref_state.proximity |= IMC::FollowRefState::PROX_XY_NEAR;
+            if (!offlineOrWaiting())
             {
-              m_fref_state.proximity = IMC::FollowRefState::PROX_Z_NEAR;
-              m_fref_state.proximity |= IMC::FollowRefState::PROX_XY_NEAR;
-              if (!offlineOrWaiting())
-              {
-                m_fref_state.state = IMC::FollowRefState::FR_LOITER;
-                inf("LOITER, XY and Z NEAR");
-              }
+              m_fref_state.state = IMC::FollowRefState::FR_LOITER;
+              inf("LOITER, XY and Z NEAR");
             }
-            else
+          }
+          else
+          {
+            m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
+            if(!offlineOrWaiting() )
             {
-              m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
-              if(!offlineOrWaiting() )
-              {
-                m_fref_state.state = IMC::FollowRefState::FR_GOTO;
-                inf("GOTO, FAR");
-              }
+              m_fref_state.state = IMC::FollowRefState::FR_GOTO;
+              inf("GOTO, FAR");
             }
-
           }
         }
 
@@ -456,11 +448,6 @@ namespace Maneuver
             signalError("reference source timed out");
             dispatch(m_fref_state);
           }
-        }
-
-        bool pcsNotEmpty()
-        {
-          return init_pcs;
         }
 
         bool
