@@ -46,7 +46,7 @@ using DUNE_NAMESPACES;
 UDPSocket g_sock;
 Address g_addr;
 uint16_t g_port = 6002;
-char g_buffer[4096];
+uint8_t g_buffer[4096];
 bool g_stop = false;
 
 // POSIX implementation.
@@ -67,7 +67,7 @@ handleTerminate(int signo)
 void
 sendMessage(IMC::Message& msg)
 {
-  uint16_t rv = IMC::Packet::serialize(&msg, (uint8_t*)g_buffer, sizeof(g_buffer));
+  uint16_t rv = IMC::Packet::serialize(&msg, g_buffer, sizeof(g_buffer));
   g_sock.write(g_buffer, rv, g_addr, g_port);
   msg.toText(std::cerr);
 }

@@ -488,7 +488,7 @@ namespace Vision
       void
       write(const uint8_t* data, unsigned size)
       {
-        m_socket.write((const char*)data, size, m_cam_addr, c_port);
+        m_socket.write(data, size, m_cam_addr, c_port);
 
 #if defined(DEBUG)
         std::fprintf(stderr, "write (%u): ", size);
@@ -504,7 +504,7 @@ namespace Vision
         if (!m_iom.poll(1.0))
           return false;
 
-        int rv = m_socket.read((char*)bfr, bfr_size);
+        int rv = m_socket.read(bfr, bfr_size);
 
 #if defined(DEBUG)
         std::fprintf(stderr, "read (%d): ", rv);

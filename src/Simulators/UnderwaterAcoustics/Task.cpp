@@ -74,7 +74,6 @@ namespace Simulators
 
       // UDP socket and related auxilliary data.
       UDPSocket* m_sock;
-      IOMultiplexing m_iom;
       uint8_t m_buf[1024];
 
       Task(const std::string& name, Tasks::Context& ctx):
@@ -145,7 +144,6 @@ namespace Simulators
         m_sock->setMulticastLoop(true);
         m_sock->joinMulticastGroup(m_args.udp_maddr);
         m_sock->bind(m_args.udp_port);
-        m_sock->addToPoll(m_iom);
       }
 
       void
@@ -170,7 +168,7 @@ namespace Simulators
         // Share message over the UDP multicast socket.
         int n = msg->getSerializationSize();
         IMC::Packet::serialize(msg, m_buf, n);
-        m_sock->write((char*)m_buf, n, m_args.udp_maddr, m_args.udp_port);
+        m_sock->write(m_buf, n, m_args.udp_maddr, m_args.udp_port);
       }
 
       void
@@ -364,9 +362,9 @@ namespace Simulators
 
         try
         {
-          if (m_iom.poll(0.01))
+          if (Poll::poll(*m_sock, 0.01))
           {
-            int n = m_sock->read((char*)m_buf, sizeof(m_buf), &dummy);
+            size_t n = m_sock->read(m_buf, sizeof(m_buf), &dummy);
 
             IMC::Message* m = IMC::Packet::deserialize(m_buf, n);
 

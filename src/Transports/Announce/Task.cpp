@@ -419,9 +419,9 @@ namespace Transports
           try
           {
             if (m_dsts[i].local)
-              m_sock.write((char*)m_bfr_loc, bfr_len_loc, m_dsts[i].addr, m_dsts[i].port);
+              m_sock.write(m_bfr_loc, bfr_len_loc, m_dsts[i].addr, m_dsts[i].port);
             else
-              m_sock.write((char*)m_bfr_ext, bfr_len_ext, m_dsts[i].addr, m_dsts[i].port);
+              m_sock.write(m_bfr_ext, bfr_len_ext, m_dsts[i].addr, m_dsts[i].port);
           }
           catch (...)
           { }

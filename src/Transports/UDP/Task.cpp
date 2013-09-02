@@ -339,7 +339,7 @@ namespace Transports
         {
           try
           {
-            m_sock.write((char*)m_bfr, rv, itr->getAddress(), itr->getPort());
+            m_sock.write(m_bfr, rv, itr->getAddress(), itr->getPort());
           }
           catch (...)
           { }

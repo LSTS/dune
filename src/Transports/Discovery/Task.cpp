@@ -116,7 +116,7 @@ namespace Transports
       readMessage(UDPSocket& sock)
       {
         Address addr;
-        uint16_t rv = sock.read((char*)m_bfr, sizeof(m_bfr), &addr);
+        uint16_t rv = sock.read(m_bfr, sizeof(m_bfr), &addr);
         IMC::Message* msg = IMC::Packet::deserialize(m_bfr, rv);
 
         // Validate message.
@@ -212,18 +212,12 @@ namespace Transports
       void
       onMain(void)
       {
-        IOMultiplexing iom;
-        m_sock.addToPoll(iom);
-
         while (!stopping())
         {
           try
           {
-            if (iom.poll(1.0))
-            {
-              if (m_sock.wasTriggered(iom))
-                readMessage(m_sock);
-            }
+            if (IO::Poll::poll(m_sock, 1.0))
+              readMessage(m_sock);
           }
           catch (...)
           { }

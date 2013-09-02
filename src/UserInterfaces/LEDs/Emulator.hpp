@@ -57,7 +57,7 @@ namespace UserInterfaces
         std::sprintf(cmd, "%d %d", m_nr, value ? 1 : 0);
 
         UDPSocket sock;
-        sock.write(cmd, 3, Address::Any, 6969);
+        sock.write((uint8_t*)cmd, 3, Address::Any, 6969);
       }
 
     private:
