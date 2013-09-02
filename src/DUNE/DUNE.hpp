@@ -60,6 +60,7 @@
 #include <DUNE/Navigation.hpp>
 #include <DUNE/Status.hpp>
 #include <DUNE/I18N.hpp>
+#include <DUNE/IO.hpp>
 
 //! DUNE: Uniform Navigational Environment.
 namespace DUNE
@@ -89,6 +90,7 @@ namespace DUNE
   using namespace DUNE::Plans;                  \
   using namespace DUNE::Time;                   \
   using namespace DUNE::Utils;                  \
-  using namespace DUNE::Navigation
+  using namespace DUNE::Navigation;             \
+  using namespace DUNE::IO
 
 #endif
