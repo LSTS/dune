@@ -225,6 +225,8 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT] = &Task::handleNavControllerPacket;
           m_mlh[MAVLINK_MSG_ID_MISSION_ITEM] = &Task::handleMissionItemPacket;
           m_mlh[MAVLINK_MSG_ID_BATTERY_STATUS] = &Task::handleBatteryStatusPacket;
+          m_mlh[MAVLINK_MSG_ID_VFR_HUD] = &Task::handleHUDPacket;
+
 
           // Setup processing of IMC messages
           bind<DesiredPath>(this);
@@ -828,7 +830,7 @@ namespace Control
                   case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
                     trace("NAV_CONTROLLER_OUTPUT");
                     break;
-                  case 74:
+                  case MAVLINK_MSG_ID_VFR_HUD:
                     trace("VFR_HUD");
                     break;
                   case MAVLINK_MSG_ID_COMMAND_ACK:
@@ -1228,6 +1230,23 @@ namespace Control
               m_critical = true;
               break;
           }
+        }
+
+        void
+        handleHUDPacket(const mavlink_message_t* msg)
+        {
+          mavlink_vfr_hud_t vfr_hud;
+          mavlink_msg_vfr_hud_decode(msg, &vfr_hud);
+
+          IMC::IndicatedSpeed ias;
+          IMC::TrueSpeed gs;
+
+
+          ias.value = (fp64_t)vfr_hud.airspeed;
+          gs.value = (fp64_t)vfr_hud.groundspeed;
+
+          dispatch(ias);
+          dispatch(gs);
         }
       };
     }
