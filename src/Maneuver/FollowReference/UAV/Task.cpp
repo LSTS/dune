@@ -206,7 +206,6 @@ namespace Maneuver
         consume(const IMC::PathControlState* pcs)
         {
           m_pcs = *pcs;
-          inf("consume PathControlState");
           updateFollowRefStateFlags();
           dispatch(m_fref_state);
         }
