@@ -247,7 +247,7 @@ namespace Navigation
 
             Memory::replace(m_estimate[i], new IMC::LblEstimate);
 
-            m_estimate[i]->beacon.set(IMC::LblBeacon());
+            m_estimate[i]->beacon.set(*itr);
           }
 
           setup();
