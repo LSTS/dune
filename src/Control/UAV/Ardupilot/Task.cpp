@@ -224,7 +224,7 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_HEARTBEAT] = &Task::handleHeartbeatPacket;
           m_mlh[MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT] = &Task::handleNavControllerPacket;
           m_mlh[MAVLINK_MSG_ID_MISSION_ITEM] = &Task::handleMissionItemPacket;
-          m_mlh[MAVLINK_MSG_ID_BATTERY_STATUS] = &Task::handleBatteryStatusPacket;
+          m_mlh[MAVLINK_MSG_ID_SYS_STATUS] = &Task::handleSystemStatusPacket;
           m_mlh[MAVLINK_MSG_ID_VFR_HUD] = &Task::handleHUDPacket;
 
 
@@ -786,7 +786,7 @@ namespace Control
                   case MAVLINK_MSG_ID_HEARTBEAT:
                     trace("HEARTBEAT");
                     break;
-                  case 1:
+                  case MAVLINK_MSG_ID_SYS_STATUS:
                     trace("SYS_STATUS");
                     break;
                   case 22:
@@ -980,20 +980,20 @@ namespace Control
         }
 
         void
-        handleBatteryStatusPacket(const mavlink_message_t* msg)
+        handleSystemStatusPacket(const mavlink_message_t* msg)
         {
           if(!m_args.pwrm)
           {
             (void) msg;
             return;
           }
-          mavlink_battery_status_t bat_status;
+          mavlink_sys_status_t sys_status;
 
-          mavlink_msg_battery_status_decode(msg, &bat_status);
+          mavlink_msg_sys_status_decode(msg, &sys_status);
 
-          m_volt.value = 0.001 * (float)bat_status.voltage_cell_1;
-          m_curr.value = 0.01 * (float)bat_status.current_battery;
-          m_fuel.value = (float)bat_status.battery_remaining;
+          m_volt.value = 0.001 * (float)sys_status.voltage_battery;
+          m_curr.value = 0.01 * (float)sys_status.current_battery;
+          m_fuel.value = (float)sys_status.battery_remaining;
 
           dispatch(m_volt);
           dispatch(m_curr);
