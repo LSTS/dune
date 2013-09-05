@@ -42,7 +42,7 @@ namespace DUNE
     {
     public:
       //! Constructor
-      //! @param[in] vector of moving average window sizes
+      //! @param[in] window_sizes sizes of the moving average windows
       MultiMovingAverage(const std::vector<unsigned>& window_sizes):
         m_wsizes(window_sizes)
       {
