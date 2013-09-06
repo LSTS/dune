@@ -81,8 +81,8 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
-        m_uart->write("#");
-        m_uart->write("M1\r\n");
+        m_uart->writeString("#");
+        m_uart->writeString("M1\r\n");
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -99,12 +99,11 @@ namespace Sensors
 
         while (!stopping())
         {
-          if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+          if (!Poll::poll(*m_uart, 1.0))
             continue;
 
-          int rv = m_uart->readString(bfr, sizeof(bfr));
-
-          if (rv <= 0)
+          size_t rv = m_uart->readString(bfr, sizeof(bfr));
+          if (rv == 0)
           {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
             throw RestartNeeded(DTR("I/O error"), 5);

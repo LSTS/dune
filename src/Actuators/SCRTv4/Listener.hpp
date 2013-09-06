@@ -64,12 +64,10 @@ namespace Actuators
 
         while (!isStopping())
         {
-          //          std::cerr << "waiting" << std::endl;
-          if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+          if (!Poll::poll(*m_uart, 1.0))
             continue;
 
           int rv = m_uart->read(bfr, sizeof(bfr));
-          //          std::cerr << "got " << rv << std::endl;
           for (int i = 0; i < rv; ++i)
           {
             LUCL::CommandType type = parser.parse(cmd, bfr[i]);

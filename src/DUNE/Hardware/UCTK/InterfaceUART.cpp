@@ -28,6 +28,7 @@
 // DUNE headers.
 #include <DUNE/Memory.hpp>
 #include <DUNE/Time/Delay.hpp>
+#include <DUNE/IO/Poll.hpp>
 #include <DUNE/Hardware/UCTK/Constants.hpp>
 #include <DUNE/Hardware/UCTK/InterfaceUART.hpp>
 
@@ -61,19 +62,19 @@ namespace DUNE
       bool
       InterfaceUART::doPoll(double timeout)
       {
-        return m_handle->hasNewData(timeout) == System::IOMultiplexing::PRES_OK;
+        return IO::Poll::poll(*m_handle, timeout);
       }
 
       void
       InterfaceUART::doWrite(const uint8_t* data, unsigned data_size)
       {
-        m_handle->write((const char*)data, data_size);
+        m_handle->write(data, data_size);
       }
 
       unsigned
       InterfaceUART::doRead(uint8_t* data, unsigned data_size)
       {
-        return (unsigned)m_handle->read((char*)data, data_size);
+        return m_handle->read(data, data_size);
       }
 
       void

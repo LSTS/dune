@@ -194,7 +194,7 @@ namespace Sensors
         m_uart->setCanonicalInput(true);
 
         // Wake up.
-        m_uart->write("AA");
+        m_uart->writeString("AA");
         m_uart->flushInput();
 
         stopSampling();
@@ -213,7 +213,7 @@ namespace Sensors
       bool
       readString(char* bfr, unsigned bfr_len, double timeout = 1.0)
       {
-        if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+        if (!Poll::poll(*m_uart, 1.0))
           return false;
 
         m_uart->readString(bfr, bfr_len);
@@ -235,12 +235,12 @@ namespace Sensors
           consumeMessages();
 
           // Stop sampling.
-          m_uart->write("!9");
+          m_uart->writeString("!9");
           Delay::wait(1.0);
           m_uart->flushInput();
 
           // Try requesting identification information.
-          m_uart->write("A");
+          m_uart->writeString("A");
           if (!readString(m_bfr, sizeof(m_bfr)))
             continue;
 
@@ -275,7 +275,7 @@ namespace Sensors
             m_uart->flushInput();
 
             // Read conductivity calibration.
-            m_uart->write("Z01");
+            m_uart->writeString("Z01");
             if (!readString(m_bfr, sizeof(m_bfr)))
               continue;
 
@@ -283,7 +283,7 @@ namespace Sensors
               m_coeffs[CHN_CONDUCTIVITY][i] = Parser::readDoubleFromASCII(m_bfr + 16 * i);
 
             // Read temperature.
-            m_uart->write("Z02");
+            m_uart->writeString("Z02");
             if (!readString(m_bfr, sizeof(m_bfr)))
               continue;
 
@@ -291,7 +291,7 @@ namespace Sensors
               m_coeffs[CHN_TEMPERATURE][i] = Parser::readDoubleFromASCII(m_bfr + 16 * i);
 
             // Read pressure calibration.
-            m_uart->write("Z03");
+            m_uart->writeString("Z03");
             if (!readString(m_bfr, sizeof(m_bfr)))
               continue;
 
@@ -320,8 +320,8 @@ namespace Sensors
           consumeMessages();
 
           m_uart->flushInput();
-          m_uart->write(ptr->cmd_set);
-          m_uart->write(ptr->cmd_get);
+          m_uart->writeString(ptr->cmd_set);
+          m_uart->writeString(ptr->cmd_get);
 
           if (!readString(m_bfr, sizeof(m_bfr)))
             continue;
@@ -339,8 +339,8 @@ namespace Sensors
       {
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_MISSING_DATA);
         m_wait_sample = true;
-        m_uart->write("!B0D");
-        m_uart->write("!R");
+        m_uart->writeString("!B0D");
+        m_uart->writeString("!R");
       }
 
       //! Define measurement coefficients.
@@ -405,15 +405,15 @@ namespace Sensors
             m_sspeed_timer.reset();
           }
 
-          if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+          if (!Poll::poll(*m_uart, 1.0))
           {
             if (!m_wait_sample && m_wdog.overflow())
               setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
             continue;
           }
 
-          int rv = m_uart->readString(m_bfr, sizeof(m_bfr));
-          for (int i = 0; i < rv; ++i)
+          size_t rv = m_uart->readString(m_bfr, sizeof(m_bfr));
+          for (size_t i = 0; i < rv; ++i)
           {
             try
             {

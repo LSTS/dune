@@ -75,10 +75,10 @@ main(int argc, char** argv)
 
   while (true)
   {
-    if (port.hasNewData(1.0) != DUNE::System::IOMultiplexing::PRES_OK)
+    if (!Poll::poll(port, 1.0))
       continue;
 
-    int rv = port.read(bfr, sizeof(bfr));
+    size_t rv = port.read(bfr, sizeof(bfr));
     std::fwrite(bfr, 1, rv, bin);
   }
 

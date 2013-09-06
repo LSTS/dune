@@ -36,7 +36,7 @@
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
-#include <DUNE/System/IOMultiplexing.hpp>
+#include <DUNE/IO/Handle.hpp>
 
 // POSIX headers.
 #if defined(DUNE_SYS_HAS_TERMIOS_H)
@@ -56,7 +56,7 @@ namespace DUNE
     class DUNE_DLL_SYM SerialPort;
 
     //! The SerialPort class encapsulates serial port access.
-    class SerialPort
+    class SerialPort: public IO::Handle
     {
     public:
       class Error: public std::runtime_error
@@ -133,60 +133,6 @@ namespace DUNE
       void
       setMinimumRead(int value);
 
-      //! Write an amount of bytes to the serial port.
-      //! @param bfr buffer of bytes.
-      //! @param size amount of bytes to write.
-      //! @return amount of bytes actually written.
-      int
-      write(const char* bfr, int size);
-
-      //! Write an amount of bytes to the serial port.
-      //! @param bfr buffer of bytes.
-      //! @param size amount of bytes to write.
-      //! @return amount of bytes actually written.
-      int
-      write(const uint8_t* bfr, int size);
-
-      //! Write a null terminated string to the serial port.
-      //! @param bfr C string.
-      //! @return amount of bytes written.
-      int
-      write(const char* bfr);
-
-      //! Read an amount of bytes from the serial port.
-      //! @param bfr destination buffer.
-      //! @param size amount of bytes to read.
-      //! @return amount of bytes actually read.
-      int
-      read(char* bfr, int size);
-
-      //! Read an amount of bytes from the serial port
-      //! and define last character as null.
-      //! @param bfr destination buffer.
-      //! @param size amount of bytes to read.
-      //! @return amount of bytes actually read.
-      int
-      readString(char* bfr, int size);
-
-      //! Read an amount of bytes from the serial port.
-      //! @param bfr destination buffer.
-      //! @param size amount of bytes to read.
-      //! @return amount of bytes actually read.
-      int
-      read(uint8_t* bfr, int size);
-
-      //! Flush input buffer, discarding all of it's contents.
-      void
-      flushInput(void);
-
-      //! Flush output buffer, aborting output.
-      void
-      flushOutput(void);
-
-      //! Flush both input and output buffers.
-      void
-      flush(void);
-
       //! Set the baud rate of the serial port.
       //! @param baudrate baud rate value.
       void
@@ -234,20 +180,6 @@ namespace DUNE
       void
       setCTSRTS(bool enabled);
 
-      //! Check if there is new data to be read.
-      //! @param timeout timeout.
-      System::IOMultiplexing::Result
-      hasNewData(double timeout = -1.0);
-
-      void
-      addToPoll(System::IOMultiplexing& poller);
-
-      void
-      delFromPoll(System::IOMultiplexing& p);
-
-      bool
-      wasTriggered(System::IOMultiplexing& p);
-
     private:
       // POSIX implementation.
 #if defined(DUNE_SYS_HAS_STRUCT_TERMIOS)
@@ -260,6 +192,38 @@ namespace DUNE
       DCB m_options;
 
 #endif
+
+      IO::NativeHandle
+      doGetNative(void) const
+      {
+        return m_handle;
+      }
+
+      //! Write an amount of bytes to the serial port.
+      //! @param bfr buffer of bytes.
+      //! @param size amount of bytes to write.
+      //! @return amount of bytes actually written.
+      size_t
+      doWrite(const uint8_t* bfr, size_t size);
+
+      //! Read an amount of bytes from the serial port.
+      //! @param bfr destination buffer.
+      //! @param size amount of bytes to read.
+      //! @return amount of bytes actually read.
+      size_t
+      doRead(uint8_t* bfr, size_t size);
+
+      //! Flush input buffer, discarding all of it's contents.
+      void
+      doFlushInput(void);
+
+      //! Flush output buffer, aborting output.
+      void
+      doFlushOutput(void);
+
+      //! Flush both input and output buffers.
+      void
+      doFlush(void);
     };
   }
 }

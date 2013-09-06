@@ -228,11 +228,11 @@ namespace Actuators
       sendCommand(const char* cmd, char* reply, unsigned reply_size)
       {
         m_uart->flushInput();
-        m_uart->write(cmd);
+        m_uart->writeString(cmd);
 
         if (m_args.echo)
         {
-          if (m_uart->hasNewData(m_reply_tout) != IOMultiplexing::PRES_OK)
+          if (!Poll::poll(*m_uart, m_reply_tout))
             return false;
 
           readString(reply, reply_size);
@@ -243,7 +243,7 @@ namespace Actuators
           }
         }
 
-        if (m_uart->hasNewData(m_reply_tout) != IOMultiplexing::PRES_OK)
+        if (!Poll::poll(*m_uart, m_reply_tout))
           return false;
 
         readString(reply, reply_size);

@@ -398,7 +398,7 @@ namespace Actuators
       {
         sendCommand();
 
-        if (m_uart->hasNewData(0.1) == IOMultiplexing::PRES_OK)
+        if (Poll::poll(*m_uart, 0.1))
         {
           uint8_t bfr[20];
           int rv = m_uart->read(bfr, sizeof(bfr));

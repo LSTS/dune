@@ -236,7 +236,7 @@ namespace Sensors
         if (!m_args.uart_echo)
           return true;
 
-        while (m_uart->hasNewData(0.1) == IOMultiplexing::PRES_OK)
+        while (Poll::poll(*m_uart, 0.1))
         {
           i -= m_uart->read(rxbfr + (len - i), i);
           if (i == 0)
@@ -278,7 +278,7 @@ namespace Sensors
         // Reset the parser whenever a read is asked for.
         m_parser_state = STA_ADDR;
 
-        while (m_uart->hasNewData(0.1) == IOMultiplexing::PRES_OK)
+        while (Poll::poll(*m_uart, 0.1))
         {
           int len = m_uart->read(bfr, sizeof(bfr));
           ParserResults result = parse(bfr, len);

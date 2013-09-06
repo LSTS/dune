@@ -336,7 +336,7 @@ namespace Sensors
       sendCommand(const std::string& cmd)
       {
         inf("%s", sanitize(cmd).c_str());
-        m_uart->write(cmd.c_str());
+        m_uart->writeString(cmd.c_str());
         m_dev_data.value.assign(sanitize(cmd));
         dispatch(m_dev_data);
       }
@@ -795,7 +795,7 @@ namespace Sensors
         {
           consumeMessages();
 
-          if (m_uart->hasNewData(0.1) == IOMultiplexing::PRES_OK)
+          if (Poll::poll(*m_uart, 0.1))
           {
             readSentence();
             m_last_stn.reset();

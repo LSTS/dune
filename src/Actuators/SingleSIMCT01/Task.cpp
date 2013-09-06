@@ -155,17 +155,17 @@ namespace Actuators
       bool
       sendCommand(const char* cmd, char* bfr, unsigned bfr_len)
       {
-        m_uart->write(cmd);
+        m_uart->writeString(cmd);
 
         if (m_args.uart_echo)
         {
-          if (m_uart->hasNewData(0.2) != IOMultiplexing::PRES_OK)
+          if (!Poll::poll(*m_uart, 0.2))
             return false;
 
           m_uart->readString(bfr, bfr_len);
         }
 
-        if (m_uart->hasNewData(0.2) != IOMultiplexing::PRES_OK)
+        if (!Poll::poll(*m_uart, 0.2))
           return false;
 
         m_uart->readString(bfr, bfr_len);
