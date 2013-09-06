@@ -162,7 +162,6 @@ namespace Vision
         m_polarity(true)
       {
         m_socket.bind(c_port);
-        m_iom.add(&m_socket);
       }
 
       ~GVCP(void)
@@ -349,8 +348,6 @@ namespace Vision
     private:
       //! GVCP control port.
       static const uint16_t c_port = 3956;
-      //! I/O multiplexer.
-      IOMultiplexing m_iom;
       //! Camera IP Address.
       Address m_cam_addr;
       //! Sequence lock.
@@ -501,7 +498,7 @@ namespace Vision
       bool
       read(uint8_t* bfr, unsigned bfr_size)
       {
-        if (!m_iom.poll(1.0))
+        if (!Poll::poll(m_socket, 1.0))
           return false;
 
         int rv = m_socket.read(bfr, bfr_size);

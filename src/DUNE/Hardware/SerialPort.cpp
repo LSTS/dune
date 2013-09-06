@@ -40,7 +40,6 @@
 #include <DUNE/Time/Delay.hpp>
 #include <DUNE/FileSystem/Path.hpp>
 #include <DUNE/System/Error.hpp>
-#include <DUNE/System/IOMultiplexing.hpp>
 #include <DUNE/Hardware/SerialPort.hpp>
 
 // POSIX headers.
