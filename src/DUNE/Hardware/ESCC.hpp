@@ -25,35 +25,48 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_HARDWARE_HPP_INCLUDED_
-#define DUNE_HARDWARE_HPP_INCLUDED_
+#ifndef DUNE_HARDWARE_ESCC_HPP_INCLUDED_
+#define DUNE_HARDWARE_ESCC_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <string>
+
+// DUNE headers.
+#include <DUNE/IO/Handle.hpp>
 
 namespace DUNE
 {
-  //! Low level hardware drivers.
   namespace Hardware
-  { }
-}
+  {
+    class ESCC: public IO::Handle
+    {
+    public:
+      ESCC(const std::string& dev);
 
-#include <DUNE/Hardware/SerialPort.hpp>
-#include <DUNE/Hardware/I2C.hpp>
-#include <DUNE/Hardware/IOPort.hpp>
-#include <DUNE/Hardware/GPIO.hpp>
-#include <DUNE/Hardware/Buttons.hpp>
-#include <DUNE/Hardware/PPS.hpp>
-#include <DUNE/Hardware/ESCC.hpp>
-#include <DUNE/Hardware/IntelHEX.hpp>
-#include <DUNE/Hardware/BasicModem.hpp>
-#include <DUNE/Hardware/HayesModem.hpp>
-#include <DUNE/Hardware/Exceptions.hpp>
-#include <DUNE/Hardware/UCTK/Constants.hpp>
-#include <DUNE/Hardware/UCTK/Errors.hpp>
-#include <DUNE/Hardware/UCTK/Parser.hpp>
-#include <DUNE/Hardware/UCTK/InterfaceUART.hpp>
-#include <DUNE/Hardware/UCTK/InterfaceESCC.hpp>
-#include <DUNE/Hardware/UCTK/Bootloader.hpp>
-#include <DUNE/Hardware/LUCL/Protocol.hpp>
-#include <DUNE/Hardware/LUCL/ProtocolParser.hpp>
-#include <DUNE/Hardware/LUCL/BootLoader.hpp>
+      ~ESCC(void);
+
+    private:
+      //! Device name.
+      std::string m_dev;
+      //! Low-level handle.
+      int m_handle;
+
+      IO::NativeHandle
+      doGetNative(void) const
+      {
+        return m_handle;
+      }
+
+      size_t
+      doRead(uint8_t* bfr, size_t size);
+
+      size_t
+      doWrite(const uint8_t* bfr, size_t size);
+
+      void
+      doFlush(void);
+    };
+  }
+}
 
 #endif

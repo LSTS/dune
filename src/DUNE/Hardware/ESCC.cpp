@@ -25,35 +25,89 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_HARDWARE_HPP_INCLUDED_
-#define DUNE_HARDWARE_HPP_INCLUDED_
+// DUNE headers.
+#include <DUNE/Time/Utils.hpp>
+#include <DUNE/System/Error.hpp>
+#include <DUNE/Hardware/ESCC.hpp>
+
+// Linux headers.
+#if defined(DUNE_OS_LINUX)
+#  include <sys/types.h>
+#  include <sys/stat.h>
+#  include <sys/select.h>
+#  include <fcntl.h>
+#  include <unistd.h>
+#endif
 
 namespace DUNE
 {
-  //! Low level hardware drivers.
   namespace Hardware
-  { }
-}
+  {
+    inline void
+    throwLastError(const std::string& msg)
+    {
+      throw std::runtime_error(msg + System::Error::getLastMessage());
+    }
 
-#include <DUNE/Hardware/SerialPort.hpp>
-#include <DUNE/Hardware/I2C.hpp>
-#include <DUNE/Hardware/IOPort.hpp>
-#include <DUNE/Hardware/GPIO.hpp>
-#include <DUNE/Hardware/Buttons.hpp>
-#include <DUNE/Hardware/PPS.hpp>
-#include <DUNE/Hardware/ESCC.hpp>
-#include <DUNE/Hardware/IntelHEX.hpp>
-#include <DUNE/Hardware/BasicModem.hpp>
-#include <DUNE/Hardware/HayesModem.hpp>
-#include <DUNE/Hardware/Exceptions.hpp>
-#include <DUNE/Hardware/UCTK/Constants.hpp>
-#include <DUNE/Hardware/UCTK/Errors.hpp>
-#include <DUNE/Hardware/UCTK/Parser.hpp>
-#include <DUNE/Hardware/UCTK/InterfaceUART.hpp>
-#include <DUNE/Hardware/UCTK/InterfaceESCC.hpp>
-#include <DUNE/Hardware/UCTK/Bootloader.hpp>
-#include <DUNE/Hardware/LUCL/Protocol.hpp>
-#include <DUNE/Hardware/LUCL/ProtocolParser.hpp>
-#include <DUNE/Hardware/LUCL/BootLoader.hpp>
+    ESCC::ESCC(const std::string& dev):
+      m_dev(dev),
+      m_handle(-1)
+    {
+#if defined(DUNE_OS_LINUX)
+      if (m_handle != -1)
+        ::close(m_handle);
 
+      m_handle = ::open(m_dev.c_str(), O_RDWR);
+      if (m_handle == -1)
+        throwLastError("failed to open ESCC device");
+#else
+      throw std::runtime_error("unsupported operation");
 #endif
+    }
+
+    ESCC::~ESCC(void)
+    {
+#if defined(DUNE_OS_LINUX)
+      if (m_handle != -1)
+        ::close(m_handle);
+#endif
+    }
+
+    size_t
+    ESCC::doRead(uint8_t* data, size_t data_size)
+    {
+#if defined(DUNE_OS_LINUX)
+      ssize_t rv = ::read(m_handle, data, data_size);
+      if (rv <= 0)
+        throwLastError("read failure");
+
+      return (unsigned)rv;
+#else
+      (void)data;
+      (void)data_size;
+      return 0;
+#endif
+    }
+
+    size_t
+    ESCC::doWrite(const uint8_t* data, size_t data_size)
+    {
+#if defined(DUNE_OS_LINUX)
+      ssize_t rv = ::write(m_handle, data, data_size);
+      return rv;
+
+#else
+      (void)data;
+      (void)data_size;
+#endif
+    }
+
+    void
+    ESCC::doFlush(void)
+    {
+#if defined(DUNE_OS_LINUX)
+      fsync(m_handle);
+#endif
+    }
+  }
+}
