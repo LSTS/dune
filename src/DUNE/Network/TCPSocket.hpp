@@ -33,8 +33,8 @@
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
+#include <DUNE/IO/Handle.hpp>
 #include <DUNE/Network/Address.hpp>
-#include <DUNE/System/IOMultiplexing.hpp>
 
 // Microsoft Windows headers.
 #if defined(DUNE_SYS_HAS_WINSOCK2_H)
@@ -49,7 +49,7 @@ namespace DUNE
     class DUNE_DLL_SYM TCPSocket;
 
     //! TCP Socket.
-    class TCPSocket
+    class TCPSocket: public IO::Handle
     {
     public:
       //! Create an unbound TCP socket.
@@ -71,23 +71,8 @@ namespace DUNE
       TCPSocket*
       accept(Address* a = 0, uint16_t* port = 0);
 
-      int
-      write(const char* buffer, int len);
-
-      int
-      read(char* buffer, int len);
-
       bool
       writeFile(const char* filename, int64_t off_end, int64_t off_beg = -1);
-
-      void
-      addToPoll(System::IOMultiplexing& p);
-
-      void
-      delFromPoll(System::IOMultiplexing& p);
-
-      bool
-      wasTriggered(System::IOMultiplexing& p);
 
       //! Enable/disable keep-alive messages. When enabled connections
       //! are kept active by periodically transmitting messages.
@@ -125,9 +110,19 @@ namespace DUNE
       //! System specific socket handle.
 #if defined(DUNE_OS_WINDOWS)
       SOCKET m_handle;
+      HANDLE m_event_handle;
 #else
       int m_handle;
 #endif
+
+      IO::NativeHandle
+      doGetNative(void) const;
+
+      size_t
+      doRead(uint8_t* buffer, size_t size);
+
+      size_t
+      doWrite(const uint8_t* bfr, size_t size);
 
       // Non - copyable.
       TCPSocket(TCPSocket const&);
@@ -139,6 +134,9 @@ namespace DUNE
       //! Disable SIGPIPE generation.
       void
       disableSIGPIPE(void);
+
+      void
+      createEventHandle(void);
     };
   }
 }

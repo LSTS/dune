@@ -49,7 +49,6 @@ namespace Vision
       {
         // FIXME: add exception handling
         m_socket.connect(address, port);
-        m_socket.addToPoll(m_iom);
         m_socket.write(request, std::strlen(request));
       }
 
@@ -103,8 +102,6 @@ namespace Vision
       static const size_t c_bfrlen = 128;
       // TCP socket
       TCPSocket m_socket;
-      // I/O multiplexing
-      IOMultiplexing m_iom;
       // Incomming buffer
       char m_bfr[c_bfrlen];
       // Length of incomming buffer
@@ -121,7 +118,7 @@ namespace Vision
           // if pending buffer is empty, read data from socket
           if (m_bfr_len == 0)
           {
-            if (!m_iom.poll(timeout))
+            if (!Poll::poll(m_socket, timeout))
               throw std::runtime_error(DTR("timed out while waiting for reply"));
 
             // Read to buffer
@@ -177,7 +174,7 @@ namespace Vision
         // read the rest of the data directly from the socket
         while (len > 0)
         {
-          if (!m_iom.poll(timeout))
+          if (!Poll::poll(m_socket, timeout))
             throw std::runtime_error(DTR("timed out while waiting for reply"));
 
           rdlen = m_socket.read(bfr, len);

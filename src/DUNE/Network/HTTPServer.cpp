@@ -34,7 +34,6 @@
 // DUNE headers.
 #include <DUNE/Streams/Terminal.hpp>
 #include <DUNE/Concurrency/TSQueue.hpp>
-#include <DUNE/System/IOMultiplexing.hpp>
 #include <DUNE/Concurrency/Condition.hpp>
 #include <DUNE/Concurrency/Mutex.hpp>
 #include <DUNE/Network.hpp>
@@ -89,7 +88,7 @@ namespace DUNE
     {
       m_sock.bind(port);
       m_sock.listen(1024);
-      m_sock.addToPoll(m_iom);
+      m_poll.add(m_sock);
 
       for (unsigned int i = 0; i < threads; ++i)
       {
@@ -126,9 +125,9 @@ namespace DUNE
     void
     HTTPServer::poll(double timeout)
     {
-      if (m_iom.poll(timeout))
+      if (m_poll.poll(timeout))
       {
-        if (m_sock.wasTriggered(m_iom))
+        if (m_poll.wasTriggered(m_sock))
         {
           try
           {

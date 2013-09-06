@@ -36,6 +36,7 @@
 #include <DUNE/Concurrency/Thread.hpp>
 #include <DUNE/Network/TCPSocket.hpp>
 #include <DUNE/Network/HTTPRequestHandler.hpp>
+#include <DUNE/IO/Poll.hpp>
 
 namespace DUNE
 {
@@ -69,7 +70,7 @@ namespace DUNE
       //! Socket queue.
       Concurrency::TSQueue<TCPSocket*> m_queue;
       //! I/O multiplexing.
-      System::IOMultiplexing m_iom;
+      IO::Poll m_poll;
     };
   }
 }

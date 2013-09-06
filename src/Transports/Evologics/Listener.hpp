@@ -76,9 +76,7 @@ namespace Transports
     public:
       Listener(DUNE::Network::TCPSocket* sock):
         m_socket(sock)
-      {
-        m_socket->addToPoll(m_iom);
-      }
+      { }
 
       ~Listener(void)
       {
@@ -188,16 +186,13 @@ namespace Transports
 
         while (!isStopping())
         {
-          if (!m_iom.poll(1.0))
+          if (!DUNE::IO::Poll::poll(*m_socket, 1.0))
             continue;
 
-          int rv = m_socket->read(bfr, sizeof(bfr));
-          if (rv <= 0)
-            continue;
-
+          size_t rv = m_socket->read(bfr, sizeof(bfr));
           printHex("from modem", bfr, rv);
 
-          for (int i = 0; i < rv; ++i)
+          for (size_t i = 0; i < rv; ++i)
           {
             Reply* reply = m_parser.parse(bfr[i]);
             if (reply == NULL)
@@ -223,8 +218,6 @@ namespace Transports
     private:
       DUNE::Network::TCPSocket* m_socket;
       Parser m_parser;
-      // I/O multiplexer.
-      DUNE::System::IOMultiplexing m_iom;
       DUNE::Concurrency::TSQueue<Reply*> m_cmd_queue;
       DUNE::Concurrency::TSQueue<Reply*> m_bdat_queue;
       DUNE::Concurrency::TSQueue<Reply*> m_idat_queue;

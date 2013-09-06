@@ -128,6 +128,7 @@ namespace DUNE
           throw NetworkError(DTR("unable to create socket"), getLastErrorMessage());
 
         disableSIGPIPE();
+        createEventHandle();
       }
     }
 
@@ -204,11 +205,30 @@ namespace DUNE
       TCPSocket* ns = new TCPSocket(false);
       ns->m_handle = rv;
       ns->disableSIGPIPE();
+      ns->createEventHandle();
       return ns;
     }
 
-    int
-    TCPSocket::write(const char* bfr, int size)
+    size_t
+    TCPSocket::doRead(uint8_t* bfr, size_t size)
+    {
+      ssize_t rv = ::recv(m_handle, (char*)bfr, size, 0);
+      if (rv == 0)
+      {
+        throw ConnectionClosed();
+      }
+      else if (rv < 0)
+      {
+        if (errno == ECONNRESET)
+          throw ConnectionClosed();
+        throw NetworkError(DTR("error receiving data"), getLastErrorMessage());
+      }
+
+      return static_cast<size_t>(rv);
+    }
+
+    size_t
+    TCPSocket::doWrite(const uint8_t* bfr, size_t size)
     {
       int flags = 0;
 
@@ -216,46 +236,16 @@ namespace DUNE
       flags = MSG_NOSIGNAL;
 #endif
 
-      int rv = ::send(m_handle, bfr, size, flags);
+      ssize_t rv = ::send(m_handle, (char*)bfr, size, flags);
 
-      if (rv == -1)
+      if (rv < 0)
       {
         if (errno == EPIPE)
           throw ConnectionClosed();
         throw NetworkError(DTR("error sending data"), getLastErrorMessage());
       }
 
-      return rv;
-    }
-
-    int
-    TCPSocket::read(char* bfr, int size)
-    {
-      int rv = ::recv(m_handle, bfr, size, 0);
-      if (rv == 0)
-      {
-        throw ConnectionClosed();
-      }
-      else if (rv == -1)
-      {
-        if (errno == ECONNRESET)
-          throw ConnectionClosed();
-        throw NetworkError(DTR("error receiving data"), getLastErrorMessage());
-      }
-
-      return rv;
-    }
-
-    void
-    TCPSocket::addToPoll(System::IOMultiplexing& poller)
-    {
-      poller.add(&m_handle);
-    }
-
-    void
-    TCPSocket::delFromPoll(System::IOMultiplexing& poller)
-    {
-      poller.del(&m_handle);
+      return static_cast<size_t>(rv);
     }
 
     bool
@@ -321,21 +311,6 @@ namespace DUNE
 #endif
     }
 
-    bool
-    TCPSocket::wasTriggered(System::IOMultiplexing& poller)
-    {
-      return poller.wasTriggered(&m_handle);
-    }
-
-    void
-    TCPSocket::disableSIGPIPE(void)
-    {
-#if defined(SO_NOSIGPIPE)
-      int set = 1;
-      setsockopt(m_handle, SOL_SOCKET, SO_NOSIGPIPE, (void*)&set, sizeof(int));
-#endif
-    }
-
     void
     TCPSocket::setKeepAlive(bool enabled)
     {
@@ -386,6 +361,34 @@ namespace DUNE
         throw NetworkError(DTR("unable to get bound port"), getLastErrorMessage());
 
       return Utils::ByteCopy::fromBE(name.sin_port);
+    }
+
+    IO::NativeHandle
+    TCPSocket::doGetNative(void) const
+    {
+#if defined(DUNE_OS_WINDOWS)
+      return m_event_handle;
+#else
+      return m_handle;
+#endif
+    }
+
+    void
+    TCPSocket::disableSIGPIPE(void)
+    {
+#if defined(SO_NOSIGPIPE)
+      int set = 1;
+      setsockopt(m_handle, SOL_SOCKET, SO_NOSIGPIPE, (void*)&set, sizeof(int));
+#endif
+    }
+
+    void
+    TCPSocket::createEventHandle(void)
+    {
+#if defined(DUNE_OS_WINDOWS)
+      m_event_handle = CreateEvent(NULL, FALSE, FALSE, NULL);
+      WSAEventSelect(m_handle, m_event_handle, FD_ACCEPT | FD_READ);
+#endif
     }
   }
 }

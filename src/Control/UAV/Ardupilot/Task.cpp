@@ -115,7 +115,7 @@ namespace Control
         TCPSocket* m_TCP_sock;
         Address m_TCP_addr;
         uint16_t m_TCP_port;
-        System::IOMultiplexing m_iom;
+        IO::Poll m_poll;
         //! System ID
         uint8_t m_sysid;
         //! Last received position
@@ -265,7 +265,7 @@ namespace Control
           {
             m_TCP_sock = new TCPSocket;
             m_TCP_sock->connect(m_TCP_addr, m_TCP_port);
-            m_TCP_sock->addToPoll(m_iom);
+            m_poll.add(*m_TCP_sock);
             setupRate(10);
             inf(DTR("Ardupilot interface initialized"));
           }
@@ -679,8 +679,8 @@ namespace Control
         {
           if(m_TCP_sock)
           {
-            if (m_iom.poll(timeout))
-              return m_TCP_sock->wasTriggered(m_iom);
+            if (m_poll.poll(timeout))
+              return m_poll.wasTriggered(*m_TCP_sock);
             else
               return false;
           }
@@ -692,7 +692,7 @@ namespace Control
         {
           if(m_TCP_sock)
           {
-        	trace("Sending something");
+            trace("Sending something");
             return m_TCP_sock->write((char*)bfr, size);
           }
           return 0;
@@ -705,17 +705,17 @@ namespace Control
           {
             try
             {
-              return m_TCP_sock->read((char*) buf, blen);
+              return m_TCP_sock->read(buf, blen);
             }
             catch (...)
             {
               war("Connection lost, retrying...");
-              m_TCP_sock->delFromPoll(m_iom);
+              m_poll.remove(*m_TCP_sock);
               delete m_TCP_sock;
 
               m_TCP_sock = new Network::TCPSocket;
               m_TCP_sock->connect(m_TCP_addr, m_TCP_port);
-              m_TCP_sock->addToPoll(m_iom);
+              m_poll.add(*m_TCP_sock);
               return 0;
             }
           }
