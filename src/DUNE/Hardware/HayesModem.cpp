@@ -37,11 +37,8 @@ namespace DUNE
     //! Maximum number of revision lines.
     static const unsigned c_max_rev_lines = 10;
 
-    //! Constructor.
-    //! @param[in] task parent task.
-    //! @param[in] uart serial port connected to the ISU.
-    HayesModem::HayesModem(Tasks::Task* task, SerialPort* uart):
-      BasicModem(task, uart)
+    HayesModem::HayesModem(Tasks::Task* task, IO::Handle* handle):
+      BasicModem(task, handle)
     {
       m_rssi.setDestination(getTask()->getSystemId());
       m_rssi.setDestinationEntity(getTask()->getEntityId());
@@ -55,7 +52,7 @@ namespace DUNE
       // Reset and flush pending input.
       sendReset();
       Delay::wait(2.0);
-      m_uart->flushInput();
+      m_handle->flushInput();
 
       // Perform initialization.
       setReadMode(READ_MODE_LINE);
@@ -171,7 +168,7 @@ namespace DUNE
     void
     HayesModem::sendRaw(const uint8_t* data, unsigned data_size)
     {
-      m_uart->write(data, data_size);
+      m_handle->write(data, data_size);
     }
 
     void

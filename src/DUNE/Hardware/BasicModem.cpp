@@ -37,18 +37,15 @@ namespace DUNE
     //! Default command timeout.
     static const double c_timeout = 5.0;
 
-    //! Constructor.
-    //! @param[in] task parent task.
-    //! @param[in] uart serial port connected to the ISU.
-    BasicModem::BasicModem(Tasks::Task* task, SerialPort* uart):
-      m_uart(uart),
+    BasicModem::BasicModem(Tasks::Task* task, IO::Handle* handle):
+      m_handle(handle),
       m_task(task),
       m_timeout(c_timeout),
       m_read_mode(READ_MODE_LINE),
       m_busy(false),
       m_tx_rate_max(-1.0)
     {
-      m_uart->flushInput();
+      m_handle->flushInput();
     }
 
     void
@@ -57,7 +54,7 @@ namespace DUNE
       // Reset and flush pending input.
       sendReset();
       Delay::wait(2.0);
-      m_uart->flushInput();
+      m_handle->flushInput();
 
       // Perform initialization.
       setReadMode(READ_MODE_LINE);
@@ -128,7 +125,7 @@ namespace DUNE
     void
     BasicModem::sendRaw(const uint8_t* data, unsigned data_size)
     {
-      m_uart->write(data, data_size);
+      m_handle->write(data, data_size);
     }
 
     void
@@ -252,7 +249,7 @@ namespace DUNE
     void
     BasicModem::flushInput(void)
     {
-      m_uart->flushInput();
+      m_handle->flushInput();
     }
 
     void
@@ -263,11 +260,11 @@ namespace DUNE
 
       while (!isStopping())
       {
-        if (!Poll::poll(*m_uart, 1.0))
+        if (!Poll::poll(*m_handle, 1.0))
           continue;
 
-        int rv = m_uart->read(bfr, sizeof(bfr));
-        if (rv <= 0)
+        size_t rv = m_handle->read(bfr, sizeof(bfr));
+        if (rv == 0)
         {
           IMC::IoEvent iov;
           iov.setSource(getTask()->getSystemId());
@@ -280,7 +277,7 @@ namespace DUNE
 
         if (getReadMode() == READ_MODE_RAW)
         {
-          for (int i = 0; i < rv; ++i)
+          for (size_t i = 0; i < rv; ++i)
             m_bytes.push(bfr[i]);
         }
         else
@@ -288,7 +285,7 @@ namespace DUNE
           bfr[rv] = 0;
           m_task->spew("%s", sanitize(bfr).c_str());
 
-          for (int i = 0; i < rv; ++i)
+          for (size_t i = 0; i < rv; ++i)
           {
             m_chars.push(bfr[i]);
           }

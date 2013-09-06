@@ -49,8 +49,8 @@ namespace DUNE
     public:
       //! Constructor.
       //! @param[in] task parent task.
-      //! @param[in] uart serial port connected to the ISU.
-      HayesModem(Tasks::Task* task, Hardware::SerialPort* uart);
+      //! @param[in] handle I/O handle.
+      HayesModem(Tasks::Task* task, IO::Handle* handle);
 
       //! Destructor.
       virtual

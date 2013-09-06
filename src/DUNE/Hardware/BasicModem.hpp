@@ -35,7 +35,7 @@
 #include <DUNE/Concurrency/Thread.hpp>
 #include <DUNE/Concurrency/ScopedMutex.hpp>
 #include <DUNE/Concurrency/TSQueue.hpp>
-#include <DUNE/Hardware/SerialPort.hpp>
+#include <DUNE/IO/Handle.hpp>
 #include <DUNE/Tasks/Task.hpp>
 #include <DUNE/Time/Counter.hpp>
 
@@ -46,7 +46,10 @@ namespace DUNE
     class BasicModem: public Concurrency::Thread
     {
     public:
-      BasicModem(Tasks::Task* task, Hardware::SerialPort* uart);
+      //! Constructor.
+      //! @param[in] task parent task.
+      //! @param[in] handle I/O handle.
+      BasicModem(Tasks::Task* task, IO::Handle* handle);
 
       virtual
       ~BasicModem(void)
@@ -144,8 +147,8 @@ namespace DUNE
       void
       setBusy(bool value);
 
-      //! Serial port handle.
-      Hardware::SerialPort* m_uart;
+      //! I/O handle.
+      IO::Handle* m_handle;
       //! Last command sent to modem.
       std::string m_last_cmd;
 
