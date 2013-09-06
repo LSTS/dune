@@ -522,7 +522,6 @@ namespace Sensors
         {
           case IMC::LoggingControl::COP_STARTED:
             closeLog();
-            debug("changing log file to %s", m_log_path.c_str());
             openLog(m_ctx.dir_log / msg->name / "multibeam.837");
             break;
 
