@@ -557,7 +557,6 @@ namespace Control
           dispatch(m_pcs);
 
           debug("Waypoint packet sent to Ardupilot");
-          inf(DTR("Dispatch pcs after consuming DesiredPath"));
         }
 
         void
@@ -595,7 +594,6 @@ namespace Control
           m_pcs.lradius = m_args.lradius * (m_args.lradius < 0 ? -1 : 1);
 
           dispatch(m_pcs);
-          inf(DTR("Dispatch pcs after consuming IdleManeuver"));
         }
 
         void
@@ -1200,10 +1198,6 @@ namespace Control
             near = true;
             m_pcs.flags |= PathControlState::FL_NEAR;
           }
-
-          //inf(DTR("LOITERING %s: wp_dist %d -- desired_radius %d +- %d"), (loitering)?"true":"false",nav_out.wp_dist, m_desired_radius,m_args.ltolerance);
-          //inf(DTR("NEAR %s: wp_dist %d -- desired_radius %d +- %d"), (near)?"true":"false", nav_out.wp_dist, m_desired_radius,m_args.ltolerance*2);
-          inf(DTR("%s %s %d"), (loitering)?"LOITERING":"", (near)?"NEAR":"", nav_out.wp_dist);
 
           dispatch(m_pcs);
           dispatch(d_roll);
