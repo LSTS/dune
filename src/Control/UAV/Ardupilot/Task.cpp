@@ -1180,18 +1180,22 @@ namespace Control
           d_pitch.value = Angles::radians(nav_out.nav_pitch);
           d_head.value = Angles::radians(nav_out.nav_bearing);
 
+          bool loitering = false;
           if((nav_out.wp_dist <= m_desired_radius + m_args.ltolerance)
              && (nav_out.wp_dist >= m_desired_radius - m_args.ltolerance)
              && (m_mode == 15))
           {
+            loitering = true;
             m_pcs.flags |= PathControlState::FL_LOITERING;
           }
 
+          bool near = false;
           if(!m_changing_wp
              && (nav_out.wp_dist <= m_desired_radius + 2 * m_desired_speed)
              && (nav_out.wp_dist >= m_desired_radius - 2 * m_desired_speed)
              && (m_mode == 15))
           {
+            near = true;
             m_pcs.flags |= PathControlState::FL_NEAR;
           }
 
