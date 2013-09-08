@@ -62,7 +62,7 @@ namespace Transports
       //! Control sockets.
       std::list<TCPSocket*> m_sockets;
       //! I/O selector.
-      Poll m_iom;
+      Poll m_poll;
       //! List of busy sessions.
       std::list<Session*> m_busy_list;
       //! Concurrency lock for list of busy sessions.
@@ -129,7 +129,7 @@ namespace Transports
 
           port = m_args.control_port;
           TCPSocket* sock = createSocket(itfs[i].address(), port);
-          m_iom.add(*sock);
+          m_poll.add(*sock);
           m_sockets.push_back(sock);
 
           std::stringstream os;
@@ -215,13 +215,13 @@ namespace Transports
         {
           consumeMessages();
 
-          if (!m_iom.poll(1.0))
+          if (!m_poll.poll(1.0))
             continue;
 
           std::list<TCPSocket*>::iterator itr = m_sockets.begin();
           for (; itr != m_sockets.end(); ++itr)
           {
-            if (m_iom.wasTriggered(*(*itr)))
+            if (m_poll.wasTriggered(*(*itr)))
               acceptNewClient(*itr, (*itr)->getBoundAddress());
           }
 
