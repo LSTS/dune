@@ -49,8 +49,6 @@ namespace DUNE
 #include <DUNE/Hardware/UCTK/Constants.hpp>
 #include <DUNE/Hardware/UCTK/Errors.hpp>
 #include <DUNE/Hardware/UCTK/Parser.hpp>
-#include <DUNE/Hardware/UCTK/InterfaceUART.hpp>
-#include <DUNE/Hardware/UCTK/InterfaceESCC.hpp>
 #include <DUNE/Hardware/UCTK/Bootloader.hpp>
 #include <DUNE/Hardware/LUCL/Protocol.hpp>
 #include <DUNE/Hardware/LUCL/ProtocolParser.hpp>
