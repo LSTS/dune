@@ -26,6 +26,7 @@
 //***************************************************************************
 
 // DUNE headers.
+#include <DUNE/IO/Poll.hpp>
 #include <DUNE/Algorithms/XORChecksum.hpp>
 #include <DUNE/Hardware/UCTK/Interface.hpp>
 #include <DUNE/Hardware/UCTK/Errors.hpp>
@@ -36,18 +37,14 @@ namespace DUNE
   {
     namespace UCTK
     {
+      Interface::Interface(IO::Handle* handle):
+        m_handle(handle)
+      { }
+
       Interface::~Interface(void)
       {
         while (!m_queue.empty())
           delete m_queue.pop();
-      }
-
-      void
-      Interface::open(bool query)
-      {
-        doOpen();
-        if (query)
-          getFirmwareInfo();
       }
 
       FirmwareInfo
@@ -87,7 +84,7 @@ namespace DUNE
       {
         frame.computeCRC();
 
-        write(frame.getData(), frame.getSize());
+        m_handle->write(frame.getData(), frame.getSize());
 
         if (timeout < 0)
           return true;
@@ -103,11 +100,11 @@ namespace DUNE
         Time::Counter<double> timer(timeout);
         while (!timer.overflow())
         {
-          if (!poll(timer.getRemaining()))
+          if (!IO::Poll::poll(*m_handle, timer.getRemaining()))
             break;
 
-          unsigned rv = read(m_buffer, sizeof(m_buffer));
-          for (unsigned i = 0; i < rv; ++i)
+          size_t rv = m_handle->read(m_buffer, sizeof(m_buffer));
+          for (size_t i = 0; i < rv; ++i)
           {
             if (!m_parser.parse(m_buffer[i], frame))
               continue;

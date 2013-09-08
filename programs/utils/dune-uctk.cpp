@@ -87,8 +87,6 @@ main(int argc, char** argv)
   else
     itf = new UCTK::InterfaceUART(sys_dev);
 
-  itf->open();
-
   UCTK::Bootloader* boot = new UCTK::Bootloader(itf, true);
   boot->program(ihex);
   delete boot;
