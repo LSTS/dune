@@ -26,14 +26,16 @@
 //***************************************************************************
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
+#include <DUNE/Time/Delay.hpp>
+#include <DUNE/Utils/String.hpp>
+#include <DUNE/Hardware/Exceptions.hpp>
+#include <DUNE/Concurrency/ScopedMutex.hpp>
+#include <DUNE/Hardware/HayesModem.hpp>
 
 namespace DUNE
 {
   namespace Hardware
   {
-    using DUNE_NAMESPACES;
-
     //! Maximum number of revision lines.
     static const unsigned c_max_rev_lines = 10;
 
@@ -51,7 +53,7 @@ namespace DUNE
     {
       // Reset and flush pending input.
       sendReset();
-      Delay::wait(2.0);
+      Time::Delay::wait(2.0);
       m_handle->flushInput();
 
       // Perform initialization.
@@ -93,7 +95,7 @@ namespace DUNE
         rev.push_back(line);
       }
 
-      return String::join(rev.begin(), rev.end(), " / ");
+      return Utils::String::join(rev.begin(), rev.end(), " / ");
     }
 
     //! Query the ISU serial number (IMEI).
@@ -111,14 +113,14 @@ namespace DUNE
     {
       queryRSSI();
 
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       return (unsigned)m_rssi.value;
     }
 
     void
     HayesModem::setRSSI(float value)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       m_rssi.value = value;
       getTask()->dispatch(m_rssi);
     }

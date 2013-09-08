@@ -26,14 +26,19 @@
 //***************************************************************************
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
+#include <DUNE/Config.hpp>
+#include <DUNE/Time/Delay.hpp>
+#include <DUNE/Time/Counter.hpp>
+#include <DUNE/IO/Poll.hpp>
+#include <DUNE/Streams/Terminal.hpp>
+#include <DUNE/Concurrency/ScopedMutex.hpp>
+#include <DUNE/Hardware/Exceptions.hpp>
+#include <DUNE/Hardware/BasicModem.hpp>
 
 namespace DUNE
 {
   namespace Hardware
   {
-    using DUNE_NAMESPACES;
-
     //! Default command timeout.
     static const double c_timeout = 5.0;
 
@@ -53,7 +58,7 @@ namespace DUNE
     {
       // Reset and flush pending input.
       sendReset();
-      Delay::wait(2.0);
+      Time::Delay::wait(2.0);
       m_handle->flushInput();
 
       // Perform initialization.
@@ -67,14 +72,14 @@ namespace DUNE
     bool
     BasicModem::isBusy(void)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       return m_busy;
     }
 
     void
     BasicModem::setBusy(bool value)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       m_busy = value;
       if (m_busy && (m_tx_rate_max >= 0))
         m_tx_rate_timer.reset();
@@ -85,7 +90,7 @@ namespace DUNE
     bool
     BasicModem::isCooling(void)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       if ((m_tx_rate_max >= 0.0) && (!m_tx_rate_timer.overflow()))
         return true;
       return false;
@@ -97,7 +102,7 @@ namespace DUNE
     void
     BasicModem::setTxRateMax(double rate)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       m_tx_rate_max = rate;
       m_tx_rate_timer.setTop(rate);
     }
@@ -111,14 +116,14 @@ namespace DUNE
     BasicModem::ReadMode
     BasicModem::getReadMode(void)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       return m_read_mode;
     }
 
     void
     BasicModem::setReadMode(BasicModem::ReadMode mode)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       m_read_mode = mode;
     }
 
@@ -131,21 +136,21 @@ namespace DUNE
     void
     BasicModem::send(const std::string& str)
     {
-      getTask()->inf("send: %s", sanitize(str).c_str());
+      getTask()->inf("send: %s", Streams::sanitize(str).c_str());
       sendRaw((uint8_t*)str.c_str(), str.size());
     }
 
     double
     BasicModem::getTimeout(void)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       return m_timeout;
     }
 
     void
     BasicModem::setTimeout(double timeout)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       m_timeout = timeout;
     }
 
@@ -160,12 +165,12 @@ namespace DUNE
     std::string
     BasicModem::readLine(void)
     {
-      Counter<double> timer(getTimeout());
+      Time::Counter<double> timer(getTimeout());
       return readLine(timer);
     }
 
     void
-    BasicModem::readRaw(Counter<double>& timer, uint8_t* data, unsigned data_size)
+    BasicModem::readRaw(Time::Counter<double>& timer, uint8_t* data, unsigned data_size)
     {
       unsigned bytes_read = 0;
 
@@ -210,13 +215,13 @@ namespace DUNE
         return false;
 
       // Clean line.
-      str = String::trim(m_line);
+      str = Utils::String::trim(m_line);
 
       // Got a complete line, but it's empty.
       if (str.empty())
         return true;
 
-      m_task->spew("recv: %s", sanitize(str).c_str());
+      m_task->spew("recv: %s", Streams::sanitize(str).c_str());
       m_line.clear();
 
       if (!m_skip_line.empty())
@@ -260,7 +265,7 @@ namespace DUNE
 
       while (!isStopping())
       {
-        if (!Poll::poll(*m_handle, 1.0))
+        if (!IO::Poll::poll(*m_handle, 1.0))
           continue;
 
         size_t rv = m_handle->read(bfr, sizeof(bfr));
@@ -283,7 +288,7 @@ namespace DUNE
         else
         {
           bfr[rv] = 0;
-          m_task->spew("%s", sanitize(bfr).c_str());
+          m_task->spew("%s", Streams::sanitize(bfr).c_str());
 
           for (size_t i = 0; i < rv; ++i)
           {
