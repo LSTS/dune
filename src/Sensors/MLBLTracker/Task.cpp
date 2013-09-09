@@ -729,6 +729,9 @@ namespace Sensors
         fuel.value = fuel_level;
         fuel.confidence = fuel_conf;
         dispatch(fuel);
+
+        spew("plan progress: %f", pcs.plan_progress);
+        spew("fuel level: %f (confidence is %f)", fuel.value, fuel.confidence);
       }
 
       void
