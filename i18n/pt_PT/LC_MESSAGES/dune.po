@@ -1658,7 +1658,7 @@ msgstr  "versão de \"firmware\": %u.%u.%u"
 #: /home/josebraga/workspace/dune/trunk/src/Power/MCBv2/Task.cpp:576
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/SDCR/Task.cpp:205
 msgid   "device reported"
-msgstr  "reportado dispositivo"
+msgstr  "o dispositivo reportou"
 
 #: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:372
 msgid   "failed to update EEPROM"
