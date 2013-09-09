@@ -2847,7 +2847,7 @@ msgstr  "excedido o tempo limite dos dados do sensor"
 
 #: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:692
 msgid   "too many samples below threshold"
-msgstr  "demsiadas amostras abaixo do limite"
+msgstr  "demasiadas amostras abaixo do limite"
 
 #: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:717
 msgid   "rebooting"
