@@ -335,7 +335,7 @@ namespace Sensors
       void
       onActivation(void)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_wdog.reset();
         m_trigger.setActive(true);
       }
 
@@ -364,11 +364,15 @@ namespace Sensors
         {
           if (!isActive())
           {
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_IDLE);
             waitForMessages(1.0);
             continue;
           }
 
           consumeMessages();
+
+          if (m_wdog.overflow())
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
 
           if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
             continue;
@@ -417,9 +421,6 @@ namespace Sensors
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             m_wdog.reset();
           }
-
-          if (m_wdog.overflow())
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
         }
       }
 
