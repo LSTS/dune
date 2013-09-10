@@ -6,7 +6,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.4.0-rc1\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-08-30 16:05+0100\n"
+        "POT-Creation-Date: 2013-09-10 09:54+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -305,18 +305,48 @@ msgstr  ""
 msgid   "schedule: entity label %s not found"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:138
-msgid   "waiting for first reference"
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:137
+#, c-format
+msgid   "lat lon = 0 ? %f"
 msgstr  ""
 
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:161
 #: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:194
 #, c-format
 msgid   "ignored reference from non-authorized source: %d"
 msgstr  ""
 
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:170
 #: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:203
 #, c-format
 msgid   "ignored reference from non-authorized entity: %d"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:395
+#, c-format
+msgid   "Loitering around (%f, %f, %f, %f)."
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:400
+#, c-format
+msgid   "Going towards (%f, %f, %f)."
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:404
+msgid   "Waiting for next reference."
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:407
+msgid   "Bad connection, too long since last EstimatedState was received."
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:410
+#, c-format
+msgid   "Unexpected state %#x"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:138
+msgid   "waiting for first reference"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:528
@@ -609,6 +639,7 @@ msgid   "error receiving data"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:178
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:320
 msgid   "unable to connect"
 msgstr  ""
 
@@ -1492,63 +1523,63 @@ msgstr  ""
 msgid   "maximum amount of beacons is %u"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:270
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:272
 msgid   "Ardupilot interface initialized"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:371
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:373
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:178
 #, c-format
 msgid   "%s - deactivating"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:373
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:375
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:180
 #, c-format
 msgid   "%s - activating"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:410
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:412
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:200
 msgid   "speed control"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:411
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:413
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:201
 msgid   "altitude control"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:412
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:414
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:202
 msgid   "bank control"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:413
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:415
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:203
 msgid   "heading control"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:414
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:416
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:205
 msgid   "path control"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:422
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:424
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:261
 msgid   "bank control is NOT active"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:446
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:448
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:234
 msgid   "altitude control is NOT active"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:469
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:471
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:332
 msgid   "path control is NOT active"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:737
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:739
 msgid   "receive error"
 msgstr  ""
 
@@ -1597,6 +1628,7 @@ msgstr  ""
 #: /home/josebraga/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:355
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:518
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:459
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:204
 msgid   "failed to contact device"
 msgstr  ""
 
@@ -1669,7 +1701,6 @@ msgid   "failed to read EEPROM#230"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX1/Task.cpp:311
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Antaris4/Task.cpp:494
 msgid   "unexpected byte"
 msgstr  ""
 
@@ -1700,19 +1731,6 @@ msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/PTU300/Task.cpp:202
 msgid   "timeout waiting for device response"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Antaris4/Task.cpp:319
-msgid   "unable to write full packet to device"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Antaris4/Task.cpp:355
-msgid   "message not acknowledged"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Antaris4/Task.cpp:475
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Antaris4/Task.cpp:489
-msgid   "checksum mismatch"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:210
@@ -2024,17 +2042,17 @@ msgstr  ""
 msgid   "restarting to change TCP port"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:670
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:669
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:287
 msgid   "failed to read header"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:680
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:679
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:292
 msgid   "failed to read data"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:684
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:683
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:296
 msgid   "failed to read footer"
 msgstr  ""
@@ -2826,6 +2844,27 @@ msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:717
 msgid   "rebooting"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:99
+msgid   "Start Range"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:106
+msgid   "Stop Range"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:244
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:265
+msgid   "unable to change directory"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:342
+msgid   "no sonar"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:399
+msgid   "no sonar head"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/private/src/Sensors/HG1700/Task.cpp:142
