@@ -364,7 +364,7 @@ namespace Sensors
         {
           if (!isActive())
           {
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_IDLE);
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
             waitForMessages(1.0);
             continue;
           }
