@@ -93,6 +93,13 @@ namespace Transports
         stopLog();
       }
 
+      void
+      onResourceInitialization(void)
+      {
+        // Initialize entity state.
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
       //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
@@ -146,7 +153,17 @@ namespace Transports
         switch (msg->op)
         {
           case IMC::LoggingControl::COP_STARTED:
-            startLog(msg->name);
+            try
+            {
+              startLog(msg->name);
+            }
+            catch (std::exception& e)
+            {
+              setEntityState(IMC::EntityState::ESTA_FAILURE, String::str(DTR("failed to start log, check available storage: %s"), e.what()));
+              err("%s", e.what());
+              war(DTR("waiting for human intervention"));
+            }
+
             logMessage(msg);
             break;
           case IMC::LoggingControl::COP_STOPPED:
