@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-09-10 09:54+0100\n"
+        "POT-Creation-Date: 2013-09-10 12:48+0100\n"
         "PO-Revision-Date: 2013-08-03 13:45-0000\n"
         "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
         "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -664,7 +664,7 @@ msgid   "error receiving data"
 msgstr  "erro ao receber dados"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:178
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:320
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:323
 msgid   "unable to connect"
 msgstr  "incapaz de conectar"
 
@@ -1456,11 +1456,13 @@ msgid   "log started '%s'"
 msgstr  "registo iniciado '%s'"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/Logging/Task.cpp:404
+#: /home/josebraga/workspace/dune/trunk/src/Transports/LoggingDigest/Task.cpp:162
 #, c-format
 msgid   "failed to start log, check available storage: %s"
 msgstr  "falha ao começar registo, verifique espaço disponível: %s'"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/Logging/Task.cpp:407
+#: /home/josebraga/workspace/dune/trunk/src/Transports/LoggingDigest/Task.cpp:164
 msgid   "waiting for human intervention"
 msgstr  "à espera de intervenção humana"
 
@@ -1653,7 +1655,7 @@ msgstr  "Habilitar controlador de roll"
 #: /home/josebraga/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:355
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:518
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:459
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:204
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:212
 msgid   "failed to contact device"
 msgstr  "falha ao contactar dispositivo"
 
@@ -2871,26 +2873,29 @@ msgstr  "demasiadas amostras abaixo do limite"
 msgid   "rebooting"
 msgstr  "a reiniciar"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:99
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:101
 msgid   "Start Range"
 msgstr  "Range Inicial"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:106
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:108
 msgid   "Stop Range"
 msgstr  "Range Final"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:244
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:265
-msgid   "unable to change directory"
-msgstr  "incapaz de mudar diretório"
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:115
+msgid   "Save to PGM"
+msgstr  "Gravar para PGM"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:342
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:345
 msgid   "no sonar"
 msgstr  "sem sonar"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:399
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:402
 msgid   "no sonar head"
 msgstr  "sem cabeça do sonar"
+
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:581
+msgid   "unable to change directory"
+msgstr  "incapaz de mudar diretório"
 
 #: /home/josebraga/workspace/dune/trunk/private/src/Sensors/HG1700/Task.cpp:142
 msgid   "failed to open ESCC device"
