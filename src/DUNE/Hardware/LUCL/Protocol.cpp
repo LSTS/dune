@@ -269,7 +269,7 @@ namespace DUNE
         if (idx < 0 || idx > c_error_last)
           idx = c_error_last;
 
-        return c_error_strs[idx];
+        return DTR(c_error_strs[idx]);
       }
 
       void
