@@ -784,14 +784,15 @@ namespace Sensors
         double lon;
         Coordinates::toWGS84(m_estate, lat, lon);
 
-        double depth = m_estate.depth;
-        double yaw = m_estate.psi;
-
         float f_lat = lat;
         float f_lon = lon;
-        float f_depth = depth;
-        float f_yaw = yaw;
+        uint8_t u_depth = (uint8_t)m_estate.depth;
+        int16_t i_yaw = (int16_t)(m_estate.psi * 100.0);
+        int16_t i_alt = (int16_t)(m_estate.alt * 10.0);
         uint16_t ranges[2] = {0};
+        uint8_t fuel = (uint8_t)m_fuel_level;
+        uint8_t conf = (uint8_t)m_fuel_conf;
+        int8_t prog = (int8_t)m_progress;
 
         if (m_beacons.size() == 2)
         {
@@ -802,13 +803,14 @@ namespace Sensors
         std::vector<char> msg(32, 0);
         std::memcpy(&msg[0], &f_lat, 4);
         std::memcpy(&msg[4], &f_lon, 4);
-        std::memcpy(&msg[8], &f_depth, 4);
-        std::memcpy(&msg[12], &f_yaw, 4);
-        std::memcpy(&msg[16], &ranges[0], 2);
-        std::memcpy(&msg[18], &ranges[1], 2);
-        std::memcpy(&msg[20], &m_progress, 4);
-        std::memcpy(&msg[24], &m_fuel_level, 4);
-        std::memcpy(&msg[28], &m_fuel_conf, 4);
+        std::memcpy(&msg[8], &u_depth, 1);
+        std::memcpy(&msg[9], &i_yaw, 2);
+        std::memcpy(&msg[11], &i_alt, 2);
+        std::memcpy(&msg[13], &ranges[0], 2);
+        std::memcpy(&msg[15], &ranges[1], 2);
+        std::memcpy(&msg[17], &prog, 1);
+        std::memcpy(&msg[18], &fuel, 1);
+        std::memcpy(&msg[19], &conf, 1);
 
         std::string hex = String::toHex(msg);
         std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n",
