@@ -680,23 +680,25 @@ namespace Sensors
 
         float lat;
         float lon;
-        float depth;
-        float yaw;
+        uint8_t depth;
+        int16_t yaw;
+        int16_t alt;
         uint16_t ranges[2];
 
-        float progress;
-        float fuel_level;
-        float fuel_conf;
+        int8_t progress;
+        uint8_t fuel_level;
+        uint8_t fuel_conf;
 
         std::memcpy(&lat, msg_raw + 0, 4);
         std::memcpy(&lon, msg_raw + 4, 4);
-        std::memcpy(&depth, msg_raw + 8, 4);
-        std::memcpy(&yaw, msg_raw + 12, 4);
-        std::memcpy(&ranges[0], msg_raw + 16, 2);
-        std::memcpy(&ranges[1], msg_raw + 18, 2);
-        std::memcpy(&progress, msg_raw + 20, 4);
-        std::memcpy(&fuel_level, msg_raw + 24, 4);
-        std::memcpy(&fuel_conf, msg_raw + 28, 4);
+        std::memcpy(&depth, msg_raw + 8, 1);
+        std::memcpy(&yaw, msg_raw + 9, 2);
+        std::memcpy(&alt, msg_raw + 11, 2);
+        std::memcpy(&ranges[0], msg_raw + 13, 2);
+        std::memcpy(&ranges[1], msg_raw + 15, 2);
+        std::memcpy(&progress, msg_raw + 17, 1);
+        std::memcpy(&fuel_level, msg_raw + 18, 1);
+        std::memcpy(&fuel_conf, msg_raw + 19, 1);
 
         for (int i = 0; i < 2; ++i)
         {
@@ -715,23 +717,24 @@ namespace Sensors
         es.setSource(m_mimap[src]);
         es.lat = lat;
         es.lon = lon;
-        es.depth = depth;
-        es.psi = yaw;
+        es.depth = (float)depth;
+        es.psi = (float)yaw / 100.0;
+        es.alt = (float)alt / 10.0;
         dispatch(es);
 
         IMC::PlanControlState pcs;
         pcs.setSource(m_mimap[src]);
-        pcs.plan_progress = progress;
+        pcs.plan_progress = (float)progress;
         dispatch(pcs);
 
         IMC::FuelLevel fuel;
         fuel.setSource(m_mimap[src]);
-        fuel.value = fuel_level;
-        fuel.confidence = fuel_conf;
+        fuel.value = (float)fuel_level;
+        fuel.confidence = (float)fuel_conf;
         dispatch(fuel);
 
-        spew("plan progress: %f", pcs.plan_progress);
-        spew("fuel level: %f (confidence is %f)", fuel.value, fuel.confidence);
+        spew("lat %f | lon %f | depth %f | alt %f | yaw %f", es.lat, es.lon, es.depth, es.alt, es.psi);
+        spew("fuel %f | conf %f | plan progress %f", fuel.value, fuel.confidence, pcs.plan_progress);
       }
 
       void
