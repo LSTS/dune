@@ -168,6 +168,7 @@ namespace Transports
       void
       sendInitialization(void)
       {
+        setEcho(false);
         setErrorVerbosity(2);
         setPin(m_pin);
         setMessageFormat(1);
