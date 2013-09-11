@@ -274,7 +274,7 @@ namespace Control
           catch (...)
           {
             m_TCP_sock = 0;
-            war("Connection failed, retrying...");
+            war(DTR("Connection failed, retrying..."));
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
           }
         }
@@ -370,9 +370,9 @@ namespace Control
           is &= loop;
 
           if (was && !is)
-            war(DTR("%s - deactivating"), desc);
+            debug("%s - deactivating", desc);
           else if (!was && is)
-            war(DTR("%s - activating"), desc);
+            debug("%s - activating", desc);
         }
 
         void
@@ -409,11 +409,11 @@ namespace Control
           else
             m_cloops &= ~cloops->mask;
 
-          info(prev, m_cloops, IMC::CL_SPEED, DTR("speed control"));
-          info(prev, m_cloops, IMC::CL_ALTITUDE, DTR("altitude control"));
-          info(prev, m_cloops, IMC::CL_ROLL, DTR("bank control"));
-          info(prev, m_cloops, IMC::CL_YAW, DTR("heading control"));
-          info(prev, m_cloops, IMC::CL_PATH, DTR("path control"));
+          info(prev, m_cloops, IMC::CL_SPEED, "speed control");
+          info(prev, m_cloops, IMC::CL_ALTITUDE, "altitude control");
+          info(prev, m_cloops, IMC::CL_ROLL, "bank control");
+          info(prev, m_cloops, IMC::CL_YAW, "heading control");
+          info(prev, m_cloops, IMC::CL_PATH, "path control");
         }
 
         void
@@ -421,7 +421,7 @@ namespace Control
         {
           if (!(m_cloops & IMC::CL_ROLL))
           {
-            err(DTR("bank control is NOT active"));
+            debug("bank control is NOT active");
             return;
           }
 
@@ -445,7 +445,7 @@ namespace Control
         {
           if (!(m_cloops & IMC::CL_ALTITUDE))
           {
-            err(DTR("altitude control is NOT active"));
+            debug("altitude control is NOT active");
             return;
           }
 
@@ -468,7 +468,7 @@ namespace Control
 
           if(!(m_cloops & IMC::CL_PATH))
           {
-            err(DTR("path control is NOT active"));
+            debug("path control is NOT active");
             return;
           }
 
@@ -711,7 +711,7 @@ namespace Control
             }
             catch (...)
             {
-              war("Connection lost, retrying...");
+              war(DTR("Connection lost, retrying..."));
               m_TCP_sock->delFromPoll(m_iom);
               delete m_TCP_sock;
 
@@ -736,7 +736,7 @@ namespace Control
             int n = receiveData(m_buf, sizeof(m_buf));
             if (n < 0)
             {
-              err(DTR("receive error"));
+              debug("Receive error");
               break;
             }
 
@@ -1180,22 +1180,18 @@ namespace Control
           d_pitch.value = Angles::radians(nav_out.nav_pitch);
           d_head.value = Angles::radians(nav_out.nav_bearing);
 
-          bool loitering = false;
           if((nav_out.wp_dist <= m_desired_radius + m_args.ltolerance)
              && (nav_out.wp_dist >= m_desired_radius - m_args.ltolerance)
              && (m_mode == 15))
           {
-            loitering = true;
             m_pcs.flags |= PathControlState::FL_LOITERING;
           }
 
-          bool near = false;
           if(!m_changing_wp
              && (nav_out.wp_dist <= m_desired_radius + 2 * m_desired_speed)
              && (nav_out.wp_dist >= m_desired_radius - 2 * m_desired_speed)
              && (m_mode == 15))
           {
-            near = true;
             m_pcs.flags |= PathControlState::FL_NEAR;
           }
 
