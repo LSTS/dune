@@ -126,9 +126,9 @@ namespace Vision
 
     private:
       //! GVSP header size.
-      static const int c_header_size = 44;
+      static const size_t c_header_size = 44;
       //! GVSP footer size.
-      static const int c_footer_size = 16;
+      static const size_t c_footer_size = 16;
       //! Internal packet buffer.
       uint8_t* m_buffer;
       //! Internal packet buffer capacity.
