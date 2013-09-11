@@ -96,6 +96,9 @@ namespace DUNE
       queryRSSI(void)
       { }
 
+      virtual void
+      expectOK(void);
+
       void
       sendAT(const std::string& str);
 
@@ -104,9 +107,6 @@ namespace DUNE
 
       void
       expect(const std::string& str);
-
-      void
-      expectOK(void);
 
       void
       expectREADY(void);

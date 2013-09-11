@@ -59,7 +59,6 @@ namespace DUNE
       // Perform initialization.
       setReadMode(READ_MODE_LINE);
       start();
-      setEcho(false);
       sendInitialization();
     }
 
@@ -162,8 +161,8 @@ namespace DUNE
       std::string cmd("AT");
       cmd.append(str);
       m_last_cmd = cmd;
-      cmd.append("\r\n");
-      getTask()->spew("send: %s", m_last_cmd.c_str());
+      cmd.append(getLineTermOut());
+      getTask()->spew("send: %s", DUNE::Streams::sanitize(cmd).c_str());
       sendRaw((const uint8_t*)cmd.c_str(), cmd.size());
     }
 
