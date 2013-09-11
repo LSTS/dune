@@ -137,7 +137,8 @@ namespace Control
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
-          DUNE::Control::BasicAutopilot(name, ctx, c_controllable, c_required)
+          DUNE::Control::BasicAutopilot(name, ctx, c_controllable, c_required),
+          m_ca(NULL)
         {
           // Load controller gains and integral limits
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
