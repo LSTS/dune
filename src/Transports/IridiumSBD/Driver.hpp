@@ -268,6 +268,7 @@ namespace Transports
       void
       sendInitialization(void)
       {
+        setEcho(false);
         setFlowControl(false);
         setRadioActivity(true);
         setRingAlert(true);
