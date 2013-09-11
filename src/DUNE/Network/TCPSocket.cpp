@@ -38,6 +38,7 @@
 #include <DUNE/Network/TCPSocket.hpp>
 #include <DUNE/Network/Exceptions.hpp>
 #include <DUNE/Time/Utils.hpp>
+#include <DUNE/IO/Poll.hpp>
 
 #if defined(DUNE_SYS_HAS_WINSOCK2_H)
 #  include <winsock2.h>
@@ -246,6 +247,16 @@ namespace DUNE
       }
 
       return static_cast<size_t>(rv);
+    }
+
+    void
+    TCPSocket::doFlushInput(void)
+    {
+      uint8_t bfr[4096];
+      while (IO::Poll::poll(m_handle, 0))
+      {
+        size_t rv = read(bfr, sizeof(bfr));
+      }
     }
 
     bool

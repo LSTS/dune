@@ -124,6 +124,9 @@ namespace DUNE
       size_t
       doWrite(const uint8_t* bfr, size_t size);
 
+      void
+      doFlushInput(void);
+
       // Non - copyable.
       TCPSocket(TCPSocket const&);
 
