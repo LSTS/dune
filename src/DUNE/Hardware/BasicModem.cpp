@@ -41,6 +41,10 @@ namespace DUNE
   {
     //! Default command timeout.
     static const double c_timeout = 5.0;
+    //! Default input line termination.
+    static std::string c_line_term_in = "\r\n";
+    //! Default output line termination.
+    static std::string c_line_term_out = "\r\n";
 
     BasicModem::BasicModem(Tasks::Task* task, IO::Handle* handle):
       m_handle(handle),
@@ -48,7 +52,10 @@ namespace DUNE
       m_timeout(c_timeout),
       m_read_mode(READ_MODE_LINE),
       m_busy(false),
-      m_tx_rate_max(-1.0)
+      m_tx_rate_max(-1.0),
+      m_line_term_in(c_line_term_in),
+      m_line_term_idx(0),
+      m_line_term_out(c_line_term_out)
     {
       m_handle->flushInput();
     }
@@ -65,6 +72,35 @@ namespace DUNE
       setReadMode(READ_MODE_LINE);
       start();
       sendInitialization();
+    }
+
+    void
+    BasicModem::setLineTermIn(const std::string& term)
+    {
+      Concurrency::ScopedMutex l(m_mutex);
+      m_line_term_in = term;
+      m_line_term_idx = 0;
+    }
+
+    const std::string&
+    BasicModem::getLineTermIn(void)
+    {
+      Concurrency::ScopedMutex l(m_mutex);
+      return m_line_term_in;
+    }
+
+    void
+    BasicModem::setLineTermOut(const std::string& term)
+    {
+      Concurrency::ScopedMutex l(m_mutex);
+      m_line_term_out = term;
+    }
+
+    const std::string&
+    BasicModem::getLineTermOut(void)
+    {
+      Concurrency::ScopedMutex l(m_mutex);
+      return m_line_term_out;
     }
 
     //! Test if ISU is busy performing an SBD session.
@@ -196,26 +232,44 @@ namespace DUNE
         char c = m_chars.front();
         m_chars.pop();
 
-        if (c == '\n')
+          m_line.push_back(c);
+
+        //!@fixme: concurrency hazard.
+        if (c == m_line_term_in[m_line_term_idx])
         {
-          if (!m_line.empty())
+          ++m_line_term_idx;
+          if (m_line_term_idx == m_line_term_in.size())
           {
+            m_line_term_idx = 0;
             got_line = true;
             break;
           }
         }
         else
         {
-          m_line.push_back(c);
+
         }
+      }
+
+      if (isFragment(m_line))
+      {
+        getTask()->inf("fragment: %s", Streams::sanitize(m_line).c_str());
+        return false;
       }
 
       // No complete line is available.
       if (!got_line)
         return false;
 
-      // Clean line.
-      str = Utils::String::trim(m_line);
+      if (m_line.size() <= m_line_term_in.size())
+      {
+        str = "";
+        return true;
+      }
+
+      // Remove termination characters.
+      str = m_line;
+      str.resize(m_line.size() - m_line_term_in.size());
 
       // Got a complete line, but it's empty.
       if (str.empty())
@@ -295,13 +349,16 @@ namespace DUNE
             m_chars.push(bfr[i]);
           }
 
-          while (processInput(line))
+          while (!m_chars.empty())
           {
-            if (!line.empty())
-            {
-              if (!handleUnsolicited(line))
-                m_lines.push(line);
-            }
+            if (!processInput(line))
+              continue;
+
+            if (line.empty())
+              continue;
+
+            if (!handleUnsolicited(line))
+              m_lines.push(line);
           }
         }
       }

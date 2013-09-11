@@ -58,6 +58,22 @@ namespace DUNE
       void
       initialize(void);
 
+      //! Set line termination for modem to CPU commands.
+      //! @param[in] str line terminator.
+      void
+      setLineTermIn(const std::string& term);
+
+      const std::string&
+      getLineTermIn(void);
+
+      //! Set line termination for CPU to modem commands.
+      //! @param[in] str line terminator.
+      void
+      setLineTermOut(const std::string& str);
+
+      const std::string&
+      getLineTermOut(void);
+
       //! Set maximum transmission rate.
       //! @param[in] rate transmission rate in second. Negative values
       //! will disable transmission rate control.
@@ -73,6 +89,9 @@ namespace DUNE
       //! @return true if the modem is cooling down, false otherwise.
       bool
       isCooling(void);
+
+      void
+      setBusy(bool value);
 
     protected:
       //! Read mode.
@@ -101,6 +120,13 @@ namespace DUNE
       virtual void
       sendReset(void)
       { }
+
+      virtual bool
+      isFragment(const std::string& str)
+      {
+        (void)str;
+        return false;
+      }
 
       void
       sendRaw(const uint8_t* data, unsigned data_size);
@@ -144,9 +170,6 @@ namespace DUNE
       void
       setSkipLine(const std::string& line);
 
-      void
-      setBusy(bool value);
-
       //! I/O handle.
       IO::Handle* m_handle;
       //! Last command sent to modem.
@@ -175,6 +198,12 @@ namespace DUNE
       double m_tx_rate_max;
       //! Maximum transmission rate timer.
       Time::Counter<double> m_tx_rate_timer;
+      //! Input line termination.
+      std::string m_line_term_in;
+      //! Line termination detector index.
+      size_t m_line_term_idx;
+      //! Output line termination.
+      std::string m_line_term_out;
 
       bool
       processInput(std::string& str);
