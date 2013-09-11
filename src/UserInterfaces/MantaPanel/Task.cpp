@@ -77,6 +77,8 @@ namespace UserInterfaces
       std::string pwr_chn_cpu;
       //! Name of supported systems.
       std::vector<std::string> systems;
+      //! List of sections with system names.
+      std::vector<std::string> sys_addr_sections;
     };
 
     struct Task: public Tasks::Task
@@ -146,6 +148,10 @@ namespace UserInterfaces
         .defaultValue("")
         .description("CPU power channel");
 
+        param("Sections of System Addresses", m_args.sys_addr_sections)
+        .defaultValue("")
+        .description("List of table names");
+
         param("System Names", m_args.systems)
         .defaultValue("")
         .description("Array of supported system names");
@@ -165,11 +171,11 @@ namespace UserInterfaces
         {
           if (m_args.systems.empty())
           {
-            // Create list with all known systems.
-            std::vector<std::string> addrs = m_ctx.config.options("Micromodem Addresses");
-            m_sys.insert(addrs.begin(), addrs.end());
-            std::vector<std::string> freqs = m_ctx.config.options("Narrow Band Transponders");
-            m_sys.insert(freqs.begin(), freqs.end());
+            for (unsigned i = 0; i < m_args.sys_addr_sections.size(); ++i)
+            {
+              std::vector<std::string> addrs = m_ctx.config.options(m_args.sys_addr_sections[i]);
+              m_sys.insert(addrs.begin(), addrs.end());
+            }
           }
           else
           {
