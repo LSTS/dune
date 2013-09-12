@@ -154,6 +154,8 @@ namespace Sensors
       float range_modifier_mul_k;
       //! Range Modifier Timer.
       float range_modifier_timer;
+      //! 837 file name.
+      std::string file_name_837;
     };
 
     //! List of available ranges.
@@ -310,6 +312,10 @@ namespace Sensors
         param("Fill State in 837 Format", m_args.fill_state)
         .defaultValue("true")
         .description("Fill state data in Imagenex proprietary 837 format");
+
+        param("837 File Name", m_args.file_name_837)
+        .defaultValue("Data.837")
+        .description("837 file name");
 
         param("Power Channel", m_args.power_channel)
         .defaultValue("Multibeam")
@@ -522,7 +528,7 @@ namespace Sensors
         {
           case IMC::LoggingControl::COP_STARTED:
             closeLog();
-            openLog(m_ctx.dir_log / msg->name / "multibeam.837");
+            openLog(m_ctx.dir_log / msg->name / m_args.file_name_837);
             break;
 
           case IMC::LoggingControl::COP_STOPPED:
