@@ -74,6 +74,11 @@ namespace DUNE
       const std::string&
       getLineTermOut(void);
 
+      //! Remove leading and trailing blank characters from lines.
+      //! @param[in] enable true to enable trimming, false otherwise.
+      void
+      setLineTrim(bool enable);
+
       //! Set maximum transmission rate.
       //! @param[in] rate transmission rate in second. Negative values
       //! will disable transmission rate control.
@@ -204,6 +209,8 @@ namespace DUNE
       size_t m_line_term_idx;
       //! Output line termination.
       std::string m_line_term_out;
+      //! True to trim white-space.
+      bool m_line_trim;
 
       bool
       processInput(std::string& str);

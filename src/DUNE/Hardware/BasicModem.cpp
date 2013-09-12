@@ -55,7 +55,8 @@ namespace DUNE
       m_tx_rate_max(-1.0),
       m_line_term_in(c_line_term_in),
       m_line_term_idx(0),
-      m_line_term_out(c_line_term_out)
+      m_line_term_out(c_line_term_out),
+      m_line_trim(false)
     {
       m_handle->flushInput();
     }
@@ -101,6 +102,13 @@ namespace DUNE
     {
       Concurrency::ScopedMutex l(m_mutex);
       return m_line_term_out;
+    }
+
+    void
+    BasicModem::setLineTrim(bool enable)
+    {
+      Concurrency::ScopedMutex l(m_mutex);
+      m_line_trim = enable;
     }
 
     //! Test if ISU is busy performing an SBD session.
@@ -270,6 +278,9 @@ namespace DUNE
       // Remove termination characters.
       str = m_line;
       str.resize(m_line.size() - m_line_term_in.size());
+
+      if (m_line_trim)
+        str = Utils::String::trim(str);
 
       // Got a complete line, but it's empty.
       if (str.empty())

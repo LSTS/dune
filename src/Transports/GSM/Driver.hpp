@@ -58,7 +58,9 @@ namespace Transports
       Driver(Tasks::Task* task, SerialPort* uart, const std::string& pin = ""):
         HayesModem(task, uart),
         m_pin(pin)
-      { }
+      {
+        setLineTrim(true);
+      }
 
       //! Destructor.
       ~Driver(void)
