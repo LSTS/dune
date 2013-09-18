@@ -50,6 +50,8 @@ namespace DUNE
     static const double c_lsize_factor = 0.75;
     //! Distance tolerance to loiter's center
     static const double c_ldistance = 1.0;
+    //! Distance between current and previous loiter centers to consider keep on loitering
+    static const double c_lkeep_distance = 30.0;
     //! Maximum admissible time for disabling monitors due to navigation jump
     static const float c_max_jump_time = 100.0;
 
@@ -401,8 +403,6 @@ namespace DUNE
       dispatch(m_speed, Tasks::DF_LOOP_BACK);
 
       // Loiter handling
-      m_ts.loitering = false;
-      m_ts.nearby = false;
       m_ts.loiter.radius = dpath->lradius;
       m_ts.loiter.clockwise = (dpath->flags & IMC::DesiredPath::FL_CCLOCKW) == 0;
 
@@ -414,11 +414,30 @@ namespace DUNE
         course_err = std::fabs(Angles::normalizeRadian(m_estate.psi - m_ts.track_bearing));
         double sign;
 
+        double range = c_lkeep_distance + 1.0;
+
+        // if we're already loitering
+        if (m_ts.loitering)
+        {
+          double dummy;
+          Coordinates::getBearingAndRange(m_ts.end, m_ts.loiter.center, &dummy, &range);
+        }
+
+        // loiter's center has not changed much and vehicle is close to circle
+        if (range < c_lkeep_distance && m_ts.loitering &&
+            m_ts.track_length >= m_ts.loiter.radius * c_lsize_factor &&
+            m_ts.track_length <= m_ts.loiter.radius * (2.0 - c_lsize_factor))
+        {
+          inf("keep loitering");
+        }
         // avoid singularities (very close to loiter center)
-        if (m_ts.track_length < c_ldistance)
+        else if (m_ts.track_length < c_ldistance)
         {
           Coordinates::setBearingAndRange(m_ts.loiter.center, m_estate.psi,
                                           m_ts.loiter.radius, m_ts.end);
+
+          m_ts.loitering = false;
+          m_ts.nearby = false;
         }
         else
         {
@@ -433,10 +452,18 @@ namespace DUNE
                                           m_ts.track_bearing + sign * Math::c_half_pi,
                                           m_ts.loiter.radius,
                                           m_ts.end);
+
+          m_ts.loitering = false;
+          m_ts.nearby = false;
         }
 
         Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
                                         &m_ts.track_bearing, &m_ts.track_length);
+      }
+      else
+      {
+        m_ts.loitering = false;
+        m_ts.nearby = false;
       }
 
       updateTrackingState();
