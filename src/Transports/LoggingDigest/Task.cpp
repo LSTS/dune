@@ -91,6 +91,12 @@ namespace Transports
       ~Task(void)
       {
         stopLog();
+
+        std::map<uint32_t, IMC::Message*>::iterator itr = m_messages.begin();
+        for (; itr != m_messages.end(); ++itr)
+          delete itr->second;
+
+        m_messages.clear();
       }
 
       void
