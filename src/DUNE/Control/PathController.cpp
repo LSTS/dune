@@ -299,7 +299,9 @@ namespace DUNE
         m_pcs.start_z = dpath->start_z;
         m_pcs.start_z_units = dpath->start_z_units;
       }
-      else if ((!m_tracking && now - m_ts.end_time > 1) || (!m_ts.nearby && !m_ts.loitering) || (dpath->flags & IMC::DesiredPath::FL_DIRECT) != 0)
+      else if ((!m_tracking && now - m_ts.end_time > 1) ||
+               (!m_ts.nearby && !m_ts.loitering) ||
+               (dpath->flags & IMC::DesiredPath::FL_DIRECT) != 0)
       {
         m_pcs.start_lat = m_estate.lat;
         m_pcs.start_lon = m_estate.lon;
@@ -345,7 +347,8 @@ namespace DUNE
                           &m_ts.end.x, &m_ts.end.y);
       m_ts.end.z = m_pcs.end_z;
 
-      Coordinates::getBearingAndRange(m_ts.start, m_ts.end, &m_ts.track_bearing, &m_ts.track_length);
+      Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
+                                      &m_ts.track_bearing, &m_ts.track_length);
 
       // Re-initializing tracking state values
       m_ts.start_time = now;
@@ -407,28 +410,33 @@ namespace DUNE
       {
         m_ts.loiter.center = m_ts.end;
 
-        double course_err = std::fabs(Angles::normalizeRadian(m_estate.psi - m_ts.track_bearing));
+        double course_err;
+        course_err = std::fabs(Angles::normalizeRadian(m_estate.psi - m_ts.track_bearing));
         double sign;
 
         // avoid singularities (very close to loiter center)
         if (m_ts.track_length < c_ldistance)
         {
-          setBearingAndRange(m_ts.loiter.center, m_estate.psi,
-                             m_ts.loiter.radius, m_ts.end);
+          Coordinates::setBearingAndRange(m_ts.loiter.center, m_estate.psi,
+                                          m_ts.loiter.radius, m_ts.end);
         }
         else
         {
           // if inside the circle and turned inwards
-          if ((m_ts.track_length <= m_ts.loiter.radius * c_lsize_factor) && (course_err < Math::c_half_pi))
+          if ((m_ts.track_length <= m_ts.loiter.radius * c_lsize_factor) &&
+              (course_err < Math::c_half_pi))
             sign = m_ts.loiter.clockwise ? 1.0 : -1.0;
           else
             sign = m_ts.loiter.clockwise ? -1.0 : 1.0;
 
-          setBearingAndRange(m_ts.loiter.center, m_ts.track_bearing + sign * Math::c_half_pi,
-                             m_ts.loiter.radius, m_ts.end);
+          Coordinates::setBearingAndRange(m_ts.loiter.center,
+                                          m_ts.track_bearing + sign * Math::c_half_pi,
+                                          m_ts.loiter.radius,
+                                          m_ts.end);
         }
 
-        Coordinates::getBearingAndRange(m_ts.start, m_ts.end, &m_ts.track_bearing, &m_ts.track_length);
+        Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
+                                        &m_ts.track_bearing, &m_ts.track_length);
       }
 
       updateTrackingState();
@@ -536,7 +544,9 @@ namespace DUNE
       double lon = 0.0;
 
       // Save different LLH reference.
-      if (es->lat != m_estate.lat || es->lon != m_estate.lon || es->height != m_estate.height)
+      if (es->lat != m_estate.lat ||
+          es->lon != m_estate.lon ||
+          es->height != m_estate.height)
       {
         change_ref = true;
         lat = es->lat;
@@ -707,7 +717,9 @@ namespace DUNE
         if (m_ts.loiter.clockwise)
           m_ts.track_pos.y = -m_ts.track_pos.y;
 
-        m_ts.course_error = m_ts.course - m_ts.los_angle + (m_ts.loiter.clockwise ? Math::c_half_pi : -Math::c_half_pi);
+        double ang_increment = (m_ts.loiter.clockwise ?
+                                Math::c_half_pi : -Math::c_half_pi);
+        m_ts.course_error = m_ts.course - m_ts.los_angle + ang_increment;
         m_ts.course_error = Angles::normalizeRadian(m_ts.course_error);
         m_ts.eta = 0;
         m_ts.nearby = false;
@@ -998,10 +1010,10 @@ namespace DUNE
       TrackingState lts = ts;
 
       double b = Math::c_pi + ts.los_angle;
-      setBearingAndRange(ts.end, b, lts.loiter.radius, lts.start);
+      Coordinates::setBearingAndRange(ts.end, b, lts.loiter.radius, lts.start);
 
       b += lts.loiter.clockwise ? Math::c_half_pi : -Math::c_half_pi;
-      setBearingAndRange(lts.start, b, 500, lts.end);
+      Coordinates::setBearingAndRange(lts.start, b, 500, lts.end);
 
       lts.track_bearing = b;
       lts.track_length = 500;
