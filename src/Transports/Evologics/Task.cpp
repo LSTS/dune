@@ -32,7 +32,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers.
-#include "Listener.hpp"
+#include "Driver.hpp"
 
 namespace Transports
 {
@@ -42,55 +42,62 @@ namespace Transports
 
     struct Arguments
     {
-      // IP address.
+      //! IP address.
       Address address;
-      // TCP port.
+      //! TCP port.
       uint16_t port;
-      // Low gain.
+      //! Low gain.
       bool low_gain;
-      // Source level.
+      //! Source level.
       unsigned source_level;
-      // Connection retry count.
+      //! Connection retry count.
       unsigned con_retry_count;
-      // Connection retry timeout.
+      //! Connection retry timeout.
       unsigned con_retry_tout;
-      // Connection idle timeout.
+      //! Connection idle timeout.
       unsigned con_idle_tout;
-      // Instant message retry count.
+      //! Instant message retry count.
       unsigned im_retry_count;
-      // Transmission pool size.
+      //! Transmission pool size.
       unsigned pool_size;
+      //! Sound speed on water.
+      double sound_speed_def;
+      //! Entity label of sound speed provider.
+      std::string sound_speed_elabel;
     };
 
     // Type definition for mapping addresses.
     typedef std::map<unsigned, unsigned> AddressMap;
-    typedef std::map<std::string, unsigned> EvologicsMap;
+    typedef std::map<std::string, unsigned> MapName;
+    typedef std::map<unsigned, std::string> MapAddr;
 
     struct Task: public Tasks::Task
     {
-      // Map of Evologics modems.
-      EvologicsMap m_modem_addrs;
-      // Map of Evologics to IMC addresses.
-      AddressMap m_modem_to_imc_table;
-      // Map of IMC to Evologics addresses.
-      AddressMap m_imc_to_modem_table;
-      // TCP socket.
+      //! Map of Evologics modems by name.
+      MapName m_modem_names;
+      //! Map of Evologics modems by address.
+      MapAddr m_modem_addrs;
+      //! TCP socket.
       TCPSocket* m_sock;
-      // Modem address.
+      //! Modem address.
       unsigned m_address;
-      // Listener thread.
-      Listener* m_listener;
-      // Task arguments.
+      //! Driver.
+      Driver* m_driver;
+      // Current sound speed (m/s).
+      double m_sound_speed;
+      //! Sound speed entity id.
+      int m_sound_speed_eid;
+      //! Acoustic operation reply.
+      IMC::AcousticOperation m_acop_out;
+      //! Task arguments.
       Arguments m_args;
-      std::ofstream m_file;
-      unsigned m_file_frames;
-      unsigned m_file_frames_now;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_sock(NULL),
         m_address(0),
-        m_listener(NULL)
+        m_driver(NULL),
+        m_sound_speed_eid(-1)
       {
         param("IPv4 Address", m_args.address)
         .defaultValue("192.168.0.147")
@@ -140,22 +147,29 @@ namespace Transports
         .maximumValue("255")
         .description("Instant message retry count");
 
+        param("Sound Speed - Default Value", m_args.sound_speed_def)
+        .units(Units::MeterPerSecond)
+        .defaultValue("1500");
+
+        param("Sound Speed - Entity Label", m_args.sound_speed_elabel)
+        .description("Entity label of sound speed provider");
+
         // Process modem addresses.
-        std::string agent = getSystemName();
+        std::string system = getSystemName();
         std::vector<std::string> addrs = ctx.config.options("Evologics Addresses");
         for (unsigned i = 0; i < addrs.size(); ++i)
         {
-          unsigned imc_id = resolveSystemName(addrs[i]);
-          unsigned modem_id = 0;
-          ctx.config.get("Evologics Addresses", addrs[i], "0", modem_id);
-          m_modem_to_imc_table[modem_id] = imc_id;
-          m_imc_to_modem_table[imc_id] = modem_id;
-          m_modem_addrs[addrs[i]] = modem_id;
+          unsigned addr = 0;
+          ctx.config.get("Evologics Addresses", addrs[i], "0", addr);
+          m_modem_names[addrs[i]] = addr;
+          m_modem_addrs[addr] = addrs[i];
 
-          if (addrs[i] == agent)
-            m_address = modem_id;
+          if (addrs[i] == system)
+            m_address = addr;
         }
 
+        bind<IMC::DevDataText>(this);
+        bind<IMC::SoundSpeed>(this);
         bind<IMC::AcousticOperation>(this);
       }
 
@@ -165,176 +179,276 @@ namespace Transports
       }
 
       void
+      onEntityResolution(void)
+      {
+        try
+        {
+          m_sound_speed_eid = resolveEntity(m_args.sound_speed_elabel);
+        }
+        catch (...)
+        {
+          inf(DTR("dynamic sound speed corrections are disabled"));
+          m_sound_speed = m_args.sound_speed_def;
+        }
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        m_sound_speed = m_args.sound_speed_def;
+      }
+
+      void
       onResourceAcquisition(void)
       {
         m_sock = new TCPSocket;
         m_sock->connect(m_args.address, m_args.port);
+        m_driver = new Driver(this, m_sock);
+        m_driver->setLineTermIn("\r\n");
+        m_driver->setLineTermOut("\n");
+        m_driver->initialize();
       }
 
       void
       onResourceRelease(void)
       {
-        if (m_listener != NULL)
+        if (m_driver)
         {
-          m_listener->stopAndJoin();
-          delete m_listener;
-          m_listener = NULL;
+          m_driver->stopAndJoin();
+          delete m_driver;
+          m_driver = NULL;
         }
 
         Memory::clear(m_sock);
       }
 
-      std::string
-      readString(double timeout = 2.0)
-      {
-        if (!Poll::poll(*m_sock, timeout))
-          return std::string();
-
-        char bfr[128];
-        int rv = m_sock->read(bfr, sizeof(bfr));
-        if (rv <= 0)
-          return std::string();
-
-        bfr[rv] = 0;
-        war("%s", sanitize(bfr).c_str());
-        return bfr;
-      }
-
-      bool
-      waitReply(const char* reply, const char* alt_reply, double timeout = 2.0)
-      {
-        if (reply == NULL)
-          return false;
-
-        if (reply == NULL && alt_reply == NULL)
-          return false;
-
-        std::string received = readString(timeout);
-
-        if (alt_reply == NULL)
-          return received == reply;
-
-        if (received == reply || received == alt_reply)
-          return true;
-
-        return false;
-      }
-
-      void
-      writeString(const std::string& str)
-      {
-        inf(DTR("write: %s"), sanitize(str).c_str());
-        m_sock->write(str.c_str(), str.size());
-      }
-
       void
       onResourceInitialization(void)
       {
-        if (Poll::poll(*m_sock, 2.0))
-        {
-          char bfr[2048];
-          int rv = m_sock->read(bfr, sizeof(bfr));
-          inf(DTR("discarding %d bytes"), rv);
-        }
+        m_driver->setAddress(m_address);
+        m_driver->setSourceLevel(m_args.source_level);
+        m_driver->setLowGain(m_args.low_gain);
+        m_driver->setRetryCount(m_args.con_retry_count);
+        m_driver->setRetryTimeout(m_args.con_retry_tout);
+        m_driver->setRetryCountIM(m_args.im_retry_count);
+        m_driver->setIdleTimeout(m_args.con_idle_tout);
+        m_driver->setPositionDataOutput(true);
 
-        // Clear transmission buffer.
-        writeString("ATZ4\n");
-        if (!waitReply("OK\r\n", "[*]OK\r\n"))
-          throw std::runtime_error("failed to clear the transmission buffer");
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
 
-        writeString(String::str("AT!G%u\n", m_args.low_gain ? 1 : 0));
-        if (!waitReply("OK\r\n", "[*]OK\r\n"))
-          throw std::runtime_error("failed to set gain");
+      unsigned
+      lookupSystemAddress(const std::string& name)
+      {
+        MapName::iterator itr = m_modem_names.find(name);
+        if (itr == m_modem_names.end())
+          throw std::runtime_error("unknown system name");
+        return itr->second;
+      }
 
-        writeString(String::str("AT!L%u\n", m_args.source_level));
-        if (!waitReply("OK\r\n", "[*]OK\r\n"))
-          throw std::runtime_error("failed to set source_level");
+      std::string
+      lookupSystemName(unsigned addr)
+      {
+        MapAddr::iterator itr = m_modem_addrs.find(addr);
+        if (itr == m_modem_addrs.end())
+          throw std::runtime_error("unknown system address");
+        return itr->second;
+      }
 
-        writeString(String::str("AT!RI%u\n", m_args.im_retry_count));
-        if (!waitReply("OK\r\n", "[*]OK\r\n"))
-          throw std::runtime_error("failed to set IM retry count");
+      void
+      consume(const IMC::SoundSpeed* msg)
+      {
+        if ((int)msg->getSourceEntity() != m_sound_speed_eid)
+          return;
 
-        writeString(String::str("AT!RC%u\n", m_args.con_retry_count));
-        if (!waitReply("OK\r\n", "[*]OK\r\n"))
-          throw std::runtime_error("failed to set connection retry count");
+        if (msg->value < 0)
+          return;
 
-        writeString(String::str("AT!RT%u\n", m_args.con_retry_tout));
-        if (!waitReply("OK\r\n", "[*]OK\r\n"))
-          throw std::runtime_error("failed to set connection retry timeout");
+        m_sound_speed = msg->value;
+      }
 
-        writeString(String::str("AT!ZI%u\n", m_args.con_idle_tout));
-        if (!waitReply("OK\r\n", "[*]OK\r\n"))
-          throw std::runtime_error("failed to set connection idle timeout");
+      void
+      consume(const IMC::DevDataText* msg)
+      {
+        if (msg->getDestination() != getSystemId())
+          return;
 
-        writeString(String::str("AT!AL%u\n", m_address));
-        if (!waitReply("OK\r\n", "[*]OK\r\n"))
-          throw std::runtime_error("failed to set modem address");
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        if (String::startsWith(msg->value, "RECVIM"))
+          handleInstantMessage(msg->value);
+        else if (String::startsWith(msg->value, "DELIVEREDIM"))
+          handleInstantMessageDelivered(msg->value);
+        else if (String::startsWith(msg->value, "CANCELEDIM"))
+          handleInstantMessageFailed(msg->value);
+        else if (String::startsWith(msg->value, "FAILEDIM"))
+          handleInstantMessageFailed(msg->value);
       }
 
       void
       consume(const IMC::AcousticOperation* msg)
       {
-        // EvologicsMap::iterator itr = m_modem_addrs.find(msg->system);
-        // if (itr == m_modem_addrs.end())
-        // {
-        //   err(DTR("address of '%s' is not configured"), msg->system.c_str());
-        //   return;
-        // }
-
-        if (msg->op == IMC::AcousticOperation::AOP_ABORT)
+        unsigned addr = 0;
+        try
         {
-          msg->toText(std::cerr);
-          m_listener->queueInstantMessage(1, "\x0a", 1);
-          Delay::wait(2.0);
+          addr = lookupSystemAddress(msg->system);
         }
-        else if (msg->op == IMC::AcousticOperation::AOP_MSG)
+        catch (...)
         {
-          if (msg->msg.isNull())
-            return;
-
-          const IMC::Message* imsg = msg->msg.get();
-
-          if (imsg->getId() != DUNE_IMC_DEVDATABINARY)
-            return;
-
-          const IMC::DevDataBinary* raw = static_cast<const IMC::DevDataBinary*>(imsg);
-          m_listener->queueMessage(2, &raw->value[0], raw->value.size());
+          err(DTR("address of '%s' is not configured"), msg->system.c_str());
+          return;
         }
-        else if (msg->op == IMC::AcousticOperation::AOP_MSG_SHORT)
+
+        if (m_driver->isBusy())
         {
-          if (msg->msg.isNull())
-            return;
+          m_acop_out.op = IMC::AcousticOperation::AOP_BUSY;
+          dispatch(m_acop_out);
+          return;
+        }
 
-          const IMC::Message* imsg = msg->msg.get();
-
-          if (imsg->getId() != DUNE_IMC_DEVDATABINARY)
-            return;
-
-          const IMC::DevDataBinary* raw = static_cast<const IMC::DevDataBinary*>(imsg);
-          m_listener->queueInstantMessage(2, &raw->value[0], raw->value.size());
+        if (msg->op == IMC::AcousticOperation::AOP_RANGE)
+        {
+          uint8_t data[] = {CODE_RANGE};
+          m_driver->sendIM(data, sizeof(data), addr, true);
+          m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_IP;
+          dispatch(m_acop_out);
+        }
+        else if (msg->op == IMC::AcousticOperation::AOP_ABORT)
+        {
+          uint8_t data[] = {CODE_ABORT};
+          m_driver->sendIM(data, sizeof(data), addr, true);
+          m_acop_out.op = IMC::AcousticOperation::AOP_ABORT_IP;
+          dispatch(m_acop_out);
+        }
+        else
+        {
+          return;
         }
       }
 
       void
-      openFile(const char* data, unsigned data_size)
+      handleInstantMessageFailed(const std::string& str)
       {
-        (void)data_size;
+        (void)str;
 
-        m_file_frames_now = 0;
-        m_file_frames = ((uint8_t)data[1] << 8) | (uint8_t)data[2];
-        std::string file_name(data + 3);
-        Path destination = Path("/opt/lsts") / file_name;
+        switch (m_acop_out.op)
+        {
+          case IMC::AcousticOperation::AOP_ABORT_IP:
+            m_acop_out.op = IMC::AcousticOperation::AOP_ABORT_TIMEOUT;
+            break;
 
-        war(DTR("opening file '%s' with %u frames"), file_name.c_str(), m_file_frames);
-        m_file.open(destination.c_str(), std::ios::binary);
+          case IMC::AcousticOperation::AOP_RANGE_IP:
+            m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_TIMEOUT;
+            break;
+
+          default:
+            return;
+        }
+
+        dispatch(m_acop_out);
+        m_driver->setBusy(false);
       }
 
       void
-      handleInstantMessage(Reply* msg)
+      handleInstantMessageDelivered(const std::string& str)
       {
-        switch (msg->data.recv.data[0])
+        double range = -1.0;
+        unsigned dst = 0;
+        if (std::sscanf(str.c_str(), "DELIVEREDIM,%u", &dst) == 1)
         {
-          case 0x0a:
+          double ptime = m_driver->getPropagationTime();
+          if (ptime > 0)
+          {
+            range = (ptime * m_sound_speed) / 1000000.0;
+          }
+        }
+
+        m_driver->setBusy(false);
+
+        std::string name;
+        try
+        {
+          name = lookupSystemName(dst);
+        }
+        catch (...)
+        {
+          err("unknown address %u", dst);
+          return;
+        }
+
+        switch (m_acop_out.op)
+        {
+          case IMC::AcousticOperation::AOP_ABORT_IP:
+            m_acop_out.op = IMC::AcousticOperation::AOP_ABORT_ACKED;
+            m_acop_out.system = name;
+            break;
+
+          case IMC::AcousticOperation::AOP_RANGE_IP:
+            m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_RECVED;
+            m_acop_out.system = name;
+            m_acop_out.range = range;
+            break;
+
+          default:
+            return;
+        }
+
+        dispatch(m_acop_out);
+      }
+
+      void
+      handleInstantMessage(const std::string& str)
+      {
+        int offset = 0;
+        unsigned src = 0;
+        unsigned dst = 0;
+        char flag[16] = {0};
+        unsigned bitrate = 0;
+        float rssi = 0;
+        unsigned integrity = 0;
+        float velocity = 0;
+        float propagation_time = 0;
+        std::vector<uint8_t> data;
+        size_t data_size = 0;
+        unsigned duration = 0;
+        int rv = 0;
+
+        if (m_driver->getFirmwareVersion() == "1.6")
+        {
+          rv = std::sscanf(str.c_str(),
+                           "RECVIM,%lu,%u,%u,%[^,],%u,%f,%u,%f,%f,%n",
+                           &data_size, &src, &dst, flag, &bitrate,
+                           &rssi, &integrity, &propagation_time,
+                           &velocity, &offset);
+
+          if (rv != 9)
+            return;
+        }
+        else
+        {
+          rv = std::sscanf(str.c_str(),
+                           "RECVIM,%lu,%u,%u,%[^,],%u,%f,%u,%f,%n",
+                           &data_size, &src, &dst, flag, &duration,
+                           &rssi, &integrity, &velocity, &offset);
+
+          if (rv != 8)
+            return;
+        }
+
+        bool ack = std::strcmp(flag, "ack") == 0;
+
+        if (offset >= str.size())
+          return;
+
+        data.assign((uint8_t*)&str[offset], (uint8_t*)&str[str.size()]);
+
+        switch (data[0])
+        {
+          case CODE_RANGE:
+            debug("range request received");
+            break;
+          case CODE_ABORT:
             {
               war(DTR("got abort request"));
               IMC::Abort abort;
@@ -345,54 +459,11 @@ namespace Transports
       }
 
       void
-      handleMessage(Reply* msg)
-      {
-        switch ((uint8_t)msg->data.recv.data[0])
-        {
-          case 0xf0:
-            openFile(msg->data.recv.data, msg->data.recv.data_size);
-            break;
-
-          case 0xf1:
-            if (m_file.is_open())
-            {
-              m_file.write(msg->data.recv.data + 1, msg->data.recv.data_size - 1);
-              if (++m_file_frames_now == m_file_frames)
-              {
-                war(DTR("file is complete"));
-                m_file.close();
-              }
-            }
-            else
-              war(DTR("no file is open"));
-            break;
-        }
-
-      }
-
-      void
       onMain(void)
       {
-        m_listener = new Listener(m_sock);
-        m_listener->start();
-
         while (!stopping())
         {
           waitForMessages(1.0);
-
-          Reply* reply = m_listener->dequeueInstantMessage();
-          if (reply != NULL)
-          {
-            handleInstantMessage(reply);
-            delete reply;
-          }
-
-          reply = m_listener->dequeueMessage();
-          if (reply != NULL)
-          {
-            handleMessage(reply);
-            delete reply;
-          }
         }
       }
     };

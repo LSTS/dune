@@ -1,0 +1,306 @@
+//***************************************************************************
+// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+//***************************************************************************
+// This file is part of DUNE: Unified Navigation Environment.               *
+//                                                                          *
+// Commercial Licence Usage                                                 *
+// Licencees holding valid commercial DUNE licences may use this file in    *
+// accordance with the commercial licence agreement provided with the       *
+// Software or, alternatively, in accordance with the terms contained in a  *
+// written agreement between you and Universidade do Porto. For licensing   *
+// terms, conditions, and further information contact lsts@fe.up.pt.        *
+//                                                                          *
+// European Union Public Licence - EUPL v.1.1 Usage                         *
+// Alternatively, this file may be used under the terms of the EUPL,        *
+// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// included in the packaging of this file. You may not use this work        *
+// except in compliance with the Licence. Unless required by applicable     *
+// law or agreed to in writing, software distributed under the Licence is   *
+// distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
+// ANY KIND, either express or implied. See the Licence for the specific    *
+// language governing permissions and limitations at                        *
+// https://www.lsts.pt/dune/licence.                                        *
+//***************************************************************************
+// Author: Ricardo Martins                                                  *
+//***************************************************************************
+
+#ifndef TRANSPORTS_EVOLOGICS_DRIVER_HPP_INCLUDED_
+#define TRANSPORTS_EVOLOGICS_DRIVER_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <sstream>
+#include <string>
+
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
+
+namespace Transports
+{
+  namespace Evologics
+  {
+    using DUNE_NAMESPACES;
+
+    //! Default AT command timeout.
+    static const double c_timeout = 5.0;
+
+    class Driver: public HayesModem
+    {
+    public:
+      //! Constructor.
+      //! @param[in] task parent task.
+      Driver(Tasks::Task* task, IO::Handle* handle):
+        HayesModem(task, handle)
+      { }
+
+      //! Destructor.
+      ~Driver(void)
+      { }
+
+      //! Reset device.
+      void
+      sendReset(void)
+      {
+        sendAT("Z1");
+        sendAT("Z3");
+        sendAT("Z4");
+      }
+
+      //! Set modem address.
+      //! @param[in] addr address.
+      void
+      setAddress(unsigned addr)
+      {
+        sendAT(String::str("!AL%u", addr));
+        expectOK();
+      }
+
+      //! Set the sound pressure level (SPL) in transmission mode.
+      //! @param[in] level from 3 to 0.
+      void
+      setSourceLevel(unsigned value)
+      {
+        sendAT(String::str("!L%u", value));
+        expectOK();
+      }
+
+      //! Set low gain mode. Recommended for short distances or testing
+      //! purposes.
+      //! @param[in] low_gain true to enable low gain, false otherwise.
+      void
+      setLowGain(bool low_gain)
+      {
+        sendAT(String::str("!G%u", low_gain ? 1 : 0));
+        expectOK();
+      }
+
+      //! Set the timeout before closing an idle acoustic connection.
+      //! @param[in] value timeout (s).
+      void
+      setIdleTimeout(unsigned value)
+      {
+        sendAT(String::str("!ZI%u", value));
+        expectOK();
+      }
+
+      //! Set how many times will the device retry to establish an
+      //! acoustic connection.
+      //! @param[in] value number of retries.
+      void
+      setRetryCount(unsigned value)
+      {
+        sendAT(String::str("!RC%u", value));
+        expectOK();
+      }
+
+      //! Set the number of instant message delivery retries.
+      //! @param[in] value number of delivery retries.
+      void
+      setRetryCountIM(unsigned value)
+      {
+        sendAT(String::str("!RI%u", value));
+        expectOK();
+      }
+
+      //! Set the time interval that the device waits for a response to
+      //! its acoustic connection establishment request.
+      //! @param[in] time interval (millisecond).
+      void
+      setRetryTimeout(unsigned value)
+      {
+        sendAT(String::str("!RT%u", value));
+        expectOK();
+      }
+
+      //! Retrieve the firmware version string.
+      //! @return firmware version.
+      std::string
+      getFirmwareVersion(void)
+      {
+        return m_version;
+      }
+
+      //! Send instant message.
+      //! @param[in] data data to send.
+      //! @param[in] data_size number of bytes to send.
+      //! @param[in] dst destination address.
+      //! @param[in] ack true to wait for acknowledgment, false otherwise.
+      void
+      sendIM(const uint8_t* data, size_t data_size, unsigned dst, bool ack)
+      {
+        std::string cmd = String::str("*SENDIM,%u,%u,%s,", data_size, dst, ack ? "ack" : "noack");
+        cmd.append((char*)data, data_size);
+        sendAT(cmd);
+        expectOK();
+        setBusy(true);
+      }
+
+      //! Retrieve the last computed acoustic signal propagation time
+      //! between communicating devices.
+      //! @return propagation time (microsecond).
+      unsigned
+      getPropagationTime(void)
+      {
+        sendAT("?T");
+        std::string str = readLine();
+        unsigned value = 0;
+        if (!castLexical(str, value))
+          throw Hardware::InvalidFormat(str);
+
+        return value;
+      }
+
+      //! Retrieve the configured sound speed.
+      //! @return sound speed (in m/s).
+      unsigned
+      getSoundSpeed(void)
+      {
+        sendAT("?CA");
+        std::string str = readLine();
+        unsigned value = 0;
+        if (!castLexical(str, value))
+          throw Hardware::InvalidFormat(str);
+
+        return value;
+      }
+
+      //! Set sound speed.
+      //! @param[in] sound speed (m/s).
+      void
+      setSoundSpeed(unsigned value)
+      {
+        sendAT(String::str("!CA%u", value));
+        expectOK();
+      }
+
+      void
+      setCarrierWaveformID(unsigned value)
+      {
+        sendAT(String::str("!C%u", value));
+        expectOK();
+      }
+
+      void
+      setPositionDataOutput(bool enable)
+      {
+        sendAT(String::str("@ZU%u", enable ? 1 : 0));
+        expectOK();
+      }
+
+    private:
+      //! Firmware version.
+      std::string m_version;
+
+      void
+      sendInitialization(void)
+      {
+        sendAT("I0");
+        m_version = readLine();
+        getTask()->debug("firmware version: %s", m_version.c_str());
+      }
+
+      int
+      getCommaIndex(const std::string& str, unsigned number)
+      {
+        unsigned count = 0;
+
+        for (size_t i = 0; i < str.size(); ++i)
+        {
+          if (str[i] == ',')
+            ++count;
+
+          if (count == number)
+            return i;
+        }
+
+        return -1;
+      }
+
+
+      bool
+      isFragment(const std::string& str)
+      {
+        int last_comma = -1;
+        unsigned length = 0;
+
+        if (std::sscanf(str.c_str(), "RECVIM,%u", &length) == 1)
+        {
+          if (m_version == "1.6")
+            last_comma = getCommaIndex(str, 10);
+          else
+            last_comma = getCommaIndex(str, 9);
+        }
+        else
+        {
+          return false;
+        }
+
+        //!@fixme: replace 2 with terminator size.
+        unsigned data_size = (str.size() - (last_comma + 1)) - 2;
+        if (data_size != length)
+          return true;
+
+        return false;
+      }
+
+      bool
+      handleUnsolicited(const std::string& str)
+      {
+        if (String::startsWith(str, "DELIVEREDIM")
+            || String::startsWith(str, "FAILEDIM")
+            || String::startsWith(str, "CANCELEDIM")
+            || String::startsWith(str, "RECVIM")
+            || String::startsWith(str, "USBLLONG")
+            || String::startsWith(str, "USBLANGLES"))
+        {
+          dispatch(str);
+          return true;
+        }
+
+        return false;
+      }
+
+      void
+      dispatch(const std::string& str)
+      {
+        IMC::DevDataText msg;
+        msg.setDestination(getTask()->getSystemId());
+        msg.setDestinationEntity(getTask()->getEntityId());
+        msg.value.assign(str);
+        getTask()->dispatch(msg, DF_LOOP_BACK);
+      }
+
+      void
+      expectOK(void)
+      {
+        std::string rv = readLine();
+        getTask()->inf("readline is %s", sanitize(rv).c_str());
+
+        if ((rv != "OK") && (rv != "[*]OK"))
+          throw UnexpectedReply("OK", rv);
+      }
+    };
+  }
+}
+
+#endif
