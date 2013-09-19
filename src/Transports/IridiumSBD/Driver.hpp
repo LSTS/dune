@@ -61,7 +61,9 @@ namespace Transports
         m_session_result_read(true),
         m_sbd_ring(false),
         m_queued_mt(0)
-      { }
+      {
+        setLineTrim(true);
+      }
 
       //! Destructor.
       ~Driver(void)
@@ -268,6 +270,7 @@ namespace Transports
       void
       sendInitialization(void)
       {
+        setEcho(false);
         setFlowControl(false);
         setRadioActivity(true);
         setRingAlert(true);

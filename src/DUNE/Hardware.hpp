@@ -41,6 +41,7 @@ namespace DUNE
 #include <DUNE/Hardware/GPIO.hpp>
 #include <DUNE/Hardware/Buttons.hpp>
 #include <DUNE/Hardware/PPS.hpp>
+#include <DUNE/Hardware/ESCC.hpp>
 #include <DUNE/Hardware/IntelHEX.hpp>
 #include <DUNE/Hardware/BasicModem.hpp>
 #include <DUNE/Hardware/HayesModem.hpp>
@@ -48,8 +49,6 @@ namespace DUNE
 #include <DUNE/Hardware/UCTK/Constants.hpp>
 #include <DUNE/Hardware/UCTK/Errors.hpp>
 #include <DUNE/Hardware/UCTK/Parser.hpp>
-#include <DUNE/Hardware/UCTK/InterfaceUART.hpp>
-#include <DUNE/Hardware/UCTK/InterfaceESCC.hpp>
 #include <DUNE/Hardware/UCTK/Bootloader.hpp>
 #include <DUNE/Hardware/LUCL/Protocol.hpp>
 #include <DUNE/Hardware/LUCL/ProtocolParser.hpp>

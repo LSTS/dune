@@ -239,7 +239,7 @@ namespace Sensors
         char bfr[64];
         bool got = false;
 
-        while (m_uart->hasNewData(maxwait) == IOMultiplexing::PRES_OK && !got)
+        while (Poll::poll(*m_uart, maxwait) && !got)
         {
           int rv = m_uart->read(bfr, 64);
 
@@ -467,11 +467,10 @@ namespace Sensors
 
         while (!stopping())
         {
-          if (m_uart->hasNewData(0.5) == IOMultiplexing::PRES_OK)
+          if (Poll::poll(*m_uart, 0.5))
           {
-            int rv = m_uart->read(bfr, 256);
-
-            for (int i = 0; i < rv; ++i)
+            size_t rv = m_uart->read(bfr, 256);
+            for (size_t i = 0; i < rv; ++i)
             {
               CommandByte cb = parse(bfr[i]);
               if (cb == MSG_GS_EULER)

@@ -72,8 +72,6 @@ namespace Sensors
       static const unsigned c_buffer_size = 256 * 1024;
       //! Data socket.
       TCPSocket* m_sock_dat;
-      //! I/O multiplexing of data socket.
-      IOMultiplexing m_iom_dat;
       //! Read buffer.
       std::vector<uint8_t> m_bfr;
       //! Parser.
@@ -239,7 +237,6 @@ namespace Sensors
         m_sock_dat->setReceiveTimeout(5);
         m_sock_dat->setSendTimeout(5);
         m_sock_dat->connect(m_args.addr, m_args.port_dat);
-        m_sock_dat->addToPoll(m_iom_dat);
 
         m_cmd->setPingTrigger(SUBSYS_SSH, TRIG_MODE_INTERNAL);
         m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_INTERNAL);
@@ -264,7 +261,6 @@ namespace Sensors
 
         if (m_sock_dat != NULL)
         {
-          m_sock_dat->delFromPoll(m_iom_dat);
           delete m_sock_dat;
           m_sock_dat = NULL;
         }
@@ -494,14 +490,11 @@ namespace Sensors
       bool
       readData(void)
       {
-        if (!m_iom_dat.poll(1.0))
+        if (!Poll::poll(*m_sock_dat, 1.0))
           return false;
 
-        if (!m_sock_dat->wasTriggered(m_iom_dat))
-          return false;
-
-        int rv = m_sock_dat->read((char*)&m_bfr[0], m_bfr.size());
-        for (int i = 0; i < rv; ++i)
+        size_t rv = m_sock_dat->read(&m_bfr[0], m_bfr.size());
+        for (size_t i = 0; i < rv; ++i)
         {
           if (m_parser.parse(m_bfr[i]))
             handle(m_parser.getPacket());

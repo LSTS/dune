@@ -710,7 +710,7 @@ namespace Sensors
         {
           consumeMessages();
 
-          if (m_uart->hasNewData(0.01) != IOMultiplexing::PRES_OK)
+          if (!Poll::poll(*m_uart, 0.01))
             continue;
 
           m_uart->readString(m_bfr, c_bfr_size);
@@ -764,7 +764,7 @@ namespace Sensors
                                       m_args.rx_length, m_args.ping_tout,
                                       freqs[0], freqs[1], freqs[2], freqs[3]);
 
-        m_uart->write(cmd.c_str());
+        m_uart->writeString(cmd.c_str());
 
         processInput(m_args.ping_period);
         if (consumeResult(RS_PNG_ACKD) && consumeResult(RS_PNG_TIME))
@@ -815,11 +815,11 @@ namespace Sensors
         std::string hex = String::toHex(msg);
         std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n",
                                       m_addr, 0, hex.c_str());
-        m_uart->write(cmd.c_str());
+        m_uart->writeString(cmd.c_str());
 
         std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n",
                                       m_addr, 0);
-        m_uart->write(cyc.c_str());
+        m_uart->writeString(cyc.c_str());
 
         int i = 0;
         for (i = 0; i < 7; ++i)

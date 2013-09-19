@@ -115,7 +115,6 @@ namespace Control
         TCPSocket* m_TCP_sock;
         Address m_TCP_addr;
         uint16_t m_TCP_port;
-        System::IOMultiplexing m_iom;
         //! System ID
         uint8_t m_sysid;
         //! Last received position
@@ -268,7 +267,6 @@ namespace Control
           {
             m_TCP_sock = new TCPSocket;
             m_TCP_sock->connect(m_TCP_addr, m_TCP_port);
-            m_TCP_sock->addToPoll(m_iom);
             setupRate(10);
             inf(DTR("Ardupilot interface initialized"));
           }
@@ -287,77 +285,77 @@ namespace Control
           mavlink_message_t* msg = new mavlink_message_t;
 
           mavlink_msg_request_data_stream_pack(255, 0, msg,
-              m_sysid,
-              0,
-              MAV_DATA_STREAM_EXTRA1,
-              rate,
-              1);
+                                               m_sysid,
+                                               0,
+                                               MAV_DATA_STREAM_EXTRA1,
+                                               rate,
+                                               1);
 
           uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
           spew("ATTITUDE Stream setup to %d Hertz", rate);
 
           mavlink_msg_request_data_stream_pack(255, 0, msg,
-              m_sysid,
-              0,
-              MAV_DATA_STREAM_EXTRA2,
-              rate,
-              1);
+                                               m_sysid,
+                                               0,
+                                               MAV_DATA_STREAM_EXTRA2,
+                                               rate,
+                                               1);
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
           spew("VFR Stream setup to %d Hertz", rate);
 
           mavlink_msg_request_data_stream_pack(255, 0, msg,
-              m_sysid,
-              0,
-              MAV_DATA_STREAM_POSITION,
-              rate,
-              1);
+                                               m_sysid,
+                                               0,
+                                               MAV_DATA_STREAM_POSITION,
+                                               rate,
+                                               1);
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
           spew("POSITION Stream setup to %d Hertz", rate);
 
           mavlink_msg_request_data_stream_pack(255, 0, msg,
-              m_sysid,
-              0,
-              MAV_DATA_STREAM_EXTENDED_STATUS,
-              1,
-              1);
+                                               m_sysid,
+                                               0,
+                                               MAV_DATA_STREAM_EXTENDED_STATUS,
+                                               1,
+                                               1);
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
           spew("STATUS Stream setup to 1 Hertz");
 
           mavlink_msg_request_data_stream_pack(255, 0, msg,
-              m_sysid,
-              0,
-              MAV_DATA_STREAM_EXTRA3,
-              1,
-              1);
+                                               m_sysid,
+                                               0,
+                                               MAV_DATA_STREAM_EXTRA3,
+                                               1,
+                                               1);
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
           spew("AHRS-HWSTATUS-WIND Stream setup to 1 Hertz");
 
           mavlink_msg_request_data_stream_pack(255, 0, msg,
-              m_sysid,
-              0,
-              MAV_DATA_STREAM_RAW_SENSORS,
-              1,
-              1);
+                                               m_sysid,
+                                               0,
+                                               MAV_DATA_STREAM_RAW_SENSORS,
+                                               1,
+                                               1);
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
           spew("SENSORS Stream setup to 1 Hertz");
 
           mavlink_msg_request_data_stream_pack(255, 0, msg,
-              m_sysid,
-              0,
-              MAV_DATA_STREAM_RC_CHANNELS,
-              1,
-              0);
+                                               m_sysid,
+                                               0,
+                                               MAV_DATA_STREAM_RC_CHANNELS,
+                                               1,
+                                               0);
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
@@ -399,9 +397,9 @@ namespace Control
               mavlink_message_t* msg = new mavlink_message_t;
 
               mavlink_msg_set_mode_pack(255, 0, msg,
-                  m_sysid,
-                  1,
-                  13); //! DUNE mode on ardupilot is 13
+                                        m_sysid,
+                                        1,
+                                        13); //! DUNE mode on ardupilot is 13
 
               uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
               sendData(buf, n);
@@ -430,12 +428,12 @@ namespace Control
 
           mavlink_message_t* msg = new mavlink_message_t;
           mavlink_msg_set_roll_pitch_yaw_thrust_pack(255, 0, msg,
-              1,
-              1,
-              (float)roll->value,
-              0,
-              0,
-              0);
+                                                     1,
+                                                     1,
+                                                     (float)roll->value,
+                                                     0,
+                                                     0,
+                                                     0);
           uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
           debug("DesiredRoll packet sent to Ardupilot: %f", roll->value);
@@ -478,11 +476,11 @@ namespace Control
           mavlink_message_t* msg = new mavlink_message_t;
 
           mavlink_msg_param_set_pack(255, 0, msg,
-              m_sysid, //! target_system System ID
-              0, //! target_component Component ID
-              "TRIM_ARSPD_CM", //! Parameter name
-              (int)(path->speed * 100), //! Parameter value
-              MAV_PARAM_TYPE_INT16); //! Parameter type
+                                     m_sysid, //! target_system System ID
+                                     0, //! target_component Component ID
+                                     "TRIM_ARSPD_CM", //! Parameter name
+                                     (int)(path->speed * 100), //! Parameter value
+                                     MAV_PARAM_TYPE_INT16); //! Parameter type
 
           int n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
@@ -490,11 +488,11 @@ namespace Control
           m_desired_speed = (uint16_t) path->speed;
 
           mavlink_msg_param_set_pack(255, 0, msg,
-              m_sysid, //! target_system System ID
-              0, //! target_component Component ID
-              "WP_LOITER_RAD", //! Parameter name
-              path->flags & DesiredPath::FL_CCLOCKW ? (-1 * path->lradius) : (path->lradius), //! Parameter value
-              MAV_PARAM_TYPE_INT16); //! Parameter type
+                                     m_sysid, //! target_system System ID
+                                     0, //! target_component Component ID
+                                     "WP_LOITER_RAD", //! Parameter name
+                                     path->flags & DesiredPath::FL_CCLOCKW ? (-1 * path->lradius) : (path->lradius), //! Parameter value
+                                     MAV_PARAM_TYPE_INT16); //! Parameter type
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
@@ -502,18 +500,18 @@ namespace Control
           m_desired_radius = (uint16_t) path->lradius;
 
           mavlink_msg_mission_count_pack(255, 0, msg,
-              m_sysid, //! target_system System ID
-              0, //! target_component Component ID
-              3); //! size of Mission
+                                         m_sysid, //! target_system System ID
+                                         0, //! target_component Component ID
+                                         3); //! size of Mission
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
 
           mavlink_msg_mission_write_partial_list_pack(255, 0, msg,
-              m_sysid, //! target_system System ID
-              0, //! target_component Component ID
-              1, //! start_index Start index, 0 by default and smaller / equal to the largest index of the current onboard list
-              1); //! end_index End index, equal or greater than start index
+                                                      m_sysid, //! target_system System ID
+                                                      0, //! target_component Component ID
+                                                      1, //! start_index Start index, 0 by default and smaller / equal to the largest index of the current onboard list
+                                                      1); //! end_index End index, equal or greater than start index
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
@@ -522,20 +520,20 @@ namespace Control
 
           //! Destination
           mavlink_msg_mission_item_pack(255, 0, msg,
-              m_sysid, //! target_system System ID
-              0, //! target_component Component ID
-              1, //! seq Sequence
-              MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
-              MAV_CMD_NAV_LOITER_UNLIM, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
-              2, //! current false:0, true:1
-              0, //! autocontinue to next wp
-              0, //! Not used
-              0, //! Not used
-              path->flags & DesiredPath::FL_CCLOCKW ? -1 : 0, //! If <0, then CCW loiter
-              0, //! Not used
-              (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
-              (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
-              alt);//! z PARAM7 / z position: global: altitude
+                                        m_sysid, //! target_system System ID
+                                        0, //! target_component Component ID
+                                        1, //! seq Sequence
+                                        MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+                                        MAV_CMD_NAV_LOITER_UNLIM, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+                                        2, //! current false:0, true:1
+                                        0, //! autocontinue to next wp
+                                        0, //! Not used
+                                        0, //! Not used
+                                        path->flags & DesiredPath::FL_CCLOCKW ? -1 : 0, //! If <0, then CCW loiter
+                                        0, //! Not used
+                                        (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
+                                        (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
+                                        alt);//! z PARAM7 / z position: global: altitude
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
@@ -571,11 +569,11 @@ namespace Control
           uint8_t buf[512];
 
           mavlink_msg_param_set_pack(255, 0, msg,
-              m_sysid, //! target_system System ID
-              0, //! target_component Component ID
-              "WP_LOITER_RAD", //! Parameter name
-              m_args.lradius, //! Parameter value
-              MAV_PARAM_TYPE_INT16); //! Parameter type
+                                     m_sysid, //! target_system System ID
+                                     0, //! target_component Component ID
+                                     "WP_LOITER_RAD", //! Parameter name
+                                     m_args.lradius, //! Parameter value
+                                     MAV_PARAM_TYPE_INT16); //! Parameter type
 
           int n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
@@ -680,13 +678,9 @@ namespace Control
         bool
         poll(double timeout)
         {
-          if(m_TCP_sock)
-          {
-            if (m_iom.poll(timeout))
-              return m_TCP_sock->wasTriggered(m_iom);
-            else
-              return false;
-          }
+          if (m_TCP_sock != NULL)
+            return Poll::poll(*m_TCP_sock, timeout);
+
           return false;
         }
 
@@ -695,7 +689,7 @@ namespace Control
         {
           if(m_TCP_sock)
           {
-        	trace("Sending something");
+            trace("Sending something");
             return m_TCP_sock->write((char*)bfr, size);
           }
           return 0;
@@ -708,17 +702,15 @@ namespace Control
           {
             try
             {
-              return m_TCP_sock->read((char*) buf, blen);
+              return m_TCP_sock->read(buf, blen);
             }
             catch (...)
             {
               war(DTR("Connection lost, retrying..."));
-              m_TCP_sock->delFromPoll(m_iom);
-              delete m_TCP_sock;
+              Memory::clear(m_TCP_sock);
 
               m_TCP_sock = new Network::TCPSocket;
               m_TCP_sock->connect(m_TCP_addr, m_TCP_port);
-              m_TCP_sock->addToPoll(m_iom);
               return 0;
             }
           }
@@ -747,35 +739,35 @@ namespace Control
               int rv = mavlink_parse_char(MAVLINK_COMM_0, m_buf[i], &m_msg, &status);
               if (status.packet_rx_drop_count)
               {
-                  switch(status.parse_state)
-                  {
-                    case MAVLINK_PARSE_STATE_IDLE:
-                      spew("failed at state IDLE");
-                      break;
-                    case MAVLINK_PARSE_STATE_GOT_STX:
-                      spew("failed at state GOT_STX");
-                      break;
-                    case MAVLINK_PARSE_STATE_GOT_LENGTH:
-                      spew("failed at state GOT_LENGTH");
-                      break;
-                    case MAVLINK_PARSE_STATE_GOT_SYSID:
-                      spew("failed at state GOT_SYSID");
-                      break;
-                    case MAVLINK_PARSE_STATE_GOT_COMPID:
-                      spew("failed at state GOT_COMPID");
-                      break;
-                    case MAVLINK_PARSE_STATE_GOT_MSGID:
-                      spew("failed at state GOT_MSGID");
-                      break;
-                    case MAVLINK_PARSE_STATE_GOT_PAYLOAD:
-                      spew("failed at state GOT_PAYLOAD");
-                      break;
-                    case MAVLINK_PARSE_STATE_GOT_CRC1:
-                      spew("failed at state GOT_CRC1");
-                      break;
-                    default:
-                      spew("failed OTHER");
-                  }
+                switch(status.parse_state)
+                {
+                  case MAVLINK_PARSE_STATE_IDLE:
+                    spew("failed at state IDLE");
+                    break;
+                  case MAVLINK_PARSE_STATE_GOT_STX:
+                    spew("failed at state GOT_STX");
+                    break;
+                  case MAVLINK_PARSE_STATE_GOT_LENGTH:
+                    spew("failed at state GOT_LENGTH");
+                    break;
+                  case MAVLINK_PARSE_STATE_GOT_SYSID:
+                    spew("failed at state GOT_SYSID");
+                    break;
+                  case MAVLINK_PARSE_STATE_GOT_COMPID:
+                    spew("failed at state GOT_COMPID");
+                    break;
+                  case MAVLINK_PARSE_STATE_GOT_MSGID:
+                    spew("failed at state GOT_MSGID");
+                    break;
+                  case MAVLINK_PARSE_STATE_GOT_PAYLOAD:
+                    spew("failed at state GOT_PAYLOAD");
+                    break;
+                  case MAVLINK_PARSE_STATE_GOT_CRC1:
+                    spew("failed at state GOT_CRC1");
+                    break;
+                  default:
+                    spew("failed OTHER");
+                }
               }
               if (rv)
               {
@@ -919,7 +911,7 @@ namespace Control
           m_alt = (float)gp.alt * 1e-03;
 
           double distance_to_ref = WGS84::distance(ref_lat,ref_lon,ref_hei,
-              lat,lon,hei);
+                                                   lat,lon,hei);
 
           if(distance_to_ref>1000)
           {
@@ -938,8 +930,8 @@ namespace Control
           else
           {
             WGS84::displacement(ref_lat, ref_lon, ref_hei,
-                lat, lon, hei,
-                &m_estate.x, &m_estate.y, &m_estate.z);
+                                lat, lon, hei,
+                                &m_estate.x, &m_estate.y, &m_estate.z);
 
             m_estate.lat = ref_lat;
             m_estate.lon = ref_lon;
@@ -953,8 +945,8 @@ namespace Control
           // Note: the following will yield body-fixed *ground* velocity
           // Maybe this can be fixed w/IAS readings (anyway not too important)
           BodyFixedFrame::toBodyFrame(m_estate.phi, m_estate.theta, m_estate.psi,
-              m_estate.vx, m_estate.vy, m_estate.vz,
-              &m_estate.u, &m_estate.v, &m_estate.w);
+                                      m_estate.vx, m_estate.vy, m_estate.vz,
+                                      &m_estate.u, &m_estate.v, &m_estate.w);
 
           m_estate.depth = -1;
           m_estate.alt = -1;
@@ -1034,7 +1026,7 @@ namespace Control
 
           long time_fix = gps_raw.time_usec % 1000000000;
           unsigned int date = (unsigned int)(gps_raw.time_usec / 1e9);
-          
+
 
           if(m_args.ublox)
           {
@@ -1118,9 +1110,9 @@ namespace Control
           mavlink_message_t* msg_out = new mavlink_message_t;
 
           mavlink_msg_mission_request_pack(255, 0, msg_out,
-              m_sysid, //! target_system System ID
-              0, //! target_component Component ID
-              m_current_wp); //! Mission item to request
+                                           m_sysid, //! target_system System ID
+                                           0, //! target_component Component ID
+                                           m_current_wp); //! Mission item to request
 
           uint16_t n = mavlink_msg_to_send_buffer(buf, msg_out);
           sendData(buf, n);

@@ -29,6 +29,9 @@
 #include <DUNE/DUNE.hpp>
 using DUNE_NAMESPACES;
 
+//! Default UART baud rate.
+static const unsigned c_baud_rate = 115200;
+
 int
 main(int argc, char** argv)
 {
@@ -80,20 +83,18 @@ main(int argc, char** argv)
   }
 
   // Get device type.
-  UCTK::Interface* itf = NULL;
+  IO::Handle* handle = NULL;
   std::string dev_type = options.value("--dev-type");
   if (dev_type == "escc")
-    itf = new UCTK::InterfaceESCC(sys_dev);
+    handle = new ESCC(sys_dev);
   else
-    itf = new UCTK::InterfaceUART(sys_dev);
+    handle = new SerialPort(sys_dev, c_baud_rate);
 
-  itf->open();
-
-  UCTK::Bootloader* boot = new UCTK::Bootloader(itf, true);
+  UCTK::Interface itf(handle);
+  UCTK::Bootloader* boot = new UCTK::Bootloader(&itf, true);
   boot->program(ihex);
   delete boot;
-
-  delete itf;
+  delete handle;
 
   return 0;
 }

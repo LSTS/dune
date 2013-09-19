@@ -49,8 +49,8 @@ namespace DUNE
     public:
       //! Constructor.
       //! @param[in] task parent task.
-      //! @param[in] uart serial port connected to the ISU.
-      HayesModem(Tasks::Task* task, Hardware::SerialPort* uart);
+      //! @param[in] handle I/O handle.
+      HayesModem(Tasks::Task* task, IO::Handle* handle);
 
       //! Destructor.
       virtual
@@ -96,6 +96,9 @@ namespace DUNE
       queryRSSI(void)
       { }
 
+      virtual void
+      expectOK(void);
+
       void
       sendAT(const std::string& str);
 
@@ -104,9 +107,6 @@ namespace DUNE
 
       void
       expect(const std::string& str);
-
-      void
-      expectOK(void);
 
       void
       expectREADY(void);

@@ -99,9 +99,9 @@ namespace Sensors
       {
         char bfr[128];
 
-        m_uart->write(cmd);
+        m_uart->writeString(cmd);
 
-        if (m_uart->hasNewData(1.0) == IOMultiplexing::PRES_OK)
+        if (Poll::poll(*m_uart, 1.0))
         {
           m_uart->readString(bfr, sizeof(bfr));
           if (std::strcmp(bfr, reply) == 0)
@@ -114,7 +114,7 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
-        m_uart->write("\r");
+        m_uart->writeString("\r");
         Delay::wait(1.0);
         m_uart->flush();
 
@@ -146,12 +146,12 @@ namespace Sensors
             throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
           }
 
-          if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+          if (!Poll::poll(*m_uart, 1.0))
             continue;
 
-          int rv = m_uart->readString(bfr, sizeof(bfr));
+          size_t rv = m_uart->readString(bfr, sizeof(bfr));
 
-          if (rv <= 0)
+          if (rv == 0)
             throw RestartNeeded(DTR("I/O error"), 5);
 
           if (std::sscanf(bfr, "%f", &m_sspeed.value) != 1)

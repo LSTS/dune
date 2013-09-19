@@ -37,7 +37,6 @@ namespace DUNE
 
 #include <DUNE/System/Resources.hpp>
 #include <DUNE/System/Error.hpp>
-#include <DUNE/System/IOMultiplexing.hpp>
 #include <DUNE/System/DynamicLoader.hpp>
 #include <DUNE/System/Environment.hpp>
 

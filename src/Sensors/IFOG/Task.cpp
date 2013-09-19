@@ -82,6 +82,8 @@ namespace Sensors
       OFF_STA_IMU = 22
     };
 
+    //! PSU UART baud rate.
+    static const unsigned c_baud_rate = 115200;
     //! IMU address.
     static const uint8_t c_imu_addr = 0x01;
     //! Data Frame Size.
@@ -120,10 +122,12 @@ namespace Sensors
       Counter<float> m_wdog;
       //! IMU timestamp.
       double m_imu_time;
-      // IMU handle.
-      UCTK::Interface* m_imu;
-      // PSU handle.
-      UCTK::Interface* m_psu;
+      //! IMU handle.
+      Hardware::ESCC* m_imu_escc;
+      //! PSU UART.
+      Hardware::ESCC* m_psu_escc;
+      //! PSU handle.
+      UCTK::Interface* m_psu_ctl;
       //! Failure Status Word.
       uint16_t m_sta_fail;
       //! IMU Status Word.
@@ -134,8 +138,9 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_imu_time(0),
-        m_imu(NULL),
-        m_psu(NULL),
+        m_imu_escc(NULL),
+        m_psu_escc(NULL),
+        m_psu_ctl(NULL),
         m_sta_fail(0),
         m_sta_imu(0)
       {
@@ -189,10 +194,9 @@ namespace Sensors
         try
         {
           // Open PSU.
-          m_psu = new UCTK::InterfaceESCC(m_args.psu_dev);
-          m_psu->open();
-
-          UCTK::FirmwareInfo info = m_psu->getFirmwareInfo();
+          m_psu_escc = new Hardware::ESCC(m_args.psu_dev);
+          m_psu_ctl = new UCTK::Interface(m_psu_escc);
+          UCTK::FirmwareInfo info = m_psu_ctl->getFirmwareInfo();
           if (info.isDevelopment())
             war(DTR("device is using unstable firmware"));
           else
@@ -200,8 +204,7 @@ namespace Sensors
                 info.minor, info.patch);
 
           // Open IMU.
-          m_imu = new UCTK::InterfaceESCC(m_args.imu_dev);
-          m_imu->open(false);
+          m_imu_escc = new Hardware::ESCC(m_args.imu_dev);
         }
         catch (std::runtime_error& e)
         {
@@ -212,14 +215,15 @@ namespace Sensors
       void
       onResourceRelease(void)
       {
-        if (m_psu != NULL)
+        if (m_psu_ctl != NULL)
         {
           setPower(false);
-          delete m_psu;
-          m_psu = NULL;
+          delete m_psu_ctl;
+          m_psu_ctl = NULL;
         }
 
-        Memory::clear(m_imu);
+        Memory::clear(m_psu_escc);
+        Memory::clear(m_imu_escc);
       }
 
       void
@@ -253,7 +257,7 @@ namespace Sensors
         frame.setId(PKT_ID_TRG);
         frame.setPayloadSize(2);
         frame.set(frequency, 0);
-        return m_psu->sendFrame(frame);
+        return m_psu_ctl->sendFrame(frame);
       }
 
       bool
@@ -264,7 +268,7 @@ namespace Sensors
         frame.setId(PKT_ID_PWR);
         frame.setPayloadSize(1);
         frame.set(value, 0);
-        return m_psu->sendFrame(frame, 2.0);
+        return m_psu_ctl->sendFrame(frame, 2.0);
       }
 
       int32_t
@@ -330,10 +334,10 @@ namespace Sensors
           if (!isActive())
             continue;
 
-          if (m_imu->poll(1.0))
+          if (Poll::poll(*m_imu_escc, 1.0))
           {
-            int rv = m_imu->read(bfr, sizeof(bfr));
-            if (rv <= 0)
+            size_t rv = m_imu_escc->read(bfr, sizeof(bfr));
+            if (rv == 0)
               continue;
 
             if (decodeFrame(bfr, rv))

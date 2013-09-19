@@ -171,18 +171,8 @@ namespace Sensors
 
         while (time_remaining > 0.0)
         {
-          IOMultiplexing::Result res = m_uart->hasNewData(time_remaining);
-
-          // Timeout
-          if (res == IOMultiplexing::PRES_NONE)
-            break;
-
-          // Error.
-          if (res == IOMultiplexing::PRES_ERROR)
-          {
-            err("%s", DTR(Status::getString(Status::CODE_IO_ERROR)));
-            return false;
-          }
+          if (!Poll::poll(*m_uart, time_remaining))
+            continue;
 
           rv = m_uart->read(pbfr + pbfr_i, 64);
 
@@ -212,11 +202,11 @@ namespace Sensors
 
         while (!stopping())
         {
-          if (m_uart->hasNewData(1.0) == IOMultiplexing::PRES_OK)
+          if (Poll::poll(*m_uart, 1.0))
           {
-            int rv = m_uart->read(rbfr, 32);
+            size_t rv = m_uart->read(rbfr, sizeof(rbfr));
 
-            for (int i = 0; i < rv; ++i)
+            for (size_t i = 0; i < rv; ++i)
             {
               if (rbfr[i] == '\n')
               {

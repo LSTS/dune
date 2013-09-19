@@ -95,7 +95,7 @@ namespace Transports
       void
       onDataReception(uint8_t* p, unsigned int n, double timeout)
       {
-        if (m_uart->hasNewData(timeout) != IOMultiplexing::PRES_OK)
+        if (!Poll::poll(*m_uart, timeout))
           return;
 
         int n_r;

@@ -25,113 +25,88 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-// DUNE headers.
-#include <DUNE/Time/Utils.hpp>
-#include <DUNE/System/Error.hpp>
-#include <DUNE/Hardware/UCTK/Constants.hpp>
-#include <DUNE/Hardware/UCTK/InterfaceESCC.hpp>
+#ifndef DUNE_IO_POLL_HPP_INCLUDED_
+#define DUNE_IO_POLL_HPP_INCLUDED_
 
-// Linux headers.
-#if defined(DUNE_OS_LINUX)
-#  include <sys/types.h>
-#  include <sys/stat.h>
+// ISO C++ 98 headers.
+#include <vector>
+
+// DUNE headers.
+#include <DUNE/Config.hpp>
+#include <DUNE/IO/Handle.hpp>
+
+// POSIX headers.
+#if defined(DUNE_OS_POSIX)
 #  include <sys/select.h>
-#  include <fcntl.h>
-#  include <unistd.h>
 #endif
 
 namespace DUNE
 {
-  namespace Hardware
+  namespace IO
   {
-    namespace UCTK
+    // Export symbol.
+    class DUNE_DLL_SYM Poll;
+
+    class Poll
     {
-      inline void
-      throwLastError(const std::string& msg)
+    public:
+      static bool
+      poll(const NativeHandle& handle, double timeout);
+
+      static bool
+      poll(const Handle& handle, double timeout)
       {
-        throw std::runtime_error(msg + System::Error::getLastMessage());
+        return poll(handle.getNative(), timeout);
       }
 
-      InterfaceESCC::InterfaceESCC(const std::string& dev):
-        m_dev(dev),
-        m_handle(-1)
-      { }
-
-      InterfaceESCC::~InterfaceESCC(void)
-      {
-#if defined(DUNE_OS_LINUX)
-        if (m_handle != -1)
-          ::close(m_handle);
-#endif
-      }
-
+      //! Add native I/O handle to the polling pool.
+      //! @param[in] handle native I/O handle.
       void
-      InterfaceESCC::doOpen(void)
-      {
-#if defined(DUNE_OS_LINUX)
-        if (m_handle != -1)
-          ::close(m_handle);
+      add(const NativeHandle& handle);
 
-        m_handle = ::open(m_dev.c_str(), O_RDWR);
-        if (m_handle == -1)
-          throwLastError("failed to open ESCC device");
-#else
-        throw std::runtime_error("unsupported operation");
-#endif
+      //! Add I/O handle to the polling pool.
+      //! @param[in] handle I/O handle.
+      void
+      add(const Handle& handle)
+      {
+        add(handle.getNative());
+      }
+
+      //! Remove native I/O handle from the polling pool.
+      //! @param[in] handle native I/O handle.
+      void
+      remove(const NativeHandle& handle);
+
+      //! Remove I/O handle from the polling pool.
+      //! @param[in] handle I/O handle.
+      void
+      remove(const Handle& handle)
+      {
+        remove(handle.getNative());
       }
 
       bool
-      InterfaceESCC::doPoll(double timeout)
+      poll(double timeout);
+      
+      bool
+      wasTriggered(const NativeHandle& handle);
+      
+      bool
+      wasTriggered(const Handle& handle)
       {
-#if defined(DUNE_OS_LINUX)
-        fd_set rfd;
-        FD_ZERO(&rfd);
-        FD_SET(m_handle, &rfd);
-
-        timeval tv = DUNE_TIMEVAL_INIT_SEC_FP(timeout);
-        int rv = ::select(m_handle + 1, &rfd, 0, 0, &tv);
-
-        return rv > 0;
-#else
-        (void)timeout;
-        return false;
-#endif
+        return wasTriggered(handle.getNative());
       }
 
-      void
-      InterfaceESCC::doWrite(const uint8_t* data, unsigned data_size)
-      {
-#if defined(DUNE_OS_LINUX)
-        ssize_t rv = ::write(m_handle, data, data_size);
-        (void)rv;
-#else
-        (void)data;
-        (void)data_size;
+    private:
+      //! List of native I/O handles.
+      std::vector<NativeHandle> m_handles;
+#if defined(DUNE_OS_POSIX)
+      fd_set m_rfd;
+#elif defined(DUNE_OS_WINDOWS)
+      DWORD m_rv;
 #endif
-      }
-
-      unsigned
-      InterfaceESCC::doRead(uint8_t* data, unsigned data_size)
-      {
-#if defined(DUNE_OS_LINUX)
-        ssize_t rv = ::read(m_handle, data, data_size);
-        if (rv <= 0)
-          throwLastError("read failure");
-        return (unsigned)rv;
-#else
-        (void)data;
-        (void)data_size;
-        return 0;
-#endif
-      }
-
-      void
-      InterfaceESCC::doFlush(void)
-      {
-#if defined(DUNE_OS_LINUX)
-        fsync(m_handle);
-#endif
-      }
-    }
+    };
   }
 }
+
+#endif

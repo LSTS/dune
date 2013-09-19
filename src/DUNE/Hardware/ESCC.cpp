@@ -25,49 +25,89 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_HARDWARE_UCTK_INTERFACE_UART_HPP_INCLUDED_
-#define DUNE_HARDWARE_UCTK_INTERFACE_UART_HPP_INCLUDED_
-
 // DUNE headers.
-#include <DUNE/Hardware/SerialPort.hpp>
-#include <DUNE/Hardware/UCTK/Interface.hpp>
+#include <DUNE/Time/Utils.hpp>
+#include <DUNE/System/Error.hpp>
+#include <DUNE/Hardware/ESCC.hpp>
+
+// Linux headers.
+#if defined(DUNE_OS_LINUX)
+#  include <sys/types.h>
+#  include <sys/stat.h>
+#  include <sys/select.h>
+#  include <fcntl.h>
+#  include <unistd.h>
+#endif
 
 namespace DUNE
 {
   namespace Hardware
   {
-    namespace UCTK
+    inline void
+    throwLastError(const std::string& msg)
     {
-      class InterfaceUART: public Interface
-      {
-      public:
-        InterfaceUART(const std::string& dev);
+      throw std::runtime_error(msg + System::Error::getLastMessage());
+    }
 
-        ~InterfaceUART(void);
+    ESCC::ESCC(const std::string& dev):
+      m_dev(dev),
+      m_handle(-1)
+    {
+#if defined(DUNE_OS_LINUX)
+      if (m_handle != -1)
+        ::close(m_handle);
 
-      private:
-        //! Device name.
-        std::string m_dev;
-        //! Serial port handle.
-        SerialPort* m_handle;
+      m_handle = ::open(m_dev.c_str(), O_RDWR);
+      if (m_handle == -1)
+        throwLastError("failed to open ESCC device");
+#else
+      throw std::runtime_error("unsupported operation");
+#endif
+    }
 
-        void
-        doOpen(void);
+    ESCC::~ESCC(void)
+    {
+#if defined(DUNE_OS_LINUX)
+      if (m_handle != -1)
+        ::close(m_handle);
+#endif
+    }
 
-        bool
-        doPoll(double timeout);
+    size_t
+    ESCC::doRead(uint8_t* data, size_t data_size)
+    {
+#if defined(DUNE_OS_LINUX)
+      ssize_t rv = ::read(m_handle, data, data_size);
+      if (rv <= 0)
+        throwLastError("read failure");
 
-        void
-        doWrite(const uint8_t* data, unsigned data_size);
+      return (unsigned)rv;
+#else
+      (void)data;
+      (void)data_size;
+      return 0;
+#endif
+    }
 
-        unsigned
-        doRead(uint8_t* data, unsigned data_size);
+    size_t
+    ESCC::doWrite(const uint8_t* data, size_t data_size)
+    {
+#if defined(DUNE_OS_LINUX)
+      ssize_t rv = ::write(m_handle, data, data_size);
+      return rv;
 
-        void
-        doFlush(void);
-      };
+#else
+      (void)data;
+      (void)data_size;
+#endif
+    }
+
+    void
+    ESCC::doFlush(void)
+    {
+#if defined(DUNE_OS_LINUX)
+      fsync(m_handle);
+#endif
     }
   }
 }
-
-#endif

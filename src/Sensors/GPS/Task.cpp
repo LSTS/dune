@@ -200,7 +200,7 @@ namespace Sensors
             continue;
 
           std::string cmd = String::unescape(m_args.init_cmds[i]);
-          m_uart->write(cmd.c_str());
+          m_uart->writeString(cmd.c_str());
 
           if (!m_args.init_rpls[i].empty())
           {
@@ -229,10 +229,10 @@ namespace Sensors
         {
           consumeMessages();
 
-          if (m_uart->hasNewData(0.5) != IOMultiplexing::PRES_OK)
+          if (!Poll::poll(*m_uart, 0.5))
             continue;
 
-          int rv = m_uart->readString(line, sizeof(line));
+          size_t rv = m_uart->readString(line, sizeof(line));
           if (rv == 0)
             continue;
 
@@ -683,11 +683,10 @@ namespace Sensors
         {
           consumeMessages();
 
-          if (m_uart->hasNewData(0.5) == IOMultiplexing::PRES_OK)
+          if (Poll::poll(*m_uart, 0.5))
           {
-            int rv = m_uart->readString(line, sizeof(line));
-
-            if (rv <= 0)
+            size_t rv = m_uart->readString(line, sizeof(line));
+            if (rv == 0)
             {
               throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
             }

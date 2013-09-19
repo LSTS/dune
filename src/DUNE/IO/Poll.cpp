@@ -25,59 +25,86 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <algorithm>
+#include <cstring>
+
 // DUNE headers.
 #include <DUNE/Config.hpp>
 #include <DUNE/System/Error.hpp>
 #include <DUNE/Time/Constants.hpp>
 #include <DUNE/Time/Utils.hpp>
-#include <DUNE/System/IOMultiplexing.hpp>
-
-using std::memset;
+#include <DUNE/IO/Poll.hpp>
 
 namespace DUNE
 {
-  namespace System
+  namespace IO
   {
-    IOMultiplexing::IOMultiplexing(void)
-    {
-#if defined(DUNE_SYS_HAS_SELECT)
-      FD_ZERO(&m_set);
-#endif
-    }
-
-    IOMultiplexing::~IOMultiplexing(void)
-    { }
+    using std::memset;
+    using System::Error;
 
     void
-    IOMultiplexing::add(void* src)
+    Poll::add(const NativeHandle& handle)
     {
-#if defined(DUNE_SYS_HAS_SELECT)
-      int* s = (int*)src;
-      m_fds.push_back(*s);
-      FD_SET(*s, &m_set);
-#endif
+      m_handles.push_back(handle);
     }
 
     void
-    IOMultiplexing::del(void* src)
+    Poll::remove(const NativeHandle& handle)
     {
-#if defined(DUNE_SYS_HAS_SELECT)
-      int* s = (int*)src;
-      m_fds.remove(*s);
-      FD_CLR(*s, &m_set);
-#endif
+      std::vector<NativeHandle>::iterator itr;
+      itr = std::find(m_handles.begin(), m_handles.end(), handle);
+      if (itr != m_handles.end())
+        m_handles.erase(itr);
     }
 
     bool
-    IOMultiplexing::poll(double timeout)
+    Poll::wasTriggered(const NativeHandle& handle)
     {
-#if defined(DUNE_SYS_HAS_SELECT)
-      int rv = 0;
-      int max = 0;
+#if defined(DUNE_OS_POSIX)
+      // Only the triggered fd's remain in the set after select() exits.
+      return FD_ISSET(handle, &m_rfd) != 0;
 
+#elif defined(DUNE_OS_WINDOWS)
+      size_t idx = m_rv - WAIT_OBJECT_0;
+      if (idx < m_handles.size())
+      {
+        if (m_handles[idx] == handle)
+          return true;
+      }
+#endif
+
+      return false;
+    }
+
+    bool
+    Poll::poll(double timeout)
+    {
+#if defined(DUNE_OS_WINDOWS)
+      DWORD count = m_handles.size();
+      m_rv = WaitForMultipleObjects(count, &m_handles[0], FALSE, timeout * 1000);
+
+      if (m_rv < count)
+      {
+        return true;
+      }
+
+      if (m_rv == WAIT_TIMEOUT)
+      {
+        return false;
+      }
+
+      if (m_rv == WAIT_FAILED)
+        throw Error("polling handle", Error::getLastMessage());
+
+      return false;
+
+#elif defined(DUNE_OS_POSIX)
+      int rv = 0;
+      NativeHandle max = 0;
       FD_ZERO(&m_rfd);
 
-      for (std::list<int>::iterator itr = m_fds.begin(); itr != m_fds.end(); ++itr)
+      for (std::vector<NativeHandle>::iterator itr = m_handles.begin(); itr != m_handles.end(); ++itr)
       {
         if (*itr > max)
           max = *itr;
@@ -86,7 +113,7 @@ namespace DUNE
 
       if (timeout < 0.0)
       {
-        rv = select(max + 1, &(m_rfd), NULL, NULL, NULL);
+        rv = select(max + 1, &m_rfd, NULL, NULL, NULL);
       }
       else
       {
@@ -98,9 +125,9 @@ namespace DUNE
       {
         //! Workaround for when we are interrupted by a signal.
         if (errno == EINTR)
-          return 0;
+          return false;
         else
-          throw Error("polling socket", Error::getLastMessage());
+          throw Error("polling handle", Error::getLastMessage());
       }
 
       return rv > 0;
@@ -108,12 +135,38 @@ namespace DUNE
     }
 
     bool
-    IOMultiplexing::wasTriggered(void* src)
+    Poll::poll(const NativeHandle& handle, double timeout)
     {
-#if defined(DUNE_SYS_HAS_SELECT)
-      int* s = (int*)src;
-      // Only the triggered fd's remain in the set after select() exits.
-      return FD_ISSET(*s, &m_rfd) != 0;
+#if defined(DUNE_OS_WINDOWS)
+      DWORD rv = WaitForSingleObjectEx(handle, timeout * 1000, FALSE);
+      return rv == WAIT_OBJECT_0;
+
+#elif defined(DUNE_OS_POSIX)
+      fd_set rfd;
+      FD_ZERO(&rfd);
+      FD_SET(handle, &rfd);
+
+      int rv = 0;
+      if (timeout < 0.0)
+      {
+        rv = select(handle + 1, &rfd, NULL, NULL, NULL);
+      }
+      else
+      {
+        timeval tv = DUNE_TIMEVAL_INIT_SEC_FP(timeout);
+        rv = select(handle + 1, &rfd, NULL, NULL, &tv);
+      }
+
+      if (rv == -1)
+      {
+        //! Workaround for when we are interrupted by a signal.
+        if (errno == EINTR)
+          return false;
+        else
+          throw Error("polling handle", Error::getLastMessage());
+      }
+
+      return rv > 0;
 #endif
     }
   }

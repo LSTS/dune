@@ -511,9 +511,9 @@ namespace Transports
     {
       sendReply(220, "DUNE FTP server ready.");
 
-      IOMultiplexing iom;
-      m_sock->addToPoll(iom);
-      m_sock_data->addToPoll(iom);
+      Poll poll;
+      poll.add(*m_sock);
+      poll.add(*m_sock_data);
 
       while (!isStopping())
       {
@@ -522,10 +522,10 @@ namespace Transports
 
         try
         {
-          if (!iom.poll(1.0))
+          if (!poll.poll(1.0))
             continue;
 
-          if (!m_sock->wasTriggered(iom))
+          if (!poll.wasTriggered(*m_sock))
             continue;
 
           int rv = m_sock->read(m_bfr, sizeof(m_bfr));

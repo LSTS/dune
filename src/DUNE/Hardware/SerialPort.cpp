@@ -40,7 +40,6 @@
 #include <DUNE/Time/Delay.hpp>
 #include <DUNE/FileSystem/Path.hpp>
 #include <DUNE/System/Error.hpp>
-#include <DUNE/System/IOMultiplexing.hpp>
 #include <DUNE/Hardware/SerialPort.hpp>
 
 // POSIX headers.
@@ -305,111 +304,6 @@ namespace DUNE
         throw Error("setting minimum read", System::Error::getLastMessage());
 #elif defined(DUNE_OS_WINDOWS)
       (void)value;
-#endif
-    }
-
-    int
-    SerialPort::write(const char* bfr, int size)
-    {
-#if defined(DUNE_OS_POSIX)
-      return ::write(m_handle, bfr, size);
-#elif defined(DUNE_OS_WINDOWS)
-      OVERLAPPED ov;
-      DWORD written_bytes;
-      std::memset(&ov, 0, sizeof(ov));
-
-      if (!WriteFile(m_handle, (LPCVOID)bfr, (DWORD)size, &written_bytes, &ov))
-      {
-        if (GetLastError() != ERROR_IO_PENDING || !GetOverlappedResult(m_handle, &ov, &written_bytes, TRUE))
-          written_bytes = -1;
-      }
-
-      return (int)written_bytes;
-#else
-      return 0;
-#endif
-    }
-
-    int
-    SerialPort::write(const uint8_t* bfr, int size)
-    {
-      return write((char*)bfr, size);
-    }
-
-    int
-    SerialPort::write(const char* bfr)
-    {
-      return write(bfr, std::strlen(bfr));
-    }
-
-    int
-    SerialPort::read(char* bfr, int size)
-    {
-#if defined(DUNE_OS_POSIX)
-      return ::read(m_handle, bfr, size);
-#elif defined(DUNE_OS_WINDOWS)
-      OVERLAPPED ov;
-      DWORD read_bytes;
-
-      std::memset(&ov, 0, sizeof(ov));
-
-      if (!ReadFile(m_handle, bfr, size, &read_bytes, &ov))
-      {
-        if (GetLastError() != ERROR_IO_PENDING || !GetOverlappedResult(m_handle, &ov, &read_bytes, TRUE))
-          read_bytes = -1;
-      }
-      return read_bytes;
-#else
-      return 0;
-#endif
-    }
-
-    int
-    SerialPort::readString(char* bfr, int size)
-    {
-      int rv = read(bfr, size - 1);
-
-      if (rv >= 0)
-        bfr[rv] = 0;
-      else
-        bfr[0] = 0;
-
-      return rv;
-    }
-
-    int
-    SerialPort::read(uint8_t* bfr, int size)
-    {
-      return read((char*)bfr, size);
-    }
-
-    void
-    SerialPort::flushInput(void)
-    {
-#if defined(DUNE_OS_POSIX)
-      tcflush(m_handle, TCIFLUSH);
-#elif defined(DUNE_OS_WINDOWS)
-      PurgeComm(m_handle, PURGE_RXABORT | PURGE_RXCLEAR);
-#endif
-    }
-
-    void
-    SerialPort::flushOutput(void)
-    {
-#if defined(DUNE_OS_POSIX)
-      tcflush(m_handle, TCOFLUSH);
-#elif defined(DUNE_OS_WINDOWS)
-      PurgeComm(m_handle, PURGE_TXABORT | PURGE_TXCLEAR);
-#endif
-    }
-
-    void
-    SerialPort::flush(void)
-    {
-#if defined(DUNE_OS_POSIX)
-      tcflush(m_handle, TCIOFLUSH);
-#elif defined(DUNE_OS_WINDOWS)
-      PurgeComm(m_handle, PURGE_RXABORT | PURGE_RXCLEAR | PURGE_TXABORT | PURGE_TXCLEAR);
 #endif
     }
 
@@ -716,104 +610,80 @@ namespace DUNE
 #endif
     }
 
-    System::IOMultiplexing::Result
-    SerialPort::hasNewData(double timeout)
+    size_t
+    SerialPort::doWrite(const uint8_t* bfr, size_t size)
     {
 #if defined(DUNE_OS_POSIX)
-      using std::memset;
-
-      fd_set rfd;
-      timeval* tvp = 0;
-      timeval tv = DUNE_TIMEVAL_INIT_SEC_FP(timeout);
-
-      FD_ZERO(&rfd);
-      FD_SET(m_handle, &rfd);
-
-      if (timeout > 0.0)
-        tvp = &tv;
-
-      int rv = select(1 + m_handle, &rfd, 0, 0, tvp);
-
-      if (rv == -1)
-      {
-        if (errno == EINTR)
-          return System::IOMultiplexing::PRES_SIGNAL;
-        else
-          return System::IOMultiplexing::PRES_ERROR;
-      }
-      else
-      {
-        if (rv > 0)
-          return System::IOMultiplexing::PRES_OK;
-        else
-          return System::IOMultiplexing::PRES_NONE;
-      }
+      return ::write(m_handle, bfr, size);
 
 #elif defined(DUNE_OS_WINDOWS)
-      DWORD ev;
-      COMSTAT cs;
-
-      ClearCommError(m_handle, &ev, &cs);
-
-      if (cs.cbInQue > 0)
-        return System::IOMultiplexing::PRES_OK;
-
       OVERLAPPED ov;
+      DWORD written_bytes;
       std::memset(&ov, 0, sizeof(ov));
-      ov.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-      System::IOMultiplexing::Result r;
-
-      SetCommMask(m_handle, EV_RXCHAR);
-      ev = EV_RXCHAR;
-
-      if (WaitCommEvent(m_handle, &ev, &ov))
+      if (!WriteFile(m_handle, (LPCVOID)bfr, (DWORD)size, &written_bytes, &ov))
       {
-        r = System::IOMultiplexing::PRES_OK;
+        if (GetLastError() != ERROR_IO_PENDING || !GetOverlappedResult(m_handle, &ov, &written_bytes, TRUE))
+          written_bytes = -1;
       }
-      else if (GetLastError() != ERROR_IO_PENDING)
-      {
-        r = System::IOMultiplexing::PRES_ERROR;
-      }
-      else
-        switch (WaitForSingleObject(ov.hEvent, timeout < 0.0 ? INFINITE : (int)(1000.0 * timeout)))
-        {
-          case WAIT_OBJECT_0:
-            if (!GetOverlappedResult(m_handle, &ov, &ev, FALSE))
-              r = System::IOMultiplexing::PRES_ERROR;
-            else
-              r = System::IOMultiplexing::PRES_OK;
-            break;
-          case WAIT_TIMEOUT:
-            r = System::IOMultiplexing::PRES_NONE;
-            break;
-          default:
-            r = System::IOMultiplexing::PRES_ERROR;
-        }
-      ClearCommError(m_handle, &ev, &cs);
-      CloseHandle(ov.hEvent);
-      return r;
+
+      return (int)written_bytes;
 #else
-      return System::IOMultiplexing::PRES_ERROR;
+      return 0;
+#endif
+    }
+
+    size_t
+    SerialPort::doRead(uint8_t* bfr, size_t size)
+    {
+#if defined(DUNE_OS_POSIX)
+      return ::read(m_handle, bfr, size);
+
+#elif defined(DUNE_OS_WINDOWS)
+      OVERLAPPED ov;
+      DWORD read_bytes;
+
+      std::memset(&ov, 0, sizeof(ov));
+
+      if (!ReadFile(m_handle, bfr, size, &read_bytes, &ov))
+      {
+        if (GetLastError() != ERROR_IO_PENDING || !GetOverlappedResult(m_handle, &ov, &read_bytes, TRUE))
+          read_bytes = -1;
+      }
+      return read_bytes;
+#else
+      return 0;
 #endif
     }
 
     void
-    SerialPort::addToPoll(System::IOMultiplexing& poller)
+    SerialPort::doFlushInput(void)
     {
-      poller.add(&m_handle);
-    }
-
-    bool
-    SerialPort::wasTriggered(System::IOMultiplexing& poller)
-    {
-      return poller.wasTriggered(&m_handle);
+#if defined(DUNE_OS_POSIX)
+      tcflush(m_handle, TCIFLUSH);
+#elif defined(DUNE_OS_WINDOWS)
+      PurgeComm(m_handle, PURGE_RXABORT | PURGE_RXCLEAR);
+#endif
     }
 
     void
-    SerialPort::delFromPoll(System::IOMultiplexing& poller)
+    SerialPort::doFlushOutput(void)
     {
-      poller.del(&m_handle);
+#if defined(DUNE_OS_POSIX)
+      tcflush(m_handle, TCOFLUSH);
+#elif defined(DUNE_OS_WINDOWS)
+      PurgeComm(m_handle, PURGE_TXABORT | PURGE_TXCLEAR);
+#endif
+    }
+
+    void
+    SerialPort::doFlush(void)
+    {
+#if defined(DUNE_OS_POSIX)
+      tcflush(m_handle, TCIOFLUSH);
+#elif defined(DUNE_OS_WINDOWS)
+      PurgeComm(m_handle, PURGE_RXABORT | PURGE_RXCLEAR | PURGE_TXABORT | PURGE_TXCLEAR);
+#endif
     }
   }
 }

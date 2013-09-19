@@ -37,6 +37,8 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
+    //! Serial port baud rate.
+    static const unsigned c_baud_rate = 115200;
     //! Number of hard-iron correction factors.
     static const unsigned c_hard_iron_count = 3;
     //! Power-up delay (s).
@@ -95,7 +97,9 @@ namespace Sensors
       //! Temperature.
       IMC::Temperature m_temp;
       //! Serial port device.
-      UCTK::InterfaceUART* m_uart;
+      SerialPort* m_uart;
+      //! Control Interface.
+      UCTK::Interface* m_ctl;
       //! UCTK parser.
       UCTK::Parser m_parser;
       //! Scratch frame.
@@ -111,7 +115,8 @@ namespace Sensors
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_uart(NULL)
+        m_uart(NULL),
+        m_ctl(NULL)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -184,9 +189,9 @@ namespace Sensors
 
         try
         {
-          m_uart = new UCTK::InterfaceUART(m_args.uart_dev);
-          m_uart->open();
-          UCTK::FirmwareInfo info = m_uart->getFirmwareInfo();
+          m_uart = new SerialPort(m_args.uart_dev, c_baud_rate);
+          m_ctl = new UCTK::Interface(m_uart);
+          UCTK::FirmwareInfo info = m_ctl->getFirmwareInfo();
           if (info.isDevelopment())
             war(DTR("device is using unstable firmware"));
           else
@@ -203,6 +208,7 @@ namespace Sensors
       void
       onResourceRelease(void)
       {
+        Memory::clear(m_ctl);
         Memory::clear(m_uart);
       }
 
@@ -250,7 +256,7 @@ namespace Sensors
         frame.setId(PKT_ID_OUTPUT_CONF);
         frame.setPayloadSize(1);
         frame.set(frequency, 0);
-        return m_uart->sendFrame(frame);
+        return m_ctl->sendFrame(frame);
       }
 
       //! Get sensor current Hard-Iron calibration parameters.
@@ -262,7 +268,7 @@ namespace Sensors
 
         UCTK::Frame frame;
         frame.setId(PKT_ID_HARD_IRON);
-        if (m_uart->sendFrame(frame))
+        if (m_ctl->sendFrame(frame))
         {
           int16_t tmp = 0;
           for (unsigned i = 0; i < c_hard_iron_count; ++i)
@@ -285,7 +291,7 @@ namespace Sensors
         frame.setPayloadSize(6);
         for (unsigned i = 0; i < c_hard_iron_count; ++i)
           frame.set<int16_t>(static_cast<int16_t>(factors[i] * 10e3), i * 2);
-        return m_uart->sendFrame(frame);
+        return m_ctl->sendFrame(frame);
       }
 
       //! Decode output data frame.
@@ -429,8 +435,8 @@ namespace Sensors
       void
       readInput(void)
       {
-        unsigned rv = m_uart->read(m_buffer, sizeof(m_buffer));
-        for (unsigned i = 0; i < rv; ++i)
+        size_t rv = m_uart->read(m_buffer, sizeof(m_buffer));
+        for (size_t i = 0; i < rv; ++i)
         {
           if (m_parser.parse(m_buffer[i], m_frame))
             decode(m_frame);
@@ -444,7 +450,7 @@ namespace Sensors
         {
           consumeMessages();
 
-          if (m_uart->poll(1.0))
+          if (Poll::poll(*m_uart, 1.0))
             readInput();
 
           if (m_wdog.overflow())

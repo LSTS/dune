@@ -77,6 +77,8 @@ namespace Actuators
       double wdog_tout;
     };
 
+    //! Serial port baud rate.
+    static const unsigned c_baud_rate = 115200;
     //! Number of LEDs.
     static const unsigned c_led_count = 12;
     //! Suffix of MCU voltage.
@@ -90,8 +92,10 @@ namespace Actuators
       std::map<std::string, LED*> m_led_by_name;
       //! Map of LEDs by id.
       std::map<unsigned, LED*> m_led_by_id;
-      //! Control interface.
-      UCTK::InterfaceUART* m_uart;
+      //! UART.
+      SerialPort* m_uart;
+      //! Control Interface.
+      UCTK::Interface* m_ctl;
       //! Minimum pulse duration in ticks.
       uint16_t m_min_dur;
       //! Maximum pulse duration in ticks.
@@ -114,7 +118,8 @@ namespace Actuators
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_uart(NULL)
+        m_uart(NULL),
+        m_ctl(NULL)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -173,9 +178,9 @@ namespace Actuators
       {
         try
         {
-          m_uart = new UCTK::InterfaceUART(m_args.uart_dev);
-          m_uart->open();
-          UCTK::FirmwareInfo info = m_uart->getFirmwareInfo();
+          m_uart = new SerialPort(m_args.uart_dev, c_baud_rate);
+          m_ctl = new UCTK::Interface(m_uart);
+          UCTK::FirmwareInfo info = m_ctl->getFirmwareInfo();
           if (info.isDevelopment())
             war(DTR("device is using unstable firmware"));
           else
@@ -210,6 +215,7 @@ namespace Actuators
       void
       onResourceRelease(void)
       {
+        Memory::clear(m_ctl);
         Memory::clear(m_uart);
       }
 
@@ -257,7 +263,7 @@ namespace Actuators
         frame.setPayloadSize(1);
         frame.set(v, 0);
 
-        return m_uart->sendFrame(frame);
+        return m_ctl->sendFrame(frame);
       }
 
       bool
@@ -265,7 +271,7 @@ namespace Actuators
       {
         UCTK::Frame frame;
         frame.setId(PKT_ID_PARAMS);
-        if (!m_uart->sendFrame(frame))
+        if (!m_ctl->sendFrame(frame))
           return false;
 
         if (frame.getPayloadSize() != 4)
@@ -291,7 +297,7 @@ namespace Actuators
         frame.set(id, 0);
         frame.set(ticks, 1);
 
-        if (m_uart->sendFrame(frame))
+        if (m_ctl->sendFrame(frame))
         {
           led->brightness.value = value;
           m_wdog.reset();
@@ -304,7 +310,7 @@ namespace Actuators
         UCTK::Frame frame;
         frame.setId(PKT_ID_STATE);
 
-        if (!m_uart->sendFrame(frame))
+        if (!m_ctl->sendFrame(frame))
           return false;
 
         if (frame.getPayloadSize() != 6)

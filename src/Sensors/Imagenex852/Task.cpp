@@ -374,14 +374,14 @@ namespace Sensors
           if (m_wdog.overflow())
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
 
-          if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+          if (!Poll::poll(*m_uart, 1.0))
             continue;
 
-          int rv = m_uart->read(bfr, sizeof(bfr));
-          if (rv <= 0)
+          size_t rv = m_uart->read(bfr, sizeof(bfr));
+          if (rv == 0)
             continue;
 
-          for (int i = 0; i < rv; ++i)
+          for (size_t i = 0; i < rv; ++i)
           {
             if (!m_parser.parse(bfr[i]))
               continue;

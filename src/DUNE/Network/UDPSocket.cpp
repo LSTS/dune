@@ -34,7 +34,6 @@
 #include <DUNE/Network/UDPSocket.hpp>
 #include <DUNE/Network/Exceptions.hpp>
 #include <DUNE/Utils/ByteCopy.hpp>
-#include <DUNE/System/IOMultiplexing.hpp>
 
 // Win32 headers.
 #if defined(DUNE_SYS_HAS_WINSOCK2_H)
@@ -92,7 +91,8 @@ namespace DUNE
 {
   namespace Network
   {
-    UDPSocket::UDPSocket(void)
+    UDPSocket::UDPSocket(void):
+      m_con_port(0)
     {
       //  POSIX / Win32
 #if defined(DUNE_SYS_HAS_SOCKET)
@@ -118,6 +118,8 @@ namespace DUNE
 #else
       throw NotImplemented("UDPSocket");
 #endif
+      
+      createEventHandle();
     }
 
     UDPSocket::~UDPSocket(void)
@@ -182,8 +184,26 @@ namespace DUNE
         throw NetworkError(DTR("unable to bind to socket"), DUNE_SOCKET_ERROR);
     }
 
-    int
-    UDPSocket::write(const char* buffer, int len, const Address& host, uint16_t port)
+    size_t
+    UDPSocket::read(uint8_t* buffer, size_t size, Address* addr)
+    {
+      sockaddr_in host;
+      socklen_t sock_len = sizeof(host);
+      std::memset((char*)&host, 0, sock_len);
+
+      int rv = recvfrom(m_handle, (char*)buffer, size, 0, (::sockaddr*)&host, (::socklen_t*)&sock_len);
+
+      if (rv <= 0)
+        throw NetworkError(DTR("error receiving data"), DUNE_SOCKET_ERROR);
+
+      if (addr != NULL)
+        *addr = (::sockaddr*)&host;
+
+      return rv;
+    }
+
+    size_t
+    UDPSocket::write(const uint8_t* buffer, size_t size, const Address& host, uint16_t port)
     {
       sockaddr_in host_sai;
       socklen_t sock_len = sizeof(host_sai);
@@ -192,7 +212,7 @@ namespace DUNE
       host_sai.sin_port = Utils::ByteCopy::toBE(port);
       host_sai.sin_addr.s_addr = host.toInteger();
 
-      int rv = sendto(m_handle, buffer, len, 0, (::sockaddr*)&host_sai, (::socklen_t)sock_len);
+      int rv = sendto(m_handle, (const char*)buffer, size, 0, (::sockaddr*)&host_sai, (::socklen_t)sock_len);
 
       if (rv == -1)
       {
@@ -207,40 +227,13 @@ namespace DUNE
       return rv;
     }
 
-    int
-    UDPSocket::read(char* buffer, int len, Address* add)
-    {
-      sockaddr_in host;
-      socklen_t sock_len = sizeof(host);
-      std::memset((char*)&host, 0, sock_len);
-
-      int rv = recvfrom(m_handle, buffer, len, 0, (::sockaddr*)&host, (::socklen_t*)&sock_len);
-
-      if (rv <= 0)
-        throw NetworkError(DTR("error receiving data"), DUNE_SOCKET_ERROR);
-
-      if (add != NULL)
-        *add = (::sockaddr*)&host;
-
-      return rv;
-    }
-
     void
-    UDPSocket::addToPoll(System::IOMultiplexing& poller)
+    UDPSocket::createEventHandle(void)
     {
-      poller.add(&m_handle);
-    }
-
-    void
-    UDPSocket::delFromPoll(System::IOMultiplexing& poller)
-    {
-      poller.del(&m_handle);
-    }
-
-    bool
-    UDPSocket::wasTriggered(System::IOMultiplexing& poller)
-    {
-      return poller.wasTriggered(&m_handle);
+#if defined(DUNE_OS_WINDOWS)
+      m_event_handle = CreateEvent(NULL, FALSE, FALSE, NULL);
+      WSAEventSelect(m_handle, m_event_handle, FD_READ);
+#endif
     }
   }
 }

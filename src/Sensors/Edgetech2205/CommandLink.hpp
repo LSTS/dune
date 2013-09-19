@@ -49,13 +49,11 @@ namespace Sensors
         m_sock.setNoDelay(true);
         setSocketTimeout(1.0);
         m_sock.connect(addr, port);
-        m_sock.addToPoll(m_iom);
         m_bfr.resize(c_max_size);
       }
 
       ~CommandLink(void)
       {
-        m_sock.delFromPoll(m_iom);
       }
 
       void
@@ -240,7 +238,7 @@ namespace Sensors
       //! TCP socket.
       TCPSocket m_sock;
       //! I/O multiplexer.
-      IOMultiplexing m_iom;
+      Poll m_poll;
       //! Parser.
       Parser m_parser;
       //! Packet.
@@ -263,13 +261,10 @@ namespace Sensors
 
         while (!timer.overflow())
         {
-          if (m_iom.poll(timer.getRemaining()))
+          if (Poll::poll(m_sock, timer.getRemaining()))
           {
-            if (!m_sock.wasTriggered(m_iom))
-              continue;
-
-            int rv = m_sock.read((char*)&m_bfr[0], m_bfr.size());
-            for (int i = 0; i < rv; ++i)
+            size_t rv = m_sock.read(&m_bfr[0], m_bfr.size());
+            for (size_t i = 0; i < rv; ++i)
             {
               if (!m_parser.parse(m_bfr[i]))
                 continue;

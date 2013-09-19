@@ -118,7 +118,7 @@ namespace Transports
 
         try
         {
-          sock.write((char*)data, data_len, m_active->first, m_active->second);
+          sock.write(data, data_len, m_active->first, m_active->second);
         }
         catch (...)
         { }

@@ -53,8 +53,8 @@ namespace Transports
         static const int c_port_retries = 5;
         // Server socket handle.
         TCPSocket* m_sock;
-        // IO selector.
-        IOMultiplexing m_iom;
+        // I/O selector.
+        Poll m_poll;
 
         // Client data.
         struct Client
@@ -116,7 +116,7 @@ namespace Transports
           }
 
           m_sock->listen(5);
-          m_sock->addToPoll(m_iom);
+          m_poll.add(*m_sock);
           inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), m_args.port);
 
           if (m_args.announce)
@@ -169,7 +169,7 @@ namespace Transports
           debug("closing connection to %s:%u (%s), client count is %lu",
                 c.address.c_str(), c.port, e.what(), client_count);
 
-          c.socket->delFromPoll(m_iom);
+          m_poll.remove(*c.socket);
           delete c.socket;
         }
 
@@ -178,7 +178,7 @@ namespace Transports
         {
           for (ClientList::iterator itr = m_clients.begin(); itr != m_clients.end(); ++itr)
           {
-            itr->socket->delFromPoll(m_iom);
+            m_poll.remove(*itr->socket);
             delete itr->socket;
           }
 
@@ -186,7 +186,7 @@ namespace Transports
 
           if (m_sock)
           {
-            m_sock->delFromPoll(m_iom);
+            m_poll.remove(*m_sock);
             delete m_sock;
             m_sock = 0;
           }
@@ -217,11 +217,11 @@ namespace Transports
         onDataReception(uint8_t* buf, unsigned int cap, double timeout)
         {
           // Poll for connections and client data
-          if (!m_iom.poll(timeout))
+          if (!m_poll.poll(timeout))
             return;
 
           // Check for new clients.
-          if (m_sock->wasTriggered(m_iom))
+          if (m_poll.wasTriggered(*m_sock))
             acceptNewClient();
 
           // Check for client data
@@ -240,7 +240,7 @@ namespace Transports
             c.socket->setNoDelay(true);
             c.socket->setReceiveTimeout(5);
             c.socket->setSendTimeout(5);
-            c.socket->addToPoll(m_iom);
+            m_poll.add(*c.socket);
             m_clients.push_back(c);
             updateEntityState(m_clients.size());
 
@@ -263,7 +263,7 @@ namespace Transports
 
           while (itr != m_clients.end())
           {
-            if (!itr->socket->wasTriggered(m_iom))
+            if (!m_poll.wasTriggered(*itr->socket))
             {
               ++itr;
               continue;

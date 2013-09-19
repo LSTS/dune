@@ -30,8 +30,8 @@
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
+#include <DUNE/IO/Handle.hpp>
 #include <DUNE/Network/Address.hpp>
-#include <DUNE/System/IOMultiplexing.hpp>
 
 // Microsoft Windows headers.
 #if defined(DUNE_SYS_HAS_WINSOCK2_H)
@@ -46,7 +46,7 @@ namespace DUNE
     class DUNE_DLL_SYM UDPSocket;
 
     //! UDP Socket.
-    class UDPSocket
+    class UDPSocket: public IO::Handle
     {
     public:
       //! Create an unbound UDP socket.
@@ -71,38 +71,67 @@ namespace DUNE
       void
       bind(uint16_t port = 0, Address add = Address::Any, bool reuse = true);
 
+      void
+      connect(const Address& addr, uint16_t port)
+      {
+        m_con_addr = addr;
+        m_con_port = port;
+      }
+
       //! Send an UDP datagram to a host.
+      //! @param buffer buffer to send.
+      //! @param size buffer length.
       //! @param addr system specific host address.
       //! @param port destination port.
-      //! @param buffer buffer to send.
-      //! @param len buffer length.
-      int
-      write(const char* buffer, int len, const Address& addr, uint16_t port);
+      size_t
+      write(const uint8_t* buffer, size_t size, const Address& addr, uint16_t port);
 
       //! Receive an UDP datagram, retrieving the address
       //! of the source host.
       //! @param buffer destination buffer.
-      //! @param len destination buffer length.
-      //! @param add system specific host address.
-      int
-      read(char* buffer, int len, Address* add = 0);
-
-      void
-      addToPoll(System::IOMultiplexing& poller);
-
-      void
-      delFromPoll(System::IOMultiplexing& poller);
-
-      bool
-      wasTriggered(System::IOMultiplexing& poller);
+      //! @param size destination buffer length.
+      //! @param addr system specific host address.
+      size_t
+      read(uint8_t* buffer, size_t size, Address* addr = NULL);
 
     private:
       //! Platform specific handle.
 #if defined(DUNE_OS_WINDOWS)
       SOCKET m_handle;
+      HANDLE m_event_handle;
 #else
       int m_handle;
 #endif
+
+      //! Connected address.
+      Address m_con_addr;
+      //! Connected port.
+      unsigned m_con_port;
+
+      IO::NativeHandle
+      doGetNative(void) const
+      {
+#if defined(DUNE_OS_WINDOWS)
+        return m_event_handle;
+#else
+        return m_handle;
+#endif
+      }
+
+      size_t
+      doWrite(const uint8_t* data, size_t data_size)
+      {
+        return write(data, data_size, m_con_addr, m_con_port);
+      }
+
+      size_t
+      doRead(uint8_t* data, size_t data_size)
+      {
+        return read(data, data_size, NULL);
+      }
+
+      void
+      createEventHandle(void);
 
       //! Non - copyable.
       UDPSocket(const UDPSocket&);

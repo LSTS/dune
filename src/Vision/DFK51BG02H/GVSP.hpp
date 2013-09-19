@@ -126,9 +126,9 @@ namespace Vision
 
     private:
       //! GVSP header size.
-      static const int c_header_size = 44;
+      static const size_t c_header_size = 44;
       //! GVSP footer size.
-      static const int c_footer_size = 16;
+      static const size_t c_footer_size = 16;
       //! Internal packet buffer.
       uint8_t* m_buffer;
       //! Internal packet buffer capacity.
@@ -150,15 +150,13 @@ namespace Vision
       run(void)
       {
         Frame* frame = NULL;
-        IOMultiplexing iom;
-        m_socket.addToPoll(iom);
 
         while (!isStopping())
         {
-          if (!iom.poll(1.0))
+          if (!Poll::poll(m_socket, 1.0))
             continue;
 
-          int rv = m_socket.read((char*)m_buffer, m_buffer_capacity);
+          size_t rv = m_socket.read(m_buffer, m_buffer_capacity);
 
           if (rv == c_header_size)
           {

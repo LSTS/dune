@@ -236,7 +236,7 @@ namespace Sensors
       {
         consumeMessages();
 
-        if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+        if (!Poll::poll(*m_uart, 1.0))
           return 0;
 
         return m_uart->readString(m_bfr, c_bfr_size);
@@ -255,8 +255,8 @@ namespace Sensors
         int max_value = 0;
         int cur_value = 0;
 
-        m_uart->write("\x1b");
-        m_uart->write(command);
+        m_uart->writeString("\x1b");
+        m_uart->writeString(command);
 
         std::string format = String::str("%s (%%d..%%d)=%%d\r\n", label);
 
@@ -270,11 +270,11 @@ namespace Sensors
             if (cur_value != value)
             {
               std::string value_str = String::str("%d\r\n", value);
-              m_uart->write(value_str.c_str());
+              m_uart->writeString(value_str.c_str());
             }
             else
             {
-              m_uart->write("\x1b");
+              m_uart->writeString("\x1b");
             }
 
             debug("%s '%s' %s %d", "parameter", command, "configured to", value);
@@ -317,8 +317,8 @@ namespace Sensors
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATING);
               m_uart->setCanonicalInput(false);
               m_uart->flush();
-              m_uart->write("\x1b");
-              m_uart->write("C");
+              m_uart->writeString("\x1b");
+              m_uart->writeString("C");
               changeCalibrationState(STA_ROTATE);
             }
 
@@ -360,7 +360,7 @@ namespace Sensors
       void
       calibrating(void)
       {
-        if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+        if (!Poll::poll(*m_uart, 1.0))
           return;
 
         uint8_t byte;
@@ -390,7 +390,7 @@ namespace Sensors
       terminateCalibration(void)
       {
         m_accumulator = 0;
-        m_uart->write("\x20");
+        m_uart->writeString("\x20");
         m_uart->setCanonicalInput(true);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }

@@ -26,29 +26,39 @@
 //***************************************************************************
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
+#include <DUNE/Config.hpp>
+#include <DUNE/Time/Delay.hpp>
+#include <DUNE/Time/Counter.hpp>
+#include <DUNE/IO/Poll.hpp>
+#include <DUNE/Streams/Terminal.hpp>
+#include <DUNE/Concurrency/ScopedMutex.hpp>
+#include <DUNE/Hardware/Exceptions.hpp>
+#include <DUNE/Hardware/BasicModem.hpp>
 
 namespace DUNE
 {
   namespace Hardware
   {
-    using DUNE_NAMESPACES;
-
     //! Default command timeout.
     static const double c_timeout = 5.0;
+    //! Default input line termination.
+    static std::string c_line_term_in = "\r\n";
+    //! Default output line termination.
+    static std::string c_line_term_out = "\r\n";
 
-    //! Constructor.
-    //! @param[in] task parent task.
-    //! @param[in] uart serial port connected to the ISU.
-    BasicModem::BasicModem(Tasks::Task* task, SerialPort* uart):
-      m_uart(uart),
+    BasicModem::BasicModem(Tasks::Task* task, IO::Handle* handle):
+      m_handle(handle),
       m_task(task),
       m_timeout(c_timeout),
       m_read_mode(READ_MODE_LINE),
       m_busy(false),
-      m_tx_rate_max(-1.0)
+      m_tx_rate_max(-1.0),
+      m_line_term_in(c_line_term_in),
+      m_line_term_idx(0),
+      m_line_term_out(c_line_term_out),
+      m_line_trim(false)
     {
-      m_uart->flushInput();
+      m_handle->flushInput();
     }
 
     void
@@ -56,8 +66,8 @@ namespace DUNE
     {
       // Reset and flush pending input.
       sendReset();
-      Delay::wait(2.0);
-      m_uart->flushInput();
+      Time::Delay::wait(2.0);
+      m_handle->flushInput();
 
       // Perform initialization.
       setReadMode(READ_MODE_LINE);
@@ -65,19 +75,55 @@ namespace DUNE
       sendInitialization();
     }
 
+    void
+    BasicModem::setLineTermIn(const std::string& term)
+    {
+      Concurrency::ScopedMutex l(m_mutex);
+      m_line_term_in = term;
+      m_line_term_idx = 0;
+    }
+
+    const std::string&
+    BasicModem::getLineTermIn(void)
+    {
+      Concurrency::ScopedMutex l(m_mutex);
+      return m_line_term_in;
+    }
+
+    void
+    BasicModem::setLineTermOut(const std::string& term)
+    {
+      Concurrency::ScopedMutex l(m_mutex);
+      m_line_term_out = term;
+    }
+
+    const std::string&
+    BasicModem::getLineTermOut(void)
+    {
+      Concurrency::ScopedMutex l(m_mutex);
+      return m_line_term_out;
+    }
+
+    void
+    BasicModem::setLineTrim(bool enable)
+    {
+      Concurrency::ScopedMutex l(m_mutex);
+      m_line_trim = enable;
+    }
+
     //! Test if ISU is busy performing an SBD session.
     //! @return true if ISU is busy, false otherwise.
     bool
     BasicModem::isBusy(void)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       return m_busy;
     }
 
     void
     BasicModem::setBusy(bool value)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       m_busy = value;
       if (m_busy && (m_tx_rate_max >= 0))
         m_tx_rate_timer.reset();
@@ -88,7 +134,7 @@ namespace DUNE
     bool
     BasicModem::isCooling(void)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       if ((m_tx_rate_max >= 0.0) && (!m_tx_rate_timer.overflow()))
         return true;
       return false;
@@ -100,7 +146,7 @@ namespace DUNE
     void
     BasicModem::setTxRateMax(double rate)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       m_tx_rate_max = rate;
       m_tx_rate_timer.setTop(rate);
     }
@@ -114,41 +160,41 @@ namespace DUNE
     BasicModem::ReadMode
     BasicModem::getReadMode(void)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       return m_read_mode;
     }
 
     void
     BasicModem::setReadMode(BasicModem::ReadMode mode)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       m_read_mode = mode;
     }
 
     void
     BasicModem::sendRaw(const uint8_t* data, unsigned data_size)
     {
-      m_uart->write(data, data_size);
+      m_handle->write(data, data_size);
     }
 
     void
     BasicModem::send(const std::string& str)
     {
-      getTask()->inf("send: %s", sanitize(str).c_str());
+      getTask()->inf("send: %s", Streams::sanitize(str).c_str());
       sendRaw((uint8_t*)str.c_str(), str.size());
     }
 
     double
     BasicModem::getTimeout(void)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       return m_timeout;
     }
 
     void
     BasicModem::setTimeout(double timeout)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       m_timeout = timeout;
     }
 
@@ -163,12 +209,12 @@ namespace DUNE
     std::string
     BasicModem::readLine(void)
     {
-      Counter<double> timer(getTimeout());
+      Time::Counter<double> timer(getTimeout());
       return readLine(timer);
     }
 
     void
-    BasicModem::readRaw(Counter<double>& timer, uint8_t* data, unsigned data_size)
+    BasicModem::readRaw(Time::Counter<double>& timer, uint8_t* data, unsigned data_size)
     {
       unsigned bytes_read = 0;
 
@@ -194,32 +240,53 @@ namespace DUNE
         char c = m_chars.front();
         m_chars.pop();
 
-        if (c == '\n')
+          m_line.push_back(c);
+
+        //!@fixme: concurrency hazard.
+        if (c == m_line_term_in[m_line_term_idx])
         {
-          if (!m_line.empty())
+          ++m_line_term_idx;
+          if (m_line_term_idx == m_line_term_in.size())
           {
+            m_line_term_idx = 0;
             got_line = true;
             break;
           }
         }
         else
         {
-          m_line.push_back(c);
+
         }
+      }
+
+      if (isFragment(m_line))
+      {
+        getTask()->inf("fragment: %s", Streams::sanitize(m_line).c_str());
+        return false;
       }
 
       // No complete line is available.
       if (!got_line)
         return false;
 
-      // Clean line.
-      str = String::trim(m_line);
+      if (m_line.size() <= m_line_term_in.size())
+      {
+        str = "";
+        return true;
+      }
+
+      // Remove termination characters.
+      str = m_line;
+      str.resize(m_line.size() - m_line_term_in.size());
+
+      if (m_line_trim)
+        str = Utils::String::trim(str);
 
       // Got a complete line, but it's empty.
       if (str.empty())
         return true;
 
-      m_task->spew("recv: %s", sanitize(str).c_str());
+      m_task->spew("recv: %s", Streams::sanitize(str).c_str());
       m_line.clear();
 
       if (!m_skip_line.empty())
@@ -252,7 +319,7 @@ namespace DUNE
     void
     BasicModem::flushInput(void)
     {
-      m_uart->flushInput();
+      m_handle->flushInput();
     }
 
     void
@@ -263,11 +330,11 @@ namespace DUNE
 
       while (!isStopping())
       {
-        if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+        if (!IO::Poll::poll(*m_handle, 1.0))
           continue;
 
-        int rv = m_uart->read(bfr, sizeof(bfr));
-        if (rv <= 0)
+        size_t rv = m_handle->read(bfr, sizeof(bfr));
+        if (rv == 0)
         {
           IMC::IoEvent iov;
           iov.setSource(getTask()->getSystemId());
@@ -280,26 +347,29 @@ namespace DUNE
 
         if (getReadMode() == READ_MODE_RAW)
         {
-          for (int i = 0; i < rv; ++i)
+          for (size_t i = 0; i < rv; ++i)
             m_bytes.push(bfr[i]);
         }
         else
         {
           bfr[rv] = 0;
-          m_task->spew("%s", sanitize(bfr).c_str());
+          m_task->spew("%s", Streams::sanitize(bfr).c_str());
 
-          for (int i = 0; i < rv; ++i)
+          for (size_t i = 0; i < rv; ++i)
           {
             m_chars.push(bfr[i]);
           }
 
-          while (processInput(line))
+          while (!m_chars.empty())
           {
-            if (!line.empty())
-            {
-              if (!handleUnsolicited(line))
-                m_lines.push(line);
-            }
+            if (!processInput(line))
+              continue;
+
+            if (line.empty())
+              continue;
+
+            if (!handleUnsolicited(line))
+              m_lines.push(line);
           }
         }
       }

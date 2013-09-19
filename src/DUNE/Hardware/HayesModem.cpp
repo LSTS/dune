@@ -26,22 +26,21 @@
 //***************************************************************************
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
+#include <DUNE/Time/Delay.hpp>
+#include <DUNE/Utils/String.hpp>
+#include <DUNE/Hardware/Exceptions.hpp>
+#include <DUNE/Concurrency/ScopedMutex.hpp>
+#include <DUNE/Hardware/HayesModem.hpp>
 
 namespace DUNE
 {
   namespace Hardware
   {
-    using DUNE_NAMESPACES;
-
     //! Maximum number of revision lines.
     static const unsigned c_max_rev_lines = 10;
 
-    //! Constructor.
-    //! @param[in] task parent task.
-    //! @param[in] uart serial port connected to the ISU.
-    HayesModem::HayesModem(Tasks::Task* task, SerialPort* uart):
-      BasicModem(task, uart)
+    HayesModem::HayesModem(Tasks::Task* task, IO::Handle* handle):
+      BasicModem(task, handle)
     {
       m_rssi.setDestination(getTask()->getSystemId());
       m_rssi.setDestinationEntity(getTask()->getEntityId());
@@ -54,13 +53,12 @@ namespace DUNE
     {
       // Reset and flush pending input.
       sendReset();
-      Delay::wait(2.0);
-      m_uart->flushInput();
+      Time::Delay::wait(2.0);
+      m_handle->flushInput();
 
       // Perform initialization.
       setReadMode(READ_MODE_LINE);
       start();
-      setEcho(false);
       sendInitialization();
     }
 
@@ -96,7 +94,7 @@ namespace DUNE
         rev.push_back(line);
       }
 
-      return String::join(rev.begin(), rev.end(), " / ");
+      return Utils::String::join(rev.begin(), rev.end(), " / ");
     }
 
     //! Query the ISU serial number (IMEI).
@@ -114,14 +112,14 @@ namespace DUNE
     {
       queryRSSI();
 
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       return (unsigned)m_rssi.value;
     }
 
     void
     HayesModem::setRSSI(float value)
     {
-      ScopedMutex l(m_mutex);
+      Concurrency::ScopedMutex l(m_mutex);
       m_rssi.value = value;
       getTask()->dispatch(m_rssi);
     }
@@ -163,15 +161,15 @@ namespace DUNE
       std::string cmd("AT");
       cmd.append(str);
       m_last_cmd = cmd;
-      cmd.append("\r\n");
-      getTask()->spew("send: %s", m_last_cmd.c_str());
+      cmd.append(getLineTermOut());
+      getTask()->spew("send: %s", DUNE::Streams::sanitize(cmd).c_str());
       sendRaw((const uint8_t*)cmd.c_str(), cmd.size());
     }
 
     void
     HayesModem::sendRaw(const uint8_t* data, unsigned data_size)
     {
-      m_uart->write(data, data_size);
+      m_handle->write(data, data_size);
     }
 
     void

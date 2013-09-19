@@ -222,10 +222,10 @@ namespace Sensors
         char response[16];
         String::format(response, 16, ">%s\r\n", cmd);
 
-        m_uart->write(command);
+        m_uart->writeString(command);
 
         char bfr[128];
-        readCommand(bfr, 128);
+        readCommand(bfr, sizeof(bfr));
 
         return (std::strcmp(bfr, response) == 0) || (std::strcmp(bfr, response + 1) == 0);
       }
@@ -235,7 +235,7 @@ namespace Sensors
       {
         bfr[0] = 0;
 
-        if (m_uart->hasNewData(timeout) == IOMultiplexing::PRES_OK)
+        if (Poll::poll(*m_uart, timeout))
           m_uart->readString(bfr, bfr_len);
       }
 
@@ -259,7 +259,7 @@ namespace Sensors
           throw std::runtime_error(DTR("failed to wake device"));
 
         // Write new-line so we can later read the prompt.
-        m_uart->write("\n");
+        m_uart->writeString("\n");
 
         bool prompt = false;
         while (!prompt)
@@ -269,7 +269,7 @@ namespace Sensors
             prompt = true;
         }
 
-        m_uart->write("\n");
+        m_uart->writeString("\n");
         readCommand(bfr, 128);
         if (std::strcmp(bfr, ">\r\n") != 0)
           throw std::runtime_error(DTR("unable to read prompt"));
@@ -311,12 +311,11 @@ namespace Sensors
             continue;
           }
 
-          if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+          if (!Poll::poll(*m_uart, 1.0))
             continue;
 
-          int rv = m_uart->read(bfr, 128);
-
-          for (int i = 0; i < rv; ++i)
+          size_t rv = m_uart->read(bfr, sizeof(bfr));
+          for (size_t i = 0; i < rv; ++i)
           {
             if (parser.parse(bfr[i]))
             {

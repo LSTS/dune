@@ -176,7 +176,7 @@ namespace Sensors
 
         while (!timer.overflow())
         {
-          if (m_uart->hasNewData(timer.getRemaining()) == IOMultiplexing::PRES_OK)
+          if (Poll::poll(*m_uart, timer.getRemaining()))
           {
             char bfr[128];
             m_uart->readString(bfr, sizeof(bfr));
@@ -191,7 +191,7 @@ namespace Sensors
       bool
       sendCommand(const char* str, const char* reply, double timeout = 2.0)
       {
-        m_uart->write(str);
+        m_uart->writeString(str);
         return read(reply, timeout);
       }
 
@@ -233,7 +233,7 @@ namespace Sensors
       void
       readSample(void)
       {
-        if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+        if (!Poll::poll(*m_uart, 1.0))
           return;
 
         m_uart->readString(m_buffer, sizeof(m_buffer));

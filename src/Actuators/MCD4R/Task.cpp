@@ -206,6 +206,8 @@ namespace Actuators
       double wdog_tout;
     };
 
+    //! UART baud rate.
+    static const unsigned c_baud_rate = 115200;
     //! Amount of seconds to wait before restarting task.
     static const unsigned c_restart_delay = 1;
     //! Size in bytes of the board's state
@@ -245,8 +247,10 @@ namespace Actuators
 
     struct Task: public DUNE::Tasks::Task
     {
-      //! Control interface.
-      UCTK::InterfaceUART* m_uart;
+      //! Control UART.
+      SerialPort* m_uart;
+      //! Control Interface.
+      UCTK::Interface* m_ctl;
       //! Current.
       IMC::Current m_current[SC_TOTAL];
       //! Voltage.
@@ -263,7 +267,8 @@ namespace Actuators
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_uart(NULL)
+        m_uart(NULL),
+        m_ctl(NULL)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -319,9 +324,10 @@ namespace Actuators
       {
         try
         {
-          m_uart = new UCTK::InterfaceUART(m_args.uart_dev);
-          m_uart->open();
-          UCTK::FirmwareInfo info = m_uart->getFirmwareInfo();
+          m_uart = new SerialPort(m_args.uart_dev);
+          m_ctl = new UCTK::Interface(m_uart);
+
+          UCTK::FirmwareInfo info = m_ctl->getFirmwareInfo();
           if (info.isDevelopment())
             war(DTR("device is using unstable firmware"));
           else
@@ -351,6 +357,7 @@ namespace Actuators
       void
       onResourceRelease(void)
       {
+        Memory::clear(m_ctl);
         Memory::clear(m_uart);
       }
 
@@ -381,7 +388,7 @@ namespace Actuators
         frame.set((uint8_t)cmd, 0);
         frame.set((int)dir, 1);
 
-        if (!m_uart->sendFrame(frame))
+        if (!m_ctl->sendFrame(frame))
           return false;
 
         return true;
@@ -467,7 +474,7 @@ namespace Actuators
         UCTK::Frame frame;
         frame.setId(PKT_ID_STATE);
 
-        if (!m_uart->sendFrame(frame))
+        if (!m_ctl->sendFrame(frame))
           return false;
 
         if (frame.getPayloadSize() != c_state_size)

@@ -25,62 +25,48 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+#ifndef DUNE_HARDWARE_ESCC_HPP_INCLUDED_
+#define DUNE_HARDWARE_ESCC_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <string>
+
 // DUNE headers.
-#include <DUNE/Memory.hpp>
-#include <DUNE/Time/Delay.hpp>
-#include <DUNE/Hardware/UCTK/Constants.hpp>
-#include <DUNE/Hardware/UCTK/InterfaceUART.hpp>
+#include <DUNE/IO/Handle.hpp>
 
 namespace DUNE
 {
   namespace Hardware
   {
-    namespace UCTK
+    class ESCC: public IO::Handle
     {
-      //! Constant baud rate.
-      static const unsigned c_baud_rate = 115200;
+    public:
+      ESCC(const std::string& dev);
 
-      InterfaceUART::InterfaceUART(const std::string& dev):
-        m_dev(dev),
-        m_handle(NULL)
-      { }
+      ~ESCC(void);
 
-      InterfaceUART::~InterfaceUART(void)
+    private:
+      //! Device name.
+      std::string m_dev;
+      //! Low-level handle.
+      int m_handle;
+
+      IO::NativeHandle
+      doGetNative(void) const
       {
-        if (m_handle != NULL)
-          delete m_handle;
+        return m_handle;
       }
+
+      size_t
+      doRead(uint8_t* bfr, size_t size);
+
+      size_t
+      doWrite(const uint8_t* bfr, size_t size);
 
       void
-      InterfaceUART::doOpen(void)
-      {
-        Memory::clear(m_handle);
-        m_handle = new SerialPort(m_dev, c_baud_rate);
-      }
-
-      bool
-      InterfaceUART::doPoll(double timeout)
-      {
-        return m_handle->hasNewData(timeout) == System::IOMultiplexing::PRES_OK;
-      }
-
-      void
-      InterfaceUART::doWrite(const uint8_t* data, unsigned data_size)
-      {
-        m_handle->write((const char*)data, data_size);
-      }
-
-      unsigned
-      InterfaceUART::doRead(uint8_t* data, unsigned data_size)
-      {
-        return (unsigned)m_handle->read((char*)data, data_size);
-      }
-
-      void
-      InterfaceUART::doFlush(void)
-      {
-        m_handle->flushInput();
-      }
-    }
+      doFlush(void);
+    };
   }
 }
+
+#endif

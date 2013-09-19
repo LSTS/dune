@@ -342,14 +342,14 @@ namespace Sensors
         if (!cmd_size)
           return true;
 
-        if (m_uart->hasNewData(m_args.data_tout) != IOMultiplexing::PRES_OK)
+        if (!Poll::poll(*m_uart, m_args.data_tout))
           return false;
 
         // Read response.
-        int rv = m_uart->read(m_bfr, c_bfr_size);
+        size_t rv = m_uart->read(m_bfr, c_bfr_size);
         m_tstamp = Clock::getSinceEpoch();
 
-        if (rv <= 0)
+        if (rv == 0)
           return false;
 
         if (rv != cmd_size)

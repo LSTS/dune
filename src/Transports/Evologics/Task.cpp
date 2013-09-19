@@ -76,8 +76,6 @@ namespace Transports
       AddressMap m_imc_to_modem_table;
       // TCP socket.
       TCPSocket* m_sock;
-      // I/O multiplexer.
-      IOMultiplexing* m_iom;
       // Modem address.
       unsigned m_address;
       // Listener thread.
@@ -91,7 +89,6 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_sock(NULL),
-        m_iom(NULL),
         m_address(0),
         m_listener(NULL)
       {
@@ -170,10 +167,8 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
-        m_iom = new IOMultiplexing;
         m_sock = new TCPSocket;
         m_sock->connect(m_args.address, m_args.port);
-        m_sock->addToPoll(*m_iom);
       }
 
       void
@@ -186,14 +181,13 @@ namespace Transports
           m_listener = NULL;
         }
 
-        Memory::clear(m_iom);
         Memory::clear(m_sock);
       }
 
       std::string
       readString(double timeout = 2.0)
       {
-        if (!m_iom->poll(timeout))
+        if (!Poll::poll(*m_sock, timeout))
           return std::string();
 
         char bfr[128];
@@ -236,7 +230,7 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-        if (m_iom->poll(2.0))
+        if (Poll::poll(*m_sock, 2.0))
         {
           char bfr[2048];
           int rv = m_sock->read(bfr, sizeof(bfr));
