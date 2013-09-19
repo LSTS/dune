@@ -231,6 +231,7 @@ namespace Control
           // Setup processing of IMC messages
           bind<DesiredPath>(this);
           bind<DesiredRoll>(this);
+          bind<DesiredZ>(this);
           bind<SetServoPosition>(this);
           bind<IdleManeuver>(this);
           bind<ControlLoops>(this);
@@ -1169,6 +1170,9 @@ namespace Control
         void
         handleNavControllerPacket(const mavlink_message_t* msg)
         {
+          if(!m_args.ardu_tracker)
+            return;
+
           mavlink_nav_controller_output_t nav_out;
           mavlink_msg_nav_controller_output_decode(msg, &nav_out);
           debug("WP Dist: %d", nav_out.wp_dist);
