@@ -160,6 +160,8 @@ namespace Transports
         dispatch(announce);
 
         m_rep_timer.reset();
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       //! Release resources.
