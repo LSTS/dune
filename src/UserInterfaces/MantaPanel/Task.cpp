@@ -79,6 +79,8 @@ namespace UserInterfaces
       std::vector<std::string> systems;
       //! List of sections with system names.
       std::vector<std::string> sys_addr_sections;
+      //! Set of excluded systems.
+      std::vector<std::string> sys_exclude;
     };
 
     struct Task: public Tasks::Task
@@ -156,6 +158,10 @@ namespace UserInterfaces
         .defaultValue("")
         .description("Array of supported system names");
 
+        param("Exclude System Names", m_args.sys_exclude)
+        .defaultValue("broadcast")
+        .description("List of excluded systems");
+
         // Register listeners.
         bind<IMC::ButtonEvent>(this);
         bind<IMC::AcousticOperation>(this);
@@ -184,6 +190,9 @@ namespace UserInterfaces
 
           // Remove our name from the list.
           m_sys.erase(getSystemName());
+          for (size_t i = 0; i < m_args.sys_exclude.size(); ++i)
+            m_sys.erase(m_args.sys_exclude[i]);
+
           m_sys_itr = m_sys.begin();
           m_acoustic_systems.list = String::join(m_sys.begin(), m_sys.end(), ",");
         }
@@ -240,6 +249,7 @@ namespace UserInterfaces
       requestAbort(const std::string& sys)
       {
         IMC::AcousticOperation acop;
+        acop.setDestination(getSystemId());
         acop.system = sys;
         acop.op = IMC::AcousticOperation::AOP_ABORT;
         dispatch(&acop, DF_LOOP_BACK);
@@ -249,6 +259,7 @@ namespace UserInterfaces
       requestPing(const std::string& sys)
       {
         IMC::AcousticOperation acop;
+        acop.setDestination(getSystemId());
         acop.system = sys;
         acop.op = IMC::AcousticOperation::AOP_RANGE;
         dispatch(&acop, DF_LOOP_BACK);
