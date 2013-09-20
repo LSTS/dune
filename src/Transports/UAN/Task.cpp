@@ -83,8 +83,6 @@ namespace Transports
       uint16_t m_seq;
       //! Last acoustic operation.
       IMC::AcousticOperation* m_last_acop;
-      //! Stop reports on the ground.
-      bool m_stop_reports;
       //! Task arguments.
       Arguments m_args;
 
@@ -94,9 +92,13 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_seq(0),
-        m_last_acop(NULL),
-        m_stop_reports(true)
+        m_last_acop(NULL)
       {
+        // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER,
+                    true);
+
         param(DTR_RT("Enable Reports"), m_args.report_enable)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("false")
@@ -117,7 +119,6 @@ namespace Transports
         bind<IMC::UamRxFrame>(this);
         bind<IMC::UamTxStatus>(this);
         bind<IMC::UamRxRange>(this);
-        bind<IMC::VehicleMedium>(this);
       }
 
       ~Task(void)
@@ -161,7 +162,20 @@ namespace Transports
 
         m_rep_timer.reset();
 
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
+      onActivation(void)
+      {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_rep_timer.reset();
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       //! Release resources.
@@ -188,15 +202,6 @@ namespace Transports
       {
         m_fuel_level = msg->value;
         m_fuel_conf = msg->confidence;
-      }
-
-      void
-      consume(const IMC::VehicleMedium* msg)
-      {
-        if (msg->medium == IMC::VehicleMedium::VM_GROUND)
-	  m_stop_reports = true;
-	else
-	  m_stop_reports = false;
       }
 
       void
@@ -543,7 +548,7 @@ namespace Transports
         {
           waitForMessages(1.0);
 
-          if (m_args.report_enable && !m_stop_reports)
+          if (m_args.report_enable && isActive())
           {
             if (m_rep_timer.overflow())
             {
