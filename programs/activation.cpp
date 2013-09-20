@@ -74,7 +74,7 @@ main(int argc, char** argv)
   UDPSocket sock;
   try
   {
-    sock.write((const char*)bfr, rv, dest, port);
+    sock.write(bfr, rv, dest, port);
 
     fprintf(stderr, "Raw:");
     for (int i = 0; i < rv; ++i)
