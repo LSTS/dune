@@ -214,7 +214,7 @@ namespace Transports
           TCPSocket atz;
           atz.connect(m_args.address, m_args.port);
           atz.writeString("ATZ0\n");
-          Delay::wait(2.0);
+          Delay::wait(5.0);
         }
 
         m_sock = new TCPSocket;
