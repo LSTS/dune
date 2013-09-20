@@ -24,7 +24,6 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-//! @fixme: set source address.
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -84,6 +83,8 @@ namespace Transports
       uint16_t m_seq;
       //! Last acoustic operation.
       IMC::AcousticOperation* m_last_acop;
+      //! Stop reports on the ground.
+      bool m_stop_reports;
       //! Task arguments.
       Arguments m_args;
 
@@ -93,7 +94,8 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_seq(0),
-        m_last_acop(NULL)
+        m_last_acop(NULL),
+        m_stop_reports(true)
       {
         param(DTR_RT("Enable Reports"), m_args.report_enable)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
@@ -115,6 +117,7 @@ namespace Transports
         bind<IMC::UamRxFrame>(this);
         bind<IMC::UamTxStatus>(this);
         bind<IMC::UamRxRange>(this);
+        bind<IMC::VehicleMedium>(this);
       }
 
       ~Task(void)
@@ -183,6 +186,15 @@ namespace Transports
       {
         m_fuel_level = msg->value;
         m_fuel_conf = msg->confidence;
+      }
+
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        if (msg->medium == IMC::VehicleMedium::VM_GROUND)
+	  m_stop_reports = true;
+	else
+	  m_stop_reports = false;
       }
 
       void
@@ -529,10 +541,13 @@ namespace Transports
         {
           waitForMessages(1.0);
 
-          if (m_args.report_enable && m_rep_timer.overflow())
+          if (m_args.report_enable && !m_stop_reports)
           {
-            m_rep_timer.reset();
-            sendReport();
+            if (m_rep_timer.overflow())
+            {
+              m_rep_timer.reset();
+              sendReport();
+            }
           }
         }
       }
