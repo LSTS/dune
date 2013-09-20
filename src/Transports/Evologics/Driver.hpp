@@ -35,6 +35,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "Replies.hpp"
+
 namespace Transports
 {
   namespace Evologics
@@ -43,6 +46,26 @@ namespace Transports
 
     //! Default AT command timeout.
     static const double c_timeout = 5.0;
+
+    //! Asynchronous messages.
+    static const char* c_async_msgs[] =
+    {
+      "DELIVEREDIM",
+      "FAILEDIM",
+      "CANCELEDIM",
+      "RECVIM",
+      "USBLLONG",
+      "USBLANGLES",
+      "BITRATE",
+      "SRCLEVEL",
+      "PHYON",
+      "PHYOFF",
+      "RECVSTART",
+      "RECVFAILED",
+      "RECVEND",
+      "SENDSTART",
+      "SENDEND"
+    };
 
     class Driver: public HayesModem
     {
@@ -140,6 +163,20 @@ namespace Transports
         return m_version;
       }
 
+      void
+      setExtendedNotifications(bool enable)
+      {
+        sendAT(String::str("@ZX%u", enable ? 1 : 0));
+        expectOK();
+      }
+
+      void
+      setPromiscuous(bool enable)
+      {
+        sendAT(String::str("!RP%u", enable ? 1 : 0));
+        expectOK();
+      }
+
       //! Send instant message.
       //! @param[in] data data to send.
       //! @param[in] data_size number of bytes to send.
@@ -207,6 +244,44 @@ namespace Transports
         expectOK();
       }
 
+      void
+      parse(const std::string& str, RecvIM& msg)
+      {
+        int offset = 0;
+        char flag[16] = {0};
+        long unsigned int data_size = 0;
+        int rv = 0;
+
+        if (getFirmwareVersion() == "1.6")
+        {
+          rv = std::sscanf(str.c_str(),
+                           "RECVIM,%lu,%u,%u,%[^,],%u,%f,%u,%f,%f,%n",
+                           &data_size, &msg.src, &msg.dst, flag, &msg.bitrate,
+                           &msg.rssi, &msg.integrity, &msg.propagation_time,
+                           &msg.velocity, &offset);
+
+          if (rv != 9)
+            throw std::runtime_error("invalid format");
+        }
+        else
+        {
+          rv = std::sscanf(str.c_str(),
+                           "RECVIM,%lu,%u,%u,%[^,],%u,%f,%u,%f,%n",
+                           &data_size, &msg.src, &msg.dst, flag, &msg.duration,
+                           &msg.rssi, &msg.integrity, &msg.velocity, &offset);
+
+          if (rv != 8)
+            throw std::runtime_error("invalid format");
+        }
+
+        msg.ack = std::strcmp(flag, "ack") == 0;
+
+        if ((unsigned)offset >= str.size())
+          throw std::runtime_error("empty payload");
+
+        msg.data.assign((uint8_t*)&str[offset], (uint8_t*)&str[str.size()]);
+      }
+
     private:
       //! Firmware version.
       std::string m_version;
@@ -266,15 +341,13 @@ namespace Transports
       bool
       handleUnsolicited(const std::string& str)
       {
-        if (String::startsWith(str, "DELIVEREDIM")
-            || String::startsWith(str, "FAILEDIM")
-            || String::startsWith(str, "CANCELEDIM")
-            || String::startsWith(str, "RECVIM")
-            || String::startsWith(str, "USBLLONG")
-            || String::startsWith(str, "USBLANGLES"))
+        for (size_t i = 0; i < sizeof(c_async_msgs) / sizeof(char*); ++i)
         {
-          dispatch(str);
-          return true;
+          if (String::startsWith(str, c_async_msgs[i]))
+          {
+            dispatch(str);
+            return true;
+          }
         }
 
         return false;
