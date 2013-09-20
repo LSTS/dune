@@ -96,7 +96,7 @@ namespace Monitors
         .description("No valid wet sensor data timeout");
 
         param("Wet Data Threshold", m_args.water_threshold)
-        .defaultValue("0.0")
+        .defaultValue("5.0")
         .description("No valid wet sensor data threshold value");
 
         param("GPS Timeout", m_args.gps_timeout)
