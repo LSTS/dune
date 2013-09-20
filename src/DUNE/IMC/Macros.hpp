@@ -456,5 +456,13 @@
 #define DUNE_IMC_POPENTITYPARAMETERS 812
 //! IoEvent identification number.
 #define DUNE_IMC_IOEVENT 813
+//! UamTxFrame identification number.
+#define DUNE_IMC_UAMTXFRAME 814
+//! UamRxFrame identification number.
+#define DUNE_IMC_UAMRXFRAME 815
+//! UamTxStatus identification number.
+#define DUNE_IMC_UAMTXSTATUS 816
+//! UamRxRange identification number.
+#define DUNE_IMC_UAMRXRANGE 817
 
 #endif

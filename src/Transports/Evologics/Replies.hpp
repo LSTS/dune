@@ -24,31 +24,39 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-// Automatically generated.                                                 *
-//***************************************************************************
 
-#ifndef DUNE_IMC_CONSTANTS_HPP_INCLUDED_
-#define DUNE_IMC_CONSTANTS_HPP_INCLUDED_
+#ifndef TRANSPORTS_EVOLOGICS_REPLIES_HPP_INCLUDED_
+#define TRANSPORTS_EVOLOGICS_REPLIES_HPP_INCLUDED_
 
-//! IMC version string.
-#define DUNE_IMC_CONST_VERSION "5.3.x"
-//! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "2a2a2ffdfb256ca4dc7f158c17d377d5"
-//! Synchronization number.
-#define DUNE_IMC_CONST_SYNC 0xFE53
-//! Reversed synchronization number.
-#define DUNE_IMC_CONST_SYNC_REV 0x53FE
-//! Size of the header in bytes.
-#define DUNE_IMC_CONST_HEADER_SIZE 20
-//! Size of the footer in bytes.
-#define DUNE_IMC_CONST_FOOTER_SIZE 2
-//! Identification number of the null message.
-#define DUNE_IMC_CONST_NULL_ID 65535
-//! Maximum message data size.
-#define DUNE_IMC_CONST_MAX_SIZE 65535
-//! Unknown entity identifier.
-#define DUNE_IMC_CONST_UNK_EID 255
-//! System entity identifier.
-#define DUNE_IMC_CONST_SYS_EID 0
+namespace Transports
+{
+  namespace Evologics
+  {
+    struct RecvIM
+    {
+      RecvIM(void):
+        src(0),
+        dst(0),
+        ack(false),
+        bitrate(0),
+        rssi(0),
+        velocity(0),
+        propagation_time(0),
+        duration(0)
+      { }
+
+      unsigned src;
+      unsigned dst;
+      bool ack;
+      unsigned bitrate;
+      float rssi;
+      unsigned integrity;
+      float velocity;
+      float propagation_time;
+      std::vector<uint8_t> data;
+      unsigned duration;
+    };
+  }
+}
 
 #endif

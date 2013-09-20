@@ -6709,4 +6709,42 @@
       </description>
     </field>
   </message>
+
+  <message id="814" name="UamTxFrame" abbrev="UamTxFrame" source="ccu,vehicle">
+    <field name="Sequence Id" abbrev="seq" type="uint16_t"/>
+    <field name="Destination System" abbrev="sys_dst" type="plaintext"/>
+    <field name="Flags" abbrev="flags" type="uint8_t" unit="Bitfield" prefix="UTF">
+      <value abbrev="ACK" name="Acknowledgement" id="0x01"/>
+    </field>
+    <field name="Data" abbrev="data" type="rawdata"/>
+  </message>
+
+  <message id="815" name="UamRxFrame" abbrev="UamRxFrame" source="ccu,vehicle">
+    <field name="Source System" abbrev="sys_src" type="plaintext"/>
+    <field name="Destination System" abbrev="sys_dst" type="plaintext"/>
+    <field name="Flags" abbrev="flags" type="uint8_t" unit="Bitfield" prefix="URF">
+      <value abbrev="PROMISCUOUS" name="Promiscuous" id="0x01"/>
+    </field>
+    <field name="Data" abbrev="data" type="rawdata"/>
+  </message>
+
+  <message id="816" name="UamTxStatus" abbrev="UamTxStatus" source="ccu,vehicle">
+    <field name="Sequence Id" abbrev="seq" type="uint16_t"/>
+    <field name="Value" abbrev="value" type="uint8_t" unit="Enumerated" prefix="UTS">
+      <value abbrev="DONE" name="Transmission Completed" id="0"/>
+      <value abbrev="FAILED" name="Transmission Failed" id="1"/>
+      <value abbrev="CANCELED" name="Transmission Canceled" id="2"/>
+      <value abbrev="BUSY" name="Modem is busy" id="3"/>
+      <value abbrev="INV_ADDR" name="Invalid address" id="4"/>
+      <value abbrev="IP" name="In Progress" id="5"/>
+    </field>
+    <field name="Error Message" abbrev="error" type="plaintext"/>
+  </message>
+
+  <message id="817" name="UamRxRange" abbrev="UamRxRange" source="ccu,vehicle">
+    <field name="Sequence Id" abbrev="seq" type="uint16_t"/>
+    <field name="System" abbrev="sys" type="plaintext"/>
+    <field name="Value" abbrev="value" type="fp32_t"/>
+  </message>
+
 </messages>

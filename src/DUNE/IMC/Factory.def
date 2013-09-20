@@ -240,4 +240,8 @@ MESSAGE(810, SessionStatus)
 MESSAGE(811, PushEntityParameters)
 MESSAGE(812, PopEntityParameters)
 MESSAGE(813, IoEvent)
+MESSAGE(814, UamTxFrame)
+MESSAGE(815, UamRxFrame)
+MESSAGE(816, UamTxStatus)
+MESSAGE(817, UamRxRange)
 #undef MESSAGE
