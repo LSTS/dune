@@ -59,7 +59,7 @@ namespace DUNE
       initialize(void);
 
       //! Set line termination for modem to CPU commands.
-      //! @param[in] str line terminator.
+      //! @param[in] term line terminator.
       void
       setLineTermIn(const std::string& term);
 

@@ -25,6 +25,9 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <vector>
+
 #ifndef TRANSPORTS_EVOLOGICS_REPLIES_HPP_INCLUDED_
 #define TRANSPORTS_EVOLOGICS_REPLIES_HPP_INCLUDED_
 

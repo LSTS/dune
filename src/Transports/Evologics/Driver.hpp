@@ -72,6 +72,7 @@ namespace Transports
     public:
       //! Constructor.
       //! @param[in] task parent task.
+      //! @param[in] handle I/O handle.
       Driver(Tasks::Task* task, IO::Handle* handle):
         HayesModem(task, handle)
       { }
@@ -99,7 +100,7 @@ namespace Transports
       }
 
       //! Set the sound pressure level (SPL) in transmission mode.
-      //! @param[in] level from 3 to 0.
+      //! @param[in] value from 3 to 0.
       void
       setSourceLevel(unsigned value)
       {
@@ -147,7 +148,7 @@ namespace Transports
 
       //! Set the time interval that the device waits for a response to
       //! its acoustic connection establishment request.
-      //! @param[in] time interval (millisecond).
+      //! @param[in] value interval (millisecond).
       void
       setRetryTimeout(unsigned value)
       {
@@ -222,7 +223,7 @@ namespace Transports
       }
 
       //! Set sound speed.
-      //! @param[in] sound speed (m/s).
+      //! @param[in] value sound speed (m/s).
       void
       setSoundSpeed(unsigned value)
       {
