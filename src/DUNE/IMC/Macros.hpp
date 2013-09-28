@@ -58,12 +58,16 @@
 #define DUNE_IMC_DEVCALIBRATIONSTATE 13
 //! EntityActivationState identification number.
 #define DUNE_IMC_ENTITYACTIVATIONSTATE 14
+//! VehicleOperationalLimits identification number.
+#define DUNE_IMC_VEHICLEOPERATIONALLIMITS 15
 //! SimulatedState identification number.
 #define DUNE_IMC_SIMULATEDSTATE 50
 //! LeakSimulation identification number.
 #define DUNE_IMC_LEAKSIMULATION 51
 //! UASimulation identification number.
 #define DUNE_IMC_UASIMULATION 52
+//! DynamicsSimParam identification number.
+#define DUNE_IMC_DYNAMICSSIMPARAM 53
 //! StorageUsage identification number.
 #define DUNE_IMC_STORAGEUSAGE 100
 //! CacheControl identification number.
@@ -98,6 +102,10 @@
 #define DUNE_IMC_SMSRX 158
 //! SmsState identification number.
 #define DUNE_IMC_SMSSTATE 159
+//! GroupMembershipState identification number.
+#define DUNE_IMC_GROUPMEMBERSHIPSTATE 160
+//! SystemGroup identification number.
+#define DUNE_IMC_SYSTEMGROUP 161
 //! LblRange identification number.
 #define DUNE_IMC_LBLRANGE 200
 //! LblDetection identification number.
@@ -246,6 +254,8 @@
 #define DUNE_IMC_NAVIGATIONRESET 359
 //! LblEstimate identification number.
 #define DUNE_IMC_LBLESTIMATE 360
+//! GroupStreamVelocity identification number.
+#define DUNE_IMC_GROUPSTREAMVELOCITY 361
 //! DesiredHeading identification number.
 #define DUNE_IMC_DESIREDHEADING 400
 //! DesiredZ identification number.
@@ -326,6 +336,10 @@
 #define DUNE_IMC_POLYGONVERTEX 474
 //! CompassCalibration identification number.
 #define DUNE_IMC_COMPASSCALIBRATION 475
+//! FormationParameters identification number.
+#define DUNE_IMC_FORMATIONPARAMETERS 476
+//! FormationPlanExecution identification number.
+#define DUNE_IMC_FORMATIONPLANEXECUTION 477
 //! FollowReference identification number.
 #define DUNE_IMC_FOLLOWREFERENCE 478
 //! Reference identification number.
@@ -352,6 +366,8 @@
 #define DUNE_IMC_VEHICLEMEDIUM 508
 //! Collision identification number.
 #define DUNE_IMC_COLLISION 509
+//! FormState identification number.
+#define DUNE_IMC_FORMSTATE 510
 //! Abort identification number.
 #define DUNE_IMC_ABORT 550
 //! PlanSpecification identification number.
@@ -378,6 +394,8 @@
 #define DUNE_IMC_PLANVARIABLE 561
 //! PlanGeneration identification number.
 #define DUNE_IMC_PLANGENERATION 562
+//! LeaderState identification number.
+#define DUNE_IMC_LEADERSTATE 563
 //! ReportedState identification number.
 #define DUNE_IMC_REPORTEDSTATE 600
 //! RemoteSensorInfo identification number.
@@ -432,5 +450,7 @@
 #define DUNE_IMC_PUSHENTITYPARAMETERS 811
 //! PopEntityParameters identification number.
 #define DUNE_IMC_POPENTITYPARAMETERS 812
+//! FormCtrlParam identification number.
+#define DUNE_IMC_FORMCTRLPARAM 813
 
 #endif

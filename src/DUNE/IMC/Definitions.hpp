@@ -1103,6 +1103,112 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Vehicle Operational Limits.
+    class VehicleOperationalLimits: public Message
+    {
+    public:
+      //! Action on the vehicle operational limits.
+      enum ActiononthevehicleoperationallimitsEnum
+      {
+        //! Request.
+        OP_REQUEST = 0,
+        //! Set.
+        OP_SET = 1,
+        //! Report.
+        OP_REPORT = 2
+      };
+
+      //! Action on the vehicle operational limits.
+      uint8_t op;
+      //! Minimum speed.
+      fp32_t speed_min;
+      //! Maximum speed.
+      fp32_t speed_max;
+      //! Longitudinal maximum acceleration.
+      fp32_t long_accel;
+      //! Maximum MSL altitude.
+      fp32_t alt_max_msl;
+      //! Maximum Dive Rate Speed Fraction.
+      fp32_t dive_fraction_max;
+      //! Maximum Climb Rate Speed Fraction.
+      fp32_t climb_fraction_max;
+      //! Bank limit.
+      fp32_t bank_max;
+      //! Bank rate limit.
+      fp32_t p_max;
+      //! Minimum pitch angle.
+      fp32_t pitch_min;
+      //! Maximum pitch angle.
+      fp32_t pitch_max;
+      //! Maximum pitch rate.
+      fp32_t q_max;
+      //! Minimum load factor.
+      fp32_t g_min;
+      //! Maximum load factor.
+      fp32_t g_max;
+      //! Maximum lateral load factor.
+      fp32_t g_lat_max;
+      //! Minimum RPMs.
+      fp32_t rpm_min;
+      //! Maximum RPMs.
+      fp32_t rpm_max;
+      //! Maximum RPM rate.
+      fp32_t rpm_rate_max;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 15;
+      }
+
+      VehicleOperationalLimits(void);
+
+      Message*
+      clone(void) const
+      {
+        return new VehicleOperationalLimits(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return VehicleOperationalLimits::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "VehicleOperationalLimits";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 69;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Simulated State.
     class SimulatedState: public Message
     {
@@ -1352,6 +1458,82 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Dynamics Simulation Parameters.
+    class DynamicsSimParam: public Message
+    {
+    public:
+      //! Action on the Vehicle Simulation Parameters.
+      enum ActionontheVehicleSimulationParametersEnum
+      {
+        //! Request.
+        OP_REQUEST = 0,
+        //! Set.
+        OP_SET = 1,
+        //! Report.
+        OP_REPORT = 2
+      };
+
+      //! Action on the Vehicle Simulation Parameters.
+      uint8_t op;
+      //! TAS to Longitudinal Acceleration Gain.
+      fp32_t tas2acc_pgain;
+      //! Bank to Bank Rate Gain.
+      fp32_t bank2p_pgain;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 53;
+      }
+
+      DynamicsSimParam(void);
+
+      Message*
+      clone(void) const
+      {
+        return new DynamicsSimParam(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return DynamicsSimParam::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DynamicsSimParam";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 9;
       }
 
       void
@@ -2675,6 +2857,163 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(error);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Group Membership State.
+    class GroupMembershipState: public Message
+    {
+    public:
+      //! Group Name.
+      std::string group_name;
+      //! Communication Links Assertion.
+      uint32_t links;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 160;
+      }
+
+      GroupMembershipState(void);
+
+      Message*
+      clone(void) const
+      {
+        return new GroupMembershipState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return GroupMembershipState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "GroupMembershipState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 4;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(group_name);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! System Group.
+    class SystemGroup: public Message
+    {
+    public:
+      //! Group List Action.
+      enum GroupListActionEnum
+      {
+        //! Disband.
+        OP_Dis = 0,
+        //! Set.
+        OP_Set = 1,
+        //! Request.
+        OP_Req = 2,
+        //! Change.
+        OP_Chg = 3,
+        //! Report.
+        OP_Rep = 4,
+        //! Force.
+        OP_Frc = 5
+      };
+
+      //! Group Name.
+      std::string groupname;
+      //! Group List Action.
+      uint8_t action;
+      //! Systems Name List.
+      std::string grouplist;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 161;
+      }
+
+      SystemGroup(void);
+
+      Message*
+      clone(void) const
+      {
+        return new SystemGroup(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SystemGroup::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SystemGroup";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(groupname) + IMC::getSerializationSize(grouplist);
       }
 
       void
@@ -8142,6 +8481,71 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! GroupStreamVelocity.
+    class GroupStreamVelocity: public Message
+    {
+    public:
+      //! X component (North).
+      fp64_t x;
+      //! Y component (East).
+      fp64_t y;
+      //! Z component (Down).
+      fp64_t z;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 361;
+      }
+
+      GroupStreamVelocity(void);
+
+      Message*
+      clone(void) const
+      {
+        return new GroupStreamVelocity(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return GroupStreamVelocity::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "GroupStreamVelocity";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 24;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Desired Heading.
     class DesiredHeading: public ControlCommand
     {
@@ -11000,7 +11404,7 @@ namespace DUNE
     };
 
     //! Communications Relay.
-    class CommsRelay: public Message
+    class CommsRelay: public Maneuver
     {
     public:
       //! Latitude WGS-84.
@@ -11332,6 +11736,199 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(custom);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Formation Parameters.
+    class FormationParameters: public Maneuver
+    {
+    public:
+      //! Formation Reference Frame.
+      enum FormationReferenceFrameEnum
+      {
+        //! Earth Fixed.
+        OP_EARTH_FIXED = 0,
+        //! Path Fixed.
+        OP_PATH_FIXED = 1,
+        //! Path Curved.
+        OP_PATH_CURVED = 2
+      };
+
+      //! Formation Name.
+      std::string formation_name;
+      //! Formation Reference Frame.
+      uint8_t reference_frame;
+      //! Formation Participants.
+      MessageList<VehicleFormationParticipant> participants;
+      //! Custom settings for formation.
+      std::string custom;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 476;
+      }
+
+      FormationParameters(void);
+
+      Message*
+      clone(void) const
+      {
+        return new FormationParameters(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FormationParameters::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FormationParameters";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(formation_name) + participants.getSerializationSize() + IMC::getSerializationSize(custom);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Formation Plan Execution.
+    class FormationPlanExecution: public Maneuver
+    {
+    public:
+      //! Target Group Name.
+      std::string group_name;
+      //! Formation Name.
+      std::string formation_name;
+      //! Formation Plan ID.
+      std::string plan_id;
+      //! Plan Description.
+      std::string description;
+      //! Formation Leader Flight Airspeed.
+      fp32_t leader_speed;
+      //! Formation leader flight bank limit.
+      fp32_t leader_bank_lim;
+      //! Position mismatch limit.
+      fp32_t pos_sim_err_lim;
+      //! Position mismatch threshold.
+      fp32_t pos_sim_err_wrn;
+      //! Position mismatch time-out.
+      uint16_t pos_sim_err_timeout;
+      //! Convergence threshold.
+      fp32_t converg_max;
+      //! Convergence time-out.
+      uint16_t converg_timeout;
+      //! Communications time-out.
+      uint16_t comms_timeout;
+      //! Turbulence limit.
+      fp32_t turb_lim;
+      //! Custom settings for maneuver.
+      std::string custom;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 477;
+      }
+
+      FormationPlanExecution(void);
+
+      Message*
+      clone(void) const
+      {
+        return new FormationPlanExecution(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FormationPlanExecution::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FormationPlanExecution";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 30;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(group_name) + IMC::getSerializationSize(formation_name) + IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(description) + IMC::getSerializationSize(custom);
       }
 
       void
@@ -12443,6 +13040,106 @@ namespace DUNE
 
       void
       setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Formation Tracking State.
+    class FormState: public Message
+    {
+    public:
+      //! Position Mismatch Monitor.
+      enum PositionMismatchMonitorEnum
+      {
+        //! Ok.
+        POS_OK = 0,
+        //! Warning threshold.
+        POS_WRN = 1,
+        //! Limit threshold.
+        POS_LIM = 2
+      };
+
+      //! Communications Monitor.
+      enum CommunicationsMonitorEnum
+      {
+        //! Ok.
+        COMMS_OK = 0,
+        //! Timeout.
+        COMMS_TIMEOUT = 1
+      };
+
+      //! Convergence.
+      enum ConvergenceEnum
+      {
+        //! Ok.
+        CONV_OK = 0,
+        //! Timeout.
+        CONV_TIMEOUT = 1
+      };
+
+      //! Position Mismatch.
+      fp32_t possimerr;
+      //! Convergence.
+      fp32_t converg;
+      //! Stream Turbulence.
+      fp32_t turbulence;
+      //! Position Mismatch Monitor.
+      uint8_t possimmon;
+      //! Communications Monitor.
+      uint8_t commmon;
+      //! Convergence.
+      uint8_t convergmon;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 510;
+      }
+
+      FormState(void);
+
+      Message*
+      clone(void) const
+      {
+        return new FormState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FormState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FormState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 15;
+      }
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
@@ -13686,6 +14383,122 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(params);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Leader State.
+    class LeaderState: public Message
+    {
+    public:
+      //! Action on the leader state.
+      enum ActionontheleaderstateEnum
+      {
+        //! Request.
+        OP_REQUEST = 0,
+        //! Set.
+        OP_SET = 1,
+        //! Report.
+        OP_REPORT = 2
+      };
+
+      //! Group Name.
+      std::string group_name;
+      //! Action on the leader state.
+      uint8_t op;
+      //! Latitude (WGS-84).
+      fp64_t lat;
+      //! Longitude (WGS-84).
+      fp64_t lon;
+      //! Height (WGS-84).
+      fp32_t height;
+      //! Offset north.
+      fp32_t x;
+      //! Offset east.
+      fp32_t y;
+      //! Offset down.
+      fp32_t z;
+      //! Rotation over x axis.
+      fp32_t phi;
+      //! Rotation over y axis.
+      fp32_t theta;
+      //! Rotation over z axis.
+      fp32_t psi;
+      //! Ground Velocity X (North).
+      fp32_t vx;
+      //! Ground Velocity Y (East).
+      fp32_t vy;
+      //! Ground Velocity Z (Down).
+      fp32_t vz;
+      //! Angular Velocity in x.
+      fp32_t p;
+      //! Angular Velocity in y.
+      fp32_t q;
+      //! Angular Velocity in z.
+      fp32_t r;
+      //! Stream Velocity X (North).
+      fp32_t svx;
+      //! Stream Velocity Y (East).
+      fp32_t svy;
+      //! Stream Velocity Z (Down).
+      fp32_t svz;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 563;
+      }
+
+      LeaderState(void);
+
+      Message*
+      clone(void) const
+      {
+        return new LeaderState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return LeaderState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "LeaderState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 81;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(group_name);
       }
 
       void
@@ -15760,6 +16573,88 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(name);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Formation Control Parameters.
+    class FormCtrlParam: public Message
+    {
+    public:
+      //! Action.
+      enum ActionEnum
+      {
+        //! Request.
+        OP_REQ = 0,
+        //! Set.
+        OP_SET = 1,
+        //! Report.
+        OP_REP = 2
+      };
+
+      //! Action.
+      uint8_t action;
+      //! Longitudinal Gain.
+      uint32_t longain;
+      //! Lateral Gain.
+      uint32_t latgain;
+      //! Boundary Layer Thickness.
+      uint32_t bondthick;
+      //! Leader Gain.
+      uint32_t leadgain;
+      //! Deconfliction Gain.
+      uint32_t deconflgain;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 813;
+      }
+
+      FormCtrlParam(void);
+
+      Message*
+      clone(void) const
+      {
+        return new FormCtrlParam(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FormCtrlParam::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FormCtrlParam";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 21;
       }
 
       void
