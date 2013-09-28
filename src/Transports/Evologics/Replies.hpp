@@ -25,11 +25,14 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+#ifndef TRANSPORTS_EVOLOGICS_REPLIES_HPP_INCLUDED_
+#define TRANSPORTS_EVOLOGICS_REPLIES_HPP_INCLUDED_
+
 // ISO C++ 98 headers.
 #include <vector>
 
-#ifndef TRANSPORTS_EVOLOGICS_REPLIES_HPP_INCLUDED_
-#define TRANSPORTS_EVOLOGICS_REPLIES_HPP_INCLUDED_
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
 
 namespace Transports
 {
