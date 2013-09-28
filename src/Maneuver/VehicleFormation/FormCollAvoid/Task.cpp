@@ -228,6 +228,7 @@ namespace Maneuver
           .description("Bank controller first order time constant. Inverse of the bank rate gain to simulate bank dynamics");
 
           // Message binding
+          bind<IMC::LeaderState>(this);
           bind<IMC::IndicatedSpeed>(this);
           bind<IMC::EstimatedStreamVelocity>(this);
           bind<IMC::SimulatedState>(this);
@@ -295,13 +296,54 @@ namespace Maneuver
         }
 
         void
+        consume(const IMC::LeaderState* msg)
+        {
+          if (!isActive())
+            requestActivation();
+
+          /*
+           * if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
+           * return;
+           */
+          debug("Consuming GPS-Fix");
+
+          // Defining origin.
+          m_sstate.lat = msg->lat;
+          m_sstate.lon = msg->lon;
+          m_sstate.height = msg->height;
+
+          //! - State initialization
+          m_position(0) = 0.0;
+          m_position(1) = 0.0;
+          // Assuming vehicle starts at ground surface.
+          m_position(2) = 0.0;
+          m_position(3) = 0.0;
+          m_position(4) = 0.0;
+          m_position(5) = 0.0;
+          m_model->set(m_position);
+
+          m_start_time = Clock::get();
+          m_last_update = Clock::get();
+
+          // Save message to cache.
+          IMC::CacheControl cop;
+          cop.op = IMC::CacheControl::COP_STORE;
+          cop.message.set(*msg);
+          dispatch(cop);
+        }
+
+        void
         consume(const IMC::IndicatedSpeed* msg)
         {
-          m_airspeed = msg->value;
-          if (!m_valid_airspeed)
+          if (m_args.uav_ind != 0 && msg->getSource() == getSystemId())
           {
-            m_valid_airspeed = 1;
-            m_airspeed_cmd.value = m_airspeed;
+            //! Get current vehicle airspeed
+            m_airspeed = msg->value;
+            if (!m_valid_airspeed)
+            {
+              m_valid_airspeed = 1;
+              m_airspeed_cmd.value = m_airspeed;
+            }
           }
         }
 
@@ -333,10 +375,10 @@ namespace Maneuver
         void
         consume(const IMC::Acceleration* msg)
         {
-          if (msg->getSource() == getSystemId())
+          if (m_args.uav_ind != 0 && msg->getSource() == getSystemId())
           {
-            //! Get vehicle own acceleration state
-            double mt_uav_accel[12] = {msg->x,   msg->y,     msg->z};
+            //! Get current vehicle acceleration state
+            double mt_uav_accel[12] = {msg->x, msg->y, msg->z};
             m_uav_accel.set(0, 2, m_args.uav_ind, m_args.uav_ind, Matrix(mt_uav_accel, 3, 1));
           }
           //! Get team vehicles acceleration state
@@ -347,35 +389,43 @@ namespace Maneuver
         void
         consume(const IMC::DesiredRoll* msg)
         {
-          if (!isActive())
+          if (m_args.uav_ind == 0)
           {
-            trace("Bank command rejected.");
-            trace("Simulation not active.");
-            trace("Missing GPS-Fix!");
-            return;
+            //! Get leader vehicle commanded roll
+            if (!isActive())
+            {
+              trace("Bank command rejected.");
+              trace("Simulation not active.");
+              trace("Missing GPS-Fix!");
+              return;
+            }
+
+            m_model->m_bank_cmd = msg->value;
+
+            // ========= Debug ===========
+            trace("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
           }
-
-          m_model->m_bank_cmd = msg->value;
-
-          // ========= Debug ===========
-          trace("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
         }
 
         void
         consume(const IMC::DesiredSpeed* msg)
         {
-          if (!isActive())
+          if (m_args.uav_ind == 0)
           {
-            trace("Speed command rejected.");
-            trace("Simulation not active.");
-            trace("Missing GPS-Fix!");
-            return;
+            //! Get leader vehicle commanded airspeed
+            if (!isActive())
+            {
+              trace("Speed command rejected.");
+              trace("Simulation not active.");
+              trace("Missing GPS-Fix!");
+              return;
+            }
+
+            m_model->m_airspeed_cmd = msg->value;
+
+            // ========= Debug ===========
+            trace("Speed command received (%1.2fm/s)", msg->value);
           }
-
-          m_model->m_airspeed_cmd = msg->value;
-
-          // ========= Debug ===========
-          trace("Speed command received (%1.2fm/s)", msg->value);
         }
 
         void
@@ -389,16 +439,12 @@ namespace Maneuver
             {
               m_init_leader_state = 0;
               Matrix vd_vel2wind = Matrix(3, 1, 0.0);
-              //! Retrieve current vehicle model
-              model = m_models[0];
               //! - State  and control parameters initialization
-              model->set(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)),
-                        m_uav_state.get(3, 5, ind_uav, ind_uav).vertCat(m_uav_state.get(9, 11, ind_uav, ind_uav)));
+              m_model->set(m_uav_state.get(0, 2, 0, 0).vertCat(m_uav_state.get(6, 8, 0, 0)),
+                        m_uav_state.get(3, 5, 0, 0).vertCat(m_uav_state.get(9, 11, 0, 0)));
               //! - Commands initialization
-              vd_vel2wind = m_uav_state.get(3, 5, ind_uav, ind_uav) - m_wind;
-              model->command(m_uav_state(6, ind_uav), vd_vel2wind.norm_2(), m_uav_state(2, ind_uav));
-              //! Update current vehicle model to the vector
-              m_models[ind_uav-1] = model;
+              vd_vel2wind = m_uav_state.get(3, 5, 0, 0) - m_wind;
+              m_model->command(m_uav_state(6, 0), vd_vel2wind.norm_2(), m_uav_state(2, 0));
             }
 
             //! GPS position initialization
@@ -455,11 +501,11 @@ namespace Maneuver
                 //! Retrieve current vehicle model
                 model = *m_models[ind_uav-1];
                 //! - State  and control parameters initialization
-                model.set(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)),
+                model->set(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)),
                           m_uav_state.get(3, 5, ind_uav, ind_uav).vertCat(m_uav_state.get(9, 11, ind_uav, ind_uav)));
                 //! - Commands initialization
                 vd_vel2wind = m_uav_state.get(3, 5, ind_uav, ind_uav) - m_wind;
-                model.command(m_uav_state(6, ind_uav), vd_vel2wind.norm_2(), m_uav_state(2, ind_uav));
+                model->command(m_uav_state(6, ind_uav), vd_vel2wind.norm_2(), m_uav_state(2, ind_uav));
                 //! Update current vehicle model to the vector
                 *m_models[ind_uav-1] = model;
               }
