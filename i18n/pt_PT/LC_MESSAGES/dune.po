@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-10-01 11:53+0100\n"
+        "POT-Creation-Date: 2013-10-01 12:59+0100\n"
         "PO-Revision-Date: 2013-08-03 13:45-0000\n"
         "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
         "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -1430,9 +1430,9 @@ msgid   "Reports Periodicity"
 msgstr  "Periodicidade de Relatórios"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:249
-#, fuzzy, c-format
+#, c-format
 msgid   "unknown system name: %s"
-msgstr  "nome de sistema desconhecido: '%s' (%u)"
+msgstr  "nome de sistema desconhecido: %s"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:465
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:603
@@ -3235,130 +3235,134 @@ msgid   "Port Stern Motor"
 msgstr  "Motor de Popa a Bombordo"
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:84
+msgid   "Power Source"
+msgstr  "Fornecedor de Energia"
+
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:85
 msgid   "Power Supervisor"
 msgstr  "Supervisor de Energia"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:85
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:86
 msgid   "Power Supply"
 msgstr  "Fonte de Energia"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:86
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:87
 msgid   "Remote Control"
 msgstr  "Controlo Remoto"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:87
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:88
 msgid   "Remote Operation"
 msgstr  "Operação Remota"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:88
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:89
 msgid   "Rows Maneuver"
 msgstr  "Manobra de Linhas"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:89
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:90
 msgid   "Service Announcer"
 msgstr  "Serviço de Anúncio"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:90
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:91
 msgid   "Service Discovery"
 msgstr  "Descoberta de Serviços"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:91
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:92
 msgid   "Servo Controller"
 msgstr  "Controlador de Servos"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:92
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:93
 msgid   "Servo Monitor"
 msgstr  "Monitor de Servos"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:93
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:94
 msgid   "Servos"
 msgstr  "Servos"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:94
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:95
 msgid   "Sidescan"
 msgstr  "Sonar de Varrimento Lateral"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:95
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:96
 msgid   "Simulation Engine"
 msgstr  "Motor de Simulação"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:96
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:97
 msgid   "Sound Speed Sensor"
 msgstr  "Sensor de Velocidade do Som"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:97
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:98
 msgid   "Speed Control"
 msgstr  "Controlo de Velocidade"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:98
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:99
 msgid   "Starboard Bow Motor"
 msgstr  "Motor de Proa a Estibordo"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:99
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:100
 msgid   "Starboard Stern Motor"
 msgstr  "Motor de Popa a Estibordo"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:100
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:101
 msgid   "Station Keeping Maneuver"
 msgstr  "Manobra de Posição Estacionária"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:101
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:102
 msgid   "TASE"
 msgstr  "TASE"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:102
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:103
 msgid   "TCP Server"
 msgstr  "Servidor TCP"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:103
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:104
 msgid   "TCP to Camera CPU"
 msgstr  "TCP para Computador da Câmara"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:104
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:105
 msgid   "TCP to Master"
 msgstr  "TCP para o Mestre"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:105
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:106
 msgid   "TREX"
 msgstr  "TREX"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:106
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:107
 msgid   "Teleoperation Maneuver"
 msgstr  "Manobra de Teleoperação"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:107
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:108
 msgid   "Text Message Parser"
 msgstr  "Processador de Mensagens de Texto"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:108
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:109
 msgid   "Thermal Zone"
 msgstr  "Zona Térmica"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:109
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:110
 msgid   "UAN"
 msgstr  "UAN"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:110
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:111
 msgid   "UDP"
 msgstr  "UDP"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:111
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:112
 msgid   "UDP to PTU"
 msgstr  "UDP para PTU"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:112
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:113
 msgid   "UDP to TREX"
 msgstr  "UDP para TREX"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:113
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:114
 msgid   "USBL"
 msgstr  "USBL"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:114
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:115
 msgid   "Underwater Acoustics Simulator"
 msgstr  "Simulador de Comunicação Acústica Subaquática"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:115
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:116
 msgid   "Vehicle Supervisor"
 msgstr  "Supervisor de Veículo"
 

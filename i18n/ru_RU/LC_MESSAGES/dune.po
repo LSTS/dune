@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-10-01 11:49+0100\n"
+        "POT-Creation-Date: 2013-10-01 12:57+0100\n"
         "PO-Revision-Date: 2013-08-03 13:42-0000\n"
         "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
         "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -3310,133 +3310,138 @@ msgid   "Port Stern Motor"
 msgstr  "Порт Стерн двигателя"
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:84
+#, fuzzy
+msgid   "Power Source"
+msgstr  "Питание"
+
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:85
 msgid   "Power Supervisor"
 msgstr  "Мощность Supervisor"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:85
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:86
 msgid   "Power Supply"
 msgstr  "Питание"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:86
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:87
 msgid   "Remote Control"
 msgstr  "Дистанционное управление"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:87
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:88
 msgid   "Remote Operation"
 msgstr  "Дистанционное управление"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:88
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:89
 msgid   "Rows Maneuver"
 msgstr  "Строки Маневр"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:89
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:90
 msgid   "Service Announcer"
 msgstr  "Служба Диктор"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:90
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:91
 msgid   "Service Discovery"
 msgstr  "Service Discovery"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:91
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:92
 #, fuzzy
 msgid   "Servo Controller"
 msgstr  "Servo монитор"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:92
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:93
 msgid   "Servo Monitor"
 msgstr  "Servo монитор"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:93
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:94
 msgid   "Servos"
 msgstr  "Сервоприводы"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:94
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:95
 msgid   "Sidescan"
 msgstr  "Sidescan"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:95
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:96
 msgid   "Simulation Engine"
 msgstr  "Моделирование двигателя"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:96
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:97
 msgid   "Sound Speed Sensor"
 msgstr  "Датчик скорости звука"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:97
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:98
 msgid   "Speed Control"
 msgstr  "Управление скоростью"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:98
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:99
 msgid   "Starboard Bow Motor"
 msgstr  "Правый борт Лук Motor"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:99
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:100
 msgid   "Starboard Stern Motor"
 msgstr  "Правый борт Стерн двигателя"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:100
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:101
 msgid   "Station Keeping Maneuver"
 msgstr  "Маневр удержания на орбите"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:101
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:102
 msgid   "TASE"
 msgstr  "TASE"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:102
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:103
 msgid   "TCP Server"
 msgstr  "TCP сервера"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:103
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:104
 #, fuzzy
 msgid   "TCP to Camera CPU"
 msgstr  "TCP в DOAM CPU"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:104
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:105
 msgid   "TCP to Master"
 msgstr  "TCP мастеру"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:105
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:106
 msgid   "TREX"
 msgstr  "TREX"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:106
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:107
 msgid   "Teleoperation Maneuver"
 msgstr  "Маневр Teleoperation"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:107
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:108
 msgid   "Text Message Parser"
 msgstr  "Анализа текстовых сообщений"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:108
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:109
 msgid   "Thermal Zone"
 msgstr  "Термальная зона"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:109
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:110
 msgid   "UAN"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:110
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:111
 msgid   "UDP"
 msgstr  "UDP"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:111
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:112
 #, fuzzy
 msgid   "UDP to PTU"
 msgstr  "UDP для TREX"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:112
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:113
 msgid   "UDP to TREX"
 msgstr  "UDP для TREX"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:113
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:114
 msgid   "USBL"
 msgstr  "USBL"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:114
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:115
 msgid   "Underwater Acoustics Simulator"
 msgstr  "Подводные Simulator акустика"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:115
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:116
 msgid   "Vehicle Supervisor"
 msgstr  "Автомобиль Supervisor"
 

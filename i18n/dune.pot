@@ -6,7 +6,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.4.0-rc1\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-10-01 11:53+0100\n"
+        "POT-Creation-Date: 2013-10-01 12:59+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3210,129 +3210,133 @@ msgid   "Port Stern Motor"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:84
-msgid   "Power Supervisor"
+msgid   "Power Source"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:85
-msgid   "Power Supply"
+msgid   "Power Supervisor"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:86
-msgid   "Remote Control"
+msgid   "Power Supply"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:87
-msgid   "Remote Operation"
+msgid   "Remote Control"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:88
-msgid   "Rows Maneuver"
+msgid   "Remote Operation"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:89
-msgid   "Service Announcer"
+msgid   "Rows Maneuver"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:90
-msgid   "Service Discovery"
+msgid   "Service Announcer"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:91
-msgid   "Servo Controller"
+msgid   "Service Discovery"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:92
-msgid   "Servo Monitor"
+msgid   "Servo Controller"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:93
-msgid   "Servos"
+msgid   "Servo Monitor"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:94
-msgid   "Sidescan"
+msgid   "Servos"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:95
-msgid   "Simulation Engine"
+msgid   "Sidescan"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:96
-msgid   "Sound Speed Sensor"
+msgid   "Simulation Engine"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:97
-msgid   "Speed Control"
+msgid   "Sound Speed Sensor"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:98
-msgid   "Starboard Bow Motor"
+msgid   "Speed Control"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:99
-msgid   "Starboard Stern Motor"
+msgid   "Starboard Bow Motor"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:100
-msgid   "Station Keeping Maneuver"
+msgid   "Starboard Stern Motor"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:101
-msgid   "TASE"
+msgid   "Station Keeping Maneuver"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:102
-msgid   "TCP Server"
+msgid   "TASE"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:103
-msgid   "TCP to Camera CPU"
+msgid   "TCP Server"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:104
-msgid   "TCP to Master"
+msgid   "TCP to Camera CPU"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:105
-msgid   "TREX"
+msgid   "TCP to Master"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:106
-msgid   "Teleoperation Maneuver"
+msgid   "TREX"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:107
-msgid   "Text Message Parser"
+msgid   "Teleoperation Maneuver"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:108
-msgid   "Thermal Zone"
+msgid   "Text Message Parser"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:109
-msgid   "UAN"
+msgid   "Thermal Zone"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:110
-msgid   "UDP"
+msgid   "UAN"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:111
-msgid   "UDP to PTU"
+msgid   "UDP"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:112
-msgid   "UDP to TREX"
+msgid   "UDP to PTU"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:113
-msgid   "USBL"
+msgid   "UDP to TREX"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:114
-msgid   "Underwater Acoustics Simulator"
+msgid   "USBL"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:115
+msgid   "Underwater Acoustics Simulator"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:116
 msgid   "Vehicle Supervisor"
 msgstr  ""
