@@ -123,7 +123,7 @@ namespace Transports
         .defaultValue("3")
         .minimumValue("0")
         .maximumValue("3")
-        .description("Source level");
+        .description("Signal transmission source level during data exchange");
 
         param("Connection Retry Count", m_args.con_retry_count)
         .defaultValue("3")
