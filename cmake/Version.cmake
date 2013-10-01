@@ -76,7 +76,8 @@ else()
   file(WRITE "${DUNE_GENERATED}/src/DUNE/Version.cpp" "")
 
   add_custom_target(dune-version
-    COMMAND ${CMAKE_COMMAND} -DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+    COMMAND ${CMAKE_COMMAND}
+    -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}
     -DDUNE_VERSION_TPL=src/DUNE/Version.cpp.in
     -DDUNE_VERSION_OUT=${DUNE_GENERATED}/src/DUNE/Version.cpp
     -P "cmake/Version.cmake"
