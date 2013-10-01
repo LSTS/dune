@@ -324,7 +324,7 @@ namespace Actuators
       {
         try
         {
-          m_uart = new SerialPort(m_args.uart_dev);
+          m_uart = new SerialPort(m_args.uart_dev, c_baud_rate);
           m_ctl = new UCTK::Interface(m_uart);
 
           UCTK::FirmwareInfo info = m_ctl->getFirmwareInfo();
