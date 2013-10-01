@@ -44,6 +44,8 @@ namespace Transports
       std::vector<std::string> messages;
       //! Log file name.
       std::string lsf_name;
+      //! Log file folder.
+      std::string log_folder;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -77,6 +79,9 @@ namespace Transports
         .defaultValue("10.0")
         .units(Units::Second)
         .description("Number of seconds to wait before forcing data to be written to disk");
+
+        param("Log Folder", m_args.log_folder)
+        .defaultValue("");
 
         param("LSF Name", m_args.lsf_name)
         .defaultValue("Digest")
@@ -126,8 +131,24 @@ namespace Transports
       {
         stopLog();
 
-        Path path = m_ctx.dir_log / name / (m_args.lsf_name + ".lsf.gz");
-        m_log = new Compression::FileOutput(path.c_str(), Compression::METHOD_GZIP);
+        if (!m_args.log_folder.empty())
+        {
+          std::string flat_name(name);
+          for (size_t i = 0; i < flat_name.size(); ++i)
+          {
+            if (flat_name[i] == '/')
+              flat_name[i] = '_';
+          }
+
+          Path(m_args.log_folder).create();
+          Path path = m_args.log_folder / (flat_name + ".lsf.gz");
+          m_log = new Compression::FileOutput(path.c_str(), Compression::METHOD_GZIP);
+        }
+        else
+        {
+          Path path = m_ctx.dir_log / name / (m_args.lsf_name + ".lsf.gz");
+          m_log = new Compression::FileOutput(path.c_str(), Compression::METHOD_GZIP);
+        }
 
         // Log entities.
         double ref_time = Clock::getSinceEpoch();
