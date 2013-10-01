@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-09-11 14:31+0100\n"
+        "POT-Creation-Date: 2013-10-01 11:53+0100\n"
         "PO-Revision-Date: 2013-08-03 13:45-0000\n"
         "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
         "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -227,18 +227,18 @@ msgstr  "erro no monitor do motor: "
 msgid   "number of linear points is not even"
 msgstr  "número de pontos não é par"
 
-#: /home/josebraga/workspace/dune/trunk/src/Vision/Lumenera/HTTPClient.hpp:125
-#: /home/josebraga/workspace/dune/trunk/src/Vision/Lumenera/HTTPClient.hpp:181
+#: /home/josebraga/workspace/dune/trunk/src/Vision/Lumenera/HTTPClient.hpp:122
+#: /home/josebraga/workspace/dune/trunk/src/Vision/Lumenera/HTTPClient.hpp:178
 msgid   "timed out while waiting for reply"
 msgstr  "tempo limite atingido à espera de resposta"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/GSM/Driver.hpp:124
+#: /home/josebraga/workspace/dune/trunk/src/Transports/GSM/Driver.hpp:126
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Hardware/UCTK/Errors.cpp:47
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Hardware/LUCL/Protocol.cpp:59
 msgid   "unknown error"
 msgstr  "erro desconhecido"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/GSM/Driver.hpp:134
+#: /home/josebraga/workspace/dune/trunk/src/Transports/GSM/Driver.hpp:136
 #, c-format
 msgid   "SMS transmission failed with error code %d"
 msgstr  "transmissão de SMS falhou com código de erro %d"
@@ -258,31 +258,31 @@ msgstr  "tamanho SBD inválido %u"
 msgid   "invalid SBD write %s"
 msgstr  "escrita de SBD inválida %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Driver.hpp:207
+#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Driver.hpp:209
 msgid   "error ocurred while clearing MO buffer"
 msgstr  "ocorreu um erro ao limpar o espaço de memória MO"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Driver.hpp:216
+#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Driver.hpp:218
 msgid   "error ocurred while clearing MT buffer"
 msgstr  "ocorreu um erro ao limpar o espaço de memória MT"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Driver.hpp:401
+#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Driver.hpp:404
 msgid   "error ocurred while clearing buffer"
 msgstr  "ocorreu um erro a limpar espaço de memória"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Driver.hpp:409
+#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Driver.hpp:412
 msgid   "error ocurred while clearing the MOMSN"
 msgstr  "ocorreu um erro ao limpar o MOMSN"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/CommandLink.hpp:82
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/CommandLink.hpp:80
 msgid   "failed to get time"
 msgstr  "falha ao obter tempo"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/CommandLink.hpp:138
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/CommandLink.hpp:136
 msgid   "failed to set range"
 msgstr  "falha ao definir distância"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/CommandLink.hpp:166
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/CommandLink.hpp:164
 msgid   "failed to get range"
 msgstr  "falha ao obter distância"
 
@@ -332,13 +332,13 @@ msgid   "lat lon = 0 ? %f"
 msgstr  "lat lon = 0 ? %f"
 
 #: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:161
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:194
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:226
 #, c-format
 msgid   "ignored reference from non-authorized source: %d"
 msgstr  "ignorada referência de origem não autorizada: %d"
 
 #: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:170
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:203
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:235
 #, c-format
 msgid   "ignored reference from non-authorized entity: %d"
 msgstr  "ignorada referência de entidade não autorizada: %d"
@@ -366,26 +366,41 @@ msgstr  "Ligação fraca, demasiado tempo desde último EstimatedState recebido.
 msgid   "Unexpected state %#x"
 msgstr  "Estado não esperado %#x"
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:138
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:150
 msgid   "waiting for first reference"
 msgstr  "à espera da primeira referência"
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:528
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:574
+#, c-format
+msgid   "Z reference changed to %f"
+msgstr  "Referência Z mudada para %f"
+
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:583
+#, c-format
+msgid   "Speed reference changed to %f"
+msgstr  "Referência de velocidade mudada para %f"
+
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:589
+#, c-format
+msgid   "Loiter radius reference changed to %f"
+msgstr  "Referência de raio de loiter mudada para %f"
+
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:603
 #, c-format
 msgid   "loitering around (%f, %f, %f, %f)."
 msgstr  "em loiter em torno de (%f, %f, %f, %f)."
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:536
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:614
 #, c-format
 msgid   "loitering (elevator) towards (%f, %f, %f, %f)."
 msgstr  "em loiter (elevador) em direção a (%f, %f, %f, %f)."
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:543
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:625
 #, c-format
 msgid   "going towards (%f, %f, %f)."
 msgstr  "a ir em direção (%f, %f, %f)."
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:547
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:630
 #, c-format
 msgid   "hovering next to (%f, %f)."
 msgstr  "a pairar perto de (%f,%f)."
@@ -640,7 +655,7 @@ msgid   "invalid rate limiter: %s"
 msgstr  "limitador de taxa inválido '%s'"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/UDPSocket.cpp:101
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:128
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:129
 msgid   "unable to create socket"
 msgstr  "incapaz de criar socket"
 
@@ -648,47 +663,47 @@ msgstr  "incapaz de criar socket"
 msgid   "setting up socket"
 msgstr  "a definir socket"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/UDPSocket.cpp:182
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:166
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/UDPSocket.cpp:184
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:168
 msgid   "unable to bind to socket"
 msgstr  "incapaz de ligar ao socket"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/UDPSocket.cpp:204
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/UDPSocket.cpp:197
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:225
-msgid   "error sending data"
-msgstr  "erro ao enviar dados"
-
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/UDPSocket.cpp:220
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:243
 msgid   "error receiving data"
 msgstr  "erro ao receber dados"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:178
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/UDPSocket.cpp:224
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:246
+msgid   "error sending data"
+msgstr  "erro ao enviar dados"
+
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:180
 #: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:323
 msgid   "unable to connect"
 msgstr  "incapaz de conectar"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:185
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:187
 msgid   "unable to listen"
 msgstr  "incapaz de receber dados"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:196
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:198
 msgid   "failed to accept connection"
 msgstr  "falhou ao aceitar conexão"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:358
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:344
 msgid   "unable to set receive timeout"
 msgstr  "incapaz de definir tempo limite de receção"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:366
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:352
 msgid   "unable to set send timeout"
 msgstr  "incapaz de definir tempo limite de transmissão"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:375
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:361
 msgid   "unable to get bound address"
 msgstr  "impossível obter endereço associado"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:386
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:372
 msgid   "unable to get bound port"
 msgstr  "impossível obter porta associada"
 
@@ -735,33 +750,33 @@ msgstr  "Profundidade"
 msgid   "Euler Angles"
 msgstr  "Ângulos de Euler"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:287
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:289
 #: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:263
 msgid   "not active"
 msgstr  "inativo"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:438
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:473
 #, c-format
 msgid   "path (lat/lon): %0.5f %0.5f to %0.5f %0.5f"
 msgstr  "caminho (lat/lon): %0.5f %0.5f para %0.5f %0.5f"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:603
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:640
 msgid   "expected new path control reference"
 msgstr  "esperada nova referência de path control"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:660
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:697
 msgid   "now loitering"
 msgstr  "a fazer loiter"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:797
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:836
 msgid   "along-track divergence error"
 msgstr  "erro por divergência ao longo do caminho"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:830
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:869
 msgid   "cross-track divergence error"
 msgstr  "erro por divergência perpendicular ao caminho"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:923
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:962
 msgid   "waiting for position estimate from navigation"
 msgstr  "à espera de uma estimativa da posição pela navegação"
 
@@ -911,23 +926,23 @@ msgstr  "perfil de execução: %s"
 msgid   "clean shutdown"
 msgstr  "encerramento limpo"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Hardware/UCTK/Interface.cpp:70
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Hardware/UCTK/Interface.cpp:67
 msgid   "failed to reset device"
 msgstr  "falha ao restabelecer dispositivo"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Hardware/UCTK/Interface.cpp:82
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Hardware/UCTK/Interface.cpp:79
 msgid   "failed to set bootloader parameters"
 msgstr  "falha ao definir parâmetros do \"bootloader\""
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Hardware/UCTK/Interface.cpp:140
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Hardware/UCTK/Interface.cpp:137
 msgid   "failed to get firmware name"
 msgstr  "falha ao obter nome do \"firmware\""
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Hardware/UCTK/Interface.cpp:153
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Hardware/UCTK/Interface.cpp:150
 msgid   "failed to get firmware version"
 msgstr  "falha ao obter versão do \"firmware\""
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Hardware/UCTK/Interface.cpp:156
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Hardware/UCTK/Interface.cpp:153
 msgid   "invalid firmware version"
 msgstr  "versão de \"firmware\" inválida"
 
@@ -1203,7 +1218,7 @@ msgid   "now in '%s' mode"
 msgstr  "agora no modo '%s'"
 
 #: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:202
-#: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:345
+#: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:373
 msgid   "got abort request"
 msgstr  "recebido pedido abort"
 
@@ -1358,28 +1373,15 @@ msgstr  "erro ao aceitar ligação a novo cliente: %s"
 msgid   "failed to copy cache snapshot: %s"
 msgstr  "falhou a copiar o snapshot da cache: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:232
-#, c-format
-msgid   "write: %s"
-msgstr  "escreve: %s"
+#: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:121
+msgid   "Source Level"
+msgstr  "Nível da Fonte"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:243
-#, c-format
-msgid   "discarding %d bytes"
-msgstr  "a descartar %d \"bytes\""
-
-#: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:334
-#, c-format
-msgid   "opening file '%s' with %u frames"
-msgstr  "a abrir ficheiro '%s' com %u tramas"
-
-#: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:368
-msgid   "file is complete"
-msgstr  "o ficheiro está completo"
-
-#: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:373
-msgid   "no file is open"
-msgstr  "não existe nenhum ficheiro aberto"
+#: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:199
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:503
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:443
+msgid   "dynamic sound speed corrections are disabled"
+msgstr  "correção dinâmica de velocidade do som está desativada"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/Replay/Task.cpp:179
 msgid   "operation not supported"
@@ -1413,9 +1415,29 @@ msgstr  "iniciou a repetição de"
 msgid   "stopped replay"
 msgstr  "repetição parada"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/SerialOverTCP/Task.cpp:138
+#: /home/josebraga/workspace/dune/trunk/src/Transports/SerialOverTCP/Task.cpp:158
 msgid   "accepting connection request"
 msgstr  "a aceitar pedido de ligação"
+
+#: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:102
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:277
+msgid   "Enable Reports"
+msgstr  "Permitir Relatórios"
+
+#: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:107
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:287
+msgid   "Reports Periodicity"
+msgstr  "Periodicidade de Relatórios"
+
+#: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:249
+#, fuzzy, c-format
+msgid   "unknown system name: %s"
+msgstr  "nome de sistema desconhecido: '%s' (%u)"
+
+#: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:465
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:603
+msgid   "start plan detected"
+msgstr  "detetado arranque de plano"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/LogBook/Task.cpp:98
 msgid   "cleared logbook"
@@ -1456,13 +1478,13 @@ msgid   "log started '%s'"
 msgstr  "registo iniciado '%s'"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/Logging/Task.cpp:404
-#: /home/josebraga/workspace/dune/trunk/src/Transports/LoggingDigest/Task.cpp:162
+#: /home/josebraga/workspace/dune/trunk/src/Transports/LoggingDigest/Task.cpp:189
 #, c-format
 msgid   "failed to start log, check available storage: %s"
 msgstr  "falha ao começar registo, verifique espaço disponível: %s'"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/Logging/Task.cpp:407
-#: /home/josebraga/workspace/dune/trunk/src/Transports/LoggingDigest/Task.cpp:164
+#: /home/josebraga/workspace/dune/trunk/src/Transports/LoggingDigest/Task.cpp:191
 msgid   "waiting for human intervention"
 msgstr  "à espera de intervenção humana"
 
@@ -1530,17 +1552,17 @@ msgstr  "erro ao carregar parâmetros do mundo."
 msgid   "error loading vehicle parameters."
 msgstr  "erro ao carregar parâmetros de veículo."
 
-#: /home/josebraga/workspace/dune/trunk/src/Simulators/UnderwaterAcoustics/Task.cpp:255
+#: /home/josebraga/workspace/dune/trunk/src/Simulators/UnderwaterAcoustics/Task.cpp:253
 #: /home/josebraga/workspace/dune/trunk/src/Monitors/Collisions/Task.cpp:336
 msgid   "collision detected"
 msgstr  "colisão detetada"
 
-#: /home/josebraga/workspace/dune/trunk/src/Simulators/UnderwaterAcoustics/Task.cpp:383
+#: /home/josebraga/workspace/dune/trunk/src/Simulators/UnderwaterAcoustics/Task.cpp:381
 #, c-format
 msgid   "unexpected simulation message: %s"
 msgstr  "mensagem de simulação inesperada: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/Simulators/UnderwaterAcoustics/Task.cpp:390
+#: /home/josebraga/workspace/dune/trunk/src/Simulators/UnderwaterAcoustics/Task.cpp:388
 #, c-format
 msgid   "read error: %s"
 msgstr  "erro de leitura: %s"
@@ -1550,15 +1572,15 @@ msgstr  "erro de leitura: %s"
 msgid   "maximum amount of beacons is %u"
 msgstr  "número máximo de transdutores é %u"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:272
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:271
 msgid   "Ardupilot interface initialized"
 msgstr  "Interface Ardupilot inicializada"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:277
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:276
 msgid   "Connection failed, retrying..."
 msgstr  "Ligação falhou, a tentar novamente..."
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:714
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:709
 msgid   "Connection lost, retrying..."
 msgstr  "Ligação perdida, a tentar novamente..."
 
@@ -1568,13 +1590,13 @@ msgstr  "submersão falhada"
 
 #: /home/josebraga/workspace/dune/trunk/src/Control/AUV/LMI/Task.cpp:89
 #: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Allocator/Task.cpp:81
-#: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:156
+#: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:157
 msgid   "Maximum Fin Rotation"
 msgstr  "Máxima Rotação de Lemes"
 
 #: /home/josebraga/workspace/dune/trunk/src/Control/AUV/LMI/Task.cpp:92
 #: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Allocator/Task.cpp:84
-#: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:159
+#: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:160
 msgid   "Maximum admissible fin rotation"
 msgstr  "Máxima rotação admissível de lemes"
 
@@ -1598,15 +1620,15 @@ msgstr  "Orientação"
 msgid   "Heading Rate"
 msgstr  "Rate de Orientação"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:161
-#: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:163
+#: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:162
+#: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:164
 msgid   "Enable roll controller"
 msgstr  "Habilitar controlador de roll"
 
 #: /home/josebraga/workspace/dune/trunk/src/Power/DOAMv2/Task.cpp:184
 #: /home/josebraga/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:355
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:518
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:459
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:511
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:465
 #: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:212
 msgid   "failed to contact device"
 msgstr  "falha ao contactar dispositivo"
@@ -1628,12 +1650,12 @@ msgstr  "Câmara"
 #: /home/josebraga/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:304
 #: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:481
 #: /home/josebraga/workspace/dune/trunk/src/Power/MCBv2/Task.cpp:626
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:193
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:198
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/SDCR/Task.cpp:174
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:199
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:203
 #: /home/josebraga/workspace/dune/trunk/src/Actuators/SCRT/Task.cpp:455
-#: /home/josebraga/workspace/dune/trunk/src/Actuators/MCD4R/Task.cpp:328
-#: /home/josebraga/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:182
+#: /home/josebraga/workspace/dune/trunk/src/Actuators/MCD4R/Task.cpp:334
+#: /home/josebraga/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:187
 #: /home/josebraga/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:358
 #, c-format
 msgid   "firmware version %u.%u.%u"
@@ -1662,7 +1684,7 @@ msgstr  "sem fugas"
 msgid   "updating firmware"
 msgstr  "a atualizar firmware"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MiniSVS/Task.cpp:110
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MiniSVS/Task.cpp:109
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:155
 msgid   "I/O error"
 msgstr  "erro de entrada/saída"
@@ -1708,9 +1730,26 @@ msgstr  "falha ao configurar saída continua de dados"
 msgid   "unable to write full command to device"
 msgstr  "falha ao escrever comando para dispositivo"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/PTU300/Task.cpp:202
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/PTU300/Task.cpp:192
 msgid   "timeout waiting for device response"
 msgstr  "tempo limite excedido à espera de resposta do dispositivo"
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Genesys/Task.cpp:99
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:194
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:378
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:184
+msgid   "restarting to change IPv4 address"
+msgstr  "a reiniciar para mudar o endereço IPv4"
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Genesys/Task.cpp:102
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:381
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:187
+msgid   "restarting to change TCP port"
+msgstr  "a reiniciar para mudar a porta TCP"
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Genesys/Task.cpp:105
+msgid   "restarting to change device address"
+msgstr  "a reiniciar para mudar o endereço do dispositivo"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:210
 msgid   "no reply to command"
@@ -1776,73 +1815,59 @@ msgstr  "mensagem inválida"
 msgid   "timeout"
 msgstr  "tempo limite"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:128
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:126
 msgid   "High-Frequency Channels"
 msgstr  "Canais de Alta Frequência"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:129
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:145
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:127
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:143
 msgid   "None, Port, Starboard, Both"
 msgstr  "Nenhum, Bombordo, Estibordo, Ambos"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:133
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:131
 msgid   "High-frequency subsystem channels"
 msgstr  "Canais do subsistema de alta frequência"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:135
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:133
 msgid   "High-Frequency Range"
 msgstr  "Alcance de Alta-Frequência"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:142
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:158
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:140
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:156
 msgid   "Enable high frequency subsystem"
 msgstr  "Habilitar subsistema de alta frequência"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:144
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:142
 msgid   "Low-Frequency Channels"
 msgstr  "Canais de Baixa Frequência"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:149
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:147
 msgid   "Low-frequency subsystem channels"
 msgstr  "Canais do subsistema de baixa frequência"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:151
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:149
 msgid   "Low-Frequency Range"
 msgstr  "Alcance de Baixa-Frequência"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:160
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:158
 msgid   "Range Multiplier"
 msgstr  "Multiplicador de Alcance"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:166
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:164
 msgid   "Range multiplier"
 msgstr  "Multiplicador de alcance"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:196
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:372
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:184
-msgid   "restarting to change IPv4 address"
-msgstr  "a reiniciar para mudar o endereço IPv4"
-
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:199
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:197
 msgid   "restarting to change TCP command port"
 msgstr  "a reiniciar para mudar porta TCP de comandos"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:202
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:200
 msgid   "restarting to change TCP data port"
 msgstr  "a reiniciar para mudar porta TCP de dados"
-
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:277
-msgid   "Enable Reports"
-msgstr  "Permitir Relatórios"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:282
 msgid   "Make Reports Verbose"
 msgstr  "Fazer Relatórios Verbosos"
-
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:287
-msgid   "Reports Periodicity"
-msgstr  "Periodicidade de Relatórios"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:323
 msgid   "waiting beacons configuration"
@@ -1865,18 +1890,9 @@ msgstr  "falhou ao definir endereço modem"
 msgid   "modem address for agent '%s' is invalid"
 msgstr  "endereço modem para agente '%s' é inválido"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:503
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:443
-msgid   "dynamic sound speed corrections are disabled"
-msgstr  "correção dinâmica de velocidade do som está desativada"
-
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:584
 msgid   "invalid change plan message"
 msgstr  "mensagem para mudar plano inválida"
-
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:603
-msgid   "start plan detected"
-msgstr  "detetado arranque de plano"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:611
 msgid   "plan acknowledged"
@@ -1994,44 +2010,39 @@ msgstr  "Erro de calibração, é necessário reiniciar o processo de calibraç�
 msgid   "Level the device and hit NEXT (Roll: %0.2f | Pitch: %0.2f)"
 msgstr  "Nivele o dispositivo e clique NEXT (Roll: %0.2f | Pitch: %0.2f)"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:191
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:197
-#: /home/josebraga/workspace/dune/trunk/src/Actuators/MCD4R/Task.cpp:326
-#: /home/josebraga/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:180
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:196
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:201
+#: /home/josebraga/workspace/dune/trunk/src/Actuators/MCD4R/Task.cpp:332
+#: /home/josebraga/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:185
 msgid   "device is using unstable firmware"
 msgstr  "o dispositivo está a usar \"firmware\" instável"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:214
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:220
 msgid   "failed to configure output frequency"
 msgstr  "falha ao configurar frequência de saída"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:217
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:237
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:223
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:243
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:403
 msgid   "failed to set hard-iron correction factors"
 msgstr  "falha ao definir fatores de correção \"hard-iron\""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:262
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:264
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:152
 msgid   "Range"
 msgstr  "Alcance"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:375
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:187
-msgid   "restarting to change TCP port"
-msgstr  "a reiniciar para mudar a porta TCP"
-
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:669
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:675
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:287
 msgid   "failed to read header"
 msgstr  "falhou ao ler cabeçalho"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:679
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:685
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:292
 msgid   "failed to read data"
 msgstr  "falhou ao ler dados"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:683
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:689
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:296
 msgid   "failed to read footer"
 msgstr  "falhou ao ler footer"
@@ -2151,20 +2162,20 @@ msgstr  "a acordar dispositivo"
 msgid   "file '%s' doesn't exist"
 msgstr  "ficheiro '%s' não existe"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:229
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:233
 msgid   "failed to configure trigger frequency"
 msgstr  "falha ao configurar frequência de disparo"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:239
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:243
 msgid   "failed to turn on device"
 msgstr  "falha ao ligar dispositivo"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:343
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:347
 #, c-format
 msgid   "IMU failure: %04X"
 msgstr  "falha do IMU: %04X"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:348
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:352
 #, c-format
 msgid   "data might be unreliable: %04X"
 msgstr  "os dados podem não ser confiáveis: %04X"
@@ -2373,11 +2384,11 @@ msgstr  "número de servo fora dos limites: %u"
 msgid   "device reported: %s"
 msgstr  "dispositivo reportado: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:196
+#: /home/josebraga/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:201
 msgid   "failed to get constant parameters"
 msgstr  "falha ao adquirir parâmetros constantes"
 
-#: /home/josebraga/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:199
+#: /home/josebraga/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:204
 msgid   "failed to configured external LED driver"
 msgstr  "falha ao configurar controlador externo de LEDs"
 
@@ -3324,28 +3335,47 @@ msgid   "Thermal Zone"
 msgstr  "Zona Térmica"
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:109
+msgid   "UAN"
+msgstr  "UAN"
+
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:110
 msgid   "UDP"
 msgstr  "UDP"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:110
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:111
 msgid   "UDP to PTU"
 msgstr  "UDP para PTU"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:111
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:112
 msgid   "UDP to TREX"
 msgstr  "UDP para TREX"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:112
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:113
 msgid   "USBL"
 msgstr  "USBL"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:113
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:114
 msgid   "Underwater Acoustics Simulator"
 msgstr  "Simulador de Comunicação Acústica Subaquática"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:114
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:115
 msgid   "Vehicle Supervisor"
 msgstr  "Supervisor de Veículo"
+
+#~ msgid        "write: %s"
+#~ msgstr       "escreve: %s"
+
+#~ msgid        "discarding %d bytes"
+#~ msgstr       "a descartar %d \"bytes\""
+
+#~ msgid        "opening file '%s' with %u frames"
+#~ msgstr       "a abrir ficheiro '%s' com %u tramas"
+
+#~ msgid        "file is complete"
+#~ msgstr       "o ficheiro está completo"
+
+#~ msgid        "no file is open"
+#~ msgstr       "não existe nenhum ficheiro aberto"
 
 #, fuzzy
 #~ msgid        "Receive error"
