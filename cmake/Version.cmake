@@ -45,7 +45,7 @@ if(DUNE_VERSION_TPL AND DUNE_VERSION_OUT)
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   string(COMPARE EQUAL "${sha1}" "" empty_string)
   if(empty_string)
-    set(branch "unknown")
+    set(sha1 "unknown")
   endif(empty_string)
   set(DUNE_GIT_INFO "${DUNE_GIT_INFO},${sha1}")
 
