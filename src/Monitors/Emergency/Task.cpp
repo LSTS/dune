@@ -132,7 +132,7 @@ namespace Monitors
                                lat_deg, lat_min, lon_deg, std::fabs(lon_min),
                                (int)m_fuel, (int)m_fuel_conf);
 
-          m_emsg += m_in_mission? String::str(" / p:%u", (int)m_progress) : "";
+          m_emsg += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
         }
       }
 
