@@ -234,6 +234,8 @@ main(int argc, char** argv)
     tmsg->lat = Angles::radians(atof(argv[4]));
     tmsg->lon = Angles::radians(atof(argv[5]));
     tmsg->height = atof(argv[6]);
+    tmsg->satellites = 10;
+    tmsg->validity = 0xFFFF;
   }
   else if (strcmp(argv[3], "VehicleCommand") == 0)
   {
