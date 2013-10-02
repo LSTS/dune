@@ -147,6 +147,8 @@ namespace Control
             m_fins[i].id = i;
             m_servo_pos[i] = 0.0;
           }
+
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
 
         //! Resolve entities for messages
