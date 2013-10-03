@@ -92,7 +92,7 @@ namespace Transports
       sendFileInfo(const DUNE::FileSystem::Path& path, DUNE::Network::TCPSocket* sock, DUNE::Time::BrokenDown& time_ref);
 
       void
-      sendFileInfoMLSD(const DUNE::FileSystem::Path& path, DUNE::Network::TCPSocket* sock, DUNE::Time::BrokenDown& time_ref);
+      sendFileInfoMLSD(const DUNE::FileSystem::Path& path, DUNE::Network::TCPSocket* sock);
 
       void
       closeControlConnection(void);

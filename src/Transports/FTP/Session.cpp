@@ -135,7 +135,7 @@ namespace Transports
     }
 
     void
-    Session::sendFileInfoMLSD(const Path& path, TCPSocket* sock, Time::BrokenDown& time_ref)
+    Session::sendFileInfoMLSD(const Path& path, TCPSocket* sock)
     {
       Path::Type type = path.type();
       int64_t size = 0;
@@ -486,7 +486,7 @@ namespace Transports
       TCPSocket* data = openDataConnection();
       if (type == Path::PT_FILE)
       {
-        sendFileInfoMLSD(path, data, time_ref);
+        sendFileInfoMLSD(path, data);
       }
       else
       {
@@ -494,7 +494,7 @@ namespace Transports
         const char* entry = NULL;
         while ((entry = dir.readEntry(Directory::RD_FULL_NAME)))
         {
-          sendFileInfoMLSD(entry, data, time_ref);
+          sendFileInfoMLSD(entry, data);
         }
       }
 
