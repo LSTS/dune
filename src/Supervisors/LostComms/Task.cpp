@@ -138,7 +138,7 @@ namespace Supervisors
           return;
 
         if (m_lcs == STATE_STARTED)
-          m_lost_coms_timer.reset();
+          m_lost_coms_timer.setTop(m_args.timeout);
       }
 
       void
@@ -191,6 +191,7 @@ namespace Supervisors
 
           spew("got lost comms plan");
 
+          activate();
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
       }
