@@ -39,7 +39,7 @@ namespace DUNE
     IridiumMessage *
     IridiumMessage::deserialize(const DUNE::IMC::IridiumMsgRx * msg)
     {
-      msg->toText(std::cerr);
+      //msg->toText(std::cerr);
 
       uint8_t* ptr = (uint8_t*)&msg->data[0];
       IridiumMessage * ret = NULL;
@@ -116,13 +116,13 @@ namespace DUNE
       buffer += DUNE::IMC::deserialize(destination, buffer, length);
       buffer += DUNE::IMC::deserialize(msg_id, buffer, length);
 
-      std::cerr << "parsing Iridium message... msg id: " << msg_id << "size: " << length << std::endl;
+      //std::cerr << "parsing Iridium message... msg id: " << msg_id << "size: " << length << std::endl;
 
 
       msg = DUNE::IMC::Factory::produce(msg_id);
       if (msg == NULL)
       {
-        std::cerr << "ERROR parsing Iridium message: unknown msg id: " << msg_id << std::endl;
+        //std::cerr << "ERROR parsing Iridium message: unknown msg id: " << msg_id << std::endl;
         return 0;
       }
 
@@ -188,7 +188,7 @@ namespace DUNE
         buffer += DUNE::IMC::serialize(_lat, buffer);
         buffer += DUNE::IMC::serialize(_lon, buffer);
 
-        std::cerr << it->id << " is at " << _lat << " / " << _lon;
+        //std::cerr << it->id << " is at " << _lat << " / " << _lon;
       }
 
       return buffer - start;
