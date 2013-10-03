@@ -92,6 +92,9 @@ namespace Transports
       sendFileInfo(const DUNE::FileSystem::Path& path, DUNE::Network::TCPSocket* sock, DUNE::Time::BrokenDown& time_ref);
 
       void
+      sendFileInfoMLSD(const DUNE::FileSystem::Path& path, DUNE::Network::TCPSocket* sock, DUNE::Time::BrokenDown& time_ref);
+
+      void
       closeControlConnection(void);
 
       DUNE::Network::TCPSocket*
@@ -105,6 +108,9 @@ namespace Transports
 
       void
       handleNOOP(const std::string& arg);
+
+      void
+      handleMLSD(const std::string& arg);
 
       void
       handleLIST(const std::string& arg);
