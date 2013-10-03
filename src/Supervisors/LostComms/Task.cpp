@@ -290,6 +290,8 @@ namespace Supervisors
               pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
               pc.arg.set(m_plan);
 
+              dispatch(pc);
+
               m_lcs = STATE_EXEC;
             }
             break;
