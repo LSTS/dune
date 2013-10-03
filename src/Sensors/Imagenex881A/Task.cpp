@@ -115,14 +115,14 @@ namespace Sensors
       bool profile;
     };
 
-    //! List of available ranges.
-    static const unsigned c_ranges[] = {1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 60, 80, 100, 150, 200};
-    //! Count of available ranges.
-    static const unsigned c_ranges_size = sizeof(c_ranges) / sizeof(c_ranges[0]);
     //! This device has only one baud rate.
     static const unsigned c_uart_baud = 115200;
+    //! List of available ranges.
+    static const uint8_t c_ranges[] = {1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 60, 80, 100, 150, 200};
+    //! Count of available ranges.
+    static const uint8_t c_ranges_size = sizeof(c_ranges) / sizeof(c_ranges[0]);
     // Switch data size.
-    static const int c_sdata_size = 27;
+    static const uint8_t c_sdata_size = 27;
 
     struct Task: public DUNE::Tasks::Task
     {
@@ -238,12 +238,14 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
         m_uart = new SerialPort(m_args.uart_dev,
                                 c_uart_baud,
                                 SerialPort::SP_PARITY_NONE,
                                 SerialPort::SP_STOPBITS_1,
                                 SerialPort::SP_DATABITS_8,
                                 true);
+        m_uart->flush();
         m_wdog.setTop(2.0);
       }
 
@@ -261,24 +263,21 @@ namespace Sensors
 
         while (!stopping())
         {
-          if (!isActive())
+          if (m_wdog.overflow())
           {
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-            waitForMessages(1.0);
-            continue;
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
           }
 
-          consumeMessages();
-
-          if (m_wdog.overflow())
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          m_uart->write(m_sdata, c_sdata_size);
 
           if (!Poll::poll(*m_uart, 1.0))
             continue;
 
           size_t rv = m_uart->read(bfr, sizeof(bfr));
+
           if (rv == 0)
-            continue;
+            throw RestartNeeded(DTR("I/O error"), 5);
 
           // Extract and dispatch data.
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
