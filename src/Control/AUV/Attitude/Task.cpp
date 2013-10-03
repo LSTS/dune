@@ -254,12 +254,6 @@ namespace Control
           .description("Limit of a fixed number of incoming samples per second");
         }
 
-        //! Destructor
-        ~Task(void)
-        {
-          Task::onResourceRelease();
-        }
-
         //! Initialize resources
         void
         onResourceInitialization(void)

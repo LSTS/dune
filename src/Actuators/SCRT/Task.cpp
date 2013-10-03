@@ -206,11 +206,6 @@ namespace Actuators
         bind<IMC::Voltage>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onUpdateParameters(void)
       {

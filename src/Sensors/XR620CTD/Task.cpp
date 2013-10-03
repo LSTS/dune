@@ -155,11 +155,6 @@ namespace Sensors
         .description("Output frequency of sound speed estimations");
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       //! Update parameters.
       void
       onUpdateParameters(void)

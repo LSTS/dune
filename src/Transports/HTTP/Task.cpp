@@ -100,11 +100,6 @@ namespace Transports
         m_agent = getSystemName();
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onResourceAcquisition(void)
       {

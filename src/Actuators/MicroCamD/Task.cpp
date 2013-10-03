@@ -142,11 +142,6 @@ namespace Actuators
         bind<IMC::RemoteActions>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onResourceAcquisition(void)
       {

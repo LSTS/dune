@@ -246,11 +246,6 @@ namespace Monitors
         bind<IMC::VehicleState>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onUpdateParameters(void)
       {

@@ -127,11 +127,6 @@ namespace Simulators
         bind<IMC::SimulatedState>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       //! Update parameters
       void
       onUpdateParameters(void)

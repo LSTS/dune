@@ -73,11 +73,6 @@ namespace Monitors
         bind<IMC::CpuUsage>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onResourceRelease(void)
       {

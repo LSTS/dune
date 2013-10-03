@@ -155,11 +155,6 @@ namespace Sensors
         bind<IMC::MagneticField>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       //! Resolve entities.
       void
       onEntityResolution(void)

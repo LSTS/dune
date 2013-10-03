@@ -83,11 +83,6 @@ namespace Simulators
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       //! On update parameters
       void
       onUpdateParameters(void)

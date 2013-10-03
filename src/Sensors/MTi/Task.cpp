@@ -120,7 +120,6 @@ namespace Sensors
       ~Task(void)
       {
         delete [] m_bfr;
-        Task::onResourceRelease();
       }
 
       void

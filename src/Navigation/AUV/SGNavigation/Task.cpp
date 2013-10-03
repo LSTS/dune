@@ -262,11 +262,6 @@ namespace Navigation
           m_avg_speed = new MovingAverage<double>(m_args.avg_speed_samples);
         }
 
-        ~Task(void)
-        {
-          Task::onResourceRelease();
-        }
-
         void
         onResourceRelease(void)
         {

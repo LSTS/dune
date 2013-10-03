@@ -145,11 +145,6 @@ namespace Sensors
         Memory::clear(m_uart);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       consume(const IMC::SoundSpeed* msg)
       {

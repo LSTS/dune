@@ -135,11 +135,6 @@ namespace Navigation
           m_kal.setMeasurementNoise(OUT_LBL, m_measure_noise[0]);
         }
 
-        ~Task(void)
-        {
-          Task::onResourceRelease();
-        }
-
         void
         onResourceRelease(void)
         {

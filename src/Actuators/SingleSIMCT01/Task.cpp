@@ -118,11 +118,6 @@ namespace Actuators
         bind<IMC::SetThrusterActuation>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onResourceAcquisition(void)
       {

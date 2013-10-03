@@ -178,11 +178,6 @@ namespace Sensors
         bind<IMC::DevCalibrationControl>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       //! Release allocated resources.
       void
       onResourceRelease(void)

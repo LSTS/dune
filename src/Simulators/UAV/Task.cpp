@@ -214,11 +214,6 @@ namespace Simulators
         m_model = new UAVModel(par);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onResourceRelease(void)
       {

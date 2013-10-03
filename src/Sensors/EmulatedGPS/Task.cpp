@@ -78,11 +78,6 @@ namespace Sensors
         bind<IMC::EstimatedState>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onResourceAcquisition(void)
       {

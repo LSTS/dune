@@ -78,11 +78,6 @@ namespace Sensors
         .description("Device Has Humidity Sensor");
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onResourceAcquisition(void)
       {

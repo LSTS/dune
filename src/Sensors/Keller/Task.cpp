@@ -164,11 +164,6 @@ namespace Sensors
         bind<IMC::VehicleMedium>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onUpdateParameters(void)
       {

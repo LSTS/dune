@@ -165,11 +165,6 @@ namespace Navigation
           setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
         }
 
-        ~Task(void)
-        {
-          Task::onResourceRelease();
-        }
-
         void
         onResourceRelease(void)
         {

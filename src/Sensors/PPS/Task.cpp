@@ -64,11 +64,6 @@ namespace Sensors
         bind<IMC::PulseDetectionControl>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onResourceAcquisition(void)
       {

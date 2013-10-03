@@ -241,11 +241,6 @@ namespace Control
           m_estate.clear();
         }
 
-        ~Task(void)
-        {
-          Task::onResourceRelease();
-        }
-
         void
         onResourceRelease(void)
         {

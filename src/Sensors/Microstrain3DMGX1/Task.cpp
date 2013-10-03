@@ -140,11 +140,6 @@ namespace Sensors
         .description("Set to true to enable sampling of raw data");
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onResourceAcquisition(void)
       {

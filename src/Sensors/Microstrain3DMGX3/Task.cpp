@@ -182,11 +182,6 @@ namespace Sensors
         bind<IMC::MagneticField>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       //! Update parameters.
       void
       onUpdateParameters(void)

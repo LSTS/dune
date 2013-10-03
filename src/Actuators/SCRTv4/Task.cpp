@@ -124,11 +124,6 @@ namespace Actuators
         bind<IMC::SetServoPosition>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onEntityReservation(void)
       {

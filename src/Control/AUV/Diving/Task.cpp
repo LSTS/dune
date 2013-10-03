@@ -158,11 +158,6 @@ namespace Control
           bind<IMC::ControlLoops>(this);
         }
 
-        ~Task(void)
-        {
-          Task::onResourceRelease();
-        }
-
         //! Release resources.
         void
         onResourceRelease(void)

@@ -86,11 +86,6 @@ namespace Sensors
         .description("Entity label of position message");
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onEntityReservation(void)
       {

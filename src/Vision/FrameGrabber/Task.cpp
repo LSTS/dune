@@ -101,11 +101,6 @@ namespace Vision
         bind<IMC::ImageTxSettings>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onUpdateParameters(void)
       {

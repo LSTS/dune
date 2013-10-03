@@ -149,12 +149,6 @@ namespace Navigation
           BasicNavigation::onResourceInitialization();
         }
 
-
-        ~Task(void)
-        {
-          Task::onResourceRelease();
-        }
-
         //! Release resources.
         void
         onResourceRelease(void)

@@ -142,11 +142,6 @@ namespace Sensors
           m_args.rotation = Angles::radians(m_args.rotation);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onResourceRelease(void)
       {

@@ -119,11 +119,6 @@ namespace Sensors
         }
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onResourceAcquisition(void)
       {

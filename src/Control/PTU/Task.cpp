@@ -123,11 +123,6 @@ namespace Control
         bind<IMC::Target>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onUpdateParameters(void)
       {

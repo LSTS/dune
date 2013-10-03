@@ -90,11 +90,6 @@ namespace Simulators
         bind<IMC::SimulatedState>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       //! Initialize resources.
       void
       onResourceInitialization(void)

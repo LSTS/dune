@@ -108,12 +108,6 @@ namespace Simulators
         bind<IMC::SetThrusterActuation>(this);
       }
 
-      //! Destructor.
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       //! Update parameters.
       void
       onUpdateParameters(void)

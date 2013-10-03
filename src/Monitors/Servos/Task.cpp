@@ -190,11 +190,6 @@ namespace Monitors
         bind<IMC::Current>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onUpdateParameters(void)
       {

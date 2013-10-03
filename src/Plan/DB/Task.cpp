@@ -117,11 +117,6 @@ namespace Plan
         bind<IMC::PowerOperation>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onResourceAcquisition(void)
       {

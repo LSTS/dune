@@ -242,12 +242,6 @@ namespace Sensors
         bind<IMC::SoundSpeed>(this);
       }
 
-      //! Destructor.
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       //! Update parameters.
       void
       onUpdateParameters(void)

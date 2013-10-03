@@ -138,11 +138,6 @@ namespace Transports
         bind<IMC::IoEvent>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onUpdateParameters(void)
       {

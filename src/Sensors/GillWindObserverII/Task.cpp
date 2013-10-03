@@ -69,11 +69,6 @@ namespace Sensors
         .description("Serial port baud rate");
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onResourceAcquisition(void)
       {

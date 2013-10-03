@@ -143,11 +143,6 @@ namespace Sensors
         clear();
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       clear(void)
       {

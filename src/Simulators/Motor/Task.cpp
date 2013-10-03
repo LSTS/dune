@@ -91,11 +91,6 @@ namespace Simulators
         bind<IMC::SetThrusterActuation>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       //! Release resources.
       void
       onResourceRelease(void)

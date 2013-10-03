@@ -104,11 +104,6 @@ namespace Sensors
         bind<IMC::Calibration>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onResourceAcquisition(void)
       {
