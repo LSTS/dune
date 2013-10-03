@@ -54,9 +54,12 @@ namespace Transports
       Random::Generator* m_rnd;
       Arguments m_args;
 
-      Task(const std::string& name, Tasks::Context& ctx) :
-          DUNE::Tasks::Task(name, ctx), m_last_dev_update_time(Clock::get()), m_update_pool_empty(
-              true), m_dev_update_req_id(10), m_rnd(NULL)
+      Task(const std::string& name, Tasks::Context& ctx):
+        DUNE::Tasks::Task(name, ctx),
+        m_last_dev_update_time(Clock::get()),
+        m_update_pool_empty(true),
+        m_dev_update_req_id(10),
+        m_rnd(NULL)
       {
         param("Device updates - Periodicity",
               m_args.delay_between_device_updates).units(Units::Second).defaultValue(
@@ -81,6 +84,12 @@ namespace Transports
         announce.service = std::string("imc+any://iridium");
         dispatch(announce);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_rnd);
       }
 
       void
