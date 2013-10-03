@@ -83,7 +83,7 @@ namespace Supervisors
       //! Plan Control State
       IMC::PlanControlState m_pcs;
       //! Availability of data
-      DataReady m_dr;
+      unsigned m_dr;
       //! State of the task
       LostCommsState m_lcs;
       //! Plan specification for lost comms
@@ -154,7 +154,7 @@ namespace Supervisors
       {
         m_dr |= GOT_VSTATE;
 
-        m_serv_err = (msg->op == IMC::VehicleState::VS_SERVICE) || (msg->op == IMC:::VehicleState::VS_ERROR);
+        m_serv_err = (msg->op_mode == IMC::VehicleState::VS_SERVICE) || (msg->op_mode == IMC::VehicleState::VS_ERROR);
       }
 
       void
@@ -172,13 +172,13 @@ namespace Supervisors
             (msg->op == IMC::PlanControl::PC_LOAD) &&
             (msg->plan_id.compare(m_args.plan_name) == 0))
         {
-          if (msg->arg == NULL)
+          if (msg->arg.isNull())
           {
             m_dr &= ~GOT_LCPLAN;
             return;
           }
 
-          IMC::PlanSpecification* spec = dynamic_cast<IMC::PlanSpecification>(*msg->arg);
+          const IMC::PlanSpecification* spec = dynamic_cast<const IMC::PlanSpecification*>(msg->arg.get());
 
           if (spec == NULL)
           {
@@ -210,7 +210,7 @@ namespace Supervisors
         bool is_idle = (m_pcs.state == IMC::PlanControlState::PCS_BLOCKED) || (m_pcs.state == IMC::PlanControlState::PCS_READY);
 
         // is coming from a bad outcome plan
-        bool has_bad_outcome = m_pcs->last_outcome == IMC::PlanControlState::LPO_FAILURE;
+        bool has_bad_outcome = m_pcs.last_outcome == IMC::PlanControlState::LPO_FAILURE;
 
         return is_idle && has_bad_outcome;
       }
@@ -241,8 +241,8 @@ namespace Supervisors
       bool
       testStillExecuting(void)
       {
-        if ((m_pcs.state == IMC::PlanControlState::INITIALIZING) ||
-            (m_pcs.state == IMC::PlanControlState::EXECUTING))
+        if ((m_pcs.state == IMC::PlanControlState::PCS_INITIALIZING) ||
+            (m_pcs.state == IMC::PlanControlState::PCS_EXECUTING))
         {
           if (m_pcs.plan_id.compare(m_args.plan_name) == 0)
             return true;
@@ -281,6 +281,15 @@ namespace Supervisors
             else if (testTakeAction())
             {
               spew("sending lost comms plan");
+
+              IMC::PlanControl pc;
+              pc.type = IMC::PlanControl::PC_REQUEST;
+              pc.op = IMC::PlanControl::PC_START;
+              pc.request_id = 0;
+              pc.plan_id = m_args.plan_name;
+              pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
+              pc.arg.set(m_plan);
+
               m_lcs = STATE_EXEC;
             }
             break;
