@@ -112,6 +112,7 @@ namespace Supervisors
         bind<IMC::VehicleState>(this);
         bind<IMC::VehicleMedium>(this);
         bind<IMC::PlanControl>(this);
+        bind<IMC::PlanDB>(this);
       }
 
       void
@@ -125,7 +126,9 @@ namespace Supervisors
       consume(const IMC::Abort* msg)
       {
         (void)msg;
-        deactivate();
+
+        if (isActive())
+          requestDeactivation();
       }
 
       void
@@ -166,33 +169,52 @@ namespace Supervisors
       }
 
       void
+      getPlanSpec(const IMC::InlineMessage<IMC::Message>* msg)
+      {
+        if (msg->isNull())
+        {
+          m_dr &= ~GOT_LCPLAN;
+          return;
+        }
+
+        const IMC::PlanSpecification* spec = dynamic_cast<const IMC::PlanSpecification*>(msg->get());
+
+        if (spec == NULL)
+        {
+          m_dr &= ~GOT_LCPLAN;
+          return;
+        }
+
+        m_dr |= GOT_LCPLAN;
+        m_plan = *spec;
+
+        spew("got lost comms plan");
+
+        if (!isActive())
+          requestActivation();
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
       consume(const IMC::PlanControl* msg)
       {
         if ((msg->type == IMC::PlanControl::PC_REQUEST) &&
             (msg->op == IMC::PlanControl::PC_LOAD) &&
             (msg->plan_id.compare(m_args.plan_name) == 0))
         {
-          if (msg->arg.isNull())
-          {
-            m_dr &= ~GOT_LCPLAN;
-            return;
-          }
+          getPlanSpec(&msg->arg);
+        }
+      }
 
-          const IMC::PlanSpecification* spec = dynamic_cast<const IMC::PlanSpecification*>(msg->arg.get());
-
-          if (spec == NULL)
-          {
-            m_dr &= ~GOT_LCPLAN;
-            return;
-          }
-
-          m_dr |= GOT_LCPLAN;
-          m_plan = *spec;
-
-          spew("got lost comms plan");
-
-          activate();
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      void
+      consume(const IMC::PlanDB* msg)
+      {
+        if ((msg->type == IMC::PlanDB::DBT_REQUEST) &&
+            (msg->op == IMC::PlanDB::DBOP_SET) &&
+            (msg->plan_id.compare(m_args.plan_name) == 0))
+        {
+          getPlanSpec(&msg->arg);
         }
       }
 
