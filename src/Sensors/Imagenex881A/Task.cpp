@@ -94,23 +94,25 @@ namespace Sensors
       //! Serial port device.
       std::string uart_dev;
       //! Start gain.
-      unsigned start_gain;
+      uint8_t start_gain;
       //! Absorption.
       float absorption;
+      //! Step size.
+      float step_size;
+      //! Profile minimum range.
+      float profile_min_range;
       //! Data points.
       unsigned data_points;
+      //! Data bits.
+      uint8_t data_bits;
       //! Switch delay.
       unsigned switch_delay;
       //! Range.
-      unsigned range;
+      uint8_t range;
       //! Frequency.
       unsigned frequency;
       //! Profile mode.
       bool profile;
-      //! Save data in proprietary format.
-      bool save_to_file;
-      //! Data file name.
-      std::string file_name;
     };
 
     //! List of available ranges.
@@ -143,6 +145,78 @@ namespace Sensors
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
         .description("Serial port device used to communicate with the sensor");
+
+        param("Start Gain", m_args.start_gain)
+        .defaultValue("3")
+        .units(Units::Decibel)
+        .minimumValue("0")
+        .maximumValue("40")
+        .description("Start gain");
+
+        param("Absorption", m_args.absorption)
+        .defaultValue("0.1")
+        .units(Units::DecibelPerMeter)
+        .minimumValue("0")
+        .maximumValue("2.55")
+        .description("Absorption");
+
+        param("Profile Minimum Range", m_args.profile_min_range)
+        .defaultValue("0.1")
+        .units(Units::Meter)
+        .minimumValue("0.0")
+        .maximumValue("25.0")
+        .description("Minimum range for profile point digitization");
+
+        param("Step Size", m_args.step_size)
+        .defaultValue("0.3")
+        .values("0, 0.3, 0.6, 0.9, 1.2, 2.4")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .units(Units::Degree)
+        .description("Step size");
+
+        param("Data Bits", m_args.data_bits)
+        .defaultValue("8")
+        .values("4, 8, 16")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .units(Units::Bit)
+        .description("Resolution (number of data bits) of the returned echo data");
+
+        param("Data Points", m_args.data_points)
+        .defaultValue("250")
+        .values("250, 500")
+        .description("Number of sonar return data points");
+
+        param("Switch Delay", m_args.switch_delay)
+        .defaultValue("0")
+        .units(Units::Millisecond)
+        .minimumValue("0")
+        .maximumValue("510")
+        .description("The head can be commanded to pause before sending"
+                     "its return data to allow the commanding program"
+                     "enough time to setup for the return of the data.");
+
+        param(DTR_RT("Range"), m_args.range)
+        .defaultValue("30")
+        .values("1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 60, 80, 100, 150, 200")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .units(Units::Meter)
+        .description("Operating range");
+
+        param(DTR_RT("Frequency"), m_args.frequency)
+        .defaultValue("675")
+        .minimumValue("175")
+        .maximumValue("1175")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .units(Units::Kilohertz)
+        .description("Operating frequency");
+
+        param("Profile Mode", m_args.profile)
+        .defaultValue("true")
+        .description("Gather data in profile mode");
 
         // Initialize switch data.
         std::memset(m_sdata, 0, sizeof(m_sdata));
