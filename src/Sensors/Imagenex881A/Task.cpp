@@ -37,6 +37,12 @@ namespace Sensors
     //! Switch data command.
     enum IndexQuery
     {
+      // Header 1.
+      SD_HDR_1 = 0,
+      // Header 2.
+      SD_HDR_2 = 1,
+      // Head ID.
+      SD_HEAD_ID = 2,
       // Range index.
       SD_RANGE = 3,
       // Hold/Reverse step direction.
@@ -63,6 +69,8 @@ namespace Sensors
       SD_DATA_POINTS = 19,
       // Data bits.
       SD_DATA_BITS = 20,
+      // Baud rate.
+      SD_BAUD_RATE = 21,
       // Profile mode.
       SD_PROFILE = 22,
       // Calibrate sensor.
@@ -70,7 +78,9 @@ namespace Sensors
       // Switch Delay index.
       SD_SWITCH_DELAY = 24,
       // Frequency index.
-      SD_FREQUENCY = 25
+      SD_FREQUENCY = 25,
+      // Terminator index.
+      SD_TERMINATOR = 26
     };
 
     //! Sonar return data.
@@ -115,7 +125,7 @@ namespace Sensors
       bool profile;
     };
 
-    //! This device has only one baud rate.
+    //! Device query baud rate.
     static const unsigned c_uart_baud = 115200;
     //! List of available ranges.
     static const uint8_t c_ranges[] = {1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 60, 80, 100, 150, 200};
@@ -220,10 +230,12 @@ namespace Sensors
 
         // Initialize switch data.
         std::memset(m_sdata, 0, sizeof(m_sdata));
-        m_sdata[0] = 0xfe;
-        m_sdata[1] = 0x44;
-        m_sdata[2] = 0x10;
-        m_sdata[26] = 0xfd;
+        m_sdata[SD_HDR_1] = 0xfe;
+        m_sdata[SD_HDR_2] = 0x44;
+        m_sdata[SD_HEAD_ID] = 0x10;
+        m_sdata[SD_MASTER_SLAVE] = 0x43;
+        m_sdata[SD_BAUD_RATE] = 0x06;
+        m_sdata[SD_TERMINATOR] = 0xfd;
       }
 
       //! Update internal state with new parameter values.
@@ -232,6 +244,14 @@ namespace Sensors
       {
         if (paramChanged(m_args.uart_dev) && (m_uart != NULL))
           throw RestartNeeded(DTR("restarting to change UART device"), 1);
+
+        setRange();
+        setStartGain();
+        setAbsorption();
+        setDataPoints();
+        setDataBits();
+        setProfile();
+        setFrequency();
       }
 
       //! Acquire resources.
@@ -239,14 +259,16 @@ namespace Sensors
       onResourceAcquisition(void)
       {
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+
         m_uart = new SerialPort(m_args.uart_dev,
                                 c_uart_baud,
                                 SerialPort::SP_PARITY_NONE,
                                 SerialPort::SP_STOPBITS_1,
                                 SerialPort::SP_DATABITS_8,
                                 true);
+
         m_uart->flush();
-        m_wdog.setTop(2.0);
+        m_wdog.setTop(5.0);
       }
 
       void
@@ -255,11 +277,93 @@ namespace Sensors
         Memory::clear(m_uart);
       }
 
+      void
+      setRange(void)
+      {
+        m_sdata[SD_RANGE] = m_args.range;
+      }
+
+      void
+      setStartGain(void)
+      {
+        m_sdata[SD_START_GAIN] = m_args.start_gain;
+      }
+
+      void
+      setAbsorption(void)
+      {
+        uint8_t abs = (uint8_t)(m_args.absorption * 100.0);
+
+        if (abs == 253)
+          abs += 1;
+
+        m_sdata[SD_ABSORPTION] = abs;
+      }
+
+      void
+      setStepSize(void)
+      {
+        m_sdata[SD_STEP_SIZE] = (uint8_t)(m_args.step_size / 0.3);
+      }
+
+      void
+      setProfile(void)
+      {
+        m_sdata[SD_PROFILE] = m_args.profile ? 1 : 0;
+      }
+
+      void
+      setDataBits(void)
+      {
+        m_sdata[SD_DATA_BITS] = m_args.data_bits;
+      }
+
+      void
+      setDataPoints(void)
+      {
+        m_sdata[SD_DATA_POINTS] = (uint8_t)(m_args.data_points / 10.0);
+      }
+
+      void
+      setProfileMinRange(void)
+      {
+        m_sdata[SD_PROFILE_MIN_RANGE] = (uint8_t)(m_args.profile_min_range * 10.0);
+      }
+
+      void
+      setSwitchDelay(void)
+      {
+        uint8_t sd = (uint8_t)(m_args.switch_delay / 2);
+
+        if (sd == 253)
+          sd += 1;
+
+        m_sdata[SD_SWITCH_DELAY] = sd;
+      }
+
+      void
+      setFrequency(void)
+      {
+        m_sdata[SD_FREQUENCY] = (uint8_t)((m_args.frequency - 675) / 5 + 100);
+      }
+
+      void
+      temporary(void)
+      {
+        // Temporary.
+        m_sdata[SD_SECTOR_WIDTH] = 120;
+        m_sdata[SD_TRAIN_ANGLE] = 0;
+        m_sdata[SD_STEP_SIZE] = 1;
+        m_sdata[SD_PULSE_LEN] = 26;
+      }
+
       //! Main loop.
       void
       onMain(void)
       {
         uint8_t bfr[513];
+
+        temporary();
 
         while (!stopping())
         {
@@ -278,6 +382,10 @@ namespace Sensors
 
           if (rv == 0)
             throw RestartNeeded(DTR("I/O error"), 5);
+
+          // Temporary.
+          if (bfr[0] == 0x49)
+            war("we have something: %d", bfr[7]);
 
           // Extract and dispatch data.
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
