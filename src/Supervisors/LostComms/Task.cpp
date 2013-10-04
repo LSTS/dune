@@ -141,7 +141,7 @@ namespace Supervisors
           return;
 
         if (m_lcs == STATE_STARTED)
-          m_lost_coms_timer.setTop(m_args.timeout);
+          m_lost_coms_timer.reset();
       }
 
       void
@@ -290,12 +290,14 @@ namespace Supervisors
             {
               trace("conditions are met to start timer");
 
-              m_lost_coms_timer.reset();
+              m_lost_coms_timer.setTop(m_args.timeout);
 
               m_lcs = STATE_STARTED;
             }
             break;
           case STATE_STARTED:
+            trace("time left is %.1f", m_lost_coms_timer.getRemaining());
+
             if (!testKeepTimer())
             {
               trace("lost conditions to keep timer");
