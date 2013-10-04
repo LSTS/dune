@@ -188,7 +188,7 @@ namespace Supervisors
         m_dr |= GOT_LCPLAN;
         m_plan = *spec;
 
-        spew("got lost comms plan");
+        trace("got lost comms plan");
 
         if (!isActive())
           requestActivation();
@@ -288,7 +288,7 @@ namespace Supervisors
           case STATE_NOT_MET:
             if (testStartTimer())
             {
-              spew("conditions are met to start timer");
+              trace("conditions are met to start timer");
 
               m_lost_coms_timer.reset();
 
@@ -298,12 +298,12 @@ namespace Supervisors
           case STATE_STARTED:
             if (!testKeepTimer())
             {
-              spew("lost conditions to keep timer");
+              trace("lost conditions to keep timer");
               m_lcs = STATE_NOT_MET;
             }
             else if (testTakeAction())
             {
-              spew("sending lost comms plan");
+              war("starting lost comms plan");
 
               IMC::PlanControl pc;
               pc.type = IMC::PlanControl::PC_REQUEST;
@@ -321,7 +321,7 @@ namespace Supervisors
           case STATE_EXEC:
             if (!testStillExecuting())
             {
-              spew("no longer executing lost comms");
+              trace("no longer executing lost comms");
               m_lcs = STATE_NOT_MET;
             }
             break;
