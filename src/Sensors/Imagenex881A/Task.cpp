@@ -421,7 +421,7 @@ namespace Sensors
         double width = c_base_width - (m_args.frequency - c_freq_min) / c_freq_range;
         IMC::BeamConfig bc;
         bc.beam_width = Math::Angles::radians(width);
-        bc.beam_height = -1;
+        bc.beam_height = Math::Angles::radians(width);
 
         // Push back to distance and sonar variables.
         m_distance.beam_config.clear();

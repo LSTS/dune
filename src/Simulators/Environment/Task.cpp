@@ -337,13 +337,13 @@ namespace Simulators
 
         IMC::BeamConfig bottom_bc;
         bottom_bc.beam_width = m_args.bottom_width;
-        bottom_bc.beam_height = -1;
+        bottom_bc.beam_height = m_args.bottom_width;
 
         m_bd.beam_config.push_back(bottom_bc);
 
         IMC::BeamConfig forward_bc;
         forward_bc.beam_width = m_args.forward_width;
-        forward_bc.beam_height = -1;
+        forward_bc.beam_height = m_args.forward_width;
 
         m_fd.beam_config.push_back(forward_bc);
       }

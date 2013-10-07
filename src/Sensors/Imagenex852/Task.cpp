@@ -282,7 +282,7 @@ namespace Sensors
 
         IMC::BeamConfig bc;
         bc.beam_width = Math::Angles::radians(c_beam_width);
-        bc.beam_height = -1;
+        bc.beam_height = Math::Angles::radians(c_beam_width);
         m_dist.beam_config.clear();
         m_dist.beam_config.push_back(bc);
 
