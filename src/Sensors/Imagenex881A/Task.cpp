@@ -225,8 +225,8 @@ namespace Sensors
 
         param(DTR_RT("Frequency"), m_args.frequency)
         .defaultValue("675")
-        .minimumValue("175")
-        .maximumValue("1175")
+        .minimumValue("600")
+        .maximumValue("1000")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .units(Units::Kilohertz)
