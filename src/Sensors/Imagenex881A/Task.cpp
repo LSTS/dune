@@ -115,6 +115,8 @@ namespace Sensors
       double sspeed;
       //! Use dynamic sound speed.
       bool sspeed_dyn;
+      //! Sonar position.
+      std::vector<float> position;
     };
 
     //! Device query baud rate.
@@ -131,6 +133,12 @@ namespace Sensors
     static const float c_min_range = 0.0;
     //! Device uses this constant sound speed.
     static const double c_sound_speed = 1500.0;
+    //! Minimum frequency.
+    static const float c_freq_min = 600;
+    //! Frequency range.
+    static const float c_freq_range = 400;
+    //! Base width.
+    static const float c_base_width = 2.4;
 
     struct Task: public DUNE::Tasks::Task
     {
@@ -142,6 +150,8 @@ namespace Sensors
       IMC::Distance m_distance;
       //! Profile message.
       IMC::SonarData m_sonar;
+      //! Device State message.
+      IMC::DeviceState m_device_state;
       // Output switch data.
       uint8_t m_sdata[c_sdata_size];
       //! Last valid sound speed value.
@@ -238,10 +248,17 @@ namespace Sensors
 
         param("Sound Speed on Water", m_args.sspeed)
         .units(Units::MeterPerSecond)
-        .defaultValue("1500");
+        .defaultValue("1500")
+        .description("Water sound speed");
 
         param("Use Dynamic Sound Speed", m_args.sspeed_dyn)
-        .defaultValue("false");
+        .defaultValue("true")
+        .description("Update measurements according with measured sound speed");
+
+        param("Sonar position", m_args.position)
+        .defaultValue("0.2, 0, -0.4")
+        .size(3)
+        .description("Sonar position");
 
         m_distance.validity = IMC::Distance::DV_VALID;
 
@@ -277,6 +294,13 @@ namespace Sensors
         setDataBits();
         setProfile();
         setFrequency();
+
+        // Update state.
+        m_device_state.x = m_args.position[0];
+        m_device_state.y = m_args.position[1];
+        m_device_state.z = m_args.position[2];
+        m_distance.location.clear();
+        m_distance.location.push_back(m_device_state);
       }
 
       //! Acquire resources.
@@ -296,6 +320,7 @@ namespace Sensors
         m_wdog.setTop(5.0);
       }
 
+      //! Release resources
       void
       onResourceRelease(void)
       {
@@ -311,18 +336,21 @@ namespace Sensors
         m_sound_speed = msg->value;
       }
 
+      //! Set switch data range.
       void
       setRange(void)
       {
         m_sdata[SD_RANGE] = m_args.range;
       }
 
+      //! Set switch data start gain.
       void
       setStartGain(void)
       {
         m_sdata[SD_START_GAIN] = m_args.start_gain;
       }
 
+      //! Set switch data absorption.
       void
       setAbsorption(void)
       {
@@ -334,18 +362,21 @@ namespace Sensors
         m_sdata[SD_ABSORPTION] = abs;
       }
 
+      //! Set switch data step size.
       void
       setStepSize(void)
       {
         m_sdata[SD_STEP_SIZE] = (uint8_t)(m_args.step_size / 0.3);
       }
 
+      //! Set switch data profile mode.
       void
       setProfile(void)
       {
         m_sdata[SD_PROFILE] = m_args.profile ? 1 : 0;
       }
 
+      //! Set switch data number of bits per data point.
       void
       setDataBits(void)
       {
@@ -353,18 +384,21 @@ namespace Sensors
         m_sdata[SD_DATA_BITS] = m_args.data_bits;
       }
 
+      //! Set switch data number of data points.
       void
       setDataPoints(void)
       {
         m_sdata[SD_DATA_POINTS] = (uint8_t)(m_args.data_points / 10.0);
       }
 
+      //! Set switch data profile minimum range.
       void
       setProfileMinRange(void)
       {
         m_sdata[SD_PROFILE_MIN_RANGE] = (uint8_t)(m_args.profile_min_range * 10.0);
       }
 
+      //! Set switch data delay.
       void
       setSwitchDelay(void)
       {
@@ -376,17 +410,34 @@ namespace Sensors
         m_sdata[SD_SWITCH_DELAY] = sd;
       }
 
+      //! Set switch data frequency.
       void
       setFrequency(void)
       {
         m_sonar.frequency = m_args.frequency;
         m_sdata[SD_FREQUENCY] = (uint8_t)((m_args.frequency - 675) / 5 + 100);
+
+        // Beam config.
+        double width = c_base_width - (m_args.frequency - c_freq_min) / c_freq_range;
+        IMC::BeamConfig bc;
+        bc.beam_width = Math::Angles::radians(width);
+        bc.beam_height = -1;
+
+        // Push back to distance and sonar variables.
+        m_distance.beam_config.clear();
+        m_distance.beam_config.push_back(bc);
+        m_sonar.beam_config.clear();
+        m_sonar.beam_config.push_back(bc);
       }
 
+      //! Update state.
+      //! @param[in] heading beam orientation.
       void
-      updateState(void)
+      updateState(float heading)
       {
-        // @todo
+        m_device_state.psi = heading;
+        m_distance.location.clear();
+        m_distance.location.push_back(m_device_state);
       }
 
       void
@@ -438,9 +489,9 @@ namespace Sensors
 
             // Correct for dynamic sound speed.
             if (m_args.sspeed_dyn)
-              m_distance.value = (m_distance.value * m_sound_speed) / c_sound_speed;
+              m_distance.value *= m_sound_speed / c_sound_speed;
 
-            updateState();
+            updateState(m_parser.getHeadPosition());
 
             dispatch(m_distance);
 
