@@ -122,7 +122,7 @@ namespace Sensors
     //! Device query baud rate.
     static const unsigned c_uart_baud = 115200;
     //! List of available ranges.
-    static const uint8_t c_ranges[] = {1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 60, 80, 100, 150, 200};
+    static const uint8_t c_ranges[] = {1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 60, 80, 100};
     //! Count of available ranges.
     static const uint8_t c_ranges_size = sizeof(c_ranges) / sizeof(c_ranges[0]);
     //! Switch data size.
@@ -130,7 +130,7 @@ namespace Sensors
     //! Return frame maximum size.
     static const uint16_t c_max_rdata_size = 513;
     //! Echo sounder practical minimum range.
-    static const float c_min_range = 0.0;
+    static const float c_min_range = 0.150;
     //! Device uses this constant sound speed.
     static const double c_sound_speed = 1500.0;
     //! Minimum frequency.
@@ -227,7 +227,7 @@ namespace Sensors
 
         param(DTR_RT("Range"), m_args.range)
         .defaultValue("30")
-        .values("1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 60, 80, 100, 150, 200")
+        .values("1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 60, 80, 100")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .units(Units::Meter)
