@@ -115,7 +115,7 @@ namespace Sensors
     //! This device has only one frequency (Hz).
     static const unsigned c_frequency = 675000;
     //! Echo sounder practical minimum range.
-    static const float c_min_range = 0.30;
+    static const float c_min_range = 0.150;
     //! Pattern filter pattern size
     static const unsigned c_pattern_size = 5;
     //! Pattern filter maximum samples
