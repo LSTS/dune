@@ -151,7 +151,7 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_sound_speed(0),
+        m_sound_speed(c_sound_speed),
         m_parser(m_profile.data),
         m_pfilt(NULL)
       {
@@ -391,7 +391,7 @@ namespace Sensors
             m_dist.value = m_parser.getProfileRange();
 
             // If range is zero, there are no echoes.
-            if (m_dist.value == c_min_range)
+            if (m_dist.value < c_min_range)
               m_dist.value = m_parser.getRange();
 
             // Filter using data points

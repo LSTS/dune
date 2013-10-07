@@ -28,6 +28,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "Parser.hpp"
+
 namespace Sensors
 {
   namespace Imagenex881A
@@ -83,21 +86,6 @@ namespace Sensors
       SD_TERMINATOR = 26
     };
 
-    //! Sonar return data.
-    enum IndexResponse
-    {
-      // Head position low byte.
-      SR_HEAD_POS_LO = 5,
-      // Head position high byte.
-      SR_HEAD_POS_HI = 6,
-      // Range.
-      SR_RANGE = 7,
-      // Profile range low byte.
-      SR_PRANGE_LO = 8,
-      // Profile range high byte.
-      SR_PRANGE_HI = 9
-    };
-
     //! %Task arguments.
     struct Arguments
     {
@@ -123,6 +111,10 @@ namespace Sensors
       unsigned frequency;
       //! Profile mode.
       bool profile;
+      //! Sound speed on water.
+      double sspeed;
+      //! Use dynamic sound speed.
+      bool sspeed_dyn;
     };
 
     //! Device query baud rate.
@@ -131,15 +123,29 @@ namespace Sensors
     static const uint8_t c_ranges[] = {1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 60, 80, 100, 150, 200};
     //! Count of available ranges.
     static const uint8_t c_ranges_size = sizeof(c_ranges) / sizeof(c_ranges[0]);
-    // Switch data size.
+    //! Switch data size.
     static const uint8_t c_sdata_size = 27;
+    //! Return frame maximum size.
+    static const uint16_t c_max_rdata_size = 513;
+    //! Echo sounder practical minimum range.
+    static const float c_min_range = 0.0;
+    //! Device uses this constant sound speed.
+    static const double c_sound_speed = 1500.0;
 
     struct Task: public DUNE::Tasks::Task
     {
       //! Serial port handle.
       SerialPort* m_uart;
+      //! Response frame parser.
+      Parser m_parser;
+      //! Distance message.
+      IMC::Distance m_distance;
+      //! Profile message.
+      IMC::SonarData m_sonar;
       // Output switch data.
       uint8_t m_sdata[c_sdata_size];
+      //! Last valid sound speed value.
+      double m_sound_speed;
       //! Watchdog.
       Counter<double> m_wdog;
       //! Task arguments.
@@ -150,7 +156,9 @@ namespace Sensors
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_uart(NULL)
+        m_uart(NULL),
+        m_parser(m_sonar.data),
+        m_sound_speed(c_sound_speed)
       {
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
@@ -228,6 +236,19 @@ namespace Sensors
         .defaultValue("true")
         .description("Gather data in profile mode");
 
+        param("Sound Speed on Water", m_args.sspeed)
+        .units(Units::MeterPerSecond)
+        .defaultValue("1500");
+
+        param("Use Dynamic Sound Speed", m_args.sspeed_dyn)
+        .defaultValue("false");
+
+        m_distance.validity = IMC::Distance::DV_VALID;
+
+        // Filling constant Sonar Data.
+        m_sonar.type = IMC::SonarData::ST_ECHOSOUNDER;
+        m_sonar.scale_factor = 1.0f;
+
         // Initialize switch data.
         std::memset(m_sdata, 0, sizeof(m_sdata));
         m_sdata[SD_HDR_1] = 0xfe;
@@ -236,6 +257,8 @@ namespace Sensors
         m_sdata[SD_MASTER_SLAVE] = 0x43;
         m_sdata[SD_BAUD_RATE] = 0x06;
         m_sdata[SD_TERMINATOR] = 0xfd;
+
+        bind<IMC::SoundSpeed>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -244,6 +267,8 @@ namespace Sensors
       {
         if (paramChanged(m_args.uart_dev) && (m_uart != NULL))
           throw RestartNeeded(DTR("restarting to change UART device"), 1);
+
+        m_sound_speed = m_args.sspeed;
 
         setRange();
         setStartGain();
@@ -275,6 +300,15 @@ namespace Sensors
       onResourceRelease(void)
       {
         Memory::clear(m_uart);
+      }
+
+      void
+      consume(const IMC::SoundSpeed* msg)
+      {
+        if (msg->value < 0.0)
+          return;
+
+        m_sound_speed = msg->value;
       }
 
       void
@@ -315,6 +349,7 @@ namespace Sensors
       void
       setDataBits(void)
       {
+        m_sonar.bits_per_point = m_args.data_bits;
         m_sdata[SD_DATA_BITS] = m_args.data_bits;
       }
 
@@ -344,7 +379,14 @@ namespace Sensors
       void
       setFrequency(void)
       {
+        m_sonar.frequency = m_args.frequency;
         m_sdata[SD_FREQUENCY] = (uint8_t)((m_args.frequency - 675) / 5 + 100);
+      }
+
+      void
+      updateState(void)
+      {
+        // @todo
       }
 
       void
@@ -361,9 +403,9 @@ namespace Sensors
       void
       onMain(void)
       {
-        uint8_t bfr[513];
-
         temporary();
+
+        uint8_t bfr[c_max_rdata_size];
 
         while (!stopping())
         {
@@ -381,15 +423,45 @@ namespace Sensors
           size_t rv = m_uart->read(bfr, sizeof(bfr));
 
           if (rv == 0)
-            throw RestartNeeded(DTR("I/O error"), 5);
+            continue;
 
-          // Temporary.
-          if (bfr[0] == 0x49)
-            war("we have something: %d", bfr[7]);
+          for (size_t i = 0; i < rv; ++i)
+          {
+            if (!m_parser.parse(bfr[i]))
+              continue;
 
-          // Extract and dispatch data.
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          m_wdog.reset();
+            m_distance.value = m_parser.getProfileRange();
+
+            // If range is zero, there are no echoes.
+            if (m_distance.value <= c_min_range)
+              m_distance.value = m_parser.getRange();
+
+            // Correct for dynamic sound speed.
+            if (m_args.sspeed_dyn)
+              m_distance.value = (m_distance.value * m_sound_speed) / c_sound_speed;
+
+            updateState();
+
+            dispatch(m_distance);
+
+            if (m_parser.getDataPointsCount() > 0)
+            {
+              m_sonar.setTimeStamp(m_distance.getTimeStamp());
+              m_sonar.min_range = static_cast<uint16_t>(m_parser.getProfileRange());
+              m_sonar.max_range = m_parser.getRange();
+              dispatch(m_sonar);
+            }
+
+            // Gather data.
+            inf("Data Bytes: %d | Head: %f | Range: %f",
+                m_parser.getDataPointsCount(),
+                m_parser.getHeadPosition(),
+                m_distance.value);
+
+            // Extract and dispatch data.
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            m_wdog.reset();
+          }
         }
       }
     };
