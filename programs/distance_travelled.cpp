@@ -58,6 +58,9 @@ main(int32_t argc, char** argv)
 
   double total_accum = 0;
 
+  // Accumulated travelled time
+  double duration = 0.0;
+
   for (int32_t i = 1; i < argc; ++i)
   {
     std::istream* is = 0;
@@ -77,7 +80,7 @@ main(int32_t argc, char** argv)
     double last_lon;
 
     // Accumulated travelled distance
-    double accum = 0;
+    double accum = 0.0;
 
     bool got_name = false;
     std::string log_name = "unknown";
@@ -125,7 +128,10 @@ main(int32_t argc, char** argv)
 
               // Not faster than maximum considered speed
               if (dist / (ptr->getTimeStamp() - estate.getTimeStamp()) < c_max_speed)
+              {
                 accum += dist;
+                duration += msg->getTimeStamp() - estate.getTimeStamp();
+              }
 
               estate = *ptr;
               Coordinates::toWGS84(*ptr, last_lat, last_lon);
@@ -179,6 +185,10 @@ main(int32_t argc, char** argv)
 
   std::cerr << "Total travelled distance is " << total_accum << "m" << std::endl
             << " or " << total_accum / 1000.0 << " km." << std::endl;
+
+  std::cerr << "Travelled for " << (unsigned)duration / 60 / 60 << "h"
+            << (unsigned)(duration / 60) % 60 << "m"
+            << (unsigned)duration % 60 << "s" << "." << std::endl;
 
   return 0;
 }
