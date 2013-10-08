@@ -107,6 +107,8 @@ namespace Sensors
       unsigned switch_delay;
       //! Range.
       uint8_t range;
+      //! Sector Width.
+      unsigned sector_width;
       //! Frequency.
       unsigned frequency;
       //! Profile mode.
@@ -117,6 +119,8 @@ namespace Sensors
       bool sspeed_dyn;
       //! Sonar position.
       std::vector<float> position;
+      //! Use default Imagenex configuration.
+      bool use_default;
     };
 
     //! Device query baud rate.
@@ -125,6 +129,8 @@ namespace Sensors
     static const uint8_t c_ranges[] = {1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 60, 80, 100};
     //! Count of available ranges.
     static const uint8_t c_ranges_size = sizeof(c_ranges) / sizeof(c_ranges[0]);
+    //! List of pulse lengths in us.
+    static const unsigned c_pulse_len[] = {20, 20, 20, 20, 60, 60, 100, 160, 220, 260, 320, 420, 540};
     //! Switch data size.
     static const uint8_t c_sdata_size = 27;
     //! Return frame maximum size.
@@ -139,6 +145,14 @@ namespace Sensors
     static const float c_freq_range = 400;
     //! Base width.
     static const float c_base_width = 2.4;
+    //! Frequency level for small ranges.
+    static const unsigned c_frequency_below = 1000;
+    //! Frequency level for big ranges.
+    static const unsigned c_frequency_above = 675;
+    //! Absorption level for small ranges.
+    static const float c_absorption_below = 0.6;
+    //! Absorption level for big ranges.
+    static const float c_absorption_above = 0.2;
 
     struct Task: public DUNE::Tasks::Task
     {
@@ -242,6 +256,13 @@ namespace Sensors
         .units(Units::Kilohertz)
         .description("Operating frequency");
 
+        param("Sector Width", m_args.sector_width)
+        .defaultValue("360")
+        .minimumValue("0")
+        .maximumValue("360")
+        .units(Units::Degree)
+        .description("Sweep sector width");
+
         param("Profile Mode", m_args.profile)
         .defaultValue("true")
         .description("Gather data in profile mode");
@@ -259,6 +280,10 @@ namespace Sensors
         .defaultValue("0.2, 0, -0.4")
         .size(3)
         .description("Sonar position");
+
+        param("Use Default Configuration", m_args.use_default)
+        .defaultValue("true")
+        .description("Use default Imagenex configuration for frequency and absorption levels.");
 
         m_distance.validity = IMC::Distance::DV_VALID;
 
@@ -289,11 +314,30 @@ namespace Sensors
 
         setRange();
         setStartGain();
-        setAbsorption();
         setDataPoints();
         setDataBits();
         setProfile();
-        setFrequency();
+        setStepSize();
+        setSectorWidth();
+
+        if (m_args.use_default)
+        {
+          if (m_args.range > 5)
+          {
+            setFrequency(c_frequency_above);
+            setAbsorption(c_absorption_above);
+          }
+          else
+          {
+            setFrequency(c_frequency_below);
+            setAbsorption(c_absorption_below);
+          }
+        }
+        else
+        {
+          setFrequency(m_args.frequency);
+          setAbsorption(m_args.absorption);
+        }
 
         // Update state.
         m_device_state.x = m_args.position[0];
@@ -336,11 +380,31 @@ namespace Sensors
         m_sound_speed = msg->value;
       }
 
+      //! Get index from table according with given value.
+      //! @param[in] value value to be checked in the table.
+      //! @param[in] table vector with parameters.
+      //! @param[in] table_size size of the vector.
+      //! @return index of the vector.
+      uint8_t
+      getIndex(uint8_t value, const uint8_t* table, uint8_t table_size)
+      {
+        for (unsigned i = 0; i < table_size; ++i)
+        {
+          if (value <= table[i])
+            return i;
+        }
+
+        return table_size - 1;
+      }
+
       //! Set switch data range.
       void
       setRange(void)
       {
-        m_sdata[SD_RANGE] = m_args.range;
+        unsigned idx = getIndex(m_args.range, c_ranges, c_ranges_size);
+
+        m_sdata[SD_RANGE] = (uint8_t)c_ranges[idx];
+        m_sdata[SD_PULSE_LEN] = (uint8_t)(c_pulse_len[idx] / 10);
       }
 
       //! Set switch data start gain.
@@ -351,10 +415,11 @@ namespace Sensors
       }
 
       //! Set switch data absorption.
+      //! @param[in] absorption absorption level.
       void
-      setAbsorption(void)
+      setAbsorption(float absorption)
       {
-        uint8_t abs = (uint8_t)(m_args.absorption * 100.0);
+        uint8_t abs = (uint8_t)(absorption * 100.0);
 
         if (abs == 253)
           abs += 1;
@@ -411,14 +476,15 @@ namespace Sensors
       }
 
       //! Set switch data frequency.
+      //! @param[in] frequency operation frequency.
       void
-      setFrequency(void)
+      setFrequency(unsigned frequency)
       {
-        m_sonar.frequency = m_args.frequency;
-        m_sdata[SD_FREQUENCY] = (uint8_t)((m_args.frequency - 675) / 5 + 100);
+        m_sonar.frequency = frequency;
+        m_sdata[SD_FREQUENCY] = (uint8_t)((frequency - 675) / 5 + 100);
 
         // Beam config.
-        double width = c_base_width - (m_args.frequency - c_freq_min) / c_freq_range;
+        double width = c_base_width - (frequency - c_freq_min) / c_freq_range;
         IMC::BeamConfig bc;
         bc.beam_width = Math::Angles::radians(width);
         bc.beam_height = Math::Angles::radians(width);
@@ -440,22 +506,17 @@ namespace Sensors
         m_distance.location.push_back(m_device_state);
       }
 
+      //! Set switch data sector width.
       void
-      temporary(void)
+      setSectorWidth(void)
       {
-        // Temporary.
-        m_sdata[SD_SECTOR_WIDTH] = 120;
-        m_sdata[SD_TRAIN_ANGLE] = 0;
-        m_sdata[SD_STEP_SIZE] = 1;
-        m_sdata[SD_PULSE_LEN] = 26;
+        m_sdata[SD_SECTOR_WIDTH] = (uint8_t)(m_args.sector_width / 3);
       }
 
       //! Main loop.
       void
       onMain(void)
       {
-        temporary();
-
         uint8_t bfr[c_max_rdata_size];
 
         while (!stopping())
