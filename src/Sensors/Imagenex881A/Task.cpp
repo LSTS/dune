@@ -153,6 +153,8 @@ namespace Sensors
     static const float c_absorption_below = 0.6;
     //! Absorption level for big ranges.
     static const float c_absorption_above = 0.2;
+    //! Range threshold for default configuration.
+    static const uint8_t c_range_threshold = 5;
 
     struct Task: public DUNE::Tasks::Task
     {
@@ -322,7 +324,7 @@ namespace Sensors
 
         if (m_args.use_default)
         {
-          if (m_args.range > 5)
+          if (m_args.range > c_range_threshold)
           {
             setFrequency(c_frequency_above);
             setAbsorption(c_absorption_above);
