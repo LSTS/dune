@@ -142,6 +142,15 @@ namespace Control
           if (paramChanged(m_args.horfin_pos))
             m_args.horfin_pos = Angles::radians(m_args.horfin_pos);
 
+          if (paramChanged(m_args.force_torque_control))
+          {
+            if (!m_args.force_torque_control && m_torque_control)
+            {
+              debug("disabling torque control");
+              deactivateTorqueControl();
+            }
+          }
+
           m_args.max_thrust = Math::trimValue(m_args.max_thrust, 0.0, 1.0);
           m_last_estate.setTop(m_args.estate_tout);
         }
@@ -255,6 +264,20 @@ namespace Control
           m_horfin = m_args.horfin_pos;
 
           m_torque_control = true;
+        }
+
+        //! Deactivate direct torque control
+        void
+        deactivateTorqueControl(void)
+        {
+          // Change active controllers
+          disableControlLoops(IMC::CL_TORQUE);
+
+          enableControlLoops(IMC::CL_PITCH | IMC::CL_YAW_RATE);
+
+          m_hrate = 0;
+
+          m_torque_control = false;
         }
 
         //! Compute and dispatch control commands
