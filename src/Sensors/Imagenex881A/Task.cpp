@@ -566,12 +566,6 @@ namespace Sensors
               dispatch(m_sonar);
             }
 
-            // Gather data.
-            inf("Data Bytes: %d | Head: %f | Range: %f",
-                m_parser.getDataPointsCount(),
-                m_parser.getHeadPosition(),
-                m_distance.value);
-
             // Extract and dispatch data.
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             m_wdog.reset();
