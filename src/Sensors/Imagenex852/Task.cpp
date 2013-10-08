@@ -115,7 +115,7 @@ namespace Sensors
     //! This device has only one frequency (Hz).
     static const unsigned c_frequency = 675000;
     //! Echo sounder practical minimum range.
-    static const float c_min_range = 0.30;
+    static const float c_min_range = 0.150;
     //! Pattern filter pattern size
     static const unsigned c_pattern_size = 5;
     //! Pattern filter maximum samples
@@ -151,7 +151,7 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_sound_speed(0),
+        m_sound_speed(c_sound_speed),
         m_parser(m_profile.data),
         m_pfilt(NULL)
       {
@@ -276,7 +276,7 @@ namespace Sensors
 
         IMC::BeamConfig bc;
         bc.beam_width = Math::Angles::radians(c_beam_width);
-        bc.beam_height = -1;
+        bc.beam_height = Math::Angles::radians(c_beam_width);
         m_dist.beam_config.clear();
         m_dist.beam_config.push_back(bc);
 
@@ -385,7 +385,7 @@ namespace Sensors
             m_dist.value = m_parser.getProfileRange();
 
             // If range is zero, there are no echoes.
-            if (m_dist.value == c_min_range)
+            if (m_dist.value < c_min_range)
               m_dist.value = m_parser.getRange();
 
             // Filter using data points

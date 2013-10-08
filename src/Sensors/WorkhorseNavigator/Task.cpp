@@ -68,6 +68,10 @@ namespace Sensors
       std::vector<float> orientation;
     };
 
+    //! Device beam width
+    static const float c_beam_width = 1.2;
+
+    //! %Task.
     struct Task: public DUNE::Tasks::Task
     {
       // Serial port handle.
@@ -115,8 +119,8 @@ namespace Sensors
         .description("Device orientation");
 
         IMC::BeamConfig bc;
-        bc.beam_width = -1;
-        bc.beam_height = -1;
+        bc.beam_width = Math::Angles::radians(c_beam_width);
+        bc.beam_height = Math::Angles::radians(c_beam_width);
 
         IMC::DeviceState ds;
         ds.x = m_args.position[0];

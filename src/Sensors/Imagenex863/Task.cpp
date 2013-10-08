@@ -117,8 +117,8 @@ namespace Sensors
         m_sspeed = m_args.sspeed;
 
         IMC::BeamConfig bc;
-        bc.beam_width = -1;
-        bc.beam_height = -1;
+        bc.beam_width = Math::Angles::radians(1.0);
+        bc.beam_height = Math::Angles::radians(1.0);
 
         IMC::DeviceState ds;
         ds.x = m_args.position[0];
