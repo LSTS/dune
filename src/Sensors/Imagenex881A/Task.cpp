@@ -253,8 +253,6 @@ namespace Sensors
         .defaultValue("675")
         .minimumValue("600")
         .maximumValue("1000")
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .units(Units::Kilohertz)
         .description("Operating frequency");
 
@@ -262,11 +260,15 @@ namespace Sensors
         .defaultValue("360")
         .minimumValue("0")
         .maximumValue("360")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .units(Units::Degree)
         .description("Sweep sector width");
 
         param("Profile Mode", m_args.profile)
         .defaultValue("true")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .description("Gather data in profile mode");
 
         param("Sound Speed on Water", m_args.sspeed)
