@@ -55,7 +55,33 @@ main(int32_t argc, char** argv)
   {
     std::cerr << "Usage: " << argv[0] << " <path_to_log_1/Data.lsf[.gz]> ... <path_to_log_n/Data.lsf[.gz]>"
               << std::endl;
+    std::cerr << "Or: " << argv[0] << "-e <Voltage Entity Label> <Current Entity Label> <path_to_log_1/Data.lsf[.gz]> ... <path_to_log_n/Data.lsf[.gz]>"
+              << std::endl;
     return 1;
+  }
+
+  std::string volt_label;
+  std::string curr_label;
+
+  unsigned start_index = 1;
+
+  if (strcmp(argv[1], "-e") == 0)
+  {
+    if (argc < 5)
+    {
+      std::cerr << "Too few arguments" << std::endl;
+      return 1;
+    }
+
+    volt_label = argv[2];
+    curr_label = argv[3];
+
+    start_index = 4;
+  }
+  else
+  {
+    volt_label = c_label;
+    curr_label = c_label;
   }
 
   // Total of energy spent
@@ -69,7 +95,7 @@ main(int32_t argc, char** argv)
   for (unsigned k = 0; k < Monitors::FuelLevel::BatteryData::BM_TOTAL; k++)
     wsizes[k] = c_samples;
 
-  for (int32_t i = 1; i < argc; ++i)
+  for (int32_t i = start_index; i < argc; ++i)
   {
     std::istream* is = 0;
     DUNE::Compression::Methods method = DUNE::Compression::Factory::detect(argv[i]);
@@ -85,6 +111,8 @@ main(int32_t argc, char** argv)
 
     // Energy computation related data
     Monitors::FuelLevel::BatteryData bdata(wsizes);
+    bool volt_entity_set = false;
+    bool curr_entity_set = false;
     bool entities_set = false;
     unsigned eids[Monitors::FuelLevel::BatteryData::BM_TOTAL] = {0};
     unsigned samples = 0;
@@ -92,7 +120,7 @@ main(int32_t argc, char** argv)
     double accum = 0.0;
 
     // Current rpm value
-    float curr_rpm = 0.0;
+    float rpm = 0.0;
 
     // Ignore some logs
     bool ignore = false;
@@ -119,11 +147,20 @@ main(int32_t argc, char** argv)
         {
           DUNE::IMC::EntityInfo* ptr = dynamic_cast<DUNE::IMC::EntityInfo*>(msg);
 
-          if (ptr->label.compare(c_label) == 0)
+          if (ptr->label.compare(volt_label) == 0)
           {
             eids[Monitors::FuelLevel::BatteryData::BM_VOLTAGE] = ptr->id;
-            eids[Monitors::FuelLevel::BatteryData::BM_CURRENT] = ptr->id;
+            volt_entity_set = true;
+          }
 
+          if (ptr->label.compare(curr_label) == 0)
+          {
+            eids[Monitors::FuelLevel::BatteryData::BM_CURRENT] = ptr->id;
+            curr_entity_set = true;
+          }
+
+          if (!entities_set && volt_entity_set && curr_entity_set)
+          {
             bdata.setEntities(eids);
             entities_set = true;
           }
@@ -141,7 +178,7 @@ main(int32_t argc, char** argv)
               float drop = bdata.getEnergyDrop(msg->getTimeStamp() - last_timestamp);
               accum += drop;
 
-              if (curr_rpm > c_min_rpm)
+              if (rpm > c_min_rpm)
                 motor_total_accum += drop;
             }
           }
@@ -159,7 +196,7 @@ main(int32_t argc, char** argv)
         else if (msg->getId() == DUNE_IMC_RPM)
         {
           DUNE::IMC::Rpm* ptr = dynamic_cast<DUNE::IMC::Rpm*>(msg);
-          curr_rpm = ptr->value;
+          rpm = ptr->value;
         }
         else if (msg->getId() == DUNE_IMC_SIMULATEDSTATE)
         {
