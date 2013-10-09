@@ -548,6 +548,12 @@ main(int argc, char** argv)
     std::string hex = String::fromHex(argv[6]);
     tmsg->data.assign(hex.begin(), hex.end());
   }
+  else if (strcmp(argv[3], "VehicleMedium") == 0)
+  {
+    IMC::VehicleMedium* tmsg = new IMC::VehicleMedium;
+    msg = tmsg;
+    tmsg->medium = atoi(argv[4]);
+  }
 
   if (msg == NULL)
   {
