@@ -100,17 +100,19 @@ namespace Sensors
       //! Profile minimum range.
       float profile_min_range;
       //! Data points.
-      unsigned data_points;
+      uint16_t data_points;
       //! Data bits.
       uint8_t data_bits;
       //! Switch delay.
-      unsigned switch_delay;
+      uint16_t switch_delay;
       //! Range.
       uint8_t range;
       //! Sector Width.
-      unsigned sector_width;
+      uint16_t sector_width;
+      //! Train Angle.
+      int16_t train_angle;
       //! Frequency.
-      unsigned frequency;
+      uint16_t frequency;
       //! Profile mode.
       bool profile;
       //! Sound speed on water.
@@ -130,7 +132,7 @@ namespace Sensors
     //! Count of available ranges.
     static const uint8_t c_ranges_size = sizeof(c_ranges) / sizeof(c_ranges[0]);
     //! List of pulse lengths in us.
-    static const unsigned c_pulse_len[] = {20, 20, 20, 20, 60, 60, 100, 160, 220, 260, 320, 420, 540};
+    static const uint16_t c_pulse_len[] = {20, 20, 20, 20, 60, 60, 100, 160, 220, 260, 320, 420, 540};
     //! Switch data size.
     static const uint8_t c_sdata_size = 27;
     //! Return frame maximum size.
@@ -146,9 +148,9 @@ namespace Sensors
     //! Base width.
     static const float c_base_width = 2.4;
     //! Frequency level for small ranges.
-    static const unsigned c_frequency_below = 1000;
+    static const uint16_t c_frequency_below = 1000;
     //! Frequency level for big ranges.
-    static const unsigned c_frequency_above = 675;
+    static const uint16_t c_frequency_above = 675;
     //! Absorption level for small ranges.
     static const float c_absorption_below = 0.6;
     //! Absorption level for big ranges.
@@ -265,6 +267,13 @@ namespace Sensors
         .units(Units::Degree)
         .description("Sweep sector width");
 
+        param("Train Angle", m_args.train_angle)
+        .defaultValue("0")
+        .minimumValue("-180")
+        .maximumValue("180")
+        .units(Units::Degree)
+        .description("Device train angle");
+
         param("Profile Mode", m_args.profile)
         .defaultValue("true")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
@@ -323,6 +332,7 @@ namespace Sensors
         setProfile();
         setStepSize();
         setSectorWidth();
+        setTrainAngle();
 
         if (m_args.use_default)
         {
@@ -392,7 +402,7 @@ namespace Sensors
       uint8_t
       getIndex(uint8_t value, const uint8_t* table, uint8_t table_size)
       {
-        for (unsigned i = 0; i < table_size; ++i)
+        for (uint8_t i = 0; i < table_size; ++i)
         {
           if (value <= table[i])
             return i;
@@ -405,7 +415,7 @@ namespace Sensors
       void
       setRange(void)
       {
-        unsigned idx = getIndex(m_args.range, c_ranges, c_ranges_size);
+        uint8_t idx = getIndex(m_args.range, c_ranges, c_ranges_size);
 
         m_sdata[SD_RANGE] = (uint8_t)c_ranges[idx];
         m_sdata[SD_PULSE_LEN] = (uint8_t)(c_pulse_len[idx] / 10);
@@ -482,7 +492,7 @@ namespace Sensors
       //! Set switch data frequency.
       //! @param[in] frequency operation frequency.
       void
-      setFrequency(unsigned frequency)
+      setFrequency(uint16_t frequency)
       {
         m_sonar.frequency = frequency;
         m_sdata[SD_FREQUENCY] = (uint8_t)((frequency - 675) / 5 + 100);
@@ -515,6 +525,13 @@ namespace Sensors
       setSectorWidth(void)
       {
         m_sdata[SD_SECTOR_WIDTH] = (uint8_t)(m_args.sector_width / 3);
+      }
+
+      //! Set switch data train angle.
+      void
+      setTrainAngle(void)
+      {
+        m_sdata[SD_TRAIN_ANGLE] = (uint8_t)((m_args.train_angle + 180) / 3);
       }
 
       //! Main loop.
