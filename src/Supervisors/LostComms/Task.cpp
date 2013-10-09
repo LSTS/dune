@@ -194,7 +194,7 @@ namespace Supervisors
         m_dr |= GOT_LCPLAN;
         m_plan = *spec;
 
-        trace("got lost comms plan");
+        debug("got lost comms plan");
 
         if (!isActive())
           requestActivation();
@@ -294,7 +294,7 @@ namespace Supervisors
           case STATE_NOT_MET:
             if (testStartTimer())
             {
-              trace("conditions are met to start timer");
+              debug("conditions are met to start timer");
 
               m_lost_coms_timer.setTop(m_args.timeout);
 
