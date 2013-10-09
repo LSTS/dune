@@ -122,7 +122,6 @@ namespace Sensors
           case STA_DATA_BYTES_HI:
             interpretDataBytes(byte, m_previous);
             m_data.resize(m_data_points);
-            std::printf("section: %d", m_data_points);
             if (m_data_points > 0)
               m_state = STA_ECHO_DATA;
             else
