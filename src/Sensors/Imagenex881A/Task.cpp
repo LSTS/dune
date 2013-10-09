@@ -529,6 +529,8 @@ namespace Sensors
             throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
           }
 
+          consumeMessages();
+
           m_uart->write(m_sdata, c_sdata_size);
 
           if (!Poll::poll(*m_uart, 1.0))
