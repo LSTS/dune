@@ -123,6 +123,12 @@ namespace Supervisors
       }
 
       void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
       consume(const IMC::Abort* msg)
       {
         (void)msg;
