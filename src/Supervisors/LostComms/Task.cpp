@@ -245,7 +245,7 @@ namespace Supervisors
       }
 
       bool
-      testStartTimer(void)
+      canStartTimer(void)
       {
         bool at_surface = m_medium.medium == IMC::VehicleMedium::VM_WATER;
 
@@ -253,7 +253,7 @@ namespace Supervisors
       }
 
       bool
-      testKeepTimer(void)
+      canKeepTimer(void)
       {
         bool in_water = (m_medium.medium == IMC::VehicleMedium::VM_WATER) ||
         (m_medium.medium == IMC::VehicleMedium::VM_UNDERWATER);
@@ -262,13 +262,13 @@ namespace Supervisors
       }
 
       bool
-      testTakeAction(void)
+      canTakeAction(void)
       {
         return m_lost_coms_timer.overflow();
       }
 
       bool
-      testStillExecuting(void)
+      isStillExecuting(void)
       {
         if ((m_pcs.state == IMC::PlanControlState::PCS_INITIALIZING) ||
             (m_pcs.state == IMC::PlanControlState::PCS_EXECUTING))
@@ -292,7 +292,7 @@ namespace Supervisors
         switch (m_lcs)
         {
           case STATE_NOT_MET:
-            if (testStartTimer())
+            if (canStartTimer())
             {
               debug("conditions are met to start timer");
 
@@ -304,12 +304,12 @@ namespace Supervisors
           case STATE_STARTED:
             trace("time left is %.1f", m_lost_coms_timer.getRemaining());
 
-            if (!testKeepTimer())
+            if (!canKeepTimer())
             {
               trace("lost conditions to keep timer");
               m_lcs = STATE_NOT_MET;
             }
-            else if (testTakeAction())
+            else if (canTakeAction())
             {
               war("starting lost comms plan");
 
@@ -327,7 +327,7 @@ namespace Supervisors
             }
             break;
           case STATE_EXEC:
-            if (!testStillExecuting())
+            if (!isStillExecuting())
             {
               trace("no longer executing lost comms");
               m_lcs = STATE_NOT_MET;
