@@ -488,15 +488,17 @@ namespace Plan
         // This template makes the vehicle dive for some time
         if (plan_id == "dive")
         {
+
           double lat, lon, depth;
           getCurrentPosition(&lat, &lon, &depth);
+          depth = params.get("depth", m_args.dive_depth);
 
           IMC::MessageList<IMC::Maneuver> maneuvers;
 
           IMC::Loiter* loiter = new IMC::Loiter();
           loiter->lat = lat;
           loiter->lon = lon;
-          loiter->z = m_args.dive_depth;
+          loiter->z = depth;
           loiter->z_units = IMC::Z_DEPTH;
           loiter->type = IMC::Loiter::LT_CIRCULAR;
           loiter->duration = m_args.dive_time;

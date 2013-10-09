@@ -122,13 +122,9 @@ namespace Autonomy
         {
           handleAbortCommand(msg->origin, args);
         }
-        else if (cmd == "gen")
-        {
-          handlePlanGeneratorCommand(msg->origin, args);
-        }
         else
         {
-
+          handlePlanGeneratorCommand(msg->origin, msg->text);
         }
       }
 
