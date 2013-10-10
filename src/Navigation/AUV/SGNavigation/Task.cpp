@@ -279,7 +279,6 @@ namespace Navigation
           }
           catch (std::runtime_error& e)
           {
-            war(DTR("failed to resolve entity '%s': %s"), m_args.elabel_imu.c_str(), e.what());
             m_imu_eid = UINT_MAX;
           }
         }
