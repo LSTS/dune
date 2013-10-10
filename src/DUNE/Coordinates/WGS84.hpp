@@ -277,9 +277,9 @@ namespace DUNE
       //! @param[out] lat WGS-84 latitude (rad).
       //! @param[out] lon WGS-84 longitude (rad).
       //! @param[out] hae height above WGS-84 ellipsoid (m).
-      template <typename Ta, typename Tb>
+      template <typename Ta, typename Tb, typename Tc, typename Td>
       static void
-      fromECEF(Ta x, Ta y, Ta z, Tb* lat, Tb* lon, Tb* hae)
+      fromECEF(Ta x, Ta y, Tb z, Tc* lat, Tc* lon, Td* hae)
       {
         assert(lat != 0);
         assert(lon != 0);
