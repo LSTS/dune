@@ -190,6 +190,14 @@ namespace Power
             delete m_adcs[i];
 
           m_adcs[i] = IMC::Factory::produce(m_args.adc_messages[i]);
+
+          try
+          {
+            unsigned eid = resolveEntity(m_args.adc_elabels[i]);
+            m_adcs[i]->setSourceEntity(eid);
+          }
+          catch (...)
+          { }
         }
 
         m_power_state.name = m_args.pwr_name;
