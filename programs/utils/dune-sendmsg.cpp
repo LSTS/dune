@@ -47,24 +47,21 @@ main(int argc, char** argv)
     if (argc == 2 && (!strcmp(argv[1], "-l") || !strcmp(argv[1], "--list")))
     {
       fprintf(stdout, "List:\n");
-      fprintf(stdout, "  Abort, Acoustic{Message, Ping, Range, SystemsQuery}\n");
+      fprintf(stdout, "  Abort, AcousticMessage, AcousticPing, AcousticRange, AcousticSystemsQuery\n");
       fprintf(stdout, "  Brake, ButtonEvent\n");
       fprintf(stdout, "  CacheControl, Calibration, ClockControl, ControlLoops\n");
-      fprintf(stdout, "  DataSanity, Desired{Control, Heading, HeadingRate, Pitch, Speed, Z}, DevCalibrationControl\n");
-      fprintf(stdout, "  EmergencyControl, Entity{List, State, ActivationState}, EstimatedState\n");
-      fprintf(stdout, "  GpsFix\n");
-      fprintf(stdout, "  Heartbeat\n");
-      fprintf(stdout, "  IridiumMsgTx\n");
-      fprintf(stdout, "  Lbl{Config, Range}\n");
-      fprintf(stdout, "  LeakSimulation, LogBook{Control, Entry}, LoggingControl\n");
-      fprintf(stdout, "  MagneticField, MonitorEntityState\n");
-      fprintf(stdout, "  OperationalLimits\n");
-      fprintf(stdout, "  Parameter, Plan{Control, Generation}, PopEntityParameters, PowerChannelControl, PushEntityParameters\n");
-      fprintf(stdout, "  Query{EntityInfo, EntityParameters}\n");
+      fprintf(stdout, "  DataSanity, DesiredControl, DesiredHeading, DesiredHeadingRate\n");
+      fprintf(stdout, "  DesiredPitch, DesiredSpeed, DesiredZ, DevCalibrationControl\n");
+      fprintf(stdout, "  EmergencyControl, EntityList, EntityState, EntityActivationState, EstimatedState\n");
+      fprintf(stdout, "  GpsFix, Heartbeat, IridiumMsgTx, LblConfig, LblRange\n");
+      fprintf(stdout, "  LeakSimulation, LogBookControl, LogBookEntry, LoggingControl\n");
+      fprintf(stdout, "  MagneticField, MonitorEntityState, OperationalLimits\n");
+      fprintf(stdout, "  Parameter, PlanControl, PlanGeneration, PopEntityParameters, PowerChannelControl, PushEntityParameters\n");
+      fprintf(stdout, "  QueryEntityInfo, QueryEntityParameters\n");
       fprintf(stdout, "  RegisterManeuver, RemoteActions, RemoteActionsRequest, ReplayControl, RestartSystem\n");
-      fprintf(stdout, "  SaveEntityParameters, Set{EntityParameters, LedBrightness, ServoPosition, ThrusterActuation}, Sms, SoundSpeed\n");
-      fprintf(stdout, "  TeleoperationDone, TrexCommand\n");
-      fprintf(stdout, "  Vehicle{Command, Medium}\n");
+      fprintf(stdout, "  SaveEntityParameters, SetEntityParameters, SetLedBrightness, SetServoPosition\n");
+      fprintf(stdout, "  SetThrusterActuation, Sms, SoundSpeed\n");
+      fprintf(stdout, "  TeleoperationDone, TrexCommand, VehicleCommand, VehicleMedium\n");
       return 1;
     }
 
