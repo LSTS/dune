@@ -45,7 +45,7 @@ namespace Supervisors
       {
         //! Heartbeat timeout.
         float heartbeat_tout;
-        //! Default SMS recipient.
+        //! LostComms plan name.
         std::string plan;
         //! Timeout if executing plan
         float mission_tout;
@@ -59,8 +59,8 @@ namespace Supervisors
         double m_heartbeat_last;
         //! True if executing plan
         bool m_in_mission;
-        //! Executing plan's progress
-        float m_progress;
+        //! True if executing LostComms plan
+        bool m_in_lc;
         //! Task arguments.
         Arguments m_args;
 
@@ -93,7 +93,6 @@ namespace Supervisors
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
           m_heartbeat_last = Clock::get();
-          m_progress = -1.0;
         }
 
         void
@@ -109,13 +108,16 @@ namespace Supervisors
         consume(const IMC::PlanControlState* msg)
         {
           m_in_mission = (msg->state & IMC::PlanControlState::PCS_EXECUTING) != 0;
-          m_progress = msg->plan_progress;
+          m_in_lc = (strcmp(msg->plan_id.c_str(), m_args.plan.c_str()) == 0);
         }
 
         void
         task(void)
         {
           double now = Clock::get();
+
+          if(m_in_lc)
+            return;
 
           if ((now > (m_heartbeat_last + m_args.mission_tout) && m_in_mission) ||
               now > (m_heartbeat_last + m_args.heartbeat_tout))
