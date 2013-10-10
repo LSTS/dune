@@ -4317,7 +4317,7 @@ namespace DUNE
       //! Longitude WGS-84.
       fp64_t lon;
       //! Height above WGS-84 ellipsoid.
-      fp64_t height;
+      fp32_t height;
       //! Number of Satellites.
       uint8_t satellites;
       //! Course Over Ground.
@@ -4380,7 +4380,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 60;
+        return 56;
       }
 
       void

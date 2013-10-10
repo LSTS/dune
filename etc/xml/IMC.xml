@@ -1938,7 +1938,7 @@
         WGS-84 Longitude coordinate.
       </description>
     </field>
-    <field name="Height above WGS-84 ellipsoid" abbrev="height" type="fp64_t" unit="m">
+    <field name="Height above WGS-84 ellipsoid" abbrev="height" type="fp32_t" unit="m">
       <description>
         Height above WGS-84 ellipsoid.
       </description>
