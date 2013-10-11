@@ -188,10 +188,11 @@ namespace Transports
             {
               setEntityState(IMC::EntityState::ESTA_FAILURE, String::str(DTR("failed to start log, check available storage: %s"), e.what()));
               err("%s", e.what());
-              war(DTR("waiting for human intervention"));
+              throw RestartNeeded(e.what(), 5);
             }
 
-            logMessage(msg);
+            if (m_log != NULL)
+              logMessage(msg);
             break;
           case IMC::LoggingControl::COP_STOPPED:
             stopLog();
@@ -263,8 +264,15 @@ namespace Transports
         while (!stopping())
         {
           waitForMessages(1.0);
-          writeSample();
-          flush();
+          try
+          {
+            writeSample();
+            flush();
+          }
+          catch(std::exception& e)
+          {
+            throw RestartNeeded(e.what(), 5);
+          }
         }
       }
     };
