@@ -617,8 +617,6 @@ namespace Sensors
       void
       testComms(void)
       {
-        uint8_t bfr[c_max_rdata_size];
-
         m_uart->write(m_sdata, c_sdata_size);
 
         if (!Poll::poll(*m_uart, 1.0))
