@@ -123,6 +123,8 @@ namespace Sensors
       std::vector<float> position;
       //! Use default Imagenex configuration.
       bool use_default;
+      // Power channel name.
+      std::string power_channel;
     };
 
     //! Device query baud rate.
@@ -174,6 +176,12 @@ namespace Sensors
       uint8_t m_sdata[c_sdata_size];
       //! Last valid sound speed value.
       double m_sound_speed;
+      //! Power channel control.
+      IMC::PowerChannelControl m_power_channel_control;
+      //! True if task is activating.
+      bool m_activating;
+      //! Activation/deactivation timer.
+      Counter<double> m_countdown;
       //! Watchdog.
       Counter<double> m_wdog;
       //! Task arguments.
@@ -186,8 +194,13 @@ namespace Sensors
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
         m_parser(m_sonar.data),
-        m_sound_speed(c_sound_speed)
+        m_sound_speed(c_sound_speed),
+        m_activating(false)
       {
+        // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
         .description("Serial port device used to communicate with the sensor");
@@ -298,6 +311,10 @@ namespace Sensors
         .defaultValue("true")
         .description("Use default Imagenex configuration for frequency and absorption levels.");
 
+        param("Power Channel", m_args.power_channel)
+        .defaultValue("Pencil Beam")
+        .description("Power channel that controls the power of the device");
+
         m_distance.validity = IMC::Distance::DV_VALID;
 
         // Filling constant Sonar Data.
@@ -324,6 +341,8 @@ namespace Sensors
           throw RestartNeeded(DTR("restarting to change UART device"), 1);
 
         m_sound_speed = m_args.sspeed;
+        m_power_channel_control.name = m_args.power_channel;
+        m_countdown.setTop(getActivationTime());
 
         setRange();
         setStartGain();
@@ -383,6 +402,66 @@ namespace Sensors
       onResourceRelease(void)
       {
         Memory::clear(m_uart);
+        requestDeactivation();
+      }
+
+      void
+      onResourceInitialization(void)
+      {
+        requestDeactivation();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
+      onRequestActivation(void)
+      {
+        m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+        dispatch(m_power_channel_control);
+
+        m_countdown.reset();
+        m_activating = true;
+      }
+
+      void
+      onActivation(void)
+      {
+        inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_activating = false;
+      }
+
+      void
+      onDeactivation(void)
+      {
+        inf("%s", DTR(Status::getString(Status::CODE_IDLE)));
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
+        m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+        dispatch(m_power_channel_control);
+      }
+
+      void
+      checkActivationProgress(void)
+      {
+        if (m_countdown.overflow())
+        {
+          activationFailed(DTR("failed to contact device"));
+          m_activating = false;
+          return;
+        }
+
+        try
+        {
+          testComms();
+          activate();
+
+          debug("activation took %0.2f s", getActivationTime() -
+                m_countdown.getRemaining());
+
+          m_wdog.reset();
+        }
+        catch (...)
+        { }
       }
 
       void
@@ -534,6 +613,18 @@ namespace Sensors
         m_sdata[SD_TRAIN_ANGLE] = (uint8_t)((m_args.train_angle + 180) / 3);
       }
 
+      //! Test communication with device.
+      void
+      testComms(void)
+      {
+        uint8_t bfr[c_max_rdata_size];
+
+        m_uart->write(m_sdata, c_sdata_size);
+
+        if (!Poll::poll(*m_uart, 1.0))
+          throw std::runtime_error("unable to communicate");
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -542,54 +633,63 @@ namespace Sensors
 
         while (!stopping())
         {
-          if (m_wdog.overflow())
-          {
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
-          }
-
           consumeMessages();
 
-          m_uart->write(m_sdata, c_sdata_size);
-
-          if (!Poll::poll(*m_uart, 1.0))
-            continue;
-
-          size_t rv = m_uart->read(bfr, sizeof(bfr));
-
-          if (rv == 0)
-            continue;
-
-          for (size_t i = 0; i < rv; ++i)
+          if (isActive() && (m_uart != NULL))
           {
-            if (!m_parser.parse(bfr[i]))
-              continue;
-
-            m_distance.value = m_parser.getProfileRange();
-
-            // If range is zero, there are no echoes.
-            if (m_distance.value <= c_min_range)
-              m_distance.value = m_parser.getRange();
-
-            // Correct for dynamic sound speed.
-            if (m_args.sspeed_dyn)
-              m_distance.value *= m_sound_speed / c_sound_speed;
-
-            updateState(m_parser.getHeadPosition());
-
-            dispatch(m_distance);
-
-            if (m_parser.getDataPointsCount() > 0)
+            if (m_wdog.overflow())
             {
-              m_sonar.setTimeStamp(m_distance.getTimeStamp());
-              m_sonar.min_range = static_cast<uint16_t>(m_distance.value);
-              m_sonar.max_range = m_parser.getRange();
-              dispatch(m_sonar);
+              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+              throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
             }
 
-            // Extract and dispatch data.
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-            m_wdog.reset();
+            m_uart->write(m_sdata, c_sdata_size);
+
+            if (!Poll::poll(*m_uart, 1.0))
+              continue;
+
+            size_t rv = m_uart->read(bfr, sizeof(bfr));
+
+            if (rv == 0)
+              continue;
+
+            for (size_t i = 0; i < rv; ++i)
+            {
+              if (!m_parser.parse(bfr[i]))
+                continue;
+
+              m_distance.value = m_parser.getProfileRange();
+
+              // If range is zero, there are no echoes.
+              if (m_distance.value <= c_min_range)
+                m_distance.value = m_parser.getRange();
+
+              // Correct for dynamic sound speed.
+              if (m_args.sspeed_dyn)
+                m_distance.value *= m_sound_speed / c_sound_speed;
+
+              updateState(m_parser.getHeadPosition());
+
+              dispatch(m_distance);
+
+              if (m_parser.getDataPointsCount() > 0)
+              {
+                m_sonar.setTimeStamp(m_distance.getTimeStamp());
+                m_sonar.min_range = static_cast<uint16_t>(m_distance.value);
+                m_sonar.max_range = m_parser.getRange();
+                dispatch(m_sonar);
+              }
+
+              // Extract and dispatch data.
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+              m_wdog.reset();
+            }
+          }
+          else
+          {
+            waitForMessages(1.0);
+            if (m_activating)
+              checkActivationProgress();
           }
         }
       }
