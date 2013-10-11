@@ -58,7 +58,35 @@ namespace DUNE
       }
 
       static std::string
+      get(const int8_t& var)
+      {
+        (void)var;
+        return "integer";
+      }
+
+      static std::string
+      get(const int16_t& var)
+      {
+        (void)var;
+        return "integer";
+      }
+
+      static std::string
       get(const unsigned& var)
+      {
+        (void)var;
+        return "integer";
+      }
+
+      static std::string
+      get(const uint8_t& var)
+      {
+        (void)var;
+        return "integer";
+      }
+
+      static std::string
+      get(const uint16_t& var)
       {
         (void)var;
         return "integer";
