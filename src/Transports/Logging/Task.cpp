@@ -404,7 +404,7 @@ namespace Transports
           setEntityState(IMC::EntityState::ESTA_FAILURE, String::str(DTR("failed to start log, check available storage: %s"), e.what()));
           m_active = false;
           err("%s", e.what());
-          war(DTR("waiting for human intervention"));
+          throw RestartNeeded(e.what(), 5);
         }
       }
 
