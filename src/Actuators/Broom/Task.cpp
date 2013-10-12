@@ -179,22 +179,27 @@ namespace Actuators
         param("State Sampling Frequency", m_args.state_per)
         .units(Units::Hertz)
         .defaultValue("1.0")
+        .minimumValue("0.1")
         .description("Value of the state sampling frequency");
 
         param("Motor Pole Pairs", m_args.pole_pairs)
         .defaultValue("12.0")
+        .minimumValue("1.0")
         .description("Number of motor pole pairs");
 
         param("Maximum Phase Current", m_args.max_phase_current)
         .units(Units::Ampere)
-        .defaultValue("5.4");
+        .defaultValue("5.4")
+        .minimumValue("0.0");
 
         param("Maximum Rotor RPM", m_args.max_rpm)
         .units(Units::RPM)
-        .defaultValue("2500");
+        .defaultValue("2500")
+        .minimumValue("0");
 
         param("Thrust Control Mode", m_args.thrust_ctl_mode)
-        .defaultValue("None")
+        .defaultValue("none")
+        .values("none, voltage, current, rpm")
         .description("Thrust control mode ('none', 'voltage', 'current', 'rpm')");
 
         param("Inverted Rotation", m_args.inv_rotation)

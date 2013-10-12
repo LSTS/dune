@@ -129,6 +129,7 @@ namespace Actuators
         param("Watchdog Timeout", m_args.wdog_tout)
         .units(Units::Second)
         .defaultValue("2.0")
+        .minimumValue("1.0")
         .description("Watchdog timeout");
 
         param("LED - Names", m_args.led_names)

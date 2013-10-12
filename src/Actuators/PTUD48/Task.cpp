@@ -106,18 +106,22 @@ namespace Actuators
 
         param("PTU Pan Speed", m_args.pan_speed)
         .defaultValue("1000")
+        .minimumValue("0")
         .description("PTU pan speed in positions/sec");
 
         param("PTU Tilt Speed", m_args.tilt_speed)
         .defaultValue("1000")
+        .minimumValue("0")
         .description("PTU tilt speed in positions/sec");
 
         param("PTU Pan Acceleration", m_args.pan_accel)
         .defaultValue("2000")
+        .minimumValue("0")
         .description("PTU pan acceleration in positions/sec/sec");
 
         param("PTU Tilt Acceleration", m_args.tilt_accel)
         .defaultValue("2000")
+        .minimumValue("0")
         .description("PTU tilt acceleration in positions/sec/sec");
 
         // Setup entity states.

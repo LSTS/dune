@@ -113,11 +113,16 @@ namespace Actuators
 
         param("Scale Factor", m_args.scale)
         .defaultValue("100.0")
+        .minimumValue("0.0")
+        .maximumValue("100.0")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .units(Units::Percentage)
         .description("Scale factor to be multiplied to the thruster actuation reference");
 
         param("Feedback Querying Frequency", m_args.feedback_freq)
         .defaultValue("1.0")
+        .minimumValue("0.1")
         .units(Units::Hertz)
         .description("Frequency with which the motors are queried for current and RPMs");
 

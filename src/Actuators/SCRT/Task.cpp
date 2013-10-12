@@ -142,19 +142,26 @@ namespace Actuators
 
         param("ADC Sampling Frequency", m_args.adc_sper)
         .units(Units::Hertz)
-        .defaultValue("1.0");
+        .defaultValue("1.0")
+        .minimumValue("0.1")
+        .maximumValue("10.0");
 
         param("Servo Rotation - Minimum", m_args.servo_min)
         .units(Units::Degree)
-        .defaultValue("-45.0");
+        .defaultValue("-45.0")
+        .minimumValue("-60.0")
+        .maximumValue("0.0");
 
         param("Servo Rotation - Maximum", m_args.servo_max)
         .units(Units::Degree)
-        .defaultValue("-45.0");
+        .defaultValue("45.0")
+        .minimumValue("0.0")
+        .maximumValue("60.0");
 
         param("Servo Rotation Rate - Maximum", m_args.servo_rate_max)
         .units(Units::DegreePerSecond)
-        .defaultValue("333.3");
+        .defaultValue("333.3")
+        .minimumValue("0.0");
 
         param("Enable Rotation Rate Limit", m_args.limit_servo_rate)
         .defaultValue("false")
