@@ -133,7 +133,8 @@ namespace Sensors
 
         param("Data Timeout", m_args.data_tout)
         .units(Units::Second)
-        .defaultValue("2.0");
+        .defaultValue("2.0")
+        .minimumValue("1.0");
 
         param("Raw Inertial Vectors", m_args.raw_ivecs)
         .defaultValue("false")

@@ -173,31 +173,40 @@ namespace Sensors
 
         param("Length of Transmit Pings", m_args.tx_length)
         .units(Units::Millisecond)
-        .defaultValue("5");
+        .defaultValue("5")
+        .minimumValue("0");
 
         param("Length of Receive Pings", m_args.rx_length)
         .units(Units::Millisecond)
-        .defaultValue("5");
+        .defaultValue("5")
+        .minimumValue("0");
 
         param("Sound Speed on Water", m_args.sspeed)
+        .defaultValue("1500")
+        .minimumValue("1375")
+        .maximumValue("1900")
         .units(Units::MeterPerSecond)
-        .defaultValue("1500");
+        .description("Water sound speed");
 
         param("Timeout - Micro-Modem Ping", m_args.tout_mmping)
         .units(Units::Second)
-        .defaultValue("5.0");
+        .defaultValue("5.0")
+        .minimumValue("0");
 
         param("Timeout - Narrow Band Ping", m_args.tout_nbping)
         .units(Units::Second)
-        .defaultValue("5.0");
+        .defaultValue("5.0")
+        .minimumValue("0");
 
         param("Timeout - Abort", m_args.tout_abort)
         .units(Units::Second)
-        .defaultValue("5.0");
+        .defaultValue("5.0")
+        .minimumValue("0");
 
         param("Timeout - Input", m_args.tout_input)
         .units(Units::Second)
-        .defaultValue("20.0");
+        .defaultValue("20.0")
+        .minimumValue("0");
 
         param("GPIO - Transducer Detection", m_args.gpio_txd)
         .defaultValue("-1");

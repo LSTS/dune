@@ -97,6 +97,7 @@ namespace Sensors
 
         param("Watchdog Timeout", m_args.wdog_tout)
         .defaultValue("2.0")
+        .minimumValue("1.0")
         .units(Units::Second)
         .description("Number of seconds without data before reporting an error");
 

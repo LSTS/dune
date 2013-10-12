@@ -93,7 +93,7 @@ namespace Sensors
       //! Serial port baud rate.
       unsigned uart_baud;
       //! Sound speed moving average samples size.
-      int avg_ss_samples;
+      uint8_t avg_ss_samples;
       //! Speed of Sound output frequency.
       float output_freq;
     };
@@ -146,6 +146,7 @@ namespace Sensors
 
         param("Sound Speed Moving Average Samples", m_args.avg_ss_samples)
         .defaultValue("10")
+        .minimumValue("0")
         .description("Number of moving average samples to smooth sound speed");
 
         param("Sound Speed Output Frequency", m_args.output_freq)

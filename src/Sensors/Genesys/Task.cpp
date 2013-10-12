@@ -49,7 +49,7 @@ namespace Sensors
       //! TCP port.
       unsigned port;
       //! Start gain.
-      unsigned addr;
+      uint8_t addr;
     };
 
     //! Address data size.
@@ -80,10 +80,14 @@ namespace Sensors
 
         param("TCP Port", m_args.port)
         .defaultValue("5000")
+        .minimumValue("0")
+        .maximumValue("65535")
         .description("TCP port");
 
         param("Device Address", m_args.addr)
         .defaultValue("6")
+        .minimumValue("0")
+        .maximumValue("30")
         .description("Device address in the network");
 
         m_wdog.setTop(60.0);
@@ -138,7 +142,7 @@ namespace Sensors
         char packet[c_addr_size];
         String::format(packet, c_addr_size, "ADR %u\r", m_args.addr);
 
-        unsigned size = m_args.addr < 10 ? 6 : 7;
+        uint8_t size = m_args.addr < 10 ? 6 : 7;
         m_sock->write(packet, size);
       }
 

@@ -263,15 +263,18 @@ namespace Sensors
 
         param("Length of Transmit Pings", m_args.tx_length)
         .units(Units::Millisecond)
-        .defaultValue("3");
+        .defaultValue("3")
+        .minimumValue("0");
 
         param("Length of Receive Pings", m_args.rx_length)
         .units(Units::Millisecond)
-        .defaultValue("3");
+        .defaultValue("3")
+        .minimumValue("0");
 
         param("Ping Timeout", m_args.ping_tout)
         .units(Units::Millisecond)
-        .defaultValue("1000");
+        .defaultValue("1000")
+        .minimumValue("0");
 
         param("Ping Periodicity", m_args.ping_period)
         .units(Units::Second)
@@ -298,27 +301,33 @@ namespace Sensors
 
         param("Good Range Age", m_args.good_range_age)
         .units(Units::Second)
-        .defaultValue("5");
+        .defaultValue("5")
+        .minimumValue("0");
 
         param("Mini-Packet Delay - Before", m_args.mpk_delay_bef)
         .units(Units::Second)
-        .defaultValue("1.0");
+        .defaultValue("1.0")
+        .minimumValue("0");
 
         param("Mini-Packet Delay - After", m_args.mpk_delay_aft)
         .units(Units::Second)
-        .defaultValue("0.5");
+        .defaultValue("0.5")
+        .minimumValue("0");
 
         param("Range Reports Delay - Before", m_args.report_delay_bef)
         .units(Units::Second)
-        .defaultValue("0.5");
+        .defaultValue("0.5")
+        .minimumValue("0");
 
         param("Range Reports Delay - After", m_args.report_delay_aft)
         .units(Units::Second)
-        .defaultValue("1.0");
+        .defaultValue("1.0")
+        .minimumValue("0");
 
         param("Turn Around Time", m_args.turn_around_time)
         .units(Units::Millisecond)
-        .defaultValue("20");
+        .defaultValue("20")
+        .minimumValue("0");
 
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;

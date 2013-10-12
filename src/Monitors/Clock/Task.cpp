@@ -94,16 +94,19 @@ namespace Monitors
       {
         param("Minimum GPS Fixes", m_args.min_gps_fixes)
         .defaultValue("10")
+        .minimumValue("0")
         .description("Minimum number of GPS fixes required to compute the clock offset");
 
         param("Maximum Clock Offset", m_args.max_clock_offs)
         .units(Units::Second)
         .defaultValue("4")
+        .minimumValue("0")
         .description("Maximum Clock Offset. If the clock offset is above this value the clock will be syncronized");
 
         param("Boot Synchronization Timeout", m_args.max_boot_tout)
         .units(Units::Second)
         .defaultValue("30")
+        .minimumValue("0")
         .description("At boot the system tries to synchronize clocks. It continues unsynched after timeout");
 
         param("Hardware Clock Synchronization Command", m_args.hw_sync_cmd)

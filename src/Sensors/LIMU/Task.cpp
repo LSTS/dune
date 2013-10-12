@@ -127,11 +127,6 @@ namespace Sensors
         .defaultValue("")
         .description("Name of the power channel");
 
-        param("Output Frequency", m_args.output_frq)
-        .units(Units::Hertz)
-        .defaultValue("100")
-        .description("Output frequency");
-
         param(c_hard_iron_param, m_args.hard_iron)
         .units(Units::Gauss)
         .size(c_hard_iron_count)

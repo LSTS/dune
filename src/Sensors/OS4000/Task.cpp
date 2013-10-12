@@ -132,6 +132,7 @@ namespace Sensors
 
         param("Data Timeout", m_args.data_tout)
         .defaultValue("0.5")
+        .minimumValue("0.2")
         .units(Units::Second)
         .description("Number of seconds without data before reporting an error");
 

@@ -99,10 +99,12 @@ namespace Sensors
 
         param("Conversion Delay", m_args.conv_delay)
         .units(Units::Second)
-        .defaultValue("0.001");
+        .defaultValue("0.001")
+        .minimumValue("0.0");
 
         param("Samples Per Average", m_args.spl_avg)
-        .defaultValue("10");
+        .defaultValue("10")
+        .minimumValue("0");
 
         for (unsigned i = 0; i < c_max_channels; ++i)
         {

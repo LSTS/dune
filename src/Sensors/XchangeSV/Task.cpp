@@ -75,6 +75,7 @@ namespace Sensors
 
         param("Input Timeout", m_args.input_timeout)
         .defaultValue("4.0")
+        .minimumValue("1.0")
         .units(Units::Second)
         .description("Amount of seconds to wait for data before reporting an error");
       }

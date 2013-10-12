@@ -158,6 +158,7 @@ namespace Sensors
         param("Input Timeout", m_args.input_tout)
         .units(Units::Second)
         .defaultValue("2")
+        .minimumValue("1")
         .description("Number of seconds for the watchdog");
 
         param("Trigger Frequency", m_args.trigger_frq)

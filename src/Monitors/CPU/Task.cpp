@@ -60,10 +60,13 @@ namespace Monitors
       {
         param("CPU - Moving Average Samples", m_args.cpu_avg_samples)
         .defaultValue("10")
+        .minimumValue("0")
         .description("Number of moving average samples to smooth CPU usage");
 
         param("CPU - Maximum Usage", m_args.cpu_max)
         .defaultValue("75")
+        .minimumValue("0")
+        .maximumValue("100")
         .description("Maximum CPU usage. When this value is hit an error will be raised");
 
         // Initialize Entity State.

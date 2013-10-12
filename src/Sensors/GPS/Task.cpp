@@ -118,6 +118,7 @@ namespace Sensors
         param("Input Timeout", m_args.inp_tout)
         .units(Units::Second)
         .defaultValue("4.0")
+        .minimumValue("0.0")
         .description("Input timeout");
 
         param("Power Channel - Names", m_args.pwr_channels)

@@ -118,6 +118,7 @@ namespace Monitors
 
         param("Position Error Threshold", m_args.pos_error_threshold)
         .defaultValue("0.2")
+        .minimumValue("0.0")
         .units(Units::Radian)
         .description("Threshold for position error in fault detection");
 
@@ -133,6 +134,7 @@ namespace Monitors
 
         param("Position Error Samples", m_args.pos_error_samples)
         .defaultValue("5")
+        .minimumValue("1")
         .description("Number of samples for the moving average in the "
                      "DelayedTrigger object");
 
@@ -148,26 +150,31 @@ namespace Monitors
         param("Current Lower Threshold", m_args.curr_lower)
         .units(Units::Ampere)
         .defaultValue("0.4")
+        .minimumValue("0.0")
         .description("Current lower threshold to consider abnormal behavior");
 
         param("Current Upper Threshold", m_args.curr_upper)
         .units(Units::Ampere)
         .defaultValue("0.7")
+        .minimumValue("0.0")
         .description("Current upper threshold to consider abnormal behavior");
 
         param("Maximum Lower Faults", m_args.max_lfaults)
         .defaultValue("20")
+        .minimumValue("0")
         .description("Number of faults above the lower threshold to consider "
                      "a current fault detection");
 
         param("Maximum Upper Faults", m_args.max_ufaults)
         .defaultValue("4")
+        .minimumValue("0")
         .description("Number of faults above the upper threshold to consider "
                      "a current fault detection");
 
         param("Fault Time Cooldown", m_args.fault_cooldown)
         .units(Units::Second)
         .defaultValue("60.0")
+        .minimumValue("0.0")
         .description("Period of time after which the fault vectors will be reset to zero");
 
         for (unsigned i = 0; i < c_servo_count; ++i)

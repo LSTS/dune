@@ -122,6 +122,7 @@ namespace Monitors
 
         param("Maximum Consecutive Transitions", m_args.max_transitions)
         .defaultValue("3")
+        .minimumValue("0")
         .description("Maximum number of consecutive transitions before starting to ignore");
 
         bind<IMC::EntityState>(this);
