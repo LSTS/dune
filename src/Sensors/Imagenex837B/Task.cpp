@@ -231,6 +231,8 @@ namespace Sensors
 
         param("TCP Port", m_args.port)
         .defaultValue("4040")
+        .minimumValue("0")
+        .maximumValue("65535")
         .description("TCP port");
 
         param("Start Gain", m_args.start_gain)
@@ -298,6 +300,8 @@ namespace Sensors
 
         param("Profile Tilt Angle", m_args.tilt_angle)
         .defaultValue("0.0")
+        .minimumValue("-30.0")
+        .maximumValue("30.0")
         .units(Units::Degree)
         .description("Mounting offset");
 
@@ -333,6 +337,7 @@ namespace Sensors
         param("Adaptive Range Modifier Multiplicative Constant", m_args.range_modifier_mul_k)
         .defaultValue("2")
         .minimumValue("1")
+        .maximumValue("3")
         .description("Adaptive Multibeam range modifier multiplicative constant");
 
         param("Adaptive Range Modifier Timer", m_args.range_modifier_timer)

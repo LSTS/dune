@@ -294,8 +294,10 @@ namespace Sensors
         .description("Gather data in profile mode");
 
         param("Sound Speed on Water", m_args.sspeed)
-        .units(Units::MeterPerSecond)
         .defaultValue("1500")
+        .minimumValue("1375")
+        .maximumValue("1900")
+        .units(Units::MeterPerSecond)
         .description("Water sound speed");
 
         param("Use Dynamic Sound Speed", m_args.sspeed_dyn)

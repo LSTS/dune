@@ -166,26 +166,38 @@ namespace Sensors
 
         param("Sampling Frequency", m_args.sample_frequency)
         .defaultValue("5")
+        .minimumValue("0.1")
+        .maximumValue("10")
         .units(Units::Hertz)
         .description("Number of samples per second");
 
         param("Range", m_args.range)
-        .units(Units::Meter)
         .defaultValue("50")
+        .values("5, 10, 20, 30, 40, 50")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .units(Units::Meter)
         .description("Default range");
 
         param("Start Gain", m_args.start_gain)
         .defaultValue("20")
+        .minimumValue("0")
+        .maximumValue("40")
+        .units(Units::Decibel)
         .description("Start gain");
 
         param("Pulse Length", m_args.pulse_length)
-        .units(Units::Second)
         .defaultValue("0.000015")
+        .minimumValue("0.000001")
+        .maximumValue("0.000255")
+        .units(Units::Second)
         .description("Pulse length");
 
         param("Profile Minimum Range", m_args.profile_range)
-        .units(Units::Meter)
         .defaultValue("0")
+        .minimumValue("0")
+        .maximumValue("25")
+        .units(Units::Meter)
         .description("Profile minimum range");
 
         param("Data Points", m_args.data_points)
@@ -194,11 +206,15 @@ namespace Sensors
         .description("Number of sonar return data points");
 
         param("Sound Speed on Water", m_args.sspeed)
-        .units(Units::MeterPerSecond)
         .defaultValue("1500");
+        .minimumValue("1375")
+        .maximumValue("1900")
+        .units(Units::MeterPerSecond)
+        .description("Water sound speed");
 
         param("Use Dynamic Sound Speed", m_args.sspeed_dyn)
         .defaultValue("false");
+        .description("Update measurements according with measured sound speed");
 
         param("Sonar position", m_args.position)
         .defaultValue("1, 0, 0")

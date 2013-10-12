@@ -126,6 +126,8 @@ namespace Sensors
 
         param("TCP Port", m_args.port)
         .defaultValue("4040")
+        .minimumValue("0")
+        .maximumValue("65535")
         .description("TCP port");
 
         param("Data Gain", m_args.dat_gain)
