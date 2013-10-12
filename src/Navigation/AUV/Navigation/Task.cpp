@@ -91,6 +91,8 @@ namespace Navigation
           param("Maximum expected currents", m_args.max_current)
           .units(Units::MeterPerSecond)
           .defaultValue("0.5")
+          .minimumValue("0.5")
+          .maximumValue("2.0")
           .description("Maximum expected ocean currents");
 
           param("Process Noise Covariance", m_process_noise)
@@ -112,6 +114,8 @@ namespace Navigation
 
           param("RPM to Speed multiplicative factor", m_args.initial_rpm_to_speed)
           .defaultValue("1.2e-3")
+          .minimumValue("0.8e-3")
+          .maximumValue("2.0e-3")
           .description("Kalman Filter initial RPM to Speed multiplicative factor state value");
 
           // Extended Kalman Filter initialization.

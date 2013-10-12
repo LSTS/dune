@@ -81,16 +81,19 @@ namespace Monitors
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .units(Units::Second)
         .defaultValue("300.0")
+        .minimumValue("60.0")
         .description(DTR("Lost Communications Timeout"));
 
         param("Expiration Time - Abort SMS", m_args.sms_abort_ttl)
         .units(Units::Second)
         .defaultValue("30.0")
+        .minimumValue("30.0")
         .description("Abort SMS Timeout");
 
         param("Expiration Time - Lost Communications", m_args.sms_lost_coms_ttl)
         .units(Units::Second)
         .defaultValue("30.0")
+        .minimumValue("0.0")
         .description("Expiration time of lost communications SMS");
 
         bind<IMC::Abort>(this);

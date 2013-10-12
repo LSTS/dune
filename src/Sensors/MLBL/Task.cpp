@@ -252,8 +252,11 @@ namespace Sensors
         .description("Serial port baud rate");
 
         param("Sound Speed - Default Value", m_args.sound_speed_def)
+        .defaultValue("1500")
+        .minimumValue("1375")
+        .maximumValue("1900")
         .units(Units::MeterPerSecond)
-        .defaultValue("1500");
+        .description("Water sound speed");
 
         param("Sound Speed - Entity Label", m_args.sound_speed_elabel)
         .description("Entity label of sound speed provider");
@@ -272,7 +275,8 @@ namespace Sensors
 
         param("Ping Periodicity", m_args.ping_period)
         .units(Units::Second)
-        .defaultValue("2");
+        .defaultValue("2")
+        .minimumValue("2");
 
         param(DTR_RT("Enable Reports"), m_args.report)
         .visibility(Tasks::Parameter::VISIBILITY_USER)

@@ -206,14 +206,14 @@ namespace Sensors
         .description("Number of sonar return data points");
 
         param("Sound Speed on Water", m_args.sspeed)
-        .defaultValue("1500");
+        .defaultValue("1500")
         .minimumValue("1375")
         .maximumValue("1900")
         .units(Units::MeterPerSecond)
         .description("Water sound speed");
 
         param("Use Dynamic Sound Speed", m_args.sspeed_dyn)
-        .defaultValue("false");
+        .defaultValue("false")
         .description("Update measurements according with measured sound speed");
 
         param("Sonar position", m_args.position)

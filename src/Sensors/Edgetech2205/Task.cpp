@@ -117,10 +117,14 @@ namespace Sensors
 
         param("TCP Port - Command", m_args.port_cmd)
         .defaultValue("1700")
+        .minimumValue("0")
+        .maximumValue("65535")
         .description("TCP command port");
 
         param("TCP Port - Data", m_args.port_dat)
         .defaultValue("1701")
+        .minimumValue("0")
+        .maximumValue("65535")
         .description("TCP data port");
 
         param(DTR_RT("High-Frequency Channels"), m_args.channels_hf)

@@ -164,10 +164,12 @@ namespace Navigation
           // Declare configuration parameters.
           param("Position Noise Covariance with IMU", m_args.position_noise_with_imu)
           .defaultValue("0.0")
+          .minimumValue("0.0")
           .description("Position process noise covariance value when IMU is available");
 
           param("LBL Noise Covariance with IMU", m_args.lbl_noise_with_imu)
           .defaultValue("0.1")
+          .minimumValue("0.0")
           .description("LBL measurement noise covariance value when IMU is available");
 
           param("Process Noise Covariance", m_process_noise)
@@ -192,10 +194,14 @@ namespace Navigation
 
           param("Speed Moving Average Samples", m_args.avg_speed_samples)
           .defaultValue("10")
+          .minimumValue("5")
+          .maximumValue("20")
           .description("Number of moving average samples to smooth forward speed");
 
           param("RPM to Speed multiplicative factor", m_args.initial_rpm_to_speed)
           .defaultValue("1.2e-3")
+          .minimumValue("0.8e-3")
+          .maximumValue("2.0e-3")
           .description("Kalman Filter initial RPM to Speed multiplicative factor state value");
 
           param("Update Heading with Euler Increments", m_args.increment_euler_delta)
@@ -204,6 +210,8 @@ namespace Navigation
 
           param("Heading Bias Alignment Index", m_args.alignment_index)
           .defaultValue("1e-5")
+          .minimumValue("1e-6")
+          .maximumValue("1e-4")
           .description("Heading bias uncertainty alignment threshold");
 
           param("Entity Label - IMU", m_args.elabel_imu)

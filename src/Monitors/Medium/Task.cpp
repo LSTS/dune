@@ -88,25 +88,32 @@ namespace Monitors
         param("Initialization Time", m_args.init_time)
         .units(Units::Second)
         .defaultValue("30.0")
+        .minimumValue("20.0")
+        .maximumValue("60.0")
         .description("Time to wait at beginning before assessing vehicle medium");
 
         param("Wet Data Timeout", m_args.water_timeout)
         .units(Units::Second)
         .defaultValue("3.0")
+        .minimumValue("1.5")
         .description("No valid wet sensor data timeout");
 
         param("Wet Data Threshold", m_args.water_threshold)
         .defaultValue("5.0")
+        .minimumValue("3.0")
         .description("No valid wet sensor data threshold value");
 
         param("GPS Timeout", m_args.gps_timeout)
         .units(Units::Second)
         .defaultValue("3.0")
+        .minimumValue("2.0")
         .description("No valid GPS fixes timeout");
 
         param("Underwater Depth Threshold", m_args.depth_threshold)
         .units(Units::Meter)
         .defaultValue("0.3")
+        .minimumValue("0.2")
+        .maximumValue("0.8")
         .description("Minimum depth necessary to consider a vehicle underwater");
 
         param("Vehicle Type", m_args.vtype)

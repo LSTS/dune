@@ -54,12 +54,14 @@ namespace DUNE
       param("Maximum Distance to Reference", m_max_dis2ref)
       .units(Units::Meter)
       .defaultValue("1000")
+      .minimumValue("500")
       .description("Maximum allowed distance to 'EstimatedState' reference");
 
       param(DTR_RT("Maximum Horizontal Position Variance"), m_max_hpos_var)
       .visibility(Tasks::Parameter::VISIBILITY_USER)
       .units(Units::SquareMeter)
       .defaultValue("500.0")
+      .minimumValue("100.0")
       .description("Maximum allowed horizontal position estimation variance");
 
       param("Reject all LBL ranges", m_reject_all_lbl)
@@ -74,51 +76,61 @@ namespace DUNE
       param("GPS timeout", m_without_gps_timeout)
       .units(Units::Second)
       .defaultValue("3.0")
+      .minimumValue("2.0")
       .description("No GPS readings timeout");
 
       param("DVL timeout", m_without_dvl_timeout)
       .units(Units::Second)
       .defaultValue("1.0")
+      .minimumValue("1.0")
       .description("No DVL readings timeout");
 
       param("Altitude timeout", m_without_alt_timeout)
       .units(Units::Second)
       .defaultValue("5.0")
+      .minimumValue("3.0")
       .description("No altitude readings timeout");
 
       param("Euler timeout", m_without_euler_timeout)
       .units(Units::Second)
       .defaultValue("10.0")
+      .minimumValue("5.0")
       .description("No EulerAngles readings timeout");
 
       param("Depth timeout", m_without_depth_timeout)
       .units(Units::Second)
       .defaultValue("3.0")
+      .minimumValue("2.0")
       .description("No Depth readings timeout");
 
       param("Main Depth timeout", m_without_main_depth_timeout)
       .units(Units::Second)
       .defaultValue("1.0")
+      .minimumValue("0.5")
       .description("No Depth readings from main provider timeout");
 
       param("DVL sanity timeout", m_dvl_sanity_timeout)
       .units(Units::Second)
       .defaultValue("10.0")
+      .minimumValue("10.0")
       .description("DVL sanity timeout");
 
       param("Distance Between DVL and CG", m_dist_dvl_cg)
       .units(Units::Meter)
       .defaultValue("0.3")
+      .minimumValue("0.0")
       .description("Distance between DVL and vehicle Center of Gravity");
 
       param("Distance Between GPS and CG", m_dist_gps_cg)
       .units(Units::Meter)
       .defaultValue("0.28")
+      .minimumValue("0.0")
       .description("Distance between GPS and vehicle Center of Gravity");
 
       param("Distance Between LBL and GPS", m_dist_lbl_gps)
       .units(Units::Meter)
       .defaultValue("0.50")
+      .minimumValue("0.0")
       .description("Distance between LBL receiver and GPS in the vehicle");
 
       param("DVL absolute thresholds", m_dvl_abs_thresh)
@@ -139,6 +151,7 @@ namespace DUNE
 
       param("LBL Threshold", m_lbl_threshold)
       .defaultValue("4.0")
+      .minimumValue("2.0")
       .description("LBL Threshold value for the LBL level check rejection scheme");
 
       param("GPS Maximum HDOP", m_max_hdop)
@@ -161,10 +174,12 @@ namespace DUNE
 
       param("Heave Moving Average Samples", m_avg_heave_samples)
       .defaultValue("40")
+      .minimumValue("10")
       .description("Number of moving average samples to smooth heave");
 
       param("GPS Moving Average Samples", m_avg_gps_samples)
       .defaultValue("7")
+      .minimumValue("5")
       .description("Number of moving average samples to smooth maximum GPS HACC.");
 
       param("Entity Label - Depth", m_elabel_depth)

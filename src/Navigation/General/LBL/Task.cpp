@@ -99,18 +99,22 @@ namespace Navigation
         {
           param("State Covariance Initial State", m_args.state_cov)
           .defaultValue("1.0")
+          .minimumValue("1.0")
           .description("Kalman Filter State Covariance initial values");
 
           param("LBL Threshold", m_args.lbl_threshold)
           .defaultValue("4.0")
+          .minimumValue("2.0")
           .description("LBL Threshold value for the LBL level check rejection scheme");
 
           param("LBL Measure Noise Covariance", m_args.lbl_mnoise)
           .defaultValue("10.0")
+          .minimumValue("0.1")
           .description("Kalman Filter LBL Measurement Noise Covariance value");
 
           param("LBL Process Noise Covariance", m_args.lbl_pnoise)
           .defaultValue("1e-5")
+          .minimumValue("0.0")
           .description("Kalman Filter LBL Process Noise Covariance value");
 
           param("LBL Expected Range Rejection Constants", m_args.k_rej)
@@ -120,6 +124,7 @@ namespace Navigation
           param("GPS timeout", m_args.gps_timeout)
           .units(Units::Second)
           .defaultValue("3.0")
+          .minimumValue("2.0")
           .description("No GPS readings timeout");
 
           param("GPS Maximum HACC", m_args.max_hacc)
@@ -131,6 +136,7 @@ namespace Navigation
           param("Distance Between LBL and GPS", m_args.dist_lbl_gps)
           .units(Units::Meter)
           .defaultValue("0.50")
+          .minimumValue("0.0")
           .description("Distance between LBL receiver and GPS in the vehicle");
 
           for (unsigned i = 0; i < DUNE::Navigation::c_max_transponders; ++i)

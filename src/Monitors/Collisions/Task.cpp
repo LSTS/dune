@@ -106,10 +106,14 @@ namespace Monitors
         // Definition of configuration parameters.
         param("Innovation Moving Average Samples", m_args.avg_samples_innov)
         .defaultValue("10")
+        .minimumValue("5")
+        .maximumValue("20")
         .description("Number of moving average samples to smooth accelerations");
 
         param("Absolute Moving Average Samples", m_args.avg_samples_abs)
         .defaultValue("3")
+        .minimumValue("2")
+        .maximumValue("5")
         .description("Number of moving average samples to smooth accelerations");
 
         param("Maximum Deviation Factor", m_args.k_std)
@@ -146,6 +150,8 @@ namespace Monitors
 
         param("Minimum Depth", m_args.min_depth)
         .defaultValue("1.0")
+        .minimumValue("0.5")
+        .maximumValue("10.0")
         .description("Depth value below which collisions will be ignored");
 
         // Register consumers.

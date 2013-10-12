@@ -99,7 +99,7 @@ namespace Sensors
         .description("Water sound speed");
 
         param("Use Dynamic Sound Speed", m_args.sspeed_dyn)
-        .defaultValue("false");
+        .defaultValue("false")
         .description("Update measurements according with measured sound speed");
 
         param("Device position", m_args.position)
