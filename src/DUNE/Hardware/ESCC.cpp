@@ -99,6 +99,7 @@ namespace DUNE
 #else
       (void)data;
       (void)data_size;
+      return 0;
 #endif
     }
 

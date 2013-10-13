@@ -676,7 +676,7 @@ namespace Sensors
               {
                 m_sonar.setTimeStamp(m_distance.getTimeStamp());
                 m_sonar.min_range = static_cast<uint16_t>(m_distance.value);
-                m_sonar.max_range = m_parser.getRange();
+                m_sonar.max_range = (float)m_parser.getRange();
                 dispatch(m_sonar);
               }
 
