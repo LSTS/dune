@@ -74,6 +74,8 @@ namespace Control
         int ltolerance;
         //! Has Power Module
         bool pwrm;
+        //! WP seconds before reach
+        int secs;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -207,6 +209,11 @@ namespace Control
           param("Power Module", m_args.pwrm)
           .defaultValue("true")
           .description("There is a Power Module installed");
+
+          param("Seconds before Waypoint", m_args.secs)
+          .defaultValue("4.0")
+          .units(Units::Second)
+          .description("Seconds before actually reaching Waypoint that it is considered as reached");
 
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
@@ -1179,8 +1186,8 @@ namespace Control
           }
 
           if(!m_changing_wp
-             && (nav_out.wp_dist <= m_desired_radius + 2 * m_desired_speed)
-             && (nav_out.wp_dist >= m_desired_radius - 2 * m_desired_speed)
+             && (nav_out.wp_dist <= m_desired_radius + m_args.secs * m_desired_speed)
+             && (nav_out.wp_dist >= m_desired_radius - m_args.secs * m_desired_speed)
              && (m_mode == 15))
           {
             m_pcs.flags |= PathControlState::FL_NEAR;
