@@ -24,7 +24,7 @@
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 //***************************************************************************
-// Utility to compute distance travelled from LSF log files.                *
+// Utility to create a CSV file with all CTD data from a log.               *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -50,7 +50,7 @@ enum Content
   //! Got state
   GOT_STATE = 0x08,
   //! Got all
-  GOT_ALL = 0x0f//GOT_COND | GOT_TEMP | GOT_DEPTH | GOT_STATE
+  GOT_ALL = GOT_COND | GOT_TEMP | GOT_DEPTH | GOT_STATE
 };
 
 static const std::string c_ctd_label = "CTD";
@@ -64,37 +64,40 @@ struct RData
   float cond;
   float temp;
   float depth;
+
+  bool
+  gotState(void)
+  {
+    return (cnt & GOT_STATE) != 0;
+  }
+
+  bool
+  gotAll(void)
+  {
+    return (cnt == GOT_ALL);
+  }
+
+  void
+  writeToStream(std::ofstream& ofs)
+  {
+    ofs << std::fixed << std::setprecision(3)
+        << timestamp << ", "
+        << std::fixed << std::setprecision(7)
+        << lat * 180.0 / Math::c_pi << ", "
+        << lon * 180.0 / Math::c_pi << ", "
+        << std::fixed << std::setprecision(4)
+        << cond << ", "
+        << temp << ", "
+        << depth;
+    ofs << std::endl;
+  }
+
+  void
+  clearData(void)
+  {
+    cnt = 0x00;
+  }
 };
-
-bool
-gotState(const struct RData *rdata)
-{
-  return (rdata->cnt & GOT_STATE) != 0;
-}
-
-bool
-gotAll(const struct RData *rdata)
-{
-  return (rdata->cnt == GOT_ALL);
-}
-
-void
-writeToStream(const struct RData *rdata, std::stringstream& ss)
-{
-  ss << std::fixed << std::setprecision(5)
-     << rdata->timestamp << ", "
-     << rdata->lat << ", "
-     << rdata->lon << ", "
-     << rdata->cond << ", "
-     << rdata->temp << ", "
-     << rdata->depth;
-}
-
-void
-clearData(struct RData *rdata)
-{
-  rdata->cnt = 0x00;
-}
 
 int
 main(int32_t argc, char** argv)
@@ -107,7 +110,7 @@ main(int32_t argc, char** argv)
   }
 
   std::ofstream csv("AllData.csv");
-  csv << "timestamp, latitude, longitude, conductivity, temperature, depth" << std::endl;
+  csv << "timestamp (s), latitude (deg), longitude (deg), conductivity (S/m), temperature (ºC), depth (m)" << std::endl;
 
   for (int32_t i = 1; i < argc; ++i)
   {
@@ -129,7 +132,7 @@ main(int32_t argc, char** argv)
     bool ignore = false;
 
     RData rdata;
-    clearData(&rdata);
+    rdata.clearData();
     std::stringstream ss_data;
 
     try
@@ -165,7 +168,7 @@ main(int32_t argc, char** argv)
 
           rdata.cnt |= GOT_STATE;
         }
-        else if (gotState(&rdata) && got_ent)
+        else if (rdata.gotState() && got_ent)
         {
           if (msg->getId() == DUNE_IMC_CONDUCTIVITY)
           {
@@ -195,20 +198,10 @@ main(int32_t argc, char** argv)
             }
           }
 
-          if (gotAll(&rdata))
+          if (rdata.gotAll())
           {
-            csv << std::fixed << std::setprecision(3)
-                << rdata.timestamp << ", "
-                << std::fixed << std::setprecision(7)
-                << rdata.lat << ", "
-                << rdata.lon << ", "
-                << std::fixed << std::setprecision(4)
-                << rdata.cond << ", "
-                << rdata.temp << ", "
-                << rdata.depth;
-            csv << std::endl;
-
-            clearData(&rdata);
+            rdata.writeToStream(csv);
+            rdata.clearData();
           }
         }
 
