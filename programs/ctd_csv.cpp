@@ -104,7 +104,10 @@ main(int32_t argc, char** argv)
 {
   if (argc <= 1)
   {
-    std::cerr << "Usage: " << argv[0] << " <path_to_log_1/Data.lsf[.gz]> ... <path_to_log_n/Data.lsf[.gz]>"
+    std::cerr << "Usage: " << argv[0] << " [options] <path_to_log_1/Data.lsf[.gz]> ... <path_to_log_n/Data.lsf[.gz]>"
+              << std::endl
+              << "Options:" << std::endl
+              << "-i    Process idles. Idle logs are ignored by default."
               << std::endl;
     return 1;
   }
@@ -230,8 +233,12 @@ main(int32_t argc, char** argv)
 
     if (ignore)
     {
-      std::cerr << "... ignoring" << std::endl;
+      std::cerr << "... ignoring " << log_name << std::endl;
       continue;
+    }
+    else
+    {
+      std::cerr << "Processed " << log_name << std::endl;
     }
   }
 
