@@ -133,7 +133,7 @@ namespace Control
         //! Parser Variables
         mavlink_message_t m_msg;
         int m_desired_radius;
-        int m_desired_speed;
+        int m_gnd_speed;
         int m_mode;
         bool m_changing_wp;
         bool m_error_missing, m_error_ext;
@@ -152,7 +152,7 @@ namespace Control
           m_critical(false),
           m_cloops(0),
           m_desired_radius(0),
-          m_desired_speed(0),
+          m_gnd_speed(0),
           m_mode(0),
           m_changing_wp(false),
           m_error_missing(false),
@@ -211,7 +211,7 @@ namespace Control
           .description("There is a Power Module installed");
 
           param("Seconds before Waypoint", m_args.secs)
-          .defaultValue("4.0")
+          .defaultValue("4")
           .units(Units::Second)
           .description("Seconds before actually reaching Waypoint that it is considered as reached");
 
@@ -269,7 +269,7 @@ namespace Control
           {
             m_TCP_sock = new TCPSocket;
             m_TCP_sock->connect(m_TCP_addr, m_TCP_port);
-            setupRate(10);
+            setupRate(m_args.trate);
             inf(DTR("Ardupilot interface initialized"));
           }
           catch (...)
@@ -323,12 +323,12 @@ namespace Control
                                                m_sysid,
                                                0,
                                                MAV_DATA_STREAM_EXTENDED_STATUS,
-                                               1,
+                                               (int)(rate/5),
                                                1);
 
           n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
-          spew("STATUS Stream setup to 1 Hertz");
+          spew("STATUS Stream setup to %d Hertz", (int)(rate/5));
 
           mavlink_msg_request_data_stream_pack(255, 0, msg,
                                                m_sysid,
@@ -438,7 +438,7 @@ namespace Control
                                                      0);
           uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
-          debug("DesiredRoll packet sent to Ardupilot: %f", roll->value);
+          spew("DesiredRoll packet sent to Ardupilot: %f", roll->value);
         }
 
         void
@@ -458,7 +458,7 @@ namespace Control
                             0, // Empty
                             0, // Empty
                             desired_z->value); // Finish Altitude
-          debug("DesiredZ packet sent to Ardupilot");
+          spew("DesiredZ packet sent to Ardupilot");
         }
 
         void
@@ -486,8 +486,6 @@ namespace Control
 
           int n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
-
-          m_desired_speed = (uint16_t) path->speed;
 
           mavlink_msg_param_set_pack(255, 0, msg,
                                      m_sysid, //! target_system System ID
@@ -613,13 +611,13 @@ namespace Control
                             servo->value, // PWM (microseconds, 1000 to 2000 typical)
                             0, // Empty
                             0); //Empty
-          debug("SetServo packet sent to Ardupilot");
+          spew("SetServo packet sent to Ardupilot");
         }
 
         void
         consume(const IMC::PowerChannelControl* pcc)
         {
-          debug("Trigger Request Received");
+          trace("Trigger Request Received");
 
           if(pcc->op & IMC::PowerChannelControl::PCC_OP_TURN_ON)
             sendCommandPacket(MAV_CMD_DO_SET_RELAY, 1);
@@ -634,7 +632,7 @@ namespace Control
 
           mavlink_message_t msg;
 
-          debug("%0.2f %0.2f %0.2f %0.2f %0.2f %0.2f %0.2f", arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+          trace("%0.2f %0.2f %0.2f %0.2f %0.2f %0.2f %0.2f", arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 
           mavlink_msg_command_long_pack(255, 0, &msg, m_sysid, 0, cmd, 0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 
@@ -942,7 +940,7 @@ namespace Control
 
           m_estate.vx = 1e-02 * gp.vx;
           m_estate.vy = 1e-02 * gp.vy;
-          m_estate.vz = 1e-02 * gp.vz;
+          m_estate.vz = -1e-02 * gp.vz;
 
           // Note: the following will yield body-fixed *ground* velocity
           // Maybe this can be fixed w/IAS readings (anyway not too important)
@@ -1186,8 +1184,8 @@ namespace Control
           }
 
           if(!m_changing_wp
-             && (nav_out.wp_dist <= m_desired_radius + m_args.secs * m_desired_speed)
-             && (nav_out.wp_dist >= m_desired_radius - m_args.secs * m_desired_speed)
+             && (nav_out.wp_dist <= m_desired_radius + m_args.secs * m_gnd_speed)
+             && (nav_out.wp_dist >= m_desired_radius - m_args.secs * m_gnd_speed)
              && (m_mode == 15))
           {
             m_pcs.flags |= PathControlState::FL_NEAR;
@@ -1232,6 +1230,7 @@ namespace Control
 
           ias.value = (fp64_t)vfr_hud.airspeed;
           gs.value = (fp64_t)vfr_hud.groundspeed;
+          m_gnd_speed = (int)vfr_hud.groundspeed;
 
           dispatch(ias);
           dispatch(gs);
