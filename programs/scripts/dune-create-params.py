@@ -82,6 +82,9 @@ for i18n in sint:
         os.environ['LANGUAGE'] = i18n
         subprocess.check_call(['./dune', '-c', ini, '-p', 'Hardware', '-X', '.'])
         if os.path.exists(out):
-            subprocess.check_call(['xmllint', '--format', out, '-o', 'tmp.xml'])
-            os.remove(out)
-            os.rename('tmp.xml', out)
+            try:
+                subprocess.check_call(['xmllint', '--format', out, '-o', 'tmp.xml'])
+                os.remove(out)
+                os.rename('tmp.xml', out)
+            except:
+                pass
