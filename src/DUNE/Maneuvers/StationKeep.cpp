@@ -57,12 +57,11 @@ namespace DUNE
       m_lat(lat),
       m_lon(lon),
       m_radius(radius),
+      m_state(ST_INITIAL),
       m_moving(true),
       m_inside(false)
     {
       m_task = task;
-
-      m_task->setControl(IMC::CL_PATH);
 
       m_path.end_lat = lat;
       m_path.end_lon = lon;
@@ -74,9 +73,8 @@ namespace DUNE
       m_task->dispatch(m_path);
     }
 
-
-    void
-    StationKeep::update(const IMC::EstimatedState* state, bool near_on)
+    double
+    StationKeep::getRange(cosnt IMC::EstimatedState* state)
     {
       double lat = state->lat;
       double lon = state->lon;
@@ -93,32 +91,33 @@ namespace DUNE
 
       toPolar(x, y, &bearing, &range);
 
-      bool was_inside = m_inside;
-      m_inside = range < m_radius;
+      return range;
+    }
 
-      if (was_inside && !m_inside)
-        near_on = false;
+    void
+    StationKeep::update(const IMC::EstimatedState* state, bool is_near)
+    {
+      double range = getRange(state);
 
-      if (m_inside != was_inside)
-        m_task->inf(DTR("%s safe region (distance: %.1f m)"),
-                    m_inside ? DTR("inside") : DTR("outside"), range);
-
-      if (near_on)
+      switch (m_sks)
       {
-        if (m_moving)
-        {
-          m_moving = false;
-          m_task->setControl(IMC::CL_NONE);
-          m_task->inf(DTR("stopping (%0.1f m)"), range);
-          return;
-        }
-      }
-      else if (!m_moving && !m_inside)
-      {
-        m_moving = true;
-        m_task->setControl(IMC::CL_PATH);
-        m_task->dispatch(m_path);
-        m_task->inf(DTR("moving (distance: %0.1f m)"), range);
+        case ST_INITIAL:
+          if (range < m_radius)
+            m_sks = ST_ON_STATION;
+          else
+            m_sks = ST_OFF_STATION;
+          break;
+        case ST_ON_STATION:
+          if (range > m_radius)
+            m_sks = ST_OFF_STATION;
+          break;
+        case ST_OFF_STATION:
+          if (is_near)
+            m_sks = ST_ON_STATION;
+          break;
+        default:
+          throw std::runtime_error("invalid station keeping state");
+          break;
       }
     }
   }
