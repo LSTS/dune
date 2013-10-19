@@ -31,6 +31,11 @@ import sys
 import glob
 import subprocess
 
+# Find available locales.
+langs = subprocess.check_output(['localedef', '--list'], universal_newlines = True)
+langs = set(langs.split(os.linesep))
+langs.remove('')
+
 # Find source folder.
 script = os.path.abspath(__file__).replace('.pyc', '.py')
 wrk_dir = os.path.dirname(script)
@@ -45,22 +50,33 @@ for ini in inis:
     f = os.path.splitext(os.path.basename(ini))[0]
     list_ini.append(f)
 
-# Find config files.
-list_i18n = ['en_US']
+# Find translations.
+i18n_set = set()
+i18n_set.add('en_US.utf8')
 i18ns = glob.glob(os.path.join(i18n_dir, '*'))
 for i18n in i18ns:
     if os.path.isdir(i18n):
         d = os.path.basename(i18n)
-        list_i18n.append(d)
+        i18n_set.add(d + '.utf8')
+
+# Find locales with UTF-8 encoding.
+sint = i18n_set.intersection(langs)
+sdif = i18n_set.difference(langs)
+
+if len(sdif) != 0:
+    print("ERROR: your system does not support the following languages: %s" % ' '.join(sdif))
+    sys.exit(1)
 
 # Execute DUNE.
 if not os.path.exists('./dune'):
     print("ERROR: this script must be executed in DUNE's build folder.")
     sys.exit(1)
 
-for i18n in list_i18n:
+for i18n in sint:
+    lang = i18n.split('.')[0]
+
     for ini in list_ini:
-        out =  ini + '.' + i18n + '.xml'
+        out =  ini + '.' + lang + '.xml'
         os.environ['LC_ALL'] = i18n
         os.environ['LANG'] = i18n
         os.environ['LANGUAGE'] = i18n
