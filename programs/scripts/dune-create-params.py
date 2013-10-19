@@ -73,13 +73,14 @@ if not os.path.exists('./dune'):
     sys.exit(1)
 
 for i18n in sint:
-    lang = i18n.split('.')[0]
+    name = i18n.split('.')[0]
+    lang = name + '.UTF-8'
 
     for ini in list_ini:
-        out =  ini + '.' + lang + '.xml'
-        os.environ['LC_ALL'] = i18n
-        os.environ['LANG'] = i18n
-        os.environ['LANGUAGE'] = i18n
+        out =  ini + '.' + name + '.xml'
+        os.environ['LC_ALL'] = lang
+        os.environ['LANG'] = lang
+        os.environ['LANGUAGE'] = lang
         subprocess.check_call(['./dune', '-c', ini, '-p', 'Hardware', '-X', '.'])
         if os.path.exists(out):
             try:
