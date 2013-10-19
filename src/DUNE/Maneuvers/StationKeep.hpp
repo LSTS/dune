@@ -66,32 +66,36 @@ namespace DUNE
 
       //! Update behavior
       //! @param[in] state pointer to EstimatedState message
-      //! @param[in] near_on if pathcontrolstate flag near is on, this should be true
+      //! @param[in] is_near if pathcontrolstate flag near is on, this should be true
       void
       update(const IMC::EstimatedState* state, bool is_near);
 
       //! Check if vehicle is inside boundary
       //! @return true if inside
       bool
-      isInside(void)
-      {
-        return m_inside;
-      }
+      isInside(void) const;
 
       //! Check if vehicle is moving
       //! @return true if moving
       bool
-      isMoving(void)
-      {
-        return m_moving;
-      }
+      isMoving(void) const;
 
     private:
       //! Compute the range to the point
       //! @param[in] state
       //! @return range to maneuver point
       double
-      getRange(const IMC::EstimatedState* state);
+      getRange(const IMC::EstimatedState* state) const;
+
+      //! Start moving to the maneuver's point
+      //! @param[in] range distance to the point
+      void
+      startMoving(double range);
+
+      //! Stop moving
+      //! @param[in] range distance to the point
+      void
+      stopMoving(double range);
 
       enum StationState
       {
@@ -115,10 +119,6 @@ namespace DUNE
       double m_radius;
       //! Current state of the state machine
       StationState m_sks;
-      //! Flag will tell if the vehicle is moving
-      bool m_moving;
-      //! Flag will tell if the vehicle is inside the requested radius
-      bool m_inside;
     };
   }
 }

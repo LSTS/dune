@@ -57,9 +57,7 @@ namespace DUNE
       m_lat(lat),
       m_lon(lon),
       m_radius(radius),
-      m_state(ST_INITIAL),
-      m_moving(true),
-      m_inside(false)
+      m_sks(ST_INITIAL)
     {
       m_task = task;
 
@@ -69,12 +67,10 @@ namespace DUNE
       m_path.end_z_units = z_units;
       m_path.speed = speed;
       m_path.speed_units = speed_units;
-
-      m_task->dispatch(m_path);
     }
 
     double
-    StationKeep::getRange(cosnt IMC::EstimatedState* state)
+    StationKeep::getRange(const IMC::EstimatedState* state) const
     {
       double lat = state->lat;
       double lon = state->lon;
@@ -95,6 +91,21 @@ namespace DUNE
     }
 
     void
+    StationKeep::startMoving(double range)
+    {
+      m_task->inf(DTR("outside safe region (distance: %.1f m)"), range);
+      m_task->setControl(IMC::CL_PATH);
+      m_task->dispatch(m_path);
+    }
+
+    void
+    StationKeep::stopMoving(double range)
+    {
+      m_task->setControl(IMC::CL_NONE);
+      m_task->inf(DTR("inside safe region (distance: %.1f m)"), range);
+    }
+
+    void
     StationKeep::update(const IMC::EstimatedState* state, bool is_near)
     {
       double range = getRange(state);
@@ -103,22 +114,46 @@ namespace DUNE
       {
         case ST_INITIAL:
           if (range < m_radius)
+          {
+            stopMoving(range);
             m_sks = ST_ON_STATION;
+          }
           else
+          {
+            startMoving(range);
             m_sks = ST_OFF_STATION;
+          }
           break;
         case ST_ON_STATION:
           if (range > m_radius)
+          {
+            startMoving(range);
             m_sks = ST_OFF_STATION;
+          }
           break;
         case ST_OFF_STATION:
           if (is_near)
+          {
+            stopMoving(range);
             m_sks = ST_ON_STATION;
+          }
           break;
         default:
           throw std::runtime_error("invalid station keeping state");
           break;
       }
+    }
+
+    bool
+    StationKeep::isInside(void) const
+    {
+      return (m_sks == ST_ON_STATION);
+    }
+
+    bool
+    StationKeep::isMoving(void) const
+    {
+      return (m_sks == ST_OFF_STATION);
     }
   }
 }
