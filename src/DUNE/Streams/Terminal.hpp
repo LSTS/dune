@@ -34,12 +34,14 @@
 #include <fstream>
 #include <iostream>
 #include <cstddef>
+#include <cctype>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
 #include <DUNE/Time/Format.hpp>
 #include <DUNE/Concurrency/ScopedRWLock.hpp>
 #include <DUNE/Concurrency/Mutex.hpp>
+#include <DUNE/Utils/String.hpp>
 
 namespace DUNE
 {
@@ -64,7 +66,10 @@ namespace DUNE
             out += "\\n";
             break;
           default:
-            out += str[i];
+            if (isprint(str[i]))
+              out += str[i];
+            else
+              out += Utils::String::str("<%02X>", str[i]);
             break;
         }
       }
