@@ -149,22 +149,32 @@ namespace Actuators
         .size(c_led_count)
         .description("List of LED names");
 
-        param("LED - Patterns", m_args.led_patterns)
+        param(DTR("LED - Patterns"), m_args.led_patterns)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("")
         .maximumSize(8)
-        .description("List of LED patterns");
+        .description(DTR("List of LED patterns"));
 
-        param("LED - Patterns Pulse Width", m_args.led_patterns_pw)
+        param(DTR("LED - Patterns Pulse Width"), m_args.led_patterns_pw)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .minimumValue("0")
+        .maximumValue("20000")
         .defaultValue("5000")
-        .description("Pulse width for LED patterns");
+        .description(DTR("Pulse width for LED patterns"));
 
-        param("LED - External Driver", m_args.ext_drv)
+        param(DTR("LED - External Driver"), m_args.ext_drv)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("false")
-        .description("Enable external LED driver");
+        .description(DTR("Enable external LED driver"));
 
-        param("LED - External Trigger", m_args.ext_trg)
+        param(DTR("LED - External Trigger"), m_args.ext_trg)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("false")
-        .description("Enable external LED trigger");
+        .description(DTR("Enable external LED trigger"));
 
         bind<IMC::SetLedBrightness>(this);
         bind<IMC::QueryLedBrightness>(this);
@@ -199,6 +209,8 @@ namespace Actuators
           m_led_by_id[led->id] = led;
         }
 
+        setConfig();
+
         m_wdog.setTop(m_args.wdog_tout);
       }
 
@@ -230,14 +242,7 @@ namespace Actuators
         if (!getConstantParameters())
           throw RestartNeeded(DTR("failed to get constant parameters"), c_restart_delay);
 
-        if (!setExternalDriver(m_args.ext_drv))
-          throw RestartNeeded(DTR("failed to configure LED driver"), c_restart_delay);
-
-        if (!setExternalTrigger(m_args.ext_trg))
-          throw RestartNeeded(DTR("failed to configure LED driver"), c_restart_delay);
-
-        if (!setPatternPulseWidth(m_args.led_patterns_pw))
-          throw RestartNeeded(DTR("failed to configure LED pattern pulse width"), c_restart_delay);
+        setConfig();
 
         std::map<std::string, LED*>::iterator itr = m_led_by_name.begin();
         for (unsigned i = 0; i < c_led_count; ++i)
@@ -265,8 +270,31 @@ namespace Actuators
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_ctl);
+        if (m_ctl != NULL)
+        {
+          setExternalDriver(false);
+          setExternalTrigger(false);
+          delete m_ctl;
+          m_ctl = NULL;
+        }
+
         Memory::clear(m_uart);
+      }
+
+      void
+      setConfig(void)
+      {
+        if (m_ctl != NULL)
+        {
+          if (!setExternalDriver(m_args.ext_drv))
+            throw RestartNeeded(DTR("failed to configure LED driver"), c_restart_delay);
+
+          if (!setExternalTrigger(m_args.ext_trg))
+            throw RestartNeeded(DTR("failed to configure LED driver"), c_restart_delay);
+
+          if (!setPatternPulseWidth(m_args.led_patterns_pw))
+            throw RestartNeeded(DTR("failed to configure LED pattern pulse width"), c_restart_delay);
+        }
       }
 
       void
