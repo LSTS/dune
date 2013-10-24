@@ -149,32 +149,32 @@ namespace Actuators
         .size(c_led_count)
         .description("List of LED names");
 
-        param(DTR("LED - Patterns"), m_args.led_patterns)
+        param(DTR_RT("LED - Patterns"), m_args.led_patterns)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("")
         .maximumSize(8)
-        .description(DTR("List of LED patterns"));
+        .description(DTR_RT("List of LED patterns"));
 
-        param(DTR("LED - Patterns Pulse Width"), m_args.led_patterns_pw)
+        param(DTR_RT("LED - Patterns Pulse Width"), m_args.led_patterns_pw)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .minimumValue("0")
         .maximumValue("20000")
         .defaultValue("5000")
-        .description(DTR("Pulse width for LED patterns"));
+        .description(DTR_RT("Pulse width for LED patterns"));
 
-        param(DTR("LED - External Driver"), m_args.ext_drv)
+        param(DTR_RT("LED - External Driver"), m_args.ext_drv)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("false")
-        .description(DTR("Enable external LED driver"));
+        .description(DTR_RT("Enable external LED driver"));
 
-        param(DTR("LED - External Trigger"), m_args.ext_trg)
+        param(DTR_RT("LED - External Trigger"), m_args.ext_trg)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("false")
-        .description(DTR("Enable external LED trigger"));
+        .description(DTR_RT("Enable external LED trigger"));
 
         bind<IMC::SetLedBrightness>(this);
         bind<IMC::QueryLedBrightness>(this);
