@@ -272,8 +272,8 @@ namespace Actuators
       {
         if (m_ctl != NULL)
         {
-          setExternalDriver(false);
           setExternalTrigger(false);
+          setExternalDriver(false);
           delete m_ctl;
           m_ctl = NULL;
         }
