@@ -74,8 +74,6 @@ namespace Sensors
       std::string pwr_name;
       //! Hard-iron correction factors.
       std::vector<double> hard_iron;
-      //! Incoming Calibration Parameters entity label.
-      std::string calib_elabel;
     };
 
     struct Task: public Tasks::Task
@@ -143,25 +141,20 @@ namespace Sensors
         .defaultValue("false")
         .description("Set to true to enable raw data output");
 
-        param("Calibration Maneuver - Entity Label", m_args.calib_elabel)
-        .defaultValue("")
-        .description("Entity label of maneuver responsible for compass calibration");
-
         bind<IMC::MagneticField>(this);
       }
 
-      //! Resolve entities.
       void
-      onEntityResolution(void)
+      onUpdateParameters(void)
       {
-        try
-        {
-          m_calib_eid = resolveEntity(m_args.calib_elabel);
-        }
-        catch (...)
-        {
-          m_calib_eid = 0;
-        }
+        if (m_ctl == NULL)
+          return;
+
+        if (paramChanged(m_args.hard_iron))
+          setHardIronFactors(m_args.hard_iron);
+
+        if (paramChanged(m_args.output_frq) || paramChanged(m_args.raw_data))
+          setOutputFrequency(m_args.output_frq);
       }
 
       //! Acquire resources.
@@ -206,37 +199,38 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
-        if (!setOutputFrequency(m_args.output_frq))
-          throw RestartNeeded(DTR("failed to configure output frequency"), 5);
-
-        if (!setHardIronFactors(m_args.hard_iron))
-          throw RestartNeeded(DTR("failed to set hard-iron correction factors"), 5);
-
+        setHardIronFactors(m_args.hard_iron);
+        setOutputFrequency(m_args.output_frq);
         m_wdog.setTop(2.0);
       }
 
       void
       consume(const IMC::MagneticField* msg)
       {
-        if (m_calib_eid != msg->getSourceEntity())
+        if (getEntityId() != msg->getDestinationEntity())
           return;
 
-        m_args.hard_iron[0] += msg->x;
-        m_args.hard_iron[1] += msg->y;
-        m_args.hard_iron[2] = 0.0;
+        double hi_x = m_args.hard_iron[0] + msg->x;
+        double hi_y = m_args.hard_iron[1] + msg->y;
 
-        IMC::SaveEntityParameters params;
-        params.name = getName();
-        dispatch(params);
+        IMC::EntityParameter hip;
+        hip.name = c_hard_iron_param;
+        hip.value = String::str("%f, %f, %f", hi_x, hi_y, 0);
 
-        if (!setHardIronFactors(m_args.hard_iron))
-          throw RestartNeeded(DTR("failed to set hard-iron correction factors"), 5);
+        IMC::SetEntityParameters np;
+        np.name = getEntityLabel();
+        np.params.push_back(hip);
+        dispatch(np, DF_LOOP_BACK);
+
+        IMC::SaveEntityParameters sp;
+        sp.name = getEntityLabel();
+        dispatch(sp);
       }
 
       //! Define sensor output frequency.
       //! @param[in] frequency desired frequency.
       //! @return true if successful, false otherwise.
-      bool
+      void
       setOutputFrequency(uint8_t frequency)
       {
         if (m_args.raw_data)
@@ -246,10 +240,12 @@ namespace Sensors
         frame.setId(PKT_ID_OUTPUT_CONF);
         frame.setPayloadSize(1);
         frame.set(frequency, 0);
-        return m_ctl->sendFrame(frame);
+
+        if (!m_ctl->sendFrame(frame))
+          throw RestartNeeded(DTR("failed to configure output frequency"), 5);
       }
 
-      //! Get sensor current Hard-Iron calibration parameters.
+      //! Get current Hard-Iron calibration parameters.
       //! @return hard-iron calibration parameters.
       std::vector<double>
       getHardIronFactors(void)
@@ -273,15 +269,29 @@ namespace Sensors
 
       //! Set Hard-Iron calibration parameters.
       //! @param[in] factors new calibration values.
-      bool
+      void
       setHardIronFactors(const std::vector<double>& factors)
       {
+        spew("setting hard-iron parameters to %f, %f, %f",
+             factors[0],
+             factors[1],
+             factors[2]);
+
+        std::vector<double> old = getHardIronFactors();
+        if ((factors[0] == old[0]) && (factors[1] == old[1]))
+        {
+          spew("no change in hard-iron parameters");
+          return;
+        }
+
         UCTK::Frame frame;
         frame.setId(PKT_ID_HARD_IRON);
         frame.setPayloadSize(6);
         for (unsigned i = 0; i < c_hard_iron_count; ++i)
           frame.set<int16_t>(static_cast<int16_t>(factors[i] * 10e3), i * 2);
-        return m_ctl->sendFrame(frame);
+
+        if (!m_ctl->sendFrame(frame))
+          throw RestartNeeded(DTR("failed to set hard-iron correction factors"), 5);
       }
 
       //! Decode output data frame.
