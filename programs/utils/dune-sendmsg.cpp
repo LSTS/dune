@@ -395,7 +395,7 @@ main(int argc, char** argv)
   {
     IMC::MagneticField* tmsg = new IMC::MagneticField;
     msg = tmsg;
-    tmsg->setSourceEntity(atoi(argv[4]));
+    tmsg->setDestinationEntity(atoi(argv[4]));
     tmsg->x = atof(argv[5]);
     tmsg->y = atof(argv[6]);
     tmsg->z = atof(argv[7]);
