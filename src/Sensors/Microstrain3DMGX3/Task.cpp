@@ -130,8 +130,6 @@ namespace Sensors
       uint8_t m_bfr[c_bfr_size];
       //! Magnetic Calibration addresses.
       uint16_t m_addr[c_num_addr];
-      //! Compass Calibration maneuver entity id.
-      unsigned m_calib_eid;
       //! Read timestamp.
       double m_tstamp;
       //! Watchdog.
@@ -209,20 +207,6 @@ namespace Sensors
         Memory::clear(m_uart);
       }
 
-      //! Resolve entities.
-      void
-      onEntityResolution(void)
-      {
-        try
-        {
-          m_calib_eid = resolveEntity(m_args.calib_elabel);
-        }
-        catch (...)
-        {
-          m_calib_eid = 0;
-        }
-      }
-
       //! Acquire resources.
       void
       onResourceAcquisition(void)
@@ -263,7 +247,7 @@ namespace Sensors
       void
       consume(const IMC::MagneticField* msg)
       {
-        if (m_calib_eid != msg->getSourceEntity())
+        if (msg->getDestinationEntity() != getEntityId())
           return;
 
         // Reject if it is small adjustment.
