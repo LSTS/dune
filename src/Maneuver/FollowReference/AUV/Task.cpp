@@ -421,8 +421,14 @@ namespace Maneuver
           if (enable)
           {
             // set control loops in order to move
+            bool was_moving = m_moving;
             setControl(mask);
             m_moving = true;
+            if (!was_moving)
+            {
+              m_path_sent = false;
+              dispatchDesiredPath(m_last_desired_path);
+            }
           }
           else
           {
