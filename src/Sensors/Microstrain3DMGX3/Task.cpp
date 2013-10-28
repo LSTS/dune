@@ -214,6 +214,9 @@ namespace Sensors
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
         }
 
+        // Calibrate sensor.
+        runCalibration();
+
         // Prepare to read data frame.
         m_uart->setMinimumRead(CMD_DATA_SIZE);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
