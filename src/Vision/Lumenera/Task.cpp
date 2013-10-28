@@ -48,10 +48,18 @@ namespace Vision
       Address address;
       //! Maximum Frames Per Second.
       unsigned fps;
+      //! Auto Exposure.
+      bool auto_exposure;
+      //! Exposure Value if Manual.
+      float exposure_value;
       //! Maximum Exposure.
       float exposure_max;
       //! Exposure Knee.
       float exposure_knee;
+      //! Auto Gain.
+      bool auto_gain;
+      //! Gain Value if Manual.
+      float gain_value;
       //! Maximum Gain.
       float gain_max;
       //! Gain knee.
@@ -111,21 +119,37 @@ namespace Vision
         .defaultValue("15")
         .description("Frames per second");
 
-        param("Maximum Exposure", m_args.exposure_max)
-        .defaultValue("10")
-        .description("Maximum exposure in miliseconds");
+        param("Auto Exposure", m_args.auto_exposure)
+        .defaultValue("true")
+        .description("Enable automatic exposure");
 
-        param("Maximum Gain", m_args.gain_max)
-        .defaultValue("4.0")
-        .description("Maximum gain");
+        param("Exposure Value", m_args.exposure_value)
+        .defaultValue("true")
+        .description("Exposure value if auto exposure is disabled");
 
         param("Autoexposure Knee", m_args.exposure_knee)
         .defaultValue("5")
         .description("Exposure limit before increasing the gain (in miliseconds)");
 
+        param("Maximum Exposure", m_args.exposure_max)
+        .defaultValue("10")
+        .description("Maximum exposure in miliseconds");
+
+        param("Auto Gain", m_args.auto_gain)
+        .defaultValue("true")
+        .description("Enable automatic gain");
+
+        param("Gain Value", m_args.gain_value)
+        .defaultValue("1.0")
+        .description("Gain value if auto gain is disabled");
+
         param("Autogain Knee", m_args.gain_knee)
         .defaultValue("2.0")
         .description("Gain limit before increasing the exposure");
+
+        param("Maximum Gain", m_args.gain_max)
+        .defaultValue("4.0")
+        .description("Maximum gain");
 
         param("Median Filter", m_args.median_filter)
         .defaultValue("false")
@@ -368,17 +392,41 @@ namespace Vision
       {
         debug("setting frames per second to '%u'", m_args.fps);
         setProperty("maximum_framerate", uncastLexical(m_args.fps));
-        debug("enabling autogain and autoexposure");
-        setProperty("autogain", "1");
-        setProperty("autoexposure", "1");
-        debug("setting maximum exposure to '%f' seconds", m_args.exposure_max);
-        setProperty("maximum_exposure", uncastLexical(m_args.exposure_max));
-        debug("setting maximum gain to '%f'", m_args.gain_max);
-        setProperty("maximum_gain", uncastLexical(m_args.gain_max));
-        debug("setting auto-exposure knee to '%f' seconds", m_args.exposure_knee);
-        setProperty("autoexposure_knee", uncastLexical(m_args.exposure_knee));
-        debug("setting auto-gain knee to '%f'", m_args.gain_knee);
-        setProperty("autogain_knee", uncastLexical(m_args.gain_knee));
+
+        if (m_args.auto_exposure)
+        {
+          debug("enabling autoexposure");
+          setProperty("autoexposure", "1");
+          debug("setting maximum exposure to '%f' seconds", m_args.exposure_max);
+          setProperty("maximum_exposure", uncastLexical(m_args.exposure_max));
+          debug("setting autoexposure knee to '%f' seconds", m_args.exposure_knee);
+          setProperty("autoexposure_knee", uncastLexical(m_args.exposure_knee));
+        }
+        else
+        {
+          debug("disabling autoexposure");
+          setProperty("autoexposure", "0");
+          debug("setting exposure value to '%f' seconds", m_args.exposure_value);
+          setProperty("exposure", uncastLexical(m_args.exposure_value));
+        }
+
+        if (m_args.auto_gain)
+        {
+          debug("enabling autogain");
+          setProperty("autogain", "1");
+          debug("setting maximum gain to '%f'", m_args.gain_max);
+          setProperty("maximum_gain", uncastLexical(m_args.gain_max));
+          debug("setting autogain knee to '%f'", m_args.gain_knee);
+          setProperty("autogain_knee", uncastLexical(m_args.gain_knee));
+        }
+        else
+        {
+          debug("disabling autogain");
+          setProperty("autogain", "0");
+          debug("setting gain value to '%f'", m_args.gain_value);
+          setProperty("gain", uncastLexical(m_args.gain_value));
+        }
+
         debug("setting median filtering to '%u'", m_args.median_filter);
         setProperty("median_filter", uncastLexical(m_args.median_filter));
 
