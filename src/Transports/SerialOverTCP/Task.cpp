@@ -105,7 +105,7 @@ namespace Transports
 
         if (m_uart != NULL)
         {
-          //m_poll.remove(*m_uart);
+          m_poll.remove(*m_uart);
           delete m_uart;
           m_uart = NULL;
         }
@@ -126,7 +126,7 @@ namespace Transports
         m_sock->bind(m_args.tcp_port);
         m_sock->listen(1024);
         m_poll.add(*m_sock);
-        //m_poll.add(*m_uart);
+        m_poll.add(*m_uart);
       }
 
       void
@@ -205,12 +205,12 @@ namespace Transports
       void
       checkSerialPort(void)
       {
-        // if (m_poll.wasTriggered(*m_uart))
-        // {
-        //   char bfr[1024];
-        //   int rv = m_uart->read(bfr, sizeof(bfr));
-        //   dispatchToClients(bfr, rv);
-        // }
+        if (m_poll.wasTriggered(*m_uart))
+        {
+          char bfr[1024];
+          int rv = m_uart->read(bfr, sizeof(bfr));
+          dispatchToClients(bfr, rv);
+        }
       }
 
       void
