@@ -171,7 +171,7 @@ namespace Transports
           Memory::clear(m_frame);
           m_frame = new IMC::UamTxFrame;
           m_frame->setDestination(getSystemId());
-          m_frame->sys_dst = resolveSystemId(msg->getDestination());
+          m_frame->sys_dst = msg->system;
           m_frame->data.assign((char*)&bfr[0], (char*)&bfr[rv]);
         }
         catch (...)
@@ -183,6 +183,9 @@ namespace Transports
       void
       consume(const IMC::UamRxFrame* msg)
       {
+        if (msg->sys_dst != getSystemName())
+          return;
+
         if (msg->data.size() < 1)
           return;
 
@@ -200,8 +203,9 @@ namespace Transports
             {
               rmsg = IMC::Packet::deserialize((uint8_t*)&msg->data[0], msg->data.size());
             }
-            catch (...)
+            catch (std::runtime_error& e)
             {
+              war("deserialization error: %s", e.what());
               return;
             }
             break;
@@ -211,7 +215,6 @@ namespace Transports
         {
           uint16_t src = resolveSystemName(msg->sys_src);
           rmsg->setSource(src);
-          rmsg->toText(std::cerr);
           dispatch(*rmsg);
         }
       }
