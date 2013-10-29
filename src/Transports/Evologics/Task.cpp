@@ -363,6 +363,7 @@ namespace Transports
         }
         catch (...)
         {
+          war("invalid system name %s", msg->sys_dst.c_str());
           sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR);
           return;
         }
