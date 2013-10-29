@@ -55,6 +55,7 @@ namespace Transports
     {
       //! Last received estimated state.
       IMC::EstimatedState* m_estate;
+      IMC::UamTxFrame* m_frame;
       //! Seconds.
       std::set<unsigned> m_seconds;
       //! Task arguments.
@@ -65,7 +66,8 @@ namespace Transports
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_estate(NULL)
+        m_estate(NULL),
+        m_frame(NULL)
       {
         param("Slot Count", m_args.slot_count)
         .description("Number of TDMA slots");
@@ -165,11 +167,12 @@ namespace Transports
           const IMC::Message* m = msg->msg.get();
           uint8_t bfr[64] = {0};
           uint16_t rv = IMC::Packet::serialize(m, bfr, sizeof(bfr));
-          IMC::UamTxFrame frame;
-          frame.setDestination(getSystemId());
-          frame.sys_dst = resolveSystemId(msg->getDestination());
-          frame.data.assign((char*)&bfr[0], (char*)&bfr[rv]);
-          dispatch(frame);
+
+          Memory::clear(m_frame);
+          m_frame = new IMC::UamTxFrame;
+          m_frame->setDestination(getSystemId());
+          m_frame->sys_dst = resolveSystemId(msg->getDestination());
+          m_frame->data.assign((char*)&bfr[0], (char*)&bfr[rv]);
         }
         catch (...)
         {
@@ -222,7 +225,21 @@ namespace Transports
 
         if (m_seconds.find(tsec) != m_seconds.end())
         {
-          transmit();
+          if (m_args.tx_estate)
+            transmit();
+          else
+            transmitPending();
+        }
+      }
+
+      void
+      transmitPending(void)
+      {
+        if (m_frame != NULL)
+        {
+          dispatch(m_frame);
+          delete m_frame;
+          m_frame = NULL;
         }
       }
 
@@ -230,9 +247,6 @@ namespace Transports
       transmit(void)
       {
         if (m_estate == NULL)
-          return;
-
-        if (!m_args.tx_estate)
           return;
 
         IMC::UamTxFrame frame;
