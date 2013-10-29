@@ -341,6 +341,9 @@ namespace Transports
       void
       consume(const IMC::UamTxFrame* msg)
       {
+        if (msg->getDestination() != getSystemId())
+          return;
+
         // Create and fill new ticket.
         Ticket ticket;
         ticket.imc_sid = msg->getSource();
