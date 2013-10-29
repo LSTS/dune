@@ -69,7 +69,7 @@ namespace DUNE
             if (isprint(str[i]))
               out += str[i];
             else
-              out += Utils::String::str("<%02X>", str[i]);
+              out += Utils::String::str("<%02X>", (unsigned char)str[i]);
             break;
         }
       }
