@@ -55,7 +55,10 @@ namespace Transports
     {
       //! Last received estimated state.
       IMC::EstimatedState* m_estate;
-      IMC::UamTxFrame* m_frame;
+      //! Map of pending transmissions.
+      std::map<std::string, IMC::UamTxFrame*> m_txs;
+      //! Destination of last transmission.
+      std::string m_tx_last;
       //! Seconds.
       std::set<unsigned> m_seconds;
       //! Task arguments.
@@ -66,8 +69,7 @@ namespace Transports
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_estate(NULL),
-        m_frame(NULL)
+        m_estate(NULL)
       {
         param("Slot Count", m_args.slot_count)
         .description("Number of TDMA slots");
@@ -168,11 +170,21 @@ namespace Transports
           uint8_t bfr[64] = {0};
           uint16_t rv = IMC::Packet::serialize(m, bfr, sizeof(bfr));
 
-          Memory::clear(m_frame);
-          m_frame = new IMC::UamTxFrame;
-          m_frame->setDestination(getSystemId());
-          m_frame->sys_dst = msg->system;
-          m_frame->data.assign((char*)&bfr[0], (char*)&bfr[rv]);
+          IMC::UamTxFrame* frame = new IMC::UamTxFrame;
+          frame->setDestination(getSystemId());
+          frame->sys_dst = msg->system;
+          frame->data.assign((char*)&bfr[0], (char*)&bfr[rv]);
+
+          std::map<std::string, IMC::UamTxFrame*>::iterator itr = m_txs.find(frame->sys_dst);
+          if (itr != m_txs.end())
+          {
+            delete itr->second;
+            itr->second = frame;
+          }
+          else
+          {
+            m_txs[frame->sys_dst] = frame;
+          }
         }
         catch (...)
         {
@@ -236,14 +248,39 @@ namespace Transports
       }
 
       void
+      clearPending(void)
+      {
+        std::map<std::string, IMC::UamTxFrame*>::iterator itr = m_txs.begin();
+        for (; itr != m_txs.end(); ++itr)
+          delete itr->second;
+        m_txs.clear();
+      }
+
+      void
       transmitPending(void)
       {
-        if (m_frame != NULL)
+        std::map<std::string, IMC::UamTxFrame*>::iterator itr = m_txs.begin();
+
+        if (m_txs.size() == 1)
         {
-          dispatch(m_frame);
-          delete m_frame;
-          m_frame = NULL;
+          m_tx_last = itr->first;
+          dispatch(itr->second);
         }
+        else
+        {
+          // Try to balance transmissions.
+          for (; itr != m_txs.end(); ++itr)
+          {
+            if (itr->first != m_tx_last)
+            {
+              m_tx_last = itr->first;
+              dispatch(itr->second);
+              break;
+            }
+          }
+        }
+
+        clearPending();
       }
 
       void
