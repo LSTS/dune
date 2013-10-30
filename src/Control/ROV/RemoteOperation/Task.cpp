@@ -97,6 +97,14 @@ namespace Control
           addActionAxis("Rotate");
           addActionButton("Stop");
           addActionButton("Depth Control");
+
+          bind<IMC::Depth>(this);
+        }
+
+        void
+        consume(const IMC::Depth* msg)
+        {
+          m_depth = msg->value;
         }
 
         void
@@ -173,30 +181,29 @@ namespace Control
 
           if (tuples.get("Depth Control", 0))
           {
+            if (!m_depth_control)
+              return;
+
             disableControlLoops(IMC::CL_DEPTH);
             m_depth_control = false;
 
-            debug("depth control active");
+            debug("depth control not active");
           }
           else
           {
+            if (m_depth_control)
+              return;
+
+            enableControlLoops(IMC::CL_DEPTH);
+            m_depth_control = true;
+
             IMC::DesiredZ z;
             z.value = m_depth;
             z.z_units = IMC::Z_DEPTH;
             dispatch(z);
 
-            enableControlLoops(IMC::CL_DEPTH);
-            m_depth_control = true;
-
-            debug("depth control not active");
+            debug("depth control active for %0.2f m", z.value);
           }
-        }
-
-        void
-        onEstimatedState(const double timestep, const IMC::EstimatedState* msg)
-        {
-          (void)timestep;
-          m_depth = msg->depth;
         }
 
         void
