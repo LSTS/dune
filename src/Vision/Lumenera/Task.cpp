@@ -64,10 +64,20 @@ namespace Vision
       float gain_max;
       //! Gain knee.
       float gain_knee;
+      //! Gamma value.
+      float gamma;
       //! Enable median filtering (helps with noise in low light/high gain settings).
       bool median_filter;
       //! Enable the LED strobe output.
       bool strobe;
+      //! Automatic white balance
+      bool auto_whitebalance;
+      //! White balance red gain.
+      float gain_red;
+      //! White balance green gain.
+      float gain_green;
+      //! White balance blue gain.
+      float gain_blue;
       //! LED strobe power channel.
       std::string strobe_pwr;
       //! Number of photos per volume.
@@ -151,9 +161,29 @@ namespace Vision
         .defaultValue("4.0")
         .description("Maximum gain");
 
+        param("Gamma", m_args.gamma)
+        .defaultValue("1.4")
+        .description("Gamma Value");
+
         param("Median Filter", m_args.median_filter)
         .defaultValue("false")
         .description("Enable Median Filter");
+
+        param("Auto White Balance", m_args.auto_whitebalance)
+        .defaultValue("true")
+        .description("Enable Continuous Automatic White Balance");
+
+        param("White Balance Gain Red", m_args.gain_red)
+        .defaultValue("2.0")
+        .description("White Balance Gain Red");
+
+        param("White Balance Gain Green", m_args.gain_green)
+        .defaultValue("1.0")
+        .description("White Balance Gain Green");
+
+        param("White Balance Gain Blue", m_args.gain_blue)
+        .defaultValue("2.0")
+        .description("White Balance Gain Blue");
 
         param("Strobe", m_args.strobe)
         .defaultValue("true")
@@ -427,6 +457,25 @@ namespace Vision
           setProperty("gain", uncastLexical(m_args.gain_value));
         }
 
+        if (m_args.auto_whitebalance)
+        {
+          debug("enabling continuous automatic whitebalance");
+          setProperty("whitebalance", "continuous");
+
+        }
+        else
+        {
+          debug("disabling continuous automatic whitebalance");
+          setProperty("whitebalance", "off");
+          setProperty("whitebalance_preset", "user");
+          debug("setting whitebalance gains to R='%f' G='%f' B='%f'", m_args.gain_red, m_args.gain_blue, m_args.gain_blue);
+          setProperty("gain_red", uncastLexical(m_args.gain_red));
+          setProperty("gain_green", uncastLexical(m_args.gain_green));
+          setProperty("gain_blue", uncastLexical(m_args.gain_blue));
+        }
+
+        debug("setting gamma to '%f'", m_args.gamma);
+        setProperty("gamma", uncastLexical(m_args.gamma));
         debug("setting median filtering to '%u'", m_args.median_filter);
         setProperty("median_filter", uncastLexical(m_args.median_filter));
 
