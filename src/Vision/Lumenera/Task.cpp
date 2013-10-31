@@ -397,16 +397,16 @@ namespace Vision
         {
           debug("enabling autoexposure");
           setProperty("autoexposure", "1");
-          debug("setting maximum exposure to '%f' seconds", m_args.exposure_max);
+          debug("setting maximum exposure to '%f' miliseconds", m_args.exposure_max);
           setProperty("maximum_exposure", uncastLexical(m_args.exposure_max));
-          debug("setting autoexposure knee to '%f' seconds", m_args.exposure_knee);
+          debug("setting autoexposure knee to '%f' miliseconds", m_args.exposure_knee);
           setProperty("autoexposure_knee", uncastLexical(m_args.exposure_knee));
         }
         else
         {
           debug("disabling autoexposure");
           setProperty("autoexposure", "0");
-          debug("setting exposure value to '%f' seconds", m_args.exposure_value);
+          debug("setting exposure value to '%f' miliseconds", m_args.exposure_value);
           setProperty("exposure", uncastLexical(m_args.exposure_value));
         }
 
