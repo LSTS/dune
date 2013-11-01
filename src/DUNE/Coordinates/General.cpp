@@ -35,7 +35,7 @@ namespace DUNE
   namespace Coordinates
   {
     void
-    toWGS84(const IMC::EstimatedState& estate, double& lat, double& lon, double& hae)
+    toWGS84(const IMC::EstimatedState& estate, double& lat, double& lon, float& hae)
     {
       // Define reference.
       lat = estate.lat;
@@ -50,7 +50,7 @@ namespace DUNE
     toWGS84(const IMC::EstimatedState& estate, double& lat, double& lon)
     {
       // Use reference height.
-      double hae = estate.height;
+      float hae = estate.height;
 
       toWGS84(estate, lat, lon, hae);
     }

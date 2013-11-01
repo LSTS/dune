@@ -392,9 +392,9 @@ namespace Transports
       {
         if (m_estate)
         {
-          double hae;
+          float hae;
           Coordinates::toWGS84(*m_estate, m_announce_loc.lat, m_announce_loc.lon, hae);
-          m_announce_loc.height = (float)hae;
+          m_announce_loc.height = hae;
         }
 
         m_announce_ext.lat = m_announce_loc.lat;

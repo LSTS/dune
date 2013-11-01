@@ -767,12 +767,12 @@ namespace DUNE
       {
         double new_lat;
         double new_lon;
-        double new_hae;
+        float new_hae;
         Coordinates::toWGS84(*new_state, new_lat, new_lon, new_hae);
 
         double old_lat;
         double old_lon;
-        double old_hae;
+        float old_hae;
         Coordinates::toWGS84(*old_state, old_lat, old_lon, old_hae);
 
         distance = Coordinates::WGS84::distance(new_lat, new_lon, new_hae,

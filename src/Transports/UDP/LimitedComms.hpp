@@ -71,7 +71,7 @@ namespace Transports
       {
         double lat = msg->lat;
         double lon = msg->lon;
-        double hae = msg->height;
+        float hae = msg->height;
 
         Coordinates::toWGS84(*msg, lat, lon, hae);
 
@@ -99,11 +99,11 @@ namespace Transports
       }
 
       void
-      setMyPosition(double lat, double lon, double alt)
+      setMyPosition(double lat, double lon, float alt)
       {
         m_position[0] = lat;
         m_position[1] = lon;
-        m_position[2] = alt;
+        m_position[2] = (double)alt;
 
         if (m_last_calc.overflow())
           recomputeVisibleNodes();
