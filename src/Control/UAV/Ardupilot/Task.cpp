@@ -54,12 +54,10 @@ namespace Control
         uint8_t comm_timeout;
         //! Use Ardupilot's waypoint tracker
         bool ardu_tracker;
-        //! Port for SITL simulations
+        //! TCP Port
         uint16_t TCP_port;
-        //! Address for SITL simulations
+        //! TCP Address
         Address TCP_addr;
-        //! Connection mode Serial/TCP
-        bool tcp;
         //! Telemetry Rate
         uint8_t trate;
         //! Default Altitude
