@@ -89,14 +89,14 @@ namespace Sensors
         .minimumValue("0")
         .maximumValue("30")
         .description("Device address in the network");
-
-        m_wdog.setTop(60.0);
       }
 
       //! Update task parameters.
       void
       onUpdateParameters(void)
       {
+        m_wdog.setTop(3 / getFrequency());
+
         if (isActive())
         {
           if (paramChanged(m_args.ip))
@@ -191,7 +191,16 @@ namespace Sensors
         consumeMessages();
 
         if (m_sock != NULL)
-          getData();
+        {
+          try
+          {
+            getData();
+          }
+          catch (std::exception& e)
+          {
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 30);
+          }
+        }
 
         if (m_wdog.overflow())
         {
