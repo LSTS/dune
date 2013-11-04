@@ -132,7 +132,12 @@ namespace Vision
                                      m_lat, m_lon, m_hei);
 
         if(dist >= m_distance)
+        {
           trigger();
+          m_prev_lat = m_lat;
+          m_prev_lon = m_lon;
+          m_prev_hei = m_hei;
+        }
       }
 
       void
