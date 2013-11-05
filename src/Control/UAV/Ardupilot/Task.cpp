@@ -25,6 +25,7 @@
 // Author: Joel Cardoso                                                     *
 // Author: Eduardo Marques                                                  *
 // Author: Ricardo Martins                                                  *
+// Author: Joao Fortuna                                                     *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -702,8 +703,9 @@ namespace Control
             {
               return m_TCP_sock->read(buf, blen);
             }
-            catch (...)
+            catch (std::runtime_error& e)
             {
+              err("%s", e.what());
               war(DTR("Connection lost, retrying..."));
               Memory::clear(m_TCP_sock);
 
@@ -722,9 +724,10 @@ namespace Control
 
           double now = Clock::get();
 
-          while (poll(0.01))
+          while (poll(1.0))
           {
             int n = receiveData(m_buf, sizeof(m_buf));
+
             if (n < 0)
             {
               debug("Receive error");
