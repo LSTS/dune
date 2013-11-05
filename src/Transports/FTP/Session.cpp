@@ -77,15 +77,14 @@ namespace Transports
       "----------"
     };
 
-    Session::Session(Tasks::Context& ctx, TCPSocket* sock, const Address& local_addr, double timeout):
-      m_ctx(ctx),
+    Session::Session(const FileSystem::Path& root, TCPSocket* sock, const Address& local_addr, double timeout):
       m_sock(sock),
       m_local_addr(local_addr),
       m_data_pasv(false),
       m_rest_offset(-1),
       m_timer(timeout)
     {
-      m_root = ctx.dir_log;
+      m_root = root;
       m_path = "/";
 
       m_sock->setNoDelay(true);

@@ -177,7 +177,7 @@ namespace Transports
           TCPSocket* client = sock->accept(&addr);
 
           debug("accepted connection from '%s'", addr.c_str());
-          Session* handler = new Session(m_ctx, client, local_addr,
+          Session* handler = new Session(m_ctx.dir_log, client, local_addr,
                                          m_args.session_tout);
           handler->start();
           m_busy_list.push_back(handler);
