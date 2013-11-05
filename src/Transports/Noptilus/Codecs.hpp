@@ -46,7 +46,7 @@ namespace Transports
       int16_t alt;
       int16_t yaw;
 
-      static size_t
+      size_t
       getSize(void)
       {
         return sizeof(c_id) + sizeof(lat) + sizeof(lon) + sizeof(depth)
