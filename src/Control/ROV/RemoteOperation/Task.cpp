@@ -136,47 +136,59 @@ namespace Control
         }
 
         void
+        speedControl(TupleList& tuples)
+        {
+          if (tuples.get("Stop", 0))
+          {
+            reset_dvel();
+          }
+          else
+          {
+            m_dvel.flags = IMC::DesiredVelocity::FL_SURGE | IMC::DesiredVelocity::FL_SWAY |
+            IMC::DesiredVelocity::FL_YAW;
+
+            m_dvel.u += tuples.get("Forward", 0) / 127.0 * m_args.accel_step;
+            m_dvel.v += tuples.get("Starboard", 0) / 127.0 * m_args.accel_step;
+            m_dvel.r += tuples.get("Rotate", 0) / 127.0 * m_args.accel_step;
+
+            if (!m_depth_control)
+            {
+              m_dvel.w += tuples.get("Up", 0) / 127.0 * m_args.accel_step;
+              m_dvel.flags |= IMC::DesiredVelocity::FL_HEAVE;
+            }
+          }
+
+          m_dvel.u = trimValue(m_dvel.u, -m_args.max_speed, m_args.max_speed);
+          m_dvel.v = trimValue(m_dvel.v, -m_args.max_speed, m_args.max_speed);
+          m_dvel.w = trimValue(m_dvel.w, -m_args.max_speed, m_args.max_speed);
+          m_dvel.r = trimValue(m_dvel.r, -m_args.max_speed, m_args.max_speed);
+        }
+
+        void
+        noSpeedControl(TupleList& tuples)
+        {
+          m_forces(0, 0) = tuples.get("Forward", 0) / 127.0;   // X
+          m_forces(1, 0) = tuples.get("Starboard", 0) / 127.0; // Y
+          m_forces(3, 0) = 0.0;                                // K
+          m_forces(4, 0) = 0.0;                                // M
+          m_forces(5, 0) = tuples.get("Rotate", 0) / 127.0;    // N
+
+          if (!m_depth_control)
+            m_forces(2, 0) = tuples.get("Up", 0) / 127.0;      // Z
+        }
+
+        void
         onRemoteActions(const IMC::RemoteActions* msg)
         {
           TupleList tuples(msg->actions);
 
           if (m_args.speed_control)
           {
-            if (tuples.get("Stop", 0))
-            {
-              reset_dvel();
-            }
-            else
-            {
-              m_dvel.flags = IMC::DesiredVelocity::FL_SURGE | IMC::DesiredVelocity::FL_SWAY |
-              IMC::DesiredVelocity::FL_YAW;
-
-              m_dvel.u += tuples.get("Forward", 0) / 127.0 * m_args.accel_step;
-              m_dvel.v += tuples.get("Starboard", 0) / 127.0 * m_args.accel_step;
-              m_dvel.r += tuples.get("Rotate", 0) / 127.0 * m_args.accel_step;
-
-              if (!m_depth_control)
-              {
-                m_dvel.w += tuples.get("Up", 0) / 127.0 * m_args.accel_step;
-                m_dvel.flags |= IMC::DesiredVelocity::FL_HEAVE;
-              }
-            }
-
-            m_dvel.u = trimValue(m_dvel.u, -m_args.max_speed, m_args.max_speed);
-            m_dvel.v = trimValue(m_dvel.v, -m_args.max_speed, m_args.max_speed);
-            m_dvel.w = trimValue(m_dvel.w, -m_args.max_speed, m_args.max_speed);
-            m_dvel.r = trimValue(m_dvel.r, -m_args.max_speed, m_args.max_speed);
+            speedControl(tuples);
           }
           else
           {
-            m_forces(0, 0) = tuples.get("Forward", 0) / 127.0;   // X
-            m_forces(1, 0) = tuples.get("Starboard", 0) / 127.0; // Y
-            m_forces(3, 0) = 0.0;                                // K
-            m_forces(4, 0) = 0.0;                                // M
-            m_forces(5, 0) = tuples.get("Rotate", 0) / 127.0;    // N
-
-            if (!m_depth_control)
-              m_forces(2, 0) = tuples.get("Up", 0) / 127.0;      // Z
+            noSpeedControl(tuples);
           }
 
           if (tuples.get("Depth Control", 0))
