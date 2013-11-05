@@ -39,8 +39,13 @@ namespace Transports
 
     Client::Client(TCPSocket* sock):
       m_sock(sock),
-      m_timer(5)
-    { }
+      m_timer(10)
+    {
+      m_sock->setKeepAlive(true);
+      m_sock->setNoDelay(true);
+      m_sock->setReceiveTimeout(5);
+      m_sock->setSendTimeout(5);
+    }
 
     Client::~Client(void)
     {
@@ -54,16 +59,17 @@ namespace Transports
         return 0;
       else
       {
-        bfr = m_out_data.front();
+        bfr = m_out_data.front().data;
         m_out_data.pop();
-        return sizeof(bfr);
+        return m_out_data.front().size;
       }
     }
 
     void
-    Client::write(char* bfr)
+    Client::write(char* bfr, unsigned bfr_len)
     {
-      m_in_data.push(bfr);
+      Buffer bfr_in = {bfr, bfr_len};
+      m_in_data.push(bfr_in);
     }
 
     void
@@ -81,7 +87,6 @@ namespace Transports
     Client::run(void)
     {
       m_poll.add(*m_sock);
-
       m_timer.reset();
 
       while (!isStopping())
@@ -91,37 +96,32 @@ namespace Transports
 
         try
         {
-          if (!m_poll.poll(1.0))
-            continue;
+          if(!m_in_data.empty())
+          {
+            m_sock->write(m_in_data.front().data, m_in_data.front().size);
+            m_in_data.pop();
+            m_timer.reset();
+          }
 
           if (!m_poll.wasTriggered(*m_sock))
             continue;
 
-          int rv = m_sock->read(m_bfr, sizeof(m_bfr));
+          char tmp_bfr[1024];
+
+          int rv = m_sock->read(tmp_bfr, sizeof(tmp_bfr));
           if (rv <= 0)
             break;
 
+          m_bfr.data = tmp_bfr;
+          m_bfr.size = rv;
           m_out_data.push(m_bfr);
           m_timer.reset();
         }
-        catch (...)
+        catch (std::exception& e)
         {
+          DUNE_ERR("SerialOverTCP Client", e.what());
           break;
         }
-
-        try
-        {
-          if(!m_in_data.empty())
-          {
-            m_sock->write(m_in_data.front(), sizeof(m_in_data.front()));
-            m_in_data.pop();
-          }
-        }
-        catch (...)
-        {
-          continue;
-        }
-
       }
 
       closeConnection();

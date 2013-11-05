@@ -126,14 +126,14 @@ namespace Transports
       }
 
       void
-      dispatchToClients(char* bfr)
+      dispatchToClients(char* bfr, unsigned bfr_len)
       {
         std::list<Client*>::iterator itr = m_client_list.begin();
         while (itr != m_client_list.end())
         {
           try
           {
-            (*itr)->write(bfr);
+            (*itr)->write(bfr, bfr_len);
             ++itr;
           }
           catch (std::runtime_error& e)
@@ -173,6 +173,13 @@ namespace Transports
         std::list<Client*>::iterator itr = m_client_list.begin();
         while (itr != m_client_list.end())
         {
+          if((*itr)->isDead())
+          {
+            delete *itr;
+            itr = m_client_list.erase(itr);
+            continue;
+          }
+
           try
           {
             int rv = (*itr)->read(bfr);
@@ -180,13 +187,6 @@ namespace Transports
               m_uart->write(bfr, rv);
 
             ++itr;
-          }
-          catch (Network::ConnectionClosed& e)
-          {
-            (void)e;
-            delete *itr;
-            itr = m_client_list.erase(itr);
-            continue;
           }
           catch (std::runtime_error& e)
           {
@@ -202,8 +202,9 @@ namespace Transports
         {
           char bfr[1024];
           int rv = m_uart->read(bfr, sizeof(bfr));
+
           if(rv>0)
-            dispatchToClients(bfr);
+            dispatchToClients(bfr, rv);
         }
       }
 

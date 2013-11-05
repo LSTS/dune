@@ -49,20 +49,27 @@ namespace Transports
       read(char* bfr);
 
       void
-      write(char* bfr);
+      write(char* bfr, unsigned bfr_len);
 
     private:
+
+      struct Buffer
+      {
+        char* data;
+        unsigned size;
+      };
+
       // I/O Multiplexer.
       DUNE::IO::Poll m_poll;
       //! Control socket.
       DUNE::Network::TCPSocket* m_sock;
       //! Scratch buffer.
-      char m_bfr[1024];
+      Buffer m_bfr;
       //! Idle timer.
       DUNE::Time::Counter<double> m_timer;
       //! Buffer queue
-      std::queue<char*> m_out_data;
-      std::queue<char*> m_in_data;
+      std::queue<Buffer> m_out_data;
+      std::queue<Buffer> m_in_data;
 
       void
       closeConnection(void);
