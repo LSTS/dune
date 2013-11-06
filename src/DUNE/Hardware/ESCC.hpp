@@ -54,7 +54,11 @@ namespace DUNE
       IO::NativeHandle
       doGetNative(void) const
       {
+#if defined(DUNE_OS_POSIX)
         return m_handle;
+#else
+        return 0;
+#endif
       }
 
       size_t
