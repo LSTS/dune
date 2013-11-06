@@ -114,8 +114,6 @@ namespace Control
         {
           m_thruster.fill(0);
 
-          actuate();
-
           if (m_args.dh_control)
           {
             enableControlLoops(IMC::CL_SPEED | IMC::CL_DEPTH | IMC::CL_YAW);
@@ -126,6 +124,8 @@ namespace Control
           {
             disableControlLoops(IMC::CL_DEPTH | IMC::CL_YAW);
           }
+
+          actuate();
         }
 
         void
@@ -184,6 +184,13 @@ namespace Control
         {
           m_thruster.fill(0);
 
+          if (m_args.dh_control)
+          {
+            disableControlLoops(IMC::CL_DEPTH | IMC::CL_YAW);
+            m_depth = m_start_depth;
+            m_heading = m_start_heading;
+          }
+
           actuate();
         }
 
@@ -204,7 +211,7 @@ namespace Control
             IMC::DesiredVelocity dvel;
             dvel.flags = IMC::DesiredVelocity::FL_SURGE | IMC::DesiredVelocity::FL_SWAY;
             dvel.u = m_forces(0, 0);
-            dvel.v = m_forces(0, 1);
+            dvel.v = m_forces(1, 0);
             dispatch(dvel);
 
             IMC::DesiredHeading d_heading;
