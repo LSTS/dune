@@ -125,7 +125,11 @@ namespace Control
         onResourceInitialization(void)
         {
           BasicAutopilot::onResourceInitialization();
+        }
 
+        void
+        onUpdateParameters(void)
+        {
           // Depth control parameters.
           m_depth_pid.setGains(m_args.depth_gains);
           m_depth_pid.setOutputLimits(-m_args.max_heave, m_args.max_heave);
