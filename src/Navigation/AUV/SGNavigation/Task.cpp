@@ -403,7 +403,7 @@ namespace Navigation
         }
 
         double
-        getHeading(void)
+        getBiasedHeading(void)
         {
           return m_kal.getState(STATE_PSI) + m_kal.getState(STATE_PSI_BIAS);
         }
@@ -519,7 +519,7 @@ namespace Navigation
 
           // Update heading in Kalman filter.
           m_kal.setOutput(OUT_PSI, m_heading);
-          m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - getHeading());
+          m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - getBiasedHeading());
 
           double r = m_kal.getState(STATE_R) + m_kal.getState(STATE_R_BIAS);
           m_kal.setInnovation(OUT_R,  m_kal.getOutput(OUT_R) - r);
@@ -669,7 +669,7 @@ namespace Navigation
                                           m_kal.getInnovation(OUT_GPS_Y));
           m_navdata.custom_y = m_kal.getState(STATE_K);
 
-          double ang = Angles::normalizeRadian(m_heading) - Angles::normalizeRadian(getEuler(AXIS_Z));
+          double ang = m_estate.psi - Angles::normalizeRadian(getEuler(AXIS_Z));
           m_navdata.custom_z = Angles::degrees(Angles::normalizeRadian(ang));
         }
       };
