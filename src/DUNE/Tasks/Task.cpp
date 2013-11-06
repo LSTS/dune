@@ -464,7 +464,14 @@ namespace DUNE
           while (!stopping() && !counter.overflow())
             Time::Delay::wait(1.0);
 
-          updateParameters();
+          try
+          {
+            updateParameters();
+          }
+          catch (std::runtime_error& pe)
+          {
+            err(DTR("failed to update parameters: %s"), pe.what());
+          }
         }
         catch (std::exception& e)
         {
