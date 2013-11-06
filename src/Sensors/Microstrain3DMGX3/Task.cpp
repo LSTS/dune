@@ -305,7 +305,7 @@ namespace Sensors
         if (rv == 0)
           return false;
 
-        if (rv != cmd_size)
+        if (rv != (size_t)cmd_size)
           return false;
 
         // Check if we have a response to our query.
