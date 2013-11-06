@@ -175,6 +175,7 @@ namespace Control
           // Heading control parameters.
           m_heading_pid.setGains(m_args.heading_gains);
           m_heading_pid.setOutputLimits(-m_args.max_hrate, m_args.max_hrate);
+          m_heading_pid.setIntegralLimits(m_args.int_heading_limit);
 
           // Heading rate control parameters.
           m_hrate_pid.setGains(m_args.hrate_gains);
