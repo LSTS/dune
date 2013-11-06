@@ -55,6 +55,7 @@ namespace Control
         bool hrate_bypass;
         unsigned n_thrusters;
         std::vector<float> heading_gains;
+        float int_heading_limit;
         float max_hrate;
         std::vector<float> hrate_gains;
         float max_surge;
@@ -87,6 +88,11 @@ namespace Control
           .defaultValue("")
           .size(3)
           .description("PID gains for heading controller");
+
+          param("Heading Integral Limit", m_args.int_heading_limit)
+          .defaultValue("-1.0")
+          .units(Units::DegreePerSecond)
+          .description("Integral limit for depth controller");
 
           param("Maximum Thrust Actuation", m_args.max_thrust)
           .defaultValue("1.0")
@@ -154,6 +160,17 @@ namespace Control
         onResourceInitialization(void)
         {
           BasicAutopilot::onResourceInitialization();
+        }
+
+        void
+        onUpdateParameters(void)
+        {
+          if (paramChanged(m_args.int_heading_limit))
+            m_args.int_heading_limit = Angles::radians(m_args.int_heading_limit);
+
+          // Heading control parameters.
+          if (paramChanged(m_args.max_hrate))
+            m_args.max_hrate = Angles::radians(m_args.max_hrate);
 
           // Heading control parameters.
           m_heading_pid.setGains(m_args.heading_gains);
@@ -170,14 +187,6 @@ namespace Control
           // Sway control parameters
           m_sway_pid.setGains(m_args.sway_gains);
           m_sway_pid.setOutputLimits(-m_args.max_thrust, m_args.max_thrust);
-        }
-
-        void
-        onUpdateParameters(void)
-        {
-          // Heading control parameters.
-          if (paramChanged(m_args.max_hrate))
-            m_args.max_hrate = Angles::radians(m_args.max_hrate);
         }
 
         void
