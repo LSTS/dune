@@ -357,7 +357,6 @@ namespace Navigation
             m_agvel_eid = getAhrsId();
             spew("deactivating IMU");
 
-            m_kal.setState(STATE_PSI, getHeading());
             m_kal.setState(STATE_PSI_BIAS, 0.0);
 
             // No heading offset estimation without IMU.
@@ -639,7 +638,7 @@ namespace Navigation
         void
         logData(void)
         {
-          m_estate.psi = Angles::normalizeRadian(getHeading());
+          m_estate.psi = Angles::normalizeRadian(m_kal.getState(STATE_PSI));
           m_estate.r = m_kal.getState(STATE_R);
           onDispatchNavigation();
 
@@ -669,7 +668,9 @@ namespace Navigation
           m_navdata.custom_x = Math::norm(m_kal.getInnovation(OUT_GPS_X),
                                           m_kal.getInnovation(OUT_GPS_Y));
           m_navdata.custom_y = m_kal.getState(STATE_K);
-          m_navdata.custom_z = m_kal.getCovariance(STATE_K);
+
+          double ang = Angles::normalizeRadian(m_heading) - Angles::normalizeRadian(getEuler(AXIS_Z));
+          m_navdata.custom_z = Angles::degrees(Angles::normalizeRadian(ang));
         }
       };
     }
