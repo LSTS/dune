@@ -253,7 +253,7 @@ namespace DUNE
     TCPSocket::doFlushInput(void)
     {
       uint8_t bfr[4096];
-      while (IO::Poll::poll(m_handle, 0))
+      while (IO::Poll::poll(*this, 0))
       {
         read(bfr, sizeof(bfr));
       }
