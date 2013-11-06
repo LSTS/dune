@@ -158,6 +158,7 @@ namespace Control
             m_forces(1, 0) = tuples.get("Starboard", 0) / 127.0; // Y
 
             m_depth += tuples.get("Up", 0) / 127.0 * m_args.depth_rate;
+            m_depth = std::max(0.0f, m_depth);
 
             m_heading += tuples.get("Rotate", 0) / 127.0 * m_args.heading_rate;
             m_heading = Math::Angles::normalizeRadian(m_heading);
@@ -167,6 +168,9 @@ namespace Control
               m_depth = m_start_depth;
               m_heading = m_start_heading;
             }
+
+            debug("desired depth: %.1f", m_depth);
+            debug("desired heading: %.1f", m_heading * 180.0 / DUNE::Math::c_pi);
           }
           else
           {
