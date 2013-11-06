@@ -95,8 +95,8 @@ namespace Control
           .description("Rate of increase or decrease of depth with control enabled.");
 
           param("Heading Rate", m_args.heading_rate)
-          .defaultValue("0.05")
-          .units(Units::RadianPerSecond)
+          .defaultValue("5.0")
+          .units(Units::DegreePerSecond)
           .description("Rate of increase or decrease of heading with control enabled.");
 
           // Add remote actions.
@@ -137,6 +137,13 @@ namespace Control
           m_thruster.fill(0);
 
           actuate();
+        }
+
+        void
+        onUpdateParameters(void)
+        {
+          if (paramChanged(m_args.heading_rate))
+            m_args.heading_rate = Math::Angles::radians(m_args.heading_rate);
         }
 
         void
