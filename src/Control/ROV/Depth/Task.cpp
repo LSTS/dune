@@ -104,7 +104,7 @@ namespace Control
           .description("Maximum admissible thrust command for heave controller");
 
           param("Log PID Parcels", m_args.log_parcels)
-          .defaultValue("false")
+          .defaultValue("true")
           .description("Log the size of each PID parcel");
         }
 
