@@ -49,11 +49,11 @@ namespace Control
 
       struct APMStatus
       {
-        int mode;
         //! External control
         bool external;
         //! Critical Maneuver
         bool critical;
+        //! Used to update Task EntityState
         IMC::EntityState::StateEnum entity_state;
         Status::Code entity_code;
       };
@@ -105,14 +105,12 @@ namespace Control
 
           m_last_pkt_time = 0; // time of last packet from Ardupilot
 
-          m_status.entity_state = IMC::EntityState::ESTA_BOOT;
-          m_status.entity_code = Status::CODE_MISSING_DATA;
+          m_entity_state = IMC::EntityState::ESTA_BOOT;
+          m_entity_code = Status::CODE_MISSING_DATA;
       }
 
         ~Translator(void)
-        {
-          closeConnection();
-        }
+        { }
 
         APMStatus
         getStatus(void)
@@ -171,12 +169,11 @@ namespace Control
         //! Ardupilot status variables to be reported to the task
         APMStatus m_status;
         int m_gnd_speed;
-
-        void
-        closeConnection(void)
-        {
-          m_poll.remove(*m_sock);
-        }
+        //! APM mode
+        int m_mode;
+        //! Temporary holders
+        IMC::EntityState::StateEnum m_entity_state;
+        Status::Code m_entity_code;
 
         int
         receiveData(uint8_t* buf, size_t blen)
@@ -189,8 +186,8 @@ namespace Control
             }
             catch (std::runtime_error& e)
             {
-              m_task->err("%s", e.what());
               Memory::clear(m_sock);
+              throw(e);
               return 0;
             }
           }
@@ -354,8 +351,8 @@ namespace Control
 
           if ((now - m_last_pkt_time >= m_args.comm_timeout))
           {
-            m_status.entity_state = IMC::EntityState::ESTA_ERROR;
-            m_status.entity_code = Status::CODE_COM_ERROR;
+            m_entity_state = IMC::EntityState::ESTA_ERROR;
+            m_entity_code = Status::CODE_COM_ERROR;
             m_status.critical = true;
           }
         }
@@ -592,9 +589,9 @@ namespace Control
 
           mavlink_msg_heartbeat_decode(msg, &hbt);
 
-          m_status.mode = hbt.custom_mode;
+          m_mode = hbt.custom_mode;
 
-          switch(m_status.mode)
+          switch(m_mode)
           {
             default:
               m_status.external = true;
@@ -637,14 +634,14 @@ namespace Control
 
           if((nav_out.wp_dist <= m_desired_radius + m_args.ltolerance)
               && (nav_out.wp_dist >= m_desired_radius - m_args.ltolerance)
-              && (m_status.mode == 15))
+              && (m_mode == 15))
           {
             m_pcs.flags |= PathControlState::FL_LOITERING;
           }
 
           if((nav_out.wp_dist <= m_desired_radius + m_args.secs * m_gnd_speed)
              && (nav_out.wp_dist >= m_desired_radius - m_args.secs * m_gnd_speed)
-             && (m_status.mode == 15))
+             && (m_mode == 15))
           {
             m_pcs.flags |= PathControlState::FL_NEAR;
           }
@@ -702,19 +699,20 @@ namespace Control
 
           while(!isStopping())
           {
-            m_status.entity_state = IMC::EntityState::ESTA_NORMAL;
-            m_status.entity_code = Status::CODE_ACTIVE;
+            m_entity_state = IMC::EntityState::ESTA_NORMAL;
+            m_entity_code = Status::CODE_ACTIVE;
 
             handleArdupilotData();
 
-            if(m_status.external && (m_status.entity_state != IMC::EntityState::ESTA_ERROR))
+            if(m_status.external && (m_entity_state != IMC::EntityState::ESTA_ERROR))
             {
-              m_status.entity_state = IMC::EntityState::ESTA_FAILURE;
-              m_status.entity_code = Status::CODE_NOT_SYNCHED;
+              m_entity_state = IMC::EntityState::ESTA_FAILURE;
+              m_entity_code = Status::CODE_NOT_SYNCHED;
             }
-          }
 
-          closeConnection();
+            m_status.entity_state = m_entity_state;
+            m_status.entity_code = m_entity_code;
+          }
         }
       };
     }

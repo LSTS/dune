@@ -635,23 +635,35 @@ namespace Control
         void
         onMain(void)
         {
+          m_transl = new Translator(this, m_TCP_sock, m_transl_args);
+
           while (!stopping())
           {
             // Handle data
-            if(m_TCP_sock)
+            if(m_transl->isRunning())
             {
-              APMStatus status = m_transl->getStatus();
-              m_critical = status.critical;
-              m_external = status.external;
+              try
+              {
+                APMStatus status = m_transl->getStatus();
+                m_critical = status.critical;
+                m_external = status.external;
 
-              if(status.entity_code == Status::CODE_NOT_SYNCHED)
-                setEntityState(status.entity_state, "External Control");
-              else
-                setEntityState(status.entity_state, status.entity_code);
+                if(status.entity_code == Status::CODE_NOT_SYNCHED)
+                  setEntityState(status.entity_state, "External Control");
+                else
+                  setEntityState(status.entity_state, status.entity_code);
+              }
+              catch (std::runtime_error& e)
+              {
+                err("%s", e.what());
+                m_transl->stop();
+                Time::Delay::wait(1.0);
+                openConnection();
+              }
             }
             else
             {
-              Time::Delay::wait(0.5);
+              Time::Delay::wait(1.0);
               openConnection();
             }
 
