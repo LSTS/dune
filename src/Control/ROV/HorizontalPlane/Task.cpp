@@ -48,6 +48,8 @@ namespace Control
       static const uint32_t c_controllable = IMC::CL_YAW | IMC::CL_YAW_RATE | IMC::CL_SPEED;
       //! Required loops
       static const uint32_t c_required = 0;
+      //! Minimum speed reference
+      static const float c_min_speed = 0.01;
 
       //! Task arguments
       struct Arguments
@@ -64,6 +66,7 @@ namespace Control
         std::vector<float> sway_gains;
         float max_thrust;
         Matrix tmat;
+        bool stabilize_ground;
       };
 
       struct Task: public DUNE::Control::BasicAutopilot
@@ -141,6 +144,10 @@ namespace Control
           .defaultValue("")
           .size(12)
           .description("Thrust allocation pseudo inverse matrix");
+
+          param("Stabilize Ground Speeds", m_args.stabilize_ground)
+          .defaultValue("false")
+          .description("If speed reference is zero, control thrusters to keep it zero");
         }
 
         void
@@ -205,18 +212,36 @@ namespace Control
         float
         surgeControl(const double timestep, const IMC::EstimatedState* msg)
         {
-          float cmd;
-          cmd = m_surge_pid.step(timestep, getSurgeRef() - msg->u, 0);
-          return cmd;
+          float ref = getSurgeRef();
+
+          if ((std::abs(ref) < c_min_speed) && (!m_args.stabilize_ground))
+          {
+            return 0.0;
+          }
+          else
+          {
+            float cmd;
+            cmd = m_surge_pid.step(timestep, ref - msg->u, 0);
+            return cmd;
+          }
         }
 
         //! Compute thrust necessary to comply with desired sway speed
         float
         swayControl(const double timestep, const IMC::EstimatedState* msg)
         {
-          float cmd;
-          cmd = m_sway_pid.step(timestep, getSwayRef() - msg->v, 0);
-          return cmd;
+          float ref = getSwayRef();
+
+          if ((std::abs(ref) < c_min_speed) && (!m_args.stabilize_ground))
+          {
+            return 0.0;
+          }
+          else
+          {
+            float cmd;
+            cmd = m_sway_pid.step(timestep, ref - msg->v, 0);
+            return cmd;
+          }
         }
 
         //! Compute thrust necessary to comply with desired heading or heading rate
