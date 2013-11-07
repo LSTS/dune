@@ -179,6 +179,9 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        if (m_uart == NULL)
+          return;
+
         if (paramChanged(m_args.hard_iron))
           runCalibration();
       }
@@ -260,6 +263,9 @@ namespace Sensors
       inline bool
       poll(Commands cmd, Sizes cmd_size, uint16_t addr, uint16_t value)
       {
+        if (m_uart == NULL)
+          return false;
+
         // Request data.
         switch (cmd)
         {
@@ -347,6 +353,9 @@ namespace Sensors
       void
       runCalibration(void)
       {
+        if (m_uart == NULL)
+          return;
+
         // See if vehicle has same hard iron calibration parameters.
         if (!isCalibrated())
         {
