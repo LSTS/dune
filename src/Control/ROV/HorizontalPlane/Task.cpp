@@ -71,7 +71,6 @@ namespace Control
       //! Task arguments
       struct Arguments
       {
-        //! PID controller gains
         std::vector<float> gains[LP_MAX_LOOPS];
         bool hrate_bypass;
         unsigned n_thrusters;
@@ -89,8 +88,6 @@ namespace Control
       {
         //! PID controllers
         DiscretePID m_pid[LP_MAX_LOOPS];
-        //! Heading controller heading rate reference
-        IMC::DesiredHeadingRate m_hrate_ref;
         //! PID parcels
         IMC::ControlParcel m_parcels[LP_MAX_LOOPS];
         //! Task Arguments
@@ -221,15 +218,11 @@ namespace Control
           float ref = getSurgeRef();
 
           if ((std::abs(ref) < c_min_speed) && (!m_args.stabilize_ground))
-          {
             return 0.0;
-          }
-          else
-          {
-            float cmd;
-            cmd = m_pid[LP_SURGE].step(timestep, ref - msg->u, 0);
-            return cmd;
-          }
+
+          float cmd;
+          cmd = m_pid[LP_SURGE].step(timestep, ref - msg->u, 0);
+          return cmd;
         }
 
         //! Compute thrust necessary to comply with desired sway speed
@@ -239,15 +232,20 @@ namespace Control
           float ref = getSwayRef();
 
           if ((std::abs(ref) < c_min_speed) && (!m_args.stabilize_ground))
-          {
             return 0.0;
-          }
-          else
-          {
-            float cmd;
-            cmd = m_pid[LP_SWAY].step(timestep, ref - msg->v, 0);
-            return cmd;
-          }
+
+          float cmd;
+          cmd = m_pid[LP_SWAY].step(timestep, ref - msg->v, 0);
+          return cmd;
+        }
+
+        //! Log Desired heading rate
+        void
+        logDesiredHRate(float value)
+        {
+          IMC::DesiredHeadingRate hrate_ref;
+          hrate_ref.value = value;
+          dispatch(hrate_ref);
         }
 
         //! Compute thrust necessary to comply with desired heading or heading rate
@@ -260,10 +258,11 @@ namespace Control
           {
             case YAW_MODE_HEADING:
               // Outer heading controller
-              cmd = m_pid[LP_HEADING].step(timestep, Angles::normalizeRadian(getYawRef() - msg->psi));
+              cmd = m_pid[LP_HEADING].step(timestep,
+                                           Angles::normalizeRadian(getYawRef() - msg->psi));
+
               // Log the desired hrate
-              m_hrate_ref.value = cmd;
-              dispatch(m_hrate_ref);
+              logDesiredHRate(cmd);
               break;
             case YAW_MODE_HRATE:
               cmd = getYawRef();
@@ -277,7 +276,7 @@ namespace Control
           }
 
           // Inner heading rate controller
-          float heading_err = cmd - msg->r;
+          float hrate_err = cmd - msg->r;
           cmd = m_pid[LP_HRATE].step(timestep, heading_err, 0);
 
           return cmd;
@@ -306,7 +305,9 @@ namespace Control
           dcontrol.x = X;
           dcontrol.y = Y;
           dcontrol.n = N;
-          dcontrol.flags = IMC::DesiredControl::FL_X | IMC::DesiredControl::FL_Y | IMC::DesiredControl::FL_N;
+          dcontrol.flags = (IMC::DesiredControl::FL_X |
+                            IMC::DesiredControl::FL_Y |
+                            IMC::DesiredControl::FL_N);
           dispatch(dcontrol);
         }
       };
