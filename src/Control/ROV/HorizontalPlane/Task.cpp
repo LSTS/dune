@@ -201,6 +201,16 @@ namespace Control
         }
 
         void
+        onEntityReservation(void)
+        {
+          if (m_args.log_parcels)
+          {
+            for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
+              m_parcels[i].setSourceEntity(reserveEntity(c_loop_name[i] + " Parcel"));
+          }
+        }
+
+        void
         onEstimatedState(const double timestep, const IMC::EstimatedState* msg)
         {
           double X = surgeControl(timestep, msg);
@@ -277,7 +287,7 @@ namespace Control
 
           // Inner heading rate controller
           float hrate_err = cmd - msg->r;
-          cmd = m_pid[LP_HRATE].step(timestep, heading_err, 0);
+          cmd = m_pid[LP_HRATE].step(timestep, hrate_err, 0);
 
           return cmd;
         }

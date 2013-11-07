@@ -148,6 +148,16 @@ namespace Control
         }
 
         void
+        onEntityReservation(void)
+        {
+          if (m_args.log_parcels)
+          {
+            m_depth_parcels.setSourceEntity(reserveEntity("Depth Parcel"));
+            m_heave_parcels.setSourceEntity(reserveEntity("Heave Parcel"));
+          }
+        }
+
+        void
         onEstimatedState(const double timestep, const IMC::EstimatedState* msg)
         {
           m_thrust.id = m_args.vmotor_id; // CHANGE TO VERTICAL MOTOR ID
