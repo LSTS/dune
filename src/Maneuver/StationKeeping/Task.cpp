@@ -49,8 +49,6 @@ namespace Maneuver
       IMC::PathControlState m_pcs;
       //! Maneuver's duration
       float m_duration;
-      //! Timer counter for maneuver duration
-      Time::Counter<float> m_counter;
       //! End time for the maneuver
       double m_end_time;
       //! Path control says vehicle is near
