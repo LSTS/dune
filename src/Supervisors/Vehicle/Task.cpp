@@ -203,6 +203,8 @@ namespace Supervisors
         m_vs.last_error_time = Clock::getSinceEpoch();
         err("%s", m_vs.last_error.c_str());
 
+        changeMode(IMC::VehicleState::VS_ERROR);
+
         stopManeuver();
       }
 
