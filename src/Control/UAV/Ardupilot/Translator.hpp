@@ -199,7 +199,7 @@ namespace Control
         {
           mavlink_status_t status;
 
-          double now = Clock::get();
+          double now = 0;
 
           while (m_poll.poll(0.01))
           {
@@ -211,6 +211,7 @@ namespace Control
               break;
             }
 
+            now = Clock::get();
 
             for (int i = 0; i < n; i++)
             {
