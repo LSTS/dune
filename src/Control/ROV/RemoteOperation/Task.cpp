@@ -44,6 +44,7 @@ namespace Control
         Matrix actuat;
         double max_speed;
         bool dh_control;
+        bool as_control;
         float depth_rate;
         float heading_rate;
       };
@@ -62,8 +63,8 @@ namespace Control
         float m_start_heading;
         //! Current vehicle depth.
         float m_depth;
-        //! Current vehicle heading.
-        float m_heading;
+        //! Current heading or heading rate reference
+        float m_h_ref;
         //! Flag is true if we have depth and heading data
         bool m_dh_data;
         //! Task arguments.
@@ -88,6 +89,10 @@ namespace Control
           param("Depth and Heading Control", m_args.dh_control)
           .defaultValue("false")
           .description("Turn on actively control of depth and heading");
+
+          param("Angular Speed Control", m_args.as_control)
+          .defaultValue("false")
+          .description("Control the angular speed instead of heading.");
 
           param("Depth Rate", m_args.depth_rate)
           .defaultValue("0.1")
@@ -118,7 +123,9 @@ namespace Control
           {
             enableControlLoops(IMC::CL_SPEED | IMC::CL_DEPTH | IMC::CL_YAW);
             m_depth = m_start_depth;
-            m_heading = m_start_heading;
+
+            if (!m_args.as_control)
+              m_h_ref = m_start_heading;
           }
           else
           {
@@ -167,17 +174,32 @@ namespace Control
             m_depth += tuples.get("Up", 0) / 127.0 * m_args.depth_rate;
             m_depth = std::max(0.0f, m_depth);
 
-            m_heading += tuples.get("Rotate", 0) / 127.0 * m_args.heading_rate;
-            m_heading = Math::Angles::normalizeRadian(m_heading);
+            if (!m_args.as_control)
+            {
+              m_h_ref += tuples.get("Rotate", 0) / 127.0 * m_args.heading_rate;
+              m_h_ref = Math::Angles::normalizeRadian(m_h_ref);
+            }
+            else
+            {
+              m_h_ref = tuples.get("Rotate", 0) / 127.0 * m_args.heading_rate;
+            }
 
             if (tuples.get("Stop", 1))
             {
               m_depth = m_start_depth;
-              m_heading = m_start_heading;
+
+              if (!m_args.as_control)
+                m_h_ref = m_start_heading;
+              else
+                m_h_ref = 0.0;
             }
 
             debug("desired depth: %.1f", m_depth);
-            debug("desired heading: %.1f", m_heading * 180.0 / DUNE::Math::c_pi);
+
+            if (!m_args.as_control)
+              debug("desired heading: %.1f", m_h_ref * 180.0 / DUNE::Math::c_pi);
+            else
+              debug("desired heading rate: %.1f", m_h_ref * 180.0 / DUNE::Math::c_pi);
           }
           else
           {
@@ -199,7 +221,11 @@ namespace Control
           {
             disableControlLoops(IMC::CL_DEPTH | IMC::CL_YAW);
             m_depth = m_start_depth;
-            m_heading = m_start_heading;
+
+            if (!m_args.as_control)
+              m_h_ref = m_start_heading;
+            else
+              m_h_ref = 0.0;
           }
 
           actuate();
@@ -225,9 +251,18 @@ namespace Control
             dvel.v = m_forces(1, 0);
             dispatch(dvel);
 
-            IMC::DesiredHeading d_heading;
-            d_heading.value = m_heading;
-            dispatch(d_heading);
+            if (!m_args.as_control)
+            {
+              IMC::DesiredHeading d_heading;
+              d_heading.value = m_h_ref;
+              dispatch(d_heading);
+            }
+            else
+            {
+              IMC::DesiredHeadingRate d_hrate;
+              d_hrate.value = m_h_ref;
+              dispatch(d_hrate);
+            }
 
             IMC::DesiredZ d_z;
             d_z.z_units = IMC::Z_DEPTH;
