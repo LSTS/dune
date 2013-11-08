@@ -88,8 +88,6 @@ namespace Plan
       double m_vc_reply_deadline;
       double m_last_vstate;
       IMC::VehicleCommand m_vc;
-      //! Is the plan loaded
-      bool m_plan_loaded;
       //! PlanSpecification message
       IMC::PlanSpecification m_spec;
       //! List of supported maneuvers.
@@ -629,17 +627,12 @@ namespace Plan
           return false;
         }
 
-        m_plan_loaded = true;
         m_pcs.plan_id = m_spec.plan_id;
 
         if (plan_startup)
-        {
           onSuccess(DTR("plan loaded"), false);
-        }
         else
-        {
           changeMode(IMC::PlanControlState::PCS_READY, DTR("plan loaded"));
-        }
 
         return true;
       }
@@ -648,9 +641,9 @@ namespace Plan
       void
       getPlan(void)
       {
-        if (!m_plan_loaded)
+        if (!initMode() && !execMode())
         {
-          onFailure(DTR("no plan is loaded"));
+          onFailure(DTR("no plan is running"));
           return;
         }
 
@@ -676,13 +669,9 @@ namespace Plan
             changeMode(IMC::PlanControlState::PCS_READY, DTR("plan stopped"));
             m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
           }
-          else if (m_plan_loaded)
-          {
-            debug("switching to new plan");
-            return false;
-          }
           else
           {
+            debug("switching to new plan");
             return false;
           }
         }
@@ -690,30 +679,12 @@ namespace Plan
         {
           if (!plan_startup)
           {
-            if (m_plan_loaded)
-            {
-              onFailure(DTR("loaded plan is not running, request ignored"));
-              m_reply.plan_id = m_spec.plan_id;
-            }
-            else
-            {
-              onFailure(DTR("no plan is even loaded, request ignored"));
-              m_reply.plan_id = "";
-            }
+            onFailure(DTR("no plan is running, request ignored"));
+            m_reply.plan_id = "";
           }
         }
 
         return true;
-      }
-
-      //! Reset the plan data
-      void
-      resetPlanData(void)
-      {
-        m_pcs.plan_id.clear();
-        m_plan->clear();
-        m_spec.clear();
-        m_mcs.clear();
       }
 
       //! Parse a given plan
@@ -931,9 +902,6 @@ namespace Plan
         if (print)
           war("%s", event_desc.c_str());
 
-        if (!m_plan_loaded)
-          resetPlanData();
-
         m_last_event = event_desc;
 
         if (s != m_pcs.state)
@@ -983,7 +951,6 @@ namespace Plan
       void
       setInitialState(void)
       {
-        m_plan_loaded = false;
         m_pcs.state = IMC::PlanControlState::PCS_READY;
         m_pcs.plan_id.clear();
         m_pcs.man_id.clear();
