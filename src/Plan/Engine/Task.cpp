@@ -84,7 +84,6 @@ namespace Plan
       //! Last event description
       std::string m_last_event;
       //! Vehicle interface
-      bool m_vehicle_ready;
       uint16_t m_vreq_ctr;
       double m_vc_reply_deadline;
       double m_last_vstate;
@@ -407,7 +406,7 @@ namespace Plan
         {
           onFailure(m_calib->getInfo());
           m_reply.plan_id = m_spec.plan_id;
-          changeMode(IMC::PlanControlState::PCS_BLOCKED, m_calib->getInfo());
+          changeMode(IMC::PlanControlState::PCS_READY, m_calib->getInfo());
         }
       }
 
@@ -417,10 +416,7 @@ namespace Plan
         switch (m_pcs.state)
         {
           case IMC::PlanControlState::PCS_BLOCKED:
-            if (m_plan_loaded)
-              changeMode(IMC::PlanControlState::PCS_READY, DTR("vehicle ready"));
-            else if (!m_vehicle_ready)
-              m_vehicle_ready = true;
+            changeMode(IMC::PlanControlState::PCS_READY, DTR("vehicle ready"));
             break;
           case IMC::PlanControlState::PCS_INITIALIZING:
             if (!pendingReply())
@@ -475,7 +471,6 @@ namespace Plan
       void
       onVehicleError(const IMC::VehicleState* vs)
       {
-        m_vehicle_ready = false;
         std::string err_ents = DTR("vehicle errors: ") + vs->error_ents;
         std::string edesc = vs->last_error_time < 0 ? err_ents : vs->last_error;
 
@@ -485,8 +480,8 @@ namespace Plan
           m_reply.plan_id = m_spec.plan_id;
         }
 
-        // @FIXME blockedmode or there are new error entities
-        if (!blockedMode() || edesc != m_last_event)
+        // there are new error entities
+        if (edesc != m_last_event)
         {
           if (initMode())
           {
@@ -608,7 +603,7 @@ namespace Plan
             }
             else
             {
-              changeMode(IMC::PlanControlState::PCS_BLOCKED,
+              changeMode(IMC::PlanControlState::PCS_READY,
                          DTR("plan load failed: undefined maneuver or plan"));
               return false;
             }
@@ -621,7 +616,7 @@ namespace Plan
 
           if (!lookForPlan(plan_id, m_spec))
           {
-            changeMode(IMC::PlanControlState::PCS_BLOCKED,
+            changeMode(IMC::PlanControlState::PCS_READY,
                        DTR("plan load failed: ") + m_reply.info);
             return false;
           }
@@ -629,7 +624,7 @@ namespace Plan
 
         if (!parsePlan(plan_startup))
         {
-          changeMode(IMC::PlanControlState::PCS_BLOCKED,
+          changeMode(IMC::PlanControlState::PCS_READY,
                      DTR("plan validation failed: ") + m_reply.info);
           return false;
         }
@@ -643,11 +638,7 @@ namespace Plan
         }
         else
         {
-          if (m_vehicle_ready)
-            changeMode(IMC::PlanControlState::PCS_READY, DTR("plan loaded"));
-          else
-            changeMode(IMC::PlanControlState::PCS_BLOCKED,
-                       DTR("plan loaded but vehicle not ready"));
+          changeMode(IMC::PlanControlState::PCS_READY, DTR("plan loaded"));
         }
 
         return true;
@@ -992,8 +983,7 @@ namespace Plan
       setInitialState(void)
       {
         m_plan_loaded = false;
-        m_vehicle_ready = false;
-        m_pcs.state = IMC::PlanControlState::PCS_BLOCKED;
+        m_pcs.state = IMC::PlanControlState::PCS_READY;
         m_pcs.plan_id.clear();
         m_pcs.man_id.clear();
         m_pcs.man_type = 0xFFFF;
