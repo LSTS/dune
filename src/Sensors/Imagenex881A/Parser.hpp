@@ -154,7 +154,7 @@ namespace Sensors
 
       //! Get range.
       //! @return maximum range.
-      float
+      uint8_t
       getRange(void) const
       {
         return m_range;
