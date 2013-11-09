@@ -30,6 +30,7 @@
 
 // ISO C++ 98 headers.
 #include <vector>
+#include <cstddef>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
