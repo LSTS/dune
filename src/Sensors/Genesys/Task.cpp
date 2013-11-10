@@ -196,7 +196,7 @@ namespace Sensors
           {
             getData();
           }
-          catch (std::exception& e)
+          catch (...)
           {
             throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 30);
           }

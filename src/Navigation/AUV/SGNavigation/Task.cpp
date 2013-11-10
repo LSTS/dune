@@ -285,7 +285,7 @@ namespace Navigation
           {
             m_imu_eid = resolveEntity(m_args.elabel_imu);
           }
-          catch (std::runtime_error& e)
+          catch (...)
           {
             m_imu_eid = UINT_MAX;
           }
