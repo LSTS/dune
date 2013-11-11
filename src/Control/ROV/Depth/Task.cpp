@@ -118,7 +118,6 @@ namespace Control
 
           m_thrust.id = m_args.vmotor_id;
           m_thrust.value = 0.0;
-          dispatch(m_thrust);
         }
 
         void
@@ -130,6 +129,8 @@ namespace Control
         void
         onUpdateParameters(void)
         {
+          reset();
+
           // Depth control parameters.
           m_depth_pid.setGains(m_args.depth_gains);
           m_depth_pid.setOutputLimits(-m_args.max_heave, m_args.max_heave);

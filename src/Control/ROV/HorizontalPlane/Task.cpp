@@ -159,8 +159,6 @@ namespace Control
 
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
             m_pid[i].reset();
-
-          tal(0.0, 0.0, 0.0);
         }
 
         void
@@ -172,6 +170,8 @@ namespace Control
         void
         onUpdateParameters(void)
         {
+          reset();
+
           if (paramChanged(m_args.int_heading_limit))
             m_args.int_heading_limit = Angles::radians(m_args.int_heading_limit);
 
