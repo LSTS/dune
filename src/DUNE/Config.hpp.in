@@ -179,7 +179,7 @@
 #  endif
 #endif
 
-#if defined(SSIZE_T) && !defined(DUNE_SYS_HAS_SSIZE_T)
+#if !defined(DUNE_SYS_HAS_SSIZE_T) && defined(DUNE_CLIB_MICROSOFT)
 typedef SSIZE_T ssize_t;
 #endif
 
