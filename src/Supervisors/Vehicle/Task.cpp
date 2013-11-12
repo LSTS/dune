@@ -203,7 +203,7 @@ namespace Supervisors
         m_vs.last_error_time = Clock::getSinceEpoch();
         err("%s", m_vs.last_error.c_str());
 
-        stopManeuver();
+        stopManeuver(true);
       }
 
       void
@@ -502,14 +502,14 @@ namespace Supervisors
       }
 
       void
-      stopManeuver(void)
+      stopManeuver(bool abort = false)
       {
         if (!errorMode() && !bootMode())
         {
           reset();
 
           if (!externalMode() || !nonOverridableLoops())
-            changeMode(IMC::VehicleState::VS_SERVICE);
+            changeMode(abort ? IMC::VehicleState::VS_ERROR : IMC::VehicleState::VS_SERVICE);
         }
       }
 
