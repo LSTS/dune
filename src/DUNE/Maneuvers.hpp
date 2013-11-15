@@ -40,5 +40,6 @@ namespace DUNE
 #include <DUNE/Maneuvers/VehicleFormation.hpp>
 #include <DUNE/Maneuvers/RowsStages.hpp>
 #include <DUNE/Maneuvers/StationKeep.hpp>
+#include <DUNE/Maneuvers/Elevate.hpp>
 
 #endif
