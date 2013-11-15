@@ -31,7 +31,6 @@
 // DUNE headers.
 #include <DUNE/IMC.hpp>
 #include <DUNE/Maneuvers/Maneuver.hpp>
-#include <DUNE/Coordinates.hpp>
 
 namespace DUNE
 {
@@ -70,12 +69,18 @@ namespace DUNE
       }
 
       float
-      getVerticalError(const IMC::EstimatedState* msg)
+      getVerticalError(float depth, float altitude)
       {
         if (m_elevator.end_z_units == IMC::Z_ALTITUDE)
-          return std::fabs(msg->alt - m_elevator.end_z);
+          return std::fabs(altitude - m_elevator.end_z);
         else
-          return std::fabs(msg->depth - m_elevator.end_z);
+          return std::fabs(depth - m_elevator.end_z);
+      }
+
+      float
+      getVerticalError(const IMC::EstimatedState* msg)
+      {
+        return getVerticalError(msg->depth, msg->alt);
       }
 
     private:
