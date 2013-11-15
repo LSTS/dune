@@ -47,27 +47,40 @@ namespace DUNE
       //! @param[in] maneuver pointer to rows maneuver
       //! @param[in] task pointer to task object (debug and inf)
       //! @param[in] min_radius minimum radius to consider in maneuver
+      //! @param[in] depth_tolerance tolerance when elevating towards a new depth
       Elevate(const IMC::Elevator* maneuver, Maneuvers::Maneuver* task,
               float min_radius, float depth_tolerance);
 
+      //! Update object with EstimatedState message
+      //! @param[in] msg pointer to EstimatedState message
       void
       update(const IMC::EstimatedState* msg);
 
+      //! Update object with PathControlState message
+      //! @param[in] msg pointer to PathControlState message
       void
       updatePathControl(const IMC::PathControlState* msg);
 
+      //! Check if elevator has finished
+      //! @return true if finished
       inline bool
       isDone(void) const
       {
         return (m_els == ST_DONE);
       }
 
+      //! Get the elevator's direction
+      //! @return positive if going up, negative going down, zero for undefined
       inline int
       getElevatorDirection(void) const
       {
         return m_dir;
       }
 
+      //! Compute vertical error
+      //! @param[in] depth current vehicle's depth
+      //! @param[in] altitude current vehicle's altitude
+      //! @return difference between current z value being used and the reference
       float
       getVerticalError(float depth, float altitude)
       {
@@ -77,6 +90,9 @@ namespace DUNE
           return std::fabs(depth - m_elevator.end_z);
       }
 
+      //! Compute vertical error
+      //! @param[in] msg pointer to EstimatedState message
+      //! @return difference between current z value being used and the reference
       float
       getVerticalError(const IMC::EstimatedState* msg)
       {
@@ -98,18 +114,27 @@ namespace DUNE
         ST_DONE
       };
 
+      //! Compute the elevator direction
+      //! @param[in] msg pointer to EstimatedState message
       void
       computeElevatorDirection(const IMC::EstimatedState* msg);
 
+      //! Start helicoid motion
+      //! @param[in] msg pointer to EstimatedState message
       void
       startHelicoid(const IMC::EstimatedState* msg);
 
+      //! Check if current position should be used
+      //! @return true if current position should be used, false otherwise
       inline bool
       useCurr(void) const
       {
         return (m_elevator.flags & IMC::Elevator::FLG_CURR_POS);
       }
 
+      //! Compute loiter direction for going up or down
+      //! @param[in] msg pointer to EstimatedState message
+      //! @return IMC::DesiredPath::FL_CCLOCKW for counter-clockwise or zero otherwise
       unsigned
       getLoiterDirection(const IMC::EstimatedState* msg) const
       {
