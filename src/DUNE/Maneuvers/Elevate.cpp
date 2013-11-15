@@ -70,7 +70,9 @@ namespace DUNE
       m_path.end_z = m_elevator.end_z;
       m_path.end_z_units = m_elevator.end_z_units;
 
-      computeElevatorDirection(msg);      
+      computeElevatorDirection(msg);
+
+      m_task->dispatch(m_path);
     }
 
     void
