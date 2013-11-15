@@ -40,7 +40,7 @@ namespace DUNE
 
     //! Default constructor.
     Elevate::Elevate(const IMC::Elevator* maneuver, Maneuvers::Maneuver* task,
-                     float min_radius, float depth_tolerance) :
+                     float min_radius, float depth_tolerance):
       m_dir(0),
       m_depth_tolerance(depth_tolerance)
     {
