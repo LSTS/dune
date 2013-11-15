@@ -27,10 +27,8 @@
 
 // DUNE headers.
 #include <DUNE/Maneuvers/Elevate.hpp>
-#include <DUNE/Coordinates/WGS84.hpp>
 
 using namespace DUNE::Math;
-using namespace DUNE::Coordinates;
 using namespace DUNE::IMC;
 
 namespace DUNE
@@ -48,6 +46,7 @@ namespace DUNE
     {
       m_elevator = *maneuver;
       m_task = task;
+      m_path.clear();
 
       m_els = ST_INITIAL;
 
