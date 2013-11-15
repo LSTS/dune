@@ -603,7 +603,7 @@ namespace Sensors
           }
 
           rmat.fill(3, 3, &r8[0]);
-          rmat = m_rotation * rmat;
+          rmat = transpose(m_rotation * rmat);
 
           m_euler.phi = std::atan2(rmat(2, 1), rmat(2, 2));
           m_euler.theta = std::asin(-rmat(2, 0));
