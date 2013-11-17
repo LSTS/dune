@@ -209,6 +209,8 @@ namespace Maneuver
           path.speed_units = m_maneuver.speed_units;
 
           dispatch(path);
+
+          m_pstate = ST_GO_TO;
         }
       }
 
@@ -221,8 +223,6 @@ namespace Maneuver
           case ST_NEAR_SURFACE:
             if (msg->medium == IMC::VehicleMedium::VM_WATER)
             {
-              setControl(IMC::CL_NONE);
-
               if (mustWait())
               {
                 m_pstate = ST_WAIT;
@@ -311,15 +311,20 @@ namespace Maneuver
         {
           case ST_GO_TO:
             if (m_near)
+            {
+              goUp();
               m_pstate = ST_GO_UP;
-
+            }
             break;
           case ST_GO_UP:
             m_elevate->updatePathControl(pcs);
 
             // reached surface?
             if (m_elevate->isDone())
+            {
+              setControl(IMC::CL_NONE);
               m_pstate = ST_NEAR_SURFACE;
+            }
 
             break;
           case ST_GO_DOWN:
@@ -329,6 +334,9 @@ namespace Maneuver
             if (m_elevate->isDone())
               m_pstate = ST_DONE;
 
+            break;
+          case ST_DONE:
+            signalCompletion();
             break;
           default:
             break;
