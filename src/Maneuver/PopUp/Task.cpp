@@ -151,18 +151,30 @@ namespace Maneuver
       }
 
       void
-      elevate(float z_value, unsigned z_units)
+      elevate(float z_value, unsigned z_units, bool current)
       {
         // Elevate upwards
         Memory::clear(m_elevate);
 
         IMC::Elevator elev;
-        elev.flags = IMC::Elevator::FLG_CURR_POS;
+
+        if (current)
+        {
+          elev.flags = IMC::Elevator::FLG_CURR_POS;
+          // Start z doesn't matter
+          elev.start_z = 0;
+          elev.start_z_units = IMC::Z_DEPTH;
+        }
+        else
+        {
+          elev.flags = 0;
+          elev.start_z = z_value;
+          elev.start_z_units = z_units;
+        }
+
         elev.lat = m_maneuver.lat;
         elev.lon = m_maneuver.lon;
-        // Start z doesn't matter
-        elev.start_z = 0;
-        elev.start_z_units = IMC::Z_DEPTH;
+
         // End does however
         elev.end_z = z_value;
         elev.end_z_units = z_units;
@@ -176,13 +188,13 @@ namespace Maneuver
       inline void
       goUp(void)
       {
-        elevate(0.0, IMC::Z_DEPTH);
+        elevate(0.0, IMC::Z_DEPTH, true);
       }
 
       inline void
       goDown(void)
       {
-        elevate(m_maneuver.z, m_maneuver.z_units);
+        elevate(m_maneuver.z, m_maneuver.z_units, false);
       }
 
       void
