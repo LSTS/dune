@@ -99,6 +99,9 @@ namespace Maneuver
           m_end_time = Clock::get() + m_duration;
 
         m_skeep->update(state, m_near);
+
+	if (m_near)
+	  m_near = false;
       }
 
       void
