@@ -228,6 +228,11 @@ namespace DUNE
       void
       unlock(void);
 
+      //! Update the scope reference
+      //! @return new sequence number for the scope
+      uint32_t
+      changeScopeRef(void);
+
       IMC::ManeuverControlState m_mcs;
       IMC::RegisterManeuver m_rm;
     };

@@ -64,7 +64,7 @@ namespace DUNE
       m_jump_monitors(false),
       m_aloops(0),
       m_btrack(NULL),
-      m_scope_ref(0.0)
+      m_scope_ref(0)
     {
       param("Control Frequency", m_cperiod)
       .defaultValue("10")

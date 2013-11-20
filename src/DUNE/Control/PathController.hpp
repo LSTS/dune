@@ -430,8 +430,8 @@ namespace DUNE
       IMC::DesiredSpeed m_speed;
       //! Pointer to bottom tracker object
       BottomTracker* m_btrack;
-      //! Control loops last reference time
-      float m_scope_ref;
+      //! Control loops last reference
+      uint32_t m_scope_ref;
     };
   }
 }

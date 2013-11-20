@@ -75,8 +75,8 @@ namespace Supervisors
       IMC::StopManeuver m_stop;
       //! Idle maneuver message.
       IMC::IdleManeuver m_idle;
-      //! Control loops last reference time
-      float m_scope_ref;
+      //! Control loops last reference
+      uint32_t m_scope_ref;
       //! Vector of labels from entities in error
       std::vector<std::string> m_ents_in_error;
       //! Last vehicle state operation mode
@@ -90,7 +90,7 @@ namespace Supervisors
         Tasks::Periodic(name, ctx),
         m_switch_time(-1.0),
         m_in_safe_plan(false),
-        m_scope_ref(0.0)
+        m_scope_ref(0)
       {
         param("Safe Entities", m_args.safe_ents)
         .defaultValue("")

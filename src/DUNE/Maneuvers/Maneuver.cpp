@@ -36,6 +36,7 @@ namespace DUNE
     static Concurrency::Mutex s_man_lock;
     static Concurrency::Mutex s_amask_lock;
     static uint32_t s_amask;
+    static uint32_t s_scope_ref;
 
     Maneuver::Maneuver(const std::string& name, Tasks::Context& ctx):
       Tasks::Task(name, ctx)
@@ -113,6 +114,26 @@ namespace DUNE
       }
     }
 
+    uint32_t
+    Maneuver::changeScopeRef(void)
+    {
+      while (1)
+      {
+        try
+        {
+          Concurrency::ScopedMutex l(s_amask_lock);
+
+          s_scope_ref += 1;
+
+          return s_scope_ref;
+        }
+        catch (...)
+        {
+
+        }
+      }
+    }
+
     void
     Maneuver::consume(const IMC::StopManeuver* sm)
     {
@@ -177,7 +198,7 @@ namespace DUNE
       // Stop everything
       cloops.enable = IMC::ControlLoops::CL_DISABLE;
       cloops.mask = IMC::CL_ALL;
-      cloops.scope_ref = Time::Clock::get();
+      cloops.scope_ref = changeScopeRef();
       dispatch(cloops);
       updateLoops(&cloops);
 
@@ -186,7 +207,7 @@ namespace DUNE
         // Enable controllers.
         cloops.enable = IMC::ControlLoops::CL_ENABLE;
         cloops.mask = mask;
-        cloops.scope_ref = Time::Clock::get();
+        cloops.scope_ref = changeScopeRef();
         dispatch(cloops);
         updateLoops(&cloops);
       }
