@@ -155,17 +155,10 @@ namespace Sensors
         }
 
         // Initialize messages.
-        clear();
+        clearMessages();
 
         bind<IMC::DevDataText>(this);
-      }
-
-      void
-      clear(void)
-      {
-        m_euler.clear();
-        m_agvel.clear();
-        m_fix.clear();
+        bind<IMC::IoEvent>(this);
       }
 
       void
@@ -188,21 +181,8 @@ namespace Sensors
 
         try
         {
-          if (String::startsWith(m_args.uart_dev, "TCP"))
-          {
-            std::vector<std::string> p;
-            String::split(m_args.uart_dev, " ", p);
-            if (p.size() != 3)
-              throw std::runtime_error("invalid I/O handle specification");
-
-            TCPSocket* sock = new TCPSocket;
-            sock->connect(p[1].c_str(), std::atoi(p[2].c_str()));
-            m_handle = sock;
-          }
-          else
-          {
+          if (!openSocket())
             m_handle = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          }
 
           m_reader = new Reader(this, m_handle);
           m_reader->start();
@@ -211,6 +191,21 @@ namespace Sensors
         {
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
+      }
+
+      bool
+      openSocket(void)
+      {
+        char addr[128] = {0};
+        unsigned port = 0;
+
+        if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
+          return false;
+
+        TCPSocket* sock = new TCPSocket;
+        sock->connect(addr, port);
+        m_handle = sock;
+        return true;
       }
 
       void
@@ -267,6 +262,27 @@ namespace Sensors
           m_init_line = msg->value;
         else
           processSentence(msg->value);
+      }
+
+      void
+      consume(const IMC::IoEvent* msg)
+      {
+        if (msg->getDestination() != getSystemId())
+          return;
+
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
+          throw RestartNeeded(msg->error, 5);
+      }
+
+      void
+      clearMessages(void)
+      {
+        m_euler.clear();
+        m_agvel.clear();
+        m_fix.clear();
       }
 
       //! Wait reply to initialization command.
@@ -431,11 +447,10 @@ namespace Sensors
       {
         if (parts[0] == m_args.stn_order.front())
         {
-          clear();
+          clearMessages();
           m_fix.setTimeStamp();
           m_euler.setTimeStamp(m_fix.getTimeStamp());
           m_agvel.setTimeStamp(m_fix.getTimeStamp());
-          m_wdog.reset();
         }
 
         if (parts[0] == "GPZDA")
