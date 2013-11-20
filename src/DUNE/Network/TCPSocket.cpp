@@ -169,7 +169,7 @@ namespace DUNE
     }
 
     void
-    TCPSocket::connect(Address addr, uint16_t port)
+    TCPSocket::connect(const Address& addr, uint16_t port)
     {
       sockaddr_in ad;
       ad.sin_family = AF_INET;
