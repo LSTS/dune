@@ -55,7 +55,7 @@ namespace DUNE
       m_aloops(0),
       m_controllable_loops(controllable_loops),
       m_required_loops(required_loops),
-      m_scope_ref(0.0)
+      m_scope_ref(0)
     {
       param("Heading Rate Bypass", m_hrate_bypass)
       .defaultValue("false")

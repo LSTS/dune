@@ -139,8 +139,8 @@ namespace DUNE
       fp64_t m_last_action;
       //! Remote actions reply message;
       IMC::RemoteActionsRequest m_actions;
-      //! Control loops last reference time
-      float m_scope_ref;
+      //! Control loops last reference
+      uint32_t m_scope_ref;
     };
   }
 }

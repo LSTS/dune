@@ -275,8 +275,8 @@ namespace DUNE
       const uint32_t m_controllable_loops;
       //! Required loops for this controller
       const uint32_t m_required_loops;
-      //! Control loops last reference time
-      float m_scope_ref;
+      //! Control loops last reference
+      uint32_t m_scope_ref;
       //! Maximum admissible depth that the vehicle may sustain
       float m_max_depth;
 
