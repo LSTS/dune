@@ -187,6 +187,18 @@ namespace Control
         }
 
         void
+        onActivation(void)
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        }
+
+        void
+        onDeactivation(void)
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        }
+
+        void
         onResourceInitialization(void)
         {
           requestDeactivation();
@@ -300,15 +312,9 @@ namespace Control
             return;
 
           if (!msg->enable)
-          {
             requestDeactivation();
-            debug("disabling");
-          }
           else
-          {
             requestActivation();
-            debug("enabling");
-          }
 
           reset();
         }
