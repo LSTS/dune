@@ -82,8 +82,6 @@ namespace Sensors
       std::string init_rpls[c_max_init_cmds];
       //! Power channels.
       std::vector<std::string> pwr_channels;
-      //! Log lines.
-      bool log_lines;
     };
 
     struct Task: public Tasks::Task
@@ -138,10 +136,6 @@ namespace Sensors
         param("Sentence Order", m_args.stn_order)
         .defaultValue("")
         .description("Sentence order");
-
-        param("Log Lines", m_args.log_lines)
-        .defaultValue("false")
-        .description("Dispatch DevDataText message for each received line of text");
 
         for (unsigned i = 0; i < c_max_init_cmds; ++i)
         {
