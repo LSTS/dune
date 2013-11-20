@@ -51,8 +51,6 @@ namespace Maneuver
       float m_duration;
       //! End time for the maneuver
       double m_end_time;
-      //! Path control says vehicle is near
-      bool m_near;
       //! Task arguments
       Arguments m_args;
 
@@ -79,7 +77,6 @@ namespace Maneuver
       void
       consume(const IMC::StationKeeping* maneuver)
       {
-        m_near = false;
         m_duration = maneuver->duration;
 
         Memory::clear(m_skeep);
@@ -98,10 +95,7 @@ namespace Maneuver
         if (m_skeep->isInside() && (m_end_time < 0))
           m_end_time = Clock::get() + m_duration;
 
-        m_skeep->update(state, m_near);
-
-	if (m_near)
-	  m_near = false;
+        m_skeep->update(state);
       }
 
       void
@@ -109,7 +103,10 @@ namespace Maneuver
       {
         m_pcs = *pcs;
 
-        m_near = (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
+        if (m_skeep == NULL)
+          return;
+
+        m_skeep->updatePathControl(pcs);
       }
 
       void

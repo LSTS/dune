@@ -99,8 +99,6 @@ namespace Maneuver
       bool m_matched_criteria;
       //! Vehicle is not underwater
       bool m_at_surface;
-      //! True if flag near from PathControlState has gone true
-      bool m_near;
       //! Estimated time of arrival from PathControlState
       unsigned m_path_eta;
       //! Station keeping behavior in case it is necessary
@@ -116,7 +114,6 @@ namespace Maneuver
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Maneuvers::Maneuver(name, ctx),
-        m_near(false),
         m_path_eta(Plans::c_max_eta),
         m_skeep(NULL),
         m_elevate(NULL),
@@ -300,7 +297,7 @@ namespace Maneuver
             m_elevate->update(state);
             break;
           case ST_SKEEP:
-            m_skeep->update(state, m_near);
+            m_skeep->update(state);
             // fall through
           case ST_WAIT:
             if (m_dur_timer.overflow())
@@ -317,12 +314,10 @@ namespace Maneuver
       void
       consume(const IMC::PathControlState* pcs)
       {
-        m_near = (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
-
         switch (m_pstate)
         {
           case ST_GO_TO:
-            if (m_near)
+            if (pcs->flags & IMC::PathControlState::FL_NEAR)
             {
               goUp();
               m_pstate = ST_GO_UP;
@@ -346,6 +341,9 @@ namespace Maneuver
             if (m_elevate->isDone())
               m_pstate = ST_DONE;
 
+            break;
+          case ST_SKEEP:
+            m_skeep->updatePathControl(pcs);
             break;
           case ST_DONE:
             signalCompletion();

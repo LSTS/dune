@@ -66,9 +66,13 @@ namespace DUNE
 
       //! Update behavior
       //! @param[in] state pointer to EstimatedState message
-      //! @param[in] is_near if pathcontrolstate flag near is on, this should be true
       void
-      update(const IMC::EstimatedState* state, bool is_near);
+      update(const IMC::EstimatedState* state);
+
+      //! Update behavior with path control state
+      //! @param[in] pcs pointer to PathControlState message
+      void
+      updatePathControl(const IMC::PathControlState* pcs);
 
       //! Check if vehicle is inside boundary
       //! @return true if inside

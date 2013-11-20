@@ -106,7 +106,7 @@ namespace DUNE
     }
 
     void
-    StationKeep::update(const IMC::EstimatedState* state, bool is_near)
+    StationKeep::update(const IMC::EstimatedState* state)
     {
       double range = getRange(state);
 
@@ -132,14 +132,28 @@ namespace DUNE
           }
           break;
         case ST_OFF_STATION:
-          if (is_near)
+          break;
+        default:
+          throw std::runtime_error("invalid station keeping state");
+          break;
+      }
+    }
+
+    void
+    StationKeep::updatePathControl(const IMC::PathControlState* pcs)
+    {
+      double range = Math::norm(pcs->x, pcs->y);
+
+      switch (m_sks)
+      {
+        case ST_OFF_STATION:
+          if (pcs->flags & IMC::PathControlState::FL_NEAR)
           {
             stopMoving(range);
             m_sks = ST_ON_STATION;
           }
           break;
         default:
-          throw std::runtime_error("invalid station keeping state");
           break;
       }
     }
