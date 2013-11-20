@@ -250,7 +250,7 @@ namespace Sensors
         if (msg->getDestinationEntity() != getEntityId())
           return;
 
-        inf("%s", sanitize(msg->value).c_str());
+        spew("%s", sanitize(msg->value).c_str());
 
         if (getEntityState() == IMC::EntityState::ESTA_BOOT)
           m_init_line = msg->value;
