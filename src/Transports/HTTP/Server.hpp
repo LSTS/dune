@@ -25,93 +25,48 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_NETWORK_HTTP_REQUEST_HANDLER_HPP_INCLUDED_
-#define DUNE_NETWORK_HTTP_REQUEST_HANDLER_HPP_INCLUDED_
+#ifndef TRANSPORTS_HTTP_SERVER_HPP_INCLUDED_
+#define TRANSPORTS_HTTP_SERVER_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
-#include <map>
-#include <string>
-#include <cstddef>
+#include <vector>
 
 // DUNE headers.
-#include <DUNE/Network/TCPSocket.hpp>
-#include <DUNE/Utils/TupleList.hpp>
+#include <DUNE/DUNE.hpp>
 
-namespace DUNE
+// Local headers.
+#include "RequestHandler.hpp"
+
+namespace Transports
 {
-  namespace Network
+  namespace HTTP
   {
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM HTTPRequestHandler;
-
-    class HTTPRequestHandler
+    class Server
     {
     public:
-      typedef std::map<std::string, std::string> HeaderFieldsMap;
+      //! Constructor.
+      //! @param port listening port.
+      //! @param threads number of worker threads.
+      //! @param handler HTTP request handler.
+      Server(int port, unsigned threads, RequestHandler& handler);
 
-      HTTPRequestHandler(void)
-      { }
-
-      virtual
-      ~HTTPRequestHandler(void)
-      { }
-
-      virtual void
-      handleGET(TCPSocket* sock, Utils::TupleList& headers, const char* uri);
-
-      virtual void
-      handlePOST(TCPSocket* sock, Utils::TupleList& headers, const char* uri);
-
-      virtual void
-      handlePUT(TCPSocket* sock, Utils::TupleList& headers, const char* uri);
+      //! Destructor.
+      ~Server(void);
 
       void
-      sendHeader(TCPSocket* sock, const char* status_line, int64_t length, HeaderFieldsMap* hdr_fields = 0);
+      poll(double timeout);
 
-      void
-      sendResponse100(TCPSocket* sock);
-
-      void
-      sendResponse201(TCPSocket* sock);
-
-      void
-      sendResponse200(TCPSocket* sock);
-
-      void
-      sendResponse403(TCPSocket* sock);
-
-      void
-      sendResponse404(TCPSocket* sock, const std::string& message);
-
-      inline void
-      sendResponse404(TCPSocket* sock)
-      {
-        sendResponse404(sock, "Not Found");
-      }
-
-      void
-      sendResponse416(TCPSocket* sock);
-
-      void
-      sendResponse500(TCPSocket* sock);
-
-      void
-      sendResponse503(TCPSocket* sock);
-
-      void
-      sendData(TCPSocket* sock, const char* data, int size, HeaderFieldsMap* hdr_fields = 0);
-
-      inline void
-      sendData(TCPSocket* sock, const std::string& data, HeaderFieldsMap* hdr_fields = 0)
-      {
-        sendData(sock, data.c_str(), (int)data.size(), hdr_fields);
-      }
-
-      void
-      sendFile(TCPSocket* sock, const std::string& file, HeaderFieldsMap& hdr_fields, int64_t off_beg = -1, int64_t off_end = -1);
-
-      void
-      handleRequest(TCPSocket* sock);
+    private:
+      //! HTTP request handler.
+      RequestHandler& m_handler;
+      //! Server socket.
+      TCPSocket m_sock;
+      //! Worker threads pool.
+      std::vector<Concurrency::Thread*> m_pool;
+      //! Socket queue.
+      Concurrency::TSQueue<TCPSocket*> m_queue;
+      //! I/O multiplexing.
+      IO::Poll m_poll;
     };
   }
 }
