@@ -114,8 +114,12 @@ namespace Simulators
       void
       consume(const IMC::SimulatedState* msg)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        requestActivation();
+        if (!isActive())
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          requestActivation();
+        }
+
         m_sstate = *msg;
       }
 
