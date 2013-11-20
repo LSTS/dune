@@ -39,6 +39,8 @@
 
 // Local headers.
 #include "MessageMonitor.hpp"
+#include "RequestHandler.hpp"
+#include "Server.hpp"
 
 namespace Transports
 {
@@ -64,10 +66,10 @@ namespace Transports
     //! Maximum number of ports to try before giving up.
     static const int c_max_port_tries = 10;
 
-    struct Task: public Tasks::Task, public HTTPRequestHandler
+    struct Task: public Tasks::Task, public RequestHandler
     {
       //! HTTP server.
-      HTTPServer* m_server;
+      Server* m_server;
       //! Configuration directory.
       std::string m_cfg_dir;
       //! Agent name.
@@ -79,7 +81,7 @@ namespace Transports
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        HTTPRequestHandler(),
+        RequestHandler(),
         m_server(NULL),
         m_msg_mon(getSystemName(), ctx.uid)
       {
@@ -110,7 +112,7 @@ namespace Transports
           try
           {
             inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), port);
-            m_server = new HTTPServer(port, m_args.threads, *this);
+            m_server = new Server(port, m_args.threads, *this);
 
             // Initialize and dispatch AnnounceService.
             std::vector<Interface> itfs = Interface::get();
@@ -269,7 +271,7 @@ namespace Transports
           p1 >> end;
         }
 
-        HTTPRequestHandler::HeaderFieldsMap hdr;
+        RequestHandler::HeaderFieldsMap hdr;
         std::string ext = file.extension();
         if (ext == "html")
           hdr["Content-Type"] = "text/html";
@@ -322,7 +324,7 @@ namespace Transports
         (void)headers;
         (void)uri;
 
-        HTTPRequestHandler::HeaderFieldsMap hdr;
+        RequestHandler::HeaderFieldsMap hdr;
         hdr["Content-Type"] = "text/javascript";
         hdr["Content-Encoding"] = "gzip";
 
@@ -338,7 +340,7 @@ namespace Transports
 
         std::ostringstream os;
         os << "var systemVersion = '" << getFullVersion() << " - " << getCompileDate() << "';";
-        HTTPRequestHandler::HeaderFieldsMap hdr;
+        RequestHandler::HeaderFieldsMap hdr;
         hdr["Content-Type"] = "text/javascript";
         sendData(sock, os.str(), &hdr);
       }
@@ -351,7 +353,7 @@ namespace Transports
 
         std::ostringstream os;
         os << "var systemName = '" << m_agent << "';";
-        HTTPRequestHandler::HeaderFieldsMap hdr;
+        RequestHandler::HeaderFieldsMap hdr;
         hdr["Content-Type"] = "text/javascript";
         sendData(sock, os.str(), &hdr);
       }

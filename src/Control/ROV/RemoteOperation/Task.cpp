@@ -41,11 +41,12 @@ namespace Control
 
       struct Arguments
       {
-        // Actuation Inverse Matrix.
         Matrix actuat;
-        bool speed_control;
-        double accel_step;
         double max_speed;
+        bool dh_control;
+        bool as_control;
+        float depth_rate;
+        float heading_rate;
       };
 
       struct Task: public DUNE::Control::BasicRemoteOperation
@@ -56,39 +57,52 @@ namespace Control
         Matrix m_forces;
         //! Desired Velocity message.
         IMC::DesiredVelocity m_dvel;
+        //! Starting depth
+        float m_start_depth;
+        //! Starting heading
+        float m_start_heading;
         //! Current vehicle depth.
         float m_depth;
-        //! Depth control mode active.
-        bool m_depth_control;
+        //! Current heading or heading rate reference
+        float m_h_ref;
+        //! Flag is true if we have depth and heading data
+        bool m_dh_data;
         //! Task arguments.
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::BasicRemoteOperation(name, ctx),
           m_thruster(5, 1, 0.0),
-          m_forces(6, 1, 0.0)
+          m_forces(6, 1, 0.0),
+          m_dh_data(false)
         {
           param("Actuation Inverse Matrix", m_args.actuat)
           .defaultValue("")
           .size(30)
           .description("Actuation Inverse Matrix");
 
-          param("Use Speed Control", m_args.speed_control)
-          .defaultValue("false")
-          .description("Use speed control instead of force control");
-
-          param("Acceleration Step", m_args.accel_step)
-          .defaultValue("0.1")
-          .units(Units::MeterPerSecond)
-          .description("Acceleration step to be used when speed control is enabled");
-
           param("Maximum Speed Allowed", m_args.max_speed)
           .defaultValue("1.5")
           .units(Units::MeterPerSecond)
           .description("Maximum speed allowed for remote operation");
 
-          m_depth = 0;
-          m_depth_control = false;
+          param("Depth and Heading Control", m_args.dh_control)
+          .defaultValue("false")
+          .description("Turn on actively control of depth and heading");
+
+          param("Angular Speed Control", m_args.as_control)
+          .defaultValue("false")
+          .description("Control the angular speed instead of heading.");
+
+          param("Depth Rate", m_args.depth_rate)
+          .defaultValue("0.1")
+          .units(Units::MeterPerSecond)
+          .description("Rate of increase or decrease of depth with control enabled.");
+
+          param("Heading Rate", m_args.heading_rate)
+          .defaultValue("5.0")
+          .units(Units::DegreePerSecond)
+          .description("Rate of increase or decrease of heading with control enabled.");
 
           // Add remote actions.
           addActionAxis("Forward");
@@ -96,29 +110,26 @@ namespace Control
           addActionAxis("Up");
           addActionAxis("Rotate");
           addActionButton("Stop");
-          addActionButton("Depth Control");
 
-          bind<IMC::Depth>(this);
-        }
-
-        void
-        consume(const IMC::Depth* msg)
-        {
-          m_depth = msg->value;
+          bind<IMC::EstimatedState>(this);
         }
 
         void
         onActivation(void)
         {
-          if (m_args.speed_control)
-          {
-            enableControlLoops(IMC::CL_YAW_RATE | IMC::CL_SPEED | IMC::CL_VERTICAL_RATE);
+          m_thruster.fill(0);
 
-            reset_dvel();
+          if (m_args.dh_control)
+          {
+            enableControlLoops(IMC::CL_SPEED | IMC::CL_DEPTH | IMC::CL_YAW);
+            m_depth = m_start_depth;
+
+            if (!m_args.as_control)
+              m_h_ref = m_start_heading;
           }
           else
           {
-            m_thruster.fill(0);
+            disableControlLoops(IMC::CL_DEPTH | IMC::CL_YAW);
           }
 
           actuate();
@@ -127,12 +138,27 @@ namespace Control
         void
         onDeactivation(void)
         {
-          if (m_args.speed_control)
-            reset_dvel();
-          else
-            m_thruster.fill(0);
+          if (m_args.dh_control)
+            disableControlLoops(IMC::CL_DEPTH | IMC::CL_YAW | IMC::CL_SPEED);
+
+          m_thruster.fill(0);
 
           actuate();
+        }
+
+        void
+        onUpdateParameters(void)
+        {
+          if (paramChanged(m_args.heading_rate))
+            m_args.heading_rate = Math::Angles::radians(m_args.heading_rate);
+        }
+
+        void
+        consume(const IMC::EstimatedState* msg)
+        {
+          m_dh_data = true;
+          m_start_depth = msg->depth;
+          m_start_heading = msg->psi;
         }
 
         void
@@ -140,32 +166,40 @@ namespace Control
         {
           TupleList tuples(msg->actions);
 
-          if (m_args.speed_control)
+          if (m_args.dh_control)
           {
-            if (tuples.get("Stop", 0))
+            m_forces(0, 0) = tuples.get("Forward", 0) / 127.0;   // X
+            m_forces(1, 0) = tuples.get("Starboard", 0) / 127.0; // Y
+
+            m_depth += tuples.get("Up", 0) / 127.0 * m_args.depth_rate;
+            m_depth = std::max(0.0f, m_depth);
+
+            if (!m_args.as_control)
             {
-              reset_dvel();
+              m_h_ref += tuples.get("Rotate", 0) / 127.0 * m_args.heading_rate;
+              m_h_ref = Math::Angles::normalizeRadian(m_h_ref);
             }
             else
             {
-              m_dvel.flags = IMC::DesiredVelocity::FL_SURGE | IMC::DesiredVelocity::FL_SWAY |
-              IMC::DesiredVelocity::FL_YAW;
-
-              m_dvel.u += tuples.get("Forward", 0) / 127.0 * m_args.accel_step;
-              m_dvel.v += tuples.get("Starboard", 0) / 127.0 * m_args.accel_step;
-              m_dvel.r += tuples.get("Rotate", 0) / 127.0 * m_args.accel_step;
-
-              if (!m_depth_control)
-              {
-                m_dvel.w += tuples.get("Up", 0) / 127.0 * m_args.accel_step;
-                m_dvel.flags |= IMC::DesiredVelocity::FL_HEAVE;
-              }
+              m_h_ref = tuples.get("Rotate", 0) / 127.0 * m_args.heading_rate;
             }
 
-            m_dvel.u = trimValue(m_dvel.u, -m_args.max_speed, m_args.max_speed);
-            m_dvel.v = trimValue(m_dvel.v, -m_args.max_speed, m_args.max_speed);
-            m_dvel.w = trimValue(m_dvel.w, -m_args.max_speed, m_args.max_speed);
-            m_dvel.r = trimValue(m_dvel.r, -m_args.max_speed, m_args.max_speed);
+            if (tuples.get("Stop", 1))
+            {
+              m_depth = m_start_depth;
+
+              if (!m_args.as_control)
+                m_h_ref = m_start_heading;
+              else
+                m_h_ref = 0.0;
+            }
+
+            debug("desired depth: %.1f", m_depth);
+
+            if (!m_args.as_control)
+              debug("desired heading: %.1f", m_h_ref * 180.0 / DUNE::Math::c_pi);
+            else
+              debug("desired heading rate: %.1f", m_h_ref * 180.0 / DUNE::Math::c_pi);
           }
           else
           {
@@ -173,80 +207,75 @@ namespace Control
             m_forces(1, 0) = tuples.get("Starboard", 0) / 127.0; // Y
             m_forces(3, 0) = 0.0;                                // K
             m_forces(4, 0) = 0.0;                                // M
+            m_forces(2, 0) = tuples.get("Up", 0) / 127.0;      // Z
             m_forces(5, 0) = tuples.get("Rotate", 0) / 127.0;    // N
-
-            if (!m_depth_control)
-              m_forces(2, 0) = tuples.get("Up", 0) / 127.0;      // Z
-          }
-
-          if (tuples.get("Depth Control", 0))
-          {
-            if (!m_depth_control)
-              return;
-
-            disableControlLoops(IMC::CL_DEPTH);
-            m_depth_control = false;
-
-            debug("depth control not active");
-          }
-          else
-          {
-            if (m_depth_control)
-              return;
-
-            enableControlLoops(IMC::CL_DEPTH);
-            m_depth_control = true;
-
-            IMC::DesiredZ z;
-            z.value = m_depth;
-            z.z_units = IMC::Z_DEPTH;
-            dispatch(z);
-
-            debug("depth control active for %0.2f m", z.value);
           }
         }
 
         void
         onConnectionTimeout(void)
         {
-          if (m_args.speed_control)
-            reset_dvel();
-          else
-            m_thruster.fill(0);
+          m_thruster.fill(0);
+
+          if (m_args.dh_control)
+          {
+            disableControlLoops(IMC::CL_DEPTH | IMC::CL_YAW);
+            m_depth = m_start_depth;
+
+            if (!m_args.as_control)
+              m_h_ref = m_start_heading;
+            else
+              m_h_ref = 0.0;
+          }
 
           actuate();
         }
 
         void
+        actuateThruster(unsigned i)
+        {
+          IMC::SetThrusterActuation sta;
+          sta.id = i;
+          sta.value = trimValue(m_thruster(i, 0), -1.0, 1.0);
+          dispatch(sta);
+        }
+
+        void
         actuate(void)
         {
-          if (m_args.speed_control)
+          if (m_args.dh_control && m_dh_data)
           {
-            dispatch(m_dvel);
+            IMC::DesiredVelocity dvel;
+            dvel.flags = IMC::DesiredVelocity::FL_SURGE | IMC::DesiredVelocity::FL_SWAY;
+            dvel.u = m_forces(0, 0);
+            dvel.v = m_forces(1, 0);
+            dispatch(dvel);
+
+            if (!m_args.as_control)
+            {
+              IMC::DesiredHeading d_heading;
+              d_heading.value = m_h_ref;
+              dispatch(d_heading);
+            }
+            else
+            {
+              IMC::DesiredHeadingRate d_hrate;
+              d_hrate.value = m_h_ref;
+              dispatch(d_hrate);
+            }
+
+            IMC::DesiredZ d_z;
+            d_z.z_units = IMC::Z_DEPTH;
+            d_z.value = m_depth;
+            dispatch(d_z);
           }
           else
           {
             m_thruster = m_args.actuat * m_forces;
 
             for (int i = 0; i < 5; i++)
-            {
-              IMC::SetThrusterActuation sta;
-              sta.id = i;
-              sta.value = trimValue(m_thruster(i, 0), -1.0, 1.0);
-              dispatch(sta);
-            }
+              actuateThruster(i);
           }
-        }
-
-        void
-        reset_dvel(void)
-        {
-          m_dvel.u = 0.0;
-          m_dvel.v = 0.0;
-          m_dvel.w = 0.0;
-          m_dvel.r = 0.0;
-          m_dvel.flags = IMC::DesiredVelocity::FL_SURGE | IMC::DesiredVelocity::FL_SWAY
-          | IMC::DesiredVelocity::FL_HEAVE | IMC::DesiredVelocity::FL_YAW;
         }
       };
     }

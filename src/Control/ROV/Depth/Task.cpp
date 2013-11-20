@@ -54,6 +54,8 @@ namespace Control
         float max_heave;
         std::vector<float> heave_gains;
         float max_thrust;
+        float int_depth_limit;
+        bool log_parcels;
       };
 
       struct Task: public DUNE::Control::BasicAutopilot
@@ -64,6 +66,10 @@ namespace Control
         DiscretePID m_heave_pid;
         //! Desired actuation torque vector.
         IMC::SetThrusterActuation m_thrust;
+        //! Depth PID parcels
+        IMC::ControlParcel m_depth_parcels;
+        //! Heave PID parcels
+        IMC::ControlParcel m_heave_parcels;
         //! Task Arguments
         Arguments m_args;
 
@@ -79,6 +85,11 @@ namespace Control
           .size(3)
           .description("Proportional gain for depth controller");
 
+          param("Depth Integral Limit", m_args.int_depth_limit)
+          .defaultValue("-1.0")
+          .units(Units::MeterPerSecond)
+          .description("Integral limit for depth controller");
+
           param("Maximum Heave Reference", m_args.max_heave)
           .defaultValue("1.0")
           .description("Maximum admissible heave reference for depth controller");
@@ -91,6 +102,10 @@ namespace Control
           param("Maximum Thrust Reference", m_args.max_thrust)
           .defaultValue("1.0")
           .description("Maximum admissible thrust command for heave controller");
+
+          param("Log PID Parcels", m_args.log_parcels)
+          .defaultValue("true")
+          .description("Log the size of each PID parcel");
         }
 
         void
@@ -103,21 +118,44 @@ namespace Control
 
           m_thrust.id = m_args.vmotor_id;
           m_thrust.value = 0.0;
-          dispatch(m_thrust);
         }
 
         void
         onResourceInitialization(void)
         {
           BasicAutopilot::onResourceInitialization();
+        }
+
+        void
+        onUpdateParameters(void)
+        {
+          reset();
 
           // Depth control parameters.
           m_depth_pid.setGains(m_args.depth_gains);
           m_depth_pid.setOutputLimits(-m_args.max_heave, m_args.max_heave);
+          m_depth_pid.setIntegralLimits(m_args.int_depth_limit);
 
           // Heave control parameters.
           m_heave_pid.setGains(m_args.heave_gains);
           m_heave_pid.setOutputLimits(-m_args.max_thrust, m_args.max_thrust);
+
+          // Debug parcels
+          if (m_args.log_parcels)
+          {
+            m_depth_pid.enableParcels(this, &m_depth_parcels);
+            m_heave_pid.enableParcels(this, &m_heave_parcels);
+          }
+        }
+
+        void
+        onEntityReservation(void)
+        {
+          if (m_args.log_parcels)
+          {
+            m_depth_parcels.setSourceEntity(reserveEntity("Depth Parcel"));
+            m_heave_parcels.setSourceEntity(reserveEntity("Heave Parcel"));
+          }
         }
 
         void
@@ -166,7 +204,7 @@ namespace Control
 
           // Positive depth implies positive heave
           float heave_error = cmd - msg->w;
-          cmd = -m_heave_pid.step(timestep, heave_error);
+          cmd = m_heave_pid.step(timestep, heave_error);
 
           return cmd;
         }

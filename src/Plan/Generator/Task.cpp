@@ -356,7 +356,9 @@ namespace Plan
           std::string loc = params.get("loc");
           double lat = Angles::radians(params.get("lat", 0.0));
           double lon = Angles::radians(params.get("lon", 0.0));
-          double depth = params.get("depth", m_args.travel_depth);
+          double depth = params.get("depth", (double)-1);
+          if (depth == -1)
+        	  depth = params.get("d", m_args.travel_depth);
 
           // Searches for a beacon whose name matches given loc
           // in which case updates lat/lon with the beacon's location

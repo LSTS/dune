@@ -104,7 +104,7 @@ namespace DUNE
         CloseHandle(th);
 
 #elif defined(DUNE_SYS_HAS_NANOSLEEP)
-        timespec deadline = {m_delay / 1000000000, m_delay % 1000000000};
+        timespec deadline = {(time_t)(m_delay / 1000000000), (long)(m_delay % 1000000000)};
         nanosleep(&deadline, 0);
 
 #else

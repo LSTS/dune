@@ -179,6 +179,10 @@
 #  endif
 #endif
 
+#if !defined(DUNE_SYS_HAS_SSIZE_T) && defined(DUNE_CLIB_MICROSOFT)
+typedef SSIZE_T ssize_t;
+#endif
+
 // Fixed width integers.
 #if defined(DUNE_SYS_HAS_STDINT_H)
 #  include <stdint.h>
@@ -191,7 +195,6 @@
    typedef UINT32 uint32_t;
    typedef INT64 int64_t;
    typedef UINT64 uint64_t;
-   typedef SSIZE_T ssize_t;
 #else
 #  error Unable to find fixed precision integer types.
 #endif

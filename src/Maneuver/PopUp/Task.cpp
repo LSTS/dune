@@ -41,6 +41,11 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
+    //! Minimum radius for the elevators
+    static const float c_min_radius = 10.0f;
+    //! Tolerance in depth when reaching target depth in elevator
+    static const float c_depth_tol = 0.3f;
+
     //! %Task arguments
     struct Arguments
     {
@@ -48,6 +53,31 @@ namespace Maneuver
       unsigned min_sats;
       //! Minimum distance between gps_fix position and the estimated state
       float min_distance;
+      //! Radius for the elevator behavior
+      float elev_radius;
+    };
+
+    //! Maneuver states for the state machine
+    enum PopUpState
+    {
+      //! Initial useless state
+      ST_INITIAL,
+      //! Go to point
+      ST_GO_TO,
+      //! Go up
+      ST_GO_UP,
+      //! Reaching the surface
+      ST_NEAR_SURFACE,
+      //! Get a fix
+      ST_GET_FIX,
+      //! Wait at the surface
+      ST_WAIT,
+      //! Station keep at the surface
+      ST_SKEEP,
+      //! Come back down
+      ST_GO_DOWN,
+      //! Maneuver is done
+      ST_DONE
     };
 
     //! %PopUp task.
@@ -69,25 +99,25 @@ namespace Maneuver
       bool m_matched_criteria;
       //! Vehicle is not underwater
       bool m_at_surface;
-      //! True if flag near from PathControlState has gone true
-      bool m_near;
       //! Estimated time of arrival from PathControlState
       unsigned m_path_eta;
       //! Station keeping behavior in case it is necessary
       Maneuvers::StationKeep* m_skeep;
+      //! Elevator behavior
+      Maneuvers::Elevate* m_elevate;
       //! Timer counter for duration
       Time::Counter<float> m_dur_timer;
+      //! PopUp maneuver state
+      PopUpState m_pstate;
       //! Task arguments
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Maneuvers::Maneuver(name, ctx),
-        m_got_fix(false),
-        m_matched_criteria(false),
-        m_at_surface(false),
-        m_near(false),
         m_path_eta(Plans::c_max_eta),
-        m_skeep(NULL)
+        m_skeep(NULL),
+        m_elevate(NULL),
+        m_pstate(ST_INITIAL)
       {
         param("Minimum Satellites", m_args.min_sats)
         .defaultValue("7")
@@ -97,6 +127,11 @@ namespace Maneuver
         .defaultValue("3.0")
         .units(Units::Meter)
         .description("Minimum distance between gps_fix position and the estimated state");
+
+        param("Elevator Radius", m_args.elev_radius)
+        .defaultValue("15.0")
+        .units(Units::Meter)
+        .description("Radius for the elevator behavior");
 
         bindToManeuver<Task, IMC::PopUp>();
         bind<IMC::EstimatedState>(this);
@@ -109,17 +144,66 @@ namespace Maneuver
       onResourceRelease(void)
       {
         Memory::clear(m_skeep);
+        Memory::clear(m_elevate);
+      }
+
+      void
+      elevate(float z_value, unsigned z_units, bool current)
+      {
+        // Elevate upwards
+        Memory::clear(m_elevate);
+
+        IMC::Elevator elev;
+
+        if (current)
+        {
+          elev.flags = IMC::Elevator::FLG_CURR_POS;
+          // Start z doesn't matter
+          elev.start_z = 0;
+          elev.start_z_units = IMC::Z_DEPTH;
+        }
+        else
+        {
+          elev.flags = 0;
+          elev.start_z = z_value;
+          elev.start_z_units = z_units;
+        }
+
+        elev.lat = m_maneuver.lat;
+        elev.lon = m_maneuver.lon;
+
+        // End does however
+        elev.end_z = z_value;
+        elev.end_z_units = z_units;
+        elev.radius = m_args.elev_radius;
+        elev.speed = m_maneuver.speed;
+        elev.speed_units = m_maneuver.speed_units;
+
+        m_elevate = new Maneuvers::Elevate(&elev, this, c_min_radius, c_depth_tol);
+      }
+
+      inline void
+      goUp(void)
+      {
+        elevate(0.0, IMC::Z_DEPTH, true);
+      }
+
+      inline void
+      goDown(void)
+      {
+        elevate(m_maneuver.z, m_maneuver.z_units, false);
       }
 
       void
       consume(const IMC::PopUp* maneuver)
       {
         m_maneuver = *maneuver;
+        m_dur_timer.setTop(m_maneuver.duration);
 
         if (useCurr())
         {
-          // disable control loops and let it surface
-          setControl(IMC::CL_NONE);
+          goUp();
+          m_pstate = ST_GO_UP;
         }
         else
         {
@@ -134,15 +218,8 @@ namespace Maneuver
           path.speed_units = m_maneuver.speed_units;
 
           dispatch(path);
-        }
 
-        if (mustWait() && mustKeep())
-        {
-          Memory::clear(m_skeep);
-
-          m_skeep = new Maneuvers::StationKeep(this, maneuver->lat, maneuver->lon,
-                                               maneuver->radius, 0.0, IMC::Z_DEPTH,
-                                               maneuver->speed, maneuver->speed_units);
+          m_pstate = ST_GO_TO;
         }
       }
 
@@ -150,25 +227,61 @@ namespace Maneuver
       void
       consume(const IMC::VehicleMedium* msg)
       {
-        bool was_at_surface = m_at_surface;
+        switch (m_pstate)
+        {
+          case ST_NEAR_SURFACE:
+            if (msg->medium == IMC::VehicleMedium::VM_WATER)
+            {
+              if (mustWait())
+              {
+                m_pstate = ST_WAIT;
+                m_dur_timer.reset();
+              }
+              else if (mustKeep())
+              {
+                m_pstate = ST_SKEEP;
+                m_dur_timer.reset();
 
-        m_at_surface = msg->medium != IMC::VehicleMedium::VM_UNDERWATER;
-
-        if (m_at_surface != was_at_surface && m_at_surface)
-          m_dur_timer.setTop(m_maneuver.duration);
+                Memory::clear(m_skeep);
+                m_skeep = new Maneuvers::StationKeep(this, m_maneuver.lat, m_maneuver.lon,
+                                                     m_args.elev_radius, 0.0, IMC::Z_DEPTH,
+                                                     m_maneuver.speed,
+                                                     m_maneuver.speed_units);
+              }
+              else
+              {
+                m_pstate = ST_GET_FIX;
+              }
+            }
+            break;
+          default:
+            break;
+        }
       }
 
       void
       consume(const IMC::GpsFix* msg)
       {
-        if (m_at_surface && !m_matched_criteria)
+        float dist;
+
+        switch (m_pstate)
         {
-          if (msg->satellites >= m_args.min_sats)
-          {
-            m_gps_lat = msg->lat;
-            m_gps_lon = msg->lon;
-            m_got_fix = true;
-          }
+          case ST_GET_FIX:
+            double lat;
+            double lon;
+            Coordinates::toWGS84(m_state, lat, lon);
+
+            dist = Coordinates::WGS84::distance(lat, lon, 0.0,
+                                                msg->lat, msg->lon, 0.0);
+
+            if (dist < m_args.min_distance)
+            {
+              goDown();
+              m_pstate = ST_GO_DOWN;
+            }
+            break;
+          default:
+            break;
         }
       }
 
@@ -177,46 +290,67 @@ namespace Maneuver
       {
         m_state = *state;
 
-        if (m_got_fix && !m_matched_criteria)
+        switch (m_pstate)
         {
-          double lat;
-          double lon;
-          Coordinates::toWGS84(*state, lat, lon);
-
-          float dist = Coordinates::WGS84::distance(lat, lon, 0.0,
-                                                    m_gps_lat, m_gps_lon, 0.0);
-
-          if (dist < m_args.min_distance)
-          {
-            m_matched_criteria = true;
-            debug("matched criteria");
-          }
-        }
-
-        if (m_matched_criteria && mustWait())
-        {
-          if (m_dur_timer.overflow())
-            signalCompletion();
-
-          if (mustKeep())
-            m_skeep->update(state, m_near);
-        }
-        else if (m_matched_criteria)
-        {
-          signalCompletion();
+          case ST_GO_UP:
+          case ST_GO_DOWN:
+            m_elevate->update(state);
+            break;
+          case ST_SKEEP:
+            m_skeep->update(state);
+            // fall through
+          case ST_WAIT:
+            if (m_dur_timer.overflow())
+            {
+              goDown();
+              m_pstate = ST_GO_DOWN;
+            }
+            break;
+          default:
+            break;
         }
       }
 
       void
       consume(const IMC::PathControlState* pcs)
       {
-        if ((pcs->flags & IMC::PathControlState::FL_NEAR) && !m_near)
+        switch (m_pstate)
         {
-          if (!useCurr() && !mustKeep())
-            setControl(IMC::CL_NONE);
-        }
+          case ST_GO_TO:
+            if (pcs->flags & IMC::PathControlState::FL_NEAR)
+            {
+              goUp();
+              m_pstate = ST_GO_UP;
+            }
+            break;
+          case ST_GO_UP:
+            m_elevate->updatePathControl(pcs);
 
-        m_near = (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
+            // reached surface?
+            if (m_elevate->isDone())
+            {
+              setControl(IMC::CL_NONE);
+              m_pstate = ST_NEAR_SURFACE;
+            }
+
+            break;
+          case ST_GO_DOWN:
+            m_elevate->updatePathControl(pcs);
+
+            // all done?
+            if (m_elevate->isDone())
+              m_pstate = ST_DONE;
+
+            break;
+          case ST_SKEEP:
+            m_skeep->updatePathControl(pcs);
+            break;
+          case ST_DONE:
+            signalCompletion();
+            break;
+          default:
+            break;
+        }
       }
 
       void
@@ -229,39 +363,17 @@ namespace Maneuver
       inline void
       computeETA(void)
       {
-        if (m_matched_criteria && mustWait())
+        if (m_pstate == ST_WAIT)
         {
           signalProgress((uint16_t)std::ceil(m_dur_timer.getRemaining()));
         }
-        else if (m_matched_criteria)
+        else if (m_pstate == ST_DONE)
         {
           signalProgress(0);
         }
         else
         {
-          unsigned rising_time = Plans::c_max_eta;
-          unsigned steady_time = 0;
-
-          if (!m_at_surface)
-          {
-            if (m_state.vz != 0.0)
-              rising_time = (unsigned)std::ceil(std::fabs(m_state.depth / m_state.vz));
-
-            // Might be heading to the waypoint
-            if (!useCurr())
-              rising_time += m_path_eta;
-          }
-          else
-          {
-            rising_time = 0;
-          }
-
-          if (mustWait())
-            steady_time = m_maneuver.duration;
-          else
-            steady_time = (unsigned)Plans::c_fix_time;
-
-          signalProgress(rising_time + steady_time);
+          // TBD
         }
       }
 

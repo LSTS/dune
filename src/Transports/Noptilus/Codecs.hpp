@@ -46,7 +46,7 @@ namespace Transports
       int16_t alt;
       int16_t yaw;
 
-      static size_t
+      size_t
       getSize(void)
       {
         return sizeof(c_id) + sizeof(lat) + sizeof(lon) + sizeof(depth)
@@ -60,9 +60,9 @@ namespace Transports
         frame->data.resize(coded.getSize());
         uint8_t* ptr = (uint8_t*)&frame->data[0];
 
-        coded.depth = msg->depth * 100.0;
-        coded.yaw = msg->psi * 100.0;
-        coded.alt = msg->alt * 100.0;
+        coded.depth = static_cast<int16_t>(msg->depth * 100.0);
+        coded.yaw = static_cast<int16_t>(msg->psi * 100.0);
+        coded.alt = static_cast<int16_t>(msg->alt * 100.0);
         Coordinates::toWGS84(*msg, coded.lat, coded.lon);
 
         ptr += IMC::serialize(coded.c_id, ptr);

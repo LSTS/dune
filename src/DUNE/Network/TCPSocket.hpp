@@ -30,6 +30,7 @@
 
 // ISO C++ 98 headers.
 #include <vector>
+#include <cstddef>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
@@ -63,7 +64,7 @@ namespace DUNE
       bind(uint16_t port = 0, Address add = Address::Any, bool reuse = true);
 
       void
-      connect(Address add, uint16_t port);
+      connect(const Address& add, uint16_t port);
 
       void
       listen(int backlog);

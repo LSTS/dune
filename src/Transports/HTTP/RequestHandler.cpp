@@ -34,11 +34,13 @@
 // DUNE headers.
 #include <DUNE/FileSystem/Path.hpp>
 #include <DUNE/Utils/TupleList.hpp>
-#include <DUNE/Network/HTTPRequestHandler.hpp>
 #include <DUNE/Network/Exceptions.hpp>
 #include <DUNE/Network/URL.hpp>
 #include <DUNE/Time/Format.hpp>
 #include <DUNE/Utils/String.hpp>
+
+// Local headers.
+#include "RequestHandler.hpp"
 
 #define SERVER_VERSION "Server: DUNE/" DUNE_VERSION_STR "\r\n"
 #define STATUS_LINE_100 "HTTP/1.0 100 Continue\r\n"
@@ -51,15 +53,15 @@
 #define STATUS_LINE_500 "HTTP/1.0 500 Internal Server Error\r\n"
 #define STATUS_LINE_503 "HTTP/1.0 503 Service Unavailable\r\n"
 
-// Maximum size of a request.
-static const unsigned c_max_request_size = 2048;
-
-namespace DUNE
+namespace Transports
 {
-  namespace Network
+  namespace HTTP
   {
+    // Maximum size of a request.
+    static const unsigned c_max_request_size = 2048;
+
     void
-    HTTPRequestHandler::sendHeader(TCPSocket* sock, const char* status_line, int64_t length, HeaderFieldsMap* hdr_fields)
+    RequestHandler::sendHeader(TCPSocket* sock, const char* status_line, int64_t length, HeaderFieldsMap* hdr_fields)
     {
       std::string now = Time::Format::getRFC1123();
 
@@ -89,63 +91,63 @@ namespace DUNE
     }
 
     void
-    HTTPRequestHandler::sendResponse100(TCPSocket* sock)
+    RequestHandler::sendResponse100(TCPSocket* sock)
     {
       sendHeader(sock, STATUS_LINE_100, 8);
       sock->write("Continue", 8);
     }
 
     void
-    HTTPRequestHandler::sendResponse200(TCPSocket* sock)
+    RequestHandler::sendResponse200(TCPSocket* sock)
     {
       sendHeader(sock, STATUS_LINE_200, 2);
       sock->write("OK", 2);
     }
 
     void
-    HTTPRequestHandler::sendResponse201(TCPSocket* sock)
+    RequestHandler::sendResponse201(TCPSocket* sock)
     {
       sendHeader(sock, STATUS_LINE_201, 7);
       sock->write("Created", 7);
     }
 
     void
-    HTTPRequestHandler::sendResponse403(TCPSocket* sock)
+    RequestHandler::sendResponse403(TCPSocket* sock)
     {
       sendHeader(sock, STATUS_LINE_403, 9);
       sock->write("Forbidden", 9);
     }
 
     void
-    HTTPRequestHandler::sendResponse404(TCPSocket* sock, const std::string& message)
+    RequestHandler::sendResponse404(TCPSocket* sock, const std::string& message)
     {
       sendHeader(sock, STATUS_LINE_404, message.size());
       sock->write(message.c_str(), message.size());
     }
 
     void
-    HTTPRequestHandler::sendResponse416(TCPSocket* sock)
+    RequestHandler::sendResponse416(TCPSocket* sock)
     {
       sendHeader(sock, STATUS_LINE_416, 31);
       sock->write("Requested Range Not Satisfiable", 31);
     }
 
     void
-    HTTPRequestHandler::sendResponse500(TCPSocket* sock)
+    RequestHandler::sendResponse500(TCPSocket* sock)
     {
       sendHeader(sock, STATUS_LINE_500, 21);
       sock->write("Internal Server Error", 21);
     }
 
     void
-    HTTPRequestHandler::sendResponse503(TCPSocket* sock)
+    RequestHandler::sendResponse503(TCPSocket* sock)
     {
       sendHeader(sock, STATUS_LINE_503, 19);
       sock->write("Service unavailable", 19);
     }
 
     void
-    HTTPRequestHandler::sendData(TCPSocket* sock, const char* data, int size, HeaderFieldsMap* hdr_fields)
+    RequestHandler::sendData(TCPSocket* sock, const char* data, int size, HeaderFieldsMap* hdr_fields)
     {
       sendHeader(sock, STATUS_LINE_200, size, hdr_fields);
 
@@ -158,7 +160,7 @@ namespace DUNE
 
         if (rv < 0)
         {
-          DUNE_ERR("HTTPRequestHandler", "error sending data: " << rv);
+          DUNE_ERR("RequestHandler", "error sending data: " << rv);
           return;
         }
 
@@ -167,7 +169,7 @@ namespace DUNE
     }
 
     void
-    HTTPRequestHandler::sendFile(TCPSocket* sock, const std::string& file, HeaderFieldsMap& hdr_fields, int64_t off_beg, int64_t off_end)
+    RequestHandler::sendFile(TCPSocket* sock, const std::string& file, HeaderFieldsMap& hdr_fields, int64_t off_beg, int64_t off_end)
     {
       int64_t size = FileSystem::Path(file).size();
 
@@ -214,7 +216,7 @@ namespace DUNE
     }
 
     void
-    HTTPRequestHandler::handleGET(TCPSocket* sock, Utils::TupleList& headers, const char* uri)
+    RequestHandler::handleGET(TCPSocket* sock, Utils::TupleList& headers, const char* uri)
     {
       (void)headers;
       (void)uri;
@@ -222,7 +224,7 @@ namespace DUNE
     }
 
     void
-    HTTPRequestHandler::handlePOST(TCPSocket* sock, Utils::TupleList& headers, const char* uri)
+    RequestHandler::handlePOST(TCPSocket* sock, Utils::TupleList& headers, const char* uri)
     {
       (void)headers;
       (void)uri;
@@ -230,7 +232,7 @@ namespace DUNE
     }
 
     void
-    HTTPRequestHandler::handlePUT(TCPSocket* sock, Utils::TupleList& headers, const char* uri)
+    RequestHandler::handlePUT(TCPSocket* sock, Utils::TupleList& headers, const char* uri)
     {
       (void)headers;
       (void)uri;
@@ -238,7 +240,7 @@ namespace DUNE
     }
 
     void
-    HTTPRequestHandler::handleRequest(TCPSocket* sock)
+    RequestHandler::handleRequest(TCPSocket* sock)
     {
       char mtd[16];
       char uri[512];

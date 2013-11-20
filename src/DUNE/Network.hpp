@@ -41,8 +41,6 @@ namespace DUNE
 #include <DUNE/Network/Exceptions.hpp>
 #include <DUNE/Network/UDPSocket.hpp>
 #include <DUNE/Network/TCPSocket.hpp>
-#include <DUNE/Network/HTTPServer.hpp>
-#include <DUNE/Network/HTTPRequestHandler.hpp>
 #include <DUNE/Network/Interface.hpp>
 
 #endif

@@ -98,6 +98,8 @@ namespace Sensors
       std::vector<float> hard_iron;
       //! Incoming Calibration Parameters entity label.
       std::string calib_elabel;
+      // Rotation matrix values.
+      std::vector<double> rotation_mx;
     };
 
     //! %Microstrain3DMGX3 software driver.
@@ -109,6 +111,10 @@ namespace Sensors
       static const unsigned c_num_addr = 6;
       //! Magnetic calibration initial address.
       static const uint16_t c_mag_addr = 0x0400;
+      //! Rotation Matrix to correct mounting position.
+      Math::Matrix m_rotation;
+      //! Rotated calibration parameters.
+      float m_hard_iron[3];
       //! Serial port.
       SerialPort* m_uart;
       //! Euler angles message.
@@ -166,6 +172,11 @@ namespace Sensors
         .defaultValue("")
         .description("Entity label of maneuver responsible for compass calibration");
 
+        param("IMU Rotation Matrix", m_args.rotation_mx)
+        .defaultValue("")
+        .size(9)
+        .description("IMU rotation matrix which is dependent of the mounting position");
+
         m_timer.setTop(c_reset_tout);
 
         // Magnetic calibration addresses.
@@ -179,6 +190,22 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        m_rotation.fill(3, 3, &m_args.rotation_mx[0]);
+
+        // Rotate calibration parameters.
+        Math::Matrix data(3, 1);
+
+        for (unsigned i = 0; i < 3; i++)
+          data(i) = m_args.hard_iron[i];
+
+        data = inverse(m_rotation) * data;
+
+        for (unsigned i = 0; i < 3; i++)
+          m_hard_iron[i] = data(i);
+
+        if (m_uart == NULL)
+          return;
+
         if (paramChanged(m_args.hard_iron))
           runCalibration();
       }
@@ -260,6 +287,9 @@ namespace Sensors
       inline bool
       poll(Commands cmd, Sizes cmd_size, uint16_t addr, uint16_t value)
       {
+        if (m_uart == NULL)
+          return false;
+
         // Request data.
         switch (cmd)
         {
@@ -305,7 +335,7 @@ namespace Sensors
         if (rv == 0)
           return false;
 
-        if (rv != cmd_size)
+        if (rv != (size_t)cmd_size)
           return false;
 
         // Check if we have a response to our query.
@@ -347,6 +377,9 @@ namespace Sensors
       void
       runCalibration(void)
       {
+        if (m_uart == NULL)
+          return;
+
         // See if vehicle has same hard iron calibration parameters.
         if (!isCalibrated())
         {
@@ -393,7 +426,7 @@ namespace Sensors
         for (unsigned i = 0; i <= 2; i++)
         {
           senCal[i] = hard_iron[i * 2 + 1] << 16 | hard_iron[i * 2];
-          std::memcpy(&cfgCal[i], &m_args.hard_iron[i], sizeof(uint32_t));
+          std::memcpy(&cfgCal[i], &m_hard_iron[i], sizeof(uint32_t));
 
           if (senCal[i] != cfgCal[i])
           {
@@ -448,7 +481,7 @@ namespace Sensors
         for (unsigned i = 0; i <= c_num_addr / c_number_axis; i++)
         {
           uint32_t val;
-          std::memcpy(&val, &m_args.hard_iron[i], sizeof(uint32_t));
+          std::memcpy(&val, &m_hard_iron[i], sizeof(uint32_t));
 
           if (!poll(CMD_WRITE_EEPROM, CMD_WRITE_EEPROM_SIZE, m_addr[i * 2], (uint16_t)(val & 0x0000ffff)))
             return false;
@@ -480,6 +513,40 @@ namespace Sensors
 
         // Calibrate device.
         m_uart->write((uint8_t*)&bfr, 8);
+      }
+
+      //! Correct data according with mounting position.
+      void
+      rotateData(void)
+      {
+        Math::Matrix data(3, 1);
+
+        // Acceleration.
+        data(0) = m_accel.x;
+        data(1) = m_accel.y;
+        data(2) = m_accel.z;
+        data = m_rotation * data;
+        m_accel.x = data(0);
+        m_accel.y = data(1);
+        m_accel.z = data(2);
+
+        // Angular Velocity.
+        data(0) = m_agvel.x;
+        data(1) = m_agvel.y;
+        data(2) = m_agvel.z;
+        data = m_rotation * data;
+        m_agvel.x = data(0);
+        m_agvel.y = data(1);
+        m_agvel.z = data(2);
+
+        // Magnetic Field.
+        data(0) = m_magfield.x;
+        data(1) = m_magfield.y;
+        data(2) = m_magfield.z;
+        data = m_rotation * data;
+        m_magfield.x = data(0);
+        m_magfield.y = data(1);
+        m_magfield.z = data(2);
       }
 
       //! Main task.
@@ -525,15 +592,22 @@ namespace Sensors
           m_magfield.z = mfield[2];
 
           // Extract orientation matrix and compute Euler angles.
-          fp32_t omtrx[5] = {0};
-          ByteCopy::fromBE(omtrx[0], m_bfr + 37); // M11
-          ByteCopy::fromBE(omtrx[1], m_bfr + 41); // M12
-          ByteCopy::fromBE(omtrx[2], m_bfr + 45); // M13
-          ByteCopy::fromBE(omtrx[3], m_bfr + 57); // M23
-          ByteCopy::fromBE(omtrx[4], m_bfr + 69); // M33
-          m_euler.phi = static_cast<double>(std::atan2(omtrx[3], omtrx[4]));
-          m_euler.theta = static_cast<double>(std::asin(-omtrx[2]));
-          m_euler.psi = static_cast<double>(std::atan2(omtrx[1], omtrx[0]));
+          Math::Matrix rmat(3, 3);
+          float r[9] = {0};
+          double r8[9] = {0};
+
+          for (unsigned i = 0; i < 9; ++i)
+          {
+            ByteCopy::fromBE(r[i], m_bfr + 37 + 4 * i);
+            r8[i] = r[i];
+          }
+
+          rmat.fill(3, 3, &r8[0]);
+          rmat = transpose(m_rotation * rmat);
+
+          m_euler.phi = std::atan2(rmat(2, 1), rmat(2, 2));
+          m_euler.theta = std::asin(-rmat(2, 0));
+          m_euler.psi = std::atan2(rmat(1, 0), rmat(0, 0));
           m_euler.psi_magnetic = m_euler.psi;
 
           // Extract time.
@@ -543,6 +617,9 @@ namespace Sensors
           m_accel.time = m_euler.time;
           m_agvel.time = m_euler.time;
           m_magfield.time = m_euler.time;
+
+          // Correct mounting position.
+          rotateData();
 
           // Dispatch messages.
           dispatch(m_euler, DF_KEEP_TIME);

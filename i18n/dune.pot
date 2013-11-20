@@ -6,7 +6,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.4.0-rc1\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-11-01 17:25+0000\n"
+        "POT-Creation-Date: 2013-11-08 14:16+0000\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -557,17 +557,22 @@ msgstr  ""
 msgid   "restarting in %u seconds due to error: %s"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:474
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:473
+#, c-format
+msgid   "failed to update parameters: %s"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:481
 #, c-format
 msgid   "task died with uncaught exception: %s: restarting"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:558
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:565
 #, c-format
 msgid   "updating entity parameters: %s: '%s'"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:754
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:761
 #, c-format
 msgid   "invalid parameter '%s'"
 msgstr  ""
@@ -1111,27 +1116,14 @@ msgstr  ""
 msgid   "no valid value for altitude has been received yet,maneuver will not proceed"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:103
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:96
 #, c-format
-msgid   "%s safe region (distance: %.1f m)"
+msgid   "outside safe region (distance: %.1f m)"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:104
-msgid   "inside"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:104
-msgid   "outside"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:112
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:105
 #, c-format
-msgid   "stopping (%0.1f m)"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:121
-#, c-format
-msgid   "moving (distance: %0.1f m)"
+msgid   "inside safe region (distance: %.1f m)"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/VehicleFormation.cpp:68
@@ -1541,16 +1533,30 @@ msgstr  ""
 msgid   "maximum amount of beacons is %u"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:273
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:238
 msgid   "Ardupilot interface initialized"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:278
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:243
 msgid   "Connection failed, retrying..."
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:709
-msgid   "Connection lost, retrying..."
+#: /home/josebraga/workspace/dune/trunk/src/Control/ROV/HorizontalPlane/Task.cpp:54
+#: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:60
+msgid   "Heading Rate"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Control/ROV/HorizontalPlane/Task.cpp:54
+#: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:59
+msgid   "Heading"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Control/ROV/HorizontalPlane/Task.cpp:55
+msgid   "Surge"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Control/ROV/HorizontalPlane/Task.cpp:55
+msgid   "Sway"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Diving/Task.cpp:476
@@ -1579,14 +1585,6 @@ msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:58
 msgid   "Pitch"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:59
-msgid   "Heading"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:60
-msgid   "Heading Rate"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:162
@@ -2004,7 +2002,7 @@ msgid   "failed to configure output frequency"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:294
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:356
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:365
 msgid   "failed to set hard-iron correction factors"
 msgstr  ""
 
@@ -2040,19 +2038,19 @@ msgstr  ""
 msgid   "parse error: %s"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:362
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:371
 msgid   "resetting device"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:381
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:390
 msgid   "failed to read magnetic calibration parameters from device"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:400
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:409
 msgid   "different calibration parameters"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:445
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:454
 #, c-format
 msgid   "new hard-iron calibration parameters: %f | %f"
 msgstr  ""
@@ -2979,251 +2977,251 @@ msgid   "Communications Relay Maneuver"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:18
-msgid   "Compass"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:19
 msgid   "Compass Calibration Maneuver"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:20
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:19
 msgid   "Cover Area"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:21
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:20
 msgid   "DVL"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:22
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:21
 msgid   "Depth Control"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:23
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:22
 msgid   "Depth Sensor"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:24
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:23
 msgid   "Discovery"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:25
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:24
 msgid   "Diving"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:26
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:25
 msgid   "Docking"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:27
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:26
 msgid   "Echo Sounder"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:28
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:27
 msgid   "Elevator Maneuver"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:29
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:28
 msgid   "Emergency Monitor"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:30
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:29
 msgid   "Entity Monitor"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:31
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:30
 msgid   "Environment"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:32
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:31
 msgid   "FTP Server"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:33
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:32
 msgid   "Follow Path Maneuver"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:34
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:33
 msgid   "Follow Reference"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:35
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:34
 msgid   "Follow Reference Maneuver"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:36
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:35
 msgid   "Follow System Maneuver"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:37
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:36
 msgid   "Frame Grabber"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:38
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:37
 msgid   "Fuel"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:39
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:38
 msgid   "GPS"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:40
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:39
 msgid   "GSM"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:41
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:40
 msgid   "Gimbal"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:42
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:41
 msgid   "Goto Maneuver"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:43
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:42
 msgid   "Groundstation Telemetry"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:44
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:43
 msgid   "HTTP Server"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:45
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:44
 msgid   "Heave Motor"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:46
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:45
 msgid   "Horizontal Plane Control"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:47
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:46
 msgid   "IMU"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:48
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:47
 msgid   "INOV TCP"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:49
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:48
 msgid   "INOV Target"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:50
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:49
 msgid   "Idle Maneuver"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:51
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:50
 msgid   "Iridium Modem"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:52
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:51
 msgid   "Iridium Transport"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:53
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:52
 msgid   "LBL"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:54
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:53
 msgid   "LBL Estimator"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:55
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:54
 msgid   "LCD"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:56
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:55
 msgid   "LED Driver"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:57
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:56
 msgid   "LEDs"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:58
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:57
 msgid   "Leak Simulator"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:59
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:58
 msgid   "Log Book"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:60
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:59
 msgid   "Logger"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:61
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:60
 msgid   "Loiter Maneuver"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:62
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:61
 msgid   "Lost Comms"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:63
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:62
 msgid   "Lost Comms Monitor"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:64
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:63
 msgid   "MCD4R"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:65
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:64
 msgid   "Mainboard"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:66
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:65
 msgid   "Medium"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:67
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:66
 msgid   "Motor"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:68
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:67
 msgid   "Motor Controller"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:69
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:68
 msgid   "Multibeam"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:70
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:69
 msgid   "Navigation"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:71
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:70
 msgid   "Noptilus"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:72
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:71
 msgid   "Operational Limits"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:73
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:72
 msgid   "Panel"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:74
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:73
 msgid   "Panel Buttons"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:75
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:74
 msgid   "Path Control"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:76
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:75
 msgid   "Pencil Beam"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:77
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:76
 msgid   "Photo Trigger"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:78
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:77
 msgid   "Piccolo Communications"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:79
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:78
 msgid   "Piccolo Gateway"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:79
+msgid   "Piccolo Serial"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:80

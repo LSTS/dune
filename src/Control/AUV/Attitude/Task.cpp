@@ -300,6 +300,8 @@ namespace Control
         void
         onUpdateParameters(void)
         {
+          reset();
+
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
           {
             if (paramChanged(m_args.max_int[i]))
