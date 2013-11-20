@@ -244,4 +244,5 @@ MESSAGE(814, UamTxFrame)
 MESSAGE(815, UamRxFrame)
 MESSAGE(816, UamTxStatus)
 MESSAGE(817, UamRxRange)
+MESSAGE(818, AbortAcked)
 #undef MESSAGE

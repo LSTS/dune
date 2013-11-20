@@ -464,5 +464,7 @@
 #define DUNE_IMC_UAMTXSTATUS 816
 //! UamRxRange identification number.
 #define DUNE_IMC_UAMRXRANGE 817
+//! AbortAcked identification number.
+#define DUNE_IMC_ABORTACKED 818
 
 #endif

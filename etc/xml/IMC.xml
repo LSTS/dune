@@ -5590,13 +5590,13 @@
         Control loop mask.
       </description>
     </field>
-    <field name="Scope Time Reference" abbrev="scope_ref" type="fp32_t" unit="s">
+    <field name="Scope Time Reference" abbrev="scope_ref" type="uint32_t">
       <description>
-        Time reference for the scope of the control loop message.
+        Unsigned integer reference for the scope of the control loop message.
         Scope reference should only be set by a maneuver.
-        Should be set to a monotonic reference at the time of dispatching this message.
-        Lower level controllers must inherit the same scope reference time sent by maneuver.
-        This same scope reference time must be sent down to lower control layers.
+        Should be set to an always increasing reference at the time of dispatching this message.
+        Lower level controllers must inherit the same scope reference sent by maneuver.
+        This same scope reference must be sent down to lower control layers.
       </description>
     </field>
   </message>
@@ -6747,4 +6747,9 @@
     <field name="Value" abbrev="value" type="fp32_t"/>
   </message>
 
+  <message id="818" name="Abort Acknowledged" abbrev="AbortAcked" source="vehicle">
+    <description>
+      An 'Abort' message was received and acted upon.
+    </description>
+  </message>
 </messages>
