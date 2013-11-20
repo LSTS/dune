@@ -130,6 +130,18 @@ namespace Control
         }
 
         void
+        onActivation(void)
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        }
+
+        void
+        onDeactivation(void)
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        }
+
+        void
         reset(void)
         {
           m_braking = false;
@@ -147,8 +159,6 @@ namespace Control
             m_fins[i].id = i;
             m_servo_pos[i] = 0.0;
           }
-
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
 
         //! Resolve entities for messages
