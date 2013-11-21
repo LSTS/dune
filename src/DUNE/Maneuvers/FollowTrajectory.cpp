@@ -67,7 +67,7 @@ namespace DUNE
       begin.z = maneuver->z;
       begin.z_units = maneuver->z_units;
       begin.t = 0;
-      m_traj.push_back(begin);
+      // m_traj.push_back(begin);
 
       const IMC::MessageList<IMC::TrajectoryPoint>* list = &maneuver->points;
 
@@ -100,6 +100,9 @@ namespace DUNE
       if (!initTrajectory(msg))
         return;
 
+      if (!canInit(msg))
+        return;
+
       setControl(IMC::CL_PATH);
 
       m_path.end_lat = msg->lat;
@@ -110,11 +113,12 @@ namespace DUNE
       m_path.speed = msg->speed;
       m_path.speed_units = msg->speed_units;
 
+      m_rlat = msg->lat;
+      m_rlon = msg->lon;
+
       dispatch(m_path);
 
       m_approach = true; // signal approach stage
-
-      onInit(msg);
     }
 
     void
@@ -145,8 +149,8 @@ namespace DUNE
 
       step(*msg);
       m_cstep_time = now;
-      m_rlat = msg->lat;
-      m_rlon = msg->lon;
+      // m_rlat = msg->lat;
+      // m_rlon = msg->lon;
     }
 
     void

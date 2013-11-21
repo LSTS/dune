@@ -68,9 +68,10 @@ namespace DUNE
       //! Method invoked on maneuver startup.
       //! By default the base class implementation does nothing.
       //! @param msg maneuver message
+      //! @return true if we can proceed with the maneuver, false otherwise
       virtual
-      void
-      onInit(const IMC::FollowTrajectory* msg) = 0;
+      bool
+      canInit(const IMC::FollowTrajectory* msg) = 0;
 
       //! Consumer for IMC::EstimatedState message.
       //! @param msg message
