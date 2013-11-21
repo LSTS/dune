@@ -75,6 +75,7 @@ namespace Control
         bool hrate_bypass;
         unsigned n_thrusters;
         float int_heading_limit;
+        float int_hrate_limit;
         float max_hrate;
         float max_surge;
         float max_sway;
@@ -108,7 +109,11 @@ namespace Control
           param("Heading Integral Limit", m_args.int_heading_limit)
           .defaultValue("-1.0")
           .units(Units::DegreePerSecond)
-          .description("Integral limit for depth controller");
+          .description("Integral limit for heading controller");
+
+          param("Heading Rate Integral Limit", m_args.int_hrate_limit)
+          .defaultValue("-1.0")
+          .description("Integral limit for heading rate controller");
 
           param("Maximum Thrust Actuation", m_args.max_thrust)
           .defaultValue("1.0")
@@ -175,6 +180,9 @@ namespace Control
           if (paramChanged(m_args.int_heading_limit))
             m_args.int_heading_limit = Angles::radians(m_args.int_heading_limit);
 
+          if (paramChanged(m_args.int_hrate_limit))
+            m_args.int_hrate_limit = Angles::radians(m_args.int_hrate_limit);
+
           // Heading control parameters.
           if (paramChanged(m_args.max_hrate))
             m_args.max_hrate = Angles::radians(m_args.max_hrate);
@@ -198,6 +206,9 @@ namespace Control
 
           // Heading control parameters.
           m_pid[LP_HEADING].setIntegralLimits(m_args.int_heading_limit);
+
+          // Heading rate control parameters.
+          m_pid[LP_HRATE].setIntegralLimits(m_args.int_hrate_limit);
         }
 
         void
