@@ -101,17 +101,24 @@ namespace Maneuver
         Maneuvers::FollowTrajectory::onUpdateParameters();
       }
 
-      void
-      onInit(const IMC::FollowTrajectory* maneuver)
+      bool
+      canInit(const IMC::FollowTrajectory* maneuver)
       {
         m_maneuver_speed.value = maneuver->speed;
         m_maneuver_speed.speed_units = maneuver->speed_units;
+
+        if (!m_args.mps_control &&
+            (maneuver->speed_units == IMC::SUNITS_METERS_PS))
+        {
+          m_args.mps_control = true;
+          inf("forcing control in meters per second");
+        }
 
         // first waypoint in trajectory should have the time 0 (zero)
         if (!isFeasible())
         {
           signalError(DTR("provided trajectory is not feasible by the current vehicle!"));
-          return;
+          return false;
         }
 
         // Initialize member variables at zero
@@ -119,6 +126,8 @@ namespace Maneuver
         m_done = false;
         m_curr = 0;
         m_last_actuation = 0;
+
+        return true;
       }
 
       void
@@ -227,15 +236,28 @@ namespace Maneuver
         {
           // testing if the first waypoint is timed at zero
           if (point(0).t != 0.0)
+          {
+            err("first point must be timed at 0.0");
             return false;
+          }
 
           // testing for two dimensional trajectories
           for (size_t i = 1; i < n; i++)
           {
             double required_speed = speed(i - 1);
 
-            if (required_speed > m_args.max_speed || point(i).t - point(i - 1).t <= 0)
+            if (required_speed > m_args.max_speed)
+            {
+              err("required speed is above the maximum speed allowed");
               return false;
+            }
+
+            if (point(i).t - point(i - 1).t <= 0)
+            {
+              err("time difference between %d and %d is less than or equal to zero",
+                  i, i - 1);
+              return false;
+            }
           }
         }
 
