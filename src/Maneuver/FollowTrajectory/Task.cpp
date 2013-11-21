@@ -104,8 +104,6 @@ namespace Maneuver
       void
       onInit(const IMC::FollowTrajectory* maneuver)
       {
-        size_t n = trajectory_points();
-
         m_maneuver_speed.value = maneuver->speed;
         m_maneuver_speed.speed_units = maneuver->speed_units;
 
@@ -179,7 +177,9 @@ namespace Maneuver
 
           // test if the delay/advance is between the desired bounds
           if (std::fabs(delay) <= m_args.timegap)
+          {
             value = dist(m_curr, m_curr + 1) / (point(m_curr + 1).t - point(m_curr).t);
+          }
           else // if not then compute proper speed to handle delay/advance
           {
             if (point(m_curr + 1).t - point(m_curr).t - delay <= 0)
@@ -191,7 +191,9 @@ namespace Maneuver
           value = trimValue(value, m_args.min_speed, m_args.max_speed);
 
           if (m_args.mps_control)
+          {
             desiredSpeed(value, IMC::SUNITS_METERS_PS);
+          }
           else
           {
             // use interpolation

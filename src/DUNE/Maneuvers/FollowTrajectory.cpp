@@ -37,7 +37,7 @@ namespace DUNE
     FollowTrajectory::FollowTrajectory(const std::string& name, Tasks::Context& ctx):
       Maneuver(name, ctx)
     {
-      param("Control Step Period", m_cstep_period)
+      param("Control Step Frequency", m_cstep_period)
       .units(Units::Hertz)
       .defaultValue("1.0");
 
@@ -52,7 +52,8 @@ namespace DUNE
     void
     FollowTrajectory::onUpdateParameters(void)
     {
-      m_cstep_period = 1.0 / m_cstep_period;
+      if (paramChanged(m_cstep_period))
+        m_cstep_period = 1.0 / m_cstep_period;
     }
 
     bool
@@ -60,7 +61,9 @@ namespace DUNE
     {
       TPoint begin;
 
-      Coordinates::WGS84::displacement(m_rlat, m_rlon, 0, maneuver->lat, maneuver->lon, 0, &begin.x, &begin.y);
+      Coordinates::WGS84::displacement(m_rlat, m_rlon, 0,
+                                       maneuver->lat, maneuver->lon, 0,
+                                       &begin.x, &begin.y);
       begin.z = maneuver->z;
       begin.z_units = maneuver->z_units;
       begin.t = 0;
@@ -124,6 +127,7 @@ namespace DUNE
           m_approach = false;
           m_cstep_time = 0;
         }
+
         onPathCompletion();
       }
     }
@@ -136,7 +140,7 @@ namespace DUNE
 
       double now = msg->getTimeStamp();
 
-      if (m_cstep_period > 0 && now - m_cstep_time < m_cstep_period)
+      if ((m_cstep_period > 0) && (now - m_cstep_time < m_cstep_period))
         return;
 
       step(*msg);
