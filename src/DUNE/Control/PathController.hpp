@@ -334,6 +334,10 @@ namespace DUNE
         Coordinates::getTrackPosition(m_ts.start, m_ts.track_bearing, coord, x, y);
       }
 
+      //! Deactivate bottom tracker
+      void
+      deactivateBottomTracker(void);
+
       //! Data for along-track error monitoring.
       struct ATMData
       {

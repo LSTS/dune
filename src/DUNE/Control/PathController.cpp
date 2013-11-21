@@ -230,16 +230,23 @@ namespace DUNE
       if (paramChanged(m_atm.min_yaw))
         m_atm.min_yaw = Angles::radians(m_atm.min_yaw);
 
-      if (m_btd.enabled)
+      if (paramChanged(m_btd.enabled))
       {
-        if (paramChanged(m_btd.args.safe_pitch))
-          m_btd.args.safe_pitch = Angles::radians(m_btd.args.safe_pitch);
+        if (m_btd.enabled)
+        {
+          if (paramChanged(m_btd.args.safe_pitch))
+            m_btd.args.safe_pitch = Angles::radians(m_btd.args.safe_pitch);
 
-        if (paramChanged(m_btd.args.slope_hyst))
-          m_btd.args.slope_hyst = Angles::radians(m_btd.args.slope_hyst);
+          if (paramChanged(m_btd.args.slope_hyst))
+            m_btd.args.slope_hyst = Angles::radians(m_btd.args.slope_hyst);
 
-        if (paramChanged(m_btd.args.control_period))
-          m_btd.args.control_period = 1.0 / m_btd.args.control_period;
+          if (paramChanged(m_btd.args.control_period))
+            m_btd.args.control_period = 1.0 / m_btd.args.control_period;
+        }
+        else
+        {
+          deactivateBottomTracker();
+        }
       }
     }
 
@@ -932,19 +939,7 @@ namespace DUNE
       updateEntityState();
 
       if (m_btd.enabled)
-      {
-        m_btrack->deactivate();
-
-        // If braking then stop braking
-        if (m_braking)
-        {
-          IMC::Brake brk;
-          brk.op = IMC::Brake::OP_STOP;
-          dispatch(brk);
-
-          m_braking = false;
-        }
-      }
+        deactivateBottomTracker();
     }
 
     void
@@ -1048,6 +1043,25 @@ namespace DUNE
       lts.los_angle = getBearing(state, lts.end);
 
       step(state, lts);
+    }
+
+    void
+    PathController::deactivateBottomTracker(void)
+    {
+      if (m_btrack == NULL)
+        return;
+
+      m_btrack->deactivate();
+
+      // If braking then stop braking
+      if (m_braking)
+      {
+        IMC::Brake brk;
+        brk.op = IMC::Brake::OP_STOP;
+        dispatch(brk);
+
+        m_braking = false;
+      }
     }
 
     void
