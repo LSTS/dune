@@ -50,8 +50,6 @@ namespace Maneuver
 
     struct Task: public Maneuvers::FollowTrajectory
     {
-      //! Flag on whether or not the time in the waypoints shall be disregarded or not
-      bool m_ignore_time;
       //! FollowTrajectory maneuver's speed
       IMC::DesiredSpeed m_maneuver_speed;
       //! Last actuation sent to the motor (used to compute actuation step
@@ -111,24 +109,8 @@ namespace Maneuver
         m_maneuver_speed.value = maneuver->speed;
         m_maneuver_speed.speed_units = maneuver->speed_units;
 
-        m_ignore_time = false;
-
-        // if at least one of the waypoints has a time lower than zero
-        // then trajectory's time constraints will be disregarded
-        for (size_t i = 0; i < n; i++)
-        {
-          if (point(i).t < 0)
-          {
-            m_ignore_time = true;
-            break;
-          }
-        }
-
-        if (m_ignore_time)
-          inf(DTR("disregarding trajectory's time constraints"));
-
         // first waypoint in trajectory should have the time 0 (zero)
-        if (!isFeasible() && !m_ignore_time)
+        if (!isFeasible())
         {
           signalError(DTR("provided trajectory is not feasible by the current vehicle!"));
           return;
@@ -170,67 +152,59 @@ namespace Maneuver
         // the chosen ground speed is simply the distance between the points
         // divided by the time difference between them
 
-        // if time constraints are ignored just throw the maneuver speed
-        if (m_ignore_time)
+        // if this is the first waypoint
+        if (!m_curr)
         {
-          desiredSpeed(m_maneuver_speed.value, m_maneuver_speed.speed_units);
-        }
-        else
-        {
-          // if this is the first waypoint
-          if (!m_curr)
-          {
-            double value = dist(m_curr, m_curr + 1) / (point(m_curr + 1).t - point(m_curr).t);
+          double value = dist(m_curr, m_curr + 1) / (point(m_curr + 1).t - point(m_curr).t);
 
-            if (m_args.mps_control)
-            {
-              desiredSpeed(value, IMC::SUNITS_METERS_PS);
-            }
-            else
-            {
-              double actuation = Math::linearInterpolation(LinIntParam<double>(m_args.min_actuation,
-                                                                               m_args.max_actuation,
-                                                                               m_args.min_speed, m_args.max_speed,
-                                                                               value));
-              desiredSpeed(actuation, IMC::SUNITS_PERCENTAGE);
-              m_last_actuation = actuation;
-            }
+          if (m_args.mps_control)
+          {
+            desiredSpeed(value, IMC::SUNITS_METERS_PS);
           }
           else
           {
-            double delay = Clock::get() - m_zero_time - point(m_curr).t;
+            double actuation = Math::linearInterpolation(LinIntParam<double>(m_args.min_actuation,
+                                                                             m_args.max_actuation,
+                                                                             m_args.min_speed, m_args.max_speed,
+                                                                             value));
+            desiredSpeed(actuation, IMC::SUNITS_PERCENTAGE);
+            m_last_actuation = actuation;
+          }
+        }
+        else
+        {
+          double delay = Clock::get() - m_zero_time - point(m_curr).t;
 
-            double value;
+          double value;
 
-            // test if the delay/advance is between the desired bounds
-            if (std::fabs(delay) <= m_args.timegap)
-              value = dist(m_curr, m_curr + 1) / (point(m_curr + 1).t - point(m_curr).t);
-            else // if not then compute proper speed to handle delay/advance
-            {
-              if (point(m_curr + 1).t - point(m_curr).t - delay <= 0)
-                value = m_args.max_speed;
-              else
-                value = dist(m_curr, m_curr + 1) / (point(m_curr + 1).t - point(m_curr).t - delay);
-            }
-
-            value = trimValue(value, m_args.min_speed, m_args.max_speed);
-
-            if (m_args.mps_control)
-              desiredSpeed(value, IMC::SUNITS_METERS_PS);
+          // test if the delay/advance is between the desired bounds
+          if (std::fabs(delay) <= m_args.timegap)
+            value = dist(m_curr, m_curr + 1) / (point(m_curr + 1).t - point(m_curr).t);
+          else // if not then compute proper speed to handle delay/advance
+          {
+            if (point(m_curr + 1).t - point(m_curr).t - delay <= 0)
+              value = m_args.max_speed;
             else
-            {
-              // use interpolation
-              Math::LinIntParam<double> lip(m_args.min_actuation, m_args.max_actuation,
-                                            m_args.min_speed, m_args.max_speed,
-                                            value);
-              double actuation = Math::linearInterpolation(lip);
-              actuation = trimValue(actuation,
-                                    m_last_actuation - m_args.act_step,
-                                    m_last_actuation + m_args.act_step);
+              value = dist(m_curr, m_curr + 1) / (point(m_curr + 1).t - point(m_curr).t - delay);
+          }
 
-              desiredSpeed(actuation, IMC::SUNITS_PERCENTAGE);
-              m_last_actuation = actuation;
-            }
+          value = trimValue(value, m_args.min_speed, m_args.max_speed);
+
+          if (m_args.mps_control)
+            desiredSpeed(value, IMC::SUNITS_METERS_PS);
+          else
+          {
+            // use interpolation
+            Math::LinIntParam<double> lip(m_args.min_actuation, m_args.max_actuation,
+                                          m_args.min_speed, m_args.max_speed,
+                                          value);
+            double actuation = Math::linearInterpolation(lip);
+            actuation = trimValue(actuation,
+                                  m_last_actuation - m_args.act_step,
+                                  m_last_actuation + m_args.act_step);
+
+            desiredSpeed(actuation, IMC::SUNITS_PERCENTAGE);
+            m_last_actuation = actuation;
           }
         }
 
