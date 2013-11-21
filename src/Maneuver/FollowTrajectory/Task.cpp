@@ -153,7 +153,7 @@ namespace Maneuver
         // if this is the first waypoint
         if (!m_curr)
         {
-          double value = dist(m_curr, m_curr + 1) / (point(m_curr + 1).t - point(m_curr).t);
+          double value = speed(m_curr);
 
           if (m_args.mps_control)
           {
@@ -161,10 +161,12 @@ namespace Maneuver
           }
           else
           {
-            double actuation = Math::linearInterpolation(LinIntParam<double>(m_args.min_actuation,
-                                                                             m_args.max_actuation,
-                                                                             m_args.min_speed, m_args.max_speed,
-                                                                             value));
+            LinIntParam<double> lip(m_args.min_actuation,
+                                    m_args.max_actuation,
+                                    m_args.min_speed, m_args.max_speed,
+                                    value);
+
+            double actuation = Math::linearInterpolation(lip);
             desiredSpeed(actuation, IMC::SUNITS_PERCENTAGE);
             m_last_actuation = actuation;
           }
@@ -178,7 +180,7 @@ namespace Maneuver
           // test if the delay/advance is between the desired bounds
           if (std::fabs(delay) <= m_args.timegap)
           {
-            value = dist(m_curr, m_curr + 1) / (point(m_curr + 1).t - point(m_curr).t);
+            value = speed(m_curr);
           }
           else // if not then compute proper speed to handle delay/advance
           {
@@ -238,6 +240,13 @@ namespace Maneuver
         }
 
         return true;
+      }
+
+      //! Function for computing the speed for travelling to the next point
+      inline double
+      speed(int curr)
+      {
+        return dist(curr, curr + 1) / (point(curr + 1).t - point(curr).t);
       }
 
       //! Function for computing the horizontal distance between two points in the trajectory
