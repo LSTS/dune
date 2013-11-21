@@ -232,7 +232,7 @@ namespace Maneuver
           // testing for two dimensional trajectories
           for (size_t i = 1; i < n; i++)
           {
-            double required_speed = dist(i, i - 1) / (point(i).t - point(i - 1).t);
+            double required_speed = speed(i - 1);
 
             if (required_speed > m_args.max_speed || point(i).t - point(i - 1).t < 0)
               return false;
