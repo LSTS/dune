@@ -50,6 +50,8 @@ namespace Supervisors
     static const float c_error_period = 2.0;
     //! Maneuver request timeout
     static const float c_man_timeout = 1.0;
+    //! Cooldown before checking control loops after change into service mode
+    static const float c_loops_check_time = 2.0;
 
     struct Arguments
     {
@@ -85,6 +87,8 @@ namespace Supervisors
       IMC::VehicleState::OperationModeEnum m_last_op;
       //! Entities booting
       unsigned m_eboot;
+      //! Time counter for enabled loops in service mode
+      Time::Counter<float> m_loops_timer;
       //! Task arguments.
       Arguments m_args;
 
@@ -115,6 +119,7 @@ namespace Supervisors
       {
         setInitialState();
         m_err_timer.setTop(c_error_period);
+        m_loops_timer.setTop(c_loops_check_time);
         m_idle.duration = 0;
       }
 
@@ -173,6 +178,9 @@ namespace Supervisors
           m_last_op = (IMC::VehicleState::OperationModeEnum)m_vs.op_mode;
 
           m_vs.op_mode = s;
+
+          if (serviceMode() && m_vs.control_loops)
+            m_loops_timer.reset();
 
           war(DTR("now in '%s' mode"), DTR(c_state_desc[s]));
 
@@ -547,18 +555,27 @@ namespace Supervisors
       }
 
       void
+      disableLoops(void)
+      {
+        IMC::ControlLoops cloops;
+        cloops.enable = IMC::ControlLoops::CL_DISABLE;
+        cloops.mask = IMC::CL_ALL;
+        cloops.scope_ref = m_scope_ref;
+        dispatch(&cloops, DF_LOOP_BACK);
+      }
+
+      void
       task(void)
       {
         dispatch(m_vs);
 
-        if (externalMode() && !m_args.ext_control)
+        if (serviceMode() && m_vs.control_loops && m_loops_timer.overflow())
+          changeMode(IMC::VehicleState::VS_EXTERNAL);
+
+        if (!m_args.ext_control && externalMode())
         {
-          war("this vehicle does not allow for external control, disabling loops");
-          IMC::ControlLoops cloops;
-          cloops.enable = IMC::ControlLoops::CL_DISABLE;
-          cloops.mask = IMC::CL_ALL;
-          cloops.scope_ref = m_scope_ref;
-          dispatch(&cloops, DF_LOOP_BACK);
+          err(DTR("this vehicle does not allow for external control, disabling loops"));
+          disableLoops();
         }
 
         if (m_switch_time < 0.0)
