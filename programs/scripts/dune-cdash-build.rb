@@ -379,8 +379,8 @@ if not options[:machine].nil?
   else
     vm = VirtualBox.new(options[:machine], options[:target])
     vm.execute
+    exit 0
   end
-  exit 0
 end
 
 if options[:tchain].nil?
