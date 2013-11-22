@@ -59,16 +59,6 @@ namespace DUNE
     bool
     FollowTrajectory::initTrajectory(const IMC::FollowTrajectory* maneuver)
     {
-      TPoint begin;
-
-      Coordinates::WGS84::displacement(m_rlat, m_rlon, 0,
-                                       maneuver->lat, maneuver->lon, 0,
-                                       &begin.x, &begin.y);
-      begin.z = maneuver->z;
-      begin.z_units = maneuver->z_units;
-      begin.t = 0;
-      // m_traj.push_back(begin);
-
       const IMC::MessageList<IMC::TrajectoryPoint>* list = &maneuver->points;
 
       IMC::MessageList<IMC::TrajectoryPoint>::const_iterator itr;
@@ -76,8 +66,8 @@ namespace DUNE
       for (itr = list->begin(); itr != list->end(); itr++)
       {
         TPoint p;
-        p.x = (*itr)->x + begin.x;
-        p.y = (*itr)->y + begin.y;
+        p.x = (*itr)->x;
+        p.y = (*itr)->y;
         p.z = maneuver->z + (*itr)->z;
         p.z_units = maneuver->z_units;
         p.t = (*itr)->t;
@@ -149,8 +139,6 @@ namespace DUNE
 
       step(*msg);
       m_cstep_time = now;
-      // m_rlat = msg->lat;
-      // m_rlon = msg->lon;
     }
 
     void
