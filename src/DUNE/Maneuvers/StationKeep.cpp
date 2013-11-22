@@ -134,7 +134,10 @@ namespace DUNE
         case ST_OFF_STATION:
           break;
         default:
-          throw std::runtime_error("invalid station keeping state");
+          std::string str = DTR("invalid station keeping state");
+          // signal error before throwing exception
+          m_task->signalError(str);
+          throw std::runtime_error(str);
           break;
       }
     }
