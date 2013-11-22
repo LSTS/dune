@@ -55,6 +55,8 @@ namespace Supervisors
     {
       //! Relevant entities when performing a safe plan.
       std::vector<std::string> safe_ents;
+      //! Allow external control
+      bool ext_control;
     };
 
     struct Task: public DUNE::Tasks::Periodic
@@ -95,6 +97,10 @@ namespace Supervisors
         param("Safe Entities", m_args.safe_ents)
         .defaultValue("")
         .description("Relevant entities when performing a safe plan");
+
+        param("Allows External Control", m_args.ext_control)
+        .defaultValue("true")
+        .description("Allow for the vehicle to be externally controlled");
 
         bind<IMC::Abort>(this);
         bind<IMC::ControlLoops>(this);
@@ -544,6 +550,16 @@ namespace Supervisors
       task(void)
       {
         dispatch(m_vs);
+
+        if (externalMode() && !m_args.ext_control)
+        {
+          war("this vehicle does not allow for external control, disabling loops");
+          IMC::ControlLoops cloops;
+          cloops.enable = IMC::ControlLoops::CL_DISABLE;
+          cloops.mask = IMC::CL_ALL;
+          cloops.scope_ref = m_scope_ref;
+          dispatch(&cloops, DF_LOOP_BACK);
+        }
 
         if (m_switch_time < 0.0)
           return;
