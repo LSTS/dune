@@ -168,6 +168,7 @@ main(int argc, char** argv)
     msg = tmsg;
     tmsg->enable = atoi(argv[4]) ? 1 : 0;
     tmsg->mask = atoi(argv[5]);
+    tmsg->scope_ref = atoi(argv[6]);
   }
 
   if (strcmp(argv[3], "DataSanity") == 0)
