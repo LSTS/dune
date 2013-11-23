@@ -69,6 +69,7 @@ CODE
 
 # C++ test code.
 TEST_CXX = <<CODE
+#include <stdexcept>
 int main(void) { int* v = new int; return *v; }
 CODE
 
