@@ -111,7 +111,7 @@ namespace Maneuver
             (maneuver->speed_units == IMC::SUNITS_METERS_PS))
         {
           m_args.mps_control = true;
-          inf("forcing control in meters per second");
+          inf(DTR("forcing control in meters per second"));
         }
 
         // first waypoint in trajectory should have the time 0 (zero)
@@ -237,7 +237,7 @@ namespace Maneuver
           // testing if the first waypoint is timed at zero
           if (point(0).t != 0.0)
           {
-            err("first point must be timed at 0.0");
+            err(DTR("first point must be timed at 0.0"));
             return false;
           }
 
@@ -248,14 +248,14 @@ namespace Maneuver
 
             if (required_speed > m_args.max_speed)
             {
-              err("required speed is above the maximum speed allowed");
+              err(DTR("required speed is above the maximum speed allowed"));
               return false;
             }
 
             if (point(i).t - point(i - 1).t <= 0)
             {
-              err("time difference between %d and %d is less than or equal to zero",
-                  i, i - 1);
+              err(DTR("time difference between %d and %d is less than or equal to zero"),
+                  (int)i, (int)i - 1);
               return false;
             }
           }
