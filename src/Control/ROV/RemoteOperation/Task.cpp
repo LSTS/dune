@@ -247,8 +247,8 @@ namespace Control
           {
             IMC::DesiredVelocity dvel;
             dvel.flags = IMC::DesiredVelocity::FL_SURGE | IMC::DesiredVelocity::FL_SWAY;
-            dvel.u = m_forces(0, 0);
-            dvel.v = m_forces(1, 0);
+            dvel.u = m_args.max_speed * m_forces(0, 0);
+            dvel.v = m_args.max_speed * m_forces(1, 0);
             dispatch(dvel);
 
             if (!m_args.as_control)
