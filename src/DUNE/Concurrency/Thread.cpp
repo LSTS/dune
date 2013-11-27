@@ -81,7 +81,7 @@ dune_concurrency_thread_entry_point(void* data)
 
 #if defined(DUNE_OS_LINUX)
   td->m_id = syscall(SYS_gettid);
-  td->m_proc_file = DUNE::Utils::String::str("/proc/%u/stat", td->m_id);
+  td->m_proc_file = DUNE::Utils::String::str("/proc/%u/task/%u/stat", getpid(), td->m_id);
 #endif
 
   td->m_start_barrier.wait();
@@ -257,7 +257,7 @@ namespace DUNE
       if (global_delta == 0)
         return -1;
 
-      return proc_delta * 100 / global_delta;
+      return (proc_delta * 100) / global_delta;
 
       // Not implemented.
 #else
