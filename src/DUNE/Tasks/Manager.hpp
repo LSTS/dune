@@ -84,6 +84,18 @@ namespace DUNE
       void
       writeParamsXML(std::ostream& os) const;
 
+      std::map<std::string, Task*>::iterator
+      begin(void)
+      {
+        return m_tasks.begin();
+      }
+
+      std::map<std::string, Task*>::iterator
+      end(void)
+      {
+        return m_tasks.end();
+      }
+
     private:
       //! Task list.
       std::vector<std::string> m_list;
