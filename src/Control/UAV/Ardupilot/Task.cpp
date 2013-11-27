@@ -724,7 +724,7 @@ namespace Control
 
           double now = Clock::get();
 
-          while (poll(1.0))
+          while (poll(0.01))
           {
             int n = receiveData(m_buf, sizeof(m_buf));
 
