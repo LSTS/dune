@@ -235,13 +235,26 @@ namespace DUNE
   void
   Daemon::dispatchPeriodic(void)
   {
-    // Dispatch CPU usage.
+    // Dispatch global CPU usage.
     IMC::CpuUsage cpu_usage;
     int value = m_sys_resources.getProcessorUsage();
     if (value >= 0 && value <= 100)
     {
       cpu_usage.value = value;
       dispatch(cpu_usage);
+    }
+
+    // Dispatch per thread CPU usage.
+    std::map<std::string, Task*>::iterator itr = m_tman->begin();
+    for ( ; itr != m_tman->end(); ++itr)
+    {
+      value = itr->second->getProcessorUsage();
+      if (value >= 0 && value <= 100)
+      {
+        cpu_usage.setSourceEntity(itr->second->getEntityId());
+        cpu_usage.value = value;
+        dispatch(cpu_usage);
+      }
     }
 
     // Dispatch available storage.
