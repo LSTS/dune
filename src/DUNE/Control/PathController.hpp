@@ -44,7 +44,9 @@ namespace DUNE
   namespace Control
   {
     //! Estimated time of arrival factor
-    static const double c_time_factor = 5;
+    static const float c_time_factor = 5.0f;
+    //! Factor for path error in y direction to prevent too large cross track offsets
+    static const float c_erry_factor = 1.75f;
 
     // Export DLL Symbol.
     class DUNE_DLL_SYM PathController;
