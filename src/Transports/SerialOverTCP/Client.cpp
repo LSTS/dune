@@ -57,12 +57,10 @@ namespace Transports
     {
       if(m_out_data.empty())
         return 0;
-      else
-      {
-        bfr = m_out_data.front().data;
-        m_out_data.pop();
-        return m_out_data.front().size;
-      }
+
+      *bfr = *m_out_data.front().data;
+      m_out_data.pop();
+      return m_out_data.front().size;
     }
 
     void
@@ -93,6 +91,8 @@ namespace Transports
       {
         if (m_timer.overflow())
           break;
+
+        m_poll.poll(0.01);
 
         try
         {

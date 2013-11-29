@@ -213,7 +213,7 @@ namespace Transports
       {
         while (!stopping())
         {
-          if (m_poll.poll(1.0))
+          if (m_poll.poll(0.01))
           {
             checkSerialPort();
             checkMainSocket();
