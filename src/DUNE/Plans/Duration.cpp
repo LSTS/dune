@@ -93,7 +93,7 @@ namespace DUNE
     inline float
     Duration::compensate(float distance, float speed)
     {
-      return std::max(0.0, distance - Control::c_time_factor * speed);
+      return std::max(0.0f, distance - Control::c_time_factor * speed);
     }
 
     float
