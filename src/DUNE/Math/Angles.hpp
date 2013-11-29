@@ -172,7 +172,8 @@ namespace DUNE
         // Correct sign while avoiding division by zero.
         if (std::fabs(d) > 1e-3)
         {
-          // Check quadrants.
+          // Modify sign if one of the angles is on the 2nd
+          // quadrant while other is on the 3rd quadrant
           if (((ca < 0) && (sa < 0) && (cb > 0) && (sb < 0)) ||
               ((cb < 0) && (sb < 0) && (ca > 0) && (sa < 0)))
             d = -d;
