@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-11-08 14:08+0000\n"
+        "POT-Creation-Date: 2013-12-02 15:58+0000\n"
         "PO-Revision-Date: 2013-08-03 13:42-0000\n"
         "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
         "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -413,28 +413,37 @@ msgstr  "происходит в направлении (%f, %f, %f)."
 msgid   "hovering next to (%f, %f)."
 msgstr  "парящей рядом (%f, %f)."
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/Elevator/Task.cpp:149
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/Loiter/Task.cpp:75
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:47
-#, c-format
-msgid   "forcing minimum radius of %.1f"
-msgstr  "заставляя минимальный радиус %.1f"
-
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/Elevator/Task.cpp:279
-msgid   "water column is not deep enough"
-msgstr  "толщи воды не достаточно глубоко"
-
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/Elevator/Task.cpp:331
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/Elevator/Task.cpp:216
 msgid   "vertical progress is too slow"
 msgstr  "вертикальная прогресс идет слишком медленными"
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowTrajectory/Task.cpp:128
-msgid   "disregarding trajectory's time constraints"
-msgstr  "без учета времени траектории стесненность"
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowTrajectory/Task.cpp:114
+msgid   "forcing control in meters per second"
+msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowTrajectory/Task.cpp:133
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowTrajectory/Task.cpp:120
 msgid   "provided trajectory is not feasible by the current vehicle!"
 msgstr  "при условии траектории не представляется возможным действующим автомобиля!"
+
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowTrajectory/Task.cpp:240
+msgid   "first point must be timed at 0.0"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowTrajectory/Task.cpp:251
+msgid   "required speed is above the maximum speed allowed"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowTrajectory/Task.cpp:257
+#, c-format
+msgid   "time difference between %d and %d is less than or equal to zero"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/Loiter/Task.cpp:75
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:47
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/Elevate.cpp:54
+#, c-format
+msgid   "forcing minimum radius of %.1f"
+msgstr  "заставляя минимальный радиус %.1f"
 
 #: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowSystem/Task.cpp:299
 msgid   "timeout to receive new remote info was exceeded."
@@ -771,33 +780,33 @@ msgstr  "Глубина"
 msgid   "Euler Angles"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:289
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:296
 #: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:258
 msgid   "not active"
 msgstr  "не активна"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:473
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:480
 #, c-format
 msgid   "path (lat/lon): %0.5f %0.5f to %0.5f %0.5f"
 msgstr  "пути (широта / долгота): %0.5f %0.5f до %0.5f %0.5f"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:640
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:647
 msgid   "expected new path control reference"
 msgstr  "Ожидается новая ссылка пути управления"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:697
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:704
 msgid   "now loitering"
 msgstr  "теперь слонялся"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:836
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:843
 msgid   "along-track divergence error"
 msgstr  "вдоль линии пути расхождение ошибке"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:869
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:876
 msgid   "cross-track divergence error"
 msgstr  "боковое расхождение ошибке"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:962
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:957
 msgid   "waiting for position estimate from navigation"
 msgstr  "ждет от оценки местоположения навигации"
 
@@ -1059,7 +1068,7 @@ msgstr  "синтаксической ошибке"
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:40
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:334
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/OS4000/Task.cpp:147
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1002
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:960
 msgid   "initializing"
 msgstr  "инициализации"
 
@@ -1161,15 +1170,15 @@ msgstr  "Неверная версия"
 msgid   "active but without bottom lock"
 msgstr  "активно, но без нижний замок"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:89
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:90
 msgid   "unable to unlock"
 msgstr  "не в состоянии разблокировать"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:139
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:160
 msgid   "unsupported vertical reference"
 msgstr  "поддерживается вертикальной ссылки"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:145
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:166
 msgid   "no valid value for altitude has been received yet,maneuver will not proceed"
 msgstr  "нет допустимого значения для высоты не было получено не менее, маневр не будет продолжаться"
 
@@ -1182,6 +1191,11 @@ msgstr  "%s безопасной области (расстояние: %.1f м)"
 #, fuzzy, c-format
 msgid   "inside safe region (distance: %.1f m)"
 msgstr  "%s безопасной области (расстояние: %.1f м)"
+
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:137
+#, fuzzy
+msgid   "invalid station keeping state"
+msgstr  "недействительным участником формирования"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/VehicleFormation.cpp:68
 msgid   "parsing vehicle participants"
@@ -1204,9 +1218,13 @@ msgid   "local vehicle is not part of formation"
 msgstr  "местное транспортное средство не является частью формирования"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/VehicleFormation.cpp:146
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/FollowTrajectory.cpp:87
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/FollowTrajectory.cpp:80
 msgid   "too few trajectory points"
 msgstr  "слишком мало точках траектории"
+
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/Elevate.cpp:125
+msgid   "water column is not deep enough"
+msgstr  "толщи воды не достаточно глубоко"
 
 #: /home/josebraga/workspace/dune/trunk/src/Supervisors/Power/Task.cpp:116
 msgid   "failed to execute power down command"
@@ -1236,65 +1254,69 @@ msgstr  "ВНЕШНЕЕ УПРАВЛЕНИЕ"
 msgid   "BOOT"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:171
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:185
 #, c-format
 msgid   "now in '%s' mode"
 msgstr  "Сейчас в '%s' режиме"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:202
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:216
 #: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:372
 msgid   "got abort request"
 msgstr  "получил прервать запрос"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:314
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:328
 msgid   "entity errors cleared"
 msgstr  "Ошибки лица очищается"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:318
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:332
 #, c-format
 msgid   "vehicle errors: %s"
 msgstr  "автомобиль ошибок: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:381
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:395
 msgid   " maneuver error: "
 msgstr  " маневра ошибке:"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:441
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:455
 msgid   "cannot calibrate: vehicle is in external mode"
 msgstr  "нельзя откалибровать: автомобиль находится в режиме внешнего"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:455
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:469
 #, c-format
 msgid   "calibrating vehicle for %u seconds"
 msgstr  "средства для калибровки %u секунд"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:464
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:478
 msgid   "cannot stop calibration: vehicle is not calibrating"
 msgstr  "не может остановить калибровка: автомобиль не калибровке"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:468
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:482
 msgid   "stopped calibration"
 msgstr  "остановился калибровки"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:484
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:498
 msgid   "no maneuver specified"
 msgstr  "Нет маневр указанный"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:492
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:506
 msgid   " maneuver cannot be started in current mode"
 msgstr  " маневр не может быть запущена в текущем режиме"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:501
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:515
 msgid   " maneuver started"
 msgstr  " маневр начался"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:532
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:546
 #: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:620
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:919
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:882
 msgid   "OK"
 msgstr  "Хорошо"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:560
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:577
+msgid   "this vehicle does not allow for external control, disabling loops"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:593
 msgid   "maneuver request timeout"
 msgstr  "Тайм-аут запроса маневра"
 
@@ -1376,7 +1398,7 @@ msgstr  "не удалось выполнить привязку сокета с
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/TCP/Server/Task.cpp:120
 #: /home/josebraga/workspace/dune/trunk/src/Transports/UDP/Task.cpp:254
-#: /home/josebraga/workspace/dune/trunk/src/Transports/HTTP/Task.cpp:112
+#: /home/josebraga/workspace/dune/trunk/src/Transports/HTTP/Task.cpp:114
 #: /home/josebraga/workspace/dune/trunk/src/Transports/FTP/Task.cpp:103
 #: /home/josebraga/workspace/dune/trunk/src/Transports/Discovery/Task.cpp:105
 #, c-format
@@ -1406,7 +1428,7 @@ msgstr  "Уровень отладки"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:199
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:511
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:447
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:563
 msgid   "dynamic sound speed corrections are disabled"
 msgstr  "динамической корректировки скорости звук отключаются"
 
@@ -1477,7 +1499,7 @@ msgid   "invalid or unsupported command"
 msgstr  "недопустимую команду реконфигурации"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/UDP/Task.cpp:251
-#: /home/josebraga/workspace/dune/trunk/src/Transports/HTTP/Task.cpp:140
+#: /home/josebraga/workspace/dune/trunk/src/Transports/HTTP/Task.cpp:142
 msgid   "failed to find one available port"
 msgstr  "не удалось найти свободный порт"
 
@@ -1596,13 +1618,18 @@ msgstr  "Ошибка разбора: %s"
 msgid   "maximum amount of beacons is %u"
 msgstr  "максимальное количество маяков %u"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:238
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:272
 msgid   "Ardupilot interface initialized"
 msgstr  "Ardupilot интерфейс инициализируется"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:243
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:277
 msgid   "Connection failed, retrying..."
 msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:709
+#, fuzzy
+msgid   "Connection lost, retrying..."
+msgstr  "соединение закрыто"
 
 #: /home/josebraga/workspace/dune/trunk/src/Control/ROV/HorizontalPlane/Task.cpp:54
 #: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:60
@@ -1659,7 +1686,8 @@ msgstr  "Включить рулон контроллера"
 #: /home/josebraga/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:364
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex881A/Task.cpp:450
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:515
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:470
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:474
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:375
 #: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:212
 msgid   "failed to contact device"
 msgstr  "не удалось связаться с устройством"
@@ -1732,7 +1760,7 @@ msgid   "Frequency"
 msgstr  "Частота"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex881A/Task.cpp:343
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:273
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:284
 msgid   "restarting to change UART device"
 msgstr  "перезапуска изменить устройство UART"
 
@@ -1799,45 +1827,55 @@ msgstr  "перезапуска изменить TCP порт"
 msgid   "restarting to change device address"
 msgstr  "перезапуска изменить адрес IPv4"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:206
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:234
 msgid   "no reply to command"
 msgstr  "Ответа не командовать"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:207
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:235
 msgid   "failed to setup device"
 msgstr  "Не могу выполнить устройство"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:456
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:516
 msgid   "invalid GPZDA sentence"
 msgstr  "недействительным приговор GPZDA"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:480
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:540
 msgid   "invalid GPGGA sentence"
 msgstr  "недействительным приговор GPGGA"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:528
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:588
 msgid   "invalid PUBX,00 sentence"
 msgstr  "недействительным PUBX, 00 предложение"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:579
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:639
 msgid   "invalid GPVTG sentence"
 msgstr  "недействительным GPVTG предложении"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:603
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:663
 msgid   "invalid GPHDT sentence"
 msgstr  "недействительным GPHDT предложении"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:619
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:679
 msgid   "invalid GPHDM sentence"
 msgstr  "недействительным GPHDM предложении"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:637
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:697
 msgid   "invalid GPROT sentence"
 msgstr  "недействительным GPROT предложении"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:656
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Task.cpp:716
 msgid   "invalid PSATHPR sentence"
 msgstr  "недействительным PSATHPR предложении"
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:254
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:205
+msgid   "Use Device at Surface"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:409
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:496
+msgid   "no medium data: user must control device"
+msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:123
 msgid   "failed to enter command mode"
@@ -2033,7 +2071,7 @@ msgid   "unable to read prompt"
 msgstr  "не в состоянии читать быстрое"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:288
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:456
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:572
 msgid   "failed to start data sampling"
 msgstr  "Не удалось запустить выборки данных"
 
@@ -2071,21 +2109,21 @@ msgid   "failed to configure output frequency"
 msgstr  "удалось настроить выходной частоты"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:294
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:365
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:389
 msgid   "failed to set hard-iron correction factors"
 msgstr  "не удалось установить Hard-Iron поправочных коэффициентов"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:680
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:687
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:289
 msgid   "failed to read header"
 msgstr  "удалось прочитать заголовок"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:690
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:697
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:294
 msgid   "failed to read data"
 msgstr  "Не удалось прочитать данные"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:694
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:701
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:298
 msgid   "failed to read footer"
 msgstr  "удалось прочитать нижний колонтитулы"
@@ -2107,19 +2145,19 @@ msgstr  "не удалось получить государственную"
 msgid   "parse error: %s"
 msgstr  "Ошибка разбора: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:371
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:395
 msgid   "resetting device"
 msgstr  "сброс устройства"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:390
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:414
 msgid   "failed to read magnetic calibration parameters from device"
 msgstr  "удалось прочитать магнитных параметров калибровки с устройства"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:409
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:433
 msgid   "different calibration parameters"
 msgstr  "различные параметры калибровки"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:454
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:478
 #, c-format
 msgid   "new hard-iron calibration parameters: %f | %f"
 msgstr  "Новый жесткий железа параметры калибровки: %f | %f"
@@ -2620,7 +2658,7 @@ msgstr  "база данных повреждена"
 #: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:404
 #: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:439
 #: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:474
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:753
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:716
 msgid   "undefined plan id"
 msgstr  "неопределенная ID плана"
 
@@ -2643,7 +2681,7 @@ msgstr  "OK (впервые в списке)"
 #: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:429
 #: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:450
 #: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:484
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:763
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:726
 msgid   "undefined plan"
 msgstr  "неопределенная плана"
 
@@ -2679,112 +2717,106 @@ msgstr  "ИНиЦиАЛиЗАЦиЯ"
 msgid   "EXECUTING"
 msgstr  "ВЫПОЛНЕНИЕ"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:269
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:266
 #, c-format
 msgid   "failed to activate %s: %s"
 msgstr  "Не удалось активировать %s: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:421
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:417
 msgid   "vehicle ready"
 msgstr  "транспортное средство готово"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:457
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:451
 msgid   "plan completed"
 msgstr  "план завершен"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:479
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:472
 msgid   "vehicle errors: "
 msgstr  "автомобиль ошибок:"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:512
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:505
 msgid   "vehicle in CALIBRATION mode"
 msgstr  "транспортного средства в режиме калибровки"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:525
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:518
 msgid   "vehicle in EXTERNAL mode"
 msgstr  "транспортного средства в режиме внешнего"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:540
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:533
 #, c-format
 msgid   "request -- %s (%s)"
 msgstr  "Запрос - %s (%s)"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:546
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:539
 msgid   "engine not ready: entity state not normal"
 msgstr  "Двигатель не готова: государственное образование не нормально"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:579
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:572
 msgid   "cannot load plan now"
 msgstr  "не может загрузить план теперь"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:612
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:605
 msgid   "plan load failed: undefined maneuver or plan"
 msgstr  "План загрузка не удалась: Не определено маневра или плана"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:625
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:618
 msgid   "plan load failed: "
 msgstr  "План загрузка не удалась:"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:633
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:626
 msgid   "plan validation failed: "
 msgstr  "План проверки не удалось:"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:642
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:647
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:633
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:635
 msgid   "plan loaded"
 msgstr  "План загружается"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:650
-msgid   "plan loaded but vehicle not ready"
-msgstr  "План загружен, но транспортное средство не готово"
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:646
+#, fuzzy
+msgid   "no plan is running"
+msgstr  "топливо на исходе"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:662
-msgid   "no plan is loaded"
-msgstr  "план не загружается"
-
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:685
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:669
 msgid   "plan stopped"
 msgstr  "План остановилась"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:703
-msgid   "loaded plan is not running, request ignored"
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:682
+#, fuzzy
+msgid   "no plan is running, request ignored"
 msgstr  "загруженных план не работает, просим игнорируются"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:708
-msgid   "no plan is even loaded, request ignored"
-msgstr  "план не загружается даже, запрос игнорируется"
-
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:796
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:759
 msgid   "plan initializing: "
 msgstr  "План инициализации:"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:848
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:811
 msgid   "cannot initialize plan in BLOCKED state"
 msgstr  "не может инициализировать плана в заблокированном состоянии"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:864
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:827
 msgid   ": invalid maneuver ID"
 msgstr  ": Invalid ID маневра"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:871
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:834
 msgid   ": executing maneuver"
 msgstr  ": Выполнение маневра"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:890
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:853
 #, c-format
 msgid   "reply -- %s (%s) -- %s"
 msgstr  "Ответ - %s (%s) - %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:949
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:909
 #, c-format
 msgid   "now in %s state"
 msgstr  "Сейчас в %s состоянии"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1044
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1002
 msgid   "vehicle state timeout"
 msgstr  "Тайм-аут состояние транспортного средства"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1059
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1017
 msgid   "vehicle reply timeout"
 msgstr  "Тайм-аут автомобиля Ответить"
 
@@ -2936,46 +2968,51 @@ msgstr  "не удалось установить выходной формат"
 msgid   "failed to set sampling frequency"
 msgstr  "не удалось установить частоту дискретизации"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:278
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:290
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:211
+#, fuzzy
+msgid   "Operator Control"
+msgstr  "Пути управления"
+
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:402
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:414
 #, fuzzy
 msgid   "failed to request current output formats"
 msgstr  "не удалось установить выходной формат"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:303
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:427
 #, fuzzy
 msgid   "failed to configure output format"
 msgstr  "удалось настроить выходной частоты"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:469
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:585
 #, fuzzy
 msgid   "failed to stop data sampling"
 msgstr  "Не удалось запустить выборки данных"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:476
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:592
 msgid   "failed to enable user-defined sound speed"
 msgstr  "не позволяла скорость звука определяется пользователем"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:483
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:599
 #, fuzzy
 msgid   "failed to set initial sound speed"
 msgstr  "не удалось инициализировать камеру"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:565
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:681
 #, fuzzy
 msgid   "invalid sample"
 msgstr  "недопустимое сообщение"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:690
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:806
 #, fuzzy
 msgid   "sensor data timeout"
 msgstr  ": Государственное образование тайм-аут"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:696
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:812
 msgid   "too many samples below threshold"
 msgstr  "слишком много образцов ниже порогового"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:721
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:837
 #, fuzzy
 msgid   "rebooting"
 msgstr  "перезапуска"
@@ -3488,6 +3525,18 @@ msgstr  "Подводные Simulator акустика"
 msgid   "Vehicle Supervisor"
 msgstr  "Автомобиль Supervisor"
 
+#~ msgid        "disregarding trajectory's time constraints"
+#~ msgstr       "без учета времени траектории стесненность"
+
+#~ msgid        "plan loaded but vehicle not ready"
+#~ msgstr       "План загружен, но транспортное средство не готово"
+
+#~ msgid        "no plan is loaded"
+#~ msgstr       "план не загружается"
+
+#~ msgid        "no plan is even loaded, request ignored"
+#~ msgstr       "план не загружается даже, запрос игнорируется"
+
 #~ msgid        "inside"
 #~ msgstr       "внутри"
 
@@ -3499,10 +3548,6 @@ msgstr  "Автомобиль Supervisor"
 
 #~ msgid        "moving (distance: %0.1f m)"
 #~ msgstr       "перемещения (расстояние: %0.1f м)"
-
-#, fuzzy
-#~ msgid        "Connection lost, retrying..."
-#~ msgstr       "соединение закрыто"
 
 #~ msgid        "Compass"
 #~ msgstr       "Компас"
