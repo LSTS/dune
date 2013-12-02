@@ -104,6 +104,8 @@ namespace Sensors
       bool pattern_filter;
       //! Pattern maximum difference
       unsigned pattern_diff;
+      //! True to activate device at surface.
+      bool activate_at_surface;
     };
 
     //! Device uses this constant sound speed.
@@ -249,6 +251,12 @@ namespace Sensors
         .defaultValue("0")
         .description("Pattern maximum difference");
 
+        param(DTR_RT("Use Device at Surface"), m_args.activate_at_surface)
+        .defaultValue("false")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_IDLE)
+        .description("Enable to activate device when at surface");
+
         m_dist.validity = IMC::Distance::DV_VALID;
 
         // Filling constant Sonar Data.
@@ -372,7 +380,7 @@ namespace Sensors
       consume(const IMC::VehicleMedium* msg)
       {
         // Request activation.
-        if ((msg->medium == IMC::VehicleMedium::VM_WATER && m_args.dvl_at_surface) ||
+        if ((msg->medium == IMC::VehicleMedium::VM_WATER && m_args.activate_at_surface) ||
             (msg->medium == IMC::VehicleMedium::VM_UNDERWATER))
         {
           if (!isActive())
@@ -384,7 +392,7 @@ namespace Sensors
         // Request deactivation.
         if ((msg->medium == IMC::VehicleMedium::VM_GROUND) ||
             (msg->medium == IMC::VehicleMedium::VM_AIR) ||
-            (msg->medium == IMC::VehicleMedium::VM_WATER && !m_args.dvl_at_surface))
+            (msg->medium == IMC::VehicleMedium::VM_WATER && !m_args.activate_at_surface))
         {
           if (isActive())
             requestDeactivation();
