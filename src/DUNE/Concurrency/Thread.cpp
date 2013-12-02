@@ -28,9 +28,11 @@
 // ISO C++ 98 headers.
 #include <cassert>
 #include <iostream>
+#include <limits>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
+#include <DUNE/Utils/String.hpp>
 #include <DUNE/Streams/Terminal.hpp>
 #include <DUNE/Concurrency/Exceptions.hpp>
 #include <DUNE/Concurrency/Thread.hpp>
@@ -58,6 +60,17 @@
 #  include <sys/syscall.h>
 #endif
 
+#if defined(DUNE_OS_LINUX)
+//! Number of useful fields in /proc/stat.
+static const unsigned c_proc_stat_values = 8;
+//! Number of fields to discard /proc/stat
+static const unsigned c_proc_stat_skips = 1;
+//! Number of useful fields in /proc/self/stat.
+static const unsigned c_proc_self_stat_values = 2;
+//! Number of fields to discard /proc/self/stat
+static const unsigned c_proc_self_stat_skips = 13;
+#endif
+
 extern "C" void*
 dune_concurrency_thread_entry_point(void* data)
 {
@@ -65,8 +78,19 @@ dune_concurrency_thread_entry_point(void* data)
 
   Thread* td = reinterpret_cast<Thread*>(data);
   td->setStateImpl(Thread::StateRunning);
+
+#if defined(DUNE_OS_LINUX)
+  td->m_id = syscall(SYS_gettid);
+  td->m_proc_file = DUNE::Utils::String::str("/proc/%u/task/%u/stat", getpid(), td->m_id);
+#endif
+
   td->m_start_barrier.wait();
   td->run();
+
+#if defined(DUNE_OS_LINUX)
+  td->m_id = -1;
+#endif
+
   td->setStateImpl(Thread::StateDead);
 
   return NULL;
@@ -79,6 +103,10 @@ namespace DUNE
     Thread::Thread(void):
       m_start_barrier(2)
     {
+#if defined(DUNE_OS_LINUX)
+      m_id = -1;
+#endif
+
       int rv = pthread_attr_init(&m_attr);
       if (rv != 0)
         throw ThreadError("failed to initialize attributes", rv);
@@ -103,16 +131,6 @@ namespace DUNE
       int rv = pthread_attr_destroy(&m_attr);
       if (rv != 0)
         DUNE_ERR("Thread", "failed to destroy attributes: " << System::Error::getMessage(rv));
-#endif
-    }
-
-    unsigned
-    Thread::native(void)
-    {
-#if defined(DUNE_OS_LINUX)
-      return syscall(SYS_gettid);
-#else
-      return 0;
 #endif
     }
 
@@ -186,6 +204,65 @@ namespace DUNE
     {
       ScopedMutex m(m_state_mx);
       m_state = state;
+    }
+
+    int
+    Thread::getProcessorUsage(void)
+    {
+      if (m_id == -1)
+        return -1;
+
+      // Linux v2.6 implementation.
+#if defined(DUNE_OS_LINUX)
+      uint64_t global_time = 0;
+      uint64_t global_delta = 0;
+      uint64_t proc_time = 0;
+      uint64_t proc_delta = 0;
+      uint64_t tmp;
+
+      // Retrieve global CPU delta.
+      {
+        std::ifstream ifs("/proc/stat");
+        for (unsigned i = 0; i < c_proc_stat_skips; ++i)
+          ifs.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
+
+        for (unsigned i = 0; i < c_proc_stat_values; ++i)
+        {
+          ifs >> tmp;
+          global_time = global_time + tmp;
+        }
+      }
+
+      // Retrieve process's CPU time.
+      {
+        std::ifstream ifs(m_proc_file.c_str());
+        for (unsigned i = 0; i < c_proc_self_stat_skips; ++i)
+          ifs.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
+
+        for (unsigned i = 0; i < c_proc_self_stat_values; ++i)
+        {
+          ifs >> tmp;
+          proc_time = proc_time + tmp;
+        }
+      }
+
+      // Update global delta.
+      global_delta = global_time - m_last_global_time;
+      m_last_global_time = global_time;
+
+      // Update process delta.
+      proc_delta = proc_time - m_last_proc_time;
+      m_last_proc_time = proc_time;
+
+      if (global_delta == 0)
+        return -1;
+
+      return (proc_delta * 100) / global_delta;
+
+      // Not implemented.
+#else
+      return -1;
+#endif
     }
   }
 }

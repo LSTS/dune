@@ -61,12 +61,13 @@ namespace DUNE
       virtual
       ~Thread(void);
 
-      //! Retrieve the platform specific thread identifier of the
-      //! calling thread. This feature might not be available in all
-      //! operating systems.
-      //! @return native thread identifier.
-      static unsigned
-      native(void);
+      //! Retrieve the percentage of CPU time used by this thread
+      //! since the last call to this function or object creation. On
+      //! multi CPU systems the CPU time is an average.
+      //! @return percentage of the CPU time used or -1 if this value
+      //! cannot be computed.
+      int
+      getProcessorUsage(void);
 
     protected:
       void
@@ -95,6 +96,17 @@ namespace DUNE
       pthread_t m_handle;
       //! POSIX thread attributes.
       pthread_attr_t m_attr;
+#endif
+
+#if defined(DUNE_OS_LINUX)
+      //! Native identifier.
+      int m_id;
+      //! Last process's CPU time.
+      uint64_t m_last_proc_time;
+      //! Last global CPU time.
+      uint64_t m_last_global_time;
+      //! /proc file.
+      std::string m_proc_file;
 #endif
 
       void
