@@ -144,6 +144,8 @@ namespace Sensors
       SwitchData m_switch;
       //! Return data parser.
       Parser m_parser;
+      //! Flag will be true if vehicle medium unavailable.
+      bool m_no_medium;
       //! Pattern filter
       PatternFilter* m_pfilt;
 
@@ -153,12 +155,12 @@ namespace Sensors
         m_uart(NULL),
         m_sound_speed(c_sound_speed),
         m_parser(m_profile.data),
+        m_no_medium(false),
         m_pfilt(NULL)
       {
         // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER,
-                    true);
+        paramActive(Tasks::Parameter::SCOPE_IDLE,
+                    Tasks::Parameter::VISIBILITY_USER);
 
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
@@ -256,6 +258,7 @@ namespace Sensors
         m_profile.scale_factor = 1.0f;
 
         bind<IMC::SoundSpeed>(this);
+        bind<IMC::VehicleMedium>(this);
       }
 
       //! Update parameters.
@@ -363,6 +366,41 @@ namespace Sensors
           return;
 
         m_sound_speed = msg->value;
+      }
+
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        // Request activation.
+        if ((msg->medium == IMC::VehicleMedium::VM_WATER && m_args.dvl_at_surface) ||
+            (msg->medium == IMC::VehicleMedium::VM_UNDERWATER))
+        {
+          if (!isActive())
+            requestActivation();
+
+          m_no_medium = true;
+        }
+
+        // Request deactivation.
+        if ((msg->medium == IMC::VehicleMedium::VM_GROUND) ||
+            (msg->medium == IMC::VehicleMedium::VM_AIR) ||
+            (msg->medium == IMC::VehicleMedium::VM_WATER && !m_args.dvl_at_surface))
+        {
+          if (isActive())
+            requestDeactivation();
+
+          m_no_medium = true;
+        }
+
+        // Medium is unknown.
+        if (msg->medium == IMC::VehicleMedium::VM_UNKNOWN)
+        {
+          if (!m_no_medium)
+          {
+            m_no_medium = true;
+            err(DTR("no medium data: user must control device"));
+          }
+        }
       }
 
       void
