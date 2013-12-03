@@ -415,7 +415,7 @@ namespace Sensors
             else
               setEntityState(getEntityState(), Status::CODE_NO_MEDIUM_IDLE);
 
-            err(DTR(Status::getString(Status::CODE_NO_MEDIUM)));
+            err("%s", DTR(Status::getString(Status::CODE_NO_MEDIUM)));
           }
         }
       }
