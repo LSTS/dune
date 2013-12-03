@@ -363,7 +363,11 @@ namespace Sensors
       void
       onDeactivation(void)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        if (m_no_medium)
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NO_MEDIUM_IDLE);
+        else
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
         m_trigger.setActive(false);
       }
 
@@ -386,7 +390,7 @@ namespace Sensors
           if (!isActive())
             requestActivation();
 
-          m_no_medium = true;
+          m_no_medium = false;
         }
 
         // Request deactivation.
@@ -397,7 +401,7 @@ namespace Sensors
           if (isActive())
             requestDeactivation();
 
-          m_no_medium = true;
+          m_no_medium = false;
         }
 
         // Medium is unknown.
@@ -406,7 +410,12 @@ namespace Sensors
           if (!m_no_medium)
           {
             m_no_medium = true;
-            err(DTR("no medium data: user must control device"));
+            if (isActive())
+              setEntityState(getEntityState(), Status::CODE_NO_MEDIUM_ACTIVE);
+            else
+              setEntityState(getEntityState(), Status::CODE_NO_MEDIUM_IDLE);
+
+            err(DTR(Status::getString(Status::CODE_NO_MEDIUM)));
           }
         }
       }
@@ -420,7 +429,6 @@ namespace Sensors
         {
           if (!isActive())
           {
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
             waitForMessages(1.0);
             continue;
           }
@@ -474,7 +482,11 @@ namespace Sensors
               dispatch(m_profile);
             }
 
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            if (m_no_medium)
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NO_MEDIUM_ACTIVE);
+            else
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
             m_wdog.reset();
           }
         }
