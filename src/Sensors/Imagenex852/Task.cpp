@@ -157,7 +157,7 @@ namespace Sensors
         m_uart(NULL),
         m_sound_speed(c_sound_speed),
         m_parser(m_profile.data),
-        m_no_medium(false),
+        m_no_medium(true),
         m_pfilt(NULL)
       {
         // Define configuration parameters.
@@ -402,6 +402,7 @@ namespace Sensors
             requestDeactivation();
 
           m_no_medium = false;
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
 
         // Medium is unknown.
