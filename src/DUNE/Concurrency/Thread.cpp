@@ -209,11 +209,11 @@ namespace DUNE
     int
     Thread::getProcessorUsage(void)
     {
+      // Linux v2.6 implementation.
+#if defined(DUNE_OS_LINUX)
       if (m_id == -1)
         return -1;
 
-      // Linux v2.6 implementation.
-#if defined(DUNE_OS_LINUX)
       uint64_t global_time = 0;
       uint64_t global_delta = 0;
       uint64_t proc_time = 0;
