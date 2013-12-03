@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-12-02 15:58+0000\n"
+        "POT-Creation-Date: 2013-12-03 13:16+0000\n"
         "PO-Revision-Date: 2013-10-24 10:59-0000\n"
         "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
         "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -1138,6 +1138,18 @@ msgstr  "versão inválida"
 msgid   "active but without bottom lock"
 msgstr  "ativo mas sem \"bottom lock\""
 
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:66
+msgid   "no medium data: user must control device"
+msgstr  "sem dados do meio: utilizador deve controlar dispositivo"
+
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:67
+msgid   "active (no medium data: need user input)"
+msgstr  "ativo (sem dados do meio: controlo do utilizador"
+
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:68
+msgid   "idle (no medium data: need user input)"
+msgstr  "em espera (sem dados do meio: controlo do utilizador"
+
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:90
 msgid   "unable to unlock"
 msgstr  "impossível desbloquear"
@@ -1391,7 +1403,7 @@ msgstr  "Nível da Fonte"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:199
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:511
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:563
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:576
 msgid   "dynamic sound speed corrections are disabled"
 msgstr  "correção dinâmica de velocidade do som está desativada"
 
@@ -1647,7 +1659,7 @@ msgstr  "Habilitar controlador de roll"
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex881A/Task.cpp:450
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:515
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:474
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:375
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:379
 #: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:212
 msgid   "failed to contact device"
 msgstr  "falha ao contactar dispositivo"
@@ -1830,11 +1842,6 @@ msgstr  "frase PSATHPR é inválida"
 #: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:205
 msgid   "Use Device at Surface"
 msgstr  "Usar Dispositivo à Superfície"
-
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:409
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:496
-msgid   "no medium data: user must control device"
-msgstr  "sem dados do meio: utilizador deve controlar dispositivo"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:123
 msgid   "failed to enter command mode"
@@ -2026,7 +2033,7 @@ msgid   "unable to read prompt"
 msgstr  "incapaz de ler o \"prompt\""
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:288
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:572
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:585
 msgid   "failed to start data sampling"
 msgstr  "falha ao começar amostragem de dados"
 
@@ -2904,40 +2911,40 @@ msgstr  "falha ao configurar taxa de amostragem"
 msgid   "Operator Control"
 msgstr  "Controlo do Operador"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:402
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:414
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:406
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:418
 msgid   "failed to request current output formats"
 msgstr  "falha ao pedir formatos de saída atuais"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:427
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:431
 msgid   "failed to configure output format"
 msgstr  "falha ao configurar formate de saída"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:585
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:598
 msgid   "failed to stop data sampling"
 msgstr  "falha ao parar amostragem de dados"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:592
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:605
 msgid   "failed to enable user-defined sound speed"
 msgstr  "falhou ao habilitar a velocidade do som definida por utilizador"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:599
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:612
 msgid   "failed to set initial sound speed"
 msgstr  "falha ao especificar velocidade do som inicial"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:681
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:694
 msgid   "invalid sample"
 msgstr  "amostra inválida"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:806
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:823
 msgid   "sensor data timeout"
 msgstr  "excedido o tempo limite dos dados do sensor"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:812
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:829
 msgid   "too many samples below threshold"
 msgstr  "demasiadas amostras abaixo do limite"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:837
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:854
 msgid   "rebooting"
 msgstr  "a reiniciar"
 
