@@ -91,8 +91,6 @@ namespace Transports
       double m_sound_speed;
       //! Sound speed entity id.
       int m_sound_speed_eid;
-      //! Acoustic operation reply.
-      IMC::AcousticOperation m_acop_out;
       //! Current transmission ticket.
       Ticket* m_ticket;
       //! Task arguments.
