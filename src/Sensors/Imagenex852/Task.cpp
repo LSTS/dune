@@ -366,7 +366,7 @@ namespace Sensors
         if (m_no_medium)
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NO_MEDIUM_IDLE);
         else
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
 
         m_trigger.setActive(false);
       }
