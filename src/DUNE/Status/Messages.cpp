@@ -35,7 +35,7 @@ namespace DUNE
 {
   namespace Status
   {
-    static const char* c_status_messages[26] =
+    static const char* c_status_messages[29] =
     {
       DTR_RT("initializing"),
       DTR_RT("idle"),
@@ -62,7 +62,10 @@ namespace DUNE
       DTR_RT("missing data"),
       DTR_RT("invalid checksum"),
       DTR_RT("invalid version"),
-      DTR_RT("active but without bottom lock")
+      DTR_RT("active but without bottom lock"),
+      DTR_RT("no medium data: user must control device"),
+      DTR_RT("active (no medium data: need user input)"),
+      DTR_RT("idle (no medium data: need user input)")
     };
 
     const char*

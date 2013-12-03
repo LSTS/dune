@@ -91,7 +91,13 @@ namespace DUNE
       //! Invalid version.
       CODE_INVALID_VERSION = 24,
       //! Active but without bottom lock.
-      CODE_NO_BOTTOM_LOCK = 25
+      CODE_NO_BOTTOM_LOCK = 25,
+      //! No medium data: user must control device.
+      CODE_NO_MEDIUM = 26,
+      //! Active (no medium data: need user input).
+      CODE_NO_MEDIUM_ACTIVE = 27,
+      //! Idle (no medium data: need user input).
+      CODE_NO_MEDIUM_IDLE = 28
     };
   }
 }
