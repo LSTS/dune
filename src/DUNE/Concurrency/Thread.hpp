@@ -28,6 +28,9 @@
 #ifndef DUNE_CONCURRENCY_THREAD_HPP_INCLUDED_
 #define DUNE_CONCURRENCY_THREAD_HPP_INCLUDED_
 
+// ISO C++ 98 headers.
+#include <string>
+
 // DUNE headers.
 #include <DUNE/Config.hpp>
 #include <DUNE/Concurrency/Initializer.hpp>
