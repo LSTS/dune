@@ -146,10 +146,10 @@ namespace Sensors
       SwitchData m_switch;
       //! Return data parser.
       Parser m_parser;
-      //! Flag will be true if vehicle medium unavailable.
-      bool m_no_medium;
-      //! Pattern filter
+      //! Pattern filter.
       PatternFilter* m_pfilt;
+      //! Medium handler.
+      Monitors::MediumHandler m_hand;
 
       //! %Task constructor.
       Task(const std::string& name, Tasks::Context& ctx):
@@ -157,7 +157,6 @@ namespace Sensors
         m_uart(NULL),
         m_sound_speed(c_sound_speed),
         m_parser(m_profile.data),
-        m_no_medium(true),
         m_pfilt(NULL)
       {
         // Define configuration parameters.
@@ -363,10 +362,10 @@ namespace Sensors
       void
       onDeactivation(void)
       {
-        if (m_no_medium)
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NO_MEDIUM_IDLE);
-        else
+        if (m_hand.isKnown())
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        else
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NO_MEDIUM_IDLE);
 
         m_trigger.setActive(false);
       }
@@ -383,41 +382,34 @@ namespace Sensors
       void
       consume(const IMC::VehicleMedium* msg)
       {
+        m_hand.update(msg);
+
         // Request activation.
-        if ((msg->medium == IMC::VehicleMedium::VM_WATER && m_args.activate_at_surface) ||
-            (msg->medium == IMC::VehicleMedium::VM_UNDERWATER))
+        if ((m_hand.isWaterSurface() && m_args.activate_at_surface) ||
+            m_hand.isUnderwater())
         {
           if (!isActive())
             requestActivation();
-
-          m_no_medium = false;
         }
 
         // Request deactivation.
-        if ((msg->medium == IMC::VehicleMedium::VM_GROUND) ||
-            (msg->medium == IMC::VehicleMedium::VM_AIR) ||
-            (msg->medium == IMC::VehicleMedium::VM_WATER && !m_args.activate_at_surface))
+        if (m_hand.outWater() || (m_hand.isWaterSurface() && !m_args.activate_at_surface))
         {
           if (isActive())
             requestDeactivation();
 
-          m_no_medium = false;
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
 
         // Medium is unknown.
-        if (msg->medium == IMC::VehicleMedium::VM_UNKNOWN)
+        if (!m_hand.isKnown() && m_hand.changed())
         {
-          if (!m_no_medium)
-          {
-            m_no_medium = true;
-            if (isActive())
-              setEntityState(getEntityState(), Status::CODE_NO_MEDIUM_ACTIVE);
-            else
-              setEntityState(getEntityState(), Status::CODE_NO_MEDIUM_IDLE);
+          if (isActive())
+            setEntityState(getEntityState(), Status::CODE_NO_MEDIUM_ACTIVE);
+          else
+            setEntityState(getEntityState(), Status::CODE_NO_MEDIUM_IDLE);
 
-            err("%s", DTR(Status::getString(Status::CODE_NO_MEDIUM)));
-          }
+          err("%s", DTR(Status::getString(Status::CODE_NO_MEDIUM)));
         }
       }
 
@@ -483,10 +475,10 @@ namespace Sensors
               dispatch(m_profile);
             }
 
-            if (m_no_medium)
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NO_MEDIUM_ACTIVE);
-            else
+            if (m_hand.isKnown())
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            else
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NO_MEDIUM_ACTIVE);
 
             m_wdog.reset();
           }
