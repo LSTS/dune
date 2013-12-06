@@ -45,6 +45,7 @@ namespace DUNE
       MediumHandler(void)
       {
         m_no_medium = true;
+        m_new_medium = false;
       }
 
       //! Update with new info.
@@ -52,6 +53,11 @@ namespace DUNE
       void
       update(const IMC::VehicleMedium* msg)
       {
+        if (m_vm.medium != msg->medium)
+          m_new_medium = true;
+        else
+          m_new_medium = false;
+
         m_vm = *msg;
 
         if (m_vm.medium == IMC::VehicleMedium::VM_UNKNOWN)
@@ -66,6 +72,14 @@ namespace DUNE
       isKnown(void)
       {
         return !m_no_medium;
+      }
+
+      //! This functions checks if medium has changed.
+      //! @return true if medium has changed, false otherwise.
+      bool
+      changed(void)
+      {
+        return m_new_medium;
       }
 
       //! This functions checks if medium is water.
@@ -106,6 +120,8 @@ namespace DUNE
       IMC::VehicleMedium m_vm;
       //! Flag will be true if vehicle medium unavailable.
       bool m_no_medium;
+      //! Flag will be true if medium has changed.
+      bool m_new_medium;
     };
   }
 }
