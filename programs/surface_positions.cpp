@@ -69,6 +69,7 @@ main(int32_t argc, char** argv)
   IMC::EstimatedState state;
   IMC::Packet::serialize(&state, buffer);
   lsf.write(buffer.getBufferSigned(), buffer.getSize());
+  double timestamp = -1.0;
 
   try
   {
@@ -76,11 +77,14 @@ main(int32_t argc, char** argv)
     {
       if (msg->getId() == DUNE_IMC_GPSFIX)
       {
-
         IMC::GpsFix* fix = dynamic_cast<IMC::GpsFix*>(msg);
 
-        if (fix->hacc <= MIN_HACC)
+        if ((fix->hacc <= MIN_HACC) &&
+            (fix->validity & IMC::GpsFix::GFV_VALID_POS) &&
+            (fix->getTimeStamp() >= timestamp))
         {
+          timestamp = fix->getTimeStamp();
+
           IMC::Packet::serialize(msg, buffer);
           lsf.write(buffer.getBufferSigned(), buffer.getSize());
 
