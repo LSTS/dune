@@ -96,8 +96,6 @@ namespace Sensors
       double calib_threshold;
       //! Hard iron calibration.
       std::vector<float> hard_iron;
-      //! Incoming Calibration Parameters entity label.
-      std::string calib_elabel;
       // Rotation matrix values.
       std::vector<double> rotation_mx;
     };
@@ -167,10 +165,6 @@ namespace Sensors
         .units(Units::Gauss)
         .size(c_number_axis)
         .description("Hard-Iron calibration parameters");
-
-        param("Calibration Maneuver - Entity Label", m_args.calib_elabel)
-        .defaultValue("")
-        .description("Entity label of maneuver responsible for compass calibration");
 
         param("IMU Rotation Matrix", m_args.rotation_mx)
         .defaultValue("")
