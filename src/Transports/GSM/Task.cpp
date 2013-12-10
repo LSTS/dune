@@ -237,7 +237,6 @@ namespace Transports
         }
         catch (std::exception& e)
         {
-          inf(DTR("failed to send SMS: %s"), e.what());
           m_queue.push(sms);
         }
       }
