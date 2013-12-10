@@ -1,3 +1,78 @@
+DUNE v2.4.0
+===========
+
+* Now using IMC v5.3.x.
+
+* Added BOOT state.
+
+* Actuators.LED4R: new task to control LED setup for ROV.
+
+* Actuators.MCD4R: new task to control ROV's pan&tilt,
+  camera and laser beams.
+
+* Control.Path.ILOS: new path controller task.
+
+* Control.ROV.HorizontalPlane: modified logic and tested
+  in real experiments.
+
+* Control.ROV.Depth: modified logic and tested in real experiments.
+
+* Control.ROV.RemoteOperation: modified logic and tested in real
+  experiments.
+
+* DUNE Concurrency: ability to compute CPU usage of a thread.
+
+* DUNE IO: redesign of I/O framework.
+
+* Maneuver.StationKeeping: task was rewritten for robusteness and
+  responsiveness.
+
+* Maneuver.FollowTrajectory: task was rewritten for robusteness
+  and responsiveness.
+
+* Maneuver.FollowReference: new maneuver to guide vehicle to
+  a new reference location.
+
+* Maneuver.PopUp: task was rewritten for robusteness and
+  responsiveness.
+
+* Sensors.BlueView: new task to control imaging sonar.
+
+* Sensors.Imagenex881A: new task to control ROV pencil beam sonar.
+
+* Sensors.Microstrain3DMGX3: corrected a bug that prevented new
+  hard-iron calibration parameters to be correctly stored in
+  the vehicle configuration file.
+
+* Sensors.NavQuestDVL: using medium to activate task.
+
+* Sensors.Imagenex852: using medium to activate task.
+
+* Sensors.Imagenex837B: fixed bug that prevented auto
+  mode to be activated.
+
+* Supervisors.AUV.LostComms: new task to handle loss of communications.
+
+* Transports.Evologics: new task to control acoustic modem.
+
+* Transports.UAN: new task to control acoustic medium access.
+
+* Transports.Noptilus: new task to control acoustic medium access
+  by implementing a TDMA scheme between multiple systems.
+
+* Navigation.AUV.SGNavigation: EstimatedState psi is properly filled.
+
+* Programs: added program to compute new compass calibration parameters
+  from log file.
+
+* Programs: added program to compute distance travelled.
+
+* Programs: added program to compute total energy consumed.
+
+* Programs: added script to compute XML parameters from known systems.
+
+* Programs: added CDash build script.
+
 DUNE v2.3.0
 ===========
 
