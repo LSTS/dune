@@ -66,7 +66,7 @@ namespace Monitors
       //! Lost communications timer.
       Counter<double> m_lost_coms_timer;
       //! Medium handler.
-      Monitors::MediumHandler m_hand;
+      DUNE::Monitors::MediumHandler m_hand;
       //! Task arguments.
       Arguments m_args;
 
