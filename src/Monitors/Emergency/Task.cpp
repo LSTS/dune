@@ -65,6 +65,8 @@ namespace Monitors
       float m_progress;
       //! Lost communications timer.
       Counter<double> m_lost_coms_timer;
+      //! Medium handler.
+      Monitors::MediumHandler m_hand;
       //! Task arguments.
       Arguments m_args;
 
@@ -97,10 +99,11 @@ namespace Monitors
         .description("Expiration time of lost communications SMS");
 
         bind<IMC::Abort>(this);
+        bind<IMC::FuelLevel>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::Heartbeat>(this);
         bind<IMC::PlanControlState>(this);
-        bind<IMC::FuelLevel>(this);
+        bind<IMC::VehicleMedium>(this);
       }
 
       void
@@ -192,12 +195,20 @@ namespace Monitors
       }
 
       void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        m_hand.update(msg);
+      }
+
+      void
       task(void)
       {
         if (m_lost_coms_timer.overflow())
         {
-          sendSMS("T", m_args.sms_lost_coms_ttl);
           m_lost_coms_timer.reset();
+
+          if (!m_hand.isUnderwater())
+            sendSMS("T", m_args.sms_lost_coms_ttl);
         }
       }
     };
