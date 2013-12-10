@@ -208,15 +208,23 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
+        try
         {
-          TCPSocket atz;
-          atz.connect(m_args.address, m_args.port);
-          atz.writeString("ATZ0\n");
-          Delay::wait(5.0);
+          {
+            TCPSocket atz;
+            atz.connect(m_args.address, m_args.port);
+            atz.writeString("ATZ0\n");
+            Delay::wait(5.0);
+          }
+
+          m_sock = new TCPSocket;
+          m_sock->connect(m_args.address, m_args.port);
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 5);
         }
 
-        m_sock = new TCPSocket;
-        m_sock->connect(m_args.address, m_args.port);
         m_driver = new Driver(this, m_sock);
         m_driver->setLineTermIn("\r\n");
         m_driver->setLineTermOut("\n");
