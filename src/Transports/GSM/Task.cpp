@@ -218,7 +218,12 @@ namespace Transports
       processQueue(void)
       {
         if (m_queue.empty())
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
           return;
+        }
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
         SMS sms = m_queue.top();
         m_queue.pop();
