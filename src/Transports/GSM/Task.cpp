@@ -240,7 +240,7 @@ namespace Transports
           m_driver->getRSSI();
           m_driver->sendSMS(sms.recipient, sms.message, m_args.sms_tout);
         }
-        catch (std::exception& e)
+        catch (...)
         {
           m_queue.push(sms);
         }
