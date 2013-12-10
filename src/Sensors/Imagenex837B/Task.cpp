@@ -775,6 +775,7 @@ namespace Sensors
             {
               err("%s", e.what());
               setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+              throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
             }
           }
           else
