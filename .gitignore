@@ -4,3 +4,4 @@
 private/
 *~
 *.mo
+CMakeLists.txt.user
