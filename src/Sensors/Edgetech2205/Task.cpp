@@ -206,11 +206,6 @@ namespace Sensors
       }
 
       void
-      onResourceAcquisition(void)
-      {
-      }
-
-      void
       onResourceRelease(void)
       {
         requestDeactivation();
