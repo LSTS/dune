@@ -90,9 +90,9 @@ namespace Vision
         .description("Trigger by using overlap value and distance to previous shot");
 
         param("Trigger Frequency", m_args.freq)
-        .defaultValue("1.0")
+        .defaultValue("0.25")
         .units(Units::Hertz)
-        .maximumValue("2.0")
+        .maximumValue("1.0")
         .description("Frequency of photo shots");
 
         param("Photo Overlap", m_args.overlap)
