@@ -75,6 +75,13 @@ namespace DUNE
       virtual std::streamsize
       xsgetn(char* bfr, std::streamsize bfr_len);
 
+      virtual std::streampos
+      seekoff(std::streamoff off, std::ios_base::seekdir way,
+              std::ios_base::openmode which = std::ios_base::in | std::ios_base::out)
+      {
+        return -1;
+      }
+
     private:
       //! Stream format.
       Methods m_method;
