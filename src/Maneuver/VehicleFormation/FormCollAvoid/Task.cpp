@@ -102,7 +102,8 @@ namespace Maneuver
         //! Start time.
         double m_start_time;
         //! Last time update was ran
-        double m_last_update;
+        double m_last_sim_update;
+        Matrix m_last_ctrl_update;
         //! Task arguments.
         Arguments m_args;
 
@@ -127,7 +128,7 @@ namespace Maneuver
           m_models(NULL),
           m_model(NULL),
           m_start_time(-1.0),
-          m_last_update(-1.0),
+          m_last_sim_update(-1.0),
           m_uav_state(12, 1, 0.0),
           m_uav_accel(3, 1,  0.0),
           m_airspeed(1),
@@ -298,7 +299,9 @@ namespace Maneuver
 
           //! Start the simulation time
           m_start_time = Clock::get();
-          m_last_update = Clock::get();
+          m_last_sim_update = Clock::get();
+          //! Start the control time
+          m_last_ctrl_update = Matrix(m_args.uav_n, 1, Clock::get());
         }
 
         void
@@ -334,7 +337,7 @@ namespace Maneuver
           m_model->set(m_position);
 
           m_start_time = Clock::get();
-          m_last_update = Clock::get();
+          m_last_sim_update = Clock::get();
 
           // Save message to cache.
           IMC::CacheControl cop;
@@ -361,7 +364,7 @@ namespace Maneuver
         void
         consume(const IMC::EstimatedStreamVelocity* msg)
         {
-          double t_wind = {msg->x, msg->y, msg->z};
+          double t_wind[3] = {msg->x, msg->y, msg->z};
           m_wind = Matrix(t_wind, 3, 1);
         }
 
@@ -378,7 +381,7 @@ namespace Maneuver
 
           double t_leader[12] = {msg->x,       msg->y,       msg->z,
               vd_vel(0),    vd_vel(1),    vd_vel(2),
-              euler_ang(0), euler_ang(1), euler_ang(2),
+              euler_ang[0], euler_ang[1], euler_ang[2],
               msg->p,       msg->q,       msg->r};
           m_uav_state.set(0, 11, 0, 0, Matrix(t_leader, 12, 1));
         }
@@ -442,7 +445,12 @@ namespace Maneuver
         void
         consume(const IMC::EstimatedState* msg)
         {
+          //! Declaration
+          double time;
+          double timestep;
           UAVSimulation* model;
+          double vd_cmd[3];
+
           //! Skip formation flight controller if running as the leader vehicle
           if (m_args.uav_ind == 0)
           {
@@ -498,12 +506,17 @@ namespace Maneuver
                   msg->phi, msg->theta, msg->psi,
                   msg->p,   msg->q,     msg->r};
               m_uav_state.set(0, 11, m_args.uav_ind, m_args.uav_ind, Matrix(vt_uav_state, 12, 1));
+
+              //! Compute the time step
+              time  = Clock::get();
+              timestep = time - m_last_ctrl_update(m_args.uav_ind);
+              m_last_ctrl_update(m_args.uav_ind) = time;
             }
             //! Get team vehicles updated state
             //! - Check that the estimated state is from a team member
             // m_uav_state.set(0, 11, m_args.uav_ind, m_args.uav_ind, Matrix(vt_uav_state, 12, 1));
 
-            //! Simulation vehicles model initialization
+            //! Simulation - vehicles model initialization
             if (m_init_sim_state)
             {
               Matrix vd_vel2wind = Matrix(3, 1, 0.0);
@@ -522,7 +535,7 @@ namespace Maneuver
               }
             }
 
-            double vd_cmd[3] = formationControl(m_uav_state, m_uav_accel, m_args.uav_ind, m_airspeed_cmd.value);
+            vd_cmd = formationControl(m_uav_state, m_uav_accel, m_args.uav_ind, m_airspeed_cmd.value, timestep);
 
             //===========================================
             // Output
@@ -1361,8 +1374,8 @@ namespace Maneuver
 
             //! Compute the time step
             time  = Clock::get();
-            timestep = time - m_last_update;
-            m_last_update = time;
+            timestep = time - m_last_sim_update;
+            m_last_sim_update = time;
 
             /*
             // ========= Debug ===========
