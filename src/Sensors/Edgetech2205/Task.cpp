@@ -94,6 +94,8 @@ namespace Sensors
       bool m_activating;
       //! True if task is deactivating.
       bool m_deactivating;
+      //! True if first shot.
+      bool m_first_shot;
       //! Activation/deactivation timer.
       Counter<double> m_countdown;
 
@@ -103,7 +105,8 @@ namespace Sensors
         m_cmd(NULL),
         m_time_diff(0),
         m_activating(false),
-        m_deactivating(false)
+        m_deactivating(false),
+        m_first_shot(true)
       {
         // Define configuration parameters.
         setParamSectionEditor("Edgetech2205");
@@ -266,6 +269,7 @@ namespace Sensors
 
         m_deactivating = true;
         m_countdown.setTop(getDeactivationTime());
+        m_first_shot = true;
       }
 
       void
@@ -483,7 +487,10 @@ namespace Sensors
         if (pkt->getMessageType() == MSG_ID_SONAR_DATA)
           handleSonarData(pkt);
 
-        writeToLog(pkt);
+        if (!m_first_shot)
+          writeToLog(pkt);
+        else
+          m_first_shot = false;
       }
 
       bool
