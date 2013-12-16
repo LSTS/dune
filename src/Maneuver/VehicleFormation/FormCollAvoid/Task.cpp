@@ -125,8 +125,8 @@ namespace Maneuver
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Periodic(name, ctx),
-          m_models(NULL),
-          m_model(NULL),
+          //m_models(NULL),
+          //m_model(NULL),
           m_start_time(-1.0),
           m_last_sim_update(-1.0),
           m_uav_state(12, 1, 0.0),
@@ -449,7 +449,7 @@ namespace Maneuver
           double time;
           double timestep;
           UAVSimulation* model;
-          double vd_cmd[3];
+          double* vd_cmd[3];
 
           //! Skip formation flight controller if running as the leader vehicle
           if (m_args.uav_ind == 0)
@@ -523,7 +523,7 @@ namespace Maneuver
               for (int ind_uav = 1; ind_uav <= m_uav_n; ++ind_uav)
               {
                 //! Retrieve current vehicle model
-                model = *m_models[ind_uav-1];
+                model = m_models[ind_uav-1];
                 //! - State  and control parameters initialization
                 model->set(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)),
                           m_uav_state.get(3, 5, ind_uav, ind_uav).vertCat(m_uav_state.get(9, 11, ind_uav, ind_uav)));
@@ -531,36 +531,40 @@ namespace Maneuver
                 vd_vel2wind = m_uav_state.get(3, 5, ind_uav, ind_uav) - m_wind;
                 model->command(m_uav_state(6, ind_uav), vd_vel2wind.norm_2(), m_uav_state(2, ind_uav));
                 //! Update current vehicle model to the vector
-                *m_models[ind_uav-1] = model;
+                m_models[ind_uav-1] = model;
               }
             }
 
-            vd_cmd = formationControl(m_uav_state, m_uav_accel, m_args.uav_ind, m_airspeed_cmd.value, timestep);
+            *vd_cmd[2] = m_airspeed_cmd.value;
+            formationControl(m_uav_state, m_uav_accel, m_args.uav_ind, timestep, vd_cmd);
 
             //===========================================
             // Output
             //===========================================
 
-            m_bank_cmd.value = vd_cmd[1];
+            m_bank_cmd.value = *vd_cmd[1];
             dispatch(m_bank_cmd);
+            m_airspeed_cmd.value = *vd_cmd[2];
             dispatch(m_airspeed_cmd);
             /*
-             m_altitude_cmd.value = vd_cmd[3];
+             m_altitude_cmd.value = *vd_cmd[3];
              dispatch(m_altitude_cmd);
              */
           }
         }
 
-        double
+        void
         formationControl(const Matrix& md_uav_state, const Matrix& md_uav_accel,
-            const int& ind_uav, double& d_airspeed_cmd, const double& d_time_step)
+            const int& ind_uav, const double& d_time_step, double* vd_cmd)
         {
           //! Vehicle formation control method
 
-          //! ====== Variables declaration and initialization ======
+          //! Controls:
+          //! - cmd(1) = bank_cmd
+          //! - cmd(2) = airspeed_cmd
+          //! - cmd(3) = alt_cmd
 
-          // Controls
-          double d_bank_cmd;
+          //! ====== Variables declaration and initialization ======
 
           //! Environment parameters
           double d_g = m_args.gaccel;
@@ -1274,7 +1278,7 @@ namespace Maneuver
           // Altitude control
           //-------------------------------------------
 
-          double d_alt_cmd = md_form_pos(2, ind_uav) + md_uav_state(2, 0);
+          *vd_cmd[3] = md_form_pos(2, ind_uav) + md_uav_state(2, 0);
 
           //-------------------------------------------
           // Speed control
@@ -1282,28 +1286,28 @@ namespace Maneuver
 
           double d_accel_x_cmd = std::min(std::max(vd_ctrl(0), -d_accel_lim_x), d_accel_lim_x);
           vd_ctrl(0) = d_accel_x_cmd;
-          d_airspeed_cmd += d_time_step * d_accel_x_cmd;
+          *vd_cmd[2] += d_time_step * d_accel_x_cmd;
 
           //-------------------------------------------
           // Course control
           //-------------------------------------------
 
           // Bank command
-          d_bank_cmd = std::atan(vd_ctrl(1)/d_g); // Desired bank
+          *vd_cmd[1] = std::atan(vd_ctrl(1)/d_g); // Desired bank
 
           //===========================================
           // Control limits
           //===========================================
 
           //! Velocity limits
-          d_airspeed_cmd = std::min(std::max(d_airspeed_cmd, d_airspeed_min), d_airspeed_max);
+          *vd_cmd[2] = std::min(std::max(*vd_cmd[2], d_airspeed_min), d_airspeed_max);
 
           //! Altitude limits
-          d_alt_cmd = std::min(std::max(d_alt_cmd, m_args.alt_min), m_args.alt_max);
+          *vd_cmd[3] = std::min(std::max(*vd_cmd[3], m_args.alt_min), m_args.alt_max);
 
           //! Bank limits
-          d_bank_cmd = std::min(std::max(d_bank_cmd, -d_bank_lim), d_bank_lim);
-          vd_ctrl(2) = d_g*std::tan(d_bank_cmd); // Real lateral acceleration command
+          *vd_cmd[1] = std::min(std::max(*vd_cmd[1], -d_bank_lim), d_bank_lim);
+          vd_ctrl(2) = d_g*std::tan(*vd_cmd[1]); // Real lateral acceleration command
 
           //===========================================
           // Log data
@@ -1324,12 +1328,6 @@ namespace Maneuver
         end
            */
 
-          //===========================================
-          // Output
-          //===========================================
-
-          double vd_cmd[3] = {d_bank_cmd, d_airspeed_cmd, d_alt_cmd};
-          return vd_cmd;
         }
 
         Matrix
