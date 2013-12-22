@@ -535,19 +535,19 @@ namespace Maneuver
               }
             }
 
-            *vd_cmd[2] = m_airspeed_cmd.value;
+            (*vd_cmd)[2] = m_airspeed_cmd.value;
             formationControl(m_uav_state, m_uav_accel, m_args.uav_ind, timestep, vd_cmd);
 
             //===========================================
             // Output
             //===========================================
 
-            m_bank_cmd.value = *vd_cmd[1];
+            m_bank_cmd.value = (*vd_cmd)[1];
             dispatch(m_bank_cmd);
-            m_airspeed_cmd.value = *vd_cmd[2];
+            m_airspeed_cmd.value = (*vd_cmd)[2];
             dispatch(m_airspeed_cmd);
             /*
-             m_altitude_cmd.value = *vd_cmd[3];
+             m_altitude_cmd.value = (*vd_cmd)[3];
              dispatch(m_altitude_cmd);
              */
           }
@@ -555,7 +555,7 @@ namespace Maneuver
 
         void
         formationControl(const Matrix& md_uav_state, const Matrix& md_uav_accel,
-            const int& ind_uav, const double& d_time_step, double* vd_cmd)
+            const int& ind_uav, const double& d_time_step, double*const vd_cmd[3])
         {
           //! Vehicle formation control method
 
@@ -1278,7 +1278,7 @@ namespace Maneuver
           // Altitude control
           //-------------------------------------------
 
-          *vd_cmd[3] = md_form_pos(2, ind_uav) + md_uav_state(2, 0);
+          (*vd_cmd)[3] = md_form_pos(2, ind_uav) + md_uav_state(2, 0);
 
           //-------------------------------------------
           // Speed control
@@ -1286,28 +1286,28 @@ namespace Maneuver
 
           double d_accel_x_cmd = std::min(std::max(vd_ctrl(0), -d_accel_lim_x), d_accel_lim_x);
           vd_ctrl(0) = d_accel_x_cmd;
-          *vd_cmd[2] += d_time_step * d_accel_x_cmd;
+          (*vd_cmd)[2] += d_time_step * d_accel_x_cmd;
 
           //-------------------------------------------
           // Course control
           //-------------------------------------------
 
           // Bank command
-          *vd_cmd[1] = std::atan(vd_ctrl(1)/d_g); // Desired bank
+          (*vd_cmd)[1] = std::atan(vd_ctrl(1)/d_g); // Desired bank
 
           //===========================================
           // Control limits
           //===========================================
 
           //! Velocity limits
-          *vd_cmd[2] = std::min(std::max(*vd_cmd[2], d_airspeed_min), d_airspeed_max);
+          (*vd_cmd)[2] = std::min(std::max((*vd_cmd)[2], d_airspeed_min), d_airspeed_max);
 
           //! Altitude limits
-          *vd_cmd[3] = std::min(std::max(*vd_cmd[3], m_args.alt_min), m_args.alt_max);
+          (*vd_cmd)[3] = std::min(std::max((*vd_cmd)[3], m_args.alt_min), m_args.alt_max);
 
           //! Bank limits
-          *vd_cmd[1] = std::min(std::max(*vd_cmd[1], -d_bank_lim), d_bank_lim);
-          vd_ctrl(2) = d_g*std::tan(*vd_cmd[1]); // Real lateral acceleration command
+          (*vd_cmd)[1] = std::min(std::max((*vd_cmd)[1], -d_bank_lim), d_bank_lim);
+          vd_ctrl(2) = d_g*std::tan((*vd_cmd)[1]); // Real lateral acceleration command
 
           //===========================================
           // Log data
