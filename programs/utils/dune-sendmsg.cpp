@@ -487,6 +487,14 @@ main(int argc, char** argv)
     msg = tmsg;
     tmsg->op = atoi(argv[4]);
   }
+  else if (strcmp(argv[3], "LeaderState") == 0)
+  {
+    IMC::LeaderState* tmsg = new IMC::LeaderState;
+    msg = tmsg;
+    tmsg->lat = Angles::radians(atof(argv[4]));
+    tmsg->lon = Angles::radians(atof(argv[5]));
+    tmsg->height = atof(argv[6]);
+  }
   else if (strcmp(argv[3], "SetEntityParameters") == 0)
   {
     IMC::SetEntityParameters* tmsg = new IMC::SetEntityParameters;
