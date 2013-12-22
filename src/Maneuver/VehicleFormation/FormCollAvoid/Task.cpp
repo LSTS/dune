@@ -127,12 +127,14 @@ namespace Maneuver
           DUNE::Tasks::Periodic(name, ctx),
           //m_models(NULL),
           //m_model(NULL),
+          m_position(6, 1, 0.0),
+          m_velocity(6, 1, 0.0),
           m_start_time(-1.0),
           m_last_sim_update(-1.0),
           m_uav_state(12, 1, 0.0),
           m_uav_accel(3, 1,  0.0),
           m_airspeed(1),
-          m_wind(2, 1, 0.0),
+          m_wind(3, 1, 0.0),
           m_uav_n(1),
           m_init_leader_state(1),
           m_init_sim_state(1),
@@ -266,6 +268,11 @@ namespace Maneuver
           //! Initial parameters checking
           checkParameters();
 
+          //! Variables initialization
+          debug("Number of UAVs -> %d", m_uav_n);
+          m_uav_state = DUNE::Math::Matrix(12, m_uav_n+1, 0.0);
+
+          debug("Current UAV -> %d", m_args.uav_ind);
           UAVSimulation* model;
           if (m_args.uav_ind == 0)
           {
@@ -301,17 +308,19 @@ namespace Maneuver
           m_start_time = Clock::get();
           m_last_sim_update = Clock::get();
           //! Start the control time
-          m_last_ctrl_update = Matrix(m_args.uav_n, 1, Clock::get());
-        }
+          m_last_ctrl_update = Matrix(m_uav_n, 1, Clock::get());
+       }
 
         void
         onResourceRelease(void)
         {
         }
 
+
         void
         consume(const IMC::LeaderState* msg)
         {
+          debug("ping 1: LeaderState");
           if (!isActive())
             requestActivation();
 
@@ -349,6 +358,7 @@ namespace Maneuver
         void
         consume(const IMC::IndicatedSpeed* msg)
         {
+          debug("ping 1: IndicatedSpeed");
           if (m_args.uav_ind != 0 && msg->getSource() == getSystemId())
           {
             //! Get current vehicle airspeed
@@ -364,13 +374,16 @@ namespace Maneuver
         void
         consume(const IMC::EstimatedStreamVelocity* msg)
         {
+          debug("ping 1: EstimatedStreamVelocity");
           double t_wind[3] = {msg->x, msg->y, msg->z};
           m_wind = Matrix(t_wind, 3, 1);
+          debug("ping End: EstimatedStreamVelocity");
         }
 
         void
         consume(const IMC::SimulatedState* msg)
         {
+          debug("ping 1: SimulatedState");
           // Body to ground rotation matrix
           double euler_ang[3] = {msg->phi, msg->theta, msg->psi};
           Matrix md_rot_body2ground = Matrix(euler_ang, 3, 1).toDCM();
@@ -384,11 +397,13 @@ namespace Maneuver
               euler_ang[0], euler_ang[1], euler_ang[2],
               msg->p,       msg->q,       msg->r};
           m_uav_state.set(0, 11, 0, 0, Matrix(t_leader, 12, 1));
+          debug("ping End: SimulatedState");
         }
 
         void
         consume(const IMC::Acceleration* msg)
         {
+          debug("ping 1: Acceleration");
           if (m_args.uav_ind != 0 && msg->getSource() == getSystemId())
           {
             //! Get current vehicle acceleration state
@@ -403,6 +418,7 @@ namespace Maneuver
         void
         consume(const IMC::DesiredRoll* msg)
         {
+          debug("ping 1: ");
           if (m_args.uav_ind == 0)
           {
             //! Get leader vehicle commanded roll
@@ -424,6 +440,7 @@ namespace Maneuver
         void
         consume(const IMC::DesiredSpeed* msg)
         {
+          debug("ping 1: DesiredSpeed");
           if (m_args.uav_ind == 0)
           {
             //! Get leader vehicle commanded airspeed
@@ -445,6 +462,7 @@ namespace Maneuver
         void
         consume(const IMC::EstimatedState* msg)
         {
+          debug("ping 1: EstimatedState");
           //! Declaration
           double time;
           double timestep;
@@ -509,8 +527,8 @@ namespace Maneuver
 
               //! Compute the time step
               time  = Clock::get();
-              timestep = time - m_last_ctrl_update(m_args.uav_ind);
-              m_last_ctrl_update(m_args.uav_ind) = time;
+              timestep = time - m_last_ctrl_update(m_args.uav_ind-1);
+              m_last_ctrl_update(m_args.uav_ind-1) = time;
             }
             //! Get team vehicles updated state
             //! - Check that the estimated state is from a team member
@@ -550,13 +568,15 @@ namespace Maneuver
              m_altitude_cmd.value = (*vd_cmd)[3];
              dispatch(m_altitude_cmd);
              */
+            debug("ping End: EstimatedState");
           }
         }
 
         void
         formationControl(const Matrix& md_uav_state, const Matrix& md_uav_accel,
-            const int& ind_uav, const double& d_time_step, double*const vd_cmd[3])
+            const int& ind_uav, const double& d_time_step, double* vd_cmd[3])
         {
+          debug("ping 1: formationControl");
           //! Vehicle formation control method
 
           //! Controls:
@@ -669,7 +689,7 @@ namespace Maneuver
 
           Matrix vd_surf_uav = Matrix(2, m_uav_n+1, 0.0);
           Matrix vt_virt_err_uav = Matrix(2, m_uav_n+1, 0.0);
-          Matrix vd_weight_gain = Matrix(1, m_uav_n+1, 0.0);
+          Matrix vd_weight_gain = Matrix(m_uav_n+1, 1, 0.0);
 
 
           // ===========================================
@@ -718,7 +738,7 @@ namespace Maneuver
             {
               //! Formation following in a straight line
               d_form_turnrate = 0;
-              vd_form_pos1 = md_form_pos.get(0, 1, ind_uav, ind_uav);
+              vd_form_pos1 = md_form_pos.get(0, 1, ind_uav-1, ind_uav-1);
               /*
             Matrix vd_form_vel1[2] = {0, 0};
             Matrix vd_form_acc1[2] = {0, 0};
@@ -728,13 +748,13 @@ namespace Maneuver
             {
               //! Path reference frame
               //! In-formation adjustment
-              t_uav_turnrad = d_form_turnrad - md_form_pos(1, ind_uav);
-              t_cos_gamma = std::cos(md_form_pos(0, ind_uav)/d_form_turnrad);
-              t_sin_gamma = std::sin(md_form_pos(0, ind_uav)/d_form_turnrad);
+              t_uav_turnrad = d_form_turnrad - md_form_pos(1, ind_uav-1);
+              t_cos_gamma = std::cos(md_form_pos(0, ind_uav-1)/d_form_turnrad);
+              t_sin_gamma = std::sin(md_form_pos(0, ind_uav-1)/d_form_turnrad);
               // - Position
               vt_form_dir[0] = t_sin_gamma;
               vt_form_dir[1] = 1 - t_cos_gamma;
-              double vt_form_pos1[2] = {0, md_form_pos(1, ind_uav)};
+              double vt_form_pos1[2] = {0, md_form_pos(1, ind_uav-1)};
               vd_form_pos1 = t_uav_turnrad * Matrix(vt_form_dir, 2, 1) +
                   Matrix(vt_form_pos1, 2, 1);
               /*
@@ -748,7 +768,7 @@ namespace Maneuver
             else
             {
               //! Ground reference frame
-              vd_form_pos1 = md_form_pos.get(0, 1, ind_uav, ind_uav);
+              vd_form_pos1 = md_form_pos.get(0, 1, ind_uav-1, ind_uav-1);
               /*
             //! - Velocity
             double vt_form_vel1[2] = {-vd_form_pos1(1), vd_form_pos1(0)};
@@ -767,7 +787,7 @@ namespace Maneuver
 
           // verificar inclusão do líder como elemento 0 dos vectores e matrizes
           // da formação, em vez de elemento m_uav_n em apenas algumas
-          for (int ind_uav2 = 0; ind_uav2 < m_uav_n; ind_uav2++)
+          for (int ind_uav2 = 1; ind_uav2 < m_uav_n; ind_uav2++)
           {
             // Skeeping the current UAV index
             if (ind_uav == ind_uav2)
@@ -800,8 +820,8 @@ namespace Maneuver
             {
               //! Ground reference frame
               //! - Position
-              vd_inter_uav_des_pos = md_form_pos.get(0, 1, ind_uav, ind_uav) -
-                  md_form_pos.get(0, 1, ind_uav2, ind_uav2);
+              vd_inter_uav_des_pos = md_form_pos.get(0, 1, ind_uav-1, ind_uav-1) -
+                  md_form_pos.get(0, 1, ind_uav2-1, ind_uav2-1);
               //! - Velocity
               vd_inter_uav_des_vel = Matrix(2, 1, 0.0);
               //! - Acceleration
@@ -820,14 +840,14 @@ namespace Maneuver
               if ((i_formation_frame == 2) && (md_uav_state(6, 0) != 0))
               {
                 //! Curved shape - Formation shape adjustment to path curvature
-                t_uav_turnrad = d_form_turnrad - md_form_pos(1, ind_uav2);
-                t_cos_gamma = std::cos(md_form_pos(0, ind_uav2)/d_form_turnrad);
-                t_sin_gamma = std::sin(md_form_pos(0, ind_uav2)/d_form_turnrad);
+                t_uav_turnrad = d_form_turnrad - md_form_pos(1, ind_uav2-1);
+                t_cos_gamma = std::cos(md_form_pos(0, ind_uav2-1)/d_form_turnrad);
+                t_sin_gamma = std::sin(md_form_pos(0, ind_uav2-1)/d_form_turnrad);
                 // - Position
                 vt_form_dir[0] = t_sin_gamma;
                 vt_form_dir[1] = 1 - t_cos_gamma;
                 vt_form_pos2[0] = 0;
-                vt_form_pos2[1] = md_form_pos(1, ind_uav);
+                vt_form_pos2[1] = md_form_pos(1, ind_uav-1);
                 vd_form_pos2 = t_uav_turnrad * Matrix(vt_form_dir, 2, 1) +
                     Matrix(vt_form_pos2, 2, 1);
                 /*
@@ -840,7 +860,7 @@ namespace Maneuver
               else
               {
                 //! Original shape - Simpler formation shape rotation (below)
-                vd_form_pos2 = md_form_pos.get(0, 1, ind_uav2, ind_uav2);
+                vd_form_pos2 = md_form_pos.get(0, 1, ind_uav2-1, ind_uav2-1);
                 /*
               vd_form_vel2 = [-vd_form_pos2(2); vd_form_pos2(1)] * d_form_turnrate;
               vd_form_acc2 = -vd_form_pos2 * d_form_turnrate*d_form_turnrate;
@@ -1068,7 +1088,7 @@ namespace Maneuver
           {
             //! Earth reference frame
             //! - Position
-            vd_inter_uav_des_pos = md_form_pos.get(0, 1, ind_uav, ind_uav);
+            vd_inter_uav_des_pos = md_form_pos.get(0, 1, ind_uav-1, ind_uav-1);
             vd_err = -vd_inter_uav_state.get(0, 1, 0, 0) - vd_inter_uav_des_pos;
             //! - Velocity
             //     vd_inter_uav_des_vel = [0; 0];
@@ -1182,8 +1202,9 @@ namespace Maneuver
           //! Control influence merging
           //!-------------------------------------------
 
+
           //! UAV weight on control strategy
-          Matrix vd_ctrl_weight = Matrix(m_uav_n+1, 1, 1);
+          Matrix vd_ctrl_weight = Matrix(m_uav_n+1, 1, 1.0);
           vd_ctrl_weight(m_uav_n) = d_form_ref_gain;
           vd_ctrl_weight(ind_uav) = 0;
           vd_ctrl_weight &= vd_weight_gain;
@@ -1278,7 +1299,7 @@ namespace Maneuver
           // Altitude control
           //-------------------------------------------
 
-          (*vd_cmd)[3] = md_form_pos(2, ind_uav) + md_uav_state(2, 0);
+          (*vd_cmd)[3] = md_form_pos(2, ind_uav-1) + md_uav_state(2, 0);
 
           //-------------------------------------------
           // Speed control
@@ -1307,7 +1328,7 @@ namespace Maneuver
 
           //! Bank limits
           (*vd_cmd)[1] = std::min(std::max((*vd_cmd)[1], -d_bank_lim), d_bank_lim);
-          vd_ctrl(2) = d_g*std::tan((*vd_cmd)[1]); // Real lateral acceleration command
+          vd_ctrl(1) = d_g*std::tan((*vd_cmd)[1]); // Real lateral acceleration command
 
           //===========================================
           // Log data
@@ -1356,6 +1377,7 @@ namespace Maneuver
         void
         task(void)
         {
+          debug("ping 1: PeriodicTask");
           if (m_args.uav_ind == 0)
           {
             //! Update the leader vehicle commands and states
@@ -1436,7 +1458,7 @@ namespace Maneuver
           else
           {
             //! Update the simulated vehicles commands and states
-
+            debug("ping else");
           }
         }
       };
