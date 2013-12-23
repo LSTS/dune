@@ -103,7 +103,7 @@ namespace Maneuver
         double m_start_time;
         //! Last time update was ran
         double m_last_sim_update;
-        Matrix m_last_ctrl_update;
+        Matrix m_last_state_estim;
         //! Task arguments.
         Arguments m_args;
 
@@ -267,21 +267,17 @@ namespace Maneuver
         {
           //! Initial parameters checking
           checkParameters();
-
-          //! Variables initialization
           debug("Number of UAVs -> %d", m_uav_n);
-          m_uav_state = DUNE::Math::Matrix(12, m_uav_n+1, 0.0);
-
           debug("Current UAV -> %d", m_args.uav_ind);
-          UAVSimulation* model;
+
+          //! Initialize the leader vehicle model
+          //! - State  and control parameters initialization
+          m_model = new UAVSimulation(m_args.c_bank, m_args.c_speed);
+          //! - Simulation type
+          m_model->m_sim_type = m_args.sim_type;
+
           if (m_args.uav_ind == 0)
           {
-            //! Initialize the leader vehicle models
-            //! - State  and control parameters initialization
-            m_model = new UAVSimulation(m_args.c_bank, m_args.c_speed);
-            //! - Simulation type
-            m_model->m_sim_type = m_args.sim_type;
-
             //! Initiate the leader vehicle plan
             IMC::PlanControl p_control;
             p_control.plan_id = m_args.plan;
@@ -289,10 +285,17 @@ namespace Maneuver
             p_control.type = IMC::PlanControl::PC_REQUEST;
             p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
             dispatch(p_control);
+
+            //! Start the control time
+            m_last_state_estim = Matrix(1, 1, Clock::get());
           }
           else
           {
+            //! Initialize vehicles state
+            m_uav_state = DUNE::Math::Matrix(12, m_uav_n+1, 0.0);
+
             //! Initialize the simulated vehicles models
+            UAVSimulation* model;
             for (int ind_uav = 0; ind_uav <= m_uav_n; ++ind_uav)
             {
               //! - State  and control parameters initialization
@@ -301,14 +304,15 @@ namespace Maneuver
               model->m_sim_type = m_args.sim_type;
               //! Add model to the models vector
               m_models.push_back(model);
+
+              //! Start the control time
+              m_last_state_estim = Matrix(m_uav_n + 1, 1, Clock::get());
             }
           }
 
           //! Start the simulation time
           m_start_time = Clock::get();
           m_last_sim_update = Clock::get();
-          //! Start the control time
-          m_last_ctrl_update = Matrix(m_uav_n, 1, Clock::get());
        }
 
         void
@@ -384,20 +388,27 @@ namespace Maneuver
         consume(const IMC::SimulatedState* msg)
         {
           debug("ping 1: SimulatedState");
-          // Body to ground rotation matrix
-          double euler_ang[3] = {msg->phi, msg->theta, msg->psi};
-          Matrix md_rot_body2ground = Matrix(euler_ang, 3, 1).toDCM();
+          if (msg->getSource() != getSystemId())
+          {
+            //! Receive the leader simulated state from a parallel DUNE instance
+            // Future improvements - Substitute "msg->getSource() != getSystemId()" by an
+            // expression that check explicitly if the source is the virtual leader
 
-          // Ground velocity vector computation
-          double vt_body_vel[3] = {msg->u, msg->v, msg->w};
-          Matrix vd_vel = md_rot_body2ground*Matrix(vt_body_vel, 3, 1);
+            // Body to ground rotation matrix
+            double euler_ang[3] = {msg->phi, msg->theta, msg->psi};
+            Matrix md_rot_body2ground = Matrix(euler_ang, 3, 1).toDCM();
 
-          double t_leader[12] = {msg->x,       msg->y,       msg->z,
-              vd_vel(0),    vd_vel(1),    vd_vel(2),
-              euler_ang[0], euler_ang[1], euler_ang[2],
-              msg->p,       msg->q,       msg->r};
-          m_uav_state.set(0, 11, 0, 0, Matrix(t_leader, 12, 1));
-          debug("ping End: SimulatedState");
+            // Ground velocity vector computation
+            double vt_body_vel[3] = {msg->u, msg->v, msg->w};
+            Matrix vd_vel = md_rot_body2ground*Matrix(vt_body_vel, 3, 1);
+
+            double t_leader[12] = {msg->x,       msg->y,       msg->z,
+                vd_vel(0),    vd_vel(1),    vd_vel(2),
+                euler_ang[0], euler_ang[1], euler_ang[2],
+                msg->p,       msg->q,       msg->r};
+            m_uav_state.set(0, 11, 0, 0, Matrix(t_leader, 12, 1));
+            debug("ping End: SimulatedState");
+          }
         }
 
         void
@@ -527,8 +538,8 @@ namespace Maneuver
 
               //! Compute the time step
               time  = Clock::get();
-              timestep = time - m_last_ctrl_update(m_args.uav_ind-1);
-              m_last_ctrl_update(m_args.uav_ind-1) = time;
+              timestep = time - m_last_state_estim(m_args.uav_ind);
+              m_last_state_estim(m_args.uav_ind) = time;
             }
             //! Get team vehicles updated state
             //! - Check that the estimated state is from a team member
@@ -537,6 +548,7 @@ namespace Maneuver
             //! Simulation - vehicles model initialization
             if (m_init_sim_state)
             {
+              m_init_sim_state = 0;
               Matrix vd_vel2wind = Matrix(3, 1, 0.0);
               for (int ind_uav = 1; ind_uav <= m_uav_n; ++ind_uav)
               {
