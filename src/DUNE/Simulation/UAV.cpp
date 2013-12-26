@@ -767,10 +767,6 @@ namespace DUNE
         return;
       }
 
-      //! Optimization variables
-      m_cos_yaw = std::cos(m_position(5));
-      m_sin_yaw = std::sin(m_position(5));
-
       //! Wind effects
       m_velocity(2) = m_wind(2);
       m_uav2wind_gnd_frm = m_velocity.get(0, 2, 0, 0) - m_wind;
@@ -779,24 +775,41 @@ namespace DUNE
       //==========================================================================
       //! Aircraft Dynamics
       //==========================================================================
+
+      //! Vertical position and Euler angles state update
+      m_position.set(2, 5, 0, 0, m_position.get(2, 5, 0, 0) + m_velocity.get(2, 5, 0, 0)*timestep);
+      // Optimization variables
+      m_cos_yaw = std::cos(m_position(5));
+      m_sin_yaw = std::sin(m_position(5));
+
+      //! Turn rate
+      m_velocity(5) = m_g * std::tan(m_position(3))/m_airspeed;
+      //! Horizontal position state update
+      if (m_position(3) == 0)
+      {
+        m_position.set(0, 1, 0, 0, m_position.get(0, 1, 0, 0) + m_velocity.get(0, 1, 0, 0)*timestep);
+      }
+      else
+      {
+        double d_turn_radius = m_airspeed/m_velocity(5);
+        double d_initial_angle = m_position(5) - m_velocity(5)*timestep;
+        m_position(0) += d_turn_radius*(m_sin_yaw - std::sin(d_initial_angle));
+        m_position(1) += d_turn_radius*(std::cos(d_initial_angle) - m_cos_yaw);
+      }
+
+
       //! Command effect
       //! - Horizontal acceleration command
       double d_speed_rate = (m_airspeed_cmd - m_airspeed)/m_speed_time_cst;
       m_airspeed += d_speed_rate*timestep;
       //! - Roll rate command
-      double d_bank_rate = (m_bank_cmd - m_position(3))/m_bank_time_cst;
-      m_position(3) += d_bank_rate*timestep;
+      m_velocity(3) = (m_bank_cmd - m_position(3))/m_bank_time_cst;
 
       //! UAV velocity components relative to the wind over the ground reference frame
       m_uav2wind_gnd_frm(0) = m_airspeed * m_cos_yaw;
       m_uav2wind_gnd_frm(1) = m_airspeed * m_sin_yaw;
-      // UAV velocity components relative to the ground over the ground reference frame
+      //! UAV velocity components relative to the ground over the ground reference frame
       m_velocity.set(0, 2, 0, 0, m_uav2wind_gnd_frm + m_wind);
-      // Turn rate
-      m_velocity(5) = m_g * std::tan(m_position(3))/m_airspeed;
-
-      // State vector update
-      m_position += m_velocity*timestep;
 
       //==========================================================================
       // Output

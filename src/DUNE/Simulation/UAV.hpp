@@ -58,6 +58,15 @@ namespace DUNE
         { }
       };
 
+      /*
+      class Warning: public std::warn
+      {
+        Warning(const std::string& msg):
+          std::warn("UAV simulation warning: " + msg)
+        { }
+      };
+      */
+
       //! Constructor.
       //! Create a simulation model with null initial state and null vehicle model
       UAVSimulation(void);
