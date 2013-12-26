@@ -776,6 +776,7 @@ namespace DUNE
       //! Aircraft Dynamics
       //==========================================================================
 
+      double d_initial_yaw = m_position(5);
       //! Vertical position and Euler angles state update
       m_position.set(2, 5, 0, 0, m_position.get(2, 5, 0, 0) + m_velocity.get(2, 5, 0, 0)*timestep);
       // Optimization variables
@@ -792,9 +793,8 @@ namespace DUNE
       else
       {
         double d_turn_radius = m_airspeed/m_velocity(5);
-        double d_initial_angle = m_position(5) - m_velocity(5)*timestep;
-        m_position(0) += d_turn_radius*(m_sin_yaw - std::sin(d_initial_angle));
-        m_position(1) += d_turn_radius*(std::cos(d_initial_angle) - m_cos_yaw);
+        m_position(0) += d_turn_radius*(m_sin_yaw - std::sin(d_initial_yaw));
+        m_position(1) += d_turn_radius*(std::cos(d_initial_yaw) - m_cos_yaw);
       }
 
 
