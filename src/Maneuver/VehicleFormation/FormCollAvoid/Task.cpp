@@ -466,6 +466,7 @@ namespace Maneuver
 
           if (msg->getSource() != getSystemId())
           {
+            trace("SimulatedState receiving");
             //! Receive the leader simulated state from a parallel DUNE instance
             // Future improvements - Substitute "msg->getSource() != getSystemId()" by an
             // expression that check explicitly if the source is the virtual leader
@@ -716,11 +717,11 @@ namespace Maneuver
           if (!isActive())
             return;
 
-          trace("PeriodicTask active");
+          spew("PeriodicTask active");
           if (m_args.uav_ind == 0)
           {
             //! Update the leader vehicle commands and states
-            debug("PeriodicTask - Leader state update");
+            spew("PeriodicTask - Leader state update");
 
             //! Declaration
             double d_time;
@@ -792,7 +793,7 @@ namespace Maneuver
           else
           {
             //! Update the simulated vehicles commands and states
-            debug("PeriodicTask - Team state prediction");
+            spew("PeriodicTask - Team state prediction");
 
             // To complete - Check if leader simulation last update is recent enough: m_last_state_estim(0)
             // To complete - Check if team vehicles last update is recent enough: m_last_state_estim(1:m_uav_n)
@@ -818,7 +819,24 @@ namespace Maneuver
         void
         checkParameters(void)
         {
-          m_uav_n = m_args.formation_pos.columns();
+          //! Check if the formation positions matrix has a suitable size
+          if (m_args.formation_pos.rows()%3 != 0)
+            err("Number of UAV positions coordinates in the formation matrix (%d) is not a multiple of 3!",
+                m_args.formation_pos.rows());
+
+          //! Check if the formation positions matrix has the right size:
+          //! 3 rows and as many columns as the number of UAVs
+          if (m_args.formation_pos.rows()/3 > 1)
+          {
+            //! - If not, compute the number of UAVs included and resize the matrix
+            m_uav_n = m_args.formation_pos.rows()/3;
+            m_args.formation_pos.resizeAndKeep(3, m_uav_n);
+          }
+          else
+            m_uav_n = m_args.formation_pos.columns();
+
+          //! Check if the number of UAVs in the formation positions matrix
+          //! matches that indicated as a parameter
           if (m_uav_n != m_args.uav_n)
           {
             war("Number of the UAVs in the formation matrix (%d) is different from the total UAV count indicated (%d)!",
