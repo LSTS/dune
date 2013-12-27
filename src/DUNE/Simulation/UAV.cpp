@@ -835,6 +835,13 @@ namespace DUNE
     }
 
     void
+    UAVSimulation::get(DUNE::Math::Matrix& pos)
+    {
+      //! Vehicle position
+      pos = m_position;
+    }
+
+    void
     UAVSimulation::get(DUNE::Math::Matrix& pos, DUNE::Math::Matrix& vel)
     {
       //! Vehicle position

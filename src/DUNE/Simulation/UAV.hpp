@@ -236,8 +236,13 @@ namespace DUNE
       setCtrl(const double& bank_time_cst, const double& speed_time_cst);
 
       //! This method gets the vehicle state.
-      //! @param[in] pos - initial position vector
-      //! @param[in] vel - initial velocity vector
+      //! @param[out] pos - initial position vector
+      void
+      get(DUNE::Math::Matrix& pos);
+
+      //! This method gets the vehicle state.
+      //! @param[out] pos - initial position vector
+      //! @param[out] vel - initial velocity vector
       void
       get(DUNE::Math::Matrix& pos, DUNE::Math::Matrix& vel);
 
