@@ -118,7 +118,7 @@ namespace Maneuver
         Matrix m_wind;
 
         //! System command variables
-        Matrix* m_uav_ctrl;
+        Matrix m_uav_ctrl;
 
         //! Vehicle commands
         IMC::DesiredRoll m_bank_cmd;
@@ -351,10 +351,14 @@ namespace Maneuver
           }
           else
           {
+            debug("Vehicles state and command vectors initialization");
             //! Initialize vehicles state
             m_uav_state = DUNE::Math::Matrix(12, m_uav_n+1, 0.0);
+            debug("Vehicles state and command vectors initialization 2");
             //! Initialize vehicles commands
-            *m_uav_ctrl = DUNE::Math::Matrix(3, m_uav_n, 0.0);
+            m_uav_ctrl = DUNE::Math::Matrix(3, m_uav_n, 0.0);
+            debug("Vehicles state and command vectors initialization 3");
+
 
             //! Start the control time
             m_last_ctrl_update = Clock::get();
@@ -363,10 +367,11 @@ namespace Maneuver
             m_last_simctrl_update = Matrix(m_uav_n, 1, -1);
 
             //! Initialize the simulated vehicles models
+            debug("Simulated vehicles models initialization");
             UAVSimulation* model;
             for (int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
             {
-              debug("UAV index on 'for' loop: %d", ind_uav)
+              debug("UAV index on 'for' loop: %d", ind_uav);
               //! - State  and control parameters initialization
               model = new DUNE::Simulation::UAVSimulation(
                   m_args.formation_pos.get(0, 2, ind_uav, ind_uav).vertCat(m_position.get(3, 5, 0, 0)),
@@ -405,7 +410,7 @@ namespace Maneuver
             m_sstate.height = msg->height;
 
             //! - State initialization
-            m_position = m_model->m_position;
+            m_model->get(m_position);
             m_position(0) = 0.0;
             m_position(1) = 0.0;
             // Assuming vehicle starts at ground surface.
@@ -433,7 +438,7 @@ namespace Maneuver
             if (!m_valid_airspeed)
             {
               m_valid_airspeed = 1;
-              (*m_uav_ctrl)(1, m_args.uav_ind-1) = m_airspeed;
+              m_uav_ctrl(1, m_args.uav_ind-1) = m_airspeed;
             }
           }
         }
@@ -559,9 +564,8 @@ namespace Maneuver
           {
             //! Declaration
             double d_time = Clock::get();
-            double d_timestep;
             UAVSimulation* model;
-            Matrix* vd_cmd(3, 1, 0.0);
+            Matrix vd_cmd = Matrix(3, 1);
 
             if (msg->getSource() == getSystemId())
             {
@@ -590,9 +594,9 @@ namespace Maneuver
               //! Control computation
               //===========================================
 
-              vd_cmd->set(0, 2, 0, 0, m_uav_ctrl->get(0, 2, m_args.uav_ind-1, m_args.uav_ind-1));
-              formationControl(m_uav_state, m_uav_accel, m_args.uav_ind, d_time - m_last_ctrl_update, vd_cmd);
-              m_uav_ctrl->set(0, 2, m_args.uav_ind-1, m_args.uav_ind-1, vd_cmd->get(0, 2, 0, 0));
+              vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, m_args.uav_ind-1, m_args.uav_ind-1));
+              formationControl(m_uav_state, m_uav_accel, m_args.uav_ind, d_time - m_last_ctrl_update, &vd_cmd);
+              m_uav_ctrl.set(0, 2, m_args.uav_ind-1, m_args.uav_ind-1, vd_cmd.get(0, 2, 0, 0));
 
               //! - Update own vehicle simulation model
               model = m_models[m_args.uav_ind-1];
@@ -600,7 +604,7 @@ namespace Maneuver
                          vertCat(m_uav_state.get(6, 8, m_args.uav_ind, m_args.uav_ind)),
                          m_uav_state.get(3, 5, m_args.uav_ind, m_args.uav_ind).
                          vertCat(m_uav_state.get(9, 11, m_args.uav_ind, m_args.uav_ind)));
-              model->command((*vd_cmd)(0), (*vd_cmd)(1), (*vd_cmd)(2));
+              model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
               m_models[m_args.uav_ind-1] = model;
 
               //! Update the time control variables
@@ -608,19 +612,19 @@ namespace Maneuver
               m_last_simctrl_update(m_args.uav_ind-1) = d_time;
               m_last_state_estim(m_args.uav_ind) = d_time;
               //! Get estimated state time stamp
-              debug("Clock time: %d; Estimated state time stamp: %d", d_time, msg->getTimeStamp());
-              debug("Clock time stamp difference: %d", d_time - msg->getTimeStamp());
+              debug("Clock time: %2.3f; Estimated state time stamp: %2.3f", d_time, msg->getTimeStamp());
+              debug("Clock time stamp difference: %2.3f", d_time - msg->getTimeStamp());
 
               //===========================================
               //! Commands output
               //===========================================
 
-              m_bank_cmd.value = (*m_uav_ctrl)(0, m_args.uav_ind-1);
+              m_bank_cmd.value = m_uav_ctrl(0, m_args.uav_ind-1);
               dispatch(m_bank_cmd);
-              m_airspeed_cmd.value = (*m_uav_ctrl)(1, m_args.uav_ind-1);
+              m_airspeed_cmd.value = m_uav_ctrl(1, m_args.uav_ind-1);
               dispatch(m_airspeed_cmd);
               /*
-               m_altitude_cmd.value = (*m_uav_ctrl)(2, m_args.uav_ind-1);
+               m_altitude_cmd.value = m_uav_ctrl(2, m_args.uav_ind-1);
                dispatch(m_altitude_cmd);
                */
             }
@@ -646,15 +650,15 @@ namespace Maneuver
               //! - Commands update
               // To complete - Compute the estimated vehicle acceleration
               Matrix vd_uav_accel = Matrix(3, 1, 0.0);
-              vd_cmd->set(0, 2, 0, 0, m_uav_ctrl->get(0, 2, ind_uav-1, ind_uav-1));
-              formationControl(m_uav_state, vd_uav_accel, ind_uav, 1/m_args.ctrl_frequency, vd_cmd);
-              m_uav_ctrl->set(0, 2, ind_uav-1, ind_uav-1, vd_cmd->get(0, 2, 0, 0));
+              vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, ind_uav-1, ind_uav-1));
+              formationControl(m_uav_state, vd_uav_accel, ind_uav, 1/m_args.ctrl_frequency, &vd_cmd);
+              m_uav_ctrl.set(0, 2, ind_uav-1, ind_uav-1, vd_cmd.get(0, 2, 0, 0));
 
               //! - Update current vehicle simulation model
               model = m_models[ind_uav-1];
               model->set(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)),
                          m_uav_state.get(3, 5, ind_uav, ind_uav).vertCat(m_uav_state.get(9, 11, ind_uav, ind_uav)));
-              model->command((*vd_cmd)(0), (*vd_cmd)(1), (*vd_cmd)(2));
+              model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
               m_models[ind_uav-1] = model;
 
               //! Check if all vehicles states were initialized
@@ -664,7 +668,7 @@ namespace Maneuver
                   return;
 
                 bool b_state_init = true;
-                for (int ind_uav = 1; ind_uav <= m_uav_n; ++ind_uav)
+                for (ind_uav = 1; ind_uav <= m_uav_n; ++ind_uav)
                 {
                   // Do not check current vehicle state initialization
                   if (ind_uav == m_args.uav_ind)
@@ -809,38 +813,38 @@ namespace Maneuver
           double d_timestep_sim = 1/m_args.frequency;
           double d_timestep_ctrl = 1/m_args.ctrl_frequency;
           double d_sim_time;
-          int vi_sim_time[m_uav_n+1];
+          Matrix vi_sim_time = Matrix(m_uav_n+1, 1);
           int ind_time;
           int i_time_n = m_uav_n;
-          Matrix* vd_cmd;
+          Matrix vd_cmd = Matrix(3, 1);
           UAVSimulation* model;
 
           //! Order the update times as an increasing sequence
           for (int ind_uav = 1; ind_uav <= m_uav_n; ++ind_uav)
-            vi_sim_time[ind_uav] = ind_uav;
+            vi_sim_time(ind_uav) = ind_uav;
 
           for (int ind_uav = 1; ind_uav < i_time_n; ++ind_uav)
           {
             for (int ind_uav2 = ind_uav + 1; ind_uav2 <= i_time_n; ++ind_uav2)
             {
-              if (m_last_state_estim(vi_sim_time[ind_uav]) > m_last_state_estim(vi_sim_time[ind_uav2]))
+              if (m_last_state_estim(vi_sim_time(ind_uav)) > m_last_state_estim(vi_sim_time(ind_uav2)))
               {
-                ind_time = vi_sim_time[ind_uav];
-                vi_sim_time[ind_uav] = vi_sim_time[ind_uav2];
-                vi_sim_time[ind_uav2] = ind_time;
+                ind_time = vi_sim_time(ind_uav);
+                vi_sim_time(ind_uav) = vi_sim_time(ind_uav2);
+                vi_sim_time(ind_uav2) = ind_time;
               }
-              else if (m_last_state_estim(vi_sim_time[ind_uav]) == m_last_state_estim(vi_sim_time[ind_uav2]))
+              else if (m_last_state_estim(vi_sim_time(ind_uav)) == m_last_state_estim(vi_sim_time(ind_uav2)))
               {
                 --i_time_n;
                 for (ind_time = ind_uav2; ind_time < i_time_n; ++ind_time)
-                  vi_sim_time[ind_time] = vi_sim_time[ind_time + 1];
+                  vi_sim_time(ind_time) = vi_sim_time(ind_time + 1);
               }
             }
           }
 
           //! Select the oldest prediction time reference
           ind_time = 0;
-          d_sim_time = m_last_state_estim(vi_sim_time[ind_time]);
+          d_sim_time = m_last_state_estim(vi_sim_time(ind_time));
 
           //! Loop the time references to update all prediction up to the "current" time
           while (d_sim_time + d_timestep_sim <= d_time)
@@ -877,14 +881,14 @@ namespace Maneuver
                 Matrix vd_uav_accel = Matrix(3, 1, 0.0);
 
                 //! Compute simulated vehicle formation controls
-                vd_cmd->set(0, 2, 0, 0, m_uav_ctrl->get(0, 2, ind_uav-1, ind_uav-1));
-                formationControl(m_uav_state, vd_uav_accel, ind_uav, d_timestep_ctrl, vd_cmd);
-                m_uav_ctrl->set(0, 2, ind_uav-1, ind_uav-1, vd_cmd->get(0, 2, 0, 0));
+                vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, ind_uav-1, ind_uav-1));
+                formationControl(m_uav_state, vd_uav_accel, ind_uav, d_timestep_ctrl, &vd_cmd);
+                m_uav_ctrl.set(0, 2, ind_uav-1, ind_uav-1, vd_cmd.get(0, 2, 0, 0));
 
                 //! Retrieve current vehicle model
                 model = m_models[ind_uav-1];
                 //! - Update current vehicle model control commands
-                model->command((*vd_cmd)(0), (*vd_cmd)(1), (*vd_cmd)(2));
+                model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
                 //! Update current vehicle model to the vector
                 m_models[ind_uav-1] = model;
 
@@ -894,14 +898,14 @@ namespace Maneuver
             }
 
             //! Update the state prediction time
-            m_last_state_estim(vi_sim_time[ind_time]) += d_timestep_sim;
+            m_last_state_estim(vi_sim_time(ind_time)) += d_timestep_sim;
 
             //! Select the next prediction time reference
             if (ind_time <= i_time_n)
               ++ind_time;
             else
               ind_time = 0;
-            d_sim_time = m_last_state_estim(vi_sim_time[ind_time]);
+            d_sim_time = m_last_state_estim(vi_sim_time(ind_time));
           }
         }
 
@@ -912,7 +916,6 @@ namespace Maneuver
           //! Temporary prediction variables initialization
           Matrix vd_pos(6, 1, 0.0);
           Matrix vd_vel(6, 1, 0.0);
-          double d_timestep_sim = 1/m_args.frequency;
           UAVSimulation* model;
 
           //! Update team simulated state for remaining time
@@ -1024,7 +1027,7 @@ namespace Maneuver
           double d_err_x;
           double d_err_y;
           double d_err_x_s_conv;
-          double d_err_y_s_conv;
+          // double d_err_y_s_conv;
           int int_Max;
           Matrix vd_deriv_err = Matrix(2, 1);
           double d_deriv_err_x;
