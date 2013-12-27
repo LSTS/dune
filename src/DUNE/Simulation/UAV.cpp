@@ -767,6 +767,9 @@ namespace DUNE
         return;
       }
 
+      if (timestep <= 0)
+        return;
+
       //! Wind effects
       m_velocity(2) = m_wind(2);
       m_uav2wind_gnd_frm = m_velocity.get(0, 2, 0, 0) - m_wind;
@@ -803,7 +806,7 @@ namespace DUNE
       double d_speed_rate = (m_airspeed_cmd - m_airspeed)/m_speed_time_cst;
       m_airspeed += d_speed_rate*timestep;
       //! - Roll rate command
-      m_velocity(3) = (m_bank_cmd - m_position(3))/m_bank_time_cst;
+      m_velocity(3) = (m_bank_cmd - m_position(3))*timestep/m_bank_time_cst;
 
       //! UAV velocity components relative to the wind over the ground reference frame
       m_uav2wind_gnd_frm(0) = m_airspeed * m_cos_yaw;
