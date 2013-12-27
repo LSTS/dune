@@ -354,10 +354,8 @@ namespace Maneuver
             debug("Vehicles state and command vectors initialization");
             //! Initialize vehicles state
             m_uav_state = DUNE::Math::Matrix(12, m_uav_n+1, 0.0);
-            debug("Vehicles state and command vectors initialization 2");
             //! Initialize vehicles commands
             m_uav_ctrl = DUNE::Math::Matrix(3, m_uav_n, 0.0);
-            debug("Vehicles state and command vectors initialization 3");
 
 
             //! Start the control time
@@ -395,7 +393,8 @@ namespace Maneuver
         void
         consume(const IMC::LeaderState* msg)
         {
-          debug("ping 1: LeaderState");
+          spew("LeaderState start");
+
           if (m_args.uav_ind == 0)
           {
             // if (msg->op == IMC::LeaderState::OP_SET)
@@ -425,12 +424,15 @@ namespace Maneuver
             cop.message.set(*msg);
             dispatch(cop);
           }
+
+          spew("LeaderState end");
         }
 
         void
         consume(const IMC::IndicatedSpeed* msg)
         {
-          debug("ping 1: IndicatedSpeed");
+          spew("IndicatedSpeed start");
+
           if (m_args.uav_ind > 0 && msg->getSource() == getSystemId())
           {
             //! Get current vehicle airspeed
@@ -441,22 +443,27 @@ namespace Maneuver
               m_uav_ctrl(1, m_args.uav_ind-1) = m_airspeed;
             }
           }
+
+          spew("IndicatedSpeed end");
         }
 
         void
         consume(const IMC::EstimatedStreamVelocity* msg)
         {
-          debug("ping 1: EstimatedStreamVelocity");
+          spew("EstimatedStreamVelocity start");
+
           double t_wind[3] = {msg->x, msg->y, msg->z};
           m_wind = Matrix(t_wind, 3, 1);
-          debug("ping End: EstimatedStreamVelocity");
-          // Send estimated wind to the global formation management thread
+          // To complete - Send estimated wind to the global formation management thread
+
+          spew("EstimatedStreamVelocity end");
         }
 
         void
         consume(const IMC::SimulatedState* msg)
         {
-          debug("ping 1: SimulatedState");
+          spew("SimulatedState start");
+
           if (msg->getSource() != getSystemId())
           {
             //! Receive the leader simulated state from a parallel DUNE instance
@@ -486,15 +493,16 @@ namespace Maneuver
             //! Update leader commands
             Matrix vd_vel2wind = m_uav_state.get(3, 5, 0, 0) - m_wind;
             m_model->command(m_uav_state(6, 0), vd_vel2wind.norm_2(), m_uav_state(2, 0));
-
-            debug("ping End: SimulatedState");
           }
+
+          spew("SimulatedState end");
         }
 
         void
         consume(const IMC::Acceleration* msg)
         {
-          debug("ping 1: Acceleration");
+          spew("Acceleration start");
+
           if (m_args.uav_ind > 0)
           {
             double mt_uav_accel[12] = {msg->x, msg->y, msg->z};
@@ -509,12 +517,15 @@ namespace Maneuver
               // m_uav_state.set(0, 11, m_args.uav_ind, m_args.uav_ind, Matrix(vt_uav_state, 12, 1));
             }
           }
+
+          spew("Acceleration end");
         }
 
         void
         consume(const IMC::DesiredRoll* msg)
         {
-          debug("ping 1: ");
+          spew("DesiredRoll start");
+
           if (m_args.uav_ind == 0)
           {
             //! Get leader vehicle commanded roll
@@ -531,12 +542,15 @@ namespace Maneuver
             // ========= Debug ===========
             trace("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
           }
+
+          spew("DesiredRoll end");
         }
 
         void
         consume(const IMC::DesiredSpeed* msg)
         {
-          debug("ping 1: DesiredSpeed");
+          spew("DesiredSpeed start");
+
           if (m_args.uav_ind == 0)
           {
             //! Get leader vehicle commanded airspeed
@@ -553,12 +567,15 @@ namespace Maneuver
             // ========= Debug ===========
             trace("Speed command received (%1.2fm/s)", msg->value);
           }
+
+          spew("DesiredSpeed end");
         }
 
         void
         consume(const IMC::EstimatedState* msg)
         {
-          debug("ping 1: EstimatedState");
+          spew("EstimatedState start");
+
           //! Skip formation flight controller if running as the leader vehicle
           if (m_args.uav_ind > 0)
           {
@@ -684,23 +701,26 @@ namespace Maneuver
               if (!isActive() && m_team_state_init)
                 requestActivation();
             }
-            debug("ping End: EstimatedState");
           }
+
+          spew("EstimatedState end");
         }
 
         void
         task(void)
         {
-          //! Handle IMC messages from bus
+          spew("PeriodicTask start");
+         //! Handle IMC messages from bus
           consumeMessages();
 
           if (!isActive())
             return;
 
-          debug("ping 1: PeriodicTask");
+          trace("PeriodicTask active");
           if (m_args.uav_ind == 0)
           {
             //! Update the leader vehicle commands and states
+            debug("PeriodicTask - Leader state update");
 
             //! Declaration
             double d_time;
@@ -772,7 +792,7 @@ namespace Maneuver
           else
           {
             //! Update the simulated vehicles commands and states
-            debug("ping: PeriodicTask - Team state prediction");
+            debug("PeriodicTask - Team state prediction");
 
             // To complete - Check if leader simulation last update is recent enough: m_last_state_estim(0)
             // To complete - Check if team vehicles last update is recent enough: m_last_state_estim(1:m_uav_n)
@@ -780,6 +800,8 @@ namespace Maneuver
             //! Update team simulated state for standard time periods
             teamPeriodicUpdate(Clock::get());
           }
+
+          spew("PeriodicTask end");
         }
 
         Matrix
@@ -944,7 +966,7 @@ namespace Maneuver
         formationControl(const Matrix& md_uav_state, const Matrix& md_uav_accel,
             const int& ind_uav, const double& d_time_step, Matrix* vd_cmd)
         {
-          debug("ping 1: formationControl");
+          spew("formationControl start");
           //! Vehicle formation control method
 
           //! Controls:
@@ -1717,6 +1739,7 @@ namespace Maneuver
         end
            */
 
+          spew("formationControl end");
         }
       };
     }
