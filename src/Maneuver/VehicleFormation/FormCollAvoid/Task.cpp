@@ -464,7 +464,7 @@ namespace Maneuver
         {
           spew("SimulatedState start");
 
-          if (msg->getSource() != getSystemId())
+          if (m_args.uav_ind > 0 && msg->getSource() != getSystemId())
           {
             trace("SimulatedState receiving");
             //! Receive the leader simulated state from a parallel DUNE instance
