@@ -369,7 +369,6 @@ namespace Maneuver
             UAVSimulation* model;
             for (int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
             {
-              debug("UAV index on 'for' loop: %d", ind_uav);
               //! - State  and control parameters initialization
               model = new DUNE::Simulation::UAVSimulation(
                   m_args.formation_pos.get(0, 2, ind_uav, ind_uav).vertCat(m_position.get(3, 5, 0, 0)),
