@@ -417,11 +417,11 @@ namespace Maneuver
 
             m_last_leader_update = Clock::get();
 
-            // Save message to cache.
-            IMC::CacheControl cop;
-            cop.op = IMC::CacheControl::COP_STORE;
-            cop.message.set(*msg);
-            dispatch(cop);
+//            // Save message to cache.
+//            IMC::CacheControl cop;
+//            cop.op = IMC::CacheControl::COP_STORE;
+//            cop.message.set(*msg);
+//            dispatch(cop);
           }
 
           spew("LeaderState end");
