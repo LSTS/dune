@@ -92,8 +92,18 @@ namespace Simulators
       void
       consume(const IMC::SimulatedState* msg)
       {
+        //! Check if system is active
         if (!isActive())
           return;
+
+        //! Check if the source ID is from the system itself
+        if (msg->getSource() != getSystemId())
+        {
+          spew("Simulated state rejected.");
+          spew("SimulatedState sent from another source!");
+          return;
+        }
+
         spew("Consuming SimulatedState");
 
         if (getEntityState() != IMC::EntityState::ESTA_NORMAL)

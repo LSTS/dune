@@ -312,6 +312,7 @@ namespace Simulators
       void
       consume(const IMC::GpsFix* msg)
       {
+        //! Check if system is active and activate it if not
         if (!isActive())
           requestActivation();
 
@@ -351,11 +352,20 @@ namespace Simulators
       {
         debug("Consuming DesiredRoll");
 
+        //! Check if system is active
         if (!isActive())
         {
           trace("Bank command rejected.");
           trace("Simulation not active.");
           trace("Missing GPS-Fix!");
+          return;
+        }
+
+        //! Check if the source ID is from the system itself
+        if (msg->getSource() != getSystemId())
+        {
+          trace("Bank command rejected.");
+          trace("DesiredRoll sent from another source!");
           return;
         }
 
@@ -370,11 +380,20 @@ namespace Simulators
       {
         debug("Consuming DesiredSpeed");
 
+        //! Check if system is active
         if (!isActive())
         {
           trace("Speed command rejected.");
           trace("Simulation not active.");
           trace("Missing GPS-Fix!");
+          return;
+        }
+
+        //! Check if the source ID is from the system itself
+        if (msg->getSource() != getSystemId())
+        {
+          trace("Speed command rejected.");
+          trace("DesiredSpeed sent from another source!");
           return;
         }
 
@@ -388,8 +407,17 @@ namespace Simulators
       void
       consume(const IMC::SetServoPosition* msg)
       {
+        //! Check if system is active
         if (!isActive())
           return;
+
+        //! Check if the source ID is from the system itself
+        if (msg->getSource() != getSystemId())
+        {
+          trace("Servo command rejected.");
+          trace("SetServoPosition sent from another source!");
+          return;
+        }
 
         m_servo_pos(msg->id) = msg->value;
       }
@@ -397,8 +425,17 @@ namespace Simulators
       void
       consume(const IMC::SetThrusterActuation* msg)
       {
+        //! Check if system is active
         if (!isActive())
           return;
+
+        //! Check if the source ID is from the system itself
+        if (msg->getSource() != getSystemId())
+        {
+          trace("Thruster command rejected.");
+          trace("SetThrusterActuation sent from another source!");
+          return;
+        }
 
         m_thruster_act = msg->value;
       }
@@ -446,6 +483,7 @@ namespace Simulators
         //! Handle IMC messages from bus
         consumeMessages();
 
+        //! Check if system is active
         if (!isActive())
           return;
 
@@ -513,6 +551,9 @@ namespace Simulators
         m_sstate.svx = m_model->m_wind(0);
         m_sstate.svy = m_model->m_wind(1);
         m_sstate.svz = m_model->m_wind(2);
+
+        //! Set the destination ID as the system own ID
+        m_sstate.setDestination(getSystemId());
 
         dispatch(m_sstate);
 
