@@ -236,26 +236,29 @@ namespace DUNE
       setCtrl(const double& bank_time_cst, const double& speed_time_cst);
 
       //! This method gets the vehicle state.
-      //! @param[out] pos - initial position vector
-      void
-      get(DUNE::Math::Matrix& pos);
+      //! @returns pos - current position vector
+      DUNE::Math::Matrix
+      getPosition(void);
 
       //! This method gets the vehicle state.
-      //! @param[out] pos - initial position vector
-      //! @param[out] vel - initial velocity vector
-      void
-      get(DUNE::Math::Matrix& pos, DUNE::Math::Matrix& vel);
+      //! @returns vel - current velocity vector
+      DUNE::Math::Matrix
+      getVelocity(void);
+
+      //! This method gets the vehicle state.
+      //! @returns airspeed - current aircraft total airspeed
+      double
+      getAirspeed(void);
 
       //! This method sets the vehicle state.
-      //! @param[in] pos - initial position vector
+      //! @param[in] pos - current position vector
       void
-      set(const DUNE::Math::Matrix& pos);
+      setPosition(const DUNE::Math::Matrix& pos);
 
       //! This method sets the vehicle state.
-      //! @param[in] pos - initial position vector
-      //! @param[in] vel - initial velocity vector
+      //! @param[in] pos - current position vector
       void
-      set(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel);
+      setVelocity(const DUNE::Math::Matrix& vel);
 
       //! This method sets the vehicle control commands.
       //! @param[in] bank_cmd - applied bank command
@@ -319,7 +322,6 @@ namespace DUNE
       double m_airspeed;
       double m_cos_yaw;
       double m_sin_yaw;
-
 
       void
       update4DOF_Bank(const double& timestep);

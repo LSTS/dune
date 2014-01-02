@@ -806,7 +806,7 @@ namespace DUNE
       double d_speed_rate = (m_airspeed_cmd - m_airspeed)/m_speed_time_cst;
       m_airspeed += d_speed_rate*timestep;
       //! - Roll rate command
-      m_velocity(3) = (m_bank_cmd - m_position(3))*timestep/m_bank_time_cst;
+      m_velocity(3) = (m_bank_cmd - m_position(3))/m_bank_time_cst;
 
       //! UAV velocity components relative to the wind over the ground reference frame
       m_uav2wind_gnd_frm(0) = m_airspeed * m_cos_yaw;
@@ -834,24 +834,29 @@ namespace DUNE
       m_model_time_cst = 1;
     }
 
-    void
-    UAVSimulation::get(DUNE::Math::Matrix& pos)
+    DUNE::Math::Matrix
+    UAVSimulation::getPosition(void)
     {
       //! Vehicle position
-      pos = m_position;
+      return m_position;
     }
 
-    void
-    UAVSimulation::get(DUNE::Math::Matrix& pos, DUNE::Math::Matrix& vel)
+    DUNE::Math::Matrix
+    UAVSimulation::getVelocity(void)
     {
-      //! Vehicle position
-      pos = m_position;
       //! Vehicle velocity vector, relative to the ground, in the ground reference frame
-      vel = m_velocity;
+      return m_velocity;
+    }
+
+    double
+    UAVSimulation::getAirspeed(void)
+    {
+      //! Aircraft total airspeed
+      return m_airspeed;
     }
 
     void
-    UAVSimulation::set(const DUNE::Math::Matrix& pos)
+    UAVSimulation::setPosition(const DUNE::Math::Matrix& pos)
     {
       int i_pos_size = pos.rows();
       if (i_pos_size < 2 && i_pos_size > 6)
@@ -862,19 +867,12 @@ namespace DUNE
     }
 
     void
-    UAVSimulation::set(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel)
+    UAVSimulation::setVelocity(const DUNE::Math::Matrix& vel)
     {
-      int i_pos_size = pos.rows();
-      if (i_pos_size < 2 && i_pos_size > 6)
-        throw Error("Invalid position vector dimension. Vector size must be between 2 and 6.");
-
       int i_vel_size = vel.rows();
       if (i_vel_size < 2 && i_vel_size > 6)
         throw Error("Invalid velocity vector dimension. Vector size must be between 2 and 6.");
 
-      //! Vehicle position
-      m_position.set(0, i_pos_size-1, 0, 0, pos);
-      /*
       //! Vehicle velocity vector, relative to the ground, in the ground reference frame
       m_velocity.set(0, i_vel_size-1, 0, 0, vel);
       //! Vehicle velocity vector, relative to the wind, in the ground reference frame
@@ -883,7 +881,6 @@ namespace DUNE
       m_airspeed = m_uav2wind_gnd_frm.norm_2();
       m_cos_yaw = std::cos(m_position(5));
       m_sin_yaw = std::sin(m_position(5));
-       */
     }
 
     void

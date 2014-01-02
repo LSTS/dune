@@ -335,7 +335,7 @@ namespace Simulators
         m_position(3) = 0.0;
         m_position(4) = 0.0;
         m_position(5) = 0.0;
-        m_model->set(m_position);
+        m_model->setPosition(m_position);
 
         m_start_time = Clock::get();
         m_last_update = Clock::get();
@@ -504,16 +504,17 @@ namespace Simulators
           spew("Bank: %1.2fº        - Commanded bank: %1.2fº",
               DUNE::Math::Angles::degrees(m_position(3)),
               DUNE::Math::Angles::degrees(m_model->m_bank_cmd));
-          spew("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->m_airspeed, m_model->m_airspeed_cmd);
+          spew("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->m_airspeed_cmd);
           spew("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
         }
-         */
+        */
         //==========================================================================
         //! Dynamics
         //==========================================================================
 
         m_model->update(timestep);
-        m_model->get(m_position, m_velocity);
+        m_position = m_model->getPosition();
+        m_velocity = m_model->getVelocity();
 
         //==========================================================================
         //! Output
