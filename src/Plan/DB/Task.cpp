@@ -79,6 +79,8 @@ namespace Plan
     {
       // Trace flag
       bool trace;
+      // Path to DB file
+      std::string db_path;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -112,6 +114,10 @@ namespace Plan
         .defaultValue("false")
         .description("Enable verbose output");
 
+        param("DB Path", m_args.db_path)
+        .defaultValue("")
+        .description("Path to DB file");
+
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::PowerOperation>(this);
@@ -130,7 +136,11 @@ namespace Plan
 
         inProgress("initializing");
 
-        Path db_file = m_ctx.dir_db / "Plan.db";
+        Path db_file;
+        if (m_args.db_path.empty())
+          db_file = m_ctx.dir_db / "Plan.db";
+        else
+          db_file = m_args.db_path;
 
         inf(DTR("database file: '%s'"), db_file.c_str());
 
