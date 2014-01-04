@@ -117,6 +117,10 @@ namespace Simulators
       void
       task(void)
       {
+        //! Check if system is active
+        if (!isActive())
+          return;
+
         spew("UAV Simulator: Running");
         // Handle IMC messages from bus
         consumeMessages();
@@ -192,6 +196,7 @@ namespace Simulators
         m_beta.value = std::atan2(vd_body_vel_2wind(1), vd_body_vel_2wind(0));
          */
 
+        //trace("Exporting estimated state (%s)!", this->getSystemName());
         dispatch(estate);
         dispatch(speed);
         dispatch(streamspeed);

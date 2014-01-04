@@ -506,6 +506,7 @@ namespace Simulators
               DUNE::Math::Angles::degrees(m_model->m_bank_cmd));
           spew("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->m_airspeed_cmd);
           spew("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
+          m_last_time_debug = time;
         }
         */
         //==========================================================================
