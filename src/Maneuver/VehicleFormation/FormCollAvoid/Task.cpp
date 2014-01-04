@@ -49,7 +49,6 @@ namespace Maneuver
       struct Arguments
       {
         //! Simulation and control frequencies
-        double frequency;
         double ctrl_frequency;
         //! Controller parameters
         double k_longitudinal;
@@ -110,6 +109,9 @@ namespace Maneuver
         double m_last_ctrl_update;
         Matrix m_last_state_estim;
         Matrix m_last_simctrl_update;
+        //! Last time debug information was shown
+        double m_last_time_debug;
+        double m_last_time_trace;
 
         //! System state variables
         Matrix m_uav_state;
@@ -131,25 +133,29 @@ namespace Maneuver
         bool m_team_state_init;
         bool m_valid_airspeed;
 
+        //! Simulation process frequency
+        double m_frequency;
+
+        //! Leader initial state
+        IMC::LeaderState m_init_leader;
+        bool m_init_leader_set;
+
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Periodic(name, ctx),
           //m_models(NULL),
           //m_model(NULL),
           m_position(6, 1, 0.0),
           m_velocity(6, 1, 0.0),
-          m_last_leader_update(-1.0),
-          m_last_ctrl_update(-1.0),
+          m_last_time_debug(std::min(-1.0, Clock::get())),
+          m_last_time_trace(std::min(-1.0, Clock::get())),
           m_uav_state(12, 1, 0.0),
           m_uav_accel(3, 1,  0.0),
           m_wind(3, 1, 0.0),
           m_uav_n(1),
           m_team_state_init(false),
-          m_valid_airspeed(false)
+          m_valid_airspeed(false),
+          m_frequency(0.0)
         {
-          param("Execution Frequency", m_args.frequency)
-            .defaultValue("100.0")
-            .description("Task execution frequency");
-
           param("Predicted Control Frequency", m_args.ctrl_frequency)
             .defaultValue("20.0")
             .description("Frequency at which simulated vehicles control is executed");
@@ -255,6 +261,30 @@ namespace Maneuver
           .units(Units::Hertz)
           .description("Bank controller first order time constant. Inverse of the bank rate gain to simulate bank dynamics");
 
+          param("Initial Latitude", m_args.init_lat)
+          .defaultValue("39.09")
+          .description("Initial state latitude");
+
+          param("Initial Longitude", m_args.init_lon)
+          .defaultValue("-8.964")
+          .description("Initial state longitude");
+
+          param("Initial Altitude", m_args.init_alt)
+          .defaultValue("147.3")
+          .description("Initial state WGS-84 geoid altitude");
+
+          param("Initial Speed", m_args.init_speed)
+          .defaultValue("18.0")
+          .description("Initial state airspeed");
+
+          param("Initial Roll", m_args.init_roll)
+          .defaultValue("0.0")
+          .description("Initial state bank");
+
+          param("Initial Yaw", m_args.init_yaw)
+          .defaultValue("0.0")
+          .description("Initial state yaw");
+
           // Message binding
           bind<IMC::LeaderState>(this);
           bind<IMC::IndicatedSpeed>(this);
@@ -288,11 +318,13 @@ namespace Maneuver
           m_airspeed = m_args.init_speed;
           m_airspeed_cmd.value = m_airspeed;
 
+          m_frequency = this->getFrequency();
+
           //! Initialize the leader vehicle model
           //! Model initialization
           debug("Formation leader model initialization");
           //! - Altitude initialization
-          m_position(2) = m_args.init_alt;
+          //m_position(2) = m_args.init_alt;
           //! - Bank initialization
           m_position(3) = DUNE::Math::Angles::radians(m_args.init_roll);
           //! - Heading initialization
@@ -309,34 +341,47 @@ namespace Maneuver
 
           if (m_args.uav_ind == 0)
           {
-            //! GPS position initialization
+            //! Leader state initialization
             debug("Formation LeaderState initialization");
-            IMC::LeaderState init_leader;
-            init_leader.op = IMC::LeaderState::OP_SET;
-            init_leader.lat = DUNE::Math::Angles::radians(m_args.init_lat);
-            init_leader.lon = DUNE::Math::Angles::radians(m_args.init_lon);
-            init_leader.height = m_args.init_alt;
-            init_leader.x = m_position(0);
-            init_leader.y = m_position(1);
-            init_leader.z = m_position(2);
-            init_leader.phi = m_position(3);
-            init_leader.theta = m_position(4);
-            init_leader.psi = m_position(5);
-            init_leader.vx = m_velocity(0);
-            init_leader.vy = m_velocity(1);
-            init_leader.vz = m_velocity(2);
-            init_leader.p = m_velocity(3);
-            init_leader.q = m_velocity(4);
-            init_leader.r = m_velocity(5);
-            init_leader.svx = m_wind(0);
-            init_leader.svy = m_wind(1);
-            init_leader.svz = m_wind(2);
-            dispatch(init_leader);
+            m_init_leader.op = IMC::LeaderState::OP_SET;
+            m_init_leader.lat = DUNE::Math::Angles::radians(m_args.init_lat);
+            m_init_leader.lon = DUNE::Math::Angles::radians(m_args.init_lon);
+            m_init_leader.height = m_args.init_alt;
+            m_init_leader.x = m_position(0);
+            m_init_leader.y = m_position(1);
+            m_init_leader.z = m_position(2);
+            m_init_leader.phi = m_position(3);
+            m_init_leader.theta = m_position(4);
+            m_init_leader.psi = m_position(5);
+            m_init_leader.vx = m_velocity(0);
+            m_init_leader.vy = m_velocity(1);
+            m_init_leader.vz = m_velocity(2);
+            m_init_leader.p = m_velocity(3);
+            m_init_leader.q = m_velocity(4);
+            m_init_leader.r = m_velocity(5);
+            m_init_leader.svx = m_wind(0);
+            m_init_leader.svy = m_wind(1);
+            m_init_leader.svz = m_wind(2);
+            setLeaderState(&m_init_leader);
 
-            m_sstate.lat = init_leader.lat;
-            m_sstate.lon = init_leader.lon;
-            m_sstate.height = m_args.init_alt;
-            requestActivation();
+            debug("Initial latitude: %1.4f", m_args.init_lat);
+            debug("Initial longitude: %1.4f", m_args.init_lon);
+            debug("Initial altitude: %1.4f", m_args.init_alt);
+            debug("Initial x position: %1.4f", m_position(0));
+            debug("Initial y position: %1.4f", m_position(1));
+            debug("Initial z position: %1.4f", m_position(2));
+            debug("Initial roll angle: %1.4f", m_position(3));
+            debug("Initial pitch angle: %1.4f", m_position(4));
+            debug("Initial yaw angle: %1.4f", m_position(5));
+            debug("Initial x speed: %1.4f", m_velocity(0));
+            debug("Initial y speed: %1.4f", m_velocity(1));
+            debug("Initial z speed: %1.4f", m_velocity(2));
+            debug("Initial roll rate: %1.4f", m_velocity(3));
+            debug("Initial pitch rate: %1.4f", m_velocity(4));
+            debug("Initial yaw rate: %1.4f", m_velocity(5));
+            debug("Initial x wind speed: %1.4f", m_wind(0));
+            debug("Initial y wind speed: %1.4f", m_wind(1));
+            debug("Initial z wind speed: %1.4f", m_wind(2));
 
             //! Initiate the leader vehicle plan
             IMC::PlanControl p_control;
@@ -345,9 +390,6 @@ namespace Maneuver
             p_control.type = IMC::PlanControl::PC_REQUEST;
             p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
             dispatch(p_control);
-
-            //! Start the simulation time
-            m_last_leader_update = Clock::get();
           }
           else
           {
@@ -357,9 +399,6 @@ namespace Maneuver
             //! Initialize vehicles commands
             m_uav_ctrl = DUNE::Math::Matrix(3, m_uav_n, 0.0);
 
-
-            //! Start the control time
-            m_last_ctrl_update = Clock::get();
             //! Start the team vehicles simulation and control time
             m_last_state_estim = Matrix(m_uav_n + 1, 1, Clock::get());
             m_last_simctrl_update = Matrix(m_uav_n, 1, -1);
@@ -370,19 +409,33 @@ namespace Maneuver
             for (int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
             {
               //! - State  and control parameters initialization
+              debug("Simulated vehicles models initialization 1 (%d)", ind_uav);
               model = new DUNE::Simulation::UAVSimulation(
                   m_args.formation_pos.get(0, 2, ind_uav, ind_uav).vertCat(m_position.get(3, 5, 0, 0)),
                   m_velocity, m_args.c_bank, m_args.c_speed);
               //! - Simulation type
+              debug("Simulated vehicles models initialization 2 (%d)", ind_uav);
               model->m_sim_type = m_args.sim_type;
               //! - Commands initialization
-              model->command(0, m_airspeed);
+              debug("Simulated vehicles models initialization 3 (%d)", ind_uav);
+              model->command(m_position(3), m_airspeed);
               //! Add model to the models vector
+              debug("Simulated vehicles models initialization 4 (%d)", ind_uav);
               m_models.push_back(model);
-
+              debug("Simulated vehicles models initialization 5 (%d)", ind_uav);
             }
           }
-       }
+
+          spew("Time tags initialization 1");
+          //! Start the simulation time
+          m_last_leader_update = Clock::get();
+
+          spew("Time tags initialization 1");
+          //! Start the control time
+          m_last_ctrl_update = Clock::get();
+
+          spew("Resource acquisition end");
+        }
 
         void
         onResourceRelease(void)
@@ -394,34 +447,19 @@ namespace Maneuver
         {
           spew("LeaderState start");
 
-          if (m_args.uav_ind == 0)
+          if (m_args.uav_ind == 0 && msg->op == IMC::LeaderState::OP_SET)
           {
-            // if (msg->op == IMC::LeaderState::OP_SET)
-            if (!isActive())
-              requestActivation();
-
             debug("Consuming LeaderState");
 
-            // Defining origin.
-            m_sstate.lat = msg->lat;
-            m_sstate.lon = msg->lon;
-            m_sstate.height = msg->height;
+            setLeaderState(msg);
 
-            //! - State initialization
-            m_model->get(m_position);
-            m_position(0) = 0.0;
-            m_position(1) = 0.0;
-            // Assuming vehicle starts at ground surface.
-            m_position(2) = 0.0;
-            m_model->set(m_position);
-
-            m_last_leader_update = Clock::get();
-
-//            // Save message to cache.
-//            IMC::CacheControl cop;
-//            cop.op = IMC::CacheControl::COP_STORE;
-//            cop.message.set(*msg);
-//            dispatch(cop);
+            /*
+            // Save message to cache.
+            IMC::CacheControl cop;
+            cop.op = IMC::CacheControl::COP_STORE;
+            cop.message.set(*msg);
+            dispatch(cop);
+            */
           }
 
           spew("LeaderState end");
@@ -463,12 +501,10 @@ namespace Maneuver
         {
           spew("SimulatedState start");
 
-          if (m_args.uav_ind > 0 && msg->getSource() != getSystemId())
+          if (m_args.uav_ind > 0 && msg->getSource() == resolveSystemName("form-leader-01"))
           {
-            trace("SimulatedState receiving");
+            spew("SimulatedState receiving");
             //! Receive the leader simulated state from a parallel DUNE instance
-            // Future improvements - Substitute "msg->getSource() != getSystemId()" by an
-            // expression that check explicitly if the source is the virtual leader
 
             //! Get simulated state time stamp
             m_last_state_estim(0) = msg->getTimeStamp();
@@ -487,12 +523,15 @@ namespace Maneuver
                 euler_ang[0], euler_ang[1], euler_ang[2],
                 msg->p,       msg->q,       msg->r};
             m_uav_state.set(0, 11, 0, 0, Matrix(t_leader, 12, 1));
-            m_model->set(m_uav_state.get(0, 2, 0, 0).vertCat(m_uav_state.get(6, 8, 0, 0)),
-                         m_uav_state.get(3, 5, 0, 0).vertCat(m_uav_state.get(9,11, 0, 0)));
+            m_model->setPosition(m_uav_state.get(0, 2, 0, 0).vertCat(m_uav_state.get(6, 8, 0, 0)));
+            m_model->setVelocity(m_uav_state.get(3, 5, 0, 0).vertCat(m_uav_state.get(9,11, 0, 0)));
 
             //! Update leader commands
             Matrix vd_vel2wind = m_uav_state.get(3, 5, 0, 0) - m_wind;
             m_model->command(m_uav_state(6, 0), vd_vel2wind.norm_2(), m_uav_state(2, 0));
+
+            if (!isActive() && m_args.uav_ind == 1)
+              requestActivation();
           }
 
           spew("SimulatedState end");
@@ -617,9 +656,9 @@ namespace Maneuver
 
               //! - Update own vehicle simulation model
               model = m_models[m_args.uav_ind-1];
-              model->set(m_uav_state.get(0, 2, m_args.uav_ind, m_args.uav_ind).
-                         vertCat(m_uav_state.get(6, 8, m_args.uav_ind, m_args.uav_ind)),
-                         m_uav_state.get(3, 5, m_args.uav_ind, m_args.uav_ind).
+              m_model->setPosition(m_uav_state.get(0, 2, m_args.uav_ind, m_args.uav_ind).
+                         vertCat(m_uav_state.get(6, 8, m_args.uav_ind, m_args.uav_ind)));
+              m_model->setVelocity(m_uav_state.get(3, 5, m_args.uav_ind, m_args.uav_ind).
                          vertCat(m_uav_state.get(9, 11, m_args.uav_ind, m_args.uav_ind)));
               model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
               m_models[m_args.uav_ind-1] = model;
@@ -673,8 +712,8 @@ namespace Maneuver
 
               //! - Update current vehicle simulation model
               model = m_models[ind_uav-1];
-              model->set(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)),
-                         m_uav_state.get(3, 5, ind_uav, ind_uav).vertCat(m_uav_state.get(9, 11, ind_uav, ind_uav)));
+              m_model->setPosition(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)));
+              m_model->setVelocity(m_uav_state.get(3, 5, ind_uav, ind_uav).vertCat(m_uav_state.get(9, 11, ind_uav, ind_uav)));
               model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
               m_models[ind_uav-1] = model;
 
@@ -710,13 +749,19 @@ namespace Maneuver
         task(void)
         {
           spew("PeriodicTask start");
-         //! Handle IMC messages from bus
+          //! Handle IMC messages from bus
           consumeMessages();
 
           if (!isActive())
-            return;
+          {
+            //! Initialize leader state
+            if (m_args.uav_ind == 0)
+              dispatch(m_init_leader);
 
-          spew("PeriodicTask active");
+            spew("Formation flight task is inactive (%s).", this->getSystemName());
+            return;
+          }
+
           if (m_args.uav_ind == 0)
           {
             //! Update the leader vehicle commands and states
@@ -731,25 +776,73 @@ namespace Maneuver
             d_timestep = d_time - m_last_leader_update;
             m_last_leader_update = d_time;
 
-            /*
-            // ========= Debug ===========
-            if (d_time >= m_last_time_debug + 1.0)
+
+            // ========= Trace ===========
+            if (d_time >= m_last_time_trace + 0.1)
             {
-              //spew("Simulating: %s", m_model->m_sim_type);
-              spew("Bank: %1.2fº        - Commanded bank: %1.2fº",
+              //trace("Simulating: %s", m_model->m_sim_type);
+              trace("Bank: %1.2fº        - Commanded bank: %1.2fº",
                   DUNE::Math::Angles::degrees(m_position(3)),
                   DUNE::Math::Angles::degrees(m_model->m_bank_cmd));
-              spew("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->m_airspeed, m_model->m_airspeed_cmd);
-              spew("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
+              trace("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->m_airspeed_cmd);
+              trace("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
+              trace("Current latitude: %1.4f", m_args.init_lat);
+              trace("Current longitude: %1.4f", m_args.init_lon);
+              trace("Current altitude: %1.4f", m_args.init_alt);
+              trace("Current x position: %1.4f", m_position(0));
+              trace("Current y position: %1.4f", m_position(1));
+              trace("Current z position: %1.4f", m_position(2));
+              trace("Current roll angle: %1.4f", m_position(3));
+              trace("Current pitch angle: %1.4f", m_position(4));
+              trace("Current yaw angle: %1.4f", m_position(5));
+              trace("Current x speed: %1.4f", m_velocity(0));
+              trace("Current y speed: %1.4f", m_velocity(1));
+              trace("Current z speed: %1.4f", m_velocity(2));
+              trace("Current roll rate: %1.4f", m_velocity(3));
+              trace("Current pitch rate: %1.4f", m_velocity(4));
+              trace("Current yaw rate: %1.4f", m_velocity(5));
+              trace("Current x wind speed: %1.4f", m_wind(0));
+              trace("Current y wind speed: %1.4f", m_wind(1));
+              trace("Current z wind speed: %1.4f", m_wind(2));
+              m_last_time_trace = d_time;
             }
-             */
             //==========================================================================
             //! Dynamics
             //==========================================================================
 
             m_model->update(d_timestep);
-            m_model->get(m_position, m_velocity);
+            m_position = m_model->getPosition();
+            m_velocity = m_model->getVelocity();
 
+            // ========= Debug ===========
+            if (d_time >= m_last_time_debug + 1.0)
+            {
+              //debug("Simulating: %s", m_model->m_sim_type);
+              debug("Bank: %1.2fº        - Commanded bank: %1.2fº",
+                  DUNE::Math::Angles::degrees(m_position(3)),
+                  DUNE::Math::Angles::degrees(m_model->m_bank_cmd));
+              debug("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->m_airspeed_cmd);
+              debug("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
+              debug("Current latitude: %1.4f", m_args.init_lat);
+              debug("Current longitude: %1.4f", m_args.init_lon);
+              debug("Current altitude: %1.4f", m_args.init_alt);
+              debug("Current x position: %1.4f", m_position(0));
+              debug("Current y position: %1.4f", m_position(1));
+              debug("Current z position: %1.4f", m_position(2));
+              debug("Current roll angle: %1.4f", m_position(3));
+              debug("Current pitch angle: %1.4f", m_position(4));
+              debug("Current yaw angle: %1.4f", m_position(5));
+              debug("Current x speed: %1.4f", m_velocity(0));
+              debug("Current y speed: %1.4f", m_velocity(1));
+              debug("Current z speed: %1.4f", m_velocity(2));
+              debug("Current roll rate: %1.4f", m_velocity(3));
+              debug("Current pitch rate: %1.4f", m_velocity(4));
+              debug("Current yaw rate: %1.4f", m_velocity(5));
+              debug("Current x wind speed: %1.4f", m_wind(0));
+              debug("Current y wind speed: %1.4f", m_wind(1));
+              debug("Current z wind speed: %1.4f", m_wind(2));
+              m_last_time_debug = d_time;
+            }
             //==========================================================================
             //! Output
             //==========================================================================
@@ -787,7 +880,19 @@ namespace Maneuver
             m_sstate.svy = m_model->m_wind(1);
             m_sstate.svz = m_model->m_wind(2);
 
+            //! Set the destination ID as the system own ID (for virtual leader autopilot simulation)
+            m_sstate.setDestination(getSystemId());
+
+            //! Send simulated state message (with the system own ID as destination)
             dispatch(m_sstate);
+
+            /*
+            //! Set the destination ID as the real vehicle system ID (for virtual leader data transmission)
+            m_sstate.setDestination(getSystemId());
+
+            //! Send simulated state message (with the real vehicle system ID as destination)
+            dispatch(m_sstate);
+            */
           }
           else
           {
@@ -802,6 +907,49 @@ namespace Maneuver
           }
 
           spew("PeriodicTask end");
+        }
+
+        void
+        setLeaderState(const IMC::LeaderState* msg)
+        {
+          if (!isActive())
+            requestActivation();
+
+          //! Defining GpsFix for autopilot simulator
+          IMC::GpsFix origin;
+          origin.lat = msg->lat;
+          origin.lon = msg->lon;
+          origin.height = msg->height;
+          origin.setDestination(getSystemId());
+          dispatch(origin);
+
+          //! Defining origin.
+          m_sstate.lat = msg->lat;
+          m_sstate.lon = msg->lon;
+          m_sstate.height = msg->height;
+
+          //! - State initialization
+          m_position = m_model->getPosition();
+          m_position(0) = msg->x;
+          m_position(1) = msg->y;
+          m_position(2) = msg->z;
+          m_position(3) = msg->phi;
+          m_position(4) = msg->theta;
+          m_position(5) = msg->psi;
+          m_model->setPosition(m_position);
+          m_velocity(0) = msg->vx;
+          m_velocity(1) = msg->vy;
+          m_velocity(2) = msg->vz;
+          m_velocity(3) = msg->p;
+          m_velocity(4) = msg->q;
+          m_velocity(5) = msg->r;
+          m_model->setVelocity(m_velocity);
+          m_wind(0) = msg->svx;
+          m_wind(1) = msg->svy;
+          m_wind(2) = msg->svz;
+          m_model->m_wind = m_wind;
+
+          m_last_leader_update = Clock::get();
         }
 
         Matrix
@@ -849,7 +997,7 @@ namespace Maneuver
         teamPeriodicUpdate(const double& d_time)
         {
           //! Variables initialization
-          double d_timestep_sim = 1/m_args.frequency;
+          double d_timestep_sim = 1/m_frequency;
           double d_timestep_ctrl = 1/m_args.ctrl_frequency;
           double d_sim_time;
           Matrix vi_sim_time = Matrix(m_uav_n+1, 1);
@@ -960,7 +1108,8 @@ namespace Maneuver
           //! Update team simulated state for remaining time
           //! - Leader state prediction - Update the simulated vehicle state
           m_model->update(d_time - m_last_state_estim(0));
-          m_model->get(vd_pos, vd_vel);
+          vd_pos = m_model->getPosition();
+          vd_vel = m_model->getVelocity();
           m_uav_state.set(0, 11, 0, 0, vd_pos.get(0, 2, 0, 0).vertCat(vd_vel.get(0, 2, 0, 0).
                           vertCat(vd_pos.get(3, 5, 0, 0).vertCat(vd_vel.get(3, 5, 0, 0)))));
 
@@ -972,7 +1121,8 @@ namespace Maneuver
 
             //!  * State update
             model->update(d_time - m_last_state_estim(ind_uav));
-            model->get(vd_pos, vd_vel);
+            vd_pos = model->getPosition();
+            vd_vel = model->getVelocity();
             m_uav_state.set(0, 11, ind_uav, ind_uav,
                             vd_pos.get(0, 2, 0, 0).vertCat(vd_vel.get(0, 2, 0, 0).
                             vertCat(vd_pos.get(3, 5, 0, 0).vertCat(vd_vel.get(3, 5, 0, 0)))));
