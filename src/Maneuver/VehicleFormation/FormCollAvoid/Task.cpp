@@ -335,7 +335,7 @@ namespace Maneuver
           //! - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
           //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed, m_position(2));
+          m_model->command(m_position(3), m_args.init_speed+4, m_position(2));
           //! - Simulation type
           m_model->m_sim_type = m_args.sim_type;
 
@@ -409,28 +409,22 @@ namespace Maneuver
             for (int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
             {
               //! - State  and control parameters initialization
-              debug("Simulated vehicles models initialization 1 (%d)", ind_uav);
               model = new DUNE::Simulation::UAVSimulation(
                   m_args.formation_pos.get(0, 2, ind_uav, ind_uav).vertCat(m_position.get(3, 5, 0, 0)),
                   m_velocity, m_args.c_bank, m_args.c_speed);
               //! - Simulation type
-              debug("Simulated vehicles models initialization 2 (%d)", ind_uav);
               model->m_sim_type = m_args.sim_type;
               //! - Commands initialization
-              debug("Simulated vehicles models initialization 3 (%d)", ind_uav);
               model->command(m_position(3), m_airspeed);
               //! Add model to the models vector
-              debug("Simulated vehicles models initialization 4 (%d)", ind_uav);
               m_models.push_back(model);
-              debug("Simulated vehicles models initialization 5 (%d)", ind_uav);
+              debug("Simulated vehicle model initialized for vehicle %d.", ind_uav+1);
             }
           }
 
-          spew("Time tags initialization 1");
           //! Start the simulation time
           m_last_leader_update = Clock::get();
 
-          spew("Time tags initialization 1");
           //! Start the control time
           m_last_ctrl_update = Clock::get();
 
@@ -477,6 +471,7 @@ namespace Maneuver
             if (!m_valid_airspeed)
             {
               m_valid_airspeed = 1;
+              trace("Valid airspeed in.");
               m_uav_ctrl(1, m_args.uav_ind-1) = m_airspeed;
             }
           }
@@ -524,13 +519,13 @@ namespace Maneuver
                 msg->p,       msg->q,       msg->r};
             m_uav_state.set(0, 11, 0, 0, Matrix(t_leader, 12, 1));
             m_model->setPosition(m_uav_state.get(0, 2, 0, 0).vertCat(m_uav_state.get(6, 8, 0, 0)));
-            m_model->setVelocity(m_uav_state.get(3, 5, 0, 0).vertCat(m_uav_state.get(9,11, 0, 0)));
+            m_model->setVelocity(m_uav_state.get(3, 5, 0, 0).vertCat(m_uav_state.get(9, 11, 0, 0)));
 
             //! Update leader commands
             Matrix vd_vel2wind = m_uav_state.get(3, 5, 0, 0) - m_wind;
             m_model->command(m_uav_state(6, 0), vd_vel2wind.norm_2(), m_uav_state(2, 0));
 
-            if (!isActive() && m_args.uav_ind == 1)
+            if (!isActive() && m_uav_n == 1)
               requestActivation();
           }
 
@@ -625,6 +620,17 @@ namespace Maneuver
 
             if (msg->getSource() == getSystemId())
             {
+              //===========================================
+              //! Vehicle own updated state
+              //===========================================
+              double vt_uav_state[12] = {msg->x,   msg->y,     msg->z,
+                  msg->vx,  msg->vy,    msg->vz,
+                  msg->phi, msg->theta, msg->psi,
+                  msg->p,   msg->q,     msg->r};
+              m_uav_state.set(0, 11, m_args.uav_ind, m_args.uav_ind, Matrix(vt_uav_state, 12, 1));
+              // To complete - Check the difference between the vehicle real and simulated state
+
+              spew("EstimatedState - Own vehicle state update");
               if (!isActive())
                 return;
 
@@ -635,16 +641,6 @@ namespace Maneuver
               //! Update team simulated state for standard time periods
               teamPeriodicUpdate(d_time);
               teamUnevenUpdate(d_time);
-
-              //===========================================
-              //! Vehicle own updated state
-              //===========================================
-              double vt_uav_state[12] = {msg->x,   msg->y,     msg->z,
-                  msg->vx,  msg->vy,    msg->vz,
-                  msg->phi, msg->theta, msg->psi,
-                  msg->p,   msg->q,     msg->r};
-              m_uav_state.set(0, 11, m_args.uav_ind, m_args.uav_ind, Matrix(vt_uav_state, 12, 1));
-              // To complete - Check the difference between the vehicle real and simulated state
 
               //===========================================
               //! Control computation
@@ -668,8 +664,7 @@ namespace Maneuver
               m_last_simctrl_update(m_args.uav_ind-1) = d_time;
               m_last_state_estim(m_args.uav_ind) = d_time;
               //! Get estimated state time stamp
-              debug("Clock time: %2.3f; Estimated state time stamp: %2.3f", d_time, msg->getTimeStamp());
-              debug("Clock time stamp difference: %2.3f", d_time - msg->getTimeStamp());
+//              debug("Clock time: %2.3f; Estimated state time stamp: %2.3f", d_time, msg->getTimeStamp());
 
               //===========================================
               //! Commands output
@@ -683,9 +678,11 @@ namespace Maneuver
                m_altitude_cmd.value = m_uav_ctrl(2, m_args.uav_ind-1);
                dispatch(m_altitude_cmd);
                */
+              spew("EstimatedState - Own vehicle processing end");
             }
             else
             {
+              debug("EstimatedState start for vehicle %s", resolveSystemId(msg->getSource()));
               //! Get team vehicle updated state
               //! To complete - Check that the estimated state is from a team member
 
@@ -693,9 +690,11 @@ namespace Maneuver
               int ind_uav = 100;
 
               //! Get estimated state time stamp
+              debug("EstimatedState 1 for vehicle %s", resolveSystemId(msg->getSource()));
               m_last_state_estim(ind_uav) = msg->getTimeStamp();
               m_last_simctrl_update(ind_uav-1)  = msg->getTimeStamp();
 
+              debug("EstimatedState 2 for vehicle %s", resolveSystemId(msg->getSource()));
               //! - State update
               double vt_uav_state[12] = {msg->x,   msg->y,     msg->z,
                   msg->vx,  msg->vy,    msg->vz,
@@ -778,6 +777,7 @@ namespace Maneuver
 
 
             // ========= Trace ===========
+            /*
             if (d_time >= m_last_time_trace + 0.1)
             {
               //trace("Simulating: %s", m_model->m_sim_type);
@@ -806,6 +806,7 @@ namespace Maneuver
               trace("Current z wind speed: %1.4f", m_wind(2));
               m_last_time_trace = d_time;
             }
+            */
             //==========================================================================
             //! Dynamics
             //==========================================================================
@@ -815,6 +816,7 @@ namespace Maneuver
             m_velocity = m_model->getVelocity();
 
             // ========= Debug ===========
+            /*
             if (d_time >= m_last_time_debug + 1.0)
             {
               //debug("Simulating: %s", m_model->m_sim_type);
@@ -843,6 +845,7 @@ namespace Maneuver
               debug("Current z wind speed: %1.4f", m_wind(2));
               m_last_time_debug = d_time;
             }
+            */
             //==========================================================================
             //! Output
             //==========================================================================
@@ -898,6 +901,7 @@ namespace Maneuver
           {
             //! Update the simulated vehicles commands and states
             spew("PeriodicTask - Team state prediction");
+            trace("PeriodicTask - Team state prediction");
 
             // To complete - Check if leader simulation last update is recent enough: m_last_state_estim(0)
             // To complete - Check if team vehicles last update is recent enough: m_last_state_estim(1:m_uav_n)
@@ -996,6 +1000,7 @@ namespace Maneuver
         void
         teamPeriodicUpdate(const double& d_time)
         {
+          spew("teamPeriodicUpdate - start");
           //! Variables initialization
           double d_timestep_sim = 1/m_frequency;
           double d_timestep_ctrl = 1/m_args.ctrl_frequency;
@@ -1007,7 +1012,7 @@ namespace Maneuver
           UAVSimulation* model;
 
           //! Order the update times as an increasing sequence
-          for (int ind_uav = 1; ind_uav <= m_uav_n; ++ind_uav)
+          for (int ind_uav = 0; ind_uav <= m_uav_n; ++ind_uav)
             vi_sim_time(ind_uav) = ind_uav;
 
           for (int ind_uav = 1; ind_uav < i_time_n; ++ind_uav)
@@ -1094,12 +1099,14 @@ namespace Maneuver
               ind_time = 0;
             d_sim_time = m_last_state_estim(vi_sim_time(ind_time));
           }
+          spew("teamPeriodicUpdate - end");
         }
 
         //! Update team simulated state for uneven time periods
         void
         teamUnevenUpdate(const double& d_time)
         {
+          spew("teamUnevenUpdate - start");
           //! Temporary prediction variables initialization
           Matrix vd_pos(6, 1, 0.0);
           Matrix vd_vel(6, 1, 0.0);
@@ -1127,6 +1134,7 @@ namespace Maneuver
                             vd_pos.get(0, 2, 0, 0).vertCat(vd_vel.get(0, 2, 0, 0).
                             vertCat(vd_pos.get(3, 5, 0, 0).vertCat(vd_vel.get(3, 5, 0, 0)))));
           }
+          spew("teamUnevenUpdate - end");
         }
 
         void
