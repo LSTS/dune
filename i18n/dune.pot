@@ -6,7 +6,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE 2.4.0-rc1\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2013-12-03 13:16+0000\n"
+        "POT-Creation-Date: 2014-01-09 09:29+0000\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -251,6 +251,10 @@ msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Driver.hpp:412
 msgid   "error ocurred while clearing the MOMSN"
+msgstr  ""
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/GPS/Reader.hpp:84
+msgid   "invalid read size"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/CommandLink.hpp:80
@@ -668,7 +672,6 @@ msgid   "error sending data"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:180
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:323
 msgid   "unable to connect"
 msgstr  ""
 
@@ -740,7 +743,7 @@ msgid   "Euler Angles"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:296
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:258
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:268
 msgid   "not active"
 msgstr  ""
 
@@ -1261,7 +1264,7 @@ msgid   " maneuver started"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:546
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:620
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:630
 #: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:882
 msgid   "OK"
 msgstr  ""
@@ -1322,17 +1325,12 @@ msgstr  ""
 msgid   "SMS timeout cannot be zero"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/GSM/Task.cpp:229
+#: /home/josebraga/workspace/dune/trunk/src/Transports/GSM/Task.cpp:234
 #, c-format
 msgid   "discarded expired SMS to recipient '%s'"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/GSM/Task.cpp:240
-#, c-format
-msgid   "failed to send SMS: %s"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/Transports/GSM/Task.cpp:264
+#: /home/josebraga/workspace/dune/trunk/src/Transports/GSM/Task.cpp:268
 #, c-format
 msgid   "failed to poll status: %s"
 msgstr  ""
@@ -1372,13 +1370,12 @@ msgstr  ""
 msgid   "failed to copy cache snapshot: %s"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:121
+#: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:119
 msgid   "Source Level"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:199
+#: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:197
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:511
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:576
 msgid   "dynamic sound speed corrections are disabled"
 msgstr  ""
 
@@ -1632,10 +1629,8 @@ msgstr  ""
 #: /home/josebraga/workspace/dune/trunk/src/Power/DOAMv2/Task.cpp:184
 #: /home/josebraga/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:364
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex881A/Task.cpp:450
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:515
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:517
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:474
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:379
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:212
 msgid   "failed to contact device"
 msgstr  ""
 
@@ -1707,7 +1702,7 @@ msgid   "Frequency"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex881A/Task.cpp:343
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:284
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:283
 msgid   "restarting to change UART device"
 msgstr  ""
 
@@ -1757,7 +1752,7 @@ msgid   "timeout waiting for device response"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Genesys/Task.cpp:103
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:198
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:201
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:383
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:186
 msgid   "restarting to change IPv4 address"
@@ -1813,8 +1808,7 @@ msgstr  ""
 msgid   "invalid PSATHPR sentence"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:254
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:205
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:253
 msgid   "Use Device at Surface"
 msgstr  ""
 
@@ -1838,53 +1832,53 @@ msgstr  ""
 msgid   "timeout"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:130
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:133
 msgid   "High-Frequency Channels"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:131
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:147
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:134
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:150
 msgid   "None, Port, Starboard, Both"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:135
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:138
 msgid   "High-frequency subsystem channels"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:137
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:140
 msgid   "High-Frequency Range"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:144
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:160
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:147
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:163
 msgid   "Enable high frequency subsystem"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:146
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:149
 msgid   "Low-Frequency Channels"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:151
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:154
 msgid   "Low-frequency subsystem channels"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:153
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:156
 msgid   "Low-Frequency Range"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:162
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:165
 msgid   "Range Multiplier"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:168
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:171
 msgid   "Range multiplier"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:201
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:204
 msgid   "restarting to change TCP command port"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:204
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:207
 msgid   "restarting to change TCP data port"
 msgstr  ""
 
@@ -2008,7 +2002,6 @@ msgid   "unable to read prompt"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:288
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:585
 msgid   "failed to start data sampling"
 msgstr  ""
 
@@ -2045,7 +2038,7 @@ msgid   "failed to configure output frequency"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:294
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:389
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:383
 msgid   "failed to set hard-iron correction factors"
 msgstr  ""
 
@@ -2081,19 +2074,19 @@ msgstr  ""
 msgid   "parse error: %s"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:395
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:389
 msgid   "resetting device"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:414
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:408
 msgid   "failed to read magnetic calibration parameters from device"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:433
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:427
 msgid   "different calibration parameters"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:478
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:472
 #, c-format
 msgid   "new hard-iron calibration parameters: %f | %f"
 msgstr  ""
@@ -2326,24 +2319,24 @@ msgstr  ""
 msgid   "potential fault in servo#%d, current consumption above %f"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:75
+#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:77
 msgid   "SMS Recipient Number"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:78
+#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:80
 msgid   "Phone number of the SMS recipient"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:85
+#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:87
 msgid   "Lost Communications Timeout"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:147
+#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:150
 #, c-format
 msgid   "sending SMS %s | %u"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:157
+#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:160
 msgid   "unknown location"
 msgstr  ""
 
@@ -2554,59 +2547,59 @@ msgstr  ""
 msgid   "database initialization"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:135
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:145
 #, c-format
 msgid   "database file: '%s'"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:165
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:175
 msgid   "initialization complete"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:212
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:222
 #, c-format
 msgid   "storing plan '%s' issued through a PlanControl request"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:242
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:252
 msgid   "unexpected message"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:288
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:298
 msgid   "unsupported operation"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:320
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:330
 msgid   "database is corrupt"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:328
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:404
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:439
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:474
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:338
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:414
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:449
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:484
 #: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:716
 msgid   "undefined plan id"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:336
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:346
 msgid   "no plan specification given"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:342
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:352
 msgid   "plan id mismatch"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:396
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:406
 msgid   "OK (updated)"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:396
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:406
 msgid   "OK (new entry)"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:429
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:450
-#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:484
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:439
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:460
+#: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:494
 #: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:726
 msgid   "undefined plan"
 msgstr  ""
@@ -2766,189 +2759,6 @@ msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Main/Launcher.cpp:171
 msgid   "daemon crashed with signal "
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:142
-#, c-format
-msgid   "creating a TCP connection | %s %u"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:144
-msgid   "Piccolo interface initialized"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:166
-#, c-format
-msgid   "%s - deactivating"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:168
-#, c-format
-msgid   "%s - activating"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:181
-msgid   "tracker is NOT enabled"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:188
-msgid   "speed control"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:189
-msgid   "altitude control"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:190
-msgid   "bank control"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:191
-msgid   "heading control"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:192
-msgid   "vertical rate control"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:193
-msgid   "path control"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:251
-msgid   "speed control is NOT active"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:272
-msgid   "altitude control is NOT active"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:278
-msgid   "Not a valid height reference"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:299
-msgid   "bank control is NOT active"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:320
-msgid   "heading control is NOT active"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:346
-msgid   "vertical rate control is NOT active"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:370
-msgid   "path control is NOT active"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/TASE/Task.cpp:246
-msgid   "no gimbal data"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/TASE/Task.cpp:424
-msgid   "error decoding gimbal georeference packet"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/TASE/Task.cpp:448
-msgid   "error decoding gimbal version packet"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/TASE/Task.cpp:452
-#, c-format
-msgid   "software version %d.%d.%d patch %d %4d-%02d-%02d"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/TASE/Task.cpp:461
-#, c-format
-msgid   "hardware board - SN %0u FN %u rev %u config %u %u-%02u-%02u"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/TASE/Task.cpp:472
-#, c-format
-msgid   "camera %d -- id: %u HFOV: [%0.2f, %0.2f]"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:25
-msgid   "failed to set continous mode"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:26
-msgid   "failed to set transducer face orientation"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:27
-msgid   "failed to set sampling frequency"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:211
-msgid   "Operator Control"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:406
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:418
-msgid   "failed to request current output formats"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:431
-msgid   "failed to configure output format"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:598
-msgid   "failed to stop data sampling"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:605
-msgid   "failed to enable user-defined sound speed"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:612
-msgid   "failed to set initial sound speed"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:694
-msgid   "invalid sample"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:823
-msgid   "sensor data timeout"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:829
-msgid   "too many samples below threshold"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:854
-msgid   "rebooting"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:101
-msgid   "Start Range"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:108
-msgid   "Stop Range"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:115
-msgid   "Save to PGM"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:345
-msgid   "no sonar"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:402
-msgid   "no sonar head"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:581
-msgid   "unable to change directory"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/HG1700/Task.cpp:142
-msgid   "failed to open ESCC device"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:1
