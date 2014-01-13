@@ -55,7 +55,7 @@ namespace DUNE
         throw BufferTooShort();
 
       ptr += serializeHeader(msg, bfr, size);
-      ptr = msg->serializeFields(ptr);
+      msg->serializeFields(ptr);
 
       uint16_t crc = Algorithms::CRC16::compute(bfr, n - DUNE_IMC_CONST_FOOTER_SIZE);
       IMC::serialize(crc, (bfr + (n - DUNE_IMC_CONST_FOOTER_SIZE)));
