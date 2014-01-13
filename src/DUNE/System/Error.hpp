@@ -135,32 +135,33 @@ namespace DUNE
       getMessage(int ec)
       {
         char bfr[512] = {0};
-        char* p = bfr;
 
         // POSIX strerror_r
 #if defined(DUNE_SYS_HAS_POSIX_STRERROR_R)
         strerror_r(ec, bfr, sizeof(bfr));
+        return bfr;
 
         // GNU strerror_r
 #elif defined(DUNE_SYS_HAS_GNU_STRERROR_R)
-        p = strerror_r(ec, bfr, sizeof(bfr));
+        char* p = strerror_r(ec, bfr, sizeof(bfr));
+        return p;
 
         // POSIX strerror
 #elif defined(DUNE_SYS_HAS_STRERROR)
-        p = strerror(ec);
+        char* p = strerror(ec);
+        return p;
 
         // Microsoft Windows FormatMessage
 #elif defined(DUNE_SYS_HAS_FORMAT_MESSAGE)
         WORD lid = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
         if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, "%0", ec, lid, bfr, sizeof(bfr), 0) == 0)
           return "unable to translate system error";
+        return bfr;
 
         // Unsupported system
 #else
         return "retrieving of error messages is not supported in this system";
 #endif
-
-        return p;
       }
 
     private:
