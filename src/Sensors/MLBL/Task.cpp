@@ -650,6 +650,7 @@ namespace Sensors
         else if (value == c_code_abort)
         {
           war(DTR("acoustic abort detected"));
+          m_abort->setDestination(getSystemId());
           dispatch(m_abort);
 
           std::string cmd = String::str("$CCMUC,%u,%u,%04x\r\n", m_addr, src, c_code_abort_ack);
