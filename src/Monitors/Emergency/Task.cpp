@@ -164,7 +164,9 @@ namespace Monitors
       void
       consume(const IMC::Abort* msg)
       {
-        (void)msg;
+        if (msg->getDestination() != getSystemId())
+          return;
+
         sendSMS("A", m_args.sms_abort_ttl);
       }
 
