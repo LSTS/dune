@@ -28,11 +28,13 @@
 // ISO C++ 98 headers.
 #include <ctime>
 #include <cstring>
+#include <cerrno>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
 #include <DUNE/Time/Constants.hpp>
 #include <DUNE/Time/Clock.hpp>
+#include <DUNE/System/Error.hpp>
 
 // Platform headers.
 #if defined(DUNE_SYS_HAS_SYS_TIME_H)
@@ -117,7 +119,8 @@ namespace DUNE
       timeval tv;
       tv.tv_sec = static_cast<time_t>(value);
       tv.tv_usec = 0;
-      settimeofday(&tv, 0);
+      if (settimeofday(&tv, 0) != 0)
+        throw System::Error(errno, DTR("failed to set time"));
 #else
       (void)value;
 #endif
