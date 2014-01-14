@@ -75,6 +75,7 @@ namespace Autonomy
       {
         err(DTR("got abort request from '%s'"), origin.c_str());
         IMC::Abort abort;
+        abort.setDestination(getSystemId());
         dispatch(abort);
         (void)args;
       }

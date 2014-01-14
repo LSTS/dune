@@ -246,7 +246,8 @@ namespace Control
         void
         consume(const IMC::Abort* msg)
         {
-          (void)msg;
+          if (msg->getDestination() != getSystemId())
+            return;
 
           // This works as redundancy, in case everything else fails
           reset();

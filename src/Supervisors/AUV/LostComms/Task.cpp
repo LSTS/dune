@@ -133,7 +133,8 @@ namespace Supervisors
         void
         consume(const IMC::Abort* msg)
         {
-          (void)msg;
+          if (msg->getDestination() != getSystemId())
+            return;
 
           if (isActive())
             requestDeactivation();

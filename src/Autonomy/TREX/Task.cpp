@@ -178,9 +178,11 @@ namespace Autonomy
       }
 
       void
-      consume(const IMC::Abort * msg)
+      consume(const IMC::Abort* msg)
       {
-        (void) msg;
+        if (msg->getDestination() != getSystemId())
+          return;
+
         war("Abort detected. Disabling TREX control...");
         requestDeactivation();
       }
