@@ -134,29 +134,30 @@ namespace DUNE
       static std::string
       getMessage(int ec)
       {
-        char bfr[512] = {0};
-
         // POSIX strerror_r
 #if defined(DUNE_SYS_HAS_POSIX_STRERROR_R)
+        char bfr[512] = {0};
         strerror_r(ec, bfr, sizeof(bfr));
         return bfr;
 
         // GNU strerror_r
 #elif defined(DUNE_SYS_HAS_GNU_STRERROR_R)
+        char bfr[512] = {0};
         char* p = strerror_r(ec, bfr, sizeof(bfr));
         return p;
+
+        // Microsoft Windows FormatMessage
+#elif defined(DUNE_SYS_HAS_FORMAT_MESSAGE)
+        char bfr[512] = {0};
+        WORD lid = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
+        if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, "%0", ec, lid, bfr, sizeof(bfr), 0) == 0)
+          return "unable to translate system error";
+        return bfr;
 
         // POSIX strerror
 #elif defined(DUNE_SYS_HAS_STRERROR)
         char* p = strerror(ec);
         return p;
-
-        // Microsoft Windows FormatMessage
-#elif defined(DUNE_SYS_HAS_FORMAT_MESSAGE)
-        WORD lid = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
-        if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, "%0", ec, lid, bfr, sizeof(bfr), 0) == 0)
-          return "unable to translate system error";
-        return bfr;
 
         // Unsupported system
 #else
