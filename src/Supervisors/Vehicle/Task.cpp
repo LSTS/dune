@@ -211,7 +211,8 @@ namespace Supervisors
       void
       consume(const IMC::Abort* msg)
       {
-        (void)msg;
+        if (msg->getDestination() != getSystemId())
+          return;
 
         m_vs.last_error = DTR("got abort request");
         m_vs.last_error_time = Clock::getSinceEpoch();
