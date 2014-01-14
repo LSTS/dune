@@ -166,16 +166,9 @@ namespace Monitors
           if (std::fabs(offs) > m_args.max_clock_offs)
           {
             war(DTR("adjusting CPU clock by %0.4f s"), offs);
-            Time::Clock::set(new_time);
-            if (std::system(m_args.hw_sync_cmd.c_str()) == -1)
-              err(DTR("failed to execute clock sync command"));
-
+            setTime(new_time);
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_SYNCHED);
             m_clock_synched = true;
-
-            m_cc.op = IMC::ClockControl::COP_SYNC_DONE;
-            m_cc.clock = new_time;
-            dispatch(m_cc);
           }
           else
           {
@@ -183,6 +176,26 @@ namespace Monitors
             m_clock_synched = true;
           }
         }
+      }
+
+      void
+      setTime(double new_time)
+      {
+        try
+        {
+          Time::Clock::set(new_time);
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 10);
+        }
+
+        if (std::system(m_args.hw_sync_cmd.c_str()) == -1)
+          err(DTR("failed to execute clock sync command"));
+
+        m_cc.op = IMC::ClockControl::COP_SYNC_DONE;
+        m_cc.clock = new_time;
+        dispatch(m_cc);
       }
 
       void
