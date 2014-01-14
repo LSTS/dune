@@ -245,6 +245,20 @@ namespace Transports
         expectOK();
       }
 
+      //! Retrieve value of system clock.
+      //! @return sound speed (in m/s).
+      uint32_t
+      getClock(void)
+      {
+        sendAT("?CLOCK");
+        std::string str = readLine();
+        unsigned value = 0;
+        if (!castLexical(str, value))
+          throw Hardware::InvalidFormat(str);
+
+        return value;
+      }
+
       void
       parse(const std::string& str, RecvIM& msg)
       {
@@ -311,7 +325,6 @@ namespace Transports
 
         return -1;
       }
-
 
       bool
       isFragment(const std::string& str)

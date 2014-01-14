@@ -65,6 +65,8 @@ namespace Transports
       double sound_speed_def;
       //! Entity label of sound speed provider.
       std::string sound_speed_elabel;
+      //! Keep-alive timeout.
+      double kalive_tout;
     };
 
     // Type definition for mapping addresses.
@@ -93,6 +95,8 @@ namespace Transports
       int m_sound_speed_eid;
       //! Current transmission ticket.
       Ticket* m_ticket;
+      //! Keep-alive counter.
+      Counter<double> m_kalive_counter;
       //! Task arguments.
       Arguments m_args;
 
@@ -159,6 +163,11 @@ namespace Transports
 
         param("Sound Speed - Entity Label", m_args.sound_speed_elabel)
         .description("Entity label of sound speed provider");
+
+        param("Keep Alive - Timeout", m_args.kalive_tout)
+        .defaultValue("5.0")
+        .units(Units::Second)
+        .description("Keep-alive timeout");
 
         // Process modem addresses.
         std::string system = getSystemName();
@@ -258,7 +267,7 @@ namespace Transports
         m_driver->setPositionDataOutput(true);
         m_driver->setPromiscuous(true);
         m_driver->setExtendedNotifications(true);
-
+        m_kalive_counter.setTop(m_args.kalive_tout);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -385,6 +394,7 @@ namespace Transports
         replaceTicket(ticket);
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
         m_driver->sendIM((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr, ticket.ack);
+        m_kalive_counter.reset();
       }
 
       void
@@ -476,11 +486,33 @@ namespace Transports
       }
 
       void
+      keepAlive(void)
+      {
+        if (m_driver->isBusy())
+          return;
+
+        if (m_kalive_counter.overflow())
+        {
+          m_kalive_counter.reset();
+
+          try
+          {
+            m_driver->getClock();
+          }
+          catch (std::runtime_error& e)
+          {
+            throw RestartNeeded(e.what(), 10.0);
+          }
+        }
+      }
+
+      void
       onMain(void)
       {
         while (!stopping())
         {
           waitForMessages(1.0);
+          keepAlive();
         }
       }
     };
