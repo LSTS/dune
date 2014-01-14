@@ -237,10 +237,10 @@ namespace Transports
         if (msg->data.size() < 1)
           return;
 
-        uint16_t imc_addr = 0;
+        uint16_t imc_addr_src = 0;
         try
         {
-          imc_addr = resolveSystemName(msg->sys_src);
+          imc_addr_src = resolveSystemName(msg->sys_src);
         }
         catch (...)
         {
@@ -248,22 +248,33 @@ namespace Transports
           return;
         }
 
+        uint16_t imc_addr_dst = 0;
+        try
+        {
+          imc_addr_dst = resolveSystemName(msg->sys_dst);
+        }
+        catch (...)
+        {
+          err(DTR("unknown system name: %s"), msg->sys_dst.c_str());
+          return;
+        }
+
         switch (msg->data[0])
         {
           case CODE_REPORT:
-            recvReport(imc_addr, msg);
+            recvReport(imc_addr_src, imc_addr_dst, msg);
             break;
 
           case CODE_ABORT:
-            recvAbort(imc_addr, msg);
+            recvAbort(imc_addr_src, imc_addr_dst, msg);
             break;
 
           case CODE_RANGE:
-            recvRange(imc_addr, msg);
+            recvRange(imc_addr_src, imc_addr_dst, msg);
             break;
 
           case CODE_PLAN:
-            recvPlanControl(imc_addr, msg);
+            recvPlanControl(imc_addr_src, imc_addr_dst, msg);
             break;
         }
       }
@@ -366,13 +377,14 @@ namespace Transports
       }
 
       void
-      recvAbort(uint16_t imc_src, const IMC::UamRxFrame* msg)
+      recvAbort(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
       {
         (void)msg;
         war(DTR("got abort request"));
 
         IMC::Abort abort;
         abort.setSource(imc_src);
+        abort.setDestination(imc_dst);
         dispatch(abort);
       }
 
@@ -391,9 +403,10 @@ namespace Transports
       }
 
       void
-      recvRange(uint16_t imc_src, const IMC::UamRxFrame* msg)
+      recvRange(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
       {
         (void)imc_src;
+        (void)imc_dst;
         (void)msg;
       }
 
@@ -445,9 +458,10 @@ namespace Transports
       }
 
       void
-      recvPlanControl(uint16_t imc_src, const IMC::UamRxFrame* msg)
+      recvPlanControl(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
       {
         IMC::OperationalLimits ol;
+        ol.setDestination(imc_dst);
         ol.setSource(imc_src);
         ol.mask = 0;
         dispatch(ol);
@@ -480,11 +494,12 @@ namespace Transports
       }
 
       void
-      recvRestartSystem(uint16_t imc_src, const IMC::UamRxFrame* msg)
+      recvRestartSystem(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
       {
         (void)msg;
         IMC::RestartSystem restart;
         restart.setSource(imc_src);
+        restart.setDestination(imc_dst);
         dispatch(restart);
       }
 
@@ -517,8 +532,10 @@ namespace Transports
       }
 
       void
-      recvReport(uint16_t imc_src, const IMC::UamRxFrame* msg)
+      recvReport(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
       {
+        (void)imc_dst;
+
         Report dat;
         std::memcpy(&dat, &msg->data[1], sizeof(dat));
 
