@@ -231,6 +231,7 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_MISSION_ITEM] = &Task::handleMissionItemPacket;
           m_mlh[MAVLINK_MSG_ID_SYS_STATUS] = &Task::handleSystemStatusPacket;
           m_mlh[MAVLINK_MSG_ID_VFR_HUD] = &Task::handleHUDPacket;
+          m_mlh[MAVLINK_MSG_ID_SYSTEM_TIME] = &Task::handleSystemTimePacket;
 
 
           // Setup processing of IMC messages
@@ -1002,7 +1003,7 @@ namespace Control
           mavlink_msg_scaled_pressure_decode(msg, &sc_press);
 
           m_pressure.value = sc_press.press_abs;
-          m_temp.value = 0.1 * sc_press.temperature;
+          m_temp.value = 0.01 * sc_press.temperature;
 
           dispatch(m_pressure);
           dispatch(m_temp);
@@ -1024,41 +1025,11 @@ namespace Control
           m_fix.height = (double)gps_raw.alt * 0.001;
           m_fix.satellites = gps_raw.satellites_visible;
 
-
-          long time_fix = gps_raw.time_usec % 1000000000;
-          unsigned int date = (unsigned int)(gps_raw.time_usec / 1e9);
-
-
-          if(m_args.ublox)
-          {
-            m_fix.utc_time = (float)(time_fix % (3600 * 24 * 1000)) / 1000;
-
-            long gps_sec_since_1970 = GPS_EPOCH + 7 * 24 * 60 * 60 * date + time_fix / 1000;
-            time_t t = gps_sec_since_1970;
-            struct tm* utc;
-            utc = gmtime(&t);
-
-            m_fix.utc_year = utc->tm_year + 1900;
-            m_fix.utc_month = utc->tm_mon +1;
-            m_fix.utc_day = utc->tm_mday;
-          }
-          else
-          {
-            m_fix.utc_time = (float)time_fix / 1000;
-
-            m_fix.utc_year = date % 100;
-            m_fix.utc_month = ((date % 10000) - m_fix.utc_year) / 100;
-            m_fix.utc_day = date / 10000;
-            m_fix.utc_year += 2000;
-          }
-
           m_fix.validity = 0;
           if(gps_raw.fix_type>1)
             m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
           if(m_fix.utc_year>2012)
             m_fix.validity |= (IMC::GpsFix::GFV_VALID_TIME | IMC::GpsFix::GFV_VALID_DATE);
-
-          dispatch(m_fix);
         }
 
         void
@@ -1235,6 +1206,27 @@ namespace Control
 
           dispatch(ias);
           dispatch(gs);
+        }
+
+        void
+        handleSystemTimePacket(const mavlink_message_t* msg)
+        {
+          mavlink_system_time_t sys_time;
+          mavlink_msg_system_time_decode(msg, &sys_time);
+
+          time_t t = sys_time.time_unix_usec / 1000000;
+          struct tm* utc;
+          utc = gmtime(&t);
+
+          m_fix.utc_time = utc->tm_hour * 3600 + utc->tm_min * 60 + utc->tm_sec + (sys_time.time_unix_usec % 1000000) * 1e-6;
+          m_fix.utc_year = utc->tm_year + 1900;
+          m_fix.utc_month = utc->tm_mon +1;
+          m_fix.utc_day = utc->tm_mday;
+
+          if(m_fix.utc_year>2014)
+            m_fix.validity |= (IMC::GpsFix::GFV_VALID_TIME | IMC::GpsFix::GFV_VALID_DATE);
+
+          dispatch(m_fix);
         }
       };
     }
