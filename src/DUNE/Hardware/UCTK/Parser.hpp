@@ -101,7 +101,7 @@ namespace DUNE
 
             case STA_CSUM:
               m_state = STA_SYNC;
-              if ((m_frame_csum | 0x80) == byte)
+              if ((m_frame_csum | c_csum_mask) == byte)
                 return true;
               break;
           }

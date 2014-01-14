@@ -121,11 +121,11 @@ namespace DUNE
         computeCRC(void)
         {
           uint8_t size = c_header_size + getPayloadSize();
-          m_data[size] = Algorithms::XORChecksum::compute(m_data, size) | 0x80;
+          m_data[size] = Algorithms::XORChecksum::compute(m_data, size) | c_csum_mask;
         }
 
       private:
-        uint8_t m_data[c_header_size + c_max_payload];
+        uint8_t m_data[c_header_size + c_max_payload + c_footer_size];
       };
     }
   }
