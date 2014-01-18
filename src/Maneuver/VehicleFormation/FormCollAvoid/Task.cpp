@@ -344,8 +344,8 @@ namespace Maneuver
             //! Leader state initialization
             debug("Formation LeaderState initialization");
             m_init_leader.op = IMC::LeaderState::OP_SET;
-            m_init_leader.lat = DUNE::Math::Angles::radians(m_args.init_lat);
-            m_init_leader.lon = DUNE::Math::Angles::radians(m_args.init_lon);
+            m_init_leader.lat = m_args.init_lat;
+            m_init_leader.lon = m_args.init_lon;
             m_init_leader.height = m_args.init_alt;
             m_init_leader.x = m_position(0);
             m_init_leader.y = m_position(1);
@@ -364,9 +364,9 @@ namespace Maneuver
             m_init_leader.svz = m_wind(2);
             setLeaderState(&m_init_leader);
 
-            debug("Initial latitude: %1.4f", m_args.init_lat);
-            debug("Initial longitude: %1.4f", m_args.init_lon);
-            debug("Initial altitude: %1.4f", m_args.init_alt);
+            debug("Initial latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
+            debug("Initial longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
+            debug("Initial altitude: %1.4fm", m_init_leader.height);
             debug("Initial x position: %1.4f", m_position(0));
             debug("Initial y position: %1.4f", m_position(1));
             debug("Initial z position: %1.4f", m_position(2));
@@ -786,9 +786,9 @@ namespace Maneuver
                   DUNE::Math::Angles::degrees(m_model->m_bank_cmd));
               trace("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->m_airspeed_cmd);
               trace("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
-              trace("Current latitude: %1.4f", m_args.init_lat);
-              trace("Current longitude: %1.4f", m_args.init_lon);
-              trace("Current altitude: %1.4f", m_args.init_alt);
+              trace("Current latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
+              trace("Current longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
+              trace("Current altitude: %1.4fm", m_init_leader.height);
               trace("Current x position: %1.4f", m_position(0));
               trace("Current y position: %1.4f", m_position(1));
               trace("Current z position: %1.4f", m_position(2));
@@ -825,9 +825,9 @@ namespace Maneuver
                   DUNE::Math::Angles::degrees(m_model->m_bank_cmd));
               debug("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->m_airspeed_cmd);
               debug("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
-              debug("Current latitude: %1.4f", m_args.init_lat);
-              debug("Current longitude: %1.4f", m_args.init_lon);
-              debug("Current altitude: %1.4f", m_args.init_alt);
+              debug("Current latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
+              debug("Current longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
+              debug("Current altitude: %1.4fm", m_init_leader.height);
               debug("Current x position: %1.4f", m_position(0));
               debug("Current y position: %1.4f", m_position(1));
               debug("Current z position: %1.4f", m_position(2));
@@ -1350,7 +1350,7 @@ namespace Maneuver
 
           //! Formation UAV sweep
 
-          // verificar inclusão do líder como elemento 0 dos vectores e matrizes
+          // check - verificar inclusão do líder como elemento 0 dos vectores e matrizes
           // da formação, em vez de elemento m_uav_n em apenas algumas
           for (int ind_uav2 = 1; ind_uav2 < m_uav_n; ind_uav2++)
           {
