@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -83,14 +83,14 @@ namespace Control
         Delta m_last_estate;
         // Motor Thrust.
         IMC::SetThrusterActuation m_motor[2];
-        //! Control loops last reference time
-        float m_scope_ref;
+        //! Control loops last reference
+        uint32_t m_scope_ref;
         // Task arguments.
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
-          m_scope_ref(0.0)
+          m_scope_ref(0)
         {
           param("Maximum Motor Command", m_args.max_motor)
           .defaultValue("1.0")

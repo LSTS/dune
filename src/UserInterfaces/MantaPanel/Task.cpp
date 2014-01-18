@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -77,6 +77,10 @@ namespace UserInterfaces
       std::string pwr_chn_cpu;
       //! Name of supported systems.
       std::vector<std::string> systems;
+      //! List of sections with system names.
+      std::vector<std::string> sys_addr_sections;
+      //! Set of excluded systems.
+      std::vector<std::string> sys_exclude;
     };
 
     struct Task: public Tasks::Task
@@ -146,9 +150,17 @@ namespace UserInterfaces
         .defaultValue("")
         .description("CPU power channel");
 
+        param("Sections of System Addresses", m_args.sys_addr_sections)
+        .defaultValue("")
+        .description("List of table names");
+
         param("System Names", m_args.systems)
         .defaultValue("")
         .description("Array of supported system names");
+
+        param("Exclude System Names", m_args.sys_exclude)
+        .defaultValue("broadcast")
+        .description("List of excluded systems");
 
         // Register listeners.
         bind<IMC::ButtonEvent>(this);
@@ -165,11 +177,11 @@ namespace UserInterfaces
         {
           if (m_args.systems.empty())
           {
-            // Create list with all known systems.
-            std::vector<std::string> addrs = m_ctx.config.options("Micromodem Addresses");
-            m_sys.insert(addrs.begin(), addrs.end());
-            std::vector<std::string> freqs = m_ctx.config.options("Narrow Band Transponders");
-            m_sys.insert(freqs.begin(), freqs.end());
+            for (unsigned i = 0; i < m_args.sys_addr_sections.size(); ++i)
+            {
+              std::vector<std::string> addrs = m_ctx.config.options(m_args.sys_addr_sections[i]);
+              m_sys.insert(addrs.begin(), addrs.end());
+            }
           }
           else
           {
@@ -178,6 +190,9 @@ namespace UserInterfaces
 
           // Remove our name from the list.
           m_sys.erase(getSystemName());
+          for (size_t i = 0; i < m_args.sys_exclude.size(); ++i)
+            m_sys.erase(m_args.sys_exclude[i]);
+
           m_sys_itr = m_sys.begin();
           m_acoustic_systems.list = String::join(m_sys.begin(), m_sys.end(), ",");
         }
@@ -234,18 +249,20 @@ namespace UserInterfaces
       requestAbort(const std::string& sys)
       {
         IMC::AcousticOperation acop;
+        acop.setDestination(getSystemId());
         acop.system = sys;
         acop.op = IMC::AcousticOperation::AOP_ABORT;
-        consume(&acop);
+        dispatch(&acop, DF_LOOP_BACK);
       }
 
       void
       requestPing(const std::string& sys)
       {
         IMC::AcousticOperation acop;
+        acop.setDestination(getSystemId());
         acop.system = sys;
         acop.op = IMC::AcousticOperation::AOP_RANGE;
-        consume(&acop);
+        dispatch(&acop, DF_LOOP_BACK);
       }
 
       void
@@ -263,21 +280,21 @@ namespace UserInterfaces
       void
       consume(const IMC::PowerOperation* msg)
       {
+        if (msg->getDestination() != getSystemId())
+          return;
+
         if (msg->op == IMC::PowerOperation::POP_PWR_DOWN_IP)
         {
           if (!m_power_down)
           {
             m_power_down = true;
-            IMC::LoggingControl lctl;
-            lctl.op = IMC::LoggingControl::COP_REQUEST_STOP;
-            dispatch(lctl);
+            m_lcd.op = IMC::LcdControl::OP_WRITE0;
+            m_lcd.text = center("> Power Down <");
+            dispatch(m_lcd);
           }
 
           if (!m_power_down_now)
           {
-            m_lcd.op = IMC::LcdControl::OP_WRITE0;
-            m_lcd.text = center("> Power Down <");
-            dispatch(m_lcd);
             m_lcd.op = IMC::LcdControl::OP_WRITE1;
             m_lcd.text = center(String::str("%d", (int)msg->time_remain));
             dispatch(m_lcd);
@@ -296,10 +313,6 @@ namespace UserInterfaces
           dispatch(m_lcd);
           if (std::system(m_args.cmd_pwr_down_abort.c_str()) == -1)
             err("failed to execute power down command");
-
-          IMC::LoggingControl lctl;
-          lctl.op = IMC::LoggingControl::COP_REQUEST_START;
-          dispatch(lctl);
 
           selectSystem(false);
         }

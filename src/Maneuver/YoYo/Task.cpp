@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -97,8 +97,11 @@ namespace Maneuver
       void
       onUpdateParameters(void)
       {
-        m_args.variation = Angles::radians(m_args.variation);
-        m_args.u_course = Angles::radians(m_args.u_course);
+        if (paramChanged(m_args.variation))
+          m_args.variation = Angles::radians(m_args.variation);
+
+        if (paramChanged(m_args.u_course))
+          m_args.u_course = Angles::radians(m_args.u_course);
       }
 
       void
@@ -137,7 +140,7 @@ namespace Maneuver
         }
         else
         {
-          signalError("unsupported vertical reference");
+          signalInvalidZ();
           return;
         }
 

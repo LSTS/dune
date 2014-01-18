@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -68,15 +68,15 @@ namespace Control
         unsigned m_spos_ent;
         //! Servo positions
         float m_servo_pos[c_fins];
-        //! Control loops last reference time
-        float m_scope_ref;
+        //! Control loops last reference
+        uint32_t m_scope_ref;
         //! Task arguments.
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
           m_braking(false),
-          m_scope_ref(0.0)
+          m_scope_ref(0)
         {
           param(DTR_RT("Maximum Fin Rotation"), m_args.max_fin_rot)
           .defaultValue("25.0")
@@ -127,8 +127,18 @@ namespace Control
         {
           if (paramChanged(m_args.max_fin_rot))
             m_args.max_fin_rot = Angles::radians(m_args.max_fin_rot);
+        }
 
-          reset();
+        void
+        onActivation(void)
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        }
+
+        void
+        onDeactivation(void)
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
 
         void
@@ -141,7 +151,7 @@ namespace Control
         void
         onResourceInitialization(void)
         {
-          requestDeactivation();
+          reset();
 
           // Initialize fin commands.
           for (int i = 0; i < c_fins; i++)

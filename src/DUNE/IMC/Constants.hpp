@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -31,13 +31,13 @@
 #define DUNE_IMC_CONSTANTS_HPP_INCLUDED_
 
 //! IMC version string.
-#define DUNE_IMC_CONST_VERSION "5.1.1"
+#define DUNE_IMC_CONST_VERSION "5.3.1"
 //! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "53092ff2114a52df6bec98ec6a90b2ad"
+#define DUNE_IMC_CONST_MD5 "f9cc875a21326c853a2ec368240192c1"
 //! Synchronization number.
-#define DUNE_IMC_CONST_SYNC 0xF511
+#define DUNE_IMC_CONST_SYNC 0xF531
 //! Reversed synchronization number.
-#define DUNE_IMC_CONST_SYNC_REV 0x11F5
+#define DUNE_IMC_CONST_SYNC_REV 0x31F5
 //! Size of the header in bytes.
 #define DUNE_IMC_CONST_HEADER_SIZE 20
 //! Size of the footer in bytes.

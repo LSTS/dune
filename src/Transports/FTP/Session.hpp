@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -45,13 +45,14 @@ namespace Transports
     class Session: public DUNE::Concurrency::Thread
     {
     public:
-      Session(DUNE::Tasks::Context& ctx, DUNE::Network::TCPSocket* sock, const DUNE::Network::Address& local_addr);
+      Session(const DUNE::FileSystem::Path& root,
+              DUNE::Network::TCPSocket* sock,
+              const DUNE::Network::Address& local_addr,
+              double timeout);
 
       ~Session(void);
 
     private:
-      //! Current context.
-      DUNE::Tasks::Context& m_ctx;
       //! Control socket.
       DUNE::Network::TCPSocket* m_sock;
       //! Address of the local interface.
@@ -74,6 +75,8 @@ namespace Transports
       char m_bfr[1024];
       //! File offset (used by REST/RETR commands).
       int64_t m_rest_offset;
+      //! Idle timer.
+      DUNE::Time::Counter<double> m_timer;
 
       DUNE::FileSystem::Path
       getAbsolutePath(const std::string& path);
@@ -86,6 +89,9 @@ namespace Transports
 
       void
       sendFileInfo(const DUNE::FileSystem::Path& path, DUNE::Network::TCPSocket* sock, DUNE::Time::BrokenDown& time_ref);
+
+      void
+      sendFileInfoMLSD(const DUNE::FileSystem::Path& path, DUNE::Network::TCPSocket* sock);
 
       void
       closeControlConnection(void);
@@ -101,6 +107,9 @@ namespace Transports
 
       void
       handleNOOP(const std::string& arg);
+
+      void
+      handleMLSD(const std::string& arg);
 
       void
       handleLIST(const std::string& arg);

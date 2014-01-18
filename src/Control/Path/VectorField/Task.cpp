@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -99,7 +99,10 @@ namespace Control
         onUpdateParameters(void)
         {
           PathController::onUpdateParameters();
-          m_args.entry_angle = Angles::radians(m_args.entry_angle);
+
+          if (paramChanged(m_args.entry_angle))
+            m_args.entry_angle = Angles::radians(m_args.entry_angle);
+
           m_gain = std::tan(m_args.entry_angle) / m_args.corridor;
         }
 

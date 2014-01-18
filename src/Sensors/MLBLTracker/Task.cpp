@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -111,6 +111,8 @@ namespace Sensors
       static const unsigned c_code_abort = 0x000a;
       // Abort acked code.
       static const unsigned c_code_abort_ack = 0x000b;
+      //! Start plan acknowledge code.
+      static const unsigned c_code_plan_ack = 0x000c;
       // Address used to send change plan messages.
       static const unsigned c_plan_addr = 15;
       // Quick tracking mask.
@@ -143,10 +145,12 @@ namespace Sensors
       IMC::AcousticOperation m_acop_out;
       // Save modem commands.
       IMC::DevDataText m_dev_data;
+      // Saved Plan Control.
+      IMC::PlanControl* m_pc;
       // Current operation.
       Operation m_op;
       // Transducer detection GPIO.
-      GPIO* m_txd_gpio;
+      GPIO* m_gpio_txd;
       // Time of last sentence from modem.
       Counter<double> m_last_stn;
 
@@ -154,8 +158,9 @@ namespace Sensors
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
         m_op_deadline(-1.0),
+        m_pc(NULL),
         m_op(OP_NONE),
-        m_txd_gpio(0)
+        m_gpio_txd(NULL)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -168,31 +173,40 @@ namespace Sensors
 
         param("Length of Transmit Pings", m_args.tx_length)
         .units(Units::Millisecond)
-        .defaultValue("5");
+        .defaultValue("5")
+        .minimumValue("0");
 
         param("Length of Receive Pings", m_args.rx_length)
         .units(Units::Millisecond)
-        .defaultValue("5");
+        .defaultValue("5")
+        .minimumValue("0");
 
         param("Sound Speed on Water", m_args.sspeed)
+        .defaultValue("1500")
+        .minimumValue("1375")
+        .maximumValue("1900")
         .units(Units::MeterPerSecond)
-        .defaultValue("1500");
+        .description("Water sound speed");
 
         param("Timeout - Micro-Modem Ping", m_args.tout_mmping)
         .units(Units::Second)
-        .defaultValue("5.0");
+        .defaultValue("5.0")
+        .minimumValue("0");
 
         param("Timeout - Narrow Band Ping", m_args.tout_nbping)
         .units(Units::Second)
-        .defaultValue("5.0");
+        .defaultValue("5.0")
+        .minimumValue("0");
 
         param("Timeout - Abort", m_args.tout_abort)
         .units(Units::Second)
-        .defaultValue("5.0");
+        .defaultValue("5.0")
+        .minimumValue("0");
 
         param("Timeout - Input", m_args.tout_input)
         .units(Units::Second)
-        .defaultValue("20.0");
+        .defaultValue("20.0")
+        .minimumValue("0");
 
         param("GPIO - Transducer Detection", m_args.gpio_txd)
         .defaultValue("-1");
@@ -236,19 +250,8 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        // Configure transducer GPIO (if any).
-        if (m_args.gpio_txd > 0)
-        {
-          try
-          {
-            m_txd_gpio = new GPIO((unsigned)m_args.gpio_txd);
-            m_txd_gpio->setDirection(GPIO::GPIO_DIR_INPUT);
-          }
-          catch (...)
-          {
-            err(DTR("unable to use GPIO %d for transducer detection"), m_args.gpio_txd);
-          }
-        }
+        if ((m_gpio_txd != NULL) && paramChanged(m_args.gpio_txd) )
+          throw RestartNeeded(DTR("restarting to change transducer detection GPIO"), 1);
 
         // Input timeout.
         m_last_stn.setTop(m_args.tout_input);
@@ -257,6 +260,20 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
+        // Configure transducer GPIO (if any).
+        if (m_args.gpio_txd > 0)
+        {
+          try
+          {
+            m_gpio_txd = new GPIO((unsigned)m_args.gpio_txd);
+            m_gpio_txd->setDirection(GPIO::GPIO_DIR_INPUT);
+          }
+          catch (...)
+          {
+            err(DTR("unable to use GPIO %d for transducer detection"), m_args.gpio_txd);
+          }
+        }
+
         m_uart = new SerialPort(m_args.uart_dev.c_str(), m_args.uart_baud);
         m_uart->setCanonicalInput(true);
         m_uart->flush();
@@ -288,6 +305,8 @@ namespace Sensors
       void
       onResourceRelease(void)
       {
+        Memory::clear(m_pc);
+        Memory::clear(m_gpio_txd);
         Memory::clear(m_uart);
       }
 
@@ -310,10 +329,10 @@ namespace Sensors
       bool
       hasTransducer(void)
       {
-        if (m_txd_gpio == 0)
+        if (m_gpio_txd == NULL)
           return true;
 
-        if (m_txd_gpio->getValue() == false)
+        if (m_gpio_txd->getValue() == false)
           return true;
 
         err("%s", DTR("transducer not connected"));
@@ -326,7 +345,7 @@ namespace Sensors
       sendCommand(const std::string& cmd)
       {
         inf("%s", sanitize(cmd).c_str());
-        m_uart->write(cmd.c_str());
+        m_uart->writeString(cmd.c_str());
         m_dev_data.value.assign(sanitize(cmd));
         dispatch(m_dev_data);
       }
@@ -382,6 +401,8 @@ namespace Sensors
         if (msg->getId() == DUNE_IMC_PLANCONTROL)
         {
           const IMC::PlanControl* pc = static_cast<const IMC::PlanControl*>(msg);
+          Memory::replace(m_pc, new IMC::PlanControl(*pc));
+
           if (pc->op == IMC::PlanControl::PC_START)
           {
             if (pc->plan_id.size() == 1)
@@ -589,6 +610,17 @@ namespace Sensors
           dispatch(m_acop_out);
           resetOp();
         }
+        if (value == c_code_plan_ack)
+        {
+          inf(DTR("plan started"));
+          m_pc->setDestination(m_pc->getSource());
+          m_pc->setDestinationEntity(m_pc->getSourceEntity());
+          m_pc->setSource(getSystemId());
+          m_pc->setSourceEntity(getEntityId());
+          m_pc->type = IMC::PlanControl::PC_SUCCESS;
+          m_pc->flags = 0;
+          dispatch(*m_pc);
+        }
         else if (value & c_mask_qtrack)
         {
           unsigned beacon = (value & c_mask_qtrack_beacon) >> 10;
@@ -657,16 +689,25 @@ namespace Sensors
 
         float lat;
         float lon;
-        float depth;
-        float yaw;
+        uint8_t depth;
+        int16_t yaw;
+        int16_t alt;
         uint16_t ranges[2];
+
+        int8_t progress;
+        uint8_t fuel_level;
+        uint8_t fuel_conf;
 
         std::memcpy(&lat, msg_raw + 0, 4);
         std::memcpy(&lon, msg_raw + 4, 4);
-        std::memcpy(&depth, msg_raw + 8, 4);
-        std::memcpy(&yaw, msg_raw + 12, 4);
-        std::memcpy(&ranges[0], msg_raw + 16, 2);
-        std::memcpy(&ranges[1], msg_raw + 18, 2);
+        std::memcpy(&depth, msg_raw + 8, 1);
+        std::memcpy(&yaw, msg_raw + 9, 2);
+        std::memcpy(&alt, msg_raw + 11, 2);
+        std::memcpy(&ranges[0], msg_raw + 13, 2);
+        std::memcpy(&ranges[1], msg_raw + 15, 2);
+        std::memcpy(&progress, msg_raw + 17, 1);
+        std::memcpy(&fuel_level, msg_raw + 18, 1);
+        std::memcpy(&fuel_conf, msg_raw + 19, 1);
 
         for (int i = 0; i < 2; ++i)
         {
@@ -685,9 +726,24 @@ namespace Sensors
         es.setSource(m_mimap[src]);
         es.lat = lat;
         es.lon = lon;
-        es.depth = depth;
-        es.psi = yaw;
+        es.depth = (float)depth;
+        es.psi = (float)yaw / 100.0;
+        es.alt = (float)alt / 10.0;
         dispatch(es);
+
+        IMC::PlanControlState pcs;
+        pcs.setSource(m_mimap[src]);
+        pcs.plan_progress = (float)progress;
+        dispatch(pcs);
+
+        IMC::FuelLevel fuel;
+        fuel.setSource(m_mimap[src]);
+        fuel.value = (float)fuel_level;
+        fuel.confidence = (float)fuel_conf;
+        dispatch(fuel);
+
+        spew("lat %f | lon %f | depth %f | alt %f | yaw %f", es.lat, es.lon, es.depth, es.alt, es.psi);
+        spew("fuel %f | conf %f | plan progress %f", fuel.value, fuel.confidence, pcs.plan_progress);
       }
 
       void
@@ -754,7 +810,7 @@ namespace Sensors
         {
           consumeMessages();
 
-          if (m_uart->hasNewData(0.1) == IOMultiplexing::PRES_OK)
+          if (Poll::poll(*m_uart, 0.1))
           {
             readSentence();
             m_last_stn.reset();

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -81,8 +81,8 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
-        m_uart->write("#");
-        m_uart->write("M1\r\n");
+        m_uart->writeString("#");
+        m_uart->writeString("M1\r\n");
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -99,15 +99,14 @@ namespace Sensors
 
         while (!stopping())
         {
-          if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+          if (!Poll::poll(*m_uart, 1.0))
             continue;
 
-          int rv = m_uart->readString(bfr, sizeof(bfr));
-
-          if (rv <= 0)
+          size_t rv = m_uart->readString(bfr, sizeof(bfr));
+          if (rv == 0)
           {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-            throw RestartNeeded("I/O error", 5);
+            throw RestartNeeded(DTR("I/O error"), 5);
           }
 
           if (std::sscanf(bfr, "%f", &m_sspeed.value) == 1)

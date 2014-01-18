@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -87,12 +87,12 @@ namespace Sensors
 
     // Number of seconds to wait before setting an entity error.
     static const float c_expire_wdog = 2.0f;
-    // Conversion between bar and pascal
-    static const float c_pascal_per_bar = 100000.0f;
 
     struct Task: public Tasks::Periodic
     {
-      static const int c_parser_data_size = 6;
+      static const unsigned c_parser_data_size = 6;
+      // Maximum number of consecutive CRC errors before bailing out.
+      static const unsigned c_max_crc_err = 10;
       // Serial port handle.
       SerialPort* m_uart;
       // True if serial port echoes sent commands.
@@ -107,6 +107,8 @@ namespace Sensors
       IMC::Depth m_depth;
       // Measured temperature.
       IMC::Temperature m_temperature;
+      // Sensor is calibrated.
+      bool m_calibrated;
       // Entity ID.
       int m_entity_id;
       // Current parser state.
@@ -127,10 +129,13 @@ namespace Sensors
       Time::Counter<float> m_error_wdog;
       // Task arguments.
       Arguments m_args;
+      // Unsigned CRC error counter.
+      unsigned m_crc_err_count;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
-        m_uart(NULL)
+        m_uart(NULL),
+        m_crc_err_count(0)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -152,18 +157,19 @@ namespace Sensors
         param("Water Density", m_args.depth_conv)
         .units(Units::KilogramPerCubicMeter)
         .defaultValue("1025.0");
-      }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
+        m_calibrated = false;
+
+        // Register consumers.
+        bind<IMC::VehicleMedium>(this);
       }
 
       void
       onUpdateParameters(void)
       {
         // Depth conversion (bar to meters of fluid).
-        m_args.depth_conv = 100e3 / (9.8 * m_args.depth_conv);
+        if (paramChanged(m_args.depth_conv))
+          m_args.depth_conv = Math::c_pascal_per_bar / (Math::c_gravity * m_args.depth_conv);
 
         // Initialize serial messages.
         m_msg_read_pressure[0] = m_args.address;
@@ -198,8 +204,19 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
+        m_crc_err_count = 0;
         initialize();
-        zero();
+      }
+
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        if ((msg->medium == IMC::VehicleMedium::VM_WATER ||
+             msg->medium == IMC::VehicleMedium::VM_GROUND) && !m_calibrated)
+        {
+          zero();
+          m_calibrated = true;
+        }
       }
 
       bool
@@ -214,7 +231,7 @@ namespace Sensors
         if (!m_args.uart_echo)
           return true;
 
-        while (m_uart->hasNewData(0.1) == IOMultiplexing::PRES_OK)
+        while (Poll::poll(*m_uart, 0.1))
         {
           i -= m_uart->read(rxbfr + (len - i), i);
           if (i == 0)
@@ -256,7 +273,7 @@ namespace Sensors
         // Reset the parser whenever a read is asked for.
         m_parser_state = STA_ADDR;
 
-        while (m_uart->hasNewData(0.1) == IOMultiplexing::PRES_OK)
+        while (Poll::poll(*m_uart, 0.1))
         {
           int len = m_uart->read(bfr, sizeof(bfr));
           ParserResults result = parse(bfr, len);
@@ -265,15 +282,19 @@ namespace Sensors
           {
             m_error_wdog.reset();
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            m_crc_err_count = 0;
             return true;
+          }
+          else if (result == RES_EXCEPTION)
+          {
+            m_crc_err_count = 0;
+            return false;
           }
           else if (result == RES_CRC)
           {
             err(DTR("invalid CRC"));
-            return false;
-          }
-          else if (result == RES_EXCEPTION)
-          {
+            if (++m_crc_err_count > c_max_crc_err)
+              throw std::runtime_error(DTR("exceeded maximum consecutive CRC error count"));;
             return false;
           }
         }
@@ -380,7 +401,7 @@ namespace Sensors
             ByteCopy::fromBE(m_channel_readout, m_parser_data);
             break;
           case CMD_ZERO_CHANNEL:
-            inf(DTR("successfuly zeroed device"));
+            inf("%s", DTR(Status::getString(Status::CODE_CALIBRATED)));
         }
 
         // Everything correctly interpreted, so return true
@@ -461,14 +482,8 @@ namespace Sensors
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
 
           // The device seems to be dead.. attempt to restart
-          try
-          {
-            onResourceAcquisition();
-            onResourceInitialization();
-          }
-          catch (...)
-          {
-          }
+          onResourceAcquisition();
+          onResourceInitialization();
         }
       }
     };

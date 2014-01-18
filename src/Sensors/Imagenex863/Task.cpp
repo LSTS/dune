@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -92,11 +92,15 @@ namespace Sensors
         .description("Serial port baud rate");
 
         param("Sound Speed on Water", m_args.sspeed)
+        .defaultValue("1500")
+        .minimumValue("1375")
+        .maximumValue("1900")
         .units(Units::MeterPerSecond)
-        .defaultValue("1500");
+        .description("Water sound speed");
 
         param("Use Dynamic Sound Speed", m_args.sspeed_dyn)
-        .defaultValue("false");
+        .defaultValue("false")
+        .description("Update measurements according with measured sound speed");
 
         param("Device position", m_args.position)
         .defaultValue("0, 0, 0")
@@ -117,8 +121,8 @@ namespace Sensors
         m_sspeed = m_args.sspeed;
 
         IMC::BeamConfig bc;
-        bc.beam_width = -1;
-        bc.beam_height = -1;
+        bc.beam_width = Math::Angles::radians(1.0);
+        bc.beam_height = Math::Angles::radians(1.0);
 
         IMC::DeviceState ds;
         ds.x = m_args.position[0];
@@ -143,11 +147,6 @@ namespace Sensors
       onResourceRelease(void)
       {
         Memory::clear(m_uart);
-      }
-
-      ~Task(void)
-      {
-        Task::onResourceRelease();
       }
 
       void

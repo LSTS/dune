@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -171,7 +171,7 @@ namespace Sensors
       void
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
-        inf("%s: %u.%u.%d", DTR("version"), major, minor, (int)patch);
+        inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 

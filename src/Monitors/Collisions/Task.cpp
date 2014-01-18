@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -81,6 +81,8 @@ namespace Monitors
       Time::Counter<double> m_twindow;
       //! Collision detected.
       IMC::Collision m_collision;
+      //! Vehicle Medium.
+      IMC::VehicleMedium m_vm;
       //! Device entity id.
       unsigned m_device_eid;
       //! Depth value
@@ -104,10 +106,14 @@ namespace Monitors
         // Definition of configuration parameters.
         param("Innovation Moving Average Samples", m_args.avg_samples_innov)
         .defaultValue("10")
+        .minimumValue("5")
+        .maximumValue("20")
         .description("Number of moving average samples to smooth accelerations");
 
         param("Absolute Moving Average Samples", m_args.avg_samples_abs)
         .defaultValue("3")
+        .minimumValue("2")
+        .maximumValue("5")
         .description("Number of moving average samples to smooth accelerations");
 
         param("Maximum Deviation Factor", m_args.k_std)
@@ -144,18 +150,16 @@ namespace Monitors
 
         param("Minimum Depth", m_args.min_depth)
         .defaultValue("1.0")
+        .minimumValue("0.5")
+        .maximumValue("10.0")
         .description("Depth value below which collisions will be ignored");
 
         // Register consumers.
         bind<IMC::Acceleration>(this);
-        bind<IMC::Depth>(this);
         bind<IMC::Brake>(this);
+        bind<IMC::EstimatedState>(this);
         bind<IMC::Rpm>(this);
-      }
-
-      ~Task(void)
-      {
-        Task::onResourceRelease();
+        bind<IMC::VehicleMedium>(this);
       }
 
       void
@@ -230,8 +234,6 @@ namespace Monitors
         // Check collision in the x-axis.
         if ((std_x > m_args.min_std) && (x > m_args.k_std * std_x))
         {
-          err(DTR("collision in the x-axis: %.2f times the standard deviation %f"), (x / std_x), std_x);
-
           m_collision.value = msg->x;
           m_collision.type = (IMC::Collision::CD_IMPACT |
                               IMC::Collision::CD_X);
@@ -242,8 +244,6 @@ namespace Monitors
         // Check collision in the z-axis.
         if ((std_z > m_args.min_std) && (z > m_args.k_std * std_z))
         {
-          err(DTR("collision in the z-axis: %.2f times the standard deviation %f"), (z / std_z), std_z);
-
           m_collision.value = msg->z;
           m_collision.type = (IMC::Collision::CD_IMPACT |
                               IMC::Collision::CD_Z);
@@ -251,11 +251,13 @@ namespace Monitors
           collided();
         }
 
+        // Ignore attitude if vehicle is on the ground.
+        if (m_vm.medium == IMC::VehicleMedium::VM_GROUND)
+          return;
+
         // Check absolute acceleration values in the x-axis.
         if ((mean_x_abs > m_args.max_x) || (mean_x_abs < - m_args.max_x))
         {
-          err(DTR("x-axis acceleration breached limits: %.2f"), mean_x_abs);
-
           m_collision.value = mean_x_abs;
           m_collision.type = IMC::Collision::CD_X;
 
@@ -266,8 +268,6 @@ namespace Monitors
         if ((std::abs(mean_z_abs) > Math::c_gravity + m_args.max_z) ||
             (std::abs(mean_z_abs) < Math::c_gravity - m_args.max_z))
         {
-          err(DTR("z-axis acceleration breached limits: %.2f"), mean_z_abs);
-
           m_collision.value = mean_z_abs;
           m_collision.type = IMC::Collision::CD_Z;
 
@@ -276,9 +276,9 @@ namespace Monitors
       }
 
       void
-      consume(const IMC::Depth* msg)
+      consume(const IMC::EstimatedState* msg)
       {
-        m_depth = msg->value;
+        m_depth = msg->depth;
       }
 
       void
@@ -294,6 +294,12 @@ namespace Monitors
       consume(const IMC::Rpm* msg)
       {
         m_rpms = msg->value;
+      }
+
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        m_vm = *msg;
       }
 
       //! Check if the collision should be ignored

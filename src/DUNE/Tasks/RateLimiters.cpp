@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -82,7 +82,7 @@ namespace DUNE
             continue;
           }
         }
-        throw std::runtime_error("invalid rate limiter: " + spec[i]);
+        throw std::runtime_error(Utils::String::str(DTR("invalid rate limiter: %s"), spec[i].c_str()));
       }
     }
   }

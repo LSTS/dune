@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -89,7 +89,8 @@ namespace Control
         void
         onUpdateParameters(void)
         {
-          m_args.max_bank = Angles::radians(m_args.max_bank);
+          if (paramChanged(m_args.max_bank))
+            m_args.max_bank = Angles::radians(m_args.max_bank);
         }
 
         void

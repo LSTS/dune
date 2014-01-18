@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -34,8 +34,6 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
-    //! Minimum radius admissible for loitering or helicoiding
-    static const float c_min_radius = 5.0f;
     //! Number of samples for vertical monitor moving average
     static const unsigned c_vsamples = 10;
     //! Value to be consider at surface
@@ -48,6 +46,7 @@ namespace Maneuver
       float radius_tolerance;
       float vmonitor_speed;
       float vmonitor_timeout;
+      float min_radius;
     };
 
     //! Vertical monitor data
@@ -86,16 +85,16 @@ namespace Maneuver
       IMC::DesiredPath m_path;
       //! Elevator Maneuver message
       IMC::Elevator m_maneuver;
-      //! Estimated state
-      IMC::EstimatedState m_estate;
-      //! Pointer to zed that matters
-      float* m_state_z;
-      //! true if the target depth has been reached
-      bool m_done;
-      //! True if loitering
-      bool m_loitering;
-      //! direction up or down (1 or -1)
-      int m_dir;
+      //! Current depth
+      float m_depth;
+      //! Current altitude
+      float m_altitude;
+      //! Current pitch
+      float m_pitch;
+      //! Current forward speed
+      float m_u_speed;
+      //! Elevator mechanism
+      Maneuvers::Elevate* m_elevate;
       //! Vertical monitor
       VMonitor* m_vmon;
       //! Task parameters
@@ -103,6 +102,7 @@ namespace Maneuver
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Maneuvers::Maneuver(name, ctx),
+        m_depth(0.0),
         m_vmon(NULL)
       {
         param("Depth Tolerance", m_args.depth_tolerance)
@@ -124,6 +124,10 @@ namespace Maneuver
         .defaultValue("15.0")
         .description("Timeout when progress is below the specified value");
 
+        param("Minimum Radius", m_args.min_radius)
+        .defaultValue("10.0")
+        .description("Minimum radius to prevent incompatibility with path controller");
+
         bindToManeuver<Task, IMC::Elevator>();
         bind<IMC::PathControlState>(this);
         bind<IMC::EstimatedState>(this);
@@ -139,176 +143,60 @@ namespace Maneuver
       consume(const IMC::Elevator* maneuver)
       {
         m_maneuver = *maneuver;
-        m_path.clear();
 
-        if (m_maneuver.radius < c_min_radius)
-        {
-          war(DTR("invalid loiter radius, forcing a minimum of %0.2f"), c_min_radius);
-          m_maneuver.radius = c_min_radius;
-        }
-
-        // Enable movement
-        setControl(IMC::CL_PATH);
-
-        // either start helicoid right away or get to the waypoint first
-        if (maneuver->flags & IMC::Elevator::FLG_CURR_POS)
-        {
-          m_path.flags = IMC::DesiredPath::FL_LOITER_CURR;
-          m_path.end_z = m_maneuver.end_z;
-          m_path.end_z_units = m_maneuver.end_z_units;
-        }
-        else
-        {
-          m_path.end_z = m_maneuver.start_z;
-          m_path.end_z_units = m_maneuver.start_z_units;
-        }
-
-        m_path.end_lat = m_maneuver.lat;
-        m_path.end_lon = m_maneuver.lon;
-        m_path.lradius = m_maneuver.radius;
-
-        // If we are going down then loiter counter-clockwise
-        if (m_maneuver.end_z_units == IMC::Z_DEPTH)
-        {
-          if (m_estate.depth < m_maneuver.end_z)
-            m_path.flags |= IMC::DesiredPath::FL_CCLOCKW;
-        }
-        else if (m_estate.alt > m_maneuver.end_z)
-        {
-          m_path.flags |= IMC::DesiredPath::FL_CCLOCKW;
-        }
-
-        // Set speed
-        m_path.speed = m_maneuver.speed;
-        m_path.speed_units = m_maneuver.speed_units;
-
-        dispatch(m_path);
+        m_elevate = new Maneuvers::Elevate(maneuver, this,
+                                           m_args.min_radius, m_args.depth_tolerance);
 
         if (m_args.vmonitor_speed > 0.0)
         {
           Memory::clear(m_vmon);
-          m_vmon = new VMonitor(m_args.vmonitor_timeout, m_estate.depth);
+          m_vmon = new VMonitor(m_args.vmonitor_timeout, m_depth);
         }
-
-        // init
-        m_dir = 0;
-        m_done = false;
-        m_loitering = false;
       }
 
       void
       consume(const IMC::EstimatedState* state)
       {
-        m_estate = *state;
-
-        bool was_dir = m_dir;
-
-        // a direction has not been defined yet
-        if (!m_dir)
-        {
-          // variable state_z will hold the vehicle's depth or altitude
-          if (m_maneuver.end_z_units == IMC::Z_DEPTH)
-          {
-            // Depth
-            m_state_z = &m_estate.depth;
-            m_dir = (*m_state_z > m_maneuver.end_z) ? 1 : -1;
-          }
-          else if ((m_maneuver.end_z_units == IMC::Z_ALTITUDE) &&
-                   (m_estate.alt >= 0))
-          {
-            // Altitude.
-            m_state_z = &m_estate.alt;
-            m_dir = (*m_state_z > m_maneuver.end_z) ? -1 : 1;
-          }
-          else
-          {
-            signalNoAltitude();
-            return;
-          }
-
-          debug("%s to %0.2f meters of depth/altitude",
-                (m_dir < 0) ? "descending" : "ascending",
-                m_maneuver.end_z);
-        }
-
-        // If we have set the direction for the first time
-        if (!was_dir && m_dir)
-        {
-          if (m_maneuver.flags & IMC::Elevator::FLG_CURR_POS)
-            return;
-
-          m_path.end_z = m_maneuver.end_z;
-          m_path.end_z_units = m_maneuver.end_z_units;
-        }
+        m_depth = state->depth;
+        m_altitude = state->alt;
+        m_pitch = state->theta;
+        m_u_speed = state->u;
+        m_elevate->update(state);
       }
 
       void
       consume(const IMC::PathControlState* pcs)
       {
-        // if direction has not been defined yet then do not proceed
-        if (!m_dir)
+        m_elevate->updatePathControl(pcs);
+
+        if (m_elevate->isDone())
+        {
+          signalCompletion();
           return;
+        }
+
+        float vertical_error = m_elevate->getVerticalError(m_depth, m_altitude);
 
         if (pcs->flags & IMC::PathControlState::FL_LOITERING)
         {
-          // If it's not supposed to use the current location then path
-          // reference to dive has yet to be fired
-          if (!m_loitering && (m_maneuver.flags & IMC::Elevator::FLG_CURR_POS) == 0)
-            dispatch(m_path);
-
-          m_loitering = true;
-
-          // check if it is in the neighborhood of the desired depth
-          if (std::fabs(*m_state_z - m_maneuver.end_z) <= m_args.depth_tolerance)
-          {
-            m_done = true;
-            debug("Reached target depth/altitude of %0.2f meters.", m_maneuver.end_z);
-          }
-
-          // Check if water column is not deep enough for desired altitude
-          if (m_maneuver.end_z_units == IMC::Z_ALTITUDE)
-          {
-            if ((m_maneuver.end_z > m_estate.depth + m_estate.alt)
-                && m_estate.depth < c_depth_tol)
-            {
-              // water column is not deep enough so we bail
-              m_done = true;
-              war("water column is not deep enough so the maneuver will not proceed.");
-            }
-          }
-
-          // signal as complete
-          if (m_done)
-          {
-            signalCompletion();
-            return;
-          }
-
           if (m_args.vmonitor_speed > 0.0)
             checkVerticalProgress();
 
-          float time_left = getVerticalError() / (m_estate.u * std::sin(m_estate.theta));
+          float time_left = vertical_error / (m_u_speed * std::sin(m_pitch));
           signalProgress((unsigned)std::fabs(time_left));
         }
         else
         {
-          float diagonal_length = getVerticalError() / std::sin(Plans::c_rated_pitch);
+          float diagonal_length = vertical_error / std::sin(Plans::c_rated_pitch);
           float loiter;
-          if (m_estate.u)
-            loiter = diagonal_length / m_estate.u;
+
+          if (m_u_speed)
+            loiter = diagonal_length / m_u_speed;
           else
             loiter = Plans::c_max_eta;
 
           signalProgress((uint16_t)Math::round(pcs->eta + loiter));
         }
-      }
-
-      //! Get absolute difference between current zed and target one
-      //! @return the vertical error for the desiredZ
-      float
-      getVerticalError(void) const
-      {
-        return std::fabs(m_maneuver.end_z - *m_state_z);
       }
 
       //! Check vertical progress
@@ -317,7 +205,7 @@ namespace Maneuver
       {
         // compute vertical rate
         // (multiply by minus direction for absolute value)
-        float vrate = - m_dir * (m_estate.depth - m_vmon->last_depth) / (Clock::get() - m_vmon->last_time);
+        float vrate = - m_elevate->getElevatorDirection() * (m_depth - m_vmon->last_depth) / (Clock::get() - m_vmon->last_time);
 
         if ((m_args.vmonitor_speed > vrate) ||
             (m_args.vmonitor_speed > m_vmon->mave->update(vrate)))
@@ -342,7 +230,7 @@ namespace Maneuver
         }
 
         m_vmon->last_time = Clock::get();
-        m_vmon->last_depth = m_estate.depth;
+        m_vmon->last_depth = m_depth;
       }
     };
   }

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -94,16 +94,19 @@ namespace Monitors
       {
         param("Minimum GPS Fixes", m_args.min_gps_fixes)
         .defaultValue("10")
+        .minimumValue("0")
         .description("Minimum number of GPS fixes required to compute the clock offset");
 
         param("Maximum Clock Offset", m_args.max_clock_offs)
         .units(Units::Second)
         .defaultValue("4")
+        .minimumValue("0")
         .description("Maximum Clock Offset. If the clock offset is above this value the clock will be syncronized");
 
         param("Boot Synchronization Timeout", m_args.max_boot_tout)
         .units(Units::Second)
         .defaultValue("30")
+        .minimumValue("0")
         .description("At boot the system tries to synchronize clocks. It continues unsynched after timeout");
 
         param("Hardware Clock Synchronization Command", m_args.hw_sync_cmd)
@@ -163,16 +166,9 @@ namespace Monitors
           if (std::fabs(offs) > m_args.max_clock_offs)
           {
             war(DTR("adjusting CPU clock by %0.4f s"), offs);
-            Time::Clock::set(new_time);
-            if (std::system(m_args.hw_sync_cmd.c_str()) == -1)
-              err(DTR("failed to execute clock sync command"));
-
+            setTime(new_time);
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_SYNCHED);
             m_clock_synched = true;
-
-            m_cc.op = IMC::ClockControl::COP_SYNC_DONE;
-            m_cc.clock = new_time;
-            dispatch(m_cc);
           }
           else
           {
@@ -180,6 +176,26 @@ namespace Monitors
             m_clock_synched = true;
           }
         }
+      }
+
+      void
+      setTime(double new_time)
+      {
+        try
+        {
+          Time::Clock::set(new_time);
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 10);
+        }
+
+        if (std::system(m_args.hw_sync_cmd.c_str()) == -1)
+          err(DTR("failed to execute clock sync command"));
+
+        m_cc.op = IMC::ClockControl::COP_SYNC_DONE;
+        m_cc.clock = new_time;
+        dispatch(m_cc);
       }
 
       void

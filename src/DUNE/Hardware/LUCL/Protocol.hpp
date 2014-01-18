@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -189,7 +189,7 @@ namespace DUNE
         std::string
         searchNewFirmware(const FileSystem::Path& path, unsigned ver = 0, unsigned rev = 0, unsigned pat = 0, bool ver_fixed = false);
 
-        const char*
+        static const char*
         getErrorString(uint8_t error);
 
       private:

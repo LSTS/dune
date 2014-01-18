@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -49,12 +49,8 @@ namespace Maneuver
       IMC::PathControlState m_pcs;
       //! Maneuver's duration
       float m_duration;
-      //! Timer counter for maneuver duration
-      Time::Counter<float> m_counter;
       //! End time for the maneuver
       double m_end_time;
-      //! Path control says vehicle is near
-      bool m_near;
       //! Task arguments
       Arguments m_args;
 
@@ -81,7 +77,6 @@ namespace Maneuver
       void
       consume(const IMC::StationKeeping* maneuver)
       {
-        m_near = false;
         m_duration = maneuver->duration;
 
         Memory::clear(m_skeep);
@@ -94,10 +89,13 @@ namespace Maneuver
       void
       consume(const IMC::EstimatedState* state)
       {
+        if (m_skeep == NULL)
+          return;
+
         if (m_skeep->isInside() && (m_end_time < 0))
           m_end_time = Clock::get() + m_duration;
 
-        m_skeep->update(state, m_near);
+        m_skeep->update(state);
       }
 
       void
@@ -105,7 +103,10 @@ namespace Maneuver
       {
         m_pcs = *pcs;
 
-        m_near = (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
+        if (m_skeep == NULL)
+          return;
+
+        m_skeep->updatePathControl(pcs);
       }
 
       void
@@ -120,9 +121,10 @@ namespace Maneuver
           else
             signalProgress((uint16_t)Math::round(time_left));
         }
-        else if (m_skeep->isMoving())
+        else if (m_skeep != NULL)
         {
-          signalProgress(m_pcs.eta);
+          if (m_skeep->isMoving())
+            signalProgress(m_pcs.eta);
         }
       }
     };

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -29,6 +29,7 @@
 #define DUNE_HARDWARE_UCTK_INTERFACE_HPP_INCLUDED_
 
 // DUNE headers.
+#include <DUNE/IO/Handle.hpp>
 #include <DUNE/Time/Counter.hpp>
 #include <DUNE/Concurrency/TSQueue.hpp>
 #include <DUNE/Hardware/UCTK/Parser.hpp>
@@ -44,46 +45,30 @@ namespace DUNE
       class Interface
       {
       public:
+        Interface(IO::Handle* handle);
+
         virtual
         ~Interface(void);
-
-        void
-        open(void);
-
-        bool
-        poll(double timeout)
-        {
-          return doPoll(timeout);
-        }
-
-        void
-        write(const uint8_t* data, unsigned data_size)
-        {
-          doWrite(data, data_size);
-        }
-
-        unsigned
-        read(uint8_t* data, unsigned data_size)
-        {
-          return doRead(data, data_size);
-        }
 
         void
         flush(void)
         {
           while (!m_queue.empty())
             delete m_queue.pop();
-          doFlush();
+          m_handle->flush();
         }
 
-        const FirmwareInfo&
-        getFirmwareInfo(void) const;
+        FirmwareInfo
+        getFirmwareInfo(void);
+
+        void
+        resetDevice(void);
 
         bool
         sendFrame(Frame& frame, double timeout = 1.0);
 
         void
-        enterBootloader(void);
+        setBootStop(bool value);
 
         Frame*
         pop(void)
@@ -95,8 +80,8 @@ namespace DUNE
         consume(void)
         {
           unsigned frame_count = 0;
-          unsigned rv = read(m_buffer, sizeof(m_buffer));
-          for (unsigned i = 0; i < rv; ++i)
+          size_t rv = m_handle->read(m_buffer, sizeof(m_buffer));
+          for (size_t i = 0; i < rv; ++i)
           {
             if (m_parser.parse(m_buffer[i], m_frame))
             {
@@ -108,40 +93,24 @@ namespace DUNE
           return frame_count;
         }
 
-      protected:
-        virtual void
-        doOpen(void) = 0;
-
-        virtual bool
-        doPoll(double timeout) = 0;
-
-        virtual void
-        doWrite(const uint8_t* data, unsigned data_size) = 0;
-
-        virtual unsigned
-        doRead(uint8_t* data, unsigned data_size) = 0;
-
-        virtual void
-        doFlush(void) = 0;
-
       private:
+        //! I/O handle.
+        IO::Handle* m_handle;
         //! Buffer frame.
         UCTK::Frame m_frame;
         UCTK::Parser m_parser;
         uint8_t m_buffer[128];
         //! Frame queue.
         Concurrency::TSQueue<UCTK::Frame*> m_queue;
-        //! Firmware info.
-        FirmwareInfo m_info;
 
         bool
         readReply(Frame& msg, double timeout);
 
         void
-        getFirmwareName(void);
+        getFirmwareName(FirmwareInfo& info);
 
         void
-        getFirmwareVersion(void);
+        getFirmwareVersion(FirmwareInfo& info);
       };
     }
   }

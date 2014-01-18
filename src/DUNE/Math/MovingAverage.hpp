@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -56,14 +56,15 @@ namespace DUNE
       }
 
       //! Update sample with new value.
+      //! @return mean value.
       T
       update(const T& value)
       {
-        if (m_window.size() < m_window_size)
+        if (sampleSize() < m_window_size)
         {
           m_window.push_back(value);
           m_accum += value;
-          return m_accum / m_window.size();
+          return m_accum / sampleSize();
         }
 
         m_accum += value - m_window[m_oldest];
@@ -73,20 +74,22 @@ namespace DUNE
       }
 
       //! Extract mean value of the sample.
+      //! @return mean value.
       T
       mean(void)
       {
-        if (m_window.size())
-          return m_accum / m_window.size();
+        if (sampleSize())
+          return m_accum / sampleSize();
         else
           return 0;
       }
 
       //! Extract standard deviation of the sample.
+      //! @return standard deviation value.
       T
       stdev(void)
       {
-        unsigned size = m_window.size();
+        unsigned size = sampleSize();
 
         if (!size)
           return 0;
@@ -98,6 +101,14 @@ namespace DUNE
           sdev += (m_window[i] - u) * (m_window[i] - u);
 
         return std::sqrt(sdev / size);
+      }
+
+      //! Know size of sample.
+      //! @return size of the sample.
+      unsigned
+      sampleSize(void)
+      {
+        return (unsigned)m_window.size();
       }
 
     private:

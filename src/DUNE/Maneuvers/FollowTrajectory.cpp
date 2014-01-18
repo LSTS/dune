@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -37,7 +37,7 @@ namespace DUNE
     FollowTrajectory::FollowTrajectory(const std::string& name, Tasks::Context& ctx):
       Maneuver(name, ctx)
     {
-      param("Control Step Period", m_cstep_period)
+      param("Control Step Frequency", m_cstep_period)
       .units(Units::Hertz)
       .defaultValue("1.0");
 
@@ -52,20 +52,13 @@ namespace DUNE
     void
     FollowTrajectory::onUpdateParameters(void)
     {
-      m_cstep_period = 1.0 / m_cstep_period;
+      if (paramChanged(m_cstep_period))
+        m_cstep_period = 1.0 / m_cstep_period;
     }
 
     bool
     FollowTrajectory::initTrajectory(const IMC::FollowTrajectory* maneuver)
     {
-      TPoint begin;
-
-      Coordinates::WGS84::displacement(m_rlat, m_rlon, 0, maneuver->lat, maneuver->lon, 0, &begin.x, &begin.y);
-      begin.z = maneuver->z;
-      begin.z_units = maneuver->z_units;
-      begin.t = 0;
-      m_traj.push_back(begin);
-
       const IMC::MessageList<IMC::TrajectoryPoint>* list = &maneuver->points;
 
       IMC::MessageList<IMC::TrajectoryPoint>::const_iterator itr;
@@ -73,8 +66,8 @@ namespace DUNE
       for (itr = list->begin(); itr != list->end(); itr++)
       {
         TPoint p;
-        p.x = (*itr)->x + begin.x;
-        p.y = (*itr)->y + begin.y;
+        p.x = (*itr)->x;
+        p.y = (*itr)->y;
         p.z = maneuver->z + (*itr)->z;
         p.z_units = maneuver->z_units;
         p.t = (*itr)->t;
@@ -97,6 +90,9 @@ namespace DUNE
       if (!initTrajectory(msg))
         return;
 
+      if (!canInit(msg))
+        return;
+
       setControl(IMC::CL_PATH);
 
       m_path.end_lat = msg->lat;
@@ -107,11 +103,12 @@ namespace DUNE
       m_path.speed = msg->speed;
       m_path.speed_units = msg->speed_units;
 
+      m_rlat = msg->lat;
+      m_rlon = msg->lon;
+
       dispatch(m_path);
 
       m_approach = true; // signal approach stage
-
-      onInit(msg);
     }
 
     void
@@ -124,6 +121,7 @@ namespace DUNE
           m_approach = false;
           m_cstep_time = 0;
         }
+
         onPathCompletion();
       }
     }
@@ -136,13 +134,11 @@ namespace DUNE
 
       double now = msg->getTimeStamp();
 
-      if (m_cstep_period > 0 && now - m_cstep_time < m_cstep_period)
+      if ((m_cstep_period > 0) && (now - m_cstep_time < m_cstep_period))
         return;
 
       step(*msg);
       m_cstep_time = now;
-      m_rlat = msg->lat;
-      m_rlon = msg->lon;
     }
 
     void

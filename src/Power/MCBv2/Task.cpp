@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -62,8 +62,6 @@ namespace Power
     static const unsigned c_adcs_count = 6;
     //! Number of power channels.
     static const unsigned c_pwrs_count = 17;
-    //! Id of the CPU power channel.
-    static const unsigned c_pwr_cpu = 8;
     //! Id of the backlight power channel.
     static const unsigned c_pwr_blight = 16;
 
@@ -74,7 +72,8 @@ namespace Power
       CMD_BLIGHT = 0x02,
       CMD_PARAMS = 0x03,
       CMD_SAVE = 0x04,
-      CMD_HALT = 0x05
+      CMD_HALT = 0x05,
+      CMD_LCD_LINE = 0x06
     };
 
     //! Power Bits.
@@ -126,6 +125,10 @@ namespace Power
       std::string pwr_names[c_pwrs_count];
       //! Initial power channels states.
       unsigned pwr_states[c_pwrs_count];
+      //! True to automatically upgrade firmware.
+      bool flash_upgrade;
+      //! True to drived LCD from MCB.
+      bool lcd;
     };
 
     struct Task: public Tasks::Task
@@ -201,7 +204,16 @@ namespace Power
           .defaultValue("0");
         }
 
+        param("Firmware Upgrade", m_args.flash_upgrade)
+        .defaultValue("false")
+        .description("Automatically upgrade firmware");
+
+        param("Drive LCD", m_args.lcd)
+        .defaultValue("false")
+        .description("LCD is controlled by MCB");
+
         // Register consumers.
+        bind<IMC::LcdControl>(this);
         bind<IMC::PowerChannelControl>(this);
         bind<IMC::QueryPowerChannelState>(this);
       }
@@ -230,6 +242,14 @@ namespace Power
             delete m_adcs[i];
 
           m_adcs[i] = IMC::Factory::produce(m_args.adc_messages[i]);
+
+          try
+          {
+            unsigned eid = resolveEntity(m_args.adc_elabels[i]);
+            m_adcs[i]->setSourceEntity(eid);
+          }
+          catch (...)
+          { }
         }
 
         clearPowerChannels();
@@ -352,18 +372,6 @@ namespace Power
       void
       controlPowerChannel(PowerChannel* channel, IMC::PowerChannelControl::OperationEnum op, double sched = -1.0)
       {
-        if (m_halt)
-          return;
-
-        if ((channel->id == c_pwr_cpu) && (op == IMC::PowerChannelControl::PCC_OP_TURN_OFF))
-        {
-          // We're dead after this but it might take a few moments, so
-          // don't mess with the i2c bus.
-          m_proto.sendCommand(CMD_HALT);
-          m_halt = true;
-          return;
-        }
-
         if (channel->id == c_pwr_blight)
         {
           uint8_t state = (op == IMC::PowerChannelControl::PCC_OP_TURN_ON) ? 1 : 0;
@@ -424,8 +432,42 @@ namespace Power
       }
 
       void
+      writeLCD(unsigned line, const uint8_t* data, unsigned data_len)
+      {
+        std::vector<uint8_t> cmd;
+        cmd.push_back(line);
+        cmd.insert(cmd.begin() + 1, data, data + data_len);
+        m_proto.sendCommand(CMD_LCD_LINE, &cmd[0], cmd.size());
+        waitForCommand(CMD_LCD_LINE);
+      }
+
+      void
+      consume(const IMC::LcdControl* msg)
+      {
+        if (!m_args.lcd)
+          return;
+
+        if (msg->op == IMC::LcdControl::OP_WRITE0)
+          writeLCD(0, (const uint8_t*)&msg->text[0], msg->text.size());
+        else if (msg->op == IMC::LcdControl::OP_WRITE1)
+          writeLCD(1, (const uint8_t*)&msg->text[0], msg->text.size());
+      }
+
+      void
       consume(const IMC::PowerChannelControl* msg)
       {
+        if (m_halt)
+          return;
+
+        if (msg->name == "System")
+        {
+          // We're dead after this but it might take a few moments, so
+          // don't mess with the i2c bus.
+          m_proto.sendCommand(CMD_HALT);
+          m_halt = true;
+          return;
+        }
+
         PowerChannelMap::const_iterator itr = m_pwr_chs.find(msg->name);
         if (itr == m_pwr_chs.end())
           return;
@@ -475,6 +517,7 @@ namespace Power
           {
             m_pwr_down = true;
             IMC::PowerOperation pop;
+            pop.setDestination(getSystemId());
             pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
             pop.time_remain = (float)(data[8] & 0x1F);
             dispatch(pop);
@@ -483,6 +526,7 @@ namespace Power
           {
             m_pwr_down = false;
             IMC::PowerOperation pop;
+            pop.setDestination(getSystemId());
             pop.op = IMC::PowerOperation::POP_PWR_DOWN_ABORTED;
             dispatch(pop);
           }
@@ -559,6 +603,9 @@ namespace Power
       void
       flashFirmware(const std::string& file)
       {
+        if (!m_args.flash_upgrade)
+          return;
+
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
         inf(DTR("updating firmware"));
         LUCL::BootLoader lucb(m_proto, true);
@@ -584,7 +631,7 @@ namespace Power
       void
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
-        inf(DTR("version: %u.%u.%u"), major, minor, patch);
+        inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
 
         std::string fmw = m_proto.searchNewFirmware(m_ctx.dir_fmw, 2, minor, patch);
         if (!fmw.empty())

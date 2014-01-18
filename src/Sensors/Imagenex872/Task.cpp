@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -126,6 +126,8 @@ namespace Sensors
 
         param("TCP Port", m_args.port)
         .defaultValue("4040")
+        .minimumValue("0")
+        .maximumValue("65535")
         .description("TCP port");
 
         param("Data Gain", m_args.dat_gain)
@@ -233,10 +235,8 @@ namespace Sensors
       {
         for (unsigned i = 0; i < table_size; ++i)
         {
-          if (value == table[i])
+          if (value <= table[i])
             return i;
-          else if (value < table[i])
-            return (i == 0) ? 0 : i - 1;
         }
 
         return table_size - 1;
@@ -332,6 +332,7 @@ namespace Sensors
         {
           err("%s", e.what());
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
       }
     };

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -285,6 +285,9 @@ namespace Transports
           std::set<std::string>::iterator iitr = m_uris_loc.begin();
           for (; iitr != m_uris_loc.end(); ++iitr)
           {
+            if (String::startsWith(*iitr, "imc+info"))
+              continue;
+
             if (iitr->compare(0, 4, "imc+", 4) == 0)
               addLocalURI(*iitr + *itr);
           }
@@ -292,6 +295,9 @@ namespace Transports
           iitr = m_uris_ext.begin();
           for (; iitr != m_uris_ext.end(); ++iitr)
           {
+            if (String::startsWith(*iitr, "imc+info"))
+              continue;
+
             if (iitr->compare(0, 4, "imc+", 4) == 0)
               addExternalURI(*iitr + *itr);
           }
@@ -386,9 +392,9 @@ namespace Transports
       {
         if (m_estate)
         {
-          double hae;
+          float hae;
           Coordinates::toWGS84(*m_estate, m_announce_loc.lat, m_announce_loc.lon, hae);
-          m_announce_loc.height = (float)hae;
+          m_announce_loc.height = hae;
         }
 
         m_announce_ext.lat = m_announce_loc.lat;
@@ -413,9 +419,9 @@ namespace Transports
           try
           {
             if (m_dsts[i].local)
-              m_sock.write((char*)m_bfr_loc, bfr_len_loc, m_dsts[i].addr, m_dsts[i].port);
+              m_sock.write(m_bfr_loc, bfr_len_loc, m_dsts[i].addr, m_dsts[i].port);
             else
-              m_sock.write((char*)m_bfr_ext, bfr_len_ext, m_dsts[i].addr, m_dsts[i].port);
+              m_sock.write(m_bfr_ext, bfr_len_ext, m_dsts[i].addr, m_dsts[i].port);
           }
           catch (...)
           { }

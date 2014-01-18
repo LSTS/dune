@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -166,7 +166,7 @@ namespace DUNE
     //! @param[out] lon WGS84 longitude.
     //! @param[out] hae height above WGS84 ellipsoid.
     void
-    toWGS84(const IMC::EstimatedState& estate, double& lat, double& lon, double& hae);
+    toWGS84(const IMC::EstimatedState& estate, double& lat, double& lon, float& hae);
 
     //! Convert the position in an estimated state message to WGS84 coordinates.
     //! @param[in] estate estimated state message.

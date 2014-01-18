@@ -1,7 +1,0 @@
-file(GLOB DUNE_WMM2010_FILES
-  external/libraries/wmm2010/*.c)
-
-set_source_files_properties(${DUNE_WMM2010_FILES}
-  PROPERTIES COMPILE_FLAGS "${DUNE_CXX_FLAGS}")
-
-list(APPEND DUNE_EXTERNAL_FILES ${DUNE_WMM2010_FILES})

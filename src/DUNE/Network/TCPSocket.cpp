@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -38,6 +38,7 @@
 #include <DUNE/Network/TCPSocket.hpp>
 #include <DUNE/Network/Exceptions.hpp>
 #include <DUNE/Time/Utils.hpp>
+#include <DUNE/IO/Poll.hpp>
 
 #if defined(DUNE_SYS_HAS_WINSOCK2_H)
 #  include <winsock2.h>
@@ -128,6 +129,7 @@ namespace DUNE
           throw NetworkError(DTR("unable to create socket"), getLastErrorMessage());
 
         disableSIGPIPE();
+        createEventHandle();
       }
     }
 
@@ -167,7 +169,7 @@ namespace DUNE
     }
 
     void
-    TCPSocket::connect(Address addr, uint16_t port)
+    TCPSocket::connect(const Address& addr, uint16_t port)
     {
       sockaddr_in ad;
       ad.sin_family = AF_INET;
@@ -204,11 +206,30 @@ namespace DUNE
       TCPSocket* ns = new TCPSocket(false);
       ns->m_handle = rv;
       ns->disableSIGPIPE();
+      ns->createEventHandle();
       return ns;
     }
 
-    int
-    TCPSocket::write(const char* bfr, int size)
+    size_t
+    TCPSocket::doRead(uint8_t* bfr, size_t size)
+    {
+      ssize_t rv = ::recv(m_handle, (char*)bfr, size, 0);
+      if (rv == 0)
+      {
+        throw ConnectionClosed();
+      }
+      else if (rv < 0)
+      {
+        if (errno == ECONNRESET)
+          throw ConnectionClosed();
+        throw NetworkError(DTR("error receiving data"), getLastErrorMessage());
+      }
+
+      return static_cast<size_t>(rv);
+    }
+
+    size_t
+    TCPSocket::doWrite(const uint8_t* bfr, size_t size)
     {
       int flags = 0;
 
@@ -216,58 +237,38 @@ namespace DUNE
       flags = MSG_NOSIGNAL;
 #endif
 
-      int rv = ::send(m_handle, bfr, size, flags);
+      ssize_t rv = ::send(m_handle, (char*)bfr, size, flags);
 
-      if (rv == -1)
+      if (rv < 0)
       {
         if (errno == EPIPE)
           throw ConnectionClosed();
         throw NetworkError(DTR("error sending data"), getLastErrorMessage());
       }
 
-      return rv;
-    }
-
-    int
-    TCPSocket::read(char* bfr, int size)
-    {
-      int rv = ::recv(m_handle, bfr, size, 0);
-      if (rv == 0)
-      {
-        throw ConnectionClosed();
-      }
-      else if (rv == -1)
-      {
-        if (errno == ECONNRESET)
-          throw ConnectionClosed();
-        throw NetworkError(DTR("error receiving data"), getLastErrorMessage());
-      }
-
-      return rv;
+      return static_cast<size_t>(rv);
     }
 
     void
-    TCPSocket::addToPoll(System::IOMultiplexing& poller)
+    TCPSocket::doFlushInput(void)
     {
-      poller.add(&m_handle);
-    }
-
-    void
-    TCPSocket::delFromPoll(System::IOMultiplexing& poller)
-    {
-      poller.del(&m_handle);
+      uint8_t bfr[4096];
+      while (IO::Poll::poll(*this, 0))
+      {
+        read(bfr, sizeof(bfr));
+      }
     }
 
     bool
     TCPSocket::writeFile(const char* filename, int64_t off_end, int64_t off_beg)
     {
 #if defined(DUNE_OS_LINUX)
-      int fd = open(filename, O_RDONLY);
+      int fd = open64(filename, O_RDONLY);
       if (fd == -1)
         return false;
 
       int64_t remaining = off_end;
-      off_t offset = 0;
+      off64_t offset = 0;
       if (off_beg > 0)
       {
         offset = off_beg;
@@ -276,7 +277,8 @@ namespace DUNE
 
       while (remaining >= 0)
       {
-        ssize_t rv = sendfile(m_handle, fd, &offset, c_block_size);
+        ssize_t rv = sendfile64(m_handle, fd, &offset, c_block_size);
+
         if (rv == -1)
         {
           close(fd);
@@ -317,21 +319,6 @@ namespace DUNE
       }
 
       return true;
-#endif
-    }
-
-    bool
-    TCPSocket::wasTriggered(System::IOMultiplexing& poller)
-    {
-      return poller.wasTriggered(&m_handle);
-    }
-
-    void
-    TCPSocket::disableSIGPIPE(void)
-    {
-#if defined(SO_NOSIGPIPE)
-      int set = 1;
-      setsockopt(m_handle, SOL_SOCKET, SO_NOSIGPIPE, (void*)&set, sizeof(int));
 #endif
     }
 
@@ -385,6 +372,34 @@ namespace DUNE
         throw NetworkError(DTR("unable to get bound port"), getLastErrorMessage());
 
       return Utils::ByteCopy::fromBE(name.sin_port);
+    }
+
+    IO::NativeHandle
+    TCPSocket::doGetNative(void) const
+    {
+#if defined(DUNE_OS_WINDOWS)
+      return m_event_handle;
+#else
+      return m_handle;
+#endif
+    }
+
+    void
+    TCPSocket::disableSIGPIPE(void)
+    {
+#if defined(SO_NOSIGPIPE)
+      int set = 1;
+      setsockopt(m_handle, SOL_SOCKET, SO_NOSIGPIPE, (void*)&set, sizeof(int));
+#endif
+    }
+
+    void
+    TCPSocket::createEventHandle(void)
+    {
+#if defined(DUNE_OS_WINDOWS)
+      m_event_handle = CreateEvent(NULL, FALSE, FALSE, NULL);
+      WSAEventSelect(m_handle, m_event_handle, FD_ACCEPT | FD_READ);
+#endif
     }
   }
 }

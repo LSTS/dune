@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -93,7 +93,7 @@ namespace Sensors
       //! Serial port baud rate.
       unsigned uart_baud;
       //! Sound speed moving average samples size.
-      int avg_ss_samples;
+      uint8_t avg_ss_samples;
       //! Speed of Sound output frequency.
       float output_freq;
     };
@@ -114,6 +114,8 @@ namespace Sensors
       IMC::Temperature m_temp;
       //! Pressure.
       IMC::Pressure m_pres;
+      //! Depth.
+      IMC::Depth m_depth;
       //! Sound Speed Moving Average.
       Math::MovingAverage<double>* m_avg_sspeed;
       //! Counter to output Speed of Sound.
@@ -144,6 +146,7 @@ namespace Sensors
 
         param("Sound Speed Moving Average Samples", m_args.avg_ss_samples)
         .defaultValue("10")
+        .minimumValue("0")
         .description("Number of moving average samples to smooth sound speed");
 
         param("Sound Speed Output Frequency", m_args.output_freq)
@@ -151,11 +154,6 @@ namespace Sensors
         .minimumValue("0.1")
         .defaultValue("1.0")
         .description("Output frequency of sound speed estimations");
-      }
-
-      ~Task(void)
-      {
-        Task::onResourceRelease();
       }
 
       //! Update parameters.
@@ -192,7 +190,7 @@ namespace Sensors
         m_uart->setCanonicalInput(true);
 
         // Wake up.
-        m_uart->write("AA");
+        m_uart->writeString("AA");
         m_uart->flushInput();
 
         stopSampling();
@@ -211,7 +209,7 @@ namespace Sensors
       bool
       readString(char* bfr, unsigned bfr_len, double timeout = 1.0)
       {
-        if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+        if (!Poll::poll(*m_uart, 1.0))
           return false;
 
         m_uart->readString(bfr, bfr_len);
@@ -233,12 +231,12 @@ namespace Sensors
           consumeMessages();
 
           // Stop sampling.
-          m_uart->write("!9");
+          m_uart->writeString("!9");
           Delay::wait(1.0);
           m_uart->flushInput();
 
           // Try requesting identification information.
-          m_uart->write("A");
+          m_uart->writeString("A");
           if (!readString(m_bfr, sizeof(m_bfr)))
             continue;
 
@@ -273,7 +271,7 @@ namespace Sensors
             m_uart->flushInput();
 
             // Read conductivity calibration.
-            m_uart->write("Z01");
+            m_uart->writeString("Z01");
             if (!readString(m_bfr, sizeof(m_bfr)))
               continue;
 
@@ -281,7 +279,7 @@ namespace Sensors
               m_coeffs[CHN_CONDUCTIVITY][i] = Parser::readDoubleFromASCII(m_bfr + 16 * i);
 
             // Read temperature.
-            m_uart->write("Z02");
+            m_uart->writeString("Z02");
             if (!readString(m_bfr, sizeof(m_bfr)))
               continue;
 
@@ -289,7 +287,7 @@ namespace Sensors
               m_coeffs[CHN_TEMPERATURE][i] = Parser::readDoubleFromASCII(m_bfr + 16 * i);
 
             // Read pressure calibration.
-            m_uart->write("Z03");
+            m_uart->writeString("Z03");
             if (!readString(m_bfr, sizeof(m_bfr)))
               continue;
 
@@ -318,8 +316,8 @@ namespace Sensors
           consumeMessages();
 
           m_uart->flushInput();
-          m_uart->write(ptr->cmd_set);
-          m_uart->write(ptr->cmd_get);
+          m_uart->writeString(ptr->cmd_set);
+          m_uart->writeString(ptr->cmd_get);
 
           if (!readString(m_bfr, sizeof(m_bfr)))
             continue;
@@ -337,8 +335,8 @@ namespace Sensors
       {
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_MISSING_DATA);
         m_wait_sample = true;
-        m_uart->write("!B0D");
-        m_uart->write("!R");
+        m_uart->writeString("!B0D");
+        m_uart->writeString("!R");
       }
 
       //! Define measurement coefficients.
@@ -403,15 +401,15 @@ namespace Sensors
             m_sspeed_timer.reset();
           }
 
-          if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+          if (!Poll::poll(*m_uart, 1.0))
           {
             if (!m_wait_sample && m_wdog.overflow())
               setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
             continue;
           }
 
-          int rv = m_uart->readString(m_bfr, sizeof(m_bfr));
-          for (int i = 0; i < rv; ++i)
+          size_t rv = m_uart->readString(m_bfr, sizeof(m_bfr));
+          for (size_t i = 0; i < rv; ++i)
           {
             try
             {
@@ -419,6 +417,7 @@ namespace Sensors
               {
                 m_cond.setTimeStamp();
                 m_pres.setTimeStamp(m_cond.getTimeStamp());
+                m_depth.setTimeStamp(m_cond.getTimeStamp());
                 m_temp.setTimeStamp(m_cond.getTimeStamp());
                 m_sali.setTimeStamp(m_cond.getTimeStamp());
 
@@ -430,16 +429,20 @@ namespace Sensors
 
                 // Pressure.
                 double pres_bar = computePressure() / 10.0;
-                m_pres.value = pres_bar * 100000.0;
+                m_pres.value = pres_bar * Math::c_pascal_per_bar;
 
                 // Derived values.
                 m_sali.value = UNESCO1983::computeSalinity(m_cond.value, pres_bar, m_temp.value);
 
                 m_sspe.value = (m_sali.value < 0.0) ? -1.0 : m_avg_sspeed->update(UNESCO1983::computeSoundSpeed(m_sali.value, pres_bar, m_temp.value));
 
+                // Compute depth.
+                m_depth.value = (m_pres.value - Math::c_sea_level_pressure) / (Math::c_gravity * c_seawater_density);
+
                 dispatch(m_cond, DF_KEEP_TIME);
                 dispatch(m_temp, DF_KEEP_TIME);
                 dispatch(m_pres, DF_KEEP_TIME);
+                dispatch(m_depth, DF_KEEP_TIME);
                 dispatch(m_sali, DF_KEEP_TIME);
 
                 // Update watchdog and state.

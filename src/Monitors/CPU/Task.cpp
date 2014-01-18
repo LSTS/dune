@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -60,10 +60,13 @@ namespace Monitors
       {
         param("CPU - Moving Average Samples", m_args.cpu_avg_samples)
         .defaultValue("10")
+        .minimumValue("0")
         .description("Number of moving average samples to smooth CPU usage");
 
         param("CPU - Maximum Usage", m_args.cpu_max)
         .defaultValue("75")
+        .minimumValue("0")
+        .maximumValue("100")
         .description("Maximum CPU usage. When this value is hit an error will be raised");
 
         // Initialize Entity State.
@@ -71,11 +74,6 @@ namespace Monitors
 
         // Register listeners.
         bind<IMC::CpuUsage>(this);
-      }
-
-      ~Task(void)
-      {
-        Task::onResourceRelease();
       }
 
       void

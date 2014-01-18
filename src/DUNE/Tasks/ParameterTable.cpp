@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -38,7 +38,7 @@ namespace DUNE
       std::map<std::string, Parameter*>::const_iterator itr = m_names.find(name);
 
       if (itr == m_names.end())
-        throw std::runtime_error("invalid parameter");
+        throw std::runtime_error(DTR("invalid parameter"));
 
       Parameter* parameter = itr->second;
       if (!value.empty())

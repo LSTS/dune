@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -35,7 +35,7 @@ namespace DUNE
 {
   namespace Status
   {
-    static const char* c_status_messages[23] =
+    static const char* c_status_messages[29] =
     {
       DTR_RT("initializing"),
       DTR_RT("idle"),
@@ -48,6 +48,9 @@ namespace DUNE
       DTR_RT("fuel reserve"),
       DTR_RT("calibrating"),
       DTR_RT("calibrated"),
+      DTR_RT("not aligned"),
+      DTR_RT("aligning"),
+      DTR_RT("aligned"),
       DTR_RT("powering down"),
       DTR_RT("communication error"),
       DTR_RT("synchronized"),
@@ -59,7 +62,10 @@ namespace DUNE
       DTR_RT("missing data"),
       DTR_RT("invalid checksum"),
       DTR_RT("invalid version"),
-      DTR_RT("active but without bottom lock")
+      DTR_RT("active but without bottom lock"),
+      DTR_RT("no medium data: user must control device"),
+      DTR_RT("active (no medium data: need user input)"),
+      DTR_RT("idle (no medium data: need user input)")
     };
 
     const char*

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -76,16 +76,16 @@ namespace Actuators
       ERR_MOTOR_TEMPERATURE = (1 << 7)
     };
 
-    const char* DevErrorStrings[] =
+    const char* c_dev_error_strings[] =
     {
-      DTR("init"),
-      DTR("i2c"),
-      DTR("power"),
-      DTR("hall"),
-      DTR("rotor locked"),
-      DTR("mcu temperature"),
-      DTR("bridge temperature"),
-      DTR("motor temperature")
+      DTR_RT("init"),
+      DTR_RT("i2c"),
+      DTR_RT("power"),
+      DTR_RT("hall"),
+      DTR_RT("rotor locked"),
+      DTR_RT("mcu temperature"),
+      DTR_RT("bridge temperature"),
+      DTR_RT("motor temperature")
     };
 
     //! Device Control Modes
@@ -179,22 +179,27 @@ namespace Actuators
         param("State Sampling Frequency", m_args.state_per)
         .units(Units::Hertz)
         .defaultValue("1.0")
+        .minimumValue("0.1")
         .description("Value of the state sampling frequency");
 
         param("Motor Pole Pairs", m_args.pole_pairs)
         .defaultValue("12.0")
+        .minimumValue("1.0")
         .description("Number of motor pole pairs");
 
         param("Maximum Phase Current", m_args.max_phase_current)
         .units(Units::Ampere)
-        .defaultValue("5.4");
+        .defaultValue("5.4")
+        .minimumValue("0.0");
 
         param("Maximum Rotor RPM", m_args.max_rpm)
         .units(Units::RPM)
-        .defaultValue("2500");
+        .defaultValue("2500")
+        .minimumValue("0");
 
         param("Thrust Control Mode", m_args.thrust_ctl_mode)
-        .defaultValue("None")
+        .defaultValue("none")
+        .values("none, voltage, current, rpm")
         .description("Thrust control mode ('none', 'voltage', 'current', 'rpm')");
 
         param("Inverted Rotation", m_args.inv_rotation)
@@ -223,7 +228,8 @@ namespace Actuators
       void
       onUpdateParameters(void)
       {
-        m_args.state_per = 1.0 / m_args.state_per;
+        if (paramChanged(m_args.state_per))
+          m_args.state_per = 1.0 / m_args.state_per;
 
         if (m_args.thrust_ctl_mode == "none")
           m_thrust_ctl_mode = MODE_NONE;
@@ -308,7 +314,7 @@ namespace Actuators
               for (int i = 0; i < 8; i++)
               {
                 if (data[0] & (1 << i))
-                  err(DTR("device error: %s"), DevErrorStrings[i]);
+                  err(DTR("device error: %s"), DTR(c_dev_error_strings[i]));
               }
 
               // FIXME: report this error properly
@@ -354,7 +360,7 @@ namespace Actuators
       void
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
-        inf(DTR("version: %u.%u.%u"), major, minor, patch);
+        inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
 
         // Enable legacy 1.0.0 protocol
         if (major == 1 && minor < 1)

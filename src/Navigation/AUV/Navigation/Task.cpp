@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -91,6 +91,8 @@ namespace Navigation
           param("Maximum expected currents", m_args.max_current)
           .units(Units::MeterPerSecond)
           .defaultValue("0.5")
+          .minimumValue("0.5")
+          .maximumValue("2.0")
           .description("Maximum expected ocean currents");
 
           param("Process Noise Covariance", m_process_noise)
@@ -112,11 +114,12 @@ namespace Navigation
 
           param("RPM to Speed multiplicative factor", m_args.initial_rpm_to_speed)
           .defaultValue("1.2e-3")
+          .minimumValue("0.8e-3")
+          .maximumValue("2.0e-3")
           .description("Kalman Filter initial RPM to Speed multiplicative factor state value");
 
           // Extended Kalman Filter initialization.
           m_kal.reset(NUM_STATE, NUM_OUT);
-          m_kal.resetOutputs();
         }
 
         void
@@ -134,11 +137,6 @@ namespace Navigation
           m_kal.setMeasurementNoise(OUT_GPS_X, m_measure_noise[0]);
           m_kal.setMeasurementNoise(OUT_GPS_Y, m_measure_noise[0]);
           m_kal.setMeasurementNoise(OUT_LBL, m_measure_noise[0]);
-        }
-
-        ~Task(void)
-        {
-          Task::onResourceRelease();
         }
 
         void
@@ -205,7 +203,7 @@ namespace Navigation
           m_kal.setObservation(OUT_LBL, STATE_Y, dy / exp_range);
 
           double k = (m_kal.getObservation() * m_kal.getCovariance() * transpose (m_kal.getObservation()))(0);
-          m_navdata.lbl_rej_level = std::max(BasicNavigation::getLblRejectionValue(exp_range), k);
+          m_navdata.lbl_rej_level = std::max(getLblRejectionValue(exp_range), k);
 
           m_kal.setMeasurementNoise(OUT_LBL, OUT_LBL, m_navdata.lbl_rej_level);
           m_kal.setInnovation(OUT_LBL, range - exp_range);
@@ -223,29 +221,36 @@ namespace Navigation
         }
 
         void
+        getSpeedOutputStates(unsigned* u, unsigned* v)
+        {
+          (void)*u;
+          (void)*v;
+        }
+
+        unsigned
+        getNumberOutputs(void)
+        {
+          return NUM_OUT;
+        }
+
+        void
         task(void)
         {
           if(!BasicNavigation::isActive())
             return;
 
           // Compute time delta.
-          double tstep = BasicNavigation::getTimeStep();
+          double tstep = getTimeStep();
           // Check if we have a valid time delta.
           if (tstep < 0)
             return;
 
-          m_heading += Angles::minimumSignedAngle(m_heading, BasicNavigation::getYaw());
+          m_heading += Angles::minSignedAngle(m_heading, Angles::normalizeRadian(getEuler(AXIS_Z)));
           m_estate.psi = Angles::normalizeRadian(m_heading);
+          m_estate.r = getAngularVelocity(AXIS_Z);
 
           // Update estimated state.
-          BasicNavigation::onDispatchNavigation();
-
-          // Update Euler Angles derivatives when
-          // Angular Velocity readings are not available.
-          if (!gotAngularReadings())
-            m_estate.r = BasicNavigation::getVirtualAngularVelocity(AXIS_Z);
-          else
-            m_estate.r = BasicNavigation::getAngularVelocity(AXIS_Z);
+          onDispatchNavigation();
 
           // Some (experimental) sanity checks. This is not standard EKF!
           // If any of this conditions is met, some kind of warning should be raised.
@@ -275,7 +280,7 @@ namespace Navigation
           // Run EKF prediction.
           m_kal.predict();
 
-          BasicNavigation::checkUncertainty();
+          checkUncertainty();
 
           // Fill and dispatch data.
           m_estate.u = m_rpm * m_kal.getState(STATE_K) * std::cos(m_estate.theta);
@@ -298,8 +303,8 @@ namespace Navigation
           m_ewvel.y = m_kal.getState(STATE_WY);
           m_ewvel.z = 0;
 
-          BasicNavigation::reportToBus();
-          BasicNavigation::updateBuffers(c_wma_filter);
+          reportToBus();
+          updateBuffers(c_wma_filter);
         }
       };
     }

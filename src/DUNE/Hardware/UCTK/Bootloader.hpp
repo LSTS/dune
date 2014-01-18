@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -46,6 +46,8 @@ namespace DUNE
       public:
         Bootloader(Interface* itf, bool verbose = false);
 
+        ~Bootloader(void);
+
         void
         program(const std::string& file_name);
 
@@ -72,10 +74,19 @@ namespace DUNE
         title(const char* str) const;
 
         void
-        reset(void);
+        getFlashInfo(void);
 
         void
-        getFlashInfo(void);
+        printFirmwareInfo(const FirmwareInfo& info) const;
+
+        void
+        printOK(void) const;
+
+        void
+        printFailed(void) const;
+
+        void
+        printSuccess(void) const;
       };
     }
   }

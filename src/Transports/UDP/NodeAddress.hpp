@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -59,7 +59,7 @@ namespace Transports
         }
         else
         {
-          throw std::runtime_error(String::str("invalid address: '%s'", addr_port.c_str()));
+          throw std::runtime_error(String::str(DTR("invalid address: '%s'"), addr_port.c_str()));
         }
       }
 
@@ -78,7 +78,13 @@ namespace Transports
       bool
       operator<(const NodeAddress& other) const
       {
-        return (m_addr < other.m_addr) && (m_port < other.m_port);
+        if (m_addr < other.m_addr)
+          return true;
+
+        if (m_port < other.m_port)
+          return true;
+
+        return false;
       }
 
     private:

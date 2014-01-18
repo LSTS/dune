@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -35,7 +35,7 @@ namespace DUNE
   namespace Coordinates
   {
     void
-    toWGS84(const IMC::EstimatedState& estate, double& lat, double& lon, double& hae)
+    toWGS84(const IMC::EstimatedState& estate, double& lat, double& lon, float& hae)
     {
       // Define reference.
       lat = estate.lat;
@@ -50,7 +50,7 @@ namespace DUNE
     toWGS84(const IMC::EstimatedState& estate, double& lat, double& lon)
     {
       // Use reference height.
-      double hae = estate.height;
+      float hae = estate.height;
 
       toWGS84(estate, lat, lon, hae);
     }

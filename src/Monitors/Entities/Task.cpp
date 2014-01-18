@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -40,7 +40,7 @@ namespace Monitors
     // Entity state description labels.
     static const char* c_state_desc[] =
     {
-      DTR("Boot"), DTR("Normal"), DTR("Fault"), DTR("Error"), DTR("Failure")
+      DTR_RT("Boot"), DTR_RT("Normal"), DTR_RT("Fault"), DTR_RT("Error"), DTR_RT("Failure")
     };
 
     // Datum for monitoring information per entity.
@@ -77,8 +77,6 @@ namespace Monitors
       std::vector<std::string> defmon;
       //! Additional default entities to monitor in Hardware profile
       std::vector<std::string> defmon_hw;
-      //! Enable verbose output
-      bool trace;
       //! Minimum gap for state transitioning
       float transition_gap;
       //! Maximum number of consecutive transitions before starting to ignore
@@ -117,10 +115,6 @@ namespace Monitors
         .defaultValue("")
         .description("Additional default entities to monitor in Hardware profile");
 
-        param("Trace", m_args.trace)
-        .defaultValue("false")
-        .description("Enable verbose output");
-
         param("Transition Time Gap", m_args.transition_gap)
         .units(Units::Second)
         .defaultValue("4.0")
@@ -128,6 +122,7 @@ namespace Monitors
 
         param("Maximum Consecutive Transitions", m_args.max_transitions)
         .defaultValue("3")
+        .minimumValue("0")
         .description("Maximum number of consecutive transitions before starting to ignore");
 
         bind<IMC::EntityState>(this);
@@ -200,9 +195,6 @@ namespace Monitors
 
         bool noteworthy = r.monitor && r.state != msg->state;
 
-        if (m_args.trace)
-          msg->toText(std::cerr);
-
         if (noteworthy)
         {
           if (Clock::get() - r.last_transition < m_args.transition_gap)
@@ -214,13 +206,13 @@ namespace Monitors
 
           if (r.transitions < m_args.max_transitions)
           {
-            war(DTR("%s : %s -> %s | %s"), r.label.c_str(), c_state_desc[r.state],
-                c_state_desc[msg->state], msg->description.c_str());
+            war("%s : %s -> %s | %s", DTR(r.label.c_str()), DTR(c_state_desc[r.state]),
+                DTR(c_state_desc[msg->state]), msg->description.c_str());
           }
           else if (r.transitions == m_args.max_transitions)
           {
             war(DTR("%s entity state is unstable (%s <-> %s), ignoring"),
-                r.label.c_str(), c_state_desc[r.state], c_state_desc[msg->state]);
+                DTR(r.label.c_str()), DTR(c_state_desc[r.state]), DTR(c_state_desc[msg->state]));
           }
         }
 
@@ -229,8 +221,8 @@ namespace Monitors
         {
           r.transitions = 0;
 
-          war(DTR("%s : State stabilized in %s | %s"), r.label.c_str(),
-              c_state_desc[msg->state], msg->description.c_str());
+          war(DTR("%s : State stabilized in %s | %s"), DTR(r.label.c_str()),
+              DTR(c_state_desc[msg->state]), msg->description.c_str());
         }
 
         r.time = Clock::get();
@@ -238,7 +230,8 @@ namespace Monitors
 
         if (noteworthy)
         {
-          if (r.state != IMC::EntityState::ESTA_NORMAL)
+          if (r.state != IMC::EntityState::ESTA_NORMAL &&
+              r.state != IMC::EntityState::ESTA_FAULT)
             setLastError(r.label + ": " + msg->description);
           reportState();
         }
@@ -277,7 +270,7 @@ namespace Monitors
       void
       enableDefaults(bool startup = false)
       {
-        inf(DTR("setting up configuration defaults"));
+        debug("setting up configuration defaults");
         m_ems.last_error_time = -1.0;
 
         if (m_current.size() > 0)
@@ -305,17 +298,17 @@ namespace Monitors
 
         if (!r.monitor)
         {
-          inf(DTR("%s - monitoring enabled"), r.label.c_str());
+          inf(DTR("%s - monitoring enabled"), DTR(r.label.c_str()));
 
           m_current.insert(eid);
           r.monitor = true;
 
           if (r.state != IMC::EntityState::ESTA_NORMAL && !startup)
-            err(DTR("%s - current state not normal - %s"), r.label.c_str(), c_state_desc[r.state]);
+            err(DTR("%s - current state not normal - %s"), DTR(r.label.c_str()), DTR(c_state_desc[r.state]));
         }
         else
         {
-          inf(DTR("%s - monitoring previously enabled"), r.label.c_str());
+          inf(DTR("%s - monitoring previously enabled"), DTR(r.label.c_str()));
         }
       }
 
@@ -328,14 +321,14 @@ namespace Monitors
 
         if (r.monitor)
         {
-          inf(DTR("%s - monitoring disabled"), r.label.c_str());
+          inf(DTR("%s - monitoring disabled"), DTR(r.label.c_str()));
 
           m_current.erase(eid);
           r.monitor = false;
         }
         else
         {
-          inf(DTR("%s - monitoring previously disabled"), r.label.c_str());
+          inf(DTR("%s - monitoring previously disabled"), DTR(r.label.c_str()));
         }
       }
 
@@ -359,7 +352,7 @@ namespace Monitors
           }
           catch (std::exception& e)
           {
-            inf(DTR("entity %s: %s"), lst[i].c_str(), e.what());
+            inf(DTR("entity %s: %s"), DTR(lst[i].c_str()), e.what());
           }
         }
 
@@ -398,16 +391,18 @@ namespace Monitors
 
           m_ems.mnames += r.label;
 
-          switch (r.state)
+          switch ((IMC::EntityState::StateEnum)r.state)
           {
             case IMC::EntityState::ESTA_NORMAL:
               break;
+            case IMC::EntityState::ESTA_FAULT:
+            case IMC::EntityState::ESTA_ERROR:
             case IMC::EntityState::ESTA_FAILURE:
               if (m_ems.ccount++ > 0)
                 m_ems.cnames += ',';
               m_ems.cnames += r.label;
               break;
-            default:
+            case IMC::EntityState::ESTA_BOOT:
               if (m_ems.ecount++ > 0)
                 m_ems.enames += ',';
               m_ems.enames += r.label;
@@ -415,9 +410,6 @@ namespace Monitors
           }
         }
         dispatch(m_ems);
-
-        if (m_args.trace)
-          m_ems.toText(std::cerr);
       }
 
       //! Check if any entity has timedout
@@ -434,10 +426,11 @@ namespace Monitors
           {
             if (r.monitor)
             {
-              err(DTR("%s -- status not reported after %0.2f seconds"), r.label.c_str(),
-                  m_args.report_timeout);
+              err(DTR("%s -- status not reported after %0.2f seconds"),
+                  DTR(r.label.c_str()), m_args.report_timeout);
 
-              setLastError(r.label + ": entity state timeout");
+              setLastError(String::str(DTR("%s: entity state timeout"),
+                                       DTR(r.label.c_str())));
             }
 
             r.time = now;

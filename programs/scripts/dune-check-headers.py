@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ############################################################################
-# Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -63,7 +63,7 @@ cxx = ['g++', '-Wall', '-Wextra', '-Werror',
        '-D', 'DUNE_TASK=',
        '-I', os.path.join(top_dir, 'src'),
        '-I', os.path.join(top_dir, 'src', 'Simulators', 'VSIM'),
-       '-I', os.path.join(top_dir, 'external/libraries'),
+       '-I', os.path.join(top_dir, 'vendor/libraries'),
        '-I', os.path.join(bld_dir, 'DUNEGeneratedFiles/src'),
        '-I', '/usr/include/Qt',
        '-I', '/usr/include/QtCore',

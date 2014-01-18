@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -196,7 +196,9 @@ namespace DUNE
 
       // Microsoft Windows implementation.
 #if defined(DUNE_SYS_HAS_GET_MODULE_FILE_NAME)
-      return _pgmptr;
+      if (GetModuleFileName(NULL, bfr, PATH_MAX - 1) == 0)
+        return "";
+      return bfr;
 
       // Linux implementation.
 #elif defined(DUNE_OS_LINUX)

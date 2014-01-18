@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -70,12 +70,17 @@ namespace Plan
     static const char* c_lastchange_query_stmt
     = "select change_time, change_sid, change_sname from LastChange";
 
-    static const char* c_op_desc[] = {DTR("set plan"), DTR("delete plan"), DTR("get plan"), DTR("get plan info"), DTR("clear database"), DTR("database state"), DTR("database initialization")};
+    static const char* c_op_desc[] = {DTR_RT("set plan"), DTR_RT("delete plan"),
+                                      DTR_RT("get plan"), DTR_RT("get plan info"),
+                                      DTR_RT("clear database"), DTR_RT("database state"),
+                                      DTR_RT("database initialization")};
 
     struct Arguments
     {
       // Trace flag
       bool trace;
+      // Path to DB file
+      std::string db_path;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -109,14 +114,13 @@ namespace Plan
         .defaultValue("false")
         .description("Enable verbose output");
 
+        param("DB Path", m_args.db_path)
+        .defaultValue("")
+        .description("Path to DB file");
+
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::PowerOperation>(this);
-      }
-
-      ~Task(void)
-      {
-        Task::onResourceRelease();
       }
 
       void
@@ -130,9 +134,13 @@ namespace Plan
         m_reply.request_id = m_local_reqid++;
         m_reply.setDestination(getSystemId());
 
-        inProgress(DTR("initializing"));
+        inProgress("initializing");
 
-        Path db_file = m_ctx.dir_db / "Plan.db";
+        Path db_file;
+        if (m_args.db_path.empty())
+          db_file = m_ctx.dir_db / "Plan.db";
+        else
+          db_file = m_args.db_path;
 
         inf(DTR("database file: '%s'"), db_file.c_str());
 
@@ -219,6 +227,9 @@ namespace Plan
       void
       consume(const IMC::PowerOperation* po)
       {
+        if (po->getDestination() != getSystemId())
+          return;
+
         switch (po->op)
         {
           case IMC::PowerOperation::POP_PWR_DOWN_IP:
@@ -591,17 +602,20 @@ namespace Plan
           case IMC::PlanDB::DBOP_CLEAR:
             {
               if (type == IMC::PlanDB::DBT_FAILURE)
-                err("%s (%s) -- %s", c_op_desc[m_reply.op], m_reply.plan_id.c_str(), desc);
+                err("%s (%s) -- %s", DTR(c_op_desc[m_reply.op]),
+                    m_reply.plan_id.c_str(), desc);
               else if (type == IMC::PlanDB::DBT_SUCCESS)
-                inf("%s (%s) -- %s", c_op_desc[m_reply.op], m_reply.plan_id.c_str(), desc);
+                inf("%s (%s) -- %s", DTR(c_op_desc[m_reply.op]),
+                    m_reply.plan_id.c_str(), desc);
               else
-                debug("%s (%s) -- %s", c_op_desc[m_reply.op], m_reply.plan_id.c_str(), desc);
+                debug("%s (%s) -- %s", DTR(c_op_desc[m_reply.op]),
+                      m_reply.plan_id.c_str(), desc);
             }
         }
       }
 
       void
-      inProgress(const char* msg = DTR("in progress"))
+      inProgress(const char* msg = "in progress")
       {
         answer(IMC::PlanDB::DBT_IN_PROGRESS, msg);
       }

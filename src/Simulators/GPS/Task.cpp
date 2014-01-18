@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -173,6 +173,10 @@ namespace Simulators
 
         m_fix.satellites = 0;
         m_fix.validity = 0;
+        m_fix.sog = 0.0;
+        m_fix.cog = 0.0;
+        m_fix.hdop += 1.0 / getFrequency();
+        m_fix.hacc += 1.0 / getFrequency();
         dispatch(m_fix);
       }
 

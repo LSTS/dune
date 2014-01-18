@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -41,6 +41,7 @@
 #include <DUNE/Math/Derivative.hpp>
 #include <DUNE/Math/MovingAverage.hpp>
 #include <DUNE/Navigation/KalmanFilter.hpp>
+#include <DUNE/Navigation/Ranging.hpp>
 #include <DUNE/Time/Clock.hpp>
 #include <DUNE/Time/Counter.hpp>
 #include <DUNE/Time/Delta.hpp>
@@ -55,8 +56,6 @@ namespace DUNE
     // Export DLL Symbol.
     class DUNE_DLL_SYM BasicNavigation;
 
-    //! Maximum number of beacons.
-    static const unsigned c_max_beacons = 4;
     //! Weighted Moving Average filter value.
     static const float c_wma_filter = 0.1f;
     //! Maximum artificial angular velocity value.
@@ -93,21 +92,6 @@ namespace DUNE
       AXIS_Y = 1,
       //! Z-axis.
       AXIS_Z = 2
-    };
-
-    //! Beacon configuration information.
-    struct LblBeaconXYZ
-    {
-      //! WGS-84 latitude.
-      double lat;
-      //! WGS-84 longitude.
-      double lon;
-      //! Beacon north displacement relative to reference (m).
-      double x;
-      //! Beacon east displacement relative to reference (m).
-      double y;
-      //! Beacon depth (m).
-      double depth;
     };
 
     //! Abstract base class for navigation tasks.
@@ -161,6 +145,9 @@ namespace DUNE
       consume(const IMC::AngularVelocity* msg);
 
       void
+      consume(const IMC::DataSanity* msg);
+
+      void
       consume(const IMC::Distance* msg);
 
       void
@@ -170,10 +157,10 @@ namespace DUNE
       consume(const IMC::DepthOffset* msg);
 
       void
-      consume(const IMC::DesiredZ* msg);
+      consume(const IMC::EulerAngles* msg);
 
       void
-      consume(const IMC::EulerAngles* msg);
+      consume(const IMC::EulerAnglesDelta* msg);
 
       void
       consume(const IMC::GpsFix* msg);
@@ -199,10 +186,7 @@ namespace DUNE
       inline double
       getDepth(void) const
       {
-        if (m_depth_readings)
-          return (m_depth_bfr / m_depth_readings);
-        else
-          return 0;
+        return m_depth_readings ? (m_depth_bfr / m_depth_readings) : 0.0;
       }
 
       //! Get vehicle altitude.
@@ -211,97 +195,36 @@ namespace DUNE
       inline double
       getAltitude(void)
       {
-        if (m_time_without_bdist.overflow())
-          m_altitude = -1;
+        if (!m_alt_sanity)
+        {
+          if (m_dvl_sanity_timer.overflow())
+            m_altitude = -1.0;
+          else
+            m_altitude = 0.0;
+
+          return m_altitude;
+        }
+
+        if (m_time_without_alt.overflow())
+          m_altitude = -1.0;
+
         return m_altitude;
       }
 
       //! Get the acceleration along a specific axis.
       //! @return acceleration value.
       inline double
-      getAcceleration(Axes axis) const
+      getAcceleration(unsigned axis) const
       {
-        if (!m_accel_readings)
-          return 0;
-
-        switch (axis)
-        {
-          case AXIS_X:
-            return (m_accel_x_bfr / m_accel_readings);
-          case AXIS_Y:
-            return (m_accel_y_bfr / m_accel_readings);
-          case AXIS_Z:
-            return (m_accel_z_bfr / m_accel_readings);
-        }
-
-        return 0;
+        return m_accel_readings ? (m_accel_bfr[axis] / m_accel_readings) : 0.0;
       }
 
       //! Get angular velocity value along a specific axis.
       //! @return angular velocity value.
       inline double
-      getAngularVelocity(Axes axis) const
+      getAngularVelocity(unsigned axis) const
       {
-        if (!m_angular_readings)
-          return 0;
-
-        switch (axis)
-        {
-          case AXIS_X:
-            return (m_p_bfr / m_angular_readings);
-          case AXIS_Y:
-            return (m_q_bfr / m_angular_readings);
-          case AXIS_Z:
-            return (m_r_bfr / m_angular_readings);
-        }
-
-        return 0;
-      }
-
-      //! Produce virtual angular velocities.
-      inline void
-      produceAngularVelocity(void)
-      {
-        if (!gotAngularReadings())
-        {
-          if (!gotEulerReadings())
-            return;
-
-          double pitch = getPitch();
-          double cp = std::cos(pitch);
-
-          // Avoid singularity
-          if ((1e-2 - std::abs(cp)) > 0.0)
-            return;
-
-          double roll = getRoll();
-          double sr = std::sin(roll);
-          double cr = std::cos(roll);
-          double tp = std::tan(pitch);
-
-          double j2_elements[9] = {1, sr * tp, cr * tp,
-                                   0, cr, -sr,
-                                   0, sr / cp, cr / cp};
-
-          Math::Matrix j2 = Math::Matrix(j2_elements, 3, 3);
-
-          double euler[3] = {m_deriv_roll.check(),
-                             m_deriv_pitch.check(),
-                             m_deriv_yaw.check()};
-
-          Math::Matrix ea = Math::Matrix(euler, 3, 1);
-
-          m_virtual_avel = inverse(j2) * ea;
-        }
-      }
-
-      //! Get virtual angular velocity
-      //! @param[in] axis axis of rotation.
-      //! @return angular velocity value.
-      inline double
-      getVirtualAngularVelocity(Axes axis)
-      {
-        return Math::trimValue(m_virtual_avel(axis), - c_max_av, c_max_av);
+        return m_angular_readings ? (m_agvel_bfr[axis] / m_angular_readings) : 0.0;
       }
 
       //! Get heading rate value.
@@ -309,53 +232,59 @@ namespace DUNE
       inline double
       getHeadingRate(void)
       {
-        double pitch = getPitch();
+        double pitch = getEuler(AXIS_Y);
 
         // Avoid division by zero.
         if (!std::cos(pitch))
           return 0;
 
-        double roll = getRoll();
-        double p = getAngularVelocity(AXIS_X);
-        double q = getAngularVelocity(AXIS_Y);
-        double r = getAngularVelocity(AXIS_Z);
+        double roll = getEuler(AXIS_X);
+        double p, q, r;
+
+        if (m_sum_euler_inc)
+        {
+          if (!m_edelta_readings)
+            return 0.0;
+
+          // Make sure the following corresponds to angular velocity in all IMUs.
+          p = getEulerDelta(AXIS_X) / getEulerDeltaTimestep();
+          q = getEulerDelta(AXIS_Y) / getEulerDeltaTimestep();
+          r = getEulerDelta(AXIS_Z) / getEulerDeltaTimestep();
+        }
+        else
+        {
+          p = getAngularVelocity(AXIS_X);
+          q = getAngularVelocity(AXIS_Y);
+          r = getAngularVelocity(AXIS_Z);
+        }
+
         extractEarthRotation(p, q, r);
 
         return (std::sin(roll) * q + std::cos(roll) * r) / std::cos(pitch);
       }
 
-      //! Get roll value.
-      //! @return roll.
+      //! Get Euler Angle value.
+      //! @return euler angle value.
       inline double
-      getRoll(void) const
+      getEuler(unsigned axis) const
       {
-        if (m_euler_readings)
-          return Math::Angles::normalizeRadian(m_roll_bfr / m_euler_readings);
-        else
-          return 0;
+        return m_euler_readings ? (m_euler_bfr[axis] / m_euler_readings) : 0.0;
       }
 
-      //! Get pitch value.
-      //! @return pitch.
+      //! Get Euler Angles increment value along a specific axis.
+      //! @return euler angles increment value
       inline double
-      getPitch(void) const
+      getEulerDelta(unsigned axis) const
       {
-        if (m_euler_readings)
-          return Math::Angles::normalizeRadian(m_pitch_bfr / m_euler_readings);
-        else
-          return 0;
+        return m_edelta_readings ? (m_edelta_bfr[axis] / m_edelta_readings) : 0.0;
       }
 
-      //! Get yaw value.
-      //! @return yaw.
-      inline double
-      getYaw(void) const
+      //! Get Euler Angles increment value along a specific axis.
+      //! @return euler angles increment value
+      inline float
+      getEulerDeltaTimestep(void) const
       {
-        if (m_euler_readings)
-          // other navigation tasks are responsible to normalize yaw.
-          return m_heading_bfr / m_euler_readings;
-        else
-          return 0;
+        return m_edelta_ts;
       }
 
       //! Number of depth readings since last cycle plus constant filter gain.
@@ -428,10 +357,21 @@ namespace DUNE
       inline void
       updateEuler(float filter)
       {
-        m_roll_bfr = getRoll() * filter;
-        m_pitch_bfr = getPitch() * filter;
-        m_heading_bfr = getYaw() * filter;
+        for (unsigned i = 0; i < 3; ++i)
+          m_euler_bfr[i] = getEuler(i) * filter;
+
         m_euler_readings = filter;
+      }
+
+      //! Routine to clear euler angles delta buffer.
+      //! @param[in] filter filter value.
+      inline void
+      updateEulerDelta(float filter)
+      {
+        for (unsigned i = 0; i < 3; ++i)
+          m_edelta_bfr[i] =  getEulerDelta(i) * filter;
+
+        m_edelta_readings = filter;
       }
 
       //! Routine to clear angular velocities buffer.
@@ -439,9 +379,9 @@ namespace DUNE
       inline void
       updateAngularVelocities(float filter)
       {
-        m_p_bfr = getAngularVelocity(AXIS_X) * filter;
-        m_q_bfr = getAngularVelocity(AXIS_Y) * filter;
-        m_r_bfr = getAngularVelocity(AXIS_Z) * filter;
+        for (unsigned i = 0; i < 3; ++i)
+          m_agvel_bfr[i] =  getAngularVelocity(i) * filter;
+
         m_angular_readings = filter;
       }
 
@@ -450,9 +390,9 @@ namespace DUNE
       inline void
       updateAcceleration(float filter)
       {
-        m_accel_x_bfr = getAcceleration(AXIS_X) * filter;
-        m_accel_y_bfr = getAcceleration(AXIS_Y) * filter;
-        m_accel_z_bfr = getAcceleration(AXIS_Z) * filter;
+        for (unsigned i = 0; i < 3; ++i)
+          m_accel_bfr[i] =  getAcceleration(i) * filter;
+
         m_accel_readings = filter;
       }
 
@@ -506,6 +446,17 @@ namespace DUNE
       virtual void
       correctAlignment(double psi);
 
+      //! Get EKF output matrix speed indexes.
+      //! @param[out] u forward speed state index.
+      //! @param[out] v transversal speed state index.
+      virtual void
+      getSpeedOutputStates(unsigned* u, unsigned* v) = 0;
+
+      //! Get number of EKF outputs.
+      //! @return number of outputs.
+      virtual unsigned
+      getNumberOutputs(void) = 0;
+
       //! Routine called to assign common dispatch messages.
       void
       onDispatchNavigation(void);
@@ -540,6 +491,10 @@ namespace DUNE
       void
       resetEulerAngles(void);
 
+      //! Routine to reset euler angles delta buffers.
+      void
+      resetEulerAnglesDelta(void);
+
       //! Routine to check navigation uncertainty.
       void
       checkUncertainty(void);
@@ -553,6 +508,8 @@ namespace DUNE
 
       //! Kalman Filter matrices.
       Navigation::KalmanFilter m_kal;
+      //! Ranging data.
+      Navigation::Ranging m_ranging;
       //! Propeller speed (RPM)
       int16_t m_rpm;
       //! Kalman Filter process noise covariance matrix parameters.
@@ -565,8 +522,6 @@ namespace DUNE
       IMC::EstimatedState m_estate;
       //! Estimated water velocity message.
       IMC::EstimatedStreamVelocity m_ewvel;
-      //! LblConfig buffer.
-      IMC::LblConfig m_lbl_cfg;
       //! LBL range acceptance.
       IMC::LblRangeAcceptance m_lbl_ac;
       //! GPS fix rejection.
@@ -581,26 +536,38 @@ namespace DUNE
       IMC::GroundVelocity m_gvel;
       //! Current velocity relative to the water message.
       IMC::WaterVelocity m_wvel;
-      //! Number of beacons.
-      unsigned m_num_beacons;
       //! Time without GPS sensor readings deadline.
       Time::Counter<double> m_time_without_gps;
       //! Time without DVL sensor readings deadline.
       Time::Counter<double> m_time_without_dvl;
-      //! Time without bottom Distance readings deadline.
-      Time::Counter<double> m_time_without_bdist;
+      //! Time without altitude readings deadline.
+      Time::Counter<double> m_time_without_alt;
+      //! DVL data sanity timeout.
+      Time::Counter<double> m_dvl_sanity_timer;
+      //! Time without main depth provider.
+      Time::Counter<double> m_time_without_main_depth;
+      //! Time without depth readings.
+      Time::Counter<double> m_time_without_depth;
+      //! Time without euler angles readings.
+      Time::Counter<double> m_time_without_euler;
       //! Valid GPS speed over ground.
       double m_gps_sog;
       //! Vertical displacement in the NED frame to the origin height above ellipsoid
       double m_last_z;
-      //! Integrate yaw rate to get heading.
-      bool m_integ_yrate;
+      //! Dead reckoning mode.
+      bool m_dead_reckoning;
+      //! Sum euler increments to get heading.
+      bool m_sum_euler_inc;
+      //! Vehicle is aligned.
+      bool m_aligned;
       //! Angular velocity message entity id.
       unsigned m_agvel_eid;
+      //! Accelaration message entity id.
+      unsigned m_accel_eid;
       //! IMU entity id.
       unsigned m_imu_eid;
-      //! Orientation calibration entity id.
-      unsigned m_calibration_eid;
+      //! Orientation alignment entity id.
+      unsigned m_alignment_eid;
       //! LBL threshold.
       float m_lbl_threshold;
       //! Heading value (rad).
@@ -609,22 +576,10 @@ namespace DUNE
       bool m_valid_gv;
       //! Received valid water velocity message.
       bool m_valid_wv;
-      //! Derivative for roll.
-      Math::Derivative<double> m_deriv_roll;
-      //! Derivative for pitch.
-      Math::Derivative<double> m_deriv_pitch;
-      //! Derivative for yaw.
-      Math::Derivative<double> m_deriv_yaw;
       //! Derivative for heave.
       Math::Derivative<double> m_deriv_heave;
 
     private:
-      //! Routine to add a new beacon.
-      //! @param[in] id beacon id.
-      //! @param[in] msg inline msg.
-      void
-      addBeacon(unsigned id, const IMC::LblBeacon* msg);
-
       //! Routine to filter earth rotation effect from angular velocity values.
       //! @param[out] p angular velocity along the x-axis.
       //! @param[out] q angular velocity along the y-axis.
@@ -655,9 +610,9 @@ namespace DUNE
       //! Last GPS WGS-84 height above ellipsoid.
       double m_last_hae;
       //! Entity labels.
-      std::string m_label_depth;
-      std::string m_label_ahrs;
-      std::string m_label_calibration;
+      std::string m_elabel_ahrs;
+      std::string m_elabel_alignment;
+      std::string m_elabel_depth;
       //! Task state machine.
       SMStates m_navstate;
       //! Time step delta.
@@ -672,12 +627,8 @@ namespace DUNE
       IMC::WaterVelocity m_wvel_previous;
       //! Navigation Startup point.
       IMC::GpsFix* m_origin;
-      //! LBL beacon configuration.
-      LblBeaconXYZ* m_beacons[c_max_beacons];
       //! Displacement between LBL and GPS.
       float m_dist_lbl_gps;
-      //! LblConfig data has been logged.
-      bool m_lbl_log_beacons;
       //! Always reject LblRanges.
       bool m_reject_all_lbl;
       //! LBL rejection constants.
@@ -698,6 +649,8 @@ namespace DUNE
       float m_dvl_time_rel_thresh;
       //! Altitude value.
       float m_altitude;
+      //! DVL entity label.
+      std::string m_elabel_dvl;
       //! Altitude entity label hardware.
       std::string m_elabel_alt_hard;
       //! Altitude entity label simulation.
@@ -706,54 +659,44 @@ namespace DUNE
       bool m_alt_attitude_compensation;
       //! Altitude Exponential Moving Average filter gain.
       float m_alt_ema_gain;
+      //! Altitude data sanity;
+      bool m_alt_sanity;
       //! Maximum horizontal dilution of precision.
       float m_max_hdop;
       //! Maximum valid horizontal accuracy estimate.
       float m_max_hacc;
+      //! Maximum HACC Moving Average factor.
+      float m_gps_hacc_factor;
       //! Sum of weights of sensor readings between prediction cycles.
       float m_depth_readings;
       float m_euler_readings;
+      float m_edelta_readings;
       float m_angular_readings;
       float m_accel_readings;
-      //! "Buffers" for sensor readings.
+      //! "Buffers" for sensors readings.
       double m_depth_bfr;
-      double m_p_bfr;
-      double m_q_bfr;
-      double m_r_bfr;
-      double m_roll_bfr;
-      double m_pitch_bfr;
-      double m_heading_bfr;
-      double m_accel_x_bfr;
-      double m_accel_y_bfr;
-      double m_accel_z_bfr;
-      // Moving Average for roll angle.
-      Math::MovingAverage<double>* m_avg_phi;
-      // Moving Average for pitch angle.
-      Math::MovingAverage<double>* m_avg_theta;
-      // Moving Average for heading angle.
-      Math::MovingAverage<double>* m_avg_psi;
-      //! Number of samples to average euler angles.
-      unsigned m_avg_euler_samples;
-      //! Virtual Angular Velocities.
-      Math::Matrix m_virtual_avel;
+      double m_euler_bfr[3];
+      double m_agvel_bfr[3];
+      double m_accel_bfr[3];
+      //! Euler Angles Delta.
+      double m_edelta_bfr[3];
+      //! Euler Angles Delta timestep.
+      float m_edelta_ts;
       //! Depth offset value.
       float m_depth_offset;
       //! Moving Average for heave.
       Math::MovingAverage<double>* m_avg_heave;
+      //! Moving Average for GpsFix.
+      Math::MovingAverage<double>* m_avg_gps;
       //! Number of samples to average heave.
       unsigned m_avg_heave_samples;
-      //! Z reference.
-      double m_z_ref;
-      //! Reject GPS fixes based on desired depth.
-      bool m_reject_gps;
-      //! Received DesiredZ message to start diving.
-      bool m_diving;
-      //! Z units for this maneuver
-      IMC::ZUnits m_zunits;
+      //! Number of samples to average GPS.
+      unsigned m_avg_gps_samples;
       //! Entity Ids.
       unsigned m_depth_eid;
       unsigned m_ahrs_eid;
       unsigned m_alt_eid;
+      unsigned m_dvl_eid;
       //! Declination value.
       float m_declination;
       //! Declination variables.
@@ -762,12 +705,15 @@ namespace DUNE
       //! Sensors timeout.
       float m_without_gps_timeout;
       float m_without_dvl_timeout;
+      float m_without_alt_timeout;
+      float m_without_main_depth_timeout;
+      float m_without_depth_timeout;
+      float m_without_euler_timeout;
+      float m_dvl_sanity_timeout;
       //! DVL ground velocity validation bits.
       uint8_t m_gvel_val_bits;
       //! DVL water velocity validation bits.
       uint8_t m_wvel_val_bits;
-      //! GPS validity bits.
-      uint16_t m_gps_val_bits;
       //! Euler Angles offset.
       double m_phi_offset;
       double m_theta_offset;

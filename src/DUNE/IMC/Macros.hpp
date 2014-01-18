@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -58,8 +58,10 @@
 #define DUNE_IMC_DEVCALIBRATIONSTATE 13
 //! EntityActivationState identification number.
 #define DUNE_IMC_ENTITYACTIVATIONSTATE 14
+//! QueryEntityActivationState identification number.
+#define DUNE_IMC_QUERYENTITYACTIVATIONSTATE 15
 //! VehicleOperationalLimits identification number.
-#define DUNE_IMC_VEHICLEOPERATIONALLIMITS 15
+#define DUNE_IMC_VEHICLEOPERATIONALLIMITS 16
 //! SimulatedState identification number.
 #define DUNE_IMC_SIMULATEDSTATE 50
 //! LeakSimulation identification number.
@@ -102,10 +104,18 @@
 #define DUNE_IMC_SMSRX 158
 //! SmsState identification number.
 #define DUNE_IMC_SMSSTATE 159
+//! TextMessage identification number.
+#define DUNE_IMC_TEXTMESSAGE 160
+//! IridiumMsgRx identification number.
+#define DUNE_IMC_IRIDIUMMSGRX 170
+//! IridiumMsgTx identification number.
+#define DUNE_IMC_IRIDIUMMSGTX 171
+//! IridiumTxStatus identification number.
+#define DUNE_IMC_IRIDIUMTXSTATUS 172
 //! GroupMembershipState identification number.
-#define DUNE_IMC_GROUPMEMBERSHIPSTATE 160
+#define DUNE_IMC_GROUPMEMBERSHIPSTATE 180
 //! SystemGroup identification number.
-#define DUNE_IMC_SYSTEMGROUP 161
+#define DUNE_IMC_SYSTEMGROUP 181
 //! LblRange identification number.
 #define DUNE_IMC_LBLRANGE 200
 //! LblDetection identification number.
@@ -202,6 +212,8 @@
 #define DUNE_IMC_DEVICESTATE 282
 //! BeamConfig identification number.
 #define DUNE_IMC_BEAMCONFIG 283
+//! DataSanity identification number.
+#define DUNE_IMC_DATASANITY 284
 //! CameraZoom identification number.
 #define DUNE_IMC_CAMERAZOOM 300
 //! SetThrusterActuation identification number.
@@ -254,6 +266,8 @@
 #define DUNE_IMC_NAVIGATIONRESET 359
 //! LblEstimate identification number.
 #define DUNE_IMC_LBLESTIMATE 360
+//! AlignmentState identification number.
+#define DUNE_IMC_ALIGNMENTSTATE 361
 //! GroupStreamVelocity identification number.
 #define DUNE_IMC_GROUPSTREAMVELOCITY 361
 //! DesiredHeading identification number.
@@ -414,6 +428,14 @@
 #define DUNE_IMC_TREXOBSERVATION 651
 //! TrexCommand identification number.
 #define DUNE_IMC_TREXCOMMAND 652
+//! TrexOperation identification number.
+#define DUNE_IMC_TREXOPERATION 655
+//! TrexAttribute identification number.
+#define DUNE_IMC_TREXATTRIBUTE 656
+//! TrexToken identification number.
+#define DUNE_IMC_TREXTOKEN 657
+//! TrexPlan identification number.
+#define DUNE_IMC_TREXPLAN 658
 //! VideoData identification number.
 #define DUNE_IMC_VIDEODATA 700
 //! RawImage identification number.
@@ -450,7 +472,19 @@
 #define DUNE_IMC_PUSHENTITYPARAMETERS 811
 //! PopEntityParameters identification number.
 #define DUNE_IMC_POPENTITYPARAMETERS 812
+//! IoEvent identification number.
+#define DUNE_IMC_IOEVENT 813
+//! UamTxFrame identification number.
+#define DUNE_IMC_UAMTXFRAME 814
+//! UamRxFrame identification number.
+#define DUNE_IMC_UAMRXFRAME 815
+//! UamTxStatus identification number.
+#define DUNE_IMC_UAMTXSTATUS 816
+//! UamRxRange identification number.
+#define DUNE_IMC_UAMRXRANGE 817
+//! AbortAcked identification number.
+#define DUNE_IMC_ABORTACKED 818
 //! FormCtrlParam identification number.
-#define DUNE_IMC_FORMCTRLPARAM 813
+#define DUNE_IMC_FORMCTRLPARAM 820
 
 #endif

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -201,7 +201,7 @@ namespace DUNE
     piecewiseLI(const std::vector<Type>& x_vec, const std::vector<Type>& t_vec, Type t)
     {
       if (x_vec.size() != t_vec.size())
-        throw std::runtime_error("piecewise linear interpolation needs equally sized vectors");
+        throw std::runtime_error(DTR("piecewise linear interpolation needs equally sized vectors"));
 
       if (x_vec.size() == 1)
         return x_vec[0];

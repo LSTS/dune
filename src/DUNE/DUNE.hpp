@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -30,6 +30,7 @@
 
 // DUNE module headers.
 #include <DUNE/Config.hpp>
+#include <DUNE/Version.hpp>
 #include <DUNE/Casts.hpp>
 #include <DUNE/Units.hpp>
 #include <DUNE/Memory.hpp>
@@ -59,6 +60,7 @@
 #include <DUNE/Navigation.hpp>
 #include <DUNE/Status.hpp>
 #include <DUNE/I18N.hpp>
+#include <DUNE/IO.hpp>
 
 //! DUNE: Uniform Navigational Environment.
 namespace DUNE
@@ -85,9 +87,10 @@ namespace DUNE
   using namespace DUNE::Tasks;                  \
   using namespace DUNE::Media;                  \
   using namespace DUNE::Parsers;                \
-  using namespace DUNE::Plans;                   \
+  using namespace DUNE::Plans;                  \
   using namespace DUNE::Time;                   \
   using namespace DUNE::Utils;                  \
-  using namespace DUNE::Navigation
+  using namespace DUNE::Navigation;             \
+  using namespace DUNE::IO
 
 #endif

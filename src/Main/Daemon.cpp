@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -194,8 +194,8 @@ main(int argc, char** argv)
   .program(DUNE_SHORT_NAME)
   .copyright(DUNE_COPYRIGHT)
   .email(DUNE_CONTACT)
-  .version(DUNE_COMPLETE_VERSION)
-  .date(DUNE_BUILD_TIME)
+  .version(getFullVersion())
+  .date(getCompileDate())
   .arch(DUNE_SYSTEM_NAME)
   .add("-d", "--config-dir",
        "Configuration directory", "DIR")

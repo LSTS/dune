@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -44,7 +44,7 @@ namespace Transports
       // Initialize meta information.
       std::ostringstream os;
       os << "var data = {\n"
-         << "  'dune_version': '" << DUNE_COMPLETE_VERSION << " - " << DUNE_BUILD_TIME << "',\n"
+         << "  'dune_version': '" << getFullVersion() << " - " << getCompileDate() << "',\n"
          << "  'dune_uid': '" << m_uid << "',\n"
          << "  'dune_time_start': '" << std::setprecision(12) << Clock::getSinceEpoch() << "',\n"
          << "  'dune_system': '" << system << "',\n";

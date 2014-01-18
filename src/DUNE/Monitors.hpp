@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -36,8 +36,9 @@ namespace DUNE
 }
 
 #include <DUNE/Monitors/DelayedTrigger.hpp>
+#include <DUNE/Monitors/MediumHandler.hpp>
+#include <DUNE/Monitors/MotorCurrentMonitor.hpp>
 #include <DUNE/Monitors/ServoCurrentMonitor.hpp>
 #include <DUNE/Monitors/ServoPositionMonitor.hpp>
-#include <DUNE/Monitors/MotorCurrentMonitor.hpp>
 
 #endif

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -99,10 +99,12 @@ namespace Sensors
 
         param("Conversion Delay", m_args.conv_delay)
         .units(Units::Second)
-        .defaultValue("0.001");
+        .defaultValue("0.001")
+        .minimumValue("0.0");
 
         param("Samples Per Average", m_args.spl_avg)
-        .defaultValue("10");
+        .defaultValue("10")
+        .minimumValue("0");
 
         for (unsigned i = 0; i < c_max_channels; ++i)
         {
@@ -117,11 +119,6 @@ namespace Sensors
           option = String::str("ADC%u - Entity Label", i);
           param(option, m_args.adc_elabels[i]);
         }
-      }
-
-      ~Task(void)
-      {
-        Task::onResourceRelease();
       }
 
       void

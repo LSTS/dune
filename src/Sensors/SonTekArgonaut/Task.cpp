@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -97,6 +97,7 @@ namespace Sensors
 
         param("Watchdog Timeout", m_args.wdog_tout)
         .defaultValue("2.0")
+        .minimumValue("1.0")
         .units(Units::Second)
         .description("Number of seconds without data before reporting an error");
 
@@ -123,8 +124,8 @@ namespace Sensors
           m_wdog.setTop(m_args.wdog_tout);
 
         IMC::BeamConfig bc;
-        bc.beam_width = -1;
-        bc.beam_height = -1;
+        bc.beam_width = Math::Angles::radians(2.0);
+        bc.beam_height = Math::Angles::radians(2.0);
 
         IMC::DeviceState ds;
         ds.x = m_args.position[0];
@@ -176,7 +177,7 @@ namespace Sensors
 
         while (!timer.overflow())
         {
-          if (m_uart->hasNewData(timer.getRemaining()) == IOMultiplexing::PRES_OK)
+          if (Poll::poll(*m_uart, timer.getRemaining()))
           {
             char bfr[128];
             m_uart->readString(bfr, sizeof(bfr));
@@ -191,7 +192,7 @@ namespace Sensors
       bool
       sendCommand(const char* str, const char* reply, double timeout = 2.0)
       {
-        m_uart->write(str);
+        m_uart->writeString(str);
         return read(reply, timeout);
       }
 
@@ -233,7 +234,7 @@ namespace Sensors
       void
       readSample(void)
       {
-        if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+        if (!Poll::poll(*m_uart, 1.0))
           return;
 
         m_uart->readString(m_buffer, sizeof(m_buffer));
@@ -241,6 +242,8 @@ namespace Sensors
         double distance[2];
         int wvval = 0;
         int gvval = 0;
+
+        double tstamp = Clock::getSinceEpoch();
 
         int rv = std::sscanf(m_buffer,
                         "%*d %*d %*d %*d %*d %*d" // Date
@@ -271,14 +274,16 @@ namespace Sensors
         if (wvval == 1)
         {
           m_wvel.validity = c_wvel_valid_flag;
-          m_wvel.x *= 0.001;
-          m_wvel.y *= 0.001;
-          m_wvel.z *= 0.001;
+          m_wvel.x *= 0.01;
+          m_wvel.y *= 0.01;
+          m_wvel.z *= 0.01;
         }
         else
         {
           m_wvel.clear();
         }
+
+        m_wvel.setTimeStamp(tstamp);
         dispatch(m_wvel, DF_KEEP_TIME);
 
         // Ground velocity.
@@ -286,15 +291,17 @@ namespace Sensors
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           m_gvel.validity = gvval ? c_gvel_valid_flag : 0;
-          m_gvel.x *= 0.001;
-          m_gvel.y *= 0.001;
-          m_gvel.z *= 0.001;
+          m_gvel.x *= 0.01;
+          m_gvel.y *= 0.01;
+          m_gvel.z *= 0.01;
         }
         else
         {
-          setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_NO_BOTTOM_LOCK);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NO_BOTTOM_LOCK);
           m_gvel.clear();
         }
+
+        m_gvel.setTimeStamp(tstamp);
         dispatch(m_gvel, DF_KEEP_TIME);
 
         // Beam distances.
@@ -304,10 +311,12 @@ namespace Sensors
             m_dist[i].validity = IMC::Distance::DV_INVALID;
           else
             m_dist[i].validity = IMC::Distance::DV_VALID;
-          m_dist[i].value *= 0.01;
+
+          m_dist[i].setTimeStamp(tstamp);
           dispatch(m_dist[i], DF_KEEP_TIME);
         }
 
+        m_temp.setTimeStamp(tstamp);
         dispatch(m_temp, DF_KEEP_TIME);
       }
 

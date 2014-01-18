@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -38,8 +38,9 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers.
-#include "LogManager.hpp"
 #include "MessageMonitor.hpp"
+#include "RequestHandler.hpp"
+#include "Server.hpp"
 
 namespace Transports
 {
@@ -65,16 +66,14 @@ namespace Transports
     //! Maximum number of ports to try before giving up.
     static const int c_max_port_tries = 10;
 
-    struct Task: public Tasks::Task, public HTTPRequestHandler
+    struct Task: public Tasks::Task, public RequestHandler
     {
       //! HTTP server.
-      HTTPServer* m_server;
+      Server* m_server;
       //! Configuration directory.
       std::string m_cfg_dir;
       //! Agent name.
       std::string m_agent;
-      //! Log Manager.
-      LogManager* m_logs;
       //! Message Monitor.
       MessageMonitor m_msg_mon;
       //! Task arguments.
@@ -82,9 +81,8 @@ namespace Transports
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        HTTPRequestHandler(),
+        RequestHandler(),
         m_server(NULL),
-        m_logs(NULL),
         m_msg_mon(getSystemName(), ctx.uid)
       {
         // Define configuration parameters.
@@ -102,18 +100,6 @@ namespace Transports
 
         m_cfg_dir = ctx.dir_cfg.str();
         m_agent = getSystemName();
-
-        m_logs = new LogManager(ctx.dir_log);
-
-        bind<IMC::LoggingControl>(this);
-      }
-
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-
-        if (m_logs != NULL)
-          delete m_logs;
       }
 
       void
@@ -125,8 +111,8 @@ namespace Transports
         {
           try
           {
-            inf(DTR("creating server on port %u"), port);
-            m_server = new HTTPServer(port, m_args.threads, *this);
+            inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), port);
+            m_server = new Server(port, m_args.threads, *this);
 
             // Initialize and dispatch AnnounceService.
             std::vector<Interface> itfs = Interface::get();
@@ -175,15 +161,6 @@ namespace Transports
       }
 
       void
-      consume(const IMC::LoggingControl* msg)
-      {
-        if (msg->op == IMC::LoggingControl::COP_STARTED)
-          m_logs->current(msg->name);
-        else if (msg->op == IMC::LoggingControl::COP_STOPPED)
-          m_logs->current("");
-      }
-
-      void
       consume(const IMC::Message* msg)
       {
         if (msg->getSource() == getSystemId())
@@ -221,20 +198,6 @@ namespace Transports
             sendVersionJSON(sock, headers, uri);
           else if (matchURL(uri, "/dune/agent.js"))
             sendAgentJSON(sock, headers, uri);
-          else if (matchURL(uri, "/dune/logs/list.xml"))
-            listLogsXML(sock, headers, uri);
-          else if (matchURL(uri, "/dune/logs/list.js"))
-            listLogsJSON(sock, headers, uri);
-          else if (matchURL(uri, "/dune/logs/list"))
-            listLogs(sock, headers, uri);
-          else if (matchURL(uri, "/dune/logs/stop"))
-            stopLogging(sock, headers, uri);
-          else if (matchURL(uri, "/dune/logs/start"))
-            startLogging(sock, headers, uri);
-          else if (matchURL(uri, "/dune/logs/delete/", true))
-            deleteLogs(sock, headers, uri);
-          else if (matchURL(uri, "/dune/logs/download/", true))
-            downloadLogs(sock, headers, uri);
           else if (matchURL(uri, "/dune/state/messages.js"))
             showMessages(sock, headers, uri);
           else if (matchURL(uri, "/dune/power/channel/", true))
@@ -290,91 +253,6 @@ namespace Transports
       }
 
       void
-      listLogs(TCPSocket* sock, TupleList& headers, const char* uri)
-      {
-        (void)headers;
-        (void)uri;
-
-        m_logs->readLock();
-        const std::string& txt = m_logs->txt();
-        sendData(sock, txt);
-        m_logs->readUnlock();
-      }
-
-      void
-      listLogsXML(TCPSocket* sock, TupleList& headers, const char* uri)
-      {
-        (void)headers;
-        (void)uri;
-
-        m_logs->readLock();
-        const std::string& xml = m_logs->xml();
-        sendData(sock, xml);
-        m_logs->readUnlock();
-      }
-
-      void
-      listLogsJSON(TCPSocket* sock, TupleList& headers, const char* uri)
-      {
-        (void)headers;
-        (void)uri;
-
-        m_logs->readLock();
-        const std::string& text = m_logs->toJSON();
-        sendData(sock, text);
-        m_logs->readUnlock();
-      }
-
-      void
-      stopLogging(TCPSocket* sock, TupleList& headers, const char* uri)
-      {
-        (void)headers;
-        (void)uri;
-        IMC::LoggingControl lc;
-        lc.op = IMC::LoggingControl::COP_REQUEST_STOP;
-        dispatch(lc);
-        sendResponse200(sock);
-      }
-
-      void
-      startLogging(TCPSocket* sock, TupleList& headers, const char* uri)
-      {
-        (void)headers;
-        (void)uri;
-        IMC::LoggingControl lc;
-        lc.op = IMC::LoggingControl::COP_REQUEST_START;
-        dispatch(lc);
-        sendResponse200(sock);
-      }
-
-      void
-      deleteLogs(TCPSocket* sock, TupleList& headers, const char* uri)
-      {
-        (void)headers;
-
-        std::string lname = String::getRemaining("/dune/logs/delete/", uri);
-        lname = String::trim(lname);
-
-        if (lname == "")
-        {
-          sendResponse500(sock);
-          return;
-        }
-
-        try
-        {
-          inf(DTR("removing log %s"), lname.c_str());
-          m_logs->remove(lname);
-          sendResponse200(sock);
-        }
-        catch (std::exception& e)
-        {
-          err("%s", e.what());
-          sendResponse500(sock);
-        }
-      }
-
-      void
       sendStaticFile(TCPSocket* sock, TupleList& headers, const Path& file)
       {
         int64_t beg = -1;
@@ -393,8 +271,7 @@ namespace Transports
           p1 >> end;
         }
 
-        // Retrieve log name.
-        HTTPRequestHandler::HeaderFieldsMap hdr;
+        RequestHandler::HeaderFieldsMap hdr;
         std::string ext = file.extension();
         if (ext == "html")
           hdr["Content-Type"] = "text/html";
@@ -404,14 +281,6 @@ namespace Transports
           hdr["Content-Type"] = "text/javascript";
 
         sendFile(sock, file.str(), hdr, beg, end);
-      }
-
-      void
-      downloadLogs(TCPSocket* sock, TupleList& headers, const char* uri)
-      {
-        // Retrieve log name.
-        std::string lname = String::getRemaining("/dune/logs/download/", uri);
-        sendStaticFile(sock, headers, m_ctx.dir_log / Path(lname));
       }
 
       void
@@ -434,7 +303,6 @@ namespace Transports
       {
         (void)headers;
 
-        // Retrieve log name.
         std::string lname = String::getRemaining("/dune/time/set/", uri);
         std::istringstream ss(lname);
 
@@ -456,7 +324,7 @@ namespace Transports
         (void)headers;
         (void)uri;
 
-        HTTPRequestHandler::HeaderFieldsMap hdr;
+        RequestHandler::HeaderFieldsMap hdr;
         hdr["Content-Type"] = "text/javascript";
         hdr["Content-Encoding"] = "gzip";
 
@@ -471,8 +339,8 @@ namespace Transports
         (void)uri;
 
         std::ostringstream os;
-        os << "var systemVersion = '" << DUNE_COMPLETE_VERSION << " - " << DUNE_BUILD_TIME << "';";
-        HTTPRequestHandler::HeaderFieldsMap hdr;
+        os << "var systemVersion = '" << getFullVersion() << " - " << getCompileDate() << "';";
+        RequestHandler::HeaderFieldsMap hdr;
         hdr["Content-Type"] = "text/javascript";
         sendData(sock, os.str(), &hdr);
       }
@@ -485,7 +353,7 @@ namespace Transports
 
         std::ostringstream os;
         os << "var systemName = '" << m_agent << "';";
-        HTTPRequestHandler::HeaderFieldsMap hdr;
+        RequestHandler::HeaderFieldsMap hdr;
         hdr["Content-Type"] = "text/javascript";
         sendData(sock, os.str(), &hdr);
       }

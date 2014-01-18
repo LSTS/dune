@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -122,6 +122,8 @@ namespace Vision
       double exposure_time;
       //! Automatic Exposure.
       bool ae;
+      //! Automatic Exposure - Minimum Value.
+      double ae_min;
       //! Gain.
       unsigned gain;
       //! Gamma.
@@ -220,6 +222,10 @@ namespace Vision
         param("Automatic Exposure", m_args.ae)
         .defaultValue("true")
         .description("Automatic Exposure (maximum exposure time set to Exposure Time)");
+
+        param("Automatic Exposure - Minimum Value", m_args.ae_min)
+        .defaultValue("0.002")
+        .description("Minimum exposure value when using automatic exposure filter");
 
         param("Gain", m_args.gain)
         .defaultValue("260")
@@ -496,7 +502,11 @@ namespace Vision
               // Smooth out the exposure (make it slower varying), halve the deltaEV
               correction = std::sqrt(correction);
               m_exposure = Math::trimValue(m_exposure * correction, 0.0001, m_args.exposure_time);
-              m_gvcp->setExposureTime(m_exposure);
+
+              if (m_exposure >= m_args.ae_min)
+                m_gvcp->setExposureTime(m_exposure);
+              else
+                m_gvcp->setExposureTime(m_args.ae_min);
             }
           }
 

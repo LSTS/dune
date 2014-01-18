@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -55,7 +55,7 @@ namespace DUNE
         throw BufferTooShort();
 
       ptr += serializeHeader(msg, bfr, size);
-      ptr = msg->serializeFields(ptr);
+      msg->serializeFields(ptr);
 
       uint16_t crc = Algorithms::CRC16::compute(bfr, n - DUNE_IMC_CONST_FOOTER_SIZE);
       IMC::serialize(crc, (bfr + (n - DUNE_IMC_CONST_FOOTER_SIZE)));

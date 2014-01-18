@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -36,6 +36,9 @@ CODE(FUEL_EST_UNRELIABLE , "fuel level estimation is not reliable"          )
 CODE(FUEL_RESERVE        , "fuel reserve"                                   )
 CODE(CALIBRATING         , "calibrating"                                    )
 CODE(CALIBRATED          , "calibrated"                                     )
+CODE(NOT_ALIGNED         , "not aligned"                                    )
+CODE(ALIGNING            , "aligning"                                       )
+CODE(ALIGNED             , "aligned"                                        )
 CODE(POWER_DOWN          , "powering down"                                  )
 CODE(COM_ERROR           , "communication error"                            )
 CODE(SYNCHED             , "synchronized"                                   )
@@ -48,3 +51,6 @@ CODE(MISSING_DATA        , "missing data"                                   )
 CODE(INVALID_CHECKSUM    , "invalid checksum"                               )
 CODE(INVALID_VERSION     , "invalid version"                                )
 CODE(NO_BOTTOM_LOCK      , "active but without bottom lock"                 )
+CODE(NO_MEDIUM           , "no medium data: user must control device"       )
+CODE(NO_MEDIUM_ACTIVE    , "active (no medium data: need user input)"       )
+CODE(NO_MEDIUM_IDLE      , "idle (no medium data: need user input)"         )

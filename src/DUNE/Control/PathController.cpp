@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -50,6 +50,8 @@ namespace DUNE
     static const double c_lsize_factor = 0.75;
     //! Distance tolerance to loiter's center
     static const double c_ldistance = 1.0;
+    //! Distance between current and previous loiter centers to consider keep on loitering
+    static const double c_lkeep_distance = 30.0;
     //! Maximum admissible time for disabling monitors due to navigation jump
     static const float c_max_jump_time = 100.0;
 
@@ -62,7 +64,7 @@ namespace DUNE
       m_jump_monitors(false),
       m_aloops(0),
       m_btrack(NULL),
-      m_scope_ref(0.0)
+      m_scope_ref(0)
     {
       param("Control Frequency", m_cperiod)
       .defaultValue("10")
@@ -126,6 +128,12 @@ namespace DUNE
       .units(Units::MeterPerSecond)
       .description("Relation between monitor disabling time and position jump");
 
+      param("ETA Minimum Speed", m_eta_min_speed)
+      .defaultValue("1.0")
+      .minimumValue("0.1")
+      .units(Units::MeterPerSecond)
+      .description("ETA minimum admissible speed");
+
       param("Bottom Track -- Enabled", m_btd.enabled)
       .defaultValue("false")
       .description("Enable or disable bottom track control");
@@ -178,6 +186,15 @@ namespace DUNE
       .units(Units::Hertz)
       .description("Bottom tracker's execution frequency");
 
+      param("Bottom Track -- Depth Avoidance", m_btd.args.depth_avoid)
+      .defaultValue("true")
+      .description("Enable or disable obstacle avoidance during depth control");
+
+      param("Bottom Track -- Admissible Altitude", m_btd.args.adm_alt)
+      .defaultValue("3.0")
+      .units(Units::Meter)
+      .description("Admissible altitude when doing depth control");
+
       bind<IMC::Brake>(this);
       bind<IMC::ControlLoops>(this);
       bind<IMC::DesiredPath>(this);
@@ -196,7 +213,7 @@ namespace DUNE
       if (paramChanged(m_cperiod))
         m_cperiod = 1.0 / m_cperiod;
 
-      if (paramChanged(m_cperiod))
+      if (paramChanged(m_speriod))
         m_speriod = 1.0 / m_speriod;
 
       m_ts.cc = m_course_ctl ? 1 : 0;
@@ -213,16 +230,23 @@ namespace DUNE
       if (paramChanged(m_atm.min_yaw))
         m_atm.min_yaw = Angles::radians(m_atm.min_yaw);
 
-      if (m_btd.enabled)
+      if (paramChanged(m_btd.enabled))
       {
-        if (paramChanged(m_btd.args.safe_pitch))
-          m_btd.args.safe_pitch = Angles::radians(m_btd.args.safe_pitch);
+        if (m_btd.enabled)
+        {
+          if (paramChanged(m_btd.args.safe_pitch))
+            m_btd.args.safe_pitch = Angles::radians(m_btd.args.safe_pitch);
 
-        if (paramChanged(m_btd.args.slope_hyst))
-          m_btd.args.slope_hyst = Angles::radians(m_btd.args.slope_hyst);
+          if (paramChanged(m_btd.args.slope_hyst))
+            m_btd.args.slope_hyst = Angles::radians(m_btd.args.slope_hyst);
 
-        if (paramChanged(m_btd.args.control_period))
-          m_btd.args.control_period = 1.0 / m_btd.args.control_period;
+          if (paramChanged(m_btd.args.control_period))
+            m_btd.args.control_period = 1.0 / m_btd.args.control_period;
+        }
+        else
+        {
+          deactivateBottomTracker();
+        }
       }
     }
 
@@ -284,7 +308,9 @@ namespace DUNE
         m_pcs.start_z = dpath->start_z;
         m_pcs.start_z_units = dpath->start_z_units;
       }
-      else if ((!m_tracking && now - m_ts.end_time > 1) || (!m_ts.nearby && !m_ts.loitering) || (dpath->flags & IMC::DesiredPath::FL_DIRECT) != 0)
+      else if ((!m_tracking && now - m_ts.end_time > 1) ||
+               (!m_ts.nearby && !m_ts.loitering) ||
+               (dpath->flags & IMC::DesiredPath::FL_DIRECT) != 0)
       {
         m_pcs.start_lat = m_estate.lat;
         m_pcs.start_lon = m_estate.lon;
@@ -330,7 +356,8 @@ namespace DUNE
                           &m_ts.end.x, &m_ts.end.y);
       m_ts.end.z = m_pcs.end_z;
 
-      Coordinates::getBearingAndRange(m_ts.start, m_ts.end, &m_ts.track_bearing, &m_ts.track_length);
+      Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
+                                      &m_ts.track_bearing, &m_ts.track_length);
 
       // Re-initializing tracking state values
       m_ts.start_time = now;
@@ -349,7 +376,7 @@ namespace DUNE
       if (!hasSpecificZControl() && !(dpath->flags & IMC::DesiredPath::FL_NO_Z))
       {
         m_ts.z_control = true;
-        if (dpath->end_z_units == IMC::Z_ALTITUDE)
+        if (dpath->end_z_units == IMC::Z_ALTITUDE || dpath->end_z_units == IMC::Z_HEIGHT)
         {
           disableControlLoops(IMC::CL_DEPTH);
           enableControlLoops(IMC::CL_ALTITUDE);
@@ -383,8 +410,6 @@ namespace DUNE
       dispatch(m_speed, Tasks::DF_LOOP_BACK);
 
       // Loiter handling
-      m_ts.loitering = false;
-      m_ts.nearby = false;
       m_ts.loiter.radius = dpath->lradius;
       m_ts.loiter.clockwise = (dpath->flags & IMC::DesiredPath::FL_CCLOCKW) == 0;
 
@@ -392,28 +417,60 @@ namespace DUNE
       {
         m_ts.loiter.center = m_ts.end;
 
-        double course_err = std::fabs(Angles::normalizeRadian(m_estate.psi - m_ts.track_bearing));
+        double course_err;
+        course_err = std::fabs(Angles::normalizeRadian(m_estate.psi - m_ts.track_bearing));
         double sign;
 
-        // avoid singularities (very close to loiter center)
-        if (m_ts.track_length < c_ldistance)
+        double range = c_lkeep_distance + 1.0;
+
+        // if we're already loitering
+        if (m_ts.loitering)
         {
-          setBearingAndRange(m_ts.loiter.center, m_estate.psi,
-                             m_ts.loiter.radius, m_ts.end);
+          double dummy;
+          Coordinates::getBearingAndRange(m_ts.end, m_ts.loiter.center, &dummy, &range);
+        }
+
+        // loiter's center has not changed much and vehicle is close to circle
+        if (range < c_lkeep_distance && m_ts.loitering &&
+            m_ts.track_length >= m_ts.loiter.radius * c_lsize_factor &&
+            m_ts.track_length <= m_ts.loiter.radius * (2.0 - c_lsize_factor))
+        {
+          inf("keep loitering");
+        }
+        // avoid singularities (very close to loiter center)
+        else if (m_ts.track_length < c_ldistance)
+        {
+          Coordinates::setBearingAndRange(m_ts.loiter.center, m_estate.psi,
+                                          m_ts.loiter.radius, m_ts.end);
+
+          m_ts.loitering = false;
+          m_ts.nearby = false;
         }
         else
         {
           // if inside the circle and turned inwards
-          if ((m_ts.track_length <= m_ts.loiter.radius * c_lsize_factor) && (course_err < Math::c_half_pi))
+          if ((m_ts.track_length <= m_ts.loiter.radius * c_lsize_factor) &&
+              (course_err < Math::c_half_pi))
             sign = m_ts.loiter.clockwise ? 1.0 : -1.0;
           else
             sign = m_ts.loiter.clockwise ? -1.0 : 1.0;
 
-          setBearingAndRange(m_ts.loiter.center, m_ts.track_bearing + sign * Math::c_half_pi,
-                             m_ts.loiter.radius, m_ts.end);
+          Coordinates::setBearingAndRange(m_ts.loiter.center,
+                                          m_ts.track_bearing + sign * Math::c_half_pi,
+                                          m_ts.loiter.radius,
+                                          m_ts.end);
+
+          m_ts.loitering = false;
+          m_ts.nearby = false;
         }
 
-        Coordinates::getBearingAndRange(m_ts.start, m_ts.end, &m_ts.track_bearing, &m_ts.track_length);
+        Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
+                                        &m_ts.track_bearing, &m_ts.track_length);
+      }
+      else
+      {
+        m_ts.loitering = false;
+        m_ts.nearby = false;
       }
 
       updateTrackingState();
@@ -467,26 +524,7 @@ namespace DUNE
     PathController::consume(const IMC::Distance* dist)
     {
       if (m_btd.enabled)
-      {
-        try
-        {
-          m_btrack->onDistance(dist);
-        }
-        catch (std::runtime_error& e)
-        {
-          // If braking then stop braking
-          if (m_braking)
-          {
-            IMC::Brake brk;
-            brk.op = IMC::Brake::OP_STOP;
-            dispatch(brk);
-
-            m_braking = false;
-          }
-
-          signalError(e.what());
-        }
-      }
+        m_btrack->onDistance(dist);
     }
 
     void
@@ -507,7 +545,27 @@ namespace DUNE
     PathController::consume(const IMC::EstimatedState* es)
     {
       if (m_btd.enabled)
-        m_btrack->onEstimatedState(es);
+      {
+        try
+        {
+          m_btrack->onEstimatedState(es);
+        }
+        catch (std::runtime_error& e)
+        {
+          // If braking then stop braking
+          if (m_braking)
+          {
+            IMC::Brake brk;
+            brk.op = IMC::Brake::OP_STOP;
+            dispatch(brk);
+
+            m_braking = false;
+          }
+
+          signalError(e.what());
+          return;
+        }
+      }
 
       if (m_setup)
       {
@@ -520,7 +578,9 @@ namespace DUNE
       double lon = 0.0;
 
       // Save different LLH reference.
-      if (es->lat != m_estate.lat || es->lon != m_estate.lon || es->height != m_estate.height)
+      if (es->lat != m_estate.lat ||
+          es->lon != m_estate.lon ||
+          es->height != m_estate.height)
       {
         change_ref = true;
         lat = es->lat;
@@ -660,11 +720,11 @@ namespace DUNE
         getTrackPosition(m_estate, &m_ts.track_pos.x, &m_ts.track_pos.y);
         m_ts.course_error = Angles::normalizeRadian(m_ts.course - m_ts.track_bearing);
 
-        double errx = std::fabs(m_ts.track_length - m_ts.track_pos.x);
-        double erry = std::fabs(m_ts.track_pos.y);
-        double s = std::max(1.0, m_ts.speed);
+        float errx = std::abs(m_ts.track_length - m_ts.track_pos.x);
+        float erry = std::abs(m_ts.track_pos.y);
+        float s = std::max((double)m_eta_min_speed, m_ts.speed);
 
-        if (errx <= erry && erry < 2 * c_time_factor * s)
+        if (errx <= erry && erry < c_erry_factor * c_time_factor * s)
           m_ts.eta = errx / s;
         else
           m_ts.eta = Math::norm(errx, erry) / s;
@@ -691,7 +751,9 @@ namespace DUNE
         if (m_ts.loiter.clockwise)
           m_ts.track_pos.y = -m_ts.track_pos.y;
 
-        m_ts.course_error = m_ts.course - m_ts.los_angle + (m_ts.loiter.clockwise ? Math::c_half_pi : -Math::c_half_pi);
+        double ang_increment = (m_ts.loiter.clockwise ?
+                                Math::c_half_pi : -Math::c_half_pi);
+        m_ts.course_error = m_ts.course - m_ts.los_angle + ang_increment;
         m_ts.course_error = Angles::normalizeRadian(m_ts.course_error);
         m_ts.eta = 0;
         m_ts.nearby = false;
@@ -712,12 +774,12 @@ namespace DUNE
       {
         double new_lat;
         double new_lon;
-        double new_hae;
+        float new_hae;
         Coordinates::toWGS84(*new_state, new_lat, new_lon, new_hae);
 
         double old_lat;
         double old_lon;
-        double old_hae;
+        float old_hae;
         Coordinates::toWGS84(*old_state, old_lat, old_lon, old_hae);
 
         distance = Coordinates::WGS84::distance(new_lat, new_lon, new_hae,
@@ -877,19 +939,7 @@ namespace DUNE
       updateEntityState();
 
       if (m_btd.enabled)
-      {
-        m_btrack->deactivate();
-
-        // If braking then stop braking
-        if (m_braking)
-        {
-          IMC::Brake brk;
-          brk.op = IMC::Brake::OP_STOP;
-          dispatch(brk);
-
-          m_braking = false;
-        }
-      }
+        deactivateBottomTracker();
     }
 
     void
@@ -910,7 +960,7 @@ namespace DUNE
       else if (isActive())
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       else
-	setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
     }
 
     void
@@ -982,10 +1032,10 @@ namespace DUNE
       TrackingState lts = ts;
 
       double b = Math::c_pi + ts.los_angle;
-      setBearingAndRange(ts.end, b, lts.loiter.radius, lts.start);
+      Coordinates::setBearingAndRange(ts.end, b, lts.loiter.radius, lts.start);
 
       b += lts.loiter.clockwise ? Math::c_half_pi : -Math::c_half_pi;
-      setBearingAndRange(lts.start, b, 500, lts.end);
+      Coordinates::setBearingAndRange(lts.start, b, 500, lts.end);
 
       lts.track_bearing = b;
       lts.track_length = 500;
@@ -993,6 +1043,25 @@ namespace DUNE
       lts.los_angle = getBearing(state, lts.end);
 
       step(state, lts);
+    }
+
+    void
+    PathController::deactivateBottomTracker(void)
+    {
+      if (m_btrack == NULL)
+        return;
+
+      m_btrack->deactivate();
+
+      // If braking then stop braking
+      if (m_braking)
+      {
+        IMC::Brake brk;
+        brk.op = IMC::Brake::OP_STOP;
+        dispatch(brk);
+
+        m_braking = false;
+      }
     }
 
     void

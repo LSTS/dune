@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -40,19 +40,23 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
-    // Duration of a Mini-Packet in seconds.
+    //! Duration of a Mini-Packet in seconds.
     static const double c_mpk_duration = 0.90;
-    // Cycle Init Timeout (s).
+    //! Default command reply timeout.
+    static const double c_cmd_reply_tout = 4.0;
+    //! Cycle Init Timeout (s).
     static const unsigned c_cto = 10;
-    // Input Timeout (s).
+    //! Input Timeout (s).
     static const double c_input_tout = c_cto + 5;
-    // Abort code.
+    //! Abort code.
     static const unsigned c_code_abort = 0x000a;
-    // Abort acked code.
+    //! Abort acked code.
     static const unsigned c_code_abort_ack = 0x000b;
-    // Restart system code.
+    //! Start plan acknowledge code.
+    static const unsigned c_code_plan_ack = 0x000c;
+    //! Restart system code.
     static const unsigned c_code_sys_restart = 0x01a6;
-    // Restart system ack code.
+    //! Restart system ack code.
     static const unsigned c_code_sys_restart_ack = 0x01a7;
 
     enum EntityStates
@@ -201,8 +205,6 @@ namespace Sensors
       double m_last_range;
       // Internal buffer.
       char m_bfr[c_bfr_size];
-      // Last range report.
-      double m_last_range_report;
       // Task arguments.
       Arguments m_args;
       // Current state.
@@ -219,12 +221,21 @@ namespace Sensors
       int m_sound_speed_eid;
       // Estimated state.
       IMC::EstimatedState m_estate;
+      //! Report timer.
+      Counter<double> m_report_timer;
+      //! Stop reports on the ground.
+      bool m_stop_reports;
+      //! Last progress.
+      float m_progress;
+      //! Last fuel level.
+      float m_fuel_level;
+      //! Last fuel level confidence.
+      float m_fuel_conf;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
         m_last_range(0),
-        m_last_range_report(0),
         m_result(RS_NONE),
         m_sound_speed_eid(-1)
       {
@@ -241,61 +252,82 @@ namespace Sensors
         .description("Serial port baud rate");
 
         param("Sound Speed - Default Value", m_args.sound_speed_def)
+        .defaultValue("1500")
+        .minimumValue("1375")
+        .maximumValue("1900")
         .units(Units::MeterPerSecond)
-        .defaultValue("1500");
+        .description("Water sound speed");
 
         param("Sound Speed - Entity Label", m_args.sound_speed_elabel)
         .description("Entity label of sound speed provider");
 
         param("Length of Transmit Pings", m_args.tx_length)
         .units(Units::Millisecond)
-        .defaultValue("3");
+        .defaultValue("3")
+        .minimumValue("0");
 
         param("Length of Receive Pings", m_args.rx_length)
         .units(Units::Millisecond)
-        .defaultValue("3");
+        .defaultValue("3")
+        .minimumValue("0");
 
         param("Ping Timeout", m_args.ping_tout)
         .units(Units::Millisecond)
-        .defaultValue("1000");
+        .defaultValue("1000")
+        .minimumValue("0");
 
         param("Ping Periodicity", m_args.ping_period)
         .units(Units::Second)
-        .defaultValue("2");
+        .defaultValue("2")
+        .minimumValue("2");
 
-        param("Enable Reports", m_args.report)
-        .defaultValue("true");
+        param(DTR_RT("Enable Reports"), m_args.report)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("true")
+        .description("Report data acoustically");
 
-        param("Enable Verbose Reports", m_args.report_verbose)
-        .defaultValue("false");
+        param(DTR_RT("Make Reports Verbose"), m_args.report_verbose)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("false")
+        .description("Report more verbose data acoustically");
 
-        param("Range Reports Periodicity", m_args.report_period)
+        param(DTR_RT("Reports Periodicity"), m_args.report_period)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .units(Units::Second)
-        .defaultValue("20");
+        .defaultValue("60")
+        .minimumValue("30")
+        .maximumValue("600")
+        .description("Reports periodicity");
 
         param("Good Range Age", m_args.good_range_age)
         .units(Units::Second)
-        .defaultValue("5");
+        .defaultValue("5")
+        .minimumValue("0");
 
         param("Mini-Packet Delay - Before", m_args.mpk_delay_bef)
         .units(Units::Second)
-        .defaultValue("1.0");
+        .defaultValue("1.0")
+        .minimumValue("0");
 
         param("Mini-Packet Delay - After", m_args.mpk_delay_aft)
         .units(Units::Second)
-        .defaultValue("0.5");
+        .defaultValue("0.5")
+        .minimumValue("0");
 
         param("Range Reports Delay - Before", m_args.report_delay_bef)
         .units(Units::Second)
-        .defaultValue("0.5");
+        .defaultValue("0.5")
+        .minimumValue("0");
 
         param("Range Reports Delay - After", m_args.report_delay_aft)
         .units(Units::Second)
-        .defaultValue("1.0");
+        .defaultValue("1.0")
+        .minimumValue("0");
 
         param("Turn Around Time", m_args.turn_around_time)
         .units(Units::Millisecond)
-        .defaultValue("20");
+        .defaultValue("20")
+        .minimumValue("0");
 
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
@@ -313,16 +345,16 @@ namespace Sensors
         m_states[STA_ERR_SRC].state = IMC::EntityState::ESTA_ERROR;
         m_states[STA_ERR_SRC].description = DTR("failed to set modem address");
 
+	m_stop_reports = false;
+
         // Register handlers.
+        bind<IMC::EstimatedState>(this);
+        bind<IMC::FuelLevel>(this);
         bind<IMC::LblConfig>(this);
+        bind<IMC::PlanControlState>(this);
         bind<IMC::QueryEntityState>(this);
         bind<IMC::SoundSpeed>(this);
-        bind<IMC::EstimatedState>(this);
-      }
-
-      ~Task(void)
-      {
-        Task::onResourceRelease();
+        bind<IMC::VehicleMedium>(this);
       }
 
       void
@@ -344,6 +376,7 @@ namespace Sensors
       onUpdateParameters(void)
       {
         m_sound_speed = m_args.sound_speed_def;
+        m_report_timer.setTop(m_args.report_period);
       }
 
       void
@@ -574,6 +607,19 @@ namespace Sensors
           pc.plan_id.assign(plan_name);
           pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
           dispatch(pc);
+
+          war(DTR("start plan detected"));
+
+          std::string cmd = String::str("$CCMUC,%u,%u,%04x\r\n", m_addr, src, c_code_plan_ack);
+          processInput(m_args.mpk_delay_bef);
+          m_uart->write(cmd.c_str(), cmd.size());
+          processInput(c_mpk_duration + m_args.mpk_delay_aft);
+
+          if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
+            inf(DTR("plan acknowledged"));
+          else
+            inf(DTR("failed to acknowledge plan start"));
+
           return;
         }
 
@@ -594,13 +640,9 @@ namespace Sensors
           processInput(c_mpk_duration + m_args.mpk_delay_aft);
 
           if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
-          {
             inf(DTR("restart request acknowledged"));
-          }
           else
-          {
             inf(DTR("failed to acknowledge restart request"));
-          }
 
           IMC::RestartSystem restart;
           dispatch(restart);
@@ -608,6 +650,7 @@ namespace Sensors
         else if (value == c_code_abort)
         {
           war(DTR("acoustic abort detected"));
+          m_abort.setDestination(getSystemId());
           dispatch(m_abort);
 
           std::string cmd = String::str("$CCMUC,%u,%u,%04x\r\n", m_addr, src, c_code_abort_ack);
@@ -631,7 +674,7 @@ namespace Sensors
       {
         m_range.setTimeStamp();
 
-        for (unsigned i = 0; i < c_max_beacons; ++i)
+        for (unsigned i = 0; i < Navigation::c_max_transponders; ++i)
         {
           try
           {
@@ -668,7 +711,7 @@ namespace Sensors
       }
 
       void
-      processInput(double timeout = 1.0)
+      processInput(double timeout = c_cmd_reply_tout)
       {
         double deadline = Clock::get() + timeout;
 
@@ -676,7 +719,7 @@ namespace Sensors
         {
           consumeMessages();
 
-          if (m_uart->hasNewData(0.01) != IOMultiplexing::PRES_OK)
+          if (!Poll::poll(*m_uart, 0.01))
             continue;
 
           m_uart->readString(m_bfr, c_bfr_size);
@@ -717,7 +760,7 @@ namespace Sensors
       ping(void)
       {
         std::vector<unsigned> freqs;
-        for (unsigned i = 0; i < c_max_beacons; ++i)
+        for (unsigned i = 0; i < Navigation::c_max_transponders; ++i)
         {
           if (i < m_beacons.size())
             freqs.push_back(m_beacons[i].tx_frequency);
@@ -730,7 +773,7 @@ namespace Sensors
                                       m_args.rx_length, m_args.ping_tout,
                                       freqs[0], freqs[1], freqs[2], freqs[3]);
 
-        m_uart->write(cmd.c_str());
+        m_uart->writeString(cmd.c_str());
 
         processInput(m_args.ping_period);
         if (consumeResult(RS_PNG_ACKD) && consumeResult(RS_PNG_TIME))
@@ -750,14 +793,15 @@ namespace Sensors
         double lon;
         Coordinates::toWGS84(m_estate, lat, lon);
 
-        double depth = m_estate.depth;
-        double yaw = m_estate.psi;
-
         float f_lat = lat;
         float f_lon = lon;
-        float f_depth = depth;
-        float f_yaw = yaw;
+        uint8_t u_depth = (uint8_t)m_estate.depth;
+        int16_t i_yaw = (int16_t)(m_estate.psi * 100.0);
+        int16_t i_alt = (int16_t)(m_estate.alt * 10.0);
         uint16_t ranges[2] = {0};
+        uint8_t fuel = (uint8_t)m_fuel_level;
+        uint8_t conf = (uint8_t)m_fuel_conf;
+        int8_t prog = (int8_t)m_progress;
 
         if (m_beacons.size() == 2)
         {
@@ -768,19 +812,23 @@ namespace Sensors
         std::vector<char> msg(32, 0);
         std::memcpy(&msg[0], &f_lat, 4);
         std::memcpy(&msg[4], &f_lon, 4);
-        std::memcpy(&msg[8], &f_depth, 4);
-        std::memcpy(&msg[12], &f_yaw, 4);
-        std::memcpy(&msg[16], &ranges[0], 2);
-        std::memcpy(&msg[18], &ranges[1], 2);
+        std::memcpy(&msg[8], &u_depth, 1);
+        std::memcpy(&msg[9], &i_yaw, 2);
+        std::memcpy(&msg[11], &i_alt, 2);
+        std::memcpy(&msg[13], &ranges[0], 2);
+        std::memcpy(&msg[15], &ranges[1], 2);
+        std::memcpy(&msg[17], &prog, 1);
+        std::memcpy(&msg[18], &fuel, 1);
+        std::memcpy(&msg[19], &conf, 1);
 
         std::string hex = String::toHex(msg);
         std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n",
                                       m_addr, 0, hex.c_str());
-        m_uart->write(cmd.c_str());
+        m_uart->writeString(cmd.c_str());
 
         std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n",
                                       m_addr, 0);
-        m_uart->write(cyc.c_str());
+        m_uart->writeString(cyc.c_str());
 
         int i = 0;
         for (i = 0; i < 7; ++i)
@@ -875,6 +923,28 @@ namespace Sensors
       }
 
       void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        if (msg->medium == IMC::VehicleMedium::VM_GROUND)
+	  m_stop_reports = true;
+	else
+	  m_stop_reports = false;
+      }
+
+      void
+      consume(const IMC::PlanControlState* msg)
+      {
+        m_progress = msg->plan_progress;
+      }
+
+      void
+      consume(const IMC::FuelLevel* msg)
+      {
+        m_fuel_level = msg->value;
+        m_fuel_conf = msg->confidence;
+      }
+
+      void
       reportRanges(double now)
       {
         bool first = true;
@@ -917,10 +987,24 @@ namespace Sensors
       void
       onMain(void)
       {
-        m_last_range_report = Clock::get();
+        m_report_timer.reset();
 
         while (!stopping())
         {
+          // Report.
+          if (m_args.report && !m_stop_reports)
+          {
+            if (m_report_timer.overflow())
+            {
+              m_report_timer.reset();
+
+              if (m_args.report_verbose)
+                sendVerboseReport();
+              else
+                reportRanges(Clock::get());
+            }
+          }
+
           if (m_beacons.empty())
           {
             waitForMessages(1.0);
@@ -934,19 +1018,6 @@ namespace Sensors
           if (isActive())
           {
             ping();
-
-            if (m_args.report)
-            {
-              double now = Clock::get();
-              if (now > (m_last_range_report + m_args.report_period))
-              {
-                m_last_range_report = now;
-                if (m_args.report_verbose)
-                  sendVerboseReport();
-                else
-                  reportRanges(now);
-              }
-            }
           }
           else
           {

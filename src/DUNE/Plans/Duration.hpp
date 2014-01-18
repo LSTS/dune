@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -44,7 +44,7 @@ namespace DUNE
     //! Average amount of time it takes to get a gps fix
     static const float c_fix_time = 7.0f;
     //! Typical pitch value for elevator maneuver
-    static const float c_rated_pitch = (float)Math::Angles::radians(15.0f);
+    static const float c_rated_pitch = 0.2617993877991494f;
 
     // Export DLL Symbol.
     class DUNE_DLL_SYM Duration;

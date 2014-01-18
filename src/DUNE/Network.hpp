@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -41,8 +41,6 @@ namespace DUNE
 #include <DUNE/Network/Exceptions.hpp>
 #include <DUNE/Network/UDPSocket.hpp>
 #include <DUNE/Network/TCPSocket.hpp>
-#include <DUNE/Network/HTTPServer.hpp>
-#include <DUNE/Network/HTTPRequestHandler.hpp>
 #include <DUNE/Network/Interface.hpp>
 
 #endif

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -133,9 +133,24 @@ namespace Control
         void
         onUpdateParameters(void)
         {
-          m_args.pitch_ref = Angles::radians(m_args.pitch_ref);
-          m_args.max_hrate = Angles::radians(m_args.max_hrate);
-          m_args.horfin_pos = Angles::radians(m_args.horfin_pos);
+          if (paramChanged(m_args.pitch_ref))
+            m_args.pitch_ref = Angles::radians(m_args.pitch_ref);
+
+          if (paramChanged(m_args.max_hrate))
+            m_args.max_hrate = Angles::radians(m_args.max_hrate);
+
+          if (paramChanged(m_args.horfin_pos))
+            m_args.horfin_pos = Angles::radians(m_args.horfin_pos);
+
+          if (paramChanged(m_args.force_torque_control))
+          {
+            if (!m_args.force_torque_control && m_torque_control)
+            {
+              debug("disabling torque control");
+              deactivateTorqueControl();
+            }
+          }
+
           m_args.max_thrust = Math::trimValue(m_args.max_thrust, 0.0, 1.0);
           m_last_estate.setTop(m_args.estate_tout);
         }
@@ -249,6 +264,20 @@ namespace Control
           m_horfin = m_args.horfin_pos;
 
           m_torque_control = true;
+        }
+
+        //! Deactivate direct torque control
+        void
+        deactivateTorqueControl(void)
+        {
+          // Change active controllers
+          disableControlLoops(IMC::CL_TORQUE);
+
+          enableControlLoops(IMC::CL_PITCH | IMC::CL_YAW_RATE);
+
+          m_hrate = 0;
+
+          m_torque_control = false;
         }
 
         //! Compute and dispatch control commands

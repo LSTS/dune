@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -92,36 +92,36 @@ macro(dune_probe_os)
       set(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS} -D_WIN32_WINNT=0x0501")
 
       set(DUNE_PTHREADS_WIN32_FILES
-        external/libraries/pthreads-win32/attr.c
-        external/libraries/pthreads-win32/barrier.c
-        external/libraries/pthreads-win32/cancel.c
-        external/libraries/pthreads-win32/cleanup.c
-        external/libraries/pthreads-win32/condvar.c
-        external/libraries/pthreads-win32/create.c
-        external/libraries/pthreads-win32/dll.c
-        external/libraries/pthreads-win32/errno.c
-        external/libraries/pthreads-win32/exit.c
-        external/libraries/pthreads-win32/fork.c
-        external/libraries/pthreads-win32/global.c
-        external/libraries/pthreads-win32/misc.c
-        external/libraries/pthreads-win32/mutex.c
-        external/libraries/pthreads-win32/nonportable.c
-        external/libraries/pthreads-win32/private.c
-        external/libraries/pthreads-win32/rwlock.c
-        external/libraries/pthreads-win32/sched.c
-        external/libraries/pthreads-win32/semaphore.c
-        external/libraries/pthreads-win32/signal.c
-        external/libraries/pthreads-win32/spin.c
-        external/libraries/pthreads-win32/sync.c
-        external/libraries/pthreads-win32/tsd.c)
+        vendor/libraries/pthreads-win32/attr.c
+        vendor/libraries/pthreads-win32/barrier.c
+        vendor/libraries/pthreads-win32/cancel.c
+        vendor/libraries/pthreads-win32/cleanup.c
+        vendor/libraries/pthreads-win32/condvar.c
+        vendor/libraries/pthreads-win32/create.c
+        vendor/libraries/pthreads-win32/dll.c
+        vendor/libraries/pthreads-win32/errno.c
+        vendor/libraries/pthreads-win32/exit.c
+        vendor/libraries/pthreads-win32/fork.c
+        vendor/libraries/pthreads-win32/global.c
+        vendor/libraries/pthreads-win32/misc.c
+        vendor/libraries/pthreads-win32/mutex.c
+        vendor/libraries/pthreads-win32/nonportable.c
+        vendor/libraries/pthreads-win32/private.c
+        vendor/libraries/pthreads-win32/rwlock.c
+        vendor/libraries/pthreads-win32/sched.c
+        vendor/libraries/pthreads-win32/semaphore.c
+        vendor/libraries/pthreads-win32/signal.c
+        vendor/libraries/pthreads-win32/spin.c
+        vendor/libraries/pthreads-win32/sync.c
+        vendor/libraries/pthreads-win32/tsd.c)
 
-      set(CMAKE_REQUIRED_INCLUDES ${PROJECT_SOURCE_DIR}/external/libraries/pthreads-win32)
-      include_directories(${PROJECT_SOURCE_DIR}/external/libraries/pthreads-win32)
+      set(CMAKE_REQUIRED_INCLUDES ${PROJECT_SOURCE_DIR}/vendor/libraries/pthreads-win32)
+      include_directories(${PROJECT_SOURCE_DIR}/vendor/libraries/pthreads-win32)
 
       set_source_files_properties(${DUNE_PTHREADS_WIN32_FILES}
         PROPERTIES COMPILE_FLAGS "-DPTW32_BUILD -DHAVE_CONFIG_H")
 
-      list(APPEND DUNE_EXTERNAL_FILES ${DUNE_PTHREADS_WIN32_FILES})
+      list(APPEND DUNE_VENDOR_FILES ${DUNE_PTHREADS_WIN32_FILES})
 
       set(DUNE_SYS_HAS_PTHREAD_H 1)
       set(DUNE_SYS_HAS_PTHREAD 1)

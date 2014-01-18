@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -118,11 +118,6 @@ namespace Actuators
         bind<IMC::SetThrusterActuation>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onResourceAcquisition(void)
       {
@@ -155,17 +150,17 @@ namespace Actuators
       bool
       sendCommand(const char* cmd, char* bfr, unsigned bfr_len)
       {
-        m_uart->write(cmd);
+        m_uart->writeString(cmd);
 
         if (m_args.uart_echo)
         {
-          if (m_uart->hasNewData(0.2) != IOMultiplexing::PRES_OK)
+          if (!Poll::poll(*m_uart, 0.2))
             return false;
 
           m_uart->readString(bfr, bfr_len);
         }
 
-        if (m_uart->hasNewData(0.2) != IOMultiplexing::PRES_OK)
+        if (!Poll::poll(*m_uart, 0.2))
           return false;
 
         m_uart->readString(bfr, bfr_len);

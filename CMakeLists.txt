@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -41,10 +41,10 @@ project("DUNE")
 set(PROJECT_NAME "DUNE: Unified Navigation Environment")
 set(PROJECT_SHORT_NAME "DUNE")
 set(PROJECT_VENDOR "Universidade do Porto - LSTS")
-set(PROJECT_COPYRIGHT "Copyright (C) 2007-2013 - ${PROJECT_VENDOR}")
+set(PROJECT_COPYRIGHT "Copyright (C) 2007-2014 - ${PROJECT_VENDOR}")
 set(PROJECT_CONTACT "DUNE <dune@lsts.pt>")
 set(PROJECT_VERSION_MAJ "2")
-set(PROJECT_VERSION_MIN "3")
+set(PROJECT_VERSION_MIN "4")
 set(PROJECT_VERSION_PAT "0")
 set(PROJECT_VERSION_RCN "1")
 
@@ -62,7 +62,6 @@ set(PROJECT_VERSION_PARTS
 # This directory will hold generated files.
 set(DUNE_GENERATED ${CMAKE_BINARY_DIR}/DUNEGeneratedFiles)
 
-include(${PROJECT_SOURCE_DIR}/cmake/Git.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/Macros.cmake)
 
 # Define options.
@@ -79,17 +78,11 @@ dune_option(GUI "Include Qt based GUI")
 dune_option(DC1394 "Enable support for libdc1394")
 dune_option(V4L2 "Enable support for libv4l2")
 dune_option(JS "Enable support for SpiderMonkey javascript engine")
-dune_option(JAI "Enable JAI camera support")
-dune_option(FFMPEG "Enable FFmpeg support")
-dune_option(H264 "Enable H264 support")
+dune_option(XENETH "Enable support for the Xeneth SDK")
+dune_option(BLUEVIEW "Enable support for the BlueView SDK")
+dune_option(OPENCV "Enable support for OpenCV")
 
 # Internationalization.
-if(DUNE_SYS_HAS_GETTEXT)
-  if(NOT DEFINED I18N)
-    set(I18N 1)
-  endif(NOT DEFINED I18N)
-  dune_option(I18N "Enable support for internationalization")
-endif(DUNE_SYS_HAS_GETTEXT)
 include(${PROJECT_SOURCE_DIR}/cmake/I18N.cmake)
 
 #############################################################################
@@ -165,6 +158,12 @@ else(SHARED)
   set(DUNE_STATIC 1)
 endif(SHARED)
 
+if(TLSF)
+  set(DUNE_USING_TLSF 1 CACHE INTERNAL "TLSF allocator")
+else(TLSF)
+  set(DUNE_USING_TLSF 0 CACHE INTERNAL "TLSF allocator")
+endif(TLSF)
+
 file(GLOB_RECURSE DUNE_CORE_SOURCES "${PROJECT_SOURCE_DIR}/src/DUNE/*.cpp")
 file(GLOB_RECURSE DUNE_CORE_HEADERS "${PROJECT_SOURCE_DIR}/src/DUNE/*.hpp"
   "${PROJECT_SOURCE_DIR}/src/DUNE/*.def")
@@ -176,6 +175,8 @@ configure_file(${PROJECT_SOURCE_DIR}/src/DUNE/Config.hpp.in
 
 install(FILES ${DUNE_GENERATED}/src/DUNE/Config.hpp
   DESTINATION include/DUNE)
+
+include(${PROJECT_SOURCE_DIR}/cmake/Version.cmake)
 
 set_source_files_properties(${DUNE_CORE_SOURCES}
   PROPERTIES COMPILE_FLAGS "${DUNE_CXX_FLAGS} ${DUNE_CXX_FLAGS_STRICT}")
@@ -196,20 +197,20 @@ foreach(header ${DUNE_CORE_HEADERS})
 endforeach(header ${DUNE_CORE_HEADERS})
 
 # Bundled Libraries.
-file(GLOB extlibs ${PROJECT_SOURCE_DIR}/external/libraries/*/Library.cmake)
+file(GLOB extlibs ${PROJECT_SOURCE_DIR}/vendor/libraries/*/Library.cmake)
 foreach(extlib ${extlibs})
   include(${extlib})
 endforeach(extlib ${extlibs})
 
 # Private Libraries.
-file(GLOB extlibs ${PROJECT_SOURCE_DIR}/private/external/libraries/*/Library.cmake)
+file(GLOB extlibs ${PROJECT_SOURCE_DIR}/private/vendor/libraries/*/Library.cmake)
 foreach(extlib ${extlibs})
   include(${extlib})
 endforeach(extlib ${extlibs})
 
-include_directories(${DUNE_GENERATED}/src ${PROJECT_SOURCE_DIR}/src ${DUNE_EXTERNAL_INCS_DIR})
-link_directories(${DUNE_EXTERNAL_LIBS_DIR})
-set(DUNE_CORE_FILES ${DUNE_CORE_SOURCES} ${DUNE_EXTERNAL_FILES})
+include_directories(${DUNE_GENERATED}/src ${PROJECT_SOURCE_DIR}/src ${DUNE_VENDOR_INCS_DIR})
+link_directories(${DUNE_VENDOR_LIBS_DIR})
+set(DUNE_CORE_FILES ${DUNE_CORE_SOURCES} ${DUNE_VENDOR_FILES})
 
 if(DUNE_SHARED)
   message(STATUS "Building shared library")
@@ -227,6 +228,8 @@ else(DUNE_SHARED)
     endif(DUNE_CPU_32B)
   endif(DUNE_CXX_MICROSOFT AND DUNE_CPU_X86)
 endif(DUNE_SHARED)
+
+add_dependencies(dune-core dune-version)
 
 ##########################################################################
 #                          Tasks                                         #
@@ -253,7 +256,7 @@ set_source_files_properties(src/Main/Daemon.cpp
   PROPERTIES
   COMPILE_FLAGS "${DUNE_CXX_FLAGS}")
 target_link_libraries(dune dune-core ${DUNE_SYS_LIBS} ${DUNE_STATIC_TASKS}
-  ${DUNE_EXTERNAL_LIBS})
+  ${DUNE_VENDOR_LIBS})
 
 # Launcher.
 add_executable(dune-launcher
@@ -263,7 +266,7 @@ set_source_files_properties(src/Main/Launcher.cpp
   PROPERTIES
   COMPILE_FLAGS "${DUNE_CXX_FLAGS}")
 target_link_libraries(dune-launcher dune-core ${DUNE_SYS_LIBS}
-  ${DUNE_EXTERNAL_LIBS})
+  ${DUNE_VENDOR_LIBS})
 
 ##########################################################################
 #                          Simple programs                               #
@@ -277,7 +280,7 @@ macro(dune_program source exclude)
     set(DUNE_EXTRA_EXE ${DUNE_EXTRA_EXE} ${executable})
   endif(${exclude})
   set_target_properties(${executable} PROPERTIES COMPILE_FLAGS "${DUNE_CXX_FLAGS}")
-  target_link_libraries(${executable} dune-core ${DUNE_SYS_LIBS} ${DUNE_EXTERNAL_LIBS})
+  target_link_libraries(${executable} dune-core ${DUNE_SYS_LIBS} ${DUNE_VENDOR_LIBS})
 endmacro(dune_program source)
 
 file(GLOB programs programs/*.cpp)
@@ -399,7 +402,7 @@ if(TESTS)
     set_target_properties(${executable} PROPERTIES COMPILE_FLAGS
       "${DUNE_CXX_FLAGS}")
     target_link_libraries(${executable} dune-core ${DUNE_SYS_LIBS}
-      ${DUNE_EXTERNAL_LIBS})
+      ${DUNE_VENDOR_LIBS})
     ADD_TEST(${executable} ${executable})
   endmacro(dune_test source)
 

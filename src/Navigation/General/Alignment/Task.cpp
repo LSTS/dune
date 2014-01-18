@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -133,15 +133,17 @@ namespace Navigation
           .description("Entity label of the IMU");
 
           param("Calibration Time", m_args.time)
+          .defaultValue("20")
           .units(Units::Second)
           .minimumValue("20")
-          .defaultValue("20")
+          .maximumValue("1200")
           .description("Minimum amount of time that the vehicle has to perform static orientation calibration");
 
           param("Delay Time", m_args.delay)
+          .defaultValue("5")
           .units(Units::Second)
           .minimumValue("5")
-          .defaultValue("5")
+          .maximumValue("60")
           .description("Delay time to avoid using initial noisier IMU booting data.");
 
           param("Watchdog", m_args.wdog)
@@ -152,10 +154,13 @@ namespace Navigation
 
           param("Moving Average Samples", m_args.avg_samples)
           .defaultValue("10")
+          .minimumValue("5")
+          .maximumValue("20")
           .description("Number of moving average samples to smooth acceleration vector");
 
           param("Minimum Std Dev for Motion Detection", m_args.std)
           .defaultValue("0.2")
+          .minimumValue("0.1")
           .description("Minimum standard deviation value for motion detection");
 
           param("Start At Boot", m_args.start_at_boot)
@@ -239,7 +244,7 @@ namespace Navigation
           else
           {
             if (getEntityState() == IMC::EntityState::ESTA_FAULT)
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATING);
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ALIGNING);
           }
 
           m_acc_x += msg->x;
@@ -274,7 +279,7 @@ namespace Navigation
             }
           }
 
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATING);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ALIGNING);
 
           if (!m_delay.overflow())
             return;
@@ -288,13 +293,13 @@ namespace Navigation
           {
             calibrate();
             dispatch(m_euler);
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATED);
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ALIGNED);
             m_calibrated = true;
             reset();
 
             IMC::DevCalibrationState state;
             state.step_number = 1;
-            state.step = DTR(Status::getString(Status::CODE_CALIBRATED));
+            state.step = DTR(Status::getString(Status::CODE_ALIGNED));
             state.total_steps = 2;
             state.flags = (IMC::DevCalibrationState::DCS_PREVIOUS_NOT_SUPPORTED |
                            IMC::DevCalibrationState::DCS_NEXT_NOT_SUPPORTED |
@@ -461,10 +466,10 @@ namespace Navigation
           // Convert DCM to Euler Angles.
           Matrix euler = transpose(dcm).toEulerAngles();
 
-          debug("Result: %f | %f | %f",
-                Angles::degrees(euler(0)),
-                Angles::degrees(euler(1)),
-                Angles::degrees(euler(2)));
+          spew("Result: %f | %f | %f",
+               Angles::degrees(euler(0)),
+               Angles::degrees(euler(1)),
+               Angles::degrees(euler(2)));
 
           m_euler.phi = euler(0);
           m_euler.theta = euler(1);

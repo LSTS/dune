@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -127,17 +127,15 @@ namespace Simulators
         bind<IMC::SimulatedState>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       //! Update parameters
       void
       onUpdateParameters(void)
       {
-        m_args.max_angle = Angles::radians(m_args.max_angle);
-        m_args.max_rate = Angles::radians(m_args.max_rate);
+        if (paramChanged(m_args.max_angle))
+          m_args.max_angle = Angles::radians(m_args.max_angle);
+
+        if (paramChanged(m_args.max_rate))
+          m_args.max_rate = Angles::radians(m_args.max_rate);
       }
 
       //! Acquire resources

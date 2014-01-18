@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -32,6 +32,7 @@
 
 // DUNE headers.
 #include <DUNE/Daemon.hpp>
+#include <DUNE/Version.hpp>
 #include <DUNE/I18N.hpp>
 #include <DUNE/Tasks/Factory.hpp>
 #include <DUNE/Tasks/Manager.hpp>
@@ -222,7 +223,7 @@ namespace DUNE
     os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n"
        << "<config"
        << " format=\"1\""
-       << " version=\"" << DUNE_VERSION_STR << " (" << DUNE_GIT_SHA1_STR << ")\""
+       << " version=\"" << getFullVersion() << "\""
        << " system=\"" << getSystemName() << "\""
        << " i18n=\"" << I18N::getLanguage() << "\">\n";
 
@@ -234,13 +235,26 @@ namespace DUNE
   void
   Daemon::dispatchPeriodic(void)
   {
-    // Dispatch CPU usage.
+    // Dispatch global CPU usage.
     IMC::CpuUsage cpu_usage;
     int value = m_sys_resources.getProcessorUsage();
     if (value >= 0 && value <= 100)
     {
       cpu_usage.value = value;
       dispatch(cpu_usage);
+    }
+
+    // Dispatch per thread CPU usage.
+    std::map<std::string, Task*>::iterator itr = m_tman->begin();
+    for ( ; itr != m_tman->end(); ++itr)
+    {
+      value = itr->second->getProcessorUsage();
+      if (value >= 0 && value <= 100)
+      {
+        cpu_usage.setSourceEntity(itr->second->getEntityId());
+        cpu_usage.value = value;
+        dispatch(cpu_usage);
+      }
     }
 
     // Dispatch available storage.

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -50,8 +50,6 @@ namespace Maneuver
 
     struct Task: public Maneuvers::FollowTrajectory
     {
-      //! Flag on whether or not the time in the waypoints shall be disregarded or not
-      bool m_ignore_time;
       //! FollowTrajectory maneuver's speed
       IMC::DesiredSpeed m_maneuver_speed;
       //! Last actuation sent to the motor (used to compute actuation step
@@ -103,35 +101,24 @@ namespace Maneuver
         Maneuvers::FollowTrajectory::onUpdateParameters();
       }
 
-      void
-      onInit(const IMC::FollowTrajectory* maneuver)
+      bool
+      canInit(const IMC::FollowTrajectory* maneuver)
       {
-        size_t n = trajectory_points();
-
         m_maneuver_speed.value = maneuver->speed;
         m_maneuver_speed.speed_units = maneuver->speed_units;
 
-        m_ignore_time = false;
-
-        // if at least one of the waypoints has a time lower than zero
-        // then trajectory's time constraints will be disregarded
-        for (size_t i = 0; i < n; i++)
+        if (!m_args.mps_control &&
+            (maneuver->speed_units == IMC::SUNITS_METERS_PS))
         {
-          if (point(i).t < 0)
-          {
-            m_ignore_time = true;
-            break;
-          }
+          m_args.mps_control = true;
+          inf(DTR("forcing control in meters per second"));
         }
 
-        if (m_ignore_time)
-          inf(DTR("disregarding trajectory's time constraints"));
-
         // first waypoint in trajectory should have the time 0 (zero)
-        if (!isFeasible() && !m_ignore_time)
+        if (!isFeasible())
         {
           signalError(DTR("provided trajectory is not feasible by the current vehicle!"));
-          return;
+          return false;
         }
 
         // Initialize member variables at zero
@@ -139,6 +126,8 @@ namespace Maneuver
         m_done = false;
         m_curr = 0;
         m_last_actuation = 0;
+
+        return true;
       }
 
       void
@@ -170,67 +159,65 @@ namespace Maneuver
         // the chosen ground speed is simply the distance between the points
         // divided by the time difference between them
 
-        // if time constraints are ignored just throw the maneuver speed
-        if (m_ignore_time)
+        // if this is the first waypoint
+        if (!m_curr)
         {
-          desiredSpeed(m_maneuver_speed.value, m_maneuver_speed.speed_units);
-        }
-        else
-        {
-          // if this is the first waypoint
-          if (!m_curr)
-          {
-            double value = dist(m_curr, m_curr + 1) / (point(m_curr + 1).t - point(m_curr).t);
+          double value = speed(m_curr);
 
-            if (m_args.mps_control)
-            {
-              desiredSpeed(value, IMC::SUNITS_METERS_PS);
-            }
-            else
-            {
-              double actuation = Math::linearInterpolation(LinIntParam<double>(m_args.min_actuation,
-                                                                               m_args.max_actuation,
-                                                                               m_args.min_speed, m_args.max_speed,
-                                                                               value));
-              desiredSpeed(actuation, IMC::SUNITS_PERCENTAGE);
-              m_last_actuation = actuation;
-            }
+          if (m_args.mps_control)
+          {
+            desiredSpeed(value, IMC::SUNITS_METERS_PS);
           }
           else
           {
-            double delay = Clock::get() - m_zero_time - point(m_curr).t;
+            LinIntParam<double> lip(m_args.min_actuation,
+                                    m_args.max_actuation,
+                                    m_args.min_speed, m_args.max_speed,
+                                    value);
 
-            double value;
+            double actuation = Math::linearInterpolation(lip);
+            desiredSpeed(actuation, IMC::SUNITS_PERCENTAGE);
+            m_last_actuation = actuation;
+          }
+        }
+        else
+        {
+          double delay = Clock::get() - m_zero_time - point(m_curr).t;
 
-            // test if the delay/advance is between the desired bounds
-            if (std::fabs(delay) <= m_args.timegap)
-              value = dist(m_curr, m_curr + 1) / (point(m_curr + 1).t - point(m_curr).t);
-            else // if not then compute proper speed to handle delay/advance
-            {
-              if (point(m_curr + 1).t - point(m_curr).t - delay <= 0)
-                value = m_args.max_speed;
-              else
-                value = dist(m_curr, m_curr + 1) / (point(m_curr + 1).t - point(m_curr).t - delay);
-            }
+          double value;
 
-            value = trimValue(value, m_args.min_speed, m_args.max_speed);
-
-            if (m_args.mps_control)
-              desiredSpeed(value, IMC::SUNITS_METERS_PS);
+          // test if the delay/advance is between the desired bounds
+          if (std::fabs(delay) <= m_args.timegap)
+          {
+            value = speed(m_curr);
+          }
+          else // if not then compute proper speed to handle delay/advance
+          {
+            if (point(m_curr + 1).t - point(m_curr).t - delay <= 0)
+              value = m_args.max_speed;
             else
-            {
-              // use interpolation
-              Math::LinIntParam<double> lip(m_args.min_actuation, m_args.max_actuation,
-                                            m_args.min_speed, m_args.max_speed,
-                                            value);
-              double actuation = Math::linearInterpolation(lip);
-              actuation = trimValue(actuation,
-                                    m_last_actuation - m_args.act_step,
-                                    m_last_actuation + m_args.act_step);
+              value = dist(m_curr, m_curr + 1) / (point(m_curr + 1).t - point(m_curr).t - delay);
+          }
 
-              desiredSpeed(actuation, IMC::SUNITS_PERCENTAGE);
-              m_last_actuation = actuation;
-            }
+          value = trimValue(value, m_args.min_speed, m_args.max_speed);
+
+          if (m_args.mps_control)
+          {
+            desiredSpeed(value, IMC::SUNITS_METERS_PS);
+          }
+          else
+          {
+            // use interpolation
+            Math::LinIntParam<double> lip(m_args.min_actuation, m_args.max_actuation,
+                                          m_args.min_speed, m_args.max_speed,
+                                          value);
+            double actuation = Math::linearInterpolation(lip);
+            actuation = trimValue(actuation,
+                                  m_last_actuation - m_args.act_step,
+                                  m_last_actuation + m_args.act_step);
+
+            desiredSpeed(actuation, IMC::SUNITS_PERCENTAGE);
+            m_last_actuation = actuation;
           }
         }
 
@@ -249,19 +236,39 @@ namespace Maneuver
         {
           // testing if the first waypoint is timed at zero
           if (point(0).t != 0.0)
+          {
+            err(DTR("first point must be timed at 0.0"));
             return false;
+          }
 
           // testing for two dimensional trajectories
           for (size_t i = 1; i < n; i++)
           {
-            double required_speed = dist(i, i - 1) / (point(i).t - point(i - 1).t);
+            double required_speed = speed(i - 1);
 
-            if (required_speed > m_args.max_speed || point(i).t - point(i - 1).t < 0)
+            if (required_speed > m_args.max_speed)
+            {
+              err(DTR("required speed is above the maximum speed allowed"));
               return false;
+            }
+
+            if (point(i).t - point(i - 1).t <= 0)
+            {
+              err(DTR("time difference between %d and %d is less than or equal to zero"),
+                  (int)i, (int)i - 1);
+              return false;
+            }
           }
         }
 
         return true;
+      }
+
+      //! Function for computing the speed for travelling to the next point
+      inline double
+      speed(int curr)
+      {
+        return dist(curr, curr + 1) / (point(curr + 1).t - point(curr).t);
       }
 
       //! Function for computing the horizontal distance between two points in the trajectory

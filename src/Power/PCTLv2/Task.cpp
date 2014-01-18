@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -182,11 +182,14 @@ namespace Power
         param("Minimum Operating Voltage", m_args.vol_min)
         .units(Units::Volt)
         .defaultValue("22")
+        .minimumValue("20")
+        .maximumValue("25")
         .description("Once this value is hit the system will enter emergency mode");
 
         param("Watchdog Timeout", m_args.wdog_tout)
         .units(Units::Second)
         .defaultValue("2.0")
+        .minimumValue("1.0")
         .description("Watchdog timeout");
 
         param("LED - Names", m_args.leds)
@@ -227,6 +230,8 @@ namespace Power
           param(option, m_args.leak_elabels[i]);
         }
 
+        m_pwr_op.setDestination(getSystemId());
+
         // Register handler routines.
         bind<IMC::QueryPowerChannelState>(this);
         bind<IMC::PowerChannelControl>(this);
@@ -262,6 +267,14 @@ namespace Power
             delete m_adcs[i];
 
           m_adcs[i] = IMC::Factory::produce(m_args.adc_messages[i]);
+
+          try
+          {
+            unsigned eid = resolveEntity(m_args.adc_elabels[i]);
+            m_adcs[i]->setSourceEntity(eid);
+          }
+          catch (...)
+          { }
         }
 
         m_channels.clear();
@@ -476,7 +489,7 @@ namespace Power
       void
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
-        inf(DTR("version: %u.%u.%u"), major, minor, patch);
+        inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
       }
 
       //! Wait for command.
@@ -593,6 +606,9 @@ namespace Power
         // Handle requests to main power channel.
         if (msg->name == m_args.pwr_main)
         {
+          if (msg->getDestination() != getSystemId())
+            return;
+
           if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
           {
             m_proto.sendCommand(CMD_PWR_HLT, 0, 0);

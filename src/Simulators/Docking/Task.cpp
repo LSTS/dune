@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -165,21 +165,25 @@ namespace Simulators
         bind<IMC::SimulatedState>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onUpdateParameters(void)
       {
         debug("dock coordinates lat: %0.6f, lon: %0.6f", m_args.lat, m_args.lon);
 
-        m_args.lat = Angles::radians(m_args.lat);
-        m_args.lon = Angles::radians(m_args.lon);
-        m_args.bearing = Angles::radians(m_args.bearing);
-        m_args.brate_stddev = Angles::radians(m_args.brate_stddev);
-        m_args.max_bearing_dev = Angles::radians(m_args.max_bearing_dev);
+        if (paramChanged(m_args.lat))
+          m_args.lat = Angles::radians(m_args.lat);
+
+        if (paramChanged(m_args.lon))
+          m_args.lon = Angles::radians(m_args.lon);
+
+        if (paramChanged(m_args.bearing))
+          m_args.bearing = Angles::radians(m_args.bearing);
+
+        if (paramChanged(m_args.brate_stddev))
+          m_args.brate_stddev = Angles::radians(m_args.brate_stddev);
+
+        if (paramChanged(m_args.max_bearing_dev))
+          m_args.max_bearing_dev = Angles::radians(m_args.max_bearing_dev);
 
         //! Initialize origin and position
         m_origin.depth = m_args.depth;
@@ -268,7 +272,7 @@ namespace Simulators
             (relative.psi < Math::c_half_pi) && // coming from the front
             (aoa > Math::c_half_pi)) // facing the dock
         {
-          inf("Docking successful");
+          inf(DTR("Success"));
         }
       }
 

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -48,45 +48,72 @@ namespace Control
       static const uint32_t c_controllable = IMC::CL_YAW | IMC::CL_YAW_RATE | IMC::CL_SPEED;
       //! Required loops
       static const uint32_t c_required = 0;
+      //! Minimum speed reference
+      static const float c_min_speed = 0.01;
+      //! Loop names
+      static const std::string c_loop_name[] = {DTR_RT("Heading Rate"), DTR_RT("Heading"),
+                                                DTR_RT("Surge"), DTR_RT("Sway")};
+
+      enum Loops
+      {
+        //! Heading Rate Loop
+        LP_HRATE,
+        //! Heading Loop
+        LP_HEADING,
+        //! Surge Loop
+        LP_SURGE,
+        //! Sway Loop
+        LP_SWAY,
+        //! Number of loops
+        LP_MAX_LOOPS
+      };
 
       //! Task arguments
       struct Arguments
       {
+        std::vector<float> gains[LP_MAX_LOOPS];
         bool hrate_bypass;
         unsigned n_thrusters;
-        std::vector<float> heading_gains;
+        float int_heading_limit;
+        float int_hrate_limit;
         float max_hrate;
-        std::vector<float> hrate_gains;
         float max_surge;
-        std::vector<float> surge_gains;
         float max_sway;
-        std::vector<float> sway_gains;
         float max_thrust;
         Matrix tmat;
+        bool stabilize_ground;
+        bool log_parcels;
       };
 
       struct Task: public DUNE::Control::BasicAutopilot
       {
-        //! Heading rate PID controller
-        DiscretePID m_hrate_pid;
-        //! Heading PID controller
-        DiscretePID m_heading_pid;
-        //! Surge PID controller
-        DiscretePID m_surge_pid;
-        //! Sway PID controller
-        DiscretePID m_sway_pid;
-        //! Heading controller heading rate reference
-        IMC::DesiredHeadingRate m_hrate_ref;
+        //! PID controllers
+        DiscretePID m_pid[LP_MAX_LOOPS];
+        //! PID parcels
+        IMC::ControlParcel m_parcels[LP_MAX_LOOPS];
         //! Task Arguments
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::BasicAutopilot(name, ctx, c_controllable, c_required)
         {
-          param("Heading PID Gains", m_args.heading_gains)
-          .defaultValue("")
-          .size(3)
-          .description("PID gains for heading controller");
+          // Load controller gains and integral limits
+          for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
+          {
+            param(c_loop_name[i] + " PID Gains", m_args.gains[i])
+            .defaultValue("")
+            .size(3)
+            .description("PID gains for " + c_loop_name[i] + " controller");
+          }
+
+          param("Heading Integral Limit", m_args.int_heading_limit)
+          .defaultValue("-1.0")
+          .units(Units::DegreePerSecond)
+          .description("Integral limit for heading controller");
+
+          param("Heading Rate Integral Limit", m_args.int_hrate_limit)
+          .defaultValue("-1.0")
+          .description("Integral limit for heading rate controller");
 
           param("Maximum Thrust Actuation", m_args.max_thrust)
           .defaultValue("1.0")
@@ -101,11 +128,6 @@ namespace Control
           .units(Units::DegreePerSecond)
           .description("Maximum admissible heading rate reference for heading controller");
 
-          param("Heading Rate PID Gains", m_args.hrate_gains)
-          .defaultValue("")
-          .size(3)
-          .description("PID gains for heading rate controller");
-
           param("Heading Rate Bypass", m_args.hrate_bypass)
           .defaultValue("false")
           .description("Bypass heading rate controller and send commands straight to thrusters");
@@ -113,16 +135,6 @@ namespace Control
           param("Maximum Surge Reference", m_args.max_surge)
           .defaultValue("1.0")
           .description("Maximum admissible surge speed reference");
-
-          param("Surge PID Gains", m_args.surge_gains)
-          .defaultValue("")
-          .size(3)
-          .description("Surge speed controller PID gains");
-
-          param("Sway PID Gains", m_args.sway_gains)
-          .defaultValue("")
-          .size(3)
-          .description("Sway speed controller PID gains");
 
           param("Maximum Sway Reference", m_args.max_sway)
           .defaultValue("1.0")
@@ -135,6 +147,14 @@ namespace Control
           .defaultValue("")
           .size(12)
           .description("Thrust allocation pseudo inverse matrix");
+
+          param("Stabilize Ground Speeds", m_args.stabilize_ground)
+          .defaultValue("false")
+          .description("If speed reference is zero, control thrusters to keep it zero");
+
+          param("Log PID Parcels", m_args.log_parcels)
+          .defaultValue("true")
+          .description("Log the size of each PID parcel");
         }
 
         void
@@ -142,41 +162,63 @@ namespace Control
         {
           BasicAutopilot::reset();
 
-          m_hrate_pid.reset();
-          m_heading_pid.reset();
-          m_surge_pid.reset();
-          m_sway_pid.reset();
-
-          tal(0.0, 0.0, 0.0);
+          for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
+            m_pid[i].reset();
         }
 
         void
         onResourceInitialization(void)
         {
           BasicAutopilot::onResourceInitialization();
-
-          // Heading control parameters.
-          m_heading_pid.setGains(m_args.heading_gains);
-          m_heading_pid.setOutputLimits(-m_args.max_hrate, m_args.max_hrate);
-
-          // Heading rate control parameters.
-          m_hrate_pid.setGains(m_args.hrate_gains);
-          m_hrate_pid.setOutputLimits(-m_args.max_thrust, m_args.max_thrust);
-
-          // Surge control parameters
-          m_surge_pid.setGains(m_args.surge_gains);
-          m_surge_pid.setOutputLimits(-m_args.max_thrust, m_args.max_thrust);
-
-          // Sway control parameters
-          m_sway_pid.setGains(m_args.sway_gains);
-          m_sway_pid.setOutputLimits(-m_args.max_thrust, m_args.max_thrust);
         }
 
         void
         onUpdateParameters(void)
         {
+          reset();
+
+          if (paramChanged(m_args.int_heading_limit))
+            m_args.int_heading_limit = Angles::radians(m_args.int_heading_limit);
+
+          if (paramChanged(m_args.int_hrate_limit))
+            m_args.int_hrate_limit = Angles::radians(m_args.int_hrate_limit);
+
           // Heading control parameters.
-          m_args.max_hrate = Angles::radians(m_args.max_hrate);
+          if (paramChanged(m_args.max_hrate))
+            m_args.max_hrate = Angles::radians(m_args.max_hrate);
+
+          float output_limits[LP_MAX_LOOPS];
+          output_limits[LP_HRATE] = m_args.max_thrust;
+          output_limits[LP_HEADING] = m_args.max_hrate;
+          output_limits[LP_SURGE] = m_args.max_thrust;
+          output_limits[LP_SWAY] = m_args.max_thrust;
+
+          // Setting pid gains and integral limits
+          for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
+          {
+            m_pid[i].setGains(m_args.gains[i]);
+            m_pid[i].setOutputLimits(-output_limits[i], output_limits[i]);
+
+            // Debug parcels
+            if (m_args.log_parcels)
+              m_pid[i].enableParcels(this, &m_parcels[i]);
+          }
+
+          // Heading control parameters.
+          m_pid[LP_HEADING].setIntegralLimits(m_args.int_heading_limit);
+
+          // Heading rate control parameters.
+          m_pid[LP_HRATE].setIntegralLimits(m_args.int_hrate_limit);
+        }
+
+        void
+        onEntityReservation(void)
+        {
+          if (m_args.log_parcels)
+          {
+            for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
+              m_parcels[i].setSourceEntity(reserveEntity(c_loop_name[i] + " Parcel"));
+          }
         }
 
         void
@@ -194,8 +236,13 @@ namespace Control
         float
         surgeControl(const double timestep, const IMC::EstimatedState* msg)
         {
+          float ref = getSurgeRef();
+
+          if ((std::abs(ref) < c_min_speed) && (!m_args.stabilize_ground))
+            return 0.0;
+
           float cmd;
-          cmd = m_surge_pid.step(timestep, getSurgeRef() - msg->u, 0);
+          cmd = m_pid[LP_SURGE].step(timestep, ref - msg->u, 0);
           return cmd;
         }
 
@@ -203,9 +250,23 @@ namespace Control
         float
         swayControl(const double timestep, const IMC::EstimatedState* msg)
         {
+          float ref = getSwayRef();
+
+          if ((std::abs(ref) < c_min_speed) && (!m_args.stabilize_ground))
+            return 0.0;
+
           float cmd;
-          cmd = m_sway_pid.step(timestep, getSwayRef() - msg->v, 0);
+          cmd = m_pid[LP_SWAY].step(timestep, ref - msg->v, 0);
           return cmd;
+        }
+
+        //! Log Desired heading rate
+        void
+        logDesiredHRate(float value)
+        {
+          IMC::DesiredHeadingRate hrate_ref;
+          hrate_ref.value = value;
+          dispatch(hrate_ref);
         }
 
         //! Compute thrust necessary to comply with desired heading or heading rate
@@ -218,10 +279,11 @@ namespace Control
           {
             case YAW_MODE_HEADING:
               // Outer heading controller
-              cmd = m_heading_pid.step(timestep, Angles::normalizeRadian(getYawRef() - msg->psi));
+              cmd = m_pid[LP_HEADING].step(timestep,
+                                           Angles::normalizeRadian(getYawRef() - msg->psi));
+
               // Log the desired hrate
-              m_hrate_ref.value = cmd;
-              dispatch(m_hrate_ref);
+              logDesiredHRate(cmd);
               break;
             case YAW_MODE_HRATE:
               cmd = getYawRef();
@@ -235,8 +297,8 @@ namespace Control
           }
 
           // Inner heading rate controller
-          float heading_err = cmd - msg->r;
-          cmd = m_hrate_pid.step(timestep, heading_err, 0);
+          float hrate_err = cmd - msg->r;
+          cmd = m_pid[LP_HRATE].step(timestep, hrate_err, 0);
 
           return cmd;
         }
@@ -264,7 +326,9 @@ namespace Control
           dcontrol.x = X;
           dcontrol.y = Y;
           dcontrol.n = N;
-          dcontrol.flags = IMC::DesiredControl::FL_X | IMC::DesiredControl::FL_Y | IMC::DesiredControl::FL_N;
+          dcontrol.flags = (IMC::DesiredControl::FL_X |
+                            IMC::DesiredControl::FL_Y |
+                            IMC::DesiredControl::FL_N);
           dispatch(dcontrol);
         }
       };

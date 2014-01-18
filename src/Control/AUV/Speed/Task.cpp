@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -106,8 +106,8 @@ namespace Control
         IMC::ControlParcel m_parcel_mps;
         //! Control Parcels for rpm controller
         IMC::ControlParcel m_parcel_rpm;
-        //! Control loops last reference time
-        float m_scope_ref;
+        //! Control loops last reference
+        uint32_t m_scope_ref;
         //! Task arguments
         Arguments m_args;
 
@@ -115,7 +115,7 @@ namespace Control
           DUNE::Tasks::Task(name, ctx),
           m_u_active(false),
           m_previous_rpm(0.0),
-          m_scope_ref(0.0)
+          m_scope_ref(0)
         {
           param("Hardware RPMs Control", m_args.hardrpms)
           .defaultValue("true")
@@ -187,6 +187,18 @@ namespace Control
         }
 
         void
+        onActivation(void)
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        }
+
+        void
+        onDeactivation(void)
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        }
+
+        void
         onResourceInitialization(void)
         {
           requestDeactivation();
@@ -234,7 +246,8 @@ namespace Control
         void
         consume(const IMC::Abort* msg)
         {
-          (void)msg;
+          if (msg->getDestination() != getSystemId())
+            return;
 
           // This works as redundancy, in case everything else fails
           reset();
@@ -300,15 +313,9 @@ namespace Control
             return;
 
           if (!msg->enable)
-          {
             requestDeactivation();
-            debug("disabling");
-          }
           else
-          {
             requestActivation();
-            debug("enabling");
-          }
 
           reset();
         }

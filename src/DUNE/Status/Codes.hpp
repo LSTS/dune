@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -62,30 +62,42 @@ namespace DUNE
       CODE_CALIBRATING = 9,
       //! Calibrated.
       CODE_CALIBRATED = 10,
+      //! Not aligned.
+      CODE_NOT_ALIGNED = 11,
+      //! Aligning.
+      CODE_ALIGNING = 12,
+      //! Aligned.
+      CODE_ALIGNED = 13,
       //! Powering down.
-      CODE_POWER_DOWN = 11,
+      CODE_POWER_DOWN = 14,
       //! Communication error.
-      CODE_COM_ERROR = 12,
+      CODE_COM_ERROR = 15,
       //! Synchronized.
-      CODE_SYNCHED = 13,
+      CODE_SYNCHED = 16,
       //! Synchronizing.
-      CODE_SYNCING = 14,
+      CODE_SYNCING = 17,
       //! Not synchronized.
-      CODE_NOT_SYNCHED = 15,
+      CODE_NOT_SYNCHED = 18,
       //! Waiting for GPS fix.
-      CODE_WAIT_GPS_FIX = 16,
+      CODE_WAIT_GPS_FIX = 19,
       //! Waiting for configuration of LBL beacons.
-      CODE_WAIT_LBL_CFG = 17,
+      CODE_WAIT_LBL_CFG = 20,
       //! Waiting for solution to converge.
-      CODE_WAIT_CONVERGE = 18,
+      CODE_WAIT_CONVERGE = 21,
       //! Missing data.
-      CODE_MISSING_DATA = 19,
+      CODE_MISSING_DATA = 22,
       //! Invalid checksum.
-      CODE_INVALID_CHECKSUM = 20,
+      CODE_INVALID_CHECKSUM = 23,
       //! Invalid version.
-      CODE_INVALID_VERSION = 21,
+      CODE_INVALID_VERSION = 24,
       //! Active but without bottom lock.
-      CODE_NO_BOTTOM_LOCK = 22
+      CODE_NO_BOTTOM_LOCK = 25,
+      //! No medium data: user must control device.
+      CODE_NO_MEDIUM = 26,
+      //! Active (no medium data: need user input).
+      CODE_NO_MEDIUM_ACTIVE = 27,
+      //! Idle (no medium data: need user input).
+      CODE_NO_MEDIUM_IDLE = 28
     };
   }
 }

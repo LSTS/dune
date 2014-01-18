@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -220,9 +220,9 @@ namespace Simulators
       void
       addBeacon(unsigned id, const IMC::LblBeacon* msg)
       {
-        if (m_beacons.size() >= c_max_beacons)
+        if (m_beacons.size() >= Navigation::c_max_transponders)
         {
-          err(DTR("maximum amount of beacons is %u"), c_max_beacons);
+          err(DTR("maximum amount of beacons is %u"), Navigation::c_max_transponders);
           return;
         }
 

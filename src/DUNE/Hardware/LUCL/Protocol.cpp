@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -48,15 +48,15 @@ namespace DUNE
     {
       const char* Protocol::c_error_strs[] =
       {
-        "invalid command",
-        "lost synchronization",
-        "parser error",
-        "data overrun",
-        "buffer overflow",
-        "invalid checksum",
-        "parser bug",
-        "invalid command arguments",
-        "unknown error"
+        DTR_RT("invalid command"),
+        DTR_RT("lost synchronization"),
+        DTR_RT("parser error"),
+        DTR_RT("data overrun"),
+        DTR_RT("buffer overflow"),
+        DTR_RT("invalid checksum"),
+        DTR_RT("parser bug"),
+        DTR_RT("invalid command arguments"),
+        DTR_RT("unknown error")
       };
 
       const int Protocol::c_error_last = 8;
@@ -269,7 +269,7 @@ namespace DUNE
         if (idx < 0 || idx > c_error_last)
           idx = c_error_last;
 
-        return c_error_strs[idx];
+        return DTR(c_error_strs[idx]);
       }
 
       void

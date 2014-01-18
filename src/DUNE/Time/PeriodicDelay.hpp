@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -104,7 +104,7 @@ namespace DUNE
         CloseHandle(th);
 
 #elif defined(DUNE_SYS_HAS_NANOSLEEP)
-        timespec deadline = {m_delay / 1000000000, m_delay % 1000000000};
+        timespec deadline = {(time_t)(m_delay / 1000000000), (long)(m_delay % 1000000000)};
         nanosleep(&deadline, 0);
 
 #else

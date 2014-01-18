@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -97,9 +97,32 @@ namespace Navigation
         void
         onEntityResolution(void)
         {
-          m_gps_eid = resolveEntity(m_args.elabel_gps);
-          m_imu_eid = resolveEntity(m_args.elabel_imu);
-          m_yaw_eid = resolveEntity(m_args.elabel_yaw);
+          try
+          {
+            m_gps_eid = resolveEntity(m_args.elabel_gps);
+          }
+          catch (...)
+          {
+            m_gps_eid = 0;
+          }
+
+          try
+          {
+            m_imu_eid = resolveEntity(m_args.elabel_imu);
+          }
+          catch (...)
+          {
+            m_imu_eid = 0;
+          }
+
+          try
+          {
+            m_yaw_eid = resolveEntity(m_args.elabel_yaw);
+          }
+          catch (...)
+          {
+            m_yaw_eid = 0;
+          }
         }
 
         void
@@ -135,9 +158,7 @@ namespace Navigation
           }
 
           if (msg->getSourceEntity() == m_yaw_eid)
-          {
             m_estate.psi = msg->psi;
-          }
         }
 
         void

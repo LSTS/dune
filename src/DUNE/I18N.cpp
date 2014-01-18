@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -40,8 +40,8 @@ namespace DUNE
     (void)folder;
     (void)name;
 
-#if defined(DUNE_USING_I18N) && defined(LC_ALL)
-    setlocale(LC_ALL, name.c_str());
+#if defined(DUNE_SYS_HAS_GETTEXT) && defined(LC_MESSAGES)
+    setlocale(LC_MESSAGES, name.c_str());
     bindtextdomain("dune", folder.c_str());
     bind_textdomain_codeset("dune", "UTF-8");
     textdomain("dune");
@@ -51,7 +51,7 @@ namespace DUNE
   std::string
   I18N::getLanguage(void)
   {
-#if defined(DUNE_USING_I18N) && defined(LC_MESSAGES)
+#if defined(DUNE_SYS_HAS_GETTEXT) && defined(LC_MESSAGES)
     std::string name = setlocale(LC_MESSAGES, NULL);
     for (unsigned i = 0; i < name.size(); ++i)
     {

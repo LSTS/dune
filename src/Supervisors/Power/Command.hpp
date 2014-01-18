@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -45,35 +45,30 @@ namespace Supervisors
     {
     public:
       Command(const std::string& cmd):
-        m_done(false),
+        m_success(false),
         m_cmd(cmd)
       { }
 
       bool
-      isDone(void)
+      success(void)
       {
-        ScopedMutex l(m_done_mx);
-        return m_done;
+        ScopedMutex l(m_success_mx);
+        return m_success;
       }
 
       void
       run(void)
       {
-        while (!isStopping())
+        if (std::system(m_cmd.c_str()) == 0)
         {
-          int rv = std::system(m_cmd.c_str());
-          if (rv == 0)
-          {
-            ScopedMutex l(m_done_mx);
-            m_done = true;
-            break;
-          }
+          ScopedMutex l(m_success_mx);
+          m_success = true;
         }
       }
 
     private:
-      Mutex m_done_mx;
-      bool m_done;
+      Mutex m_success_mx;
+      bool m_success;
       std::string m_cmd;
     };
   }

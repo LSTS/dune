@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -59,7 +59,8 @@ namespace DUNE
       m_eid(DUNE_IMC_CONST_UNK_EID),
       m_debug_level(DEBUG_LEVEL_NONE),
       m_entity_state_code(-1),
-      m_honours_active(false)
+      m_honours_active(false),
+      m_next_act_state(NAS_SAME)
     {
       m_args.priority = 10;
       m_args.act_time = 0;
@@ -72,7 +73,8 @@ namespace DUNE
       .description(DTR("Main entity label"));
 
       param(DTR_RT("Execution Priority"), m_args.priority)
-      .defaultValue("10");
+      .defaultValue("10")
+      .description(DTR("Execution priority"));
 
       param(DTR_RT("Activation Time"), m_args.act_time)
       .defaultValue("0");
@@ -91,6 +93,7 @@ namespace DUNE
 
       bind<IMC::QueryEntityInfo>(this);
       bind<IMC::QueryEntityState>(this);
+      bind<IMC::QueryEntityActivationState>(this);
       bind<IMC::QueryEntityParameters>(this);
       bind<IMC::SetEntityParameters>(this);
       bind<IMC::PushEntityParameters>(this);
@@ -100,8 +103,7 @@ namespace DUNE
     unsigned int
     Task::reserveEntity(const std::string& label)
     {
-      debug("reserving entity '%s'", label.c_str());
-      return m_ctx.entities.reserve(label, getName());
+      return m_ctx.entities.reserve(label, getName(), m_args.act_time, m_args.deact_time);
     }
 
     unsigned int
@@ -122,8 +124,7 @@ namespace DUNE
       if (m_elabel.empty())
         throw std::runtime_error(DTR("entity label is not configured"));
 
-      m_eid = m_ctx.entities.reserve(m_elabel, getName());
-      debug("reserving main entity '%s' -> '%u'", m_elabel.c_str(), m_eid);
+      m_eid = m_ctx.entities.reserve(m_elabel, getName(), m_args.act_time, m_args.deact_time);
       onEntityReservation();
     }
 
@@ -219,18 +220,21 @@ namespace DUNE
       param(DTR_RT("Active - Scope"), m_args.active_scope)
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue(scope_str);
+      .defaultValue(scope_str)
+      .description(DTR("Scoped of the 'Active' parameter"));
 
       std::string visibility_str = Parameter::visibilityToString(def_visibility);
       param(DTR_RT("Active - Visibility"), m_args.active_visibility)
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue(visibility_str);
+      .defaultValue(visibility_str)
+      .description(DTR("Visibility of the 'Active' parameter"));
 
       param(DTR_RT("Active"), m_args.active)
       .visibility(def_visibility)
       .scope(def_scope)
-      .defaultValue(uncastLexical(def_value));
+      .defaultValue(uncastLexical(def_value))
+      .description(DTR("True to activate task, false otherwise"));
     }
 
     void
@@ -263,12 +267,19 @@ namespace DUNE
         if (paramChanged(m_args.active_visibility))
           itr->second->visibility(m_args.active_visibility);
 
-        if (paramChanged(m_args.active) && act_deact)
+        if (act_deact)
         {
-          if (m_args.active)
-            requestActivation();
+          if (paramChanged(m_args.active))
+          {
+            if (m_args.active)
+              requestActivation();
+            else
+              requestDeactivation();
+          }
           else
-            requestDeactivation();
+          {
+            dispatch(m_act_state);
+          }
         }
       }
 
@@ -283,9 +294,26 @@ namespace DUNE
       if (m_act_state.state != IMC::EntityActivationState::EAS_INACTIVE)
       {
         spew("task is not inactive");
+
+        if ((m_act_state.state == IMC::EntityActivationState::EAS_DEACT_IP)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_DEACT_DONE)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_DEACT_FAIL)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_FAIL))
+        {
+          spew("saving activation request");
+          m_next_act_state = NAS_ACTIVE;
+        }
+        else if (m_act_state.state == IMC::EntityActivationState::EAS_ACT_IP)
+        {
+          spew("activation is in progress");
+          m_next_act_state = NAS_ACTIVE;
+        }
+
+        dispatch(m_act_state);
         return;
       }
 
+      m_next_act_state = NAS_SAME;
       m_act_state.state = IMC::EntityActivationState::EAS_ACT_IP;
       dispatch(m_act_state);
 
@@ -297,7 +325,7 @@ namespace DUNE
     Task::activate(void)
     {
       if (m_act_state.state != IMC::EntityActivationState::EAS_ACT_IP)
-        throw std::runtime_error("activation is not in progress");
+        throw std::runtime_error(DTR("activation is not in progress"));
 
       spew("activate");
 
@@ -312,6 +340,9 @@ namespace DUNE
 
       m_act_state.state = IMC::EntityActivationState::EAS_ACTIVE;
       dispatch(m_act_state);
+
+      if (m_next_act_state == NAS_INACTIVE)
+        requestDeactivation();
     }
 
     void
@@ -331,12 +362,30 @@ namespace DUNE
     Task::requestDeactivation(void)
     {
       spew("request deactivation");
+
       if (m_act_state.state != IMC::EntityActivationState::EAS_ACTIVE)
       {
         spew("task is not active");
+
+        if ((m_act_state.state == IMC::EntityActivationState::EAS_DEACT_FAIL)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_IP)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_DONE)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_FAIL))
+        {
+          spew("saving deactivation request");
+          m_next_act_state = NAS_INACTIVE;
+        }
+        else if (m_act_state.state == IMC::EntityActivationState::EAS_DEACT_IP)
+        {
+          spew("deactivation is in progress");
+          m_next_act_state = NAS_INACTIVE;
+        }
+
+        dispatch(m_act_state);
         return;
       }
 
+      m_next_act_state = NAS_SAME;
       m_act_state.state = IMC::EntityActivationState::EAS_DEACT_IP;
       dispatch(m_act_state);
 
@@ -348,7 +397,7 @@ namespace DUNE
     Task::deactivate(void)
     {
       if (m_act_state.state != IMC::EntityActivationState::EAS_DEACT_IP)
-        throw std::runtime_error("deactivation is not in progress");
+        throw std::runtime_error(DTR("deactivation is not in progress"));
 
       spew("deactivate");
 
@@ -361,6 +410,10 @@ namespace DUNE
       m_act_state.state = IMC::EntityActivationState::EAS_DEACT_DONE;
       dispatch(m_act_state);
       m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
+      dispatch(m_act_state);
+
+      if (m_next_act_state == NAS_ACTIVE)
+        requestActivation();
     }
 
     void
@@ -411,7 +464,14 @@ namespace DUNE
           while (!stopping() && !counter.overflow())
             Time::Delay::wait(1.0);
 
-          updateParameters();
+          try
+          {
+            updateParameters();
+          }
+          catch (std::runtime_error& pe)
+          {
+            err(DTR("failed to update parameters: %s"), pe.what());
+          }
         }
         catch (std::exception& e)
         {
@@ -455,6 +515,15 @@ namespace DUNE
     {
       (void)msg;
       reportEntityState();
+    }
+
+    void
+    Task::consume(const IMC::QueryEntityActivationState* msg)
+    {
+      if (msg->getDestinationEntity() != getEntityId())
+        return;
+
+      dispatch(m_act_state);
     }
 
     void
@@ -541,6 +610,8 @@ namespace DUNE
       os << "<section";
       XML::writeAttr("name", getEntityLabel(), os);
       XML::writeAttr("name-i18n", DTR(getEntityLabel()), os);
+      if (!m_param_editor.empty())
+        XML::writeAttr("editor", m_param_editor, os);
       os << ">\n";
 
       m_params.writeXML(os);

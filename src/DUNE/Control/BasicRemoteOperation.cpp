@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -49,7 +49,7 @@ namespace DUNE
       m_connection(false),
       m_connection_timeout(1.0),
       m_last_action(-1.0),
-      m_scope_ref(0.0)
+      m_scope_ref(0)
     {
       param("Connection Timeout", m_connection_timeout)
       .defaultValue("1.0")

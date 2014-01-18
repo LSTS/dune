@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -79,4 +79,5 @@ macro(dune_probe_types)
   dune_test_type("struct flock" "fcntl.h")
   dune_test_type("CRITICAL_SECTION" "windows.h")
   dune_test_type("std::tr1::shared_ptr<int>" "memory;tr1/memory")
+  dune_test_type("ssize_t" "sys/types.h;windows.h")
 endmacro(dune_probe_types)

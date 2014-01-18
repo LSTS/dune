@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -26,6 +26,7 @@
 //***************************************************************************
 
 // DUNE headers.
+#include <DUNE/IO/Poll.hpp>
 #include <DUNE/Algorithms/XORChecksum.hpp>
 #include <DUNE/Hardware/UCTK/Interface.hpp>
 #include <DUNE/Hardware/UCTK/Errors.hpp>
@@ -36,40 +37,46 @@ namespace DUNE
   {
     namespace UCTK
     {
+      Interface::Interface(IO::Handle* handle):
+        m_handle(handle)
+      { }
+
       Interface::~Interface(void)
       {
         while (!m_queue.empty())
           delete m_queue.pop();
       }
 
-      void
-      Interface::open(void)
+      FirmwareInfo
+      Interface::getFirmwareInfo(void)
       {
-        doOpen();
-        getFirmwareName();
-        getFirmwareVersion();
-      }
-
-      const FirmwareInfo&
-      Interface::getFirmwareInfo(void) const
-      {
-        return m_info;
+        FirmwareInfo info;
+        getFirmwareName(info);
+        getFirmwareVersion(info);
+        return info;
       }
 
       void
-      Interface::enterBootloader(void)
+      Interface::resetDevice(void)
       {
         UCTK::Frame frame;
-        frame.setId(PKT_ID_BOOT);
+        frame.setId(PKT_ID_RESET);
         frame.setPayloadSize(0);
 
         if (!sendFrame(frame))
-          throw std::runtime_error("failed to jump to bootloader");
+          throw std::runtime_error(DTR("failed to reset device"));
+      }
 
-        open();
+      void
+      Interface::setBootStop(bool value)
+      {
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_BOOT);
+        frame.setPayloadSize(1);
+        frame.set<uint8_t>(value, 0);
 
-        if (getFirmwareInfo().name != "BOOT")
-          throw std::runtime_error("failed to enter bootloader");
+        if (!sendFrame(frame))
+          throw std::runtime_error(DTR("failed to set bootloader parameters"));
       }
 
       bool
@@ -77,7 +84,7 @@ namespace DUNE
       {
         frame.computeCRC();
 
-        write(frame.getData(), frame.getSize());
+        m_handle->write(frame.getData(), frame.getSize());
 
         if (timeout < 0)
           return true;
@@ -93,11 +100,11 @@ namespace DUNE
         Time::Counter<double> timer(timeout);
         while (!timer.overflow())
         {
-          if (!poll(timer.getRemaining()))
+          if (!IO::Poll::poll(*m_handle, timer.getRemaining()))
             break;
 
-          unsigned rv = read(m_buffer, sizeof(m_buffer));
-          for (unsigned i = 0; i < rv; ++i)
+          size_t rv = m_handle->read(m_buffer, sizeof(m_buffer));
+          for (size_t i = 0; i < rv; ++i)
           {
             if (!m_parser.parse(m_buffer[i], frame))
               continue;
@@ -120,34 +127,34 @@ namespace DUNE
       }
 
       void
-      Interface::getFirmwareName(void)
+      Interface::getFirmwareName(FirmwareInfo& info)
       {
         UCTK::Frame frame;
         frame.setId(PKT_ID_NAME);
         frame.setPayloadSize(0);
 
         if (!sendFrame(frame))
-          throw std::runtime_error("failed to get firmware name");
+          throw std::runtime_error(DTR("failed to get firmware name"));
 
-        m_info.name.assign((const char*)frame.getPayload(), frame.getPayloadSize());
+        info.name.assign((const char*)frame.getPayload(), frame.getPayloadSize());
       }
 
       void
-      Interface::getFirmwareVersion(void)
+      Interface::getFirmwareVersion(FirmwareInfo& info)
       {
         UCTK::Frame frame;
         frame.setId(PKT_ID_VERSION);
         frame.setPayloadSize(0);
 
         if (!sendFrame(frame))
-          throw std::runtime_error("failed to get firmware version");
+          throw std::runtime_error(DTR("failed to get firmware version"));
 
         if (frame.getPayloadSize() != 3)
-          throw std::runtime_error("invalid firmware version");
+          throw std::runtime_error(DTR("invalid firmware version"));
 
-        frame.get(m_info.major, 0);
-        frame.get(m_info.minor, 1);
-        frame.get(m_info.patch, 2);
+        frame.get(info.major, 0);
+        frame.get(info.minor, 1);
+        frame.get(info.patch, 2);
       }
     }
   }

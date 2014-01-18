@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -81,8 +81,7 @@ namespace Simulators
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER,
-                    true);
+                    Tasks::Parameter::VISIBILITY_USER);
 
         param("Standard Deviation - Ground Velocity", m_args.stdev_gvel)
         .units(Units::MeterPerSecond)
@@ -129,14 +128,18 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        m_args.ir_prob *= 0.01;
+        if (paramChanged(m_args.ir_prob))
+          m_args.ir_prob *= 0.01;
       }
 
       void
       consume(const IMC::SimulatedState* msg)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        requestActivation();
+        if (isActive())
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        else
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
         m_sstate = *msg;
       }
 

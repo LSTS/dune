@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -102,34 +102,34 @@ namespace Transports
           try
           {
             m_sock.bind(m_args.ports[i], Address::Any, false);
-            inf("listening for advertisements on port %u", m_args.ports[i]);
+            inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), m_args.ports[i]);
             return;
           }
           catch (...)
           { }
         }
 
-        throw std::runtime_error("no available ports to listen to advertisements");
+        throw std::runtime_error(DTR("no available ports to listen to advertisements"));
       }
 
       void
       readMessage(UDPSocket& sock)
       {
         Address addr;
-        uint16_t rv = sock.read((char*)m_bfr, sizeof(m_bfr), &addr);
+        uint16_t rv = sock.read(m_bfr, sizeof(m_bfr), &addr);
         IMC::Message* msg = IMC::Packet::deserialize(m_bfr, rv);
 
         // Validate message.
         if (msg == 0)
         {
-          war("discarding spurious message");
+          war(DTR("discarding spurious message"));
           delete msg;
           return;
         }
 
         if (msg->getId() != DUNE_IMC_ANNOUNCE)
         {
-          war("discarding spurious message '%s'", msg->getName());
+          war(DTR("discarding spurious message '%s'"), msg->getName());
           delete msg;
           return;
         }
@@ -184,7 +184,7 @@ namespace Transports
         // Register node if not already registered.
         if (m_ctx.resolver.isUnknown(msg->getSource()))
         {
-          inf("new node within range '%s' / %u / %s", announce->sys_name.c_str(),
+          inf(DTR("new node within range '%s' / %u / %s"), announce->sys_name.c_str(),
               msg->getSource(), addr.c_str());
 
           m_ctx.resolver.insert(announce->sys_name, msg->getSource());
@@ -195,9 +195,9 @@ namespace Transports
         if (m_ctx.resolver.isLocal(msg->getSource()))
         {
           if (m_local)
-            war("another node on this computer is advertising our node name '%s'", node.c_str());
+            war(DTR("another node on this computer is advertising our node name '%s'"), node.c_str());
           else
-            war("another node on our network is advertising our node name '%s'", node.c_str());
+            war(DTR("another node on our network is advertising our node name '%s'"), node.c_str());
         }
 
         // Send to other tasks.
@@ -212,18 +212,12 @@ namespace Transports
       void
       onMain(void)
       {
-        IOMultiplexing iom;
-        m_sock.addToPoll(iom);
-
         while (!stopping())
         {
           try
           {
-            if (iom.poll(1.0))
-            {
-              if (m_sock.wasTriggered(iom))
-                readMessage(m_sock);
-            }
+            if (IO::Poll::poll(m_sock, 1.0))
+              readMessage(m_sock);
           }
           catch (...)
           { }

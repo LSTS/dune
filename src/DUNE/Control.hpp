@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -43,5 +43,6 @@ namespace DUNE
 #include <DUNE/Control/YoYoMotion.hpp>
 #include <DUNE/Control/AUVModel.hpp>
 #include <DUNE/Control/LinearSystem.hpp>
+#include <DUNE/Control/CoarseAltitude.hpp>
 
 #endif

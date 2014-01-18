@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -95,7 +95,6 @@ macro(dune_option name description)
 
   if(${name})
     message(STATUS "Module ${name}: Enabled")
-    set(DUNE_USING_${name} 1)
   else(${name})
     message(STATUS "Module ${name}: Disabled")
   endif(${name})

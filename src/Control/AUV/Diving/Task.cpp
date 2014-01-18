@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -104,8 +104,8 @@ namespace Control
         bool m_last_try;
         //! Braking flag
         bool m_braking;
-        //! Control loops last reference time
-        float m_scope_ref;
+        //! Control loops last reference
+        uint32_t m_scope_ref;
         //! Task arguments.
         Arguments m_args;
 
@@ -115,7 +115,7 @@ namespace Control
           m_counter_solo(NULL),
           m_counter_step(NULL),
           m_braking(false),
-          m_scope_ref(0.0)
+          m_scope_ref(0)
         {
           param("Depth Tolerance", m_args.depth_tol)
           .defaultValue("0.5")
@@ -156,11 +156,6 @@ namespace Control
           bind<IMC::DesiredSpeed>(this);
           bind<IMC::DesiredZ>(this);
           bind<IMC::ControlLoops>(this);
-        }
-
-        ~Task(void)
-        {
-          Task::onResourceRelease();
         }
 
         //! Release resources.
@@ -478,7 +473,7 @@ namespace Control
             }
             else if (m_counter_solo->overflow())
             {
-              std::string desc = "failed to submerge, given up";
+              std::string desc = DTR("failed to submerge");
               setEntityState(IMC::EntityState::ESTA_ERROR, desc);
               err("%s", desc.c_str());
 

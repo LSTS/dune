@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -68,9 +68,10 @@ namespace DUNE
       //! Method invoked on maneuver startup.
       //! By default the base class implementation does nothing.
       //! @param msg maneuver message
+      //! @return true if we can proceed with the maneuver, false otherwise
       virtual
-      void
-      onInit(const IMC::FollowTrajectory* msg) = 0;
+      bool
+      canInit(const IMC::FollowTrajectory* msg) = 0;
 
       //! Consumer for IMC::EstimatedState message.
       //! @param msg message

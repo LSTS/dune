@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -198,7 +198,7 @@ namespace Sensors
         if ((c >= '0') && (c <= '9'))
           return c - '0';
 
-        throw std::runtime_error(String::str("character value '%d' is not a valid nibble", c));
+        throw std::runtime_error(String::str(DTR("character value '%d' is not a valid nibble"), c));
       }
 
       static uint8_t

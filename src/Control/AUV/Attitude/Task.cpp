@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -55,7 +55,9 @@ namespace Control
       //! Required loops
       static const uint32_t c_required = IMC::CL_TORQUE;
       //! Loops names
-      static const std::string c_loop_name[] = {DTR("Roll"), DTR("Pitch"), DTR("Depth"), DTR("Heading"), DTR("Heading Rate")};
+      static const std::string c_loop_name[] = {DTR_RT("Roll"), DTR_RT("Pitch"),
+                                                DTR_RT("Depth"), DTR_RT("Heading"),
+                                                DTR_RT("Heading Rate")};
       //! Loops units
       static const unsigned c_loop_unit[] = {Units::Degree, Units::Degree, Units::Meter, Units::DegreePerSecond, Units::Degree};
 
@@ -109,8 +111,6 @@ namespace Control
         bool error_attitude;
         //! Log PID gain parcels
         bool log_parcels;
-        //! Compute angular rates
-        bool compute_rates;
         //! Altitude value below which altitude from DVL will be ignored
         float min_dvl_alt;
         //! Depth value below which altitude from DVL will be ignored
@@ -127,13 +127,18 @@ namespace Control
         IMC::DesiredPitch m_pitch_ref;
         //! PID parcels
         IMC::ControlParcel m_parcels[LP_MAX_LOOPS];
-        //! Previously received estimated state
-        IMC::EstimatedState m_prev_estate;
+        //! Coarse Altitude arguments
+        CoarseAltitude::Arguments m_ca_args;
+        //! Coarse Altitude pointer to object
+        CoarseAltitude* m_ca;
+        //! Parcel for coarse altitude
+        IMC::ControlParcel m_ca_parcel;
         //! Task Arguments
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
-          DUNE::Control::BasicAutopilot(name, ctx, c_controllable, c_required)
+          DUNE::Control::BasicAutopilot(name, ctx, c_controllable, c_required),
+          m_ca(NULL)
         {
           // Load controller gains and integral limits
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
@@ -213,10 +218,6 @@ namespace Control
           .defaultValue("false")
           .description("Log the size of each PID parcel");
 
-          param("Compute Angular Rates", m_args.compute_rates)
-          .defaultValue("false")
-          .description("Compute angular rates when the compass is not providing them");
-
           param("Minimum DVL Depth", m_args.min_dvl_depth)
           .defaultValue("2.5")
           .description("Depth value below which altitude from DVL will be ignored");
@@ -224,25 +225,83 @@ namespace Control
           param("Minimum DVL Altitude", m_args.min_dvl_alt)
           .defaultValue("0.50")
           .description("Altitude value below which altitude from DVL will be ignored");
+
+          param("Coarse Altitude -- Enabled", m_ca_args.enabled)
+          .defaultValue("false")
+          .description("Coarse Altitude arguments");
+
+          param("Coarse Altitude -- Window Sizes", m_ca_args.wsizes)
+          .defaultValue("")
+          .description("Vector of window sizes for the moving averages");
+
+          param("Coarse Altitude -- Upper Gap", m_ca_args.upper_gap)
+          .defaultValue("")
+          .units(Units::Meter)
+          .description("Size of the upper part of the corridor");
+
+          param("Coarse Altitude -- Period", m_ca_args.period)
+          .defaultValue("20.0")
+          .units(Units::Second)
+          .description("Period for checking time spent outside the corridor");
+
+          param("Coarse Altitude -- Ratio Time Outside", m_ca_args.max_outside)
+          .defaultValue("60.0")
+          .units(Units::Percentage)
+          .description("Percentage of time outside the corridor to change corridor size");
+
+          param("Coarse Altitude -- Sample Limit", m_ca_args.sample_limit)
+          .defaultValue("10")
+          .description("Limit of a fixed number of incoming samples per second");
         }
 
-        //! Destructor
-        ~Task(void)
-        {
-          BasicAutopilot::onResourceRelease();
-        }
-
-        //! Initialize resources and start capturing frames.
+        //! Initialize resources
         void
         onResourceInitialization(void)
         {
           BasicAutopilot::onResourceInitialization();
         }
 
+        //! Acquire resources
+        void
+        onResourceAcquisition(void)
+        {
+          BasicAutopilot::onResourceAcquisition();
+
+          if (m_ca_args.enabled)
+            m_ca = new CoarseAltitude(&m_ca_args);
+        }
+
+        //! Release Resources
+        void
+        onResourceRelease(void)
+        {
+          Memory::clear(m_ca);
+
+          BasicAutopilot::onResourceRelease();
+        }
+
+        //! On activation
+        void
+        onAutopilotActivation(void)
+        {
+          if (m_ca_args.enabled)
+            m_ca->activate();
+        }
+
+        //! On deactivation
+        void
+        onAutopilotDeactivation(void)
+        {
+          if (m_ca_args.enabled)
+            m_ca->deactivate();
+        }
+
         //! Update internal parameters.
         void
         onUpdateParameters(void)
         {
+          reset();
+
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
           {
             if (paramChanged(m_args.max_int[i]))
@@ -256,7 +315,7 @@ namespace Control
           // Depth control parameters
           if (paramChanged(m_args.max_pitch))
             m_args.max_pitch = Angles::radians(m_args.max_pitch);
-          
+
           if (paramChanged(m_args.surface_pitch))
             m_args.surface_pitch = Angles::radians(m_args.surface_pitch);
 
@@ -313,8 +372,12 @@ namespace Control
         onEntityReservation(void)
         {
           if (m_args.log_parcels)
+          {
             for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
               m_parcels[i].setSourceEntity(reserveEntity(c_loop_name[i] + " Parcel"));
+
+            m_ca_parcel.setSourceEntity(reserveEntity("Coarse Altitude"));
+          }
         }
 
         //! Computes control values when receiving EstimatedState
@@ -325,17 +388,6 @@ namespace Control
         {
           // Desired actuation torque vector.
           IMC::DesiredControl torques;
-
-          // If necessary compute rates
-          IMC::EstimatedState temp_estate = *msg;
-
-          if (m_args.compute_rates)
-          {
-            temp_estate.p = (msg->phi - m_prev_estate.phi) / timestep;
-            temp_estate.q = (msg->theta - m_prev_estate.theta) / timestep;
-            temp_estate.r = Angles::normalizeRadian(msg->psi - m_prev_estate.psi) / timestep;
-            msg = &temp_estate;
-          }
 
           if (!m_args.error_attitude)
           {
@@ -373,9 +425,6 @@ namespace Control
           torques.flags = IMC::DesiredControl::FL_K | IMC::DesiredControl::FL_M | IMC::DesiredControl::FL_N;
 
           dispatch(torques);
-
-          // Save last estimated state message
-          m_prev_estate = *msg;
         }
 
         //! classical inner pitch/outter depth nested controller
@@ -410,9 +459,29 @@ namespace Control
                 break;
               case VERTICAL_MODE_ALTITUDE:
                 if (msg->alt < m_args.min_dvl_alt && msg->depth < m_args.min_dvl_depth)
+                {
                   z_error = c_min_depth_ref;
+                }
                 else
-                  z_error = getBottomFollowDepth() - msg->depth;
+                {
+                  float bfd = getBottomFollowDepth();
+
+                  if (m_ca_args.enabled)
+                  {
+                    z_error = m_ca->update(timestep, msg->depth, bfd) - msg->depth;
+
+                    if (m_args.log_parcels)
+                    {
+                      // Log data
+                      m_ca->logParcel(m_ca_parcel, bfd);
+                      dispatch(m_ca_parcel);
+                    }
+                  }
+                  else
+                  {
+                    z_error = bfd - msg->depth;
+                  }
+                }
                 break;
               default:
                 signalBadVertical();

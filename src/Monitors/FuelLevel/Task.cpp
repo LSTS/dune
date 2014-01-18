@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -177,15 +177,19 @@ namespace Monitors
 
         param("Batteries Energy Capacity", m_args.full_capacity)
         .defaultValue("498.8")
+        .minimumValue("0.0")
         .units(Units::WattHour)
         .description("Energy capacity of the batteries advertised by manufacturer");
 
         param("Minimum Samples For Estimate", m_args.min_samples)
         .defaultValue("20")
+        .minimumValue("0")
         .description("Least amount of samples before an initial estimate is computed");
 
         param("Capacity Decay Factor", m_args.decay_factor)
         .defaultValue("15")
+        .minimumValue("0")
+        .maximumValue("100")
         .units(Units::Percentage)
         .description("Decay factor given by percentage of actual/advertised capacity");
 
@@ -221,16 +225,22 @@ namespace Monitors
 
         param("Warning Level", m_args.war_lvl)
         .defaultValue("30.0")
+        .minimumValue("0.0")
+        .maximumValue("100.0")
         .units(Units::Percentage)
         .description("Level of battery below which a warning will be thrown");
 
         param("Error Level", m_args.err_lvl)
         .defaultValue("10.0")
+        .minimumValue("0.0")
+        .maximumValue("100.0")
         .units(Units::Percentage)
         .description("Level of battery below which an error will be thrown");
 
         param("Low Confidence Level", m_args.low_confidence)
         .defaultValue("40.0")
+        .minimumValue("0.0")
+        .maximumValue("100.0")
         .units(Units::Percentage)
         .description("Value below which fuel estimation is unreliable");
 
@@ -246,15 +256,11 @@ namespace Monitors
         bind<IMC::VehicleState>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onUpdateParameters(void)
       {
-        m_args.decay_factor *= 0.01f;
+        if (paramChanged(m_args.decay_factor))
+          m_args.decay_factor *= 0.01f;
 
         // Validate models.
         for (unsigned i = 0; i < MDL_TOTAL; ++i)
@@ -302,7 +308,16 @@ namespace Monitors
       onEntityResolution(void)
       {
         for (unsigned i = 0; i < BatteryData::BM_TOTAL; ++i)
-          m_eids[i] = resolveEntity(m_args.elb[i]);
+        {
+          try
+          {
+            m_eids[i] = resolveEntity(m_args.elb[i]);
+          }
+          catch (...)
+          {
+            m_eids[i] = 0;
+          }
+        }
       }
 
       void

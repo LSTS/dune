@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -37,10 +37,14 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
-    //! Baud rate is constant.
+    //! Serial port baud rate.
     static const unsigned c_baud_rate = 115200;
     //! Number of hard-iron correction factors.
     static const unsigned c_hard_iron_count = 3;
+    //! Power-up delay (s).
+    static const double c_power_up_delay = 2.0;
+    //! Hard Iron calibration parameter name.
+    static const std::string c_hard_iron_param = "Hard-Iron Calibration";
 
     //! Packet identifiers.
     enum PacketIds
@@ -52,7 +56,9 @@ namespace Sensors
       //! Run self-test.
       PKT_ID_SELF_TEST    = 3,
       //! Hard-iron calibration parameters.
-      PKT_ID_HARD_IRON    = 4
+      PKT_ID_HARD_IRON    = 4,
+      //! Raw sample data.
+      PKT_ID_OUTPUT_RAW   = 5
     };
 
     //! %Task arguments.
@@ -62,6 +68,10 @@ namespace Sensors
       std::string uart_dev;
       //! Output frequency.
       unsigned output_frq;
+      //! Raw data output.
+      bool raw_data;
+      //! Power channel name.
+      std::string pwr_name;
       //! Hard-iron correction factors.
       std::vector<double> hard_iron;
     };
@@ -85,13 +95,17 @@ namespace Sensors
       //! Temperature.
       IMC::Temperature m_temp;
       //! Serial port device.
-      UCTK::InterfaceUART* m_uart;
+      SerialPort* m_uart;
+      //! Control Interface.
+      UCTK::Interface* m_ctl;
       //! UCTK parser.
       UCTK::Parser m_parser;
       //! Scratch frame.
       UCTK::Frame m_frame;
       //! Scratch buffer.
       uint8_t m_buffer[128];
+      //! Compass Calibration maneuver entity id.
+      unsigned m_calib_eid;
       //! Watchdog.
       Counter<double> m_wdog;
       //! Error counts.
@@ -99,76 +113,140 @@ namespace Sensors
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_uart(NULL)
+        m_uart(NULL),
+        m_ctl(NULL)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
         .description("Serial port device used to communicate with the sensor");
 
-        param("Output Frequency", m_args.output_frq)
-        .units(Units::Hertz)
-        .defaultValue("100")
-        .description("Output frequency");
+        param("Power Channel - Name", m_args.pwr_name)
+        .defaultValue("")
+        .description("Name of the power channel");
 
-        param("Hard-Iron Calibration", m_args.hard_iron)
+        param(c_hard_iron_param, m_args.hard_iron)
         .units(Units::Gauss)
         .size(c_hard_iron_count)
         .description("Hard-Iron calibration parameters");
 
         param("Output Frequency", m_args.output_frq)
         .units(Units::Hertz)
+        .minimumValue("1")
+        .maximumValue("127")
         .defaultValue("100")
         .description("Output frequency");
+
+        param("Raw Data", m_args.raw_data)
+        .defaultValue("false")
+        .description("Set to true to enable raw data output");
+
+        bind<IMC::MagneticField>(this);
       }
 
-      ~Task(void)
+      void
+      onUpdateParameters(void)
       {
-        Task::onResourceRelease();
+        if (m_ctl == NULL)
+          return;
+
+        if (paramChanged(m_args.hard_iron))
+          setHardIronFactors(m_args.hard_iron);
+
+        if (paramChanged(m_args.output_frq) || paramChanged(m_args.raw_data))
+          setOutputFrequency(m_args.output_frq);
       }
 
+      //! Acquire resources.
       void
       onResourceAcquisition(void)
       {
+        if (!m_args.pwr_name.empty())
+        {
+          IMC::PowerChannelControl pcc;
+          pcc.name = m_args.pwr_name;
+          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+          dispatch(pcc);
+          Delay::wait(c_power_up_delay);
+        }
+
         try
         {
-          m_uart = new UCTK::InterfaceUART(m_args.uart_dev, c_baud_rate);
-          m_uart->open();
+          m_uart = new SerialPort(m_args.uart_dev, c_baud_rate);
+          m_ctl = new UCTK::Interface(m_uart);
+          UCTK::FirmwareInfo info = m_ctl->getFirmwareInfo();
+          if (info.isDevelopment())
+            war(DTR("device is using unstable firmware"));
+          else
+            inf(DTR("firmware version %u.%u.%u"), info.major,
+                info.minor, info.patch);
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 30);
+          throw RestartNeeded(DTR(e.what()), 30);
         }
       }
 
+      //! Release resources.
       void
       onResourceRelease(void)
       {
+        Memory::clear(m_ctl);
         Memory::clear(m_uart);
       }
 
+      //! Initialize resources.
       void
       onResourceInitialization(void)
       {
-        if (!setOutputFrequency(m_args.output_frq))
-          throw RestartNeeded(DTR("failed to configure output frequency"), 5);
-
-        if (!setHardIronFactors(m_args.hard_iron))
-          throw RestartNeeded(DTR("failed to set hard-iron correction factors"), 5);
-
+        setHardIronFactors(m_args.hard_iron);
+        setOutputFrequency(m_args.output_frq);
         m_wdog.setTop(2.0);
       }
 
-      bool
+      void
+      consume(const IMC::MagneticField* msg)
+      {
+        if (getEntityId() != msg->getDestinationEntity())
+          return;
+
+        double hi_x = m_args.hard_iron[0] - msg->x;
+        double hi_y = m_args.hard_iron[1] - msg->y;
+
+        IMC::EntityParameter hip;
+        hip.name = c_hard_iron_param;
+        hip.value = String::str("%f, %f, %f", hi_x, hi_y, 0);
+
+        IMC::SetEntityParameters np;
+        np.name = getEntityLabel();
+        np.params.push_back(hip);
+        dispatch(np, DF_LOOP_BACK);
+
+        IMC::SaveEntityParameters sp;
+        sp.name = getEntityLabel();
+        dispatch(sp);
+      }
+
+      //! Define sensor output frequency.
+      //! @param[in] frequency desired frequency.
+      //! @return true if successful, false otherwise.
+      void
       setOutputFrequency(uint8_t frequency)
       {
+        if (m_args.raw_data)
+          frequency |= 0x80;
+
         UCTK::Frame frame;
         frame.setId(PKT_ID_OUTPUT_CONF);
         frame.setPayloadSize(1);
         frame.set(frequency, 0);
-        return m_uart->sendFrame(frame);
+
+        if (!m_ctl->sendFrame(frame))
+          throw RestartNeeded(DTR("failed to configure output frequency"), 5);
       }
 
+      //! Get current Hard-Iron calibration parameters.
+      //! @return hard-iron calibration parameters.
       std::vector<double>
       getHardIronFactors(void)
       {
@@ -176,7 +254,7 @@ namespace Sensors
 
         UCTK::Frame frame;
         frame.setId(PKT_ID_HARD_IRON);
-        if (m_uart->sendFrame(frame))
+        if (m_ctl->sendFrame(frame))
         {
           int16_t tmp = 0;
           for (unsigned i = 0; i < c_hard_iron_count; ++i)
@@ -189,17 +267,35 @@ namespace Sensors
         return factors;
       }
 
-      bool
+      //! Set Hard-Iron calibration parameters.
+      //! @param[in] factors new calibration values.
+      void
       setHardIronFactors(const std::vector<double>& factors)
       {
+        spew("setting hard-iron parameters to %f, %f, %f",
+             factors[0],
+             factors[1],
+             factors[2]);
+
+        std::vector<double> old = getHardIronFactors();
+        if ((factors[0] == old[0]) && (factors[1] == old[1]))
+        {
+          spew("no change in hard-iron parameters");
+          return;
+        }
+
         UCTK::Frame frame;
         frame.setId(PKT_ID_HARD_IRON);
         frame.setPayloadSize(6);
         for (unsigned i = 0; i < c_hard_iron_count; ++i)
-          frame.set<int16_t>(factors[i] * 10e3, i * 2);
-        return m_uart->sendFrame(frame);
+          frame.set<int16_t>(static_cast<int16_t>(factors[i] * 10e3), i * 2);
+
+        if (!m_ctl->sendFrame(frame))
+          throw RestartNeeded(DTR("failed to set hard-iron correction factors"), 5);
       }
 
+      //! Decode output data frame.
+      //! @param[in] frame data frame.
       void
       decodeOutputData(const UCTK::Frame& frame)
       {
@@ -303,18 +399,44 @@ namespace Sensors
         m_wdog.reset();
       }
 
+      //! Decode output raw data.
+      //! @param[in] frame raw data.
+      void
+      decodeOutputRaw(const UCTK::Frame& frame)
+      {
+        IMC::DevDataBinary data;
+        data.value.assign(frame.getPayload(), frame.getPayload() + frame.getPayloadSize());
+        dispatch(data);
+      }
+
+      //! Decode data frame.
+      //! @param[in] frame data frame.
       void
       decode(const UCTK::Frame& frame)
       {
-        if (frame.getId() == PKT_ID_OUTPUT_DATA)
-          decodeOutputData(frame);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+        switch (frame.getId())
+        {
+          case PKT_ID_OUTPUT_DATA:
+            decodeOutputData(frame);
+            break;
+
+          case PKT_ID_OUTPUT_RAW:
+            decodeOutputRaw(frame);
+            break;
+
+          default:
+            break;
+        }
       }
 
+      //! Read input from sensor.
       void
       readInput(void)
       {
-        unsigned rv = m_uart->read(m_buffer, sizeof(m_buffer));
-        for (unsigned i = 0; i < rv; ++i)
+        size_t rv = m_uart->read(m_buffer, sizeof(m_buffer));
+        for (size_t i = 0; i < rv; ++i)
         {
           if (m_parser.parse(m_buffer[i], m_frame))
             decode(m_frame);
@@ -328,7 +450,7 @@ namespace Sensors
         {
           consumeMessages();
 
-          if (m_uart->poll(1.0))
+          if (Poll::poll(*m_uart, 1.0))
             readInput();
 
           if (m_wdog.overflow())

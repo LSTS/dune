@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -121,11 +121,11 @@ namespace DUNE
         computeCRC(void)
         {
           uint8_t size = c_header_size + getPayloadSize();
-          m_data[size] = Algorithms::XORChecksum::compute(m_data, size) | 0x80;
+          m_data[size] = Algorithms::XORChecksum::compute(m_data, size) | c_csum_mask;
         }
 
       private:
-        uint8_t m_data[c_header_size + c_max_payload];
+        uint8_t m_data[c_header_size + c_max_payload + c_footer_size];
       };
     }
   }

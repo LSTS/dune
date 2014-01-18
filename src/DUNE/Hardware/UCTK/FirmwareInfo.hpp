@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -50,6 +50,14 @@ namespace DUNE
         uint8_t minor;
         //! Patch level.
         uint8_t patch;
+
+        //! Test if firmware is a development version.
+        //! @return true if firmware is a development version.
+        bool
+        isDevelopment(void) const
+        {
+          return (major == 0) && (minor == 0) && (patch == 0);
+        }
       };
     }
   }

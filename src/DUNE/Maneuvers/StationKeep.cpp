@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -44,7 +44,7 @@ namespace DUNE
       m_radius = maneuver->radius;
 
       if (trimValueMod(m_radius, min_radius, m_radius))
-        m_task->war("forcing minimum radius %.1f", min_radius);
+        task->war(DTR("forcing minimum radius of %.1f"), min_radius);
 
       *this = StationKeep(task, maneuver->lat, maneuver->lon,
                           m_radius, maneuver->z, maneuver->z_units,
@@ -57,12 +57,9 @@ namespace DUNE
       m_lat(lat),
       m_lon(lon),
       m_radius(radius),
-      m_moving(true),
-      m_inside(false)
+      m_sks(ST_INITIAL)
     {
       m_task = task;
-
-      m_task->setControl(IMC::CL_PATH);
 
       m_path.end_lat = lat;
       m_path.end_lon = lon;
@@ -70,13 +67,10 @@ namespace DUNE
       m_path.end_z_units = z_units;
       m_path.speed = speed;
       m_path.speed_units = speed_units;
-
-      m_task->dispatch(m_path);
     }
 
-
-    void
-    StationKeep::update(const IMC::EstimatedState* state, bool near_on)
+    double
+    StationKeep::getRange(const IMC::EstimatedState* state) const
     {
       double lat = state->lat;
       double lon = state->lon;
@@ -93,33 +87,90 @@ namespace DUNE
 
       toPolar(x, y, &bearing, &range);
 
-      bool was_inside = m_inside;
-      m_inside = range < m_radius;
+      return range;
+    }
 
-      if (was_inside && !m_inside)
-        near_on = false;
+    void
+    StationKeep::startMoving(double range)
+    {
+      m_task->inf(DTR("outside safe region (distance: %.1f m)"), range);
+      m_task->setControl(IMC::CL_PATH);
+      m_task->dispatch(m_path);
+    }
 
-      if (m_inside != was_inside)
-        m_task->inf(DTR("%s safe region (distance: %.1f m)"),
-                    m_inside ? "inside" : "outside", range);
+    void
+    StationKeep::stopMoving(double range)
+    {
+      m_task->setControl(IMC::CL_NONE);
+      m_task->inf(DTR("inside safe region (distance: %.1f m)"), range);
+    }
 
-      if (near_on)
+    void
+    StationKeep::update(const IMC::EstimatedState* state)
+    {
+      double range = getRange(state);
+
+      switch (m_sks)
       {
-        if (m_moving)
-        {
-          m_moving = false;
-          m_task->setControl(IMC::CL_NONE);
-          m_task->inf(DTR("stopping (%0.1f m)"), range);
-          return;
-        }
+        case ST_INITIAL:
+          if (range < m_radius)
+          {
+            stopMoving(range);
+            m_sks = ST_ON_STATION;
+          }
+          else
+          {
+            startMoving(range);
+            m_sks = ST_OFF_STATION;
+          }
+          break;
+        case ST_ON_STATION:
+          if (range > m_radius)
+          {
+            startMoving(range);
+            m_sks = ST_OFF_STATION;
+          }
+          break;
+        case ST_OFF_STATION:
+          break;
+        default:
+          std::string str = DTR("invalid station keeping state");
+          // signal error before throwing exception
+          m_task->signalError(str);
+          throw std::runtime_error(str);
+          break;
       }
-      else if (!m_moving && !m_inside)
+    }
+
+    void
+    StationKeep::updatePathControl(const IMC::PathControlState* pcs)
+    {
+      double range = Math::norm(pcs->x, pcs->y);
+
+      switch (m_sks)
       {
-        m_moving = true;
-        m_task->setControl(IMC::CL_PATH);
-        m_task->dispatch(m_path);
-        m_task->inf(DTR("moving (distance: %0.1f m)"), range);
+        case ST_OFF_STATION:
+          if (pcs->flags & IMC::PathControlState::FL_NEAR)
+          {
+            stopMoving(range);
+            m_sks = ST_ON_STATION;
+          }
+          break;
+        default:
+          break;
       }
+    }
+
+    bool
+    StationKeep::isInside(void) const
+    {
+      return (m_sks == ST_ON_STATION);
+    }
+
+    bool
+    StationKeep::isMoving(void) const
+    {
+      return (m_sks == ST_OFF_STATION);
     }
   }
 }

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -356,6 +356,9 @@ namespace Plan
           std::string loc = params.get("loc");
           double lat = Angles::radians(params.get("lat", 0.0));
           double lon = Angles::radians(params.get("lon", 0.0));
+          double depth = params.get("depth", (double)-1);
+          if (depth == -1)
+        	  depth = params.get("d", m_args.travel_depth);
 
           // Searches for a beacon whose name matches given loc
           // in which case updates lat/lon with the beacon's location
@@ -401,7 +404,7 @@ namespace Plan
               IMC::Goto* go_near = new IMC::Goto();
               go_near->lat = lat;
               go_near->lon = lon;
-              go_near->z = m_args.travel_depth;
+              go_near->z = depth;
               go_near->z_units = IMC::Z_DEPTH;
               go_near->speed_units = IMC::SUNITS_RPM;
               go_near->speed = m_args.speed_rpms;
@@ -414,6 +417,8 @@ namespace Plan
             at_surface->duration = 0;
             at_surface->lat = lat;
             at_surface->lon = lon;
+            at_surface->z = depth;
+            at_surface->z_units = IMC::Z_DEPTH;
             at_surface->speed_units = IMC::SUNITS_RPM;
             at_surface->speed = m_args.speed_rpms;
             at_surface->radius = m_args.radius;
@@ -455,6 +460,7 @@ namespace Plan
           IMC::Goto* go_near = new IMC::Goto();
           go_near->lat = near_lat;
           go_near->lon = near_lon;
+
           go_near->z = m_args.travel_depth;
           go_near->z_units = IMC::Z_DEPTH;
           go_near->speed_units = IMC::SUNITS_RPM;
@@ -484,15 +490,17 @@ namespace Plan
         // This template makes the vehicle dive for some time
         if (plan_id == "dive")
         {
+
           double lat, lon, depth;
           getCurrentPosition(&lat, &lon, &depth);
+          depth = params.get("depth", m_args.dive_depth);
 
           IMC::MessageList<IMC::Maneuver> maneuvers;
 
           IMC::Loiter* loiter = new IMC::Loiter();
           loiter->lat = lat;
           loiter->lon = lon;
-          loiter->z = m_args.dive_depth;
+          loiter->z = depth;
           loiter->z_units = IMC::Z_DEPTH;
           loiter->type = IMC::Loiter::LT_CIRCULAR;
           loiter->duration = m_args.dive_time;

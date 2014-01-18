@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -58,7 +58,35 @@ namespace DUNE
       }
 
       static std::string
+      get(const int8_t& var)
+      {
+        (void)var;
+        return "integer";
+      }
+
+      static std::string
+      get(const int16_t& var)
+      {
+        (void)var;
+        return "integer";
+      }
+
+      static std::string
       get(const unsigned& var)
+      {
+        (void)var;
+        return "integer";
+      }
+
+      static std::string
+      get(const uint8_t& var)
+      {
+        (void)var;
+        return "integer";
+      }
+
+      static std::string
+      get(const uint16_t& var)
       {
         (void)var;
         return "integer";

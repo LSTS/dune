@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -86,11 +86,6 @@ namespace Sensors
         .description("Entity label of position message");
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onEntityReservation(void)
       {
@@ -115,7 +110,7 @@ namespace Sensors
       {
         m_uart->sendBreak(100);
         Delay::wait(1.0);
-        m_uart->write("log gprmc ontime 60\r\n");
+        m_uart->writeString("log gprmc ontime 60\r\n");
       }
 
       void
@@ -127,7 +122,7 @@ namespace Sensors
 
         while (!stopping())
         {
-          if (m_uart->hasNewData(1.0) == IOMultiplexing::PRES_OK)
+          if (Poll::poll(*m_uart, 1.0))
           {
             no_data = 0;
             int rv = m_uart->read(bfr, 1024);
@@ -171,7 +166,7 @@ namespace Sensors
 
           if (no_data == 30)
           {
-            inf(DTR("waking device"));
+            inf(DTR("waking up device"));
             onResourceInitialization();
             m_uart->sendBreak(100);
             no_data = 0;

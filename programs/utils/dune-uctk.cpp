@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -25,40 +25,76 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+// DUNE headers.
 #include <DUNE/DUNE.hpp>
 using DUNE_NAMESPACES;
+
+//! Default UART baud rate.
+static const unsigned c_baud_rate = 115200;
 
 int
 main(int argc, char** argv)
 {
-  if (argc != 3)
+  OptionParser options;
+  options.executable(argv[0])
+  .program("DUNE UCTK Flash Programmer")
+  .copyright(DUNE_COPYRIGHT)
+  .email("Ricardo Martins <rasm@lsts.pt>")
+  .version(getFullVersion())
+  .date(getCompileDate())
+  .arch(DUNE_SYSTEM_NAME)
+  .description("Utility to update the firmware of UCTK based devices.")
+  .add("-d", "--dev",
+       "System device", "DEVICE")
+  .add("-t", "--dev-type",
+       "System device type", "TYPE")
+  .add("-f", "--file",
+       "iHEX file", "IHEX_FILE");
+
+  // Parse command line arguments.
+  if (!options.parse(argc, argv))
   {
-    std::cerr << "Usage: " << argv[0] << " <device> <ihex>" << std::endl;
+    if (options.bad())
+      std::cerr << "ERROR: " << options.error() << std::endl;
+    options.usage();
     return 1;
   }
 
-  UCTK::Interface* itf = new UCTK::InterfaceUART(argv[1]);
-
-  while (true)
+  // Get iHEX file.
+  std::string ihex = options.value("--file");
+  if (ihex.empty())
   {
-    try
-    {
-      itf->open();
-      if (itf->getFirmwareInfo().name != "BOOT")
-        itf->enterBootloader();
-      else
-        break;
-    }
-    catch (std::exception& e)
-    {
-      std::cerr << "ERROR: " << e.what() << std::endl;
-    }
+    std::cerr << "ERROR: you must specify one iHEX file." << std::endl;
+    return 1;
   }
 
-  UCTK::Bootloader boot(itf, true);
-  boot.program(argv[2]);
+  if (Path(ihex).type() != Path::PT_FILE)
+  {
+    std::cerr << "ERROR: no such file: '" << ihex << "'" << std::endl;
+    return 1;
+  }
 
-  delete itf;
+  // Get system device.
+  std::string sys_dev = options.value("--dev");
+  if (sys_dev.empty())
+  {
+    std::cerr << "ERROR: you must specify one system device." << std::endl;
+    return 1;
+  }
+
+  // Get device type.
+  IO::Handle* handle = NULL;
+  std::string dev_type = options.value("--dev-type");
+  if (dev_type == "escc")
+    handle = new ESCC(sys_dev);
+  else
+    handle = new SerialPort(sys_dev, c_baud_rate);
+
+  UCTK::Interface itf(handle);
+  UCTK::Bootloader* boot = new UCTK::Bootloader(&itf, true);
+  boot->program(ihex);
+  delete boot;
+  delete handle;
 
   return 0;
 }

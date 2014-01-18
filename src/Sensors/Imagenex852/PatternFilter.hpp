@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -81,23 +81,35 @@ namespace Sensors
         }
         else
         {
-          PatternList::iterator it = checkOccurrences(head);
+          bool occur_found = flagOccurrences(head);
 
-          if (it == m_patterns.end())
+          if (!occur_found)
           {
             if (m_patterns.size() < m_max_samples)
               m_patterns.insert(std::pair<std::string, unsigned>(head, 1));
           }
+          else if (m_best_pattern == m_patterns.end())
+          {
+            PatternList::const_iterator it = m_patterns.begin();
+            PatternList::const_iterator candidate = m_patterns.begin();
+
+            for (; it != m_patterns.end(); ++it)
+              if (it->second > candidate->second)
+                candidate = it;
+
+            if (candidate->second > m_req_occurs)
+            {
+              m_best_pattern = candidate;
+              return true;
+            }
+          }
           else
           {
-            ++it->second;
-
-            if ((m_best_pattern == m_patterns.end()) && (it->second > m_req_occurs))
-              m_best_pattern = it;
+            if (testMatch(head, m_best_pattern->first))
+              return true;
+            else
+              return false;
           }
-
-          if (m_best_pattern != m_patterns.end() && it != m_best_pattern)
-            return false;
         }
 
         return true;
@@ -123,23 +135,41 @@ namespace Sensors
         return accum;
       }
 
-      //! Check for occurrences in the pattern list
+      //! Check if pattern matches another pattern
+      //! @param[in] pat_a first pattern to test
+      //! @param[in] pat_b second pattern to test
+      //! @return true if there is a match
+      bool
+      testMatch(const std::string& pat_a, const std::string& pat_b)
+      {
+        int diff = patternDiff(pat_a, pat_b);
+
+        if ((unsigned)std::abs(diff) < m_max_diff)
+          return true;
+        else
+          return false;
+      }
+
+      //! Flag the occurrences in the pattern list
       //! @param[in] head pattern to test
-      //! @return iterator to matched pattern or end() if no occurrence was found
-      PatternList::iterator
-      checkOccurrences(const std::string& head)
+      //! @return true if at least one occurrence was found
+      bool
+      flagOccurrences(const std::string& head)
       {
         PatternList::iterator it = m_patterns.begin();
 
+        bool occur = false;
+
         for (;it != m_patterns.end(); ++it)
         {
-          int diff = patternDiff(head, it->first);
-
-          if ((unsigned)std::abs(diff) < m_max_diff)
-            return it;
+          if (testMatch(head, it->first))
+          {
+            ++it->second;
+            occur = true;
+          }
         }
 
-        return m_patterns.end();
+        return occur;
       }
 
       //! Pattern size

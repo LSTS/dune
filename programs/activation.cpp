@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -74,7 +74,7 @@ main(int argc, char** argv)
   UDPSocket sock;
   try
   {
-    sock.write((const char*)bfr, rv, dest, port);
+    sock.write(bfr, rv, dest, port);
 
     fprintf(stderr, "Raw:");
     for (int i = 0; i < rv; ++i)

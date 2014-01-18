@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -57,7 +57,7 @@ namespace UserInterfaces
         std::sprintf(cmd, "%d %d", m_nr, value ? 1 : 0);
 
         UDPSocket sock;
-        sock.write(cmd, 3, Address::Any, 6969);
+        sock.write((uint8_t*)cmd, 3, Address::Any, 6969);
       }
 
     private:

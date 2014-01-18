@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -113,8 +113,8 @@ namespace DUNE
       inline double
       getState(short pos) const
       {
-        if ((size_t)pos > m_state_count)
-          throw std::runtime_error("invalid index while getting state");
+        if ((size_t)pos >= m_state_count)
+          throw std::runtime_error(DTR("invalid index"));
 
         return m_x(pos);
       }
@@ -178,8 +178,8 @@ namespace DUNE
       inline double
       getOutput(short pos) const
       {
-        if (pos > m_y.rows())
-          throw std::runtime_error("invalid index while getting output");
+        if (pos >= m_y.rows())
+          throw std::runtime_error(DTR("invalid index"));
 
         return m_y(pos);
       }
@@ -196,8 +196,8 @@ namespace DUNE
       inline double
       getInnovation(short pos) const
       {
-        if ((size_t)pos > m_state_count)
-          throw std::runtime_error("invalid index while getting innovation matrix value");
+        if ((size_t)pos >= m_state_count)
+          throw std::runtime_error(DTR("invalid index"));
 
         return m_innov(pos);
       }
@@ -242,8 +242,8 @@ namespace DUNE
       inline double
       getCovariance(short ln, short cl) const
       {
-        if (ln > m_p.rows() || cl > m_p.columns())
-          throw std::runtime_error("invalid index while getting state covariance matrix value");
+        if (ln >= m_p.rows() || cl >= m_p.columns())
+          throw std::runtime_error(DTR("invalid index"));
 
         return m_p(ln, cl);
       }
@@ -254,8 +254,8 @@ namespace DUNE
       inline double
       getCovariance(short in) const
       {
-        if ((size_t)in > m_state_count)
-          throw std::runtime_error("invalid index while getting state covariance matrix diagonal value");
+        if ((size_t)in >= m_state_count)
+          throw std::runtime_error(DTR("invalid index"));
 
         return m_p(in, in);
       }

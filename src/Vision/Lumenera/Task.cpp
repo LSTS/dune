@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -44,37 +44,65 @@ namespace Vision
     //! %Task arguments.
     struct Arguments
     {
-      // Camera IP address
+      //! Camera IP address.
       Address address;
-      // Maximum Frames Per Second
+      //! Maximum Frames Per Second.
       unsigned fps;
-      // Maximum Exposure
+      //! Auto Exposure.
+      bool auto_exposure;
+      //! Exposure Value if Manual.
+      float exposure_value;
+      //! Maximum Exposure.
       float exposure_max;
-      // Exposure Knee
+      //! Exposure Knee.
       float exposure_knee;
-      // Maximum Gain
+      //! Auto Gain.
+      bool auto_gain;
+      //! Gain Value if Manual.
+      float gain_value;
+      //! Maximum Gain.
       float gain_max;
-      // Gain knee
+      //! Gain knee.
       float gain_knee;
-      // Enable median filtering (helps with noise in low light/high gain settings)
+      //! Gamma value.
+      float gamma;
+      //! Enable median filtering (helps with noise in low light/high gain settings).
       bool median_filter;
-      // Enable the LED strobe output
+      //! Enable the LED strobe output.
       bool strobe;
+      //! Automatic white balance
+      bool auto_whitebalance;
+      //! White balance red gain.
+      float gain_red;
+      //! White balance green gain.
+      float gain_green;
+      //! White balance blue gain.
+      float gain_blue;
+      //! LED strobe power channel.
+      std::string strobe_pwr;
+      //! Number of photos per volume.
+      unsigned volume_size;
     };
 
     //! Device driver task.
     struct Task: public DUNE::Tasks::Task
     {
-      // HTTP camera port
+      //! HTTP camera port
       static const unsigned c_port = 80;
-      // Configuration parameters
+      //! Configuration parameters
       Arguments m_args;
-      // Video stream HTTP connection
+      //! Video stream HTTP connection
       HTTPClient* m_http;
-      // MJPEG boundary string
+      //! MJPEG boundary string
       std::string m_boundary;
-      // Destination log folder.
+      //! Destination log folder.
       Path m_log_dir;
+      //! Current destination volume.
+      Path m_volume;
+      //! Current number of volumes.
+      unsigned m_volume_count;
+      //! Number of files in current volume.
+      unsigned m_file_count;
       // Timestamp for last frame
       double m_timestamp;
       //! True if task is activating.
@@ -85,6 +113,8 @@ namespace Vision
         m_http(NULL),
         m_boundary(""),
         m_log_dir(ctx.dir_log),
+        m_volume_count(0),
+        m_file_count(0),
         m_activating(false)
       {
         // Retrieve configuration values.
@@ -99,29 +129,72 @@ namespace Vision
         .defaultValue("15")
         .description("Frames per second");
 
-        param("Maximum Exposure", m_args.exposure_max)
-        .defaultValue("10")
-        .description("Maximum exposure in miliseconds");
+        param("Auto Exposure", m_args.auto_exposure)
+        .defaultValue("true")
+        .description("Enable automatic exposure");
 
-        param("Maximum Gain", m_args.gain_max)
-        .defaultValue("4.0")
-        .description("Maximum gain");
+        param("Exposure Value", m_args.exposure_value)
+        .defaultValue("true")
+        .description("Exposure value if auto exposure is disabled");
 
         param("Autoexposure Knee", m_args.exposure_knee)
         .defaultValue("5")
         .description("Exposure limit before increasing the gain (in miliseconds)");
 
+        param("Maximum Exposure", m_args.exposure_max)
+        .defaultValue("10")
+        .description("Maximum exposure in miliseconds");
+
+        param("Auto Gain", m_args.auto_gain)
+        .defaultValue("true")
+        .description("Enable automatic gain");
+
+        param("Gain Value", m_args.gain_value)
+        .defaultValue("1.0")
+        .description("Gain value if auto gain is disabled");
+
         param("Autogain Knee", m_args.gain_knee)
         .defaultValue("2.0")
         .description("Gain limit before increasing the exposure");
+
+        param("Maximum Gain", m_args.gain_max)
+        .defaultValue("4.0")
+        .description("Maximum gain");
+
+        param("Gamma", m_args.gamma)
+        .defaultValue("1.4")
+        .description("Gamma Value");
 
         param("Median Filter", m_args.median_filter)
         .defaultValue("false")
         .description("Enable Median Filter");
 
+        param("Auto White Balance", m_args.auto_whitebalance)
+        .defaultValue("true")
+        .description("Enable Continuous Automatic White Balance");
+
+        param("White Balance Gain Red", m_args.gain_red)
+        .defaultValue("2.0")
+        .description("White Balance Gain Red");
+
+        param("White Balance Gain Green", m_args.gain_green)
+        .defaultValue("1.0")
+        .description("White Balance Gain Green");
+
+        param("White Balance Gain Blue", m_args.gain_blue)
+        .defaultValue("2.0")
+        .description("White Balance Gain Blue");
+
         param("Strobe", m_args.strobe)
         .defaultValue("true")
         .description("Enable Strobe");
+
+        param("Power Channel - Strobe", m_args.strobe_pwr)
+        .description("Power channel of the strobe");
+
+        param("Volume Size", m_args.volume_size)
+        .defaultValue("1000")
+        .description("Number of photos per volume");
 
         bind<IMC::LoggingControl>(this);
       }
@@ -149,16 +222,41 @@ namespace Vision
       }
 
       void
+      setStrobePower(bool value)
+      {
+        if (!m_args.strobe)
+          return;
+
+        if (m_args.strobe_pwr.empty())
+          return;
+
+        IMC::PowerChannelControl pcc;
+        pcc.name = m_args.strobe_pwr;
+
+        if (value)
+          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+        else
+          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+
+        dispatch(pcc);
+        pcc.toText(std::cerr);
+      }
+
+      void
       onActivation(void)
       {
         m_activating = false;
-        m_log_dir.create();
+        m_file_count = 0;
+        m_volume_count = 0;
+        changeVolume();
+        setStrobePower(true);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
       onDeactivation(void)
       {
+        setStrobePower(false);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
@@ -177,7 +275,7 @@ namespace Vision
 
         if (header[0] != "HTTP/1.0 200 OK\r\n")
         {
-          err("Failed to start video stream");
+          err(DTR("failed to start video stream"));
           stopVideo();
           return;
         }
@@ -194,7 +292,7 @@ namespace Vision
           }
         }
 
-        inf("Started video stream");
+        inf(DTR("started video stream"));
       }
 
       void
@@ -324,17 +422,60 @@ namespace Vision
       {
         debug("setting frames per second to '%u'", m_args.fps);
         setProperty("maximum_framerate", uncastLexical(m_args.fps));
-        debug("enabling autogain and autoexposure");
-        setProperty("autogain", "1");
-        setProperty("autoexposure", "1");
-        debug("setting maximum exposure to '%f' seconds", m_args.exposure_max);
-        setProperty("maximum_exposure", uncastLexical(m_args.exposure_max));
-        debug("setting maximum gain to '%f'", m_args.gain_max);
-        setProperty("maximum_gain", uncastLexical(m_args.gain_max));
-        debug("setting auto-exposure knee to '%f' seconds", m_args.exposure_knee);
-        setProperty("autoexposure_knee", uncastLexical(m_args.exposure_knee));
-        debug("setting auto-gain knee to '%f'", m_args.gain_knee);
-        setProperty("autogain_knee", uncastLexical(m_args.gain_knee));
+
+        if (m_args.auto_exposure)
+        {
+          debug("enabling autoexposure");
+          setProperty("autoexposure", "1");
+          debug("setting maximum exposure to '%f' miliseconds", m_args.exposure_max);
+          setProperty("maximum_exposure", uncastLexical(m_args.exposure_max));
+          debug("setting autoexposure knee to '%f' miliseconds", m_args.exposure_knee);
+          setProperty("autoexposure_knee", uncastLexical(m_args.exposure_knee));
+        }
+        else
+        {
+          debug("disabling autoexposure");
+          setProperty("autoexposure", "0");
+          debug("setting exposure value to '%f' miliseconds", m_args.exposure_value);
+          setProperty("exposure", uncastLexical(m_args.exposure_value));
+        }
+
+        if (m_args.auto_gain)
+        {
+          debug("enabling autogain");
+          setProperty("autogain", "1");
+          debug("setting maximum gain to '%f'", m_args.gain_max);
+          setProperty("maximum_gain", uncastLexical(m_args.gain_max));
+          debug("setting autogain knee to '%f'", m_args.gain_knee);
+          setProperty("autogain_knee", uncastLexical(m_args.gain_knee));
+        }
+        else
+        {
+          debug("disabling autogain");
+          setProperty("autogain", "0");
+          debug("setting gain value to '%f'", m_args.gain_value);
+          setProperty("gain", uncastLexical(m_args.gain_value));
+        }
+
+        if (m_args.auto_whitebalance)
+        {
+          debug("enabling continuous automatic whitebalance");
+          setProperty("whitebalance", "continuous");
+
+        }
+        else
+        {
+          debug("disabling continuous automatic whitebalance");
+          setProperty("whitebalance", "off");
+          setProperty("whitebalance_preset", "user");
+          debug("setting whitebalance gains to R='%f' G='%f' B='%f'", m_args.gain_red, m_args.gain_blue, m_args.gain_blue);
+          setProperty("gain_red", uncastLexical(m_args.gain_red));
+          setProperty("gain_green", uncastLexical(m_args.gain_green));
+          setProperty("gain_blue", uncastLexical(m_args.gain_blue));
+        }
+
+        debug("setting gamma to '%f'", m_args.gamma);
+        setProperty("gamma", uncastLexical(m_args.gamma));
         debug("setting median filtering to '%u'", m_args.median_filter);
         setProperty("median_filter", uncastLexical(m_args.median_filter));
 
@@ -358,16 +499,29 @@ namespace Vision
       }
 
       void
+      changeVolume(void)
+      {
+        m_volume = m_log_dir / String::str("%06u", m_volume_count);
+        m_volume.create();
+        ++m_volume_count;
+      }
+
+      void
       onMain(void)
       {
         ByteBuffer dst;
 
         while (!stopping())
         {
-          consumeMessages();
-
-          if (!isActive())
+          if (isActive())
+          {
+            consumeMessages();
+          }
+          else
+          {
+            waitForMessages(1.0);
             continue;
+          }
 
           // Start the video if not already
           if (m_http == NULL)
@@ -387,13 +541,17 @@ namespace Vision
             throw RestartNeeded(e.what(), 5);
           }
 
+          if (m_file_count++ == m_args.volume_size)
+          {
+            m_file_count = 0;
+            changeVolume();
+          }
+
           // Save file
           double timestamp = Clock::getSinceEpoch();
-          Path file = m_log_dir / String::str("%0.4f.jpg", timestamp);
-          {
-            std::ofstream jpg(file.c_str(), std::ios::binary);
-            jpg.write(dst.getBufferSigned(), dst.getSize());
-          }
+          Path file = m_volume / String::str("%0.4f.jpg", timestamp);
+          std::ofstream jpg(file.c_str(), std::ios::binary);
+          jpg.write(dst.getBufferSigned(), dst.getSize());
         }
       }
     };

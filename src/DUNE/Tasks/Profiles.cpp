@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -73,7 +73,7 @@ namespace DUNE
       for (unsigned i = 0; i < names.size(); ++i)
       {
         if (m_profiles.find(names[i]) == m_profiles.end())
-          throw std::runtime_error(Utils::String::str("no such profile name '%s'", names[i].c_str()));
+          throw std::runtime_error(Utils::String::str(DTR("no such profile name '%s'"), names[i].c_str()));
 
         m_selected.insert(names[i]);
       }
@@ -89,7 +89,7 @@ namespace DUNE
       for (unsigned i = 0; i < names.size(); ++i)
       {
         if (m_profiles.find(names[i]) == m_profiles.end())
-          throw std::runtime_error(Utils::String::str("no such profile name '%s'", names[i].c_str()));
+          throw std::runtime_error(Utils::String::str(DTR("no such profile name '%s'"), names[i].c_str()));
 
         m_selected.erase(names[i]);
       }

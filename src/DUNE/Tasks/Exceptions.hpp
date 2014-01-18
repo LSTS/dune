@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -98,6 +98,7 @@ namespace DUNE
       //! Constructor.
       //! @param[in] name parameter name.
       //! @param[in] value value.
+      //! @param[in] reason reason.
       InvalidValue(const std::string& name, const std::string& value, const std::string& reason):
         std::invalid_argument(Utils::String::str(DTR("invalid value '%s' for parameter '%s': '%s'"),
                                                  value.c_str(),

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -273,7 +273,7 @@ main(int argc, char** argv)
       {
         // Send message
         IMC::Packet::serialize(m, bb);
-        sock.write((const char*)bb.getBuffer(), m->getSerializationSize(), dest, port);
+        sock.write(bb.getBuffer(), m->getSerializationSize(), dest, port);
         if (verbose >= 1)
           std::cout << (begin + now - start_time) << ' ' << vtime << ' ' << now - future << " : " << m->getName() << '\n';
         if (verbose >= 2)

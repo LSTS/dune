@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -52,6 +52,8 @@ namespace Monitors
       float water_timeout;
       //! Wet measurements threshold.
       float water_threshold;
+      //! Initialization time.
+      float init_time;
       //! GPS timeout.
       float gps_timeout;
       //! Depth threshold.
@@ -65,12 +67,14 @@ namespace Monitors
     {
       //! Vehicle Medium.
       IMC::VehicleMedium m_vm;
-      //! Counter to check status of water measurements.
+      //! Timer to check status of water measurements.
       Time::Counter<float> m_water_status;
-      //! Counter to check presence of water measurements.
+      //! Timer to check presence of water measurements.
       Time::Counter<float> m_water_presence;
-      //! Counter to check presence of GPS fixes.
+      //! Timer to check presence of GPS fixes.
       Time::Counter<float> m_gps_status;
+      //! Initialization timer.
+      Time::Counter<float> m_init;
       //! GPS validation bits.
       uint16_t m_gps_val_bits;
       //! Vehicle depth.
@@ -81,23 +85,35 @@ namespace Monitors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx)
       {
+        param("Initialization Time", m_args.init_time)
+        .units(Units::Second)
+        .defaultValue("30.0")
+        .minimumValue("20.0")
+        .maximumValue("60.0")
+        .description("Time to wait at beginning before assessing vehicle medium");
+
         param("Wet Data Timeout", m_args.water_timeout)
         .units(Units::Second)
-        .defaultValue("1.0")
+        .defaultValue("3.0")
+        .minimumValue("1.5")
         .description("No valid wet sensor data timeout");
 
         param("Wet Data Threshold", m_args.water_threshold)
-        .defaultValue("0.0")
+        .defaultValue("5.0")
+        .minimumValue("3.0")
         .description("No valid wet sensor data threshold value");
 
         param("GPS Timeout", m_args.gps_timeout)
         .units(Units::Second)
         .defaultValue("3.0")
+        .minimumValue("2.0")
         .description("No valid GPS fixes timeout");
 
         param("Underwater Depth Threshold", m_args.depth_threshold)
         .units(Units::Meter)
         .defaultValue("0.3")
+        .minimumValue("0.2")
+        .maximumValue("0.8")
         .description("Minimum depth necessary to consider a vehicle underwater");
 
         param("Vehicle Type", m_args.vtype)
@@ -118,7 +134,7 @@ namespace Monitors
 
         // Register consumers.
         bind<IMC::Conductivity>(this);
-        bind<IMC::Depth>(this);
+        bind<IMC::EstimatedState>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::Salinity>(this);
         bind<IMC::SoundSpeed>(this);
@@ -128,6 +144,7 @@ namespace Monitors
       onResourceInitialization(void)
       {
         // Initialize timers.
+        m_init.setTop(m_args.init_time);
         m_water_status.setTop(m_args.water_timeout);
         m_gps_status.setTop(m_args.gps_timeout);
       }
@@ -142,9 +159,9 @@ namespace Monitors
       }
 
       void
-      consume(const IMC::Depth* msg)
+      consume(const IMC::EstimatedState* msg)
       {
-        m_depth = msg->value;
+        m_depth = msg->depth;
       }
 
       void
@@ -175,7 +192,7 @@ namespace Monitors
       //! Routine to check if we have recent wet sensor measurements.
       //! @return true if we have recent measurements, false otherwise.
       bool
-      isAcousticsAvailable(void)
+      hasWaterParameters(void)
       {
         return (!m_water_status.overflow());
       }
@@ -191,13 +208,19 @@ namespace Monitors
       void
       task(void)
       {
+        // Wait to stabilize at beginning.
+        if (!m_init.overflow())
+          return;
+
         // Initialization.
         if (getEntityState() == IMC::EntityState::ESTA_BOOT)
         {
-          if (!isAcousticsAvailable())
+          if (!hasWaterParameters() && isGpsAvailable())
             m_vm.medium = IMC::VehicleMedium::VM_GROUND;
-          else
+          if (hasWaterParameters() && isGpsAvailable())
             m_vm.medium = IMC::VehicleMedium::VM_WATER;
+          if (hasWaterParameters() && !isGpsAvailable())
+            m_vm.medium = IMC::VehicleMedium::VM_UNDERWATER;
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           dispatch(m_vm);
@@ -205,8 +228,14 @@ namespace Monitors
           return;
         }
 
+        // No way to detect medium properly.
         if (m_water_presence.overflow() && m_args.vtype != "UAV")
+        {
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
+          m_vm.medium = IMC::VehicleMedium::VM_UNKNOWN;
+          dispatch(m_vm);
+          return;
+        }
 
         if (getEntityState() == IMC::EntityState::ESTA_ERROR)
         {
@@ -221,14 +250,14 @@ namespace Monitors
             break;
 
           case (IMC::VehicleMedium::VM_GROUND):
-            if (isAcousticsAvailable())
+            if (hasWaterParameters())
               m_vm.medium = IMC::VehicleMedium::VM_WATER;
             break;
 
           case (IMC::VehicleMedium::VM_WATER):
             if ((m_depth > m_args.depth_threshold) && !isGpsAvailable())
               m_vm.medium = IMC::VehicleMedium::VM_UNDERWATER;
-            if (!isAcousticsAvailable())
+            if (!hasWaterParameters())
               m_vm.medium = IMC::VehicleMedium::VM_GROUND;
             break;
 

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -42,6 +42,8 @@ namespace Actuators
 
     //! Number of servos
     static const unsigned c_servo_count = 4;
+    //! Serial Port baud rate.
+    static const unsigned c_baud_rate = 115200;
 
     enum Commands
     {
@@ -122,11 +124,6 @@ namespace Actuators
         bind<IMC::SetServoPosition>(this);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       void
       onEntityReservation(void)
       {
@@ -157,7 +154,7 @@ namespace Actuators
       {
         try
         {
-          m_uart = new SerialPort(m_args.uart_dev, 115200);
+          m_uart = new SerialPort(m_args.uart_dev, c_baud_rate);
           m_listener = new Listener(m_uart);
           m_listener->start();
         }
@@ -277,7 +274,11 @@ namespace Actuators
             break;
 
           case LUCL::CommandTypeError:
-            err("error");
+            err(DTR("device reported: %s"), LUCL::Protocol::getErrorString(cmd->error.code));
+            break;
+
+          case LUCL::CommandTypeInvalidChecksum:
+            err("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
             break;
 
           default:

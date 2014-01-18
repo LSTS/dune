@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -153,7 +153,7 @@ namespace DUNE
       //! @param b angle in radian.
       //! @return smallest angle in radian.
       inline static fp64_t
-      minimumSignedAngle(fp64_t a, fp64_t b)
+      minSignedAngle(fp64_t a, fp64_t b)
       {
         // Absolute angle defined between 0 and 2*pi.
         double angle = std::fmod(std::fabs(a - b), c_two_pi);
@@ -172,7 +172,8 @@ namespace DUNE
         // Correct sign while avoiding division by zero.
         if (std::fabs(d) > 1e-3)
         {
-          // Check quadrants.
+          // Modify sign if one of the angles is on the 2nd
+          // quadrant while other is on the 3rd quadrant
           if (((ca < 0) && (sa < 0) && (cb > 0) && (sb < 0)) ||
               ((cb < 0) && (sb < 0) && (ca > 0) && (sa < 0)))
             d = -d;

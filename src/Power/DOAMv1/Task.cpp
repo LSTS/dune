@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -129,7 +129,7 @@ namespace Power
         .description("Serial port device used to communicate with the device");
 
         param("Power Channel - Name", m_args.pwr_name)
-        .defaultValue("DOAM")
+        .defaultValue("Camera Module")
         .description("Name of device's power channel");
 
         param("ADC Reference Voltage", m_args.ref_volt)
@@ -139,6 +139,7 @@ namespace Power
         param("Watchdog Timeout", m_args.wdog_tout)
         .units(Units::Second)
         .defaultValue("2.0")
+        .minimumValue("1.0")
         .description("Watchdog timeout");
 
         param("Slave System Name", m_args.slave_system)
@@ -190,6 +191,14 @@ namespace Power
             delete m_adcs[i];
 
           m_adcs[i] = IMC::Factory::produce(m_args.adc_messages[i]);
+
+          try
+          {
+            unsigned eid = resolveEntity(m_args.adc_elabels[i]);
+            m_adcs[i]->setSourceEntity(eid);
+          }
+          catch (...)
+          { }
         }
 
         m_power_state.name = m_args.pwr_name;
@@ -301,7 +310,7 @@ namespace Power
       void
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
-        inf(DTR("version: %u.%u.%u"), major, minor, patch);
+        inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
       }
 
       void

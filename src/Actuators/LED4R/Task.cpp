@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -44,15 +44,19 @@ namespace Actuators
     enum PacketIds
     {
       //! State.
-      PKT_ID_STATE       = 1,
-      //! LED external strobe driver.
-      PKT_ID_LED_DRV_EXT = 2,
-      //! Control internal LED driver.
-      PKT_ID_LED_DRV_CTL = 3,
+      PKT_ID_STATE          = 1,
       //! LED channel control.
-      PKT_ID_LED_CTL     = 4,
+      PKT_ID_LED_PW         = 2,
+      //! External driver.
+      PKT_ID_LED_EXT_DRV    = 3,
+      //! External trigger.
+      PKT_ID_LED_EXT_TRG    = 4,
+      //! LED pattern.
+      PKT_ID_LED_PATTERN    = 5,
+      //! LED pattern pulse width.
+      PKT_ID_LED_PATTERN_PW = 6,
       //! Constant parameters.
-      PKT_ID_PARAMS      = 5
+      PKT_ID_PARAMS         = 7
     };
 
     //! LED channel.
@@ -75,8 +79,18 @@ namespace Actuators
       std::string uart_dev;
       //! Watchdog timeout.
       double wdog_tout;
+      //! LED patterns.
+      std::vector<uint16_t> led_patterns;
+      //! LED pattern pulse width.
+      uint16_t led_patterns_pw;
+      //! Enable external LED driver.
+      bool ext_drv;
+      //! Enable external LED trigger.
+      bool ext_trg;
     };
 
+    //! Serial port baud rate.
+    static const unsigned c_baud_rate = 115200;
     //! Number of LEDs.
     static const unsigned c_led_count = 12;
     //! Suffix of MCU voltage.
@@ -90,8 +104,10 @@ namespace Actuators
       std::map<std::string, LED*> m_led_by_name;
       //! Map of LEDs by id.
       std::map<unsigned, LED*> m_led_by_id;
-      //! Control interface.
-      UCTK::InterfaceUART* m_uart;
+      //! UART.
+      SerialPort* m_uart;
+      //! Control Interface.
+      UCTK::Interface* m_ctl;
       //! Minimum pulse duration in ticks.
       uint16_t m_min_dur;
       //! Maximum pulse duration in ticks.
@@ -114,7 +130,8 @@ namespace Actuators
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_uart(NULL)
+        m_uart(NULL),
+        m_ctl(NULL)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -124,12 +141,40 @@ namespace Actuators
         param("Watchdog Timeout", m_args.wdog_tout)
         .units(Units::Second)
         .defaultValue("2.0")
+        .minimumValue("1.0")
         .description("Watchdog timeout");
 
         param("LED - Names", m_args.led_names)
         .defaultValue("")
         .size(c_led_count)
         .description("List of LED names");
+
+        param(DTR_RT("LED - Patterns"), m_args.led_patterns)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("")
+        .maximumSize(8)
+        .description(DTR_RT("List of LED patterns"));
+
+        param(DTR_RT("LED - Patterns Pulse Width"), m_args.led_patterns_pw)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .minimumValue("0")
+        .maximumValue("20000")
+        .defaultValue("5000")
+        .description(DTR_RT("Pulse width for LED patterns"));
+
+        param(DTR_RT("LED - External Driver"), m_args.ext_drv)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("false")
+        .description(DTR_RT("Enable external LED driver"));
+
+        param(DTR_RT("LED - External Trigger"), m_args.ext_trg)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("false")
+        .description(DTR_RT("Enable external LED trigger"));
 
         bind<IMC::SetLedBrightness>(this);
         bind<IMC::QueryLedBrightness>(this);
@@ -164,6 +209,8 @@ namespace Actuators
           m_led_by_id[led->id] = led;
         }
 
+        setConfig();
+
         m_wdog.setTop(m_args.wdog_tout);
       }
 
@@ -173,8 +220,14 @@ namespace Actuators
       {
         try
         {
-          m_uart = new UCTK::InterfaceUART(m_args.uart_dev);
-          m_uart->open();
+          m_uart = new SerialPort(m_args.uart_dev, c_baud_rate);
+          m_ctl = new UCTK::Interface(m_uart);
+          UCTK::FirmwareInfo info = m_ctl->getFirmwareInfo();
+          if (info.isDevelopment())
+            war(DTR("device is using unstable firmware"));
+          else
+            inf(DTR("firmware version %u.%u.%u"), info.major,
+                info.minor, info.patch);
         }
         catch (std::runtime_error& e)
         {
@@ -187,14 +240,27 @@ namespace Actuators
       onResourceInitialization(void)
       {
         if (!getConstantParameters())
-          throw RestartNeeded("failed to get constant parameters", c_restart_delay);
+          throw RestartNeeded(DTR("failed to get constant parameters"), c_restart_delay);
 
-        if (!setExternalDriver(false))
-          throw RestartNeeded("failed to configured external LED driver", c_restart_delay);
+        setConfig();
 
         std::map<std::string, LED*>::iterator itr = m_led_by_name.begin();
         for (unsigned i = 0; i < c_led_count; ++i)
           setBrightness(itr->second, 0);
+
+        if (!m_args.led_patterns.empty())
+        {
+          uint8_t count = m_args.led_patterns.size();
+
+          UCTK::Frame frame;
+          frame.setId(PKT_ID_LED_PATTERN);
+          frame.setPayloadSize(1 + (count * 2));
+          frame.set(count, 0);
+          for (size_t i = 0; i < count; ++i)
+            frame.set<uint16_t>(m_args.led_patterns[i], 1 + i * 2);
+          if (!m_ctl->sendFrame(frame))
+            throw RestartNeeded(DTR("failed to set LED patterns"), c_restart_delay);
+        }
 
         m_wdog.reset();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -204,7 +270,31 @@ namespace Actuators
       void
       onResourceRelease(void)
       {
+        if (m_ctl != NULL)
+        {
+          setExternalTrigger(false);
+          setExternalDriver(false);
+          delete m_ctl;
+          m_ctl = NULL;
+        }
+
         Memory::clear(m_uart);
+      }
+
+      void
+      setConfig(void)
+      {
+        if (m_ctl != NULL)
+        {
+          if (!setExternalDriver(m_args.ext_drv))
+            throw RestartNeeded(DTR("failed to configure LED driver"), c_restart_delay);
+
+          if (!setExternalTrigger(m_args.ext_trg))
+            throw RestartNeeded(DTR("failed to configure LED driver"), c_restart_delay);
+
+          if (!setPatternPulseWidth(m_args.led_patterns_pw))
+            throw RestartNeeded(DTR("failed to configure LED pattern pulse width"), c_restart_delay);
+        }
       }
 
       void
@@ -238,20 +328,36 @@ namespace Actuators
         m_led_by_id.clear();
       }
 
-      //! Set external LED driver.
-      //! @param[in] value if true, the LEDs are driven by an external
-      //! module, if false the LEDs are driven by the MCU.
-      //! @return true if operation was successfull, false otherwise.
       bool
-      setExternalDriver(bool value)
+      setExternalDriver(bool enabled)
       {
-        uint8_t v = value ? 1 : 0;
+        uint8_t v = enabled ? 1 : 0;
         UCTK::Frame frame;
-        frame.setId(PKT_ID_LED_DRV_EXT);
+        frame.setId(PKT_ID_LED_EXT_DRV);
         frame.setPayloadSize(1);
         frame.set(v, 0);
+        return m_ctl->sendFrame(frame);
+      }
 
-        return m_uart->sendFrame(frame);
+      bool
+      setExternalTrigger(bool enabled)
+      {
+        uint8_t v = enabled ? 1 : 0;
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_LED_EXT_TRG);
+        frame.setPayloadSize(1);
+        frame.set(v, 0);
+        return m_ctl->sendFrame(frame);
+      }
+
+      bool
+      setPatternPulseWidth(uint16_t pwidth)
+      {
+        UCTK::Frame frame;
+        frame.setId(PKT_ID_LED_PATTERN_PW);
+        frame.setPayloadSize(2);
+        frame.set(pwidth, 0);
+        return m_ctl->sendFrame(frame);
       }
 
       bool
@@ -259,7 +365,7 @@ namespace Actuators
       {
         UCTK::Frame frame;
         frame.setId(PKT_ID_PARAMS);
-        if (!m_uart->sendFrame(frame))
+        if (!m_ctl->sendFrame(frame))
           return false;
 
         if (frame.getPayloadSize() != 4)
@@ -280,12 +386,12 @@ namespace Actuators
         uint16_t ticks = ((value * m_dif_dur) / 255) + m_min_dur;
 
         UCTK::Frame frame;
-        frame.setId(PKT_ID_LED_CTL);
+        frame.setId(PKT_ID_LED_PW);
         frame.setPayloadSize(3);
         frame.set(id, 0);
         frame.set(ticks, 1);
 
-        if (m_uart->sendFrame(frame))
+        if (m_ctl->sendFrame(frame))
         {
           led->brightness.value = value;
           m_wdog.reset();
@@ -298,7 +404,7 @@ namespace Actuators
         UCTK::Frame frame;
         frame.setId(PKT_ID_STATE);
 
-        if (!m_uart->sendFrame(frame))
+        if (!m_ctl->sendFrame(frame))
           return false;
 
         if (frame.getPayloadSize() != 6)

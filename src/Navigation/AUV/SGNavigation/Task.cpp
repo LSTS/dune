@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -142,8 +142,10 @@ namespace Navigation
         unsigned avg_speed_samples;
         //! Initial RPM to Speed multiplicative factor.
         float initial_rpm_to_speed;
-        //! Use RPM information.
-        bool use_rpm;
+        //! Heading bias uncertainty alignment threshold.
+        double alignment_index;
+        //! Increment Euler Angles Delta (true) or integrate yaw rate (false)
+        bool increment_euler_delta;
       };
 
       struct Task: public DUNE::Navigation::BasicNavigation
@@ -162,10 +164,12 @@ namespace Navigation
           // Declare configuration parameters.
           param("Position Noise Covariance with IMU", m_args.position_noise_with_imu)
           .defaultValue("0.0")
+          .minimumValue("0.0")
           .description("Position process noise covariance value when IMU is available");
 
           param("LBL Noise Covariance with IMU", m_args.lbl_noise_with_imu)
           .defaultValue("0.1")
+          .minimumValue("0.0")
           .description("LBL measurement noise covariance value when IMU is available");
 
           param("Process Noise Covariance", m_process_noise)
@@ -190,15 +194,25 @@ namespace Navigation
 
           param("Speed Moving Average Samples", m_args.avg_speed_samples)
           .defaultValue("10")
+          .minimumValue("5")
+          .maximumValue("20")
           .description("Number of moving average samples to smooth forward speed");
 
           param("RPM to Speed multiplicative factor", m_args.initial_rpm_to_speed)
           .defaultValue("1.2e-3")
+          .minimumValue("0.8e-3")
+          .maximumValue("2.0e-3")
           .description("Kalman Filter initial RPM to Speed multiplicative factor state value");
 
-          param("Use RPM Data", m_args.use_rpm)
+          param("Update Heading with Euler Increments", m_args.increment_euler_delta)
           .defaultValue("false")
-          .description("Use propeller's revolutions per minute information in the filter");
+          .description("Use 'EulerAnglesDelta' or 'AngularVelocity' to update heading");
+
+          param("Heading Bias Alignment Index", m_args.alignment_index)
+          .defaultValue("1e-5")
+          .minimumValue("1e-6")
+          .maximumValue("1e-4")
+          .description("Heading bias uncertainty alignment threshold");
 
           param("Entity Label - IMU", m_args.elabel_imu)
           .description("Entity label of the IMU");
@@ -224,7 +238,7 @@ namespace Navigation
           m_kal.setProcessNoise(STATE_U, m_process_noise[PN_SPEED]);
           m_kal.setProcessNoise(STATE_V, m_process_noise[PN_SPEED]);
           m_kal.setProcessNoise(STATE_R_BIAS, m_process_noise[PN_YRATE_BIAS]);
-          m_kal.setProcessNoise(STATE_PSI_BIAS, m_process_noise[PN_PSI_BIAS]);
+          m_kal.setProcessNoise(STATE_PSI_BIAS, 0.0);
 
           m_kal.setMeasurementNoise(OUT_U, m_measure_noise[MN_U]);
           m_kal.setMeasurementNoise(OUT_V, m_measure_noise[MN_V]);
@@ -233,8 +247,20 @@ namespace Navigation
           m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_GOOD]);
           m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_GOOD]);
 
-          for (unsigned i = 0; i < m_num_beacons; i++)
+          for (unsigned i = 0; i < m_ranging.getSize(); i++)
             m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
+
+          if (m_dead_reckoning)
+          {
+            // Position process noise covariance value if IMU is available.
+            m_kal.setProcessNoise(STATE_X, m_args.position_noise_with_imu);
+            m_kal.setProcessNoise(STATE_Y, m_args.position_noise_with_imu);
+            m_kal.setProcessNoise(STATE_PSI_BIAS, m_process_noise[PN_PSI_BIAS]);
+
+            // LBL noise.
+            for (unsigned i = 0; i < m_ranging.getSize(); i++)
+              m_kal.setMeasurementNoise(NUM_OUT + i, m_args.lbl_noise_with_imu);
+          }
         }
 
         void
@@ -242,11 +268,6 @@ namespace Navigation
         {
           BasicNavigation::onResourceInitialization();
           m_avg_speed = new MovingAverage<double>(m_args.avg_speed_samples);
-        }
-
-        ~Task(void)
-        {
-          Task::onResourceRelease();
         }
 
         void
@@ -264,11 +285,27 @@ namespace Navigation
           {
             m_imu_eid = resolveEntity(m_args.elabel_imu);
           }
-          catch (std::runtime_error& e)
+          catch (...)
           {
-            war(DTR("failed to resolve entity '%s': %s"), m_args.elabel_imu.c_str(), e.what());
             m_imu_eid = UINT_MAX;
           }
+        }
+
+        void
+        onReportEntityState(void)
+        {
+          IMC::AlignmentState as;
+
+          if (m_aligned)
+            as.state = IMC::AlignmentState::AS_ALIGNED;
+          else
+            as.state = IMC::AlignmentState::AS_NOT_ALIGNED;
+
+          // No IMU unit available.
+          if (m_imu_eid == UINT_MAX)
+            as.state = IMC::AlignmentState::AS_NOT_SUPPORTED;
+
+          dispatch(as);
         }
 
         void
@@ -280,13 +317,22 @@ namespace Navigation
           if (msg->state == IMC::EntityActivationState::EAS_ACTIVE)
           {
             // IMU already activated.
-            if (m_integ_yrate)
+            if (m_dead_reckoning)
               return;
 
-            // Start integrating heading rates from IMU data.
-            m_integ_yrate = true;
-            m_agvel_eid = m_imu_eid;
-            debug("activating IMU");
+            if (m_args.increment_euler_delta)
+            {
+              m_sum_euler_inc = true;
+            }
+            else
+            {
+              m_sum_euler_inc = false;
+              m_agvel_eid = m_imu_eid;
+            }
+
+            // Dead reckoning mode.
+            m_dead_reckoning = true;
+            spew("activating IMU");
 
             // Reinitialize state covariance matrix value.
             m_kal.resetCovariance(STATE_PSI_BIAS);
@@ -295,17 +341,23 @@ namespace Navigation
             // Position process noise covariance value if IMU is available.
             m_kal.setProcessNoise(STATE_X, m_args.position_noise_with_imu);
             m_kal.setProcessNoise(STATE_Y, m_args.position_noise_with_imu);
+            m_kal.setProcessNoise(STATE_PSI_BIAS, m_process_noise[PN_PSI_BIAS]);
 
             // LBL noise.
-            for (unsigned i = 0; i < m_num_beacons; i++)
+            for (unsigned i = 0; i < m_ranging.getSize(); i++)
               m_kal.setMeasurementNoise(NUM_OUT + i, m_args.lbl_noise_with_imu);
           }
           else if (msg->state == IMC::EntityActivationState::EAS_INACTIVE)
           {
             // Stop integrate heading rates and use AHRS data.
-            m_integ_yrate = false;
-            m_agvel_eid = BasicNavigation::getAhrsId();
-            debug("deactivating IMU");
+            m_dead_reckoning = false;
+            m_sum_euler_inc = false;
+
+            m_aligned = false;
+            m_agvel_eid = getAhrsId();
+            spew("deactivating IMU");
+
+            m_kal.setState(STATE_PSI_BIAS, 0.0);
 
             // No heading offset estimation without IMU.
             m_kal.resetCovariance(STATE_PSI_BIAS);
@@ -313,8 +365,9 @@ namespace Navigation
             // Reinitialize EKF variances.
             m_kal.setProcessNoise(STATE_X, m_process_noise[PN_POSITION]);
             m_kal.setProcessNoise(STATE_Y, m_process_noise[PN_POSITION]);
+            m_kal.setProcessNoise(STATE_PSI_BIAS, 0.0);
 
-            for (unsigned i = 0; i < m_num_beacons; i++)
+            for (unsigned i = 0; i < m_ranging.getSize(); i++)
               m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
           }
         }
@@ -349,10 +402,16 @@ namespace Navigation
           m_gps_reading = false;
         }
 
+        double
+        getBiasedHeading(void)
+        {
+          return m_kal.getState(STATE_PSI) + m_kal.getState(STATE_PSI_BIAS);
+        }
+
         void
         onConsumeLblConfig(void)
         {
-          if (m_kal.resize(NUM_OUT + m_num_beacons))
+          if (m_kal.resize(NUM_OUT + m_ranging.getSize()))
             Task::onUpdateParameters();
         }
 
@@ -392,68 +451,26 @@ namespace Navigation
         }
 
         void
-        runKalmanLBL(int beacon, float range, double dx, double dy, double exp_range)
-        {
-          // "Outlier Rejection for Autonomous Acoustic Navigation"
-          // Jerome Vaganay, John J. Leonard and James G. Bellingham. MIT
-          Matrix H(1, 2, 0.0);
-          H(0, 0) = dx / exp_range;
-          H(0, 1) = dy / exp_range;
-          Matrix P(2, 2, 0.0);
-          P = m_kal.getCovariance(STATE_X, STATE_Y, STATE_X, STATE_Y);
-
-          double k = BasicNavigation::getLblRejectionValue(exp_range);
-          double R = std::max(k, (H * P * transpose (H))(0));
-
-          double d = range - exp_range;
-          m_navdata.lbl_rej_level = (d * (1 / ((H * P * transpose (H))(0) + R)) * d);
-
-          // Is rejection level above maximum threshold?
-          if (m_navdata.lbl_rej_level >= m_lbl_threshold)
-          {
-            m_lbl_ac.acceptance = IMC::LblRangeAcceptance::RR_ABOVE_THRESHOLD;
-            dispatch(m_lbl_ac, DF_KEEP_TIME);
-            return;
-          }
-          else
-          {
-            // Define measurements matrix.
-            m_kal.setObservation(NUM_OUT + beacon, STATE_X, dx / exp_range);
-            m_kal.setObservation(NUM_OUT + beacon, STATE_Y, dy / exp_range);
-
-            // Define Output matrix.
-            m_kal.setOutput(NUM_OUT + beacon, range);
-            m_kal.setInnovation(NUM_OUT + beacon, range - exp_range);
-            m_lbl_ac.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
-            dispatch(m_lbl_ac, DF_KEEP_TIME);
-          }
-        }
-
-        void
-        runKalmanDVL(void)
-        {
-          // Use Ground Velocity messages if they are valid.
-          // Water Velocity messages otherwise.
-          if (m_valid_gv)
-          {
-            m_kal.setOutput(OUT_U, m_gvel.x);
-            m_kal.setOutput(OUT_V, m_gvel.y);
-          }
-          else if (m_valid_wv)
-          {
-            m_kal.setOutput(OUT_U, m_wvel.x);
-            m_kal.setOutput(OUT_V, m_wvel.y);
-          }
-        }
-
-        void
         correctAlignment(double psi)
         {
-          // Vehicle has orientation calibrated.
+          // Vehicle heading is coarse aligned.
           m_kal.setState(STATE_PSI, psi);
           m_kal.setState(STATE_PSI_BIAS, m_heading - psi);
           m_kal.resetCovariance(STATE_PSI_BIAS);
           m_kal.setCovariance(STATE_PSI_BIAS, m_state_cov[SC_BIASES]);
+        }
+
+        void
+        getSpeedOutputStates(unsigned* u, unsigned* v)
+        {
+          *u = OUT_U;
+          *v = OUT_V;
+        }
+
+        unsigned
+        getNumberOutputs(void)
+        {
+          return NUM_OUT;
         }
 
         void
@@ -463,51 +480,47 @@ namespace Navigation
             return;
 
           // Compute time delta.
-          double tstep = BasicNavigation::getTimeStep();
+          double tstep = getTimeStep();
           // Check if we have a valid time delta.
           if (tstep < 0)
             return;
 
           // Kalman Filter
           // Reset and Discretize A matrix
-          Matrix ax(NUM_STATE, NUM_STATE, 0.0);
-          Matrix ap(NUM_STATE, NUM_STATE, 0.0);
+          Matrix a(NUM_STATE, NUM_STATE, 0.0);
+          setTransition(a);
+
           Matrix x(NUM_STATE, 1, 0.0);
-          ax = m_kal.getStateTransition();
-          ap = m_kal.getCovarianceTransition();
           x = m_kal.getState();
 
-          resetMatrixA(ax, x);
-          resetMatrixA(ap, x);
+          m_kal.setStateTransition((a * tstep).expmts());
 
-          ap(STATE_X, STATE_PSI) = (- x(STATE_U) * std::sin(x(STATE_PSI))
-                                    - x(STATE_V) * std::cos(x(STATE_PSI)));
-          ap(STATE_Y, STATE_PSI) = (x(STATE_U) * std::cos(x(STATE_PSI))
-                                    - x(STATE_V) * std::sin(x(STATE_PSI)));
+          // Modify covariance state transition matrix.
+          double yaw = m_kal.getState(STATE_PSI);
 
-          m_kal.setCovarianceTransition((ap * tstep).expmts());
-          m_kal.setStateTransition((ax * tstep).expmts());
+          a(STATE_X, STATE_PSI) = (- x(STATE_U) * std::sin(yaw)
+                                   - x(STATE_V) * std::cos(yaw));
+          a(STATE_Y, STATE_PSI) = (x(STATE_U) * std::cos(yaw)
+                                   - x(STATE_V) * std::sin(yaw));
+
+          m_kal.setCovarianceTransition((a * tstep).expmts());
 
           // Kalman Prediction.
           m_kal.predict();
 
-          // Use compass readings or integrate yaw-rate data to compute heading.
-          if (m_integ_yrate)
-          {
-            m_heading += tstep * BasicNavigation::getHeadingRate();
-            m_kal.setOutput(OUT_PSI, m_heading);
-            double psi = m_kal.getState(STATE_PSI) + m_kal.getState(STATE_PSI_BIAS);
-            m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - psi);
-          }
-          else
-          {
-            m_heading += Angles::minimumSignedAngle(m_heading, BasicNavigation::getYaw());
-            m_kal.setOutput(OUT_PSI, m_heading);
-            double psi = m_kal.getState(STATE_PSI) + m_kal.getState(STATE_PSI_BIAS);
-            m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - psi);
-          }
+          // Euler Angles update modes.
+          double hrate = getHeadingRate();
+          m_kal.setOutput(OUT_R, hrate);
 
-          m_kal.setOutput(OUT_R, BasicNavigation::getAngularVelocity(AXIS_Z));
+          if (m_dead_reckoning)
+            m_heading += tstep * hrate;
+          else
+            m_heading += Angles::minSignedAngle(m_heading, Angles::normalizeRadian(getEuler(AXIS_Z)));
+
+          // Update heading in Kalman filter.
+          m_kal.setOutput(OUT_PSI, m_heading);
+          m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - getBiasedHeading());
+
           double r = m_kal.getState(STATE_R) + m_kal.getState(STATE_R_BIAS);
           m_kal.setInnovation(OUT_R,  m_kal.getOutput(OUT_R) - r);
 
@@ -525,17 +538,23 @@ namespace Navigation
             m_kal.setObservation(OUT_GPS_Y, STATE_Y, 0.0);
           }
 
-          // DVL innovation matrix.
-          if ((m_valid_gv || m_valid_wv) && m_time_without_gps.overflow() && !m_args.use_rpm)
+          // Speed innovation matrix.
+          if (m_valid_gv || m_valid_wv)
           {
             runKalmanDVL();
             m_kal.setInnovation(OUT_U, m_kal.getOutput(OUT_U) - m_kal.getState(STATE_U));
             m_kal.setInnovation(OUT_V, m_kal.getOutput(OUT_V) - m_kal.getState(STATE_V));
           }
+          else if (m_time_without_gps.overflow() && m_time_without_dvl.overflow())
+          {
+            double u = m_rpm * m_kal.getState(STATE_K) * std::cos(getEuler(AXIS_Y));
+            m_kal.setInnovation(OUT_U, u - m_kal.getState(STATE_U));
+            m_kal.setInnovation(OUT_V, 0 - m_kal.getState(STATE_V));
+          }
           else
           {
             // Use GPS speed over ground.
-            if (m_gps_reading)
+            if (m_gps_reading && m_time_without_dvl.overflow())
             {
               m_kal.setInnovation(OUT_U, m_gps_sog - m_kal.getState(STATE_U));
               m_kal.setInnovation(OUT_V, 0 - m_kal.getState(STATE_V));
@@ -550,13 +569,22 @@ namespace Navigation
           // Extended Kalman Filter update with no threshold defined.
           m_kal.update(0.0);
 
-          BasicNavigation::checkUncertainty();
+          // Check alignment threshold index.
+          if (m_dead_reckoning)
+          {
+            if (m_kal.getCovariance(STATE_PSI_BIAS) < m_args.alignment_index)
+              m_aligned = true;
+            else
+              m_aligned = false;
+          }
 
-          sendToBus();
-          BasicNavigation::reportToBus();
+          checkUncertainty();
+
+          logData();
+          reportToBus();
 
           // Reset variables.
-          BasicNavigation::updateBuffers(c_wma_filter);
+          updateBuffers(c_wma_filter);
           m_gps_reading = false;
           m_valid_gv = false;
           m_valid_wv = false;
@@ -565,28 +593,30 @@ namespace Navigation
 
         // Reinitialize Extended Kalman Filter transition matrix function.
         void
-        resetMatrixA(Matrix& A, Matrix X)
+        setTransition(Matrix& A)
         {
           A.fill(0.0);
 
-          double phi = getRoll();
-          double theta = getPitch();
+          double phi = Angles::normalizeRadian(getEuler(AXIS_X));
+          double theta = Angles::normalizeRadian(getEuler(AXIS_Y));
 
           A(STATE_PSI, STATE_R) = 1.0;
 
-          if (!m_args.use_rpm)
+          double yaw = m_kal.getState(STATE_PSI);
+
+          if (m_time_without_dvl.overflow() && m_time_without_gps.overflow())
           {
-            A(STATE_X, STATE_U) = std::cos(X(STATE_PSI)) * std::cos(theta);
-            A(STATE_X, STATE_V) = (std::cos(X(STATE_PSI)) * std::sin(theta) * std::sin(phi)
-                                   - std::sin(X(STATE_PSI)) * std::cos(phi));
-            A(STATE_Y, STATE_U) = std::sin(X(STATE_PSI)) * std::cos(theta);
-            A(STATE_Y, STATE_V) = (std::sin(X(STATE_PSI)) * std::sin(theta) * std::sin(phi)
-                                   + std::cos(X(STATE_PSI)) * std::cos(phi));
+            A(STATE_X, STATE_K) = m_rpm * std::cos(yaw) * std::cos(theta);
+            A(STATE_Y, STATE_K) = m_rpm * std::sin(yaw) * std::cos(theta);
           }
           else
           {
-            A(STATE_X, STATE_K) = m_rpm * std::cos(X(STATE_PSI)) * std::cos(theta);
-            A(STATE_Y, STATE_K) = m_rpm * std::sin(X(STATE_PSI)) * std::cos(theta);
+            A(STATE_X, STATE_U) = std::cos(yaw) * std::cos(theta);
+            A(STATE_X, STATE_V) = (std::cos(yaw) * std::sin(theta) * std::sin(phi)
+                                   - std::sin(yaw) * std::cos(phi));
+            A(STATE_Y, STATE_U) = std::sin(yaw) * std::cos(theta);
+            A(STATE_Y, STATE_V) = (std::sin(yaw) * std::sin(theta) * std::sin(phi)
+                                   + std::cos(yaw) * std::cos(phi));
           }
         }
 
@@ -606,29 +636,14 @@ namespace Navigation
         }
 
         void
-        sendToBus(void)
+        logData(void)
         {
           m_estate.psi = Angles::normalizeRadian(m_kal.getState(STATE_PSI));
+          m_estate.r = m_kal.getState(STATE_R);
+          onDispatchNavigation();
 
-          BasicNavigation::onDispatchNavigation();
-
-          // Update Euler Angles derivatives when
-          // Angular Velocity readings are not available.
-          if (!gotAngularReadings())
-            m_estate.r = BasicNavigation::getVirtualAngularVelocity(AXIS_Z);
-          else
-            m_estate.r = m_kal.getState(STATE_R);
-
-          if (!m_args.use_rpm)
-          {
-            m_estate.u = m_avg_speed->update(m_kal.getState(STATE_U));
-            m_estate.v = m_kal.getState(STATE_V);
-          }
-          else
-          {
-            m_estate.u = m_rpm * m_kal.getState(STATE_K) * std::cos(getPitch());
-            m_estate.v = 0.0;
-          }
+          m_estate.u = m_avg_speed->update(m_kal.getState(STATE_U));
+          m_estate.v = m_kal.getState(STATE_V);
 
           // Water Velocity in the navigation frame.
           if (m_valid_gv && m_valid_wv && !m_time_without_dvl.overflow())
@@ -637,11 +652,11 @@ namespace Navigation
                                             &m_ewvel.x, &m_ewvel.y, &m_ewvel.z);
 
           // Log Navigation Uncertainty.
-          m_uncertainty.psi = m_kal.getCovariance(STATE_PSI, STATE_PSI);
-          m_uncertainty.bias_psi = m_kal.getCovariance(STATE_PSI_BIAS,STATE_PSI_BIAS);
-          m_uncertainty.r = m_kal.getCovariance(STATE_R, STATE_R);
-          m_uncertainty.u = m_kal.getCovariance(STATE_U, STATE_U);
-          m_uncertainty.v = m_kal.getCovariance(STATE_V, STATE_V);
+          m_uncertainty.psi = m_kal.getCovariance(STATE_PSI);
+          m_uncertainty.bias_psi = m_kal.getCovariance(STATE_PSI_BIAS);
+          m_uncertainty.r = m_kal.getCovariance(STATE_R);
+          m_uncertainty.u = m_kal.getCovariance(STATE_U);
+          m_uncertainty.v = m_kal.getCovariance(STATE_V);
 
           // Log Navigation Data.
           m_navdata.cog = (std::abs(m_kal.getState(STATE_U)) > 0.2 ?
@@ -653,7 +668,9 @@ namespace Navigation
           m_navdata.custom_x = Math::norm(m_kal.getInnovation(OUT_GPS_X),
                                           m_kal.getInnovation(OUT_GPS_Y));
           m_navdata.custom_y = m_kal.getState(STATE_K);
-          m_navdata.custom_z = m_kal.getCovariance(STATE_K, STATE_K);
+
+          double ang = m_estate.psi - Angles::normalizeRadian(getEuler(AXIS_Z));
+          m_navdata.custom_z = Angles::degrees(Angles::normalizeRadian(ang));
         }
       };
     }

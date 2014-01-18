@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -52,18 +52,20 @@ namespace Transports
     struct Task: public DUNE::Tasks::Task
     {
       // Socket handle.
-      std::auto_ptr<TCPSocket> m_sock;
+      TCPSocket* m_sock;
       // Serial port handle.
-      std::auto_ptr<SerialPort> m_uart;
+      SerialPort* m_uart;
       // Task arguments.
       Arguments m_args;
       // I/O Multiplexer.
-      IOMultiplexing m_iom;
+      Poll m_poll;
       // Clients.
       std::list<TCPSocket*> m_clients;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx)
+        Tasks::Task(name, ctx),
+        m_sock(NULL),
+        m_uart(NULL)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -87,8 +89,35 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
-        m_sock = std::auto_ptr<TCPSocket>(new TCPSocket);
-        m_uart = std::auto_ptr<SerialPort>(new SerialPort(m_args.uart_dev, m_args.uart_baud));
+        m_sock = new TCPSocket;
+        m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+      }
+
+      void
+      onResourceRelease(void)
+      {
+        if (m_sock != NULL)
+        {
+          m_poll.remove(*m_sock);
+          delete m_sock;
+          m_sock = NULL;
+        }
+
+        if (m_uart != NULL)
+        {
+          m_poll.remove(*m_uart);
+          delete m_uart;
+          m_uart = NULL;
+        }
+
+        std::list<TCPSocket*>::iterator itr = m_clients.begin();
+        for (; itr != m_clients.end(); ++itr)
+        {
+          m_poll.remove(*(*itr));
+          delete *itr;
+        }
+
+        m_clients.clear();
       }
 
       void
@@ -96,17 +125,8 @@ namespace Transports
       {
         m_sock->bind(m_args.tcp_port);
         m_sock->listen(1024);
-        m_sock->addToPoll(m_iom);
-        m_uart->addToPoll(m_iom);
-      }
-
-      void
-      onResourceRelease(void)
-      {
-        std::list<TCPSocket*>::iterator itr = m_clients.begin();
-        for (; itr != m_clients.end(); ++itr)
-          delete *itr;
-        m_clients.clear();
+        m_poll.add(*m_sock);
+        m_poll.add(*m_uart);
       }
 
       void
@@ -123,7 +143,7 @@ namespace Transports
           catch (std::runtime_error& e)
           {
             err("%s", e.what());
-            (*itr)->delFromPoll(m_iom);
+            m_poll.remove(*(*itr));
             delete *itr;
             itr = m_clients.erase(itr);
           }
@@ -133,14 +153,14 @@ namespace Transports
       void
       checkMainSocket(void)
       {
-        if (m_sock->wasTriggered(m_iom))
+        if (m_poll.wasTriggered(*m_sock))
         {
           inf(DTR("accepting connection request"));
           try
           {
             TCPSocket* nc = m_sock->accept();
             m_clients.push_back(nc);
-            nc->addToPoll(m_iom);
+            m_poll.add(*nc);
           }
           catch (std::runtime_error& e)
           {
@@ -157,7 +177,7 @@ namespace Transports
         std::list<TCPSocket*>::iterator itr = m_clients.begin();
         while (itr != m_clients.end())
         {
-          if ((*itr)->wasTriggered(m_iom))
+          if (m_poll.wasTriggered(*(*itr)))
           {
             try
             {
@@ -167,7 +187,7 @@ namespace Transports
             catch (Network::ConnectionClosed& e)
             {
               (void)e;
-              (*itr)->delFromPoll(m_iom);
+              m_poll.remove(*(*itr));
               delete *itr;
               itr = m_clients.erase(itr);
               continue;
@@ -185,7 +205,7 @@ namespace Transports
       void
       checkSerialPort(void)
       {
-        if (m_uart->wasTriggered(m_iom))
+        if (m_poll.wasTriggered(*m_uart))
         {
           char bfr[1024];
           int rv = m_uart->read(bfr, sizeof(bfr));
@@ -198,7 +218,7 @@ namespace Transports
       {
         while (!stopping())
         {
-          if (m_iom.poll(1.0))
+          if (m_poll.poll(1.0))
           {
             checkSerialPort();
             checkMainSocket();

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -101,7 +101,7 @@ namespace DUNE
 
             case STA_CSUM:
               m_state = STA_SYNC;
-              if ((m_frame_csum | 0x80) == byte)
+              if ((m_frame_csum | c_csum_mask) == byte)
                 return true;
               break;
           }

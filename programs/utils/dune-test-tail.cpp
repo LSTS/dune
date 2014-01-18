@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -46,7 +46,7 @@ using DUNE_NAMESPACES;
 UDPSocket g_sock;
 Address g_addr;
 uint16_t g_port = 6002;
-char g_buffer[4096];
+uint8_t g_buffer[4096];
 bool g_stop = false;
 
 // POSIX implementation.
@@ -67,7 +67,7 @@ handleTerminate(int signo)
 void
 sendMessage(IMC::Message& msg)
 {
-  uint16_t rv = IMC::Packet::serialize(&msg, (uint8_t*)g_buffer, sizeof(g_buffer));
+  uint16_t rv = IMC::Packet::serialize(&msg, g_buffer, sizeof(g_buffer));
   g_sock.write(g_buffer, rv, g_addr, g_port);
   msg.toText(std::cerr);
 }
@@ -118,8 +118,8 @@ main(int argc, char** argv)
   .program(DUNE_SHORT_NAME)
   .copyright(DUNE_COPYRIGHT)
   .email(DUNE_CONTACT)
-  .version(DUNE_COMPLETE_VERSION)
-  .date(DUNE_BUILD_TIME)
+  .version(getFullVersion())
+  .date(getCompileDate())
   .arch(DUNE_SYSTEM_NAME)
   .add("-i", "--address",
        "Vehicle's IP address", "ADDRESS")

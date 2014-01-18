@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -49,10 +49,16 @@ namespace DUNE
     static const fp64_t c_golden_ratio = 1.61803398874989490253;
     //! The gravity constant.
     static const fp64_t c_gravity = 9.80665;
-    //! Water density constant at 5ºC of temperature. (Kg/m³)
+    //! Water density constant at 5ºC of temperature (Kg/m³).
     static const uint16_t c_water_density = 1000;
-    //! Mean angular velocity of the Earth's rotation (rad/s)
+    //! Sea water density (Kg/m³).
+    static const uint16_t c_seawater_density = 1025;
+    //! Mean angular velocity of the Earth's rotation (rad/s).
     static const fp64_t c_earth_rotation = 7292115e-11;
+    //! Sea level standard atmospheric pressure (Pa).
+    static const float c_sea_level_pressure = 101325.0f;
+    // Conversion between bar and pascal
+    static const float c_pascal_per_bar = 100000.0f;
   }
 }
 

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -102,10 +102,9 @@ namespace DUNE
         debug("enabling");
         signalProgress(65535, "in progress");
 
-        static_cast<T*>(this)->consume(maneuver);
+        requestActivation();
 
-        if (m_mcs.state == IMC::ManeuverControlState::MCS_EXECUTING)
-          requestActivation();
+        static_cast<T*>(this)->consume(maneuver);
       }
 
       template <typename T, typename M>
@@ -169,6 +168,11 @@ namespace DUNE
       void
       signalError(const std::string& msg);
 
+      //! Signal invalid Z reference
+      //! This method should be used by subclasses to signal an error condition.
+      void
+      signalInvalidZ(void);
+
       //! Signal no altitude error.
       //! This method should be used by subclasses to signal an error condition.
       void
@@ -222,6 +226,11 @@ namespace DUNE
       //! Unlock maneuver so that other maneuver may start
       void
       unlock(void);
+
+      //! Update the scope reference
+      //! @return new sequence number for the scope
+      uint32_t
+      changeScopeRef(void);
 
       IMC::ManeuverControlState m_mcs;
       IMC::RegisterManeuver m_rm;

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -98,15 +98,11 @@ namespace Sensors
 
         param("Data Timeout", m_args.data_timeout)
         .defaultValue("2.0")
+        .minimumValue("1.0")
         .units(Units::Second)
         .description("Amount of seconds to wait for data before reporting an error");
 
         bind<IMC::Calibration>(this);
-      }
-
-      ~Task(void)
-      {
-        Task::onResourceRelease();
       }
 
       void

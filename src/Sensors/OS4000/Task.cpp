@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -132,6 +132,7 @@ namespace Sensors
 
         param("Data Timeout", m_args.data_tout)
         .defaultValue("0.5")
+        .minimumValue("0.2")
         .units(Units::Second)
         .description("Number of seconds without data before reporting an error");
 
@@ -167,7 +168,7 @@ namespace Sensors
                                             IMC::DevCalibrationState::DCS_COMPLETED);
 
         m_states[STA_ERROR].step_number = STA_BOOT;
-        m_states[STA_ERROR].step = DTR("Calibration error. Need to restart");
+        m_states[STA_ERROR].step = DTR("Calibration error, calibration procedure must be restarted");
         m_states[STA_ERROR].total_steps = STA_NUM_STEPS;
         m_states[STA_ERROR].flags = (IMC::DevCalibrationState::DCS_WAITING_CONTROL |
                                        IMC::DevCalibrationState::DCS_PREVIOUS_NOT_SUPPORTED |
@@ -176,11 +177,6 @@ namespace Sensors
 
         // Register listeners.
         bind<IMC::DevCalibrationControl>(this);
-      }
-
-      ~Task(void)
-      {
-        Task::onResourceRelease();
       }
 
       //! Release allocated resources.
@@ -236,7 +232,7 @@ namespace Sensors
       {
         consumeMessages();
 
-        if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+        if (!Poll::poll(*m_uart, 1.0))
           return 0;
 
         return m_uart->readString(m_bfr, c_bfr_size);
@@ -255,8 +251,8 @@ namespace Sensors
         int max_value = 0;
         int cur_value = 0;
 
-        m_uart->write("\x1b");
-        m_uart->write(command);
+        m_uart->writeString("\x1b");
+        m_uart->writeString(command);
 
         std::string format = String::str("%s (%%d..%%d)=%%d\r\n", label);
 
@@ -270,11 +266,11 @@ namespace Sensors
             if (cur_value != value)
             {
               std::string value_str = String::str("%d\r\n", value);
-              m_uart->write(value_str.c_str());
+              m_uart->writeString(value_str.c_str());
             }
             else
             {
-              m_uart->write("\x1b");
+              m_uart->writeString("\x1b");
             }
 
             debug("%s '%s' %s %d", "parameter", command, "configured to", value);
@@ -317,8 +313,8 @@ namespace Sensors
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATING);
               m_uart->setCanonicalInput(false);
               m_uart->flush();
-              m_uart->write("\x1b");
-              m_uart->write("C");
+              m_uart->writeString("\x1b");
+              m_uart->writeString("C");
               changeCalibrationState(STA_ROTATE);
             }
 
@@ -360,7 +356,7 @@ namespace Sensors
       void
       calibrating(void)
       {
-        if (m_uart->hasNewData(1.0) != IOMultiplexing::PRES_OK)
+        if (!Poll::poll(*m_uart, 1.0))
           return;
 
         uint8_t byte;
@@ -390,7 +386,7 @@ namespace Sensors
       terminateCalibration(void)
       {
         m_accumulator = 0;
-        m_uart->write("\x20");
+        m_uart->writeString("\x20");
         m_uart->setCanonicalInput(true);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }

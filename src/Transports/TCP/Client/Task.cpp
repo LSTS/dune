@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -51,15 +51,12 @@ namespace Transports
         Arguments m_args;
         // Socket handle.
         TCPSocket* m_sock;
-        // I/O multiplexer.
-        IOMultiplexing* m_iom;
         // Parser handle.
         IMC::Parser m_parser;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::SimpleTransport(name, ctx),
-          m_sock(NULL),
-          m_iom(NULL)
+          m_sock(NULL)
         {
           param("Server - Address", m_args.address)
           .defaultValue("127.0.0.1")
@@ -84,8 +81,6 @@ namespace Transports
             m_sock->connect(m_args.address, m_args.port);
             m_sock->setKeepAlive(true);
 
-            m_iom = new IOMultiplexing;
-            m_sock->addToPoll(*m_iom);
             inf("connected to %s:%u", m_args.address.c_str(), m_args.port);
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           }
@@ -98,12 +93,6 @@ namespace Transports
         void
         onResourceRelease(void)
         {
-          if (m_iom)
-          {
-            delete m_iom;
-            m_iom = NULL;
-          }
-
           if (m_sock)
           {
             delete m_sock;
@@ -129,18 +118,17 @@ namespace Transports
         void
         onDataReception(uint8_t* p, unsigned int n, double timeout)
         {
-          if (!m_iom->poll(timeout))
+          if (!Poll::poll(*m_sock, timeout))
             return;
 
           int n_r;
           try
           {
-            n_r = m_sock->read((char*)p, n);
+            n_r = m_sock->read(p, n);
           }
-          catch (std::runtime_error& e)
+          catch (std::exception& e)
           {
-            err("receive error: %s", e.what());
-            return;
+            throw RestartNeeded(e.what(), 5);
           }
 
           if (n_r > 0)

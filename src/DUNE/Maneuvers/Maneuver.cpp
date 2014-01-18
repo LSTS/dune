@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -36,6 +36,7 @@ namespace DUNE
     static Concurrency::Mutex s_man_lock;
     static Concurrency::Mutex s_amask_lock;
     static uint32_t s_amask;
+    static uint32_t s_scope_ref;
 
     Maneuver::Maneuver(const std::string& name, Tasks::Context& ctx):
       Tasks::Task(name, ctx)
@@ -86,7 +87,7 @@ namespace DUNE
       }
       catch (...)
       {
-        throw std::runtime_error("unable to unlock");
+        throw std::runtime_error(DTR("unable to unlock"));
       }
     }
 
@@ -113,6 +114,26 @@ namespace DUNE
       }
     }
 
+    uint32_t
+    Maneuver::changeScopeRef(void)
+    {
+      while (1)
+      {
+        try
+        {
+          Concurrency::ScopedMutex l(s_amask_lock);
+
+          s_scope_ref += 1;
+
+          return s_scope_ref;
+        }
+        catch (...)
+        {
+
+        }
+      }
+    }
+
     void
     Maneuver::consume(const IMC::StopManeuver* sm)
     {
@@ -131,6 +152,12 @@ namespace DUNE
       m_mcs.info = msg;
       m_mcs.eta = 0;
       dispatch(m_mcs);
+    }
+
+    void
+    Maneuver::signalInvalidZ(void)
+    {
+      signalError(DTR("unsupported vertical reference"));
     }
 
     void
@@ -171,7 +198,7 @@ namespace DUNE
       // Stop everything
       cloops.enable = IMC::ControlLoops::CL_DISABLE;
       cloops.mask = IMC::CL_ALL;
-      cloops.scope_ref = Time::Clock::get();
+      cloops.scope_ref = changeScopeRef();
       dispatch(cloops);
       updateLoops(&cloops);
 
@@ -180,7 +207,7 @@ namespace DUNE
         // Enable controllers.
         cloops.enable = IMC::ControlLoops::CL_ENABLE;
         cloops.mask = mask;
-        cloops.scope_ref = Time::Clock::get();
+        cloops.scope_ref = changeScopeRef();
         dispatch(cloops);
         updateLoops(&cloops);
       }

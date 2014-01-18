@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -28,6 +28,7 @@
 // ISO C++ 98 headers.
 #include <vector>
 #include <list>
+#include <set>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -44,10 +45,12 @@ namespace Transports
     //! Task arguments
     struct Arguments
     {
-      // Data port.
+      //! Data port.
       uint16_t data_port;
-      // Control port.
+      //! Control port.
       uint16_t control_port;
+      //! Session timeout.
+      double session_tout;
     };
 
     struct Task: public Tasks::Task
@@ -58,8 +61,8 @@ namespace Transports
       static const int c_port_retries = 5;
       //! Control sockets.
       std::list<TCPSocket*> m_sockets;
-      //! IO selector.
-      IOMultiplexing m_iom;
+      //! I/O selector.
+      Poll m_poll;
       //! List of busy sessions.
       std::list<Session*> m_busy_list;
       //! Concurrency lock for list of busy sessions.
@@ -69,12 +72,17 @@ namespace Transports
         Tasks::Task(name, ctx)
       {
         param("Data Port", m_args.data_port)
-        .defaultValue("20")
+        .defaultValue("30020")
         .description("Data Port");
 
         param("Control Port", m_args.control_port)
-        .defaultValue("21")
+        .defaultValue("30021")
         .description("Control Port");
+
+        param("Session Timeout", m_args.session_tout)
+        .units(Units::Second)
+        .defaultValue("120")
+        .description("Timeout period of a session");
       }
 
       ~Task(void)
@@ -83,12 +91,24 @@ namespace Transports
       }
 
       TCPSocket*
-      createSocket(Address addr, uint16_t port)
+      createSocket(Address addr, uint16_t& port)
       {
         TCPSocket* sock = new TCPSocket;
-        sock->bind(port, addr);
-        sock->listen(5);
-        inf(DTR("bound to port %s:%u"), addr.c_str(), port);
+        while (true)
+        {
+          try
+          {
+            sock->bind(port, addr);
+            sock->listen(5);
+            inf(DTR("listening on %s:%u"), addr.c_str(), port);
+            break;
+          }
+          catch (...)
+          {
+            ++port;
+          }
+        }
+
         return sock;
       }
 
@@ -97,14 +117,23 @@ namespace Transports
       {
         // Initialize and dispatch AnnounceService.
         std::vector<Interface> itfs = Interface::get();
+        std::set<Address> addrs;
+        uint16_t port = 0;
         for (unsigned i = 0; i < itfs.size(); ++i)
         {
-          std::stringstream os;
-          os << "ftp://" << itfs[i].address().str() << ":" << m_args.control_port << "/";
+          Address addr = itfs[i].address();
+          if (addrs.find(addr) != addrs.end())
+            continue;
 
-          TCPSocket* sock = createSocket(itfs[i].address(), m_args.control_port);
-          sock->addToPoll(m_iom);
+          addrs.insert(addr);
+
+          port = m_args.control_port;
+          TCPSocket* sock = createSocket(itfs[i].address(), port);
+          m_poll.add(*sock);
           m_sockets.push_back(sock);
+
+          std::stringstream os;
+          os << "ftp://" << addr.str() << ":" << port << "/";
 
           IMC::AnnounceService announce;
           announce.service = os.str();
@@ -116,6 +145,8 @@ namespace Transports
 
           dispatch(announce);
         }
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
@@ -146,7 +177,8 @@ namespace Transports
           TCPSocket* client = sock->accept(&addr);
 
           debug("accepted connection from '%s'", addr.c_str());
-          Session* handler = new Session(m_ctx, client, local_addr);
+          Session* handler = new Session(m_ctx.dir_log, client, local_addr,
+                                         m_args.session_tout);
           handler->start();
           m_busy_list.push_back(handler);
         }
@@ -160,13 +192,18 @@ namespace Transports
       cleanBusyList(void)
       {
         std::list<Session*>::iterator itr = m_busy_list.begin();
-        for (; itr != m_busy_list.end(); ++itr)
+        while (itr != m_busy_list.end())
         {
           if ((*itr)->isDead())
           {
+            debug("cleaning client");
             (*itr)->stopAndJoin();
             delete *itr;
             itr = m_busy_list.erase(itr);
+          }
+          else
+          {
+            ++itr;
           }
         }
       }
@@ -176,13 +213,15 @@ namespace Transports
       {
         while (!stopping())
         {
-          if (!m_iom.poll(1.0))
+          consumeMessages();
+
+          if (!m_poll.poll(1.0))
             continue;
 
           std::list<TCPSocket*>::iterator itr = m_sockets.begin();
           for (; itr != m_sockets.end(); ++itr)
           {
-            if ((*itr)->wasTriggered(m_iom))
+            if (m_poll.wasTriggered(*(*itr)))
               acceptNewClient(*itr, (*itr)->getBoundAddress());
           }
 

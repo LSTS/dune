@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -58,6 +58,14 @@ namespace DUNE
 
       virtual void
       onResourceInitialization(void);
+
+      virtual void
+      onResourceAcquisition(void)
+      { }
+
+      virtual void
+      onResourceRelease(void)
+      { }
 
       //! Reset to initial values
       virtual void
@@ -124,6 +132,18 @@ namespace DUNE
         YAW_MODE_SIZE
       };
 
+      //! On autopilot activation
+      //! Does nothing by default
+      virtual void
+      onAutopilotActivation(void)
+      { }
+
+      //! On autopilot deactivation
+      //! Does nothing by default
+      virtual void
+      onAutopilotDeactivation(void)
+      { }
+
       //! On deactivation leave error or active entity state
       //! Method from parent class
       void
@@ -131,6 +151,7 @@ namespace DUNE
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         reset();
+        onAutopilotDeactivation();
       }
 
       //! On activation enter active entity state
@@ -140,6 +161,7 @@ namespace DUNE
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         reset();
+        onAutopilotActivation();
       }
 
       //! Signal a bad yaw mode or incompatible
@@ -253,8 +275,10 @@ namespace DUNE
       const uint32_t m_controllable_loops;
       //! Required loops for this controller
       const uint32_t m_required_loops;
-      //! Control loops last reference time
-      float m_scope_ref;
+      //! Control loops last reference
+      uint32_t m_scope_ref;
+      //! Maximum admissible depth that the vehicle may sustain
+      float m_max_depth;
 
       // Configuration
       //! Bypass heading rate control

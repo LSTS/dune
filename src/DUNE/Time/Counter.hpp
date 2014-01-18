@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -89,7 +89,7 @@ namespace DUNE
       }
 
       //! Get remaining time.
-      //! @return time remaining.
+      //! @return time remaining (s).
       inline T
       getRemaining(void) const
       {
@@ -97,6 +97,14 @@ namespace DUNE
           return 0;
 
         return m_top - (Clock::get() - m_last);
+      }
+
+      //! Get elapsed time.
+      //! @return elapsed time (s).
+      inline T
+      getElapsed(void) const
+      {
+        return Clock::get() - m_last;
       }
 
     private:

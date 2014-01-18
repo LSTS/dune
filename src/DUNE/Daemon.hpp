@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -58,9 +58,6 @@ namespace DUNE
 
     void
     consume(const DUNE::IMC::RestartSystem* msg);
-
-    void
-    consume(const DUNE::IMC::QueryEntityInfo* msg);
 
     void
     consume(const DUNE::IMC::EntityList* msg);

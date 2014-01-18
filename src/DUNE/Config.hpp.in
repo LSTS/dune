@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -42,18 +42,12 @@
 #define DUNE_VERSION_PAT @PROJECT_VERSION_PAT@
 //! DUNE's version release candidate number.
 #define DUNE_VERSION_RCN @PROJECT_VERSION_RCN@
-//! DUNE's Git SHA1 of last commit.
-#define DUNE_GIT_SHA1_STR "@DUNE_GIT_SHA1_STR@"
-//! DUNE's complete version string.
-#define DUNE_COMPLETE_VERSION DUNE_VERSION_STR " (" DUNE_GIT_SHA1_STR ")"
 //! DUNE's copyright.
 #define DUNE_COPYRIGHT "@PROJECT_COPYRIGHT@"
 //! DUNE's contact.
 #define DUNE_CONTACT "@PROJECT_CONTACT@"
 //! DUNE's build type.
 #define DUNE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
-//! DUNE's build time.
-#define DUNE_BUILD_TIME __DATE__ " - " __TIME__
 //! DUNE's system name.
 #define DUNE_SYSTEM_NAME "@DUNE_SYSTEM_NAME@"
 //! DUNE's source path.
@@ -75,10 +69,8 @@
 #cmakedefine DUNE_USING_V4L2
 //! DUNE was compiled with SpiderMonkey support.
 #cmakedefine DUNE_USING_SPIDERMONKEY
-//! DUNE was compiled with libtiff support.
-#cmakedefine DUNE_USING_TIFF
-//! DUNE was compiled with gettext support.
-#cmakedefine DUNE_USING_I18N
+//! DUNE was compiled with support for the Xeneth SDK.
+#cmakedefine DUNE_USING_XENETH
 
 //! Defined on Microsoft Windows.
 #cmakedefine DUNE_OS_WINDOWS
@@ -187,6 +179,10 @@
 #  endif
 #endif
 
+#if !defined(DUNE_SYS_HAS_SSIZE_T) && defined(DUNE_CLIB_MICROSOFT)
+typedef SSIZE_T ssize_t;
+#endif
+
 // Fixed width integers.
 #if defined(DUNE_SYS_HAS_STDINT_H)
 #  include <stdint.h>
@@ -199,7 +195,6 @@
    typedef UINT32 uint32_t;
    typedef INT64 int64_t;
    typedef UINT64 uint64_t;
-   typedef SSIZE_T ssize_t;
 #else
 #  error Unable to find fixed precision integer types.
 #endif
@@ -246,7 +241,7 @@ typedef float fp32_t;
 #endif
 
 // Internationalization.
-#if defined(DUNE_USING_I18N)
+#if defined(DUNE_SYS_HAS_GETTEXT)
 #  include <libintl.h>
 #  define DTR(str) gettext(str)
 #else

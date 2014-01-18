@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -133,16 +133,12 @@ namespace Sensors
 
         param("Data Timeout", m_args.data_tout)
         .units(Units::Second)
-        .defaultValue("2.0");
+        .defaultValue("2.0")
+        .minimumValue("1.0");
 
         param("Raw Inertial Vectors", m_args.raw_ivecs)
         .defaultValue("false")
         .description("Set to true to enable sampling of raw data");
-      }
-
-      ~Task(void)
-      {
-        Task::onResourceRelease();
       }
 
       void
@@ -239,7 +235,7 @@ namespace Sensors
         char bfr[64];
         bool got = false;
 
-        while (m_uart->hasNewData(maxwait) == IOMultiplexing::PRES_OK && !got)
+        while (Poll::poll(*m_uart, maxwait) && !got)
         {
           int rv = m_uart->read(bfr, 64);
 
@@ -467,11 +463,10 @@ namespace Sensors
 
         while (!stopping())
         {
-          if (m_uart->hasNewData(0.5) == IOMultiplexing::PRES_OK)
+          if (Poll::poll(*m_uart, 0.5))
           {
-            int rv = m_uart->read(bfr, 256);
-
-            for (int i = 0; i < rv; ++i)
+            size_t rv = m_uart->read(bfr, 256);
+            for (size_t i = 0; i < rv; ++i)
             {
               CommandByte cb = parse(bfr[i]);
               if (cb == MSG_GS_EULER)

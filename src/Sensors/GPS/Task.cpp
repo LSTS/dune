@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -33,6 +33,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "Reader.hpp"
+
 namespace Sensors
 {
   //! Device driver for NMEA capable %GPS devices.
@@ -60,6 +63,8 @@ namespace Sensors
     static const unsigned c_gprot_fields = 3;
     //! Minimum number of fields of PSATHPR sentence.
     static const unsigned c_psathpr_fields = 7;
+    //! Power on delay.
+    static const double c_pwr_on_delay = 5.0;
 
     struct Arguments
     {
@@ -75,12 +80,14 @@ namespace Sensors
       std::string init_cmds[c_max_init_cmds];
       //! Initialization replies.
       std::string init_rpls[c_max_init_cmds];
+      //! Power channels.
+      std::vector<std::string> pwr_channels;
     };
 
     struct Task: public Tasks::Task
     {
       //! Serial port handle.
-      SerialPort* m_uart;
+      IO::Handle* m_handle;
       //! GPS Fix message.
       IMC::GpsFix m_fix;
       //! Euler angles message.
@@ -95,12 +102,17 @@ namespace Sensors
       bool m_has_agvel;
       //! True if we have euler angles.
       bool m_has_euler;
+      //! Last initialization line read.
+      std::string m_init_line;
+      //! Reader thread.
+      Reader* m_reader;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_uart(NULL),
+        m_handle(NULL),
         m_has_agvel(false),
-        m_has_euler(false)
+        m_has_euler(false),
+        m_reader(NULL)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -114,7 +126,12 @@ namespace Sensors
         param("Input Timeout", m_args.inp_tout)
         .units(Units::Second)
         .defaultValue("4.0")
+        .minimumValue("0.0")
         .description("Input timeout");
+
+        param("Power Channel - Names", m_args.pwr_channels)
+        .defaultValue("")
+        .description("Device's power channels");
 
         param("Sentence Order", m_args.stn_order)
         .defaultValue("")
@@ -132,29 +149,37 @@ namespace Sensors
         }
 
         // Initialize messages.
-        clear();
-      }
+        clearMessages();
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
-      void
-      clear(void)
-      {
-        m_euler.clear();
-        m_agvel.clear();
-        m_fix.clear();
+        bind<IMC::DevDataText>(this);
+        bind<IMC::IoEvent>(this);
       }
 
       void
       onResourceAcquisition(void)
       {
+        if (m_args.pwr_channels.size() > 0)
+        {
+          IMC::PowerChannelControl pcc;
+          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+          for (size_t i = 0; i < m_args.pwr_channels.size(); ++i)
+          {
+            pcc.name = m_args.pwr_channels[i];
+            dispatch(pcc);
+          }
+        }
+
+        Counter<double> timer(c_pwr_on_delay);
+        while (!stopping() && !timer.overflow())
+          waitForMessages(timer.getRemaining());
+
         try
         {
-          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          m_uart->setCanonicalInput(true);
+          if (!openSocket())
+            m_handle = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+
+          m_reader = new Reader(this, m_handle);
+          m_reader->start();
         }
         catch (...)
         {
@@ -162,10 +187,32 @@ namespace Sensors
         }
       }
 
+      bool
+      openSocket(void)
+      {
+        char addr[128] = {0};
+        unsigned port = 0;
+
+        if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
+          return false;
+
+        TCPSocket* sock = new TCPSocket;
+        sock->connect(addr, port);
+        m_handle = sock;
+        return true;
+      }
+
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_uart);
+        if (m_reader != NULL)
+        {
+          m_reader->stopAndJoin();
+          delete m_reader;
+          m_reader = NULL;
+        }
+
+        Memory::clear(m_handle);
       }
 
       void
@@ -177,12 +224,12 @@ namespace Sensors
             continue;
 
           std::string cmd = String::unescape(m_args.init_cmds[i]);
-          m_uart->write(cmd.c_str());
+          m_handle->writeString(cmd.c_str());
 
           if (!m_args.init_rpls[i].empty())
           {
             std::string rpl = String::unescape(m_args.init_rpls[i]);
-            if (!waitReply(rpl))
+            if (!waitInitReply(rpl))
             {
               err("%s: %s", DTR("no reply to command"), m_args.init_cmds[i].c_str());
               throw std::runtime_error(DTR("failed to setup device"));
@@ -190,31 +237,63 @@ namespace Sensors
           }
         }
 
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_wdog.setTop(m_args.inp_tout);
       }
 
-      //! Wait reply
-      //! @param[in] stn string to compare
-      //! @return true if successful match, false otherwise.
-      bool
-      waitReply(const std::string& stn)
+      void
+      consume(const IMC::DevDataText* msg)
       {
-        char line[256];
-        Counter<float> counter(c_wait_reply_tout);
+        if (msg->getDestination() != getSystemId())
+          return;
 
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        spew("%s", sanitize(msg->value).c_str());
+
+        if (getEntityState() == IMC::EntityState::ESTA_BOOT)
+          m_init_line = msg->value;
+        else
+          processSentence(msg->value);
+      }
+
+      void
+      consume(const IMC::IoEvent* msg)
+      {
+        if (msg->getDestination() != getSystemId())
+          return;
+
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
+          throw RestartNeeded(msg->error, 5);
+      }
+
+      void
+      clearMessages(void)
+      {
+        m_euler.clear();
+        m_agvel.clear();
+        m_fix.clear();
+      }
+
+      //! Wait reply to initialization command.
+      //! @param[in] stn string to compare.
+      //! @return true on successful match, false otherwise.
+      bool
+      waitInitReply(const std::string& stn)
+      {
+        Counter<float> counter(c_wait_reply_tout);
         while (!stopping() && !counter.overflow())
         {
-          consumeMessages();
-
-          if (m_uart->hasNewData(0.5) != IOMultiplexing::PRES_OK)
-            continue;
-
-          int rv = m_uart->readString(line, sizeof(line));
-          if (rv == 0)
-            continue;
-
-          if (stn.compare(line) == 0)
+          waitForMessages(counter.getRemaining());
+          if (m_init_line == stn)
+          {
+            m_init_line.clear();
             return true;
+          }
         }
 
         return false;
@@ -314,43 +393,42 @@ namespace Sensors
       }
 
       //! Process sentence.
-      //! @param[in] line pointer to sentence.
-      //! @param[in] line_len length of sentence.
+      //! @param[in] line line.
       void
-      processSentence(char* line, int line_len)
+      processSentence(const std::string& line)
       {
         // Discard leading noise.
-        int sidx = 0;
-        for (sidx = 0; sidx < line_len; ++sidx)
+        size_t sidx = 0;
+        for (sidx = 0; sidx < line.size(); ++sidx)
         {
           if (line[sidx] == '$')
             break;
         }
 
         // Discard trailing noise.
-        int eidx = 0;
-        for (eidx = line_len - 1; eidx > sidx; --eidx)
+        size_t eidx = 0;
+        for (eidx = line.size() - 1; eidx > sidx; --eidx)
         {
           if (line[eidx] == '*')
             break;
         }
 
+        if (sidx >= eidx)
+          return;
+
         // Compute checksum.
         uint8_t ccsum = 0;
-        for (int i = sidx + 1; i < eidx; ++i)
+        for (size_t i = sidx + 1; i < eidx; ++i)
           ccsum ^= line[i];
 
         // Validate checksum.
         unsigned rcsum = 0;
-        if (std::sscanf(line + eidx + 1, "%02X", &rcsum) != 1)
+        if (std::sscanf(&line[0] + eidx + 1, "%02X", &rcsum) != 1)
           return;
-
-        // Remove checksum from sentence.
-        line[eidx] = 0;
 
         // Split sentence
         std::vector<std::string> parts;
-        String::split(line + sidx + 1, ",", parts);
+        String::split(line.substr(sidx + 1, eidx - sidx - 1), ",", parts);
 
         if (std::find(m_args.stn_order.begin(), m_args.stn_order.end(), parts[0]) != m_args.stn_order.end())
           interpretSentence(parts);
@@ -363,11 +441,10 @@ namespace Sensors
       {
         if (parts[0] == m_args.stn_order.front())
         {
-          clear();
+          clearMessages();
           m_fix.setTimeStamp();
           m_euler.setTimeStamp(m_fix.getTimeStamp());
           m_agvel.setTimeStamp(m_fix.getTimeStamp());
-          m_wdog.reset();
         }
 
         if (parts[0] == "GPZDA")
@@ -407,7 +484,9 @@ namespace Sensors
 
         if (parts[0] == m_args.stn_order.back())
         {
+          m_wdog.reset();
           dispatch(m_fix);
+
           if (m_has_euler)
           {
             dispatch(m_euler);
@@ -654,28 +733,15 @@ namespace Sensors
       void
       onMain(void)
       {
-        char line[512];
-
         while (!stopping())
         {
-          consumeMessages();
-
-          if (m_uart->hasNewData(0.5) == IOMultiplexing::PRES_OK)
-          {
-            int rv = m_uart->readString(line, sizeof(line));
-
-            if (rv <= 0)
-            {
-              throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
-            }
-            else
-            {
-              processSentence(line, rv);
-            }
-          }
+          waitForMessages(1.0);
 
           if (m_wdog.overflow())
+          {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          }
         }
       }
     };

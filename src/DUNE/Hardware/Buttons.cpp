@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -29,8 +29,8 @@
 #include <iostream>
 
 // DUNE headers.
+#include <DUNE/IO/Poll.hpp>
 #include <DUNE/Hardware/Buttons.hpp>
-#include <DUNE/System/IOMultiplexing.hpp>
 
 // Platform headers.
 #if defined(DUNE_SYS_HAS_UNISTD_H)
@@ -74,17 +74,13 @@ namespace DUNE
 #if defined(DUNE_SYS_HAS_LINUX_INPUT_H)
       input_event ev[16];
 
-      System::IOMultiplexing iom;
-
-      iom.add(&m_fd);
-
       m_changed = 0;
 
-      if (iom.poll(timeout))
+      if (IO::Poll::poll(m_fd, timeout))
       {
-        int rv = read(m_fd, ev, sizeof(ev));
+        size_t rv = read(m_fd, ev, sizeof(ev));
 
-        for (unsigned i = 0; i < rv / sizeof(struct input_event); ++i)
+        for (size_t i = 0; i < rv / sizeof(struct input_event); ++i)
         {
           if ((ev[i].type == EV_KEY) && (ev[i].code >= BTN_0) && (ev[i].code <= BTN_7))
           {

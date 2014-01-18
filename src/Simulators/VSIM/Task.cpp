@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -108,17 +108,12 @@ namespace Simulators
         bind<IMC::SetThrusterActuation>(this);
       }
 
-      //! Destructor.
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       //! Update parameters.
       void
       onUpdateParameters(void)
       {
-        m_args.yaw = Math::Angles::radians(m_args.yaw);
+        if (paramChanged(m_args.yaw))
+          m_args.yaw = Math::Angles::radians(m_args.yaw);
       }
 
       //! Release allocated resources.
@@ -205,9 +200,9 @@ namespace Simulators
 
         // Fill attitude.
         double* attitude = m_vehicle->getOrientation();
-        m_sstate.phi = attitude[0];
-        m_sstate.theta = attitude[1];
-        m_sstate.psi = attitude[2];
+        m_sstate.phi = Angles::normalizeRadian(attitude[0]);
+        m_sstate.theta = Angles::normalizeRadian(attitude[1]);
+        m_sstate.psi = Angles::normalizeRadian(attitude[2]);
 
         // Fill angular velocity.
         double* av = m_vehicle->getAngularVelocity();

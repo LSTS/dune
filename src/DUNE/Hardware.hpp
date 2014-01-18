@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -39,14 +39,16 @@ namespace DUNE
 #include <DUNE/Hardware/I2C.hpp>
 #include <DUNE/Hardware/IOPort.hpp>
 #include <DUNE/Hardware/GPIO.hpp>
-#include <DUNE/Hardware/Modem.hpp>
 #include <DUNE/Hardware/Buttons.hpp>
 #include <DUNE/Hardware/PPS.hpp>
+#include <DUNE/Hardware/ESCC.hpp>
 #include <DUNE/Hardware/IntelHEX.hpp>
+#include <DUNE/Hardware/BasicModem.hpp>
+#include <DUNE/Hardware/HayesModem.hpp>
+#include <DUNE/Hardware/Exceptions.hpp>
 #include <DUNE/Hardware/UCTK/Constants.hpp>
 #include <DUNE/Hardware/UCTK/Errors.hpp>
 #include <DUNE/Hardware/UCTK/Parser.hpp>
-#include <DUNE/Hardware/UCTK/InterfaceUART.hpp>
 #include <DUNE/Hardware/UCTK/Bootloader.hpp>
 #include <DUNE/Hardware/LUCL/Protocol.hpp>
 #include <DUNE/Hardware/LUCL/ProtocolParser.hpp>

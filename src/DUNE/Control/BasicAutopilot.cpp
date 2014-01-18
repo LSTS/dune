@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -43,7 +43,9 @@ namespace DUNE
     //! Cooldown for the warning thrown when bottom tracking cannot be done
     static const float c_btrack_wrn_cooldown = 15.0f;
     //! No altitude measurements message
-    static const char* c_no_alt = DTR("no valid altitude measurements");
+    static const char* c_no_alt = DTR_RT("no valid altitude measurements");
+    //! Depth margin when checking for maximum admissible depth
+    static const float c_depth_margin = 1.0;
 
     BasicAutopilot::BasicAutopilot(const std::string& name, Tasks::Context& ctx,
                                    const uint32_t controllable_loops, const uint32_t required_loops):
@@ -53,11 +55,16 @@ namespace DUNE
       m_aloops(0),
       m_controllable_loops(controllable_loops),
       m_required_loops(required_loops),
-      m_scope_ref(0.0)
+      m_scope_ref(0)
     {
       param("Heading Rate Bypass", m_hrate_bypass)
       .defaultValue("false")
       .description("Bypass heading rate controller and use reference directly on torques");
+
+      param("Maximum Depth", m_max_depth)
+      .defaultValue("50.0")
+      .units(Units::Meter)
+      .description("Maximum admissible depth that the vehicle may sustain");
 
       // Initialize entity state.
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
@@ -150,9 +157,17 @@ namespace DUNE
       if (!isActive())
         return;
 
+      m_vertical_ref = msg->value;
+
       if (msg->z_units == IMC::Z_DEPTH)
       {
         m_vertical_mode = VERTICAL_MODE_DEPTH;
+
+        if (m_vertical_ref > m_max_depth)
+        {
+          m_vertical_ref = m_max_depth;
+          war(DTR("limiting depth to %.1f"), m_max_depth);
+        }
       }
       else if (msg->z_units == IMC::Z_ALTITUDE)
       {
@@ -164,8 +179,6 @@ namespace DUNE
       {
         m_vertical_mode = VERTICAL_MODE_NONE;
       }
-
-      m_vertical_ref = msg->value;
 
       // always clear delta timer after changing mode
       m_vmode_delta.clear();
@@ -208,7 +221,7 @@ namespace DUNE
       // check if vertical control mode is valid
       if (m_vertical_mode >= VERTICAL_MODE_SIZE)
       {
-        signalBadVertical(DTR("bad vertical control mode %d, this should not happen"));
+        signalBadVertical(DTR("invalid vertical control mode %d"));
         return;
       }
       else if (m_vertical_mode == VERTICAL_MODE_NONE)
@@ -234,8 +247,8 @@ namespace DUNE
         // check if we have altitude measurements
         if (msg->alt < 0.0)
         {
-          setEntityState(IMC::EntityState::ESTA_ERROR, c_no_alt);
-          err("%s", c_no_alt);
+          setEntityState(IMC::EntityState::ESTA_ERROR, DTR(c_no_alt));
+          err("%s", DTR(c_no_alt));
           return;
         }
 
@@ -245,7 +258,7 @@ namespace DUNE
         {
           if (m_btrack_wrn.overflow())
           {
-            std::string desc = String::str(DTR("bottom tracking not viable, water column is not deep enough ( %0.2f < %0.2f )"), msg->alt + m_estate.depth, m_vertical_ref);
+            std::string desc = String::str(DTR("water column not deep enough for altitude control ( %0.2f < %0.2f )"), msg->alt + m_estate.depth, m_vertical_ref);
             setEntityState(IMC::EntityState::ESTA_NORMAL, desc);
             war("%s", desc.c_str());
             m_btrack_wrn.reset();
@@ -260,11 +273,22 @@ namespace DUNE
         // to avoid causing excessive controller integration
         m_bottom_follow_depth = std::max(m_bottom_follow_depth, (float)0.0);
       }
+      else if (m_vertical_mode == VERTICAL_MODE_PITCH)
+      {
+        if (m_estate.depth >= m_max_depth - c_depth_margin)
+        {
+          const std::string desc = DTR("getting too close to maximum admissible depth");
+          setEntityState(IMC::EntityState::ESTA_ERROR, desc);
+          err("%s", desc.c_str());
+          requestDeactivation();
+          return;
+        }
+      }
 
       // check if yaw control mode is valid
       if (m_yaw_mode >= YAW_MODE_SIZE)
       {
-        signalBadYaw(DTR("bad yaw control mode %d, this should not happen"));
+        signalBadYaw(DTR("invalid yaw control mode %d"));
         return;
       }
       else if (m_yaw_mode == YAW_MODE_NONE)
@@ -276,7 +300,7 @@ namespace DUNE
         if (m_ymode_wait > c_mode_timeout)
         {
           m_ymode_wait = 0.0;
-          signalBadYaw(DTR("timed out while waiting for yaw control mode"));
+          signalBadYaw(DTR("timed out waiting for yaw control mode"));
         }
 
         return;

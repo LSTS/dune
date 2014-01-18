@@ -1,0 +1,64 @@
+//***************************************************************************
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+//***************************************************************************
+// This file is part of DUNE: Unified Navigation Environment.               *
+//                                                                          *
+// Commercial Licence Usage                                                 *
+// Licencees holding valid commercial DUNE licences may use this file in    *
+// accordance with the commercial licence agreement provided with the       *
+// Software or, alternatively, in accordance with the terms contained in a  *
+// written agreement between you and Universidade do Porto. For licensing   *
+// terms, conditions, and further information contact lsts@fe.up.pt.        *
+//                                                                          *
+// European Union Public Licence - EUPL v.1.1 Usage                         *
+// Alternatively, this file may be used under the terms of the EUPL,        *
+// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// included in the packaging of this file. You may not use this work        *
+// except in compliance with the Licence. Unless required by applicable     *
+// law or agreed to in writing, software distributed under the Licence is   *
+// distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
+// ANY KIND, either express or implied. See the Licence for the specific    *
+// language governing permissions and limitations at                        *
+// https://www.lsts.pt/dune/licence.                                        *
+//***************************************************************************
+// Author: Ricardo Martins                                                  *
+//***************************************************************************
+
+SRCODE( 0, "transfer successful (0)")
+SRCODE( 1, "transfer successful but incoming message too big (1)")
+SRCODE( 2, "transfer successful but location updated failed (2)")
+SRCODE( 3, "mobile originated session success (3)")
+SRCODE( 4, "mobile originated session success (4)")
+SRCODE( 5, "mobile originated session failure (5)")
+SRCODE( 6, "mobile originated session failure (6)")
+SRCODE( 7, "mobile originated session failure (7)")
+SRCODE( 8, "mobile originated session failure (8)")
+SRCODE(10, "call did not complete (10)")
+SRCODE(11, "message queue at the gateway is full (11)")
+SRCODE(12, "message has too many segments (12)")
+SRCODE(13, "session did not complete (13)")
+SRCODE(14, "invalid segment size (14)")
+SRCODE(15, "access denied (15)")
+SRCODE(16, "transceiver has been locked (16)")
+SRCODE(17, "gateway not responding (17)")
+SRCODE(18, "connection lost (18)")
+SRCODE(19, "mobile originated session failure (19)")
+SRCODE(20, "mobile originated session failure (20)")
+SRCODE(21, "mobile originated session failure (21)")
+SRCODE(22, "mobile originated session failure (22)")
+SRCODE(23, "mobile originated session failure (23)")
+SRCODE(24, "mobile originated session failure (24)")
+SRCODE(25, "mobile originated session failure (25)")
+SRCODE(26, "mobile originated session failure (26)")
+SRCODE(27, "mobile originated session failure (27)")
+SRCODE(28, "mobile originated session failure (28)")
+SRCODE(29, "mobile originated session failure (29)")
+SRCODE(30, "mobile originated session failure (30)")
+SRCODE(31, "mobile originated session failure (31)")
+SRCODE(32, "no network service (32)")
+SRCODE(33, "antenna fault, unable to initiate call (33)")
+SRCODE(34, "radio is disabled (34)")
+SRCODE(35, "transceive is busy, unable to initiate call (35)")
+
+#undef SRCODE

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -30,6 +30,7 @@
 #include <cstdarg>
 
 // DUNE headers.
+#include <DUNE/Time/Delay.hpp>
 #include <DUNE/Algorithms/CRC8.hpp>
 #include <DUNE/Hardware/UCTK/Bootloader.hpp>
 #include <DUNE/Hardware/UCTK/FirmwareInfo.hpp>
@@ -40,27 +41,62 @@ namespace DUNE
   {
     namespace UCTK
     {
+      //! Jump to bootloader delay.
+      static const double c_jump_boot_delay = 1.0;
+      //! Jump to application delay.
+      static const double c_jump_appl_delay = 4.0;
       //! Size of fill chunk.
       static const unsigned c_fill_chunk_size = 32;
+      //! Bootloader name.
+      static const char* c_boot_name = "BOOT";
 
       Bootloader::Bootloader(Interface* itf, bool verbose):
         m_itf(itf),
         m_verbose(verbose)
       {
-        title("Device");
+        FirmwareInfo info = m_itf->getFirmwareInfo();
+        printFirmwareInfo(info);
 
-        const FirmwareInfo& info(m_itf->getFirmwareInfo());
-        print("%-20s: %s\n", "Firmware Name", info.name.c_str());
-        print("%-20s: %u.%u.%u\n", "Firmware Version", info.major, info.minor,
-              info.patch);
+        if (info.name != c_boot_name)
+        {
+          print("\nJumping to bootloader... ");
+          itf->setBootStop(true);
+          itf->resetDevice();
+          Time::Delay::wait(c_jump_boot_delay);
+          info = m_itf->getFirmwareInfo();
+          if (info.name != c_boot_name)
+            throw std::runtime_error(DTR("failed to enter bootloader"));
+          printOK();
+        }
 
         getFlashInfo();
+      }
+
+      Bootloader::~Bootloader(void)
+      {
+        print("\nJumping to application... ");
+        try
+        {
+          m_itf->setBootStop(false);
+          m_itf->resetDevice();
+          Time::Delay::wait(c_jump_appl_delay);
+          FirmwareInfo info = m_itf->getFirmwareInfo();
+          if (info.name == c_boot_name)
+            throw std::runtime_error(DTR("failed to jump to application"));
+          printOK();
+          printFirmwareInfo(info);
+          printSuccess();
+        }
+        catch (...)
+        {
+          printFailed();
+        }
       }
 
       void
       Bootloader::program(const std::string& file_name)
       {
-        title("Firmare");
+        title("Program Info");
 
         // Load iHEX file.
         IntelHEX ihex(file_name, m_page_size);
@@ -85,24 +121,18 @@ namespace DUNE
         m_frame.set(size, 0);
         m_frame.set(crc.get(), 4);
         if (!m_itf->sendFrame(m_frame))
-          throw std::runtime_error("failed start upgrade procedure");
+          throw std::runtime_error(DTR("failed start upgrade procedure"));
 
         // Program pages.
         IntelHEX::PageTable::const_iterator pitr = table.begin();
         for (; pitr != table.end(); ++pitr)
-        {
           fillPage(pitr->first, pitr->second);
-        }
 
         // End upgrade procedure.
         m_frame.setId(PKT_ID_BOOT_UPGRADE_END);
         m_frame.setPayloadSize(0);
         if (!m_itf->sendFrame(m_frame))
-          throw std::runtime_error("failed to end upgrade procedure");
-
-        reset();
-
-        print("\nSuccess!\n\n");
+          throw std::runtime_error(DTR("failed to end upgrade procedure"));
       }
 
       void
@@ -111,8 +141,9 @@ namespace DUNE
         uint16_t offset = 0;
         unsigned chunk_count = contents.size() / c_fill_chunk_size;
 
-        print("Page %u: ", page);
+        print("Page % 2u: ", page);
 
+        // Fill page.
         m_frame.setId(PKT_ID_BOOT_FLASH_FILL);
         for (unsigned i = 0; i < chunk_count; ++i)
         {
@@ -122,7 +153,7 @@ namespace DUNE
 
           m_frame.setPayloadSize(c_fill_chunk_size + 2);
           if (!m_itf->sendFrame(m_frame))
-            throw std::runtime_error("failed to fill page chunk");
+            throw std::runtime_error(DTR("failed to fill page chunk"));
 
           print(".");
         }
@@ -132,9 +163,10 @@ namespace DUNE
         m_frame.setPayloadSize(4);
         m_frame.set<uint32_t>(page * m_page_size, 0);
         if (!m_itf->sendFrame(m_frame))
-          throw std::runtime_error("failed to write flash page");
+          throw std::runtime_error(DTR("failed to write flash page"));
+        print(" ");
 
-        print(" OK\n");
+        printOK();
       }
 
       void
@@ -158,30 +190,46 @@ namespace DUNE
       }
 
       void
-      Bootloader::reset(void)
-      {
-        print("\nResetting Device...");
-
-        m_frame.setId(PKT_ID_RESET);
-        m_frame.setPayloadSize(0);
-        if (!m_itf->sendFrame(m_frame))
-          throw std::runtime_error("failed to reset device");
-
-        print(" OK\n");
-      }
-
-      void
       Bootloader::getFlashInfo(void)
       {
         m_frame.setId(PKT_ID_BOOT_FLASH_INFO);
         m_frame.setPayloadSize(0);
         if (!m_itf->sendFrame(m_frame))
-          throw std::runtime_error("failed to retrieve flash info");
+          throw std::runtime_error(DTR("failed to retrieve flash info"));
+
+        title("Flash Info");
 
         m_frame.get(m_flash_size, 0);
         print("%-20s: %u\n", "Flash Size", m_flash_size);
         m_frame.get(m_page_size, 4);
         print("%-20s: %u\n", "Flash Page Size", m_page_size);
+      }
+
+      void
+      Bootloader::printFirmwareInfo(const FirmwareInfo& info) const
+      {
+        title("Firmware Info");
+        print("%-20s: %s\n", "Firmware Name", info.name.c_str());
+        print("%-20s: %u.%u.%u\n", "Firmware Version", info.major,
+              info.minor, info.patch);
+      }
+
+      void
+      Bootloader::printOK(void) const
+      {
+        print("OK\n");
+      }
+
+      void
+      Bootloader::printFailed(void) const
+      {
+        print("FAILED\n");
+      }
+
+      void
+      Bootloader::printSuccess(void) const
+      {
+        print("\nSuccess!\n\n");
       }
     }
   }

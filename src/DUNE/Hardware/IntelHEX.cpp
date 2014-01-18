@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -58,7 +58,7 @@ namespace DUNE
       std::ifstream ifs(m_file_name.c_str());
       if (ifs.fail())
       {
-        throw std::runtime_error(Utils::String::str("failed to open file: %s",
+        throw std::runtime_error(Utils::String::str("%s: %s", DTR("failed to open file"),
                                                     m_file_name.c_str()));
       }
 
@@ -104,7 +104,7 @@ namespace DUNE
         uint8_t csum = (uint8_t)tmp;
 
         if (csum != ccsum)
-          throw std::runtime_error("invalid checksum");
+          throw std::runtime_error(DTR("invalid checksum"));
 
         // Check for end of file record.
         if (rec_type == 1)

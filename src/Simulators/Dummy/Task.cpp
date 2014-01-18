@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -83,11 +83,6 @@ namespace Simulators
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
-      ~Task(void)
-      {
-        Task::onResourceRelease();
-      }
-
       //! On update parameters
       void
       onUpdateParameters(void)
@@ -95,16 +90,6 @@ namespace Simulators
         m_act_timer.setTop(m_args.actual_act_time);
         m_deact_timer.setTop(m_args.actual_deact_time);
       }
-
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      { }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      { }
 
       //! On activation
       void

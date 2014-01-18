@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -97,20 +97,17 @@ namespace Transports
       run(void)
       {
         Address addr;
-        IOMultiplexing iom;
         uint8_t* bfr = new uint8_t[c_bfr_size];
         double poll_tout = c_poll_tout / 1000.0;
-
-        m_sock.addToPoll(iom);
 
         while (!isStopping())
         {
           try
           {
-            if (!iom.poll(poll_tout))
+            if (!Poll::poll(m_sock, poll_tout))
               continue;
 
-            uint16_t rv = m_sock.read((char*)bfr, c_bfr_size, &addr);
+            uint16_t rv = m_sock.read(bfr, c_bfr_size, &addr);
             IMC::Message* msg = IMC::Packet::deserialize(bfr, rv);
 
             if (m_lcomms->isActive())

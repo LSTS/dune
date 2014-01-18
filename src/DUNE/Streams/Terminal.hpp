@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -34,11 +34,14 @@
 #include <fstream>
 #include <iostream>
 #include <cstddef>
+#include <cctype>
 
 // DUNE headers.
+#include <DUNE/Config.hpp>
 #include <DUNE/Time/Format.hpp>
 #include <DUNE/Concurrency/ScopedRWLock.hpp>
 #include <DUNE/Concurrency/Mutex.hpp>
+#include <DUNE/Utils/String.hpp>
 
 namespace DUNE
 {
@@ -63,7 +66,10 @@ namespace DUNE
             out += "\\n";
             break;
           default:
-            out += str[i];
+            if (isprint(str[i]))
+              out += str[i];
+            else
+              out += Utils::String::str("<%02X>", (unsigned char)str[i]);
             break;
         }
       }
@@ -148,7 +154,7 @@ namespace DUNE
 //! parameters. If the macro DEBUG is not set nothing is performed.
 #  define DUNE_DBG(module, code)                                        \
   ::DUNE::Streams::dune_term.lock()                                     \
-  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << "DBG"      \
+  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << DTR("DBG") \
   << " [" << module << "] >> " << code << "\n"                          \
   << ::DUNE::Streams::dune_term_flush
 #else
@@ -161,7 +167,7 @@ namespace DUNE
 //! parameters.
 #define DUNE_ERR(module, code)                                          \
   ::DUNE::Streams::dune_term.lock("\033[1;31m")                         \
-  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << "ERR"      \
+  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << DTR("ERR") \
   << " [" << module << "] >> " << code                                  \
   << "\n"                                                               \
   << ::DUNE::Streams::dune_term_flush
@@ -170,7 +176,7 @@ namespace DUNE
 //! parameters.
 #define DUNE_WRN(module, code)                                          \
   ::DUNE::Streams::dune_term.lock("\033[1;33m")                         \
-  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << "WRN"      \
+  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << DTR("WRN") \
   << " [" << module << "] >> " << code                                  \
   << "\n"                                                               \
   << ::DUNE::Streams::dune_term_flush
@@ -179,7 +185,7 @@ namespace DUNE
 //! parameters.
 #define DUNE_MSG(module, code)                                          \
   ::DUNE::Streams::dune_term.lock()                                     \
-  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << "MSG"      \
+  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << DTR("MSG") \
   << " [" << module << "] >> " << code << "\n"                          \
   << ::DUNE::Streams::dune_term_flush
 

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -47,15 +47,20 @@ main(int argc, char** argv)
     return 1;
   }
 
-  double now = Clock::getSinceEpoch();
-  std::string prefix(argv[2]);
-  prefix += "/";
-  prefix += Time::Format::getDateSafe(now);
-  prefix += "_";
-  prefix += Time::Format::getTimeSafe(now);
+  Path folder(argv[2]);
+  if (!folder.exists())
+    folder.create();
 
-  std::string bin_name = prefix + ".bin";
-  std::string tsv_name = prefix + ".tsv";
+  Path bin_name;
+  unsigned nr = 0;
+
+  while (true)
+  {
+    bin_name = folder / String::str("%08u.bin", nr);
+    if (!bin_name.exists())
+      break;
+    ++nr;
+  }
 
   std::FILE* bin = std::fopen(bin_name.c_str(), "wb");
   if (bin == NULL)
@@ -63,32 +68,21 @@ main(int argc, char** argv)
     std::cerr << "ERROR: failed to open file '" << bin_name << "'" << std::endl;
     return 1;
   }
+  std::cerr << "Opened " << bin_name << std::endl;
 
-  std::FILE* tsv = std::fopen(tsv_name.c_str(), "w");
-  if (tsv == NULL)
+  SerialPort port(argv[1], 921600);
+  uint8_t bfr[1024] = {0};
+
+  while (true)
   {
-    std::cerr << "ERROR: failed to open file '" << tsv_name << "'" << std::endl;
-    return 1;
-  }
-
-  std::cerr << "Logging to '" << prefix << ".{bin,tsv}'" << std::endl;
-
-  SerialPort port(argv[1], 500000);
-  uint8_t bfr[1024];
-  ::Parser parser(tsv);
-
-  while (1)
-  {
-    if (port.hasNewData(1.0) != DUNE::System::IOMultiplexing::PRES_OK)
+    if (!Poll::poll(port, 1.0))
       continue;
 
-    int rv = port.read(bfr, sizeof(bfr));
+    size_t rv = port.read(bfr, sizeof(bfr));
     std::fwrite(bfr, 1, rv, bin);
-    for (int i = 0; i < rv; ++i)
-    {
-      parser.parse(bfr[i]);
-    }
   }
+
+  std::fclose(bin);
 
   return 0;
 }
