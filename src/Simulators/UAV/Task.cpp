@@ -82,6 +82,7 @@ namespace Simulators
       double m_last_update;
       //! Last time debug information was shown
       double m_last_time_debug;
+      double m_last_time_trace;
       //! Actuation in the thruster
       float m_thruster_act;
       //! Set Servo positions
@@ -90,6 +91,8 @@ namespace Simulators
       Matrix m_position;
       //! Vehicle velocity vector
       Matrix m_velocity;
+      //! Wind velocity vector
+      Matrix m_wind;
       //! Gps simulator entity id.
       unsigned m_gps_eid;
       //! Task arguments.
@@ -100,11 +103,13 @@ namespace Simulators
         m_model(NULL),
         m_start_time(-1.0),
         m_last_update(-1.0),
-        m_last_time_debug(-1.0),
+        m_last_time_debug(std::min(-1.0, Clock::get())),
+        m_last_time_trace(std::min(-1.0, Clock::get())),
         m_thruster_act(0.0),
         m_servo_pos(4, 1, 0.0),
         m_position(6, 1, 0.0),
-        m_velocity(6, 1, 0.0)
+        m_velocity(6, 1, 0.0),
+        m_wind(3, 1, 0.0)
       {
         // Definition of configuration parameters.
         param("Stream Speed North", m_args.wx)
@@ -264,6 +269,24 @@ namespace Simulators
         // - Simulation type
         m_model->m_sim_type = m_args.sim_type;
 
+        debug("Initial latitude: %1.4fº", DUNE::Math::Angles::degrees(m_sstate.lat));
+        debug("Initial longitude: %1.4fº", DUNE::Math::Angles::degrees(m_sstate.lon));
+        debug("Initial altitude: %1.4fm", m_sstate.height);
+        debug("Initial x position: %1.4f", m_position(0));
+        debug("Initial y position: %1.4f", m_position(1));
+        debug("Initial z position: %1.4f", m_position(2));
+        debug("Initial roll angle: %1.4f", m_position(3));
+        debug("Initial pitch angle: %1.4f", m_position(4));
+        debug("Initial yaw angle: %1.4f", m_position(5));
+        debug("Initial x speed: %1.4f", m_velocity(0));
+        debug("Initial y speed: %1.4f", m_velocity(1));
+        debug("Initial z speed: %1.4f", m_velocity(2));
+        debug("Initial roll rate: %1.4f", m_velocity(3));
+        debug("Initial pitch rate: %1.4f", m_velocity(4));
+        debug("Initial yaw rate: %1.4f", m_velocity(5));
+        debug("Initial x wind speed: %1.4f", m_wind(0));
+        debug("Initial y wind speed: %1.4f", m_wind(1));
+        debug("Initial z wind speed: %1.4f", m_wind(2));
 
         /*
         DUNE::Control::ModelParameters par;
@@ -290,7 +313,6 @@ namespace Simulators
         //! Start the simulation time
         m_start_time = Clock::get();
         m_last_update = Clock::get();
-        m_last_time_debug = Clock::get();
       }
 
       void
@@ -488,35 +510,84 @@ namespace Simulators
           return;
 
         //! Declaration
-        double time;
-        double timestep;
+        double d_time;
+        double d_timestep;
 
         //! Compute the time step
-        time  = Clock::get();
-        timestep = time - m_last_update;
-        m_last_update = time;
+        d_time  = Clock::get();
+        d_timestep = d_time - m_last_update;
+        m_last_update = d_time;
 
+        // ========= Trace ===========
         /*
-        // ========= Debug ===========
-        if (time >= m_last_time_debug + 1.0)
+        if (d_time >= m_last_time_trace + 0.1)
         {
-          //spew("Simulating: %s", m_model->m_sim_type);
-          spew("Bank: %1.2fº        - Commanded bank: %1.2fº",
+          //trace("Simulating: %s", m_model->m_sim_type);
+          trace("Bank: %1.2fº        - Commanded bank: %1.2fº",
               DUNE::Math::Angles::degrees(m_position(3)),
               DUNE::Math::Angles::degrees(m_model->m_bank_cmd));
-          spew("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->m_airspeed_cmd);
-          spew("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
-          m_last_time_debug = time;
+          trace("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->m_airspeed_cmd);
+          trace("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
+          trace("Current latitude: %1.4fº", DUNE::Math::Angles::degrees(m_sstate.lat));
+          trace("Current longitude: %1.4fº", DUNE::Math::Angles::degrees(m_sstate.lon));
+          trace("Current altitude: %1.4fm", m_sstate.height);
+          trace("Current x position: %1.4f", m_position(0));
+          trace("Current y position: %1.4f", m_position(1));
+          trace("Current z position: %1.4f", m_position(2));
+          trace("Current roll angle: %1.4f", m_position(3));
+          trace("Current pitch angle: %1.4f", m_position(4));
+          trace("Current yaw angle: %1.4f", m_position(5));
+          trace("Current x speed: %1.4f", m_velocity(0));
+          trace("Current y speed: %1.4f", m_velocity(1));
+          trace("Current z speed: %1.4f", m_velocity(2));
+          trace("Current roll rate: %1.4f", m_velocity(3));
+          trace("Current pitch rate: %1.4f", m_velocity(4));
+          trace("Current yaw rate: %1.4f", m_velocity(5));
+          trace("Current x wind speed: %1.4f", m_wind(0));
+          trace("Current y wind speed: %1.4f", m_wind(1));
+          trace("Current z wind speed: %1.4f", m_wind(2));
+          m_last_time_trace = d_time;
         }
         */
         //==========================================================================
         //! Dynamics
         //==========================================================================
 
-        m_model->update(timestep);
+        m_model->update(d_timestep);
         m_position = m_model->getPosition();
         m_velocity = m_model->getVelocity();
 
+        // ========= Debug ===========
+        /*
+        if (d_time >= m_last_time_debug + 1.0)
+        {
+          //debug("Simulating: %s", m_model->m_sim_type);
+          debug("Bank: %1.2fº        - Commanded bank: %1.2fº",
+              DUNE::Math::Angles::degrees(m_position(3)),
+              DUNE::Math::Angles::degrees(m_model->m_bank_cmd));
+          debug("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->m_airspeed_cmd);
+          debug("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
+          debug("Current latitude: %1.4fº", DUNE::Math::Angles::degrees(m_sstate.lat));
+          debug("Current longitude: %1.4fº", DUNE::Math::Angles::degrees(m_sstate.lon));
+          debug("Current altitude: %1.4fm", m_sstate.height);
+          debug("Current x position: %1.4f", m_position(0));
+          debug("Current y position: %1.4f", m_position(1));
+          debug("Current z position: %1.4f", m_position(2));
+          debug("Current roll angle: %1.4f", m_position(3));
+          debug("Current pitch angle: %1.4f", m_position(4));
+          debug("Current yaw angle: %1.4f", m_position(5));
+          debug("Current x speed: %1.4f", m_velocity(0));
+          debug("Current y speed: %1.4f", m_velocity(1));
+          debug("Current z speed: %1.4f", m_velocity(2));
+          debug("Current roll rate: %1.4f", m_velocity(3));
+          debug("Current pitch rate: %1.4f", m_velocity(4));
+          debug("Current yaw rate: %1.4f", m_velocity(5));
+          debug("Current x wind speed: %1.4f", m_wind(0));
+          debug("Current y wind speed: %1.4f", m_wind(1));
+          debug("Current z wind speed: %1.4f", m_wind(2));
+          m_last_time_debug = d_time;
+        }
+        */
         //==========================================================================
         //! Output
         //==========================================================================
