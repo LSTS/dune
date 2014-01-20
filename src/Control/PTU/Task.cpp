@@ -68,23 +68,6 @@ namespace Control
         m_trg_pos(3,1),
         m_trg_vel(3,1)
       {
-        // == Parameters ==
-        // Identificador do veículo escrito directamente ini
-        // é necessário usar o:
-        // bus().resolver().resolve("alfa-007")
-        // consultar src/DUNE/IMC/AddressResolver.hpp
-        // ou
-        // src/DUNE/Daemon.cpp
-        // retrieve known imc addresses
-        // ou
-        // src/DUNE/Parsers/Config.hpp
-        // imc-addresses.ini
-        // ----
-//        param(m_my_trg)
-//        .name("Vehicle Address")
-//        .description("Vehicle to be tracked")
-//        .defaultValue("0x0c27");
-
         param("Target Vehicle", m_trg_name)
         .description("Vehicle to be tracked")
         .defaultValue("alfa-07");
@@ -127,7 +110,7 @@ namespace Control
       onUpdateParameters(void)
       {
         m_trg_id = resolveSystemName(m_trg_name);
-        inf("Target name is %s, with ID %d",m_trg_name.c_str(),m_trg_id);
+        inf("Target name is %s, with ID %d", m_trg_name.c_str(), m_trg_id);
       }
 
       void
@@ -141,18 +124,18 @@ namespace Control
         Matrix tmp_ptu_rot;
         Matrix rel_pos_body = Matrix(3,1);
         Matrix rel_vel_body = Matrix(3,1);
-        float cmd_pan,
-              des_pan_rate,
-              cmd_pan_rate,
-              cmd_tilt,
-              des_tilt_rate,
-              cmd_tilt_rate,
-              tmp_hor_dist_sq,
-              tmp_hor_dist;
+        float cmd_pan;
+        float des_pan_rate;
+        float cmd_pan_rate;
+        float cmd_tilt;
+        float des_tilt_rate;
+        float cmd_tilt_rate;
+        float tmp_hor_dist_sq;
+        float tmp_hor_dist;
         std::stringstream ss;
 
         // Self estimated state for target x, y and z position computation
-//        if (getEntityId() == msg->getSourceEntity())
+//        if (msg->getSource() == getSystemId())
 //      {
 //        m_estate = *msg;
 //        m_es_flag = true;
@@ -179,10 +162,10 @@ namespace Control
           // Check if it is expecting a fixed predefined position of an estimated state
           if (m_ptu_fixed)
           {
-            float deg2rad = Math::c_pi / 180;
+            float deg2rad = Math::c_pi / 180; // ToDo - Remove when the 2 lines below are changed
 
-            m_ptu_lat *=  deg2rad;
-            m_ptu_lon *=  deg2rad;
+            m_ptu_lat *=  deg2rad; // ToDo - Relocate at the "onUpdateParameters" as "m_ptu_lat = Math::Angles::radians(m_args.ptu_lat);"
+            m_ptu_lon *=  deg2rad; // ToDo - Relocate at the "onUpdateParameters" as "m_ptu_lon = Math::Angles::radians(m_args.ptu_lon);"
 
             WGS84::displacement(m_estate_ref.lat, m_estate_ref.lon, -m_estate_ref.height, m_ptu_lat, m_ptu_lon, m_ptu_height, &m_ptu_pos(0,0), &m_ptu_pos(1,0));
 
