@@ -344,8 +344,8 @@ namespace Maneuver
             //! Leader state initialization
             debug("Formation LeaderState initialization");
             m_init_leader.op = IMC::LeaderState::OP_SET;
-            m_init_leader.lat = m_args.init_lat;
-            m_init_leader.lon = m_args.init_lon;
+            m_init_leader.lat = DUNE::Math::Angles::radians(m_args.init_lat);
+            m_init_leader.lon = DUNE::Math::Angles::radians(m_args.init_lon);
             m_init_leader.height = m_args.init_alt;
             m_init_leader.x = m_position(0);
             m_init_leader.y = m_position(1);
@@ -1368,7 +1368,6 @@ namespace Maneuver
                 vd_inter_uav_pos(0));
             d_cos_inter_uav_angle = std::cos(d_inter_uav_angle);
             d_sin_inter_uav_angle = std::sin(d_inter_uav_angle);
-            // verificar preenchimento da matriz (linhas e colunas ou vice-versa)
             mt_rot[0] = d_cos_inter_uav_angle;
             mt_rot[1] = -d_sin_inter_uav_angle;
             mt_rot[2] = d_sin_inter_uav_angle;
@@ -1733,7 +1732,7 @@ namespace Maneuver
           vt_virt_err_uav.set(0, 1, ind_uav_lead, ind_uav_lead,
                               vd_inter_uav_des_acc + md_uav_accel.get(0, 1, ind_uav_lead, ind_uav_lead));
           vt_virt_err_uav(0, ind_uav_lead) -= d_c1 * d_c2 * d_deriv_err_x/((d_err_x - d_c2)*(d_err_x - d_c2));
-          vt_virt_err_uav(0, ind_uav_lead) -= d_c3 * d_c4 * d_deriv_err_y/((d_err_y - d_c4)*(d_err_y - d_c4));
+          vt_virt_err_uav(1, ind_uav_lead) -= d_c3 * d_c4 * d_deriv_err_y/((d_err_y - d_c4)*(d_err_y - d_c4));
 
           //! Tracking output
           /*
