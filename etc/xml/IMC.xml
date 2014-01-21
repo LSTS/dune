@@ -10,7 +10,7 @@
           xsi:noNamespaceSchemaLocation="IMC.xsd"
           name="IMC"
           long-name="Inter Module Communication"
-          version="5.3.1">
+          version="5.3.x">
 
   <description>
     This document describes the communications protocol associated
@@ -338,7 +338,7 @@
       supplemental fields, it is always placed at the beginning of a
       packet.
     </description>
-    <field name="Synchronization Number" abbrev="sync" type="uint16_t" value="0xF531" fixed="true">
+    <field name="Synchronization Number" abbrev="sync" type="uint16_t" value="0xFE53" fixed="true">
       <description>
         The synchronization number marks the beginning of a packet.
 
@@ -5588,7 +5588,7 @@
       </description>
     </field>
   </message>
-  
+
   <message id="478" name="Follow Reference Maneuver" abbrev="FollowReference" source="ccu">
     <description>
       This maneuver follows a reference given by an external entity.
