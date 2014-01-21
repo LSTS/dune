@@ -49,9 +49,16 @@ namespace Control
 
       struct Arguments
       {
-        double la_gain; // Looakhead gain
-        double tr_gain; // Turn rate gain
-        double max_bank; // Max bank.
+        //! Look-ahead gain - Multiplies by aircraft minimum turning radius
+        //! to define the distance ahead in the desired path at which the
+        //! aircraft should point.
+        double la_gain;
+        //! Turn rate gain - Defines how sharply should the aircraft turn to
+        //! to track the desired look-ahead point
+        double tr_gain;
+        //! Maximum bank angle - Defined by aircaft structural, navigation
+        //! or control constraints
+        double max_bank;
       };
 
       struct Task: public DUNE::Control::PathController
@@ -64,18 +71,18 @@ namespace Control
         {
           param("Look Ahead Gain", m_args.la_gain)
           .defaultValue("1.0")
-          .description("Lookahead again for control");
+          .description("Look-ahead gain for control");
 
           param("Turn Rate Gain", m_args.tr_gain)
           .defaultValue("0.005")
-          .description("Lookahead again for control");
+          .description("Turn rate gain for control");
 
           param("Maximum Bank", m_args.max_bank)
           .units(Units::Degree)
           .minimumValue("5")
           .maximumValue("45")
           .defaultValue("30")
-          .description("Limit for absolute value of output bank reference");
+          .description("Limit for absolute value of output bank angle reference");
         }
 
         void
@@ -102,6 +109,8 @@ namespace Control
         {
           if (std::fabs(ts.track_vel.y) <= -ts.track_vel.x)
           {
+            //! Command maximum bank angle if the aircraft is going on the
+            //! opposite direction to the target waypoint
             if (ts.track_vel.y < 0)
             {
               m_bank.value = m_args.max_bank;
@@ -113,12 +122,17 @@ namespace Control
           }
           else
           {
+            //! Airspeed
+            // Check - speed should be the aircraft airspeed
             double speed = std::sqrt(state.u * state.u + state.v * state.v + state.w * state.w);
+            //! Look-ahead distance computation
             double xla = m_args.la_gain * speed * speed;
+            //! Desired turn-rate
             double desired_tr = -m_args.tr_gain * (xla * ts.track_vel.y + ts.track_pos.y * ts.track_vel.x);
 
-            m_bank.value = std::atan(desired_tr * speed / Math::c_gravity);
-            m_bank.value = trimValue(m_bank.value, -m_args.max_bank, m_args.max_bank);
+            //! Output - Bank angle command, constrained
+            m_bank.value = trimValue(std::atan(desired_tr * speed / Math::c_gravity),
+                                     -m_args.max_bank, m_args.max_bank);
           }
 
           // Send to bus
