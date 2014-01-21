@@ -335,7 +335,7 @@ namespace Maneuver
           //! - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
           //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed+4, m_position(2));
+          m_model->command(m_position(3), m_args.init_speed, m_position(2));
           //! - Simulation type
           m_model->m_sim_type = m_args.sim_type;
 
@@ -630,6 +630,14 @@ namespace Maneuver
               m_uav_state.set(0, 11, m_args.uav_ind, m_args.uav_ind, Matrix(vt_uav_state, 12, 1));
               // To complete - Check the difference between the vehicle real and simulated state
 
+              //! - Update own vehicle simulation model
+              model = m_models[m_args.uav_ind-1];
+              model->setPosition(m_uav_state.get(0, 2, m_args.uav_ind, m_args.uav_ind).
+                         vertCat(m_uav_state.get(6, 8, m_args.uav_ind, m_args.uav_ind)));
+              model->setVelocity(m_uav_state.get(3, 5, m_args.uav_ind, m_args.uav_ind).
+                         vertCat(m_uav_state.get(9, 11, m_args.uav_ind, m_args.uav_ind)));
+              m_models[m_args.uav_ind-1] = model;
+
               spew("EstimatedState - Own vehicle state update");
               if (!isActive())
                 return;
@@ -637,6 +645,9 @@ namespace Maneuver
               //===========================================
               //! Team prediction update
               //===========================================
+
+              double vt_uav_state_own3[6] = {m_uav_state(0, m_args.uav_ind), m_uav_state(1, m_args.uav_ind), m_uav_state(2, m_args.uav_ind),
+                  m_uav_state(3, m_args.uav_ind), m_uav_state(4, m_args.uav_ind), m_uav_state(5, m_args.uav_ind)};
 
               //! Update team simulated state for standard time periods
               teamPeriodicUpdate(d_time);
@@ -646,16 +657,15 @@ namespace Maneuver
               //! Control computation
               //===========================================
 
+              double vt_uav_state_own2[6] = {m_uav_state(0, m_args.uav_ind), m_uav_state(1, m_args.uav_ind), m_uav_state(2, m_args.uav_ind),
+                  m_uav_state(3, m_args.uav_ind), m_uav_state(4, m_args.uav_ind), m_uav_state(5, m_args.uav_ind)};
+
+
               vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, m_args.uav_ind-1, m_args.uav_ind-1));
               formationControl(m_uav_state, m_uav_accel, m_args.uav_ind, d_time - m_last_ctrl_update, &vd_cmd);
               m_uav_ctrl.set(0, 2, m_args.uav_ind-1, m_args.uav_ind-1, vd_cmd.get(0, 2, 0, 0));
 
-              //! - Update own vehicle simulation model
-              model = m_models[m_args.uav_ind-1];
-              m_model->setPosition(m_uav_state.get(0, 2, m_args.uav_ind, m_args.uav_ind).
-                         vertCat(m_uav_state.get(6, 8, m_args.uav_ind, m_args.uav_ind)));
-              m_model->setVelocity(m_uav_state.get(3, 5, m_args.uav_ind, m_args.uav_ind).
-                         vertCat(m_uav_state.get(9, 11, m_args.uav_ind, m_args.uav_ind)));
+              //! - Update own vehicle simulation model - Controls
               model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
               m_models[m_args.uav_ind-1] = model;
 
@@ -711,8 +721,8 @@ namespace Maneuver
 
               //! - Update current vehicle simulation model
               model = m_models[ind_uav-1];
-              m_model->setPosition(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)));
-              m_model->setVelocity(m_uav_state.get(3, 5, ind_uav, ind_uav).vertCat(m_uav_state.get(9, 11, ind_uav, ind_uav)));
+              model->setPosition(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)));
+              model->setVelocity(m_uav_state.get(3, 5, ind_uav, ind_uav).vertCat(m_uav_state.get(9, 11, ind_uav, ind_uav)));
               model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
               m_models[ind_uav-1] = model;
 
@@ -1141,6 +1151,8 @@ namespace Maneuver
         formationControl(const Matrix& md_uav_state, const Matrix& md_uav_accel,
             const int& ind_uav, const double& d_time_step, Matrix* vd_cmd)
         {
+          double vt_uav_state_own1[6] = {md_uav_state(0, ind_uav), md_uav_state(1, ind_uav), md_uav_state(2, ind_uav),
+                        md_uav_state(3, ind_uav), md_uav_state(4, ind_uav), md_uav_state(5, ind_uav)};
           spew("formationControl start");
           //! Vehicle formation control method
 
@@ -1168,13 +1180,12 @@ namespace Maneuver
           double mt_gain_mtx[2] = {m_args.k_longitudinal, m_args.k_lateral};
           Matrix md_gain_mtx = Matrix(mt_gain_mtx, 2);
           double d_ss_bnd_layer = m_args.k_boundary;
-          double d_form_ref_gain = (m_uav_n-1)*m_args.k_leader;
           double d_flow_accel_max = m_args.flow_accel_max;
           double d_control_margin = m_args.deconfliction_offset;
           double d_deconfliction_dist = m_args.safe_dist + d_control_margin;
           double d_acc_saf_marg = m_args.acc_safety_marg;
-          double k_leader = m_args.k_leader*(m_args.uav_n - 1);
-          double k_deconfl_vel = m_args.k_deconfliction*k_leader;
+          double k_form_ref = (m_uav_n > 1)?m_args.k_leader*(m_uav_n-1):1.0;
+          double k_deconfl_vel = m_args.k_deconfliction*k_form_ref;
           double k_deconfliction_dist = k_deconfl_vel/2;
           double k_long_dist1 = 1.5;
           double k_long_dist2 = 4;
@@ -1629,6 +1640,10 @@ namespace Maneuver
           //! Computing relative state, from current UAV to leader
           vd_inter_uav_state = md_uav_state.get(0, 5, ind_uav_lead, ind_uav_lead) -
               md_uav_state.get(0, 5, ind_uav, ind_uav);
+          double vt_uav_state_lead[6] = {md_uav_state(0, ind_uav_lead), md_uav_state(1, ind_uav_lead), md_uav_state(2, ind_uav_lead),
+              md_uav_state(3, ind_uav_lead), md_uav_state(4, ind_uav_lead), md_uav_state(5, ind_uav_lead)};
+          double vt_uav_state_own[6] = {md_uav_state(0, ind_uav), md_uav_state(1, ind_uav), md_uav_state(2, ind_uav),
+                        md_uav_state(3, ind_uav), md_uav_state(4, ind_uav), md_uav_state(5, ind_uav)};
           /* --- Used just for control performance evaluation ---
         vd_inter_uav_pos = vd_inter_uav_state.get(0, 1, 0, 0);
         d_inter_uav_dist = vd_inter_uav_pos.norm_2();
@@ -1685,6 +1700,10 @@ namespace Maneuver
           vd_deriv_err = -vd_inter_uav_state.get(3, 4, 0, 0) - vd_inter_uav_des_vel;
           d_deriv_err_x = vd_deriv_err(0);
           d_deriv_err_y = vd_deriv_err(1);
+
+          double vt_inter_uav_state1[6] = {vd_inter_uav_state(0, 0), vd_inter_uav_state(1, 0), vd_inter_uav_state(2, 0),
+              vd_inter_uav_state(3, 0), vd_inter_uav_state(4, 0), vd_inter_uav_state(5, 0)};
+          double vt_inter_uav_des_vel1[6] = {vd_inter_uav_des_vel(0), vd_inter_uav_des_vel(1)};
 
           //! Maneuvering constrains
           d_accel_max_proj_x = std::abs(vd_body_accel_lim_x(0)) + std::abs(vd_body_accel_lim_y(0));
@@ -1769,7 +1788,7 @@ namespace Maneuver
 
           //! UAV weight on control strategy
           Matrix vd_ctrl_weight = Matrix(m_uav_n+1, 1, 1.0);
-          vd_ctrl_weight(m_uav_n) = d_form_ref_gain;
+          vd_ctrl_weight(m_uav_n) = k_form_ref;
           vd_ctrl_weight(ind_uav) = 0;
           vd_ctrl_weight &= vd_weight_gain;
           vd_ctrl_weight /= sum(vd_ctrl_weight);
@@ -1781,6 +1800,8 @@ namespace Maneuver
           //! Sliding surface data mixing
           Matrix vd_surf = vd_surf_uav * vd_ctrl_weight;
           Matrix vt_virt_err = vt_virt_err_uav * vd_ctrl_weight;
+          double vt_surf2[2] = {vd_surf(0), vd_surf(1)};
+          double vt_virt_err2[2] = {vt_virt_err(0), vt_virt_err(1)};
 
           double d_surf_norm = vd_surf.norm_2();
           Matrix vd_surf_unit = vd_surf/d_surf_norm;
@@ -1798,16 +1819,16 @@ namespace Maneuver
           else
             vd_sat_surf = vd_surf/d_ss_bnd_layer;
 
-          //verificar conversão para c++
+          // Check - verificar conversão para c++
           Matrix vd_surf_conv = transpose(md_rot_ground2yaw)*md_gain_mtx*md_rot_ground2yaw * vd_sat_surf;
 
           //!-------------------------------------------
           //! Sliding surface unknown disturbance term
           //!-------------------------------------------
 
-          // vd_surf_unkn = (2 * (m_uav_n-1) + d_form_ref_gain) * d_flow_accel_max * vd_surf_unit;
+          // vd_surf_unkn = (2 * (m_uav_n-1) + k_form_ref) * d_flow_accel_max * vd_surf_unit;
 
-          // vd_surf_unkn1 = ((m_uav_n-1)/(m_uav_n-1+d_form_ref_gain)+1)*...
+          // vd_surf_unkn1 = ((m_uav_n-1)/(m_uav_n-1+k_form_ref)+1)*...
           //     d_flow_accel_max*vd_surf_unit;
 
           vd_surf_unit = Matrix(2, 1);
@@ -1833,9 +1854,9 @@ namespace Maneuver
           t_SurfSqr = vd_surf_uav(0, m_uav_n)*vd_surf_uav(0, m_uav_n) +
               vd_surf_uav(1, m_uav_n)*vd_surf_uav(1, m_uav_n);
           if (t_SurfSqr)
-            vd_surf_unit += d_form_ref_gain*vd_surf_uav.get(0, 1, m_uav_n, m_uav_n)*vd_ctrl_weight(m_uav_n)/std::sqrt(t_SurfSqr);
+            vd_surf_unit += k_form_ref*vd_surf_uav.get(0, 1, m_uav_n, m_uav_n)*vd_ctrl_weight(m_uav_n)/std::sqrt(t_SurfSqr);
           // Formation/Uncertainty compensation
-          Matrix vd_surf_unkn = vd_surf_unit*d_flow_accel_max/(m_uav_n-1+d_form_ref_gain);
+          Matrix vd_surf_unkn = vd_surf_unit*d_flow_accel_max/(m_uav_n-1+k_form_ref);
           /*
         if (ind_uav == 1)
         {
@@ -1855,10 +1876,15 @@ namespace Maneuver
 
           // Control vector
           // vd_accel = (vt_virt_err - vd_surf_conv - vd_surf_unkn)/...
-          //     (m_uav_n-1+d_form_ref_gain);
+          //     (m_uav_n-1+k_form_ref);
           Matrix vd_accel = vt_virt_err - vd_surf_conv - vd_surf_unkn;
           Matrix vd_ctrl = md_rot_ground2yaw*vd_accel;
 
+          double vt_virt_err1[2] = {vt_virt_err(0), vt_virt_err(1)};
+          double vt_surf_conv1[2] = {vd_surf_conv(0), vd_surf_conv(1)};
+          double vt_surf_unkn1[2] = {vd_surf_unkn(0), vd_surf_unkn(1)};
+          double vt_accel1[2] = {vd_accel(0), vd_accel(1)};
+          double vt_ctrl2[2] = {vd_ctrl(0), vd_ctrl(1)};
           //-------------------------------------------
           // Altitude control
           //-------------------------------------------
@@ -1873,6 +1899,8 @@ namespace Maneuver
           vd_ctrl(0) = d_accel_x_cmd;
           (*vd_cmd)(1) += d_time_step * d_accel_x_cmd;
 
+          double vt_ctrl1[2] = {vd_ctrl(0), vd_ctrl(1)};
+
           //-------------------------------------------
           // Course control
           //-------------------------------------------
@@ -1880,19 +1908,23 @@ namespace Maneuver
           // Bank command
           (*vd_cmd)(0) = std::atan(vd_ctrl(1)/d_g); // Desired bank
 
+          double vt_cmd1[3] = {(*vd_cmd)(0), (*vd_cmd)(1), (*vd_cmd)(2)};
+
           //===========================================
           // Control limits
           //===========================================
 
           //! Velocity limits
-          (*vd_cmd)(1) = std::min(std::max((*vd_cmd)(1), d_airspeed_min), d_airspeed_max);
+          (*vd_cmd)(1) = trimValue((*vd_cmd)(1), d_airspeed_min, d_airspeed_max);
 
           //! Altitude limits
-          (*vd_cmd)(2) = std::min(std::max((*vd_cmd)(2), m_args.alt_min), m_args.alt_max);
+          (*vd_cmd)(2) = trimValue((*vd_cmd)(2), m_args.alt_min, m_args.alt_max);
 
           //! Bank limits
-          (*vd_cmd)(0) = std::min(std::max((*vd_cmd)(0), -d_bank_lim), d_bank_lim);
+          (*vd_cmd)(0) = trimValue((*vd_cmd)(0), -d_bank_lim, d_bank_lim);
           vd_ctrl(1) = d_g*std::tan((*vd_cmd)(0)); // Real lateral acceleration command
+
+          double vt_cmd2[3] = {(*vd_cmd)(0), (*vd_cmd)(1), (*vd_cmd)(2)};
 
           //===========================================
           // Log data
