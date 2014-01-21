@@ -269,7 +269,7 @@
 //! AlignmentState identification number.
 #define DUNE_IMC_ALIGNMENTSTATE 361
 //! GroupStreamVelocity identification number.
-#define DUNE_IMC_GROUPSTREAMVELOCITY 361
+#define DUNE_IMC_GROUPSTREAMVELOCITY 362
 //! DesiredHeading identification number.
 #define DUNE_IMC_DESIREDHEADING 400
 //! DesiredZ identification number.

@@ -8866,7 +8866,7 @@ namespace DUNE
 
     GroupStreamVelocity::GroupStreamVelocity(void)
     {
-      m_header.mgid = 361;
+      m_header.mgid = 362;
       clear();
     }
 
