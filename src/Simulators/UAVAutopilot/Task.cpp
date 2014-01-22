@@ -135,7 +135,7 @@ namespace Simulators
         Matrix vd_attitude = Matrix(vt_attitude, 3, 1);
 
         // Body velocity.
-        double vt_velocity[3] {m_sstate.u, m_sstate.v, m_sstate.w};
+        double vt_velocity[3] = {m_sstate.u, m_sstate.v, m_sstate.w};
         Matrix vd_body_vel = Matrix(vt_velocity, 3, 1);
 
         // Stream velocity.
