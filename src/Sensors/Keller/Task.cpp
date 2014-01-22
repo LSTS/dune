@@ -93,8 +93,8 @@ namespace Sensors
       static const unsigned c_parser_data_size = 6;
       // Maximum number of consecutive CRC errors before bailing out.
       static const unsigned c_max_crc_err = 10;
-      // Serial port handle.
-      SerialPort* m_uart;
+      //! Serial port handle.
+      IO::Handle* m_handle;
       // True if serial port echoes sent commands.
       bool m_echo;
       // Read Pressure message;
@@ -134,7 +134,7 @@ namespace Sensors
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
-        m_uart(NULL),
+        m_handle(NULL),
         m_crc_err_count(0)
       {
         // Define configuration parameters.
@@ -192,13 +192,36 @@ namespace Sensors
       {
         onResourceRelease();
 
-        m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+        try
+        {
+          if (!openSocket())
+            m_handle = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+        }
+        catch (...)
+        {
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
+      }
+
+      bool
+      openSocket(void)
+      {
+        char addr[128] = {0};
+        unsigned port = 0;
+
+        if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
+          return false;
+
+        TCPSocket* sock = new TCPSocket;
+        sock->connect(addr, port);
+        m_handle = sock;
+        return true;
       }
 
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_uart);
+        Memory::clear(m_handle);
       }
 
       void
@@ -226,14 +249,14 @@ namespace Sensors
         int i = len;
         bool aborted = true;
 
-        m_uart->write(bfr, len);
+        m_handle->write(bfr, len);
         // If no echo is expected, do nothing here.
         if (!m_args.uart_echo)
           return true;
 
-        while (Poll::poll(*m_uart, 0.1))
+        while (Poll::poll(*m_handle, 0.1))
         {
-          i -= m_uart->read(rxbfr + (len - i), i);
+          i -= m_handle->read(rxbfr + (len - i), i);
           if (i == 0)
           {
             aborted = false;
@@ -273,9 +296,9 @@ namespace Sensors
         // Reset the parser whenever a read is asked for.
         m_parser_state = STA_ADDR;
 
-        while (Poll::poll(*m_uart, 0.1))
+        while (Poll::poll(*m_handle, 0.1))
         {
-          int len = m_uart->read(bfr, sizeof(bfr));
+          int len = m_handle->read(bfr, sizeof(bfr));
           ParserResults result = parse(bfr, len);
 
           if (result == RES_DONE)
