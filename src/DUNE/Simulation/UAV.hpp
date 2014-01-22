@@ -163,13 +163,13 @@ namespace DUNE
           const double& altitude_cmd, const double& airspeed_cmd, const double& bank_cmd);
 
       //! This method updates the simulated state with the defined time step.
-      //! @param[in] d_t time step for the update
+      //! @param[in] timestep - time step for the update
       //! @return the updated state
       UAVSimulation
       update(const double& timestep);
 
       //! This method updates the simulated state with the defined time step and controls.
-      //! @param[in] d_t - time step for the update
+      //! @param[in] timestep - time step for the update
       //! @param[in] bank_cmd - applied bank command
       //! @return the updated state
       UAVSimulation
@@ -177,7 +177,7 @@ namespace DUNE
 
 
       //! This method updates the simulated state with the defined time step and controls.
-      //! @param[in] d_t - time step for the update
+      //! @param[in] timestep - time step for the update
       //! @param[in] bank_cmd - applied bank command
       //! @param[in] airspeed_cmd - applied airspeed command
       //! @return the updated state
@@ -185,7 +185,7 @@ namespace DUNE
       update(const double& timestep, const double& bank_cmd, const double& airspeed_cmd);
 
       //! This method updates the simulated state with the defined time step and controls.
-      //! @param[in] d_t - time step for the update
+      //! @param[in] timestep - time step for the update
       //! @param[in] bank_cmd - applied bank command
       //! @param[in] airspeed_cmd - applied airspeed command
       //! @param[in] altitude_cmd - applied altitude command
@@ -251,12 +251,12 @@ namespace DUNE
       getAirspeed(void);
 
       //! This method sets the vehicle state.
-      //! @param[in] pos - current position vector
+      //! @param[in] pos - new position vector
       void
       setPosition(const DUNE::Math::Matrix& pos);
 
       //! This method sets the vehicle state.
-      //! @param[in] pos - current position vector
+      //! @param[in] vel - new velocity vector
       void
       setVelocity(const DUNE::Math::Matrix& vel);
 
