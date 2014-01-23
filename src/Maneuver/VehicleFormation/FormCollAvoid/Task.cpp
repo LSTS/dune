@@ -646,8 +646,10 @@ namespace Maneuver
               //! Team prediction update
               //===========================================
 
+              /*
               double vt_uav_state_own3[6] = {m_uav_state(0, m_args.uav_ind), m_uav_state(1, m_args.uav_ind), m_uav_state(2, m_args.uav_ind),
-                  m_uav_state(3, m_args.uav_ind), m_uav_state(4, m_args.uav_ind), m_uav_state(5, m_args.uav_ind)};
+              m_uav_state(3, m_args.uav_ind), m_uav_state(4, m_args.uav_ind), m_uav_state(5, m_args.uav_ind)};
+              */
 
               //! Update team simulated state for standard time periods
               teamPeriodicUpdate(d_time);
@@ -657,9 +659,10 @@ namespace Maneuver
               //! Control computation
               //===========================================
 
+              /*
               double vt_uav_state_own2[6] = {m_uav_state(0, m_args.uav_ind), m_uav_state(1, m_args.uav_ind), m_uav_state(2, m_args.uav_ind),
                   m_uav_state(3, m_args.uav_ind), m_uav_state(4, m_args.uav_ind), m_uav_state(5, m_args.uav_ind)};
-
+              */
 
               vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, m_args.uav_ind-1, m_args.uav_ind-1));
               formationControl(m_uav_state, m_uav_accel, m_args.uav_ind, d_time - m_last_ctrl_update, &vd_cmd);
@@ -1151,8 +1154,10 @@ namespace Maneuver
         formationControl(const Matrix& md_uav_state, const Matrix& md_uav_accel,
             const int& ind_uav, const double& d_time_step, Matrix* vd_cmd)
         {
+          /*
           double vt_uav_state_own1[6] = {md_uav_state(0, ind_uav), md_uav_state(1, ind_uav), md_uav_state(2, ind_uav),
                         md_uav_state(3, ind_uav), md_uav_state(4, ind_uav), md_uav_state(5, ind_uav)};
+          */
           spew("formationControl start");
           //! Vehicle formation control method
 
@@ -1640,10 +1645,12 @@ namespace Maneuver
           //! Computing relative state, from current UAV to leader
           vd_inter_uav_state = md_uav_state.get(0, 5, ind_uav_lead, ind_uav_lead) -
               md_uav_state.get(0, 5, ind_uav, ind_uav);
+          /*
           double vt_uav_state_lead[6] = {md_uav_state(0, ind_uav_lead), md_uav_state(1, ind_uav_lead), md_uav_state(2, ind_uav_lead),
               md_uav_state(3, ind_uav_lead), md_uav_state(4, ind_uav_lead), md_uav_state(5, ind_uav_lead)};
           double vt_uav_state_own[6] = {md_uav_state(0, ind_uav), md_uav_state(1, ind_uav), md_uav_state(2, ind_uav),
                         md_uav_state(3, ind_uav), md_uav_state(4, ind_uav), md_uav_state(5, ind_uav)};
+          */
           /* --- Used just for control performance evaluation ---
         vd_inter_uav_pos = vd_inter_uav_state.get(0, 1, 0, 0);
         d_inter_uav_dist = vd_inter_uav_pos.norm_2();
@@ -1701,9 +1708,11 @@ namespace Maneuver
           d_deriv_err_x = vd_deriv_err(0);
           d_deriv_err_y = vd_deriv_err(1);
 
+          /*
           double vt_inter_uav_state1[6] = {vd_inter_uav_state(0, 0), vd_inter_uav_state(1, 0), vd_inter_uav_state(2, 0),
               vd_inter_uav_state(3, 0), vd_inter_uav_state(4, 0), vd_inter_uav_state(5, 0)};
           double vt_inter_uav_des_vel1[6] = {vd_inter_uav_des_vel(0), vd_inter_uav_des_vel(1)};
+          */
 
           //! Maneuvering constrains
           d_accel_max_proj_x = std::abs(vd_body_accel_lim_x(0)) + std::abs(vd_body_accel_lim_y(0));
@@ -1800,8 +1809,8 @@ namespace Maneuver
           //! Sliding surface data mixing
           Matrix vd_surf = vd_surf_uav * vd_ctrl_weight;
           Matrix vt_virt_err = vt_virt_err_uav * vd_ctrl_weight;
-          double vt_surf2[2] = {vd_surf(0), vd_surf(1)};
-          double vt_virt_err2[2] = {vt_virt_err(0), vt_virt_err(1)};
+          //double vt_surf2[2] = {vd_surf(0), vd_surf(1)};
+          //double vt_virt_err2[2] = {vt_virt_err(0), vt_virt_err(1)};
 
           double d_surf_norm = vd_surf.norm_2();
           Matrix vd_surf_unit = vd_surf/d_surf_norm;
@@ -1880,11 +1889,13 @@ namespace Maneuver
           Matrix vd_accel = vt_virt_err - vd_surf_conv - vd_surf_unkn;
           Matrix vd_ctrl = md_rot_ground2yaw*vd_accel;
 
+          /*
           double vt_virt_err1[2] = {vt_virt_err(0), vt_virt_err(1)};
           double vt_surf_conv1[2] = {vd_surf_conv(0), vd_surf_conv(1)};
           double vt_surf_unkn1[2] = {vd_surf_unkn(0), vd_surf_unkn(1)};
           double vt_accel1[2] = {vd_accel(0), vd_accel(1)};
           double vt_ctrl2[2] = {vd_ctrl(0), vd_ctrl(1)};
+          */
           //-------------------------------------------
           // Altitude control
           //-------------------------------------------
@@ -1899,7 +1910,7 @@ namespace Maneuver
           vd_ctrl(0) = d_accel_x_cmd;
           (*vd_cmd)(1) += d_time_step * d_accel_x_cmd;
 
-          double vt_ctrl1[2] = {vd_ctrl(0), vd_ctrl(1)};
+          //double vt_ctrl1[2] = {vd_ctrl(0), vd_ctrl(1)};
 
           //-------------------------------------------
           // Course control
@@ -1908,7 +1919,7 @@ namespace Maneuver
           // Bank command
           (*vd_cmd)(0) = std::atan(vd_ctrl(1)/d_g); // Desired bank
 
-          double vt_cmd1[3] = {(*vd_cmd)(0), (*vd_cmd)(1), (*vd_cmd)(2)};
+          //double vt_cmd1[3] = {(*vd_cmd)(0), (*vd_cmd)(1), (*vd_cmd)(2)};
 
           //===========================================
           // Control limits
@@ -1924,7 +1935,7 @@ namespace Maneuver
           (*vd_cmd)(0) = trimValue((*vd_cmd)(0), -d_bank_lim, d_bank_lim);
           vd_ctrl(1) = d_g*std::tan((*vd_cmd)(0)); // Real lateral acceleration command
 
-          double vt_cmd2[3] = {(*vd_cmd)(0), (*vd_cmd)(1), (*vd_cmd)(2)};
+          //double vt_cmd2[3] = {(*vd_cmd)(0), (*vd_cmd)(1), (*vd_cmd)(2)};
 
           //===========================================
           // Log data
