@@ -786,10 +786,8 @@ namespace DUNE
       m_cos_yaw = std::cos(m_position(5));
       m_sin_yaw = std::sin(m_position(5));
 
-      //! Turn rate
-      m_velocity(5) = m_g * std::tan(m_position(3))/m_airspeed;
       //! Horizontal position state update
-      if (m_position(3) == 0)
+      if (std::abs(m_position(3)) < 0.1)
       {
         m_position.set(0, 1, 0, 0, m_position.get(0, 1, 0, 0) + m_velocity.get(0, 1, 0, 0)*timestep);
       }
@@ -800,6 +798,8 @@ namespace DUNE
         m_position(1) += d_turn_radius*(std::cos(d_initial_yaw) - m_cos_yaw);
       }
 
+      //! Turn rate
+      m_velocity(5) = m_g * std::tan(m_position(3))/m_airspeed;
 
       //! Command effect
       //! - Horizontal acceleration command
@@ -815,7 +815,7 @@ namespace DUNE
       m_velocity.set(0, 2, 0, 0, m_uav2wind_gnd_frm + m_wind);
 
       //==========================================================================
-      // Output
+      // Output normalization
       //==========================================================================
 
       m_position(5) = DUNE::Math::Angles::normalizeRadian(m_position(5));
