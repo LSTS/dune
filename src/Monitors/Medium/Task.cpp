@@ -58,6 +58,8 @@ namespace Monitors
       float gps_timeout;
       //! Depth threshold.
       float depth_threshold;
+      //! Air Speed threshold.
+      float airspeed_threshold;
       //! Vehicle type.
       std::string vtype;
     };
@@ -79,6 +81,8 @@ namespace Monitors
       uint16_t m_gps_val_bits;
       //! Vehicle depth.
       float m_depth;
+      //! Vehicle airspeed.
+      float m_airspeed;
       //! Task arguments.
       Arguments m_args;
 
@@ -116,6 +120,11 @@ namespace Monitors
         .maximumValue("0.8")
         .description("Minimum depth necessary to consider a vehicle underwater");
 
+        param("Ais Speed Threshold", m_args.airspeed_threshold)
+        .units(Units::Meter)
+        .defaultValue("12.0")
+        .description("Minimum air speed necessary to consider a vehicle in air");
+
         param("Vehicle Type", m_args.vtype)
         .defaultValue("UUV")
         .values("UUV, ASV, UAV")
@@ -152,6 +161,12 @@ namespace Monitors
       void
       consume(const IMC::Conductivity* msg)
       {
+        if (m_args.vtype == "UAV")
+        {
+          (void) msg;
+          return;
+        }
+
         m_water_presence.reset();
 
         if (msg->value >= m_args.water_threshold)
@@ -165,6 +180,18 @@ namespace Monitors
       }
 
       void
+      consume(const IMC::IndicatedSpeed* msg)
+      {
+        if (m_args.vtype != "UAV")
+        {
+          (void) msg;
+          return;
+        }
+
+        m_airspeed = msg->value;
+      }
+
+      void
       consume(const IMC::GpsFix* msg)
       {
         if ((msg->validity & m_gps_val_bits) == m_gps_val_bits)
@@ -174,6 +201,12 @@ namespace Monitors
       void
       consume(const IMC::Salinity* msg)
       {
+        if (m_args.vtype == "UAV")
+        {
+          (void) msg;
+          return;
+        }
+
         m_water_presence.reset();
 
         if (msg->value >= m_args.water_threshold)
@@ -183,6 +216,12 @@ namespace Monitors
       void
       consume(const IMC::SoundSpeed* msg)
       {
+        if (m_args.vtype == "UAV")
+        {
+          (void) msg;
+          return;
+        }
+
         m_water_presence.reset();
 
         if (msg->value >= m_args.water_threshold)
@@ -215,12 +254,22 @@ namespace Monitors
         // Initialization.
         if (getEntityState() == IMC::EntityState::ESTA_BOOT)
         {
-          if (!hasWaterParameters() && isGpsAvailable())
-            m_vm.medium = IMC::VehicleMedium::VM_GROUND;
-          if (hasWaterParameters() && isGpsAvailable())
-            m_vm.medium = IMC::VehicleMedium::VM_WATER;
-          if (hasWaterParameters() && !isGpsAvailable())
-            m_vm.medium = IMC::VehicleMedium::VM_UNDERWATER;
+          if (m_args.vtype != "UAV")
+          {
+            if (!hasWaterParameters() && isGpsAvailable())
+              m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+            if (hasWaterParameters() && isGpsAvailable())
+              m_vm.medium = IMC::VehicleMedium::VM_WATER;
+            if (hasWaterParameters() && !isGpsAvailable())
+              m_vm.medium = IMC::VehicleMedium::VM_UNDERWATER;
+          }
+          else
+          {
+            if (m_airspeed < m_args.airspeed_threshold)
+              m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+            else
+              m_vm.medium = IMC::VehicleMedium::VM_AIR;
+          }
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           dispatch(m_vm);
@@ -247,11 +296,15 @@ namespace Monitors
         switch (m_vm.medium)
         {
           case (IMC::VehicleMedium::VM_AIR):
+            if (m_airspeed < m_args.airspeed_threshold)
+              m_vm.medium = IMC::VehicleMedium::VM_GROUND;
             break;
 
           case (IMC::VehicleMedium::VM_GROUND):
             if (hasWaterParameters())
               m_vm.medium = IMC::VehicleMedium::VM_WATER;
+            if (m_airspeed > m_args.airspeed_threshold && m_args.vtype == "UAV")
+              m_vm.medium = IMC::VehicleMedium::VM_AIR;
             break;
 
           case (IMC::VehicleMedium::VM_WATER):
