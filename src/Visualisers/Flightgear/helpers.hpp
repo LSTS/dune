@@ -1,16 +1,5 @@
-/*
- * helpers.hpp
- *
- *  Created on: Oct 17, 2013
- *      Author: parallels
- */
-
-#ifndef HELPERS_HPP_
-#define HELPERS_HPP_
-
-
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -42,6 +31,7 @@
 // Task specific headers
 #include "net_fdm.hxx"
 #include "net_ctrls.hxx"
+#include "helpers.hpp"
 
 namespace Visualisers
 {
