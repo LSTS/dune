@@ -165,6 +165,9 @@ namespace Simulators
         .description("Linear drag of the vehicle (6 elements of main diagonal)");
 
         bind<IMC::ArduPilotMotorControl>(this);
+
+        // Set OK status
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       //! Update internal state with new parameter values.
