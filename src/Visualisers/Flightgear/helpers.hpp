@@ -25,6 +25,9 @@
 // Author: Kristian Klausen                                                 *
 //***************************************************************************
 
+#ifndef __FLIGHTGEAR_HELPERS_HPP_
+#define __FLIGHTGEAR_HELPERS_HPP_
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -53,4 +56,4 @@ namespace Visualisers
 }
 
 
-#endif /* HELPERS_HPP_ */
+#endif /* __FLIGHTGEAR_HELPERS_HPP_ */

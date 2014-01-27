@@ -232,7 +232,6 @@ namespace Visualisers
       void
       handleFlightGearData(void)
       {
-        double now = Clock::get();
 
         while (poll(0.01))
           {
@@ -300,9 +299,9 @@ namespace Visualisers
           {
             m_UDP_sock_out->write((uint8_t*) &net, sizeof(FGNetFDM), m_UDP_addr_out, m_UDP_port_out);
           }
-          catch(NetworkError& err)
+          catch(NetworkError& error)
           {
-            war("Failed to send: %s ", err.what());
+            war("Failed to send: %s ", error.what());
           }
         }
 
