@@ -28,103 +28,83 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// Task specific headers
+// Local headers.
+#include "Helpers.hpp"
 #include "net_fdm.hxx"
-#include "helpers.hpp"
 
-
-
-namespace Visualisers
+namespace Transports
 {
-  namespace Flightgear
+  namespace FlightGear
   {
     using DUNE_NAMESPACES;
 
-    static const int endianTest = 1;
-    #define hostIsLittleEndian (*((char *) &endianTest ) != 0)
-    #define hostIsBigEndian (*((char *) &endianTest ) == 0)
-
     // Forward declarations
-    static void ntohd(double &x);
-    static void ntohf(float &x);
-    static void htond(double &x);
-    static void htonf(float &x);
+    static void ntohd(double& x);
+    static void ntohf(float& x);
+    static void htond(double& x);
+    static void htonf(float& x);
 
     static const double METER_TO_FEET = 3.2808;
     static const double FEET_TO_METER = 0.3048;
-
-    static const double MS_TO_KNOT    = 1.9438444924406;
-
-    // Implementations
-
+    static const double MS_TO_KNOT = 1.9438444924406;
 
     void
     convertFromSimstateToFGNetHost(IMC::SimulatedState* simstate, IMC::Acceleration* acc, FGNetFDM* net)
     {
+      // Set version!
+      net->version = FG_NET_FDM_VERSION;
 
-    	// Set version!
-    	net->version    = FG_NET_FDM_VERSION;
+      // Positions
+      net->latitude = simstate->lat;
+      net->longitude = simstate->lon;
+      net->altitude = simstate->height;
 
-    	// Positions
-    	net->latitude 	= simstate->lat;
-    	net->longitude  = simstate->lon;
-    	net->altitude   = simstate->height;
+      net->agl = 0; //simstate->height; // Agl: Above ground level.
 
-    	net->agl        = 0; //simstate->height; // Agl: Above ground level.
+      net->phi = simstate->phi;
+      net->theta = simstate->theta;
+      net->psi = simstate->psi;
 
-    	net->phi        = simstate->phi;
-    	net->theta      = simstate->theta;
-    	net->psi        = simstate->psi;
+      net->alpha = 0;
+      net->beta = 0;
 
-    	net->alpha		  = 0;
-    	net->beta       = 0;
+      net->cur_time = Clock::getSinceEpochMsec() * 1000;
 
-    	net->cur_time   = Clock::getSinceEpochMsec()*1000;
+      // Velocities
+      net->phidot = simstate->p;
+      net->thetadot = simstate->q;
+      net->psidot = simstate->r;
 
+      net->vcas = 0; // cal. airspeed
+      net->climb_rate = 0; // feet
 
-    	// Velocities
-    	net->phidot     = simstate->p;
-    	net->thetadot   = simstate->q;
-    	net->psidot     = simstate->r;
+      //fp32_t vx, vy, vz;
+      //BodyFixedFrame::toInertialFrame(simstate->phi, simstate->theta, simstate->psi,
+      //  simstate->u, simstate->v, simstate->w,
+      //  &vx, &vy, &vz);
 
-    	net->vcas       = 0; // cal. airspeed
-    	net->climb_rate = 0; // feet
+      net->v_north = simstate->u * METER_TO_FEET;
+      net->v_east = simstate->v * METER_TO_FEET;
+      net->v_down = simstate->w * METER_TO_FEET;
 
+      // TODO: add wind
 
-    	//fp32_t vx, vy, vz;
-		  //BodyFixedFrame::toInertialFrame(simstate->phi, simstate->theta, simstate->psi,
-			//  simstate->u, simstate->v, simstate->w,
-			//  &vx, &vy, &vz);
+      net->A_X_pilot = acc->x;
+      net->A_Y_pilot = acc->y;
+      net->A_Z_pilot = acc->z;
 
-    	net->v_north	  = simstate->u*METER_TO_FEET;
-    	net->v_east     = simstate->v*METER_TO_FEET;
-    	net->v_down     = simstate->w*METER_TO_FEET;
-
-    	// TODO: add wind
-
-
-    	net->A_X_pilot = acc->x;
-    	net->A_Y_pilot = acc->y;
-    	net->A_Z_pilot = acc->z;
-
-
-    	// Rest is just things we do not need now.
-
-    	net->num_engines = 0;
-    	net->num_tanks = 0;
-    	net->num_wheels = 0;
+      // Rest is just things we do not need now.
+      net->num_engines = 0;
+      net->num_tanks = 0;
+      net->num_wheels = 0;
     }
 
-
-
-    //! Converts incomming buffer to host-ordered Flightgear native format
+    //! Converts incoming buffer to host-ordered Flightgear native format
     void
     convertFromNetworkEndian(FGNetFDM* net)
     {
       // Convert the net buffer to network format
       net->version = ntohl(net->version);
-
-
 
       ntohd(net->longitude);
       ntohd(net->latitude);
@@ -155,12 +135,11 @@ namespace Visualisers
       ntohf(net->stall_warning);
       ntohf(net->slip_deg);
 
-
-
       unsigned int i;
 
       net->num_engines = ntohl(net->num_engines);
-      for ( i = 0; i < net->num_engines; ++i ) {
+      for (i = 0; i < net->num_engines; ++i)
+      {
         net->eng_state[i] = ntohl(net->eng_state[i]);
         ntohf(net->rpm[i]);
         ntohf(net->fuel_flow[i]);
@@ -173,23 +152,23 @@ namespace Visualisers
         ntohf(net->oil_px[i]);
       }
 
-
       net->num_tanks = ntohl(net->num_tanks);
-      for ( i = 0; i < net->num_tanks; ++i ) {
+      for (i = 0; i < net->num_tanks; ++i)
+      {
         ntohf(net->fuel_quantity[i]);
       }
 
       net->num_wheels = ntohl(net->num_wheels);
-      for ( i = 0; i < net->num_wheels; ++i ) {
+      for (i = 0; i < net->num_wheels; ++i)
+      {
         net->wow[i] = ntohl(net->wow[i]);
         ntohf(net->gear_pos[i]);
         ntohf(net->gear_steer[i]);
         ntohf(net->gear_compression[i]);
       }
 
-
-      net->cur_time = ntohl( net->cur_time );
-      net->warp = ntohl( net->warp );
+      net->cur_time = ntohl(net->cur_time);
+      net->warp = ntohl(net->warp);
       ntohf(net->visibility);
 
       ntohf(net->elevator);
@@ -203,12 +182,12 @@ namespace Visualisers
       ntohf(net->speedbrake);
       ntohf(net->spoilers);
     }
+
     void
     convertToNetworkEndian(FGNetFDM* net)
     {
-
       // Convert the net buffer to network format
-      net->version = htonl(net->version);
+      net->version = ByteCopy::toBE(net->version);
 
       htond(net->longitude);
       htond(net->latitude);
@@ -240,8 +219,9 @@ namespace Visualisers
       htonf(net->slip_deg);
 
       unsigned int i;
-      for ( i = 0; i < net->num_engines; ++i ) {
-        net->eng_state[i] = htonl(net->eng_state[i]);
+      for (i = 0; i < net->num_engines; ++i)
+      {
+        net->eng_state[i] = ByteCopy::toBE(net->eng_state[i]);
         htonf(net->rpm[i]);
         htonf(net->fuel_flow[i]);
         htonf(net->fuel_px[i]);
@@ -252,23 +232,25 @@ namespace Visualisers
         htonf(net->oil_temp[i]);
         htonf(net->oil_px[i]);
       }
-      net->num_engines = htonl(net->num_engines);
+      net->num_engines = ByteCopy::toBE(net->num_engines);
 
-      for ( i = 0; i < net->num_tanks; ++i ) {
+      for (i = 0; i < net->num_tanks; ++i)
+      {
         htonf(net->fuel_quantity[i]);
       }
-      net->num_tanks = htonl(net->num_tanks);
+      net->num_tanks = ByteCopy::toBE(net->num_tanks);
 
-      for ( i = 0; i < net->num_wheels; ++i ) {
-        net->wow[i] = htonl(net->wow[i]);
+      for (i = 0; i < net->num_wheels; ++i)
+      {
+        net->wow[i] = ByteCopy::toBE(net->wow[i]);
         htonf(net->gear_pos[i]);
         htonf(net->gear_steer[i]);
         htonf(net->gear_compression[i]);
       }
-      net->num_wheels = htonl(net->num_wheels);
+      net->num_wheels = ByteCopy::toBE(net->num_wheels);
 
-      net->cur_time = htonl( net->cur_time );
-      net->warp = htonl( net->warp );
+      net->cur_time = ByteCopy::toBE(net->cur_time);
+      net->warp = ByteCopy::toBE(net->warp);
       htonf(net->visibility);
 
       htonf(net->elevator);
@@ -281,14 +263,12 @@ namespace Visualisers
       htonf(net->nose_wheel);
       htonf(net->speedbrake);
       htonf(net->spoilers);
-
     }
 
     void
     convertFromNetworkEndian(FGNetCtrls* ctrls)
     {
-
-      ctrls->version = htonl(ctrls->version);
+      ctrls->version = ByteCopy::toBE(ctrls->version);
       htond(ctrls->aileron);
       htond(ctrls->elevator);
       htond(ctrls->rudder);
@@ -298,45 +278,45 @@ namespace Visualisers
       htond(ctrls->flaps);
       htond(ctrls->speedbrake);
       htond(ctrls->spoilers);
-      ctrls->flaps_power = htonl(ctrls->flaps_power);
-      ctrls->flap_motor_ok = htonl(ctrls->flap_motor_ok);
+      ctrls->flaps_power = ByteCopy::toBE(ctrls->flaps_power);
+      ctrls->flap_motor_ok = ByteCopy::toBE(ctrls->flap_motor_ok);
 
-      ctrls->num_engines = htonl(ctrls->num_engines);
+      ctrls->num_engines = ByteCopy::toBE(ctrls->num_engines);
 
       int i;
-      for ( i = 0; i < (int)ctrls->num_engines; ++i )
+      for (i = 0; i < (int)ctrls->num_engines; ++i)
       {
-        ctrls->master_bat[i] = htonl(ctrls->master_bat[i]);
-        ctrls->master_alt[i] = htonl(ctrls->master_alt[i]);
-        ctrls->magnetos[i] = htonl(ctrls->magnetos[i]);
-        ctrls->starter_power[i] = htonl(ctrls->starter_power[i]);
+        ctrls->master_bat[i] = ByteCopy::toBE(ctrls->master_bat[i]);
+        ctrls->master_alt[i] = ByteCopy::toBE(ctrls->master_alt[i]);
+        ctrls->magnetos[i] = ByteCopy::toBE(ctrls->magnetos[i]);
+        ctrls->starter_power[i] = ByteCopy::toBE(ctrls->starter_power[i]);
         htond(ctrls->throttle[i]);
         htond(ctrls->mixture[i]);
-        ctrls->fuel_pump_power[i] = htonl(ctrls->fuel_pump_power[i]);
+        ctrls->fuel_pump_power[i] = ByteCopy::toBE(ctrls->fuel_pump_power[i]);
         htond(ctrls->prop_advance[i]);
         htond(ctrls->condition[i]);
-        ctrls->engine_ok[i] = htonl(ctrls->engine_ok[i]);
-        ctrls->mag_left_ok[i] = htonl(ctrls->mag_left_ok[i]);
-        ctrls->mag_right_ok[i] = htonl(ctrls->mag_right_ok[i]);
-        ctrls->spark_plugs_ok[i] = htonl(ctrls->spark_plugs_ok[i]);
-        ctrls->oil_press_status[i] = htonl(ctrls->oil_press_status[i]);
-        ctrls->fuel_pump_ok[i] = htonl(ctrls->fuel_pump_ok[i]);
+        ctrls->engine_ok[i] = ByteCopy::toBE(ctrls->engine_ok[i]);
+        ctrls->mag_left_ok[i] = ByteCopy::toBE(ctrls->mag_left_ok[i]);
+        ctrls->mag_right_ok[i] = ByteCopy::toBE(ctrls->mag_right_ok[i]);
+        ctrls->spark_plugs_ok[i] = ByteCopy::toBE(ctrls->spark_plugs_ok[i]);
+        ctrls->oil_press_status[i] = ByteCopy::toBE(ctrls->oil_press_status[i]);
+        ctrls->fuel_pump_ok[i] = ByteCopy::toBE(ctrls->fuel_pump_ok[i]);
       }
 
-      ctrls->num_tanks = htonl(ctrls->num_tanks);
-      for ( i = 0; i < FGNetCtrls::FG_MAX_TANKS; ++i )
+      ctrls->num_tanks = ByteCopy::toBE(ctrls->num_tanks);
+      for (i = 0; i < FGNetCtrls::FG_MAX_TANKS; ++i)
       {
-        ctrls->fuel_selector[i] = htonl(ctrls->fuel_selector[i]);
+        ctrls->fuel_selector[i] = ByteCopy::toBE(ctrls->fuel_selector[i]);
       }
 
-      ctrls->cross_feed = htonl(ctrls->cross_feed);
+      ctrls->cross_feed = ByteCopy::toBE(ctrls->cross_feed);
       htond(ctrls->brake_left);
       htond(ctrls->brake_right);
       htond(ctrls->copilot_brake_left);
       htond(ctrls->copilot_brake_right);
       htond(ctrls->brake_parking);
-      ctrls->gear_handle = htonl(ctrls->gear_handle);
-      ctrls->master_avionics = htonl(ctrls->master_avionics);
+      ctrls->gear_handle = ByteCopy::toBE(ctrls->gear_handle);
+      ctrls->master_avionics = ByteCopy::toBE(ctrls->master_avionics);
       htond(ctrls->wind_speed_kt);
       htond(ctrls->wind_dir_deg);
       htond(ctrls->turbulence_norm);
@@ -344,14 +324,15 @@ namespace Visualisers
       htond(ctrls->press_inhg);
       htond(ctrls->hground);
       htond(ctrls->magvar);
-      ctrls->icing = htonl(ctrls->icing);
-      ctrls->speedup = htonl(ctrls->speedup);
-      ctrls->freeze = htonl(ctrls->freeze);
+      ctrls->icing = ByteCopy::toBE(ctrls->icing);
+      ctrls->speedup = ByteCopy::toBE(ctrls->speedup);
+      ctrls->freeze = ByteCopy::toBE(ctrls->freeze);
     }
+
     void
     convertToNetworkEndian(FGNetCtrls* ctrls)
     {
-      ctrls->version = htonl(ctrls->version);
+      ctrls->version = ByteCopy::toBE(ctrls->version);
       htond(ctrls->aileron);
       htond(ctrls->elevator);
       htond(ctrls->rudder);
@@ -361,42 +342,44 @@ namespace Visualisers
       htond(ctrls->flaps);
       htond(ctrls->speedbrake);
       htond(ctrls->spoilers);
-      ctrls->flaps_power = htonl(ctrls->flaps_power);
-      ctrls->flap_motor_ok = htonl(ctrls->flap_motor_ok);
+      ctrls->flaps_power = ByteCopy::toBE(ctrls->flaps_power);
+      ctrls->flap_motor_ok = ByteCopy::toBE(ctrls->flap_motor_ok);
 
-      ctrls->num_engines = htonl(ctrls->num_engines);
+      ctrls->num_engines = ByteCopy::toBE(ctrls->num_engines);
       int i;
-      for ( i = 0; i < FGNetCtrls::FG_MAX_ENGINES; ++i ) {
-        ctrls->master_bat[i] = htonl(ctrls->master_bat[i]);
-        ctrls->master_alt[i] = htonl(ctrls->master_alt[i]);
-        ctrls->magnetos[i] = htonl(ctrls->magnetos[i]);
-        ctrls->starter_power[i] = htonl(ctrls->starter_power[i]);
+      for (i = 0; i < FGNetCtrls::FG_MAX_ENGINES; ++i)
+      {
+        ctrls->master_bat[i] = ByteCopy::toBE(ctrls->master_bat[i]);
+        ctrls->master_alt[i] = ByteCopy::toBE(ctrls->master_alt[i]);
+        ctrls->magnetos[i] = ByteCopy::toBE(ctrls->magnetos[i]);
+        ctrls->starter_power[i] = ByteCopy::toBE(ctrls->starter_power[i]);
         htond(ctrls->throttle[i]);
         htond(ctrls->mixture[i]);
-        ctrls->fuel_pump_power[i] = htonl(ctrls->fuel_pump_power[i]);
+        ctrls->fuel_pump_power[i] = ByteCopy::toBE(ctrls->fuel_pump_power[i]);
         htond(ctrls->prop_advance[i]);
         htond(ctrls->condition[i]);
-        ctrls->engine_ok[i] = htonl(ctrls->engine_ok[i]);
-        ctrls->mag_left_ok[i] = htonl(ctrls->mag_left_ok[i]);
-        ctrls->mag_right_ok[i] = htonl(ctrls->mag_right_ok[i]);
-        ctrls->spark_plugs_ok[i] = htonl(ctrls->spark_plugs_ok[i]);
-        ctrls->oil_press_status[i] = htonl(ctrls->oil_press_status[i]);
-        ctrls->fuel_pump_ok[i] = htonl(ctrls->fuel_pump_ok[i]);
+        ctrls->engine_ok[i] = ByteCopy::toBE(ctrls->engine_ok[i]);
+        ctrls->mag_left_ok[i] = ByteCopy::toBE(ctrls->mag_left_ok[i]);
+        ctrls->mag_right_ok[i] = ByteCopy::toBE(ctrls->mag_right_ok[i]);
+        ctrls->spark_plugs_ok[i] = ByteCopy::toBE(ctrls->spark_plugs_ok[i]);
+        ctrls->oil_press_status[i] = ByteCopy::toBE(ctrls->oil_press_status[i]);
+        ctrls->fuel_pump_ok[i] = ByteCopy::toBE(ctrls->fuel_pump_ok[i]);
       }
 
-      ctrls->num_tanks = htonl(ctrls->num_tanks);
-      for ( i = 0; i < FGNetCtrls::FG_MAX_TANKS; ++i ) {
-        ctrls->fuel_selector[i] = htonl(ctrls->fuel_selector[i]);
+      ctrls->num_tanks = ByteCopy::toBE(ctrls->num_tanks);
+      for (i = 0; i < FGNetCtrls::FG_MAX_TANKS; ++i)
+      {
+        ctrls->fuel_selector[i] = ByteCopy::toBE(ctrls->fuel_selector[i]);
       }
 
-      ctrls->cross_feed = htonl(ctrls->cross_feed);
+      ctrls->cross_feed = ByteCopy::toBE(ctrls->cross_feed);
       htond(ctrls->brake_left);
       htond(ctrls->brake_right);
       htond(ctrls->copilot_brake_left);
       htond(ctrls->copilot_brake_right);
       htond(ctrls->brake_parking);
-      ctrls->gear_handle = htonl(ctrls->gear_handle);
-      ctrls->master_avionics = htonl(ctrls->master_avionics);
+      ctrls->gear_handle = ByteCopy::toBE(ctrls->gear_handle);
+      ctrls->master_avionics = ByteCopy::toBE(ctrls->master_avionics);
       htond(ctrls->wind_speed_kt);
       htond(ctrls->wind_dir_deg);
       htond(ctrls->turbulence_norm);
@@ -404,75 +387,64 @@ namespace Visualisers
       htond(ctrls->press_inhg);
       htond(ctrls->hground);
       htond(ctrls->magvar);
-      ctrls->icing = htonl(ctrls->icing);
-      ctrls->speedup = htonl(ctrls->speedup);
-      ctrls->freeze = htonl(ctrls->freeze);
-
+      ctrls->icing = ByteCopy::toBE(ctrls->icing);
+      ctrls->speedup = ByteCopy::toBE(ctrls->speedup);
+      ctrls->freeze = ByteCopy::toBE(ctrls->freeze);
     }
-
 
     // From http://stackoverflow.com/questions/10616883/how-to-convert-double-between-host-and-network-byte-order
     static void
-    htond (double &x)
+    htond(double& x)
     {
-      if ( hostIsLittleEndian )
-      {
-        int    *Double_Overlay;
-        int     Holding_Buffer;
+#if defined(DUNE_CPU_LITTLE_ENDIAN)
+      int* double_overlay;
+      int holding_buffer;
 
-        Double_Overlay = (int *) &x;
-        Holding_Buffer = Double_Overlay [0];
+      double_overlay = (int*)&x;
+      holding_buffer = double_overlay[0];
 
-        Double_Overlay [0] = htonl (Double_Overlay [1]);
-        Double_Overlay [1] = htonl (Holding_Buffer);
-      }
-      else
-      {
-        return;
-      }
+      double_overlay[0] = ByteCopy::toBE(double_overlay[1]);
+      double_overlay[1] = ByteCopy::toBE(holding_buffer);
+#else
+      (void)x;
+#endif
     }
 
     // Float version
     static void
-    htonf (float &x)
+    htonf(float& x)
     {
-      if ( hostIsLittleEndian )
-      {
-        int    *Float_Overlay;
-        int     Holding_Buffer;
+#if defined(DUNE_CPU_LITTLE_ENDIAN)
+      int* float_overlay;
+      int holding_buffer;
 
-        Float_Overlay = (int *) &x;
-        Holding_Buffer = Float_Overlay [0];
+      float_overlay = (int*)&x;
+      holding_buffer = float_overlay[0];
 
-        Float_Overlay [0] = htonl (Holding_Buffer);
-      }
-      else
-      {
-        return;
-      }
+      float_overlay[0] = ByteCopy::toBE(holding_buffer);
+#else
+      (void)x;
+#endif
     }
 
     static void
-    ntohd(double &x)
+    ntohd(double& x)
     {
-      // On little-endian machines, this is the same as htond
-      if( hostIsLittleEndian)
-      {
-        htond(x);
-      }
-      // else, do nothing.
+#if defined(DUNE_CPU_LITTLE_ENDIAN)
+      htond(x);
+#else
+      (void)x;
+#endif
     }
 
     static void
-    ntohf(float &x)
+    ntohf(float& x)
     {
-      // On little-endian machines, this is the same as htond
-      if( hostIsLittleEndian)
-      {
-        htonf(x);
-      }
-      // else, do nothing.
+#if defined(DUNE_CPU_LITTLE_ENDIAN)
+      htonf(x);
+#else
+      (void)x;
+#endif
     }
-
   }
 }

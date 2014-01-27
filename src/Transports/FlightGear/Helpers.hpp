@@ -25,35 +25,38 @@
 // Author: Kristian Klausen                                                 *
 //***************************************************************************
 
-#ifndef __FLIGHTGEAR_HELPERS_HPP_
-#define __FLIGHTGEAR_HELPERS_HPP_
+#ifndef TRANSPORTS_FLIGHT_GEAR_HELPERS_HPP_INCLUDED_
+#define TRANSPORTS_FLIGHT_GEAR_HELPERS_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// Task specific headers
+// Local headers.
+#include "Helpers.hpp"
 #include "net_fdm.hxx"
 #include "net_ctrls.hxx"
-#include "helpers.hpp"
 
-namespace Visualisers
+namespace Transports
 {
-  namespace Flightgear
+  namespace FlightGear
   {
     using DUNE_NAMESPACES;
 
-    void convertFromNetworkEndian(FGNetFDM* net);
-    void convertToNetworkEndian(FGNetFDM* net);
+    void
+    convertFromNetworkEndian(FGNetFDM* net);
 
-    void convertFromNetworkEndian(FGNetCtrls* ctrls);
-    void convertToNetworkEndian(FGNetCtrls* ctrls);
+    void
+    convertToNetworkEndian(FGNetFDM* net);
 
+    void
+    convertFromNetworkEndian(FGNetCtrls* ctrls);
 
+    void
+    convertToNetworkEndian(FGNetCtrls* ctrls);
 
-    void convertFromSimstateToFGNetHost(IMC::SimulatedState* simstate, IMC::Acceleration* acc, FGNetFDM* net);
-
+    void
+    convertFromSimstateToFGNetHost(IMC::SimulatedState* simstate, IMC::Acceleration* acc, FGNetFDM* net);
   }
 }
 
-
-#endif /* __FLIGHTGEAR_HELPERS_HPP_ */
+#endif

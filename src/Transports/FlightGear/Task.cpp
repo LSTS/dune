@@ -31,32 +31,29 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// Task specific headers
+// Local headers.
+#include "Helpers.hpp"
 #include "net_fdm.hxx"
-#include "helpers.hpp"
 
-namespace Visualisers
+namespace Transports
 {
-  namespace Flightgear
+  namespace FlightGear
   {
     using DUNE_NAMESPACES;
 
-
     static const unsigned int FLIGHTGEAR_footer = 0x4c56414d;
-
 
     //! %Task arguments.
     struct Arguments
     {
-
       //! Port for FlightGear connection
-      uint16_t UDP_port;
+      uint16_t udp_port;
       //! Address for SITL simulations
-      Address UDP_addr;
+      Address udp_addr;
       //! Port for outgoing control
-      uint16_t UDP_port_out;
+      uint16_t udp_port_out;
       //! Address for output to FG
-      Address UDP_addr_out;
+      Address udp_addr_out;
       //! Protocol xml file name
       std::string protocol;
       //! Aircraft Name
@@ -65,32 +62,29 @@ namespace Visualisers
       bool is_protocol_binary;
 
       //TODO: Add initial position support
-
     };
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task : public DUNE::Tasks::Task
     {
 
       //! Task arguments.
       Arguments m_args;
 
       //! UDP sockets and parameters
-      UDPSocket* m_UDP_sock;
-      Address m_UDP_addr;
-      uint16_t m_UDP_port;
+      UDPSocket* m_udp_sock;
+      Address m_udp_addr;
+      uint16_t m_udp_port;
 
       //! UDP output socket
-      UDPSocket* m_UDP_sock_out;
-      Address m_UDP_addr_out;
-      uint16_t m_UDP_port_out;
+      UDPSocket* m_udp_sock_out;
+      Address m_udp_addr_out;
+      uint16_t m_udp_port_out;
 
       //! Buffer for incomming data
       uint8_t m_buf[1024];
 
       //! Previous received acceleration data
       IMC::Acceleration m_acc;
-
-
 
       //! Constructor.
       //! @param[in] name task name.
@@ -99,37 +93,30 @@ namespace Visualisers
         DUNE::Tasks::Task(name, ctx)
       {
 
-        param("UDP - Port", m_args.UDP_port)
-    		    .defaultValue("49000")
-    		    .description("Port for connection to Flightgear");
+        param("UDP - Port", m_args.udp_port)
+        .defaultValue("49000")
+        .description("Port for connection to FlightGear");
 
-        param("UDP - Address", m_args.UDP_addr)
+        param("UDP - Address", m_args.udp_addr)
         .defaultValue("127.0.0.1")
-        .description("Address for connection to Flightgear");
+        .description("Address for connection to FlightGear");
 
-        param("UDP Out - Port", m_args.UDP_port_out)
+        param("UDP Out - Port", m_args.udp_port_out)
         .defaultValue("39000")
         .description("Port for sending data back to FlightGear");
 
-        param("UDP Out - Address", m_args.UDP_addr_out)
+        param("UDP Out - Address", m_args.udp_addr_out)
         .defaultValue("127.0.0.1")
         .description("Address for outgoing comm. to FlightGear");
-
-
 
         param("Aircraft", m_args.aircraft)
         .defaultValue("arducopter")
         .description("Name of aircraft to use");
 
-
-
-
         // Should perhaps add our own input channel to this...
 
         bind<IMC::SimulatedState>(this);
         bind<IMC::Acceleration>(this);
-
-
       }
 
       //! Update internal state with new parameter values.
@@ -154,11 +141,11 @@ namespace Visualisers
       void
       onResourceAcquisition(void)
       {
-        m_UDP_addr = m_args.UDP_addr;
-        m_UDP_port = m_args.UDP_port;
+        m_udp_addr = m_args.udp_addr;
+        m_udp_port = m_args.udp_port;
 
-        m_UDP_addr_out = m_args.UDP_addr_out;
-        m_UDP_port_out = m_args.UDP_port_out;
+        m_udp_addr_out = m_args.udp_addr_out;
+        m_udp_port_out = m_args.udp_port_out;
         openConnection();
       }
 
@@ -167,23 +154,23 @@ namespace Visualisers
       {
         try
         {
-            m_UDP_sock = new UDPSocket;
+          m_udp_sock = new UDPSocket;
 
-            m_UDP_sock->bind(m_UDP_port, m_UDP_addr, false);
+          m_udp_sock->bind(m_udp_port, m_udp_addr, false);
 
-            m_UDP_sock_out = new UDPSocket;
-            // Do not bind outgoing socket.
+          m_udp_sock_out = new UDPSocket;
+          // Do not bind outgoing socket.
 
-            inf(DTR("UDP sockets for FlightGear setup."));
+          inf(DTR("UDP sockets for FlightGear setup."));
         }
         catch (...)
         {
 
-            Memory::clear(m_UDP_sock);
-            Memory::clear(m_UDP_sock_out);
+          Memory::clear(m_udp_sock);
+          Memory::clear(m_udp_sock_out);
 
-            war(DTR("Connection failed, retrying..."));
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
+          war(DTR("Connection failed, retrying..."));
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
         }
       }
 
@@ -193,7 +180,6 @@ namespace Visualisers
       {
         // Could be an idea to start flightgear here.
         // But for now, rely on an external shell to start.
-
       }
 
       //! Release resources.
@@ -201,32 +187,30 @@ namespace Visualisers
       onResourceRelease(void)
       {
         // Clear up the socket
-        Memory::clear(m_UDP_sock);
-        Memory::clear(m_UDP_sock_out);
+        Memory::clear(m_udp_sock);
+        Memory::clear(m_udp_sock_out);
       }
 
       int
       receiveData(uint8_t* buf, size_t blen)
       {
-        if(m_UDP_sock)
+        if (m_udp_sock)
+        {
+          try
           {
-            try
-            {
-                return m_UDP_sock->read(buf, blen);
-            }
-            catch (...)
-            {
-                war(DTR("Connection lost, retrying..."));
-                Memory::clear(m_UDP_sock);
-                Memory::clear(m_UDP_sock_out);
-                openConnection();
-                return 0;
-            }
+            return m_udp_sock->read(buf, blen);
           }
+          catch (...)
+          {
+            war(DTR("Connection lost, retrying..."));
+            Memory::clear(m_udp_sock);
+            Memory::clear(m_udp_sock_out);
+            openConnection();
+            return 0;
+          }
+        }
         return 0;
       }
-
-
 
       //! Main data-handle for flightgear
       void
@@ -234,30 +218,28 @@ namespace Visualisers
       {
 
         while (poll(0.01))
+        {
+
+          int n = receiveData(m_buf, sizeof(m_buf));
+          if (n < 0)
           {
-
-            int n = receiveData(m_buf, sizeof(m_buf));
-            if (n < 0)
-            {
-              debug("Receive error");
-              break;
-            }
-            if ( n == sizeof(FGNetCtrls))
-            {
-              FGNetCtrls* fg_ctrls = (FGNetCtrls*) m_buf;
-              convertFromNetworkEndian(fg_ctrls);
-              spew("Got native flightgear controls. Elevator: %f", fg_ctrls->elevator);
-              // TODO: Do something useful with this.
-
-            }
-            else if ( n == sizeof(FGNetFDM))
-            {
-              FGNetFDM* fg_native = (FGNetFDM*) m_buf;
-              convertFromNetworkEndian(fg_native);
-              spew("Got native flightgear FDM packet. ");
-
-            }
+            debug("Receive error");
+            break;
           }
+          if (n == sizeof(FGNetCtrls))
+          {
+            FGNetCtrls* fg_ctrls = (FGNetCtrls*)m_buf;
+            convertFromNetworkEndian(fg_ctrls);
+            spew("Got native flightgear controls. Elevator: %f", fg_ctrls->elevator);
+            // TODO: Do something useful with this.
+          }
+          else if (n == sizeof(FGNetFDM))
+          {
+            FGNetFDM* fg_native = (FGNetFDM*)m_buf;
+            convertFromNetworkEndian(fg_native);
+            spew("Got native flightgear FDM packet. ");
+          }
+        }
       }
 
       void
@@ -267,9 +249,8 @@ namespace Visualisers
         m_acc = *acc;
       }
 
-
       void
-      consume(const IMC::SimulatedState *simstate)
+      consume(const IMC::SimulatedState* simstate)
       {
 
         trace("Vizualiser got new SimulatedState data.");
@@ -280,7 +261,7 @@ namespace Visualisers
         fp64_t rcv_hei = simstate->height;
 
         WGS84::displace(simstate->x, simstate->y, simstate->z,
-            &rcv_lat, &rcv_lon, &rcv_hei);
+                        &rcv_lat, &rcv_lon, &rcv_hei);
 
         IMC::SimulatedState sim = *simstate;
 
@@ -293,18 +274,17 @@ namespace Visualisers
         convertFromSimstateToFGNetHost(&sim, &m_acc, &net);
         convertToNetworkEndian(&net);
 
-        if(m_UDP_sock_out != NULL)
+        if (m_udp_sock_out != NULL)
         {
           try
           {
-            m_UDP_sock_out->write((uint8_t*) &net, sizeof(FGNetFDM), m_UDP_addr_out, m_UDP_port_out);
+            m_udp_sock_out->write((uint8_t*)&net, sizeof(FGNetFDM), m_udp_addr_out, m_udp_port_out);
           }
-          catch(NetworkError& error)
+          catch (NetworkError& error)
           {
             war("Failed to send: %s ", error.what());
           }
         }
-
       }
 
       //! Main loop.
@@ -312,30 +292,28 @@ namespace Visualisers
       onMain(void)
       {
         while (!stopping())
+        {
+          // Handle data
+          if (m_udp_sock)
           {
-            // Handle data
-            if(m_UDP_sock)
-              {
-                handleFlightGearData();
-              }
-            else
-              {
-                Time::Delay::wait(0.5);
-                openConnection();
-              }
-
-            // Handle IMC messages from bus
-            consumeMessages();
+            handleFlightGearData();
           }
-      }
+          else
+          {
+            Time::Delay::wait(0.5);
+            openConnection();
+          }
 
+          // Handle IMC messages from bus
+          consumeMessages();
+        }
+      }
 
       bool
       poll(double timeout)
       {
-        if (m_UDP_sock != NULL)
-          return Poll::poll(*m_UDP_sock, timeout);
-
+        if (m_udp_sock != NULL)
+          return Poll::poll(*m_udp_sock, timeout);
 
         return false;
       }
