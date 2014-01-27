@@ -50,10 +50,38 @@ namespace DUNE
     class ByteCopy
     {
     public:
-      //! Converts the unsigned integer with 32 bits from host byte
-      //! order to big endian byte order.
+      //! Convert the 16-bit unsigned integer to big endian byte
+      //! order. If the host is big endian no conversion is performed.
       //! @param n integer to convert.
-      //! @return 32 bit unsigned integer in big endian byte order.
+      //! @return 16-bit unsigned integer in big endian byte order.
+      inline static uint16_t
+      toBE(uint16_t n)
+      {
+#if defined(DUNE_SYS_HAS_HTONS)
+        return htons(n);
+
+#elif defined(DUNE_CPU_LITTLE_ENDIAN)
+        return ((n & 0xff00) >> 8) | ((n & 0x00ff) << 8);
+
+#else
+        return n;
+#endif
+      }
+
+      //! Convert the 16-bit signed integer to big endian byte
+      //! order. If the host is big endian no conversion is performed.
+      //! @param n integer to convert.
+      //! @return 16-bit unsigned integer in big endian byte order.
+      inline static int16_t
+      toBE(int16_t n)
+      {
+        return toBE(static_cast<uint16_t>(n));
+      }
+
+      //! Convert the 32-bit unsigned integer to big endian byte
+      //! order. If the host is big endian no conversion is performed.
+      //! @param n integer to convert.
+      //! @return 32-bit unsigned integer in big endian byte order.
       inline static uint32_t
       toBE(uint32_t n)
       {
@@ -69,28 +97,21 @@ namespace DUNE
 #endif
       }
 
-      //! Converts the unsigned integer with 16 bits from host byte
-      //! order to big endian byte order.
+      //! Convert the 32-bit signed integer to big endian byte
+      //! order. If the host is big endian no conversion is performed.
       //! @param n integer to convert.
-      //! @return 16 bit unsigned integer in big endian byte order.
-      inline static uint16_t
-      toBE(uint16_t n)
+      //! @return 32-bit signed integer in big endian byte order.
+      inline static int32_t
+      toBE(int32_t n)
       {
-#if defined(DUNE_SYS_HAS_HTONS)
-        return htons(n);
-
-#elif defined(DUNE_CPU_LITTLE_ENDIAN)
-        return ((n & 0xff00) >> 8) | ((n & 0x00ff) << 8);
-
-#else
-        return n;
-#endif
+        return toBE(static_cast<uint32_t>(n));
       }
 
-      //! Converts the unsigned integer with 32 bits from big endian
-      //! byte order to host byte order.
+      //! Convert the 32-bit unsigned integer from big endian byte
+      //! order to host byte order. If the host is big endian no
+      //! conversion is performed.
       //! @param n integer to convert.
-      //! @return 32 bit unsigned integer in host byte order.
+      //! @return 32-bit unsigned integer in host byte order.
       inline static uint32_t
       fromBE(uint32_t n)
       {
@@ -106,10 +127,22 @@ namespace DUNE
 #endif
       }
 
-      //! Converts the unsigned integer with 16 bits from big endian
-      //! byte order to host byte order.
+      //! Convert the 32-bit signed integer from big endian byte order
+      //! to host byte order. If the host is big endian no conversion
+      //! is performed.
       //! @param n integer to convert.
-      //! @return 16 bit unsigned integer in host byte order.
+      //! @return 32-bit signed integer in host byte order.
+      inline static int32_t
+      fromBE(int32_t n)
+      {
+        return fromBE(static_cast<uint32_t>(n));
+      }
+
+      //! Convert the 16-bit unsigned integer from big endian byte
+      //! order to host byte order. If the host is big endian no
+      //! conversion is performed.
+      //! @param n integer to convert.
+      //! @return 16-bit unsigned integer in host byte order.
       inline static uint16_t
       fromBE(uint16_t n)
       {
@@ -122,6 +155,17 @@ namespace DUNE
 #else
         return n;
 #endif
+      }
+
+      //! Convert the 16-bit signed integer from big endian byte
+      //! order to host byte order. If the host is big endian no
+      //! conversion is performed.
+      //! @param n integer to convert.
+      //! @return 16-bit signed integer in host byte order.
+      inline static int16_t
+      fromBE(int16_t n)
+      {
+        return fromBE(static_cast<uint16_t>(n));
       }
 
       //! Converts the first 2 bytes of an array from big endian byte
