@@ -290,8 +290,10 @@ namespace Maneuver
           bind<IMC::IndicatedSpeed>(this);
           bind<IMC::EstimatedStreamVelocity>(this);
           bind<IMC::SimulatedState>(this);
-          bind<IMC::EstimatedState>(this);
           bind<IMC::Acceleration>(this);
+          bind<IMC::DesiredRoll>(this);
+          bind<IMC::DesiredSpeed>(this);
+          bind<IMC::EstimatedState>(this);
         }
 
         void
@@ -439,8 +441,6 @@ namespace Maneuver
         void
         consume(const IMC::LeaderState* msg)
         {
-          spew("LeaderState start");
-
           if (m_args.uav_ind == 0 && msg->op == IMC::LeaderState::OP_SET)
           {
             debug("Consuming LeaderState");
@@ -455,15 +455,11 @@ namespace Maneuver
             dispatch(cop);
             */
           }
-
-          spew("LeaderState end");
         }
 
         void
         consume(const IMC::IndicatedSpeed* msg)
         {
-          spew("IndicatedSpeed start");
-
           if (m_args.uav_ind > 0 && msg->getSource() == getSystemId())
           {
             //! Get current vehicle airspeed
@@ -475,30 +471,21 @@ namespace Maneuver
               m_uav_ctrl(1, m_args.uav_ind-1) = m_airspeed;
             }
           }
-
-          spew("IndicatedSpeed end");
         }
 
         void
         consume(const IMC::EstimatedStreamVelocity* msg)
         {
-          spew("EstimatedStreamVelocity start");
-
           double t_wind[3] = {msg->x, msg->y, msg->z};
           m_wind = Matrix(t_wind, 3, 1);
           // To complete - Send estimated wind to the global formation management thread
-
-          spew("EstimatedStreamVelocity end");
         }
 
         void
         consume(const IMC::SimulatedState* msg)
         {
-          spew("SimulatedState start");
-
           if (m_args.uav_ind > 0 && msg->getSource() == resolveSystemName("form-leader-01"))
           {
-            spew("SimulatedState receiving");
             //! Receive the leader simulated state from a parallel DUNE instance
 
             //! Get simulated state time stamp
@@ -528,15 +515,11 @@ namespace Maneuver
             if (!isActive() && m_uav_n == 1)
               requestActivation();
           }
-
-          spew("SimulatedState end");
         }
 
         void
         consume(const IMC::Acceleration* msg)
         {
-          spew("Acceleration start");
-
           if (m_args.uav_ind > 0)
           {
             double mt_uav_accel[12] = {msg->x, msg->y, msg->z};
@@ -551,15 +534,11 @@ namespace Maneuver
               // m_uav_state.set(0, 11, m_args.uav_ind, m_args.uav_ind, Matrix(vt_uav_state, 12, 1));
             }
           }
-
-          spew("Acceleration end");
         }
 
         void
         consume(const IMC::DesiredRoll* msg)
         {
-          spew("DesiredRoll start");
-
           if (m_args.uav_ind == 0)
           {
             //! Get leader vehicle commanded roll
@@ -576,15 +555,11 @@ namespace Maneuver
             // ========= Debug ===========
             trace("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
           }
-
-          spew("DesiredRoll end");
         }
 
         void
         consume(const IMC::DesiredSpeed* msg)
         {
-          spew("DesiredSpeed start");
-
           if (m_args.uav_ind == 0)
           {
             //! Get leader vehicle commanded airspeed
@@ -601,15 +576,11 @@ namespace Maneuver
             // ========= Debug ===========
             trace("Speed command received (%1.2fm/s)", msg->value);
           }
-
-          spew("DesiredSpeed end");
         }
 
         void
         consume(const IMC::EstimatedState* msg)
         {
-          spew("EstimatedState start");
-
           //! Skip formation flight controller if running as the leader vehicle
           if (m_args.uav_ind > 0)
           {
@@ -638,7 +609,9 @@ namespace Maneuver
                          vertCat(m_uav_state.get(9, 11, m_args.uav_ind, m_args.uav_ind)));
               m_models[m_args.uav_ind-1] = model;
 
-              spew("EstimatedState - Own vehicle state update");
+              //! Update the time control variables
+              m_last_state_estim(m_args.uav_ind) = d_time;
+
               if (!isActive())
                 return;
 
@@ -675,7 +648,6 @@ namespace Maneuver
               //! Update the time control variables
               m_last_ctrl_update = d_time;
               m_last_simctrl_update(m_args.uav_ind-1) = d_time;
-              m_last_state_estim(m_args.uav_ind) = d_time;
               //! Get estimated state time stamp
 //              debug("Clock time: %2.3f; Estimated state time stamp: %2.3f", d_time, msg->getTimeStamp());
 
@@ -691,7 +663,6 @@ namespace Maneuver
                m_altitude_cmd.value = m_uav_ctrl(2, m_args.uav_ind-1);
                dispatch(m_altitude_cmd);
                */
-              spew("EstimatedState - Own vehicle processing end");
             }
             else
             {
@@ -715,6 +686,13 @@ namespace Maneuver
                   msg->p,   msg->q,     msg->r};
               m_uav_state.set(0, 11, ind_uav, ind_uav, Matrix(vt_uav_state, 12, 1));
 
+              //! - Update own vehicle simulation model
+              model = m_models[ind_uav-1];
+              model->setPosition(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)));
+              model->setVelocity(m_uav_state.get(3, 5, ind_uav, ind_uav).vertCat(m_uav_state.get(9, 11, ind_uav, ind_uav)));
+              model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
+              m_models[ind_uav-1] = model;
+
               //! - Commands update
               // To complete - Compute the estimated vehicle acceleration
               Matrix vd_uav_accel = Matrix(3, 1, 0.0);
@@ -723,9 +701,6 @@ namespace Maneuver
               m_uav_ctrl.set(0, 2, ind_uav-1, ind_uav-1, vd_cmd.get(0, 2, 0, 0));
 
               //! - Update current vehicle simulation model
-              model = m_models[ind_uav-1];
-              model->setPosition(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)));
-              model->setVelocity(m_uav_state.get(3, 5, ind_uav, ind_uav).vertCat(m_uav_state.get(9, 11, ind_uav, ind_uav)));
               model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
               m_models[ind_uav-1] = model;
 
@@ -753,14 +728,11 @@ namespace Maneuver
                 requestActivation();
             }
           }
-
-          spew("EstimatedState end");
         }
 
         void
         task(void)
         {
-          spew("PeriodicTask start");
           //! Handle IMC messages from bus
           consumeMessages();
 
@@ -777,7 +749,6 @@ namespace Maneuver
           if (m_args.uav_ind == 0)
           {
             //! Update the leader vehicle commands and states
-            spew("PeriodicTask - Leader state update");
 
             //! Declaration
             double d_time;
@@ -913,8 +884,6 @@ namespace Maneuver
           else
           {
             //! Update the simulated vehicles commands and states
-            spew("PeriodicTask - Team state prediction");
-            trace("PeriodicTask - Team state prediction");
 
             // To complete - Check if leader simulation last update is recent enough: m_last_state_estim(0)
             // To complete - Check if team vehicles last update is recent enough: m_last_state_estim(1:m_uav_n)
@@ -922,8 +891,6 @@ namespace Maneuver
             //! Update team simulated state for standard time periods
             teamPeriodicUpdate(Clock::get());
           }
-
-          spew("PeriodicTask end");
         }
 
         void
@@ -1013,7 +980,6 @@ namespace Maneuver
         void
         teamPeriodicUpdate(const double& d_time)
         {
-          spew("teamPeriodicUpdate - start");
           //! Variables initialization
           double d_timestep_sim = 1/m_frequency;
           double d_timestep_ctrl = 1/m_args.ctrl_frequency;
@@ -1112,14 +1078,12 @@ namespace Maneuver
               ind_time = 0;
             d_sim_time = m_last_state_estim(vi_sim_time(ind_time));
           }
-          spew("teamPeriodicUpdate - end");
         }
 
         //! Update team simulated state for uneven time periods
         void
         teamUnevenUpdate(const double& d_time)
         {
-          spew("teamUnevenUpdate - start");
           //! Temporary prediction variables initialization
           Matrix vd_pos(6, 1, 0.0);
           Matrix vd_vel(6, 1, 0.0);
@@ -1147,7 +1111,6 @@ namespace Maneuver
                             vd_pos.get(0, 2, 0, 0).vertCat(vd_vel.get(0, 2, 0, 0).
                             vertCat(vd_pos.get(3, 5, 0, 0).vertCat(vd_vel.get(3, 5, 0, 0)))));
           }
-          spew("teamUnevenUpdate - end");
         }
 
         void
@@ -1158,7 +1121,6 @@ namespace Maneuver
           double vt_uav_state_own1[6] = {md_uav_state(0, ind_uav), md_uav_state(1, ind_uav), md_uav_state(2, ind_uav),
                         md_uav_state(3, ind_uav), md_uav_state(4, ind_uav), md_uav_state(5, ind_uav)};
           */
-          spew("formationControl start");
           //! Vehicle formation control method
 
           //! Controls:
@@ -1955,8 +1917,6 @@ namespace Maneuver
           end
         end
            */
-
-          spew("formationControl end");
         }
       };
     }
