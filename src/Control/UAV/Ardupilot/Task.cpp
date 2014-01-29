@@ -1101,6 +1101,15 @@ namespace Control
         void
         handleHeartbeatPacket(const mavlink_message_t* msg)
         {
+          static bool has_setup_rate = false;
+
+          if(!has_setup_rate)
+          {
+            has_setup_rate = true;
+            setupRate(m_args.trate);
+            debug("Rates setup second time.");
+          }
+
           mavlink_heartbeat_t hbt;
 
           mavlink_msg_heartbeat_decode(msg, &hbt);
