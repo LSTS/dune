@@ -136,6 +136,8 @@ namespace Control
         int m_mode;
         bool m_changing_wp;
         bool m_error_missing, m_error_ext;
+        //! Setup rate hack
+        bool m_has_setup_rate;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -155,7 +157,8 @@ namespace Control
           m_mode(0),
           m_changing_wp(false),
           m_error_missing(false),
-          m_error_ext(false)
+          m_error_ext(false),
+          m_has_setup_rate(false)
         {
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
@@ -1101,11 +1104,9 @@ namespace Control
         void
         handleHeartbeatPacket(const mavlink_message_t* msg)
         {
-          static bool has_setup_rate = false;
-
-          if(!has_setup_rate)
+          if(!m_has_setup_rate)
           {
-            has_setup_rate = true;
+            m_has_setup_rate = true;
             setupRate(m_args.trate);
             debug("Rates setup second time.");
           }
