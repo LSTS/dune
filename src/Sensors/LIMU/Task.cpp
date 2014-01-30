@@ -215,7 +215,7 @@ namespace Sensors
 
         IMC::EntityParameter hip;
         hip.name = c_hard_iron_param;
-        hip.value = String::str("%f, %f, %f", hi_x, hi_y, 0);
+        hip.value = String::str("%f, %f, 0.0", hi_x, hi_y);
 
         IMC::SetEntityParameters np;
         np.name = getEntityLabel();
