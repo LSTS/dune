@@ -82,6 +82,8 @@ namespace Vision
       std::string strobe_pwr;
       //! Number of photos per volume.
       unsigned volume_size;
+      //! Power GPIO.
+      int pwr_gpio;
     };
 
     //! Device driver task.
@@ -107,6 +109,8 @@ namespace Vision
       double m_timestamp;
       //! True if task is activating.
       bool m_activating;
+      //! Power GPIO.
+      Hardware::GPIO* m_pwr_gpio;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -115,11 +119,16 @@ namespace Vision
         m_log_dir(ctx.dir_log),
         m_volume_count(0),
         m_file_count(0),
-        m_activating(false)
+        m_activating(false),
+        m_pwr_gpio(NULL)
       {
         // Retrieve configuration values.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
+
+        param("Power GPIO", m_args.pwr_gpio)
+        .defaultValue("-1")
+        .description("GPIO that controls power to the camera");
 
         param("Camera IPv4 Address", m_args.address)
         .defaultValue("10.0.10.82")
@@ -200,6 +209,31 @@ namespace Vision
       }
 
       void
+      onResourceAcquisition(void)
+      {
+        if (m_args.pwr_gpio > 0)
+        {
+          m_pwr_gpio = new Hardware::GPIO(m_args.pwr_gpio);
+          m_pwr_gpio->setDirection(Hardware::GPIO::GPIO_DIR_OUTPUT);
+          m_pwr_gpio->setValue(0);
+        }
+      }
+
+      void
+      onResourceRelease(void)
+      {
+        trace("releasing");
+        stopVideo();
+
+        if (m_pwr_gpio != NULL)
+        {
+          m_pwr_gpio->setValue(0);
+          delete m_pwr_gpio;
+          m_pwr_gpio = NULL;
+        }
+      }
+
+      void
       consume(const IMC::LoggingControl* msg)
       {
         if (!m_activating && (msg->getDestination() != getSystemId()))
@@ -208,17 +242,64 @@ namespace Vision
         if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
         {
           m_log_dir = m_ctx.dir_log / msg->name / "Photos";
-          activate();
         }
       }
 
       void
       onRequestActivation(void)
       {
+        trace("received activation request");
+
         m_activating = true;
+
+        if (m_pwr_gpio != NULL)
+          m_pwr_gpio->setValue(1);
+
         IMC::LoggingControl log_ctl;
         log_ctl.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
         dispatch(log_ctl);
+      }
+
+      void
+      checkActivation(void)
+      {
+        if (!m_activating)
+          return;
+
+        try
+        {
+          setProperties();
+          activate();
+        }
+        catch (std::runtime_error& e)
+        {
+          err("%s", e.what());
+        }
+      }
+
+      void
+      onActivation(void)
+      {
+        m_activating = false;
+        m_file_count = 0;
+        m_volume_count = 0;
+
+        changeVolume();
+
+        setStrobePower(true);
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setStrobePower(false);
+
+        if (m_pwr_gpio != NULL)
+          m_pwr_gpio->setValue(0);
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -239,30 +320,13 @@ namespace Vision
           pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
 
         dispatch(pcc);
-        pcc.toText(std::cerr);
-      }
-
-      void
-      onActivation(void)
-      {
-        m_activating = false;
-        m_file_count = 0;
-        m_volume_count = 0;
-        changeVolume();
-        setStrobePower(true);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-      }
-
-      void
-      onDeactivation(void)
-      {
-        setStrobePower(false);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
       startVideo(void)
       {
+        debug("starting video stream");
+
         // Send request
         const char cmd[] = "GET /cgi-bin/nph-video?type=multipart/x-mixed-replace&archive=1\r\n";
         m_http = new HTTPClient(cmd, m_args.address, c_port);
@@ -298,10 +362,12 @@ namespace Vision
       void
       stopVideo(void)
       {
+        debug("stopping video stream");
+
         if (m_http != NULL)
         {
           delete m_http;
-          m_http = 0;
+          m_http = NULL;
         }
       }
 
@@ -416,9 +482,8 @@ namespace Vision
         }
       }
 
-      //! Initialize resources.
       void
-      onResourceInitialization(void)
+      setProperties(void)
       {
         debug("setting frames per second to '%u'", m_args.fps);
         setProperty("maximum_framerate", uncastLexical(m_args.fps));
@@ -491,13 +556,6 @@ namespace Vision
         }
       }
 
-      //! Release allocated resources.
-      void
-      onResourceRelease(void)
-      {
-        stopVideo();
-      }
-
       void
       changeVolume(void)
       {
@@ -520,10 +578,10 @@ namespace Vision
           else
           {
             waitForMessages(1.0);
+            checkActivation();
             continue;
           }
 
-          // Start the video if not already
           if (m_http == NULL)
           {
             startVideo();
@@ -538,7 +596,8 @@ namespace Vision
           }
           catch (std::runtime_error& e)
           {
-            throw RestartNeeded(e.what(), 5);
+            debug("frame capture failed: %s", e.what());
+            stopVideo();
           }
 
           if (m_file_count++ == m_args.volume_size)
@@ -547,7 +606,7 @@ namespace Vision
             changeVolume();
           }
 
-          // Save file
+          // Save file.
           double timestamp = Clock::getSinceEpoch();
           Path file = m_volume / String::str("%0.4f.jpg", timestamp);
           std::ofstream jpg(file.c_str(), std::ios::binary);
