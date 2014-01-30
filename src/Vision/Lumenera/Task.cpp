@@ -134,7 +134,7 @@ namespace Vision
         .description("Enable automatic exposure");
 
         param("Exposure Value", m_args.exposure_value)
-        .defaultValue("true")
+        .defaultValue("0.008")
         .description("Exposure value if auto exposure is disabled");
 
         param("Autoexposure Knee", m_args.exposure_knee)
