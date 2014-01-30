@@ -120,7 +120,7 @@ namespace Monitors
         .maximumValue("0.8")
         .description("Minimum depth necessary to consider a vehicle underwater");
 
-        param("Ais Speed Threshold", m_args.airspeed_threshold)
+        param("Air Speed Threshold", m_args.airspeed_threshold)
         .units(Units::Meter)
         .defaultValue("12.0")
         .description("Minimum air speed necessary to consider a vehicle in air");
