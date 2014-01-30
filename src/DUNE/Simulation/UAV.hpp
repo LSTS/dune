@@ -83,12 +83,20 @@ namespace DUNE
       UAVSimulation(const double& bank_time_cst, const double& speed_time_cst);
 
       //! Constructor.
+      //! Create a simulation model with null initial state and the vehicle model parameters
+      //! @param[in] bank_time_cst - bank angle time constant
+      //! @param[in] speed_time_cst - airspeed time constant
+      //! @param[in] alt_time_cst - altitude time constant
+      UAVSimulation(const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst);
+
+      //! Constructor.
       //! Create a simulation model based on the initial state.
       //! @param[in] vel - initial velocity vector
       //! @param[in] bank_time_cst - bank angle time constant
       //! @param[in] speed_time_cst - airspeed time constant
       UAVSimulation(const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst);
 
+      /*
       //! Constructor.
       //! Create a simulation model based on the initial state.
       //! @param[in] vel - initial velocity vector
@@ -107,6 +115,7 @@ namespace DUNE
       //! @param[in] airspeed_cmd - applied airspeed command
       UAVSimulation(const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst,
           const double& altitude_cmd, const double& airspeed_cmd);
+      */
 
       //! Constructor.
       //! Create a simulation model based on the initial state.
@@ -133,6 +142,17 @@ namespace DUNE
       //! @param[in] vel - initial velocity vector
       //! @param[in] bank_time_cst - bank angle time constant
       //! @param[in] speed_time_cst - airspeed time constant
+      //! @param[in] alt_time_cst - altitude time constant
+      UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
+          const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst);
+
+      /*
+      //! Constructor.
+      //! Create a simulation model based on the initial state.
+      //! @param[in] pos - initial position vector
+      //! @param[in] vel - initial velocity vector
+      //! @param[in] bank_time_cst - bank angle time constant
+      //! @param[in] speed_time_cst - airspeed time constant
       //! @param[in] altitude_cmd - applied altitude command
       UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
           const double& bank_time_cst, const double& speed_time_cst, const double& altitude_cmd);
@@ -148,6 +168,7 @@ namespace DUNE
       UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
           const double& bank_time_cst, const double& speed_time_cst,
           const double& altitude_cmd, const double& airspeed_cmd);
+      */
 
       //! Constructor.
       //! Create a simulation model based on the initial state.
@@ -235,6 +256,28 @@ namespace DUNE
       void
       setCtrl(const double& bank_time_cst, const double& speed_time_cst);
 
+      //! This method sets the vehicle model control parameters.
+      //! @param[in] bank_time_cst - bank angle time constant
+      //! @param[in] speed_time_cst - airspeed time constant
+      //! @param[in] alt_time_cst - altitude time constant
+      void
+      setCtrl(const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst);
+
+      //! This method sets the vehicle model bank rate operation constraint.
+      //! @param[in] bank_rate_lim - bank rate limit
+      void
+      setBankRateLim(const double& bank_rate_lim);
+
+      //! This method sets the vehicle model longitudinal acceleration operation constraint.
+      //! @param[in] lon_accel_lim - longitudinal acceleration limit
+      void
+      setAccelLim(const double& lon_accel_lim);
+
+      //! This method sets the vehicle model vertical slope operation constraint.
+      //! @param[in] vert_slope_lim - vertical slope limit
+      void
+      setVertSlopeLim(const double& vert_slope_lim);
+
       //! This method gets the vehicle state.
       //! @returns pos - current position vector
       DUNE::Math::Matrix
@@ -302,29 +345,70 @@ namespace DUNE
       //! Vehicle velocity vector relative to the wind, in the ground reference frame
       DUNE::Math::Matrix m_uav2wind_gnd_frm;
 
-      //! Vehicle model parameters
+      //! Kinematic models' variables
+      //! Vehicle model parameters and respective initialization flags
       //! - Bank time constant
       double m_bank_time_cst;
+      bool m_bank_time_cst_f;
       //! - Airspeed time constant
       double m_speed_time_cst;
-      //! - Model parameters definition flag
-      bool m_model_time_cst;
-
+      bool m_speed_time_cst_f;
+      //! - Altitude time constant
+      double m_alt_time_cst;
+      bool m_alt_time_cst_f;
       //! Control commands initialization flags
-      //! - Bank
-      bool m_bank_cmd_ini;
       //! - Airspeed
       bool m_airspeed_cmd_ini;
       //! - Altitude
       bool m_altitude_cmd_ini;
+      //! Vehicle operation limits and respective initialization flags
+      //! - Bank rate
+      double m_bank_rate_lim;
+      bool m_bank_rate_lim_f;
+      //! - Longitudinal acceleration
+      double m_lon_accel_lim;
+      bool m_lon_accel_lim_f;
+      //! - Vertical slope
+      double m_vert_slope_lim;
+      bool m_vert_slope_lim_f;
 
-      //! Simulation variables
+      //! Airstream data
       double m_airspeed;
+      double m_ang_attack;
+      double m_sideslip;
+      //! Simulation optimization variables
       double m_cos_yaw;
       double m_sin_yaw;
+      double m_cos_pitch;
+      double m_sin_pitch;
+      double m_cos_roll;
+      double m_sin_roll;
+      double m_cos_course;
+      double m_sin_course;
+      double m_cos_fl_path_ang;
+      double m_sin_fl_path_ang;
+
+      //! Simulation update functions
+      void
+      integratePosition(const double& timestep);
+
+      void
+      calcUAV2AirData(void);
+
+      void
+      updateVelocity(void);
+
+      void
+      update3DOF(const double& timestep);
 
       void
       update4DOF_Bank(const double& timestep);
+
+      void
+      update4DOF_Alt(const double& timestep);
+
+      void
+      update5DOF(const double& timestep);
 
       /*
       //! This method acts as destructor.

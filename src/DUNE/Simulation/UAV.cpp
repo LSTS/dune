@@ -38,6 +38,7 @@
 
 // DUNE headers.
 //#include <DUNE/Utils/String.hpp>
+#include <DUNE/DUNE.hpp>
 #include <DUNE/Simulation/UAV.hpp>
 #include <DUNE/Math/Matrix.hpp>
 #include <DUNE/Math/Angles.hpp>
@@ -63,21 +64,43 @@ namespace DUNE
               //! Vehicle model parameters
               //! - Bank time constant
               m_bank_time_cst(0.0),
+              m_bank_time_cst_f(false),
               //! - Airspeed time constant
               m_speed_time_cst(0.0),
-              //! - Model parameters definition flag
-              m_model_time_cst(0),
+              m_speed_time_cst_f(false),
+              //! - Altitude time constant
+              m_alt_time_cst(0.0),
+              m_alt_time_cst_f(false),
               //! Control commands initialization flags
-              //! - Bank
-              m_bank_cmd_ini(0),
               //! - Airspeed
               m_airspeed_cmd_ini(0),
               //! - Altitude
               m_altitude_cmd_ini(0),
+              //! Vehicle operation limits and respective initialization flags
+              //! - Bank rate
+              m_bank_rate_lim(0.0),
+              m_bank_rate_lim_f(false),
+              //! - Longitudinal acceleration
+              m_lon_accel_lim(0.0),
+              m_lon_accel_lim_f(false),
+              //! - Vertical slope
+              m_vert_slope_lim(0.0),
+              m_vert_slope_lim_f(false),
               //! Simulation variables
               m_airspeed(0.0),
+              m_ang_attack(0.0),
+              m_sideslip(0.0),
               m_cos_yaw(1.0),
-              m_sin_yaw(0.0)
+              m_sin_yaw(0.0),
+              m_cos_pitch(1.0),
+              m_sin_pitch(0.0),
+              m_cos_roll(1.0),
+              m_sin_roll(0.0),
+              m_cos_course(1.0),
+              m_sin_course(0.0),
+              m_cos_fl_path_ang(1.0),
+              m_sin_fl_path_ang(0.0)
+
         {
           //! Vehicle position
           m_position = DUNE::Math::Matrix(6, 1, 0.0);
@@ -102,10 +125,13 @@ namespace DUNE
       //! Vehicle model parameters
       //! - Bank time constant
       m_bank_time_cst = model.m_bank_time_cst;
+      m_bank_time_cst_f = model.m_bank_time_cst_f;
       //! - Airspeed time constant
       m_speed_time_cst = model.m_speed_time_cst;
-      //! - Model parameters definition flag
-      m_model_time_cst = model.m_model_time_cst;
+      m_speed_time_cst_f = model.m_speed_time_cst_f;
+      //! - Altitude time constant
+      m_alt_time_cst = model.m_alt_time_cst;
+      m_alt_time_cst_f = model.m_alt_time_cst_f;
 
       //! modelation type
       m_sim_type = model.m_sim_type;
@@ -118,12 +144,21 @@ namespace DUNE
       //! - Altitude
       m_altitude_cmd = model.m_altitude_cmd;
       //! Control commands initialization flags
-      //! - Bank
-      m_bank_cmd_ini = model.m_bank_cmd_ini;
       //! - Airspeed
       m_airspeed_cmd_ini = model.m_airspeed_cmd_ini;
       //! - Altitude
       m_altitude_cmd_ini = model.m_altitude_cmd_ini;
+      //! Vehicle operation limits and respective initialization flags
+      //! - Bank rate
+      m_bank_rate_lim = model.m_bank_rate_lim;
+      m_bank_rate_lim_f = model.m_bank_rate_lim_f;
+      //! - Longitudinal acceleration
+      m_lon_accel_lim = model.m_lon_accel_lim;
+      m_lon_accel_lim_f = model.m_lon_accel_lim_f;
+      //! - Vertical slope
+      m_vert_slope_lim = model.m_vert_slope_lim;
+      m_vert_slope_lim_f = model.m_vert_slope_lim_f;
+
 
       //! Environment parameters
       //! Wind state vector
@@ -135,6 +170,14 @@ namespace DUNE
       m_airspeed = model.m_airspeed;
       m_cos_yaw = model.m_cos_yaw;
       m_sin_yaw = model.m_sin_yaw;
+      m_cos_pitch = model.m_cos_pitch;
+      m_sin_pitch = model.m_sin_pitch;
+      m_cos_roll = model.m_cos_roll;
+      m_sin_roll = model.m_sin_roll;
+      m_cos_course = model.m_cos_course;
+      m_sin_course = model.m_sin_course;
+      m_cos_fl_path_ang = model.m_cos_fl_path_ang;
+      m_sin_fl_path_ang = model.m_sin_fl_path_ang;
     }
 
     UAVSimulation::UAVSimulation(const double& bank_time_cst, const double& speed_time_cst):
@@ -152,18 +195,40 @@ namespace DUNE
           m_g(9.8066),
           //! Vehicle model parameters
           //! - Model parameters definition flag
-          m_model_time_cst(1),
+          m_bank_time_cst_f(true),
+          m_speed_time_cst_f(true),
+          //! - Altitude time constant
+          m_alt_time_cst(0.0),
+          m_alt_time_cst_f(false),
           //! Control commands initialization flags
-          //! - Bank
-          m_bank_cmd_ini(0),
           //! - Airspeed
           m_airspeed_cmd_ini(0),
           //! - Altitude
           m_altitude_cmd_ini(0),
+          //! Vehicle operation limits and respective initialization flags
+          //! - Bank rate
+          m_bank_rate_lim(0.0),
+          m_bank_rate_lim_f(false),
+          //! - Longitudinal acceleration
+          m_lon_accel_lim(0.0),
+          m_lon_accel_lim_f(false),
+          //! - Vertical slope
+          m_vert_slope_lim(0.0),
+          m_vert_slope_lim_f(false),
           //! Simulation variables
           m_airspeed(0.0),
+          m_ang_attack(0.0),
+          m_sideslip(0.0),
           m_cos_yaw(1.0),
-          m_sin_yaw(0.0)
+          m_sin_yaw(0.0),
+          m_cos_pitch(1.0),
+          m_sin_pitch(0.0),
+          m_cos_roll(1.0),
+          m_sin_roll(0.0),
+          m_cos_course(1.0),
+          m_sin_course(0.0),
+          m_cos_fl_path_ang(1.0),
+          m_sin_fl_path_ang(0.0)
     {
       //! Vehicle position
       m_position = DUNE::Math::Matrix(6, 1, 0.0);
@@ -183,6 +248,71 @@ namespace DUNE
 
     }
 
+    UAVSimulation::UAVSimulation(const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst):
+        //! Simulation type
+        m_sim_type("5DOF"),
+        //! Control commands
+        //! - Bank
+        m_bank_cmd(0.0),
+        //! - Airspeed
+        m_airspeed_cmd(0.0),
+        //! - Altitude
+        m_altitude_cmd(0.0),
+        //! Environment parameters
+        //! - Wind
+        m_wind(3, 1, 0.0),
+        //! - Gravity acceleration
+        m_g(9.8066),
+        //! Vehicle position
+        m_position(6, 1, 0.0),
+        //! Vehicle velocity vector
+        m_velocity(6, 1, 0.0),
+        //! Vehicle velocity vector relative to the wind, in the ground reference frame
+        m_uav2wind_gnd_frm(3, 1, 0.0),
+        //! Vehicle model parameters
+        //! - Model parameters definition flag
+        m_bank_time_cst_f(true),
+        m_speed_time_cst_f(true),
+        m_alt_time_cst_f(true),
+        //! Control commands initialization flags
+        //! - Airspeed
+        m_airspeed_cmd_ini(0),
+        //! - Altitude
+        m_altitude_cmd_ini(0),
+        //! Vehicle operation limits and respective initialization flags
+        //! - Bank rate
+        m_bank_rate_lim(0.0),
+        m_bank_rate_lim_f(false),
+        //! - Longitudinal acceleration
+        m_lon_accel_lim(0.0),
+        m_lon_accel_lim_f(false),
+        //! - Vertical slope
+        m_vert_slope_lim(0.0),
+        m_vert_slope_lim_f(false),
+        //! Simulation variables
+        m_airspeed(0.0),
+        m_ang_attack(0.0),
+        m_sideslip(0.0),
+        m_cos_yaw(1.0),
+        m_sin_yaw(0.0),
+        m_cos_pitch(1.0),
+        m_sin_pitch(0.0),
+        m_cos_roll(1.0),
+        m_sin_roll(0.0),
+        m_cos_course(1.0),
+        m_sin_course(0.0),
+        m_cos_fl_path_ang(1.0),
+        m_sin_fl_path_ang(0.0)
+    {
+      //! Vehicle model parameters
+      //! - Bank time constant
+      m_bank_time_cst = bank_time_cst;
+      //! - Airspeed time constant
+      m_speed_time_cst = speed_time_cst;
+      //! - Airspeed time constant
+      m_alt_time_cst = alt_time_cst;
+    }
+
     UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst):
           //! Simulation type
           m_sim_type("4DOF_bank"),
@@ -198,18 +328,40 @@ namespace DUNE
           m_g(9.8066),
           //! Vehicle model parameters
           //! - Model parameters definition flag
-          m_model_time_cst(1),
+          m_bank_time_cst_f(true),
+          m_speed_time_cst_f(true),
+          //! - Altitude time constant
+          m_alt_time_cst(0.0),
+          m_alt_time_cst_f(false),
           //! Control commands initialization flags
-          //! - Bank
-          m_bank_cmd_ini(0),
           //! - Airspeed
           m_airspeed_cmd_ini(0),
           //! - Altitude
           m_altitude_cmd_ini(0),
+          //! Vehicle operation limits and respective initialization flags
+          //! - Bank rate
+          m_bank_rate_lim(0.0),
+          m_bank_rate_lim_f(false),
+          //! - Longitudinal acceleration
+          m_lon_accel_lim(0.0),
+          m_lon_accel_lim_f(false),
+          //! - Vertical slope
+          m_vert_slope_lim(0.0),
+          m_vert_slope_lim_f(false),
           //! Simulation variables
           m_airspeed(0.0),
+          m_ang_attack(0.0),
+          m_sideslip(0.0),
           m_cos_yaw(1.0),
-          m_sin_yaw(0.0)
+          m_sin_yaw(0.0),
+          m_cos_pitch(1.0),
+          m_sin_pitch(0.0),
+          m_cos_roll(1.0),
+          m_sin_roll(0.0),
+          m_cos_course(1.0),
+          m_sin_course(0.0),
+          m_cos_fl_path_ang(1.0),
+          m_sin_fl_path_ang(0.0)
     {
       int i_vel_size = vel.rows();
       if (i_vel_size < 2 && i_vel_size > 6)
@@ -237,6 +389,7 @@ namespace DUNE
       m_airspeed = m_uav2wind_gnd_frm.norm_2();
     }
 
+    /*
     UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst,
         const double& altitude_cmd):
           //! Simulation type
@@ -251,18 +404,40 @@ namespace DUNE
           m_g(9.8066),
           //! Vehicle model parameters
           //! - Model parameters definition flag
-          m_model_time_cst(1),
+          m_bank_time_cst_f(true),
+          m_speed_time_cst_f(true),
+          //! - Altitude time constant
+          m_alt_time_cst(0.0),
+          m_alt_time_cst_f(false),
           //! Control commands initialization flags
-          //! - Bank
-          m_bank_cmd_ini(0),
           //! - Airspeed
           m_airspeed_cmd_ini(0),
           //! - Altitude
           m_altitude_cmd_ini(1),
+          //! Vehicle operation limits and respective initialization flags
+          //! - Bank rate
+          m_bank_rate_lim(0.0),
+          m_bank_rate_lim_f(false),
+          //! - Longitudinal acceleration
+          m_lon_accel_lim(0.0),
+          m_lon_accel_lim_f(false),
+          //! - Vertical slope
+          m_vert_slope_lim(0.0),
+          m_vert_slope_lim_f(false),
           //! Simulation variables
           m_airspeed(0.0),
+              m_ang_attack(0.0),
+              m_sideslip(0.0),
           m_cos_yaw(1.0),
-          m_sin_yaw(0.0)
+          m_sin_yaw(0.0),
+          m_cos_pitch(1.0),
+          m_sin_pitch(0.0),
+          m_cos_roll(1.0),
+          m_sin_roll(0.0),
+              m_cos_course(1.0),
+              m_sin_course(0.0),
+              m_cos_fl_path_ang(1.0),
+              m_sin_fl_path_ang(0.0)
     {
       int i_vel_size = vel.rows();
       if (i_vel_size < 2 && i_vel_size > 6)
@@ -306,18 +481,40 @@ namespace DUNE
           m_g(9.8066),
           //! Vehicle model parameters
           //! - Model parameters definition flag
-          m_model_time_cst(1),
+          m_bank_time_cst_f(true),
+          m_speed_time_cst_f(true),
+          //! - Altitude time constant
+          m_alt_time_cst(0.0),
+          m_alt_time_cst_f(false),
           //! Control commands initialization flags
-          //! - Bank
-          m_bank_cmd_ini(0),
           //! - Airspeed
           m_airspeed_cmd_ini(1),
           //! - Altitude
           m_altitude_cmd_ini(1),
+          //! Vehicle operation limits and respective initialization flags
+          //! - Bank rate
+          m_bank_rate_lim(0.0),
+          m_bank_rate_lim_f(false),
+          //! - Longitudinal acceleration
+          m_lon_accel_lim(0.0),
+          m_lon_accel_lim_f(false),
+          //! - Vertical slope
+          m_vert_slope_lim(0.0),
+          m_vert_slope_lim_f(false),
           //! Simulation variables
           m_airspeed(0.0),
+              m_ang_attack(0.0),
+              m_sideslip(0.0),
           m_cos_yaw(1.0),
-          m_sin_yaw(0.0)
+          m_sin_yaw(0.0),
+              m_cos_pitch(1.0),
+              m_sin_pitch(0.0),
+              m_cos_roll(1.0),
+              m_sin_roll(0.0),
+              m_cos_course(1.0),
+              m_sin_course(0.0),
+              m_cos_fl_path_ang(1.0),
+              m_sin_fl_path_ang(0.0)
     {
       int i_vel_size = vel.rows();
       if (i_vel_size < 2 && i_vel_size > 6)
@@ -350,6 +547,7 @@ namespace DUNE
       //! Simulation variables
       m_airspeed = m_uav2wind_gnd_frm.norm_2();
     }
+    */
 
     UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst,
         const double& altitude_cmd, const double& airspeed_cmd, const double& bank_cmd):
@@ -360,18 +558,40 @@ namespace DUNE
           m_g(9.8066),
           //! Vehicle model parameters
           //! - Model parameters definition flag
-          m_model_time_cst(1),
+          m_bank_time_cst_f(true),
+          m_speed_time_cst_f(true),
+          //! - Altitude time constant
+          m_alt_time_cst(0.0),
+          m_alt_time_cst_f(false),
           //! Control commands initialization flags
-          //! - Bank
-          m_bank_cmd_ini(1),
           //! - Airspeed
           m_airspeed_cmd_ini(1),
           //! - Altitude
           m_altitude_cmd_ini(1),
+          //! Vehicle operation limits and respective initialization flags
+          //! - Bank rate
+          m_bank_rate_lim(0.0),
+          m_bank_rate_lim_f(false),
+          //! - Longitudinal acceleration
+          m_lon_accel_lim(0.0),
+          m_lon_accel_lim_f(false),
+          //! - Vertical slope
+          m_vert_slope_lim(0.0),
+          m_vert_slope_lim_f(false),
           //! Simulation variables
           m_airspeed(0.0),
+          m_ang_attack(0.0),
+          m_sideslip(0.0),
           m_cos_yaw(1.0),
-          m_sin_yaw(0.0)
+          m_sin_yaw(0.0),
+          m_cos_pitch(1.0),
+          m_sin_pitch(0.0),
+          m_cos_roll(1.0),
+          m_sin_roll(0.0),
+          m_cos_course(1.0),
+          m_sin_course(0.0),
+          m_cos_fl_path_ang(1.0),
+          m_sin_fl_path_ang(0.0)
     {
       int i_vel_size = vel.rows();
       if (i_vel_size < 2 && i_vel_size > 6)
@@ -423,14 +643,26 @@ namespace DUNE
           m_g(9.8066),
           //! Vehicle model parameters
           //! - Model parameters definition flag
-          m_model_time_cst(1),
+          m_bank_time_cst_f(true),
+          m_speed_time_cst_f(true),
+          //! - Altitude time constant
+          m_alt_time_cst(0.0),
+          m_alt_time_cst_f(false),
           //! Control commands initialization flags
-          //! - Bank
-          m_bank_cmd_ini(0),
           //! - Airspeed
           m_airspeed_cmd_ini(0),
           //! - Altitude
-          m_altitude_cmd_ini(0)
+          m_altitude_cmd_ini(0),
+          //! Vehicle operation limits and respective initialization flags
+          //! - Bank rate
+          m_bank_rate_lim(0.0),
+          m_bank_rate_lim_f(false),
+          //! - Longitudinal acceleration
+          m_lon_accel_lim(0.0),
+          m_lon_accel_lim_f(false),
+          //! - Vertical slope
+          m_vert_slope_lim(0.0),
+          m_vert_slope_lim_f(false)
     {
       int i_pos_size = pos.rows();
       if (i_pos_size < 2 && i_pos_size > 6)
@@ -467,6 +699,64 @@ namespace DUNE
       m_sin_yaw = std::sin(m_position(5));
     }
 
+    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos,
+        const DUNE::Math::Matrix& vel, const double& bank_time_cst,
+        const double& speed_time_cst, const double& alt_time_cst) :
+        //! Simulation type
+        m_sim_type("5DOF"),
+        //! Control commands
+        //! - Bank
+        m_bank_cmd(0.0),
+        //! - Airspeed
+        m_airspeed_cmd(0.0),
+        //! - Altitude
+        m_altitude_cmd(0.0),
+        //! Environment parameters
+        //! - Wind
+        m_wind(3, 1, 0.0),
+        //! - Gravity acceleration
+        m_g(9.8066),
+        //! Vehicle position
+        m_position(6, 1, 0.0),
+        //! Vehicle velocity vector
+        m_velocity(6, 1, 0.0),
+        //! Vehicle model parameters
+        //! - Model parameters definition flag
+        m_bank_time_cst_f(true),
+        m_speed_time_cst_f(true),
+        m_alt_time_cst_f(true),
+        //! Control commands initialization flags
+        //! - Airspeed
+        m_airspeed_cmd_ini(0),
+        //! - Altitude
+        m_altitude_cmd_ini(0),
+        //! Vehicle operation limits and respective initialization flags
+        //! - Bank rate
+        m_bank_rate_lim(0.0),
+        m_bank_rate_lim_f(false),
+        //! - Longitudinal acceleration
+        m_lon_accel_lim(0.0),
+        m_lon_accel_lim_f(false),
+        //! - Vertical slope
+        m_vert_slope_lim(0.0),
+        m_vert_slope_lim_f(false)
+    {
+      //! Vehicle position
+      setPosition(pos);
+
+      //! Vehicle velocity vector
+      setVelocity(vel);
+
+      //! Vehicle model parameters
+      //! - Bank time constant
+      m_bank_time_cst = bank_time_cst;
+      //! - Airspeed time constant
+      m_speed_time_cst = speed_time_cst;
+      //! - Airspeed time constant
+      m_alt_time_cst = alt_time_cst;
+    }
+
+    /*
     UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
         const double& bank_time_cst, const double& speed_time_cst, const double& altitude_cmd):
           //! Simulation type
@@ -481,14 +771,26 @@ namespace DUNE
           m_g(9.8066),
           //! Vehicle model parameters
           //! - Model parameters definition flag
-          m_model_time_cst(1),
+          m_bank_time_cst_f(true),
+          m_speed_time_cst_f(true),
+          //! - Altitude time constant
+          m_alt_time_cst(0.0),
+          m_alt_time_cst_f(false),
           //! Control commands initialization flags
-          //! - Bank
-          m_bank_cmd_ini(0),
           //! - Airspeed
           m_airspeed_cmd_ini(0),
           //! - Altitude
-          m_altitude_cmd_ini(1)
+          m_altitude_cmd_ini(1),
+          //! Vehicle operation limits and respective initialization flags
+          //! - Bank rate
+          m_bank_rate_lim(0.0),
+          m_bank_rate_lim_f(false),
+          //! - Longitudinal acceleration
+          m_lon_accel_lim(0.0),
+          m_lon_accel_lim_f(false),
+          //! - Vertical slope
+          m_vert_slope_lim(0.0),
+          m_vert_slope_lim_f(false)
     {
       int i_pos_size = pos.rows();
       if (i_pos_size < 2 && i_pos_size > 6)
@@ -542,14 +844,26 @@ namespace DUNE
           m_g(9.8066),
           //! Vehicle model parameters
           //! - Model parameters definition flag
-          m_model_time_cst(1),
+          m_bank_time_cst_f(true),
+          m_speed_time_cst_f(true),
+          //! - Altitude time constant
+          m_alt_time_cst(0.0),
+          m_alt_time_cst_f(false),
           //! Control commands initialization flags
-          //! - Bank
-          m_bank_cmd_ini(0),
           //! - Airspeed
           m_airspeed_cmd_ini(1),
           //! - Altitude
-          m_altitude_cmd_ini(1)
+          m_altitude_cmd_ini(1),
+          //! Vehicle operation limits and respective initialization flags
+          //! - Bank rate
+          m_bank_rate_lim(0.0),
+          m_bank_rate_lim_f(false),
+          //! - Longitudinal acceleration
+          m_lon_accel_lim(0.0),
+          m_lon_accel_lim_f(false),
+          //! - Vertical slope
+          m_vert_slope_lim(0.0),
+          m_vert_slope_lim_f(false)
     {
       int i_pos_size = pos.rows();
       if (i_pos_size < 2 && i_pos_size > 6)
@@ -591,6 +905,7 @@ namespace DUNE
       m_cos_yaw = std::cos(m_position(5));
       m_sin_yaw = std::sin(m_position(5));
     }
+    */
 
     UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
         const double& bank_time_cst, const double& speed_time_cst,
@@ -602,14 +917,26 @@ namespace DUNE
           m_g(9.8066),
           //! Vehicle model parameters
           //! - Model parameters definition flag
-          m_model_time_cst(1),
+          m_bank_time_cst_f(true),
+          m_speed_time_cst_f(true),
+          //! - Altitude time constant
+          m_alt_time_cst(0.0),
+          m_alt_time_cst_f(false),
           //! Control commands initialization flags
-          //! - Bank
-          m_bank_cmd_ini(1),
           //! - Airspeed
           m_airspeed_cmd_ini(1),
           //! - Altitude
-          m_altitude_cmd_ini(1)
+          m_altitude_cmd_ini(1),
+          //! Vehicle operation limits and respective initialization flags
+          //! - Bank rate
+          m_bank_rate_lim(0.0),
+          m_bank_rate_lim_f(false),
+          //! - Longitudinal acceleration
+          m_lon_accel_lim(0.0),
+          m_lon_accel_lim_f(false),
+          //! - Vertical slope
+          m_vert_slope_lim(0.0),
+          m_vert_slope_lim_f(false)
     {
       int i_pos_size = pos.rows();
       if (i_pos_size < 2 && i_pos_size > 6)
@@ -657,11 +984,34 @@ namespace DUNE
     UAVSimulation
     UAVSimulation::update(const double& timestep)
     {
+      //! Check if model has the required commands
+      //! - Airspeed
+      if (!m_airspeed_cmd_ini)
+      {
+        throw Error("Airspeed command missing! The state was not updated.");
+        //inf("No model parameters defined! The state was not updated.");
+        return *this;
+      }
 
       if (m_sim_type == "4DOF_bank")
-      {
         update4DOF_Bank(timestep);
+      else if (m_sim_type == "5DOF")
+      {
+        if (m_altitude_cmd_ini)
+          update5DOF(timestep);
+        else
+          throw Error("Altitude command missing! The state was not updated.");
       }
+      else if (m_sim_type == "4DOF_alt")
+      {
+        if (m_altitude_cmd_ini)
+          update4DOF_Alt(timestep);
+        else
+          throw Error("Altitude command missing! The state was not updated.");
+      }
+      else if (m_sim_type == "3DOF")
+        update3DOF(timestep);
+
       return *this;
     }
 
@@ -756,35 +1106,30 @@ namespace DUNE
     */
 
     void
-    UAVSimulation::update4DOF_Bank(const double& timestep)
+    UAVSimulation::integratePosition(const double& timestep)
     {
-      //! Check if model has the required parameters
-      //! - Model control time constants
-      if (!m_model_time_cst)
-      {
-        throw Error("No model parameters defined! The state was not updated.");
-        //inf("No model parameters defined! The state was not updated.");
-        return;
-      }
-
-      if (timestep <= 0)
-        return;
-
-      //! Wind effects
-      m_velocity(2) = m_wind(2);
-      m_uav2wind_gnd_frm = m_velocity.get(0, 2, 0, 0) - m_wind;
-      m_airspeed = m_uav2wind_gnd_frm.norm_2();
-
-      //==========================================================================
-      //! Aircraft Dynamics
-      //==========================================================================
+      /*
+      //for debug
+      double vt_position1[6] = {m_position(0), m_position(1), m_position(2), m_position(3), m_position(4), m_position(5)};
+      */
 
       double d_initial_yaw = m_position(5);
       //! Vertical position and Euler angles state update
       m_position.set(2, 5, 0, 0, m_position.get(2, 5, 0, 0) + m_velocity.get(2, 5, 0, 0)*timestep);
+      m_position(5) = DUNE::Math::Angles::normalizeRadian(m_position(5));
       // Optimization variables
       m_cos_yaw = std::cos(m_position(5));
       m_sin_yaw = std::sin(m_position(5));
+      if (m_sim_type == "5DOF" || m_sim_type == "4DOF_alt")
+      {
+        m_cos_pitch = std::cos(m_position(4));
+        m_sin_pitch = std::sin(m_position(4));
+      }
+      else if (m_sim_type == "6DOF_stab")
+      {
+        m_cos_roll = std::cos(m_position(3));
+        m_sin_roll = std::sin(m_position(3));
+      }
 
       //! Horizontal position state update
       if (std::abs(m_position(3)) < 0.1)
@@ -798,27 +1143,270 @@ namespace DUNE
         m_position(1) += d_turn_radius*(std::cos(d_initial_yaw) - m_cos_yaw);
       }
 
+      /*
+      //for debug
+      double vt_position2[6] = {m_position(0), m_position(1), m_position(2), m_position(3), m_position(4), m_position(5)};
+      if (std::abs(vt_position1[0] - vt_position2[0]) > 2*m_airspeed*timestep || std::abs(vt_position1[1] - vt_position2[1]) > 2*m_airspeed*timestep)
+      {
+        std::cout << "Time step: " << timestep << std::endl;
+        std::cout << "Position difference: " << vt_position1[0]-vt_position2[0] << ", " << vt_position1[1]-vt_position2[1] << std::endl;
+      }
+      if (std::abs(vt_position1[0] - vt_position2[0]) > 100 || std::abs(vt_position1[1] - vt_position2[1]) > 100)
+      {
+        std::cout << "Time step: " << timestep << std::endl;
+        std::cout << "Position difference: " << vt_position1[0]-vt_position2[0] << ", " << vt_position1[1]-vt_position2[1] << std::endl;
+        std::cout << "Heading: " << DUNE::Math::Angles::degrees(vt_position1[5]) << "º" << std::endl;
+      }
+      */
+    }
+
+    void
+    UAVSimulation::calcUAV2AirData()
+    {
+      //! Vehicle velocity vector, relative to the wind, in the ground reference frame
+      m_uav2wind_gnd_frm = m_velocity.get(0, 2, 0, 0) - m_wind;
+      //! Airspeed
+      m_airspeed = m_uav2wind_gnd_frm.norm_2();
+      //! Angle-of-Attack
+      m_ang_attack = std::atan(m_uav2wind_gnd_frm(2)/m_uav2wind_gnd_frm(0));
+      //! Sideslip
+      m_sideslip = std::asin(m_uav2wind_gnd_frm(1)/m_airspeed);
+    }
+
+    void
+    UAVSimulation::updateVelocity(void)
+    {
+      //! UAV velocity components relative to the wind over the ground reference frame
+      m_uav2wind_gnd_frm(0) = m_airspeed * m_cos_yaw*m_cos_pitch;
+      m_uav2wind_gnd_frm(1) = m_airspeed * m_sin_yaw*m_cos_pitch;
+      m_uav2wind_gnd_frm(2) = -m_airspeed * m_sin_pitch;
+      //! UAV velocity components relative to the ground over the ground reference frame
+      m_velocity.set(0, 2, 0, 0, m_uav2wind_gnd_frm + m_wind);
+    }
+
+    void
+    UAVSimulation::update3DOF(const double& timestep)
+    {
+      if (timestep <= 0)
+        return;
+
+      //! Wind effects
+      m_velocity(2) = m_wind(2);
+      calcUAV2AirData();
+
+      //==========================================================================
+      //! Aircraft Dynamics
+      //==========================================================================
+
+      integratePosition(timestep);
+
+      //! Command effect
+      //! - Airspeed command
+      m_airspeed = m_airspeed_cmd;
+      //! - Roll command
+      m_position(3) = m_bank_cmd;
+
+      //! Turn rate
+      m_velocity(5) = m_g * std::tan(m_position(3))/m_airspeed;
+
+      updateVelocity();
+    }
+
+    void
+    UAVSimulation::update4DOF_Bank(const double& timestep)
+    {
+      //! Check if model has the required parameters
+      //! - Model control time constants
+      if (!m_bank_time_cst_f)// && !m_speed_time_cst_f)
+      {
+        throw Error("No model parameters defined! The state was not updated.");
+        //inf("No model parameters defined! The state was not updated.");
+        return;
+      }
+
+      if (timestep <= 0)
+        return;
+
+      calcUAV2AirData();
+
+      //==========================================================================
+      //! Aircraft Dynamics
+      //==========================================================================
+
+      integratePosition(timestep);
+
+      /*
+      //for debug
+      double vt_velocity1[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
+      */
+
       //! Turn rate
       m_velocity(5) = m_g * std::tan(m_position(3))/m_airspeed;
 
       //! Command effect
       //! - Horizontal acceleration command
-      double d_speed_rate = (m_airspeed_cmd - m_airspeed)/m_speed_time_cst;
-      m_airspeed += d_speed_rate*timestep;
+      double d_lon_accel = (m_airspeed_cmd - m_airspeed)/m_speed_time_cst;
+      if (m_lon_accel_lim_f)
+        d_lon_accel = DUNE::Math::trimValue(d_lon_accel, -m_lon_accel_lim, m_lon_accel_lim);
+      m_airspeed += d_lon_accel*timestep;
       //! - Roll rate command
       m_velocity(3) = (m_bank_cmd - m_position(3))/m_bank_time_cst;
+      if (m_bank_rate_lim_f)
+        m_velocity(3) = DUNE::Math::trimValue(m_velocity(3), -m_bank_rate_lim, m_bank_rate_lim);
 
-      //! UAV velocity components relative to the wind over the ground reference frame
-      m_uav2wind_gnd_frm(0) = m_airspeed * m_cos_yaw;
-      m_uav2wind_gnd_frm(1) = m_airspeed * m_sin_yaw;
-      //! UAV velocity components relative to the ground over the ground reference frame
-      m_velocity.set(0, 2, 0, 0, m_uav2wind_gnd_frm + m_wind);
+      //! Wind effects
+      m_velocity(2) = m_wind(2);
+
+      updateVelocity();
+
+      /*
+      //for debug
+      double vt_velocity2[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
+      if (std::abs(vt_velocity1[0] - vt_velocity2[0]) > 0.5*m_airspeed*timestep/m_speed_time_cst ||
+          std::abs(vt_velocity1[1] - vt_velocity2[1]) > 0.5*m_airspeed*timestep/m_speed_time_cst)
+      {
+        std::cout << "Time step: " << timestep << std::endl;
+        std::cout << "Velocity difference: " << vt_velocity1[0]-vt_velocity2[0] << ", " << vt_velocity1[1]-vt_velocity2[1] << std::endl;
+        std::cout << "Heading: " << DUNE::Math::Angles::degrees(vt_position1[5]) << "º" << std::endl;
+      }
+      */
+    }
+
+    void
+    UAVSimulation::update5DOF(const double& timestep)
+    {
+      //! Check if model has the required parameters
+      //! - Model control time constants
+      if (!m_bank_time_cst_f && !m_speed_time_cst_f && !m_alt_time_cst_f)
+      {
+        throw Error("No model parameters defined! The state was not updated.");
+        //inf("No model parameters defined! The state was not updated.");
+        return;
+      }
+      else if (!m_alt_time_cst_f)
+      {
+        throw Error("Model parameter missing (Altitude time constant)! The state was not updated.");
+        //inf("No model parameters defined! The state was not updated.");
+        return;
+      }
+
+      if (timestep <= 0)
+        return;
+
+      //! Wind effects
+      calcUAV2AirData();
 
       //==========================================================================
-      // Output normalization
+      //! Aircraft Dynamics
       //==========================================================================
 
-      m_position(5) = DUNE::Math::Angles::normalizeRadian(m_position(5));
+      integratePosition(timestep);
+
+      /*
+      //for debug
+      double vt_velocity1[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
+      */
+
+      //! Turn rate
+      m_velocity(5) = m_g * std::tan(m_position(3))/m_airspeed;
+
+      //! Command effect
+      //! - Horizontal acceleration command
+      double d_lon_accel = (m_airspeed_cmd - m_airspeed)/m_speed_time_cst;
+      if (m_lon_accel_lim_f)
+        d_lon_accel = DUNE::Math::trimValue(d_lon_accel, -m_lon_accel_lim, m_lon_accel_lim);
+      m_airspeed += d_lon_accel*timestep;
+      //! - Roll rate command
+      m_velocity(3) = (m_bank_cmd - m_position(3))/m_bank_time_cst;
+      if (m_bank_rate_lim_f)
+        m_velocity(3) = DUNE::Math::trimValue(m_velocity(3), -m_bank_rate_lim, m_bank_rate_lim);
+      //! - Vertical rate command
+      m_velocity(2) = (-m_altitude_cmd - m_position(2))/m_alt_time_cst;
+      double d_vert_rate_lim = m_vert_slope_lim*m_airspeed;
+      if (m_bank_rate_lim_f)
+        m_velocity(2) = DUNE::Math::trimValue(m_velocity(2), -d_vert_rate_lim, d_vert_rate_lim);
+
+      //! - Computing flight path angle
+      m_sin_pitch = -m_velocity(2)/m_airspeed;
+      m_cos_pitch = std::sqrt(1 - m_sin_pitch*m_sin_pitch);
+      m_position(4) = std::asin(m_sin_pitch);
+
+      updateVelocity();
+
+      /*
+      //for debug
+      double vt_velocity2[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
+      if (std::abs(vt_velocity1[0] - vt_velocity2[0]) > 0.5*m_airspeed*timestep/m_speed_time_cst ||
+          std::abs(vt_velocity1[1] - vt_velocity2[1]) > 0.5*m_airspeed*timestep/m_speed_time_cst)
+      {
+        std::cout << "Time step: " << timestep << std::endl;
+        std::cout << "Velocity difference: " << vt_velocity1[0]-vt_velocity2[0] << ", " << vt_velocity1[1]-vt_velocity2[1] << std::endl;
+        std::cout << "Heading: " << DUNE::Math::Angles::degrees(m_position(5)) << "º" << std::endl;
+      }
+      */
+    }
+
+    void
+    UAVSimulation::update4DOF_Alt(const double& timestep)
+    {
+      //! Check if model has the required parameters
+      //! - Model control time constants
+      if (!m_alt_time_cst_f)
+      {
+        throw Error("Model parameter missing (Altitude time constant)! The state was not updated.");
+        //inf("No model parameters defined! The state was not updated.");
+        return;
+      }
+
+      if (timestep <= 0)
+        return;
+
+      //! Wind effects
+      calcUAV2AirData();
+
+      //==========================================================================
+      //! Aircraft Dynamics
+      //==========================================================================
+
+      integratePosition(timestep);
+
+      /*
+      //for debug
+      double vt_velocity1[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
+      */
+
+      //! Command effect
+      //! - Airspeed command
+      m_airspeed = m_airspeed_cmd;
+      //! - Roll command
+      m_position(3) = m_bank_cmd;
+      //! - Vertical rate command
+      m_velocity(2) = (-m_altitude_cmd - m_position(2))/m_alt_time_cst;
+      double d_vert_rate_lim = m_vert_slope_lim*m_airspeed;
+      if (m_bank_rate_lim_f)
+        m_velocity(2) = DUNE::Math::trimValue(m_velocity(2), -d_vert_rate_lim, d_vert_rate_lim);
+
+      //! - Computing flight path angle
+      m_cos_pitch = std::sqrt(m_airspeed*m_airspeed - m_velocity(2)*m_velocity(2));
+      m_sin_pitch = -m_velocity(2)/m_airspeed;
+      m_position(4) = std::asin(m_sin_pitch);
+
+      //! Turn rate
+      m_velocity(5) = m_g * std::tan(m_position(3))/m_airspeed;
+
+      updateVelocity();
+
+      /*
+      //for debug
+      double vt_velocity2[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
+      if (std::abs(vt_velocity1[0] - vt_velocity2[0]) > 0.5*m_airspeed*timestep/m_speed_time_cst ||
+          std::abs(vt_velocity1[1] - vt_velocity2[1]) > 0.5*m_airspeed*timestep/m_speed_time_cst)
+      {
+        std::cout << "Time step: " << timestep << std::endl;
+        std::cout << "Velocity difference: " << vt_velocity1[0]-vt_velocity2[0] << ", " << vt_velocity1[1]-vt_velocity2[1] << std::endl;
+        std::cout << "Heading: " << DUNE::Math::Angles::degrees(vt_position1[5]) << "º" << std::endl;
+      }
+      */
     }
 
     void
@@ -827,11 +1415,49 @@ namespace DUNE
       //! Vehicle model parameters
       //! - Bank time constant
       m_bank_time_cst = bank_time_cst;
+      m_bank_time_cst_f = true;
       //! - Airspeed time constant
       m_speed_time_cst = speed_time_cst;
+      m_speed_time_cst_f = true;
+    }
+
+    void
+    UAVSimulation::setCtrl(const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst)
+    {
       //! Vehicle model parameters
-      //! - Model parameters definition flag
-      m_model_time_cst = 1;
+      //! - Bank time constant
+      m_bank_time_cst = bank_time_cst;
+      m_bank_time_cst_f = true;
+      //! - Airspeed time constant
+      m_speed_time_cst = speed_time_cst;
+      m_speed_time_cst_f = true;
+      //! - Altitude time constant
+      m_alt_time_cst = alt_time_cst;
+      m_alt_time_cst_f = true;
+    }
+
+    void
+    UAVSimulation::setBankRateLim(const double& bank_rate_lim)
+    {
+      //! Vehicle operation bank rate limit and respective initialization flag
+      m_bank_rate_lim = bank_rate_lim;
+      m_bank_rate_lim_f = true;
+    }
+
+    void
+    UAVSimulation::setAccelLim(const double& lon_accel_lim)
+    {
+      //! Vehicle operation longitudinal acceleration limit and respective initialization flag
+      m_lon_accel_lim = lon_accel_lim;
+      m_lon_accel_lim_f = true;
+    }
+
+    void
+    UAVSimulation::setVertSlopeLim(const double& vert_slope_lim)
+    {
+      //! Vehicle operation vertical slope limit and respective initialization flag
+      m_vert_slope_lim = vert_slope_lim;
+      m_vert_slope_lim_f = true;
     }
 
     DUNE::Math::Matrix
@@ -864,6 +1490,13 @@ namespace DUNE
 
       //! Vehicle position
       m_position.set(0, i_pos_size-1, 0, 0, pos);
+      //! Simulation variables
+      m_cos_course = std::cos(m_position(5));
+      m_sin_course = std::sin(m_position(5));
+      m_cos_pitch = std::cos(m_position(4));
+      m_sin_pitch = std::sin(m_position(4));
+      m_cos_roll = std::cos(m_position(3));
+      m_sin_roll = std::sin(m_position(3));
     }
 
     void
@@ -875,12 +1508,8 @@ namespace DUNE
 
       //! Vehicle velocity vector, relative to the ground, in the ground reference frame
       m_velocity.set(0, i_vel_size-1, 0, 0, vel);
-      //! Vehicle velocity vector, relative to the wind, in the ground reference frame
-      m_uav2wind_gnd_frm = m_velocity.get(0, 2, 0, 0) - m_wind;
-      //! Simulation variables
-      m_airspeed = m_uav2wind_gnd_frm.norm_2();
-      m_cos_yaw = std::cos(m_position(5));
-      m_sin_yaw = std::sin(m_position(5));
+
+      calcUAV2AirData();
     }
 
     void
@@ -889,10 +1518,6 @@ namespace DUNE
       //! Control commands
       //! - Bank
       m_bank_cmd = bank_cmd;
-
-      //! Control commands initialization flags
-      //! - Bank
-      m_bank_cmd_ini = 1;
     }
 
     void
@@ -905,8 +1530,6 @@ namespace DUNE
       m_airspeed_cmd = airspeed_cmd;
 
       //! Control commands initialization flags
-      //! - Bank
-      m_bank_cmd_ini = 1;
       //! - Airspeed
       m_airspeed_cmd_ini = 1;
     }
@@ -923,8 +1546,6 @@ namespace DUNE
       m_altitude_cmd = altitude_cmd;
 
       //! Control commands initialization flags
-      //! - Bank
-      m_bank_cmd_ini = 1;
       //! - Airspeed
       m_airspeed_cmd_ini = 1;
       //! - Altitude

@@ -37,15 +37,22 @@ namespace Simulators
 
     struct Arguments
     {
-      // Stream speed North parameter (m/s).
+      //! Stream velocity parameters (m/s)
+      //! - North
       double wx;
-      // Stream speed East parameter (m/s).
+      //! - East
       double wy;
-      // UAV Model Parameters
+      //! UAV Model Parameters
       std::string sim_type; // Simulation type (3DOF, 4DOF_bank, 4DOF_alt, 5DOF, 6DOF_stabder, and 6DOF_geom)
       double gaccel;
-      double c_speed;
+      //! - Time constants
       double c_bank;
+      double c_speed;
+      double c_alt;
+      //! - Constraints
+      double l_bank_rate;
+      double l_lon_accel;
+      double l_vert_slope;
       double mass;
       double max_thrust;
       Matrix aac; // Wing aerodynamic center
@@ -94,7 +101,7 @@ namespace Simulators
       //! Wind velocity vector
       Matrix m_wind;
       //! Gps simulator entity id.
-      unsigned m_gps_eid;
+//      unsigned m_gps_eid;
       //! Task arguments.
       Arguments m_args;
 
@@ -131,15 +138,35 @@ namespace Simulators
         .units(Units::MeterPerSquareSecond)
         .description("Gravity Acceleration at aircraft location");
 
+        param("Bank Time Constant", m_args.c_bank)
+        .defaultValue("1.0")
+        .units(Units::Hertz)
+        .description("Bank controller first order time constant. Inverse of the bank rate gain to simulate bank dynamics");
+
         param("Speed Time Constant", m_args.c_speed)
         .defaultValue("1.0")
         .units(Units::Hertz)
         .description("Speed controller first order time constant. Inverse of the speed rate gain to simulate speed dynamics");
 
-        param("Bank Time Constant", m_args.c_bank)
+        param("Altitude Time Constant", m_args.c_alt)
         .defaultValue("1.0")
         .units(Units::Hertz)
-        .description("Bank controller first order time constant. Inverse of the bank rate gain to simulate bank dynamics");
+        .description("Altitude controller first order time constant. Inverse of the vertical rate gain to simulate altitude dynamics");
+
+        param("Bank Rate Limit", m_args.l_bank_rate)
+        .defaultValue("0.0")
+        .units(Units::DegreePerSecond)
+        .description("Bank rate limit to simulate bank dynamics");
+
+        param("Acceleration Limit", m_args.l_lon_accel)
+        .defaultValue("0.0")
+        .units(Units::MeterPerSquareSecond)
+        .description("Longitudinal acceleration limit to simulate speed dynamics");
+
+        param("Vertical Slope Limit", m_args.l_vert_slope)
+        .defaultValue("0.0")
+        .units(Units::None)
+        .description("Vertical slope limit to simulate altitude dynamics");
 
         param("Mass", m_args.mass)
         .defaultValue("10.0")
@@ -231,7 +258,7 @@ namespace Simulators
         bind<IMC::GpsFix>(this);
         bind<IMC::DesiredRoll>(this);
         bind<IMC::DesiredSpeed>(this);
-
+        bind<IMC::DesiredZ>(this);
       }
 
       void
@@ -251,7 +278,7 @@ namespace Simulators
         dispatch(init_fix);
         requestActivation();
 
-        //! Model initialization
+        //! Model state initialization
         debug("Model initialization");
         //! - Altitude initialization
         m_position(2) = m_args.init_alt;
@@ -262,12 +289,56 @@ namespace Simulators
         //! - Velocity vector initialization
         m_velocity(0) = m_args.init_speed*std::cos(m_position(5));
         m_velocity(1) = m_args.init_speed*std::sin(m_position(5));
-        //! - State  and control parameters initialization
-        m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
-        //! - Commands initialization
-        m_model->command(m_position(3), m_args.init_speed, m_position(2));
+
+        if (m_args.sim_type == "4DOF_bank")
+        {
+          //! 4 DOF (bank) model initialization
+          //! - State  and control parameters initialization
+          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
+          //! - Commands initialization
+          m_model->command(m_position(3), m_args.init_speed, m_position(2));
+          //! - Limits definition
+          if (m_args.l_bank_rate > 0)
+            m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
+          if (m_args.l_lon_accel > 0)
+            m_model->setAccelLim(m_args.l_lon_accel);
+        }
+        else if (m_args.sim_type == "5DOF")
+        {
+          //! 5 DOF model initialization
+          //! - State  and control parameters initialization
+          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed, m_args.c_alt);
+          //! - Commands initialization
+          m_model->command(m_position(3), m_args.init_speed, m_position(2));
+          //! - Limits definition
+          if (m_args.l_bank_rate > 0)
+            m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
+          if (m_args.l_lon_accel > 0)
+            m_model->setAccelLim(m_args.l_lon_accel);
+          if (m_args.l_vert_slope > 0)
+            m_model->setVertSlopeLim(m_args.l_vert_slope);
+        }
+        /*
+        else if (m_args.sim_type == "6DOF_geom")
+        {
+          par.mass = m_args.mass;
+          par.max_thrust = m_args.max_thrust;
+          par.aac = m_args.aac;
+          par.addedmass = m_args.addedmass;
+          par.inertia = m_args.inertia;
+          par.base_drag = m_args.base_drag;
+          par.quadratic_drag = m_args.quadratic_drag;
+          par.lift = m_args.lift;
+          par.elev_lift = m_args.elev_lift;
+          par.rud_lift = m_args.rud_lift;
+        }
+        */
         // - Simulation type
         m_model->m_sim_type = m_args.sim_type;
+
+        //! Start the simulation time
+        m_start_time = Clock::get();
+        m_last_update = Clock::get();
 
         debug("Initial latitude: %1.4fº", DUNE::Math::Angles::degrees(m_sstate.lat));
         debug("Initial longitude: %1.4fº", DUNE::Math::Angles::degrees(m_sstate.lon));
@@ -287,32 +358,6 @@ namespace Simulators
         debug("Initial x wind speed: %1.4f", m_wind(0));
         debug("Initial y wind speed: %1.4f", m_wind(1));
         debug("Initial z wind speed: %1.4f", m_wind(2));
-
-        /*
-        DUNE::Control::ModelParameters par;
-        if (m_args.sim_type == "4DOF_bank")
-        {
-        }
-        else if (m_args.sim_type == "6DOF_geom")
-        {
-          par.mass = m_args.mass;
-          par.max_thrust = m_args.max_thrust;
-          par.aac = m_args.aac;
-          par.addedmass = m_args.addedmass;
-          par.inertia = m_args.inertia;
-          par.base_drag = m_args.base_drag;
-          par.quadratic_drag = m_args.quadratic_drag;
-          par.lift = m_args.lift;
-          par.elev_lift = m_args.elev_lift;
-          par.rud_lift = m_args.rud_lift;
-        }
-
-        m_model = new UAVModel(par);
-        */
-
-        //! Start the simulation time
-        m_start_time = Clock::get();
-        m_last_update = Clock::get();
       }
 
       void
@@ -393,34 +438,62 @@ namespace Simulators
       }
 
       void
-      consume(const IMC::DesiredSpeed* msg)
-      {
-        debug("Consuming DesiredSpeed");
+       consume(const IMC::DesiredSpeed* msg)
+       {
+         debug("Consuming DesiredSpeed");
 
-        //! Check if system is active
-        if (!isActive())
-        {
-          trace("Speed command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
-          return;
-        }
+         //! Check if system is active
+         if (!isActive())
+         {
+           trace("Speed command rejected.");
+           trace("Simulation not active.");
+           trace("Missing GPS-Fix!");
+           return;
+         }
 
-        //! Check if the source ID is from the system itself
-        if (msg->getSource() != getSystemId())
-        {
-          trace("Speed command rejected.");
-          trace("DesiredSpeed sent from another source!");
-          return;
-        }
+         //! Check if the source ID is from the system itself
+         if (msg->getSource() != getSystemId())
+         {
+           trace("Speed command rejected.");
+           trace("DesiredSpeed sent from another source!");
+           return;
+         }
 
-        m_model->m_airspeed_cmd = msg->value;
+         m_model->m_airspeed_cmd = msg->value;
 
-        // ========= Debug ===========
-        trace("Speed command received (%1.2fm/s)", msg->value);
-      }
+         // ========= Debug ===========
+         trace("Speed command received (%1.2fm/s)", msg->value);
+       }
 
-      /*
+      void
+       consume(const IMC::DesiredZ* msg)
+       {
+         debug("Consuming DesiredZ");
+
+         //! Check if system is active
+         if (!isActive())
+         {
+           trace("Altitude command rejected.");
+           trace("Simulation not active.");
+           trace("Missing GPS-Fix!");
+           return;
+         }
+
+         //! Check if the source ID is from the system itself
+         if (msg->getSource() != getSystemId())
+         {
+           trace("Altitude command rejected.");
+           trace("DesiredZ sent from another source!");
+           return;
+         }
+
+         m_model->m_altitude_cmd = -msg->value;
+
+         // ========= Debug ===========
+         trace("Altitude command received (%1.2fm)", -msg->value);
+       }
+
+       /*
       void
       consume(const IMC::SetServoPosition* msg)
       {
