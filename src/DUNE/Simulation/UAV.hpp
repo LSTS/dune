@@ -96,26 +96,14 @@ namespace DUNE
       //! @param[in] speed_time_cst - airspeed time constant
       UAVSimulation(const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst);
 
-      /*
       //! Constructor.
       //! Create a simulation model based on the initial state.
       //! @param[in] vel - initial velocity vector
       //! @param[in] bank_time_cst - bank angle time constant
       //! @param[in] speed_time_cst - airspeed time constant
-      //! @param[in] altitude_cmd - applied altitude command
-      UAVSimulation(const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst,
-          const double& altitude_cmd);
-
-      //! Constructor.
-      //! Create a simulation model based on the initial state.
-      //! @param[in] vel - initial velocity vector
-      //! @param[in] bank_time_cst - bank angle time constant
-      //! @param[in] speed_time_cst - airspeed time constant
-      //! @param[in] altitude_cmd - applied altitude command
-      //! @param[in] airspeed_cmd - applied airspeed command
-      UAVSimulation(const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst,
-          const double& altitude_cmd, const double& airspeed_cmd);
-      */
+      //! @param[in] alt_time_cst - altitude time constant
+      UAVSimulation(const DUNE::Math::Matrix& vel,
+          const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst);
 
       //! Constructor.
       //! Create a simulation model based on the initial state.
@@ -126,7 +114,7 @@ namespace DUNE
       //! @param[in] airspeed_cmd - applied airspeed command
       //! @param[in] bank_cmd - applied bank command
       UAVSimulation(const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst,
-          const double& altitude_cmd, const double& airspeed_cmd, const double& bank_cmd);
+          const double& airspeed_cmd, const double& bank_cmd);
 
       //! Constructor.
       //! Create a simulation model based on the initial state.
@@ -146,42 +134,21 @@ namespace DUNE
       UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
           const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst);
 
-      /*
       //! Constructor.
       //! Create a simulation model based on the initial state.
       //! @param[in] pos - initial position vector
       //! @param[in] vel - initial velocity vector
       //! @param[in] bank_time_cst - bank angle time constant
       //! @param[in] speed_time_cst - airspeed time constant
-      //! @param[in] altitude_cmd - applied altitude command
-      UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
-          const double& bank_time_cst, const double& speed_time_cst, const double& altitude_cmd);
-
-      //! Constructor.
-      //! Create a simulation model based on the initial state.
-      //! @param[in] pos - initial position vector
-      //! @param[in] vel - initial velocity vector
-      //! @param[in] bank_time_cst - bank angle time constant
-      //! @param[in] speed_time_cst - airspeed time constant
-      //! @param[in] altitude_cmd - applied altitude command
-      //! @param[in] airspeed_cmd - applied airspeed command
-      UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
-          const double& bank_time_cst, const double& speed_time_cst,
-          const double& altitude_cmd, const double& airspeed_cmd);
-      */
-
-      //! Constructor.
-      //! Create a simulation model based on the initial state.
-      //! @param[in] pos - initial position vector
-      //! @param[in] vel - initial velocity vector
-      //! @param[in] bank_time_cst - bank angle time constant
-      //! @param[in] speed_time_cst - airspeed time constant
-      //! @param[in] altitude_cmd - applied altitude command
       //! @param[in] airspeed_cmd - applied airspeed command
       //! @param[in] bank_cmd - applied bank command
       UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
           const double& bank_time_cst, const double& speed_time_cst,
-          const double& altitude_cmd, const double& airspeed_cmd, const double& bank_cmd);
+          const double& airspeed_cmd, const double& bank_cmd);
+
+      //! This method resets all the vehicle model variables.
+      void
+      resetModel(void);
 
       //! This method updates the simulated state with the defined time step.
       //! @param[in] timestep - time step for the update

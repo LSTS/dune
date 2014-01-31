@@ -487,7 +487,10 @@ namespace Simulators
            return;
          }
 
-         m_model->m_altitude_cmd = -msg->value;
+         if (msg->z_units == IMC::Z_HEIGHT || msg->z_units == IMC::Z_ALTITUDE)
+           m_model->m_altitude_cmd = msg->value;
+         else if (msg->z_units == IMC::Z_DEPTH)
+           m_model->m_altitude_cmd = -msg->value;
 
          // ========= Debug ===========
          trace("Altitude command received (%1.2fm)", -msg->value);
