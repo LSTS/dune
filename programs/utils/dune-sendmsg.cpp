@@ -51,7 +51,7 @@ main(int argc, char** argv)
       fprintf(stdout, "  Brake, ButtonEvent\n");
       fprintf(stdout, "  CacheControl, Calibration, ClockControl, ControlLoops\n");
       fprintf(stdout, "  DataSanity, DesiredControl, DesiredHeading, DesiredHeadingRate\n");
-      fprintf(stdout, "  DesiredPitch, DesiredSpeed, DesiredZ, DevCalibrationControl\n");
+      fprintf(stdout, "  DesiredPitch, DesiredSpeed, DesiredRoll, DesiredZ, DevCalibrationControl\n");
       fprintf(stdout, "  EmergencyControl, EntityList, EntityState, EntityActivationState, EstimatedState\n");
       fprintf(stdout, "  GpsFix, Heartbeat, IridiumMsgTx, LblConfig, LblRange\n");
       fprintf(stdout, "  LeakSimulation, LogBookControl, LogBookEntry, LoggingControl\n");
@@ -61,7 +61,7 @@ main(int argc, char** argv)
       fprintf(stdout, "  RegisterManeuver, RemoteActions, RemoteActionsRequest, ReplayControl, RestartSystem\n");
       fprintf(stdout, "  SaveEntityParameters, SetEntityParameters, SetLedBrightness, SetServoPosition\n");
       fprintf(stdout, "  SetThrusterActuation, Sms, SoundSpeed\n");
-      fprintf(stdout, "  TeleoperationDone, TrexCommand, VehicleCommand, VehicleMedium\n");
+      fprintf(stdout, "  TeleoperationDone, Temperature, TrexCommand, VehicleCommand, VehicleMedium\n");
       return 1;
     }
 
@@ -231,7 +231,10 @@ main(int argc, char** argv)
   {
     IMC::DesiredZ* tmsg = new IMC::DesiredZ;
     tmsg->value = atof(argv[4]);
-    tmsg->z_units = static_cast<IMC::ZUnits>(atoi(argv[5]));
+    if (argc == 5)
+      tmsg->z_units = static_cast<IMC::ZUnits>(3);
+    else
+      tmsg->z_units = static_cast<IMC::ZUnits>(atoi(argv[5]));
     msg = tmsg;
   }
 
