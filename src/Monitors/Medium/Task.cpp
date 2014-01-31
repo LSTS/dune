@@ -147,6 +147,7 @@ namespace Monitors
         bind<IMC::GpsFix>(this);
         bind<IMC::Salinity>(this);
         bind<IMC::SoundSpeed>(this);
+        bind<IMC::IndicatedSpeed>(this);
       }
 
       void
