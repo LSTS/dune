@@ -59,7 +59,7 @@ namespace Transports
       //! Aircraft Name
       std::string aircraft;
       //! If input stuff is binary
-      bool is_protocol_binary;
+      bool create_rc_values;
 
       //TODO: Add initial position support
     };
@@ -86,6 +86,9 @@ namespace Transports
       //! Previous received acceleration data
       IMC::Acceleration m_acc;
 
+      //! True if we should generate ardupilot pwm codes
+      bool m_create_rc_values;
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -109,14 +112,17 @@ namespace Transports
         .defaultValue("127.0.0.1")
         .description("Address for outgoing comm. to FlightGear");
 
-        param("Aircraft", m_args.aircraft)
-        .defaultValue("arducopter")
-        .description("Name of aircraft to use");
+        param("Create RC Commands", m_args.create_rc_values)
+        .defaultValue("False")
+        .description("True if this task should dispatch ArdupilotPwm messages.");
 
         // Should perhaps add our own input channel to this...
 
         bind<IMC::SimulatedState>(this);
         bind<IMC::Acceleration>(this);
+
+        // Set OK status
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       //! Update internal state with new parameter values.
@@ -147,6 +153,8 @@ namespace Transports
         m_udp_addr_out = m_args.udp_addr_out;
         m_udp_port_out = m_args.udp_port_out;
         openConnection();
+
+        m_create_rc_values = m_args.create_rc_values;
       }
 
       void
@@ -232,6 +240,26 @@ namespace Transports
             convertFromNetworkEndian(fg_ctrls);
             spew("Got native flightgear controls. Elevator: %f", fg_ctrls->elevator);
             // TODO: Do something useful with this.
+
+            if(m_create_rc_values)
+            {
+              inf("Ailron: %f, Flaps: %f, Elevator: %f, Throttle: %f ", fg_ctrls->aileron, fg_ctrls->flaps, fg_ctrls->elevator, fg_ctrls->throttle[0]);
+
+              IMC::ArduPilotPwm pwm;
+
+              // -1 should be 1000, +1 should be 2000
+              pwm.chan1 = 1000.0 + 1000.0*(fg_ctrls->aileron+1.0)/2.0;
+              pwm.chan2 = 1000.0 + 1000.0*(fg_ctrls->elevator+1.0)/2.0;
+              pwm.chan3 = 1000.0 + 1000.0*(fg_ctrls->throttle[0])/2.0;
+              pwm.chan4 = 1000.0 + 1000.0*(fg_ctrls->rudder+1.0)/2.0;
+
+
+              dispatch(pwm);
+
+
+            }
+
+
           }
           else if (n == sizeof(FGNetFDM))
           {
