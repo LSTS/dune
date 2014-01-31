@@ -803,10 +803,12 @@ namespace Sensors
         uint8_t conf = (uint8_t)m_fuel_conf;
         int8_t prog = (int8_t)m_progress;
 
-        if (m_beacons.size() == 2)
+        for (uint8_t i = 0; i < 2; i++)
         {
-          ranges[0] = m_beacons[0].range;
-          ranges[1] = m_beacons[1].range;
+          if (m_args.good_range_age > (Clock::get() - m_beacons[i].range_time))
+            ranges[i] = m_beacons[i].range;
+          else
+            ranges[i] = 0;
         }
 
         std::vector<char> msg(32, 0);
