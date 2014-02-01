@@ -1622,7 +1622,6 @@ namespace Maneuver
             vd_inter_uav_pos(0));
         d_cos_inter_uav_angle = std::cos(d_inter_uav_angle);
         d_sin_inter_uav_angle = std::sin(d_inter_uav_angle);
-        // verificar preenchimento da matriz (linhas e colunas ou vice-versa)
         mt_rot[0] = d_cos_inter_uav_angle;
         mt_rot[1] = -d_sin_inter_uav_angle;
         mt_rot[2] = d_sin_inter_uav_angle;
