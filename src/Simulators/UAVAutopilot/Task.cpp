@@ -86,7 +86,7 @@ namespace Simulators
         debug("Consuming GPS-Fix");
 
         requestActivation();
-        m_origin = *msg;
+        //m_origin = *msg;
       }
 
       void
