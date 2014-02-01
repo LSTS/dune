@@ -290,13 +290,37 @@ namespace Simulators
         m_velocity(0) = m_args.init_speed*std::cos(m_position(5));
         m_velocity(1) = m_args.init_speed*std::sin(m_position(5));
 
-        if (m_args.sim_type == "4DOF_bank")
+        if (m_args.sim_type == "3DOF")
+        {
+          //! 4 DOF (bank) model initialization
+          //! - State  and control parameters initialization
+          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity);
+          //! - Commands initialization
+          m_model->command(m_position(3), m_args.init_speed);
+          //! - Limits definition
+          if (m_args.l_bank_rate > 0)
+            m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
+          if (m_args.l_lon_accel > 0)
+            m_model->setAccelLim(m_args.l_lon_accel);
+        }
+        else if (m_args.sim_type == "4DOF_alt")
+        {
+          //! 4 DOF (altitude) model initialization
+          //! - State  and control parameters initialization
+          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_alt);
+          //! - Commands initialization
+          m_model->command(m_position(3), m_args.init_speed, m_position(2));
+          //! - Limits definition
+          if (m_args.l_vert_slope > 0)
+            m_model->setVertSlopeLim(m_args.l_vert_slope);
+        }
+        else if (m_args.sim_type == "4DOF_bank")
         {
           //! 4 DOF (bank) model initialization
           //! - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
           //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed, m_position(2));
+          m_model->command(m_position(3), m_args.init_speed);
           //! - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
@@ -333,8 +357,9 @@ namespace Simulators
           par.rud_lift = m_args.rud_lift;
         }
         */
-        // - Simulation type
+        //! - Simulation type
         m_model->m_sim_type = m_args.sim_type;
+        inf("UAV simulation type: %s", m_args.sim_type.c_str());
 
         //! Start the simulation time
         m_start_time = Clock::get();
@@ -402,11 +427,13 @@ namespace Simulators
         m_start_time = Clock::get();
         m_last_update = Clock::get();
 
+        /*
         // Save message to cache.
         IMC::CacheControl cop;
         cop.op = IMC::CacheControl::COP_STORE;
         cop.message.set(*msg);
         dispatch(cop);
+         */
       }
 
       void
@@ -438,63 +465,63 @@ namespace Simulators
       }
 
       void
-       consume(const IMC::DesiredSpeed* msg)
-       {
-         debug("Consuming DesiredSpeed");
+      consume(const IMC::DesiredSpeed* msg)
+      {
+        debug("Consuming DesiredSpeed");
 
-         //! Check if system is active
-         if (!isActive())
-         {
-           trace("Speed command rejected.");
-           trace("Simulation not active.");
-           trace("Missing GPS-Fix!");
-           return;
-         }
+        //! Check if system is active
+        if (!isActive())
+        {
+          trace("Speed command rejected.");
+          trace("Simulation not active.");
+          trace("Missing GPS-Fix!");
+          return;
+        }
 
-         //! Check if the source ID is from the system itself
-         if (msg->getSource() != getSystemId())
-         {
-           trace("Speed command rejected.");
-           trace("DesiredSpeed sent from another source!");
-           return;
-         }
+        //! Check if the source ID is from the system itself
+        if (msg->getSource() != getSystemId())
+        {
+          trace("Speed command rejected.");
+          trace("DesiredSpeed sent from another source!");
+          return;
+        }
 
-         m_model->m_airspeed_cmd = msg->value;
+        m_model->m_airspeed_cmd = msg->value;
 
-         // ========= Debug ===========
-         trace("Speed command received (%1.2fm/s)", msg->value);
-       }
+        // ========= Debug ===========
+        trace("Speed command received (%1.2fm/s)", msg->value);
+      }
 
       void
-       consume(const IMC::DesiredZ* msg)
-       {
-         debug("Consuming DesiredZ");
+      consume(const IMC::DesiredZ* msg)
+      {
+        debug("Consuming DesiredZ");
 
-         //! Check if system is active
-         if (!isActive())
-         {
-           trace("Altitude command rejected.");
-           trace("Simulation not active.");
-           trace("Missing GPS-Fix!");
-           return;
-         }
+        //! Check if system is active
+        if (!isActive())
+        {
+          trace("Altitude command rejected.");
+          trace("Simulation not active.");
+          trace("Missing GPS-Fix!");
+          return;
+        }
 
-         //! Check if the source ID is from the system itself
-         if (msg->getSource() != getSystemId())
-         {
-           trace("Altitude command rejected.");
-           trace("DesiredZ sent from another source!");
-           return;
-         }
+        //! Check if the source ID is from the system itself
+        if (msg->getSource() != getSystemId())
+        {
+          trace("Altitude command rejected.");
+          trace("DesiredZ sent from another source!");
+          return;
+        }
 
-         if (msg->z_units == IMC::Z_HEIGHT || msg->z_units == IMC::Z_ALTITUDE)
-           m_model->m_altitude_cmd = msg->value;
-         else if (msg->z_units == IMC::Z_DEPTH)
-           m_model->m_altitude_cmd = -msg->value;
+        if (msg->z_units == IMC::Z_HEIGHT || msg->z_units == IMC::Z_ALTITUDE)
+          m_model->m_altitude_cmd = msg->value;
+        else if (msg->z_units == IMC::Z_DEPTH)
+          m_model->m_altitude_cmd = -msg->value;
 
-         // ========= Debug ===========
-         trace("Altitude command received (%1.2fm)", -msg->value);
-       }
+        // ========= Debug ===========
+        trace("Altitude command received (%1.2fm)", -msg->value);
+      }
 
        /*
       void
