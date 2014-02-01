@@ -50,7 +50,7 @@ namespace DUNE
   {
     UAVSimulation::UAVSimulation(void):
         //! Simulation type
-        m_sim_type("4DOF_bank")
+        m_sim_type("3DOF")
     {
       resetModel();
     }
@@ -122,6 +122,18 @@ namespace DUNE
       m_sin_fl_path_ang = model.m_sin_fl_path_ang;
     }
 
+    UAVSimulation::UAVSimulation(const double& alt_time_cst):
+        //! Simulation type
+        m_sim_type("4DOF_alt")
+    {
+      resetModel();
+
+      //! Vehicle model parameters
+      //! - Altitude time constant
+      m_alt_time_cst = alt_time_cst;
+      m_alt_time_cst_f = true;
+    }
+
     UAVSimulation::UAVSimulation(const double& bank_time_cst, const double& speed_time_cst):
         //! Simulation type
         m_sim_type("4DOF_bank")
@@ -151,6 +163,31 @@ namespace DUNE
       m_speed_time_cst = speed_time_cst;
       m_speed_time_cst_f = true;
       //! - Airspeed time constant
+      m_alt_time_cst = alt_time_cst;
+      m_alt_time_cst_f = true;
+    }
+
+    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& vel):
+        //! Simulation type
+        m_sim_type("3DOF")
+    {
+      resetModel();
+
+      //! Vehicle velocity vector
+      setVelocity(vel);
+    }
+
+    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& vel, const double& alt_time_cst):
+        //! Simulation type
+        m_sim_type("4DOF_alt")
+    {
+      resetModel();
+
+      //! Vehicle velocity vector
+      setVelocity(vel);
+
+      //! Vehicle model parameters
+      //! - Altitude time constant
       m_alt_time_cst = alt_time_cst;
       m_alt_time_cst_f = true;
     }
@@ -218,6 +255,38 @@ namespace DUNE
       m_bank_cmd = bank_cmd;
       //! - Airspeed
       m_airspeed_cmd = airspeed_cmd;
+    }
+
+    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel):
+        //! Simulation type
+        m_sim_type("3DOF")
+    {
+      resetModel();
+
+      //! Vehicle position
+      setPosition(pos);
+
+      //! Vehicle velocity vector
+      setVelocity(vel);
+    }
+
+    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
+        const double& alt_time_cst):
+        //! Simulation type
+        m_sim_type("4DOF_alt")
+    {
+      resetModel();
+
+      //! Vehicle position
+      setPosition(pos);
+
+      //! Vehicle velocity vector
+      setVelocity(vel);
+
+      //! Vehicle model parameters
+      //! - Altitude time constant
+      m_alt_time_cst = alt_time_cst;
+      m_alt_time_cst_f = true;
     }
 
     UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
@@ -295,6 +364,42 @@ namespace DUNE
       //! - Airspeed
       m_airspeed_cmd = airspeed_cmd;
       m_airspeed_cmd_ini = true;
+    }
+
+    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
+        const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst,
+        const double& altitude_cmd, const double& airspeed_cmd, const double& bank_cmd):
+          //! Simulation type
+          m_sim_type("5DOF")
+    {
+      resetModel();
+
+      //! Vehicle position
+      setPosition(pos);
+
+      //! Vehicle velocity vector
+      setVelocity(vel);
+
+      //! Vehicle model parameters
+      //! - Bank time constant
+      m_bank_time_cst = bank_time_cst;
+      m_bank_time_cst_f = true;
+      //! - Airspeed time constant
+      m_speed_time_cst = speed_time_cst;
+      m_speed_time_cst_f = true;
+      //! - Altitude time constant
+      m_alt_time_cst = alt_time_cst;
+      m_alt_time_cst_f = true;
+
+      //! Control commands
+      //! - Bank
+      m_bank_cmd = bank_cmd;
+      //! - Airspeed
+      m_airspeed_cmd = airspeed_cmd;
+      m_airspeed_cmd_ini = true;
+      //! - Altitude
+      m_altitude_cmd = altitude_cmd;
+      m_altitude_cmd_ini = true;
     }
 
     void
@@ -536,6 +641,7 @@ namespace DUNE
         std::cout << "Heading: " << DUNE::Math::Angles::degrees(vt_position1[5]) << "º" << std::endl;
       }
       */
+
       /*
       //for debug
       double vt_position2[6] = {m_position(0), m_position(1), m_position(2), m_position(3), m_position(4), m_position(5)};
@@ -584,6 +690,11 @@ namespace DUNE
 
       integratePosition(timestep);
 
+      /*
+      //for debug
+      double vt_velocity1[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
+      */
+
       //! Command effect
       //! - Airspeed command
       m_airspeed = m_airspeed_cmd;
@@ -593,7 +704,111 @@ namespace DUNE
       //! Turn rate
       m_velocity(5) = m_g * std::tan(m_position(3))/m_airspeed;
 
+      /*
+      //for debug
+      double vt_velocity2[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
+      */
+
       updateVelocity();
+
+      /*
+      //for debug
+      double vt_velocity2[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
+      if (std::abs(vt_velocity1[0] - vt_velocity2[0]) > 0.5*m_airspeed*timestep/m_speed_time_cst ||
+          std::abs(vt_velocity1[1] - vt_velocity2[1]) > 0.5*m_airspeed*timestep/m_speed_time_cst)
+      {
+        std::cout << "Time step: " << timestep << std::endl;
+        std::cout << "Velocity difference: " << vt_velocity1[0]-vt_velocity2[0] << ", " << vt_velocity1[1]-vt_velocity2[1] << std::endl;
+        std::cout << "Heading: " << DUNE::Math::Angles::degrees(vt_position1[5]) << "º" << std::endl;
+      }
+      */
+      /*
+      //for debug
+      double vt_velocity3[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
+      std::cout << "Prev velocity: " << vt_velocity1[0] << ", " << vt_velocity1[1] << std::endl;
+      std::cout << "Int velocity: " << vt_velocity2[0] << ", " << vt_velocity2[1] << std::endl;
+      std::cout << "New velocity: " << vt_velocity3[0] << ", " << vt_velocity3[1] << std::endl;
+      */
+    }
+
+    void
+    UAVSimulation::update4DOF_Alt(const double& timestep)
+    {
+      //! Check if model has the required parameters
+      //! - Model control time constants
+      if (!m_alt_time_cst_f)
+      {
+        throw Error("Model parameter missing (Altitude time constant)! The state was not updated.");
+        //inf("No model parameters defined! The state was not updated.");
+        return;
+      }
+
+      if (timestep <= 0)
+        return;
+
+      //! Wind effects
+      calcUAV2AirData();
+
+      //==========================================================================
+      //! Aircraft Dynamics
+      //==========================================================================
+
+      integratePosition(timestep);
+
+      /*
+      //for debug
+      double vt_velocity1[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
+       */
+
+      //! Command effect
+      //! - Airspeed command
+      m_airspeed = m_airspeed_cmd;
+      //! - Roll command
+      m_position(3) = m_bank_cmd;
+      //! - Vertical rate command
+      m_velocity(2) = (-m_altitude_cmd - m_position(2))/m_alt_time_cst;
+      if (m_vert_slope_lim_f)
+      {
+        double d_vert_rate_lim = m_vert_slope_lim*m_airspeed;
+        m_velocity(2) = DUNE::Math::trimValue(m_velocity(2), -d_vert_rate_lim, d_vert_rate_lim);
+      }
+      else
+        //! The vertical speed should not exceed the airspeed, even if there is no specified vertical slope limit
+        m_velocity(2) = DUNE::Math::trimValue(m_velocity(2), -m_airspeed, m_airspeed);
+
+      //! - Computing flight path angle
+      m_sin_pitch = -m_velocity(2)/m_airspeed;
+      m_cos_pitch = std::sqrt(1 - m_sin_pitch*m_sin_pitch);
+      m_position(4) = std::asin(m_sin_pitch);
+
+      //! Turn rate
+      m_velocity(5) = m_g * std::tan(m_position(3))/m_airspeed;
+
+      /*
+      //for debug
+      double vt_velocity2[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
+      */
+
+      updateVelocity();
+
+      /*
+      //for debug
+      double vt_velocity2[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
+      if (std::abs(vt_velocity1[0] - vt_velocity2[0]) > 0.5*m_airspeed*timestep/m_speed_time_cst ||
+          std::abs(vt_velocity1[1] - vt_velocity2[1]) > 0.5*m_airspeed*timestep/m_speed_time_cst)
+      {
+        std::cout << "Time step: " << timestep << std::endl;
+        std::cout << "Velocity difference: " << vt_velocity1[0]-vt_velocity2[0] << ", " << vt_velocity1[1]-vt_velocity2[1] << std::endl;
+        std::cout << "Heading: " << DUNE::Math::Angles::degrees(vt_position1[5]) << "º" << std::endl;
+      }
+      */
+      /*
+      //for debug
+      double vt_velocity3[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
+      std::cout << "Prev velocity: " << vt_velocity1[0] << ", " << vt_velocity1[1] << std::endl;
+      std::cout << "Int velocity: " << vt_velocity2[0] << ", " << vt_velocity2[1] << std::endl;
+      std::cout << "New velocity: " << vt_velocity3[0] << ", " << vt_velocity3[1] << std::endl;
+      */
     }
 
     void
@@ -641,7 +856,10 @@ namespace DUNE
       //! Wind effects
       m_velocity(2) = m_wind(2);
 
+      /*
+      //for debug
       double vt_velocity2[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
+      */
       updateVelocity();
 
       /*
@@ -714,9 +932,15 @@ namespace DUNE
         m_velocity(3) = DUNE::Math::trimValue(m_velocity(3), -m_bank_rate_lim, m_bank_rate_lim);
       //! - Vertical rate command
       m_velocity(2) = (-m_altitude_cmd - m_position(2))/m_alt_time_cst;
-      double d_vert_rate_lim = m_vert_slope_lim*m_airspeed;
-      if (m_bank_rate_lim_f)
+      if (m_vert_slope_lim_f)
+      {
+        double d_vert_rate_lim = m_vert_slope_lim*m_airspeed;
         m_velocity(2) = DUNE::Math::trimValue(m_velocity(2), -d_vert_rate_lim, d_vert_rate_lim);
+      }
+      else
+        //! The vertical speed should not exceed the airspeed, even if there is no specified vertical slope limit
+        m_velocity(2) = DUNE::Math::trimValue(m_velocity(2), -m_airspeed, m_airspeed);
+
 
       //! - Computing flight path angle
       m_sin_pitch = -m_velocity(2)/m_airspeed;
@@ -734,69 +958,6 @@ namespace DUNE
         std::cout << "Time step: " << timestep << std::endl;
         std::cout << "Velocity difference: " << vt_velocity1[0]-vt_velocity2[0] << ", " << vt_velocity1[1]-vt_velocity2[1] << std::endl;
         std::cout << "Heading: " << DUNE::Math::Angles::degrees(m_position(5)) << "º" << std::endl;
-      }
-      */
-    }
-
-    void
-    UAVSimulation::update4DOF_Alt(const double& timestep)
-    {
-      //! Check if model has the required parameters
-      //! - Model control time constants
-      if (!m_alt_time_cst_f)
-      {
-        throw Error("Model parameter missing (Altitude time constant)! The state was not updated.");
-        //inf("No model parameters defined! The state was not updated.");
-        return;
-      }
-
-      if (timestep <= 0)
-        return;
-
-      //! Wind effects
-      calcUAV2AirData();
-
-      //==========================================================================
-      //! Aircraft Dynamics
-      //==========================================================================
-
-      integratePosition(timestep);
-
-      /*
-      //for debug
-      double vt_velocity1[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
-      */
-
-      //! Command effect
-      //! - Airspeed command
-      m_airspeed = m_airspeed_cmd;
-      //! - Roll command
-      m_position(3) = m_bank_cmd;
-      //! - Vertical rate command
-      m_velocity(2) = (-m_altitude_cmd - m_position(2))/m_alt_time_cst;
-      double d_vert_rate_lim = m_vert_slope_lim*m_airspeed;
-      if (m_bank_rate_lim_f)
-        m_velocity(2) = DUNE::Math::trimValue(m_velocity(2), -d_vert_rate_lim, d_vert_rate_lim);
-
-      //! - Computing flight path angle
-      m_cos_pitch = std::sqrt(m_airspeed*m_airspeed - m_velocity(2)*m_velocity(2));
-      m_sin_pitch = -m_velocity(2)/m_airspeed;
-      m_position(4) = std::asin(m_sin_pitch);
-
-      //! Turn rate
-      m_velocity(5) = m_g * std::tan(m_position(3))/m_airspeed;
-
-      updateVelocity();
-
-      /*
-      //for debug
-      double vt_velocity2[6] = {m_velocity(0), m_velocity(1), m_velocity(2), m_velocity(3), m_velocity(4), m_velocity(5)};
-      if (std::abs(vt_velocity1[0] - vt_velocity2[0]) > 0.5*m_airspeed*timestep/m_speed_time_cst ||
-          std::abs(vt_velocity1[1] - vt_velocity2[1]) > 0.5*m_airspeed*timestep/m_speed_time_cst)
-      {
-        std::cout << "Time step: " << timestep << std::endl;
-        std::cout << "Velocity difference: " << vt_velocity1[0]-vt_velocity2[0] << ", " << vt_velocity1[1]-vt_velocity2[1] << std::endl;
-        std::cout << "Heading: " << DUNE::Math::Angles::degrees(vt_position1[5]) << "º" << std::endl;
       }
       */
     }
