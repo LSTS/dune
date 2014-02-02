@@ -105,6 +105,8 @@ namespace DUNE
     {
 #if defined(DUNE_OS_LINUX)
       m_id = -1;
+      m_last_proc_time = 0;
+      m_last_global_time= 0;
 #endif
 
       int rv = pthread_attr_init(&m_attr);
