@@ -205,23 +205,30 @@ namespace DUNE
       IMC::MessageList<IMC::PathPoint>::const_iterator itr = maneuver->points.begin();
       double total_duration = last_dur;
 
-      // Iterate point list
-      for (; itr != maneuver->points.end(); itr++)
+      if (!maneuver->points.size())
       {
-        if ((*itr) == NULL)
-          continue;
+        durations.push_back(0.0);
+      }
+      else
+      {
+        // Iterate point list
+        for (; itr != maneuver->points.end(); itr++)
+        {
+          if ((*itr) == NULL)
+            continue;
 
-        pos.lat = maneuver->lat;
-        pos.lon = maneuver->lon;
-        Coordinates::WGS84::displace((*itr)->x, (*itr)->y, &pos.lat, &pos.lon);
+          pos.lat = maneuver->lat;
+          pos.lon = maneuver->lon;
+          Coordinates::WGS84::displace((*itr)->x, (*itr)->y, &pos.lat, &pos.lon);
 
-        float travelled = distance3D(pos, last_pos);
+          float travelled = distance3D(pos, last_pos);
 
-        last_pos = pos;
+          last_pos = pos;
 
-        // compensate with path controller's eta factor
-        total_duration += compensate(travelled, speed) / speed;
-        durations.push_back(total_duration);
+          // compensate with path controller's eta factor
+          total_duration += compensate(travelled, speed) / speed;
+          durations.push_back(total_duration);
+        }
       }
 
       return durations.back();
