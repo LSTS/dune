@@ -105,8 +105,6 @@ namespace DUNE
       //! Create a simulation model based on the initial velocity state.
       //! 3 DOF simulation.
       //! @param[in] vel - initial velocity vector
-      //! @param[in] bank_time_cst - bank angle time constant
-      //! @param[in] speed_time_cst - airspeed time constant
       UAVSimulation(const DUNE::Math::Matrix& vel);
 
       //! Constructor.
