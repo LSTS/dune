@@ -188,6 +188,9 @@ namespace Sensors
 
         if (m_fd != -1)
           close(m_fd);
+
+        if (m_uart != -1)
+          close(m_uart);
       }
 
       void
