@@ -52,6 +52,14 @@
 // Local headers.
 #include "timepps.h"
 
+#ifndef N_PPS
+#  define N_PPS 18
+#endif
+
+#ifndef TIOCSETD
+#  define TIOCSETD 0x5423
+#endif
+
 namespace Sensors
 {
   namespace PPS
@@ -67,7 +75,9 @@ namespace Sensors
 
     struct Arguments
     {
-      // PPS device.
+      //! UART device.
+      std::string uart_dev;
+      //! PPS device.
       std::string pps_dev;
     };
 
@@ -79,6 +89,8 @@ namespace Sensors
       int m_pps;
       //! PPS file descriptor.
       int m_fd;
+      //! UART device.
+      int m_uart;
       //! Current clock state.
       ClockState m_clk_state;
       //! Count of PPS signals.
@@ -88,9 +100,14 @@ namespace Sensors
         DUNE::Tasks::Task(name, ctx),
         m_pps(-1),
         m_fd(-1),
+        m_uart(-1),
         m_clk_state(CS_PPS_WAIT),
         m_pps_count(0)
       {
+        param("Serial Port - Device", m_args.uart_dev)
+        .defaultValue("")
+        .description("Serial port device with PPS on CDC pin");
+
         param("PPS Device", m_args.pps_dev)
         .defaultValue("")
         .description("Platform specific PPS device");
@@ -101,6 +118,18 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
+        //! Attach PPS line discipline to serial port.
+        if (!m_args.uart_dev.empty())
+        {
+          m_uart = open(m_args.uart_dev.c_str(), O_RDWR | O_NOCTTY);
+          if (m_uart < 0)
+            throw std::runtime_error(Utils::String::str("unable to open serial port '%s'", m_args.uart_dev.c_str()));
+
+          int ldisc = 18;
+          if (ioctl(m_uart, TIOCSETD, &ldisc) < 0)
+            throw std::runtime_error(Utils::String::str("unable to attach line discipline to serial port '%s'", m_args.uart_dev.c_str()));
+        }
+
         // Try to find the source by using the supplied "path" name
         m_fd = open(m_args.pps_dev.c_str(), O_RDWR);
         if (m_fd < 0)
