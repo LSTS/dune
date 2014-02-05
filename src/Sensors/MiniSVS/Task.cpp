@@ -99,6 +99,8 @@ namespace Sensors
 
         while (!stopping())
         {
+          consumeMessages();
+
           if (!Poll::poll(*m_uart, 1.0))
             continue;
 
