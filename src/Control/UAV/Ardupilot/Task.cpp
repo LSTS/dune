@@ -46,6 +46,16 @@ namespace Control
     {
       using DUNE_NAMESPACES;
 
+      struct RadioChannel
+      {
+        //! PWM range
+        int pwm_min;
+        int pwm_max;
+        //! Value range
+        float val_max;
+        float val_min;
+      };
+
       //! %Task arguments.
       struct Arguments
       {
@@ -73,6 +83,13 @@ namespace Control
         bool pwrm;
         //! WP seconds before reach
         int secs;
+        //! RC setup
+        RadioChannel rc1;
+        RadioChannel rc2;
+        RadioChannel rc3;
+        RadioChannel rc8;
+        //! FBWB Mode
+        int fbwb_mode;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -140,6 +157,8 @@ namespace Control
         bool m_has_setup_rate;
         //! Vehicle is on ground
         bool m_ground;
+        //! Desired control
+        float m_droll, m_dclimb, m_dspeed;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -161,7 +180,10 @@ namespace Control
           m_error_missing(false),
           m_esta_ext(false),
           m_has_setup_rate(false),
-          m_ground(true)
+          m_ground(true),
+          m_droll(0),
+          m_dclimb(0),
+          m_dspeed(20)
         {
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
@@ -220,6 +242,70 @@ namespace Control
           .units(Units::Second)
           .description("Seconds before actually reaching Waypoint that it is considered as reached");
 
+          param("RC 1 PWM MIN", m_args.rc1.pwm_min)
+          .defaultValue("1000")
+          .units(Units::Microsecond)
+          .description("Min PWM value for Roll channel");
+
+          param("RC 1 PWM MAX", m_args.rc1.pwm_max)
+          .defaultValue("2000")
+          .units(Units::Microsecond)
+          .description("Max PWM value for Roll channel");
+
+          param("RC 1 MAX", m_args.rc1.val_max)
+          .defaultValue("30.0")
+          .units(Units::Degree)
+          .description("Max Roll");
+
+          param("RC 2 PWM MIN", m_args.rc2.pwm_min)
+          .defaultValue("1000")
+          .units(Units::Microsecond)
+          .description("Min PWM value for Climb Rate channel");
+
+          param("RC 2 PWM MAX", m_args.rc2.pwm_max)
+          .defaultValue("2000")
+          .units(Units::Microsecond)
+          .description("Max PWM value for Climb Rate channel");
+
+          param("RC 2 MAX", m_args.rc2.val_max)
+          .defaultValue("2.0")
+          .units(Units::MeterPerSecond)
+          .description("Max Climb Rate");
+
+          param("RC 3 PWM MIN", m_args.rc3.pwm_min)
+          .defaultValue("1000")
+          .units(Units::Microsecond)
+          .description("Min PWM value for Air Speed channel");
+
+          param("RC 3 PWM MAX", m_args.rc3.pwm_max)
+          .defaultValue("2000")
+          .units(Units::Microsecond)
+          .description("Max PWM value for Air Speed channel");
+
+          param("RC 3 MIN", m_args.rc3.val_min)
+          .defaultValue("10.0")
+          .units(Units::MeterPerSecond)
+          .description("Min Air Speed");
+
+          param("RC 3 MAX", m_args.rc3.val_max)
+          .defaultValue("30.0")
+          .units(Units::MeterPerSecond)
+          .description("Max Air Speed");
+
+          param("RC 8 PWM MIN", m_args.rc8.pwm_min)
+          .defaultValue("1000")
+          .units(Units::Microsecond)
+          .description("Min PWM value for Mode channel");
+
+          param("RC 8 PWM MAX", m_args.rc8.pwm_max)
+          .defaultValue("2000")
+          .units(Units::Microsecond)
+          .description("Max PWM value for Mode channel");
+
+          param("FBWB Mode", m_args.fbwb_mode)
+          .defaultValue("4")
+          .description("Mode set up on FBWB");
+
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
           m_mlh[MAVLINK_MSG_ID_ATTITUDE] = &Task::handleAttitudePacket;
@@ -244,7 +330,8 @@ namespace Control
           bind<DesiredPath>(this);
           bind<DesiredRoll>(this);
           bind<DesiredZ>(this);
-          bind<SetServoPosition>(this);
+          bind<DesiredVerticalRate>(this);
+          bind<DesiredSpeed>(this);
           bind<IdleManeuver>(this);
           bind<ControlLoops>(this);
           bind<PowerChannelControl>(this);
@@ -267,6 +354,15 @@ namespace Control
           m_TCP_addr = m_args.TCP_addr;
           m_TCP_port = m_args.TCP_port;
           openConnection();
+        }
+
+        void
+        onParameterUpdate(void)
+        {
+          m_args.rc1.val_min = -m_args.rc1.val_max;
+          m_args.rc2.val_min = -m_args.rc2.val_max;
+          m_args.rc8.val_min = 1;
+          m_args.rc8.val_max = 6;
         }
 
         void
@@ -393,60 +489,121 @@ namespace Control
             m_cloops |= cloops->mask;
             if ((!m_args.ardu_tracker) && (cloops->mask & IMC::CL_PATH))
             {
-              debug("tracker is NOT enabled");
+              debug("Ardupilot tracker is NOT enabled");
               m_cloops &= ~IMC::CL_PATH;
             }
 
             if (!(m_args.ardu_tracker) && (cloops->mask & IMC::CL_ROLL))
-            {
-              uint8_t buf[512];
-              mavlink_message_t* msg = new mavlink_message_t;
-
-              mavlink_msg_set_mode_pack(255, 0, msg,
-                                        m_sysid,
-                                        1,
-                                        13); //! DUNE mode on ardupilot is 13
-
-              uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
-              sendData(buf, n);
-            }
+              onParameterUpdate();
           }
           else
+          {
             m_cloops &= ~cloops->mask;
+
+            if ((cloops->mask & IMC::CL_ROLL) && !m_ground)
+            {
+              mavlink_message_t* msg = new mavlink_message_t;
+              uint8_t buf[512];
+
+              //! Disabling RC override
+              mavlink_msg_rc_channels_override_pack(255, 0, msg,
+                                                    1,
+                                                    1,
+                                                    0, //! RC Channel 1 (roll)
+                                                    0, //! RC Channel 2 (vertical rate)
+                                                    0, //! RC Channel 3 (speed)
+                                                    0, //! RC Channel 4 (rudder)
+                                                    0, //! RC Channel 5 (not used)
+                                                    0, //! RC Channel 6 (not used)
+                                                    0, //! RC Channel 7 (not used)
+                                                    0);//! RC Channel 8 (mode)
+              uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
+              sendData(buf, n);
+
+              sendCommandPacket(MAV_CMD_NAV_LOITER_UNLIM);
+              inf("Loiter");
+            }
+          }
 
           info(prev, m_cloops, IMC::CL_SPEED, "speed control");
           info(prev, m_cloops, IMC::CL_ALTITUDE, "altitude control");
+          info(prev, m_cloops, IMC::CL_VERTICAL_RATE, "vertical rate control");
           info(prev, m_cloops, IMC::CL_ROLL, "bank control");
           info(prev, m_cloops, IMC::CL_YAW, "heading control");
           info(prev, m_cloops, IMC::CL_PATH, "path control");
         }
 
+        //! Messages for FBWB control (using DUNE's controllers)
         void
-        consume(const IMC::DesiredRoll* roll)
+        activateFBW(void)
         {
+          uint8_t buf[512];
+          mavlink_message_t* msg = new mavlink_message_t;
+
+          mavlink_msg_set_mode_pack(255, 0, msg,
+                                    m_sysid,
+                                    1,
+                                    6); //!FBWB
+
+          uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
+        }
+
+        void
+        consume(const IMC::DesiredRoll* d_roll)
+        {
+          if(m_external || m_critical || m_ground)
+            return;
+
           if (!(m_cloops & IMC::CL_ROLL))
           {
             debug("bank control is NOT active");
             return;
           }
 
+          m_droll = Angles::degrees(d_roll->value);
+
+          int pwm_roll = map2PWM(m_args.rc1.pwm_min, m_args.rc1.pwm_max,
+                                 m_args.rc1.val_min, m_args.rc1.val_max,
+                                 m_droll);
+
+          int pwm_climb = map2PWM(m_args.rc2.pwm_min, m_args.rc2.pwm_max,
+                                  m_args.rc2.val_min, m_args.rc2.val_max,
+                                  m_dclimb);
+
+          int pwm_speed = map2PWM(m_args.rc3.pwm_min, m_args.rc3.pwm_max,
+                                  m_args.rc3.val_min, m_args.rc3.val_max,
+                                  m_dspeed);
+
+          int pwm_fbwb = map2PWM(m_args.rc1.pwm_min, m_args.rc1.pwm_max,
+                                 m_args.rc1.val_min, m_args.rc1.val_max,
+                                 m_args.fbwb_mode);
+
+          debug("V1: %f, V2: %f, V3: %f", m_droll, m_dclimb, m_dspeed);
+          debug("RC1: %d, RC2: %d, RC3: %d, RC4: %d", pwm_roll, pwm_climb, pwm_speed, pwm_fbwb);
+
+          activateFBW();
+
           uint8_t buf[512];
 
           mavlink_message_t* msg = new mavlink_message_t;
-          mavlink_msg_set_roll_pitch_yaw_thrust_pack(255, 0, msg,
-                                                     1,
-                                                     1,
-                                                     (float)roll->value,
-                                                     0,
-                                                     0,
-                                                     0);
+          mavlink_msg_rc_channels_override_pack(255, 0, msg,
+                                                1,
+                                                1,
+                                                pwm_roll, //! RC Channel 1 (roll)
+                                                pwm_climb, //! RC Channel 2 (vertical rate)
+                                                pwm_speed, //! RC Channel 3 (speed)
+                                                1500, //! RC Channel 4 (rudder)
+                                                0, //! RC Channel 5 (not used)
+                                                0, //! RC Channel 6 (not used)
+                                                0, //! RC Channel 7 (not used)
+                                                pwm_fbwb);//! RC Channel 8 (mode)
           uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
-          spew("DesiredRoll packet sent to Ardupilot: %f", roll->value);
         }
 
         void
-        consume(const IMC::DesiredZ* desired_z)
+        consume(const IMC::DesiredZ* d_z)
         {
           if (!(m_cloops & IMC::CL_ALTITUDE))
           {
@@ -454,17 +611,42 @@ namespace Control
             return;
           }
 
-          sendCommandPacket(MAV_CMD_CONDITION_CHANGE_ALT, // Ascend/descend at rate.  Delay mission state machine until desired altitude reached.
-                            0, // Descent / Ascend rate (m/s)
-                            0, // Empty
-                            0, // Empty
-                            0, // Empty
-                            0, // Empty
-                            0, // Empty
-                            desired_z->value); // Finish Altitude
-          spew("DesiredZ packet sent to Ardupilot");
+          (void) d_z;
         }
 
+        void
+        consume(const IMC::DesiredVerticalRate* d_vr)
+        {
+          if (!(m_cloops & IMC::CL_VERTICAL_RATE))
+          {
+            debug("vertical rate control is NOT active");
+            return;
+          }
+
+          m_dclimb = d_vr->value;
+        }
+
+        void
+        consume(const IMC::DesiredSpeed* d_speed)
+        {
+          if (!(m_cloops & IMC::CL_SPEED))
+          {
+            inf("speed control is NOT active");
+            return;
+          }
+
+          m_dspeed = d_speed->value;
+        }
+
+        //! Converts value in range min_value:max_value to a value_pwm in range min_pwm:max_pwm
+        int
+        map2PWM(int min_pwm, int max_pwm, float min_value, float max_value, float value)
+        {
+          int value_pwm = (int) ((max_pwm - min_pwm) * (value - min_value) / (max_value - min_value)) + min_pwm;
+          return trimValue(value_pwm, min_pwm, max_pwm);
+        }
+
+        //! Message for GUIDED/AUTO control (using Ardupilot's controllers)
         void
         consume(const IMC::DesiredPath* path)
         {
@@ -475,17 +657,17 @@ namespace Control
             return;
           }
 
-          if (!((m_cloops & IMC::CL_PATH) && m_args.ardu_tracker))
-          {
-            inf("path control is NOT active");
-            return;
-          }
-
           //! In Auto mode but still in ground, performing takeoff first
           if (m_ground)
           {
             inf(DTR("ArduPilot in Auto mode but still in ground, performing takeoff first."));
             takeoff(path);
+            return;
+          }
+
+          if (!((m_cloops & IMC::CL_PATH) && m_args.ardu_tracker))
+          {
+            inf("path control is NOT active");
             return;
           }
 
@@ -704,7 +886,7 @@ namespace Control
         loiterHere(void)
         {
 
-          if (getEntityState() != IMC::EntityState::ESTA_NORMAL || m_external)
+          if ((getEntityState() != IMC::EntityState::ESTA_NORMAL) || m_external || m_ground)
             return;
 
           mavlink_message_t* msg = new mavlink_message_t;
@@ -717,7 +899,7 @@ namespace Control
                                      m_args.lradius, //! Parameter value
                                      MAV_PARAM_TYPE_INT16); //! Parameter type
 
-          int n = mavlink_msg_to_send_buffer(buf, msg);
+          uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
 
           sendCommandPacket(MAV_CMD_NAV_LOITER_UNLIM);
@@ -744,17 +926,6 @@ namespace Control
           m_dpath.clear();
 
           loiterHere();
-        }
-
-        void
-        consume(const IMC::SetServoPosition* servo)
-        {
-          sendCommandPacket(MAV_CMD_DO_SET_SERVO,
-                            servo->id, // Servo number
-                            servo->value, // PWM (microseconds, 1000 to 2000 typical)
-                            0, // Empty
-                            0); //Empty
-          spew("SetServo packet sent to Ardupilot");
         }
 
         void
@@ -1284,8 +1455,8 @@ namespace Control
               trace("LOITER");
               m_external = false;
               break;
-            case 13:
-              trace("DUNE");
+            case 6:
+              trace("FBWB");
               m_external = false;
               break;
             case 15:
