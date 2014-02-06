@@ -41,6 +41,8 @@ namespace Sensors
       std::string uart_dev;
       //! Serial port baud rate.
       unsigned uart_baud;
+      //! Input timeout.
+      double input_timeout;
     };
 
     //! Minimum sound speed value.
@@ -54,6 +56,8 @@ namespace Sensors
       IMC::SoundSpeed m_sspeed;
       //! Serial port handle.
       SerialPort* m_uart;
+      //! Watchdog.
+      Counter<double> m_wdog;
       //! Task arguments
       Arguments m_args;
 
@@ -68,6 +72,12 @@ namespace Sensors
         param("Serial Port - Baud Rate", m_args.uart_baud)
         .defaultValue("19200")
         .description("Serial port baud rate");
+
+        param("Input Timeout", m_args.input_timeout)
+        .defaultValue("4.0")
+        .minimumValue("2.0")
+        .units(Units::Second)
+        .description("Amount of seconds to wait for data before reporting an error");
       }
 
       void
@@ -84,6 +94,7 @@ namespace Sensors
         m_uart->writeString("#");
         m_uart->writeString("M1\r\n");
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_wdog.setTop(m_args.input_timeout);
       }
 
       void
@@ -101,6 +112,12 @@ namespace Sensors
         {
           consumeMessages();
 
+          if (m_wdog.overflow())
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          }
+
           if (!Poll::poll(*m_uart, 1.0))
             continue;
 
@@ -116,6 +133,8 @@ namespace Sensors
             m_sspeed.value /= 1000.0;
             if ((m_sspeed.value < c_min_speed) || (m_sspeed.value > c_max_speed))
               m_sspeed.value = -1.0;
+
+            m_wdog.reset();
             dispatch(m_sspeed);
           }
         }
