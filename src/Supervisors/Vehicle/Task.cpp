@@ -195,6 +195,8 @@ namespace Supervisors
 
         if (maneuverMode())
         {
+          // original entity ID is the Plan.Engine's
+          maneuver->setSourceEntity(getEntityId());
           dispatch(maneuver);
           m_vs.maneuver_stime = maneuver->getTimeStamp();
           m_vs.maneuver_type = maneuver->getId();
