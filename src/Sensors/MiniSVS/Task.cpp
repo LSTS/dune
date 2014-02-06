@@ -93,7 +93,6 @@ namespace Sensors
       {
         m_uart->writeString("#");
         m_uart->writeString("M1\r\n");
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_wdog.setTop(m_args.input_timeout);
       }
 
@@ -136,6 +135,8 @@ namespace Sensors
 
             m_wdog.reset();
             dispatch(m_sspeed);
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
           }
         }
       }

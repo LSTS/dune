@@ -128,7 +128,6 @@ namespace Sensors
         if (!sendCommand("MONITOR\r", ">MONITOR\r\n"))
           throw RestartNeeded(DTR("failed to enter monitor mode"), 5);
 
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_wdog.setTop(m_args.input_timeout);
       }
 
@@ -161,6 +160,7 @@ namespace Sensors
           if ((m_sspeed.value < c_min_speed) || (m_sspeed.value > c_max_speed))
             m_sspeed.value = -1;
 
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           m_wdog.reset();
           dispatch(m_sspeed);
         }
