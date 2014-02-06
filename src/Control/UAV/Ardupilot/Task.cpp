@@ -46,6 +46,16 @@ namespace Control
     {
       using DUNE_NAMESPACES;
 
+      //! APM Type specifier
+      enum APM_Vehicle {
+        //! Unset or unknown vehicle type
+        VEHICLE_UNKNOWN = 0,
+        //! Fixed wing types
+        VEHICLE_FIXEDWING,
+        //! Copter types (quad, hexa, etc)
+        VEHICLE_COPTER
+      };
+
       struct RadioChannel
       {
         //! PWM range
@@ -159,6 +169,8 @@ namespace Control
         bool m_ground;
         //! Desired control
         float m_droll, m_dclimb, m_dspeed;
+        //! Type of system to be controlled
+        APM_Vehicle m_vehicle_type; 
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -183,7 +195,8 @@ namespace Control
           m_ground(true),
           m_droll(0),
           m_dclimb(0),
-          m_dspeed(20)
+          m_dspeed(20),
+          m_vehicle_type(VEHICLE_UNKNOWN)
         {
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
@@ -1432,37 +1445,87 @@ namespace Control
           }
 
           mavlink_heartbeat_t hbt;
-
           mavlink_msg_heartbeat_decode(msg, &hbt);
+          
+          // Update vehicle type if applicable
+          if (m_vehicle_type == VEHICLE_UNKNOWN)
+          {
+            MAV_TYPE mav_type = static_cast<MAV_TYPE>(hbt.type);
+            switch (mav_type)
+            {
+            default:
+              err("Controlling and unknown vehicle type.");
+              break;
+            case MAV_TYPE_FIXED_WING:
+              m_vehicle_type = VEHICLE_FIXEDWING;
+              debug("Controlling a fixed-wing vehicle.");
+              break;
+            case MAV_TYPE_QUADROTOR:
+            case MAV_TYPE_HEXAROTOR:
+            case MAV_TYPE_OCTOROTOR:
+            case MAV_TYPE_TRICOPTER:
+              m_vehicle_type = VEHICLE_COPTER;
+              debug("Controlling a multicopter.");
+              break;
+            }
+          }
+          
 
           m_mode = hbt.custom_mode;
-
-          switch(m_mode)
+          if (m_vehicle_type == VEHICLE_COPTER)
           {
-            default:
-              m_external = true;
-              break;
-            case 10:
-              trace("AUTO");
-              if (m_external)
-              {
+            switch(m_mode)
+            {
+              default:
+                m_external = true;
+                break;
+              case 3:
+                trace("AUTO");
                 m_external = false;
-                if (m_dpath.end_lat)
-                  receive(&m_dpath);
-              }
-              break;
-            case 12:
-              trace("LOITER");
-              m_external = false;
-              break;
-            case 6:
-              trace("FBWB");
-              m_external = false;
-              break;
-            case 15:
-              trace("GUIDED");
-              m_external = false;
-              break;
+                break;
+              case 5:
+                trace("LOITER");
+                m_external = false;
+                break;
+              case 14:
+                trace("DUNE");
+                m_external = false;
+                break;
+              case 4:
+                trace("GUIDED");
+                m_external = false;
+                break;
+            }
+          }
+          else
+          {
+            switch(m_mode)
+            {
+              default:
+                m_external = true;
+                break;
+              case 10:
+                trace("AUTO");
+                if (m_external)
+                {
+                  m_external = false;
+                  if (m_dpath.end_lat)
+                    receive(&m_dpath);
+                }
+                break;
+              case 12:
+                trace("LOITER");
+                m_external = false;
+                break;
+              case 6:
+                trace("FBWB");
+                m_external = false;
+                break;
+              case 15:
+                trace("GUIDED");
+                m_external = false;
+                break;
+            }
           }
         }
 
