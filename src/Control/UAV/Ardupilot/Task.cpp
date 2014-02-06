@@ -569,7 +569,7 @@ namespace Control
 
           int pwm_climb = map2PWM(m_args.rc2.pwm_min, m_args.rc2.pwm_max,
                                   m_args.rc2.val_min, m_args.rc2.val_max,
-                                  m_dclimb);
+                                  -m_dclimb);
 
           int pwm_speed = map2PWM(m_args.rc3.pwm_min, m_args.rc3.pwm_max,
                                   m_args.rc3.val_min, m_args.rc3.val_max,
