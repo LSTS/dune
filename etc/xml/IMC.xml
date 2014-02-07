@@ -10,7 +10,7 @@
           xsi:noNamespaceSchemaLocation="IMC.xsd"
           name="IMC"
           long-name="Inter Module Communication"
-          version="5.3.x">
+          version="5.3.0">
 
   <description>
     This document describes the communications protocol associated
@@ -1531,7 +1531,7 @@
       <description>The unique identifier of this message's origin device (e.g. lauv-xtreme-2, manta-0).</description>
     </field>
     <field name="Timestamp" abbrev="htime" type="fp64_t" unit="s">
-        <description>Timestamp (Epoch time).</description>
+      <description>Timestamp (Epoch time).</description>
     </field>
     <field name="Latitude Reference" abbrev="lat" type="fp64_t" unit="rad" />
     <field name="Longitude Reference" abbrev="lon" type="fp64_t" unit="rad" />
@@ -1544,10 +1544,10 @@
 
   <message id="171" name="Transmit Iridium Message" abbrev="IridiumMsgTx" source="vehicle,ccu">
     <field name="Request Identifier" abbrev="req_id" type="uint16_t">
-        <description>The request identifier used to receive transmission updates.</description>
+      <description>The request identifier used to receive transmission updates.</description>
     </field>
     <field name="Time to live" abbrev="ttl" type="uint16_t" unit="s">
-        <description>Time, in seconds, after which there will be no more atempts to transmit the message.</description>
+      <description>Time, in seconds, after which there will be no more atempts to transmit the message.</description>
     </field>
     <field name="Destination Identifier" abbrev="destination" type="plaintext">
       <description>The unique identifier of this message's destination (e.g. lauv-xtreme-2, manta-0).</description>
@@ -1561,14 +1561,14 @@
 
   <message id="172" name="Iridium Transmission Status" abbrev="IridiumTxStatus" source="vehicle,ccu">
     <field name="Request Identifier" abbrev="req_id" type="uint16_t">
-        <description>The request identifier used to receive transmission updates</description>
+      <description>The request identifier used to receive transmission updates</description>
     </field>
     <field name="Status Code" abbrev="status" type="uint8_t" unit="Enumerated" prefix="TXSTATUS">
-        <value abbrev="OK" name="Successfull transmission" id="1"/>
-        <value abbrev="ERROR" name="Error while trying to transmit message" id="2"/>
-        <value abbrev="QUEUED" name="Message has been queued for transmission" id="3"/>
-        <value abbrev="TRANSMIT" name="Message is currently being transmitted" id="4"/>
-        <value abbrev="EXPIRED" name="Message's TTL has expired. Transmition cancelled." id="5"/>
+      <value abbrev="OK" name="Successfull transmission" id="1"/>
+      <value abbrev="ERROR" name="Error while trying to transmit message" id="2"/>
+      <value abbrev="QUEUED" name="Message has been queued for transmission" id="3"/>
+      <value abbrev="TRANSMIT" name="Message is currently being transmitted" id="4"/>
+      <value abbrev="EXPIRED" name="Message's TTL has expired. Transmition cancelled." id="5"/>
     </field>
     <field name="Status Text" abbrev="text" type="plaintext"/>
   </message>
@@ -1589,7 +1589,7 @@
       </description>
     </field>
   </message>
-  
+
   <message id="181" name="System Group" abbrev="SystemGroup">
     <description>
       Group of systems configuration.
@@ -1616,7 +1616,7 @@
       </description>
     </field>
   </message>
-  
+
 
   <!-- Acoustic Networking -->
   <message id="200" name="LBL Range" abbrev="LblRange" source="vehicle" flags="periodic">
@@ -5468,15 +5468,15 @@
 
       The formation reference frame may be:
       - Earth Fixed: Where the vehicles relative position do not depend on the followed path.
-          This results in all UAVs following the same path with an offset relative to each other;
+      This results in all UAVs following the same path with an offset relative to each other;
       - Path Fixed:  Where the vehicles relative position depends on the followed path,
-          changing the inter-vehicle offset direction with the path direction.
+      changing the inter-vehicle offset direction with the path direction.
       - Path Curved:  Where the vehicles relative position depends on the followed path,
-          changing the inter-vehicle offset direction with the path direction and direction
-          change rate.
-          An offset in the xx axis results in a distance over the curved path line.
-          An offset in the yy axis results in an offset of the vehicle path line relative to the
-          formation center path line.
+      changing the inter-vehicle offset direction with the path direction and direction
+      change rate.
+      An offset in the xx axis results in a distance over the curved path line.
+      An offset in the yy axis results in an offset of the vehicle path line relative to the
+      formation center path line.
     </description>
     <field name="Formation Name" abbrev="formation_name" type="plaintext">
       <description>
@@ -5507,12 +5507,12 @@
     <description>
       A "Formation Plan" is a maneuver specifying a plan for a team of vehicles.
       The maneuver defines:
-       - Vehicles included in the formation group
-       - Formation shape configuration
-       - Plan (set of maneuvers) to be followed by the formation center
-       - Speed at which that plan is followed
-       - Path contrains (virtual leader bank limit)
-       - Supervision settings
+      - Vehicles included in the formation group
+      - Formation shape configuration
+      - Plan (set of maneuvers) to be followed by the formation center
+      - Speed at which that plan is followed
+      - Path contrains (virtual leader bank limit)
+      - Supervision settings
     </description>
     <field name="Target Group Name" abbrev="group_name" type="plaintext">
       <description>
@@ -6636,9 +6636,9 @@
       next:
 
       .. figure:: images/euler-lauv.png
-         :align:  center
+      :align:  center
 
-         Euler angles
+      Euler angles
     </description>
     <field name="Group Name" abbrev="group_name" type="plaintext">
       <description>
@@ -6958,7 +6958,7 @@
 
   <message id="656" abbrev="TrexAttribute" name="TREX Attribute" source="vehicle,ccu">
 
-   <field name="Attribute Name" abbrev="name" type="plaintext">
+    <field name="Attribute Name" abbrev="name" type="plaintext">
       <description>Name of this attribute.</description>
     </field>
 
@@ -7279,7 +7279,7 @@
       <description>
 	Control sliding surface boundary layer thickness.
       </description>
-    </field> 
+    </field>
     <field name="Leader Gain" abbrev="LeadGain" type="uint32_t">
       <description>
 	Formation shape gain (absolute vehicle position tracking).
