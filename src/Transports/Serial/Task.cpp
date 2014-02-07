@@ -106,13 +106,13 @@ namespace Transports
         }
         catch (std::exception& e)
         {
-          err("read error: %s", e.what());
+          err(DTR("read error: %s"), e.what());
           return;
         }
 
         if (n_r < 0)
         {
-          err("unknown read error");
+          err(DTR("unknown read error"));
           return;
         }
 

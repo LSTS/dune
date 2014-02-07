@@ -346,7 +346,7 @@ namespace Transports
         {
           ScopedMutex l(m_mutex);
           if (!m_session_result_read)
-            getTask()->err("new session result will overwrite previously unread value");
+            getTask()->err(DTR("new session result will overwrite previously unread value"));
           m_session_result_read = false;
           m_session_result.parse(str);
           if (m_session_result.isSuccessMT())

@@ -188,7 +188,7 @@ namespace Transports
         }
         catch (...)
         {
-          err("messages doesn't fit in one frame");
+          err(DTR("messages doesn't fit in one frame"));
         }
       }
 

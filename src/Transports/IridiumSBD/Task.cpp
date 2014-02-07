@@ -306,7 +306,7 @@ namespace Transports
         }
         else
         {
-          err("invalid SBD message of size %u", rv);
+          err(DTR("invalid SBD message of size %u"), rv);
         }
       }
 

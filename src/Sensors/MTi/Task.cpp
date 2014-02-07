@@ -367,35 +367,35 @@ namespace Sensors
 
         if (!sendGoToConfig())
         {
-          err("unable to enter configuration mode");
+          err(DTR("unable to enter configuration mode"));
           return false;
         }
 
         if (!sendSetOutputSettings())
         {
-          err("unable to set output settings");
+          err(DTR("unable to set output settings"));
           return false;
         }
 
         if (!sendSetOutputMode())
         {
-          err("unable to set output mode");
+          err(DTR("unable to set output mode"));
           return false;
         }
 
         if (!sendSyncInSettings())
         {
-          err("unable to set SyncIn settings");
+          err(DTR("unable to set SyncIn settings"));
           return false;
         }
 
         if (!sendGoToMeasurement())
         {
-          err("unable to enter measurement mode");
+          err(DTR("unable to enter measurement mode"));
           return false;
         }
 
-        inf("online");
+        inf(DTR("online"));
         return true;
       }
 

@@ -312,7 +312,7 @@ namespace UserInterfaces
           m_lcd.text = center("- Resuming -");
           dispatch(m_lcd);
           if (std::system(m_args.cmd_pwr_down_abort.c_str()) == -1)
-            err("failed to execute power down command");
+            err(DTR("failed to execute power down command"));
 
           selectSystem(false);
         }

@@ -1042,7 +1042,7 @@ namespace Control
             }
             catch (std::runtime_error& e)
             {
-              err(DTR("%s"), e.what());
+              err("%s", e.what());
               war(DTR("Connection lost, retrying..."));
               Memory::clear(m_TCP_sock);
 
