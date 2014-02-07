@@ -395,7 +395,6 @@ namespace Sensors
           return false;
         }
 
-        inf(DTR("online"));
         return true;
       }
 
