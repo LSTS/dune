@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2014-02-04 14:04+0000\n"
+        "POT-Creation-Date: 2014-02-07 09:57+0000\n"
         "PO-Revision-Date: 2013-10-24 10:59-0000\n"
         "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
         "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -266,6 +266,15 @@ msgstr  "ocorreu um erro ao limpar o espaço de memória MO"
 msgid   "error ocurred while clearing MT buffer"
 msgstr  "ocorreu um erro ao limpar o espaço de memória MT"
 
+#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Driver.hpp:333
+#, c-format
+msgid   "invalid unsolicited string %s"
+msgstr  "palavra não solicitada inválida: %s"
+
+#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Driver.hpp:349
+msgid   "new session result will overwrite previously unread value"
+msgstr  "resultado nova sessão vai sobrepôr valor anterior não lido"
+
 #: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Driver.hpp:404
 msgid   "error ocurred while clearing buffer"
 msgstr  "ocorreu um erro a limpar espaço de memória"
@@ -330,6 +339,21 @@ msgstr  "ações: %s ativação atrasada, %.1f segundos"
 msgid   "schedule: entity label %s not found"
 msgstr  "ações: etiqueta de entidade %s não encontrada"
 
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/ActionSchedule.hpp:811
+#, c-format
+msgid   "scheduled for: %.1f"
+msgstr  "definido para: %.1f"
+
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/ActionSchedule.hpp:815
+#, c-format
+msgid   "END %s ---"
+msgstr  "FIM %s ---"
+
+#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/MantaPanel/Task.cpp:315
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Power/Task.cpp:116
+msgid   "failed to execute power down command"
+msgstr  "Falha ao executar comando de desligar"
+
 #: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:137
 #, c-format
 msgid   "lat lon = 0 ? %f"
@@ -369,6 +393,14 @@ msgstr  "Ligação fraca, demasiado tempo desde último EstimatedState recebido.
 #, c-format
 msgid   "Unexpected state %#x"
 msgstr  "Estado não esperado %#x"
+
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:425
+msgid   "LOITER, XY and Z NEAR"
+msgstr  "LOITER, XY e perto Z"
+
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:434
+msgid   "GOTO, FAR"
+msgstr  "GOTO, LONGE"
 
 #: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:150
 msgid   "waiting for first reference"
@@ -680,6 +712,16 @@ msgstr  "perfil inexistente '%s'"
 msgid   "invalid rate limiter: %s"
 msgstr  "limitador de taxa inválido '%s'"
 
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/SimpleTransport.cpp:76
+#, c-format
+msgid   "outgoing: %s"
+msgstr  "a sair: %s"
+
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/SimpleTransport.cpp:107
+#, c-format
+msgid   "incoming: %s"
+msgstr  "a chegar: %s"
+
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/UDPSocket.cpp:101
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/TCPSocket.cpp:129
 msgid   "unable to create socket"
@@ -784,6 +826,10 @@ msgstr  "falha ao definir tempo"
 #: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:268
 msgid   "not active"
 msgstr  "inativo"
+
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:438
+msgid   "keep loitering"
+msgstr  "manter loiter"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:480
 #, c-format
@@ -1049,6 +1095,16 @@ msgstr  "falha ao obter informação da \"flash\""
 msgid   "parser bug"
 msgstr  "defeito do analisador"
 
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Hardware/BasicModem.cpp:183
+#, c-format
+msgid   "send: %s"
+msgstr  "envio: %s"
+
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Hardware/BasicModem.cpp:264
+#, c-format
+msgid   "fragment: %s"
+msgstr  "fragment: %s"
+
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:40
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:334
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/OS4000/Task.cpp:147
@@ -1221,10 +1277,6 @@ msgstr  "poucos pontos de trajetória"
 msgid   "water column is not deep enough"
 msgstr  "coluna de água não é suficientemente profunda"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Power/Task.cpp:116
-msgid   "failed to execute power down command"
-msgstr  "Falha ao executar comando de desligar"
-
 #: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:43
 msgid   "SERVICE"
 msgstr  "SERVIÇO"
@@ -1254,66 +1306,70 @@ msgstr  "ARRANQUE"
 msgid   "now in '%s' mode"
 msgstr  "agora no modo '%s'"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:217
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:219
 #: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:383
 msgid   "got abort request"
 msgstr  "recebido pedido abort"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:329
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:331
 msgid   "entity errors cleared"
 msgstr  "erros de entidades limpos"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:333
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:335
 #, c-format
 msgid   "vehicle errors: %s"
 msgstr  "erros do veículo: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:396
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:398
 msgid   " maneuver error: "
 msgstr  " erro de manobra:"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:456
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:458
 msgid   "cannot calibrate: vehicle is in external mode"
 msgstr  "não é possível calibrar: veículo está em modo de controlo externo"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:470
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:472
 #, c-format
 msgid   "calibrating vehicle for %u seconds"
 msgstr  "a calibrar veículo por %u segundos"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:479
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:481
 msgid   "cannot stop calibration: vehicle is not calibrating"
 msgstr  "não é possível parar calibração: veículo não está a calibrar"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:483
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:485
 msgid   "stopped calibration"
 msgstr  "calibração parada"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:499
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:501
 msgid   "no maneuver specified"
 msgstr  "nenhuma manobra foi especificada"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:507
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:509
 msgid   " maneuver cannot be started in current mode"
 msgstr  " manobras não podem ser iniciadas no modo atual"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:516
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:518
 msgid   " maneuver started"
 msgstr  " manobra começada"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:547
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:549
 #: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:630
 #: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:882
 msgid   "OK"
 msgstr  "OK"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:578
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:580
 msgid   "this vehicle does not allow for external control, disabling loops"
 msgstr  "este veículo não permite controlo externo, a desabilitar malhas de controlo"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:594
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:596
 msgid   "maneuver request timeout"
 msgstr  "pedido de manobra excedeu o tempo limite"
+
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/AUV/LostComms/Task.cpp:317
+msgid   "starting lost comms plan"
+msgstr  "iniciar plano perda comunicações: "
 
 #: /home/josebraga/workspace/dune/trunk/src/Navigation/General/Alignment/Task.cpp:198
 #: /home/josebraga/workspace/dune/trunk/src/Monitors/Collisions/Task.cpp:191
@@ -1340,6 +1396,11 @@ msgstr  "em calibração: o sistema deve permanecer estático"
 #: /home/josebraga/workspace/dune/trunk/src/Vision/DFK51BG02H/Task.cpp:459
 msgid   "keep alive failed"
 msgstr  "falhou keep alive"
+
+#: /home/josebraga/workspace/dune/trunk/src/Vision/DFK51BG02H/Task.cpp:476
+#, c-format
+msgid   "lost at least %d packets"
+msgstr  "perda de pelo menos %d pacotes"
 
 #: /home/josebraga/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:342
 msgid   "failed to start video stream"
@@ -1403,6 +1464,11 @@ msgstr  "ligado a %u clients"
 msgid   "error accepting new client connection: %s"
 msgstr  "erro ao aceitar ligação a novo cliente: %s"
 
+#: /home/josebraga/workspace/dune/trunk/src/Transports/TCP/Client/Task.cpp:84
+#, c-format
+msgid   "connected to %s:%u"
+msgstr  "ligado a %s:%u"
+
 #: /home/josebraga/workspace/dune/trunk/src/Transports/Cache/Task.cpp:258
 #, c-format
 msgid   "failed to copy cache snapshot: %s"
@@ -1417,6 +1483,11 @@ msgstr  "Nível da Fonte"
 #: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:574
 msgid   "dynamic sound speed corrections are disabled"
 msgstr  "correção dinâmica de velocidade do som está desativada"
+
+#: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:381
+#, c-format
+msgid   "invalid system name %s"
+msgstr  "nome de sistema inválido %s"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/Replay/Task.cpp:179
 msgid   "operation not supported"
@@ -1475,6 +1546,20 @@ msgstr  "nome de sistema desconhecido: %s"
 msgid   "start plan detected"
 msgstr  "detetado arranque de plano"
 
+#: /home/josebraga/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:113
+#, c-format
+msgid   "slot second %u"
+msgstr  "slot segundo %u"
+
+#: /home/josebraga/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:191
+msgid   "messages doesn't fit in one frame"
+msgstr  "mensagens não cabem num única trama"
+
+#: /home/josebraga/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:220
+#, c-format
+msgid   "deserialization error: %s"
+msgstr  "erro de desserialização: %s"
+
 #: /home/josebraga/workspace/dune/trunk/src/Transports/LogBook/Task.cpp:98
 msgid   "cleared logbook"
 msgstr  "livro de registo limpo"
@@ -1483,19 +1568,34 @@ msgstr  "livro de registo limpo"
 msgid   "invalid or unsupported command"
 msgstr  "parâmetro inválido ou não suportado"
 
+#: /home/josebraga/workspace/dune/trunk/src/Transports/Serial/Task.cpp:109
+#: /home/josebraga/workspace/dune/trunk/src/Simulators/UnderwaterAcoustics/Task.cpp:388
+#, c-format
+msgid   "read error: %s"
+msgstr  "erro de leitura: %s"
+
+#: /home/josebraga/workspace/dune/trunk/src/Transports/Serial/Task.cpp:115
+msgid   "unknown read error"
+msgstr  "erro de leitura desconhecido"
+
 #: /home/josebraga/workspace/dune/trunk/src/Transports/FlightGear/Task.cpp:164
 msgid   "UDP sockets for FlightGear setup."
 msgstr  "Sockets UDP para setup FlightGear."
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/FlightGear/Task.cpp:172
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:285
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:394
 msgid   "Connection failed, retrying..."
 msgstr  "Ligação falhou, a tentar novamente..."
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/FlightGear/Task.cpp:205
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:862
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1046
 msgid   "Connection lost, retrying..."
 msgstr  "Ligação perdida, a tentar novamente..."
+
+#: /home/josebraga/workspace/dune/trunk/src/Transports/FlightGear/Task.cpp:285
+#, c-format
+msgid   "Failed to send: %s"
+msgstr  "Falha ao enviar: %s"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/UDP/Task.cpp:251
 #: /home/josebraga/workspace/dune/trunk/src/Transports/HTTP/Task.cpp:142
@@ -1574,6 +1674,11 @@ msgstr  "a tarefa está a desligar"
 msgid   "failed with error %u"
 msgstr  "falha com erro %u"
 
+#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Task.cpp:309
+#, c-format
+msgid   "invalid SBD message of size %u"
+msgstr  "tamanho de mensagem SBD inválido %u"
+
 #: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Task.cpp:327
 #, c-format
 msgid   "transmission failed: %s"
@@ -1583,11 +1688,26 @@ msgstr  "transmissão falhada: %s"
 msgid   "Success"
 msgstr  "Sucesso"
 
+#: /home/josebraga/workspace/dune/trunk/src/Simulators/UAV/Task.cpp:362
+#, c-format
+msgid   "UAV simulation type: %s"
+msgstr  "Tipo simulação UAV: %s"
+
 #: /home/josebraga/workspace/dune/trunk/src/Simulators/Leaks/Task.cpp:125
 #: /home/josebraga/workspace/dune/trunk/src/Simulators/Leaks/Task.cpp:140
 #: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:560
 msgid   "leak detected"
 msgstr  "fuga detetada"
+
+#: /home/josebraga/workspace/dune/trunk/src/Simulators/Servos/Task.cpp:200
+#, c-format
+msgid   "fault triggered in servo #%d"
+msgstr  "falha lançada no servo #%d"
+
+#: /home/josebraga/workspace/dune/trunk/src/Simulators/Servos/Task.cpp:207
+#, c-format
+msgid   "servo #%d is no longer in fault"
+msgstr  "servo #%d voltou ao estado normal"
 
 #: /home/josebraga/workspace/dune/trunk/src/Simulators/VSIM/Task.cpp:134
 msgid   "error loading world parameters."
@@ -1607,31 +1727,62 @@ msgstr  "colisão detetada"
 msgid   "unexpected simulation message: %s"
 msgstr  "mensagem de simulação inesperada: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/Simulators/UnderwaterAcoustics/Task.cpp:388
-#, c-format
-msgid   "read error: %s"
-msgstr  "erro de leitura: %s"
-
 #: /home/josebraga/workspace/dune/trunk/src/Simulators/LBL/Task.cpp:225
 #, c-format
 msgid   "maximum amount of beacons is %u"
 msgstr  "número máximo de transdutores é %u"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:280
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:389
 msgid   "Ardupilot interface initialized"
 msgstr  "Interface Ardupilot inicializada"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:474
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:537
+msgid   "Loiter"
+msgstr  "Loiter"
+
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:647
+#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:251
+msgid   "speed control is NOT active"
+msgstr  "controlo de velocidade NÃO está ativo"
+
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:669
 msgid   "ArduPilot is in Manual mode, saving desired path."
 msgstr  "ArduPilot em modo manual, a salvar caminho desejado."
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:487
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:676
 msgid   "ArduPilot in Auto mode but still in ground, performing takeoff first."
 msgstr  "ArduPilot em modo automático mas em Terra, a fazer takeoff primeiro"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:700
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:683
+#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:370
+msgid   "path control is NOT active"
+msgstr  "controlo de caminho NÃO está ativo"
+
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:895
 msgid   "Waypoint packet sent to Ardupilot"
 msgstr  "Pacote waypoints enviado para o Ardupilot"
+
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1457
+msgid   "Controlling an unknown vehicle type."
+msgstr  "A controlar um tipo de veículo desconhecido."
+
+#: /home/josebraga/workspace/dune/trunk/src/Control/PTU2/Task.cpp:90
+#: /home/josebraga/workspace/dune/trunk/src/Control/PTU/Task.cpp:113
+#, c-format
+msgid   "Target name is %s, with ID %d"
+msgstr  "Nome do alvo é %s, com ID %d"
+
+#: /home/josebraga/workspace/dune/trunk/src/Control/ASV/HeadingAndSpeed/Task.cpp:314
+msgid   "enabling"
+msgstr  "a ativar"
+
+#: /home/josebraga/workspace/dune/trunk/src/Control/ASV/HeadingAndSpeed/Task.cpp:314
+msgid   "disabling"
+msgstr  "a desativar"
+
+#: /home/josebraga/workspace/dune/trunk/src/Control/PTU/Task.cpp:262
+msgid   "received euler angles"
+msgstr  "a receber ângulos de euler"
 
 #: /home/josebraga/workspace/dune/trunk/src/Control/ROV/HorizontalPlane/Task.cpp:54
 #: /home/josebraga/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:60
@@ -1755,10 +1906,40 @@ msgstr  "a atualizar firmware"
 msgid   "device is using unstable firmware"
 msgstr  "o dispositivo está a usar \"firmware\" instável"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MiniSVS/Task.cpp:109
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:156
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MiniSVS/Task.cpp:127
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:155
 msgid   "I/O error"
 msgstr  "erro de entrada/saída"
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MTi/Task.cpp:200
+#, c-format
+msgid   "took too long to read data: %lu ms"
+msgstr  "demasiado tempo a ler dados: %lu ms"
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MTi/Task.cpp:207
+#, c-format
+msgid   "overrun of %lu ms"
+msgstr  "overrun de %lu ms"
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MTi/Task.cpp:370
+msgid   "unable to enter configuration mode"
+msgstr  "incapaz de entrar no modo de configuração"
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MTi/Task.cpp:376
+msgid   "unable to set output settings"
+msgstr  "incapaz de definir parâmetros de saída"
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MTi/Task.cpp:382
+msgid   "unable to set output mode"
+msgstr  "incapaz de configurar modo de saída"
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MTi/Task.cpp:388
+msgid   "unable to set SyncIn settings"
+msgstr  "incapaz de definir parâmetros SyncIn"
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MTi/Task.cpp:394
+msgid   "unable to enter measurement mode"
+msgstr  "incapaz de entrar em modo de leitura"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex881A/Task.cpp:259
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:266
@@ -2255,6 +2436,28 @@ msgstr  "os dados podem não ser confiáveis: %04X"
 #, c-format
 msgid   "TREX disconnected for more than %d seconds"
 msgstr  "TREX desligado durante mais do que %d segundos"
+
+#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:186
+msgid   "Abort detected. Disabling TREX control..."
+msgstr  "Detetado aborte. A desabilitar controlo T-REX."
+
+#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:207
+msgid   "T-REX has been started."
+msgstr  "T-REX foi iniciado."
+
+#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:209
+#, c-format
+msgid   "Could not start T-REX: %d."
+msgstr  "Incapaz de iniciar T-REX: %d."
+
+#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:216
+msgid   "T-REX has been stopped."
+msgstr  "T-REX interrompido."
+
+#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:218
+#, c-format
+msgid   "Could not stop T-REX: %d."
+msgstr  "Incapaz de parar T-REX: %d."
 
 #: /home/josebraga/workspace/dune/trunk/src/Autonomy/TextActions/Task.cpp:65
 #, c-format
@@ -2873,10 +3076,6 @@ msgstr  "controlo de taxa vertical"
 msgid   "path control"
 msgstr  "controlo de caminho"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:251
-msgid   "speed control is NOT active"
-msgstr  "controlo de velocidade NÃO está ativo"
-
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:272
 msgid   "altitude control is NOT active"
 msgstr  "controlo de altitude NÃO está ativo"
@@ -2896,10 +3095,6 @@ msgstr  "controlo de orientação NÃO está ativo"
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:346
 msgid   "vertical rate control is NOT active"
 msgstr  "controlo de taxa vertical NÃO está ativo"
-
-#: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:370
-msgid   "path control is NOT active"
-msgstr  "controlo de caminho NÃO está ativo"
 
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/TASE/Task.cpp:246
 msgid   "no gimbal data"
@@ -3477,8 +3672,8 @@ msgstr  "Simulador de Comunicação Acústica Subaquática"
 msgid   "Vehicle Supervisor"
 msgstr  "Supervisor de Veículo"
 
-#~ msgid        "failed to send SMS: %s"
-#~ msgstr       "falha ao enviar SMS: %s"
+#~ msgid        "online"
+#~ msgstr       "online"
 
 #~ msgid        "failed to open ESCC device"
 #~ msgstr       "falhou ao abrir dispositivo ESCC"
@@ -3681,9 +3876,6 @@ msgstr  "Supervisor de Veículo"
 
 #~ msgid        "unknown packet type: %u"
 #~ msgstr       "tipo de pacote desconhecido: %u"
-
-#~ msgid        "received %d bytes"
-#~ msgstr       "a receber %d bytes"
 
 #~ msgid        "vehicle is heading towards an obstacle"
 #~ msgstr       "o veículo está a ir em direção a um obstáculo"
@@ -3970,9 +4162,6 @@ msgstr  "Supervisor de Veículo"
 #~ msgid        "Latitude"
 #~ msgstr       "Latitude"
 
-#~ msgid        "Loiter radius"
-#~ msgstr       "Raio de \"loiter\""
-
 #~ msgid        "Maximum expected currents"
 #~ msgstr       "Correntes máximas esperadas"
 
@@ -4017,9 +4206,6 @@ msgstr  "Supervisor de Veículo"
 #~ msgid        "star"
 #~ msgstr       "estrela"
 
-#~ msgid        "starting task: "
-#~ msgstr       "a iniciar tarefa: "
-
 #~ msgid        "failed maneuver request:"
 #~ msgstr       "falhou pedido manobra:"
 
@@ -4055,9 +4241,6 @@ msgstr  "Supervisor de Veículo"
 
 #~ msgid        "clash between handover and plan waypoints"
 #~ msgstr       "incompatibilidade entre plano waypoints e handover"
-
-#~ msgid        "state now: %s"
-#~ msgstr       "estado atual: %s"
 
 #~ msgid        "not ready for tracking commands"
 #~ msgstr       "não pronto para comandos de tracking"
