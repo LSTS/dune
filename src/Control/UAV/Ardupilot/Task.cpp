@@ -170,7 +170,7 @@ namespace Control
         //! Desired control
         float m_droll, m_dclimb, m_dspeed;
         //! Type of system to be controlled
-        APM_Vehicle m_vehicle_type; 
+        APM_Vehicle m_vehicle_type;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -534,7 +534,7 @@ namespace Control
               sendData(buf, n);
 
               sendCommandPacket(MAV_CMD_NAV_LOITER_UNLIM);
-              inf("Loiter");
+              inf(DTR("Loiter"));
             }
           }
 
@@ -1042,7 +1042,7 @@ namespace Control
             }
             catch (std::runtime_error& e)
             {
-              err("%s", e.what());
+              err(DTR("%s"), e.what());
               war(DTR("Connection lost, retrying..."));
               Memory::clear(m_TCP_sock);
 
@@ -1446,7 +1446,7 @@ namespace Control
 
           mavlink_heartbeat_t hbt;
           mavlink_msg_heartbeat_decode(msg, &hbt);
-          
+
           // Update vehicle type if applicable
           if (m_vehicle_type == VEHICLE_UNKNOWN)
           {
@@ -1454,7 +1454,7 @@ namespace Control
             switch (mav_type)
             {
             default:
-              err("Controlling and unknown vehicle type.");
+              err(DTR("Controlling and unknown vehicle type."));
               break;
             case MAV_TYPE_FIXED_WING:
               m_vehicle_type = VEHICLE_FIXEDWING;
@@ -1469,7 +1469,7 @@ namespace Control
               break;
             }
           }
-          
+
 
           m_mode = hbt.custom_mode;
           if (m_vehicle_type == VEHICLE_COPTER)
