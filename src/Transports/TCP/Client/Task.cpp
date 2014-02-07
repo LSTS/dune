@@ -81,7 +81,7 @@ namespace Transports
             m_sock->connect(m_args.address, m_args.port);
             m_sock->setKeepAlive(true);
 
-            inf("connected to %s:%u", m_args.address.c_str(), m_args.port);
+            inf(DTR("connected to %s:%u"), m_args.address.c_str(), m_args.port);
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           }
           catch (std::runtime_error& e)

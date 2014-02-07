@@ -644,7 +644,7 @@ namespace Control
         {
           if (!(m_cloops & IMC::CL_SPEED))
           {
-            inf("speed control is NOT active");
+            inf(DTR("speed control is NOT active"));
             return;
           }
 
@@ -680,7 +680,7 @@ namespace Control
 
           if (!((m_cloops & IMC::CL_PATH) && m_args.ardu_tracker))
           {
-            inf("path control is NOT active");
+            inf(DTR("path control is NOT active"));
             return;
           }
 

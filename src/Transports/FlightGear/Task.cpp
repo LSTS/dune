@@ -282,7 +282,7 @@ namespace Transports
           }
           catch (NetworkError& error)
           {
-            war("Failed to send: %s ", error.what());
+            war(DTR("Failed to send: %s"), error.what());
           }
         }
       }

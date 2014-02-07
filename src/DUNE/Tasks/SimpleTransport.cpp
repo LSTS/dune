@@ -73,7 +73,7 @@ namespace DUNE
       IMC::Packet::serialize(msg, p, n);
 
       if (m_gargs.trace_out)
-        inf("outgoing: %s", msg->getName());
+        inf(DTR("outgoing: %s"), msg->getName());
 
       onDataTransmission(p, n);
     }
@@ -104,7 +104,7 @@ namespace DUNE
           dispatch(m, DF_KEEP_TIME | DF_KEEP_SRC_EID);
 
           if (m_gargs.trace_in)
-            inf("incoming: %s", m->getName());
+            inf(DTR("incoming: %s"), m->getName());
 
           delete m;
         }

@@ -422,7 +422,7 @@ namespace Maneuver
             if (!offlineOrWaiting())
             {
               m_fref_state.state = IMC::FollowRefState::FR_LOITER;
-              inf("LOITER, XY and Z NEAR");
+              inf(DTR("LOITER, XY and Z NEAR"));
             }
           }
           else
@@ -431,7 +431,7 @@ namespace Maneuver
             if(!offlineOrWaiting() )
             {
               m_fref_state.state = IMC::FollowRefState::FR_GOTO;
-              inf("GOTO, FAR");
+              inf(DTR("GOTO, FAR"));
             }
           }
         }

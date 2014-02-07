@@ -311,7 +311,7 @@ namespace Control
           else
             requestDeactivation();
 
-          inf(isActive() ? "enabling" : "disabling");
+          inf(isActive() ? DTR("enabling") : DTR("disabling"));
 
           if (!isActive())
             reset();

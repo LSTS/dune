@@ -110,7 +110,7 @@ namespace Transports
           if (slot == m_args.slot_number)
           {
             m_seconds.insert(i);
-            inf("slot second %u", i);
+            inf(DTR("slot second %u"), i);
           }
 
           if (++slot > m_args.slot_count)
@@ -217,7 +217,7 @@ namespace Transports
             }
             catch (std::runtime_error& e)
             {
-              war("deserialization error: %s", e.what());
+              war(DTR("deserialization error: %s"), e.what());
               return;
             }
             break;

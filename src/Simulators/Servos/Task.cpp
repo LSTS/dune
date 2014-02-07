@@ -197,14 +197,14 @@ namespace Simulators
           {
             m_servo_in_fault = Math::roundToInteger(m_prng->uniform(0, c_servo_count - 1));
             m_faulted = true;
-            war("fault triggered in servo #%d", m_servo_in_fault);
+            war(DTR("fault triggered in servo #%d"), m_servo_in_fault);
           }
         }
         else if (m_args.generate_faults && (m_servo_in_fault >= 0))
         {
           if (Clock::get() - m_fault_timer > c_fault_duration)
           {
-            war("servo #%d is no longer in fault", m_servo_in_fault);
+            war(DTR("servo #%d is no longer in fault"), m_servo_in_fault);
             m_servo_in_fault = -1;
           }
         }

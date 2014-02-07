@@ -473,7 +473,7 @@ namespace Vision
 
           unsigned pkt_count = frame->getPacketCount();
           if (pkt_count < c_pkts_per_frame)
-            war("lost at least %d packets", c_pkts_per_frame - pkt_count);
+            war(DTR("lost at least %d packets"), c_pkts_per_frame - pkt_count);
 
           if (isActive())
           {

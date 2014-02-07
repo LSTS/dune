@@ -808,11 +808,11 @@ namespace Plan
           m_task->war("--- %s ---", itr->first.c_str());
           while (!itr->second.empty())
           {
-            m_task->war("scheduled for: %.1f", itr->second.top().sched_time);
+            m_task->war(DTR("scheduled for: %.1f"), itr->second.top().sched_time);
             itr->second.top().list->toText(std::cerr);
             itr->second.pop();
           }
-          m_task->war("END %s ---", itr->first.c_str());
+          m_task->war(DTR("END %s ---"), itr->first.c_str());
         }
       }
 

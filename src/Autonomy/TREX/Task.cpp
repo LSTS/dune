@@ -183,7 +183,7 @@ namespace Autonomy
         if (msg->getDestination() != getSystemId())
           return;
 
-        war("Abort detected. Disabling TREX control...");
+        war(DTR("Abort detected. Disabling TREX control..."));
         requestDeactivation();
       }
 
@@ -204,18 +204,18 @@ namespace Autonomy
           {
             int i = system("services trex restart 1,2 > /dev/null &");
             if (i == 0)
-              inf("T-REX has been started.");
+              inf(DTR("T-REX has been started."));
             else
-              war("Could not start T-REX: %d.", i);
+              war(DTR("Could not start T-REX: %d."), i);
             break;
           }
           case IMC::TrexOperation::OP_REPORT_PLAN:
           {
             int i = system("services trex stop 1,2 > /dev/null &");
             if (i == 0)
-              inf("T-REX has been stopped.");
+              inf(DTR("T-REX has been stopped."));
             else
-              war("Could not stop T-REX: %d.", i);
+              war(DTR("Could not stop T-REX: %d."), i);
 
             break;
           }

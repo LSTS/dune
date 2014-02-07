@@ -180,7 +180,7 @@ namespace DUNE
     void
     BasicModem::send(const std::string& str)
     {
-      getTask()->inf("send: %s", Streams::sanitize(str).c_str());
+      getTask()->inf(DTR("send: %s"), Streams::sanitize(str).c_str());
       sendRaw((uint8_t*)str.c_str(), str.size());
     }
 
@@ -261,7 +261,7 @@ namespace DUNE
 
       if (isFragment(m_line))
       {
-        getTask()->inf("fragment: %s", Streams::sanitize(m_line).c_str());
+        getTask()->inf(DTR("fragment: %s"), Streams::sanitize(m_line).c_str());
         return false;
       }
 

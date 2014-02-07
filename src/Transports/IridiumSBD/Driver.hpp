@@ -330,7 +330,7 @@ namespace Transports
         }
         else
         {
-          getTask()->war("invalid unsolicited string %s", str.c_str());
+          getTask()->war(DTR("invalid unsolicited string %s"), str.c_str());
         }
       }
 

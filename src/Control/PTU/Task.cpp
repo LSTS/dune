@@ -110,7 +110,7 @@ namespace Control
       onUpdateParameters(void)
       {
         m_trg_id = resolveSystemName(m_trg_name);
-        inf("Target name is %s, with ID %d", m_trg_name.c_str(), m_trg_id);
+        inf(DTR("Target name is %s, with ID %d"), m_trg_name.c_str(), m_trg_id);
       }
 
       void
@@ -259,7 +259,7 @@ namespace Control
       void
       consume(const IMC::EulerAngles* msg)
       {
-        inf("EulerAngles arrived");
+        inf(DTR("received euler angles"));
         // Pan & Tilt angles: Sensor orientation relative to the PTU fixation
         // Used in case of angular velocity control
         m_sensor_flag = true;

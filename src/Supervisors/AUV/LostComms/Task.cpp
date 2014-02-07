@@ -314,7 +314,7 @@ namespace Supervisors
               }
               else if (canTakeAction())
               {
-                war("starting lost comms plan");
+                war(DTR("starting lost comms plan"));
 
                 IMC::PlanControl pc;
                 pc.type = IMC::PlanControl::PC_REQUEST;

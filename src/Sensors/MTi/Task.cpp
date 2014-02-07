@@ -197,14 +197,14 @@ namespace Sensors
               uint64_t time_diff = Clock::getMsec() - time_start;
 
               if (time_diff > 10)
-                war("took too long to read data: %lu ms", (unsigned long)time_diff);
+                war(DTR("took too long to read data: %lu ms"), (unsigned long)time_diff);
 
               return;
             }
           }
         }
 
-        war("overrun of %lu ms", (unsigned long)(Clock::getMsec() - time_start));
+        war(DTR("overrun of %lu ms"), (unsigned long)(Clock::getMsec() - time_start));
       }
 
       int

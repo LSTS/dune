@@ -435,7 +435,7 @@ namespace DUNE
             m_ts.track_length >= m_ts.loiter.radius * c_lsize_factor &&
             m_ts.track_length <= m_ts.loiter.radius * (2.0 - c_lsize_factor))
         {
-          inf("keep loitering");
+          inf(DTR("keep loitering"));
         }
         // avoid singularities (very close to loiter center)
         else if (m_ts.track_length < c_ldistance)

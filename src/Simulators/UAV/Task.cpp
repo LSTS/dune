@@ -359,7 +359,7 @@ namespace Simulators
         */
         //! - Simulation type
         m_model->m_sim_type = m_args.sim_type;
-        inf("UAV simulation type: %s", m_args.sim_type.c_str());
+        inf(DTR("UAV simulation type: %s"), m_args.sim_type.c_str());
 
         //! Start the simulation time
         m_start_time = Clock::get();

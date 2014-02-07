@@ -87,7 +87,7 @@ namespace Control
       onUpdateParameters(void)
       {
         m_trg_id = resolveSystemName(m_args.trg_name);
-        inf("Target name is %s, with ID %d", m_args.trg_name.c_str(), m_trg_id);
+        inf(DTR("Target name is %s, with ID %d"), m_args.trg_name.c_str(), m_trg_id);
         m_lat = Angles::radians(m_args.ptu_lat);
         m_lon = Angles::radians(m_args.ptu_lon);
         m_hei = m_args.ptu_height;
