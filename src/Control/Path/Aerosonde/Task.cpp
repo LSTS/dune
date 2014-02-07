@@ -65,9 +65,11 @@ namespace Control
       {
         Arguments m_args;
         IMC::DesiredRoll m_bank;
+        double m_airspeed;
 
         Task(const std::string& name, Tasks::Context& ctx):
-          DUNE::Control::PathController(name, ctx)
+          DUNE::Control::PathController(name, ctx),
+          m_airspeed(0.0)
         {
           param("Look Ahead Gain", m_args.la_gain)
           .defaultValue("1.0")
@@ -83,7 +85,9 @@ namespace Control
           .maximumValue("45")
           .defaultValue("30")
           .description("Limit for absolute value of output bank angle reference");
-        }
+
+          bind<IMC::IndicatedSpeed>(this);
+       }
 
         void
         onUpdateParameters(void)
@@ -105,8 +109,24 @@ namespace Control
         }
 
         void
+        consume(const IMC::IndicatedSpeed* airspeed)
+        {
+          m_airspeed = airspeed->value;
+        }
+
+        void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
+          // Unused state
+          (void) state;
+
+          //! Check if airspeed is larger than zero
+          if (m_airspeed <= 0)
+          {
+            war("No waypoint tracking control update: Airspeed <= 0!");
+            return;
+          }
+
           if (std::fabs(ts.track_vel.y) <= -ts.track_vel.x)
           {
             //! Command maximum bank angle if the aircraft is going on the
@@ -122,16 +142,13 @@ namespace Control
           }
           else
           {
-            //! Airspeed
-            // Check - speed should be the aircraft airspeed
-            double speed = std::sqrt(state.u * state.u + state.v * state.v + state.w * state.w);
             //! Look-ahead distance computation
-            double xla = m_args.la_gain * speed * speed;
+            double xla = m_args.la_gain * m_airspeed * m_airspeed;
             //! Desired turn-rate
             double desired_tr = -m_args.tr_gain * (xla * ts.track_vel.y + ts.track_pos.y * ts.track_vel.x);
 
             //! Output - Bank angle command, constrained
-            m_bank.value = trimValue(std::atan(desired_tr * speed / Math::c_gravity),
+            m_bank.value = trimValue(std::atan(desired_tr * m_airspeed / Math::c_gravity),
                                      -m_args.max_bank, m_args.max_bank);
           }
 
