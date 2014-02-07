@@ -1454,7 +1454,7 @@ namespace Control
             switch (mav_type)
             {
             default:
-              err(DTR("Controlling and unknown vehicle type."));
+              err(DTR("Controlling an unknown vehicle type."));
               break;
             case MAV_TYPE_FIXED_WING:
               m_vehicle_type = VEHICLE_FIXEDWING;
