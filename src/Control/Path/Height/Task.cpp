@@ -58,6 +58,7 @@ namespace Control
         IMC::DesiredVerticalRate m_vrate;
         double m_h_dot_cmd;
         double m_airspeed;
+        bool m_first_run;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::PathController(name, ctx)
@@ -80,6 +81,8 @@ namespace Control
           .units(Units::Meter)
           .defaultValue("20")
           .description("Limit for absolute value of output bank angle reference");
+
+          bind<IMC::IndicatedSpeed>(this);
         }
 
         void
@@ -93,6 +96,7 @@ namespace Control
         {
           // Activate vertical rate controller.
           enableControlLoops(IMC::CL_VERTICAL_RATE);
+          m_first_run = true;
         }
 
         void
@@ -110,25 +114,37 @@ namespace Control
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
-          m_h_dot_cmd = state.vz;
+          if (m_first_run)
+          {
+            m_h_dot_cmd = state.vz;
+            m_first_run = false;
+          }
 
-          double delta_h = ts.track_pos.z;
-          double delta_h_dot = -state.vz;
+          double delta_h = ts.end.z - (state.height - state.z);
+          double delta_h_dot = state.vz; //should be -h_dot, but z is pointing down and h is up
 
-          double trimmed_h = trimValue(delta_h / m_args.phi_h, -1, 1);
-          double trimmed_ss = trimValue((delta_h_dot + (m_args.k_vr * m_airspeed * trimmed_h)) / m_args.phi_ss,-1,1);
+          double h_dotdot;
 
-          double h_dotdot = m_args.k_ss * trimmed_ss;
-
-          if (fabs(delta_h / m_args.phi_h) < 1)
-            h_dotdot += m_args.k_vr * m_airspeed * (delta_h_dot / m_args.phi_h);
+          if (std::abs(delta_h / m_args.phi_h) < 1)
+          {
+            double delta_h_phi = (delta_h / m_args.phi_h);
+            double trimmed_ss = trimValue((delta_h_dot + (m_args.k_vr * m_airspeed * delta_h_phi)) / m_args.phi_ss,-1,1);
+            h_dotdot = m_args.k_ss * trimmed_ss + m_args.k_vr * m_airspeed * (delta_h_dot / m_args.phi_h);
+          }
+          else
+          {
+            double trimmed_ss = trimValue((delta_h_dot + (m_args.k_vr * m_airspeed)) / m_args.phi_ss,-1,1);
+            h_dotdot = m_args.k_ss * trimmed_ss;
+          }
 
           double h_dot_cmd_tmp = m_h_dot_cmd + h_dotdot * ts.delta;
 
-          if (fabs(h_dot_cmd_tmp) < m_airspeed * m_args.k_vr)
-            m_h_dot_cmd = h_dot_cmd_tmp;
+//          if (std::abs(h_dot_cmd_tmp) < m_airspeed * m_args.k_vr)
+//            m_h_dot_cmd = h_dot_cmd_tmp;
+          m_h_dot_cmd = trimValue(h_dot_cmd_tmp, -(m_airspeed * m_args.k_vr), (m_airspeed * m_args.k_vr));
 
           m_vrate.value = m_h_dot_cmd;
+
           // Send to bus
           dispatch(m_vrate);
         }
