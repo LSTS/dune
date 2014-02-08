@@ -5725,6 +5725,28 @@
     </field>
   </message>
 
+  <message id="481" name="Formation Evaluation Data" abbrev="FormationEval">
+    <description>
+      Variables to evaluation the formation state and performance.
+    </description>
+    <field name="Relative State" abbrev="relstate" type="message-list" message-type="RelativeState">
+      <description>
+        List of RelativeState messages, encoding the inter-vehicle formation state.
+      </description>
+    </field>
+  </message>
+
+  <message id="482" name="Relative State" abbrev="RelativeState">
+    <description>
+      Inter-vehicle formation state.
+    </description>
+    <field name="Reference Update Timeout" abbrev="timeout" type="fp32_t">
+      <description>
+        
+      </description>
+    </field>
+  </message>
+
   <!-- Vehicle Supervision -->
   <message id="500" name="Vehicle State" abbrev="VehicleState" source="vehicle">
     <description>
