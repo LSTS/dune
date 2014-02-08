@@ -106,7 +106,7 @@ namespace Control
         }
 
         bool
-        hasSpecificZControl(void)
+        hasSpecificZControl(void) const
         {
           return true;
         }
