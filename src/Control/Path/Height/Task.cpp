@@ -121,7 +121,7 @@ namespace Control
           }
 
           double phi_ss = m_args.phi_sp_ss * m_args.k_vr * m_airspeed;
-          double_t k_ss = phi_ss / m_args.tau_ss;
+          double k_ss = phi_ss / m_args.tau_ss;
 
           double delta_h = ts.end.z - (state.height - state.z);
           double delta_h_dot = state.vz; //should be -h_dot, but z is pointing down and h is up
