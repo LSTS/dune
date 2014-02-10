@@ -486,5 +486,15 @@
 #define DUNE_IMC_ABORTACKED 818
 //! FormCtrlParam identification number.
 #define DUNE_IMC_FORMCTRLPARAM 820
+//! DeviceUpdates identification number.
+#define DUNE_IMC_DEVICEUPDATES 873
+//! DeviceUpdate identification number.
+#define DUNE_IMC_DEVICEUPDATE 874
+//! IridiumSubscription identification number.
+#define DUNE_IMC_IRIDIUMSUBSCRIPTION 875
+//! AssetPosition identification number.
+#define DUNE_IMC_ASSETPOSITION 876
+//! MessagePart identification number.
+#define DUNE_IMC_MESSAGEPART 877
 
 #endif
