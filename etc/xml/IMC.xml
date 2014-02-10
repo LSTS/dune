@@ -1572,7 +1572,7 @@
     </field>
     <field name="Status Text" abbrev="text" type="plaintext"/>
   </message>
-  
+
   <message id="180" name="Group Membership State" abbrev="GroupMembershipState" source="ccu,vehicle" flags="periodic">
     <description>
       Group communication link assertion.
@@ -7298,46 +7298,4 @@
       </description>
     </field>
   </message>
-  
-  <!-- IRIDIUM Communications protocol extensions -->
-  <message abbrev="DeviceUpdates" name="Device Updates" id="873">
-      <field name="Positions" abbrev="positions" type="message-list" message-type="DeviceUpdate"/>
-  </message>
-  
-  <message abbrev="DeviceUpdate" name="Device Update" id="874">
-      <field name="IMC Identifier" abbrev="imc_id" type="uint16_t">
-          <description>IMC ID of the device to which this update corresponds to</description>
-	  </field>
-      <field name="Unix Time" abbrev="unix_time" type="uint32_t">
-          <description>Time in seconds since midnight of 1st January 1970 (Unix timestamp)</description>
-	  </field>
-      <field name="Latitude" abbrev="latitude" type="int32_t">
-          <description>Latitude (in degrees) of the device, multiplied by 1000000 (10^6)</description>
-	  </field>
-	  <field name="Longitude" abbrev="longitude" type="int32_t">
-	      <description>Longitude (in degrees) of the device, multiplied by 1000000 (10^6)</description>
-	  </field>
-  </message>
-  
-  <message abbrev="IridiumSubscription" name="Iridium Subscription" id="875">
-      <field name="Request Type" abbrev="req_type" type="uint8_t" unit="Enumerated" prefix="REQ">
-          <value abbrev="ACTIVATE" name="Activate Subscription" id="1"/>
-          <value abbrev="DEACTIVATE" name="Deactivate Subscription" id="2"/>
-      </field>
-  </message>
-  
-  <message abbrev="AssetPosition" name="Asset Position" id="876">
-      <field name="Position Type" abbrev="pos_type" type="uint8_t" unit="Enumerated" prefix="POS">
-          <value abbrev="DESIRED" name="Desired Asset Position" id="1"/>
-          <value abbrev="TARGET" name="Target Asset Position" id="2"/>
-      </field>
-  </message>
-  
-  <message abbrev="MessagePart" name="Message Fragment" id="877">
-      <field name="Transmission Unique Id" abbrev="uid" type="uint8_t"/>
-      <field name="Fragment Number" abbrev="frag_number" type="uint8_t"/>
-      <field name="Total Number of fragments" abbrev="num_frags" type="uint8_t"/>
-      <field name="Fragment Data" abbrev="data" type="rawdata"/>     
-  </message>
-  
 </messages>
