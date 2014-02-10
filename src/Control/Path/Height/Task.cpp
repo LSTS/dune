@@ -46,9 +46,9 @@ namespace Control
 
       struct Arguments
       {
-        double k_ss;
+        double tau_ss;
         double k_vr;
-        double phi_ss;
+        double phi_sp_ss;
         double phi_h;
       };
 
@@ -63,24 +63,24 @@ namespace Control
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::PathController(name, ctx)
         {
-          param("Sliding Surface maximum gain", m_args.k_ss)
+          param("Sliding Surface maximum gain", m_args.tau_ss)
               .units(Units::MeterPerSquareSecond)
-          .defaultValue("0.1")
+          .defaultValue("0.25")
           .description("Sliding Surface maximum gain for control");
 
           param("Vertical Rate maximum gain", m_args.k_vr)
           .defaultValue("0.15")
           .description("Vertical Rate maximum gain for control");
 
-          param("Sliding Surface bandwidth", m_args.phi_ss)
+          param("Sliding Surface bandwidth scaler", m_args.phi_sp_ss)
           .units(Units::MeterPerSecond)
-          .defaultValue("10")
-          .description("Limit for absolute value of output bank angle reference");
+          .defaultValue("0.7")
+          .description("Sliding Surface bandwidth scaler");
 
           param("Height bandwidth", m_args.phi_h)
           .units(Units::Meter)
           .defaultValue("20")
-          .description("Limit for absolute value of output bank angle reference");
+          .description("Limit distance above and bellow desired height from which maximum control is used");
 
           bind<IMC::IndicatedSpeed>(this);
         }
@@ -120,27 +120,24 @@ namespace Control
             m_first_run = false;
           }
 
+          double phi_ss = m_args.phi_sp_ss * m_args.k_vr * m_airspeed;
+          double_t k_ss = phi_ss / m_args.tau_ss;
+
           double delta_h = ts.end.z - (state.height - state.z);
           double delta_h_dot = state.vz; //should be -h_dot, but z is pointing down and h is up
 
           double h_dotdot;
 
-          if (std::abs(delta_h / m_args.phi_h) < 1)
-          {
-            double delta_h_phi = (delta_h / m_args.phi_h);
-            double trimmed_ss = trimValue((delta_h_dot + (m_args.k_vr * m_airspeed * delta_h_phi)) / m_args.phi_ss,-1,1);
-            h_dotdot = m_args.k_ss * trimmed_ss + m_args.k_vr * m_airspeed * (delta_h_dot / m_args.phi_h);
-          }
-          else
-          {
-            double trimmed_ss = trimValue((delta_h_dot + (m_args.k_vr * m_airspeed)) / m_args.phi_ss,-1,1);
-            h_dotdot = m_args.k_ss * trimmed_ss;
-          }
+          double delta_h_phi = (delta_h / m_args.phi_h);
+          double trimmed_d_h_phi = trimValue(delta_h_phi,-1,1);
+          double trimmed_ss = trimValue((delta_h_dot + (m_args.k_vr * m_airspeed * trimmed_d_h_phi)) / phi_ss,-1,1);
+          h_dotdot = k_ss * trimmed_ss;
+
+          if (std::abs(delta_h_phi) < 1)
+            h_dotdot += m_args.k_vr * m_airspeed * (delta_h_dot / m_args.phi_h);
 
           double h_dot_cmd_tmp = m_h_dot_cmd + h_dotdot * ts.delta;
 
-//          if (std::abs(h_dot_cmd_tmp) < m_airspeed * m_args.k_vr)
-//            m_h_dot_cmd = h_dot_cmd_tmp;
           m_h_dot_cmd = trimValue(h_dot_cmd_tmp, -(m_airspeed * m_args.k_vr), (m_airspeed * m_args.k_vr));
 
           m_vrate.value = m_h_dot_cmd;
