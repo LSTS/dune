@@ -32,11 +32,16 @@
 // MAVLink headers.
 #include <mavlink/ardupilotmega/mavlink.h>
 
+// STDlib headers
+#include <vector>
+
 namespace UserInterfaces
 {
   namespace RCViaArdupilot
   {
     using DUNE_NAMESPACES;
+
+    static const unsigned int NUMBER_OF_CHANNELS = 8;
 
     struct Arguments
     {
@@ -45,8 +50,6 @@ namespace UserInterfaces
       // Serial port baud rate.
       unsigned uart_baud;
     };
-
-
 
     struct Task: public DUNE::Tasks::Task
     {
@@ -65,6 +68,8 @@ namespace UserInterfaces
       bool m_got_first_rc_input;
       //! Time of previous packet
       double m_time_of_previous_packet;
+      //! Holds current sent PWM values
+      IMC::PWM m_pwm[NUMBER_OF_CHANNELS];
 
 
       //! Constructor.
@@ -86,7 +91,21 @@ namespace UserInterfaces
 
         m_time_of_previous_packet = Clock::get();
 
+        initializePWMContainer();
+
         setEntityState(IMC::EntityState::ESTA_ERROR, "Not yet gotten first RC input.");
+      }
+
+      // Resets private PWM container and sets correct IDs.
+      void
+      initializePWMContainer()
+      {
+        for(unsigned int i = 0; i < NUMBER_OF_CHANNELS; ++i)
+        {
+          m_pwm[i].id = i + 1;  // 1-indexed id.
+          m_pwm[i].period = 20000;
+          m_pwm[i].duty_cycle = 1500;
+        }
       }
 
 
@@ -250,7 +269,7 @@ namespace UserInterfaces
               switch(status.parse_state)
               {
               case MAVLINK_PARSE_STATE_IDLE:
-                spew(DTR("failed at state IDLE"));
+                spew(DTR("failed at state IDLE, count: %d"), status.packet_rx_drop_count);
                 break;
               case MAVLINK_PARSE_STATE_GOT_STX:
                 spew(DTR("failed at state GOT_STX"));
@@ -335,17 +354,20 @@ namespace UserInterfaces
             rc_raw.chan6_raw
         );
 
-        IMC::ArduPilotPwm raw_pwm;
-        raw_pwm.chan1 = rc_raw.chan1_raw;
-        raw_pwm.chan2 = rc_raw.chan2_raw;
-        raw_pwm.chan3 = rc_raw.chan3_raw;
-        raw_pwm.chan4 = rc_raw.chan4_raw;
-        raw_pwm.chan5 = rc_raw.chan5_raw;
-        raw_pwm.chan6 = rc_raw.chan6_raw;
-        raw_pwm.chan7 = rc_raw.chan7_raw;
-        raw_pwm.chan8 = rc_raw.chan8_raw;
 
-        dispatch(raw_pwm);
+        m_pwm[0].duty_cycle = rc_raw.chan1_raw;
+        m_pwm[1].duty_cycle = rc_raw.chan2_raw;
+        m_pwm[2].duty_cycle = rc_raw.chan3_raw;
+        m_pwm[3].duty_cycle = rc_raw.chan4_raw;
+        m_pwm[4].duty_cycle = rc_raw.chan5_raw;
+        m_pwm[5].duty_cycle = rc_raw.chan6_raw;
+        m_pwm[6].duty_cycle = rc_raw.chan7_raw;
+        m_pwm[7].duty_cycle = rc_raw.chan8_raw;
+
+        for(unsigned int i = 0; i < NUMBER_OF_CHANNELS; ++i)
+        {
+          dispatch(m_pwm[i]);
+        }
       }
 
 
