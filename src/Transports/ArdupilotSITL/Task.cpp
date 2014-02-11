@@ -36,6 +36,7 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    //! Struct defined by APM SITL interface
     struct SITL_rc_control {
       uint16_t pwm[11];
       uint16_t speed, direction, turbulance;
@@ -56,19 +57,48 @@ namespace Transports
       uint32_t magic; // 0x4c56414f
     };
 
-
-
     struct SITL_pwm_packet {
       uint16_t pwm[8];
+    };
+
+    //! %Task arguments.
+    struct Arguments
+    {
+      //! port from sitl
+      uint16_t sitl_port_in;
+      //! Port to sitl
+      uint16_t sitl_port_out;
+      //! Address of ardupilot sitl application
+      Address sitl_addr;
+
     };
 
     struct Task: public DUNE::Tasks::Task
     {
 
+      //! Arguments
+      Arguments m_args;
 
-      UDPSocket* m_UPD_sock_rc_in;
-      UDPSocket* m_UDP_sock_out;
+      //! port from sitl
+      uint16_t m_sitl_port_in;
+      //! Port to sitl
+      uint16_t m_sitl_port_out;
+      //! Address of ardupilot sitl application
+      Address m_sitl_addr;
+
+
+      //! UDP Socket for input from apm.
+      UDPSocket* m_udp_sock_rc_in;
+      //! UDP socket for simulation output.
+      UDPSocket* m_udp_sock_out;
+      //! Buffer
       uint8_t m_buf[512];
+
+      //! Ready to send packet, updated for each new pwm IMC message.
+      SITL_pwm_packet m_pwm;
+      //! Holdings for outgoing motor pwm values
+      IMC::SetPWM m_motor_pwm[11];
+
 
       IMC::SimulatedState m_sstate;
       IMC::Acceleration m_accel;
@@ -81,12 +111,33 @@ namespace Transports
         DUNE::Tasks::Task(name, ctx)
       {
 
-        bind<IMC::ArduPilotPwm>(this);
+        param("SITL - Port In", m_args.sitl_port_in)
+        .defaultValue("5502")
+        .description("Port for data from the sitl application");
+
+        param("SITL - Port Out", m_args.sitl_port_out)
+        .defaultValue("5501")
+        .description("Port for data to the sitl application");
+
+        param("SITL - Address", m_args.sitl_addr)
+        .defaultValue("127.0.0.1")
+        .description("Address of the sitl application.");
+
+        bind<IMC::PWM>(this);
         bind<IMC::SimulatedState>(this);
         bind<IMC::Acceleration>(this);
 
         // Set OK status
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+        for(int i = 0; i < 11; ++i)
+        {
+          m_motor_pwm[i].id         = i+1;
+          m_motor_pwm[i].period     = 20000;
+          m_motor_pwm[i].duty_cycle = 1500;
+        }
+
+
       }
 
       //! Update internal state with new parameter values.
@@ -111,7 +162,12 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
-        m_UDP_sock_out = new UDPSocket;
+        m_sitl_addr     = m_args.sitl_addr;
+        m_sitl_port_in  = m_args.sitl_port_in;
+        m_sitl_port_out = m_args.sitl_port_out;
+
+
+        m_udp_sock_out = new UDPSocket;
         openConnection();
       }
 
@@ -185,15 +241,12 @@ namespace Transports
         try
         {
           trace(DTR("Sending FDM to ardupilot.."));
-          m_UDP_sock_out->write((unsigned char*)&fdm, sizeof(SITL_fdm), "127.0.0.1", 5501);
+          m_udp_sock_out->write((unsigned char*)&fdm, sizeof(SITL_fdm), m_sitl_addr.c_str(), m_sitl_port_out);
         }
         catch(...)
         {
           inf(DTR("Unable to send fdm"));
         }
-
-
-
 
       }
 
@@ -204,38 +257,49 @@ namespace Transports
       }
 
       void
-      consume(const IMC::ArduPilotPwm* msg)
+      consume(const IMC::PWM* msg)
       {
-
-        // Send RC packet!
-        SITL_pwm_packet pwm;
-        pwm.pwm[0] = msg->chan1;
-        pwm.pwm[1] = msg->chan2;
-        pwm.pwm[2] = msg->chan3;
-        pwm.pwm[3] = msg->chan4;
-        pwm.pwm[4] = msg->chan5;
-        pwm.pwm[5] = msg->chan6;
-        pwm.pwm[6] = msg->chan7;
-        pwm.pwm[7] = msg->chan8;
-
-        spew(DTR("Sending raw pwm data.."));
-        try
+        // Check source entity label
+        if (resolveEntity(msg->getSourceEntity()) == "RcViaArdupilot")
         {
-          m_UDP_sock_out->write((unsigned char*)&pwm, sizeof(SITL_pwm_packet), "127.0.0.1", 5501);
-        }
-        catch(...)
-        {
-          inf(DTR("Unable to send."));
-        }
 
+          spew(DTR("Got PWM packet of ID: %d"), msg->id);
+
+          // Only accept 8 values. Ids are 1-indexed.
+          if (msg->id > 8)
+            return;
+
+          m_pwm.pwm[msg->id-1] = msg->duty_cycle;
+
+          // When we receive ID 8, send
+          // Not optimal way of doing things though..
+          if (msg->id == 8)
+          {
+            spew(DTR("Sending raw pwm data.."));
+            try
+            {
+              m_udp_sock_out->write((unsigned char*)&m_pwm, sizeof(SITL_pwm_packet), m_sitl_addr.c_str(), m_sitl_port_out);
+            }
+            catch(...)
+            {
+              inf(DTR("Unable to send."));
+            }
+          }
+
+
+        }
+        else
+        {
+          trace(DTR("Got PWM message from unknown entity."));
+        }
       }
 
       void
       openConnection()
       {
-        Memory::clear(m_UPD_sock_rc_in);
-        m_UPD_sock_rc_in = new UDPSocket;
-        m_UPD_sock_rc_in->bind(5502, "");
+        Memory::clear(m_udp_sock_rc_in);
+        m_udp_sock_rc_in = new UDPSocket;
+        m_udp_sock_rc_in->bind(m_sitl_port_in, "");
       }
 
       //! Initialize resources.
@@ -248,22 +312,22 @@ namespace Transports
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_UPD_sock_rc_in);
+        Memory::clear(m_udp_sock_rc_in);
       }
 
       int
       receiveData(uint8_t* buf, size_t blen)
       {
-        if (m_UPD_sock_rc_in)
+        if (m_udp_sock_rc_in)
           {
             try
             {
-                return m_UPD_sock_rc_in->read(buf, blen);
+                return m_udp_sock_rc_in->read(buf, blen);
             }
             catch (...)
             {
                 war(DTR("Connection lost, retrying..."));
-                Memory::clear(m_UPD_sock_rc_in);
+                Memory::clear(m_udp_sock_rc_in);
 
                 openConnection();
                 return 0;
@@ -275,8 +339,8 @@ namespace Transports
       bool
       poll(double timeout)
       {
-        if (m_UPD_sock_rc_in != NULL)
-          return Poll::poll(*m_UPD_sock_rc_in, timeout);
+        if (m_udp_sock_rc_in != NULL)
+          return Poll::poll(*m_udp_sock_rc_in, timeout);
         return false;
       }
 
@@ -287,9 +351,9 @@ namespace Transports
         while (!stopping())
         {
           // Poll socket for incomming RC messages
-          if(m_UPD_sock_rc_in != NULL)
+          if(m_udp_sock_rc_in != NULL)
           {
-            int i = 0;
+
             while(poll(0.0))
             {
 
@@ -300,27 +364,11 @@ namespace Transports
               {
                 SITL_rc_control* rc_in = (SITL_rc_control*)&m_buf;
 
-                IMC::ArduPilotMotorControl msg;
-                msg.chan1 = rc_in->pwm[0];
-                msg.chan2 = rc_in->pwm[1];
-                msg.chan3 = rc_in->pwm[2];
-                msg.chan4 = rc_in->pwm[3];
-                msg.chan5 = rc_in->pwm[4];
-                msg.chan6 = rc_in->pwm[5];
-                msg.chan7 = rc_in->pwm[6];
-                msg.chan8 = rc_in->pwm[7];
-                msg.chan9 = rc_in->pwm[8];
-                msg.chan10 = rc_in->pwm[9];
-                msg.chan11 = rc_in->pwm[10];
-
-                msg.wind_direction = rc_in->direction/100.0;
-                msg.wind_speed = rc_in->speed/100.0;
-                msg.wind_turbulence = rc_in->turbulance/100.0;
-
-                dispatch(msg);
-
-
-
+                for(int i = 0; i < 11; ++i)
+                {
+                  m_motor_pwm[i].duty_cycle = rc_in->pwm[i];
+                  dispatch(m_motor_pwm[i]);
+                }
               }
             } // end while
           }
