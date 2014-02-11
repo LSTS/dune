@@ -245,16 +245,21 @@ namespace Transports
             {
               inf("Ailron: %f, Flaps: %f, Elevator: %f, Throttle: %f ", fg_ctrls->aileron, fg_ctrls->flaps, fg_ctrls->elevator, fg_ctrls->throttle[0]);
 
-              IMC::ArduPilotPwm pwm;
+              IMC::PWM pwm[4];
 
               // -1 should be 1000, +1 should be 2000
-              pwm.chan1 = 1000.0 + 1000.0*(fg_ctrls->aileron+1.0)/2.0;
-              pwm.chan2 = 1000.0 + 1000.0*(fg_ctrls->elevator+1.0)/2.0;
-              pwm.chan3 = 1000.0 + 1000.0*(fg_ctrls->throttle[0])/2.0;
-              pwm.chan4 = 1000.0 + 1000.0*(fg_ctrls->rudder+1.0)/2.0;
+              pwm[0].duty_cycle = 1000.0 + 1000.0*(fg_ctrls->aileron+1.0)/2.0;
+              pwm[1].duty_cycle = 1000.0 + 1000.0*(fg_ctrls->elevator+1.0)/2.0;
+              pwm[2].duty_cycle = 1000.0 + 1000.0*(fg_ctrls->throttle[0])/2.0;
+              pwm[3].duty_cycle = 1000.0 + 1000.0*(fg_ctrls->rudder+1.0)/2.0;
 
+              for(int i = 0; i < 4; i++)
+              {
+                pwm[i].id     = i+1;
+                pwm[i].period = 20000;
+                dispatch(pwm[i]);
+              }
 
-              dispatch(pwm);
 
 
             }
