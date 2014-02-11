@@ -34,13 +34,11 @@ namespace Simulators
   namespace Multicopter
   {
     using DUNE_NAMESPACES;
-    using namespace Simulators::Multicopter;
+//    using namespace Simulators::Multicopter;
 
 
     struct Arguments
     {
-
-
       double mass;
       double hover_throttle;        // 0.45;
       double k;                     // pitch/roll motor gain
@@ -55,19 +53,7 @@ namespace Simulators
       Math::Matrix cog;
       Math::Matrix inertia;
       Math::Matrix ldrag;
-    };
-
-
-    struct Arguments2
-    {
-      //! AUV Model Parameters
-      double mass;
-      double max_thrust;
-      Matrix cog;
-      Matrix addedmass;
-      Matrix inertia;
-
-      bool superSimple;
+      Math::Matrix qdrag;
     };
 
     struct Task: public Tasks::Periodic
@@ -164,7 +150,11 @@ namespace Simulators
         .defaultValue("")
         .description("Linear drag of the vehicle (6 elements of main diagonal)");
 
-        bind<IMC::ArduPilotMotorControl>(this);
+        param("Quadratic Drag", m_args.qdrag)
+        .defaultValue("")
+        .description("Quadratic (abs(x)*x) drag of the vehicle (6 elements of main diagonal)");
+
+        bind<IMC::SetPWM>(this);
 
         // Set OK status
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -206,6 +196,12 @@ namespace Simulators
           ldrag[i] = m_args.ldrag(i);
         }
 
+        double qdrag[6];
+        for(int i = 0; i < 6; i++)
+        {
+          qdrag[i] = m_args.qdrag(i);
+        }
+
 
         Simulators::Multicopter::MulticopterModelParameters par;
         par.mass            = m_args.mass;
@@ -219,6 +215,7 @@ namespace Simulators
         par.cog             = m_args.cog;
         par.inertia         = Matrix(inertia, 3);
         par.ldrag           = Matrix(ldrag, 6);
+        par.qdrag           = Matrix(qdrag, 6);
 
         if(par.frame == Frame_quad)
           inf("Got quad");
@@ -280,9 +277,18 @@ namespace Simulators
       }
 
       void
-      consume(const IMC::ArduPilotMotorControl* msg)
+      consume(const IMC::SetPWM* msg)
       {
+        if (resolveEntity(msg->getSourceEntity()) == "Sitl Layer")
+        {
+          int id = 0;
+          bool got_relevant_message = true;
 
+          // This implements the strange mapping APM has to motors.
+          // Also remember channels are 1-indexed.
+          // [1:1, 2:2, 3:3, 4:4, 5:7, 6:8, 7:10, 8:11]
+
+          /*
         // Note: Intentionally skipping chan. 5,6 and 9.
         m_servo_speed(0) = msg->chan1;
         m_servo_speed(1) = msg->chan2;
@@ -292,20 +298,47 @@ namespace Simulators
         m_servo_speed(5) = msg->chan8;
         m_servo_speed(6) = msg->chan10;
         m_servo_speed(7) = msg->chan11;
+           *
+           */
 
-        for(int i = 0; i < 8; i++)
-        {
-          m_servo_speed(i) = (m_servo_speed(i)-1000)/1000.0;
+          switch(msg->id)
+          {
+            default:
+              got_relevant_message = false;
+              break;
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+              id = msg->id;
+              break;
+            case 7:
+              id = 5;
+              break;
+            case 8:
+              id = 6;
+              break;
+            case 10:
+              id = 7;
+              break;
+            case 11:
+              id = 8;
+              break;
+          }
+
+          if (got_relevant_message)
+          {
+            // this is zero-indexed.
+            m_servo_speed(id-1) = (msg->duty_cycle - 1000)/1000.0;
+          }
+
+
+
         }
-
-        double thrust;
-        for (unsigned int i = 0; i < m_model->getNMotors(); i++) {
-              //thrust += servo_speed.get(i, i, 0, 0);
-              // Positive thrust negative on NED upwards..
-              thrust -= m_servo_speed(i) * m_model->getThrustScale();
-            }
-
-        debug(DTR("Thrust: %f"), thrust);
+        else
+        {
+          trace(DTR("Got a SetPWM message from another source. Ignoring."));
+        }
       }
 
       void
@@ -364,6 +397,7 @@ namespace Simulators
 
         // Fill position.
         double sim_time = Clock::get() - m_start_time;
+        (void) sim_time;
         m_sstate.x = m_position(0);// + sim_time * m_args.wx;
         m_sstate.y = m_position(1);// + sim_time * m_args.wy;
         m_sstate.z = m_position(2);
@@ -389,12 +423,6 @@ namespace Simulators
         m_acc.x = accel(0);
         m_acc.y = accel(1);
         m_acc.z = accel(2);
-
-
-        //m_sstate.ax = accel(0);
-        //m_sstate.ay = accel(1);
-        //m_sstate.az = accel(2);
-
 
         dispatch(m_acc);
         dispatch(m_sstate);

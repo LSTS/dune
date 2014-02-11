@@ -89,6 +89,7 @@ namespace Simulators
       Math::Matrix cog;
       Math::Matrix inertia;
       Math::Matrix ldrag;
+      Math::Matrix qdrag;
     };
 
 
@@ -123,6 +124,8 @@ namespace Simulators
       Math::Matrix m_inertia;
       //! Model's linear damping coefficients
       Math::Matrix m_ldrag;
+      //! Models quadratic (sign(x)*x) coefficients
+      Math::Matrix m_qdrag;
 
       //! Calculated in constructor.
       //! From input to newton.
@@ -169,6 +172,11 @@ namespace Simulators
       //! Computes linear damping matrix
       Math::Matrix
       computeD(const Math::Matrix& nu);
+
+      //! Computes quadratic damping matrix
+      Math::Matrix
+      computeQ(const Math::Matrix& nu);
+
 
     };
 

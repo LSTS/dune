@@ -39,7 +39,8 @@ namespace Simulators
       m_configuration(param.configuration),
       m_cog(param.cog),
       m_inertia(param.inertia),
-      m_ldrag(param.ldrag)
+      m_ldrag(param.ldrag),
+      m_qdrag(param.qdrag)
     {
       // This does not change.
       m_matrix_mass = computeM();
@@ -84,7 +85,22 @@ namespace Simulators
     //! Computes linear damping matrix
     Math::Matrix
     MulticopterModel::computeD(const Math::Matrix& nu) {
+      (void) nu;
       return m_ldrag;
+    }
+
+    //! Computes quadratic damping matrix
+    Math::Matrix
+    MulticopterModel::computeQ(const Math::Matrix& nu)
+    {
+
+      Math::Matrix nu_signsquare = Matrix(6, 1);
+      for(int i = 0; i < 6; i++)
+      {
+        nu_signsquare(i) = abs(nu(i))*nu(i);
+      }
+
+      return m_qdrag * nu_signsquare;
     }
 
 
@@ -215,8 +231,8 @@ namespace Simulators
         }
         else
         {
-          m[0] += m_k * -sin(Angles::radians(m_motors[i].angle)) * servo_speed(i) * servo_speed(i);
-          m[1] += m_k *  cos(Angles::radians(m_motors[i].angle)) * servo_speed(i) * servo_speed(i);
+          m[0] += m_k * m_l * -sin(Angles::radians(m_motors[i].angle)) * servo_speed(i) * servo_speed(i);
+          m[1] += m_k * m_l *  cos(Angles::radians(m_motors[i].angle)) * servo_speed(i) * servo_speed(i);
           if (m_motors[i].clockwise)
             m[2] -= m_b * servo_speed(i) * servo_speed(i);
           else
