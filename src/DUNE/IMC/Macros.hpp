@@ -244,6 +244,10 @@
 #define DUNE_IMC_QUERYLEDBRIGHTNESS 313
 //! SetLedBrightness identification number.
 #define DUNE_IMC_SETLEDBRIGHTNESS 314
+//! SetPWM identification number.
+#define DUNE_IMC_SETPWM 315
+//! PWM identification number.
+#define DUNE_IMC_PWM 316
 //! EstimatedState identification number.
 #define DUNE_IMC_ESTIMATEDSTATE 350
 //! EstimatedStreamVelocity identification number.

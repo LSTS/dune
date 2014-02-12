@@ -193,6 +193,7 @@
     <unit abbrev="m/s" name="Meter per second"/>
     <unit abbrev="m/s/s" name="Meter per second^2"/>
     <unit abbrev="ms" name="Millisecond"/>
+    <unit abbrev="µs" name="Microsecond"/>
     <unit abbrev="S/m" name="Siemens per meter"/>
     <unit abbrev="Nm" name="Newton meter"/>
     <unit abbrev="N" name="Newton"/>
@@ -3206,6 +3207,52 @@
     <field name="Value" abbrev="value" type="uint8_t">
       <description>
         Desired brightness value.
+      </description>
+    </field>
+  </message>
+
+  <message id="315" name="Set PWM" abbrev="SetPWM" source="vehicle">
+    <description>
+      Set properties of a PWM signal channel.
+    </description>
+    <field name="Channel Identifier" abbrev="id" type="uint8_t">
+      <description>
+        PWM channel identifier.
+      </description>
+    </field>
+    <field name="Period" abbrev="period" type="uint32_t" unit="µs">
+      <description>
+        The total period of the PWM signal (sum of active and inactive
+        time of the PWM).
+      </description>
+    </field>
+    <field name="Duty Cycle" abbrev="duty_cycle" type="uint32_t" unit="µs">
+      <description>
+        The active time of the PWM signal. The duty cycle value must
+        be less or equal to the period.
+      </description>
+    </field>
+  </message>
+
+  <message id="316" name="PWM" abbrev="PWM" source="vehicle">
+    <description>
+      Properties of a PWM signal channel.
+    </description>
+    <field name="Channel Identifier" abbrev="id" type="uint8_t">
+      <description>
+        PWM channel identifier.
+      </description>
+    </field>
+    <field name="Period" abbrev="period" type="uint32_t" unit="µs">
+      <description>
+        The total period of the PWM signal (sum of active and inactive
+        time of the PWM).
+      </description>
+    </field>
+    <field name="Duty Cycle" abbrev="duty_cycle" type="uint32_t" unit="µs">
+      <description>
+        The active time of the PWM signal. The duty cycle value is
+        less or equal to the period.
       </description>
     </field>
   </message>

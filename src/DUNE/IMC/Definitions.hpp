@@ -8058,6 +8058,148 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Set PWM.
+    class SetPWM: public Message
+    {
+    public:
+      //! Channel Identifier.
+      uint8_t id;
+      //! Period.
+      uint32_t period;
+      //! Duty Cycle.
+      uint32_t duty_cycle;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 315;
+      }
+
+      SetPWM(void);
+
+      Message*
+      clone(void) const
+      {
+        return new SetPWM(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SetPWM::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SetPWM";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 9;
+      }
+
+      uint16_t
+      getSubId(void) const;
+
+      void
+      setSubId(uint16_t subid);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! PWM.
+    class PWM: public Message
+    {
+    public:
+      //! Channel Identifier.
+      uint8_t id;
+      //! Period.
+      uint32_t period;
+      //! Duty Cycle.
+      uint32_t duty_cycle;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 316;
+      }
+
+      PWM(void);
+
+      Message*
+      clone(void) const
+      {
+        return new PWM(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return PWM::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PWM";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 9;
+      }
+
+      uint16_t
+      getSubId(void) const;
+
+      void
+      setSubId(uint16_t subid);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Estimated State.
     class EstimatedState: public Message
     {

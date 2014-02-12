@@ -7803,6 +7803,166 @@ namespace DUNE
       IMC::toJSON(os__, "value", value, nindent__);
     }
 
+    SetPWM::SetPWM(void)
+    {
+      m_header.mgid = 315;
+      clear();
+    }
+
+    void
+    SetPWM::clear(void)
+    {
+      id = 0;
+      period = 0;
+      duty_cycle = 0;
+    }
+
+    bool
+    SetPWM::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::SetPWM& other__ = dynamic_cast<const SetPWM&>(msg__);
+      if (id != other__.id) return false;
+      if (period != other__.period) return false;
+      if (duty_cycle != other__.duty_cycle) return false;
+      return true;
+    }
+
+    int
+    SetPWM::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    SetPWM::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(id, ptr__);
+      ptr__ += IMC::serialize(period, ptr__);
+      ptr__ += IMC::serialize(duty_cycle, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    SetPWM::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(id, bfr__, size__);
+      bfr__ += IMC::deserialize(period, bfr__, size__);
+      bfr__ += IMC::deserialize(duty_cycle, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    SetPWM::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(period, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(duty_cycle, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    SetPWM::getSubId(void) const
+    {
+      return id;
+    }
+
+    void
+    SetPWM::setSubId(uint16_t subid)
+    {
+      id = (uint8_t)subid;
+    }
+
+    void
+    SetPWM::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "id", id, nindent__);
+      IMC::toJSON(os__, "period", period, nindent__);
+      IMC::toJSON(os__, "duty_cycle", duty_cycle, nindent__);
+    }
+
+    PWM::PWM(void)
+    {
+      m_header.mgid = 316;
+      clear();
+    }
+
+    void
+    PWM::clear(void)
+    {
+      id = 0;
+      period = 0;
+      duty_cycle = 0;
+    }
+
+    bool
+    PWM::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::PWM& other__ = dynamic_cast<const PWM&>(msg__);
+      if (id != other__.id) return false;
+      if (period != other__.period) return false;
+      if (duty_cycle != other__.duty_cycle) return false;
+      return true;
+    }
+
+    int
+    PWM::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    PWM::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(id, ptr__);
+      ptr__ += IMC::serialize(period, ptr__);
+      ptr__ += IMC::serialize(duty_cycle, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    PWM::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(id, bfr__, size__);
+      bfr__ += IMC::deserialize(period, bfr__, size__);
+      bfr__ += IMC::deserialize(duty_cycle, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    PWM::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(period, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(duty_cycle, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    PWM::getSubId(void) const
+    {
+      return id;
+    }
+
+    void
+    PWM::setSubId(uint16_t subid)
+    {
+      id = (uint8_t)subid;
+    }
+
+    void
+    PWM::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "id", id, nindent__);
+      IMC::toJSON(os__, "period", period, nindent__);
+      IMC::toJSON(os__, "duty_cycle", duty_cycle, nindent__);
+    }
+
     EstimatedState::EstimatedState(void)
     {
       m_header.mgid = 350;
