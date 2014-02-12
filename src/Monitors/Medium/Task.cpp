@@ -103,8 +103,9 @@ namespace Monitors
         .description("No valid wet sensor data timeout");
 
         param("Wet Data Threshold", m_args.water_threshold)
-        .defaultValue("5.0")
-        .minimumValue("3.0")
+        .defaultValue("1.0")
+        .minimumValue("0.0")
+        .maximumValue("5.0")
         .description("No valid wet sensor data threshold value");
 
         param("GPS Timeout", m_args.gps_timeout)
@@ -142,7 +143,6 @@ namespace Monitors
         m_water_presence.setTop(c_water_presence);
 
         // Register consumers.
-        bind<IMC::Conductivity>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::Salinity>(this);
@@ -157,21 +157,6 @@ namespace Monitors
         m_init.setTop(m_args.init_time);
         m_water_status.setTop(m_args.water_timeout);
         m_gps_status.setTop(m_args.gps_timeout);
-      }
-
-      void
-      consume(const IMC::Conductivity* msg)
-      {
-        if (m_args.vtype == "UAV")
-        {
-          (void) msg;
-          return;
-        }
-
-        m_water_presence.reset();
-
-        if (msg->value >= m_args.water_threshold)
-          m_water_status.reset();
       }
 
       void
