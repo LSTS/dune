@@ -160,6 +160,7 @@ namespace Power
         if (m_act_timer.overflow())
         {
           activationFailed(DTR("failed to contact device"));
+          sendPowerChannelControl(m_args.pwr_chn, false);
           m_activating = false;
           return;
         }
