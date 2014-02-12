@@ -231,6 +231,35 @@ namespace Monitors
       }
 
       void
+      checkWaterPresence(void)
+      {
+        if (m_water_presence.overflow())
+        {
+          m_vm.medium = IMC::VehicleMedium::VM_UNKNOWN;
+          return;
+        }
+
+        if (hasWaterParameters())
+          m_vm.medium = IMC::VehicleMedium::VM_WATER;
+        else
+          m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+      }
+
+      void
+      checkDepth(void)
+      {
+        if ((m_depth > m_args.depth_threshold) && !isGpsAvailable())
+          m_vm.medium = IMC::VehicleMedium::VM_UNDERWATER;
+      }
+
+      void
+      check(void)
+      {
+	checkWaterPresence();
+	checkDepth();
+      }
+
+      void
       task(void)
       {
         // Wait to stabilize at beginning.
@@ -241,14 +270,7 @@ namespace Monitors
         if (getEntityState() == IMC::EntityState::ESTA_BOOT)
         {
           if (m_args.vtype != "UAV")
-          {
-            if (!hasWaterParameters() && isGpsAvailable())
-              m_vm.medium = IMC::VehicleMedium::VM_GROUND;
-            if (hasWaterParameters() && isGpsAvailable())
-              m_vm.medium = IMC::VehicleMedium::VM_WATER;
-            if (hasWaterParameters() && !isGpsAvailable())
-              m_vm.medium = IMC::VehicleMedium::VM_UNDERWATER;
-          }
+	    check();
           else
           {
             if (m_airspeed < m_args.airspeed_threshold)
@@ -265,12 +287,7 @@ namespace Monitors
 
         // No way to detect medium properly.
         if (m_water_presence.overflow() && m_args.vtype != "UAV")
-        {
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
-          m_vm.medium = IMC::VehicleMedium::VM_UNKNOWN;
-          dispatch(m_vm);
-          return;
-        }
 
         if (getEntityState() == IMC::EntityState::ESTA_ERROR)
         {
@@ -287,22 +304,23 @@ namespace Monitors
             break;
 
           case (IMC::VehicleMedium::VM_GROUND):
-            if (hasWaterParameters())
-              m_vm.medium = IMC::VehicleMedium::VM_WATER;
+            check();
+
             if (m_airspeed > m_args.airspeed_threshold && m_args.vtype == "UAV")
               m_vm.medium = IMC::VehicleMedium::VM_AIR;
             break;
 
           case (IMC::VehicleMedium::VM_WATER):
-            if ((m_depth > m_args.depth_threshold) && !isGpsAvailable())
-              m_vm.medium = IMC::VehicleMedium::VM_UNDERWATER;
-            if (!hasWaterParameters())
-              m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+            check();
             break;
 
           case (IMC::VehicleMedium::VM_UNDERWATER):
             if ((m_depth < m_args.depth_threshold - c_depth_hyst) && isGpsAvailable())
               m_vm.medium = IMC::VehicleMedium::VM_WATER;
+            break;
+
+          case (IMC::VehicleMedium::VM_UNKNOWN):
+            check();
             break;
         }
 
