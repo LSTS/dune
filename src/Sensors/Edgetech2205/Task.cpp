@@ -516,6 +516,8 @@ namespace Sensors
         {
           activationFailed(DTR("failed to contact device"));
           m_activating = false;
+          m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+          dispatch(m_pwr_ss);
           return;
         }
 
