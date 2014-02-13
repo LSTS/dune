@@ -25,6 +25,9 @@
 // Author: Kristian Klausen                                                 *
 //***************************************************************************
 
+// ISO C++ 98 headers
+#include <cmath>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -225,7 +228,7 @@ namespace Transports
         speeds(0) = simstate->u;
         speeds(1) = simstate->v;
         speeds(2) = simstate->w;
-        fdm.airspeed = sqrt(squaresum(speeds));
+        fdm.airspeed = std::sqrt(squaresum(speeds));
 
         // Send to ardupilot
         try
