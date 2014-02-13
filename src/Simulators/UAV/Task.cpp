@@ -439,7 +439,7 @@ namespace Simulators
       void
       consume(const IMC::DesiredRoll* msg)
       {
-        debug("Consuming DesiredRoll");
+        spew("Consuming DesiredRoll");
 
         //! Check if system is active
         if (!isActive())
@@ -454,7 +454,7 @@ namespace Simulators
         if (msg->getSource() != getSystemId())
         {
           trace("Bank command rejected.");
-          trace("DesiredRoll sent from another source!");
+          trace("DesiredRoll received from system: %s", resolveSystemId(msg->getSource()));
           return;
         }
 
@@ -467,7 +467,7 @@ namespace Simulators
       void
       consume(const IMC::DesiredSpeed* msg)
       {
-        debug("Consuming DesiredSpeed");
+        spew("Consuming DesiredSpeed");
 
         //! Check if system is active
         if (!isActive())
@@ -482,7 +482,7 @@ namespace Simulators
         if (msg->getSource() != getSystemId())
         {
           trace("Speed command rejected.");
-          trace("DesiredSpeed sent from another source!");
+          trace("DesiredSpeed received from system: %s", resolveSystemId(msg->getSource()));
           return;
         }
 
@@ -495,7 +495,7 @@ namespace Simulators
       void
       consume(const IMC::DesiredZ* msg)
       {
-        debug("Consuming DesiredZ");
+        spew("Consuming DesiredZ");
 
         //! Check if system is active
         if (!isActive())
@@ -510,7 +510,7 @@ namespace Simulators
         if (msg->getSource() != getSystemId())
         {
           trace("Altitude command rejected.");
-          trace("DesiredZ sent from another source!");
+          trace("DesiredZ received from system: %s", resolveSystemId(msg->getSource()));
           return;
         }
 
