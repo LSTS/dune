@@ -25,6 +25,11 @@
 // Author: Kristian Klausen                                                 *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <cstdlib>
+#include <cmath>
+
+// Local headers.
 #include "MulticopterModel.hpp"
 
 namespace Simulators
@@ -43,7 +48,8 @@ namespace Simulators
       m_cog(param.cog),
       m_inertia(param.inertia),
       m_ldrag(param.ldrag),
-      m_qdrag(param.qdrag)
+      m_qdrag(param.qdrag),
+      m_motors(NULL)
     {
       // This does not change.
       m_matrix_mass = computeM();
@@ -65,6 +71,8 @@ namespace Simulators
 
     MulticopterModel::~MulticopterModel()
     {
+      if (m_motors != NULL)
+        std::free(m_motors);
     }
 
     Matrix
@@ -97,11 +105,10 @@ namespace Simulators
     Math::Matrix
     MulticopterModel::computeQ(const Math::Matrix& nu)
     {
-
       Math::Matrix nu_signsquare = Matrix(6, 1);
       for (int i = 0; i < 6; i++)
       {
-        nu_signsquare(i) = abs(nu(i)) * nu(i);
+        nu_signsquare(i) = std::abs(nu(i)) * nu(i);
       }
 
       return m_qdrag * nu_signsquare;
@@ -114,14 +121,14 @@ namespace Simulators
       double phi = eta(3);
       double theta = eta(4);
       double W = m_mass * Math::c_gravity;
-      double g[6] = { W * sin(theta), -W * cos(theta) * sin(phi), -W * cos(theta)
-                                                                  * cos(phi),
-                      -m_cog(1) * W * cos(theta) * cos(phi)
-                      + m_cog(2) * W * cos(theta) * sin(phi),
-                      m_cog(2) * W * sin(theta)
-                      + m_cog(0) * W * cos(theta) * cos(phi),
-                      -m_cog(0) * W * cos(theta)
-                      * sin(phi) - m_cog(1) * W * sin(theta) };
+      double g[6] = { W * std::sin(theta), -W * std::cos(theta) * std::sin(phi), -W * std::cos(theta)
+                                                                  * std::cos(phi),
+                      -m_cog(1) * W * std::cos(theta) * std::cos(phi)
+                      + m_cog(2) * W * std::cos(theta) * std::sin(phi),
+                      m_cog(2) * W * std::sin(theta)
+                      + m_cog(0) * W * std::cos(theta) * std::cos(phi),
+                      -m_cog(0) * W * std::cos(theta)
+                      * std::sin(phi) - m_cog(1) * W * std::sin(theta) };
       return Matrix(g, 6, 1);
     }
 
@@ -148,7 +155,7 @@ namespace Simulators
       if (frame == Frame_quad)
       {
         m_n_motors = 4;
-        m_motors = (CopterMotor*)malloc(m_n_motors * sizeof(CopterMotor));
+        m_motors = (CopterMotor*)std::malloc(m_n_motors * sizeof(CopterMotor));
 
         m_motors[0] = CopterMotor(90, false, 1);
         m_motors[1] = CopterMotor(270, false, 2);
@@ -167,7 +174,7 @@ namespace Simulators
       {
         // HEX
         m_n_motors = 6;
-        m_motors = (CopterMotor*)malloc(m_n_motors * sizeof(CopterMotor));
+        m_motors = (CopterMotor*)std::malloc(m_n_motors * sizeof(CopterMotor));
 
         m_motors[0] = CopterMotor(0, true, 1);
         m_motors[1] = CopterMotor(180, false, 2);
@@ -223,8 +230,8 @@ namespace Simulators
 
         if (m_linear_actuator_dynamics)
         {
-          m[0] += m_k * m_l * -sin(Angles::radians(m_motors[i].angle)) * servo_speed(i);
-          m[1] += m_k * m_l * cos(Angles::radians(m_motors[i].angle)) * servo_speed(i);
+          m[0] += m_k * m_l * -std::sin(Angles::radians(m_motors[i].angle)) * servo_speed(i);
+          m[1] += m_k * m_l * std::cos(Angles::radians(m_motors[i].angle)) * servo_speed(i);
           if (m_motors[i].clockwise)
             m[2] -= m_b * servo_speed(i);
           else
@@ -232,8 +239,8 @@ namespace Simulators
         }
         else
         {
-          m[0] += m_k * m_l * -sin(Angles::radians(m_motors[i].angle)) * servo_speed(i) * servo_speed(i);
-          m[1] += m_k * m_l * cos(Angles::radians(m_motors[i].angle)) * servo_speed(i) * servo_speed(i);
+          m[0] += m_k * m_l * -std::sin(Angles::radians(m_motors[i].angle)) * servo_speed(i) * servo_speed(i);
+          m[1] += m_k * m_l * std::cos(Angles::radians(m_motors[i].angle)) * servo_speed(i) * servo_speed(i);
           if (m_motors[i].clockwise)
             m[2] -= m_b * servo_speed(i) * servo_speed(i);
           else
