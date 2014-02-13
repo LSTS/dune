@@ -579,10 +579,17 @@ namespace Maneuver
               trace("Missing GPS-Fix!");
               return;
             }
+            if (msg->getSource() != getSystemId())
+            {
+              trace("Bank command rejected.");
+              trace("DesiredRoll received from system: %s", resolveSystemId(msg->getSource()));
+              return;
+            }
 
             m_model->m_bank_cmd = msg->value;
 
             // ========= Debug ===========
+            trace("Command received from vehicle %s", resolveSystemId(msg->getSource()));
             trace("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
           }
         }
@@ -600,10 +607,17 @@ namespace Maneuver
               trace("Missing GPS-Fix!");
               return;
             }
+            if (msg->getSource() != getSystemId())
+            {
+              trace("Speed command rejected.");
+              trace("DesiredSpeed received from system: %s", resolveSystemId(msg->getSource()));
+              return;
+            }
 
             m_model->m_airspeed_cmd = msg->value;
 
             // ========= Debug ===========
+            trace("Command received from vehicle %s", resolveSystemId(msg->getSource()));
             trace("Speed command received (%1.2fm/s)", msg->value);
           }
         }
@@ -823,7 +837,7 @@ namespace Maneuver
 
 
             // ========= Spew ===========
-            /*
+
             if (d_time >= m_last_time_spew + 0.1)
             {
               //spew("Simulating: %s", m_model->m_sim_type);
@@ -852,7 +866,7 @@ namespace Maneuver
               spew("Current z wind speed: %1.4f", m_wind(2));
               m_last_time_spew = d_time;
             }
-            */
+
             //==========================================================================
             //! Dynamics
             //==========================================================================
