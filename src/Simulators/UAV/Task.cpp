@@ -296,7 +296,7 @@ namespace Simulators
           //! - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity);
           //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed);
+          m_model->command(m_position(3), m_args.init_speed, -m_position(2));
           //! - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
@@ -309,7 +309,7 @@ namespace Simulators
           //! - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_alt);
           //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed, m_position(2));
+          m_model->command(m_position(3), m_args.init_speed, -m_position(2));
           //! - Limits definition
           if (m_args.l_vert_slope > 0)
             m_model->setVertSlopeLim(m_args.l_vert_slope);
@@ -320,7 +320,7 @@ namespace Simulators
           //! - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
           //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed);
+          m_model->command(m_position(3), m_args.init_speed, -m_position(2));
           //! - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
@@ -333,7 +333,7 @@ namespace Simulators
           //! - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed, m_args.c_alt);
           //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed, m_position(2));
+          m_model->command(m_position(3), m_args.init_speed, -m_position(2));
           //! - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
@@ -518,6 +518,12 @@ namespace Simulators
           m_model->m_altitude_cmd = msg->value;
         else if (msg->z_units == IMC::Z_DEPTH)
           m_model->m_altitude_cmd = -msg->value;
+        if (m_args.sim_type == "3DOF" || m_args.sim_type == "4DOF_bank")
+        {
+          m_position = m_model->getPosition();
+          m_position(2) = -m_model->m_altitude_cmd;
+          m_model->setPosition(m_position);
+        }
 
         // ========= Debug ===========
         trace("Altitude command received (%1.2fm)", -msg->value);
