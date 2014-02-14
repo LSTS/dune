@@ -1097,6 +1097,8 @@ namespace DUNE
       m_airspeed_cmd = airspeed_cmd;
       //! - Altitude
       m_altitude_cmd = altitude_cmd;
+      if (m_sim_type == "3DOF" || m_sim_type == "4DOF_bank")
+        m_position(2) = -altitude_cmd;
 
       //! Control commands initialization flags
       //! - Airspeed
