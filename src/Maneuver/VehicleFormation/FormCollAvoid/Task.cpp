@@ -1130,8 +1130,8 @@ namespace Maneuver
         //! Adjust offset position from a reference frame to a new reference frame.
         //!
         //! @param[in] lat1 new reference latitude (rad).
-        //! @param[in] lon2 new reference longitude (rad).
-        //! @param[in] hei2 new reference height (m).
+        //! @param[in] lon1 new reference longitude (rad).
+        //! @param[in] hei1 new reference height (m).
         //! @param[in] lat2 old reference latitude (rad).
         //! @param[in] lon2 old reference longitude (rad).
         //! @param[in] hei2 old reference height (m).
