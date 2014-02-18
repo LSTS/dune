@@ -106,10 +106,8 @@ namespace Sensors
       unsigned uart_baud;
       // Maximum time without ranges.
       double range_tout;
-      // True to send periodic reports.
-      bool report;
-      // True to send periodic verbose reports.
-      bool report_verbose;
+      // Report types.
+      std::string report;
       // Delay before sending range reports.
       double report_delay_bef;
       // Delay after sending range reports.
@@ -281,15 +279,11 @@ namespace Sensors
         .defaultValue("2")
         .minimumValue("2");
 
-        param(DTR_RT("Enable Reports"), m_args.report)
+        param(DTR_RT("Acoustic Feedback"), m_args.report)
+        .values(DTR_RT("None, Ranges, Full"))
+        .defaultValue("Ranges")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .defaultValue("true")
-        .description("Report data acoustically");
-
-        param(DTR_RT("Make Reports Verbose"), m_args.report_verbose)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .defaultValue("false")
-        .description("Report more verbose data acoustically");
+        .description("Data to be reported acoustically");
 
         param(DTR_RT("Reports Periodicity"), m_args.report_period)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
@@ -994,13 +988,13 @@ namespace Sensors
         while (!stopping())
         {
           // Report.
-          if (m_args.report && !m_stop_reports)
+          if (m_args.report != "None" && !m_stop_reports)
           {
             if (m_report_timer.overflow())
             {
               m_report_timer.reset();
 
-              if (m_args.report_verbose)
+              if (m_args.report == "Full")
                 sendVerboseReport();
               else
                 reportRanges(Clock::get());
