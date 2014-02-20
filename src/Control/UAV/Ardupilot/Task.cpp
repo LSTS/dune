@@ -97,9 +97,6 @@ namespace Control
         RadioChannel rc1;
         RadioChannel rc2;
         RadioChannel rc3;
-        RadioChannel rc8;
-        //! FBWB Mode
-        int fbwb_mode;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -305,20 +302,6 @@ namespace Control
           .units(Units::MeterPerSecond)
           .description("Max Air Speed");
 
-          param("RC 8 PWM MIN", m_args.rc8.pwm_min)
-          .defaultValue("1000")
-          .units(Units::Microsecond)
-          .description("Min PWM value for Mode channel");
-
-          param("RC 8 PWM MAX", m_args.rc8.pwm_max)
-          .defaultValue("2000")
-          .units(Units::Microsecond)
-          .description("Max PWM value for Mode channel");
-
-          param("FBWB Mode", m_args.fbwb_mode)
-          .defaultValue("4")
-          .description("Mode set up on FBWB");
-
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
           m_mlh[MAVLINK_MSG_ID_ATTITUDE] = &Task::handleAttitudePacket;
@@ -374,8 +357,6 @@ namespace Control
         {
           m_args.rc1.val_min = -m_args.rc1.val_max;
           m_args.rc2.val_min = -m_args.rc2.val_max;
-          m_args.rc8.val_min = 1;
-          m_args.rc8.val_max = 6;
         }
 
         void
@@ -507,7 +488,10 @@ namespace Control
             }
 
             if (!(m_args.ardu_tracker) && (cloops->mask & IMC::CL_ROLL))
+            {
               onParameterUpdate();
+              activateFBW();
+            }
           }
           else
           {
@@ -588,14 +572,8 @@ namespace Control
                                   m_args.rc3.val_min, m_args.rc3.val_max,
                                   m_dspeed);
 
-          int pwm_fbwb = map2PWM(m_args.rc1.pwm_min, m_args.rc1.pwm_max,
-                                 m_args.rc1.val_min, m_args.rc1.val_max,
-                                 m_args.fbwb_mode);
-
           debug("V1: %f, V2: %f, V3: %f", m_droll, m_dclimb, m_dspeed);
-          debug("RC1: %d, RC2: %d, RC3: %d, RC4: %d", pwm_roll, pwm_climb, pwm_speed, pwm_fbwb);
-
-          activateFBW();
+          debug("RC1: %d, RC2: %d, RC3: %d", pwm_roll, pwm_climb, pwm_speed);
 
           uint8_t buf[512];
 
@@ -610,7 +588,7 @@ namespace Control
                                                 0, //! RC Channel 5 (not used)
                                                 0, //! RC Channel 6 (not used)
                                                 0, //! RC Channel 7 (not used)
-                                                pwm_fbwb);//! RC Channel 8 (mode)
+                                                0);//! RC Channel 8 (mode - do not override)
           uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
           sendData(buf, n);
         }
@@ -1503,6 +1481,12 @@ namespace Control
             {
               default:
                 m_external = true;
+                {
+                  IMC::ControlLoops cl;
+                  cl.enable = IMC::ControlLoops::CL_DISABLE;
+                  cl.mask = IMC::CL_ALL;
+                  receive(&cl);
+                }
                 break;
               case 10:
                 trace("AUTO");
