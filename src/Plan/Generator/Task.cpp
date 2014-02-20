@@ -561,31 +561,33 @@ namespace Plan
         {
         	IMC::MessageList<IMC::Maneuver> maneuvers;
 
+        	double curlat, curlon, curdepth;
         	double lat = Angles::radians(params.get("lat", 0.0));
         	double lon = Angles::radians(params.get("lon", 0.0));
         	double maxdepth = params.get("maxdepth", (double)25.0);
         	double mindepth = params.get("mindepth", (double)2.0);
-        	//double vx = params.get("vx", 0.0);
-        	//double vy = params.get("vy", 0.0);
+        	double vn = params.get("vn", 0.0);
+        	double ve = params.get("ve", 0.0);
         	double size = params.get("size", 100.0);
         	double speed = params.get("speed", 1.1);
         	double rot = params.get("rot", 0.0);
         	double popup = params.get("popup", 60);
-        	//double time = 0;
+        	double time = 0;
         	double radius = sqrt((size * size) /2);
         	double ang = Angles::radians(45.0 + rot);
           int i;
 
-        	IMC::Goto* first = new IMC::Goto();
+          getCurrentPosition(&curlat, &curlon, &curdepth);
+          time = WGS84::distance(curlat, curlon, 0, lat, lon, 0) / speed;
+          IMC::Goto* first = new IMC::Goto();
         	first->lat = lat;
         	first->lon = lon;
         	first->z = mindepth;
         	first->z_units = IMC::Z_DEPTH;
         	first->speed_units = IMC::SUNITS_METERS_PS;
         	first->speed = speed;
-        	WGS84::displace(sin(ang) * radius, cos(ang) * radius, &(first->lat), &(first->lon));
+        	WGS84::displace(sin(ang) * radius + vn * time, cos(ang) * radius + ve * time, &(first->lat), &(first->lon));
         	maneuvers.push_back(*first);
-          std::cerr << "the angle is " << ang << std::endl;
         	IMC::PopUp * p = new IMC::PopUp();
         	p->lat = first->lat;
         	p->lon = first->lon;
@@ -609,8 +611,8 @@ namespace Plan
         	  yoyo->z_units = IMC::Z_DEPTH;
         	  yoyo->pitch = Angles::radians(15);
         	  ang =  Angles::radians(i * 90 + 135 + rot);
-        	  std::cerr << "angle is " << ang << std::endl;
-        	  WGS84::displace(sin(ang) * radius, cos(ang) * radius, &(yoyo->lat), &(yoyo->lon));
+        	  time += size / speed;
+        	  WGS84::displace(sin(ang) * radius + time * vn, cos(ang) * radius + time * ve, &(yoyo->lat), &(yoyo->lon));
         	  maneuvers.push_back(*yoyo);
 
         	  IMC::PopUp * pop = new IMC::PopUp();
