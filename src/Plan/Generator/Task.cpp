@@ -556,6 +556,82 @@ namespace Plan
           return true;
         }
 
+        // This template makes the vehicle survey the water column around a moving point
+        if (plan_id == "yoyo")
+        {
+        	IMC::MessageList<IMC::Maneuver> maneuvers;
+
+        	double lat = Angles::radians(params.get("lat", 0.0));
+        	double lon = Angles::radians(params.get("lon", 0.0));
+        	double maxdepth = params.get("maxdepth", (double)25.0);
+        	double mindepth = params.get("mindepth", (double)2.0);
+        	//double vx = params.get("vx", 0.0);
+        	//double vy = params.get("vy", 0.0);
+        	double size = params.get("size", 100.0);
+        	double speed = params.get("speed", 1.1);
+        	double rot = params.get("rot", 0.0);
+        	double popup = params.get("popup", 60);
+        	//double time = 0;
+        	double radius = sqrt((size * size) /2);
+        	double ang = Angles::radians(45.0 + rot);
+          int i;
+
+        	IMC::Goto* first = new IMC::Goto();
+        	first->lat = lat;
+        	first->lon = lon;
+        	first->z = mindepth;
+        	first->z_units = IMC::Z_DEPTH;
+        	first->speed_units = IMC::SUNITS_METERS_PS;
+        	first->speed = speed;
+        	WGS84::displace(sin(ang) * radius, cos(ang) * radius, &(first->lat), &(first->lon));
+        	maneuvers.push_back(*first);
+          std::cerr << "the angle is " << ang << std::endl;
+        	IMC::PopUp * p = new IMC::PopUp();
+        	p->lat = first->lat;
+        	p->lon = first->lon;
+        	p->radius = 20;
+        	p->z = 0;
+        	p->z_units = IMC::Z_DEPTH;
+        	p->duration = (int) popup;
+        	p->speed = first->speed;
+        	p->speed_units = first->speed_units;
+        	maneuvers.push_back(*p);
+        	delete first;
+        	delete p;
+        	for (i = 0; i < 4; i++) {
+        	  IMC::YoYo * yoyo = new IMC::YoYo();
+        	  yoyo->lat = lat;
+        	  yoyo->lon = lon;
+        	  yoyo->speed = speed;
+        	  yoyo->speed_units = IMC::SUNITS_METERS_PS;
+        	  yoyo->amplitude = maxdepth - mindepth;
+        	  yoyo->z = (mindepth + maxdepth) / 2;
+        	  yoyo->z_units = IMC::Z_DEPTH;
+        	  yoyo->pitch = Angles::radians(15);
+        	  ang =  Angles::radians(i * 90 + 135 + rot);
+        	  std::cerr << "angle is " << ang << std::endl;
+        	  WGS84::displace(sin(ang) * radius, cos(ang) * radius, &(yoyo->lat), &(yoyo->lon));
+        	  maneuvers.push_back(*yoyo);
+
+        	  IMC::PopUp * pop = new IMC::PopUp();
+        	  pop->lat = yoyo->lat;
+        	  pop->lon = yoyo->lon;
+        	  pop->radius = 20;
+            pop->z = 0;
+            pop->z_units = IMC::Z_DEPTH;
+        	  pop->duration = (int) popup;
+        	  pop->speed = yoyo->speed;
+        	  pop->speed_units = yoyo->speed_units;
+        	  maneuvers.push_back(*pop);
+
+        	  delete yoyo;
+        	  delete pop;
+        	}
+
+        	sequentialPlan(plan_id, &maneuvers, result);
+        	return true;
+        }
+
         // in the case the template is not understood, returns false
         return false;
       }
