@@ -358,7 +358,7 @@ namespace Plan
           double lon = Angles::radians(params.get("lon", 0.0));
           double depth = params.get("depth", (double)-1);
           if (depth == -1)
-        	  depth = params.get("d", m_args.travel_depth);
+            depth = params.get("d", m_args.travel_depth);
 
           // Searches for a beacon whose name matches given loc
           // in which case updates lat/lon with the beacon's location
@@ -490,7 +490,6 @@ namespace Plan
         // This template makes the vehicle dive for some time
         if (plan_id == "dive")
         {
-
           double lat, lon, depth;
           getCurrentPosition(&lat, &lon, &depth);
           depth = params.get("depth", m_args.dive_depth);
@@ -559,79 +558,90 @@ namespace Plan
         // This template makes the vehicle survey the water column around a moving point
         if (plan_id == "yoyo")
         {
-        	IMC::MessageList<IMC::Maneuver> maneuvers;
+          IMC::MessageList<IMC::Maneuver> maneuvers;
 
-        	double curlat, curlon, curdepth;
-        	double lat = Angles::radians(params.get("lat", 0.0));
-        	double lon = Angles::radians(params.get("lon", 0.0));
-        	double maxdepth = params.get("maxdepth", (double)25.0);
-        	double mindepth = params.get("mindepth", (double)2.0);
-        	double vn = params.get("vn", 0.0);
-        	double ve = params.get("ve", 0.0);
-        	double size = params.get("size", 100.0);
-        	double speed = params.get("speed", 1.1);
-        	double rot = params.get("rot", 0.0);
-        	double popup = params.get("popup", 60);
-        	double time = 0;
-        	double radius = sqrt((size * size) /2);
-        	double ang = Angles::radians(45.0 + rot);
+          double curlat, curlon, curdepth;
+          double lat = Angles::radians(params.get("lat", 0));
+          double lon = Angles::radians(params.get("lon", 0));
+          double maxdepth = params.get("maxdepth", (double)4.0);
+          double mindepth = params.get("mindepth", (double)1.0);
+          double vn = params.get("vn", 0.0);
+          double ve = params.get("ve", 0.0);
+          double size = params.get("size", 50.0);
+          double speed = params.get("speed", 1.1);
+          double rot = params.get("rot", 0.0);
+          double popup = params.get("popup", 30);
+          double pitch = params.get("pitch", 15);
+          double time = 0;
+          double radius = sqrt((size * size) /2);
+          double ang = Angles::radians(45.0 + rot);
           int i;
 
           getCurrentPosition(&curlat, &curlon, &curdepth);
+
+          if (lat == 0 && lon == 0) {
+            lat = curlat;
+            lon = curlon;
+          }
           time = WGS84::distance(curlat, curlon, 0, lat, lon, 0) / speed;
           IMC::Goto* first = new IMC::Goto();
-        	first->lat = lat;
-        	first->lon = lon;
-        	first->z = mindepth;
-        	first->z_units = IMC::Z_DEPTH;
-        	first->speed_units = IMC::SUNITS_METERS_PS;
-        	first->speed = speed;
-        	WGS84::displace(sin(ang) * radius + vn * time, cos(ang) * radius + ve * time, &(first->lat), &(first->lon));
-        	maneuvers.push_back(*first);
-        	IMC::PopUp * p = new IMC::PopUp();
-        	p->lat = first->lat;
-        	p->lon = first->lon;
-        	p->radius = 20;
-        	p->z = 0;
-        	p->z_units = IMC::Z_DEPTH;
-        	p->duration = (int) popup;
-        	p->speed = first->speed;
-        	p->speed_units = first->speed_units;
-        	maneuvers.push_back(*p);
-        	delete first;
-        	delete p;
-        	for (i = 0; i < 4; i++) {
-        	  IMC::YoYo * yoyo = new IMC::YoYo();
-        	  yoyo->lat = lat;
-        	  yoyo->lon = lon;
-        	  yoyo->speed = speed;
-        	  yoyo->speed_units = IMC::SUNITS_METERS_PS;
-        	  yoyo->amplitude = maxdepth - mindepth;
-        	  yoyo->z = (mindepth + maxdepth) / 2;
-        	  yoyo->z_units = IMC::Z_DEPTH;
-        	  yoyo->pitch = Angles::radians(15);
-        	  ang =  Angles::radians(i * 90 + 135 + rot);
-        	  time += size / speed;
-        	  WGS84::displace(sin(ang) * radius + time * vn, cos(ang) * radius + time * ve, &(yoyo->lat), &(yoyo->lon));
-        	  maneuvers.push_back(*yoyo);
+          first->lat = lat;
+          first->lon = lon;
+          first->z = mindepth;
+          first->z_units = IMC::Z_DEPTH;
+          first->speed_units = IMC::SUNITS_METERS_PS;
+          first->speed = speed;
+          WGS84::displace(sin(ang) * radius + vn * time, cos(ang) * radius + ve * time, &(first->lat), &(first->lon));
+          maneuvers.push_back(*first);
+          if (popup > 0)
+          {
+            IMC::PopUp * p = new IMC::PopUp();
+            p->lat = first->lat;
+            p->lon = first->lon;
+            p->radius = 20;
+            p->z = 0;
+            p->z_units = IMC::Z_DEPTH;
+            p->duration = (int) popup;
+            p->speed = first->speed;
+            p->speed_units = first->speed_units;
+            maneuvers.push_back(*p);
+            delete p;
+          }
+          delete first;
 
-        	  IMC::PopUp * pop = new IMC::PopUp();
-        	  pop->lat = yoyo->lat;
-        	  pop->lon = yoyo->lon;
-        	  pop->radius = 20;
-            pop->z = 0;
-            pop->z_units = IMC::Z_DEPTH;
-        	  pop->duration = (int) popup;
-        	  pop->speed = yoyo->speed;
-        	  pop->speed_units = yoyo->speed_units;
-        	  maneuvers.push_back(*pop);
+          for (i = 0; i < 4; i++) {
+            IMC::YoYo * yoyo = new IMC::YoYo();
+            yoyo->lat = lat;
+            yoyo->lon = lon;
+            yoyo->speed = speed;
+            yoyo->speed_units = IMC::SUNITS_METERS_PS;
+            yoyo->amplitude = (maxdepth - mindepth)/2;
+            yoyo->z = (mindepth + maxdepth) / 2;
+            yoyo->z_units = IMC::Z_DEPTH;
+            yoyo->pitch = Angles::radians(pitch);
+            ang =  Angles::radians(i * 90 + 135 + rot);
+            time += size / speed;
+            WGS84::displace(sin(ang) * radius + time * vn, cos(ang) * radius + time * ve, &(yoyo->lat), &(yoyo->lon));
+            maneuvers.push_back(*yoyo);
+            if (popup > 0)
+            {
+              IMC::PopUp * pop = new IMC::PopUp();
+              pop->lat = yoyo->lat;
+              pop->lon = yoyo->lon;
+              pop->radius = 20;
+              pop->z = 0;
+              pop->z_units = IMC::Z_DEPTH;
+              pop->duration = (int) popup;
+              pop->speed = yoyo->speed;
+              pop->speed_units = yoyo->speed_units;
+              maneuvers.push_back(*pop);
+              delete pop;
+            }
+            delete yoyo;
+          }
 
-        	  delete yoyo;
-        	  delete pop;
-        	}
-
-        	sequentialPlan(plan_id, &maneuvers, result);
-        	return true;
+          sequentialPlan(plan_id, &maneuvers, result);
+          return true;
         }
 
         // in the case the template is not understood, returns false
