@@ -93,6 +93,15 @@ namespace DUNE
         return m_data[section][option];
       }
 
+      //! Set the option map of a given section.
+      //! @param[in] section section name.
+      //! @param[in] map map of <option, value>.
+      void
+      setSection(const std::string& section, const std::map<std::string, std::string>& map)
+      {
+        m_data[section] = map;
+      }
+
       //! Retrieve the option map of a given section.
       //! @param[in] section section name.
       //! @return map of <option, value>.
