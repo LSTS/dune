@@ -573,7 +573,7 @@ namespace Plan
           double popup = params.get("popup", 30);
           double pitch = params.get("pitch", 15);
           double time = 0;
-          double radius = sqrt((size * size) /2);
+          double radius = std::sqrt((size * size) /2);
           double ang = Angles::radians(45.0 + rot);
           int i;
 
@@ -591,7 +591,7 @@ namespace Plan
           first->z_units = IMC::Z_DEPTH;
           first->speed_units = IMC::SUNITS_METERS_PS;
           first->speed = speed;
-          WGS84::displace(sin(ang) * radius + vn * time, cos(ang) * radius + ve * time, &(first->lat), &(first->lon));
+          WGS84::displace(std::sin(ang) * radius + vn * time, std::cos(ang) * radius + ve * time, &(first->lat), &(first->lon));
           maneuvers.push_back(*first);
           if (popup > 0)
           {
@@ -621,7 +621,7 @@ namespace Plan
             yoyo->pitch = Angles::radians(pitch);
             ang =  Angles::radians(i * 90 + 135 + rot);
             time += size / speed;
-            WGS84::displace(sin(ang) * radius + time * vn, cos(ang) * radius + time * ve, &(yoyo->lat), &(yoyo->lon));
+            WGS84::displace(std::sin(ang) * radius + time * vn, std::cos(ang) * radius + time * ve, &(yoyo->lat), &(yoyo->lon));
             maneuvers.push_back(*yoyo);
             if (popup > 0)
             {
