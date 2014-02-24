@@ -418,6 +418,7 @@ if(TESTS)
   dune_test(programs/tests/test_MD5.cpp)
   dune_test(programs/tests/test_Database.cpp)
   dune_test(programs/tests/test_IMC.cpp)
+  dune_test(programs/tests/test_String.cpp)
 endif(TESTS)
 
 ##########################################################################
