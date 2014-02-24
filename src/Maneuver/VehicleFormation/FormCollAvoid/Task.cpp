@@ -141,6 +141,9 @@ namespace Maneuver
         int m_uav_n;
 
         //! Process logic control variables
+        bool m_ctrl_active;
+        bool m_team_plan_init;
+        bool m_team_leader_init;
         bool m_team_state_init;
         bool m_valid_airspeed;
 
@@ -169,6 +172,9 @@ namespace Maneuver
           m_airspeed(0.0),
           m_wind(3, 1, 0.0),
           m_uav_n(1),
+          m_ctrl_active(false),
+          m_team_plan_init(false),
+          m_team_leader_init(false),
           m_team_state_init(false),
           m_valid_airspeed(false),
           m_frequency(0.0),
@@ -329,6 +335,7 @@ namespace Maneuver
 
           // Message binding
           bind<IMC::LeaderState>(this);
+          bind<IMC::PlanControl>(this);
           bind<IMC::IndicatedSpeed>(this);
           bind<IMC::EstimatedStreamVelocity>(this);
           bind<IMC::SimulatedState>(this);
@@ -395,59 +402,7 @@ namespace Maneuver
           //! - Simulation type
           m_model->m_sim_type = m_args.sim_type;
 
-          if (m_args.uav_ind == 0)
-          {
-            //! Leader state initialization
-            debug("Formation LeaderState initialization");
-            m_init_leader.op = IMC::LeaderState::OP_SET;
-            m_init_leader.lat = DUNE::Math::Angles::radians(m_args.init_lat);
-            m_init_leader.lon = DUNE::Math::Angles::radians(m_args.init_lon);
-            m_init_leader.height = m_args.init_alt;
-            m_init_leader.x = m_position(0);
-            m_init_leader.y = m_position(1);
-            m_init_leader.z = m_position(2);
-            m_init_leader.phi = m_position(3);
-            m_init_leader.theta = m_position(4);
-            m_init_leader.psi = m_position(5);
-            m_init_leader.vx = m_velocity(0);
-            m_init_leader.vy = m_velocity(1);
-            m_init_leader.vz = m_velocity(2);
-            m_init_leader.p = m_velocity(3);
-            m_init_leader.q = m_velocity(4);
-            m_init_leader.r = m_velocity(5);
-            m_init_leader.svx = m_wind(0);
-            m_init_leader.svy = m_wind(1);
-            m_init_leader.svz = m_wind(2);
-            setLeaderState(&m_init_leader);
-
-            debug("Initial latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
-            debug("Initial longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
-            debug("Initial altitude: %1.4fm", m_init_leader.height);
-            debug("Initial x position: %1.4f", m_position(0));
-            debug("Initial y position: %1.4f", m_position(1));
-            debug("Initial z position: %1.4f", m_position(2));
-            debug("Initial roll angle: %1.4f", m_position(3));
-            debug("Initial pitch angle: %1.4f", m_position(4));
-            debug("Initial yaw angle: %1.4f", m_position(5));
-            debug("Initial x speed: %1.4f", m_velocity(0));
-            debug("Initial y speed: %1.4f", m_velocity(1));
-            debug("Initial z speed: %1.4f", m_velocity(2));
-            debug("Initial roll rate: %1.4f", m_velocity(3));
-            debug("Initial pitch rate: %1.4f", m_velocity(4));
-            debug("Initial yaw rate: %1.4f", m_velocity(5));
-            debug("Initial x wind speed: %1.4f", m_wind(0));
-            debug("Initial y wind speed: %1.4f", m_wind(1));
-            debug("Initial z wind speed: %1.4f", m_wind(2));
-
-            //! Initiate the leader vehicle plan
-            IMC::PlanControl p_control;
-            p_control.plan_id = m_args.plan;
-            p_control.op = IMC::PlanControl::PC_START;
-            p_control.type = IMC::PlanControl::PC_REQUEST;
-            p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
-            dispatch(p_control);
-          }
-          else
+          if (m_args.uav_ind > 0)
           {
             debug("Vehicles state and command vectors initialization");
             //! Initialize vehicles state
@@ -500,19 +455,103 @@ namespace Maneuver
         void
         consume(const IMC::LeaderState* msg)
         {
-          if (m_args.uav_ind == 0 && msg->op == IMC::LeaderState::OP_SET)
+          if (m_args.uav_ind == 0)
           {
-            debug("Consuming LeaderState");
+            // Set leader state
+            if (msg->op == IMC::LeaderState::OP_SET)
+            {
+              // Check if the system is the intended destination of the state
+              if (msg->getDestination() != getSystemId())
+              {
+                trace("LeaderState message rejected!");
+                trace("Destination system: %s.", resolveSystemId(msg->getDestination()));
+                return;
+              }
 
-            setLeaderState(msg);
+              debug("LeaderState received!");
+              setLeaderState(msg);
+
+              /*
+              // Save message to cache.
+              IMC::CacheControl cop;
+              cop.op = IMC::CacheControl::COP_STORE;
+              cop.message.set(*msg);
+              dispatch(cop);
+               */
+            }
+          }
+        }
+
+        void
+        consume(const IMC::PlanControl* msg)
+        {
+          IMC::PlanControl lead_plan_ctrl;
+          // ToDo - For final implementation, the activation of plans
+          // should come from a formation synchronous message
+          if (m_args.uav_ind > 0)
+          {
+            // Check if it is a plan execution request
+            if (msg->type != IMC::PlanControl::PC_REQUEST)
+              return;
+
+            // Check if the vehicle is the intended destination of the plan
+            if (msg->getDestination() != getSystemId())
+            {
+              trace("PlanControl message rejected!");
+              trace("Destination system: %s.", resolveSystemId(msg->getDestination()));
+              return;
+            }
+
+            // Check if the vehicle is itself the source of the plan
+            // ToDo - For final implementation this blocking should be removed
+            if (msg->getSource() == getSystemId())
+            {
+              trace("PlanControl message rejected!");
+              trace("Source is the system itself.");
+              return;
+            }
+
+            // Reset virtual leader state
+            // ToDo - Use global team position to set the leader initial state
+            m_init_leader.setDestination(resolveSystemName("form-leader-01"));
+            m_init_leader.op      = IMC::LeaderState::OP_SET;
+            m_init_leader.lat     = m_llh_ref_pos[0];
+            m_init_leader.lon     = m_llh_ref_pos[1];
+            m_init_leader.height  = m_llh_ref_pos[2];
+            m_init_leader.x       = m_uav_state(0, m_args.uav_ind);
+            m_init_leader.y       = m_uav_state(1, m_args.uav_ind);
+            m_init_leader.z       = m_uav_state(2, m_args.uav_ind);
+            m_init_leader.vx      = m_uav_state(3, m_args.uav_ind);
+            m_init_leader.vy      = m_uav_state(4, m_args.uav_ind);
+            m_init_leader.vz      = m_uav_state(5, m_args.uav_ind);
+            m_init_leader.phi     = m_uav_state(6, m_args.uav_ind);
+            m_init_leader.theta   = m_uav_state(7, m_args.uav_ind);
+            m_init_leader.psi     = m_uav_state(8, m_args.uav_ind);
+            m_init_leader.p       = m_uav_state(9, m_args.uav_ind);
+            m_init_leader.q       = m_uav_state(10, m_args.uav_ind);
+            m_init_leader.r       = m_uav_state(11, m_args.uav_ind);
+            m_init_leader.svx     = m_wind(0);
+            m_init_leader.svy     = m_wind(1);
+            m_init_leader.svz     = m_wind(2);
+            dispatch(m_init_leader);
+
+            // Reroute the PlanControl message to the virtual leader
+            lead_plan_ctrl = *msg;
+            lead_plan_ctrl.setDestination(resolveSystemName("form-leader-01"));
+            dispatch(lead_plan_ctrl);
 
             /*
-            // Save message to cache.
-            IMC::CacheControl cop;
-            cop.op = IMC::CacheControl::COP_STORE;
-            cop.message.set(*msg);
-            dispatch(cop);
-            */
+            //! Initiate the leader vehicle plan
+            IMC::PlanControl p_control;
+            p_control.plan_id = m_args.plan;
+            p_control.op = IMC::PlanControl::PC_START;
+            p_control.type = IMC::PlanControl::PC_REQUEST;
+            p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
+            dispatch(p_control);
+             */
+
+            //! Flag virtual leader state arrival
+            m_team_plan_init = true;
           }
         }
 
@@ -578,7 +617,9 @@ namespace Maneuver
             Matrix vd_vel2wind = m_uav_state.get(3, 5, 0, 0) - m_wind;
             m_model->command(m_uav_state(6, 0), vd_vel2wind.norm_2(), m_uav_state(2, 0));
 
-            if (!isActive() && m_uav_n == 1 && m_valid_airspeed)
+            //! Flag virtual leader state arrival
+            m_team_leader_init = true;
+            if (!isActive() && m_uav_n == 1)
               requestActivation();
           }
         }
@@ -735,8 +776,12 @@ namespace Maneuver
               m_clock_diff = msg->getTimeStamp() - Clock::get();
               m_last_state_estim(m_args.uav_ind) = msg->getTimeStamp();
 
-              if (!isActive())
-                return;
+              if (!m_ctrl_active)
+              {
+                checkActivCtrlCond();
+                if (!m_ctrl_active)
+                  return;
+              }
 
               //===========================================
               //! Team prediction update
@@ -875,6 +920,7 @@ namespace Maneuver
                 m_team_state_init = b_state_init;
               }
 
+              //! Check if conditions are met to initiate team virtual state updates
               if (!isActive() && m_team_state_init)
                 requestActivation();
             }
@@ -1074,44 +1120,84 @@ namespace Maneuver
         }
 
         void
-        setLeaderState(const IMC::LeaderState* msg)
+        checkActivCtrlCond()
+        {
+          // Check formation control activation conditions
+          // - Plan activation request
+          // - Airspeed data
+          // - Leader vehicle data
+          // - Single vehicle formation or team vehicles' data
+          if (isActive() && !m_ctrl_active && m_team_plan_init && m_valid_airspeed
+              && m_team_leader_init && (m_uav_n == 1 || m_team_state_init))
+            m_ctrl_active = true;
+          else if (!m_team_plan_init)
+            spew("Team plan missing!");
+          else if (!m_valid_airspeed)
+            spew("Airspeed missing!");
+          else if (!m_team_leader_init)
+            spew("Virtual leader state missing!");
+          else if (m_uav_n != 1 && m_team_state_init)
+            spew("Team vehicles' state missing!");
+        }
+
+        void
+        setLeaderState(const IMC::LeaderState* lead_state)
         {
           if (!isActive())
             requestActivation();
 
           //! Defining GpsFix for autopilot simulator
           IMC::GpsFix origin;
-          origin.lat = msg->lat;
-          origin.lon = msg->lon;
-          origin.height = msg->height;
+          origin.lat = lead_state->lat;
+          origin.lon = lead_state->lon;
+          origin.height = lead_state->height;
           origin.setDestination(getSystemId());
           dispatch(origin);
 
           //! Defining origin.
-          m_sstate.lat = msg->lat;
-          m_sstate.lon = msg->lon;
-          m_sstate.height = msg->height;
+          m_sstate.lat = lead_state->lat;
+          m_sstate.lon = lead_state->lon;
+          m_sstate.height = lead_state->height;
 
           //! - State initialization
           m_position = m_model->getPosition();
-          m_position(0) = msg->x;
-          m_position(1) = msg->y;
-          m_position(2) = msg->z;
-          m_position(3) = msg->phi;
-          m_position(4) = msg->theta;
-          m_position(5) = msg->psi;
+          m_position(0) = lead_state->x;
+          m_position(1) = lead_state->y;
+          m_position(2) = lead_state->z;
+          m_position(3) = lead_state->phi;
+          m_position(4) = lead_state->theta;
+          m_position(5) = lead_state->psi;
           m_model->setPosition(m_position);
-          m_velocity(0) = msg->vx;
-          m_velocity(1) = msg->vy;
-          m_velocity(2) = msg->vz;
-          m_velocity(3) = msg->p;
-          m_velocity(4) = msg->q;
-          m_velocity(5) = msg->r;
+          m_velocity(0) = lead_state->vx;
+          m_velocity(1) = lead_state->vy;
+          m_velocity(2) = lead_state->vz;
+          m_velocity(3) = lead_state->p;
+          m_velocity(4) = lead_state->q;
+          m_velocity(5) = lead_state->r;
           m_model->setVelocity(m_velocity);
-          m_wind(0) = msg->svx;
-          m_wind(1) = msg->svy;
-          m_wind(2) = msg->svz;
+          m_wind(0) = lead_state->svx;
+          m_wind(1) = lead_state->svy;
+          m_wind(2) = lead_state->svz;
           m_model->m_wind = m_wind;
+
+          debug("Initial latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
+          debug("Initial longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
+          debug("Initial altitude: %1.4fm", m_init_leader.height);
+          debug("Initial x position: %1.4f", m_position(0));
+          debug("Initial y position: %1.4f", m_position(1));
+          debug("Initial z position: %1.4f", m_position(2));
+          debug("Initial roll angle: %1.4f", m_position(3));
+          debug("Initial pitch angle: %1.4f", m_position(4));
+          debug("Initial yaw angle: %1.4f", m_position(5));
+          debug("Initial x speed: %1.4f", m_velocity(0));
+          debug("Initial y speed: %1.4f", m_velocity(1));
+          debug("Initial z speed: %1.4f", m_velocity(2));
+          debug("Initial roll rate: %1.4f", m_velocity(3));
+          debug("Initial pitch rate: %1.4f", m_velocity(4));
+          debug("Initial yaw rate: %1.4f", m_velocity(5));
+          debug("Initial x wind speed: %1.4f", m_wind(0));
+          debug("Initial y wind speed: %1.4f", m_wind(1));
+          debug("Initial z wind speed: %1.4f", m_wind(2));
 
           m_last_leader_update = Clock::get();
         }
