@@ -80,6 +80,8 @@ namespace DUNE
       FileSystem::Path dir_i18n;
       //! Path to database directory.
       FileSystem::Path dir_db;
+      //! Path to scripts directory.
+      FileSystem::Path dir_scripts;
       //! UID of this instance.
       uint64_t uid;
     };

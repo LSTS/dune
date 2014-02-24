@@ -48,6 +48,7 @@ namespace DUNE
       dir_i18n = dir_app / ".." / Path("i18n");
       dir_db = dir_app / ".." / Path("db");
       dir_log = dir_app / ".." / Path("log");
+      dir_scripts = dir_app / ".." / Path("scripts");
 
 #if defined(DUNE_OS_WINDOWS)
       std::string appdata;
@@ -67,6 +68,7 @@ namespace DUNE
         dir_fmw = Path(DUNE_PATH_SRC) / Path("firmware");
         dir_log = dir_app / Path("log");
         dir_db = dir_app / Path("db");
+        dir_scripts = Path(DUNE_PATH_SRC) / Path("programs") / Path("scripts");
       }
 
       // Initialize UID (this should do...).
