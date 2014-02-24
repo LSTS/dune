@@ -43,9 +43,12 @@ namespace DUNE
     std::string
     String::filterDuplicates(char element, const std::string& subject)
     {
-      std::string result;
+      if (subject.empty())
+        return subject;
 
-      for (unsigned int i = 0; i < subject.size(); ++i)
+      std::string result(subject, 0, 1);
+
+      for (unsigned int i = 1; i < subject.size(); ++i)
       {
         if (subject[i] == element)
         {
