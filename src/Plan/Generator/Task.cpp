@@ -308,7 +308,6 @@ namespace Plan
         }
 
         result.plan_id = plan_id;
-        result.description = DTR("Plan generated automatically by DUNE.");
         result.start_man_id = "1";
       }
 
@@ -345,7 +344,7 @@ namespace Plan
       generate(const std::string& plan_id, TupleList& params, IMC::PlanSpecification& result)
       {
         result.plan_id = plan_id;
-        result.description = DTR("Plan generated automatically by DUNE.");
+        //result.description = DTR("Plan generated automatically by DUNE.");
 
         inf(DTR("generating plan from '%s' template..."), plan_id.c_str());
 
@@ -422,6 +421,9 @@ namespace Plan
             at_surface->speed_units = IMC::SUNITS_RPM;
             at_surface->speed = m_args.speed_rpms;
             at_surface->radius = m_args.radius;
+            // SK radiuses must be at least 20
+            if (at_surface->radius < 20)
+              at_surface->radius = 20;
             maneuvers.push_back(*at_surface);
 
             delete at_surface;
@@ -478,6 +480,10 @@ namespace Plan
           at_surface->speed_units = IMC::SUNITS_RPM;
           at_surface->speed = m_args.speed_rpms;
           at_surface->radius = m_args.radius;
+          // SK radiuses must be at least 20
+          if (at_surface->radius < 20)
+            at_surface->radius = 20;
+
           maneuvers.push_back(*at_surface);
 
           delete at_surface;
