@@ -56,12 +56,12 @@ main(int argc, char** argv)
       fprintf(stdout, "  GpsFix, Heartbeat, IridiumMsgTx, LblConfig, LblRange\n");
       fprintf(stdout, "  LeakSimulation, LogBookControl, LogBookEntry, LoggingControl\n");
       fprintf(stdout, "  MagneticField, MonitorEntityState, OperationalLimits\n");
-      fprintf(stdout, "  Parameter, PlanControl, PlanGeneration, PopEntityParameters, PowerChannelControl, PushEntityParameters\n");
-      fprintf(stdout, "  QueryEntityInfo, QueryEntityParameters\n");
+      fprintf(stdout, "  Parameter, PlanControl, PlanGeneration, PopEntityParameters, PowerChannelControl\n");
+      fprintf(stdout, "  PushEntityParameters, QueryEntityInfo, QueryEntityParameters\n");
       fprintf(stdout, "  RegisterManeuver, RemoteActions, RemoteActionsRequest, ReplayControl, RestartSystem\n");
       fprintf(stdout, "  SaveEntityParameters, SetEntityParameters, SetLedBrightness, SetServoPosition\n");
-      fprintf(stdout, "  SetThrusterActuation, Sms, SoundSpeed\n");
-      fprintf(stdout, "  TeleoperationDone, Temperature, TrexCommand, VehicleCommand, VehicleMedium\n");
+      fprintf(stdout, "  SetThrusterActuation, Sms, SoundSpeed, TeleoperationDone, Temperature\n");
+      fprintf(stdout, "  TextMessage, TrexCommand, VehicleCommand, VehicleMedium\n");
       return 1;
     }
 
@@ -635,6 +635,21 @@ main(int argc, char** argv)
   if (strcmp(argv[3], "TeleoperationDone") == 0)
   {
     msg = new IMC::TeleoperationDone;
+  }
+
+  if (strcmp(argv[3], "TextMessage") == 0)
+  {
+    IMC::TextMessage* tmsg = new IMC::TextMessage;
+    msg = tmsg;
+    if (argc >= 6) {
+      tmsg->origin = argv[4];
+      tmsg->text = argv[5];
+    }
+    else if (argc == 5)
+    {
+      tmsg->origin = "dune-sendmsg";
+      tmsg->text = argv[4];
+    }
   }
 
   if (strcmp(argv[3], "TrexCommand") == 0)
