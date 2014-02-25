@@ -47,17 +47,20 @@ namespace Simulators
     using DUNE_NAMESPACES;
 
     //! GpsFix required validity flags.
-    static const uint16_t c_gps_valid = (IMC::GpsFix::GFV_VALID_TIME
-                                         | IMC::GpsFix::GFV_VALID_POS
-                                         | IMC::GpsFix::GFV_VALID_COG
-                                         | IMC::GpsFix::GFV_VALID_SOG
-                                         | IMC::GpsFix::GFV_VALID_HACC
-                                         | IMC::GpsFix::GFV_VALID_HDOP);
+    static const uint16_t c_gps_valid = (IMC::GpsFix::GFV_VALID_DATE |
+                                         IMC::GpsFix::GFV_VALID_TIME |
+                                         IMC::GpsFix::GFV_VALID_POS |
+                                         IMC::GpsFix::GFV_VALID_COG |
+                                         IMC::GpsFix::GFV_VALID_SOG |
+                                         IMC::GpsFix::GFV_VALID_HACC |
+                                         IMC::GpsFix::GFV_VALID_VACC |
+                                         IMC::GpsFix::GFV_VALID_HDOP |
+                                         IMC::GpsFix::GFV_VALID_VDOP);
 
     //! GroundVelocity required validity flags.
-    static const uint8_t c_dvl_valid = (IMC::GroundVelocity::VAL_VEL_X
-                                        | IMC::GroundVelocity::VAL_VEL_Y
-                                        | IMC::GroundVelocity::VAL_VEL_Z);
+    static const uint8_t c_dvl_valid = (IMC::GroundVelocity::VAL_VEL_X |
+                                        IMC::GroundVelocity::VAL_VEL_Y |
+                                        IMC::GroundVelocity::VAL_VEL_Z);
     //! %Task arguments.
     struct Arguments
     {
