@@ -38,6 +38,9 @@ INSTALL_TIMEOUT = 5 * 60
 # Git URL.
 URL = 'https://github.com/LSTS/dune'
 
+# VirtualBox command execution timeout (ms).
+VBOX_TIMEOUT = '10800000'
+
 # Table of tools.
 TOOLS = {
   'gnu32'   => ['Unix Makefiles'        , 'gcc -m32'  , 'g++ -m32'    ],
@@ -300,7 +303,7 @@ class VirtualBox
         '--username', AUTH[:user],
         '--password', AUTH[:password],
         '--wait-exit', '--wait-stdout', '--wait-stderr',
-        '--verbose', '--timeout', '3600000',
+        '--verbose', '--timeout', VBOX_TIMEOUT,
         '--',
         'C:/Documents and Settings/rasm/dune-cdash-build.rb')
   end
