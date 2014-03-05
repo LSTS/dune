@@ -781,7 +781,7 @@ namespace Sensors
       }
 
       void
-      sendVerboseReport(void)
+      fullAcousticReport(void)
       {
         double lat;
         double lon;
@@ -797,7 +797,7 @@ namespace Sensors
         uint8_t conf = (uint8_t)m_fuel_conf;
         int8_t prog = (int8_t)m_progress;
 
-        for (uint8_t i = 0; i < 2; i++)
+        for (uint8_t i = 0; i < std::min(2, (int)m_beacons.size()); i++)
         {
           if (m_args.good_range_age > (Clock::get() - m_beacons[i].range_time))
             ranges[i] = m_beacons[i].range;
@@ -995,7 +995,7 @@ namespace Sensors
               m_report_timer.reset();
 
               if (m_args.report == "Full")
-                sendVerboseReport();
+                fullAcousticReport();
               else
                 reportRanges(Clock::get());
             }
