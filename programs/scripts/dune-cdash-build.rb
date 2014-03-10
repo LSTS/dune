@@ -305,7 +305,7 @@ class VirtualBox
         '--wait-exit', '--wait-stdout', '--wait-stderr',
         '--verbose', '--timeout', VBOX_TIMEOUT,
         '--',
-        'C:/Documents and Settings/rasm/dune-cdash-build.rb'
+        'C:/Documents and Settings/rasm/dune-cdash-build.rb',
         '--target',
         @target)
   end
