@@ -176,7 +176,8 @@ namespace DUNE
       buffer += DUNE::IMC::serialize(msg_id, buffer);
 
       std::vector<DevicePosition>::iterator it;
-      uint32_t _lat, _lon, _time;
+      int32_t _lat, _lon;
+      uint32_t _time;
 
       for (it = positions.begin(); it != positions.end(); it++)
       {
@@ -187,8 +188,6 @@ namespace DUNE
         buffer += DUNE::IMC::serialize(_time, buffer);
         buffer += DUNE::IMC::serialize(_lat, buffer);
         buffer += DUNE::IMC::serialize(_lon, buffer);
-
-        //std::cerr << it->id << " is at " << _lat << " / " << _lon;
       }
 
       return buffer - start;
