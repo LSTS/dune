@@ -66,63 +66,71 @@ namespace DUNE
             ret = (IridiumMessage *) new IridiumCommand();
             ret->deserialize(ptr, msg->data.size());
             return ret;
-        default:
-            ret = (IridiumMessage *) new GenericIridiumMessage();
+
+        case (ID_IMCMESSAGE):
+            ret = (ImcIridiumMessage *) new ImcIridiumMessage();
             ret->deserialize(ptr, msg->data.size());
             return ret;
+
+        default:
+          std::cerr << "Ignoring unrecognized Iridium message (" << msg_id
+              << ")" << std::endl;
+            return NULL;
       }
     }
 
-    GenericIridiumMessage::GenericIridiumMessage(DUNE::IMC::Message * m)
-    {
-      msg = m;
-      msg_id = m->getId();
-    }
-
-    GenericIridiumMessage::GenericIridiumMessage()
+    ImcIridiumMessage::ImcIridiumMessage()
     {
       msg = NULL;
-      msg_id = 0;
+      msg_id = ID_IMCMESSAGE;
     }
 
-    GenericIridiumMessage::~GenericIridiumMessage()
+    ImcIridiumMessage::ImcIridiumMessage(DUNE::IMC::Message * m)
+    {
+      msg = m;
+      msg_id = ID_IMCMESSAGE;
+    }
+
+    ImcIridiumMessage::~ImcIridiumMessage()
     {
       if (msg != NULL)
         delete msg;
     }
 
     int
-    GenericIridiumMessage::serialize(uint8_t * buffer)
+    ImcIridiumMessage::serialize(uint8_t * buffer)
     {
-      if (msg != NULL)
-        msg_id = msg->getId();
       uint8_t * start;
       start = buffer;
 
       buffer += DUNE::IMC::serialize(source, buffer);
       buffer += DUNE::IMC::serialize(destination, buffer);
       buffer += DUNE::IMC::serialize(msg_id, buffer);
+      buffer += DUNE::IMC::serialize(msg->getId(), buffer);
 
       buffer = msg->serializeFields(buffer);
 
       return buffer - start;
     }
 
-    int GenericIridiumMessage::deserialize(uint8_t * buffer, uint16_t length)
+    int ImcIridiumMessage::deserialize(uint8_t * buffer, uint16_t length)
     {
       uint8_t * start;
+      uint16_t mgid;
+      uint32_t timestamp;
+
       start = buffer;
       buffer += DUNE::IMC::deserialize(source, buffer, length);
       buffer += DUNE::IMC::deserialize(destination, buffer, length);
       buffer += DUNE::IMC::deserialize(msg_id, buffer, length);
+      buffer += DUNE::IMC::deserialize(mgid, buffer, length);
+      buffer += DUNE::IMC::deserialize(timestamp, buffer, length);
+      msg = DUNE::IMC::Factory::produce(mgid);
+      msg->setTimeStamp(timestamp);
 
-      //std::cerr << "parsing Iridium message... msg id: " << msg_id << "size: " << length << std::endl;
-
-
-      msg = DUNE::IMC::Factory::produce(msg_id);
       if (msg == NULL)
       {
-        //std::cerr << "ERROR parsing Iridium message: unknown msg id: " << msg_id << std::endl;
+        std::cerr << "ERROR parsing Iridium message: unknown msg id: " << mgid << std::endl;
         return 0;
       }
 
@@ -130,6 +138,7 @@ namespace DUNE
 
       return buffer - start;
     }
+
 
     IridiumCommand::IridiumCommand()
     {

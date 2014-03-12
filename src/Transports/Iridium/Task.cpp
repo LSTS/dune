@@ -167,21 +167,22 @@ namespace Transports
         switch (m->msg_id)
         {
           case (ID_ACTIVATESUB):
-            debug("Received an Iridium subscription request. WTF?");
+            inf("received subscription activation request via Iridium (ignoring).");
             break;
           case (ID_DEACTIVATESUB):
-            debug("Received an Iridium subscription end request. WTF?");
+            inf("received subscription deactivation request via Iridium (ignoring).");
             break;
           case (ID_IRIDIUMCMD):
             handleIridiumCommand(dynamic_cast<IridiumCommand *>(m));
+            inf("received text command via Iridium.");
             break;
           case (ID_DEVICEUPDATE):
             handleDeviceUpdate(dynamic_cast<DeviceUpdate *>(m));
             break;
           default:
-            DUNE::IMC::GenericIridiumMessage * irMsg =
-            dynamic_cast<DUNE::IMC::GenericIridiumMessage *>(m);
-            debug("received IMC message of type %s from Iridium.", irMsg->msg->getName());
+            DUNE::IMC::ImcIridiumMessage * irMsg =
+                dynamic_cast<DUNE::IMC::ImcIridiumMessage *>(m);
+            inf("received IMC message of type %s via Iridium.", irMsg->msg->getName());
             dispatch(irMsg->msg);
             break;
         }

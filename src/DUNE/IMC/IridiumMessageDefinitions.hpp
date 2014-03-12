@@ -46,6 +46,7 @@ namespace DUNE
     static const uint16_t ID_ACTIVATESUB = 2003;
     static const uint16_t ID_DEACTIVATESUB = 2004;
     static const uint16_t ID_IRIDIUMCMD = 2005;
+    static const uint16_t ID_IMCMESSAGE = 2010;
 
     typedef struct {
       uint16_t id;
@@ -76,16 +77,17 @@ namespace DUNE
       virtual ~IridiumMessage() {}
     };
 
+
     //! An Iridium message that encapsulates an IMC message
-    class GenericIridiumMessage : public IridiumMessage
+    class ImcIridiumMessage : public IridiumMessage
     {
     public:
-      GenericIridiumMessage();
-      GenericIridiumMessage(DUNE::IMC::Message * msg);
-      int serialize(uint8_t * buffer);
-      int deserialize(uint8_t* data, uint16_t len);
-      ~GenericIridiumMessage();
-      DUNE::IMC::Message * msg;
+    	ImcIridiumMessage();
+    	ImcIridiumMessage(DUNE::IMC::Message * msg);
+    	int serialize(uint8_t * buffer);
+    	int deserialize(uint8_t* data, uint16_t len);
+    	~ImcIridiumMessage();
+    	DUNE::IMC::Message * msg;
     };
 
     //! Extension to the IMC protocol used to report a set of device positions
