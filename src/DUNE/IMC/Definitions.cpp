@@ -1150,6 +1150,93 @@ namespace DUNE
       IMC::toJSON(os__, "rpm_rate_max", rpm_rate_max, nindent__);
     }
 
+    MsgList::MsgList(void)
+    {
+      m_header.mgid = 20;
+      clear();
+      msgs.setParent(this);
+    }
+
+    void
+    MsgList::clear(void)
+    {
+      msgs.clear();
+    }
+
+    bool
+    MsgList::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::MsgList& other__ = dynamic_cast<const MsgList&>(msg__);
+      if (msgs != other__.msgs) return false;
+      return true;
+    }
+
+    int
+    MsgList::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    MsgList::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += msgs.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    MsgList::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += msgs.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    MsgList::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += msgs.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    MsgList::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      msgs.toJSON(os__, "msgs", nindent__);
+    }
+
+    void
+    MsgList::setTimeStampNested(double value__)
+    {
+      msgs.setTimeStamp(value__);
+    }
+
+    void
+    MsgList::setSourceNested(uint16_t value__)
+    {
+      msgs.setSource(value__);
+    }
+
+    void
+    MsgList::setSourceEntityNested(uint8_t value__)
+    {
+      msgs.setSourceEntity(value__);
+    }
+
+    void
+    MsgList::setDestinationNested(uint16_t value__)
+    {
+      msgs.setDestination(value__);
+    }
+
+    void
+    MsgList::setDestinationEntityNested(uint8_t value__)
+    {
+      msgs.setDestinationEntity(value__);
+    }
+
     SimulatedState::SimulatedState(void)
     {
       m_header.mgid = 50;
@@ -18757,6 +18844,80 @@ namespace DUNE
       IMC::toJSON(os__, "bondthick", bondthick, nindent__);
       IMC::toJSON(os__, "leadgain", leadgain, nindent__);
       IMC::toJSON(os__, "deconflgain", deconflgain, nindent__);
+    }
+
+    MessagePart::MessagePart(void)
+    {
+      m_header.mgid = 877;
+      clear();
+    }
+
+    void
+    MessagePart::clear(void)
+    {
+      uid = 0;
+      frag_number = 0;
+      num_frags = 0;
+      data.clear();
+    }
+
+    bool
+    MessagePart::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::MessagePart& other__ = dynamic_cast<const MessagePart&>(msg__);
+      if (uid != other__.uid) return false;
+      if (frag_number != other__.frag_number) return false;
+      if (num_frags != other__.num_frags) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    MessagePart::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    MessagePart::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(uid, ptr__);
+      ptr__ += IMC::serialize(frag_number, ptr__);
+      ptr__ += IMC::serialize(num_frags, ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    MessagePart::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(uid, bfr__, size__);
+      bfr__ += IMC::deserialize(frag_number, bfr__, size__);
+      bfr__ += IMC::deserialize(num_frags, bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    MessagePart::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(uid, bfr__, size__);
+      bfr__ += IMC::deserialize(frag_number, bfr__, size__);
+      bfr__ += IMC::deserialize(num_frags, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    MessagePart::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "uid", uid, nindent__);
+      IMC::toJSON(os__, "frag_number", frag_number, nindent__);
+      IMC::toJSON(os__, "num_frags", num_frags, nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
     }
   }
 }

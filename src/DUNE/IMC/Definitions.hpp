@@ -1262,6 +1262,89 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Message List.
+    class MsgList: public Message
+    {
+    public:
+      //! Messages.
+      MessageList<Message> msgs;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 20;
+      }
+
+      MsgList(void);
+
+      Message*
+      clone(void) const
+      {
+        return new MsgList(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return MsgList::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "MsgList";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return msgs.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
     //! Simulated State.
     class SimulatedState: public Message
     {
@@ -18145,6 +18228,79 @@ namespace DUNE
       getFixedSerializationSize(void) const
       {
         return 21;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Message Fragment.
+    class MessagePart: public Message
+    {
+    public:
+      //! Transmission Unique Id.
+      uint8_t uid;
+      //! Fragment Number.
+      uint8_t frag_number;
+      //! Total Number of fragments.
+      uint8_t num_frags;
+      //! Fragment Data.
+      std::vector<char> data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 877;
+      }
+
+      MessagePart(void);
+
+      Message*
+      clone(void) const
+      {
+        return new MessagePart(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return MessagePart::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "MessagePart";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 3;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(data);
       }
 
       void
