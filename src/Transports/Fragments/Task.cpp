@@ -35,15 +35,27 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    struct Arguments
+    {
+      // Reception timeout.
+      float max_age_secs;
+    };
+
+
     struct Task : public DUNE::Tasks::Task
     {
       std::map<uint32_t, IncomingMessage> m_incoming;
       Time::Counter<float> m_gc_counter;
       RWLock m_incoming_lock;
+      Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
       {
+        param("Reception timeout", m_args.max_age_secs)
+                .defaultValue("1800")
+                .description("Maximum amount of seconds to wait for missing fragments in incoming messages");
+
         bind<IMC::MessagePart>(this);
         m_gc_counter.setTop(120);
       }
@@ -78,17 +90,17 @@ namespace Transports
 
       void
       message_ripper() {
-        inf("ripping old messages");
+        debug("ripping old messages");
         std::map<uint32_t, IncomingMessage>::iterator it;
 
         m_incoming_lock.lockWrite();
         for (it = m_incoming.begin(); it != m_incoming.end(); it++)
         {
           IncomingMessage msg = (*it).second;
-          if (msg.getAge() > 1800)
+          if (msg.getAge() > m_args.max_age_secs)
           {
             // message has died of natural causes...
-            war("Removing incoming message from memory.");
+            war("Removed incoming message from memory (%d fragments were still missing).", msg.getFragmentsMissing());
             m_incoming.erase(it);
           }
         }
