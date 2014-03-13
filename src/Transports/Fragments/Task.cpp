@@ -28,6 +28,7 @@
 // DUNE headers.
 # include <DUNE/DUNE.hpp>
 
+#include "IncomingMessage.hpp"
 namespace Transports
 {
   namespace Fragments
@@ -36,28 +37,62 @@ namespace Transports
 
     struct Task : public DUNE::Tasks::Task
     {
+      std::map<uint32_t, IncomingMessage> m_incoming;
+      Time::Counter<float> m_gc_counter;
+      RWLock m_incoming_lock;
+
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
       {
         bind<IMC::MessagePart>(this);
-      }
-
-      void
-      onResourceAcquisition(void)
-      {
-        // start messages structure
+        m_gc_counter.setTop(120);
       }
 
       void
       onResourceRelease(void)
       {
-        // free messages structure
+        m_incoming.clear();
       }
 
       void
       consume(const IMC::MessagePart* msg)
       {
+        int hash = (msg->uid << 16) | msg->getSource();
+        if (m_incoming.find(hash) == m_incoming.end()) {
+          IncomingMessage incMsg;
+          m_incoming[hash] = incMsg;
+        }
 
+        debug("Incoming message fragment (%d still missing)",
+              m_incoming[hash].getFragmentsMissing());
+
+        IMC::Message * res = m_incoming[hash].setFragment(msg);
+        if (res != NULL)
+        {
+          dispatch(res);
+          m_incoming_lock.lockWrite();
+          m_incoming.erase(hash);
+          m_incoming_lock.unlock();
+        }
+      }
+
+      void
+      message_ripper() {
+        inf("ripping old messages");
+        std::map<uint32_t, IncomingMessage>::iterator it;
+
+        m_incoming_lock.lockWrite();
+        for (it = m_incoming.begin(); it != m_incoming.end(); it++)
+        {
+          IncomingMessage msg = (*it).second;
+          if (msg.getAge() > 1800)
+          {
+            // message has died of natural causes...
+            war("Removing incoming message from memory.");
+            m_incoming.erase(it);
+          }
+        }
+        m_incoming_lock.unlock();
       }
 
       void
@@ -66,6 +101,11 @@ namespace Transports
         while (!stopping())
         {
           waitForMessages(1.0);
+          if (m_gc_counter.overflow())
+          {
+            message_ripper();
+            m_gc_counter.reset();
+          }
         }
       }
     };
