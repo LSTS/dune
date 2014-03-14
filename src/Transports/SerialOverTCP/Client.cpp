@@ -59,7 +59,7 @@ namespace Transports
         return 0;
 
       int size = (int) m_out_data.front().size;
-      memcpy(bfr, m_out_data.front().data, size);
+      std::memcpy(bfr, m_out_data.front().data, size);
       m_out_data.pop();
       return size;
     }
@@ -68,7 +68,7 @@ namespace Transports
     Client::write(char bfr[], unsigned bfr_len)
     {
       Buffer tmp_bfr;
-      memcpy(tmp_bfr.data, bfr, bfr_len);
+      std::memcpy(tmp_bfr.data, bfr, bfr_len);
       tmp_bfr.size = bfr_len;
       m_in_data.push(tmp_bfr);
     }
@@ -103,7 +103,7 @@ namespace Transports
         {
           if (!m_in_data.empty())
           {
-            memcpy(m_bfr.data,m_in_data.front().data, m_in_data.front().size);
+            std::memcpy(m_bfr.data, m_in_data.front().data, m_in_data.front().size);
             m_bfr.size = m_in_data.front().size;
             m_in_data.pop();
             m_sock->write(m_bfr.data, m_bfr.size);
