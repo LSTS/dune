@@ -31,6 +31,10 @@
 // ISO C++ 98 headers.
 #include <cstdio>
 
+#if !defined(fprintf)
+using std::fprintf;
+#endif
+
 class Test
 {
 public:
@@ -39,7 +43,7 @@ public:
     m_passed(0),
     m_failed(0)
   {
-    std::fprintf(stderr, "* %s\n", name);
+    fprintf(stderr, "* %s\n", name);
   }
 
   void
@@ -47,37 +51,37 @@ public:
   {
     ++m_total;
 
-    std::fprintf(stderr, "  %-40s ", description);
+    fprintf(stderr, "  %-40s ", description);
 
     if (expression)
       ++m_passed;
     else
       ++m_failed;
 
-    std::fprintf(stderr, "[%s]\n", expression ? "passed" : "failed");
+    fprintf(stderr, "[%s]\n", expression ? "passed" : "failed");
   }
 
   void
   failed(const char* description)
   {
     ++m_total;
-    std::fprintf(stderr, "  %-40s ", description);
+    fprintf(stderr, "  %-40s ", description);
     ++m_failed;
-    std::fprintf(stderr, "[%s]\n", "failed");
+    fprintf(stderr, "[%s]\n", "failed");
   }
 
   void
   passed(const char* description)
   {
     ++m_total;
-    std::fprintf(stderr, "  %-40s ", description);
+    fprintf(stderr, "  %-40s ", description);
     ++m_passed;
-    std::fprintf(stderr, "[%s]\n", "passed");
+    fprintf(stderr, "[%s]\n", "passed");
   }
 
   ~Test(void)
   {
-    std::fprintf(stderr, "- %d tests / %d passed / %d failed\n", m_total, m_passed, m_failed);
+    fprintf(stderr, "- %d tests / %d passed / %d failed\n", m_total, m_passed, m_failed);
   }
 
   int
