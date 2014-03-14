@@ -23,6 +23,7 @@
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Author: Joao Fortuna                                                     *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -32,6 +33,9 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+
+// Local Headers
+#include "Client.hpp"
 
 namespace Transports
 {
@@ -60,7 +64,7 @@ namespace Transports
       // I/O Multiplexer.
       Poll m_poll;
       // Clients.
-      std::list<TCPSocket*> m_clients;
+      std::list<Client*> m_client_list;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -84,6 +88,7 @@ namespace Transports
       ~Task(void)
       {
         onResourceRelease();
+
       }
 
       void
@@ -110,14 +115,7 @@ namespace Transports
           m_uart = NULL;
         }
 
-        std::list<TCPSocket*>::iterator itr = m_clients.begin();
-        for (; itr != m_clients.end(); ++itr)
-        {
-          m_poll.remove(*(*itr));
-          delete *itr;
-        }
-
-        m_clients.clear();
+        m_client_list.clear();
       }
 
       void
@@ -130,10 +128,10 @@ namespace Transports
       }
 
       void
-      dispatchToClients(const char* bfr, unsigned bfr_len)
+      dispatchToClients(char bfr[], unsigned bfr_len)
       {
-        std::list<TCPSocket*>::iterator itr = m_clients.begin();
-        while (itr != m_clients.end())
+        std::list<Client*>::iterator itr = m_client_list.begin();
+        while (itr != m_client_list.end())
         {
           try
           {
@@ -143,9 +141,8 @@ namespace Transports
           catch (std::runtime_error& e)
           {
             err("%s", e.what());
-            m_poll.remove(*(*itr));
             delete *itr;
-            itr = m_clients.erase(itr);
+            itr = m_client_list.erase(itr);
           }
         }
       }
@@ -158,9 +155,35 @@ namespace Transports
           inf(DTR("accepting connection request"));
           try
           {
-            TCPSocket* nc = m_sock->accept();
-            m_clients.push_back(nc);
-            m_poll.add(*nc);
+            Client* nc = new Client(m_sock->accept());
+            nc->start();
+            m_client_list.push_back(nc);
+          }
+          catch (std::runtime_error& e)
+          {
+            err("%s", e.what());
+          }
+          inf("Clients: %d", (int)m_client_list.size());
+        }
+      }
+
+      void
+      checkClientQueues(void)
+      {
+        std::list<Client*>::iterator itr = m_client_list.begin();
+        while (itr != m_client_list.end())
+        {
+          try
+          {
+            char bfr[1024] = {0};
+
+            int rv = (*itr)->read(bfr);
+            if(rv)
+            {
+              m_uart->write(bfr, rv);
+            }
+
+            ++itr;
           }
           catch (std::runtime_error& e)
           {
@@ -170,32 +193,17 @@ namespace Transports
       }
 
       void
-      checkClientSockets(void)
+      cleanClients(void)
       {
-        char bfr[1024];
-
-        std::list<TCPSocket*>::iterator itr = m_clients.begin();
-        while (itr != m_clients.end())
+        std::list<Client*>::iterator itr = m_client_list.begin();
+        while (itr != m_client_list.end())
         {
-          if (m_poll.wasTriggered(*(*itr)))
+          if((*itr)->isDead())
           {
-            try
-            {
-              int rv = (*itr)->read(bfr, sizeof(bfr));
-              m_uart->write(bfr, rv);
-            }
-            catch (Network::ConnectionClosed& e)
-            {
-              (void)e;
-              m_poll.remove(*(*itr));
-              delete *itr;
-              itr = m_clients.erase(itr);
-              continue;
-            }
-            catch (std::runtime_error& e)
-            {
-              err("%s", e.what());
-            }
+            delete *itr;
+            itr = m_client_list.erase(itr);
+            inf("Clients: %d", (int)m_client_list.size());
+            continue;
           }
 
           ++itr;
@@ -207,9 +215,13 @@ namespace Transports
       {
         if (m_poll.wasTriggered(*m_uart))
         {
-          char bfr[1024];
+          char bfr[1024] = {0};
           int rv = m_uart->read(bfr, sizeof(bfr));
-          dispatchToClients(bfr, rv);
+
+//          debug("Read %d form serial: %s", rv, bfr);
+
+          if(rv>0)
+            dispatchToClients(bfr, rv);
         }
       }
 
@@ -218,12 +230,14 @@ namespace Transports
       {
         while (!stopping())
         {
-          if (m_poll.poll(1.0))
+          if (m_poll.poll(0.01))
           {
             checkSerialPort();
             checkMainSocket();
-            checkClientSockets();
           }
+
+          cleanClients();
+          checkClientQueues();
         }
       }
     };
