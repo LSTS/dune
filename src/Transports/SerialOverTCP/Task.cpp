@@ -23,6 +23,7 @@
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Author: Joao Fortuna                                                     *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -87,6 +88,7 @@ namespace Transports
       ~Task(void)
       {
         onResourceRelease();
+
       }
 
       void
@@ -126,7 +128,7 @@ namespace Transports
       }
 
       void
-      dispatchToClients(char* bfr, unsigned bfr_len)
+      dispatchToClients(char bfr[], unsigned bfr_len)
       {
         std::list<Client*>::iterator itr = m_client_list.begin();
         while (itr != m_client_list.end())
@@ -161,30 +163,25 @@ namespace Transports
           {
             err("%s", e.what());
           }
-          inf("Clients: %d", m_client_list.size());
+          inf("Clients: %d", (int)m_client_list.size());
         }
       }
 
       void
       checkClientQueues(void)
       {
-        char bfr[1024];
-
         std::list<Client*>::iterator itr = m_client_list.begin();
         while (itr != m_client_list.end())
         {
-          if((*itr)->isDead())
-          {
-            delete *itr;
-            itr = m_client_list.erase(itr);
-            continue;
-          }
-
           try
           {
+            char bfr[1024] = {0};
+
             int rv = (*itr)->read(bfr);
             if(rv)
+            {
               m_uart->write(bfr, rv);
+            }
 
             ++itr;
           }
@@ -196,12 +193,32 @@ namespace Transports
       }
 
       void
+      cleanClients(void)
+      {
+        std::list<Client*>::iterator itr = m_client_list.begin();
+        while (itr != m_client_list.end())
+        {
+          if((*itr)->isDead())
+          {
+            delete *itr;
+            itr = m_client_list.erase(itr);
+            inf("Clients: %d", (int)m_client_list.size());
+            continue;
+          }
+
+          ++itr;
+        }
+      }
+
+      void
       checkSerialPort(void)
       {
         if (m_poll.wasTriggered(*m_uart))
         {
-          char bfr[1024];
+          char bfr[1024] = {0};
           int rv = m_uart->read(bfr, sizeof(bfr));
+
+//          debug("Read %d form serial: %s", rv, bfr);
 
           if(rv>0)
             dispatchToClients(bfr, rv);
@@ -217,8 +234,10 @@ namespace Transports
           {
             checkSerialPort();
             checkMainSocket();
-            checkClientQueues();
           }
+
+          cleanClients();
+          checkClientQueues();
         }
       }
     };

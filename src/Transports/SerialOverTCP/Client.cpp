@@ -58,16 +58,19 @@ namespace Transports
       if(m_out_data.empty())
         return 0;
 
-      *bfr = *m_out_data.front().data;
+      int size = (int) m_out_data.front().size;
+      memcpy(bfr, m_out_data.front().data, size);
       m_out_data.pop();
-      return m_out_data.front().size;
+      return size;
     }
 
     void
-    Client::write(char* bfr, unsigned bfr_len)
+    Client::write(char bfr[], unsigned bfr_len)
     {
-      Buffer bfr_in = {bfr, bfr_len};
-      m_in_data.push(bfr_in);
+      Buffer tmp_bfr;
+      memcpy(tmp_bfr.data, bfr, bfr_len);
+      tmp_bfr.size = bfr_len;
+      m_in_data.push(tmp_bfr);
     }
 
     void
@@ -79,6 +82,8 @@ namespace Transports
       m_poll.remove(*m_sock);
       delete m_sock;
       m_sock = NULL;
+
+      DUNE_WRN("Transports.SerialOverTCP", "Closing connection");
     }
 
     void
@@ -96,30 +101,29 @@ namespace Transports
 
         try
         {
-          if(!m_in_data.empty())
+          if (!m_in_data.empty())
           {
-            m_sock->write(m_in_data.front().data, m_in_data.front().size);
+            memcpy(m_bfr.data,m_in_data.front().data, m_in_data.front().size);
+            m_bfr.size = m_in_data.front().size;
             m_in_data.pop();
+            m_sock->write(m_bfr.data, m_bfr.size);
             m_timer.reset();
           }
 
           if (!m_poll.wasTriggered(*m_sock))
             continue;
 
-          char tmp_bfr[1024];
-
-          int rv = m_sock->read(tmp_bfr, sizeof(tmp_bfr));
+          int rv = m_sock->read(m_bfr.data, sizeof(m_bfr.data));
           if (rv <= 0)
             break;
 
-          m_bfr.data = tmp_bfr;
           m_bfr.size = rv;
           m_out_data.push(m_bfr);
           m_timer.reset();
         }
         catch (std::exception& e)
         {
-          DUNE_ERR("SerialOverTCP Client", e.what());
+          DUNE_ERR("Transports.SerialOverTCP - Client", e.what());
           break;
         }
       }

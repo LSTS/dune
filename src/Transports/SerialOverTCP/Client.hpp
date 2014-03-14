@@ -55,7 +55,7 @@ namespace Transports
 
       struct Buffer
       {
-        char* data;
+        char data[1024];
         unsigned size;
       };
 
