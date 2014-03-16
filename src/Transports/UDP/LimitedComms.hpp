@@ -50,7 +50,9 @@ namespace Transports
     public:
       LimitedComms(float comm_range, unsigned local_id):
         m_comm_range(comm_range),
-        m_local_id(local_id)
+        m_local_id(local_id),
+        m_active(false),
+        m_underwater_comms(false)
       {
         m_last_calc.setTop(SECONDS_BETWEEN_CALCULATIONS);
         std::memset(m_position, 0, sizeof(m_position));
@@ -86,15 +88,12 @@ namespace Transports
         bool within_range = isReachable(lat, lon, alt);
         if (itr == m_node_positions.end())
         {
-          NodePosition pos;
-          pos.lat = lat;
-          pos.lon = lon;
-          pos.hae = alt;
-          pos.visible = within_range;
-
-          m_node_positions[id] = pos;
+          m_node_positions[id] = NodePosition();
         }
 
+        m_node_positions[id].lat = lat;
+        m_node_positions[id].lon = lon;
+        m_node_positions[id].hae = alt;
         m_node_positions[id].visible = within_range;
       }
 
