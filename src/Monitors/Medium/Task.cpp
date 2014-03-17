@@ -87,7 +87,8 @@ namespace Monitors
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Periodic(name, ctx)
+        Tasks::Periodic(name, ctx),
+        m_airspeed(0)
       {
         param("Initialization Time", m_args.init_time)
         .units(Units::Second)
@@ -255,8 +256,11 @@ namespace Monitors
       void
       check(void)
       {
-	checkWaterPresence();
-	checkDepth();
+        if (m_args.vtype == "UAV")
+          return;
+
+        checkWaterPresence();
+        checkDepth();
       }
 
       void
@@ -269,9 +273,8 @@ namespace Monitors
         // Initialization.
         if (getEntityState() == IMC::EntityState::ESTA_BOOT)
         {
-          if (m_args.vtype != "UAV")
-	    check();
-          else
+          check();
+          if (m_args.vtype == "UAV")
           {
             if (m_airspeed < m_args.airspeed_threshold)
               m_vm.medium = IMC::VehicleMedium::VM_GROUND;
@@ -305,7 +308,6 @@ namespace Monitors
 
           case (IMC::VehicleMedium::VM_GROUND):
             check();
-
             if (m_airspeed > m_args.airspeed_threshold && m_args.vtype == "UAV")
               m_vm.medium = IMC::VehicleMedium::VM_AIR;
             break;
