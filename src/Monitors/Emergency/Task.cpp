@@ -74,6 +74,9 @@ namespace Monitors
         Tasks::Periodic(name, ctx),
         m_in_mission(false)
       {
+        paramActive(Tasks::Parameter::SCOPE_IDLE,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param(DTR_RT("SMS Recipient Number"), m_args.recipient)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("+351966575686")
@@ -104,17 +107,35 @@ namespace Monitors
         bind<IMC::Heartbeat>(this);
         bind<IMC::PlanControlState>(this);
         bind<IMC::VehicleMedium>(this);
+        bind<IMC::TextMessage>(this);
       }
 
       void
       onResourceInitialization(void)
       {
         // Initialize entity state.
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        if (isActive())
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        else
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
         m_lost_coms_timer.setTop(m_args.heartbeat_tout);
         m_fuel = -1.0;
         m_fuel_conf = -1.0;
         m_progress = -1.0;
+      }
+
+      void
+      onActivation(void)
+      {
+        m_lost_coms_timer.reset();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -140,6 +161,31 @@ namespace Monitors
 
           m_emsg += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
         }
+      }
+
+      void
+      consume(const IMC::TextMessage* msg)
+      {
+        spew("processing text message from %s: \"%s\"", msg->origin.c_str(), sanitize(msg->text).c_str());
+        std::istringstream iss(msg->text);
+        std::string cmd, args = "";
+        getline(iss, cmd, ' ');
+        if (iss.str().size() > cmd.size())
+          args = std::string(iss.str(), cmd.size() + 1, iss.str().size() - cmd.size() + 1);
+
+        spew("command is %s, args are %s", cmd.c_str(), args.c_str());
+
+        if (cmd == "gsm")
+        {
+          if (args == "true")
+            requestActivation();
+
+          if (args == "false")
+            requestDeactivation();
+        }
+
+        if (cmd == "pos")
+          sendSMS("T", m_args.sms_lost_coms_ttl);
       }
 
       void
@@ -205,6 +251,9 @@ namespace Monitors
       void
       task(void)
       {
+        if (!isActive())
+          return;
+
         if (m_lost_coms_timer.overflow())
         {
           m_lost_coms_timer.reset();
