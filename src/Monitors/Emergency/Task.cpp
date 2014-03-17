@@ -128,7 +128,6 @@ namespace Monitors
       void
       onActivation(void)
       {
-        m_lost_coms_timer.reset();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
