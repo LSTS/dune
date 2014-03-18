@@ -26,8 +26,8 @@
 //***************************************************************************
 
 
-#ifndef INCOMINGMESSAGE_HPP_
-#define INCOMINGMESSAGE_HPP_
+#ifndef TRANSPORTS_FRAGMENTS_INCOMINGMESSAGE_HPP_INCLUDED_
+#define TRANSPORTS_FRAGMENTS_INCOMINGMESSAGE_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -55,7 +55,7 @@ namespace Transports
       Task * m_parent;
       std::map<unsigned int, IMC::MessagePart> m_fragments;
     };
-  } /* namespace Fragments */
-} /* namespace Transports */
+  }
+}
 
-#endif /* INCOMINGMESSAGE_HPP_ */
+#endif
