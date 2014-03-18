@@ -32,9 +32,16 @@ namespace Transports
 {
   namespace Fragments
   {
-    IncomingMessage::IncomingMessage(void)
+    IncomingMessage::IncomingMessage()
     {
+      m_parent = NULL;
       m_src = m_uid = m_creation_time = m_num_frags = -1;
+    }
+
+    void
+    IncomingMessage::setParentTask(Task * parent)
+    {
+      m_parent = parent;
     }
 
     IMC::Message*
@@ -42,7 +49,7 @@ namespace Transports
     {
 
       // is this the first fragment?
-      if (m_num_frags == -1)
+      if (m_num_frags < 0)
       {
         m_num_frags = part->num_frags;
         m_uid = part->uid;
@@ -54,7 +61,11 @@ namespace Transports
       if (part->uid != m_uid || part->getSource() != m_src ||
           part->frag_number >= m_num_frags)
       {
-        std::cerr << "Invalid fragment received and it won't be processed." << std::endl;
+        if (m_parent == NULL)
+          std::cerr << "Invalid fragment received and it won't be processed." << std::endl;
+        else
+          m_parent->err("Invalid fragment received and it won't be processed.");
+
         return NULL;
       }
 
@@ -85,7 +96,7 @@ namespace Transports
     double
     IncomingMessage::getAge(void)
     {
-      if (m_creation_time == -1)
+      if (m_creation_time < 0)
         return 0;
 
       return Time::Clock::get() - m_creation_time;

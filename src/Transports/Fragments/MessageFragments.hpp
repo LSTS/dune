@@ -38,15 +38,12 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
-
-
     class MessageFragments
     {
     public:
       MessageFragments(IMC::Message * message, int mtu);
       IMC::MessagePart * getFragment(int frag_number);
       int getNumberOfFragments();
-      virtual
       ~MessageFragments();
     private:
       static int uid;

@@ -46,7 +46,6 @@ namespace Transports
     {
       std::map<uint32_t, IncomingMessage> m_incoming;
       Time::Counter<float> m_gc_counter;
-      RWLock m_incoming_lock;
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
@@ -74,6 +73,7 @@ namespace Transports
         if (m_incoming.find(hash) == m_incoming.end())
         {
           IncomingMessage incMsg;
+          incMsg.setParentTask(this);
           m_incoming[hash] = incMsg;
         }
 
@@ -84,9 +84,7 @@ namespace Transports
         if (res != NULL)
         {
           dispatch(res);
-          m_incoming_lock.lockWrite();
           m_incoming.erase(hash);
-          m_incoming_lock.unlock();
         }
       }
 
@@ -96,7 +94,6 @@ namespace Transports
         debug("ripping old messages");
         std::map<uint32_t, IncomingMessage>::iterator it;
 
-        m_incoming_lock.lockWrite();
         for (it = m_incoming.begin(); it != m_incoming.end(); it++)
         {
           IncomingMessage msg = (*it).second;
@@ -108,7 +105,6 @@ namespace Transports
             m_incoming.erase(it);
           }
         }
-        m_incoming_lock.unlock();
       }
 
       void
