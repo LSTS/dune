@@ -26,9 +26,10 @@
 //***************************************************************************
 
 // DUNE headers.
-# include <DUNE/DUNE.hpp>
+#include <DUNE/DUNE.hpp>
 
 #include "IncomingMessage.hpp"
+
 namespace Transports
 {
   namespace Fragments
@@ -41,7 +42,6 @@ namespace Transports
       float max_age_secs;
     };
 
-
     struct Task : public DUNE::Tasks::Task
     {
       std::map<uint32_t, IncomingMessage> m_incoming;
@@ -53,8 +53,8 @@ namespace Transports
         DUNE::Tasks::Task(name, ctx)
       {
         param("Reception timeout", m_args.max_age_secs)
-                .defaultValue("1800")
-                .description("Maximum amount of seconds to wait for missing fragments in incoming messages");
+        .defaultValue("1800")
+        .description("Maximum amount of seconds to wait for missing fragments in incoming messages");
 
         bind<IMC::MessagePart>(this);
         m_gc_counter.setTop(120);
@@ -70,7 +70,9 @@ namespace Transports
       consume(const IMC::MessagePart* msg)
       {
         int hash = (msg->uid << 16) | msg->getSource();
-        if (m_incoming.find(hash) == m_incoming.end()) {
+
+        if (m_incoming.find(hash) == m_incoming.end())
+        {
           IncomingMessage incMsg;
           m_incoming[hash] = incMsg;
         }
@@ -89,7 +91,8 @@ namespace Transports
       }
 
       void
-      message_ripper() {
+      messageRipper(void)
+      {
         debug("ripping old messages");
         std::map<uint32_t, IncomingMessage>::iterator it;
 
@@ -100,7 +103,8 @@ namespace Transports
           if (msg.getAge() > m_args.max_age_secs)
           {
             // message has died of natural causes...
-            war("Removed incoming message from memory (%d fragments were still missing).", msg.getFragmentsMissing());
+            war("Removed incoming message from memory (%d fragments were still missing).",
+                msg.getFragmentsMissing());
             m_incoming.erase(it);
           }
         }
@@ -113,9 +117,10 @@ namespace Transports
         while (!stopping())
         {
           waitForMessages(1.0);
+
           if (m_gc_counter.overflow())
           {
-            message_ripper();
+            messageRipper();
             m_gc_counter.reset();
           }
         }

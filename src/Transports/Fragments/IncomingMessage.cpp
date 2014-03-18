@@ -32,33 +32,33 @@ namespace Transports
 {
   namespace Fragments
   {
-    IncomingMessage::IncomingMessage()
+    IncomingMessage::IncomingMessage(void)
     {
-      src = uid = creation_time = num_frags = -1;
+      m_src = m_uid = m_creation_time = m_num_frags = -1;
     }
 
-    IMC::Message *
-    IncomingMessage::setFragment(const IMC::MessagePart * part)
+    IMC::Message*
+    IncomingMessage::setFragment(const IMC::MessagePart* part)
     {
 
       // is this the first fragment?
-      if (num_frags == -1)
+      if (m_num_frags == -1)
       {
-        num_frags = part->num_frags;
-        uid = part->uid;
-        src = part->getSource();
-        creation_time = Time::Clock::get();
+        m_num_frags = part->num_frags;
+        m_uid = part->uid;
+        m_src = part->getSource();
+        m_creation_time = Time::Clock::get();
       }
 
       // Check if this is a valid fragment
-      if (part->uid != uid || part->getSource() != src
-          || part->frag_number >= num_frags)
+      if (part->uid != m_uid || part->getSource() != m_src ||
+          part->frag_number >= m_num_frags)
       {
         std::cerr << "Invalid fragment received and it won't be processed." << std::endl;
         return NULL;
       }
 
-      fragments[part->frag_number] = *part;
+      m_fragments[part->frag_number] = *part;
 
       // Message is complete. Let's reassemble and return it.
       if (getFragmentsMissing() == 0)
@@ -67,14 +67,14 @@ namespace Transports
         int total_length = 0;
         // concatenate all parts into a single array
         std::vector<char> data;
-        for (i = 0; i < num_frags; i++)
+        for (i = 0; i < m_num_frags; i++)
         {
-          total_length += fragments[i].data.size();
-          data.insert(data.end(), fragments[i].data.begin(),
-                      fragments[i].data.end());
+          total_length += m_fragments[i].data.size();
+          data.insert(data.end(), m_fragments[i].data.begin(),
+                      m_fragments[i].data.end());
         }
 
-        return IMC::Packet::deserialize((uint8_t *)&data[0], total_length);
+        return IMC::Packet::deserialize((uint8_t*)&data[0], total_length);
       }
       else
       {
@@ -83,22 +83,23 @@ namespace Transports
     }
 
     double
-    IncomingMessage::getAge()
+    IncomingMessage::getAge(void)
     {
-      if (creation_time == -1)
+      if (m_creation_time == -1)
         return 0;
-      return Time::Clock::get() - creation_time;
+
+      return Time::Clock::get() - m_creation_time;
     }
 
     int
-    IncomingMessage::getFragmentsMissing()
+    IncomingMessage::getFragmentsMissing(void)
     {
-      return num_frags - fragments.size();
+      return m_num_frags - m_fragments.size();
     }
 
-    IncomingMessage::~IncomingMessage()
+    IncomingMessage::~IncomingMessage(void)
     {
-      fragments.clear();
+      m_fragments.clear();
     }
 
   } /* namespace Fragments */

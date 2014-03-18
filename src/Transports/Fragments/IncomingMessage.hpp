@@ -41,29 +41,27 @@ namespace Transports
     class IncomingMessage
     {
     public:
-      IncomingMessage();
+      IncomingMessage(void);
 
       double
-      getAge();
+      getAge(void);
 
       int
-      getFragmentsMissing();
+      getFragmentsMissing(void);
 
-      IMC::Message *
-      setFragment(const IMC::MessagePart * part);
+      IMC::Message*
+      setFragment(const IMC::MessagePart* part);
 
       virtual
-      ~IncomingMessage();
+      ~IncomingMessage(void);
 
     private:
-      int src;
-      int uid;
-      int num_frags;
-      double creation_time;
-      std::map<unsigned int, IMC::MessagePart> fragments;
-
+      int m_src;
+      int m_uid;
+      int m_num_frags;
+      double m_creation_time;
+      std::map<unsigned int, IMC::MessagePart> m_fragments;
     };
-
   } /* namespace Fragments */
 } /* namespace Transports */
 
