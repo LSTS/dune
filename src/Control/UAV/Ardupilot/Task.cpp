@@ -871,7 +871,7 @@ namespace Control
 
           dispatch(m_pcs);
 
-          debug(DTR("Waypoint packet sent to Ardupilot"));
+          debug("Waypoint packet sent to Ardupilot");
         }
 
         void
