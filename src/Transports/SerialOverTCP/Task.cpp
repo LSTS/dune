@@ -218,8 +218,6 @@ namespace Transports
           char bfr[1024] = {0};
           int rv = m_uart->read(bfr, sizeof(bfr));
 
-//          debug("Read %d form serial: %s", rv, bfr);
-
           if(rv>0)
             dispatchToClients(bfr, rv);
         }

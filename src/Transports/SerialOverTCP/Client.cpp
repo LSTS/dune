@@ -58,8 +58,7 @@ namespace Transports
       if(m_out_data.empty())
         return 0;
 
-      int size = (int) m_out_data.front().size;
-      std::memcpy(bfr, m_out_data.front().data, size);
+      int size = (int) m_out_data.front().getData(bfr);
       m_out_data.pop();
       return size;
     }
@@ -67,10 +66,10 @@ namespace Transports
     void
     Client::write(char bfr[], unsigned bfr_len)
     {
-      Buffer tmp_bfr;
-      std::memcpy(tmp_bfr.data, bfr, bfr_len);
-      tmp_bfr.size = bfr_len;
+      m_mtx.lock();
+      Buffer tmp_bfr(bfr, bfr_len);
       m_in_data.push(tmp_bfr);
+      m_mtx.unlock();
     }
 
     void
@@ -103,22 +102,26 @@ namespace Transports
         {
           if (!m_in_data.empty())
           {
-            std::memcpy(m_bfr.data, m_in_data.front().data, m_in_data.front().size);
-            m_bfr.size = m_in_data.front().size;
+            m_mtx.lock();
+            char bfr[1024] = {0};
+            unsigned bfr_len = m_in_data.front().getData(bfr);
             m_in_data.pop();
-            m_sock->write(m_bfr.data, m_bfr.size);
+            m_sock->write(bfr, bfr_len);
             m_timer.reset();
+            m_mtx.unlock();
           }
 
           if (!m_poll.wasTriggered(*m_sock))
             continue;
 
-          int rv = m_sock->read(m_bfr.data, sizeof(m_bfr.data));
-          if (rv <= 0)
+          char bfr[1024] = {0};
+
+          int bfr_len = m_sock->read(bfr, 1024);
+          if (bfr_len <= 0)
             break;
 
-          m_bfr.size = rv;
-          m_out_data.push(m_bfr);
+          Buffer buffer(bfr, bfr_len);
+          m_out_data.push(buffer);
           m_timer.reset();
         }
         catch (std::exception& e)
