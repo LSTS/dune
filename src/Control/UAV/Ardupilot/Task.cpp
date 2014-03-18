@@ -1050,6 +1050,8 @@ namespace Control
               break;
             }
 
+            now = Clock::get();
+
 
             for (int i = 0; i < n; i++)
             {
@@ -1193,6 +1195,7 @@ namespace Control
             {
               setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
               m_error_missing = true;
+              m_esta_ext = false;
             }
           }
           else
