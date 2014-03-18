@@ -5264,6 +5264,11 @@
           Maneuver error.
         </description>
       </value>
+      <value id="3" name="Maneuver stopped" abbrev="STOPPED">
+        <description>
+          Maneuver stopped.
+        </description>
+      </value>
     </field>
     <field name="Completion Time" abbrev="eta" type="uint16_t" unit="s">
       <description>

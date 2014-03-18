@@ -11999,7 +11999,9 @@ namespace DUNE
         //! Maneuver completed.
         MCS_DONE = 1,
         //! Maneuver error.
-        MCS_ERROR = 2
+        MCS_ERROR = 2,
+        //! Maneuver stopped.
+        MCS_STOPPED = 3
       };
 
       //! State.
