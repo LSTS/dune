@@ -144,8 +144,10 @@ namespace Navigation
         float initial_rpm_to_speed;
         //! Heading bias uncertainty alignment threshold.
         double alignment_index;
-        //! Increment Euler Angles Delta (true) or integrate yaw rate (false)
+        //! Increment Euler Angles Delta (true) or integrate yaw rate (false).
         bool increment_euler_delta;
+        //! Abort if navigation exceeds maximum uncertainty.
+        bool abort;
       };
 
       struct Task: public DUNE::Navigation::BasicNavigation
@@ -207,6 +209,10 @@ namespace Navigation
           param("Update Heading with Euler Increments", m_args.increment_euler_delta)
           .defaultValue("false")
           .description("Use 'EulerAnglesDelta' or 'AngularVelocity' to update heading");
+
+          param("Abort if Uncertainty Exceeded", m_args.abort)
+          .defaultValue("true")
+          .description("Abort if position uncertainty is exceeded");
 
           param("Heading Bias Alignment Index", m_args.alignment_index)
           .defaultValue("1e-5")
@@ -578,7 +584,7 @@ namespace Navigation
               m_aligned = false;
           }
 
-          checkUncertainty();
+          checkUncertainty(m_args.abort);
 
           logData();
           reportToBus();
