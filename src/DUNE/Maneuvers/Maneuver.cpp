@@ -140,7 +140,15 @@ namespace DUNE
       (void)sm;
 
       if (isActive())
+      {
         requestDeactivation();
+
+        IMC::ManeuverControlState mcs;
+        mcs.state = IMC::ManeuverControlState::MCS_STOPPED;
+        mcs.info = "stopped";
+        mcs.eta = 0;
+        dispatch(mcs);
+      }
     }
 
     void
