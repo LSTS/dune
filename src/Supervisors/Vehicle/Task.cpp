@@ -396,6 +396,8 @@ namespace Supervisors
         if (msg->getSource() != getSystemId())
           return;
 
+        m_man_sup->update(msg);
+
         if (!maneuverMode())
           return;
 
@@ -606,6 +608,8 @@ namespace Supervisors
           err(DTR("this vehicle does not allow for external control, disabling loops"));
           disableLoops();
         }
+
+        m_man_sup->checkExpiration();
 
         if (m_switch_time < 0.0)
           return;
