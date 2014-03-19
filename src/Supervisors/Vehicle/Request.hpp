@@ -64,7 +64,7 @@ namespace Supervisors
       Request(int type)
       {
         init(type);
-        m_msg = NULL;
+        m_msg = new IMC::StopManeuver;
       }
 
       void
