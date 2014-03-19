@@ -58,11 +58,12 @@ namespace Supervisors
 
       ~ManeuverSupervisor(void)
       {
+        clearCurrent();
+
         while (!m_reqs.empty())
         {
-          m_curr_req = m_reqs.front();
+          delete m_reqs.front();
           m_reqs.pop();
-          clearCurrent();
         }
       }
 
@@ -72,6 +73,9 @@ namespace Supervisors
       {
         Request* req = new Request(RT_STOP);
         m_reqs.push(req);
+
+        m_task->inf("added stop");
+
         processRequests();
       }
 
@@ -81,6 +85,9 @@ namespace Supervisors
       {
         Request* req = new Request(RT_START, msg);
         m_reqs.push(req);
+
+        m_task->inf("added start");
+
         processRequests();
       }
 
@@ -88,8 +95,14 @@ namespace Supervisors
       void
       update(const IMC::ManeuverControlState* msg)
       {
+        m_state = msg->state;
+        m_valid_state = true;
+
         if (!isProcessing())
+        {
+          processRequests();
           return;
+        }
 
         switch (msg->state)
         {
@@ -110,9 +123,6 @@ namespace Supervisors
             m_task->war("request dropped");
             break;
         }
-
-        m_state = msg->state;
-        m_valid_state = true;
 
         clearCurrent();
         processRequests();
@@ -146,69 +156,79 @@ namespace Supervisors
         m_curr_req = m_reqs.front();
         m_reqs.pop();
 
-        // Two stops of two starts in a row generate error
-        if (m_curr_req->isStop())
+        if (m_valid_state)
         {
-          if (m_state != IMC::ManeuverControlState::MCS_EXECUTING)
+          // Two stops of two starts in a row generate error
+          if (m_curr_req->isStop())
           {
-            m_task->err("got StopManeuver but no maneuver is executing");
-            return;
-          }
-
-          if (m_reqs.size())
-          {
-            // Two stops in a row?
-            if (m_reqs.front()->isStop())
+            if (m_state != IMC::ManeuverControlState::MCS_EXECUTING)
             {
-              m_task->inf("got two StopManeuver in a row");
-              // clear this and use next one
+              m_task->inf("got StopManeuver, but no maneuver is executing");
               clearCurrent();
               processRequests();
               return;
             }
+
+            if (m_reqs.size())
+            {
+              // Two stops in a row?
+              if (m_reqs.front()->isStop())
+              {
+                m_task->inf("got two StopManeuver in a row");
+                // clear this and use next one
+                clearCurrent();
+                processRequests();
+                return;
+              }
+            }
+          }
+          else if (m_curr_req->isStart())
+          {
+            if (m_state == IMC::ManeuverControlState::MCS_EXECUTING)
+            {
+              m_task->err("already executing, cannot start without stopping");
+              // clear this one and use next one
+              clearCurrent();
+              processRequests();
+              return;
+            }
+
+            if (m_reqs.size())
+            {
+              // Two starts in a row
+              if (m_reqs.front()->isStart())
+              {
+                m_task->err("got two or more maneuvers in a row, ignoring oldest");
+                // clear this and use next one
+                clearCurrent();
+                processRequests();
+                return;
+              }
+              else if (m_reqs.front()->isStop())
+              {
+                // if a stop is coming, ignore this maneuver
+                m_task->war("a stop comes right after, ignoring this maneuver");
+                // clear this one and pop next one
+                clearCurrent();
+                m_reqs.pop();
+                processRequests();
+                return;
+              }
+              else
+              {
+                m_task->err("undefined state");
+              }
+            }
+          }
+          else
+          {
+            m_task->err("undefined state");
           }
         }
-        else if (m_curr_req->isStart())
+        else if (m_curr_req->isStop())
         {
-          if (m_state == IMC::ManeuverControlState::MCS_EXECUTING)
-          {
-            m_task->err("already executing, cannot start without stopping");
-            // clear this one and use next one
-            clearCurrent();
-            processRequests();
-            return;
-          }
-
-          if (m_reqs.size())
-          {
-            // Two starts in a row
-            if (m_reqs.front()->isStart())
-            {
-              m_task->err("got two or more maneuvers in a row, ignoring oldest");
-              // clear this and use next one
-              clearCurrent();
-              processRequests();
-              return;
-            }
-            else if (m_reqs.front()->isStop())
-            {
-              // if a stop is coming, ignore this maneuver
-              m_task->war("a stop comes right after, ignoring this maneuver");
-              // clear this one and pop next one
-              clearCurrent();
-              m_reqs.pop();
-              processRequests();
-              return;
-            }
-            else
-            {
-              m_task->err("undefined state");
-            }
-          }
-        }
-        else
-        {
-          m_task->err("undefined state");
+          clearCurrent();
+          return;
         }
 
         m_curr_req->issue();
