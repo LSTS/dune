@@ -496,8 +496,9 @@ namespace DUNE
       resetEulerAnglesDelta(void);
 
       //! Routine to check navigation uncertainty.
+      //! @param[in] abort abort if position uncertainty is exceeded.
       void
-      checkUncertainty(void);
+      checkUncertainty(bool abort = true);
 
       //! Routine to check current declination value using WMM.
       //! @param[in] lat vehicle current latitude.
