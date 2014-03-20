@@ -1078,13 +1078,13 @@ namespace DUNE
     }
 
     void
-    BasicNavigation::checkUncertainty(void)
+    BasicNavigation::checkUncertainty(bool abort)
     {
-      // Compute maximum horizontal position variance value
+      // Compute maximum horizontal position variance value.
       float hpos_var = std::max(m_kal.getCovariance(STATE_X, STATE_X), m_kal.getCovariance(STATE_Y, STATE_Y));
 
       // Check if it exceeds the specified threshold value.
-      if (hpos_var > m_max_hpos_var)
+      if (abort && hpos_var > m_max_hpos_var)
       {
         switch (m_navstate)
         {

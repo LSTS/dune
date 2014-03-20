@@ -25,24 +25,30 @@
 // Author: Jose Pinto                                                       *
 //***************************************************************************
 
+// DUNE headers.
+#include <DUNE/Network/FragmentedMessage.hpp>
 
-#include <Transports/Fragments/IncomingMessage.hpp>
-
-namespace Transports
+namespace DUNE
 {
-  namespace Fragments
+  namespace Network
   {
-    IncomingMessage::IncomingMessage(void)
+    FragmentedMessage::FragmentedMessage(void)
     {
+      m_parent = NULL;
       m_src = m_uid = m_creation_time = m_num_frags = -1;
     }
 
-    IMC::Message*
-    IncomingMessage::setFragment(const IMC::MessagePart* part)
+    void
+    FragmentedMessage::setParentTask(Tasks::Task* parent)
     {
+      m_parent = parent;
+    }
 
+    IMC::Message*
+    FragmentedMessage::setFragment(const IMC::MessagePart* part)
+    {
       // is this the first fragment?
-      if (m_num_frags == -1)
+      if (m_num_frags < 0)
       {
         m_num_frags = part->num_frags;
         m_uid = part->uid;
@@ -54,7 +60,11 @@ namespace Transports
       if (part->uid != m_uid || part->getSource() != m_src ||
           part->frag_number >= m_num_frags)
       {
-        std::cerr << "Invalid fragment received and it won't be processed." << std::endl;
+        if (m_parent == NULL)
+          DUNE_ERR("FragmentedMessage", "Invalid fragment received and it won't be processed.");
+        else
+          m_parent->err("Invalid fragment received and it won't be processed.");
+
         return NULL;
       }
 
@@ -78,29 +88,28 @@ namespace Transports
       }
       else
       {
-        return NULL;
+        return 0;
       }
     }
 
     double
-    IncomingMessage::getAge(void)
+    FragmentedMessage::getAge(void)
     {
-      if (m_creation_time == -1)
+      if (m_creation_time < 0)
         return 0;
 
       return Time::Clock::get() - m_creation_time;
     }
 
     int
-    IncomingMessage::getFragmentsMissing(void)
+    FragmentedMessage::getFragmentsMissing(void)
     {
       return m_num_frags - m_fragments.size();
     }
 
-    IncomingMessage::~IncomingMessage(void)
+    FragmentedMessage::~FragmentedMessage(void)
     {
       m_fragments.clear();
     }
-
-  } /* namespace Fragments */
-} /* namespace Transports */
+  }
+}

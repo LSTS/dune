@@ -168,6 +168,8 @@ namespace Control
         float m_droll, m_dclimb, m_dspeed;
         //! Type of system to be controlled
         APM_Vehicle m_vehicle_type;
+        //! Check if is in mission
+        bool m_in_mission;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -194,7 +196,8 @@ namespace Control
           m_droll(0),
           m_dclimb(0),
           m_dspeed(20),
-          m_vehicle_type(VEHICLE_UNKNOWN)
+          m_vehicle_type(VEHICLE_UNKNOWN),
+          m_in_mission(false)
         {
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
@@ -204,6 +207,8 @@ namespace Control
           .description("Ardupilot communications timeout");
 
           param("Ardupilot Tracker", m_args.ardu_tracker)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
           .defaultValue("false")
           .description("Use Ardupilot's waypoint tracker");
 
@@ -333,6 +338,7 @@ namespace Control
           bind<ControlLoops>(this);
           bind<PowerChannelControl>(this);
           bind<VehicleMedium>(this);
+          bind<PlanControlState>(this);
 
           // Misc. initialization
           m_last_pkt_time = 0; // time of last packet from Ardupilot
@@ -871,7 +877,7 @@ namespace Control
 
           dispatch(m_pcs);
 
-          debug(DTR("Waypoint packet sent to Ardupilot"));
+          debug("Waypoint packet sent to Ardupilot");
         }
 
         void
@@ -935,6 +941,12 @@ namespace Control
         consume(const IMC::VehicleMedium* vm)
         {
           m_ground = (vm->medium == IMC::VehicleMedium::VM_GROUND);
+        }
+
+        void
+        consume(const IMC::PlanControlState* msg)
+        {
+          m_in_mission = (msg->state & IMC::PlanControlState::PCS_EXECUTING) != 0;
         }
 
         void
@@ -1039,9 +1051,12 @@ namespace Control
           mavlink_status_t status;
 
           double now = Clock::get();
+          int counter = 0;
 
-          while (poll(0.01))
+          while (poll(0.01) && counter < 100)
           {
+            counter++;
+
             int n = receiveData(m_buf, sizeof(m_buf));
 
             if (n < 0)
@@ -1049,6 +1064,8 @@ namespace Control
               debug("Receive error");
               break;
             }
+
+            now = Clock::get();
 
 
             for (int i = 0; i < n; i++)
@@ -1193,6 +1210,7 @@ namespace Control
             {
               setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
               m_error_missing = true;
+              m_esta_ext = false;
             }
           }
           else
@@ -1426,6 +1444,15 @@ namespace Control
           mavlink_heartbeat_t hbt;
           mavlink_msg_heartbeat_decode(msg, &hbt);
 
+          IMC::Parameter mode;
+          mode.param = "APM Mode";
+
+          std::stringstream ss;
+          ss << m_mode;
+          mode.value = ss.str();
+
+          dispatch(mode);
+
           // Update vehicle type if applicable
           if (m_vehicle_type == VEHICLE_UNKNOWN)
           {
@@ -1496,6 +1523,8 @@ namespace Control
                   m_external = false;
                   if (m_dpath.end_lat)
                     receive(&m_dpath);
+                  if (!m_in_mission)
+                    loiterHere();
                 }
                 break;
               case 12:
@@ -1511,15 +1540,14 @@ namespace Control
                 m_external = false;
                 break;
             }
+
+
           }
         }
 
         void
         handleNavControllerPacket(const mavlink_message_t* msg)
         {
-          if (!m_args.ardu_tracker)
-            return;
-
           mavlink_nav_controller_output_t nav_out;
           mavlink_msg_nav_controller_output_decode(msg, &nav_out);
           debug("WP Dist: %d", nav_out.wp_dist);
@@ -1545,11 +1573,13 @@ namespace Control
           {
             m_pcs.flags |= PathControlState::FL_NEAR;
           }
-
-          dispatch(m_pcs);
           dispatch(d_roll);
           dispatch(d_pitch);
           dispatch(d_head);
+
+          if (!m_args.ardu_tracker)
+            return;
+          dispatch(m_pcs);
         }
 
         void

@@ -53,23 +53,62 @@ namespace Transports
 
     private:
 
-      struct Buffer
+      class Buffer
       {
         char data[1024];
         unsigned size;
+
+      public:
+        Buffer(const Buffer& other)
+        {
+          size = other.size;
+          memcpy(data, other.data, size);
+        }
+
+        Buffer(char bfr[], unsigned bfr_len)
+        {
+          setData(bfr, bfr_len);
+        }
+
+        ~Buffer()
+        { }
+
+        unsigned
+        getData(char bfr[])
+        {
+          memcpy(bfr, data, size);
+          return size;
+        }
+
+        void
+        setData(char bfr[], unsigned bfr_len)
+        {
+          memcpy(data, bfr, bfr_len);
+          size = bfr_len;
+        }
+
+        Buffer&
+        operator= (const Buffer& other)
+        {
+          if (this != &other)
+          {
+            memcpy( data, other.data, other.size);
+            size = other.size;
+          }
+          return *this;
+        }
       };
 
       // I/O Multiplexer.
       DUNE::IO::Poll m_poll;
       //! Control socket.
       DUNE::Network::TCPSocket* m_sock;
-      //! Scratch buffer.
-      Buffer m_bfr;
       //! Idle timer.
       DUNE::Time::Counter<double> m_timer;
       //! Buffer queue
-      std::queue<Buffer> m_out_data;
-      std::queue<Buffer> m_in_data;
+      std::queue<Buffer> m_out_data, m_in_data;
+      //! Queue access mutex
+      DUNE::Concurrency::Mutex m_mtx;
 
       void
       closeConnection(void);

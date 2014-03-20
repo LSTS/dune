@@ -52,6 +52,10 @@ namespace Simulators
 
     struct Arguments
     {
+      //! True if bottom distance should be simulated
+      bool simulate_bd;
+      //! True if forward distance should be simulated
+      bool simulate_fd;
       //! Bottom distance entity id.
       std::string label_bd;
       //! Forward distance entity id.
@@ -125,6 +129,14 @@ namespace Simulators
         m_prng(NULL),
         m_qtree(NULL)
       {
+        param("Simulate - Bottom Distance", m_args.simulate_bd)
+        .defaultValue("true")
+        .description("True if bottom distance should be simulated");
+
+        param("Simulate - Forward Distance", m_args.simulate_fd)
+        .defaultValue("true")
+        .description("True if forward distance should be simulated");
+
         // Define configuration parameters.
         param("Entity Label - Bottom Distance", m_args.label_bd)
         .description("Entity label of simulated bottom distance");
@@ -393,10 +405,12 @@ namespace Simulators
           return;  // Home ref not setup
 
         // bottom distance
-        updateBottomDistance();
+        if (m_args.simulate_bd)
+          updateBottomDistance();
 
         // forward distance
-        updateForwardDistance();
+        if (m_args.simulate_fd)
+          updateForwardDistance();
       }
 
       //! Update bottom distance value with bathymetry
