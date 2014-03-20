@@ -150,8 +150,7 @@ namespace Supervisors
       void
       reset(void)
       {
-        if (maneuverMode())
-          m_man_sup->addStop();
+        m_man_sup->addStop();
 
         m_in_safe_plan = false;
 
