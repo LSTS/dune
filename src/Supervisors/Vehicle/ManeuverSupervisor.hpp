@@ -86,7 +86,7 @@ namespace Supervisors
         Request* req = new Request(RT_START, msg);
         m_reqs.push(req);
 
-        m_task->inf("added start");
+        m_task->inf("added start %s", msg->getName());
 
         processRequests();
       }
@@ -108,9 +108,9 @@ namespace Supervisors
         {
           case IMC::ManeuverControlState::MCS_EXECUTING:
             if (m_curr_req->isStart())
-              m_task->inf("maneuver started");
-            else
-              m_task->err("request doesn't match");
+              m_task->inf("%s maneuver started", m_curr_req->getMessage()->getName());
+            else // keep waiting for the stopped state
+              return;
             break;
           case IMC::ManeuverControlState::MCS_STOPPED:
             if (m_curr_req->isStop())
@@ -163,7 +163,7 @@ namespace Supervisors
           {
             if (m_state != IMC::ManeuverControlState::MCS_EXECUTING)
             {
-              m_task->inf("got StopManeuver, but no maneuver is executing");
+              m_task->inf("ignoring stop, no maneuver is executing");
               clearCurrent();
               processRequests();
               return;
@@ -198,7 +198,7 @@ namespace Supervisors
               // Two starts in a row
               if (m_reqs.front()->isStart())
               {
-                m_task->err("got two or more maneuvers in a row, ignoring oldest");
+                m_task->war("got two or more maneuvers in a row, ignoring oldest");
                 // clear this and use next one
                 clearCurrent();
                 processRequests();
