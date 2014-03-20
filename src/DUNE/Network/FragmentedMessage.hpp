@@ -25,31 +25,35 @@
 // Author: Jose Pinto                                                       *
 //***************************************************************************
 
-#ifndef DUNE_NETWORK_FRAGMENTS_HPP_
-#define DUNE_NETWORK_FRAGMENTS_HPP_
+#ifndef DUNE_NETWORK_FRAGMENTEDMESSAGE_HPP_
+#define DUNE_NETWORK_FRAGMENTEDMESSAGE_HPP_
 
 #include <DUNE/IMC.hpp>
 #include <DUNE/Tasks.hpp>
+#include <DUNE/Time.hpp>
 
 namespace DUNE
 {
   namespace Network
   {
-    class Fragments
+    class FragmentedMessage
     {
     public:
-      Fragments(IMC::Message* message, int mtu);
-      IMC::MessagePart* getFragment(int frag_number);
-      int getNumberOfFragments(void);
-      ~Fragments(void);
+      FragmentedMessage(void);
+      double getAge(void);
+      int getFragmentsMissing(void);
+      IMC::Message* setFragment(const IMC::MessagePart* part);
+      void setParentTask(Tasks::Task* parent);
+      ~FragmentedMessage(void);
     private:
-      static int s_uid;
+      int m_src;
       int m_uid;
       int m_num_frags;
-      std::vector<IMC::MessagePart*> m_fragments;
+      double m_creation_time;
+      DUNE::Tasks::Task* m_parent;
+      std::map<unsigned int, IMC::MessagePart> m_fragments;
     };
-
-  } /* namespace Fragments */
+  } /* namespace DUNE */
 } /* namespace Transports */
 
-#endif /* DUNE_NETWORK_FRAGMENTS_HPP_ */
+#endif /* DUNE_NETWORK_FRAGMENTEDMESSAGE_HPP_ */

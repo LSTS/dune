@@ -27,7 +27,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include <DUNE/Network/Fragments.hpp>
+#include <DUNE/Network/FragmentedMessage.hpp>
 
 namespace Transports
 {
@@ -43,7 +43,7 @@ namespace Transports
 
     struct Task : public DUNE::Tasks::Task
     {
-      std::map<uint32_t, IncomingMessage> m_incoming;
+      std::map<uint32_t, FragmentedMessage> m_incoming;
       Time::Counter<float> m_gc_counter;
       Arguments m_args;
 
@@ -71,7 +71,7 @@ namespace Transports
 
         if (m_incoming.find(hash) == m_incoming.end())
         {
-          IncomingMessage incMsg;
+          FragmentedMessage incMsg;
           incMsg.setParentTask(this);
           m_incoming[hash] = incMsg;
         }
@@ -91,11 +91,11 @@ namespace Transports
       messageRipper(void)
       {
         debug("ripping old messages");
-        std::map<uint32_t, IncomingMessage>::iterator it;
+        std::map<uint32_t, FragmentedMessage>::iterator it;
 
         for (it = m_incoming.begin(); it != m_incoming.end(); it++)
         {
-          IncomingMessage msg = (*it).second;
+          FragmentedMessage msg = (*it).second;
           if (msg.getAge() > m_args.max_age_secs)
           {
             // message has died of natural causes...

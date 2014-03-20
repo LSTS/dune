@@ -25,62 +25,91 @@
 // Author: Jose Pinto                                                       *
 //***************************************************************************
 
-#include <DUNE/Network/Fragments.hpp>
+#include <DUNE/Network/FragmentedMessage.hpp>
 
 namespace DUNE
 {
   namespace Network
   {
-    int Fragments::s_uid = 0;
 
-    Fragments::Fragments(IMC::Message * msg, int mtu)
+    FragmentedMessage::FragmentedMessage(void)
     {
-      m_uid = s_uid++;
-      m_num_frags = 0;
-      int frag_size = mtu - sizeof(IMC::Header) - 5;
-      if (frag_size <= 0)
+      m_parent = NULL;
+      m_src = m_uid = m_creation_time = m_num_frags = -1;
+    }
+
+    void
+    FragmentedMessage::setParentTask(Tasks::Task * parent)
+    {
+      m_parent = parent;
+    }
+
+    IMC::Message*
+    FragmentedMessage::setFragment(const IMC::MessagePart* part)
+    {
+      // is this the first fragment?
+      if (m_num_frags < 0)
       {
-        DUNE_ERR("Fragments","MTU is too small");
-        return;
+        m_num_frags = part->num_frags;
+        m_uid = part->uid;
+        m_src = part->getSource();
+        m_creation_time = Time::Clock::get();
       }
 
-      Utils::ByteBuffer buff;
-      int size = IMC::Packet::serialize(msg, buff);
-      uint8_t * buffer = buff.getBuffer();
-
-      int part = 0, pos = 0;
-      m_num_frags = (int)std::ceil((float)size / (float)mtu);
-
-      while (pos < size)
+      // Check if this is a valid fragment
+      if (part->uid != m_uid || part->getSource() != m_src ||
+          part->frag_number >= m_num_frags)
       {
-        int remaining = size - pos;
-        int cur_size = std::min(remaining, mtu);
-        IMC::MessagePart * mpart = new IMC::MessagePart();
-        mpart->frag_number = part++;
-        mpart->num_frags = m_num_frags;
-        mpart->uid = m_uid;
-        mpart->data.assign(buffer+pos, buffer+pos+cur_size);
-        pos += cur_size;
-        m_fragments.push_back(mpart);
+        if (m_parent == NULL)
+          DUNE_ERR("FragmentedMessage", "Invalid fragment received and it won't be processed.");
+        else
+          m_parent->err("Invalid fragment received and it won't be processed.");
+
+        return NULL;
+      }
+
+      m_fragments[part->frag_number] = *part;
+
+      // Message is complete. Let's reassemble and return it.
+      if (getFragmentsMissing() == 0)
+      {
+        int i;
+        int total_length = 0;
+        // concatenate all parts into a single array
+        std::vector<char> data;
+        for (i = 0; i < m_num_frags; i++)
+        {
+          total_length += m_fragments[i].data.size();
+          data.insert(data.end(), m_fragments[i].data.begin(),
+                      m_fragments[i].data.end());
+        }
+
+        return IMC::Packet::deserialize((uint8_t*)&data[0], total_length);
+      }
+      else
+      {
+        return 0;
       }
     }
 
-    IMC::MessagePart*
-    Fragments::getFragment(int frag_number)
+    double
+    FragmentedMessage::getAge(void)
     {
-      return m_fragments[frag_number];
+      if (m_creation_time < 0)
+        return 0;
+
+      return Time::Clock::get() - m_creation_time;
     }
 
     int
-    Fragments::getNumberOfFragments(void)
+    FragmentedMessage::getFragmentsMissing(void)
     {
-      return m_num_frags;
+      return m_num_frags - m_fragments.size();
     }
 
-    Fragments::~Fragments(void)
+    FragmentedMessage::~FragmentedMessage(void)
     {
       m_fragments.clear();
     }
-
-  } /* namespace Fragments */
-} /* namespace Transports */
+  } /* namespace Network */
+} /* namespace DUNE */
