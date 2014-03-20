@@ -27,9 +27,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-
-// Local headers.
-#include "IncomingMessage.hpp"
+#include <DUNE/Network/Fragments.hpp>
 
 namespace Transports
 {
