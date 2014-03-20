@@ -128,6 +128,16 @@ namespace Supervisors
         processRequests();
       }
 
+      //! Update without using
+      void
+      update(void)
+      {
+        checkExpiration();
+
+        processRequests();
+      }
+
+    private:
       //! Check if current request hasn't expired
       void
       checkExpiration(void)
@@ -142,7 +152,6 @@ namespace Supervisors
         m_curr_req->issue();
       }
 
-    private:
       //! Process requests in the queue
       void
       processRequests(void)
