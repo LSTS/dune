@@ -25,9 +25,10 @@
 // Author: Jose Pinto                                                       *
 //***************************************************************************
 
-#ifndef DUNE_NETWORK_FRAGMENTS_HPP_
-#define DUNE_NETWORK_FRAGMENTS_HPP_
+#ifndef DUNE_NETWORK_FRAGMENTS_HPP_INCLUDED_
+#define DUNE_NETWORK_FRAGMENTS_HPP_INCLUDED_
 
+// DUNE headers.
 #include <DUNE/IMC.hpp>
 #include <DUNE/Tasks.hpp>
 
@@ -39,9 +40,15 @@ namespace DUNE
     {
     public:
       Fragments(IMC::Message* message, int mtu);
-      IMC::MessagePart* getFragment(int frag_number);
-      int getNumberOfFragments(void);
+
+      IMC::MessagePart*
+      getFragment(int frag_number);
+
+      int
+      getNumberOfFragments(void);
+
       ~Fragments(void);
+
     private:
       static int s_uid;
       int m_uid;
@@ -49,7 +56,7 @@ namespace DUNE
       std::vector<IMC::MessagePart*> m_fragments;
     };
 
-  } /* namespace Fragments */
-} /* namespace Transports */
+  }
+}
 
-#endif /* DUNE_NETWORK_FRAGMENTS_HPP_ */
+#endif

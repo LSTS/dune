@@ -25,13 +25,13 @@
 // Author: Jose Pinto                                                       *
 //***************************************************************************
 
+// DUNE headers.
 #include <DUNE/Network/FragmentedMessage.hpp>
 
 namespace DUNE
 {
   namespace Network
   {
-
     FragmentedMessage::FragmentedMessage(void)
     {
       m_parent = NULL;
@@ -39,7 +39,7 @@ namespace DUNE
     }
 
     void
-    FragmentedMessage::setParentTask(Tasks::Task * parent)
+    FragmentedMessage::setParentTask(Tasks::Task* parent)
     {
       m_parent = parent;
     }
@@ -111,5 +111,5 @@ namespace DUNE
     {
       m_fragments.clear();
     }
-  } /* namespace Network */
-} /* namespace DUNE */
+  }
+}
