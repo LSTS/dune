@@ -608,7 +608,7 @@ namespace Supervisors
           disableLoops();
         }
 
-        m_man_sup->checkExpiration();
+        m_man_sup->update();
 
         if (m_switch_time < 0.0)
           return;
