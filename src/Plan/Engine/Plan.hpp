@@ -79,7 +79,8 @@ namespace Plan
         m_progress(0.0),
         m_calibration(0),
         m_beyond_dur(false),
-        m_sched(NULL)
+        m_sched(NULL),
+        m_started_maneuver(false)
       {
         m_speed_conv.rpm_factor = speed_rpm_factor;
         m_speed_conv.act_factor = speed_act_factor;
@@ -110,6 +111,7 @@ namespace Plan
         m_calibration = 0;
         m_beyond_dur = false;
         m_last_dur = m_durations.end();
+        m_started_maneuver = false;
       }
 
       //! Parse a given plan
@@ -268,6 +270,8 @@ namespace Plan
       void
       maneuverStarted(const std::string& id)
       {
+        m_started_maneuver = true;
+
         if (m_sched == NULL)
           return;
 
@@ -278,6 +282,9 @@ namespace Plan
       void
       maneuverDone(void)
       {
+        if (!m_started_maneuver)
+          return;
+
         if (m_curr_node == NULL)
           return;
 
@@ -655,6 +662,8 @@ namespace Plan
       ActionSchedule* m_sched;
       //! Vector of entity labels to push and pop entity parameters
       std::vector<std::string> m_affected_ents;
+      //! Signal that a maneuver has started
+      bool m_started_maneuver;
     };
   }
 }
