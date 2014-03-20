@@ -50,6 +50,8 @@ namespace Control
         double k_vr;
         double phi_sp_ss;
         double phi_h;
+        //!
+        bool use_controller;
       };
 
       struct Task: public DUNE::Control::PathController
@@ -64,7 +66,7 @@ namespace Control
           DUNE::Control::PathController(name, ctx)
         {
           param("Sliding Surface maximum gain", m_args.tau_ss)
-              .units(Units::MeterPerSquareSecond)
+          .units(Units::MeterPerSquareSecond)
           .defaultValue("0.25")
           .description("Sliding Surface maximum gain for control");
 
@@ -82,6 +84,12 @@ namespace Control
           .defaultValue("20")
           .description("Limit distance above and bellow desired height from which maximum control is used");
 
+          param("Use controller", m_args.use_controller)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
+          .defaultValue("false")
+          .description("Use this controller for maneuver");
+
           bind<IMC::IndicatedSpeed>(this);
         }
 
@@ -94,6 +102,9 @@ namespace Control
         void
         onPathActivation(void)
         {
+          if (!m_args.use_controller)
+            return;
+
           // Activate vertical rate controller.
           enableControlLoops(IMC::CL_VERTICAL_RATE);
           m_first_run = true;
@@ -114,6 +125,9 @@ namespace Control
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
+          if (!m_args.use_controller)
+            return;
+
           if (m_first_run)
           {
             m_h_dot_cmd = state.vz;
