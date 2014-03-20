@@ -91,14 +91,6 @@ namespace DUNE
       void
       startManeuver(const M* maneuver)
       {
-        if (!isActive())
-        {
-          while (!tryLock())
-          {
-            Time::Delay::wait(0.5);
-          }
-        }
-
         debug("enabling");
         signalProgress(65535, "in progress");
 
@@ -217,16 +209,6 @@ namespace DUNE
       onMain(void);
 
     private:
-      //! Check if maneuver system is locked
-      //! meaning a maneuver is in execution already
-      //! @return if sucessful at locking return true
-      bool
-      tryLock(void);
-
-      //! Unlock maneuver so that other maneuver may start
-      void
-      unlock(void);
-
       //! Update the scope reference
       //! @return new sequence number for the scope
       uint32_t

@@ -33,7 +33,6 @@ namespace DUNE
 {
   namespace Maneuvers
   {
-    static Concurrency::Mutex s_man_lock;
     static Concurrency::Mutex s_amask_lock;
     static uint32_t s_amask;
     static uint32_t s_scope_ref;
@@ -60,35 +59,6 @@ namespace DUNE
       onManeuverDeactivation();
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       debug("disabling");
-
-      unlock();
-    }
-
-    bool
-    Maneuver::tryLock(void)
-    {
-      try
-      {
-        s_man_lock.tryLock();
-        return true;
-      }
-      catch (...)
-      {
-        return false;
-      }
-    }
-
-    void
-    Maneuver::unlock(void)
-    {
-      try
-      {
-        s_man_lock.unlock();
-      }
-      catch (...)
-      {
-        throw std::runtime_error(DTR("unable to unlock"));
-      }
     }
 
     void
