@@ -243,6 +243,7 @@ namespace Autonomy
       {
         inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_pwr_cpu.op = PowerChannelControl::PCC_OP_TURN_ON;
       }
 
       void
@@ -287,6 +288,7 @@ namespace Autonomy
       void
       stopExecution(void)
       {
+        inf("Stopping TREX plan...");
         IMC::PlanControl stopPlan;
         stopPlan.type = IMC::PlanControl::PC_REQUEST;
         stopPlan.op = IMC::PlanControl::PC_STOP;
