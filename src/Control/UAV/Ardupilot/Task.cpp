@@ -523,9 +523,6 @@ namespace Control
                                                     0);//! RC Channel 8 (mode)
               uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
               sendData(buf, n);
-
-              sendCommandPacket(MAV_CMD_NAV_LOITER_UNLIM);
-              inf(DTR("Loiter"));
             }
           }
 
@@ -1523,9 +1520,9 @@ namespace Control
                   m_external = false;
                   if (m_dpath.end_lat)
                     receive(&m_dpath);
-                  if (!m_in_mission)
-                    loiterHere();
                 }
+                if (!m_in_mission)
+                  loiterHere();
                 break;
               case 12:
                 trace("LOITER");
@@ -1540,8 +1537,6 @@ namespace Control
                 m_external = false;
                 break;
             }
-
-
           }
         }
 
