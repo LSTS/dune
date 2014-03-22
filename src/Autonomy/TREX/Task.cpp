@@ -210,11 +210,8 @@ namespace Autonomy
             break;
           case IMC::TrexOperation::OP_REQUEST_PLAN:
           {
-            int i = system("services trex restart 1,2 > /dev/null &");
-            if (i == 0)
-              inf(DTR("T-REX has been started."));
-            else
-              war(DTR("Could not start T-REX: %d."), i);
+            war(DTR("Restarting auxiliary CPU..."));
+            resetAuxCpu();
             break;
           }
           case IMC::TrexOperation::OP_REPORT_PLAN:
@@ -244,6 +241,7 @@ namespace Autonomy
         inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_pwr_cpu.op = PowerChannelControl::PCC_OP_TURN_ON;
+        dispatch(m_pwr_cpu);
       }
 
       void
@@ -317,6 +315,18 @@ namespace Autonomy
       }
 
       void
+      resetAuxCpu(void) {
+    	  // Send turn off signal
+    	  m_pwr_cpu.op = PowerChannelControl::PCC_OP_TURN_OFF;
+    	  dispatch(m_pwr_cpu);
+
+    	  // Schedule turn on signal for current time + 2 seconds
+    	  m_pwr_cpu.op = PowerChannelControl::PCC_OP_SCHED_ON;
+    	  m_pwr_cpu.sched_time = Clock::getSinceEpoch() + 2;
+    	  dispatch(m_pwr_cpu);
+      }
+
+      void
       onMain(void)
       {
         std::map<unsigned int, double>::iterator it;
@@ -355,7 +365,6 @@ namespace Autonomy
           }
 
           dispatch(links);
-
           checkState();
 
           Delay::wait(1.0);
