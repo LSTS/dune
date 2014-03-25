@@ -97,6 +97,8 @@ namespace Control
         RadioChannel rc1;
         RadioChannel rc2;
         RadioChannel rc3;
+        //! HITL
+        bool hitl;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -308,6 +310,10 @@ namespace Control
           .units(Units::MeterPerSecond)
           .description("Max Air Speed");
 
+          param("HITL", m_args.hitl)
+          .defaultValue("false")
+          .description("Hardware in the loop");
+
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
           m_mlh[MAVLINK_MSG_ID_ATTITUDE] = &Task::handleAttitudePacket;
@@ -339,6 +345,7 @@ namespace Control
           bind<PowerChannelControl>(this);
           bind<VehicleMedium>(this);
           bind<PlanControlState>(this);
+          bind<SimulatedState>(this);
 
           // Misc. initialization
           m_last_pkt_time = 0; // time of last packet from Ardupilot
@@ -523,9 +530,6 @@ namespace Control
                                                     0);//! RC Channel 8 (mode)
               uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
               sendData(buf, n);
-
-              sendCommandPacket(MAV_CMD_NAV_LOITER_UNLIM);
-              inf(DTR("Loiter"));
             }
           }
 
@@ -947,6 +951,53 @@ namespace Control
         consume(const IMC::PlanControlState* msg)
         {
           m_in_mission = (msg->state & IMC::PlanControlState::PCS_EXECUTING) != 0;
+        }
+
+        void
+        consume(const IMC::SimulatedState* sim_state)
+        {
+          mavlink_message_t msg;
+          uint8_t buf[512];
+
+          double lat_ref = sim_state->lat;
+          double lon_ref = sim_state->lon;
+          float hei_ref = sim_state->height;
+
+          int lat, lon, alt;
+
+          WGS84::displace(sim_state->x, sim_state->y, sim_state->z,
+              &lat_ref, &lon_ref, &hei_ref);
+
+          lat = (int) (Angles::degrees(lat_ref) * 1E7);
+          lon = (int) (Angles::degrees(lon_ref) * 1E7);
+          alt = (int) (hei_ref * 1000);
+
+          float vx, vy, vz;
+
+          Coordinates::BodyFixedFrame::toInertialFrame(sim_state->phi, sim_state->theta, sim_state->psi,
+              sim_state->u, sim_state->v, sim_state->w,
+              &vx, &vy, &vz);
+
+          mavlink_msg_hil_state_pack(255, 0, &msg,
+              (unsigned long int) (Clock::getSinceEpochNsec() / 1000), //! Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+              sim_state->phi, //! Roll angle (rad)
+              sim_state->theta, //! Pitch angle (rad)
+              sim_state->psi, //! Yaw angle (rad)
+              sim_state->p, //! Roll angular speed (rad/s)
+              sim_state->q, //! Pitch angular speed (rad/s)
+              sim_state->r, //! Yaw angular speed (rad/s)
+              lat, //! Latitude, expressed as * 1E7
+              lon, //! Longitude, expressed as * 1E7
+              alt, //! Altitude in meters, expressed as * 1000 (millimeters)
+              (short int) (vx * 100), //! Ground X Speed (Latitude), expressed as m/s * 100
+              (short int) (vy * 100), //! Ground Y Speed (Longitude), expressed as m/s * 100
+              (short int) (vz * 100), //! Ground Z Speed (Altitude), expressed as m/s * 100
+              0, //! X acceleration (mg)
+              0, //! Y acceleration (mg)
+              0); //! Z acceleration (mg)
+
+          uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+          sendData(buf, n);
         }
 
         void
@@ -1523,9 +1574,9 @@ namespace Control
                   m_external = false;
                   if (m_dpath.end_lat)
                     receive(&m_dpath);
-                  if (!m_in_mission)
-                    loiterHere();
                 }
+                if (!m_in_mission)
+                  loiterHere();
                 break;
               case 12:
                 trace("LOITER");
@@ -1540,8 +1591,6 @@ namespace Control
                 m_external = false;
                 break;
             }
-
-
           }
         }
 
@@ -1639,7 +1688,8 @@ namespace Control
           if (m_fix.utc_year>2014)
             m_fix.validity |= (IMC::GpsFix::GFV_VALID_TIME | IMC::GpsFix::GFV_VALID_DATE);
 
-          dispatch(m_fix);
+          if (!m_args.hitl)
+            dispatch(m_fix);
         }
       };
     }

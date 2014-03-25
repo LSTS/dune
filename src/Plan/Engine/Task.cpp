@@ -549,11 +549,11 @@ namespace Plan
           case IMC::PlanControl::PC_STOP:
             stopPlan();
             break;
-          case IMC::PlanControl::PC_LOAD:
-            loadPlan(pc->plan_id, pc->arg.isNull() ? 0 : pc->arg.get());
-            break;
           case IMC::PlanControl::PC_GET:
             getPlan();
+            break;
+          default:
+            onFailure(DTR("plan control operation not supported"));
             break;
         }
       }

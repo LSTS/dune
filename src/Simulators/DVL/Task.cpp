@@ -79,10 +79,6 @@ namespace Simulators
         Tasks::Periodic(name, ctx),
         m_prng(NULL)
       {
-        // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER);
-
         param("Standard Deviation - Ground Velocity", m_args.stdev_gvel)
         .units(Units::MeterPerSecond)
         .defaultValue("0.004")
@@ -135,10 +131,11 @@ namespace Simulators
       void
       consume(const IMC::SimulatedState* msg)
       {
-        if (isActive())
+        if (!isActive())
+        {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        else
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+          requestActivation();
+        }
 
         m_sstate = *msg;
       }

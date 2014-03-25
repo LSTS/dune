@@ -61,6 +61,8 @@ namespace Simulators
       double gyro_bias;
       //! Measures Euler Angles messages.
       bool euler;
+      //! Activation Control
+      bool activation_control;
       //! PRNG type.
       std::string prng_type;
       //! PRNG seed.
@@ -91,6 +93,9 @@ namespace Simulators
         Tasks::Task(name, ctx),
         m_prng(NULL)
       {
+        paramActive(Tasks::Parameter::SCOPE_IDLE,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         // Retrieve configuration values
         param("Standard Deviation - Euler Angles", m_args.stdev_euler)
         .units(Units::Degree)
@@ -116,6 +121,10 @@ namespace Simulators
         .defaultValue("true")
         .description("Some IMUs do not output Euler Angles measurements");
 
+        param("Activation Control", m_args.activation_control)
+        .defaultValue("false")
+        .description("True if it is possible to actively control the device");
+
         param("PRNG Type", m_args.prng_type)
         .defaultValue(Random::Factory::c_default);
 
@@ -134,6 +143,12 @@ namespace Simulators
         m_heading_offset = m_prng->gaussian() * Angles::radians(m_args.stdev_heading_offset);
       }
 
+      void
+      onResourceInitialization(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
       //! Release resources.
       void
       onResourceRelease(void)
@@ -142,8 +157,20 @@ namespace Simulators
       }
 
       void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
       consume(const IMC::SimulatedState* msg)
       {
+        if (m_args.activation_control)
+        {
+          if (!isActive())
+            return;
+        }
+
         if (!isActive())
         {
           m_vel[0] = msg->u;

@@ -30,6 +30,7 @@
 
 // ISO C++ 98 headers.
 #include <queue>
+#include <cstring>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -62,7 +63,7 @@ namespace Transports
         Buffer(const Buffer& other)
         {
           size = other.size;
-          memcpy(data, other.data, size);
+          std::memcpy(data, other.data, size);
         }
 
         Buffer(char bfr[], unsigned bfr_len)
@@ -76,14 +77,14 @@ namespace Transports
         unsigned
         getData(char bfr[])
         {
-          memcpy(bfr, data, size);
+          std::memcpy(bfr, data, size);
           return size;
         }
 
         void
         setData(char bfr[], unsigned bfr_len)
         {
-          memcpy(data, bfr, bfr_len);
+          std::memcpy(data, bfr, bfr_len);
           size = bfr_len;
         }
 
@@ -92,7 +93,7 @@ namespace Transports
         {
           if (this != &other)
           {
-            memcpy( data, other.data, other.size);
+            std::memcpy(data, other.data, other.size);
             size = other.size;
           }
           return *this;
