@@ -231,7 +231,6 @@ namespace Supervisors
         switch ((IMC::VehicleState::OperationModeEnum)m_vs.op_mode)
         {
           case IMC::VehicleState::VS_SERVICE:
-            changeMode(IMC::VehicleState::VS_EXTERNAL);
             break;
           case IMC::VehicleState::VS_ERROR:
           case IMC::VehicleState::VS_BOOT:
