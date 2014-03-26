@@ -53,6 +53,7 @@ macro(dune_probe_cxx)
       set(DUNE_CXX_NAME "Sun Studio/Sun Pro")
       set(DUNE_CXX_CANONICAL "sunpro")
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -library=stlport4")
+      add_definitions(-D_REENTRANT)
     endif(DUNE_CXX_SUN)
   endif(NOT DUNE_CXX_NAME)
 
