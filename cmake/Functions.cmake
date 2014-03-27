@@ -290,12 +290,6 @@ macro(dune_probe_functions)
     "time.h"
     DUNE_SYS_HAS_NANOSLEEP)
 
-  dune_test_function(strerror
-    "char*"
-    "int"
-    "cstring"
-    DUNE_SYS_HAS_STRERROR)
-
   dune_test_function(clock_gettime
     "int"
     "clockid_t;struct timespec*"
@@ -500,6 +494,12 @@ macro(dune_probe_functions)
     "sys/types.h;sys/stat.h;unistd.h"
     DUNE_SYS_HAS_STAT)
 
+  dune_test_function(strerror
+    "char*"
+    "int"
+    "cstring"
+    DUNE_SYS_HAS_STRERROR)
+
   dune_test_function(strerror_r
     "char*"
     "int;char*;size_t"
@@ -509,7 +509,7 @@ macro(dune_probe_functions)
   dune_test_function(strerror_r
     "int"
     "int;char*;size_t"
-    "cstring"
+    "cstring;string.h"
     DUNE_SYS_HAS_POSIX_STRERROR_R)
 
   dune_test_function(CreateFile
