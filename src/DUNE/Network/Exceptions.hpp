@@ -86,11 +86,27 @@ namespace DUNE
       { }
     };
 
-    class ConnectionClosed: public Exception
+    class ConnectionError: public Exception
+    {
+    public:
+      ConnectionError(const std::string& error):
+        Exception(std::string(DTR("connection error")) + ": " + error)
+      { }
+    };
+
+    class ConnectionClosed: public ConnectionError
     {
     public:
       ConnectionClosed(void):
-        Exception(DTR("connection closed"))
+        ConnectionError(DTR("connection closed"))
+      { }
+    };
+
+    class ConnectionTimeout: public ConnectionError
+    {
+    public:
+      ConnectionTimeout(void):
+        ConnectionError(DTR("connection timeout"))
       { }
     };
   }
