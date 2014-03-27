@@ -519,6 +519,9 @@ namespace DUNE
       if (errno == EEXIST)
         return;
 
+      if (isDirectory())
+        return;
+
       throw System::Error(errno, "creating path", str());
 
       // Microsoft Windows implementation.
