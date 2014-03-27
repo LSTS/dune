@@ -158,6 +158,7 @@ namespace DUNE
       m_resolved = false;
       m_host = address;
       std::memset(&m_ia, 0, sizeof(in_addr));
+      resolve();
       return *this;
     }
 
