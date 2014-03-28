@@ -494,5 +494,7 @@
 #define DUNE_IMC_FORMCTRLPARAM 820
 //! MessagePart identification number.
 #define DUNE_IMC_MESSAGEPART 877
+//! NeptusBlob identification number.
+#define DUNE_IMC_NEPTUSBLOB 888
 
 #endif

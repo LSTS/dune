@@ -22,33 +22,94 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
-//***************************************************************************
-// Automatically generated.                                                 *
+// Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_IMC_CONSTANTS_HPP_INCLUDED_
-#define DUNE_IMC_CONSTANTS_HPP_INCLUDED_
+#ifndef SUPERVISOR_VEHICLE_REQUEST_HPP_INCLUDED_
+#define SUPERVISOR_VEHICLE_REQUEST_HPP_INCLUDED_
 
-//! IMC version string.
-#define DUNE_IMC_CONST_VERSION "5.4.x"
-//! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "ce555ac7398ca7cd19340e6433ac65c6"
-//! Synchronization number.
-#define DUNE_IMC_CONST_SYNC 0xFE54
-//! Reversed synchronization number.
-#define DUNE_IMC_CONST_SYNC_REV 0x54FE
-//! Size of the header in bytes.
-#define DUNE_IMC_CONST_HEADER_SIZE 20
-//! Size of the footer in bytes.
-#define DUNE_IMC_CONST_FOOTER_SIZE 2
-//! Identification number of the null message.
-#define DUNE_IMC_CONST_NULL_ID 65535
-//! Maximum message data size.
-#define DUNE_IMC_CONST_MAX_SIZE 65535
-//! Unknown entity identifier.
-#define DUNE_IMC_CONST_UNK_EID 255
-//! System entity identifier.
-#define DUNE_IMC_CONST_SYS_EID 0
+// DUNE headers.
+#include <DUNE/IMC.hpp>
+#include <DUNE/Time.hpp>
+
+namespace Supervisors
+{
+  namespace Vehicle
+  {
+    using DUNE_NAMESPACES;
+
+    enum RequestType
+    {
+      //! Stop maneuver type
+      RT_STOP,
+      //! Start maneuver type
+      RT_START
+    };
+
+    struct Request
+    {
+      //! Request Type
+      int m_type;
+      //! Pointer to IMC Message
+      IMC::Message* m_msg;
+      //! Issue time
+      double m_issue_time;
+
+      Request(int type, const IMC::Message* ptr)
+      {
+        init(type);
+        m_msg = ptr->clone();
+      }
+
+      Request(int type)
+      {
+        init(type);
+        m_msg = new IMC::StopManeuver;
+      }
+
+      void
+      init(int type)
+      {
+        m_type = type;
+        m_issue_time = -1.0;
+      }
+
+      ~Request(void)
+      {
+        delete m_msg;
+      }
+
+      bool
+      isStop(void)
+      {
+        return (m_type == RT_STOP);
+      }
+
+      bool
+      isStart(void)
+      {
+        return (m_type == RT_START);
+      }
+
+      double
+      getIssueTime(void)
+      {
+        return m_issue_time;
+      }
+
+      IMC::Message*
+      getMessage(void)
+      {
+        return m_msg;
+      }
+
+      void
+      issue(void)
+      {
+        m_issue_time = Time::Clock::get();
+      }
+    };
+  }
+}
 
 #endif
