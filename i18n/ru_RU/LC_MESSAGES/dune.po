@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2014-03-19 09:24+0000\n"
+        "POT-Creation-Date: 2014-03-28 16:18+0000\n"
         "PO-Revision-Date: 2013-08-03 13:42-0000\n"
         "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
         "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -124,6 +124,10 @@ msgstr  "уникальный идентификатор был уже заре�
 msgid   "piecewise linear interpolation needs equally sized vectors"
 msgstr  ""
 
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/System/Error.hpp:174
+msgid   "retrieving system error messages is not supported"
+msgstr  ""
+
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/Exceptions.hpp:49
 #, c-format
 msgid   "unable to resolve hostname '%s'"
@@ -145,7 +149,17 @@ msgid   "host unreachable '%s'"
 msgstr  "недоступности хоста '%s'"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/Exceptions.hpp:93
+#, fuzzy
+msgid   "connection error"
+msgstr  "Ошибка связи"
+
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/Exceptions.hpp:101
 msgid   "connection closed"
+msgstr  "соединение закрыто"
+
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/Exceptions.hpp:109
+#, fuzzy
+msgid   "connection timeout"
 msgstr  "соединение закрыто"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/KalmanFilter.hpp:117
@@ -312,23 +326,23 @@ msgstr  "не удалось погрузить"
 msgid   "character value '%d' is not a valid nibble"
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:134
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:136
 msgid   ": no maneuvers"
 msgstr  ": Нет маневры"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:152
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:154
 msgid   ": actual maneuver not specified"
 msgstr  ": Фактический маневр не указано"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:160
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:162
 msgid   ": maneuver is not supported"
 msgstr  ": Маневр не поддерживается"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:190
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:192
 msgid   ": maneuver has no incoming transition and it's not the initial maneuver"
 msgstr  ": Маневр не имеет входящих переходов и это не начальный маневр"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:203
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:205
 msgid   ": invalid start maneuver"
 msgstr  ": Неверный начала маневра"
 
@@ -379,7 +393,7 @@ msgstr  ""
 #: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:232
 #: /home/josebraga/workspace/dune/trunk/src/Transports/ArdupilotSITL/Task.cpp:319
 #: /home/josebraga/workspace/dune/trunk/src/Transports/FlightGear/Task.cpp:212
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1025
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1088
 #, fuzzy
 msgid   "Connection lost, retrying..."
 msgstr  "соединение закрыто"
@@ -1671,7 +1685,7 @@ msgid   "UDP sockets for FlightGear setup."
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/FlightGear/Task.cpp:179
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:376
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:389
 msgid   "Connection failed, retrying..."
 msgstr  ""
 
@@ -1819,34 +1833,30 @@ msgstr  ""
 msgid   "maximum amount of beacons is %u"
 msgstr  "максимальное количество маяков %u"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:371
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:384
 msgid   "Ardupilot interface initialized"
 msgstr  "Ardupilot интерфейс инициализируется"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:522
-msgid   "Loiter"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:626
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:636
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:251
 #, fuzzy
 msgid   "speed control is NOT active"
 msgstr  "Путь контроль будет выключен,"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:648
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:658
 msgid   "ArduPilot is in Manual mode, saving desired path."
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:655
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:665
 msgid   "ArduPilot in Auto mode but still in ground, performing takeoff first."
 msgstr  ""
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:662
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:672
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:370
 msgid   "path control is NOT active"
 msgstr  "Путь контроль будет выключен,"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1439
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1514
 msgid   "Controlling an unknown vehicle type."
 msgstr  ""
 
@@ -2302,16 +2312,6 @@ msgstr  "отбрасываются неверный диапазон %0.2f"
 msgid   "failed to ping beacons, modem seems busy"
 msgstr  "не удалось проверить связь маяки, модем кажется занятым"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:970
-#, c-format
-msgid   "reported range to %s = %u m"
-msgstr  "сообщили диапазона %s = %u м"
-
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:974
-#, c-format
-msgid   "failed to report range to %s"
-msgstr  "не сообщил диапазоне %s"
-
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/SW100/Task.cpp:182
 #, c-format
 msgid   "depth offset is %0.2f m"
@@ -2451,8 +2451,14 @@ msgid   "plan started"
 msgstr  "План остановилась"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:634
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:723
 msgid   "range to"
 msgstr  "варьироваться в"
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:742
+#, fuzzy, c-format
+msgid   "plan progress is %f"
+msgstr  "В прогрессе"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:271
 msgid   "echo handling enabled, but got no RS-485 echo"
@@ -3038,6 +3044,11 @@ msgstr  "Запрос - %s (%s)"
 #: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:539
 msgid   "engine not ready: entity state not normal"
 msgstr  "Двигатель не готова: государственное образование не нормально"
+
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:556
+#, fuzzy
+msgid   "plan control operation not supported"
+msgstr  "Операция не поддерживается"
 
 #: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:572
 msgid   "cannot load plan now"
@@ -3788,33 +3799,44 @@ msgid   "UAN"
 msgstr  ""
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:115
+#, fuzzy
+msgid   "UAV Simulator"
+msgstr  "АНПА Simulator"
+
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:116
 msgid   "UDP"
 msgstr  "UDP"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:116
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:117
 #, fuzzy
 msgid   "UDP to PTU"
 msgstr  "UDP для TREX"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:117
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:118
 msgid   "UDP to TREX"
 msgstr  "UDP для TREX"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:118
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:119
 msgid   "USBL"
 msgstr  "USBL"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:119
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:120
 msgid   "Underwater Acoustics Simulator"
 msgstr  "Подводные Simulator акустика"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:120
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:121
 msgid   "Vehicle Supervisor"
 msgstr  "Автомобиль Supervisor"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:121
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:122
 msgid   "Visualizer"
 msgstr  ""
+
+#~ msgid        "reported range to %s = %u m"
+#~ msgstr       "сообщили диапазона %s = %u м"
+
+#~ msgid        "failed to report range to %s"
+#~ msgstr       "не сообщил диапазоне %s"
 
 #, fuzzy
 #~ msgid        "Enabled RC output."
@@ -4021,9 +4043,6 @@ msgstr  ""
 
 #~ msgid        "will now loiter for %d seconds"
 #~ msgstr       "теперь будет слоняться по %d секунд"
-
-#~ msgid        "in progress"
-#~ msgstr       "В прогрессе"
 
 #~ msgid        "database connection closed"
 #~ msgstr       "подключение к базе данных закрыты"
