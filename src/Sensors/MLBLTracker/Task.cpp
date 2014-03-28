@@ -714,13 +714,13 @@ namespace Sensors
           if (ranges[i] == 0)
             continue;
 
-          IMC::LblRangeAcceptance msg;
-          msg.setSource(m_mimap[src]);
-          msg.id = i;
-          msg.range = ranges[i];
-          msg.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
-          dispatch(msg);
-          inf("%s %u: %u", DTR("range to"), msg.id, msg.range);
+          IMC::LblRangeAcceptance lmsg;
+          lmsg.setSource(m_mimap[src]);
+          lmsg.id = i;
+          lmsg.range = ranges[i];
+          lmsg.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
+          dispatch(lmsg);
+          inf("%s %u: %f", DTR("range to"), lmsg.id, lmsg.range);
         }
 
         IMC::EstimatedState es;
