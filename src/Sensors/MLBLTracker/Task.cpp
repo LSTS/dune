@@ -714,12 +714,13 @@ namespace Sensors
           if (ranges[i] == 0)
             continue;
 
-          IMC::LblRangeAcceptance lbl;
-          lbl.setSource(m_mimap[src]);
-          lbl.id = i;
-          lbl.range = ranges[i];
-          lbl.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
-          dispatch(lbl);
+          IMC::LblRangeAcceptance msg;
+          msg.setSource(m_mimap[src]);
+          msg.id = i;
+          msg.range = ranges[i];
+          msg.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
+          dispatch(msg);
+          inf("%s %u: %u", DTR("range to"), msg.id, msg.range);
         }
 
         IMC::EstimatedState es;
@@ -736,14 +737,18 @@ namespace Sensors
         pcs.plan_progress = (float)progress;
         dispatch(pcs);
 
+        // Inform if progress is valid.
+        if (pcs.plan_progress >= 0)
+          inf(DTR("plan progress is %f"), pcs.plan_progress);
+
         IMC::FuelLevel fuel;
         fuel.setSource(m_mimap[src]);
         fuel.value = (float)fuel_level;
         fuel.confidence = (float)fuel_conf;
         dispatch(fuel);
 
-        spew("lat %f | lon %f | depth %f | alt %f | yaw %f", es.lat, es.lon, es.depth, es.alt, es.psi);
-        spew("fuel %f | conf %f | plan progress %f", fuel.value, fuel.confidence, pcs.plan_progress);
+        debug("lat %f | lon %f | depth %f | alt %f | yaw %f", es.lat, es.lon, es.depth, es.alt, es.psi);
+        debug("fuel %f | conf %f | plan progress %f", fuel.value, fuel.confidence, pcs.plan_progress);
       }
 
       void
