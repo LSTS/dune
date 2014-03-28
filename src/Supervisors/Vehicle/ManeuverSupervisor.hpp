@@ -219,7 +219,13 @@ namespace Supervisors
                 m_task->debug("a stop comes right after, ignoring this maneuver");
                 // clear this one and pop next one
                 clearCurrent();
+
+                // free the stop
+                m_task->debug("cleared stop request");
+                Memory::clear(m_reqs.front());
+                // pop the stop
                 m_reqs.pop();
+
                 processRequests();
                 return;
               }
@@ -274,7 +280,10 @@ namespace Supervisors
       clearCurrent(void)
       {
         if (isProcessing())
+        {
+          m_task->debug("cleared %s request", m_curr_req->isStop() ? "stop" : "start");
           Memory::clear(m_curr_req);
+        }
       }
 
       //! Pointer to task
