@@ -18919,5 +18919,67 @@ namespace DUNE
       IMC::toJSON(os__, "num_frags", num_frags, nindent__);
       IMC::toJSON(os__, "data", data, nindent__);
     }
+
+    NeptusBlob::NeptusBlob(void)
+    {
+      m_header.mgid = 888;
+      clear();
+    }
+
+    void
+    NeptusBlob::clear(void)
+    {
+      content_type.clear();
+      content.clear();
+    }
+
+    bool
+    NeptusBlob::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::NeptusBlob& other__ = dynamic_cast<const NeptusBlob&>(msg__);
+      if (content_type != other__.content_type) return false;
+      if (content != other__.content) return false;
+      return true;
+    }
+
+    int
+    NeptusBlob::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    NeptusBlob::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(content_type, ptr__);
+      ptr__ += IMC::serialize(content, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    NeptusBlob::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(content_type, bfr__, size__);
+      bfr__ += IMC::deserialize(content, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    NeptusBlob::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(content_type, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(content, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    NeptusBlob::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "content_type", content_type, nindent__);
+      IMC::toJSON(os__, "content", content, nindent__);
+    }
   }
 }

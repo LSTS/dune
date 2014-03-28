@@ -18308,6 +18308,75 @@ namespace DUNE
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
+
+    //! Neptus Blob.
+    class NeptusBlob: public Message
+    {
+    public:
+      //! ContentType.
+      std::string content_type;
+      //! Content.
+      std::vector<char> content;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 888;
+      }
+
+      NeptusBlob(void);
+
+      Message*
+      clone(void) const
+      {
+        return new NeptusBlob(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return NeptusBlob::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "NeptusBlob";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(content_type) + IMC::getSerializationSize(content);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
   }
 }
 

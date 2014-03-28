@@ -259,4 +259,5 @@ MESSAGE(817, UamRxRange)
 MESSAGE(818, AbortAcked)
 MESSAGE(820, FormCtrlParam)
 MESSAGE(877, MessagePart)
+MESSAGE(888, NeptusBlob)
 #undef MESSAGE

@@ -7361,5 +7361,10 @@
       <field name="Total Number of fragments" abbrev="num_frags" type="uint8_t"/>
       <field name="Fragment Data" abbrev="data" type="rawdata"/>
   </message>
-
+  
+  <message id="888" abbrev="NeptusBlob" name="Neptus Blob">
+      <field name="ContentType" abbrev="content_type" type="plaintext"/>
+      <field name="Content" abbrev="content" type="rawdata"/>      
+  </message>
+  
 </messages>
