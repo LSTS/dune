@@ -1011,13 +1011,9 @@ namespace Sensors
             m_state = STA_ERR_COM;
 
           if (isActive() && !m_stop_comms)
-          {
             ping();
-          }
           else
-          {
             processInput();
-          }
         }
       }
     };
