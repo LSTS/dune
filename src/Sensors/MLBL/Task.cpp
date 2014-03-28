@@ -222,7 +222,7 @@ namespace Sensors
       //! Report timer.
       Counter<double> m_report_timer;
       //! Stop reports on the ground.
-      bool m_stop_reports;
+      bool m_stop_comms;
       //! Last progress.
       float m_progress;
       //! Last fuel level.
@@ -339,7 +339,7 @@ namespace Sensors
         m_states[STA_ERR_SRC].state = IMC::EntityState::ESTA_ERROR;
         m_states[STA_ERR_SRC].description = DTR("failed to set modem address");
 
-	m_stop_reports = false;
+	m_stop_comms = false;
 
         // Register handlers.
         bind<IMC::EstimatedState>(this);
@@ -827,6 +827,9 @@ namespace Sensors
         m_uart->writeString(cyc.c_str());
 
         int i = 0;
+
+        debug("transmitting full report");
+
         for (i = 0; i < 7; ++i)
         {
           consumeMessages();
@@ -922,9 +925,9 @@ namespace Sensors
       consume(const IMC::VehicleMedium* msg)
       {
         if (msg->medium == IMC::VehicleMedium::VM_GROUND)
-	  m_stop_reports = true;
+	  m_stop_comms = true;
 	else
-	  m_stop_reports = false;
+	  m_stop_comms = false;
       }
 
       void
@@ -966,13 +969,9 @@ namespace Sensors
             processInput(c_mpk_duration + m_args.mpk_delay_aft);
 
             if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
-            {
-              inf(DTR("reported range to %s = %u m"), m_beacons[i].name.c_str(), m_beacons[i].range);
-            }
+              debug("reported range to %s = %u m", m_beacons[i].name.c_str(), m_beacons[i].range);
             else
-            {
-              inf(DTR("failed to report range to %s"), m_beacons[i].name.c_str());
-            }
+              debug("failed to report range to %s", m_beacons[i].name.c_str());
           }
         }
 
@@ -988,7 +987,7 @@ namespace Sensors
         while (!stopping())
         {
           // Report.
-          if (m_args.report != "None" && !m_stop_reports)
+          if (m_args.report != "None" && !m_stop_comms)
           {
             if (m_report_timer.overflow())
             {
@@ -1011,7 +1010,7 @@ namespace Sensors
           if (Clock::get() >= (m_last_input + c_input_tout))
             m_state = STA_ERR_COM;
 
-          if (isActive())
+          if (isActive() && !m_stop_comms)
           {
             ping();
           }
