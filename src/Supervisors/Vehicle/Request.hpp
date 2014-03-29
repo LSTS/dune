@@ -29,8 +29,7 @@
 #define SUPERVISOR_VEHICLE_REQUEST_HPP_INCLUDED_
 
 // DUNE headers.
-#include <DUNE/IMC.hpp>
-#include <DUNE/Time.hpp>
+#include <DUNE/DUNE.hpp>
 
 namespace Supervisors
 {
