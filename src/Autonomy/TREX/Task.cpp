@@ -230,6 +230,16 @@ namespace Autonomy
         inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+        m_trex_control = m_last_plan_state.plan_id == "trex_plan"
+                            && m_last_plan_state.state == IMC::PlanControlState::PCS_EXECUTING;
+
+        if (!m_trex_control)
+        {
+          if (m_trex_connected && m_last_vehicle_state.op_mode == IMC::VehicleState::VS_SERVICE)
+
+            startExecution();
+        }
       }
 
       void
@@ -238,6 +248,14 @@ namespace Autonomy
         inf("%s", DTR(Status::getString(Status::CODE_IDLE)));
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
+        m_trex_control = m_last_plan_state.plan_id == "trex_plan"
+                    && m_last_plan_state.state == IMC::PlanControlState::PCS_EXECUTING;
+
+        if (m_trex_control)
+        {
+            stopExecution();
+        }
       }
 
       // Start a FollowReference maneuver that is controlled by TREX
@@ -342,7 +360,7 @@ namespace Autonomy
 
           dispatch(links);
 
-          checkState();
+          // checkState();
 
           Delay::wait(1.0);
         }
