@@ -88,6 +88,7 @@ namespace Monitors
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
+        m_depth(0),
         m_airspeed(0)
       {
         param("Initialization Time", m_args.init_time)
