@@ -413,7 +413,7 @@ namespace Plan
             }
 
             IMC::StationKeeping* at_surface = new IMC::StationKeeping();
-            at_surface->duration = 0;
+            at_surface->duration = 60;
             at_surface->lat = lat;
             at_surface->lon = lon;
             at_surface->z = depth;
@@ -485,7 +485,7 @@ namespace Plan
           delete surface;
 
           IMC::StationKeeping* at_surface = new IMC::StationKeeping();
-          at_surface->duration = 0;
+          at_surface->duration = 120;
           at_surface->lat = lat;
           at_surface->lon = lon;
           at_surface->z = 0.0;
