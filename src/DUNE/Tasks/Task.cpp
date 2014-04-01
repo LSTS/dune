@@ -452,6 +452,14 @@ namespace DUNE
           releaseResources();
           acquireResources();
           initializeResources();
+
+          if (m_honours_active)
+          {
+            Parameter::Scope active_scope = Parameter::scopeFromString(m_args.active_scope);
+            if (m_args.active && ((active_scope == Parameter::SCOPE_GLOBAL) || (active_scope == Parameter::SCOPE_IDLE)))
+              requestActivation();
+          }
+
           onMain();
           releaseResources();
         }
