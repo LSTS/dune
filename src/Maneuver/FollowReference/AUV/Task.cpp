@@ -384,6 +384,10 @@ namespace Maneuver
             if (desired_path.lradius == 0)
               desired_path.lradius = m_args.loitering_radius;
           }
+          else
+          {
+        	  desired_path.lradius = 0;
+          }
 
           m_fref_state.proximity = 0;
 
@@ -391,10 +395,6 @@ namespace Maneuver
             m_fref_state.proximity |= IMC::FollowRefState::PROX_Z_NEAR;
           if (at_xy_target || (m_args.vehicle_type.compare("UAV") == 0 && near_ref ))
             m_fref_state.proximity |= IMC::FollowRefState::PROX_XY_NEAR;
-
-          //inf(DTR("PathControlState flags %#x, %d || (%s && %d) -> at_xy_target || (m_args.vehicle_type.compare(\"UAV\") && near_ref )"), pcs->flags, at_xy_target,m_args.vehicle_type.c_str(), near_ref);
-          //inf(DTR("Distance XY: %f, Distance Z: %f, flags: %#x "), xy_dist, z_dist,  m_fref_state.proximity);
-
 
           if (!at_z_target && !at_xy_target)
             m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;

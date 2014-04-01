@@ -56,6 +56,7 @@ namespace Transports
 
         bind<IMC::MessagePart>(this);
         m_gc_counter.setTop(120);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
