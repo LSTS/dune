@@ -106,6 +106,7 @@ namespace Autonomy
         bind<IMC::PlanControlState>(this);
         bind<IMC::TrexOperation>(this);
         bind<IMC::Abort>(this);
+        bind<IMC::PlanControl>(this);
 
       }
 
@@ -193,6 +194,22 @@ namespace Autonomy
 
         war(DTR("Abort detected. Disabling TREX control..."));
         requestDeactivation();
+      }
+
+      void
+      consume(const IMC::PlanControl* msg)
+      {
+        if (msg->type == PlanControl::PC_REQUEST && msg->op == PlanControl::PC_STOP)
+        {
+          m_trex_control = m_last_plan_state.plan_id == "trex_plan"
+                      && m_last_plan_state.state == IMC::PlanControlState::PCS_EXECUTING;
+
+          if (m_trex_control)
+          {
+            requestDeactivation();
+            war(DTR("Stop TREX detected. Disabling TREX control..."));
+          }
+        }
       }
 
       void
