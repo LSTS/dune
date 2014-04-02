@@ -142,7 +142,7 @@ namespace Maneuver
           m_fref_state.control_ent = msg->control_ent;
           m_fref_state.control_src = msg->control_src;
           dispatch(m_fref_state);
-          processDesiredPath();
+          //processDesiredPath();
         }
 
         //! Consume Reference messages and generate DesiredPath messages accordingly
