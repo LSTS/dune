@@ -339,7 +339,7 @@ namespace Sensors
         m_states[STA_ERR_SRC].state = IMC::EntityState::ESTA_ERROR;
         m_states[STA_ERR_SRC].description = DTR("failed to set modem address");
 
-	m_stop_comms = false;
+	m_stop_comms = true;
 
         // Register handlers.
         bind<IMC::EstimatedState>(this);
