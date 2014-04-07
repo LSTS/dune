@@ -517,3 +517,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 You can contact the author at :
 - LZ4 homepage : http://fastcompression.blogspot.com/p/lz4.html
 - LZ4 source repository : http://code.google.com/p/lz4/
+
+LibAIS - Library for decoding AIS messages
+==========================================
+
+Copyright 2010.  Released under the LGPL v3
+
+You can contact the author at :
+- Kurt Schwehr homepage : http://schwehr.org/
+- LibAIS source repository : https://github.com/schwehr/libais
+
