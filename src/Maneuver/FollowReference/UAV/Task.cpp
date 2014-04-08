@@ -133,6 +133,11 @@ namespace Maneuver
           m_cur_ref.flags = Reference::FLAG_LOCATION;
           m_cur_ref.lat = m_estate.lat;
           m_cur_ref.lon = m_estate.lon;
+          IMC::DesiredZ firstZ;
+          firstZ.z_units = parseZUnitsStr(m_args.default_z_units);
+          firstZ.value = m_args.default_z;
+          m_cur_ref.z.set(firstZ);
+          m_cur_ref.radius = m_args.loitering_radius;
           WGS84::displace(m_estate.x, m_estate.y, &(m_cur_ref.lat), &(m_cur_ref.lon));
           inf(DTR("lat lon = 0 ? %f"), m_cur_ref.lat);
           // create a message to notify that the maneuver was activated
@@ -454,6 +459,14 @@ namespace Maneuver
         {
           return (m_fref_state.state & IMC::FollowRefState::FR_TIMEOUT)
               && (m_fref_state.state & IMC::FollowRefState::FR_WAIT) ;
+        }
+
+        void
+        onDeactivation(void)
+        {
+          // Send to T-Rex the FollowRefState to update Reference to Boot
+          m_fref_state.state = IMC::FollowRefState::FR_WAIT;
+          dispatch(m_fref_state);
         }
       };
     }
