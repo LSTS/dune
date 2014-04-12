@@ -26,23 +26,22 @@
 //***************************************************************************
 
 // DUNE headers.
-# include <DUNE/DUNE.hpp>
-# include <DUNE/IMC/IridiumMessageDefinitions.hpp>
-# include <DUNE/Math/Random.hpp>
+#include <DUNE/DUNE.hpp>
+#include <DUNE/IMC/IridiumMessageDefinitions.hpp>
+#include <DUNE/Math/Random.hpp>
 
 namespace Transports
 {
   namespace Iridium
   {
     using DUNE_NAMESPACES;
+
     struct Arguments
     {
       // Delay between announcements.
       int delay_between_device_updates;
-
       // Destination to send all iridium messages
       std::string iridium_destination;
-
     };
 
     struct Task : public DUNE::Tasks::Task
@@ -61,13 +60,13 @@ namespace Transports
         m_dev_update_req_id(10),
         m_rnd(NULL)
       {
-        param("Device updates - Periodicity",
-              m_args.delay_between_device_updates).units(Units::Second).defaultValue(
-            "600").description(
-            "Delay between announce update messages. 0 for no updates being sent.");
+        param("Device updates - Periodicity", m_args.delay_between_device_updates)
+        .units(Units::Second)
+        .defaultValue("600")
+        .description("Delay between announce update messages. 0 for no updates being sent.");
 
-        bind<IMC::IridiumMsgRx>(this);
         bind<IMC::Announce>(this);
+        bind<IMC::IridiumMsgRx>(this);
         bind<IMC::IridiumTxStatus>(this);
       }
 
@@ -181,7 +180,7 @@ namespace Transports
             break;
           default:
             DUNE::IMC::ImcIridiumMessage * irMsg =
-                dynamic_cast<DUNE::IMC::ImcIridiumMessage *>(m);
+            dynamic_cast<DUNE::IMC::ImcIridiumMessage *>(m);
             inf("received IMC message of type %s via Iridium.", irMsg->msg->getName());
             dispatch(irMsg->msg);
             break;
@@ -200,7 +199,7 @@ namespace Transports
       {
         if (msg->req_id == m_dev_update_req_id)
           m_update_pool_empty = msg->status == IridiumTxStatus::TXSTATUS_OK
-              || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
+          || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
       }
 
       bool
