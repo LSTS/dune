@@ -174,6 +174,9 @@ namespace Monitors
 
         spew("command is %s, args are %s", cmd.c_str(), args.c_str());
 
+        String::toLowerCase(cmd);
+        String::toLowerCase(args);
+
         if (cmd == "gsm")
         {
           if (args == "true")
