@@ -1694,6 +1694,10 @@ AIS_STATUS aivdm_to_bits(bitset<T> &bits, const char *nmea_payload) {
 #endif
     return AIS_ERR_MSG_TOO_LONG;
   }
+
+  if (!nmea_ord_initialized)
+    BuildNmeaLookup();
+
   for (size_t idx = 0; nmea_payload[idx] != '\0' && idx < T/6; idx++) {
     int c = static_cast<int>(nmea_payload[idx]);
     if (c < 48 || c > 119 || (c >= 88 && c <= 95)) {
