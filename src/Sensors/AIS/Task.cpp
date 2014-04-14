@@ -29,9 +29,14 @@
 #include <cstring>
 #include <algorithm>
 #include <cstddef>
+#include <sstream>
+#include <string>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+
+// LibAIS headers.
+#include <ais/ais.h>
 
 namespace Sensors
 {
@@ -63,7 +68,7 @@ namespace Sensors
         .description("Serial port device used to communicate with the sensor");
 
         param("Serial Port - Baud Rate", m_args.uart_baud)
-        .defaultValue("4800")
+        .defaultValue("38400")
         .description("Serial port baud rate");
       }
 
@@ -74,9 +79,47 @@ namespace Sensors
       }
 
       void
+      process(const char* nmea_msg)
+      {
+        std::string nmea_payload = GetBody(nmea_msg);
+
+        if ((nmea_payload[0] == '1') ||
+            (nmea_payload[0] == '2') ||
+            (nmea_payload[0] == '3'))
+        {
+          Ais1_2_3 msg(nmea_payload.c_str(), GetPad(nmea_msg));
+          spew("mmsi: %d", msg.mmsi);
+          spew("lat: %f", msg.y);
+          spew("lon: %f", msg.x);
+          spew("cog: %f", msg.cog);
+
+          IMC::RemoteSensorInfo rsi;
+          rsi.id = static_cast<std::ostringstream*>(&(std::ostringstream() << msg.mmsi))->str();
+          // unable to fill sensor_class
+          rsi.lat = Angles::radians(msg.y);
+          rsi.lon = Angles::radians(msg.x);
+          rsi.alt = 0;
+          rsi.heading = Angles::radians(msg.cog);
+          rsi.data = "nothing to report";
+          return;
+        }
+      }
+
+      void
+      testing(void)
+      {
+        const char* nmea_message = "!AIVDM,1,1,,A,13HOI:0P0000VOHLCnHQKwvL05Ip,0*23";
+        process(nmea_message);
+      }
+
+      void
       task(void)
       {
-        war("run");
+        while (!stopping())
+        {
+          waitForMessages(1.0);
+          testing();
+        }
       }
     };
   }
