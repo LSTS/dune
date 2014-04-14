@@ -241,6 +241,49 @@ namespace DUNE
         *range = (Tb)std::sqrt(n * n + e * e);
       }
 
+      //! Get angles of Azimuth and Elevation between two
+      //! latitude/longitude/height coordinates.
+      //!
+      //! @param[in] lat1 WGS-84 latitude of first coordinate (rad).
+      //! @param[in] lon1 WGS-84 longitude of first coordinate (rad).
+      //! @param[in] hei1 WGS-84 height of first coordinate (m).
+      //! @param[in] lat2 WGS-84 latitude of second coordinate (rad).
+      //! @param[in] lon2 WGS-84 longitude of second coordinate (rad).
+      //! @param[in] hei2 WGS-84 height of second coordinate (m).
+      //! @param[in,out] azimuth azimuth angle (rad).
+      //! @param[in,out] elevation elevation angle (rad).
+      template <typename Ta, typename Tb, typename Tc>
+      static inline void
+      getAzimuthAndElevation(Ta lat1, Ta lon1, Tb hei1,
+                             Ta lat2, Ta lon2, Tb hei2,
+                             Tc* azimuth, Tc* elevation)
+      {
+        double latitudeArc  = lat1 - lat2;
+        double longitudeArc = lon1 - lon2;
+        double latitudeH = std::sin(latitudeArc * 0.5);
+        latitudeH *= latitudeH;
+        double lontitudeH = std::sin(longitudeArc * 0.5);
+        lontitudeH *= lontitudeH;
+        double tmp = std::cos(lat1) * std::cos(lat2);
+        double arc = 2.0 * std::asin(std::sqrt(latitudeH + tmp * lontitudeH));
+
+        double cos_arc = std::cos(arc);
+        double sin_arc = std::sin(arc);
+        double tan_arc = std::tan(arc);
+
+        double radius = computeRn(lat1);
+        double r1 = radius + hei1;
+
+        double h1 = (r1 / cos_arc) - radius;
+        double h2 = hei2 - h1;
+        double h3 = cos_arc * h2;
+        double d1 = tan_arc * r1;
+        double d2 = sin_arc * h2;
+
+        *elevation = std::atan(h3 / (d1 + d2));
+        getNEBearingAndRange(lat1, lon1, lat2, lon2, azimuth, &tmp);
+      }
+
     private:
       //! Convert WGS-84 coordinates to ECEF (Earch Center Earth Fixed) coordinates.
       //!
