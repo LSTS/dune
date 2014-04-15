@@ -22,7 +22,8 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: José Pinto                                                       *
+// Author: José Braga                                                       *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -45,6 +46,7 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
+    //! %Task arguments.
     struct Arguments
     {
       //! Serial port device.
@@ -53,13 +55,15 @@ namespace Sensors
       unsigned uart_baud;
     };
 
-    struct Task: public Tasks::Periodic
+    struct Task: public DUNE::Tasks::Task
     {
+      //! Serial port handle.
       IO::Handle* m_handle;
+      //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Periodic(name, ctx),
+        DUNE::Tasks::Task(name, ctx),
         m_handle(NULL)
       {
         // Define configuration parameters.
@@ -73,11 +77,25 @@ namespace Sensors
       }
 
       void
-      onResourceInitialization(void)
+      onResourceAcquisition(void)
       {
-        war("resource init");
+        try
+        {
+          m_handle = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+        }
+        catch (...)
+        {
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
       }
 
+      void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_handle);
+      }
+
+      //! Process AIS NMEA message.
       void
       process(const char* nmea_msg)
       {
@@ -113,12 +131,26 @@ namespace Sensors
       }
 
       void
-      task(void)
+      onMain(void)
       {
+        char bfr[82];
+
         while (!stopping())
         {
-          waitForMessages(1.0);
-          testing();
+          consumeMessages();
+
+          if (!Poll::poll(*m_handle, 1.0))
+            continue;
+
+          size_t rv = m_handle->readString(bfr, sizeof(bfr));
+          if (rv == 0)
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(DTR("I/O error"), 5);
+          }
+
+          process((const char*)bfr);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
       }
     };
