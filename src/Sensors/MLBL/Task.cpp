@@ -199,8 +199,6 @@ namespace Sensors
       IMC::EntityState m_states[STA_MAX];
       // Commands to/from modem.
       IMC::DevDataText m_cmds;
-      // Time of last range.
-      double m_last_range;
       // Internal buffer.
       char m_bfr[c_bfr_size];
       // Task arguments.
@@ -233,7 +231,6 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_last_range(0),
         m_result(RS_NONE),
         m_sound_speed_eid(-1)
       {
@@ -683,14 +680,13 @@ namespace Sensors
             double range = travel * m_sound_speed;
             if (range > 0.0)
             {
-              m_last_range = m_range.getTimeStamp();
               m_range.id = i;
               m_range.range = range;
               dispatch(m_range, DF_KEEP_TIME);
 
               // Update beacon statistics.
               m_beacons[i].range = (unsigned)m_range.range;
-              m_beacons[i].range_time = m_last_range;
+              m_beacons[i].range_time = Clock::get();
             }
             else
             {
