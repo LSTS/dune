@@ -134,6 +134,8 @@ namespace Sensors
       std::string sound_speed_elabel;
       // Turn around time (ms).
       unsigned turn_around_time;
+      // Transmit only underwater.
+      bool only_underwater;
     };
 
     struct Beacon
@@ -319,6 +321,10 @@ namespace Sensors
         .units(Units::Millisecond)
         .defaultValue("20")
         .minimumValue("0");
+
+        param("Transmit Only Underwater", m_args.only_underwater)
+        .defaultValue("false")
+        .description("Do not transmit when at water surface");
 
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
@@ -920,10 +926,20 @@ namespace Sensors
       void
       consume(const IMC::VehicleMedium* msg)
       {
+        if (m_args.only_underwater)
+        {
+          if (msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
+            m_stop_comms = false;
+          else
+            m_stop_comms = true;
+
+          return;
+        }
+
         if (msg->medium == IMC::VehicleMedium::VM_GROUND)
 	  m_stop_comms = true;
-	else
-	  m_stop_comms = false;
+        else
+          m_stop_comms = false;
       }
 
       void
