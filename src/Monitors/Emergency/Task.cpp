@@ -187,18 +187,22 @@ namespace Monitors
         }
 
         if (cmd == "pos")
-          sendSMS("T", m_args.sms_lost_coms_ttl);
+          sendSMS("T", m_args.sms_lost_coms_ttl, msg->origin);
       }
 
       void
-      sendSMS(const char* prefix, unsigned timeout)
+      sendSMS(const char* prefix, unsigned timeout, std::string recipient = "")
       {
         if (!m_emsg.empty())
         {
           inf(DTR("sending SMS %s | %u"), prefix, timeout);
 
           IMC::Sms sms;
-          sms.number = m_args.recipient;
+          if (recipient.size() == 0)
+            sms.number = m_args.recipient;
+          else
+            sms.number = recipient;
+
           sms.timeout = timeout;
           sms.contents = String::str("(%s) %s", prefix, m_emsg.c_str());
           dispatch(sms);
