@@ -40,6 +40,10 @@ namespace Transports
     {
       // Delay between announcements.
       int delay_between_device_updates;
+
+      // Maximum age after which received messages are discarded
+      int max_age_secs;
+
       // Destination to send all iridium messages
       std::string iridium_destination;
     };
@@ -60,10 +64,15 @@ namespace Transports
         m_dev_update_req_id(10),
         m_rnd(NULL)
       {
-        param("Device updates - Periodicity", m_args.delay_between_device_updates)
-        .units(Units::Second)
-        .defaultValue("600")
-        .description("Delay between announce update messages. 0 for no updates being sent.");
+        param("Device updates - Periodicity",
+              m_args.delay_between_device_updates).units(Units::Second).defaultValue(
+            "600").description(
+            "Delay between announce update messages. 0 for no updates being sent.");
+
+        param("Maximum age",
+            m_args.max_age_secs).units(Units::Second).defaultValue(
+            "3600").description(
+            "Age, in seconds, after which received IMC messages are discarded.");
 
         bind<IMC::Announce>(this);
         bind<IMC::IridiumMsgRx>(this);
@@ -95,7 +104,7 @@ namespace Transports
       handleIridiumCommand(IridiumCommand * irCmd)
       {
         IMC::TextMessage tm;
-        debug("received this command via Iridium: %s", irCmd->command.c_str());
+        inf("received command: '%s'", irCmd->command.c_str());
         tm.text = irCmd->command;
         tm.origin = "Iridium";
         tm.setSource(irCmd->source);
@@ -108,7 +117,7 @@ namespace Transports
 
       void handleUpdates(std::vector<DevicePosition> positions) {
         std::vector<DevicePosition>::iterator it;
-        debug("received Iridium device update with %d updates",
+        inf("received device update with %d updates",
             (int)positions.size());
 
         for (it = positions.begin(); it != positions.end(); it++)
@@ -159,11 +168,8 @@ namespace Transports
             ss << "Argos Class " << (char)p.pos_class;
             sensorInfo.sensor_class = ss.str();
           }
-
           else
-          {
             sensorInfo.id = name;
-          }
 
           dispatch(sensorInfo);
         }
@@ -200,9 +206,18 @@ namespace Transports
             break;
           default:
             DUNE::IMC::ImcIridiumMessage * irMsg =
-            dynamic_cast<DUNE::IMC::ImcIridiumMessage *>(m);
-            inf("received IMC message of type %s via Iridium.", irMsg->msg->getName());
-            dispatch(irMsg->msg);
+                dynamic_cast<DUNE::IMC::ImcIridiumMessage *>(m);
+
+            double age = Clock::getSinceEpoch() - irMsg->msg->getTimeStamp();
+            if (age < m_args.max_age_secs)
+            {
+              inf("received IMC message of type %s via Iridium.", irMsg->msg->getName());
+              dispatch(irMsg->msg);
+            }
+            else
+            {
+              war("discarded IMC message of type %s because it is too old (%f seconds of age).",irMsg->msg->getName(), age);
+            }
             break;
         }
         delete m;
