@@ -106,14 +106,12 @@ namespace Transports
         dispatch(tm);
       }
 
-      void
-      handleDeviceUpdate(DeviceUpdate * devUpt)
-      {
+      void handleUpdates(std::vector<DevicePosition> positions) {
         std::vector<DevicePosition>::iterator it;
-        it = devUpt->positions.begin();
         debug("received Iridium device update with %d updates",
-              (int)devUpt->positions.size());
-        for (; it != devUpt->positions.end(); it++)
+            (int)positions.size());
+
+        for (it = positions.begin(); it != positions.end(); it++)
         {
           DevicePosition p = *it;
           int selector = (p.id & 0xE0) >> 4;
@@ -123,6 +121,9 @@ namespace Transports
           sensorInfo.lat = p.lat;
           sensorInfo.lon = p.lon;
           sensorInfo.heading = 0;
+
+          std::string name = resolveSystemId(p.id);
+
           switch (selector)
           {
             case 0:
@@ -145,9 +146,25 @@ namespace Transports
               break;
           }
 
-          std::stringstream ss;
-          ss << sensorInfo.sensor_class << "_" << p.id;
-          sensorInfo.id = ss.str();
+          if (name == "unknown")
+          {
+            std::stringstream ss;
+            ss << sensorInfo.sensor_class << "_" << p.id;
+            sensorInfo.id = ss.str();
+          }
+
+          if (p.pos_class != 0)
+          {
+            std::stringstream ss;
+            ss << "Argos Class " << (char)p.pos_class;
+            sensorInfo.sensor_class = ss.str();
+          }
+
+          else
+          {
+            sensorInfo.id = name;
+          }
+
           dispatch(sensorInfo);
         }
       }
@@ -156,12 +173,12 @@ namespace Transports
       consume(const IMC::IridiumMsgRx* msg)
       {
         DUNE::IMC::IridiumMessage * m = DUNE::IMC::IridiumMessage::deserialize(msg);
-
         if (m == NULL)
         {
           war(DTR("error while parsing Iridium message"));
           return;
         }
+
 
         switch (m->msg_id)
         {
@@ -176,7 +193,10 @@ namespace Transports
             inf("received text command via Iridium.");
             break;
           case (ID_DEVICEUPDATE):
-            handleDeviceUpdate(dynamic_cast<DeviceUpdate *>(m));
+            handleUpdates(dynamic_cast<DeviceUpdate *>(m)->positions);
+            break;
+          case (ID_EXTDEVUPDATE):
+            handleUpdates(dynamic_cast<ExtendedDeviceUpdate *>(m)->positions);
             break;
           default:
             DUNE::IMC::ImcIridiumMessage * irMsg =
@@ -191,7 +211,8 @@ namespace Transports
       void
       consume(const IMC::Announce* msg)
       {
-        m_last_announces[msg->sys_name] = *msg;
+        if (msg->lat != 0 || msg->lon != 0)
+          m_last_announces[msg->sys_name] = *msg;
       }
 
       void
@@ -218,6 +239,7 @@ namespace Transports
 
         for (it = m_last_announces.begin(); it != m_last_announces.end(); it++)
         {
+
           DevicePosition pos;
           pos.id = it->second.getSource();
           pos.lat = it->second.lat;

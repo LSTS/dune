@@ -47,9 +47,11 @@ namespace DUNE
     static const uint16_t ID_DEACTIVATESUB = 2004;
     static const uint16_t ID_IRIDIUMCMD = 2005;
     static const uint16_t ID_IMCMESSAGE = 2010;
+    static const uint16_t ID_EXTDEVUPDATE = 2011;
 
     typedef struct {
       uint16_t id;
+      uint8_t pos_class;
       double time;
       double lat, lon;
     } DevicePosition;
@@ -99,6 +101,17 @@ namespace DUNE
       int deserialize(uint8_t* data, uint16_t len);
       DeviceUpdate();
       ~DeviceUpdate(){};
+    };
+
+    //! Extension to the IMC protocol used to report a set of device positions (including predicted error)
+    class ExtendedDeviceUpdate : public IridiumMessage
+    {
+    public:
+    	std::vector<DevicePosition> positions;
+    	int serialize(uint8_t * buffer);
+    	int deserialize(uint8_t* data, uint16_t len);
+    	ExtendedDeviceUpdate();
+    	~ExtendedDeviceUpdate(){};
     };
 
     //! Extension to the IMC protocol used request reception of device position updates
