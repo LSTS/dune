@@ -99,6 +99,11 @@ namespace Sensors
       void
       process(const char* nmea_msg)
       {
+        // Log AIS messages.
+        IMC::DevDataText text;
+        text.value.assign(sanitize(nmea_msg));
+        dispatch(text);
+
         std::string nmea_payload = GetBody(nmea_msg);
 
         if ((nmea_payload[0] == '1') ||
