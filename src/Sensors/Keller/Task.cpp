@@ -277,7 +277,7 @@ namespace Sensors
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
 
           // No echo received, so something is seriously broken
-          throw RestartNeeded(DTR("echo handling enabled, but got no RS-485 echo"), 1);
+          throw RestartNeeded(DTR("echo handling enabled, but got no RS-485 echo"), 5);
         }
 
         // Check for collisions here.
@@ -323,7 +323,7 @@ namespace Sensors
           {
             err(DTR("invalid CRC"));
             if (++m_crc_err_count > c_max_crc_err)
-              throw std::runtime_error(DTR("exceeded maximum consecutive CRC error count"));;
+              throw RestartNeeded(DTR("exceeded maximum consecutive CRC error count"), 5);
             return false;
           }
         }
@@ -453,7 +453,7 @@ namespace Sensors
         ByteCopy::toBE(crc, &bfr[2]);
         write(bfr, 4);
         if (!read())
-          throw std::runtime_error(DTR("unable to initialize the device"));
+          throw RestartNeeded(DTR("unable to initialize the device"), 5);
 
         bfr[0] = m_args.address;
         bfr[1] = CMD_READ_SERIAL_NUMBER;
@@ -461,7 +461,7 @@ namespace Sensors
         ByteCopy::toBE(crc, &bfr[2]);
         write(bfr, 4);
         if (!read())
-          throw std::runtime_error(DTR("unable to retrieve the serial number"));
+          throw RestartNeeded(DTR("unable to retrieve the serial number"), 5);
       }
 
       void
@@ -479,7 +479,7 @@ namespace Sensors
         ByteCopy::toBE(crc, &bfr[3]);
         write(bfr, 5);
         if (!read())
-          throw std::runtime_error(DTR("unable to zero the device"));
+          throw RestartNeeded(DTR("unable to zero the device"), 5);
       }
 
       void
