@@ -1603,10 +1603,13 @@ namespace Control
           IMC::DesiredRoll d_roll;
           IMC::DesiredPitch d_pitch;
           IMC::DesiredHeading d_head;
+          IMC::DesiredZ d_z;
 
           d_roll.value = Angles::radians(nav_out.nav_roll);
           d_pitch.value = Angles::radians(nav_out.nav_pitch);
           d_head.value = Angles::radians(nav_out.nav_bearing);
+          d_z.value = m_alt + nav_out.alt_error;
+          d_z.z_units = IMC::Z_HEIGHT;
 
           if ((nav_out.wp_dist <= m_desired_radius + m_args.ltolerance)
              && (nav_out.wp_dist >= m_desired_radius - m_args.ltolerance)
@@ -1625,6 +1628,7 @@ namespace Control
           dispatch(d_roll);
           dispatch(d_pitch);
           dispatch(d_head);
+          dispatch(d_z);
 
           if (!m_args.ardu_tracker)
             return;
