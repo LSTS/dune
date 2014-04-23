@@ -137,24 +137,6 @@ namespace Transports
         }
       }
 
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      {
-      }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
       //! Acquire resources.
       void
       onResourceAcquisition(void)
@@ -290,12 +272,6 @@ namespace Transports
         Memory::clear(m_udp_sock_rc_in);
         m_udp_sock_rc_in = new UDPSocket;
         m_udp_sock_rc_in->bind(m_sitl_port_in, "");
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
       }
 
       //! Release resources.
