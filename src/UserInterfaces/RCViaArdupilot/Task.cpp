@@ -138,24 +138,6 @@ namespace UserInterfaces
         spew("Enabled RC output.");
       }
 
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      {
-      }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
       //! Acquire resources.
       void
       onResourceAcquisition(void)
@@ -179,12 +161,6 @@ namespace UserInterfaces
         {
           err(DTR("Error opening serial device."));
         }
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
       }
 
       //! Release resources.
