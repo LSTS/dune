@@ -133,24 +133,6 @@ namespace Transports
         m_rep_timer.setTop(m_args.report_period);
       }
 
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
-      }
-
       //! Initialize resources.
       void
       onResourceInitialization(void)
