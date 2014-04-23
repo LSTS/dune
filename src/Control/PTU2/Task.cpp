@@ -51,7 +51,6 @@ namespace Control
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
-     
       {
         param("Target Vehicle", m_args.trg_name)
         .description("Vehicle to be tracked")
@@ -77,10 +76,6 @@ namespace Control
         bind<IMC::EstimatedState>(this);
         bind<IMC::EulerAngles>(this);
         bind<IMC::GpsFix>(this);
-      }
-
-      ~Task(void)
-      {
       }
 
       void
@@ -116,11 +111,11 @@ namespace Control
 
         if (m_trg_id != estate->getSource())
           return;
-       
+
         //! Distance between ptu and ref
         fp32_t ptu_x, ptu_y, ptu_z;
         WGS84::displacement(estate->lat, estate->lon, estate->height,
-                            m_lat, m_lon, m_hei, 
+                            m_lat, m_lon, m_hei,
                             &ptu_x, &ptu_y, &ptu_z);
 
         //! Distance between target and ptu
