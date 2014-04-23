@@ -57,16 +57,6 @@ namespace Simulators
         bind<IMC::SimulatedState>(this);
       }
 
-      void
-      onResourceAcquisition(void)
-      {
-      }
-
-      void
-      onEntityReservation(void)
-      {
-      }
-
       ~Task(void)
       {
         Task::onResourceRelease();
