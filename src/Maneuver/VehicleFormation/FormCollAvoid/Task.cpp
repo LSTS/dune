@@ -347,11 +347,6 @@ namespace Maneuver
         }
 
         void
-        onEntityResolution(void)
-        {
-        }
-
-        void
         onResourceAcquisition(void)
         {
           //! Initial parameters checking
@@ -490,11 +485,6 @@ namespace Maneuver
           m_last_ctrl_update = Clock::get();
 
           spew("Resource acquisition end");
-        }
-
-        void
-        onResourceRelease(void)
-        {
         }
 
         void
