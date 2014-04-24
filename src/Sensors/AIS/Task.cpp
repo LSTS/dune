@@ -128,12 +128,12 @@ namespace Sensors
 
           IMC::RemoteSensorInfo rsi;
           rsi.id = static_cast<std::ostringstream*>(&(std::ostringstream() << msg.mmsi))->str();
-          // unable to fill sensor_class
+          // @todo fill sensor_class
           rsi.lat = Angles::radians(msg.y);
           rsi.lon = Angles::radians(msg.x);
-          rsi.alt = 0;
           rsi.heading = Angles::radians(msg.cog);
-          rsi.data = "nothing to report";
+          // @todo fill data
+          dispatch(rsi);
           return;
         }
       }
