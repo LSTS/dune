@@ -90,6 +90,7 @@ namespace Sensors
         try
         {
           m_handle = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          m_handle->flush();
         }
         catch (...)
         {
@@ -107,11 +108,16 @@ namespace Sensors
       void
       process(std::string nmea_msg)
       {
-        // Log AIS messages.
+        // Remove carriage return.
+        nmea_msg.erase(std::remove(nmea_msg.begin(), nmea_msg.end(), '\r'), nmea_msg.end());
+        spew("%s", nmea_msg.c_str());
+
+        // Log NMEA msg.
         IMC::DevDataText text;
         text.value = nmea_msg;
         dispatch(text);
 
+        // Process data.
         std::string nmea_payload = GetBody(nmea_msg.c_str());
 
         if ((nmea_payload[0] == '1') ||
@@ -119,10 +125,6 @@ namespace Sensors
             (nmea_payload[0] == '3'))
         {
           Ais1_2_3 msg(nmea_payload.c_str(), GetPad(nmea_msg));
-          spew("mmsi: %d", msg.mmsi);
-          spew("lat: %f", msg.y);
-          spew("lon: %f", msg.x);
-          spew("cog: %f", msg.cog);
 
           IMC::RemoteSensorInfo rsi;
           rsi.id = static_cast<std::ostringstream*>(&(std::ostringstream() << msg.mmsi))->str();
@@ -137,17 +139,10 @@ namespace Sensors
       }
 
       void
-      testing(void)
-      {
-        const char* nmea_message = "!AIVDM,1,1,,A,13HOI:0P0000VOHLCnHQKwvL05Ip,0*23";
-        process(nmea_message);
-      }
-
-      void
       onMain(void)
       {
-	std::vector<char> bfr;
-	bfr.resize(c_read_buffer_size);
+        std::vector<char> bfr;
+        bfr.resize(c_read_buffer_size);
 
         while (!stopping())
         {
@@ -163,17 +158,20 @@ namespace Sensors
             throw RestartNeeded(DTR("I/O error"), 5);
           }
 
-	  for (size_t i = 0; i < rv; ++i)
-	  {
-	    m_line.push_back(bfr[i]);
-	    if (bfr[i] == c_line_term)
-	    {
-
-	      process(m_line);
-	      setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-	      m_line.clear();
-	    }
-	  }
+          for (size_t i = 0; i < rv; ++i)
+          {
+            // Detected line termination.
+            if (bfr[i] == c_line_term)
+            {
+              process(m_line);
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+              m_line.clear();
+            }
+            else
+            {
+              m_line.push_back(bfr[i]);
+            }
+          }
         }
       }
     };
