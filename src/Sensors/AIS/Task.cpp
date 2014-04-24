@@ -40,6 +40,9 @@
 // LibAIS headers.
 #include <ais/ais.h>
 
+// Local headers.
+#include "ShipTypeCode.hpp"
+
 namespace Sensors
 {
   //! Device driver for AIS receivers.
@@ -69,6 +72,8 @@ namespace Sensors
       Arguments m_args;
       //! Current line.
       std::string m_line;
+      //! Vehicle Type.
+      std::map<int, std::string> m_systems;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -120,6 +125,7 @@ namespace Sensors
         // Process data.
         std::string nmea_payload = GetBody(nmea_msg.c_str());
 
+        // Position Report Class A.
         if ((nmea_payload[0] == '1') ||
             (nmea_payload[0] == '2') ||
             (nmea_payload[0] == '3'))
@@ -128,13 +134,30 @@ namespace Sensors
 
           IMC::RemoteSensorInfo rsi;
           rsi.id = static_cast<std::ostringstream*>(&(std::ostringstream() << msg.mmsi))->str();
-          // @todo fill sensor_class
+
+          // Find ship type.
+          std::map<int, std::string>::iterator itr = m_systems.find(msg.mmsi);
+          if (itr != m_systems.end())
+            rsi.sensor_class = itr->second;
+
           rsi.lat = Angles::radians(msg.y);
           rsi.lon = Angles::radians(msg.x);
           rsi.heading = Angles::radians(msg.cog);
-          // @todo fill data
           dispatch(rsi);
           return;
+        }
+
+        // Static and Voyage Related Data.
+        if (nmea_payload[0] == '5')
+        {
+          Ais5 msg(nmea_payload.c_str(), GetPad(nmea_msg));
+
+          // Add system MMSI and Type if not existent.
+          std::map<int, std::string>::iterator itr = m_systems.find(msg.mmsi);
+          if (itr != m_systems.end())
+            return;
+
+          m_systems[msg.mmsi] = ShipTypeCode::translate(msg.type_and_cargo);
         }
       }
 
