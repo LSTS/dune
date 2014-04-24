@@ -32,6 +32,7 @@
 #include <cstddef>
 #include <sstream>
 #include <string>
+#include <vector>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -45,6 +46,11 @@ namespace Sensors
   namespace AIS
   {
     using DUNE_NAMESPACES;
+
+    //! Read buffer size.
+    static const size_t c_read_buffer_size = 82;
+    //! Line termination character.
+    static const char c_line_term = '\n';
 
     //! %Task arguments.
     struct Arguments
@@ -61,6 +67,8 @@ namespace Sensors
       IO::Handle* m_handle;
       //! Task arguments.
       Arguments m_args;
+      //! Current line.
+      std::string m_line;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -97,14 +105,14 @@ namespace Sensors
 
       //! Process AIS NMEA message.
       void
-      process(const char* nmea_msg)
+      process(std::string nmea_msg)
       {
         // Log AIS messages.
         IMC::DevDataText text;
-        text.value.assign(sanitize(nmea_msg));
+        text.value = nmea_msg;
         dispatch(text);
 
-        std::string nmea_payload = GetBody(nmea_msg);
+        std::string nmea_payload = GetBody(nmea_msg.c_str());
 
         if ((nmea_payload[0] == '1') ||
             (nmea_payload[0] == '2') ||
@@ -138,7 +146,8 @@ namespace Sensors
       void
       onMain(void)
       {
-        char bfr[82];
+	std::vector<char> bfr;
+	bfr.resize(c_read_buffer_size);
 
         while (!stopping())
         {
@@ -147,15 +156,24 @@ namespace Sensors
           if (!Poll::poll(*m_handle, 1.0))
             continue;
 
-          size_t rv = m_handle->readString(bfr, sizeof(bfr));
+          size_t rv = m_handle->read(&bfr[0], bfr.size());
           if (rv == 0)
           {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
             throw RestartNeeded(DTR("I/O error"), 5);
           }
 
-          process((const char*)bfr);
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+	  for (size_t i = 0; i < rv; ++i)
+	  {
+	    m_line.push_back(bfr[i]);
+	    if (bfr[i] == c_line_term)
+	    {
+
+	      process(m_line);
+	      setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+	      m_line.clear();
+	    }
+	  }
         }
       }
     };
