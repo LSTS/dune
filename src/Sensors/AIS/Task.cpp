@@ -52,6 +52,10 @@ namespace Sensors
 
     //! Read buffer size.
     static const size_t c_read_buffer_size = 82;
+    //! NMEA 5 body index.
+    static const size_t c_nmea5_body_index = 15;
+    //! NMEA 5 trailing chunk in first fragment.
+    static const size_t c_nmea5_trail = 5;
     //! Line termination character.
     static const char c_line_term = '\n';
 
@@ -72,6 +76,10 @@ namespace Sensors
       Arguments m_args;
       //! Current line.
       std::string m_line;
+      //! Saved first part of NMEA 5 class message.
+      std::string m_nmea5_fg;
+      //! Waiting fragment.
+      bool m_nmea5_wait_fg;
       //! Vehicle Type.
       std::map<int, std::string> m_systems;
 
@@ -87,6 +95,8 @@ namespace Sensors
         param("Serial Port - Baud Rate", m_args.uart_baud)
         .defaultValue("38400")
         .description("Serial port baud rate");
+
+        m_nmea5_wait_fg = false;
       }
 
       void
@@ -122,8 +132,40 @@ namespace Sensors
         text.value = nmea_msg;
         dispatch(text);
 
-        // Process data.
+        // Get body of NMEA message.
         std::string nmea_payload = GetBody(nmea_msg.c_str());
+
+        // Static and Voyage Related Data, first fragment.
+        if (nmea_payload[0] == '5' && !m_nmea5_wait_fg)
+        {
+          nmea_msg.erase(nmea_msg.size() - c_nmea5_trail - 1, c_nmea5_trail);
+          m_nmea5_fg = nmea_msg;
+          m_nmea5_wait_fg = true;
+          return;
+        }
+
+        // Static and Voyage Related Data, second fragment.
+        if (m_nmea5_wait_fg)
+        {
+          nmea_msg.erase(0, c_nmea5_body_index);
+          nmea_msg = m_nmea5_fg.append(nmea_msg);
+          nmea_payload = GetBody(nmea_msg.c_str());
+        }
+
+        // Static and Voyage Related Data, second fragment.
+        if (m_nmea5_wait_fg)
+        {
+          m_nmea5_wait_fg = false;
+          Ais5 msg(nmea_payload.c_str(), GetPad(nmea_msg));
+
+          // Add system MMSI and Type if not existent.
+          std::map<int, std::string>::iterator itr = m_systems.find(msg.mmsi);
+          if (itr != m_systems.end())
+            return;
+
+          m_systems[msg.mmsi] = ShipTypeCode::translate(msg.type_and_cargo);
+          return;
+        }
 
         // Position Report Class A.
         if ((nmea_payload[0] == '1') ||
@@ -132,6 +174,7 @@ namespace Sensors
         {
           Ais1_2_3 msg(nmea_payload.c_str(), GetPad(nmea_msg));
 
+          // We are able to send a message with ship information.
           IMC::RemoteSensorInfo rsi;
           rsi.id = static_cast<std::ostringstream*>(&(std::ostringstream() << msg.mmsi))->str();
 
@@ -144,20 +187,9 @@ namespace Sensors
           rsi.lon = Angles::radians(msg.x);
           rsi.heading = Angles::radians(msg.cog);
           dispatch(rsi);
+
+          spew("%s, %s", rsi.id.c_str(), rsi.sensor_class.c_str());
           return;
-        }
-
-        // Static and Voyage Related Data.
-        if (nmea_payload[0] == '5')
-        {
-          Ais5 msg(nmea_payload.c_str(), GetPad(nmea_msg));
-
-          // Add system MMSI and Type if not existent.
-          std::map<int, std::string>::iterator itr = m_systems.find(msg.mmsi);
-          if (itr != m_systems.end())
-            return;
-
-          m_systems[msg.mmsi] = ShipTypeCode::translate(msg.type_and_cargo);
         }
       }
 
