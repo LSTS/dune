@@ -135,6 +135,8 @@ namespace Control
         IMC::PathControlState m_pcs;
         //! DesiredPath message
         IMC::DesiredPath m_dpath;
+        //! DesiredPath message
+        IMC::ControlLoops m_controllps;
         //! Reference Lat and Lon and Hei to measure displacement
         fp64_t ref_lat, ref_lon;
         fp32_t ref_hei;
@@ -170,8 +172,8 @@ namespace Control
         float m_droll, m_dclimb, m_dspeed;
         //! Type of system to be controlled
         APM_Vehicle m_vehicle_type;
-        //! Check if is in mission
-        bool m_in_mission;
+        //! Check if is in service
+        bool m_service;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -199,7 +201,7 @@ namespace Control
           m_dclimb(0),
           m_dspeed(20),
           m_vehicle_type(VEHICLE_UNKNOWN),
-          m_in_mission(false)
+          m_service(false)
         {
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
@@ -344,7 +346,7 @@ namespace Control
           bind<ControlLoops>(this);
           bind<PowerChannelControl>(this);
           bind<VehicleMedium>(this);
-          bind<PlanControlState>(this);
+          bind<VehicleState>(this);
           bind<SimulatedState>(this);
 
           // Misc. initialization
@@ -482,14 +484,21 @@ namespace Control
           is &= loop;
 
           if (was && !is)
-            debug("%s - deactivating", desc);
+            inf("%s - deactivating", desc);
           else if (!was && is)
-            debug("%s - activating", desc);
+            inf("%s - activating", desc);
         }
 
         void
         consume(const IMC::ControlLoops* cloops)
         {
+          if (m_external && cloops->enable)
+          {
+            m_controllps = *cloops;
+            inf(DTR("ArduPilot is in Manual mode, saving control loops."));
+            return;
+          }
+
           uint32_t prev = m_cloops;
 
           if (cloops->enable)
@@ -497,7 +506,7 @@ namespace Control
             m_cloops |= cloops->mask;
             if ((!m_args.ardu_tracker) && (cloops->mask & IMC::CL_PATH))
             {
-              debug("Ardupilot tracker is NOT enabled");
+              inf("Ardupilot tracker is NOT enabled");
               m_cloops &= ~IMC::CL_PATH;
             }
 
@@ -659,17 +668,17 @@ namespace Control
             return;
           }
 
+          if (!((m_cloops & IMC::CL_PATH) && m_args.ardu_tracker))
+          {
+            inf(DTR("path control is NOT active"));
+            return;
+          }
+
           //! In Auto mode but still in ground, performing takeoff first
           if (m_ground)
           {
             inf(DTR("ArduPilot in Auto mode but still in ground, performing takeoff first."));
             takeoff(path);
-            return;
-          }
-
-          if (!((m_cloops & IMC::CL_PATH) && m_args.ardu_tracker))
-          {
-            inf(DTR("path control is NOT active"));
             return;
           }
 
@@ -948,9 +957,9 @@ namespace Control
         }
 
         void
-        consume(const IMC::PlanControlState* msg)
+        consume(const IMC::VehicleState* msg)
         {
-          m_in_mission = (msg->state & IMC::PlanControlState::PCS_EXECUTING) != 0;
+          m_service = (msg->op_mode == IMC::VehicleState::VS_SERVICE);
         }
 
         void
@@ -1573,9 +1582,12 @@ namespace Control
                 {
                   m_external = false;
                   if (m_dpath.end_lat)
+                  {
+                    receive(&m_controllps);
                     receive(&m_dpath);
+                  }
                 }
-                if (!m_in_mission)
+                if (m_service)
                   loiterHere();
                 break;
               case 12:
