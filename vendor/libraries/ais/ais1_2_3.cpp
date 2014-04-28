@@ -4,8 +4,6 @@
 
 #include "ais.h"
 
-using std::abs;
-
 Ais1_2_3::Ais1_2_3(const char *nmea_payload, const size_t pad)
     : AisMsg(nmea_payload, pad) {
   if (status != AIS_UNINITIALIZED)
@@ -13,7 +11,7 @@ Ais1_2_3::Ais1_2_3(const char *nmea_payload, const size_t pad)
 
   assert(message_id >= 1 && message_id <= 3);
 
-  if (pad != 0 || strlen(nmea_payload) != 28) {
+  if (pad != 0 || std::strlen(nmea_payload) != 28) {
     status = AIS_ERR_BAD_BIT_COUNT;
     return;
   }
@@ -28,7 +26,7 @@ Ais1_2_3::Ais1_2_3(const char *nmea_payload, const size_t pad)
   nav_status = ubits(bs, 38, 4);
 
   rot_raw = sbits(bs, 42, 8);
-  rot_over_range = abs(rot_raw) > 126 ? true : false;
+  rot_over_range = std::abs((float)rot_raw) > 126 ? true : false;
   rot = pow((rot_raw/4.733), 2);
   if (rot_raw < 0) rot = -rot;
 
