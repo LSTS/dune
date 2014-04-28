@@ -237,8 +237,7 @@ namespace Sensors
       void
       consume(const IMC::VehicleMedium* msg)
       {
-        if ((msg->medium == IMC::VehicleMedium::VM_WATER ||
-             msg->medium == IMC::VehicleMedium::VM_GROUND) && !m_calibrated)
+        if ((msg->medium != IMC::VehicleMedium::VM_UNDERWATER) && !m_calibrated)
         {
           zero();
           m_calibrated = true;
