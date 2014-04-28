@@ -107,14 +107,14 @@ namespace DUNE
     {
       uint8_t * start;
       start = buffer;
+      uint32_t timestamp = (unsigned int) msg->getTimeStamp();
 
       buffer += DUNE::IMC::serialize(source, buffer);
       buffer += DUNE::IMC::serialize(destination, buffer);
       buffer += DUNE::IMC::serialize(msg_id, buffer);
       buffer += DUNE::IMC::serialize(msg->getId(), buffer);
-
+      buffer += DUNE::IMC::serialize(timestamp, buffer);
       buffer = msg->serializeFields(buffer);
-
       return buffer - start;
     }
 
