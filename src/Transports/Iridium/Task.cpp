@@ -38,8 +38,11 @@ namespace Transports
 
     struct Arguments
     {
-      // Delay between announcements.
+      // Delay between dev updates.
       int delay_between_device_updates;
+
+      // Delay between announcements.
+      int delay_between_announces;
 
       // Maximum age after which received messages are discarded
       int max_age_secs;
@@ -52,31 +55,44 @@ namespace Transports
     {
       std::map<std::string, IMC::Announce> m_last_announces;
       double m_last_dev_update_time;
+      double m_last_announce_time;
       bool m_update_pool_empty;
       int m_dev_update_req_id;
+      IMC::FuelLevel m_fuel_state;
+      IMC::PlanControlState m_plan_state;
+      IMC::VehicleState m_vehicle_state;
       Random::Generator* m_rnd;
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_last_dev_update_time(Clock::get()),
+        m_last_announce_time(Clock::get()),
         m_update_pool_empty(true),
         m_dev_update_req_id(10),
         m_rnd(NULL)
       {
         param("Device updates - Periodicity",
               m_args.delay_between_device_updates).units(Units::Second).defaultValue(
-            "600").description(
-            "Delay between announce update messages. 0 for no updates being sent.");
+                  "600").description(
+                      "Delay between announce update messages. 0 for no updates being sent.");
+
+        param("Announce Periodicity",
+            m_args.delay_between_announces).units(Units::Second).defaultValue(
+                "600").description(
+                    "Delay between announce messages being sent. 0 for no updates being sent.");
 
         param("Maximum age",
             m_args.max_age_secs).units(Units::Second).defaultValue(
-            "3600").description(
-            "Age, in seconds, after which received IMC messages are discarded.");
+                "1200").description(
+                    "Age, in seconds, after which received IMC messages are discarded.");
 
         bind<IMC::Announce>(this);
         bind<IMC::IridiumMsgRx>(this);
         bind<IMC::IridiumTxStatus>(this);
+        bind<IMC::PlanControlState>(this);
+        bind<IMC::FuelLevel>(this);
+
       }
 
       void
@@ -224,6 +240,24 @@ namespace Transports
       }
 
       void
+      consume(const IMC::PlanControlState * msg)
+      {
+        m_plan_state = *msg;
+      }
+
+      void
+      consume(const IMC::FuelLevel * msg)
+      {
+        m_fuel_state = *msg;
+      }
+
+      void
+      consume(const IMC::VehicleState * msg)
+      {
+        m_vehicle_state = *msg;
+      }
+
+      void
       consume(const IMC::Announce* msg)
       {
         if (msg->lat != 0 || msg->lon != 0)
@@ -239,11 +273,45 @@ namespace Transports
       }
 
       bool
+      send_announce() {
+
+    	  if (m_last_announces.find(getSystemName()) != m_last_announces.end()) {
+    		  Announce ann = m_last_announces[getSystemName()];
+
+    		  std::stringstream ss;
+    		  if (m_plan_state.state == IMC::PlanControlState::PCS_EXECUTING)
+    		    ss << "P:" << m_plan_state.plan_id << " ";
+    		  else
+    		    ss << "P:n/a ";
+    		  ss << "F:" << (int)m_fuel_state.value << "% ";
+    		  if (m_vehicle_state.error_count > 0)
+    		    ss << "E:" << m_vehicle_state.last_error;
+
+    		  ann.services = ss.str();
+    		  DUNE::IMC::ImcIridiumMessage * irMsg = new DUNE::IMC::ImcIridiumMessage(&ann);
+    		  irMsg->source = getSystemId();
+    		  irMsg->destination = 65535;
+    		  uint8_t buffer[65535];
+    		  int len = irMsg->serialize(buffer);
+
+    		  DUNE::IMC::IridiumMsgTx * m = new DUNE::IMC::IridiumMsgTx();
+    		  m->data.assign(buffer, buffer + len);
+    		  m->req_id = m_rnd->random() % 65535;
+    		  m->ttl = m_args.delay_between_device_updates;
+    		  m->setTimeStamp();
+    		  dispatch(m);
+    		  return true;
+    	  }
+    	  else
+    		  return false;
+      }
+
+      bool
       send_device_updates()
       {
         if (!m_update_pool_empty)
         {
-          spew("won't send device updates message because pool is not empty");
+          debug("won't send device updates message because pool is not empty");
           return false;
         }
 
@@ -295,11 +363,17 @@ namespace Transports
           if (m_args.delay_between_device_updates > 0)
           {
             double now = Clock::get();
-            if ((now - m_last_dev_update_time)
+            if (m_args.delay_between_device_updates > 0 && (now - m_last_dev_update_time)
                 > m_args.delay_between_device_updates)
             {
               if (send_device_updates())
                 m_last_dev_update_time = now;
+            }
+
+            if (m_args.delay_between_announces > 0 && now - m_last_announce_time
+                > m_args.delay_between_announces) {
+              if (send_announce())
+                m_last_announce_time = now;
             }
           }
           Delay::wait(1.0);
