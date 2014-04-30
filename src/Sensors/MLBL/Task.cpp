@@ -995,7 +995,7 @@ namespace Sensors
       logCommand(const std::string& cmd)
       {
         // Log sent message.
-        m_cmds.value = cmd;
+        m_cmds.value.assign(sanitize(cmd));
         dispatch(m_cmds);
       }
 
