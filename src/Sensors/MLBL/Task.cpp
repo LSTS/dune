@@ -58,6 +58,10 @@ namespace Sensors
     static const unsigned c_code_sys_restart = 0x01a6;
     //! Restart system ack code.
     static const unsigned c_code_sys_restart_ack = 0x01a7;
+    //! Modem base frequency.
+    static const unsigned c_base_frequency = 22000;
+    //! Channel to frequency.
+    static const unsigned c_chn_frequency = 1000;
 
     enum EntityStates
     {
@@ -387,12 +391,7 @@ namespace Sensors
 
         // Set modem address.
         {
-          NMEAWriter stn("CCCFG");
-          stn << "SRC" << m_addr;
-          std::string cmd = stn.sentence();
-          m_uart->write(cmd.c_str(), cmd.size());
-
-          processInput();
+          configureModem("CCCFG", "SRC", m_addr);
 
           if (!consumeResult(RS_SRC_ACKD))
           {
@@ -403,12 +402,7 @@ namespace Sensors
 
         // Set NRV parameter.
         {
-          NMEAWriter stn("CCCFG");
-          stn << "NRV" << 0;
-          std::string cmd = stn.sentence();
-          m_uart->write(cmd.c_str(), cmd.size());
-
-          processInput();
+          configureModem("CCCFG", "NRV", 0);
 
           if (!consumeResult(RS_NRV_ACKD))
           {
@@ -419,12 +413,7 @@ namespace Sensors
 
         // Set CTO parameter.
         {
-          NMEAWriter stn("CCCFG");
-          stn << "CTO" << c_cto;
-          std::string cmd = stn.sentence();
-          m_uart->write(cmd.c_str(), cmd.size());
-
-          processInput();
+          configureModem("CCCFG", "CTO", c_cto);
 
           if (!consumeResult(RS_CTO_ACKD))
           {
@@ -435,12 +424,7 @@ namespace Sensors
 
         // Set TAT parameter.
         {
-          NMEAWriter stn("CCCFG");
-          stn << "TAT" << m_args.turn_around_time;
-          std::string cmd = stn.sentence();
-          m_uart->write(cmd.c_str(), cmd.size());
-
-          processInput();
+          configureModem("CCCFG", "TAT", m_args.turn_around_time);
 
           if (!consumeResult(RS_TAT_ACKD))
           {
@@ -451,12 +435,7 @@ namespace Sensors
 
         // Set XST parameter.
         {
-          NMEAWriter stn("CCCFG");
-          stn << "XST" << 0;
-          std::string cmd = stn.sentence();
-          m_uart->write(cmd.c_str(), cmd.size());
-
-          processInput();
+          configureModem("CCCFG", "XST", 0);
 
           if (!consumeResult(RS_XST_ACKD))
           {
@@ -519,7 +498,7 @@ namespace Sensors
       unsigned
       channelToFrequency(unsigned channel)
       {
-        return channel * 1000 + 22000;
+        return channel * c_chn_frequency + c_base_frequency;
       }
 
       void
@@ -608,9 +587,7 @@ namespace Sensors
           war(DTR("start plan detected"));
 
           std::string cmd = String::str("$CCMUC,%u,%u,%04x\r\n", m_addr, src, c_code_plan_ack);
-          processInput(m_args.mpk_delay_bef);
-          m_uart->write(cmd.c_str(), cmd.size());
-          processInput(c_mpk_duration + m_args.mpk_delay_aft);
+          sendDelayedCommand(cmd, m_args.mpk_delay_bef, m_args.mpk_delay_aft);
 
           if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
             inf(DTR("plan acknowledged"));
@@ -632,9 +609,7 @@ namespace Sensors
           war(DTR("received system restart request"));
 
           std::string cmd = String::str("$CCMUC,%u,%u,%04x\r\n", m_addr, src, c_code_sys_restart_ack);
-          processInput(m_args.mpk_delay_bef);
-          m_uart->write(cmd.c_str(), cmd.size());
-          processInput(c_mpk_duration + m_args.mpk_delay_aft);
+          sendDelayedCommand(cmd, m_args.mpk_delay_bef, m_args.mpk_delay_aft);
 
           if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
             inf(DTR("restart request acknowledged"));
@@ -651,18 +626,12 @@ namespace Sensors
           dispatch(m_abort);
 
           std::string cmd = String::str("$CCMUC,%u,%u,%04x\r\n", m_addr, src, c_code_abort_ack);
-          processInput(m_args.mpk_delay_bef);
-          m_uart->write(cmd.c_str(), cmd.size());
-          processInput(c_mpk_duration + m_args.mpk_delay_aft);
+          sendDelayedCommand(cmd, m_args.mpk_delay_bef, m_args.mpk_delay_aft);
 
           if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
-          {
             inf(DTR("abort acknowledged"));
-          }
           else
-          {
             inf(DTR("failed to acknowledge abort"));
-          }
         }
       }
 
@@ -769,17 +738,13 @@ namespace Sensors
                                       m_args.rx_length, m_args.ping_tout,
                                       freqs[0], freqs[1], freqs[2], freqs[3]);
 
-        m_uart->writeString(cmd.c_str());
+        sendCommand(cmd);
 
         processInput(m_args.ping_period);
         if (consumeResult(RS_PNG_ACKD) && consumeResult(RS_PNG_TIME))
-        {
           m_state = STA_ACTIVE;
-        }
         else
-        {
           war(DTR("failed to ping beacons, modem seems busy"));
-        }
       }
 
       void
@@ -822,17 +787,12 @@ namespace Sensors
         std::string hex = String::toHex(msg);
         std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n",
                                       m_addr, 0, hex.c_str());
-        m_uart->writeString(cmd.c_str());
+        sendCommand(cmd);
 
-        std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n",
-                                      m_addr, 0);
-        m_uart->writeString(cyc.c_str());
+        std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n", m_addr, 0);
+        sendCommand(cyc);
 
-        int i = 0;
-
-        debug("transmitting full report");
-
-        for (i = 0; i < 7; ++i)
+        for (int i = 0; i < 7; ++i)
         {
           consumeMessages();
           Delay::wait(1.0);
@@ -844,34 +804,34 @@ namespace Sensors
       {
         if (msg->op == IMC::LblConfig::OP_SET_CFG)
         {
-            m_beacons.clear();
-            IMC::MessageList<IMC::LblBeacon>::const_iterator itr = msg->beacons.begin();
-            for (unsigned i = 0; itr != msg->beacons.end(); ++itr, ++i)
-            {
-              if (*itr == NULL)
-                continue;
+          m_beacons.clear();
+          IMC::MessageList<IMC::LblBeacon>::const_iterator itr = msg->beacons.begin();
+          for (unsigned i = 0; itr != msg->beacons.end(); ++itr, ++i)
+          {
+            if (*itr == NULL)
+              continue;
 
-              Beacon beacon;
-              beacon.id = i;
-              beacon.name = (*itr)->beacon;
-              beacon.rx_channel = (*itr)->query_channel;
-              beacon.rx_frequency = channelToFrequency((*itr)->query_channel);
-              beacon.tx_channel = (*itr)->reply_channel;
-              beacon.tx_frequency = channelToFrequency((*itr)->reply_channel);
-              beacon.ping_cmd = String::str("$CCPNT,%u,%u,%u,%u,%u,0,0,0,1\r\n",
-                                            beacon.rx_frequency, m_args.tx_length,
-                                            m_args.rx_length, m_args.ping_tout,
-                                            beacon.tx_frequency);
-              beacon.lat = (*itr)->lat;
-              beacon.lon = (*itr)->lon;
-              beacon.depth = (*itr)->depth;
-              beacon.delay = (*itr)->transponder_delay;
+            Beacon beacon;
+            beacon.id = i;
+            beacon.name = (*itr)->beacon;
+            beacon.rx_channel = (*itr)->query_channel;
+            beacon.rx_frequency = channelToFrequency((*itr)->query_channel);
+            beacon.tx_channel = (*itr)->reply_channel;
+            beacon.tx_frequency = channelToFrequency((*itr)->reply_channel);
+            beacon.ping_cmd = String::str("$CCPNT,%u,%u,%u,%u,%u,0,0,0,1\r\n",
+                                          beacon.rx_frequency, m_args.tx_length,
+                                          m_args.rx_length, m_args.ping_tout,
+                                          beacon.tx_frequency);
+            beacon.lat = (*itr)->lat;
+            beacon.lon = (*itr)->lon;
+            beacon.depth = (*itr)->depth;
+            beacon.delay = (*itr)->transponder_delay;
 
-              m_beacons.push_back(beacon);
-            }
+            m_beacons.push_back(beacon);
+          }
 
-            if (m_state != STA_ERR_COM && m_state != STA_ERR_SRC && m_state != STA_ERR_STP)
-              m_state = isActive() ? STA_ACTIVE : STA_IDLE;
+          if (m_state != STA_ERR_COM && m_state != STA_ERR_SRC && m_state != STA_ERR_STP)
+            m_state = isActive() ? STA_ACTIVE : STA_IDLE;
         }
 
         if (msg->op == IMC::LblConfig::OP_GET_CFG)
@@ -976,9 +936,7 @@ namespace Sensors
             stn << m_addr << 15 << code_str;
             std::string cmd = stn.sentence();
 
-            processInput(m_args.mpk_delay_bef);
-            m_uart->write(cmd.c_str(), cmd.size());
-            processInput(c_mpk_duration + m_args.mpk_delay_aft);
+            sendDelayedCommand(cmd, m_args.mpk_delay_bef, m_args.mpk_delay_aft);
 
             if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
               debug("reported range to %s = %u m", m_beacons[i].name.c_str(), m_beacons[i].range);
@@ -989,6 +947,56 @@ namespace Sensors
 
         if (!first)
           processInput(m_args.report_delay_aft);
+      }
+
+      //! Configure a modem parameter.
+      //! @param[in] code NMEA code of the message to be transmitted.
+      //! @param[in] parameter modem parameter to be configured.
+      //! @param[in] value new configuration value.
+      void
+      configureModem(const std::string& code, const std::string& parameter, const unsigned value)
+      {
+        // Create NMEA message.
+        NMEAWriter stn(code);
+        stn << parameter << value;
+        std::string cmd = stn.sentence();
+
+        // Send to Modem.
+        sendCommand(cmd);
+
+        // Process Input.
+        processInput();
+      }
+
+      //! Send a command to the modem processing input before and after.
+      //! @param[in] cmd NMEA message to be transmitted.
+      //! @param[in] delay_bef time to process input from modem before.
+      //! @param[in] delay_aft time to process input from modem after.
+      void
+      sendDelayedCommand(const std::string& cmd, double delay_bef, double delay_aft)
+      {
+        processInput(delay_bef);
+        sendCommand(cmd);
+        processInput(c_mpk_duration + delay_aft);
+      }
+
+      //! Send command to modem and log it.
+      //! @param[in] cmd NMEA message to be transmitted.
+      void
+      sendCommand(const std::string& cmd)
+      {
+        m_uart->writeString(cmd.c_str());
+        logCommand(cmd);
+      }
+
+      //! Log NMEA message.
+      //! @param[in] cmd NMEA message to be logged.
+      void
+      logCommand(const std::string& cmd)
+      {
+        // Log sent message.
+        m_cmds.value = cmd;
+        dispatch(m_cmds);
       }
 
       void
