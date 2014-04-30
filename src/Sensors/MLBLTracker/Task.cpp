@@ -279,24 +279,15 @@ namespace Sensors
         m_uart->flush();
 
         {
-          NMEAWriter stn("CCCFG");
-          stn << "SRC" << m_address;
-          std::string cmd = stn.sentence();
-          sendCommand(cmd);
+          configureModem("CCCFG", "SRC", m_address);
         }
 
         {
-          NMEAWriter stn("CCCFG");
-          stn << "XST" << 0;
-          std::string cmd = stn.sentence();
-          sendCommand(cmd);
+          configureModem("CCCFG", "XST", 0);
         }
 
         {
-          NMEAWriter stn("CCCFG");
-          stn << "CTO" << 10;
-          std::string cmd = stn.sentence();
-          sendCommand(cmd);
+          configureModem("CCCFG", "CTO", 10);
         }
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -806,6 +797,22 @@ namespace Sensors
           dispatch(m_acop_out);
           resetOp();
         }
+      }
+
+      //! Configure a modem parameter.
+      //! @param[in] code NMEA code of the message to be transmitted.
+      //! @param[in] parameter modem parameter to be configured.
+      //! @param[in] value new configuration value.
+      void
+      configureModem(const std::string& code, const std::string& parameter, const unsigned value)
+      {
+        // Create NMEA message.
+        NMEAWriter stn(code);
+        stn << parameter << value;
+        std::string cmd = stn.sentence();
+
+        // Send to Modem.
+        sendCommand(cmd);
       }
 
       void
