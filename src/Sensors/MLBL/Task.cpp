@@ -1027,13 +1027,13 @@ namespace Sensors
             continue;
           }
 
-          if (Clock::get() >= (m_last_input + c_input_tout))
-            m_state = STA_ERR_COM;
-
           if (isActive() && !m_stop_comms)
             ping();
           else
             processInput();
+
+          if (Clock::get() >= (m_last_input + c_input_tout))
+            m_state = STA_ERR_COM;
         }
       }
     };
