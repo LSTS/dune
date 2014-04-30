@@ -49,8 +49,6 @@ namespace Maneuver
         std::string default_speed_units;
         //! Default z of the maneuver
         float default_z;
-        //! Default referential of z units (HEIGHT/ALTITUDE/DEPTH/NONE)
-        std::string default_z_units;
       };
 
       struct Task : public DUNE::Maneuvers::Maneuver
@@ -106,14 +104,9 @@ namespace Maneuver
           .description("Units to use for default speed (one of 'm/s', 'rpm' or '%').");
 
           param("Default Z", m_args.default_z)
-          .defaultValue("0")
+          .defaultValue("200")
           .units(Units::Meter)
           .description("Default z when no vertical reference is given.");
-
-          param("Default Z Units", m_args.default_z_units)
-          .defaultValue("DEPTH")
-          .units(Units::Meter)
-          .description("Units to use for default z reference ('DEPTH', 'ALTITUDE' or 'HEIGHT')");
 
           m_last_ref_time = 0;
 
@@ -133,10 +126,10 @@ namespace Maneuver
           m_cur_ref.flags = Reference::FLAG_LOCATION;
           m_cur_ref.lat = m_estate.lat;
           m_cur_ref.lon = m_estate.lon;
-          IMC::DesiredZ firstZ;
-          firstZ.z_units = parseZUnitsStr(m_args.default_z_units);
-          firstZ.value = m_args.default_z;
-          m_cur_ref.z.set(firstZ);
+          /*IMC::DesiredZ firstZ;
+          firstZ.z_units = IMC::Z_HEIGHT;
+          firstZ.value = initializeEndZ();
+          m_cur_ref.z.set(firstZ);*/
           m_cur_ref.radius = m_args.loitering_radius;
           WGS84::displace(m_estate.x, m_estate.y, &(m_cur_ref.lat), &(m_cur_ref.lon));
           inf(DTR("lat lon = 0 ? %f"), m_cur_ref.lat);
@@ -370,10 +363,23 @@ namespace Maneuver
             desired_path.end_z = m_cur_ref.z->value;
             desired_path.end_z_units = m_cur_ref.z->z_units;
           }
-          else
+          else{
+            desired_path.end_z = initializeEndZ();
+            desired_path.end_z_units = IMC::Z_HEIGHT;
+          }
+        }
+
+  int initializeEndZ(){
+          int currentHeight = m_estate.height - m_estate.z;
+          if(currentHeight > 90 && currentHeight < 500)
           {
-            desired_path.end_z = m_args.default_z;
-            desired_path.end_z_units = parseZUnitsStr(m_args.default_z_units);
+            //err("Setting according to estimated state --> %3.0f, %3.0f", m_estate.height, m_estate.z);
+            return currentHeight;
+          }
+          else{
+            err("Setting according to default value --> %3.0f - estimated state %3.0f, %3.0f", m_args.default_z, m_estate.height, m_estate.z);
+            return m_args.default_z;
+
           }
         }
 
@@ -447,7 +453,7 @@ namespace Maneuver
           if (m_spec.timeout != 0)
             delta = Clock::get() - m_last_ref_time;
 
-          if (delta > m_spec.timeout) {
+          if (delta > m_spec.timeout  && isActive()) {
             m_fref_state.state = IMC::FollowRefState::FR_TIMEOUT;
             signalError("reference source timed out");
             dispatch(m_fref_state);
