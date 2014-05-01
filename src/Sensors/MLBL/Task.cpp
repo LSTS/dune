@@ -197,10 +197,8 @@ namespace Sensors
       SerialPort* m_uart;
       // Range.
       IMC::LblRange m_range;
-      // Range.
+      // Detection.
       IMC::LblDetection m_detect;
-      // Abort message.
-      IMC::Abort m_abort;
       // Entity states.
       IMC::EntityState m_states[STA_MAX];
       // Commands to/from modem.
@@ -622,8 +620,10 @@ namespace Sensors
         else if (value == c_code_abort)
         {
           war(DTR("acoustic abort detected"));
-          m_abort.setDestination(getSystemId());
-          dispatch(m_abort);
+
+          IMC::Abort abort;
+          abort.setDestination(getSystemId());
+          dispatch(abort);
 
           std::string cmd = String::str("$CCMUC,%u,%u,%04x\r\n", m_addr, src, c_code_abort_ack);
           sendDelayedCommand(cmd, m_args.mpk_delay_bef, m_args.mpk_delay_aft);
