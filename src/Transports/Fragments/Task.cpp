@@ -41,7 +41,7 @@ namespace Transports
       float max_age_secs;
     };
 
-    struct Task : public DUNE::Tasks::Task
+    struct Task: public DUNE::Tasks::Task
     {
       std::map<uint32_t, FragmentedMessage> m_incoming;
       Time::Counter<float> m_gc_counter;
@@ -92,19 +92,23 @@ namespace Transports
       messageRipper(void)
       {
         debug("ripping old messages");
-        std::map<uint32_t, FragmentedMessage>::iterator it;
 
-        for (it = m_incoming.begin(); it != m_incoming.end(); it++)
+        std::map<uint32_t, FragmentedMessage>::iterator it = m_incoming.begin();
+        std::vector<uint32_t> remove;
+        for ( ; it != m_incoming.end(); ++it)
         {
-          FragmentedMessage msg = (*it).second;
-          if (msg.getAge() > m_args.max_age_secs)
+          if (it->second.getAge() > m_args.max_age_secs)
           {
+            remove.push_back(it->first);
+
             // message has died of natural causes...
             war("Removed incoming message from memory (%d fragments were still missing).",
-                msg.getFragmentsMissing());
-            m_incoming.erase(it);
+                it->second.getFragmentsMissing());
           }
         }
+
+        for (size_t i = 0; i < remove.size(); ++i)
+          m_incoming.erase(remove[i]);
       }
 
       void
