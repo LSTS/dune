@@ -125,7 +125,6 @@ namespace Sensors
       {
         // Remove carriage return.
         nmea_msg.erase(std::remove(nmea_msg.begin(), nmea_msg.end(), '\r'), nmea_msg.end());
-        spew("%s", nmea_msg.c_str());
 
         // Log NMEA msg.
         IMC::DevDataText text;
@@ -188,7 +187,6 @@ namespace Sensors
           rsi.heading = Angles::radians(msg.cog);
           dispatch(rsi);
 
-          spew("%s, %s", rsi.id.c_str(), rsi.sensor_class.c_str());
           return;
         }
       }
