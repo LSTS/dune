@@ -57,7 +57,10 @@ namespace Transports
       double m_last_dev_update_time;
       double m_last_announce_time;
       bool m_update_pool_empty;
+      bool m_announce_pool_empty;
       int m_dev_update_req_id;
+      int m_announce_req_id;
+
       IMC::FuelLevel m_fuel_state;
       IMC::PlanControlState m_plan_state;
       IMC::VehicleState m_vehicle_state;
@@ -69,7 +72,9 @@ namespace Transports
         m_last_dev_update_time(Clock::get()),
         m_last_announce_time(Clock::get()),
         m_update_pool_empty(true),
+        m_announce_pool_empty(true),
         m_dev_update_req_id(10),
+        m_announce_req_id(75),
         m_rnd(NULL)
       {
         param("Device updates - Periodicity",
@@ -79,7 +84,7 @@ namespace Transports
 
         param("Announce Periodicity",
             m_args.delay_between_announces).units(Units::Second).defaultValue(
-                "600").description(
+                "0").description(
                     "Delay between announce messages being sent. 0 for no updates being sent.");
 
         param("Maximum age",
@@ -267,13 +272,32 @@ namespace Transports
       void
       consume(const IMC::IridiumTxStatus* msg)
       {
-        if (msg->req_id == m_dev_update_req_id)
-          m_update_pool_empty = msg->status == IridiumTxStatus::TXSTATUS_OK
-          || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
+    	if (msg->req_id == m_dev_update_req_id) {
+    	  m_update_pool_empty = msg->status == IridiumTxStatus::TXSTATUS_OK
+    	  || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
+    	  if (msg->status == IridiumTxStatus::TXSTATUS_OK)
+    	    m_last_dev_update_time = Clock::get();
+    	}
+
+    	if (msg->req_id == m_announce_req_id) {
+          m_announce_pool_empty = msg->status == IridiumTxStatus::TXSTATUS_OK
+        	|| msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
+    	  if (msg->status == IridiumTxStatus::TXSTATUS_OK)
+    		m_last_announce_time = Clock::get();
+    	}
+
       }
 
       bool
       send_announce() {
+
+    	  if (!m_announce_pool_empty)
+    	  {
+    		  debug("won't send announce message because pool is not empty");
+    		  return false;
+    	  }
+
+    	  debug("queuing announce");
 
     	  if (m_last_announces.find(getSystemName()) != m_last_announces.end()) {
     		  Announce ann = m_last_announces[getSystemName()];
@@ -297,7 +321,8 @@ namespace Transports
     		  DUNE::IMC::IridiumMsgTx * m = new DUNE::IMC::IridiumMsgTx();
     		  m->data.assign(buffer, buffer + len);
     		  m->req_id = m_rnd->random() % 65535;
-    		  m->ttl = m_args.delay_between_device_updates;
+    		  m_announce_req_id = m->req_id;
+    		  m->ttl = 60;
     		  m->setTimeStamp();
     		  dispatch(m);
     		  return true;
@@ -315,7 +340,7 @@ namespace Transports
           return false;
         }
 
-        debug("sending device updates");
+        debug("queuing device updates");
         DUNE::IMC::DeviceUpdate msg;
         uint8_t buffer[65535];
         std::map<std::string, IMC::Announce>::iterator it;
@@ -341,7 +366,7 @@ namespace Transports
         int len = msg.serialize(buffer);
         m->data.assign(buffer, buffer + len);
         m->req_id = m_rnd->random() % 65535;
-        m->ttl = m_args.delay_between_device_updates;
+        m->ttl = 60;
         m->setTimeStamp();
         m_dev_update_req_id = m->req_id;
         dispatch(m);
@@ -358,26 +383,25 @@ namespace Transports
       {
         while (!stopping())
         {
-          consumeMessages();
+        	consumeMessages();
 
-          if (m_args.delay_between_device_updates > 0)
-          {
-            double now = Clock::get();
-            if (m_args.delay_between_device_updates > 0 && (now - m_last_dev_update_time)
-                > m_args.delay_between_device_updates)
-            {
-              if (send_device_updates())
-                m_last_dev_update_time = now;
-            }
+        	double now = Clock::get();
+        	if (m_args.delay_between_device_updates > 0 && (now - m_last_dev_update_time)
+        			> m_args.delay_between_device_updates)
+        	{
+        	  send_device_updates();
+        	}
 
-            if (m_args.delay_between_announces > 0 && now - m_last_announce_time
-                > m_args.delay_between_announces) {
-              if (send_announce())
-                m_last_announce_time = now;
-            }
-          }
-          Delay::wait(1.0);
+        	if (m_args.delay_between_announces > 0 && now - m_last_announce_time
+        			> m_args.delay_between_announces) {
+        	  send_announce();
+        	}
+
+        	debug("last device updates sent %.2f seconds ago.", now - m_last_dev_update_time);
+        	debug("last announce sent %.2f seconds ago.", now - m_last_announce_time);
         }
+        Delay::wait(3.0);
+
       }
     };
   }
