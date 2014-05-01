@@ -97,7 +97,6 @@ namespace Transports
         bind<IMC::IridiumTxStatus>(this);
         bind<IMC::PlanControlState>(this);
         bind<IMC::FuelLevel>(this);
-
       }
 
       void
@@ -206,7 +205,6 @@ namespace Transports
           return;
         }
 
-
         switch (m->msg_id)
         {
           case (ID_ACTIVATESUB):
@@ -272,63 +270,73 @@ namespace Transports
       void
       consume(const IMC::IridiumTxStatus* msg)
       {
-    	if (msg->req_id == m_dev_update_req_id) {
-    	  m_update_pool_empty = msg->status == IridiumTxStatus::TXSTATUS_OK
-    	  || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
-    	  if (msg->status == IridiumTxStatus::TXSTATUS_OK)
-    	    m_last_dev_update_time = Clock::get();
-    	}
+        if (msg->req_id == m_dev_update_req_id) {
+          if (msg->status == IridiumTxStatus::TXSTATUS_OK)
+          {
+            debug("Device Updates just got sent.");
+            m_last_dev_update_time = Clock::get();
+          }
 
-    	if (msg->req_id == m_announce_req_id) {
-          m_announce_pool_empty = msg->status == IridiumTxStatus::TXSTATUS_OK
-        	|| msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
-    	  if (msg->status == IridiumTxStatus::TXSTATUS_OK)
-    		m_last_announce_time = Clock::get();
-    	}
+          m_update_pool_empty =
+              msg->status == IridiumTxStatus::TXSTATUS_OK
+              || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
+        }
 
+        if (msg->req_id == m_announce_req_id) {
+          if (msg->status == IridiumTxStatus::TXSTATUS_OK)
+          {
+            debug("Announce just got sent.");
+            m_last_announce_time = Clock::get();
+          }
+
+          m_announce_pool_empty =
+              msg->status == IridiumTxStatus::TXSTATUS_OK
+              || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
+        }
       }
 
       bool
       send_announce() {
 
-    	  if (!m_announce_pool_empty)
-    	  {
-    		  debug("won't send announce message because pool is not empty");
-    		  return false;
-    	  }
+        if (!m_announce_pool_empty)
+        {
+          debug("won't send announce message because pool is not empty");
+          return false;
+        }
 
-    	  debug("queuing announce");
+        debug("queuing announce");
 
-    	  if (m_last_announces.find(getSystemName()) != m_last_announces.end()) {
-    		  Announce ann = m_last_announces[getSystemName()];
+        if (m_last_announces.find(getSystemName()) != m_last_announces.end()) {
+          Announce ann = m_last_announces[getSystemName()];
 
-    		  std::stringstream ss;
-    		  if (m_plan_state.state == IMC::PlanControlState::PCS_EXECUTING)
-    		    ss << "P:" << m_plan_state.plan_id << " ";
-    		  else
-    		    ss << "P:n/a ";
-    		  ss << "F:" << (int)m_fuel_state.value << "% ";
-    		  if (m_vehicle_state.error_count > 0)
-    		    ss << "E:" << m_vehicle_state.last_error;
+          std::stringstream ss;
+          if (m_plan_state.state == IMC::PlanControlState::PCS_EXECUTING)
+            ss << "P:" << m_plan_state.plan_id << " ";
+          else
+            ss << "P:n/a ";
+          ss << "F:" << (int)m_fuel_state.value << "% ";
+          if (m_vehicle_state.error_count > 0)
+            ss << "E:" << m_vehicle_state.last_error;
 
-    		  ann.services = ss.str();
-    		  DUNE::IMC::ImcIridiumMessage * irMsg = new DUNE::IMC::ImcIridiumMessage(&ann);
-    		  irMsg->source = getSystemId();
-    		  irMsg->destination = 65535;
-    		  uint8_t buffer[65535];
-    		  int len = irMsg->serialize(buffer);
+          ann.services = ss.str();
+          DUNE::IMC::ImcIridiumMessage * irMsg = new DUNE::IMC::ImcIridiumMessage(&ann);
+          irMsg->source = getSystemId();
+          irMsg->destination = 65535;
+          uint8_t buffer[65535];
+          int len = irMsg->serialize(buffer);
 
-    		  DUNE::IMC::IridiumMsgTx * m = new DUNE::IMC::IridiumMsgTx();
-    		  m->data.assign(buffer, buffer + len);
-    		  m->req_id = m_rnd->random() % 65535;
-    		  m_announce_req_id = m->req_id;
-    		  m->ttl = 60;
-    		  m->setTimeStamp();
-    		  dispatch(m);
-    		  return true;
-    	  }
-    	  else
-    		  return false;
+          DUNE::IMC::IridiumMsgTx * m = new DUNE::IMC::IridiumMsgTx();
+          m->data.assign(buffer, buffer + len);
+          m->req_id = m_rnd->random() % 65535;
+          m_announce_req_id = m->req_id;
+          m->ttl = 60;
+          m->setTimeStamp();
+          dispatch(m);
+          m_announce_pool_empty = false;
+          return true;
+        }
+        else
+          return false;
       }
 
       bool
@@ -383,25 +391,24 @@ namespace Transports
       {
         while (!stopping())
         {
-        	consumeMessages();
+          consumeMessages();
+          double now = Clock::get();
+          if (m_args.delay_between_device_updates > 0 && (now - m_last_dev_update_time)
+              > m_args.delay_between_device_updates)
+            send_device_updates();
+          else
+            debug("Will send device updates in %f seconds.", (now - m_last_dev_update_time)
+                  - m_args.delay_between_device_updates);
 
-        	double now = Clock::get();
-        	if (m_args.delay_between_device_updates > 0 && (now - m_last_dev_update_time)
-        			> m_args.delay_between_device_updates)
-        	{
-        	  send_device_updates();
-        	}
+          if (m_args.delay_between_announces > 0 && now - m_last_announce_time
+              > m_args.delay_between_announces)
+            send_announce();
+          else
+            debug("Will send announce in %f seconds.", (now - m_last_announce_time)
+                  - m_args.delay_between_announces);
 
-        	if (m_args.delay_between_announces > 0 && now - m_last_announce_time
-        			> m_args.delay_between_announces) {
-        	  send_announce();
-        	}
-
-        	debug("last device updates sent %.2f seconds ago.", now - m_last_dev_update_time);
-        	debug("last announce sent %.2f seconds ago.", now - m_last_announce_time);
+          Delay::wait(3.0);
         }
-        Delay::wait(3.0);
-
       }
     };
   }
