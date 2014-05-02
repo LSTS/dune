@@ -59,6 +59,16 @@ namespace DUNE
         ~Parser(void)
         { }
 
+        //! Check if internal finite state machine is waiting for the
+        //! synchronization byte.
+        //! @return true if state machine is waiting for the
+        //! synchronization byte, false otherwise.
+        bool
+        stateIsSync(void)
+        {
+          return m_state == STA_SYNC;
+        }
+
         bool
         parse(uint8_t byte, Frame& frame)
         {
