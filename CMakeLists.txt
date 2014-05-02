@@ -387,6 +387,7 @@ include(CPack)
 
 include(programs/video-client/Program.cmake)
 include(programs/gsmux/Program.cmake)
+include(programs/lcb/Program.cmake)
 
 ##########################################################################
 #                                 Tests                                  #
