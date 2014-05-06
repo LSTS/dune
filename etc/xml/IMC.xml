@@ -10,7 +10,7 @@
           xsi:noNamespaceSchemaLocation="IMC.xsd"
           name="IMC"
           long-name="Inter Module Communication"
-          version="5.4.x">
+          version="5.4.0-rc1">
 
   <description>
     This document describes the communications protocol associated
@@ -815,13 +815,13 @@
     <field name="Minimum speed" abbrev="speed_min" type="fp32_t" unit="m/s" min="0">
       <description>
         Minimum operation speed.
-	For aircraft this is equal or larger then the stall speed.
+        For aircraft this is equal or larger then the stall speed.
       </description>
     </field>
     <field name="Maximum speed" abbrev="speed_max" type="fp32_t" unit="m/s" min="0">
       <description>
         Maximum operation speed.
-	For aircraft this is limited by the engine power or structural contrains.
+        For aircraft this is limited by the engine power or structural contrains.
       </description>
     </field>
     <field name="Longitudinal maximum acceleration" abbrev="long_accel" type="fp32_t" unit="m/s/s" min="0">
@@ -905,7 +905,7 @@
   </message>
 
   <message id="20" name="Message List" abbrev="MsgList" >
-  	<field name="Messages" abbrev="msgs" type="message-list"/>
+        <field name="Messages" abbrev="msgs" type="message-list"/>
   </message>
 
   <!-- Simulation -->
@@ -1589,8 +1589,8 @@
     </field>
     <field name="Communication Links Assertion" abbrev="links" type="uint32_t">
       <description>
-	Communication link assertion for each group member.
-	One bit to assert each system communication link state.
+        Communication link assertion for each group member.
+        One bit to assert each system communication link state.
       </description>
     </field>
   </message>
@@ -1606,7 +1606,7 @@
     </field>
     <field name="Group List Action" abbrev="Action" type="uint8_t" unit="Enumerated" prefix="OP">
       <description>
-	Actions on the group list.
+        Actions on the group list.
       </description>
       <value id="0" name="Disband" abbrev="Dis"/>
       <value id="1" name="Set" abbrev="Set"/>
@@ -3731,7 +3731,7 @@
     </description>
     <field name="LBL Beacon Configuration" abbrev="beacon" type="message" message-type="LblBeacon">
       <description>
-	LBL Beacon configuration estimate.
+        LBL Beacon configuration estimate.
       </description>
     </field>
     <field name="North position" abbrev="x" type="fp32_t" unit="m">
@@ -3758,7 +3758,7 @@
     </field>
     <field name="Distance" abbrev="distance" type="fp32_t" unit="m">
       <description>
-	Distance between current LBL Beacon position and filter estimation.
+        Distance between current LBL Beacon position and filter estimation.
       </description>
     </field>
   </message>
@@ -5588,7 +5588,7 @@
     <field name="Formation Plan ID" abbrev="plan_id" type="plaintext">
       <description>
         The flight plan's identifier.
-	Flight plan defined to be tracked by the formation leader.
+        Flight plan defined to be tracked by the formation leader.
       </description>
     </field>
     <field name="Plan Description" abbrev="description" type="plaintext">
@@ -6047,23 +6047,23 @@
     </description>
     <field name="Position Mismatch" abbrev="PosSimErr" type="fp32_t" unit="m">
       <description>
-	Mismatch between the real and the simulated aircraft position.
+        Mismatch between the real and the simulated aircraft position.
       </description>
     </field>
     <field name="Convergence" abbrev="Converg" type="fp32_t" unit="m">
       <description>
-	Convergence evalution variable.
-	Value indicates the position error to which the system is converging, tacking into account the aircraft current position error and velocity.
+        Convergence evalution variable.
+        Value indicates the position error to which the system is converging, tacking into account the aircraft current position error and velocity.
       </description>
     </field>
     <field name="Stream Turbulence" abbrev="Turbulence" type="fp32_t" unit="m/s/s">
       <description>
-	Evaluation of the stream turbulence level, through the stream acceleration.
+        Evaluation of the stream turbulence level, through the stream acceleration.
       </description>
     </field>
     <field name="Position Mismatch Monitor" abbrev="PosSimMon" type="uint8_t" unit="Enumerated" prefix="POS">
       <description>
-	Position mismatch monitoring flag.
+        Position mismatch monitoring flag.
       </description>
       <value id="0" name="Ok" abbrev="OK"/>
       <value id="1" name="Warning threshold" abbrev="WRN"/>
@@ -6071,14 +6071,14 @@
     </field>
     <field name="Communications Monitor" abbrev="CommMon" type="uint8_t" unit="Enumerated" prefix="COMMS">
       <description>
-	Communications monitoring flag.
+        Communications monitoring flag.
       </description>
       <value id="0" name="Ok" abbrev="OK"/>
       <value id="1" name="Timeout" abbrev="TIMEOUT"/>
     </field>
     <field name="Convergence" abbrev="ConvergMon" type="uint8_t" unit="Enumerated" prefix="CONV">
       <description>
-	Convergence monitoring flag.
+        Convergence monitoring flag.
       </description>
       <value id="0" name="Ok" abbrev="OK"/>
       <value id="1" name="Timeout" abbrev="TIMEOUT"/>
@@ -7320,7 +7320,7 @@
     </description>
     <field name="Action" abbrev="Action" type="uint8_t" unit="Enumerated" prefix="OP">
       <description>
-	Action on the vehicle formation control parameters.
+        Action on the vehicle formation control parameters.
       </description>
       <value id="0" name="Request" abbrev="REQ"/>
       <value id="1" name="Set" abbrev="SET"/>
@@ -7328,29 +7328,29 @@
     </field>
     <field name="Longitudinal Gain" abbrev="LonGain" type="uint32_t">
       <description>
-	Trajectory gain over the vehicle longitudinal direction.
+        Trajectory gain over the vehicle longitudinal direction.
       </description>
     </field>
     <field name="Lateral Gain" abbrev="LatGain" type="uint32_t">
       <description>
-	Trajectory gain over the vehicle lateral direction.
+        Trajectory gain over the vehicle lateral direction.
       </description>
     </field>
     <field name="Boundary Layer Thickness" abbrev="BondThick" type="uint32_t">
       <description>
-	Control sliding surface boundary layer thickness.
+        Control sliding surface boundary layer thickness.
       </description>
     </field>
     <field name="Leader Gain" abbrev="LeadGain" type="uint32_t">
       <description>
-	Formation shape gain (absolute vehicle position tracking).
-	Leader control importance gain (relative to the sum of every other formation vehicle).
+        Formation shape gain (absolute vehicle position tracking).
+        Leader control importance gain (relative to the sum of every other formation vehicle).
       </description>
     </field>
     <field name="Deconfliction Gain" abbrev="DeconflGain" type="uint32_t">
       <description>
-	Collision avoidance and formation shape gain (position tracking relative to the other formation vehicles).
-	Individual vehicle importance gain (relative to the leader), when the relative position or the velocity state indicate higher probability of collision.
+        Collision avoidance and formation shape gain (position tracking relative to the other formation vehicles).
+        Individual vehicle importance gain (relative to the leader), when the relative position or the velocity state indicate higher probability of collision.
       </description>
     </field>
   </message>
@@ -7361,10 +7361,10 @@
       <field name="Total Number of fragments" abbrev="num_frags" type="uint8_t"/>
       <field name="Fragment Data" abbrev="data" type="rawdata"/>
   </message>
-  
+
   <message id="888" abbrev="NeptusBlob" name="Neptus Blob">
       <field name="ContentType" abbrev="content_type" type="plaintext"/>
-      <field name="Content" abbrev="content" type="rawdata"/>      
+      <field name="Content" abbrev="content" type="rawdata"/>
   </message>
-  
+
 </messages>
