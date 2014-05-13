@@ -189,6 +189,8 @@ namespace Monitors
         if (msg->getSourceEntity() != m_medium_eid)
           return;
 
+        m_water_presence.reset();
+
         if (msg->description == DTR("water"))
           m_water_status.reset();
       }
