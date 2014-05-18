@@ -32,10 +32,6 @@ using DUNE_NAMESPACES;
 #include <iostream>
 
 // Qt headers.
-#include <QtGui/QLabel>
-#include <QtGui/QMenu>
-#include <QtGui/QMenuBar>
-#include <QtGui/QAction>
 #include <QUdpSocket>
 #include <QPixmap>
 #include <QMovie>
