@@ -25,56 +25,34 @@
 # Author: Ricardo Martins                                                  #
 ############################################################################
 
-if(GUI)
-  find_package(Qt4)
-  set(QT_USE_QTXML 1)
-  set(QT_USE_QTUITOOLS 1)
-  set(QT_USE_QTNETWORK 1)
-  include(${QT_USE_FILE})
+if(QT5)
+  find_package(Qt5Core)
+  if(Qt5Core_INCLUDE_DIRS)
+    include_directories(${Qt5Core_INCLUDE_DIRS})
+    add_definitions(${Qt5Core_DEFINITIONS})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Core_EXECUTABLE_COMPILE_FLAGS}")
+    dune_add_lib(Qt5::Core)
+  endif()
 
-  if(QT_LIBRARIES)
-    if(DUNE_OS_WINDOWS AND DUNE_CXX_GNU)
-      get_filename_component(DUNE_QT_PATH ${QT_QTGUI_LIBRARY} PATH)
-      set(DUNE_QT_PATH ${DUNE_QT_PATH}/../bin)
-      install(FILES ${DUNE_QT_PATH}/mingwm10.dll
-        ${DUNE_QT_PATH}/QtCore4.dll
-        ${DUNE_QT_PATH}/QtGui4.dll
-        DESTINATION bin)
+  find_package(Qt5Widgets)
+  if(Qt5Widgets_INCLUDE_DIRS)
+    include_directories(${Qt5Widgets_INCLUDE_DIRS})
+    add_definitions(${Qt5Widgets_DEFINITIONS})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
+    dune_add_lib(Qt5::Widgets)
+  endif()
 
-      set(QT_LIBRARIES ${QT_LIBRARIES} -mwindows)
-    endif(DUNE_OS_WINDOWS AND DUNE_CXX_GNU)
+  find_package(Qt5Network)
+  if(Qt5Network_INCLUDE_DIRS)
+    include_directories(${Qt5Network_INCLUDE_DIRS})
+    add_definitions(${Qt5Network_DEFINITIONS})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Network_EXECUTABLE_COMPILE_FLAGS}")
+    dune_add_lib(Qt5::Network)
+  endif()
 
-    macro(dune_qt4_wrap_ui outfiles)
-      set(${outfiles})
-      QT4_EXTRACT_OPTIONS(ui_files ui_options ${ARGN})
-
-      foreach(it ${ui_files})
-        DUNE_GET_GENERATED_PATH(outpath ${it})
-        get_filename_component(outfile ${it} NAME_WE)
-        get_filename_component(infile ${it} ABSOLUTE)
-
-        set(outfile ${outpath}/ui_${outfile}.hpp)
-        add_custom_command(OUTPUT ${outfile}
-          COMMAND ${QT_UIC_EXECUTABLE}
-          ARGS ${ui_options} -o ${outfile} ${infile}
-          MAIN_DEPENDENCY ${infile})
-        set(${outfiles} ${${outfiles}} ${outfile})
-      endforeach(it)
-    endmacro(dune_qt4_wrap_ui)
-
-    macro(dune_qt4_wrap_cpp outfiles)
-      set(${outfiles})
-      QT4_EXTRACT_OPTIONS(moc_files moc_options ${ARGN})
-
-      foreach(it ${moc_files})
-        DUNE_GET_GENERATED_PATH(outpath ${it})
-        get_filename_component(outfile ${it} NAME_WE)
-        set(outfile ${outpath}/moc_${outfile}.cpp)
-        get_filename_component(it ${it} ABSOLUTE)
-
-        QT4_CREATE_MOC_COMMAND(${it}  ${outfile} "" "${moc_options}")
-        set(${outfiles} ${${outfiles}} ${outfile})
-      endforeach(it)
-    endmacro(dune_qt4_wrap_cpp)
-  endif(QT_LIBRARIES)
-endif(GUI)
+  if(Qt5Core_INCLUDE_DIRS)
+    set(DUNE_USING_QT5 1 CACHE INTERNAL "Qt5 Library")
+  else()
+    set(DUNE_USING_QT5 0 CACHE INTERNAL "Qt5 Library")
+  endif()
+endif()
