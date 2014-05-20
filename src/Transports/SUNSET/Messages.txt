@@ -1,0 +1,28 @@
+UamPacketTx,UPT_RELIABLE,0,30,2,8,AACCFF00,<CHECKSUM>\n
+UamPacketRx,1,2,8,AACCFF00,<CHECKSUM>\n
+UamPacketTxCancel,123,<CHECKSUM>\n
+UamPacketTxStatus,123,<CHECKSUM>\n
+UamQuerySetting,NODE_ID,<CHECKSUM>\n
+UamSetting,NODE_ID,1,<CHECKSUM>\n
+UamSetSetting,NODE_ID,2,<CHECKSUM>\n
+
+GetRangeToX
+
+Abort\n
+
+PlanListQuery\n
+PlanList,2,pointless1,pointless2\n
+PlanAdd,pointless,1,Goto 0.8334 -0.234 2 1.2\n
+PlanGet,pointless\n
+Plan,pointless,1,Goto 0.8334 -0.234 2 1.2\n
+PlanStart,pointless\n
+
+SensorListGet\n
+SensorList,
+SensorSample
+
+PlanStop\n
+PlanDel,pointless\n
+
+Ping\n
+Version\n
