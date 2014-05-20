@@ -215,6 +215,8 @@ namespace Transports
         {
           consumeMessages();
 
+          cleanBusyList();
+
           if (!m_poll.poll(1.0))
             continue;
 
@@ -225,7 +227,6 @@ namespace Transports
               acceptNewClient(*itr, (*itr)->getBoundAddress());
           }
 
-          cleanBusyList();
         }
       }
     };
