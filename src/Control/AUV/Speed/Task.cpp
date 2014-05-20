@@ -58,6 +58,8 @@ namespace Control
         float rpms_eos;
         //! Minimum value admissible for desired RPMs
         int16_t min_rpm;
+        //! Maximum value admissible for desired RPMs for the MPS controller
+        int16_t max_rpm;
         //! Maximum acceleration step to smooth speed ramp in mps control
         int16_t max_accel;
         //! MPS controller feedforward gain
@@ -160,6 +162,11 @@ namespace Control
           .defaultValue("200")
           .units(Units::RPM)
           .description("Minimum value admissible for desired RPMs");
+
+          param("Maximum RPM Limit", m_args.max_rpm)
+          .defaultValue("1800")
+          .units(Units::RPM)
+          .description("Maximum value admissible for desired RPMs for the MPS controller");
 
           param("Maximum RPM Acceleration", m_args.max_accel)
           .defaultValue("70")
@@ -409,7 +416,7 @@ namespace Control
                                           m_previous_rpm + m_args.max_accel * timestep);
 
           // trim rpm value
-          m_desired_rpm = Math::trimValue(m_desired_rpm, m_args.min_rpm, m_args.rpms_eos);
+          m_desired_rpm = Math::trimValue(m_desired_rpm, m_args.min_rpm, m_args.max_rpm);
 
           m_previous_rpm = m_desired_rpm;
         }
