@@ -45,7 +45,8 @@ namespace Transports
     class Session: public DUNE::Concurrency::Thread
     {
     public:
-      Session(const DUNE::FileSystem::Path& root,
+      Session(DUNE::Tasks::Task* task,
+              const DUNE::FileSystem::Path& root,
               DUNE::Network::TCPSocket* sock,
               const DUNE::Network::Address& local_addr,
               double timeout);
@@ -53,6 +54,8 @@ namespace Transports
       ~Session(void);
 
     private:
+      //! Parent task.
+      DUNE::Tasks::Task* m_task;
       //! Control socket.
       DUNE::Network::TCPSocket* m_sock;
       //! Address of the local interface.
