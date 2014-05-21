@@ -209,10 +209,34 @@ namespace Control
         onResourceInitialization(void)
         {
           requestDeactivation();
+
           reset();
 
           m_act.id = 0;
+        }
 
+        void
+        onUpdateParameters(void)
+        {
+          if (paramChanged(m_args.rpm_gains) ||
+              paramChanged(m_args.mps_gains) ||
+              paramChanged(m_args.rpm_ffgain) ||
+              paramChanged(m_args.mps_ffgain) ||
+              paramChanged(m_args.max_int_mps) ||
+              paramChanged(m_args.max_thrust) ||
+              paramChanged(m_args.min_thrust) ||
+              paramChanged(m_args.log_parcels))
+          {
+            reset();
+
+            initializePIDs();
+          }
+        }
+
+        //! Initialize PID related variables
+        void
+        initializePIDs(void)
+        {
           m_rpm_pid.setGains(m_args.rpm_gains);
           m_rpm_pid.setOutputLimits(m_args.min_thrust, m_args.max_thrust);
 
@@ -226,8 +250,6 @@ namespace Control
             m_rpm_pid.enableParcels(this, &m_parcel_rpm);
             m_mps_pid.enableParcels(this, &m_parcel_mps);
           }
-
-          m_last_act.value = 0.0;
         }
 
         void
