@@ -583,7 +583,12 @@ namespace Transports
     void
     Session::run(void)
     {
-      Thread::setPriority(Concurrency::Scheduler::POLICY_RR, 1);
+      try
+      {
+        Thread::setPriority(Concurrency::Scheduler::POLICY_RR, 1);
+      }
+      catch (...)
+      { }
 
       sendReply(220, "DUNE FTP server ready.");
 
