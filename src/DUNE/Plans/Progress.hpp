@@ -145,9 +145,6 @@ namespace DUNE
 
         switch (man->getId())
         {
-#ifdef DUNE_IMC_GOTO
-          case DUNE_IMC_GOTO:
-#endif
 #ifdef DUNE_IMC_STATIONKEEPING
           case DUNE_IMC_STATIONKEEPING:
 #endif
@@ -162,9 +159,15 @@ namespace DUNE
 #endif
 #ifdef DUNE_IMC_POPUP
           case DUNE_IMC_POPUP:
+#endif
+#ifdef DUNE_IMC_COMPASSCALIBRATION
+          case DUNE_IMC_COMPASSCALIBRATION:
+#endif
+#ifdef DUNE_IMC_GOTO
+          case DUNE_IMC_GOTO:
+#endif
             time_left = total_duration - durations[0] + (float)mcs->eta;
             break;
-#endif
 #ifdef DUNE_IMC_FOLLOWPATH
           case DUNE_IMC_FOLLOWPATH:
             time_left = compute(dynamic_cast<const IMC::FollowPath*>(man), mcs,

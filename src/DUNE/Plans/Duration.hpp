@@ -311,6 +311,24 @@ namespace DUNE
       parse(const IMC::PopUp* maneuver, Position& last_pos, float last_dur,
             std::vector<float>& durations, const SpeedConversion& speed_conv);
 #endif
+
+#ifdef DUNE_IMC_COMPASSCALIBRATION
+      //! Parse a Compass Calibration maneuver
+      //! @param[in] maneuver pointer to maneuver message
+      //! @param[in,out] last_pos last position to consider when computing duration
+      //! @param[in] last_dur last computed accumulated plan duration
+      //! @param[out] durations vector of accumulated durations for this maneuver
+      //! @return accumulated plan duration in seconds, -1 if unable to compute
+      static float
+      parse(const IMC::CompassCalibration* maneuver, Position& last_pos, float last_dur,
+            std::vector<float>& durations, const SpeedConversion& speed_conv)
+      {
+        if (!maneuver->duration)
+          return -1.0;
+
+        return parseSimple(maneuver, last_pos, last_dur + maneuver->duration, durations, speed_conv);
+      }
+#endif
     };
   }
 }

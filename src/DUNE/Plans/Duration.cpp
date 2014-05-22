@@ -446,6 +446,12 @@ namespace DUNE
                                   last_duration, durations, speed_conv);
             break;
 #endif
+#ifdef DUNE_IMC_COMPASSCALIBRATION
+          case DUNE_IMC_COMPASSCALIBRATION:
+            last_duration = parse(dynamic_cast<IMC::CompassCalibration*>(msg), pos,
+                                  last_duration, durations, speed_conv);
+            break;
+#endif
           default:
             last_duration = -1.0;
             break;
