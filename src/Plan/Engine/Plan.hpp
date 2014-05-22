@@ -531,7 +531,7 @@ namespace Plan
       void
       computeDurations(const IMC::EstimatedState* state)
       {
-        m_last_dur = Duration::parse(m_seq_nodes, state, m_durations, m_speed_conv);
+        m_last_dur = m_durations.parse(m_seq_nodes, state, m_speed_conv);
       }
 
       //! Get maneuver from id
@@ -651,7 +651,7 @@ namespace Plan
       //! Vector of message pointers to cycle through (sequential) plan
       std::vector<IMC::PlanManeuver*> m_seq_nodes;
       //! Maneuver durations
-      Duration::ManeuverDuration m_durations;
+      Plans::Duration m_durations;
       //! Speed conversion factors for plan duration
       Duration::SpeedConversion m_speed_conv;
       //! Iterator to last maneuver with a valid duration
