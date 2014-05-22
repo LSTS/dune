@@ -38,6 +38,7 @@
 #include <DUNE/Network/TCPSocket.hpp>
 #include <DUNE/Network/Exceptions.hpp>
 #include <DUNE/Time/Utils.hpp>
+#include <DUNE/Concurrency/Scheduler.hpp>
 #include <DUNE/IO/Poll.hpp>
 
 #if defined(DUNE_SYS_HAS_WINSOCK2_H)
@@ -286,6 +287,7 @@ namespace DUNE
         }
 
         remaining -= rv;
+        Concurrency::Scheduler::yield();
       }
 
       close(fd);

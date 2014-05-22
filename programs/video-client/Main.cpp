@@ -25,7 +25,7 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#include <QtGui/QApplication>
+#include <QApplication>
 #include "VideoClient.hpp"
 
 int

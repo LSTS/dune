@@ -58,6 +58,8 @@ namespace Control
         float rpms_eos;
         //! Minimum value admissible for desired RPMs
         int16_t min_rpm;
+        //! Maximum value admissible for desired RPMs for the MPS controller
+        int16_t max_rpm;
         //! Maximum acceleration step to smooth speed ramp in mps control
         int16_t max_accel;
         //! MPS controller feedforward gain
@@ -161,6 +163,11 @@ namespace Control
           .units(Units::RPM)
           .description("Minimum value admissible for desired RPMs");
 
+          param("Maximum RPM Limit", m_args.max_rpm)
+          .defaultValue("1800")
+          .units(Units::RPM)
+          .description("Maximum value admissible for desired RPMs for the MPS controller");
+
           param("Maximum RPM Acceleration", m_args.max_accel)
           .defaultValue("70")
           .units(Units::RPM)
@@ -202,10 +209,34 @@ namespace Control
         onResourceInitialization(void)
         {
           requestDeactivation();
+
           reset();
 
           m_act.id = 0;
+        }
 
+        void
+        onUpdateParameters(void)
+        {
+          if (paramChanged(m_args.rpm_gains) ||
+              paramChanged(m_args.mps_gains) ||
+              paramChanged(m_args.rpm_ffgain) ||
+              paramChanged(m_args.mps_ffgain) ||
+              paramChanged(m_args.max_int_mps) ||
+              paramChanged(m_args.max_thrust) ||
+              paramChanged(m_args.min_thrust) ||
+              paramChanged(m_args.log_parcels))
+          {
+            reset();
+
+            initializePIDs();
+          }
+        }
+
+        //! Initialize PID related variables
+        void
+        initializePIDs(void)
+        {
           m_rpm_pid.setGains(m_args.rpm_gains);
           m_rpm_pid.setOutputLimits(m_args.min_thrust, m_args.max_thrust);
 
@@ -219,8 +250,6 @@ namespace Control
             m_rpm_pid.enableParcels(this, &m_parcel_rpm);
             m_mps_pid.enableParcels(this, &m_parcel_mps);
           }
-
-          m_last_act.value = 0.0;
         }
 
         void
@@ -409,7 +438,7 @@ namespace Control
                                           m_previous_rpm + m_args.max_accel * timestep);
 
           // trim rpm value
-          m_desired_rpm = Math::trimValue(m_desired_rpm, m_args.min_rpm, m_args.rpms_eos);
+          m_desired_rpm = Math::trimValue(m_desired_rpm, m_args.min_rpm, m_args.max_rpm);
 
           m_previous_rpm = m_desired_rpm;
         }

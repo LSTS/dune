@@ -964,7 +964,7 @@ int WMM_ConvertGeoidToEllipsoidHeight (WMMtype_CoordGeodetic *CoordGeodetic, WMM
 
  */
 {
-  double  DeltaHeight;
+  double  DeltaHeight = 0;
   int Error_Code;
 
   if (Geoid->UseGeoid == 1) {      /* Geoid correction required */
@@ -2799,6 +2799,3 @@ void WMM_TMfwd4(double Eps, double Epssq, double K0R4, double K0R4oa,
       *CoM = atan2(SChi * SLam, CLam) + atan2(sig2, sig1);
       }
    }
-
-
-

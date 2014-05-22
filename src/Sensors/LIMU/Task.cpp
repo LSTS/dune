@@ -215,7 +215,7 @@ namespace Sensors
 
         IMC::EntityParameter hip;
         hip.name = c_hard_iron_param;
-        hip.value = String::str("%f, %f, 0.0", hi_x, hi_y);
+        hip.value = String::str("%.4f, %.4f, 0.0", hi_x, hi_y);
 
         IMC::SetEntityParameters np;
         np.name = getEntityLabel();
@@ -272,7 +272,7 @@ namespace Sensors
       void
       setHardIronFactors(const std::vector<double>& factors)
       {
-        spew("setting hard-iron parameters to %f, %f, %f",
+        spew("setting hard-iron parameters to %.4f, %.4f, %.4f",
              factors[0],
              factors[1],
              factors[2]);

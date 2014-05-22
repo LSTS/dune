@@ -29,7 +29,7 @@
 #define VVIEW_VVIEW_HPP_INCLUDED_
 
 // QT headers.
-#include <QtGui/QMainWindow>
+#include <QMainWindow>
 #include <QUdpSocket>
 #include <QPixmap>
 #include <QWidget>
