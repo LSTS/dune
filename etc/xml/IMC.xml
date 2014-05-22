@@ -10,7 +10,7 @@
           xsi:noNamespaceSchemaLocation="IMC.xsd"
           name="IMC"
           long-name="Inter Module Communication"
-          version="5.4.0-rc1">
+          version="5.4.0">
 
   <description>
     This document describes the communications protocol associated
