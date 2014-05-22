@@ -65,31 +65,60 @@ namespace DUNE
         float act_factor;
       };
 
-      //! Parse plan duration from plan specification
-      //! @param[in] nodes vector of plan maneuver nodes
-      //! @param[in] state current estimated state
-      //! @param[out] man_durations map of maneuver ids to point durations
-      //! @param[in] speed_conv speed conversion factors
-      //! @return iterator to last computed maneuver, returns end() if unable to compute
-      static ManeuverDuration::const_iterator
-      parse(const std::vector<IMC::PlanManeuver*>& nodes , const IMC::EstimatedState* state,
-            ManeuverDuration& man_durations, const SpeedConversion& speed_conv);
+      //! Constructor
+      Duration(void)
+      { };
 
       //! Parse plan duration from plan specification
       //! @param[in] nodes vector of plan maneuver nodes
       //! @param[in] state current estimated state
-      //! @param[out] man_durations map of maneuver ids to point durations
+      //! @param[in] speed_conv speed conversion factors
       //! @return iterator to last computed maneuver, returns end() if unable to compute
-      static ManeuverDuration::const_iterator
-      parse(const std::vector<IMC::PlanManeuver*>& nodes , const IMC::EstimatedState* state,
-            ManeuverDuration& man_durations)
+      ManeuverDuration::const_iterator
+      parse(const std::vector<IMC::PlanManeuver*>& nodes, const IMC::EstimatedState* state,
+            const SpeedConversion& speed_conv);
+
+      //! Parse plan duration from plan specification
+      //! @param[in] nodes vector of plan maneuver nodes
+      //! @param[in] state current estimated state
+      //! @return iterator to last computed maneuver, returns end() if unable to compute
+      ManeuverDuration::const_iterator
+      parse(const std::vector<IMC::PlanManeuver*>& nodes, const IMC::EstimatedState* state)
       {
         SpeedConversion speed_conv;
         speed_conv.rpm_factor = 0.0;
         speed_conv.act_factor = 0.0;
 
-        return parse(nodes, state, man_durations, speed_conv);
+        return parse(nodes, state, speed_conv);
       };
+
+      //! Clear the vector
+      inline void
+      clear(void)
+      {
+        m_durations.clear();
+      }
+
+      //! Last position of the vector
+      inline ManeuverDuration::const_iterator
+      end(void) const
+      {
+        return m_durations.end();
+      }
+
+      //! Size of the vector
+      inline size_t
+      size(void) const
+      {
+        return m_durations.size();
+      }
+
+      //! Find function for the vector
+      inline ManeuverDuration::const_iterator
+      find(const std::string& str) const
+      {
+        return m_durations.find(str);
+      }
 
     private:
       //! Struct of bathymetric info for a certain location
@@ -124,27 +153,61 @@ namespace DUNE
         BathymetricInfo binfo;
       };
 
+      //! Accumulated durations
+      struct AccumulatedDurations
+      {
+        AccumulatedDurations(void)
+        { };
+
+        void
+        addDuration(float value)
+        {
+          if (!vec.size())
+          {
+            vec.push_back(value);
+            return;
+          }
+
+          vec.push_back(value + vec.back());
+        }
+
+        float
+        getLastDuration(void)
+        {
+          if (!vec.size())
+            return 0.0;
+
+          return vec.back();
+        }
+
+        std::vector<float> vec;
+      };
+
+      //! Vector of maneuver durations
+      ManeuverDuration m_durations;
+      //! Vector of accumulated durations
+      AccumulatedDurations m_accum_dur;
+
       //! Find 2D distance between two positions
       //! @param[in] new_pos object where the new position info will be stored
       //! @param[in] last_pos last position to consider when computing duration
       //! @return distance computed
-      static inline float
+      inline float
       distance2D(const Position& new_pos, const Position& last_pos);
 
       //! Compute distance and move Position to new one
       //! @param[in] new_pos object where the new position info will be stored
       //! @param[in] last_pos last position to consider when computing duration
       //! @return distance computed
-      static float
+      float
       distance3D(const Position& new_pos, const Position& last_pos);
 
       //! Parse the simplest maneuvers
       //! @param[in] pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
-      //! @param[out] durations vector of accumulated durations for this maneuver
-      //! @return accumulated plan duration in seconds, -1 if unable to compute
+      //! @return duration in seconds, -1 if unable to compute
       template <typename Type>
-      static float
+      float
       parseSimple(const Type* maneuver, Position& last_pos,
                   const SpeedConversion& speed_conv);
 
@@ -153,188 +216,169 @@ namespace DUNE
       //! @param[in] conv speed conversion factors
       //! @return converted speed
       template <typename Type>
-      static float
+      float
       convertSpeed(const Type* maneuver, const SpeedConversion& conv);
 
       //! Compensate travelled distance with path control time factor
       //! @param[in] dist travelled distance to compensate
       //! @return compensated travelled distance
-      static float
+      float
       compensate(float distance, float speed);
 
       //! Compute the offset in z the axis between two waypoints/positions
       //! @param[in] new_pos next position in line
       //! @param[in] last_pos current position
       //! @return offset in the z axis in meters
-      static float
+      float
       computeZOffset(const Position& new_pos, const Position& last_pos);
 
       //! Extract bathymetry information
       //! @param[in] list string with the list of bathymetries
       //! @param[in] pos position struct where bathymetry data will be stored
-      static void
+      void
       extractBathymetry(const std::string& str, Position& pos);
 
       //! Convert maneuver to Position struct
       //! @param[in] maneuver to extract position from
       //! @param[out] pos extracted position information
       template <typename Type>
-      static void
+      void
       extractPosition(const Type* maneuver, Position& pos);
 
       //! Convert Elevator maneuver to Position struct
       //! @param[in] maneuver to extract position from
       //! @param[out] pos extracted position information
-      static void
+      void
       extractPosition(const IMC::Elevator* maneuver, Position& pos);
 
       //! Convert PopUp maneuver to Position struct
       //! @param[in] maneuver to extract position from
       //! @param[out] pos extracted position information
-      static void
+      void
       extractPosition(const IMC::PopUp* maneuver, Position& pos);
 
       //! Convert EstimatedState to Position struct
       //! @param[in] maneuver to extract position from
       //! @param[out] pos extracted position information
-      static void
+      void
       extractPosition(const IMC::EstimatedState* state, Position& pos);
-
-      //! Add duration to durations vector
-      //! @param[in,out] durations vector of accumulated durations
-      //! @param[in] value duration value to be added
-      static void
-      addDuration(std::vector<float>& durations, float value);
-
-      //! Get last duration from durations vector
-      //! @param[in] durations vector of accumulated durations
-      static float
-      getLastDuration(std::vector<float>& durations);
 
       //! Parse a Goto maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @param[out] durations vector of accumulated durations for this maneuver
-      //! @return accumulated plan duration in seconds, -1 if unable to compute
-      static float
+      //! @return true if parse successfully, false otherwise
+      bool
       parse(const IMC::Goto* maneuver, Position& last_pos,
-            std::vector<float>& durations, const SpeedConversion& speed_conv)
+            const SpeedConversion& speed_conv)
       {
         float value = parseSimple(maneuver, last_pos, speed_conv);
         if (value < 0.0)
-          return -1.0;
+          return false;
 
-        addDuration(durations, value);
+        m_accum_dur.addDuration(value);
 
-        return getLastDuration(durations);
+        return true;
       };
 
       //! Parse a StationKeeping maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
-      //! @param[out] durations vector of accumulated durations for this maneuver
-      //! @return accumulated plan duration in seconds, -1 if unable to compute
-      static float
+      //! @return true if parse successfully, false otherwise
+      bool
       parse(const IMC::StationKeeping* maneuver, Position& last_pos,
-            std::vector<float>& durations, const SpeedConversion& speed_conv)
+            const SpeedConversion& speed_conv)
       {
         if (!maneuver->duration)
-          return -1.0;
+          return false;
 
         float value = parseSimple(maneuver, last_pos, speed_conv);
 
         if (value < 0.0)
-          return -1.0;
+          return false;
 
-        addDuration(durations, value + maneuver->duration);
-        return getLastDuration(durations);
+        m_accum_dur.addDuration(value + maneuver->duration);
+        return true;
       };
 
       //! Parse a Loiter maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
-      //! @param[out] durations vector of accumulated durations for this maneuver
-      //! @return accumulated plan duration in seconds, -1 if unable to compute
-      static float
+      //! @return true if parse successfully, false otherwise
+      bool
       parse(const IMC::Loiter* maneuver, Position& last_pos,
-            std::vector<float>& durations, const SpeedConversion& speed_conv)
+            const SpeedConversion& speed_conv)
       {
         if (!maneuver->duration)
-          return -1.0;
+          return false;
 
         float value = parseSimple(maneuver, last_pos, speed_conv);
 
         if (value < 0.0)
-          return -1.0;
+          return false;
 
-        addDuration(durations, value + maneuver->duration);
-        return getLastDuration(durations);
+        m_accum_dur.addDuration(value + maneuver->duration);
+        return true;
       };
 
       //! Parse a FollowPath maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
-      //! @param[out] durations vector of accumulated durations for this maneuver
-      //! @return accumulated plan duration in seconds, -1 if unable to compute
-      static float
+      //! @return true if parse successfully, false otherwise
+      bool
       parse(const IMC::FollowPath* maneuver, Position& last_pos,
-            std::vector<float>& durations, const SpeedConversion& speed_conv);
+            const SpeedConversion& speed_conv);
 
       //! Parse a Rows maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
-      //! @param[out] durations vector of accumulated durations for this maneuver
-      //! @return accumulated plan duration in seconds, -1 if unable to compute
-      static float
+      //! @return true if parse successfully, false otherwise
+      bool
       parse(const IMC::Rows* maneuver, Position& last_pos,
-            std::vector<float>& durations, const SpeedConversion& speed_conv);
+            const SpeedConversion& speed_conv);
 
       //! Parse a YoYo maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
-      //! @param[out] durations vector of accumulated durations for this maneuver
-      //! @return accumulated plan duration in seconds, -1 if unable to compute
-      static float
+      //! @return true if parse successfully, false otherwise
+      bool
       parse(const IMC::YoYo* maneuver, Position& last_pos,
-            std::vector<float>& durations, const SpeedConversion& speed_conv);
+            const SpeedConversion& speed_conv);
 
       //! Parse an Elevator maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
-      //! @param[out] durations vector of accumulated durations for this maneuver
-      //! @return accumulated plan duration in seconds, -1 if unable to compute
-      static float
+      //! @return true if parse successfully, false otherwise
+      bool
       parse(const IMC::Elevator* maneuver, Position& last_pos,
-            std::vector<float>& durations, const SpeedConversion& speed_conv);
+            const SpeedConversion& speed_conv);
 
       //! Parse a PopUp maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
-      //! @param[out] durations vector of accumulated durations for this maneuver
-      //! @return accumulated plan duration in seconds, -1 if unable to compute
-      static float
+      //! @return true if parse successfully, false otherwise
+      bool
       parse(const IMC::PopUp* maneuver, Position& last_pos,
-            std::vector<float>& durations, const SpeedConversion& speed_conv);
+            const SpeedConversion& speed_conv);
 
       //! Parse a Compass Calibration maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
-      //! @param[out] durations vector of accumulated durations for this maneuver
-      //! @return accumulated plan duration in seconds, -1 if unable to compute
-      static float
+      //! @return true if parse successfully, false otherwise
+      bool
       parse(const IMC::CompassCalibration* maneuver, Position& last_pos,
-            std::vector<float>& durations, const SpeedConversion& speed_conv)
+            const SpeedConversion& speed_conv)
       {
         if (!maneuver->duration)
-          return -1.0;
+          return false;
 
         float value = parseSimple(maneuver, last_pos, speed_conv);
 
         if (value < 0.0)
-          return -1.0;
+          return false;
 
-        addDuration(durations, value + maneuver->duration);
-        return getLastDuration(durations);
+        m_accum_dur.addDuration(value + maneuver->duration);
+        return true;
       }
     };
   }

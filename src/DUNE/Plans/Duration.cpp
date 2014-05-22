@@ -164,7 +164,6 @@ namespace DUNE
       extractBathymetry("", pos);
     }
 
-#ifdef DUNE_IMC_ELEVATOR
     void
     Duration::extractPosition(const IMC::Elevator* maneuver, Position& pos)
     {
@@ -187,36 +186,14 @@ namespace DUNE
       extractBathymetry("", pos);
     }
 
-    void
-    Duration::addDuration(std::vector<float>& durations, float value)
-    {
-      if (!durations.size())
-      {
-        durations.push_back(value);
-        return;
-      }
-
-      durations.push_back(value + durations.back());
-    }
-
-    float
-    Duration::getLastDuration(std::vector<float>& durations)
-    {
-      if (!durations.size())
-        return 0.0;
-
-      return durations.back();
-    }
-
-#ifdef DUNE_IMC_FOLLOWPATH
-    float
+    bool
     Duration::parse(const IMC::FollowPath* maneuver, Position& last_pos,
-                    std::vector<float>& durations, const SpeedConversion& speed_conv)
+                    const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
       if (speed == 0.0)
-        return -1.0;
+        return false;
 
       Position pos;
       pos.z = maneuver->z;
@@ -226,7 +203,7 @@ namespace DUNE
 
       if (!maneuver->points.size())
       {
-        addDuration(durations, 0.0);
+        m_accum_dur.addDuration(0.0);
       }
       else
       {
@@ -245,21 +222,21 @@ namespace DUNE
           last_pos = pos;
 
           // compensate with path controller's eta factor
-          addDuration(durations, compensate(travelled, speed) / speed);
+          m_accum_dur.addDuration(compensate(travelled, speed) / speed);
         }
       }
 
-      return getLastDuration(durations);
+      return true;
     }
 
-    float
+    bool
     Duration::parse(const IMC::Rows* maneuver, Position& last_pos,
-                    std::vector<float>& durations, const SpeedConversion& speed_conv)
+                    const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
       if (speed == 0.0)
-        return -1.0;
+        return false;
 
       Maneuvers::RowsStages rstages = Maneuvers::RowsStages(maneuver, NULL);
 
@@ -270,7 +247,7 @@ namespace DUNE
       rstages.getFirstPoint(&pos.lat, &pos.lon);
 
       float distance = distance3D(pos, last_pos);
-      addDuration(durations, distance / speed);
+      m_accum_dur.addDuration(distance / speed);
 
       last_pos = pos;
 
@@ -282,20 +259,20 @@ namespace DUNE
       {
         // compensate with path controller's eta factor
         float travelled = compensate(*itr, speed);
-        addDuration(durations, travelled / speed);
+        m_accum_dur.addDuration(travelled / speed);
       }
 
-      return getLastDuration(durations);
+      return true;
     }
 
-    float
+    bool
     Duration::parse(const IMC::YoYo* maneuver, Position& last_pos,
-                    std::vector<float>& durations, const SpeedConversion& speed_conv)
+                    const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
       if (speed == 0.0)
-        return -1.0;
+        return false;
 
       Position pos;
       extractPosition(maneuver, pos);
@@ -309,19 +286,19 @@ namespace DUNE
 
       last_pos = pos;
 
-      addDuration(durations, travelled / speed);
+      m_accum_dur.addDuration(travelled / speed);
 
-      return getLastDuration(durations);
+      return true;
     }
 
-    float
+    bool
     Duration::parse(const IMC::Elevator* maneuver, Position& last_pos,
-                    std::vector<float>& durations, const SpeedConversion& speed_conv)
+                    const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
       if (speed == 0.0)
-        return -1.0;
+        return false;
 
       Position pos;
       extractPosition(maneuver, pos);
@@ -335,19 +312,19 @@ namespace DUNE
       // compensate with path controller's eta factor
       travelled = compensate(travelled, speed);
 
-      addDuration(durations, travelled / speed);
+      m_accum_dur.addDuration(travelled / speed);
 
-      return getLastDuration(durations);
+      return true;
     }
 
-    float
+    bool
     Duration::parse(const IMC::PopUp* maneuver, Position& last_pos,
-                    std::vector<float>& durations, const SpeedConversion& speed_conv)
+                    const SpeedConversion& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
       if (speed == 0.0)
-        return -1.0;
+        return false;
 
       // Travel time
       float travel_time;
@@ -382,96 +359,93 @@ namespace DUNE
       bool wait = (maneuver->flags & IMC::PopUp::FLG_WAIT_AT_SURFACE) != 0;
       float surface_time = wait ? maneuver->duration : c_fix_time;
 
-      addDuration(durations, travel_time + rising_time + surface_time);
+      m_accum_dur.addDuration(travel_time + rising_time + surface_time);
 
-      return getLastDuration(durations);
+      return true;
     }
 
     Duration::ManeuverDuration::const_iterator
     Duration::parse(const std::vector<IMC::PlanManeuver*>& nodes,
                     const IMC::EstimatedState* state,
-                    ManeuverDuration& man_durations,
                     const SpeedConversion& speed_conv)
     {
       Position pos;
       extractPosition(state, pos);
-
-      float last_duration = 0.0;
 
       std::vector<IMC::PlanManeuver*>::const_iterator itr = nodes.begin();
 
       for (; itr != nodes.end(); ++itr)
       {
         if ((*itr)->data.isNull())
-          return man_durations.end();
+          return m_durations.end();
 
         IMC::Message* msg = (*itr)->data.get();
 
-        std::vector<float> durations;
+        bool parsed = false;
 
         switch (msg->getId())
         {
           case DUNE_IMC_GOTO:
-            last_duration = parse(static_cast<IMC::Goto*>(msg), pos, durations, speed_conv);
+            parsed = parse(static_cast<IMC::Goto*>(msg), pos, speed_conv);
             break;
 
           case DUNE_IMC_STATIONKEEPING:
-            last_duration = parse(static_cast<IMC::StationKeeping*>(msg), pos, durations, speed_conv);
+            parsed = parse(static_cast<IMC::StationKeeping*>(msg), pos, speed_conv);
             break;
 
           case DUNE_IMC_LOITER:
-            last_duration = parse(static_cast<IMC::Loiter*>(msg), pos, durations, speed_conv);
+            parsed = parse(static_cast<IMC::Loiter*>(msg), pos, speed_conv);
             break;
 
           case DUNE_IMC_FOLLOWPATH:
-            last_duration = parse(static_cast<IMC::FollowPath*>(msg), pos, durations, speed_conv);
+            parsed = parse(static_cast<IMC::FollowPath*>(msg), pos, speed_conv);
             break;
 
           case DUNE_IMC_ROWS:
-            last_duration = parse(static_cast<IMC::Rows*>(msg), pos, durations, speed_conv);
+            parsed = parse(static_cast<IMC::Rows*>(msg), pos, speed_conv);
             break;
 
           case DUNE_IMC_YOYO:
-            last_duration = parse(static_cast<IMC::YoYo*>(msg), pos, durations, speed_conv);
+            parsed = parse(static_cast<IMC::YoYo*>(msg), pos, speed_conv);
             break;
 
           case DUNE_IMC_ELEVATOR:
-            last_duration = parse(static_cast<IMC::Elevator*>(msg), pos, durations, speed_conv);
+            parsed = parse(static_cast<IMC::Elevator*>(msg), pos, speed_conv);
             break;
 
           case DUNE_IMC_POPUP:
-            last_duration = parse(static_cast<IMC::PopUp*>(msg), pos, durations, speed_conv);
+            parsed = parse(static_cast<IMC::PopUp*>(msg), pos, speed_conv);
             break;
 
           case DUNE_IMC_COMPASSCALIBRATION:
-            last_duration = parse(static_cast<IMC::CompassCalibration*>(msg), pos, durations, speed_conv);
+            parsed = parse(static_cast<IMC::CompassCalibration*>(msg), pos, speed_conv);
             break;
 
           default:
-            last_duration = -1.0;
+            parsed = false;
             break;
         }
 
-        if (last_duration < 0.0)
+        if (!parsed)
         {
-          if (man_durations.empty() || itr == nodes.begin())
-            return man_durations.end();
+          if (m_durations.empty() || itr == nodes.begin())
+            return m_durations.end();
 
           // return the duration from the previously computed maneuver
           ManeuverDuration::const_iterator dtr;
-          dtr = man_durations.find((*(--itr))->maneuver_id);
+          dtr = m_durations.find((*(--itr))->maneuver_id);
 
           if (dtr->second.empty())
-            return man_durations.end();
+            return m_durations.end();
 
           return dtr;
         }
 
-        std::pair<std::string, std::vector<float> > ent((*itr)->maneuver_id, durations);
-        man_durations.insert(ent);
+        std::pair<std::string, std::vector<float> > ent((*itr)->maneuver_id, m_accum_dur.vec);
+        m_durations.insert(ent);
       }
 
-      return man_durations.find(nodes.back()->maneuver_id);
+      return m_durations.find(nodes.back()->maneuver_id);
     }
   }
 }
