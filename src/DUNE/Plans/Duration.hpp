@@ -66,7 +66,8 @@ namespace DUNE
       };
 
       //! Constructor
-      Duration(void)
+      Duration(void):
+        m_accum_dur(NULL)
       { };
 
       //! Parse plan duration from plan specification
@@ -156,37 +157,45 @@ namespace DUNE
       //! Accumulated durations
       struct AccumulatedDurations
       {
-        AccumulatedDurations(void)
+        AccumulatedDurations(float value):
+          last_duration(value)
         { };
 
         void
         addDuration(float value)
         {
-          if (!vec.size())
-          {
-            vec.push_back(value);
-            return;
-          }
-
-          vec.push_back(value + vec.back());
+          vec.push_back(value + getLastDuration());
         }
 
         float
-        getLastDuration(void)
+        getLastDuration(void) const
         {
           if (!vec.size())
-            return 0.0;
+          {
+            if (last_duration < 0.0)
+              return 0.0;
+
+            return last_duration;
+          }
 
           return vec.back();
         }
 
+        size_t
+        size(void) const
+        {
+          return vec.size();
+        }
+
         std::vector<float> vec;
+        //! Last duration
+        float last_duration;
       };
 
       //! Vector of maneuver durations
       ManeuverDuration m_durations;
       //! Vector of accumulated durations
-      AccumulatedDurations m_accum_dur;
+      AccumulatedDurations* m_accum_dur;
 
       //! Find 2D distance between two positions
       //! @param[in] new_pos object where the new position info will be stored
@@ -276,7 +285,7 @@ namespace DUNE
         if (value < 0.0)
           return false;
 
-        m_accum_dur.addDuration(value);
+        m_accum_dur->addDuration(value);
 
         return true;
       };
@@ -297,7 +306,7 @@ namespace DUNE
         if (value < 0.0)
           return false;
 
-        m_accum_dur.addDuration(value + maneuver->duration);
+        m_accum_dur->addDuration(value + maneuver->duration);
         return true;
       };
 
@@ -317,7 +326,7 @@ namespace DUNE
         if (value < 0.0)
           return false;
 
-        m_accum_dur.addDuration(value + maneuver->duration);
+        m_accum_dur->addDuration(value + maneuver->duration);
         return true;
       };
 
@@ -377,7 +386,7 @@ namespace DUNE
         if (value < 0.0)
           return false;
 
-        m_accum_dur.addDuration(value + maneuver->duration);
+        m_accum_dur->addDuration(value + maneuver->duration);
         return true;
       }
     };

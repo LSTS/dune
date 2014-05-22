@@ -203,7 +203,7 @@ namespace DUNE
 
       if (!maneuver->points.size())
       {
-        m_accum_dur.addDuration(0.0);
+        m_accum_dur->addDuration(0.0);
       }
       else
       {
@@ -222,7 +222,7 @@ namespace DUNE
           last_pos = pos;
 
           // compensate with path controller's eta factor
-          m_accum_dur.addDuration(compensate(travelled, speed) / speed);
+          m_accum_dur->addDuration(compensate(travelled, speed) / speed);
         }
       }
 
@@ -247,7 +247,7 @@ namespace DUNE
       rstages.getFirstPoint(&pos.lat, &pos.lon);
 
       float distance = distance3D(pos, last_pos);
-      m_accum_dur.addDuration(distance / speed);
+      m_accum_dur->addDuration(distance / speed);
 
       last_pos = pos;
 
@@ -259,7 +259,7 @@ namespace DUNE
       {
         // compensate with path controller's eta factor
         float travelled = compensate(*itr, speed);
-        m_accum_dur.addDuration(travelled / speed);
+        m_accum_dur->addDuration(travelled / speed);
       }
 
       return true;
@@ -286,7 +286,7 @@ namespace DUNE
 
       last_pos = pos;
 
-      m_accum_dur.addDuration(travelled / speed);
+      m_accum_dur->addDuration(travelled / speed);
 
       return true;
     }
@@ -312,7 +312,7 @@ namespace DUNE
       // compensate with path controller's eta factor
       travelled = compensate(travelled, speed);
 
-      m_accum_dur.addDuration(travelled / speed);
+      m_accum_dur->addDuration(travelled / speed);
 
       return true;
     }
@@ -359,7 +359,7 @@ namespace DUNE
       bool wait = (maneuver->flags & IMC::PopUp::FLG_WAIT_AT_SURFACE) != 0;
       float surface_time = wait ? maneuver->duration : c_fix_time;
 
-      m_accum_dur.addDuration(travel_time + rising_time + surface_time);
+      m_accum_dur->addDuration(travel_time + rising_time + surface_time);
 
       return true;
     }
@@ -380,6 +380,16 @@ namespace DUNE
           return m_durations.end();
 
         IMC::Message* msg = (*itr)->data.get();
+
+        float last_duration = -1.0;
+        if (m_accum_dur != NULL)
+        {
+          if (m_accum_dur->size())
+            last_duration = m_accum_dur->getLastDuration();
+        }
+
+        Memory::clear(m_accum_dur);
+        m_accum_dur = new AccumulatedDurations(last_duration);
 
         bool parsed = false;
 
@@ -441,9 +451,11 @@ namespace DUNE
           return dtr;
         }
 
-        std::pair<std::string, std::vector<float> > ent((*itr)->maneuver_id, m_accum_dur.vec);
+        std::pair<std::string, std::vector<float> > ent((*itr)->maneuver_id, m_accum_dur->vec);
         m_durations.insert(ent);
       }
+
+      Memory::clear(m_accum_dur);
 
       return m_durations.find(nodes.back()->maneuver_id);
     }
