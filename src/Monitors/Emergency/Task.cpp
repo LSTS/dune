@@ -252,6 +252,9 @@ namespace Monitors
       consume(const IMC::VehicleMedium* msg)
       {
         m_hand.update(msg);
+
+        if (m_hand.isUnderwater())
+          m_lost_coms_timer.reset();
       }
 
       void
