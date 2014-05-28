@@ -174,6 +174,8 @@ namespace Control
         APM_Vehicle m_vehicle_type;
         //! Check if is in service
         bool m_service;
+        //! Time since last waypoint was sent
+        float m_last_wp;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -763,6 +765,8 @@ namespace Control
           m_pcs.lradius = path->lradius;
 
           dispatch(m_pcs);
+          m_dpath = *path;
+          m_last_wp = Clock::get();
 
           debug("Waypoint packet sent to Ardupilot");
         }
@@ -1176,6 +1180,9 @@ namespace Control
                   case MAVLINK_MSG_ID_SYS_STATUS:
                     trace("SYS_STATUS");
                     break;
+                  case MAVLINK_MSG_ID_SYSTEM_TIME:
+                    trace("SYSTEM_TIME");
+                    break;
                   case 22:
                     trace("PARAM_VALUE");
                     break;
@@ -1449,6 +1456,7 @@ namespace Control
           mavlink_msg_command_ack_decode(msg, &cmd_ack);
           debug("Command %d was received, result is %d", cmd_ack.command, cmd_ack.result);
           m_changing_wp = false;
+          m_last_wp = 0;
         }
 
         void
@@ -1459,6 +1467,7 @@ namespace Control
           mavlink_msg_mission_ack_decode(msg, &miss_ack);
           debug("Mission was received, result is %d", miss_ack.type);
           m_changing_wp = false;
+          m_last_wp = 0;
         }
 
         void
@@ -1645,6 +1654,11 @@ namespace Control
           if (!m_args.ardu_tracker)
             return;
           dispatch(m_pcs);
+
+          float since_last_wp = Clock::get() - m_last_wp;
+
+          if (m_last_wp && since_last_wp > 1.5)
+            receive(&m_dpath);
         }
 
         void
