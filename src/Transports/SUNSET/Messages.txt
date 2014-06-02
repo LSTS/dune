@@ -14,12 +14,7 @@ V0,B,A,Aborted\n
 
 V0,B,A,Abort\n
 V0,A,B,Aborted\n
-
-
-
 V0,Aborted\n
-
-
 V0,Aborted,<PLAN_ID>\n
 
 V0,PlanListQuery\n
