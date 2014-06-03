@@ -198,13 +198,13 @@ namespace Transports
           throw std::runtime_error("invalid format");
 
         // Extract number of destinations.
-        size_t dst_count = 0;
-        if (std::sscanf(parts[OFFS_DST_COUNT].c_str(), "%lu", &dst_count) != 1)
+        unsigned dst_count = 0;
+        if (std::sscanf(parts[OFFS_DST_COUNT].c_str(), "%u", &dst_count) != 1)
           throw std::runtime_error("invalid format");
 
         // Extract destinations.
         unsigned dst = 0;
-        for (size_t i = 0; i < dst_count; ++i)
+        for (unsigned i = 0; i < dst_count; ++i)
         {
           if (std::sscanf(parts[OFFS_DST + i].c_str(), "%u", &dst) != 1)
             throw std::runtime_error("invalid format");
