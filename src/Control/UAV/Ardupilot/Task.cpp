@@ -572,7 +572,10 @@ namespace Control
         consume(const IMC::DesiredRoll* d_roll)
         {
           if(m_external || m_critical || m_ground)
+          {
+            debug("external: %d, critical: %d, ground: %d", (int)m_external, (int)m_critical, (int)m_ground);
             return;
+          }
 
           if (!(m_cloops & IMC::CL_ROLL))
           {
@@ -1632,6 +1635,14 @@ namespace Control
           d_z.value = m_alt + nav_out.alt_error;
           d_z.z_units = IMC::Z_HEIGHT;
 
+          dispatch(d_roll);
+          dispatch(d_pitch);
+          dispatch(d_head);
+          dispatch(d_z);
+
+          if (!m_args.ardu_tracker)
+            return;
+
           if ((nav_out.wp_dist <= m_desired_radius + m_args.ltolerance)
              && (nav_out.wp_dist >= m_desired_radius - m_args.ltolerance)
              && (m_mode == 15))
@@ -1646,19 +1657,13 @@ namespace Control
           {
             m_pcs.flags |= PathControlState::FL_NEAR;
           }
-          dispatch(d_roll);
-          dispatch(d_pitch);
-          dispatch(d_head);
-          dispatch(d_z);
-
-          if (!m_args.ardu_tracker)
-            return;
-          dispatch(m_pcs);
 
           float since_last_wp = Clock::get() - m_last_wp;
 
           if (m_last_wp && since_last_wp > 1.5)
             receive(&m_dpath);
+
+          dispatch(m_pcs);
         }
 
         void
@@ -1666,7 +1671,7 @@ namespace Control
         {
           mavlink_mission_item_t miss_item;
           mavlink_msg_mission_item_decode(msg, &miss_item);
-          trace("Mission type: %d", miss_item.command);
+          debug("Mission type: %d", miss_item.command);
 
           switch(miss_item.command)
           {
