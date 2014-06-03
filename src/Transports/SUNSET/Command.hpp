@@ -122,7 +122,7 @@ namespace Transports
 
       //! Add destination address. This function can be called
       //! multiple times to add more than one destination address.
-      //! @param[in] destination address.
+      //! @param[in] addr destination address.
       Command&
       addDestination(unsigned addr)
       {
