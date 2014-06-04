@@ -66,6 +66,7 @@ namespace Monitors
       double max_boot_tout;
       double max_clock_offs;
       std::string hw_sync_cmd;
+      bool change_log;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -111,6 +112,10 @@ namespace Monitors
 
         param("Hardware Clock Synchronization Command", m_args.hw_sync_cmd)
         .description("System command to execute everytime the clock is synchronized");
+
+        param("Change Log", m_args.change_log)
+        .defaultValue("false")
+        .description("Change log file after synchronization");
 
         // Initialize entity states.
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_SYNCING);
@@ -169,6 +174,17 @@ namespace Monitors
             setTime(new_time);
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_SYNCHED);
             m_clock_synched = true;
+
+            m_cc.op = IMC::ClockControl::COP_SYNC_DONE;
+            m_cc.clock = new_time;
+            dispatch(m_cc);
+
+            if (m_args.change_log)
+            {
+              IMC::LoggingControl lc;
+              lc.op = IMC::LoggingControl::COP_REQUEST_START;
+              dispatch(lc);
+            }
           }
           else
           {
