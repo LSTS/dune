@@ -371,7 +371,7 @@ namespace Control
         }
 
         void
-        onParameterUpdate(void)
+        onUpdateParameters(void)
         {
           m_args.rc1.val_min = -m_args.rc1.val_max;
           m_args.rc2.val_min = -m_args.rc2.val_max;
@@ -514,7 +514,7 @@ namespace Control
 
             if (!(m_args.ardu_tracker) && (cloops->mask & IMC::CL_ROLL))
             {
-              onParameterUpdate();
+              onUpdateParameters();
               activateFBW();
             }
           }
