@@ -25,94 +25,11 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-// DUNE headers.
-#include <DUNE/DUNE.hpp>
-
-// Local headers.
-#include "Command.hpp"
-
-namespace Transports
-{
-  namespace SUNSET
-  {
-    using DUNE_NAMESPACES;
-
-    //! Task arguments.
-    struct Arguments
-    {
-      //! TCP host.
-      std::string tcp_addr;
-      //! TCP port.
-      unsigned tcp_port;
-    };
-
-    struct Task: public DUNE::Tasks::Task
-    {
-      //! Task arguments.
-      Arguments m_args;
-
-      //! Constructor.
-      //! @param[in] name task name.
-      //! @param[in] ctx context.
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
-      {
-        param("TCP - Address", m_args.tcp_addr)
-        .defaultValue("127.0.0.1")
-        .description("SUNSET server TCP address");
-
-        param("TCP - Port", m_args.tcp_port)
-        .defaultValue("7001")
-        .description("SUNSET server TCP port");
-      }
-
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      {
-      }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
-      }
-
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      {
-      }
-
-      //! Main loop.
-      void
-      onMain(void)
-      {
-        while (!stopping())
-        {
-          waitForMessages(1.0);
-        }
-      }
-    };
-  }
-}
-
-DUNE_TASK
+ERROR(0, INVALID_CRC)
+ERROR(1, INVALID_FORMAT)
+ERROR(2, INVALID_VERSION)
+ERROR(3, INVALID_REQUEST)
+ERROR(4, INVALID_VALUE)
+ERROR(5, BUSY)
+ERROR(6, TIMEOUT)
+#undef ERROR

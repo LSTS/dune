@@ -45,10 +45,21 @@ namespace Transports
     class Command
     {
     public:
+      //! Command flags.
+      enum Flags
+      {
+#define FLAG(bit, name) FLAG_ ## name = 1 << bit,
+#include "Flags.def"
+        FLAG_LAST
+      };
+
       //! Default constructor.
       Command(void):
         m_version(0),
-        m_src(0)
+        m_src(0),
+        m_flags(0),
+        m_ttl(0),
+        m_priority(0)
       { }
 
       //! Construct a Command object setting name and version.
@@ -57,7 +68,10 @@ namespace Transports
       Command(const std::string& name, unsigned version = 0):
         m_name(name),
         m_version(version),
-        m_src(0)
+        m_src(0),
+        m_flags(0),
+        m_ttl(0),
+        m_priority(0)
       { }
 
       //! Clear command.
@@ -71,6 +85,7 @@ namespace Transports
 
       //! Set command version.
       //! @param[in] version command version.
+      //! @return command object.
       Command&
       setVersion(unsigned version)
       {
@@ -88,6 +103,7 @@ namespace Transports
 
       //! Set command name.
       //! @param[in] name command name.
+      //! @return command object.
       Command&
       setName(const std::string& name)
       {
@@ -105,6 +121,7 @@ namespace Transports
 
       //! Set command source address.
       //! @param[in] addr command source address.
+      //! @return command object.
       Command&
       setSource(unsigned addr)
       {
@@ -123,6 +140,7 @@ namespace Transports
       //! Add destination address. This function can be called
       //! multiple times to add more than one destination address.
       //! @param[in] addr destination address.
+      //! @return command object.
       Command&
       addDestination(unsigned addr)
       {
@@ -130,14 +148,85 @@ namespace Transports
         return *this;
       }
 
+      //! Retrieve destination addresses.
+      //! @return destination addresses.
+      const std::set<unsigned>&
+      getDestinations(void) const
+      {
+        return m_dsts;
+      }
+
       //! Add argument to command. This function can be called
       //! multiple times to add more than one argument.
       //! @param[in] arg command argument.
+      //! @return command object.
       Command&
       addArgument(const std::string& arg)
       {
         m_args.push_back(arg);
         return *this;
+      }
+
+      //! Retrieve command arguments.
+      //! @return command arguments.
+      const std::vector<std::string>&
+      getArguments(void) const
+      {
+        return m_args;
+      }
+
+      //! Set command time-to-live.
+      //! @param[in] value number of seconds.
+      //! @return command object.
+      Command&
+      setTTL(unsigned value)
+      {
+        m_ttl = value;
+        return *this;
+      }
+
+      //! Retrieve command time-to-live.
+      //! @return command time-to-live in seconds.
+      unsigned
+      getTTL(void) const
+      {
+        return m_ttl;
+      }
+
+      //! Set command flags.
+      //! @param[in] value flags.
+      //! @return command object.
+      Command&
+      setFlags(unsigned value)
+      {
+        m_flags = value;
+        return *this;
+      }
+
+      //! Retrieve command flags.
+      //! @return command flags.
+      unsigned
+      getFlags(void) const
+      {
+        return m_flags;
+      }
+
+      //! Set command priority.
+      //! @param[in] value priority.
+      //! @return command object.
+      Command&
+      setPriority(unsigned value)
+      {
+        m_priority = value;
+        return *this;
+      }
+
+      //! Retrieve command priority.
+      //! @return command priority.
+      unsigned
+      getPriority(void) const
+      {
+        return m_priority;
       }
 
       //! Encode object to text form.
@@ -147,10 +236,16 @@ namespace Transports
       {
         std::ostringstream ss;
         ss << "V" << m_version << ","
+           << DUNE::Utils::String::str("%02X", m_flags) << ","
+           << m_ttl << ","
+           << m_priority << ","
            << m_src << ","
            << m_dsts.size() << ",";
 
         // Destinations.
+        if (m_dsts.begin() == m_dsts.end())
+          throw std::runtime_error("invalid destination");
+
         for (std::set<unsigned>::const_iterator itr = m_dsts.begin(); itr != m_dsts.end(); ++itr)
           ss << *itr << ",";
 
@@ -191,6 +286,18 @@ namespace Transports
 
         // Extract version.
         if (std::sscanf(parts[OFFS_VERSION].c_str(), "V%u", &m_version) != 1)
+          throw std::runtime_error("invalid format");
+
+        // Extract flags.
+        if (std::sscanf(parts[OFFS_FLAGS].c_str(), "%02X", &m_flags) != 1)
+          throw std::runtime_error("invalid format");
+
+        // Extract TTL.
+        if (std::sscanf(parts[OFFS_TTL].c_str(), "%u", &m_ttl) != 1)
+          throw std::runtime_error("invalid format");
+
+        // Extract priority.
+        if (std::sscanf(parts[OFFS_PRIORITY].c_str(), "%u", &m_priority) != 1)
           throw std::runtime_error("invalid format");
 
         // Extract source.
@@ -235,36 +342,61 @@ namespace Transports
         os << "{\n"
            << "  \"name\"          : \"" << m_name << "\",\n"
            << "  \"version\"       : " << m_version << ",\n"
+           << "  \"flags\"         : \"" << getFlagList(m_flags) << "\",\n"
+           << "  \"ttl\"           : " << m_ttl << ",\n"
+           << "  \"priority\"      : " << m_priority << ",\n"
            << "  \"source\"        : " << m_src << ",\n";
 
         // Destinations.
         std::set<unsigned>::const_iterator dst_itr = m_dsts.begin();
-        os << "  \"destinations\"  : [" << *dst_itr;
-        for (++dst_itr; dst_itr != m_dsts.end(); ++dst_itr)
-          os << "," << *dst_itr;
-        os << "],\n";
+        if (dst_itr == m_dsts.end())
+        {
+          os << "  \"destinations\"  : []" << *dst_itr;
+        }
+        else
+        {
+          os << "  \"destinations\"  : [" << *dst_itr;
+          for (++dst_itr; dst_itr != m_dsts.end(); ++dst_itr)
+            os << "," << *dst_itr;
+          os << "],\n";
+        }
 
         //! Arguments.
         std::vector<std::string>::const_iterator arg_itr = m_args.begin();
-        os << "  \"arguments\"     : [\"" << *arg_itr << "\"";
-        for (++arg_itr; arg_itr != m_args.end(); ++arg_itr)
-          os << "," << "\"" << *arg_itr << "\"";
-        os << "],\n";
-
-
-
+        if (arg_itr == m_args.end())
+        {
+          os << "  \"arguments\"     : []\n";
+        }
+        else
+        {
+          os << "  \"arguments\"     : [\"" << *arg_itr << "\"";
+          for (++arg_itr; arg_itr != m_args.end(); ++arg_itr)
+            os << "," << "\"" << *arg_itr << "\"";
+          os << "],\n";
+        }
 
         os << "}\n"
         ;
       }
 
     private:
+      // Field offsets.
       enum Offset
       {
-        OFFS_VERSION = 0,
-        OFFS_SRC = 1,
-        OFFS_DST_COUNT = 2,
-        OFFS_DST = 3
+        //! Version.
+        OFFS_VERSION   = 0,
+        //! Flags.
+        OFFS_FLAGS     = 1,
+        //! Time-to-live.
+        OFFS_TTL       = 2,
+        //! Priority.
+        OFFS_PRIORITY  = 3,
+        //! Source.
+        OFFS_SRC       = 4,
+        //! Number of destinations.
+        OFFS_DST_COUNT = 5,
+        //! First destination.
+        OFFS_DST       = 6
       };
 
       //! Command name.
@@ -275,6 +407,12 @@ namespace Transports
       unsigned m_src;
       //! Destination addresses.
       std::set<unsigned> m_dsts;
+      //! Command flags.
+      unsigned m_flags;
+      //! Command time-to-live.
+      unsigned m_ttl;
+      //! Command priority.
+      unsigned m_priority;
       //! Command arguments.
       std::vector<std::string> m_args;
 
@@ -307,6 +445,20 @@ namespace Transports
       computeCRC(const std::string& str, size_t size)
       {
         return DUNE::Algorithms::CRC16::compute((const uint8_t*)&str[0], size);
+      }
+
+      //! Retrieve human-readable list of flags.
+      //! @param[in] flags flags bitfield.
+      //! @return human-readable list of flags.
+      static std::string
+      getFlagList(unsigned flags)
+      {
+        std::vector<std::string> list;
+
+#define FLAG(bit, name) if (flags & (1 << bit)) { list.push_back(#name); }
+#include "Flags.def"
+
+        return DUNE::Utils::String::join(list.begin(), list.end(), " | ");
       }
     };
   }
