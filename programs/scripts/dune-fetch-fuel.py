@@ -105,6 +105,8 @@ def manipIni(myfile, labels_list, values_list):
     os.rename(sys.argv[1] + myfile + "_copy.ini", sys.argv[1] + myfile + ".ini")
     print("Wrote file " + myfile + ".ini with " + str(len(labels_list)) + " profiles.");
 
+def isnotempty(str):
+    return (str and not str.isspace());
 
 import gspread
 import getpass
@@ -140,11 +142,10 @@ ce_total = worksheet.find("Total (in Watt)")
 i = 0;
 while (True):
     value = worksheet.cell(ce_gear.row + 1, ce_gear.col + i).value
-    if (value == None):
-        break
-    else:
+    if (isnotempty(value)):
         i = i + 1;
-
+    else:
+        break
 
 # List of vehicles and profiles
 vlist = [];
@@ -157,7 +158,7 @@ vehicle_index = ce_gear.col + i + 1;
 while (True):
     print("Fetching profile...")
     vehicle = worksheet.cell(ce_gear.row, vehicle_index).value;
-    if (vehicle == None):
+    if (not isnotempty(vehicle)):
         print(" -> no more profiles left.")
         break
 
@@ -168,7 +169,7 @@ while (True):
 
     while (True):
         temp_prof = worksheet.cell(ce_gear.row + 1, vehicle_index + j).value
-        if (temp_prof != None):
+        if (isnotempty(temp_prof)):
             profile_list.append(temp_prof)
             power_list.append(worksheet.cell(ce_total.row, vehicle_index + j).value)
             j = j + 1;
