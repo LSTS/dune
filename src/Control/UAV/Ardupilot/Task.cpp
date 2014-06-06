@@ -736,7 +736,7 @@ namespace Control
           mavlink_msg_mission_count_pack(255, 0, &msg,
                                          m_sysid, //! target_system System ID
                                          0, //! target_component Component ID
-                                         3); //! size of Mission
+                                         2); //! size of Mission
 
           n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
@@ -1238,9 +1238,6 @@ namespace Control
                   case MAVLINK_MSG_ID_MISSION_CURRENT:
                     trace("MISSION_CURRENT");
                     break;
-                  case 44:
-                    trace("MISSION_COUNT");
-                    break;
                   case MAVLINK_MSG_ID_MISSION_ACK:
                     spew("MISSION_ACK");
                     break;
@@ -1645,7 +1642,7 @@ namespace Control
         {
           mavlink_nav_controller_output_t nav_out;
           mavlink_msg_nav_controller_output_decode(msg, &nav_out);
-          debug("WP Dist: %d", nav_out.wp_dist);
+          trace("WP Dist: %d", nav_out.wp_dist);
           IMC::DesiredRoll d_roll;
           IMC::DesiredPitch d_pitch;
           IMC::DesiredHeading d_head;
@@ -1667,7 +1664,7 @@ namespace Control
 
           if ((nav_out.wp_dist <= m_desired_radius + m_args.ltolerance)
              && (nav_out.wp_dist >= m_desired_radius - m_args.ltolerance)
-             && (m_mode == 15))
+             && (m_mode == 15 || (m_mode == 10 && m_current_wp == 3)))
           {
             m_pcs.flags |= PathControlState::FL_LOITERING;
           }
@@ -1675,7 +1672,7 @@ namespace Control
           if (!m_changing_wp
              && (nav_out.wp_dist <= m_desired_radius + m_args.secs * m_gnd_speed)
              && (nav_out.wp_dist >= m_desired_radius - m_args.secs * m_gnd_speed)
-             && (m_mode == 15))
+             && (m_mode == 15 || (m_mode == 10 && m_current_wp == 3)))
           {
             m_pcs.flags |= PathControlState::FL_NEAR;
           }
@@ -1685,6 +1682,9 @@ namespace Control
           if (m_last_wp && since_last_wp > 1.5)
             receive(&m_dpath);
 
+          if (m_gnd_speed)
+            m_pcs.eta = nav_out.wp_dist / m_gnd_speed;
+
           dispatch(m_pcs);
         }
 
@@ -1693,7 +1693,7 @@ namespace Control
         {
           mavlink_mission_item_t miss_item;
           mavlink_msg_mission_item_decode(msg, &miss_item);
-          debug("Mission type: %d", miss_item.command);
+          trace("Mission type: %d", miss_item.command);
 
           switch(miss_item.command)
           {
