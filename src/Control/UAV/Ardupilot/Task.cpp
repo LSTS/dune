@@ -31,6 +31,7 @@
 // ISO C++ 98 headers.
 #include <vector>
 #include <cmath>
+#include <queue>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -176,6 +177,8 @@ namespace Control
         bool m_service;
         //! Time since last waypoint was sent
         float m_last_wp;
+        //! Mission items queue
+        std::queue<mavlink_message_t> m_mission_items;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -336,6 +339,7 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_SYS_STATUS] = &Task::handleSystemStatusPacket;
           m_mlh[MAVLINK_MSG_ID_VFR_HUD] = &Task::handleHUDPacket;
           m_mlh[MAVLINK_MSG_ID_SYSTEM_TIME] = &Task::handleSystemTimePacket;
+          m_mlh[MAVLINK_MSG_ID_MISSION_REQUEST] = &Task::handleMissionRequestPacket;
 
 
           // Setup processing of IMC messages
@@ -733,33 +737,17 @@ namespace Control
 
           m_desired_radius = (uint16_t) path->lradius;
 
-          mavlink_msg_mission_count_pack(255, 0, &msg,
-                                         m_sysid, //! target_system System ID
-                                         0, //! target_component Component ID
-                                         2); //! size of Mission
-
-          n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
-
-          mavlink_msg_mission_write_partial_list_pack(255, 0, &msg,
-                                                      m_sysid, //! target_system System ID
-                                                      0, //! target_component Component ID
-                                                      1, //! start_index Start index, 0 by default and smaller / equal to the largest index of the current onboard list
-                                                      1); //! end_index End index, equal or greater than start index
-
-          n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
-
           float alt = (path->end_z_units & IMC::Z_NONE) ? m_args.alt : (float)path->end_z;
 
           //! Destination
+          //! Because this is a GUIDED waypoint, MISSION_COUNT and WRITE_PARTIAL_LIST messages should not be sent
           mavlink_msg_mission_item_pack(255, 0, &msg,
                                         m_sysid, //! target_system System ID
                                         0, //! target_component Component ID
                                         1, //! seq Sequence
                                         MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
                                         MAV_CMD_NAV_LOITER_UNLIM, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
-                                        2, //! current false:0, true:1
+                                        2, //! current false:0, true:1, guided mode:2
                                         0, //! autocontinue to next wp
                                         0, //! Not used
                                         0, //! Not used
@@ -826,8 +814,9 @@ namespace Control
                                                       seq, //! start_index Start index, 0 by default and smaller / equal to the largest index of the current onboard list
                                                       seq+2); //! end_index End index, equal or greater than start index
 
-          n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
+          m_mission_items.push(msg);
+
+          sendMissionItem(false);
 
           //! Current position
           mavlink_msg_mission_item_pack(255, 0, &msg,
@@ -846,8 +835,7 @@ namespace Control
                                         0, //! y PARAM6 / y position: global: longitude
                                         m_alt + 10);//! z PARAM7 / z position: global: altitude
 
-          n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
+          m_mission_items.push(msg);
 
           //! Desired speed
           mavlink_msg_mission_item_pack(255, 0, &msg,
@@ -866,8 +854,7 @@ namespace Control
                                         0, //! Not used
                                         0);//! Not used
 
-          n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
+          m_mission_items.push(msg);
 
           //! Destination
           mavlink_msg_mission_item_pack(255, 0, &msg,
@@ -886,10 +873,7 @@ namespace Control
                                         (float)Angles::degrees(dpath->end_lon), //! y PARAM6 / y position: global: longitude
                                         (float)(dpath->end_z));//! z PARAM7 / z position: global: altitude
 
-          n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
-
-          sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_AUTO_DISARMED);
+          m_mission_items.push(msg);
 
           mavlink_msg_mission_set_current_pack(255, 0, &msg,
                                                m_sysid,
@@ -1050,6 +1034,24 @@ namespace Control
           mavlink_msg_command_long_pack(255, 0, &msg, m_sysid, 0, cmd, 0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 
           uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+          sendData(buf, n);
+        }
+
+        void
+        sendMissionItem(bool next)
+        {
+          if (next && !m_mission_items.empty())
+            m_mission_items.pop();
+
+          if (m_mission_items.empty())
+          {
+            debug("Mission Item queue is empty.");
+            return;
+          }
+
+          uint8_t buf[512];
+
+          uint16_t n = mavlink_msg_to_send_buffer(buf, &m_mission_items.front());
           sendData(buf, n);
         }
 
@@ -1234,6 +1236,9 @@ namespace Control
                     break;
                   case MAVLINK_MSG_ID_MISSION_ITEM:
                     trace("MISSION_ITEM");
+                    break;
+                  case MAVLINK_MSG_ID_MISSION_REQUEST:
+                    trace("MISSION_REQUEST");
                     break;
                   case MAVLINK_MSG_ID_MISSION_CURRENT:
                     trace("MISSION_CURRENT");
@@ -1747,6 +1752,17 @@ namespace Control
 
           if (!m_args.hitl)
             dispatch(m_fix);
+        }
+
+        void
+        handleMissionRequestPacket(const mavlink_message_t* msg)
+        {
+          mavlink_mission_request_t mission_request;
+          mavlink_msg_mission_request_decode(msg, &mission_request);
+
+          debug("Requesting item #%d", mission_request.seq);
+
+          sendMissionItem(true);
         }
       };
     }
