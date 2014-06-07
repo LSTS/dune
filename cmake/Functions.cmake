@@ -224,6 +224,18 @@ macro(dune_probe_functions)
     "sys/mman.h;sys/types.h"
     DUNE_SYS_HAS_MMAP64)
 
+  dune_test_function(mlockall
+    "int"
+    "int"
+    "sys/mman.h;sys/types.h"
+    DUNE_SYS_HAS_MLOCKALL)
+
+  dune_test_function(munlockall
+    "int"
+    ""
+    "sys/mman.h;sys/types.h"
+    DUNE_SYS_HAS_MUNLOCKALL)
+
   dune_test_function(round
     "double"
     "double"
