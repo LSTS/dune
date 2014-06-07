@@ -48,105 +48,25 @@ namespace DUNE
     {
     public:
       static std::string
-      getTimeDate(void)
-      {
-        return getTimeDate(static_cast<double>(std::time(0)));
-      }
+      getTimeDate(void);
 
       static std::string
-      getTimeDate(double tstamp, bool utc = true)
-      {
-        char bfr[32] = {0};
-        std::time_t t = static_cast<std::time_t>(tstamp);
-
-#if defined(DUNE_SYS_HAS_GMTIME_R) && defined(DUNE_SYS_HAS_LOCALTIME_R)
-        struct tm tm_bfr = {0};
-        std::tm* tmp = utc ? gmtime_r(&t, &tm_bfr) : localtime_r(&t, &tm_bfr);
-#else
-        std::tm* tmp = utc ? std::gmtime(&t) : std::localtime(&t);
-#endif
-
-        if (tmp == 0)
-          return "unknown time";
-
-        if (std::strftime(bfr, sizeof(bfr), "%Y/%m/%d %H:%M:%S", tmp) == 0)
-          return "unknown time";
-
-        return bfr;
-      }
+      getTimeDate(double tstamp, bool utc = true);
 
       static std::string
-      getDateSafe(void)
-      {
-        return getDateSafe(static_cast<double>(std::time(0)));
-      }
+      getDateSafe(void);
 
       static std::string
-      getDateSafe(double tstamp, bool utc = true)
-      {
-        char bfr[32] = {0};
-        std::time_t t = static_cast<std::time_t>(tstamp);
-
-#if defined(DUNE_SYS_HAS_GMTIME_R) && defined(DUNE_SYS_HAS_LOCALTIME_R)
-        struct tm tm_bfr= {0};
-        std::tm* tmp = utc ? gmtime_r(&t, &tm_bfr) : localtime_r(&t, &tm_bfr);
-#else
-        std::tm* tmp = utc ? std::gmtime(&t) : std::localtime(&t);
-#endif
-
-        if (tmp == 0)
-          return "unknown date";
-
-        if (std::strftime(bfr, sizeof(bfr), "%Y%m%d", tmp) == 0)
-          return "unknown date";
-
-        return bfr;
-      }
+      getDateSafe(double tstamp, bool utc = true);
 
       static std::string
-      getTimeSafe(void)
-      {
-        return getTimeSafe(static_cast<double>(std::time(0)));
-      }
+      getTimeSafe(void);
 
       static std::string
-      getTimeSafe(double tstamp, bool utc = true)
-      {
-        char bfr[32] = {0};
-        std::time_t t = static_cast<std::time_t>(tstamp);
-
-#if defined(DUNE_SYS_HAS_GMTIME_R) && defined(DUNE_SYS_HAS_LOCALTIME_R)
-        struct tm tm_bfr= {0};
-        std::tm* tmp = utc ? gmtime_r(&t, &tm_bfr) : localtime_r(&t, &tm_bfr);
-#else
-        std::tm* tmp = utc ? std::gmtime(&t) : std::localtime(&t);
-#endif
-
-        if (tmp == 0)
-          return "unknown time";
-
-        if (std::strftime(bfr, sizeof(bfr), "%H%M%S", tmp) == 0)
-          return "unknown time";
-
-        return bfr;
-      }
+      getTimeSafe(double tstamp, bool utc = true);
 
       static std::string
-      getRFC1123(bool utc = true)
-      {
-        std::time_t t = std::time(0);
-
-#if defined(DUNE_SYS_HAS_GMTIME_R) && defined(DUNE_SYS_HAS_LOCALTIME_R)
-        struct tm tm_bfr= {0};
-        std::tm* tmp = utc ? gmtime_r(&t, &tm_bfr) : localtime_r(&t, &tm_bfr);
-#else
-        std::tm* tmp = utc ? std::gmtime(&t) : std::localtime(&t);
-#endif
-
-        char bfr[64];
-        std::strftime(bfr, 64, "%a, %d %b %Y %H:%M:%S GMT", tmp);
-        return bfr;
-      }
+      getRFC1123(bool utc = true);
     };
   }
 }
