@@ -73,10 +73,7 @@ namespace DUNE
       }
 
     private:
-#if defined(DUNE_OS_LINUX)
       int m_fd;
-#endif
-
       uint8_t m_changed;
       uint8_t m_values;
     };
