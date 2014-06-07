@@ -96,6 +96,8 @@
 #cmakedefine DUNE_OS_OPENBSD
 //! Defined on BSD variants.
 #cmakedefine DUNE_OS_BSD
+//! Defined on Android.
+#cmakedefine DUNE_OS_ANDROID
 //! Defined on POSIX compliant systems.
 #cmakedefine DUNE_OS_POSIX
 
