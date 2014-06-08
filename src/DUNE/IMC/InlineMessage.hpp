@@ -77,7 +77,7 @@ namespace DUNE
       void
       set(const Type& msg)
       {
-        replace(dynamic_cast<Type*>(msg.clone()));
+        replace(static_cast<Type*>(msg.clone()));
       }
 
       void
@@ -120,7 +120,7 @@ namespace DUNE
         m = NULL;
 
         if (!isNull())
-          m = dynamic_cast<const T*>(m_msg);
+          m = static_cast<const T*>(m_msg);
 
         return m != NULL;
       }
@@ -132,7 +132,7 @@ namespace DUNE
         m = NULL;
 
         if (!isNull())
-          m = dynamic_cast<T*>(m_msg);
+          m = static_cast<T*>(m_msg);
 
         return m != NULL;
       }
@@ -171,7 +171,7 @@ namespace DUNE
         clear();
 
         if (other.m_msg != NULL)
-          m_msg = dynamic_cast<Type*>(other.m_msg->clone());
+          m_msg = static_cast<Type*>(other.m_msg->clone());
 
         return *this;
       }
@@ -219,7 +219,7 @@ namespace DUNE
         if (id == DUNE_IMC_CONST_NULL_ID)
           return 2;
 
-        Type* m = dynamic_cast<Type*>(Factory::produce(id));
+        Type* m = static_cast<Type*>(Factory::produce(id));
 
         if (m == 0)
           throw InvalidMessageId(id);
@@ -240,7 +240,7 @@ namespace DUNE
         if (id == DUNE_IMC_CONST_NULL_ID)
           return 2;
 
-        Type* m = dynamic_cast<Type*>(Factory::produce(id));
+        Type* m = static_cast<Type*>(Factory::produce(id));
 
         if (m == 0)
           throw InvalidMessageId(id);

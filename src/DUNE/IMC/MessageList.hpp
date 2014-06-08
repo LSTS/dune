@@ -132,7 +132,7 @@ namespace DUNE
       void
       push_back(const Type& msg)
       {
-        Type* tmsg = dynamic_cast<Type*>(msg.clone());
+        Type* tmsg = static_cast<Type*>(msg.clone());
 
         if (m_parent != NULL)
           synchronizeHeader(tmsg);
@@ -276,7 +276,7 @@ namespace DUNE
             continue;
           }
 
-          Type* msg = dynamic_cast<Type*>(Factory::produce(id));
+          Type* msg = static_cast<Type*>(Factory::produce(id));
 
           if (msg == NULL)
             throw InvalidMessageId(id);
@@ -313,7 +313,7 @@ namespace DUNE
             continue;
           }
 
-          Type* msg = dynamic_cast<Type*>(Factory::produce(id));
+          Type* msg = static_cast<Type*>(Factory::produce(id));
 
           if (msg == NULL)
             throw InvalidMessageId(id);
@@ -451,7 +451,7 @@ namespace DUNE
           if (other.m_list[i] == NULL)
             m_list.push_back(NULL);
           else
-            m_list.push_back(dynamic_cast<Type*>(other.m_list[i]->clone()));
+            m_list.push_back(static_cast<Type*>(other.m_list[i]->clone()));
         }
       }
     };
