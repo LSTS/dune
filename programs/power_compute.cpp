@@ -243,7 +243,7 @@ main(int argc, char** argv)
 
       if (msg->getId() == DUNE_IMC_ENTITYINFO)
       {
-        IMC::EntityInfo* einfo = dynamic_cast<IMC::EntityInfo*>(msg);
+        IMC::EntityInfo* einfo = static_cast<IMC::EntityInfo*>(msg);
 
         for (unsigned i = 0; i < SU_COUNT; i++)
         {
@@ -256,7 +256,7 @@ main(int argc, char** argv)
       }
       else if (msg->getId() == DUNE_IMC_POWERCHANNELCONTROL)
       {
-        IMC::PowerChannelControl* pcc = dynamic_cast<IMC::PowerChannelControl*>(msg);
+        IMC::PowerChannelControl* pcc = static_cast<IMC::PowerChannelControl*>(msg);
 
         if (pcc->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF && got_channels)
         {
@@ -284,7 +284,7 @@ main(int argc, char** argv)
       }
       else if (msg->getId() == DUNE_IMC_POWERCHANNELSTATE)
       {
-        IMC::PowerChannelState* pcs = dynamic_cast<IMC::PowerChannelState*>(msg);
+        IMC::PowerChannelState* pcs = static_cast<IMC::PowerChannelState*>(msg);
 
         if (channel_names.find(pcs->id) == channel_names.end())
           channel_names.insert(std::pair<uint8_t, std::string>(pcs->id, pcs->label));
@@ -293,7 +293,7 @@ main(int argc, char** argv)
       }
       else if (msg->getId() == DUNE_IMC_VOLTAGE)
       {
-        IMC::Voltage* volt = dynamic_cast<IMC::Voltage*>(msg);
+        IMC::Voltage* volt = static_cast<IMC::Voltage*>(msg);
         Supply2Id::const_iterator it = measure_ids.find(volt->getSourceEntity());
 
         if (it != measure_ids.end() && !ignore_data)
@@ -301,7 +301,7 @@ main(int argc, char** argv)
       }
       else if (msg->getId() == DUNE_IMC_CURRENT)
       {
-        IMC::Current* curr = dynamic_cast<IMC::Current*>(msg);
+        IMC::Current* curr = static_cast<IMC::Current*>(msg);
         Supply2Id::const_iterator it = measure_ids.find(curr->getSourceEntity());
 
         if (it != measure_ids.end() && !ignore_data)
