@@ -576,7 +576,7 @@ namespace Plan
         if (arg)
         {
           const IMC::PlanSpecification* given_plan;
-          given_plan = dynamic_cast<const IMC::PlanSpecification*>(arg);
+          given_plan = static_cast<const IMC::PlanSpecification*>(arg);
 
           if (given_plan)
           {
@@ -587,7 +587,7 @@ namespace Plan
           {
             // Quick plan
             IMC::PlanManeuver spec_man;
-            const IMC::Maneuver* man = dynamic_cast<const IMC::Maneuver*>(arg);
+            const IMC::Maneuver* man = static_cast<const IMC::Maneuver*>(arg);
 
             if (man)
             {
@@ -1027,7 +1027,7 @@ namespace Plan
         m_vc.command = command;
 
         if (arg)
-          m_vc.maneuver.set(*dynamic_cast<const IMC::Maneuver*>(arg));
+          m_vc.maneuver.set(*static_cast<const IMC::Maneuver*>(arg));
 
         if (command == IMC::VehicleCommand::VC_START_CALIBRATION)
         {
