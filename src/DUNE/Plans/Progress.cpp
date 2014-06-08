@@ -124,13 +124,13 @@ namespace DUNE
           break;
 #ifdef DUNE_IMC_FOLLOWPATH
         case DUNE_IMC_FOLLOWPATH:
-          time_left = compute(dynamic_cast<const IMC::FollowPath*>(man), mcs,
+          time_left = compute(static_cast<const IMC::FollowPath*>(man), mcs,
                               durations, total_duration);
           break;
 #endif
 #ifdef DUNE_IMC_ROWS
         case DUNE_IMC_ROWS:
-          time_left = compute(dynamic_cast<const IMC::Rows*>(man), mcs,
+          time_left = compute(static_cast<const IMC::Rows*>(man), mcs,
                               durations, total_duration);
           break;
 #endif
