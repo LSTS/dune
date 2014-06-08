@@ -318,7 +318,7 @@ namespace Vision
         m_jpeg.setOutputColorSpace(JPEGCompressor::CS_YUV);
 
         m_gvcp = new GVCP(m_args.raddr);
-        m_gvsp = new GVSP(m_args.port);
+        m_gvsp = new GVSP(this, m_args.port);
         m_gvsp->start();
 
         for (unsigned i = 0; i < m_args.buffer_count; ++i)
