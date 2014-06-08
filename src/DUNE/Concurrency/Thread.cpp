@@ -130,11 +130,8 @@ namespace DUNE
 
     Thread::~Thread(void)
     {
-      //!@fixme assert errors.
 #if defined(DUNE_SYS_HAS_PTHREAD)
-      int rv = pthread_attr_destroy(&m_attr);
-      if (rv != 0)
-        DUNE_ERR("Thread", "failed to destroy attributes: " << System::Error::getMessage(rv));
+      pthread_attr_destroy(&m_attr);
 #endif
     }
 
