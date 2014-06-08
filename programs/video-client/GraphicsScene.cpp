@@ -263,7 +263,7 @@ GraphicsScene::handleInputData(void)
     {
       ++m_fps;
 
-      IMC::CompressedImage* img = dynamic_cast<IMC::CompressedImage*>(msg);
+      IMC::CompressedImage* img = static_cast<IMC::CompressedImage*>(msg);
 
       QPixmap pix;
       pix.loadFromData((uchar*)img->data.data(), img->data.size(), "JPEG");
@@ -283,7 +283,7 @@ GraphicsScene::handleInputData(void)
     }
     else if (msg->getId() == DUNE_IMC_EULERANGLES)
     {
-      IMC::EulerAngles* ang = dynamic_cast<IMC::EulerAngles*>(msg);
+      IMC::EulerAngles* ang = static_cast<IMC::EulerAngles*>(msg);
       // QString str("Roll: %0.2f | Pitch: %0.2f");
       // m_text.setText(str.arg(Angles::degrees(ang->roll), Angles::degrees(ang->pitch)));
     }
