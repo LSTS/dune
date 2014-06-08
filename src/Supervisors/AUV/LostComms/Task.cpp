@@ -186,7 +186,7 @@ namespace Supervisors
             return;
           }
 
-          const IMC::PlanSpecification* spec = dynamic_cast<const IMC::PlanSpecification*>(msg->get());
+          const IMC::PlanSpecification* spec = static_cast<const IMC::PlanSpecification*>(msg->get());
 
           if (spec == NULL)
           {
