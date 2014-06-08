@@ -67,7 +67,6 @@ namespace DUNE
       compute(const IMC::ManeuverControlState* mcs, const std::vector<float>& durations,
               float total_duration);
 
-#ifdef DUNE_IMC_FOLLOWPATH
       //! Compute progress of FollowPath maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in] mcs pointer to ManeuverControlState message
@@ -77,9 +76,7 @@ namespace DUNE
       static float
       compute(const IMC::FollowPath* maneuver, const IMC::ManeuverControlState* mcs,
               const std::vector<float>& durations, float total_duration);
-#endif
 
-#ifdef DUNE_IMC_ROWS
       //! Compute progress of Rows maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in] mcs pointer to ManeuverControlState message
@@ -89,7 +86,6 @@ namespace DUNE
       static float
       compute(const IMC::Rows* maneuver, const IMC::ManeuverControlState* mcs,
               const std::vector<float>& durations, float total_duration);
-#endif
 
     public:
       //! Compute a plan's progress from maneuver and ManeuverControlState

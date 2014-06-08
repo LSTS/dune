@@ -188,7 +188,6 @@ namespace DUNE
       extractBathymetry("", pos);
     }
 
-#ifdef DUNE_IMC_FOLLOWPATH
     float
     Duration::parse(const IMC::FollowPath* maneuver, Position& last_pos, float last_dur,
                     std::vector<float>& durations, const SpeedConversion& speed_conv)
@@ -233,8 +232,7 @@ namespace DUNE
 
       return durations.back();
     }
-#endif
-#ifdef DUNE_IMC_ROWS
+
     float
     Duration::parse(const IMC::Rows* maneuver, Position& last_pos, float last_dur,
                     std::vector<float>& durations, const SpeedConversion& speed_conv)
@@ -270,8 +268,7 @@ namespace DUNE
 
       return distance / speed;
     }
-#endif
-#ifdef DUNE_IMC_YOYO
+
     float
     Duration::parse(const IMC::YoYo* maneuver, Position& last_pos, float last_dur,
                     std::vector<float>& durations, const SpeedConversion& speed_conv)
@@ -297,8 +294,7 @@ namespace DUNE
 
       return durations.back();
     }
-#endif
-#ifdef DUNE_IMC_ELEVATOR
+
     float
     Duration::parse(const IMC::Elevator* maneuver, Position& last_pos, float last_dur,
                     std::vector<float>& durations, const SpeedConversion& speed_conv)
@@ -324,8 +320,7 @@ namespace DUNE
 
       return durations.back();
     }
-#endif
-#ifdef DUNE_IMC_POPUP
+
     float
     Duration::parse(const IMC::PopUp* maneuver, Position& last_pos, float last_dur,
                     std::vector<float>& durations, const SpeedConversion& speed_conv)
@@ -372,7 +367,6 @@ namespace DUNE
 
       return durations.back();
     }
-#endif
 
     Duration::ManeuverDuration::const_iterator
     Duration::parse(const std::vector<IMC::PlanManeuver*>& nodes,
@@ -398,60 +392,51 @@ namespace DUNE
 
         switch (msg->getId())
         {
-#ifdef DUNE_IMC_GOTO
           case DUNE_IMC_GOTO:
             last_duration = parse(static_cast<IMC::Goto*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
-#endif
-#ifdef DUNE_IMC_STATIONKEEPING
+
           case DUNE_IMC_STATIONKEEPING:
             last_duration = parse(static_cast<IMC::StationKeeping*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
-#endif
-#ifdef DUNE_IMC_LOITER
+
           case DUNE_IMC_LOITER:
             last_duration = parse(static_cast<IMC::Loiter*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
-#endif
-#ifdef DUNE_IMC_FOLLOWPATH
+
           case DUNE_IMC_FOLLOWPATH:
             last_duration = parse(static_cast<IMC::FollowPath*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
-#endif
-#ifdef DUNE_IMC_ROWS
+
           case DUNE_IMC_ROWS:
             last_duration = parse(static_cast<IMC::Rows*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
-#endif
-#ifdef DUNE_IMC_YOYO
+
           case DUNE_IMC_YOYO:
             last_duration = parse(static_cast<IMC::YoYo*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
-#endif
-#ifdef DUNE_IMC_ELEVATOR
+
           case DUNE_IMC_ELEVATOR:
             last_duration = parse(static_cast<IMC::Elevator*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
-#endif
-#ifdef DUNE_IMC_POPUP
+
           case DUNE_IMC_POPUP:
             last_duration = parse(static_cast<IMC::PopUp*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
-#endif
-#ifdef DUNE_IMC_COMPASSCALIBRATION
+
           case DUNE_IMC_COMPASSCALIBRATION:
             last_duration = parse(static_cast<IMC::CompassCalibration*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
-#endif
+
           default:
             last_duration = -1.0;
             break;

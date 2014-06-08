@@ -201,7 +201,6 @@ namespace DUNE
       static void
       extractPosition(const IMC::EstimatedState* state, Position& pos);
 
-#ifdef DUNE_IMC_GOTO
       //! Parse a Goto maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
@@ -214,9 +213,7 @@ namespace DUNE
       {
         return parseSimple(maneuver, last_pos, last_dur, durations, speed_conv);
       };
-#endif
 
-#ifdef DUNE_IMC_STATIONKEEPING
       //! Parse a StationKeeping maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
@@ -232,9 +229,7 @@ namespace DUNE
 
         return parseSimple(maneuver, last_pos, last_dur + maneuver->duration, durations, speed_conv);
       };
-#endif
 
-#ifdef DUNE_IMC_LOITER
       //! Parse a Loiter maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
@@ -250,9 +245,7 @@ namespace DUNE
 
         return parseSimple(maneuver, last_pos, last_dur + maneuver->duration, durations, speed_conv);
       };
-#endif
 
-#ifdef DUNE_IMC_FOLLOWPATH
       //! Parse a FollowPath maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
@@ -262,9 +255,7 @@ namespace DUNE
       static float
       parse(const IMC::FollowPath* maneuver, Position& last_pos, float last_dur,
             std::vector<float>& durations, const SpeedConversion& speed_conv);
-#endif
 
-#ifdef DUNE_IMC_ROWS
       //! Parse a Rows maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
@@ -274,9 +265,7 @@ namespace DUNE
       static float
       parse(const IMC::Rows* maneuver, Position& last_pos, float last_dur,
             std::vector<float>& durations, const SpeedConversion& speed_conv);
-#endif
 
-#ifdef DUNE_IMC_YOYO
       //! Parse a YoYo maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
@@ -286,9 +275,7 @@ namespace DUNE
       static float
       parse(const IMC::YoYo* maneuver, Position& last_pos, float last_dur,
             std::vector<float>& durations, const SpeedConversion& speed_conv);
-#endif
 
-#ifdef DUNE_IMC_ELEVATOR
       //! Parse an Elevator maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
@@ -298,9 +285,7 @@ namespace DUNE
       static float
       parse(const IMC::Elevator* maneuver, Position& last_pos, float last_dur,
             std::vector<float>& durations, const SpeedConversion& speed_conv);
-#endif
 
-#ifdef DUNE_IMC_POPUP
       //! Parse a PopUp maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
@@ -310,9 +295,7 @@ namespace DUNE
       static float
       parse(const IMC::PopUp* maneuver, Position& last_pos, float last_dur,
             std::vector<float>& durations, const SpeedConversion& speed_conv);
-#endif
 
-#ifdef DUNE_IMC_COMPASSCALIBRATION
       //! Parse a Compass Calibration maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
@@ -328,7 +311,6 @@ namespace DUNE
 
         return parseSimple(maneuver, last_pos, last_dur + maneuver->duration, durations, speed_conv);
       }
-#endif
     };
   }
 }

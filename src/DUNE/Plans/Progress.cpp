@@ -63,7 +63,6 @@ namespace DUNE
       return total_duration - durations[curr] + (float)mcs->eta;
     }
 
-#ifdef DUNE_IMC_FOLLOWPATH
     float
     Progress::compute(const IMC::FollowPath* maneuver, const IMC::ManeuverControlState* mcs,
       const std::vector<float>& durations, float total_duration)
@@ -72,9 +71,7 @@ namespace DUNE
 
     return compute(mcs, durations, total_duration);
   }
-#endif
 
-#ifdef DUNE_IMC_ROWS
     float
     Progress::compute(const IMC::Rows* maneuver, const IMC::ManeuverControlState* mcs,
                       const std::vector<float>& durations, float total_duration)
@@ -83,7 +80,6 @@ namespace DUNE
 
       return compute(mcs, durations, total_duration);
     }
-#endif
 
     float
     Progress::compute(const IMC::Message* man, const IMC::ManeuverControlState* mcs,
@@ -99,41 +95,23 @@ namespace DUNE
 
       switch (man->getId())
       {
-#ifdef DUNE_IMC_STATIONKEEPING
         case DUNE_IMC_STATIONKEEPING:
-#endif
-#ifdef DUNE_IMC_LOITER
         case DUNE_IMC_LOITER:
-#endif
-#ifdef DUNE_IMC_ELEVATOR
         case DUNE_IMC_ELEVATOR:
-#endif
-#ifdef DUNE_IMC_YOYO
         case DUNE_IMC_YOYO:
-#endif
-#ifdef DUNE_IMC_POPUP
         case DUNE_IMC_POPUP:
-#endif
-#ifdef DUNE_IMC_COMPASSCALIBRATION
         case DUNE_IMC_COMPASSCALIBRATION:
-#endif
-#ifdef DUNE_IMC_GOTO
         case DUNE_IMC_GOTO:
-#endif
           time_left = total_duration - durations[0] + (float)mcs->eta;
           break;
-#ifdef DUNE_IMC_FOLLOWPATH
         case DUNE_IMC_FOLLOWPATH:
           time_left = compute(static_cast<const IMC::FollowPath*>(man), mcs,
                               durations, total_duration);
           break;
-#endif
-#ifdef DUNE_IMC_ROWS
         case DUNE_IMC_ROWS:
           time_left = compute(static_cast<const IMC::Rows*>(man), mcs,
                               durations, total_duration);
           break;
-#endif
         default:
           return -1.0;
       }
