@@ -134,7 +134,7 @@ main(int32_t argc, char** argv)
         {
           if (!got_name)
           {
-            DUNE::IMC::LoggingControl* ptr = dynamic_cast<DUNE::IMC::LoggingControl*>(msg);
+            DUNE::IMC::LoggingControl* ptr = static_cast<DUNE::IMC::LoggingControl*>(msg);
 
             if (ptr->op == DUNE::IMC::LoggingControl::COP_STARTED)
             {
@@ -145,7 +145,7 @@ main(int32_t argc, char** argv)
         }
         else if (msg->getId() == DUNE_IMC_ENTITYINFO)
         {
-          DUNE::IMC::EntityInfo* ptr = dynamic_cast<DUNE::IMC::EntityInfo*>(msg);
+          DUNE::IMC::EntityInfo* ptr = static_cast<DUNE::IMC::EntityInfo*>(msg);
 
           if (ptr->label.compare(volt_label) == 0)
           {
@@ -169,7 +169,7 @@ main(int32_t argc, char** argv)
         {
           if (entities_set)
           {
-            DUNE::IMC::Voltage* ptr = dynamic_cast<DUNE::IMC::Voltage*>(msg);
+            DUNE::IMC::Voltage* ptr = static_cast<DUNE::IMC::Voltage*>(msg);
             bdata.update(ptr);
             ++samples;
 
@@ -189,13 +189,13 @@ main(int32_t argc, char** argv)
         {
           if (entities_set)
           {
-            DUNE::IMC::Current* ptr = dynamic_cast<DUNE::IMC::Current*>(msg);
+            DUNE::IMC::Current* ptr = static_cast<DUNE::IMC::Current*>(msg);
             bdata.update(ptr);
           }          
         }
         else if (msg->getId() == DUNE_IMC_RPM)
         {
-          DUNE::IMC::Rpm* ptr = dynamic_cast<DUNE::IMC::Rpm*>(msg);
+          DUNE::IMC::Rpm* ptr = static_cast<DUNE::IMC::Rpm*>(msg);
           rpm = ptr->value;
         }
         else if (msg->getId() == DUNE_IMC_SIMULATEDSTATE)
