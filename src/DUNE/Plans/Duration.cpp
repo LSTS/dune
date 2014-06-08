@@ -400,55 +400,55 @@ namespace DUNE
         {
 #ifdef DUNE_IMC_GOTO
           case DUNE_IMC_GOTO:
-            last_duration = parse(dynamic_cast<IMC::Goto*>(msg), pos,
+            last_duration = parse(static_cast<IMC::Goto*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
 #endif
 #ifdef DUNE_IMC_STATIONKEEPING
           case DUNE_IMC_STATIONKEEPING:
-            last_duration = parse(dynamic_cast<IMC::StationKeeping*>(msg), pos,
+            last_duration = parse(static_cast<IMC::StationKeeping*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
 #endif
 #ifdef DUNE_IMC_LOITER
           case DUNE_IMC_LOITER:
-            last_duration = parse(dynamic_cast<IMC::Loiter*>(msg), pos,
+            last_duration = parse(static_cast<IMC::Loiter*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
 #endif
 #ifdef DUNE_IMC_FOLLOWPATH
           case DUNE_IMC_FOLLOWPATH:
-            last_duration = parse(dynamic_cast<IMC::FollowPath*>(msg), pos,
+            last_duration = parse(static_cast<IMC::FollowPath*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
 #endif
 #ifdef DUNE_IMC_ROWS
           case DUNE_IMC_ROWS:
-            last_duration = parse(dynamic_cast<IMC::Rows*>(msg), pos,
+            last_duration = parse(static_cast<IMC::Rows*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
 #endif
 #ifdef DUNE_IMC_YOYO
           case DUNE_IMC_YOYO:
-            last_duration = parse(dynamic_cast<IMC::YoYo*>(msg), pos,
+            last_duration = parse(static_cast<IMC::YoYo*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
 #endif
 #ifdef DUNE_IMC_ELEVATOR
           case DUNE_IMC_ELEVATOR:
-            last_duration = parse(dynamic_cast<IMC::Elevator*>(msg), pos,
+            last_duration = parse(static_cast<IMC::Elevator*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
 #endif
 #ifdef DUNE_IMC_POPUP
           case DUNE_IMC_POPUP:
-            last_duration = parse(dynamic_cast<IMC::PopUp*>(msg), pos,
+            last_duration = parse(static_cast<IMC::PopUp*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
 #endif
 #ifdef DUNE_IMC_COMPASSCALIBRATION
           case DUNE_IMC_COMPASSCALIBRATION:
-            last_duration = parse(dynamic_cast<IMC::CompassCalibration*>(msg), pos,
+            last_duration = parse(static_cast<IMC::CompassCalibration*>(msg), pos,
                                   last_duration, durations, speed_conv);
             break;
 #endif
