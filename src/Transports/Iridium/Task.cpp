@@ -214,18 +214,18 @@ namespace Transports
             inf("received subscription deactivation request via Iridium (ignoring).");
             break;
           case (ID_IRIDIUMCMD):
-            handleIridiumCommand(dynamic_cast<IridiumCommand *>(m));
+            handleIridiumCommand(static_cast<IridiumCommand *>(m));
             inf("received text command via Iridium.");
             break;
           case (ID_DEVICEUPDATE):
-            handleUpdates(dynamic_cast<DeviceUpdate *>(m)->positions);
+            handleUpdates(static_cast<DeviceUpdate *>(m)->positions);
             break;
           case (ID_EXTDEVUPDATE):
-            handleUpdates(dynamic_cast<ExtendedDeviceUpdate *>(m)->positions);
+            handleUpdates(static_cast<ExtendedDeviceUpdate *>(m)->positions);
             break;
           default:
             DUNE::IMC::ImcIridiumMessage * irMsg =
-                dynamic_cast<DUNE::IMC::ImcIridiumMessage *>(m);
+                static_cast<DUNE::IMC::ImcIridiumMessage *>(m);
 
             double age = Clock::getSinceEpoch() - irMsg->msg->getTimeStamp();
             if (age < m_args.max_age_secs)
