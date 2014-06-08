@@ -61,7 +61,7 @@ main(int argc, char** argv)
     {
       if (msg->getId() == DUNE_IMC_COMPRESSEDIMAGE)
       {
-        DUNE::IMC::CompressedImage* img = dynamic_cast<DUNE::IMC::CompressedImage*>(msg);
+        DUNE::IMC::CompressedImage* img = static_cast<DUNE::IMC::CompressedImage*>(msg);
 
         Path fname = folder / String::str("%0.4f.jpg", img->getTimeStamp());
         std::ofstream ofs(fname.c_str(), std::ios::binary);
