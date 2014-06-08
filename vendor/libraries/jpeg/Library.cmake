@@ -3,7 +3,7 @@ if(NOT DUNE_SYS_HAS_JPEG)
     vendor/libraries/jpeg/*.c)
 
   set_source_files_properties(${DUNE_JPEG_FILES}
-    PROPERTIES COMPILE_FLAGS "${DUNE_CXX_FLAGS}")
+    PROPERTIES COMPILE_FLAGS "${DUNE_C_FLAGS}")
 
   list(APPEND DUNE_VENDOR_FILES ${DUNE_JPEG_FILES})
 
