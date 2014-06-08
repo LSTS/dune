@@ -2496,3 +2496,60 @@ void WMM_TMfwd4(double Eps, double Epssq, double K0R4, double K0R4oa,
       *CoM = atan2(SChi * SLam, CLam) + atan2(sig2, sig1);
       }
    }
+
+int WMM_DateToYear (WMMtype_Date *CalendarDate, char *Error)
+
+	/* Converts a given calendar date into a decimal year,
+	it also outputs an error string if there is a problem
+	INPUT  CalendarDate  Pointer to the  data  structure with the following elements
+				int	Year;
+				int	Month;
+				int	Day;
+				double DecimalYear;      decimal years
+	OUTPUT  CalendarDate  Pointer to the  data  structure with the following elements updated
+				double DecimalYear;      decimal years
+			Error	pointer to an error string
+	CALLS : none
+
+	*/
+
+	{
+	int temp = 0; /*Total number of days */
+	int MonthDays[13];
+	int ExtraDay = 0;
+	int i;
+	if((CalendarDate->Year%4 == 0 && CalendarDate->Year%100 != 0) || CalendarDate->Year%400 == 0)
+		ExtraDay = 1;
+	MonthDays[0] = 0;
+	MonthDays[1] = 31;
+	MonthDays[2] = 28 + ExtraDay;
+	MonthDays[3] = 31;
+	MonthDays[4] = 30;
+	MonthDays[5] = 31;
+	MonthDays[6] = 30;
+	MonthDays[7] = 31;
+	MonthDays[8] = 31;
+	MonthDays[9] = 30;
+	MonthDays[10] = 31;
+	MonthDays[11] = 30;
+	MonthDays[12] = 31;
+
+	/******************Validation********************************/
+	if(CalendarDate->Month <= 0 || CalendarDate->Month > 12)
+	{
+		strcpy(Error, "\nError: The Month entered is invalid, valid months are '1 to 12'\n");
+		return 0;
+	}
+	if(CalendarDate->Day <= 0 || CalendarDate->Day > MonthDays[CalendarDate->Month])
+	{
+		printf("\nThe number of days in month %d is %d\n", CalendarDate->Month, MonthDays[CalendarDate->Month]);
+		strcpy(Error, "\nError: The day entered is invalid\n");
+		return 0;
+	}
+	/****************Calculation of t***************************/
+	for(i = 1; i <= CalendarDate->Month; i++)
+		temp+=MonthDays[i-1];
+	temp+=CalendarDate->Day;
+	CalendarDate->DecimalYear = CalendarDate->Year + (temp-1)/(365.0 + ExtraDay);
+	return TRUE;
+}  /*WMM_DateToYear*/
