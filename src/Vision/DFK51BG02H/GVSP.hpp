@@ -49,6 +49,7 @@ namespace Vision
     {
     public:
       //! Constructor.
+      //! @param[in] task parent task.
       //! @param[in] port UDP listening port.
       //! @param[in] buffer_capacity packet buffer capacity.
       GVSP(DUNE::Tasks::Task* task, uint16_t port, unsigned buffer_capacity = 16384):
