@@ -957,9 +957,9 @@ namespace Control
           trace("Trigger Request Received");
 
           if (pcc->op & IMC::PowerChannelControl::PCC_OP_TURN_ON)
-            sendCommandPacket(MAV_CMD_DO_SET_RELAY, 1);
+            sendCommandPacket(MAV_CMD_DO_SET_RELAY, 0, 1);
           else
-            sendCommandPacket(MAV_CMD_DO_SET_RELAY, 0);
+            sendCommandPacket(MAV_CMD_DO_SET_RELAY, 0, 0);
         }
 
         void
