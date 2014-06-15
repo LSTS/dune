@@ -60,6 +60,12 @@ namespace DUNE
         return a;
       }
 
+      inline static double
+      normalizeRadian2(double alpha, double center = c_pi)
+      {
+        return fmod(alpha - center + c_pi, c_two_pi) + center - c_pi;
+      }
+
       //! Convert a value given in degree to radian.
       //! @param d value in degree.
       //! @return value converted to radian.
