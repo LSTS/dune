@@ -8,7 +8,7 @@
 using DUNE_NAMESPACES;
 
 // Local headers.
-#include "Filters/Table.hpp"
+#include "MCI.hpp"
 
 int
 main(int argc, char** argv)
@@ -37,15 +37,12 @@ main(int argc, char** argv)
   }
 
   // Create filter table.
-  std::string config = options.value("--config");
-  if (config.empty())
+  std::string config_file = options.value("--config");
+  if (config_file.empty())
   {
     std::cerr << "ERROR: you must specify one configuration file." << std::endl;
     return 1;
   }
-
-  LCB::Filters::Table table(config);
-  table.start();
 
   // Open serial port device.
   std::string device = options.value("--device");
@@ -55,36 +52,10 @@ main(int argc, char** argv)
     return 1;
   }
 
+  Parsers::Config config(config_file.c_str());
   SerialPort uart(device, 3000000);
-  UCTK::Interface ctl(&uart);
-  UCTK::FirmwareInfo info = ctl.getFirmwareInfo();
-  std::fprintf(stderr, "Firmware: %s %u.%u.%u\n",
-               info.name.c_str(),
-               info.major,
-               info.minor,
-               info.patch);
-
-  std::ofstream ofs("lcb.bin", std::ios::binary);
-
-  uint8_t bfr[1024] = {0};
-
-  while (true)
-  {
-    if (!Poll::poll(uart, 1.0))
-      continue;
-
-    size_t rv = uart.read(bfr, sizeof(bfr));
-
-#if 1
-    ofs.write((const char*)bfr, rv);
-    ofs.flush();
-#endif
-
-    for (size_t i = 0; i < rv; ++i)
-    {
-      table.push(bfr[i]);
-    }
-  }
+  LCB::MCI mci(uart, config);
+  mci.run();
 
   return 0;
 }

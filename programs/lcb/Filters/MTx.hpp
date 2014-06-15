@@ -131,7 +131,7 @@ namespace LCB
             }
             else
             {
-              //std::fprintf(stderr, "MTx: % 3u: % 3u\n", m_pulse, m_data_len);
+              //std::fprintf(stderr, "MTx: wee\n");
               interpret();
               return true;
             }
@@ -142,6 +142,8 @@ namespace LCB
             m_state = PS_NONE;
             break;
         }
+
+        return false;
       }
 
       void

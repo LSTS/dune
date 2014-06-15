@@ -54,6 +54,9 @@ namespace LCB
                  "  avel_x REAL NOT NULL,"
                  "  avel_y REAL NOT NULL,"
                  "  avel_z REAL NOT NULL,"
+                 "  magn_x REAL NOT NULL,"
+                 "  magn_y REAL NOT NULL,"
+                 "  magn_z REAL NOT NULL,"
                  "  phi    REAL NOT NULL,"
                  "  theta  REAL NOT NULL,"
                  "  psi    REAL NOT NULL,"
@@ -61,7 +64,7 @@ namespace LCB
                  " )"
                  );
 
-        dbPrepare("INSERT INTO limu VALUES(?,?,?,?,?,?,?,?,?,?,?)");
+        dbPrepare("INSERT INTO limu VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
       }
 
       bool
@@ -73,17 +76,21 @@ namespace LCB
         }
 
         if (m_parser.parse(byte, m_frame))
-          interpret();
+        {
+          return interpret();
+        }
+
+        return false;
       }
 
-      void
+      bool
       interpret(void)
       {
         uint8_t id = m_frame.getId();
         if (id != 0x05)
         {
           std::fprintf(stderr, "ERROR: LIMU: unknown message id %02X\n", id);
-          return;
+          return false;
         }
 
         int16_t s16;
@@ -93,43 +100,45 @@ namespace LCB
 
         // Temperature.
         ByteCopy::fromLE(s16, ptr + 32);
-        m_fields.temp = (s16 * 0.00565) + 25.0f;
+        m_fields.temp = (s16 * 0.00565) + 25.0;
 
         // Acceleration X.
         ByteCopy::fromLE(s16, ptr + 8);
-        double accl_x = s16 * 0.0008f;
-        m_fields.accl_x = accl_x * 9.7982543981;
+        m_fields.accl_x = s16 * 0.0008;
         // Acceleration Y.
         ByteCopy::fromLE(s16, ptr + 10);
-        double accl_y = s16 * 0.0008f;
-        m_fields.accl_y = accl_y * 9.7982543981;
+        m_fields.accl_y = s16 * 0.0008;
         // Acceleration Z.
         ByteCopy::fromLE(s16, ptr + 12);
-        double accl_z = s16 * 0.0008f;
-        m_fields.accl_z = accl_z * 9.7982543981;
+        m_fields.accl_z = s16 * 0.0008;
 
         // Angular Velocity X.
         ByteCopy::fromLE(s16, ptr + 2);
-        m_fields.avel_x = s16 * 0.02;
+        m_fields.avel_x = (double)s16 * 0.02;
         // Angular Velocity Y.
         ByteCopy::fromLE(s16, ptr + 4);
-        m_fields.avel_y = s16 * 0.02;
+        m_fields.avel_y = (double)s16 * 0.02;
         // Angular Velocity Z.
         ByteCopy::fromLE(s16, ptr + 6);
-        m_fields.avel_z = s16 * 0.02;
+        m_fields.avel_z = (double)s16 * 0.02;
 
         // Magnetometer X.
         ByteCopy::fromLE(s16, ptr + 26);
-        double magn_x = s16 * 0.0001;
+        m_fields.magn_x = (double)s16 * 0.0001;
         // Magnetometer X.
         ByteCopy::fromLE(s16, ptr + 28);
-        double magn_y = s16 * 0.0001;
+        m_fields.magn_y = (double)s16 * 0.0001;
         // Magnetometer X.
         ByteCopy::fromLE(s16, ptr + 30);
-        double magn_z = s16 * 0.0001;
+        m_fields.magn_z = (double)s16 * 0.0001;
 
         // Compute Euler Angles.
-        compute(accl_x, accl_y, accl_z, magn_x, magn_y, magn_z);
+        compensate();
+
+        // Convert acceleration to m/s.
+        m_fields.accl_x *= 9.7982543981;
+        m_fields.accl_y *= 9.7982543981;
+        m_fields.accl_z *= 9.7982543981;
 
         if (dbIsActive())
         {
@@ -141,35 +150,51 @@ namespace LCB
           dbBindDouble(6, m_fields.avel_x);
           dbBindDouble(7, m_fields.avel_y);
           dbBindDouble(8, m_fields.avel_z);
-          dbBindDouble(9, m_fields.phi);
-          dbBindDouble(10, m_fields.theta);
-          dbBindDouble(11, m_fields.psi);
+          dbBindDouble(9, m_fields.magn_x);
+          dbBindDouble(10, m_fields.magn_y);
+          dbBindDouble(11, m_fields.magn_z);
+          dbBindDouble(12, m_fields.phi);
+          dbBindDouble(13, m_fields.theta);
+          dbBindDouble(14, m_fields.psi);
 
           dbStep();
         }
+
+        return true;
       }
 
       void
-      compute(double a_accl_x, double a_accl_y, double a_accl_z,
-              double a_magn_x, double a_magn_y, double a_magn_z)
+      compensate(void)
       {
         using namespace std;
 
-        double accl_x = a_accl_x;
-        double accl_y = a_accl_y;
-        double accl_z = a_accl_z;
+        double accl_x = -m_fields.accl_x;
+        double accl_y = -m_fields.accl_y;
+        double accl_z = -m_fields.accl_z;
+        double magn_x = m_fields.magn_x;
+        double magn_y = m_fields.magn_y;
+        double magn_z = m_fields.magn_z;
 
-        // Compute roll (phi).
+        // Roll.
         double phi = atan2(accl_y, sqrt(accl_x * accl_x + accl_z * accl_z));
-        m_fields.phi = Angles::degrees(phi);
 
-        // Compute pitch (theta).
+        // Pitch.
         double theta = atan2(-accl_x, accl_z);
-        m_fields.theta = Angles::degrees(theta);
 
-        double Xh = a_magn_x * cos(theta) + a_magn_z * sin(theta);
-        double Yh = a_magn_x * sin(phi) * sin(theta) + a_magn_y * cos(phi) - a_magn_z * sin(phi) * cos(theta);
-        m_fields.psi = -Angles::degrees(Angles::normalizeRadian(atan2(Yh, Xh)));
+        // Yaw.
+        double cos_phi = cos(phi);
+        double sin_phi = sin(phi);
+        double cos_theta = cos(theta);
+        double sin_theta = sin(theta);
+        double psi = atan2(magn_z * sin_phi
+                           - magn_y * cos_phi,
+                           magn_x * cos_theta
+                           + magn_y * sin_theta * sin_phi
+                           + magn_z * sin_theta * cos_phi);
+
+        m_fields.phi = -Angles::degrees(Angles::normalizeRadian2(phi, 0));
+        m_fields.theta = Angles::degrees(Angles::normalizeRadian2(theta, 0));
+        m_fields.psi = Angles::degrees(Angles::normalizeRadian2(c_pi - psi, 0));
       }
 
     private:

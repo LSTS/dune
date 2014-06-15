@@ -1,0 +1,5 @@
+UART_FRAME(0, "8n1")
+UART_FRAME(1, "7o1")
+UART_FRAME(2, "7e1")
+
+#undef UART_FRAME

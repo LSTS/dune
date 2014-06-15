@@ -24,7 +24,7 @@ namespace LCB
     class Table: public DUNE::Concurrency::Thread
     {
     public:
-      Table(const std::string& config):
+      Table(Parsers::Config& config):
         m_fsm_state(FSM_ST_ACQUIRE_TIME),
         m_pulse(0),
         m_sync(false),
@@ -35,15 +35,13 @@ namespace LCB
 
         sqlite3_open("lcb.db", &m_db);
 
-        m_config.parseFile(config.c_str());
-
-        std::string time_channel = m_config.get("Filters", "Time Reference");
+        std::string time_channel = config.get("LCB", "Time Reference");
         if (!castLexical(time_channel, m_time_channel))
           throw std::runtime_error("invalid time reference channel");
 
         for (size_t i = 0; i < m_filters.size(); ++i)
         {
-          std::string name = m_config.get("Filters", String::str("Channel %u", i));
+          std::string name = config.get("LCB", String::str("Channel %u - Filter", i));
           if (name.empty())
             continue;
 
@@ -56,15 +54,18 @@ namespace LCB
       void
       setFilter(unsigned index, const std::string& name)
       {
+        DUNE_MSG("Filter", "filter " << index << ": " << name);
+
         m_filters[index] = Factory::create(name, m_db);
       }
 
       void
       flushTransaction(void)
       {
-        std::fprintf(stderr, "----- DB FLUSH -----\n");
+        //std::fprintf(stderr, "----- DB FLUSH -----\n");
         sqlite3_exec(m_db, "END TRANSACTION", NULL, NULL, NULL);
         sqlite3_exec(m_db, "BEGIN TRANSACTION", NULL, NULL, NULL);
+        printCount();
       }
 
       bool
@@ -108,7 +109,10 @@ namespace LCB
       stream(uint8_t channel, uint8_t byte)
       {
         if (m_filters[channel] == NULL)
+        {
+          DUNE_MSG("Filter", "channel is null");
           return;
+        }
 
         m_filters[channel]->filter(m_msec, byte);
       }
@@ -125,6 +129,8 @@ namespace LCB
         uint8_t* payload = m_frame.getPayload();
         uint8_t pchannel = payload[0];
         uint8_t pbyte = payload[1];
+
+        //DUNE_MSG("Filter", "channel " << (unsigned)pchannel);
 
         switch (m_fsm_state)
         {
@@ -196,7 +202,6 @@ namespace LCB
       DUNE::Hardware::UCTK::Frame m_frame;
       DUNE::Hardware::UCTK::Parser m_parser;
       DUNE::System::DynamicLoader m_loader;
-      DUNE::Parsers::Config m_config;
       std::vector<Filter*> m_filters;
       DUNE::Concurrency::TSQueue<uint8_t> m_queue;
 
@@ -204,6 +209,20 @@ namespace LCB
       size_t m_time_channel;
 
       sqlite3* m_db;
+
+      void
+      printCount(void) const
+      {
+        for (size_t i = 0; i < m_filters.size(); ++i)
+        {
+          if (m_filters[i] == NULL)
+            continue;
+
+          std::fprintf(stderr, " %u: %llu", i, m_filters[i]->getCount());
+        }
+
+        std::fprintf(stderr, "\n");
+      }
     };
   }
 }

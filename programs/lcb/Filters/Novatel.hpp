@@ -232,18 +232,23 @@ namespace LCB
             m_crc.raw[m_crc_idx++] = byte;
             if (m_crc_idx == 4)
             {
+              m_fsm_state = NOV_FSM_SYNC0;
+
               if (m_mcrc != m_crc.value)
               {
-                std::fprintf(stderr, "ERROR: novatel: invalid CRC\n");
+                std::fprintf(stderr, "ERROR: novatel: invalid CRC %04X != %04X\n", m_mcrc, m_crc.value);
+                std::fprintf(stderr, "novatel: message %u, length %u\n", m_hdr.field.msg_id, m_msg_len);
               }
               else
               {
                 interpret();
+                return true;
               }
-              m_fsm_state = NOV_FSM_SYNC0;
             }
             break;
         }
+
+        return false;
       }
 
       void
@@ -298,7 +303,7 @@ namespace LCB
           m_time *= 1000;
         }
 
-#if 1
+#if 0
         std::fprintf(stderr, "%u-%02u-%02u %02u:%02u:%02u (%u:%u)\r\n",
                      (uint16_t)m_msg.time.utc_year,
                      m_msg.time.utc_month,
@@ -332,7 +337,7 @@ namespace LCB
           return;
         }
 
-        std::fprintf(stderr, "novatel: message length %u\n", m_msg_len);
+        //std::fprintf(stderr, "novatel: message %u, length %u\n", m_hdr.field.msg_id, m_msg_len);
 
         if (dbIsActive())
         {

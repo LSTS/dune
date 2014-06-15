@@ -64,8 +64,8 @@ namespace LCB
       bool
       filter(int64_t msec, uint8_t byte)
       {
-        doFilter(msec, byte);
-        ++m_count;
+        if (doFilter(msec, byte))
+          ++m_count;
       }
 
       uint64_t
