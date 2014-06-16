@@ -323,6 +323,12 @@
         </doc>
       </arg>
 
+      <arg name="Destinations Count" type="Integer">
+        <doc>
+          Number of destination addresses in the Destinations field.
+        </doc>
+      </arg>
+
       <arg name="Destinations" type="List" >
         <types>
           <type name="Integer"/>
@@ -372,6 +378,15 @@
         This command shall be sent immediately in response to a
         command that was received, decoded and correctly interpreted.
       </doc>
+
+      <args>
+        <arg name="Name" type="String">
+          <doc>
+            Name of the received command.
+          </doc>
+        </arg>
+      </args>
+
     </command>
 
     <command name="CommandError">
