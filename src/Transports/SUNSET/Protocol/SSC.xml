@@ -166,6 +166,24 @@
       </args>
     </type>
 
+    <type name="SensorInfoTuple">
+      <doc>
+        Sensor info tuple.
+      </doc>
+
+      <args>
+        <arg name="Sensor Id" type="Integer">
+          <doc>Sensor Id</doc>
+        </arg>
+        <arg name="Sensor Vendor" type="String">
+          <doc>Speed Reference</doc>
+        </arg>
+        <arg name="Sensor Model" type="String">
+          <doc>Speed Reference</doc>
+        </arg>
+      </args>
+    </type>
+
     <type name="ManeuverGoto">
       <doc>
         A "Goto" is a maneuver specifying a movement of the
@@ -1032,6 +1050,22 @@
           </doc>
         </arg>
       </args>
+
+      <args>
+        <arg name="Tuple Count" type="Integer">
+          <doc>
+            Number of tuples in the following list.
+          </doc>
+        </arg>
+        <arg name="Tuples" type="List">
+          <types>
+            <type name="SensorInfoTuple"/>
+          </types>
+          <doc>
+            Sensor info tuple.
+          </doc>
+        </arg>
+      </args>
     </command>
 
     <command name="SensorSampleGet">
@@ -1152,6 +1186,19 @@
       </doc>
 
       <args>
+        <arg name="Target Count" type="Integer">
+          <doc>
+            Number of target addresses.
+          </doc>
+        </arg>
+        <arg name="Targets" type="List">
+          <types>
+            <type name="Integer"/>
+          </types>
+          <doc>
+            Number of target addresses.
+          </doc>
+        </arg>
         <arg name="Frequency" type="Real">
           <doc>
             Range estimation frequency. If Hz is 0, single shot.
@@ -1168,6 +1215,12 @@
       </doc>
 
       <args>
+        <arg name="Target" type="Integer">
+          <doc>
+            Target address.
+          </doc>
+        </arg>
+
         <arg name="Travel Time" type="Real">
           <doc>
             Estimated travel time to the target node in seconds.
