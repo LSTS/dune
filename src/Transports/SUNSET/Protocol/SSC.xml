@@ -500,6 +500,12 @@
                 internal problem.
               </doc>
             </value>
+
+            <value name="BUSY">
+              <doc>
+                Remote node is busy.
+              </doc>
+            </value>
           </values>
         </arg>
 
