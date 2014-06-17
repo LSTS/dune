@@ -52,10 +52,30 @@ main(int argc, char** argv)
     return 1;
   }
 
-  Parsers::Config config(config_file.c_str());
-  SerialPort uart(device, 3000000);
-  LCB::MCI mci(uart, config);
-  mci.run();
+  SerialPort m_uart(device.c_str(), 3000000);
+
+  uint8_t bfr[1024] = {0};
+
+  while (true)
+  {
+    if (!Poll::poll(m_uart, 1.0))
+    {
+      continue;
+    }
+
+    size_t rv = m_uart.read(bfr, sizeof(bfr));
+
+    for (size_t i = 0; i < rv; ++i)
+    {
+      putchar(bfr[i]);
+    }
+  }
+
+
+  // Parsers::Config config(config_file.c_str());
+  // SerialPort uart(device, 3000000);
+  // LCB::MCI mci(uart, config);
+  // mci.run();
 
   return 0;
 }
