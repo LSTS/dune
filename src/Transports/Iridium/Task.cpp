@@ -38,20 +38,17 @@ namespace Transports
 
     struct Arguments
     {
-      // Delay between dev updates.
+      //! Delay between dev updates.
       int delay_between_device_updates;
-
-      // Delay between announcements.
+      //! Delay between announcements.
       int delay_between_announces;
-
-      // Maximum age after which received messages are discarded
+      //! Maximum age after which received messages are discarded
       int max_age_secs;
-
-      // Destination to send all iridium messages
+      //! Destination to send all iridium messages
       std::string iridium_destination;
     };
 
-    struct Task : public DUNE::Tasks::Task
+    struct Task: public DUNE::Tasks::Task
     {
       std::map<std::string, IMC::Announce> m_last_announces;
       double m_last_dev_update_time;
@@ -77,20 +74,19 @@ namespace Transports
         m_announce_req_id(75),
         m_rnd(NULL)
       {
-        param("Device updates - Periodicity",
-              m_args.delay_between_device_updates).units(Units::Second).defaultValue(
-                  "600").description(
-                      "Delay between announce update messages. 0 for no updates being sent.");
+        param("Device updates - Periodicity", m_args.delay_between_device_updates)
+        .units(Units::Second)
+        .defaultValue("600")
+        .description("Delay between announce update messages. 0 for no updates being sent.");
 
-        param("Announce Periodicity",
-            m_args.delay_between_announces).units(Units::Second).defaultValue(
-                "0").description(
-                    "Delay between announce messages being sent. 0 for no updates being sent.");
+        param("Announce Periodicity", m_args.delay_between_announces)
+        .units(Units::Second)
+        .defaultValue("0").description("Delay between announce messages being sent. 0 for no updates being sent.");
 
-        param("Maximum age",
-            m_args.max_age_secs).units(Units::Second).defaultValue(
-                "1200").description(
-                    "Age, in seconds, after which received IMC messages are discarded.");
+        param("Maximum age", m_args.max_age_secs)
+        .units(Units::Second)
+        .defaultValue("1200")
+        .description("Age, in seconds, after which received IMC messages are discarded.");
 
         bind<IMC::Announce>(this);
         bind<IMC::IridiumMsgRx>(this);
@@ -135,7 +131,9 @@ namespace Transports
         dispatch(tm);
       }
 
-      void handleUpdates(std::vector<DevicePosition> positions) {
+      void
+      handleUpdates(std::vector<DevicePosition> positions)
+      {
         std::vector<DevicePosition>::iterator it;
         inf("received device update with %d updates",
             (int)positions.size());
@@ -225,7 +223,7 @@ namespace Transports
             break;
           default:
             DUNE::IMC::ImcIridiumMessage * irMsg =
-                static_cast<DUNE::IMC::ImcIridiumMessage *>(m);
+            static_cast<DUNE::IMC::ImcIridiumMessage *>(m);
 
             double age = Clock::getSinceEpoch() - irMsg->msg->getTimeStamp();
             if (age < m_args.max_age_secs)
@@ -278,8 +276,8 @@ namespace Transports
           }
 
           m_update_pool_empty =
-              msg->status == IridiumTxStatus::TXSTATUS_OK
-              || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
+          msg->status == IridiumTxStatus::TXSTATUS_OK
+          || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
         }
 
         if (msg->req_id == m_announce_req_id) {
@@ -290,14 +288,14 @@ namespace Transports
           }
 
           m_announce_pool_empty =
-              msg->status == IridiumTxStatus::TXSTATUS_OK
-              || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
+          msg->status == IridiumTxStatus::TXSTATUS_OK
+          || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
         }
       }
 
       bool
-      send_announce() {
-
+      sendAnnounce(void)
+      {
         if (!m_announce_pool_empty)
         {
           debug("won't send announce message because pool is not empty");
@@ -306,7 +304,8 @@ namespace Transports
 
         debug("queuing announce");
 
-        if (m_last_announces.find(getSystemName()) != m_last_announces.end()) {
+        if (m_last_announces.find(getSystemName()) != m_last_announces.end())
+        {
           Announce ann = m_last_announces[getSystemName()];
 
           std::stringstream ss;
@@ -319,18 +318,18 @@ namespace Transports
             ss << "E:" << m_vehicle_state.last_error;
 
           ann.services = ss.str();
-          DUNE::IMC::ImcIridiumMessage * irMsg = new DUNE::IMC::ImcIridiumMessage(&ann);
-          irMsg->source = getSystemId();
-          irMsg->destination = 65535;
+          DUNE::IMC::ImcIridiumMessage irMsg(&ann);
+          irMsg.source = getSystemId();
+          irMsg.destination = 65535;
           uint8_t buffer[65535];
-          int len = irMsg->serialize(buffer);
+          int len = irMsg.serialize(buffer);
 
-          DUNE::IMC::IridiumMsgTx * m = new DUNE::IMC::IridiumMsgTx();
-          m->data.assign(buffer, buffer + len);
-          m->req_id = m_rnd->random() % 65535;
-          m_announce_req_id = m->req_id;
-          m->ttl = 60;
-          m->setTimeStamp();
+          DUNE::IMC::IridiumMsgTx m;
+          m.data.assign(buffer, buffer + len);
+          m.req_id = m_rnd->random() % 65535;
+          m_announce_req_id = m.req_id;
+          m.ttl = 60;
+          m.setTimeStamp();
           dispatch(m);
           m_announce_pool_empty = false;
           return true;
@@ -340,7 +339,7 @@ namespace Transports
       }
 
       bool
-      send_device_updates()
+      sendDeviceUpdates(void)
       {
         if (!m_update_pool_empty)
         {
@@ -355,7 +354,6 @@ namespace Transports
 
         for (it = m_last_announces.begin(); it != m_last_announces.end(); it++)
         {
-
           DevicePosition pos;
           pos.id = it->second.getSource();
           pos.lat = it->second.lat;
@@ -370,16 +368,17 @@ namespace Transports
         msg.source = getSystemId();
         msg.destination = 0xFFFF;
 
-        DUNE::IMC::IridiumMsgTx * m = new DUNE::IMC::IridiumMsgTx();
+        IMC::IridiumMsgTx m;
         int len = msg.serialize(buffer);
-        m->data.assign(buffer, buffer + len);
-        m->req_id = m_rnd->random() % 65535;
-        m->ttl = 60;
-        m->setTimeStamp();
-        m_dev_update_req_id = m->req_id;
+        m.data.assign(buffer, buffer + len);
+        m.req_id = m_rnd->random() % 65535;
+        m.ttl = 60;
+        m.setTimeStamp();
+        m_dev_update_req_id = m.req_id;
         dispatch(m);
+
         std::stringstream ss;
-        m->toText(ss);
+        m.toText(ss);
         spew("sent the following message: %s", ss.str().c_str());
         m_update_pool_empty = false;
 
@@ -393,16 +392,16 @@ namespace Transports
         {
           consumeMessages();
           double now = Clock::get();
-          if (m_args.delay_between_device_updates > 0 && (now - m_last_dev_update_time)
-              > m_args.delay_between_device_updates)
-            send_device_updates();
+          if ((m_args.delay_between_device_updates > 0)
+              && (now - m_last_dev_update_time) > m_args.delay_between_device_updates)
+            sendDeviceUpdates();
           else
             debug("Will send device updates in %f seconds.", (now - m_last_dev_update_time)
                   - m_args.delay_between_device_updates);
 
-          if (m_args.delay_between_announces > 0 && now - m_last_announce_time
-              > m_args.delay_between_announces)
-            send_announce();
+          if ((m_args.delay_between_announces > 0)
+              && (now - m_last_announce_time) > m_args.delay_between_announces)
+            sendAnnounce();
           else
             debug("Will send announce in %f seconds.", (now - m_last_announce_time)
                   - m_args.delay_between_announces);
