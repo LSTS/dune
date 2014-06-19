@@ -541,6 +541,19 @@ namespace Sensors
           return;
         }
 
+        int quality = 0;
+        readDecimal(parts[6], quality);
+        if (quality == 1)
+        {
+          m_fix.type = IMC::GpsFix::GFT_STANDALONE;
+          m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
+        }
+        else if (quality == 2)
+        {
+          m_fix.type = IMC::GpsFix::GFT_DIFFERENTIAL;
+          m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
+        }
+
         if (readLatitude(parts[2], parts[3], m_fix.lat)
             && readLongitude(parts[4], parts[5], m_fix.lon)
             && readNumber(parts[9], m_fix.height)
@@ -554,19 +567,6 @@ namespace Sensors
           // Convert coordinates to radians.
           m_fix.lat = Angles::radians(m_fix.lat);
           m_fix.lon = Angles::radians(m_fix.lon);
-          m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
-        }
-
-        int quality = 0;
-        readDecimal(parts[6], quality);
-        if (quality == 1)
-        {
-          m_fix.type = IMC::GpsFix::GFT_STANDALONE;
-          m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
-        }
-        else if (quality == 2)
-        {
-          m_fix.type = IMC::GpsFix::GFT_DIFFERENTIAL;
           m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
         }
         else
@@ -589,18 +589,6 @@ namespace Sensors
           return;
         }
 
-        if (readLatitude(parts[3], parts[4], m_fix.lat)
-            && readLongitude(parts[5], parts[6], m_fix.lon)
-            && readNumber(parts[7], m_fix.height)
-            && readDecimal(parts[18], m_fix.satellites))
-        {
-          // Convert coordinates to radians.
-          m_fix.lat = Angles::radians(m_fix.lat);
-          m_fix.lon = Angles::radians(m_fix.lon);
-
-          m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
-        }
-
         if (parts[8] == "G3" || parts[8] == "G2")
         {
           m_fix.type = IMC::GpsFix::GFT_STANDALONE;
@@ -609,6 +597,17 @@ namespace Sensors
         else if (parts[8] == "D3" || parts[8] == "D2")
         {
           m_fix.type = IMC::GpsFix::GFT_DIFFERENTIAL;
+          m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
+        }
+
+        if (readLatitude(parts[3], parts[4], m_fix.lat)
+            && readLongitude(parts[5], parts[6], m_fix.lon)
+            && readNumber(parts[7], m_fix.height)
+            && readDecimal(parts[18], m_fix.satellites))
+        {
+          // Convert coordinates to radians.
+          m_fix.lat = Angles::radians(m_fix.lat);
+          m_fix.lon = Angles::radians(m_fix.lon);
           m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
         }
         else
