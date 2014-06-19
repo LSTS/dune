@@ -175,6 +175,10 @@ namespace Autonomy
       consume(const IMC::VehicleState * msg)
       {
         m_last_vehicle_state = *msg;
+
+        // if the vehicle is in error mode, T-REX payload becomes inactive
+        if (msg->op_mode == IMC::VehicleState::VS_ERROR)
+        	requestDeactivation();
       }
 
       void
