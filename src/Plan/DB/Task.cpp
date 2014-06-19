@@ -208,9 +208,16 @@ namespace Plan
         if (pc->arg.isNull())
           return;
 
-        const IMC::PlanSpecification* ps = 0;
+        const IMC::Message* m;
+        pc->arg.get(m);
 
-        if (!pc->arg.get(ps) || ps->plan_id != pc->plan_id)
+        if (m->getId() != DUNE_IMC_PLANSPECIFICATION)
+          return;
+
+        const IMC::PlanSpecification* ps;
+        pc->arg.get(ps);
+
+        if (ps->plan_id != pc->plan_id)
           return;
 
         m_reply.clear();
