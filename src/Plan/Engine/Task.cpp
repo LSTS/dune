@@ -575,11 +575,10 @@ namespace Plan
 
         if (arg)
         {
-          const IMC::PlanSpecification* given_plan;
-          given_plan = static_cast<const IMC::PlanSpecification*>(arg);
-
-          if (given_plan)
+          if (arg->getId() == DUNE_IMC_PLANSPECIFICATION)
           {
+            const IMC::PlanSpecification* given_plan = static_cast<const IMC::PlanSpecification*>(arg);
+
             m_spec = *given_plan;
             m_spec.setSourceEntity(getEntityId());
           }
