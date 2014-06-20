@@ -110,11 +110,14 @@ namespace Monitors
       double m_atest_time;
       //! Use configuration flag.
       bool m_use_cfg;
+      //! Absolute maximum depth
+      float m_max_depth;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Periodic(name, ctx),
         m_atest_time(0),
-        m_use_cfg(true)
+        m_use_cfg(true),
+        m_max_depth(-1.0)
       {
         param("Initial Setting - Maximum Depth", m_args.i_max_depth)
         .units(Units::Meter)
@@ -178,9 +181,28 @@ namespace Monitors
         }
       }
 
+      //! There's an absolute maximum depth rating, limit the "operational limit"
+      void
+      setMaxDepth(void)
+      {
+        if (m_max_depth > 0.0)
+        {
+          if (m_ol.mask & IMC::OPL_MAX_DEPTH)
+            m_ol.max_depth = std::min(m_ol.max_depth, m_max_depth);
+          else
+            m_ol.max_depth = m_max_depth;
+
+          m_ol.mask |= IMC::OPL_MAX_DEPTH;
+
+          inf("max depth set to %.2f", m_ol.max_depth);
+        }
+      }
+
       void
       onUpdateParameters(void)
       {
+        m_ctx.config.get("General", "Absolute Maximum Depth", "-1.0", m_max_depth);
+
         if (m_use_cfg)
         {
           reset();
@@ -192,6 +214,8 @@ namespace Monitors
           init(m_ol.min_speed, m_args.i_min_speed, IMC::OPL_MIN_SPEED);
           init(m_ol.min_speed, m_args.i_max_speed, IMC::OPL_MAX_SPEED);
           init(m_ol.max_vrate, m_args.i_max_vrate, IMC::OPL_MAX_VRATE);
+
+          setMaxDepth();
         }
       }
 
@@ -213,6 +237,7 @@ namespace Monitors
         m_use_cfg = false;
 
         m_ol = *msg;
+        setMaxDepth();
         m_ol.setSource(IMC::AddressResolver::invalid());
         m_ol.setDestination(IMC::AddressResolver::invalid());
         m_ol.setSourceEntity(getEntityId());
