@@ -85,6 +85,8 @@ namespace Monitors
       float m_depth;
       //! Vehicle airspeed.
       float m_airspeed;
+      //! Vehicle groundspeed.
+      float m_gndspeed;
       //! Medium Sensor entity id.
       unsigned m_medium_eid;
       //! Task arguments.
@@ -93,7 +95,8 @@ namespace Monitors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
         m_depth(0),
-        m_airspeed(0)
+        m_airspeed(0),
+        m_gndspeed(0)
       {
         param("Initialization Time", m_args.init_time)
         .units(Units::Second)
@@ -218,6 +221,8 @@ namespace Monitors
       {
         if ((msg->validity & m_gps_val_bits) == m_gps_val_bits)
           m_gps_status.reset();
+
+        m_gndspeed = msg->sog;
       }
 
       void
@@ -337,7 +342,7 @@ namespace Monitors
         switch (m_vm.medium)
         {
           case (IMC::VehicleMedium::VM_AIR):
-            if (m_airspeed < m_args.airspeed_threshold)
+            if (m_airspeed < m_args.airspeed_threshold && m_gndspeed < 2)
               m_vm.medium = IMC::VehicleMedium::VM_GROUND;
             break;
 
