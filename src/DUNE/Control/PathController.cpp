@@ -172,11 +172,6 @@ namespace DUNE
       .units(Units::Meter)
       .description("Depth tolerance below which altitude is ignored");
 
-      param("Bottom Track -- Depth Limit", m_btd.args.depth_limit)
-      .defaultValue("48.0")
-      .units(Units::Meter)
-      .description("Depth limit for bottom tracking");
-
       param("Bottom Track -- Check Trend", m_btd.args.check_trend)
       .defaultValue("true")
       .description("Check slope angle trend in unsafe state");
@@ -194,6 +189,8 @@ namespace DUNE
       .defaultValue("3.0")
       .units(Units::Meter)
       .description("Admissible altitude when doing depth control");
+
+      m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
 
       bind<IMC::Brake>(this);
       bind<IMC::ControlLoops>(this);

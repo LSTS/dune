@@ -61,10 +61,7 @@ namespace DUNE
       .defaultValue("false")
       .description("Bypass heading rate controller and use reference directly on torques");
 
-      param("Maximum Depth", m_max_depth)
-      .defaultValue("50.0")
-      .units(Units::Meter)
-      .description("Maximum admissible depth that the vehicle may sustain");
+      m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_max_depth);
 
       // Initialize entity state.
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
