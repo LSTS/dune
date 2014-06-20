@@ -193,8 +193,6 @@ namespace Monitors
           m_ol.max_depth = m_max_depth;
 
         m_ol.mask |= IMC::OPL_MAX_DEPTH;
-
-        inf("max depth set to %.2f", m_ol.max_depth);
       }
 
       void
