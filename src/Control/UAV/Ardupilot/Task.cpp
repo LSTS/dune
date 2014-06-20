@@ -1333,11 +1333,10 @@ namespace Control
 
           double lat = Angles::radians((double)gp.lat * 1e-07);
           double lon = Angles::radians((double)gp.lon * 1e-07);
-          float hei = (float)gp.alt * 1e-03;
+          float hei = m_alt;
 
           m_lat = (double)gp.lat * 1e-07;
           m_lon = (double)gp.lon * 1e-07;
-          m_alt = (float)gp.alt * 1e-03;
 
           double distance_to_ref = WGS84::distance(ref_lat,ref_lon,ref_hei,
                                                    lat,lon,hei);
@@ -1674,15 +1673,16 @@ namespace Control
             m_pcs.flags |= PathControlState::FL_LOITERING;
           }
 
+          float since_last_wp = Clock::get() - m_last_wp;
+
           if (!m_changing_wp
              && (nav_out.wp_dist <= m_desired_radius + m_args.secs * m_gnd_speed)
              && (nav_out.wp_dist >= m_desired_radius - m_args.secs * m_gnd_speed)
-             && (m_mode == 15 || (m_mode == 10 && m_current_wp == 3)))
+             && (m_mode == 15 || (m_mode == 10 && m_current_wp == 3))
+             && since_last_wp > 1.0)
           {
             m_pcs.flags |= PathControlState::FL_NEAR;
           }
-
-          float since_last_wp = Clock::get() - m_last_wp;
 
           if (m_last_wp && since_last_wp > 1.5)
             receive(&m_dpath);
@@ -1727,6 +1727,7 @@ namespace Control
           ias.value = (fp64_t)vfr_hud.airspeed;
           gs.value = (fp64_t)vfr_hud.groundspeed;
           m_gnd_speed = (int)vfr_hud.groundspeed;
+          m_alt = vfr_hud.alt;
 
           dispatch(ias);
           dispatch(gs);
