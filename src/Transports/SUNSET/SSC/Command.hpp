@@ -25,18 +25,21 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef TRANSPORTS_SUNSET_COMMAND_HPP_INCLUDED_
-#define TRANSPORTS_SUNSET_COMMAND_HPP_INCLUDED_
+#ifndef TRANSPORTS_SUNSET_SSC_COMMAND_HPP_INCLUDED_
+#define TRANSPORTS_SUNSET_SSC_COMMAND_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>
 #include <set>
 #include <vector>
 #include <sstream>
-#include <algorithm>
 
 // DUNE headers.
-#include <DUNE/Algorithms/CRC16.hpp>
+#include <DUNE/DUNE.hpp>
+
+// Local headers.
+#include "Constants.hpp"
+#include "Exceptions.hpp"
 
 namespace Transports
 {
@@ -74,13 +77,16 @@ namespace Transports
         m_priority(0)
       { }
 
+      virtual
+      ~Command(void)
+      { }
+
       //! Clear command.
       void
       clear(void)
       {
         m_name.clear();
         m_dsts.clear();
-        m_args.clear();
       }
 
       //! Set command version.
@@ -156,25 +162,6 @@ namespace Transports
         return m_dsts;
       }
 
-      //! Add argument to command. This function can be called
-      //! multiple times to add more than one argument.
-      //! @param[in] arg command argument.
-      //! @return command object.
-      Command&
-      addArgument(const std::string& arg)
-      {
-        m_args.push_back(arg);
-        return *this;
-      }
-
-      //! Retrieve command arguments.
-      //! @return command arguments.
-      const std::vector<std::string>&
-      getArguments(void) const
-      {
-        return m_args;
-      }
-
       //! Set command time-to-live.
       //! @param[in] value number of seconds.
       //! @return command object.
@@ -235,7 +222,8 @@ namespace Transports
       encode(void) const
       {
         std::ostringstream ss;
-        ss << "V" << m_version << ","
+        ss << c_ssc_prefix << ","
+           << m_version << ","
            << DUNE::Utils::String::str("%02X", m_flags) << ","
            << m_ttl << ","
            << m_priority << ","
@@ -244,7 +232,7 @@ namespace Transports
 
         // Destinations.
         if (m_dsts.begin() == m_dsts.end())
-          throw std::runtime_error("invalid destination");
+          throw InvalidFormat("no destinations");
 
         for (std::set<unsigned>::const_iterator itr = m_dsts.begin(); itr != m_dsts.end(); ++itr)
           ss << *itr << ",";
@@ -253,8 +241,10 @@ namespace Transports
         ss << m_name << ",";
 
         // Command arguments.
-        for (size_t i = 0; i < m_args.size(); ++i)
-          ss << m_args[i] << ",";
+        std::vector<std::string> args;
+        size_t rv = encodeArgs(args);
+        if (rv > 0)
+          ss << DUNE::Utils::String::join(args.begin(), args.end(), ",") << ",";
 
         // CRC.
         std::string cmd(ss.str());
@@ -263,7 +253,7 @@ namespace Transports
         cmd.append(crc);
 
         // Termination character.
-        cmd.push_back('\n');
+        cmd.append(c_ssc_term);
 
         return cmd;
       }
@@ -275,8 +265,8 @@ namespace Transports
       decode(const std::string& cmd)
       {
         // Validate CRC.
-        if (getCRC(cmd) != computeCRC(cmd, cmd.size() - 5))
-          throw std::runtime_error("invalid checksum");
+        if (getCRC(cmd) != computeCRC(cmd, cmd.size() - c_ssc_footer_size))
+          throw InvalidChecksum();
 
         // Split command.
         std::vector<std::string> parts;
@@ -284,37 +274,46 @@ namespace Transports
 
         clear();
 
+        // Check minimum arguments.
+        if (parts.size() < c_ssc_min_args)
+          throw InvalidFormat("minimum arguments not present");
+
+        // Extract prefix.
+        if (parts[0] != c_ssc_prefix)
+          throw InvalidFormat("invalid prefix");
+
         // Extract version.
-        if (std::sscanf(parts[OFFS_VERSION].c_str(), "V%u", &m_version) != 1)
-          throw std::runtime_error("invalid format");
+        if (std::sscanf(parts[OFFS_VERSION].c_str(), "%u", &m_version) != 1)
+          throw InvalidVersion();
 
         // Extract flags.
         if (std::sscanf(parts[OFFS_FLAGS].c_str(), "%02X", &m_flags) != 1)
-          throw std::runtime_error("invalid format");
+          throw InvalidFormat("invalid flags");
 
         // Extract TTL.
         if (std::sscanf(parts[OFFS_TTL].c_str(), "%u", &m_ttl) != 1)
-          throw std::runtime_error("invalid format");
+          throw InvalidFormat("invalid ttl");
 
         // Extract priority.
         if (std::sscanf(parts[OFFS_PRIORITY].c_str(), "%u", &m_priority) != 1)
-          throw std::runtime_error("invalid format");
+          throw InvalidFormat("invalid priority");
 
         // Extract source.
         if (std::sscanf(parts[OFFS_SRC].c_str(), "%u", &m_src) != 1)
-          throw std::runtime_error("invalid format");
+          throw InvalidFormat("invalid source");
 
         // Extract number of destinations.
         unsigned dst_count = 0;
         if (std::sscanf(parts[OFFS_DST_COUNT].c_str(), "%u", &dst_count) != 1)
-          throw std::runtime_error("invalid format");
+          throw InvalidFormat("invalid destination count");
 
         // Extract destinations.
         unsigned dst = 0;
         for (unsigned i = 0; i < dst_count; ++i)
         {
+          // FIXME: check size.
           if (std::sscanf(parts[OFFS_DST + i].c_str(), "%u", &dst) != 1)
-            throw std::runtime_error("invalid format");
+            throw InvalidFormat("invalid destination");
           m_dsts.insert(dst);
         }
 
@@ -329,9 +328,11 @@ namespace Transports
         if (args_start == args_end)
           return *this;
 
-        // Copy arguments.
-        m_args.resize(args_end - args_start);
-        std::copy(&parts[args_start], &parts[args_end], m_args.begin());
+        // Arguments.
+        decodeArgs(parts, args_start);
+
+        // m_args.resize(args_end - args_start);
+        // std::copy(&parts[args_start], &parts[args_end], m_args.begin());
 
         return *this;
       }
@@ -361,42 +362,86 @@ namespace Transports
           os << "],\n";
         }
 
-        //! Arguments.
-        std::vector<std::string>::const_iterator arg_itr = m_args.begin();
-        if (arg_itr == m_args.end())
-        {
-          os << "  \"arguments\"     : []\n";
-        }
-        else
-        {
-          os << "  \"arguments\"     : [\"" << *arg_itr << "\"";
-          for (++arg_itr; arg_itr != m_args.end(); ++arg_itr)
-            os << "," << "\"" << *arg_itr << "\"";
-          os << "],\n";
-        }
+        // //! Arguments.
+        // std::vector<std::string>::const_iterator arg_itr = m_args.begin();
+        // if (arg_itr == m_args.end())
+        // {
+        //   os << "  \"arguments\"     : []\n";
+        // }
+        // else
+        // {
+        //   os << "  \"arguments\"     : [\"" << *arg_itr << "\"";
+        //   for (++arg_itr; arg_itr != m_args.end(); ++arg_itr)
+        //     os << "," << "\"" << *arg_itr << "\"";
+        //   os << "],\n";
+        // }
 
         os << "}\n"
         ;
       }
 
+      bool
+      operator==(const Command& b) const
+      {
+        return !(*this != b);
+      }
+
+      bool
+      operator!=(const Command& b) const
+      {
+        if (m_name != b.m_name)
+          return true;
+
+        if (m_version != b.m_version)
+          return true;
+
+        if (m_src != b.m_src)
+          return true;
+
+        if (m_dsts != b.m_dsts)
+          return true;
+
+        if (m_flags != b.m_flags)
+          return true;
+
+        if (m_ttl != b.m_ttl)
+          return true;
+
+        if (m_priority != b.m_priority)
+          return true;
+
+        return false;
+      }
+
+    protected:
+      virtual size_t
+      encodeArgs(std::vector<std::string>& args) const = 0;
+
+      virtual size_t
+      decodeArgs(const std::vector<std::string>& args, size_t index) = 0;
+
     private:
       // Field offsets.
       enum Offset
       {
+        //! Prefix.
+        OFFS_PREFIX    = 0,
         //! Version.
-        OFFS_VERSION   = 0,
+        OFFS_VERSION   = 1,
         //! Flags.
-        OFFS_FLAGS     = 1,
+        OFFS_FLAGS     = 2,
         //! Time-to-live.
-        OFFS_TTL       = 2,
+        OFFS_TTL       = 3,
         //! Priority.
-        OFFS_PRIORITY  = 3,
+        OFFS_PRIORITY  = 4,
         //! Source.
-        OFFS_SRC       = 4,
+        OFFS_SRC       = 5,
         //! Number of destinations.
-        OFFS_DST_COUNT = 5,
+        OFFS_DST_COUNT = 6,
         //! First destination.
-        OFFS_DST       = 6
+        OFFS_DST       = 7,
+        //! Last fixed offset.
+        OFFS_LAST      = 8
       };
 
       //! Command name.
@@ -413,8 +458,6 @@ namespace Transports
       unsigned m_ttl;
       //! Command priority.
       unsigned m_priority;
-      //! Command arguments.
-      std::vector<std::string> m_args;
 
       //! Retrieve CRC from an encoded command string.
       //! @param[in] cmd command string.
@@ -424,15 +467,15 @@ namespace Transports
       {
         size_t idx = cmd.find_last_of(',');
         if (idx == std::string::npos)
-          throw std::runtime_error("invalid checksum format 1");
+          throw InvalidChecksum();
 
         std::string scrc(cmd.substr(idx + 1));
         if (scrc.size() != 5)
-          throw std::runtime_error("invalid checksum format 2");
+          throw InvalidChecksum();
 
         unsigned crc = 0;
         if (std::sscanf(scrc.c_str(), "%04X", &crc) != 1)
-          throw std::runtime_error("invalid checksum format 3");
+          throw InvalidChecksum();
 
         return crc;
       }

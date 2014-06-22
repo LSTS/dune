@@ -25,94 +25,51 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+#ifndef TRANSPORTS_SUNSET_EXCEPTIONS_HPP_INCLUDED_
+#define TRANSPORTS_SUNSET_EXCEPTIONS_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <stdexcept>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-
-// Local headers.
-#include "SSC/Command.hpp"
 
 namespace Transports
 {
   namespace SUNSET
   {
-    using DUNE_NAMESPACES;
-
-    //! Task arguments.
-    struct Arguments
+    class InvalidChecksum: public std::runtime_error
     {
-      //! TCP host.
-      std::string tcp_addr;
-      //! TCP port.
-      unsigned tcp_port;
+    public:
+      InvalidChecksum(void):
+        std::runtime_error("invalid checksum")
+      { }
     };
 
-    struct Task: public DUNE::Tasks::Task
+    class InvalidFormat: public std::runtime_error
     {
-      //! Task arguments.
-      Arguments m_args;
+    public:
+      InvalidFormat(const std::string& str):
+        std::runtime_error(DUNE::Utils::String::str("invalid format: %s", str.c_str()))
+      { }
+    };
 
-      //! Constructor.
-      //! @param[in] name task name.
-      //! @param[in] ctx context.
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
-      {
-        param("TCP - Address", m_args.tcp_addr)
-        .defaultValue("127.0.0.1")
-        .description("SUNSET server TCP address");
+    class InvalidVersion: public std::runtime_error
+    {
+    public:
+      InvalidVersion(void):
+        std::runtime_error("invalid version")
+      { }
+    };
 
-        param("TCP - Port", m_args.tcp_port)
-        .defaultValue("7001")
-        .description("SUNSET server TCP port");
-      }
-
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      {
-      }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
-      }
-
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      {
-      }
-
-      //! Main loop.
-      void
-      onMain(void)
-      {
-        while (!stopping())
-        {
-          waitForMessages(1.0);
-        }
-      }
+    class InvalidValue: public std::runtime_error
+    {
+    public:
+      InvalidValue(void):
+        std::runtime_error("invalid value")
+      { }
     };
   }
 }
 
-DUNE_TASK
+#endif

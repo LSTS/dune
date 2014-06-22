@@ -25,5 +25,22 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-FLAG(0, RELIABLE)
-#undef FLAG
+#ifndef TRANSPORTS_SUNSET_SSC_CONSTANTS_HPP_INCLUDED_
+#define TRANSPORTS_SUNSET_SSC_CONSTANTS_HPP_INCLUDED_
+
+namespace Transports
+{
+  namespace SUNSET
+  {
+    //! Command prefix.
+    static const char* c_ssc_prefix = "SSC";
+    //! Command terminator.
+    static const char* c_ssc_term = "\n";
+    //! Size of the SSC footer.
+    static size_t c_ssc_footer_size = 5;
+    //! Minimum number of arguments.
+    static size_t c_ssc_min_args = 10;
+  }
+}
+
+#endif

@@ -25,11 +25,79 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-ERROR(0, INVALID_CRC)
-ERROR(1, INVALID_FORMAT)
-ERROR(2, INVALID_VERSION)
-ERROR(3, INVALID_REQUEST)
-ERROR(4, INVALID_VALUE)
-ERROR(5, BUSY)
-ERROR(6, TIMEOUT)
-#undef ERROR
+#ifndef DUNE_PROGRAMS_TESTS_TEST_HPP_INCLUDED_
+#define DUNE_PROGRAMS_TESTS_TEST_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <cstdio>
+
+#if !defined(fprintf)
+using std::fprintf;
+#endif
+
+class Test
+{
+public:
+  Test(const char* name):
+    m_total(0),
+    m_passed(0),
+    m_failed(0)
+  {
+    fprintf(stderr, "* %s\n", name);
+  }
+
+  void
+  boolean(const char* description, bool expression)
+  {
+    ++m_total;
+
+    fprintf(stderr, "  %-40s ", description);
+
+    if (expression)
+      ++m_passed;
+    else
+      ++m_failed;
+
+    fprintf(stderr, "[%s]\n", expression ? "passed" : "failed");
+  }
+
+  void
+  failed(const char* description, const char* reason)
+  {
+    ++m_total;
+    fprintf(stderr, "  %-40s ", description);
+    ++m_failed;
+    fprintf(stderr, "[%s] (%s)\n", "failed", reason);
+  }
+
+  void
+  passed(const char* description, const char* reason = NULL)
+  {
+    ++m_total;
+    fprintf(stderr, "  %-40s ", description);
+    ++m_passed;
+
+    if (reason)
+      fprintf(stderr, "[%s] (%s)\n", "passed", reason);
+    else
+      fprintf(stderr, "[%s]\n", "passed");
+  }
+
+  ~Test(void)
+  {
+    fprintf(stderr, "- %d tests / %d passed / %d failed\n", m_total, m_passed, m_failed);
+  }
+
+  int
+  getReturnValue(void)
+  {
+    return (m_failed != 0);
+  }
+
+private:
+  int m_total;
+  int m_passed;
+  int m_failed;
+};
+
+#endif

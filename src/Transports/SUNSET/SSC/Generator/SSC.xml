@@ -19,7 +19,13 @@
 
     <type name="Integer">
       <doc>
-        A number written without a fractional component.
+        A signed integer number.
+      </doc>
+    </type>
+
+    <type name="Unsigned">
+      <doc>
+        An unsigned (i.e., positive) integer number.
       </doc>
     </type>
 
@@ -59,7 +65,161 @@
       </values>
     </type>
 
-    <type name="Position">
+    <type name="ErrorType" prefix="ERR">
+      <values>
+        <value name="INVALID_CRC">
+          <doc>
+            The CRC of the command is not present or is invalid.
+          </doc>
+        </value>
+
+        <value name="INVALID_FORMAT">
+          <doc>
+            The command has an invalid format.
+          </doc>
+        </value>
+
+        <value name="INVALID_VERSION">
+          <doc>
+            The command has a version that it not supported.
+          </doc>
+        </value>
+
+        <value name="INVALID_REQUEST">
+          <doc>
+            The command contained an invalid request.
+          </doc>
+        </value>
+
+        <value name="INVALID_VALUE">
+          <doc>
+            The command contained an invalid value.
+          </doc>
+        </value>
+
+        <value name="BUSY">
+          <doc>
+            The command cannot be fulfilled at the present time.
+          </doc>
+        </value>
+      </values>
+    </type>
+
+    <type name="FailureType" prefix="FAIL">
+      <values>
+        <value name="INVALID_VERSION">
+          <doc>
+            The command has a version that it not supported by the
+            remote node.
+          </doc>
+        </value>
+
+        <value name="INVALID_REQUEST">
+          <doc>
+            The command contained a request that was considered
+            invalid by the remote node.
+          </doc>
+        </value>
+
+        <value name="EXPIRED">
+          <doc>
+            The command's time-to-live was reached.
+          </doc>
+        </value>
+
+        <value name="INTERNAL_ERROR">
+          <doc>
+            The system cannot execute the command for some
+            internal problem.
+          </doc>
+        </value>
+
+        <value name="BUSY">
+          <doc>
+            Remote node is busy.
+          </doc>
+        </value>
+      </values>
+    </type>
+
+    <type name="TxErrorType" prefix="TX_ERR">
+      <values>
+        <value name="SUCCESS">
+          <doc>
+            No error has occurred.
+          </doc>
+        </value>
+
+        <value name="TX_RETRY_LIMIT">
+          <doc>
+            Maximum number of transmission retries was reached.
+          </doc>
+        </value>
+      </values>
+    </type>
+
+    <type name="TxStatusType" prefix="TX_STA">
+      <values>
+        <value name="RECEIVED">
+          <doc>
+            The transmission request was received and is being
+            processed.
+          </doc>
+        </value>
+        <value name="ERROR">
+          <doc>
+            An error has occurred while processing the
+            transmission. See field Error Code for more
+            information.
+          </doc>
+        </value>
+        <value name="QUEUED">
+          <doc>
+            The transmission request has been queued and is
+            waiting to be transmitted.
+          </doc>
+        </value>
+        <value name="TX_START">
+          <doc>
+            Transmission of the request has started. In cases
+            where the request is broken down into several modem
+            frames several PacketTxStatus messages with this
+            Status Code shall be sent, one for each frame.
+          </doc>
+        </value>
+        <value name="TX_END">
+          <doc>
+            Transmission of the request has ended. The remarks
+            of START_TX also apply to this status code.
+          </doc>
+        </value>
+        <value name="TRANSMITTED">
+          <doc>
+            Packet was successfully transmitted in its entirety.
+          </doc>
+        </value>
+        <value name="DELIVERED">
+          <doc>
+            Packet was received in its entirety by the
+            destination nodes.
+          </doc>
+        </value>
+        <value name="EXPIRED">
+          <doc>
+            The time-to-live of the transmission request was
+            reached, and the packet was not transmitted or
+            delivered in its entirety.
+          </doc>
+        </value>
+        <value name="CANCELED">
+          <doc>
+            The packet transmission request was canceled.
+          </doc>
+        </value>
+      </values>
+    </type>
+
+    <type name="PositionType">
       <doc>
         Type describing the position of a system in the world.
       </doc>
@@ -116,7 +276,6 @@
       <doc>
         Z reference.
       </doc>
-
       <args>
         <arg name="Z Units" type="ZUnits">
           <doc>Z Units</doc>
@@ -131,7 +290,6 @@
       <doc>
         Speed units.
       </doc>
-
       <values>
         <value name="METER_PS">
           <doc>
@@ -184,105 +342,94 @@
       </args>
     </type>
 
-    <type name="ManeuverGoto">
-      <doc>
-        A "Goto" is a maneuver specifying a movement of the
-        vehicle to a target waypoint. The waypoint is described by
-        the WGS-84 waypoint coordinate and target Z reference.
-      </doc>
+    <type name="Maneuver">
+      <type name="Goto">
+        <doc>
+          A "Goto" is a maneuver specifying a movement of the
+          vehicle to a target waypoint. The waypoint is described by
+          the WGS-84 waypoint coordinate and target Z reference.
+        </doc>
 
-      <args>
-        <arg name="Maneuver" type="String" value="Goto">
-          <doc>
-            Maneuver name.
-          </doc>
-        </arg>
+        <args>
+          <arg name="Latitude" type="Real">
+            <doc>
+              WGS-84 Latitude of target waypoint in decimal degrees.
+            </doc>
+          </arg>
 
-        <arg name="Latitude" type="Real">
-          <doc>
-            WGS-84 Latitude of target waypoint in decimal degrees.
-          </doc>
-        </arg>
+          <arg name="Longitude" type="Real">
+            <doc>
+              WGS-84 Longitude of target waypoint in decimal degrees.
+            </doc>
+          </arg>
 
-        <arg name="Longitude" type="Real">
-          <doc>
-            WGS-84 Longitude of target waypoint in decimal degrees.
-          </doc>
-        </arg>
+          <arg name="Timeout" type="Integer" unit="s">
+            <min>0</min>
+            <max>65535</max>
+            <doc>
+              The amount of time the maneuver is allowed to run in
+              seconds.
+            </doc>
+          </arg>
 
-        <arg name="Timeout" type="Integer" unit="s">
-          <min>0</min>
-          <max>65535</max>
-          <doc>
-            The amount of time the maneuver is allowed to run in
-            seconds.
-          </doc>
-        </arg>
+          <arg name="Z Reference" type="ZReference">
+            <doc>
+              Desired Z.
+            </doc>
+          </arg>
 
-        <arg name="Z Reference" type="ZReference">
-          <doc>
-            Desired Z.
-          </doc>
-        </arg>
+          <arg name="Speed Reference" type="SpeedReference">
+            <doc>
+              Desired Z.
+            </doc>
+          </arg>
+        </args>
+      </type>
 
-        <arg name="Speed Reference" type="SpeedReference">
-          <doc>
-            Desired Z.
-          </doc>
-        </arg>
-      </args>
-    </type>
+      <type name="StationKeeping">
+        <doc>
+          The Station Keeping maneuver makes the vehicle come to the
+          surface and then enter a given circular perimeter around a
+          waypoint coordinate for a certain amount of time.
+        </doc>
+        <args>
+          <arg name="Latitude" type="Real">
+            <doc>
+              WGS-84 Latitude of target waypoint in decimal degrees.
+            </doc>
+          </arg>
 
-    <type name="ManeuverStationKeeping">
-      <doc>
-        The Station Keeping maneuver makes the vehicle come to the
-        surface and then enter a given circular perimeter around a
-        waypoint coordinate for a certain amount of time.
-      </doc>
+          <arg name="Longitude" type="Real">
+            <doc>
+              WGS-84 Longitude of target waypoint in decimal degrees.
+            </doc>
+          </arg>
 
-      <args>
-        <arg name="Maneuver" type="String" value="StationKeeping">
-          <doc>
-            Maneuver name.
-          </doc>
-        </arg>
+          <arg name="Z Reference" type="ZReference">
+            <doc>
+              Desired Z.
+            </doc>
+          </arg>
 
-        <arg name="Latitude" type="Real">
-          <doc>
-            WGS-84 Latitude of target waypoint in decimal degrees.
-          </doc>
-        </arg>
+          <arg name="Speed Reference" type="SpeedReference">
+            <doc>
+              Desired Z.
+            </doc>
+          </arg>
 
-        <arg name="Longitude" type="Real">
-          <doc>
-            WGS-84 Longitude of target waypoint in decimal degrees.
-          </doc>
-        </arg>
+          <arg name="Radius" type="Real" unit="m">
+            <doc>
+              Radius of the maneuver.
+            </doc>
+          </arg>
 
-        <arg name="Z Reference" type="ZReference">
-          <doc>
-            Desired Z.
-          </doc>
-        </arg>
-
-        <arg name="Speed Reference" type="SpeedReference">
-          <doc>
-            Desired Z.
-          </doc>
-        </arg>
-
-        <arg name="Radius" type="Real" unit="m">
-          <doc>
-            Radius of the maneuver.
-          </doc>
-        </arg>
-
-        <arg name="Duration" type="Integer" unit="s">
-          <doc>
-            Maneuver duration. For unlimited duration use 0.
-          </doc>
-        </arg>
-      </args>
+          <arg name="Duration" type="Integer" unit="s">
+            <doc>
+              Maneuver duration. For unlimited duration use 0.
+            </doc>
+          </arg>
+        </args>
+      </type>
     </type>
   </types>
 
@@ -304,7 +451,7 @@
         </doc>
       </arg>
 
-      <arg name="Flags" type="Integer" format="Hexadecimal" size="2">
+      <arg name="Flags" type="Unsigned" format="Hexadecimal" size="2">
         <doc>
         </doc>
 
@@ -341,16 +488,7 @@
         </doc>
       </arg>
 
-      <arg name="Destinations Count" type="Integer">
-        <doc>
-          Number of destination addresses in the Destinations field.
-        </doc>
-      </arg>
-
-      <arg name="Destinations" type="List" >
-        <types>
-          <type name="Integer"/>
-        </types>
+      <arg name="Destinations" type="List" of="Integer">
         <doc>
           List of identifiers of destination nodes.
         </doc>
@@ -396,7 +534,6 @@
         This command shall be sent immediately in response to a
         command that was received, decoded and correctly interpreted.
       </doc>
-
       <args>
         <arg name="Name" type="String">
           <doc>
@@ -404,7 +541,6 @@
           </doc>
         </arg>
       </args>
-
     </command>
 
     <command name="CommandError">
@@ -412,50 +548,11 @@
         This command shall be sent immediately in response to a
         command that could not be interpreted or fulfilled.
       </doc>
-
       <args>
-        <arg name="Error" type="String">
+        <arg name="Error Reason" type="ErrorType">
           <doc>
             This field conveys the reason for the error.
           </doc>
-
-          <values>
-            <value name="INVALID_CRC">
-              <doc>
-                The CRC of the command is not present or is invalid.
-              </doc>
-            </value>
-
-            <value name="INVALID_FORMAT">
-              <doc>
-                The command has an invalid format.
-              </doc>
-            </value>
-
-            <value name="INVALID_VERSION">
-              <doc>
-                The command has a version that it not supported.
-              </doc>
-            </value>
-
-            <value name="INVALID_REQUEST">
-              <doc>
-                The command contained an invalid request.
-              </doc>
-            </value>
-
-            <value name="INVALID_VALUE">
-              <doc>
-                The command contained an invalid value.
-              </doc>
-            </value>
-
-            <value name="BUSY">
-              <doc>
-                The command cannot be fulfilled at the present time.
-              </doc>
-            </value>
-          </values>
         </arg>
       </args>
     </command>
@@ -468,47 +565,11 @@
       </doc>
 
       <args>
-        <arg name="Error" type="String">
+        <arg name="Failure Reason" type="FailureType">
           <doc>
             This field conveys the reason for the failure.
           </doc>
-
-          <values>
-            <value name="INVALID_VERSION">
-              <doc>
-                The command has a version that it not supported by the
-                remote node.
-              </doc>
-            </value>
-
-            <value name="INVALID_REQUEST">
-              <doc>
-                The command contained a request that was considered
-                invalid by the remote node.
-              </doc>
-            </value>
-
-            <value name="EXPIRED">
-              <doc>
-                The command's time-to-live was reached.
-              </doc>
-            </value>
-
-            <value name="INTERNAL_ERROR">
-              <doc>
-                The system cannot execute the command for some
-                internal problem.
-              </doc>
-            </value>
-
-            <value name="BUSY">
-              <doc>
-                Remote node is busy.
-              </doc>
-            </value>
-          </values>
         </arg>
-
         <arg name="Sequence Number" type="Integer">
           <doc>
             A non-negative number conveying the unique sequence number
@@ -535,14 +596,12 @@
         user-defined data. Upon reception SUNSET shall reply with a
         PacketTxStatus with a RECEIVED Status Code.
       </doc>
-
       <args>
         <arg name="Data Length" type="Integer">
           <doc>
             Number of characters of the Data field.
           </doc>
         </arg>
-
         <arg name="Data" type="String" format="Hexadecimal">
           <doc>
             Hexadecimal coded data octets. Two upper case characters
@@ -573,89 +632,16 @@
           </doc>
         </arg>
 
-        <arg name="Status" type="String">
+        <arg name="Status" type="TxStatusType">
           <doc>
             Status of the transmission request.
           </doc>
-
-          <values>
-            <value name="RECEIVED">
-              <doc>
-                The transmission request was received and is being
-                processed.
-              </doc>
-            </value>
-            <value name="ERROR">
-              <doc>
-                An error has occurred while processing the
-                transmission. See field Error Code for more
-                information.
-              </doc>
-            </value>
-            <value name="QUEUED">
-              <doc>
-                The transmission request has been queued and is
-                waiting to be transmitted.
-              </doc>
-            </value>
-            <value name="TX_START">
-              <doc>
-                Transmission of the request has started. In cases
-                where the request is broken down into several modem
-                frames several PacketTxStatus messages with this
-                Status Code shall be sent, one for each frame.
-              </doc>
-            </value>
-            <value name="TX_END">
-              <doc>
-                Transmission of the request has ended. The remarks
-                of START_TX also apply to this status code.
-              </doc>
-            </value>
-            <value name="TRANSMITTED">
-              <doc>
-                Packet was successfully transmitted in its entirety.
-              </doc>
-            </value>
-            <value name="DELIVERED">
-              <doc>
-                Packet was received in its entirety by the
-                destination nodes.
-              </doc>
-            </value>
-            <value name="EXPIRED">
-              <doc>
-                The time-to-live of the transmission request was
-                reached, and the packet was not transmitted or
-                delivered in its entirety.
-              </doc>
-            </value>
-            <value name="CANCELED">
-              <doc>
-                The packet transmission request was canceled.
-              </doc>
-            </value>
-          </values>
         </arg>
 
-        <arg name="Error" type="String">
+        <arg name="Error" type="TxErrorType">
           <doc>
             Error type.
           </doc>
-
-          <values>
-            <value name="SUCCESS">
-              <doc>
-                No error has occurred.
-              </doc>
-            </value>
-
-            <value name="TX_RETRY_LIMIT">
-              <doc>
-                Maximum number of transmission retries was reached.
-              </doc>
-            </value>
-          </values>
         </arg>
       </args>
     </command>
@@ -783,18 +769,7 @@
       </doc>
 
       <args>
-        <arg name="Plan Count" type="Integer">
-          <min>0</min>
-          <doc>
-            Number of plans available on the system.
-          </doc>
-        </arg>
-
-        <arg name="Plan Names" type="List">
-          <types>
-            <type name="String"/>
-          </types>
-
+        <arg name="Plan Names" type="List" of="String">
           <doc>
             List of available plan names.
           </doc>
@@ -826,28 +801,13 @@
       </doc>
 
       <args>
-        <arg name="Maneuver Count" type="Integer">
-          <doc>
-            Number of maneuvers for the requested plan. It is 0 if the
-            requested plan is not a valid plan (not available on the
-            system or with no maneuvers).
-          </doc>
-        </arg>
-
-        <arg name="Maneuver List" type="List">
-          <types>
-            <type name="ManeuverGoto"/>
-            <type name="ManeuverStationKeeping"/>
-          </types>
-
+        <arg name="Maneuver List" type="List" of="Maneuver">
           <doc>
             List of the maneuvers of the plan.
           </doc>
         </arg>
-
       </args>
     </command>
-
 
     <command name="PlanStart">
       <doc>
@@ -951,24 +911,11 @@
           </doc>
         </arg>
 
-        <arg name="Maneuver Count" type="Integer">
-          <min>0</min>
-          <doc>
-            Number of maneuvers in the plan.
-          </doc>
-        </arg>
-
-        <arg name="Maneuver List" type="List">
-          <types>
-            <type name="ManeuverGoto"/>
-            <type name="ManeuverStationKeeping"/>
-          </types>
-
+        <arg name="Maneuver List" type="List" of="Maneuver">
           <doc>
             The maneuvers of the new plan.
           </doc>
         </arg>
-
       </args>
     </command>
 
@@ -1008,17 +955,7 @@
       </doc>
 
       <args>
-        <arg name="Measurement Count" type="Integer">
-          <min>0</min>
-          <doc>
-            Number of measurements available at the target system.
-          </doc>
-        </arg>
-
-        <arg name="Measurement Names" type="List">
-          <types>
-            <type name="String"/>
-          </types>
+        <arg name="Measurement Names" type="List" of="String">
           <doc>
             Name of the available measurements.
           </doc>
@@ -1058,15 +995,7 @@
       </args>
 
       <args>
-        <arg name="Tuple Count" type="Integer">
-          <doc>
-            Number of tuples in the following list.
-          </doc>
-        </arg>
-        <arg name="Tuples" type="List">
-          <types>
-            <type name="SensorInfoTuple"/>
-          </types>
+        <arg name="Tuples" type="List" of="SensorInfoTuple">
           <doc>
             Sensor info tuple.
           </doc>
@@ -1110,7 +1039,7 @@
       </doc>
 
       <args>
-        <arg name="Position" type="Position">
+        <arg name="Position" type="PositionType">
           <doc>
             Position where sample was collected.
           </doc>
@@ -1170,7 +1099,7 @@
       </doc>
 
       <args>
-        <arg name="Value" type="Position">
+        <arg name="Value" type="PositionType">
           <doc>
           </doc>
         </arg>
@@ -1192,15 +1121,7 @@
       </doc>
 
       <args>
-        <arg name="Target Count" type="Integer">
-          <doc>
-            Number of target addresses.
-          </doc>
-        </arg>
-        <arg name="Targets" type="List">
-          <types>
-            <type name="Integer"/>
-          </types>
+        <arg name="Targets" type="List" of="Integer">
           <doc>
             Number of target addresses.
           </doc>
