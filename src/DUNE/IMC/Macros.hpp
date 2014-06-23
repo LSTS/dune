@@ -388,6 +388,8 @@
 #define DUNE_IMC_COLLISION 509
 //! FormState identification number.
 #define DUNE_IMC_FORMSTATE 510
+//! AutopilotMode identification number.
+#define DUNE_IMC_AUTOPILOTMODE 511
 //! Abort identification number.
 #define DUNE_IMC_ABORT 550
 //! PlanSpecification identification number.

@@ -14344,6 +14344,68 @@ namespace DUNE
       IMC::toJSON(os__, "convergmon", convergmon, nindent__);
     }
 
+    AutopilotMode::AutopilotMode(void)
+    {
+      m_header.mgid = 511;
+      clear();
+    }
+
+    void
+    AutopilotMode::clear(void)
+    {
+      autonomy = 0;
+      mode.clear();
+    }
+
+    bool
+    AutopilotMode::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::AutopilotMode& other__ = static_cast<const AutopilotMode&>(msg__);
+      if (autonomy != other__.autonomy) return false;
+      if (mode != other__.mode) return false;
+      return true;
+    }
+
+    int
+    AutopilotMode::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    AutopilotMode::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(autonomy, ptr__);
+      ptr__ += IMC::serialize(mode, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    AutopilotMode::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(autonomy, bfr__, size__);
+      bfr__ += IMC::deserialize(mode, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    AutopilotMode::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(autonomy, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(mode, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    AutopilotMode::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "autonomy", autonomy, nindent__);
+      IMC::toJSON(os__, "mode", mode, nindent__);
+    }
+
     Abort::Abort(void)
     {
       m_header.mgid = 550;
