@@ -13896,6 +13896,86 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Autopilot Mode.
+    class AutopilotMode: public Message
+    {
+    public:
+      //! Autonomy Level.
+      enum AutonomyLevelEnum
+      {
+        //! Manual.
+        AL_MANUAL = 0,
+        //! Assisted.
+        AL_ASSISTED = 1,
+        //! Auto.
+        AL_AUTO = 2
+      };
+
+      //! Autonomy Level.
+      uint8_t autonomy;
+      //! Mode.
+      std::string mode;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 511;
+      }
+
+      AutopilotMode(void);
+
+      Message*
+      clone(void) const
+      {
+        return new AutopilotMode(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return AutopilotMode::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AutopilotMode";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(mode);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Abort.
     class Abort: public Message
     {

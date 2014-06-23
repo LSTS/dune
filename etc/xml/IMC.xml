@@ -6085,6 +6085,31 @@
     </field>
   </message>
 
+  <message id="511" name="Autopilot Mode" abbrev="AutopilotMode" source="vehicle">
+    <description>
+      Reports autopilot mode.
+    </description>
+    <field name="Autonomy Level" abbrev="autonomy" type="uint8_t" prefix="AL" unit="Enumerated">
+      <description>
+        Current mode autonomy level.
+      </description>
+      <value id="0" abbrev="MANUAL" name="Manual">
+        <description>Autopilot has no control</description>
+      </value>
+      <value id="1" abbrev="ASSISTED" name="Assisted">
+        <description>Autopilot has some control</description>
+      </value>
+      <value id="2" abbrev="AUTO" name="Auto">
+        <description>Autopilot has full control</description>
+      </value>
+    </field>
+    <field name="Mode" abbrev="mode" type="plaintext">
+      <description>
+        Current mode name.
+      </description>
+    </field>
+  </message>
+
   <!-- Plan Supervision -->
   <message id="550" name="Abort" abbrev="Abort" source="ccu">
     <description>

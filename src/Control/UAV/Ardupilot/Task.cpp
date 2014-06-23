@@ -1539,14 +1539,7 @@ namespace Control
           mavlink_heartbeat_t hbt;
           mavlink_msg_heartbeat_decode(msg, &hbt);
 
-          IMC::Parameter mode;
-          mode.param = "APM Mode";
-
-          std::stringstream ss;
-          ss << m_mode;
-          mode.value = ss.str();
-
-          dispatch(mode);
+          IMC::AutopilotMode mode;
 
           // Update vehicle type if applicable
           if (m_vehicle_type == VEHICLE_UNKNOWN)
@@ -1578,21 +1571,31 @@ namespace Control
             switch(m_mode)
             {
               default:
+                mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
+                mode.mode = "MANUAL";
                 m_external = true;
                 break;
               case 3:
+                mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+                mode.mode = "AUTO";
                 trace("AUTO");
                 m_external = false;
                 break;
               case 5:
+                mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+                mode.mode = "LOITER";
                 trace("LOITER");
                 m_external = false;
                 break;
               case 14:
+                mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+                mode.mode = "DUNE";
                 trace("DUNE");
                 m_external = false;
                 break;
               case 4:
+                mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+                mode.mode = "GUIDED";
                 trace("GUIDED");
                 m_external = false;
                 break;
@@ -1604,6 +1607,13 @@ namespace Control
             {
               default:
                 m_external = true;
+                mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
+                mode.mode = "MANUAL";
+                if (m_mode == 2)
+                {
+                  mode.autonomy = IMC::AutopilotMode::AL_ASSISTED;
+                  mode.mode = "STABILIZE";
+                }
                 {
                   IMC::ControlLoops cl;
                   cl.enable = IMC::ControlLoops::CL_DISABLE;
@@ -1612,6 +1622,8 @@ namespace Control
                 }
                 break;
               case 10:
+                mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+                mode.mode = "AUTO";
                 trace("AUTO");
                 if (m_external)
                 {
@@ -1626,19 +1638,27 @@ namespace Control
                   loiterHere();
                 break;
               case 12:
+                mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+                mode.mode = "LOITER";
                 trace("LOITER");
                 m_external = false;
                 break;
               case 6:
+                mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+                mode.mode = "FBWB";
                 trace("FBWB");
                 m_external = false;
                 break;
               case 15:
+                mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+                mode.mode = "GUIDED";
                 trace("GUIDED");
                 m_external = false;
                 break;
             }
           }
+
+          dispatch(mode);
         }
 
         void
