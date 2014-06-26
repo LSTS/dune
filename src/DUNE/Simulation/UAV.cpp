@@ -480,20 +480,22 @@ namespace DUNE
         update4DOF_Bank(timestep);
       else if (m_sim_type == "5DOF")
       {
-        if (m_altitude_cmd_ini)
+        if (m_altitude_cmd_ini || m_fpa_cmd_ini)
           update5DOF(timestep);
         else
           throw Error("Altitude command missing! The state was not updated.");
       }
       else if (m_sim_type == "4DOF_alt")
       {
-        if (m_altitude_cmd_ini)
+        if (m_altitude_cmd_ini || m_fpa_cmd_ini)
           update4DOF_Alt(timestep);
         else
           throw Error("Altitude command missing! The state was not updated.");
       }
       else if (m_sim_type == "3DOF")
         update3DOF(timestep);
+      //else if (m_sim_type == "6DOF_stab")
+      //  update6DOF_Stab(timestep);
 
       return *this;
     }
@@ -766,7 +768,10 @@ namespace DUNE
       //! - Roll command
       m_position(3) = m_bank_cmd;
       //! - Vertical rate command
-      m_velocity(2) = (-m_altitude_cmd - m_position(2))/m_alt_time_cst;
+      if (m_altitude_cmd_ini)
+    	  m_velocity(2) = (-m_altitude_cmd - m_position(2))/m_alt_time_cst;
+      else
+    	  m_velocity(2) = -std::sin(m_fpa_cmd)*m_airspeed;
       if (m_vert_slope_lim_f)
       {
         double d_vert_rate_lim = m_vert_slope_lim*m_airspeed;
@@ -931,7 +936,10 @@ namespace DUNE
       if (m_bank_rate_lim_f)
         m_velocity(3) = DUNE::Math::trimValue(m_velocity(3), -m_bank_rate_lim, m_bank_rate_lim);
       //! - Vertical rate command
-      m_velocity(2) = (-m_altitude_cmd - m_position(2))/m_alt_time_cst;
+      if (m_altitude_cmd_ini)
+        m_velocity(2) = (-m_altitude_cmd - m_position(2))/m_alt_time_cst;
+      else
+        m_velocity(2) = -std::sin(m_fpa_cmd)*m_airspeed;
       if (m_vert_slope_lim_f)
       {
         double d_vert_rate_lim = m_vert_slope_lim*m_airspeed;
@@ -1034,6 +1042,27 @@ namespace DUNE
       return m_airspeed;
     }
 
+    double
+    UAVSimulation::getBankCmd(void)
+    {
+      //! Aircraft Bank
+      return m_bank_cmd;
+    }
+
+    double
+    UAVSimulation::getAirspeedCmd(void)
+    {
+      //! Aircraft airspeed
+      return m_airspeed_cmd;
+    }
+
+    double
+    UAVSimulation::getAltCmd(void)
+    {
+      //! Aircraft altitude
+      return m_altitude_cmd;
+    }
+
     void
     UAVSimulation::setPosition(const DUNE::Math::Matrix& pos)
     {
@@ -1105,6 +1134,76 @@ namespace DUNE
       m_airspeed_cmd_ini = 1;
       //! - Altitude
       m_altitude_cmd_ini = 1;
+    }
+
+    void
+    UAVSimulation::commandBank(const double& bank_cmd)
+    {
+      //! Control commands
+      //! - Bank
+      m_bank_cmd = bank_cmd;
+    }
+
+    void
+    UAVSimulation::commandAirspeed(const double& airspeed_cmd)
+    {
+      //! Control commands
+      //! - Airspeed
+      m_airspeed_cmd = airspeed_cmd;
+
+      //! Control commands initialization flags
+      //! - Airspeed
+      m_airspeed_cmd_ini = 1;
+    }
+
+    void
+    UAVSimulation::commandAlt(const double& altitude_cmd)
+    {
+      //! Control commands
+      //! - Altitude
+      m_altitude_cmd = altitude_cmd;
+      if (m_sim_type == "3DOF" || m_sim_type == "4DOF_bank")
+        m_position(2) = -altitude_cmd;
+
+      //! Control commands initialization flags
+      //! - Altitude
+      m_altitude_cmd_ini = 1;
+      //! - Disallow flight path angle reference
+      m_fpa_cmd_ini = 0;
+      //! - Disallow pitch reference
+      m_pitch_cmd_ini = 0;
+    }
+
+    void
+    UAVSimulation::commandFPA(const double& fpa_cmd)
+    {
+      //! Control commands
+      //! - Flight path angle
+    	m_fpa_cmd = fpa_cmd;
+
+      //! Control commands initialization flags
+      //! - Disallow altitude reference
+      m_altitude_cmd_ini = 0;
+      //! - Flight path angle
+      m_fpa_cmd_ini = 1;
+      //! - Disallow pitch reference
+      m_pitch_cmd_ini = 0;
+    }
+
+    void
+    UAVSimulation::commandPitch(const double& pitch_cmd)
+    {
+      //! Control commands
+      //! - Pitch
+      m_pitch_cmd = pitch_cmd;
+
+      //! Control commands initialization flags
+      //! - Disallow altitude reference
+      m_altitude_cmd_ini = 0;
+      //! - Disallow flight path angle reference
+      m_fpa_cmd_ini = 0;
+      //! - Pitch
+      m_pitch_cmd_ini = 1;
     }
   }
 }
