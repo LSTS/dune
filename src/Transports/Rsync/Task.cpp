@@ -103,7 +103,7 @@ namespace Transports
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_SYNCING);
         std::string command = "rsync -az root@" + address + "::" + m_args.src_mod + " " + m_args.dst_dir + " < /dev/null > /dev/null 2>&1";
-        system(command.c_str());
+        std::system(command.c_str());
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_SYNCHED);
         synced = true;
         debug("Synced module %s", m_args.src_mod.c_str());
