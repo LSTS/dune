@@ -62,6 +62,8 @@
 #define DUNE_IMC_QUERYENTITYACTIVATIONSTATE 15
 //! VehicleOperationalLimits identification number.
 #define DUNE_IMC_VEHICLEOPERATIONALLIMITS 16
+//! MsgList identification number.
+#define DUNE_IMC_MSGLIST 20
 //! SimulatedState identification number.
 #define DUNE_IMC_SIMULATEDSTATE 50
 //! LeakSimulation identification number.
@@ -386,6 +388,8 @@
 #define DUNE_IMC_COLLISION 509
 //! FormState identification number.
 #define DUNE_IMC_FORMSTATE 510
+//! AutopilotMode identification number.
+#define DUNE_IMC_AUTOPILOTMODE 511
 //! Abort identification number.
 #define DUNE_IMC_ABORT 550
 //! PlanSpecification identification number.
@@ -490,5 +494,9 @@
 #define DUNE_IMC_ABORTACKED 818
 //! FormCtrlParam identification number.
 #define DUNE_IMC_FORMCTRLPARAM 820
+//! MessagePart identification number.
+#define DUNE_IMC_MESSAGEPART 877
+//! NeptusBlob identification number.
+#define DUNE_IMC_NEPTUSBLOB 888
 
 #endif

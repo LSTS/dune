@@ -59,7 +59,7 @@ namespace Control
                                                 DTR_RT("Depth"), DTR_RT("Heading"),
                                                 DTR_RT("Heading Rate")};
       //! Loops units
-      static const unsigned c_loop_unit[] = {Units::Degree, Units::Degree, Units::Meter, Units::DegreePerSecond, Units::Degree};
+      static const unsigned c_loop_unit[] = {Units::Degree, Units::Degree, Units::Degree, Units::DegreePerSecond, Units::Degree};
 
       enum Loops
       {

@@ -33,20 +33,30 @@
 #include <sstream>
 #include <cerrno>
 #include <cstring>
+#include <cstddef>
 #include <stdexcept>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
 #include <DUNE/Utils/String.hpp>
 
+// Microsoft Windows headers.
 #if defined(DUNE_SYS_HAS_WINDOWS_H)
 #  include <windows.h>
+#endif
+
+// POSIX headers.
+#if defined(DUNE_SYS_HAS_STRING_H)
+#  include <string.h>
 #endif
 
 namespace DUNE
 {
   namespace System
   {
+    //! Maximum error message size.
+    static const size_t c_error_msg_max_size = 512;
+
     //! Error
     class Error: public std::exception
     {
@@ -136,19 +146,19 @@ namespace DUNE
       {
         // POSIX strerror_r
 #if defined(DUNE_SYS_HAS_POSIX_STRERROR_R)
-        char bfr[512] = {0};
+        char bfr[c_error_msg_max_size] = {0};
         strerror_r(ec, bfr, sizeof(bfr));
         return bfr;
 
         // GNU strerror_r
 #elif defined(DUNE_SYS_HAS_GNU_STRERROR_R)
-        char bfr[512] = {0};
+        char bfr[c_error_msg_max_size] = {0};
         char* p = strerror_r(ec, bfr, sizeof(bfr));
         return p;
 
         // Microsoft Windows FormatMessage
 #elif defined(DUNE_SYS_HAS_FORMAT_MESSAGE)
-        char bfr[512] = {0};
+        char bfr[c_error_msg_max_size] = {0};
         WORD lid = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
         if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, "%0", ec, lid, bfr, sizeof(bfr), 0) == 0)
           return "unable to translate system error";
@@ -161,7 +171,7 @@ namespace DUNE
 
         // Unsupported system
 #else
-        return "retrieving of error messages is not supported in this system";
+        return DTR("retrieving system error messages is not supported");
 #endif
       }
 

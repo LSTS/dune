@@ -224,6 +224,18 @@ macro(dune_probe_functions)
     "sys/mman.h;sys/types.h"
     DUNE_SYS_HAS_MMAP64)
 
+  dune_test_function(mlockall
+    "int"
+    "int"
+    "sys/mman.h;sys/types.h"
+    DUNE_SYS_HAS_MLOCKALL)
+
+  dune_test_function(munlockall
+    "int"
+    ""
+    "sys/mman.h;sys/types.h"
+    DUNE_SYS_HAS_MUNLOCKALL)
+
   dune_test_function(round
     "double"
     "double"
@@ -289,12 +301,6 @@ macro(dune_probe_functions)
     "struct timespec*;struct timespec*"
     "time.h"
     DUNE_SYS_HAS_NANOSLEEP)
-
-  dune_test_function(strerror
-    "char*"
-    "int"
-    "cstring"
-    DUNE_SYS_HAS_STRERROR)
 
   dune_test_function(clock_gettime
     "int"
@@ -500,6 +506,12 @@ macro(dune_probe_functions)
     "sys/types.h;sys/stat.h;unistd.h"
     DUNE_SYS_HAS_STAT)
 
+  dune_test_function(strerror
+    "char*"
+    "int"
+    "cstring"
+    DUNE_SYS_HAS_STRERROR)
+
   dune_test_function(strerror_r
     "char*"
     "int;char*;size_t"
@@ -509,7 +521,7 @@ macro(dune_probe_functions)
   dune_test_function(strerror_r
     "int"
     "int;char*;size_t"
-    "cstring"
+    "cstring;string.h"
     DUNE_SYS_HAS_POSIX_STRERROR_R)
 
   dune_test_function(CreateFile

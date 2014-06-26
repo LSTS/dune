@@ -158,24 +158,6 @@ namespace Simulators
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      {
-      }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
       //! Acquire resources.
       void
       onResourceAcquisition(void)
@@ -226,12 +208,6 @@ namespace Simulators
         m_model = new MulticopterModel(par);
 
         inf(DTR("Multicopter simulation started."));
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
       }
 
       //! Release resources.
@@ -329,7 +305,7 @@ namespace Simulators
         }
         else
         {
-          trace(DTR("Got a SetPWM message from another source. Ignoring."));
+          trace("Got a SetPWM message from another source. Ignoring.");
         }
       }
 
@@ -356,7 +332,7 @@ namespace Simulators
         spew("Moving at z: %f, height: %f", m_velocity(2), m_position(2));
         if (m_position(2) > 0)
         {
-          trace(DTR("On ground!"));
+          trace("On ground!");
           // Set position on ground
           m_position(2) = 0;
 
@@ -371,7 +347,7 @@ namespace Simulators
             // create simple bouncing-feature
             vz = -0.3 * vz;
 
-            trace(DTR("Bounce!"));
+            trace("Bounce!");
 
             // Update body-velocities
             BodyFixedFrame::toBodyFrame(m_position(3), m_position(4), m_position(5),

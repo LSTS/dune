@@ -49,9 +49,11 @@ namespace Vision
     {
     public:
       //! Constructor.
+      //! @param[in] task parent task.
       //! @param[in] port UDP listening port.
       //! @param[in] buffer_capacity packet buffer capacity.
-      GVSP(uint16_t port, unsigned buffer_capacity = 16384):
+      GVSP(DUNE::Tasks::Task* task, uint16_t port, unsigned buffer_capacity = 16384):
+        m_task(task),
         m_buffer_capacity(buffer_capacity),
         m_count(0)
       {
@@ -129,6 +131,8 @@ namespace Vision
       static const size_t c_header_size = 44;
       //! GVSP footer size.
       static const size_t c_footer_size = 16;
+      //! Parent task.
+      DUNE::Tasks::Task* m_task;
       //! Internal packet buffer.
       uint8_t* m_buffer;
       //! Internal packet buffer capacity.
@@ -164,7 +168,7 @@ namespace Vision
             frame = dequeueClean();
             if (frame == NULL)
             {
-              DUNE_ERR("GVSP", "buffer overrun");
+              m_task->err(DTR("buffer overrun"));
               break;
             }
 
@@ -185,7 +189,7 @@ namespace Vision
             }
             else
             {
-              DUNE_ERR("GVSP", "null frame");
+              m_task->err(DTR("null frame"));
             }
           }
         }

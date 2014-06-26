@@ -77,7 +77,7 @@ main(int32_t argc, char** argv)
     {
       if (msg->getId() == DUNE_IMC_GPSFIX)
       {
-        IMC::GpsFix* fix = dynamic_cast<IMC::GpsFix*>(msg);
+        IMC::GpsFix* fix = static_cast<IMC::GpsFix*>(msg);
 
         if ((fix->hacc <= MIN_HACC) &&
             (fix->validity & IMC::GpsFix::GFV_VALID_POS) &&

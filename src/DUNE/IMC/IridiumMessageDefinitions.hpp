@@ -46,9 +46,12 @@ namespace DUNE
     static const uint16_t ID_ACTIVATESUB = 2003;
     static const uint16_t ID_DEACTIVATESUB = 2004;
     static const uint16_t ID_IRIDIUMCMD = 2005;
+    static const uint16_t ID_IMCMESSAGE = 2010;
+    static const uint16_t ID_EXTDEVUPDATE = 2011;
 
     typedef struct {
       uint16_t id;
+      uint8_t pos_class;
       double time;
       double lat, lon;
     } DevicePosition;
@@ -76,16 +79,17 @@ namespace DUNE
       virtual ~IridiumMessage() {}
     };
 
+
     //! An Iridium message that encapsulates an IMC message
-    class GenericIridiumMessage : public IridiumMessage
+    class ImcIridiumMessage : public IridiumMessage
     {
     public:
-      GenericIridiumMessage();
-      GenericIridiumMessage(DUNE::IMC::Message * msg);
-      int serialize(uint8_t * buffer);
-      int deserialize(uint8_t* data, uint16_t len);
-      ~GenericIridiumMessage();
-      DUNE::IMC::Message * msg;
+    	ImcIridiumMessage();
+    	ImcIridiumMessage(DUNE::IMC::Message * msg);
+    	int serialize(uint8_t * buffer);
+    	int deserialize(uint8_t* data, uint16_t len);
+    	~ImcIridiumMessage();
+    	DUNE::IMC::Message * msg;
     };
 
     //! Extension to the IMC protocol used to report a set of device positions
@@ -97,6 +101,17 @@ namespace DUNE
       int deserialize(uint8_t* data, uint16_t len);
       DeviceUpdate();
       ~DeviceUpdate(){};
+    };
+
+    //! Extension to the IMC protocol used to report a set of device positions (including predicted error)
+    class ExtendedDeviceUpdate : public IridiumMessage
+    {
+    public:
+    	std::vector<DevicePosition> positions;
+    	int serialize(uint8_t * buffer);
+    	int deserialize(uint8_t* data, uint16_t len);
+    	ExtendedDeviceUpdate();
+    	~ExtendedDeviceUpdate(){};
     };
 
     //! Extension to the IMC protocol used request reception of device position updates

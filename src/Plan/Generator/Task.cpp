@@ -413,7 +413,7 @@ namespace Plan
             }
 
             IMC::StationKeeping* at_surface = new IMC::StationKeeping();
-            at_surface->duration = 0;
+            at_surface->duration = 60;
             at_surface->lat = lat;
             at_surface->lon = lon;
             at_surface->z = depth;
@@ -432,65 +432,6 @@ namespace Plan
 
             return true;
           }
-        }
-
-        // This template makes the vehicle go to the home referential
-        // (partly using goto and last 50 meters using a station keeping).
-        if (plan_id == "go_home")
-        {
-          if (m_estate == NULL)
-            return false;
-
-          double bearing, range, home_lat, home_lon, cur_lat, cur_lon, cur_depth, near_lat, near_lon;
-
-          getCurrentPosition(&cur_lat, &cur_lon, &cur_depth);
-          near_lat = home_lat = m_estate->lat;
-          near_lon = home_lon = m_estate->lon;
-
-          WGS84::getNEBearingAndRange(cur_lat, cur_lon, home_lat, home_lon, &bearing, &range);
-
-          if (range > 50)
-          {
-            double n, e, ratio;
-            WGS84::displacement(home_lat, home_lon, 0.0, cur_lat, cur_lon, 0.0, &n, &e);
-            ratio = 50 / range;
-            WGS84::displace(n * ratio, e * ratio, &near_lat, &near_lon);
-          }
-
-          IMC::MessageList<IMC::Maneuver> maneuvers;
-
-          IMC::Goto* go_near = new IMC::Goto();
-          go_near->lat = near_lat;
-          go_near->lon = near_lon;
-
-          go_near->z = m_args.travel_depth;
-          go_near->z_units = IMC::Z_DEPTH;
-          go_near->speed_units = IMC::SUNITS_RPM;
-          go_near->speed = m_args.speed_rpms;
-          maneuvers.push_back(*go_near);
-
-          delete go_near;
-
-          IMC::StationKeeping* at_surface = new IMC::StationKeeping();
-          at_surface->duration = 0;
-          at_surface->lat = home_lat;
-          at_surface->lon = home_lon;
-          at_surface->z = 0.0;
-          at_surface->z_units = IMC::Z_DEPTH;
-          at_surface->speed_units = IMC::SUNITS_RPM;
-          at_surface->speed = m_args.speed_rpms;
-          at_surface->radius = m_args.radius;
-          // SK radiuses must be at least 20
-          if (at_surface->radius < 20)
-            at_surface->radius = 20;
-
-          maneuvers.push_back(*at_surface);
-
-          delete at_surface;
-
-          sequentialPlan(plan_id, &maneuvers, result);
-
-          return true;
         }
 
         // This template makes the vehicle dive for some time
@@ -544,7 +485,7 @@ namespace Plan
           delete surface;
 
           IMC::StationKeeping* at_surface = new IMC::StationKeeping();
-          at_surface->duration = 0;
+          at_surface->duration = 120;
           at_surface->lat = lat;
           at_surface->lon = lon;
           at_surface->z = 0.0;
@@ -567,10 +508,10 @@ namespace Plan
           IMC::MessageList<IMC::Maneuver> maneuvers;
 
           double curlat, curlon, curdepth;
-          double lat = Angles::radians(params.get("lat", 0));
-          double lon = Angles::radians(params.get("lon", 0));
-          double maxdepth = params.get("maxdepth", (double)4.0);
-          double mindepth = params.get("mindepth", (double)1.0);
+          double lat = Angles::radians(params.get("lat", 0.0));
+          double lon = Angles::radians(params.get("lon", 0.0));
+          double maxdepth = params.get("maxdepth", 4.0);
+          double mindepth = params.get("mindepth", 1.0);
           double vn = params.get("vn", 0.0);
           double ve = params.get("ve", 0.0);
           double size = params.get("size", 50.0);

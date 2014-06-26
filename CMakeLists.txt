@@ -44,9 +44,9 @@ set(PROJECT_VENDOR "Universidade do Porto - LSTS")
 set(PROJECT_COPYRIGHT "Copyright (C) 2007-2014 - ${PROJECT_VENDOR}")
 set(PROJECT_CONTACT "DUNE <dune@lsts.pt>")
 set(PROJECT_VERSION_MAJ "2")
-set(PROJECT_VERSION_MIN "5")
-set(PROJECT_VERSION_PAT "0")
-set(PROJECT_VERSION_RCN "1")
+set(PROJECT_VERSION_MIN "6")
+set(PROJECT_VERSION_PAT "x")
+set(PROJECT_VERSION_RCN "0")
 
 # Version formats.
 set(PROJECT_VERSION
@@ -56,8 +56,13 @@ if(PROJECT_VERSION_RCN GREATER 0)
   set(PROJECT_VERSION "${PROJECT_VERSION}-rc${PROJECT_VERSION_RCN}")
 endif(PROJECT_VERSION_RCN GREATER 0)
 
-set(PROJECT_VERSION_PARTS
-  "${PROJECT_VERSION_MAJ},${PROJECT_VERSION_MIN},${PROJECT_VERSION_PAT},${PROJECT_VERSION_RCN}")
+if(PROJECT_VERSION_PAT STREQUAL "x")
+  set(PROJECT_VERSION_PARTS
+    "${PROJECT_VERSION_MAJ},${PROJECT_VERSION_MIN},99,${PROJECT_VERSION_RCN}")
+else()
+  set(PROJECT_VERSION_PARTS
+    "${PROJECT_VERSION_MAJ},${PROJECT_VERSION_MIN},${PROJECT_VERSION_PAT},${PROJECT_VERSION_RCN}")
+endif()
 
 # This directory will hold generated files.
 set(DUNE_GENERATED ${CMAKE_BINARY_DIR}/DUNEGeneratedFiles)
@@ -74,7 +79,7 @@ dune_option(SHARED "Build shared library and shared plugins")
 dune_option(DEBUG "Compile with debug information enabled")
 dune_option(PROFILE "Compile with profiling and debug information enabled")
 dune_option(TLSF "Include the TLSF O(1) memory allocator")
-dune_option(GUI "Include Qt based GUI")
+dune_option(QT5 "Include Qt5 based GUI")
 dune_option(DC1394 "Enable support for libdc1394")
 dune_option(V4L2 "Enable support for libv4l2")
 dune_option(JS "Enable support for SpiderMonkey javascript engine")
@@ -406,19 +411,11 @@ if(TESTS)
     ADD_TEST(${executable} ${executable})
   endmacro(dune_test source)
 
-  dune_test(programs/tests/test_Network.cpp)
-  dune_test(programs/tests/test_System.cpp)
-  dune_test(programs/tests/test_AtomicInteger.cpp)
-  dune_test(programs/tests/test_BodyFixedFrame.cpp)
-  dune_test(programs/tests/test_Optimization.cpp)
-  dune_test(programs/tests/test_Path.cpp)
-  dune_test(programs/tests/test_StateMachine.cpp)
-  dune_test(programs/tests/test_Random.cpp)
-  dune_test(programs/tests/test_CircularBuffer.cpp)
-  dune_test(programs/tests/test_MD5.cpp)
-  dune_test(programs/tests/test_Database.cpp)
-  dune_test(programs/tests/test_IMC.cpp)
-  dune_test(programs/tests/test_String.cpp)
+  file(GLOB_RECURSE DUNE_TESTS_SOURCES
+    "${PROJECT_SOURCE_DIR}/programs/tests/*.cpp")
+  foreach(test ${DUNE_TESTS_SOURCES})
+    dune_test(${test})
+  endforeach(test ${DUNE_TESTS_SOURCES})
 endif(TESTS)
 
 ##########################################################################

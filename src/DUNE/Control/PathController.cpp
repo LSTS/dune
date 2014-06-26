@@ -54,6 +54,8 @@ namespace DUNE
     static const double c_lkeep_distance = 30.0;
     //! Maximum admissible time for disabling monitors due to navigation jump
     static const float c_max_jump_time = 100.0;
+    //! Depth margin when limiting depth in bottom tracker
+    static const float c_depth_margin = 1.0;
 
     PathController::PathController(std::string name, Tasks::Context& ctx):
       Task(name, ctx),
@@ -172,11 +174,6 @@ namespace DUNE
       .units(Units::Meter)
       .description("Depth tolerance below which altitude is ignored");
 
-      param("Bottom Track -- Depth Limit", m_btd.args.depth_limit)
-      .defaultValue("48.0")
-      .units(Units::Meter)
-      .description("Depth limit for bottom tracking");
-
       param("Bottom Track -- Check Trend", m_btd.args.check_trend)
       .defaultValue("true")
       .description("Check slope angle trend in unsafe state");
@@ -194,6 +191,9 @@ namespace DUNE
       .defaultValue("3.0")
       .units(Units::Meter)
       .description("Admissible altitude when doing depth control");
+
+      m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
+      m_btd.args.depth_limit -= c_depth_margin;
 
       bind<IMC::Brake>(this);
       bind<IMC::ControlLoops>(this);

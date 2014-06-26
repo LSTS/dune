@@ -58,6 +58,10 @@ namespace Sensors
     static const unsigned c_code_sys_restart = 0x01a6;
     //! Restart system ack code.
     static const unsigned c_code_sys_restart_ack = 0x01a7;
+    //! Modem base frequency.
+    static const unsigned c_base_frequency = 22000;
+    //! Channel to frequency.
+    static const unsigned c_chn_frequency = 1000;
 
     enum EntityStates
     {
@@ -134,6 +138,8 @@ namespace Sensors
       std::string sound_speed_elabel;
       // Turn around time (ms).
       unsigned turn_around_time;
+      // Transmit only underwater.
+      bool only_underwater;
     };
 
     struct Beacon
@@ -191,16 +197,12 @@ namespace Sensors
       SerialPort* m_uart;
       // Range.
       IMC::LblRange m_range;
-      // Range.
+      // Detection.
       IMC::LblDetection m_detect;
-      // Abort message.
-      IMC::Abort m_abort;
       // Entity states.
       IMC::EntityState m_states[STA_MAX];
       // Commands to/from modem.
       IMC::DevDataText m_cmds;
-      // Time of last range.
-      double m_last_range;
       // Internal buffer.
       char m_bfr[c_bfr_size];
       // Task arguments.
@@ -222,7 +224,7 @@ namespace Sensors
       //! Report timer.
       Counter<double> m_report_timer;
       //! Stop reports on the ground.
-      bool m_stop_reports;
+      bool m_stop_comms;
       //! Last progress.
       float m_progress;
       //! Last fuel level.
@@ -233,7 +235,6 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_last_range(0),
         m_result(RS_NONE),
         m_sound_speed_eid(-1)
       {
@@ -323,6 +324,10 @@ namespace Sensors
         .defaultValue("20")
         .minimumValue("0");
 
+        param("Transmit Only Underwater", m_args.only_underwater)
+        .defaultValue("false")
+        .description("Do not transmit when at water surface");
+
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
         m_states[STA_BOOT].description = DTR("initializing");
@@ -339,7 +344,7 @@ namespace Sensors
         m_states[STA_ERR_SRC].state = IMC::EntityState::ESTA_ERROR;
         m_states[STA_ERR_SRC].description = DTR("failed to set modem address");
 
-	m_stop_reports = false;
+	m_stop_comms = true;
 
         // Register handlers.
         bind<IMC::EstimatedState>(this);
@@ -384,12 +389,7 @@ namespace Sensors
 
         // Set modem address.
         {
-          NMEAWriter stn("CCCFG");
-          stn << "SRC" << m_addr;
-          std::string cmd = stn.sentence();
-          m_uart->write(cmd.c_str(), cmd.size());
-
-          processInput();
+          configureModem("CCCFG", "SRC", m_addr);
 
           if (!consumeResult(RS_SRC_ACKD))
           {
@@ -400,12 +400,7 @@ namespace Sensors
 
         // Set NRV parameter.
         {
-          NMEAWriter stn("CCCFG");
-          stn << "NRV" << 0;
-          std::string cmd = stn.sentence();
-          m_uart->write(cmd.c_str(), cmd.size());
-
-          processInput();
+          configureModem("CCCFG", "NRV", 0);
 
           if (!consumeResult(RS_NRV_ACKD))
           {
@@ -416,12 +411,7 @@ namespace Sensors
 
         // Set CTO parameter.
         {
-          NMEAWriter stn("CCCFG");
-          stn << "CTO" << c_cto;
-          std::string cmd = stn.sentence();
-          m_uart->write(cmd.c_str(), cmd.size());
-
-          processInput();
+          configureModem("CCCFG", "CTO", c_cto);
 
           if (!consumeResult(RS_CTO_ACKD))
           {
@@ -432,12 +422,7 @@ namespace Sensors
 
         // Set TAT parameter.
         {
-          NMEAWriter stn("CCCFG");
-          stn << "TAT" << m_args.turn_around_time;
-          std::string cmd = stn.sentence();
-          m_uart->write(cmd.c_str(), cmd.size());
-
-          processInput();
+          configureModem("CCCFG", "TAT", m_args.turn_around_time);
 
           if (!consumeResult(RS_TAT_ACKD))
           {
@@ -448,12 +433,7 @@ namespace Sensors
 
         // Set XST parameter.
         {
-          NMEAWriter stn("CCCFG");
-          stn << "XST" << 0;
-          std::string cmd = stn.sentence();
-          m_uart->write(cmd.c_str(), cmd.size());
-
-          processInput();
+          configureModem("CCCFG", "XST", 0);
 
           if (!consumeResult(RS_XST_ACKD))
           {
@@ -516,7 +496,7 @@ namespace Sensors
       unsigned
       channelToFrequency(unsigned channel)
       {
-        return channel * 1000 + 22000;
+        return channel * c_chn_frequency + c_base_frequency;
       }
 
       void
@@ -605,9 +585,7 @@ namespace Sensors
           war(DTR("start plan detected"));
 
           std::string cmd = String::str("$CCMUC,%u,%u,%04x\r\n", m_addr, src, c_code_plan_ack);
-          processInput(m_args.mpk_delay_bef);
-          m_uart->write(cmd.c_str(), cmd.size());
-          processInput(c_mpk_duration + m_args.mpk_delay_aft);
+          sendDelayedCommand(cmd, m_args.mpk_delay_bef, m_args.mpk_delay_aft);
 
           if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
             inf(DTR("plan acknowledged"));
@@ -629,9 +607,7 @@ namespace Sensors
           war(DTR("received system restart request"));
 
           std::string cmd = String::str("$CCMUC,%u,%u,%04x\r\n", m_addr, src, c_code_sys_restart_ack);
-          processInput(m_args.mpk_delay_bef);
-          m_uart->write(cmd.c_str(), cmd.size());
-          processInput(c_mpk_duration + m_args.mpk_delay_aft);
+          sendDelayedCommand(cmd, m_args.mpk_delay_bef, m_args.mpk_delay_aft);
 
           if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
             inf(DTR("restart request acknowledged"));
@@ -644,22 +620,18 @@ namespace Sensors
         else if (value == c_code_abort)
         {
           war(DTR("acoustic abort detected"));
-          m_abort.setDestination(getSystemId());
-          dispatch(m_abort);
+
+          IMC::Abort abort;
+          abort.setDestination(getSystemId());
+          dispatch(abort);
 
           std::string cmd = String::str("$CCMUC,%u,%u,%04x\r\n", m_addr, src, c_code_abort_ack);
-          processInput(m_args.mpk_delay_bef);
-          m_uart->write(cmd.c_str(), cmd.size());
-          processInput(c_mpk_duration + m_args.mpk_delay_aft);
+          sendDelayedCommand(cmd, m_args.mpk_delay_bef, m_args.mpk_delay_aft);
 
           if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
-          {
             inf(DTR("abort acknowledged"));
-          }
           else
-          {
             inf(DTR("failed to acknowledge abort"));
-          }
         }
       }
 
@@ -683,14 +655,13 @@ namespace Sensors
             double range = travel * m_sound_speed;
             if (range > 0.0)
             {
-              m_last_range = m_range.getTimeStamp();
               m_range.id = i;
               m_range.range = range;
               dispatch(m_range, DF_KEEP_TIME);
 
               // Update beacon statistics.
               m_beacons[i].range = (unsigned)m_range.range;
-              m_beacons[i].range_time = m_last_range;
+              m_beacons[i].range_time = Clock::get();
             }
             else
             {
@@ -767,21 +738,17 @@ namespace Sensors
                                       m_args.rx_length, m_args.ping_tout,
                                       freqs[0], freqs[1], freqs[2], freqs[3]);
 
-        m_uart->writeString(cmd.c_str());
+        sendCommand(cmd);
 
         processInput(m_args.ping_period);
         if (consumeResult(RS_PNG_ACKD) && consumeResult(RS_PNG_TIME))
-        {
           m_state = STA_ACTIVE;
-        }
         else
-        {
           war(DTR("failed to ping beacons, modem seems busy"));
-        }
       }
 
       void
-      sendVerboseReport(void)
+      fullAcousticReport(void)
       {
         double lat;
         double lon;
@@ -797,7 +764,7 @@ namespace Sensors
         uint8_t conf = (uint8_t)m_fuel_conf;
         int8_t prog = (int8_t)m_progress;
 
-        for (uint8_t i = 0; i < 2; i++)
+        for (uint8_t i = 0; i < std::min(2, (int)m_beacons.size()); i++)
         {
           if (m_args.good_range_age > (Clock::get() - m_beacons[i].range_time))
             ranges[i] = m_beacons[i].range;
@@ -820,14 +787,12 @@ namespace Sensors
         std::string hex = String::toHex(msg);
         std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n",
                                       m_addr, 0, hex.c_str());
-        m_uart->writeString(cmd.c_str());
+        sendCommand(cmd);
 
-        std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n",
-                                      m_addr, 0);
-        m_uart->writeString(cyc.c_str());
+        std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n", m_addr, 0);
+        sendCommand(cyc);
 
-        int i = 0;
-        for (i = 0; i < 7; ++i)
+        for (int i = 0; i < 7; ++i)
         {
           consumeMessages();
           Delay::wait(1.0);
@@ -839,34 +804,34 @@ namespace Sensors
       {
         if (msg->op == IMC::LblConfig::OP_SET_CFG)
         {
-            m_beacons.clear();
-            IMC::MessageList<IMC::LblBeacon>::const_iterator itr = msg->beacons.begin();
-            for (unsigned i = 0; itr != msg->beacons.end(); ++itr, ++i)
-            {
-              if (*itr == NULL)
-                continue;
+          m_beacons.clear();
+          IMC::MessageList<IMC::LblBeacon>::const_iterator itr = msg->beacons.begin();
+          for (unsigned i = 0; itr != msg->beacons.end(); ++itr, ++i)
+          {
+            if (*itr == NULL)
+              continue;
 
-              Beacon beacon;
-              beacon.id = i;
-              beacon.name = (*itr)->beacon;
-              beacon.rx_channel = (*itr)->query_channel;
-              beacon.rx_frequency = channelToFrequency((*itr)->query_channel);
-              beacon.tx_channel = (*itr)->reply_channel;
-              beacon.tx_frequency = channelToFrequency((*itr)->reply_channel);
-              beacon.ping_cmd = String::str("$CCPNT,%u,%u,%u,%u,%u,0,0,0,1\r\n",
-                                            beacon.rx_frequency, m_args.tx_length,
-                                            m_args.rx_length, m_args.ping_tout,
-                                            beacon.tx_frequency);
-              beacon.lat = (*itr)->lat;
-              beacon.lon = (*itr)->lon;
-              beacon.depth = (*itr)->depth;
-              beacon.delay = (*itr)->transponder_delay;
+            Beacon beacon;
+            beacon.id = i;
+            beacon.name = (*itr)->beacon;
+            beacon.rx_channel = (*itr)->query_channel;
+            beacon.rx_frequency = channelToFrequency((*itr)->query_channel);
+            beacon.tx_channel = (*itr)->reply_channel;
+            beacon.tx_frequency = channelToFrequency((*itr)->reply_channel);
+            beacon.ping_cmd = String::str("$CCPNT,%u,%u,%u,%u,%u,0,0,0,1\r\n",
+                                          beacon.rx_frequency, m_args.tx_length,
+                                          m_args.rx_length, m_args.ping_tout,
+                                          beacon.tx_frequency);
+            beacon.lat = (*itr)->lat;
+            beacon.lon = (*itr)->lon;
+            beacon.depth = (*itr)->depth;
+            beacon.delay = (*itr)->transponder_delay;
 
-              m_beacons.push_back(beacon);
-            }
+            m_beacons.push_back(beacon);
+          }
 
-            if (m_state != STA_ERR_COM && m_state != STA_ERR_SRC && m_state != STA_ERR_STP)
-              m_state = isActive() ? STA_ACTIVE : STA_IDLE;
+          if (m_state != STA_ERR_COM && m_state != STA_ERR_SRC && m_state != STA_ERR_STP)
+            m_state = isActive() ? STA_ACTIVE : STA_IDLE;
         }
 
         if (msg->op == IMC::LblConfig::OP_GET_CFG)
@@ -921,10 +886,20 @@ namespace Sensors
       void
       consume(const IMC::VehicleMedium* msg)
       {
+        if (m_args.only_underwater)
+        {
+          if (msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
+            m_stop_comms = false;
+          else
+            m_stop_comms = true;
+
+          return;
+        }
+
         if (msg->medium == IMC::VehicleMedium::VM_GROUND)
-	  m_stop_reports = true;
-	else
-	  m_stop_reports = false;
+	  m_stop_comms = true;
+        else
+          m_stop_comms = false;
       }
 
       void
@@ -961,23 +936,67 @@ namespace Sensors
             stn << m_addr << 15 << code_str;
             std::string cmd = stn.sentence();
 
-            processInput(m_args.mpk_delay_bef);
-            m_uart->write(cmd.c_str(), cmd.size());
-            processInput(c_mpk_duration + m_args.mpk_delay_aft);
+            sendDelayedCommand(cmd, m_args.mpk_delay_bef, m_args.mpk_delay_aft);
 
             if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
-            {
-              inf(DTR("reported range to %s = %u m"), m_beacons[i].name.c_str(), m_beacons[i].range);
-            }
+              debug("reported range to %s = %u m", m_beacons[i].name.c_str(), m_beacons[i].range);
             else
-            {
-              inf(DTR("failed to report range to %s"), m_beacons[i].name.c_str());
-            }
+              debug("failed to report range to %s", m_beacons[i].name.c_str());
           }
         }
 
         if (!first)
           processInput(m_args.report_delay_aft);
+      }
+
+      //! Configure a modem parameter.
+      //! @param[in] code NMEA code of the message to be transmitted.
+      //! @param[in] parameter modem parameter to be configured.
+      //! @param[in] value new configuration value.
+      void
+      configureModem(const std::string& code, const std::string& parameter, const unsigned value)
+      {
+        // Create NMEA message.
+        NMEAWriter stn(code);
+        stn << parameter << value;
+        std::string cmd = stn.sentence();
+
+        // Send to Modem.
+        sendCommand(cmd);
+
+        // Process Input.
+        processInput();
+      }
+
+      //! Send a command to the modem processing input before and after.
+      //! @param[in] cmd NMEA message to be transmitted.
+      //! @param[in] delay_bef time to process input from modem before.
+      //! @param[in] delay_aft time to process input from modem after.
+      void
+      sendDelayedCommand(const std::string& cmd, double delay_bef, double delay_aft)
+      {
+        processInput(delay_bef);
+        sendCommand(cmd);
+        processInput(c_mpk_duration + delay_aft);
+      }
+
+      //! Send command to modem and log it.
+      //! @param[in] cmd NMEA message to be transmitted.
+      void
+      sendCommand(const std::string& cmd)
+      {
+        m_uart->writeString(cmd.c_str());
+        logCommand(cmd);
+      }
+
+      //! Log NMEA message.
+      //! @param[in] cmd NMEA message to be logged.
+      void
+      logCommand(const std::string& cmd)
+      {
+        // Log sent message.
+        m_cmds.value.assign(sanitize(cmd));
+        dispatch(m_cmds);
       }
 
       void
@@ -988,14 +1007,14 @@ namespace Sensors
         while (!stopping())
         {
           // Report.
-          if (m_args.report != "None" && !m_stop_reports)
+          if (m_args.report != "None" && !m_stop_comms)
           {
             if (m_report_timer.overflow())
             {
               m_report_timer.reset();
 
               if (m_args.report == "Full")
-                sendVerboseReport();
+                fullAcousticReport();
               else
                 reportRanges(Clock::get());
             }
@@ -1008,17 +1027,13 @@ namespace Sensors
             continue;
           }
 
+          if (isActive() && !m_stop_comms)
+            ping();
+          else
+            processInput();
+
           if (Clock::get() >= (m_last_input + c_input_tout))
             m_state = STA_ERR_COM;
-
-          if (isActive())
-          {
-            ping();
-          }
-          else
-          {
-            processInput();
-          }
         }
       }
     };

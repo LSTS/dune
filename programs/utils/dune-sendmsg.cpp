@@ -681,7 +681,7 @@ main(int argc, char** argv)
     tmsg->command = atoi(argv[4]);
 
     if (tmsg->command == IMC::VehicleCommand::VC_EXEC_MANEUVER)
-      tmsg->maneuver.set(dynamic_cast<IMC::Maneuver*>(IMC::Factory::produce(argv[5])));
+      tmsg->maneuver.set(static_cast<IMC::Maneuver*>(IMC::Factory::produce(argv[5])));
   }
 
   if (strcmp(argv[3], "VehicleMedium") == 0)

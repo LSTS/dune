@@ -116,13 +116,21 @@ namespace Navigation
         SC_RPM = 4
       };
 
-      //! GPS accuracy parameters.
+      //! GPS accuracy indexes.
       enum GpsAccuracyIndexes
       {
-        GPS_ACC_BAD = 0,
-        GPS_ACC_AVERAGE = 1,
-        GPS_ACC_GOOD = 2,
-        GPS_ACC_PERFECT = 3
+        GPS_ACC_BAD_IDX = 0,
+        GPS_ACC_AVG_IDX = 1,
+        GPS_ACC_GOOD_IDX = 2,
+        GPS_ACC_PERFECT_IDX = 3
+      };
+
+      //! GPS Horizontal Accuracy (HACC) threshold values.
+      enum GpsAccuracyValues
+      {
+        GPS_ACC_BAD_THRESH = 10,
+        GPS_ACC_AVG_THRESH = 8,
+        GPS_ACC_GOOD_THRESH = 4
       };
 
       //! %Task arguments.
@@ -144,8 +152,10 @@ namespace Navigation
         float initial_rpm_to_speed;
         //! Heading bias uncertainty alignment threshold.
         double alignment_index;
-        //! Increment Euler Angles Delta (true) or integrate yaw rate (false)
+        //! Increment Euler Angles Delta (true) or integrate yaw rate (false).
         bool increment_euler_delta;
+        //! Abort if navigation exceeds maximum uncertainty.
+        bool abort;
       };
 
       struct Task: public DUNE::Navigation::BasicNavigation
@@ -208,6 +218,10 @@ namespace Navigation
           .defaultValue("false")
           .description("Use 'EulerAnglesDelta' or 'AngularVelocity' to update heading");
 
+          param("Abort if Uncertainty Exceeded", m_args.abort)
+          .defaultValue("true")
+          .description("Abort if position uncertainty is exceeded");
+
           param("Heading Bias Alignment Index", m_args.alignment_index)
           .defaultValue("1e-5")
           .minimumValue("1e-6")
@@ -244,8 +258,8 @@ namespace Navigation
           m_kal.setMeasurementNoise(OUT_V, m_measure_noise[MN_V]);
           m_kal.setMeasurementNoise(OUT_PSI, m_measure_noise[MN_PSI]);
           m_kal.setMeasurementNoise(OUT_R, m_measure_noise[MN_YAWRATE]);
-          m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_GOOD]);
-          m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_GOOD]);
+          m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_GOOD_IDX]);
+          m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_GOOD_IDX]);
 
           for (unsigned i = 0; i < m_ranging.getSize(); i++)
             m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
@@ -418,25 +432,25 @@ namespace Navigation
         void
         updateKalmanParametersGps(double hacc)
         {
-          if (hacc > 10)
+          if (hacc > GPS_ACC_BAD_THRESH)
           {
-            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_BAD]);
-            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_BAD]);
+            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_BAD_IDX]);
+            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_BAD_IDX]);
           }
-          if (hacc > 8 && hacc <= 10)
+          if (hacc > GPS_ACC_AVG_THRESH && hacc <= GPS_ACC_BAD_THRESH)
           {
-            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_AVERAGE]);
-            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_AVERAGE]);
+            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_AVG_IDX]);
+            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_AVG_IDX]);
           }
-          if (hacc > 4 && hacc <= 8)
+          if (hacc > GPS_ACC_GOOD_THRESH && hacc <= GPS_ACC_AVG_THRESH)
           {
-            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_GOOD]);
-            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_GOOD]);
+            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_GOOD_IDX]);
+            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_GOOD_IDX]);
           }
-          if (hacc <= 4)
+          if (hacc <= GPS_ACC_GOOD_THRESH)
           {
-            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_PERFECT]);
-            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_PERFECT]);
+            m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_ACC_PERFECT_IDX]);
+            m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_ACC_PERFECT_IDX]);
           }
         }
 
@@ -578,7 +592,7 @@ namespace Navigation
               m_aligned = false;
           }
 
-          checkUncertainty();
+          checkUncertainty(m_args.abort);
 
           logData();
           reportToBus();

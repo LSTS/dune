@@ -33,6 +33,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "ManeuverSupervisor.hpp"
+
 namespace Supervisors
 {
   namespace Vehicle
@@ -59,6 +62,8 @@ namespace Supervisors
       std::vector<std::string> safe_ents;
       //! Allow external control
       bool ext_control;
+      //! Timeout for starting or stopping a maneuver
+      double handle_timeout;
     };
 
     struct Task: public DUNE::Tasks::Periodic
@@ -89,6 +94,8 @@ namespace Supervisors
       unsigned m_eboot;
       //! Time counter for enabled loops in service mode
       Time::Counter<float> m_loops_timer;
+      //! Maneuver handler
+      ManeuverSupervisor* m_man_sup;
       //! Task arguments.
       Arguments m_args;
 
@@ -96,7 +103,8 @@ namespace Supervisors
         Tasks::Periodic(name, ctx),
         m_switch_time(-1.0),
         m_in_safe_plan(false),
-        m_scope_ref(0)
+        m_scope_ref(0),
+        m_man_sup(NULL)
       {
         param("Safe Entities", m_args.safe_ents)
         .defaultValue("")
@@ -106,12 +114,28 @@ namespace Supervisors
         .defaultValue("true")
         .description("Allow for the vehicle to be externally controlled");
 
+        param("Maneuver Handling Timeout", m_args.handle_timeout)
+        .defaultValue("1.0")
+        .description("Timeout for starting or stopping a maneuver");
+
         bind<IMC::Abort>(this);
         bind<IMC::ControlLoops>(this);
         bind<IMC::EntityMonitoringState>(this);
         bind<IMC::ManeuverControlState>(this);
         bind<IMC::VehicleCommand>(this);
         bind<IMC::PlanControl>(this);
+      }
+
+      void
+      onResourceAcquisition(void)
+      {
+        m_man_sup = new ManeuverSupervisor(this, m_args.handle_timeout);
+      }
+
+      void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_man_sup);
       }
 
       void
@@ -126,8 +150,7 @@ namespace Supervisors
       void
       reset(void)
       {
-        if (maneuverMode())
-          dispatch(m_stop);
+        m_man_sup->addStop();
 
         m_in_safe_plan = false;
 
@@ -135,7 +158,7 @@ namespace Supervisors
 
         m_vs.control_loops = 0;
 
-        dispatch(m_idle);
+        m_man_sup->addStart(&m_idle);
       }
 
       void
@@ -197,7 +220,7 @@ namespace Supervisors
         {
           // original entity ID is the Plan.Engine's
           maneuver->setSourceEntity(getEntityId());
-          dispatch(maneuver);
+          m_man_sup->addStart(maneuver);
           m_vs.maneuver_stime = maneuver->getTimeStamp();
           m_vs.maneuver_type = maneuver->getId();
           m_vs.maneuver_eta = 0xFFFF;
@@ -231,7 +254,7 @@ namespace Supervisors
         switch ((IMC::VehicleState::OperationModeEnum)m_vs.op_mode)
         {
           case IMC::VehicleState::VS_SERVICE:
-            changeMode(IMC::VehicleState::VS_EXTERNAL);
+            m_loops_timer.reset();
             break;
           case IMC::VehicleState::VS_ERROR:
           case IMC::VehicleState::VS_BOOT:
@@ -372,6 +395,8 @@ namespace Supervisors
         if (msg->getSource() != getSystemId())
           return;
 
+        m_man_sup->update(msg);
+
         if (!maneuverMode())
           return;
 
@@ -400,6 +425,8 @@ namespace Supervisors
             debug("%s", m_vs.last_error.c_str());
             changeMode(IMC::VehicleState::VS_SERVICE);
             reset();
+            break;
+          case IMC::ManeuverControlState::MCS_STOPPED:
             break;
         }
       }
@@ -510,7 +537,7 @@ namespace Supervisors
           return;
         }
 
-        dispatch(m_stop);
+        m_man_sup->addStop();
         IMC::Message* clone = m->clone();
         changeMode(IMC::VehicleState::VS_MANEUVER, clone);
         delete clone;
@@ -580,6 +607,8 @@ namespace Supervisors
           err(DTR("this vehicle does not allow for external control, disabling loops"));
           disableLoops();
         }
+
+        m_man_sup->update();
 
         if (m_switch_time < 0.0)
           return;

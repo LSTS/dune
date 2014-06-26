@@ -365,14 +365,14 @@ namespace Actuators
           if (es.state == IMC::EntityState::ESTA_NORMAL)
           {
             es.state = IMC::EntityState::ESTA_FAILURE;
-            es.description = "leak detected";
+            es.description = DTR("leak detected");
             dispatch(es);
           }
         }
         else if (es.state == IMC::EntityState::ESTA_FAILURE)
         {
           es.state = IMC::EntityState::ESTA_NORMAL;
-          es.description = "no leak";
+          es.description = DTR("no leak");
           dispatch(es);
         }
       }

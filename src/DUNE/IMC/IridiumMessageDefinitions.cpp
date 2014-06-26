@@ -66,63 +66,76 @@ namespace DUNE
             ret = (IridiumMessage *) new IridiumCommand();
             ret->deserialize(ptr, msg->data.size());
             return ret;
-        default:
-            ret = (IridiumMessage *) new GenericIridiumMessage();
+
+        case (ID_IMCMESSAGE):
+            ret = (ImcIridiumMessage *) new ImcIridiumMessage();
             ret->deserialize(ptr, msg->data.size());
             return ret;
+
+        case(ID_EXTDEVUPDATE):
+            ret = (ExtendedDeviceUpdate *) new ExtendedDeviceUpdate();
+            ret->deserialize(ptr, msg->data.size());
+            return ret;
+
+        default:
+          std::cerr << "Ignoring unrecognized Iridium message (" << msg_id
+              << ")" << std::endl;
+            return NULL;
       }
     }
 
-    GenericIridiumMessage::GenericIridiumMessage(DUNE::IMC::Message * m)
-    {
-      msg = m;
-      msg_id = m->getId();
-    }
-
-    GenericIridiumMessage::GenericIridiumMessage()
+    ImcIridiumMessage::ImcIridiumMessage()
     {
       msg = NULL;
-      msg_id = 0;
+      msg_id = ID_IMCMESSAGE;
     }
 
-    GenericIridiumMessage::~GenericIridiumMessage()
+    ImcIridiumMessage::ImcIridiumMessage(DUNE::IMC::Message * m)
+    {
+      msg = m;
+      msg_id = ID_IMCMESSAGE;
+    }
+
+    ImcIridiumMessage::~ImcIridiumMessage()
     {
       if (msg != NULL)
         delete msg;
     }
 
     int
-    GenericIridiumMessage::serialize(uint8_t * buffer)
+    ImcIridiumMessage::serialize(uint8_t * buffer)
     {
-      if (msg != NULL)
-        msg_id = msg->getId();
       uint8_t * start;
       start = buffer;
+      uint32_t timestamp = (unsigned int) msg->getTimeStamp();
 
       buffer += DUNE::IMC::serialize(source, buffer);
       buffer += DUNE::IMC::serialize(destination, buffer);
       buffer += DUNE::IMC::serialize(msg_id, buffer);
-
+      buffer += DUNE::IMC::serialize(msg->getId(), buffer);
+      buffer += DUNE::IMC::serialize(timestamp, buffer);
       buffer = msg->serializeFields(buffer);
-
       return buffer - start;
     }
 
-    int GenericIridiumMessage::deserialize(uint8_t * buffer, uint16_t length)
+    int ImcIridiumMessage::deserialize(uint8_t * buffer, uint16_t length)
     {
       uint8_t * start;
+      uint16_t mgid;
+      uint32_t timestamp;
+
       start = buffer;
       buffer += DUNE::IMC::deserialize(source, buffer, length);
       buffer += DUNE::IMC::deserialize(destination, buffer, length);
       buffer += DUNE::IMC::deserialize(msg_id, buffer, length);
+      buffer += DUNE::IMC::deserialize(mgid, buffer, length);
+      buffer += DUNE::IMC::deserialize(timestamp, buffer, length);
+      msg = DUNE::IMC::Factory::produce(mgid);
+      msg->setTimeStamp(timestamp);
 
-      //std::cerr << "parsing Iridium message... msg id: " << msg_id << "size: " << length << std::endl;
-
-
-      msg = DUNE::IMC::Factory::produce(msg_id);
       if (msg == NULL)
       {
-        //std::cerr << "ERROR parsing Iridium message: unknown msg id: " << msg_id << std::endl;
+        std::cerr << "ERROR parsing Iridium message: unknown msg id: " << mgid << std::endl;
         return 0;
       }
 
@@ -130,6 +143,7 @@ namespace DUNE
 
       return buffer - start;
     }
+
 
     IridiumCommand::IridiumCommand()
     {
@@ -176,7 +190,8 @@ namespace DUNE
       buffer += DUNE::IMC::serialize(msg_id, buffer);
 
       std::vector<DevicePosition>::iterator it;
-      uint32_t _lat, _lon, _time;
+      int32_t _lat, _lon;
+      uint32_t _time;
 
       for (it = positions.begin(); it != positions.end(); it++)
       {
@@ -187,8 +202,6 @@ namespace DUNE
         buffer += DUNE::IMC::serialize(_time, buffer);
         buffer += DUNE::IMC::serialize(_lat, buffer);
         buffer += DUNE::IMC::serialize(_lon, buffer);
-
-        //std::cerr << it->id << " is at " << _lat << " / " << _lon;
       }
 
       return buffer - start;
@@ -212,6 +225,69 @@ namespace DUNE
         buffer += DUNE::IMC::deserialize(_time, buffer, length);
         buffer += DUNE::IMC::deserialize(_lat, buffer, length);
         buffer += DUNE::IMC::deserialize(_lon, buffer, length);
+
+        pos.time = _time;
+        pos.lat = DUNE::Math::Angles::radians((_lat / 1000000.0));
+        pos.lon = DUNE::Math::Angles::radians((_lon / 1000000.0));
+
+        positions.push_back(pos);
+      }
+
+      return buffer - start;
+    }
+
+    ExtendedDeviceUpdate::ExtendedDeviceUpdate()
+    {
+      msg_id = ID_EXTDEVUPDATE;
+    }
+
+    int
+    ExtendedDeviceUpdate::serialize(uint8_t * buffer)
+    {
+      uint8_t* start = buffer;
+      buffer += DUNE::IMC::serialize(source, buffer);
+      buffer += DUNE::IMC::serialize(destination, buffer);
+      buffer += DUNE::IMC::serialize(msg_id, buffer);
+
+      std::vector<DevicePosition>::iterator it;
+      int32_t _lat, _lon;
+      uint32_t _time;
+
+      for (it = positions.begin(); it != positions.end(); it++)
+      {
+        _time = (uint32_t) DUNE::Math::round(it->time);
+        _lat = (int32_t) DUNE::Math::round(DUNE::Math::Angles::degrees(it->lat) * 1000000.0);
+        _lon = (int32_t) DUNE::Math::round(DUNE::Math::Angles::degrees(it->lon) * 1000000.0);
+
+        buffer += DUNE::IMC::serialize(it->id, buffer);
+        buffer += DUNE::IMC::serialize(_time, buffer);
+        buffer += DUNE::IMC::serialize(_lat, buffer);
+        buffer += DUNE::IMC::serialize(_lon, buffer);
+        buffer += DUNE::IMC::serialize(it->pos_class, buffer);
+      }
+
+      return buffer - start;
+    }
+
+    int
+    ExtendedDeviceUpdate::deserialize(uint8_t * buffer, uint16_t length)
+    {
+      uint8_t * start;
+      uint32_t _time;
+      int32_t _lat, _lon;
+
+      start = buffer;
+      buffer += DUNE::IMC::deserialize(source, buffer, length);
+      buffer += DUNE::IMC::deserialize(destination, buffer, length);
+      buffer += DUNE::IMC::deserialize(msg_id, buffer, length);
+
+      while (length >= 15) { // id (2) + time (4) + lat(4) + lon(4) + pos_class (1)
+        DevicePosition pos;
+        buffer += DUNE::IMC::deserialize(pos.id, buffer, length);
+        buffer += DUNE::IMC::deserialize(_time, buffer, length);
+        buffer += DUNE::IMC::deserialize(_lat, buffer, length);
+        buffer += DUNE::IMC::deserialize(_lon, buffer, length);
+        buffer += DUNE::IMC::deserialize(pos.pos_class, buffer, length);
 
         pos.time = _time;
         pos.lat = DUNE::Math::Angles::radians((_lat / 1000000.0));

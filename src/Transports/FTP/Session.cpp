@@ -77,7 +77,9 @@ namespace Transports
       "----------"
     };
 
-    Session::Session(const FileSystem::Path& root, TCPSocket* sock, const Address& local_addr, double timeout):
+    Session::Session(Tasks::Task* task, const FileSystem::Path& root,
+                     TCPSocket* sock, const Address& local_addr, double timeout):
+      m_task(task),
       m_sock(sock),
       m_local_addr(local_addr),
       m_data_pasv(false),
@@ -581,6 +583,13 @@ namespace Transports
     void
     Session::run(void)
     {
+      try
+      {
+        Thread::setPriority(Concurrency::Scheduler::POLICY_RR, 1);
+      }
+      catch (...)
+      { }
+
       sendReply(220, "DUNE FTP server ready.");
 
       Poll poll;

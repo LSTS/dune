@@ -259,6 +259,7 @@ namespace Simulators
         bind<IMC::DesiredRoll>(this);
         bind<IMC::DesiredSpeed>(this);
         bind<IMC::DesiredZ>(this);
+        bind<IMC::DesiredPitch>(this);
       }
 
       void
@@ -458,7 +459,7 @@ namespace Simulators
           return;
         }
 
-        m_model->m_bank_cmd = msg->value;
+        m_model->commandBank(msg->value);
 
         // ========= Debug ===========
         trace("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
@@ -486,7 +487,7 @@ namespace Simulators
           return;
         }
 
-        m_model->m_airspeed_cmd = msg->value;
+        m_model->commandAirspeed(msg->value);
 
         // ========= Debug ===========
         trace("Speed command received (%1.2fm/s)", msg->value);
@@ -514,19 +515,43 @@ namespace Simulators
           return;
         }
 
+        double alt_cmd;
         if (msg->z_units == IMC::Z_HEIGHT || msg->z_units == IMC::Z_ALTITUDE)
-          m_model->m_altitude_cmd = msg->value;
+          alt_cmd = msg->value;
         else if (msg->z_units == IMC::Z_DEPTH)
-          m_model->m_altitude_cmd = -msg->value;
-        if (m_args.sim_type == "3DOF" || m_args.sim_type == "4DOF_bank")
-        {
-          m_position = m_model->getPosition();
-          m_position(2) = -m_model->m_altitude_cmd;
-          m_model->setPosition(m_position);
-        }
+          alt_cmd = -msg->value;
+        m_model->commandAlt(alt_cmd);
 
         // ========= Debug ===========
-        trace("Altitude command received (%1.2fm)", -msg->value);
+        trace("Altitude command received (%1.2fm)", alt_cmd);
+      }
+
+      void
+      consume(const IMC::DesiredPitch* msg)
+      {
+        spew("Consuming DesiredPitch");
+
+        //! Check if system is active
+        if (!isActive())
+        {
+          trace("Pitch command rejected.");
+          trace("Simulation not active.");
+          trace("Missing GPS-Fix!");
+          return;
+        }
+
+        //! Check if the source ID is from the system itself
+        if (msg->getSource() != getSystemId())
+        {
+          trace("Pitch command rejected.");
+          trace("DesiredPitch received from system: %s", resolveSystemId(msg->getSource()));
+          return;
+        }
+
+        m_model->commandFPA(msg->value);
+
+        // ========= Debug ===========
+        trace("Pitch command received (%1.2fm)", msg->value);
       }
 
        /*
@@ -629,8 +654,8 @@ namespace Simulators
           //trace("Simulating: %s", m_model->m_sim_type);
           trace("Bank: %1.2fº        - Commanded bank: %1.2fº",
               DUNE::Math::Angles::degrees(m_position(3)),
-              DUNE::Math::Angles::degrees(m_model->m_bank_cmd));
-          trace("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->m_airspeed_cmd);
+              DUNE::Math::Angles::degrees(m_model->getBankCmd()));
+          trace("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->getAirspeedCmd());
           trace("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
           trace("Current latitude: %1.4fº", DUNE::Math::Angles::degrees(m_sstate.lat));
           trace("Current longitude: %1.4fº", DUNE::Math::Angles::degrees(m_sstate.lon));
@@ -668,8 +693,8 @@ namespace Simulators
           //debug("Simulating: %s", m_model->m_sim_type);
           debug("Bank: %1.2fº        - Commanded bank: %1.2fº",
               DUNE::Math::Angles::degrees(m_position(3)),
-              DUNE::Math::Angles::degrees(m_model->m_bank_cmd));
-          debug("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->m_airspeed_cmd);
+              DUNE::Math::Angles::degrees(m_model->getBankCmd()));
+          debug("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->getAirspeedCmd());
           debug("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
           debug("Current latitude: %1.4fº", DUNE::Math::Angles::degrees(m_sstate.lat));
           debug("Current longitude: %1.4fº", DUNE::Math::Angles::degrees(m_sstate.lon));

@@ -181,7 +181,7 @@ namespace DUNE
     void
     Resources::lockMemory(void)
     {
-#if defined(DUNE_SYS_HAS_SYS_MMAN_H)
+#if defined(DUNE_SYS_HAS_MLOCKALL)
       mlockall(MCL_CURRENT | MCL_FUTURE);
 #endif
     }
@@ -189,7 +189,7 @@ namespace DUNE
     void
     Resources::unlockMemory(void)
     {
-#if defined(DUNE_SYS_HAS_SYS_MMAN_H)
+#if defined(DUNE_SYS_HAS_MUNLOCKALL)
       munlockall();
 #endif
     }

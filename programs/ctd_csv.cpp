@@ -144,7 +144,7 @@ main(int32_t argc, char** argv)
       {
         if (msg->getId() == DUNE_IMC_LOGGINGCONTROL)
         {
-          IMC::LoggingControl* ptr = dynamic_cast<IMC::LoggingControl*>(msg);
+          IMC::LoggingControl* ptr = static_cast<IMC::LoggingControl*>(msg);
 
           if (ptr->op == IMC::LoggingControl::COP_STARTED)
           {
@@ -154,7 +154,7 @@ main(int32_t argc, char** argv)
         }
         else if (msg->getId() == DUNE_IMC_ENTITYINFO)
         {
-          IMC::EntityInfo *ptr = dynamic_cast<IMC::EntityInfo*>(msg);
+          IMC::EntityInfo *ptr = static_cast<IMC::EntityInfo*>(msg);
 
           if (ptr->label.compare(c_ctd_label) == 0)
           {
@@ -164,7 +164,7 @@ main(int32_t argc, char** argv)
         }
         else if (msg->getId() == DUNE_IMC_ESTIMATEDSTATE)
         {
-          IMC::EstimatedState* ptr = dynamic_cast<IMC::EstimatedState*>(msg);
+          IMC::EstimatedState* ptr = static_cast<IMC::EstimatedState*>(msg);
 
           Coordinates::toWGS84(*ptr, rdata.lat, rdata.lon);
           rdata.timestamp = ptr->getTimeStamp();
@@ -175,7 +175,7 @@ main(int32_t argc, char** argv)
         {
           if (msg->getId() == DUNE_IMC_CONDUCTIVITY)
           {
-            IMC::Conductivity* ptr = dynamic_cast<IMC::Conductivity*>(msg);
+            IMC::Conductivity* ptr = static_cast<IMC::Conductivity*>(msg);
             if (ptr->getSourceEntity() == ctd_ent)
             {
               rdata.cond = ptr->value;
@@ -184,7 +184,7 @@ main(int32_t argc, char** argv)
           }
           else if (msg->getId() == DUNE_IMC_TEMPERATURE)
           {
-            IMC::Temperature* ptr = dynamic_cast<IMC::Temperature*>(msg);
+            IMC::Temperature* ptr = static_cast<IMC::Temperature*>(msg);
             if (ptr->getSourceEntity() == ctd_ent)
             {
               rdata.temp = ptr->value;
@@ -193,7 +193,7 @@ main(int32_t argc, char** argv)
           }
           else if (msg->getId() == DUNE_IMC_DEPTH)
           {
-            IMC::Depth* ptr = dynamic_cast<IMC::Depth*>(msg);
+            IMC::Depth* ptr = static_cast<IMC::Depth*>(msg);
             if (ptr->getSourceEntity() == ctd_ent)
             {
               rdata.depth = ptr->value;

@@ -148,39 +148,14 @@ namespace DUNE
       }
 
 
-      //! Computes the smallest signed angle between two angles in radians.
-      //! @param a angle in radian.
-      //! @param b angle in radian.
-      //! @return smallest angle in radian.
+      //! Computes the smallest signed angle between two angles (radians).
+      //! @param source reference angle.
+      //! @param target target angle.
+      //! @return smallest signed angle.
       inline static fp64_t
-      minSignedAngle(fp64_t a, fp64_t b)
+      minSignedAngle(fp64_t source, fp64_t target)
       {
-        // Absolute angle defined between 0 and 2*pi.
-        double angle = std::fmod(std::fabs(a - b), c_two_pi);
-
-        double ca = std::cos(a);
-        double sa = std::sin(a);
-        double cb = std::cos(b);
-        double sb = std::sin(b);
-
-        // Normalize angle to fall between 0 and pi.
-        if (angle > c_pi)
-          angle = c_two_pi - angle;
-
-        double d = std::atan2(ca, sa) - std::atan2(cb, sb);
-
-        // Correct sign while avoiding division by zero.
-        if (std::fabs(d) > 1e-3)
-        {
-          // Modify sign if one of the angles is on the 2nd
-          // quadrant while other is on the 3rd quadrant
-          if (((ca < 0) && (sa < 0) && (cb > 0) && (sb < 0)) ||
-              ((cb < 0) && (sb < 0) && (ca > 0) && (sa < 0)))
-            d = -d;
-          return (d / std::fabs(d)) * angle;
-        }
-        else
-          return 0;
+        return std::atan2(std::sin(target - source), std::cos(target - source));
       }
     };
   }

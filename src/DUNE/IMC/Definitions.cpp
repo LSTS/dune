@@ -63,7 +63,7 @@ namespace DUNE
     bool
     EntityState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EntityState& other__ = dynamic_cast<const EntityState&>(msg__);
+      const IMC::EntityState& other__ = static_cast<const EntityState&>(msg__);
       if (state != other__.state) return false;
       if (flags != other__.flags) return false;
       if (description != other__.description) return false;
@@ -172,7 +172,7 @@ namespace DUNE
     bool
     EntityInfo::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EntityInfo& other__ = dynamic_cast<const EntityInfo&>(msg__);
+      const IMC::EntityInfo& other__ = static_cast<const EntityInfo&>(msg__);
       if (id != other__.id) return false;
       if (label != other__.label) return false;
       if (component != other__.component) return false;
@@ -260,7 +260,7 @@ namespace DUNE
     bool
     QueryEntityInfo::fieldsEqual(const Message& msg__) const
     {
-      const IMC::QueryEntityInfo& other__ = dynamic_cast<const QueryEntityInfo&>(msg__);
+      const IMC::QueryEntityInfo& other__ = static_cast<const QueryEntityInfo&>(msg__);
       if (id != other__.id) return false;
       return true;
     }
@@ -329,7 +329,7 @@ namespace DUNE
     bool
     EntityList::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EntityList& other__ = dynamic_cast<const EntityList&>(msg__);
+      const IMC::EntityList& other__ = static_cast<const EntityList&>(msg__);
       if (op != other__.op) return false;
       if (list != other__.list) return false;
       return true;
@@ -390,7 +390,7 @@ namespace DUNE
     bool
     EntityControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EntityControl& other__ = dynamic_cast<const EntityControl&>(msg__);
+      const IMC::EntityControl& other__ = static_cast<const EntityControl&>(msg__);
       if (op != other__.op) return false;
       return true;
     }
@@ -446,7 +446,7 @@ namespace DUNE
     bool
     CpuUsage::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CpuUsage& other__ = dynamic_cast<const CpuUsage&>(msg__);
+      const IMC::CpuUsage& other__ = static_cast<const CpuUsage&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -515,7 +515,7 @@ namespace DUNE
     bool
     TransportBindings::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TransportBindings& other__ = dynamic_cast<const TransportBindings&>(msg__);
+      const IMC::TransportBindings& other__ = static_cast<const TransportBindings&>(msg__);
       if (consumer != other__.consumer) return false;
       if (message_id != other__.message_id) return false;
       return true;
@@ -617,7 +617,7 @@ namespace DUNE
     bool
     Parameter::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Parameter& other__ = dynamic_cast<const Parameter&>(msg__);
+      const IMC::Parameter& other__ = static_cast<const Parameter&>(msg__);
       if (section != other__.section) return false;
       if (param != other__.param) return false;
       if (value != other__.value) return false;
@@ -685,7 +685,7 @@ namespace DUNE
     bool
     ParameterControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ParameterControl& other__ = dynamic_cast<const ParameterControl&>(msg__);
+      const IMC::ParameterControl& other__ = static_cast<const ParameterControl&>(msg__);
       if (op != other__.op) return false;
       if (params != other__.params) return false;
       return true;
@@ -776,7 +776,7 @@ namespace DUNE
     bool
     DevCalibrationControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DevCalibrationControl& other__ = dynamic_cast<const DevCalibrationControl&>(msg__);
+      const IMC::DevCalibrationControl& other__ = static_cast<const DevCalibrationControl&>(msg__);
       if (op != other__.op) return false;
       return true;
     }
@@ -835,7 +835,7 @@ namespace DUNE
     bool
     DevCalibrationState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DevCalibrationState& other__ = dynamic_cast<const DevCalibrationState&>(msg__);
+      const IMC::DevCalibrationState& other__ = static_cast<const DevCalibrationState&>(msg__);
       if (total_steps != other__.total_steps) return false;
       if (step_number != other__.step_number) return false;
       if (step != other__.step) return false;
@@ -907,7 +907,7 @@ namespace DUNE
     bool
     EntityActivationState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EntityActivationState& other__ = dynamic_cast<const EntityActivationState&>(msg__);
+      const IMC::EntityActivationState& other__ = static_cast<const EntityActivationState&>(msg__);
       if (state != other__.state) return false;
       if (error != other__.error) return false;
       return true;
@@ -1024,7 +1024,7 @@ namespace DUNE
     bool
     VehicleOperationalLimits::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VehicleOperationalLimits& other__ = dynamic_cast<const VehicleOperationalLimits&>(msg__);
+      const IMC::VehicleOperationalLimits& other__ = static_cast<const VehicleOperationalLimits&>(msg__);
       if (op != other__.op) return false;
       if (speed_min != other__.speed_min) return false;
       if (speed_max != other__.speed_max) return false;
@@ -1150,6 +1150,93 @@ namespace DUNE
       IMC::toJSON(os__, "rpm_rate_max", rpm_rate_max, nindent__);
     }
 
+    MsgList::MsgList(void)
+    {
+      m_header.mgid = 20;
+      clear();
+      msgs.setParent(this);
+    }
+
+    void
+    MsgList::clear(void)
+    {
+      msgs.clear();
+    }
+
+    bool
+    MsgList::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::MsgList& other__ = static_cast<const MsgList&>(msg__);
+      if (msgs != other__.msgs) return false;
+      return true;
+    }
+
+    int
+    MsgList::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    MsgList::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += msgs.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    MsgList::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += msgs.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    MsgList::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += msgs.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    MsgList::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      msgs.toJSON(os__, "msgs", nindent__);
+    }
+
+    void
+    MsgList::setTimeStampNested(double value__)
+    {
+      msgs.setTimeStamp(value__);
+    }
+
+    void
+    MsgList::setSourceNested(uint16_t value__)
+    {
+      msgs.setSource(value__);
+    }
+
+    void
+    MsgList::setSourceEntityNested(uint8_t value__)
+    {
+      msgs.setSourceEntity(value__);
+    }
+
+    void
+    MsgList::setDestinationNested(uint16_t value__)
+    {
+      msgs.setDestination(value__);
+    }
+
+    void
+    MsgList::setDestinationEntityNested(uint8_t value__)
+    {
+      msgs.setDestinationEntity(value__);
+    }
+
     SimulatedState::SimulatedState(void)
     {
       m_header.mgid = 50;
@@ -1182,7 +1269,7 @@ namespace DUNE
     bool
     SimulatedState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SimulatedState& other__ = dynamic_cast<const SimulatedState&>(msg__);
+      const IMC::SimulatedState& other__ = static_cast<const SimulatedState&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (height != other__.height) return false;
@@ -1324,7 +1411,7 @@ namespace DUNE
     bool
     LeakSimulation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LeakSimulation& other__ = dynamic_cast<const LeakSimulation&>(msg__);
+      const IMC::LeakSimulation& other__ = static_cast<const LeakSimulation&>(msg__);
       if (op != other__.op) return false;
       if (entities != other__.entities) return false;
       return true;
@@ -1387,7 +1474,7 @@ namespace DUNE
     bool
     UASimulation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::UASimulation& other__ = dynamic_cast<const UASimulation&>(msg__);
+      const IMC::UASimulation& other__ = static_cast<const UASimulation&>(msg__);
       if (type != other__.type) return false;
       if (speed != other__.speed) return false;
       if (data != other__.data) return false;
@@ -1455,7 +1542,7 @@ namespace DUNE
     bool
     DynamicsSimParam::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DynamicsSimParam& other__ = dynamic_cast<const DynamicsSimParam&>(msg__);
+      const IMC::DynamicsSimParam& other__ = static_cast<const DynamicsSimParam&>(msg__);
       if (op != other__.op) return false;
       if (tas2acc_pgain != other__.tas2acc_pgain) return false;
       if (bank2p_pgain != other__.bank2p_pgain) return false;
@@ -1522,7 +1609,7 @@ namespace DUNE
     bool
     StorageUsage::fieldsEqual(const Message& msg__) const
     {
-      const IMC::StorageUsage& other__ = dynamic_cast<const StorageUsage&>(msg__);
+      const IMC::StorageUsage& other__ = static_cast<const StorageUsage&>(msg__);
       if (available != other__.available) return false;
       if (value != other__.value) return false;
       return true;
@@ -1598,7 +1685,7 @@ namespace DUNE
     bool
     CacheControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CacheControl& other__ = dynamic_cast<const CacheControl&>(msg__);
+      const IMC::CacheControl& other__ = static_cast<const CacheControl&>(msg__);
       if (op != other__.op) return false;
       if (snapshot != other__.snapshot) return false;
       if (message != other__.message) return false;
@@ -1710,7 +1797,7 @@ namespace DUNE
     bool
     LoggingControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LoggingControl& other__ = dynamic_cast<const LoggingControl&>(msg__);
+      const IMC::LoggingControl& other__ = static_cast<const LoggingControl&>(msg__);
       if (op != other__.op) return false;
       if (name != other__.name) return false;
       return true;
@@ -1774,7 +1861,7 @@ namespace DUNE
     bool
     LogBookEntry::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LogBookEntry& other__ = dynamic_cast<const LogBookEntry&>(msg__);
+      const IMC::LogBookEntry& other__ = static_cast<const LogBookEntry&>(msg__);
       if (type != other__.type) return false;
       if (htime != other__.htime) return false;
       if (context != other__.context) return false;
@@ -1848,7 +1935,7 @@ namespace DUNE
     bool
     LogBookControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LogBookControl& other__ = dynamic_cast<const LogBookControl&>(msg__);
+      const IMC::LogBookControl& other__ = static_cast<const LogBookControl&>(msg__);
       if (command != other__.command) return false;
       if (htime != other__.htime) return false;
       if (msg != other__.msg) return false;
@@ -1945,7 +2032,7 @@ namespace DUNE
     bool
     ReplayControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ReplayControl& other__ = dynamic_cast<const ReplayControl&>(msg__);
+      const IMC::ReplayControl& other__ = static_cast<const ReplayControl&>(msg__);
       if (op != other__.op) return false;
       if (file != other__.file) return false;
       return true;
@@ -2008,7 +2095,7 @@ namespace DUNE
     bool
     ClockControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ClockControl& other__ = dynamic_cast<const ClockControl&>(msg__);
+      const IMC::ClockControl& other__ = static_cast<const ClockControl&>(msg__);
       if (op != other__.op) return false;
       if (clock != other__.clock) return false;
       if (tz != other__.tz) return false;
@@ -2119,7 +2206,7 @@ namespace DUNE
     bool
     Announce::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Announce& other__ = dynamic_cast<const Announce&>(msg__);
+      const IMC::Announce& other__ = static_cast<const Announce&>(msg__);
       if (sys_name != other__.sys_name) return false;
       if (sys_type != other__.sys_type) return false;
       if (owner != other__.owner) return false;
@@ -2206,7 +2293,7 @@ namespace DUNE
     bool
     AnnounceService::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AnnounceService& other__ = dynamic_cast<const AnnounceService&>(msg__);
+      const IMC::AnnounceService& other__ = static_cast<const AnnounceService&>(msg__);
       if (service != other__.service) return false;
       if (service_type != other__.service_type) return false;
       return true;
@@ -2267,7 +2354,7 @@ namespace DUNE
     bool
     RSSI::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RSSI& other__ = dynamic_cast<const RSSI&>(msg__);
+      const IMC::RSSI& other__ = static_cast<const RSSI&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -2335,7 +2422,7 @@ namespace DUNE
     bool
     VSWR::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VSWR& other__ = dynamic_cast<const VSWR&>(msg__);
+      const IMC::VSWR& other__ = static_cast<const VSWR&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -2403,7 +2490,7 @@ namespace DUNE
     bool
     LinkLevel::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LinkLevel& other__ = dynamic_cast<const LinkLevel&>(msg__);
+      const IMC::LinkLevel& other__ = static_cast<const LinkLevel&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -2473,7 +2560,7 @@ namespace DUNE
     bool
     Sms::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Sms& other__ = dynamic_cast<const Sms&>(msg__);
+      const IMC::Sms& other__ = static_cast<const Sms&>(msg__);
       if (number != other__.number) return false;
       if (timeout != other__.timeout) return false;
       if (contents != other__.contents) return false;
@@ -2542,7 +2629,7 @@ namespace DUNE
     bool
     SmsTx::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SmsTx& other__ = dynamic_cast<const SmsTx&>(msg__);
+      const IMC::SmsTx& other__ = static_cast<const SmsTx&>(msg__);
       if (seq != other__.seq) return false;
       if (destination != other__.destination) return false;
       if (timeout != other__.timeout) return false;
@@ -2614,7 +2701,7 @@ namespace DUNE
     bool
     SmsRx::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SmsRx& other__ = dynamic_cast<const SmsRx&>(msg__);
+      const IMC::SmsRx& other__ = static_cast<const SmsRx&>(msg__);
       if (source != other__.source) return false;
       if (data != other__.data) return false;
       return true;
@@ -2677,7 +2764,7 @@ namespace DUNE
     bool
     SmsState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SmsState& other__ = dynamic_cast<const SmsState&>(msg__);
+      const IMC::SmsState& other__ = static_cast<const SmsState&>(msg__);
       if (seq != other__.seq) return false;
       if (state != other__.state) return false;
       if (error != other__.error) return false;
@@ -2744,7 +2831,7 @@ namespace DUNE
     bool
     TextMessage::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TextMessage& other__ = dynamic_cast<const TextMessage&>(msg__);
+      const IMC::TextMessage& other__ = static_cast<const TextMessage&>(msg__);
       if (origin != other__.origin) return false;
       if (text != other__.text) return false;
       return true;
@@ -2809,7 +2896,7 @@ namespace DUNE
     bool
     IridiumMsgRx::fieldsEqual(const Message& msg__) const
     {
-      const IMC::IridiumMsgRx& other__ = dynamic_cast<const IridiumMsgRx&>(msg__);
+      const IMC::IridiumMsgRx& other__ = static_cast<const IridiumMsgRx&>(msg__);
       if (origin != other__.origin) return false;
       if (htime != other__.htime) return false;
       if (lat != other__.lat) return false;
@@ -2888,7 +2975,7 @@ namespace DUNE
     bool
     IridiumMsgTx::fieldsEqual(const Message& msg__) const
     {
-      const IMC::IridiumMsgTx& other__ = dynamic_cast<const IridiumMsgTx&>(msg__);
+      const IMC::IridiumMsgTx& other__ = static_cast<const IridiumMsgTx&>(msg__);
       if (req_id != other__.req_id) return false;
       if (ttl != other__.ttl) return false;
       if (destination != other__.destination) return false;
@@ -2961,7 +3048,7 @@ namespace DUNE
     bool
     IridiumTxStatus::fieldsEqual(const Message& msg__) const
     {
-      const IMC::IridiumTxStatus& other__ = dynamic_cast<const IridiumTxStatus&>(msg__);
+      const IMC::IridiumTxStatus& other__ = static_cast<const IridiumTxStatus&>(msg__);
       if (req_id != other__.req_id) return false;
       if (status != other__.status) return false;
       if (text != other__.text) return false;
@@ -3028,7 +3115,7 @@ namespace DUNE
     bool
     GroupMembershipState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::GroupMembershipState& other__ = dynamic_cast<const GroupMembershipState&>(msg__);
+      const IMC::GroupMembershipState& other__ = static_cast<const GroupMembershipState&>(msg__);
       if (group_name != other__.group_name) return false;
       if (links != other__.links) return false;
       return true;
@@ -3091,7 +3178,7 @@ namespace DUNE
     bool
     SystemGroup::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SystemGroup& other__ = dynamic_cast<const SystemGroup&>(msg__);
+      const IMC::SystemGroup& other__ = static_cast<const SystemGroup&>(msg__);
       if (groupname != other__.groupname) return false;
       if (action != other__.action) return false;
       if (grouplist != other__.grouplist) return false;
@@ -3158,7 +3245,7 @@ namespace DUNE
     bool
     LblRange::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LblRange& other__ = dynamic_cast<const LblRange&>(msg__);
+      const IMC::LblRange& other__ = static_cast<const LblRange&>(msg__);
       if (id != other__.id) return false;
       if (range != other__.range) return false;
       return true;
@@ -3233,7 +3320,7 @@ namespace DUNE
     bool
     LblDetection::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LblDetection& other__ = dynamic_cast<const LblDetection&>(msg__);
+      const IMC::LblDetection& other__ = static_cast<const LblDetection&>(msg__);
       if (tx != other__.tx) return false;
       if (channel != other__.channel) return false;
       if (timer != other__.timer) return false;
@@ -3305,7 +3392,7 @@ namespace DUNE
     bool
     LblBeacon::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LblBeacon& other__ = dynamic_cast<const LblBeacon&>(msg__);
+      const IMC::LblBeacon& other__ = static_cast<const LblBeacon&>(msg__);
       if (beacon != other__.beacon) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -3393,7 +3480,7 @@ namespace DUNE
     bool
     LblConfig::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LblConfig& other__ = dynamic_cast<const LblConfig&>(msg__);
+      const IMC::LblConfig& other__ = static_cast<const LblConfig&>(msg__);
       if (op != other__.op) return false;
       if (beacons != other__.beacons) return false;
       return true;
@@ -3484,7 +3571,7 @@ namespace DUNE
     bool
     AcousticRange::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AcousticRange& other__ = dynamic_cast<const AcousticRange&>(msg__);
+      const IMC::AcousticRange& other__ = static_cast<const AcousticRange&>(msg__);
       if (address != other__.address) return false;
       return true;
     }
@@ -3542,7 +3629,7 @@ namespace DUNE
     bool
     AcousticRangeReply::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AcousticRangeReply& other__ = dynamic_cast<const AcousticRangeReply&>(msg__);
+      const IMC::AcousticRangeReply& other__ = static_cast<const AcousticRangeReply&>(msg__);
       if (address != other__.address) return false;
       if (status != other__.status) return false;
       if (range != other__.range) return false;
@@ -3609,7 +3696,7 @@ namespace DUNE
     bool
     AcousticMessage::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AcousticMessage& other__ = dynamic_cast<const AcousticMessage&>(msg__);
+      const IMC::AcousticMessage& other__ = static_cast<const AcousticMessage&>(msg__);
       if (message != other__.message) return false;
       return true;
     }
@@ -3710,7 +3797,7 @@ namespace DUNE
     bool
     AcousticDiagnostic::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AcousticDiagnostic& other__ = dynamic_cast<const AcousticDiagnostic&>(msg__);
+      const IMC::AcousticDiagnostic& other__ = static_cast<const AcousticDiagnostic&>(msg__);
       if (enable != other__.enable) return false;
       return true;
     }
@@ -3767,7 +3854,7 @@ namespace DUNE
     bool
     AcousticNoise::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AcousticNoise& other__ = dynamic_cast<const AcousticNoise&>(msg__);
+      const IMC::AcousticNoise& other__ = static_cast<const AcousticNoise&>(msg__);
       if (summary != other__.summary) return false;
       if (level != other__.level) return false;
       return true;
@@ -3910,7 +3997,7 @@ namespace DUNE
     bool
     AcousticOperation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AcousticOperation& other__ = dynamic_cast<const AcousticOperation&>(msg__);
+      const IMC::AcousticOperation& other__ = static_cast<const AcousticOperation&>(msg__);
       if (op != other__.op) return false;
       if (system != other__.system) return false;
       if (range != other__.range) return false;
@@ -4065,7 +4152,7 @@ namespace DUNE
     bool
     AcousticSystems::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AcousticSystems& other__ = dynamic_cast<const AcousticSystems&>(msg__);
+      const IMC::AcousticSystems& other__ = static_cast<const AcousticSystems&>(msg__);
       if (list != other__.list) return false;
       return true;
     }
@@ -4121,7 +4208,7 @@ namespace DUNE
     bool
     Rpm::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Rpm& other__ = dynamic_cast<const Rpm&>(msg__);
+      const IMC::Rpm& other__ = static_cast<const Rpm&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -4189,7 +4276,7 @@ namespace DUNE
     bool
     Voltage::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Voltage& other__ = dynamic_cast<const Voltage&>(msg__);
+      const IMC::Voltage& other__ = static_cast<const Voltage&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -4257,7 +4344,7 @@ namespace DUNE
     bool
     Current::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Current& other__ = dynamic_cast<const Current&>(msg__);
+      const IMC::Current& other__ = static_cast<const Current&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -4340,7 +4427,7 @@ namespace DUNE
     bool
     GpsFix::fieldsEqual(const Message& msg__) const
     {
-      const IMC::GpsFix& other__ = dynamic_cast<const GpsFix&>(msg__);
+      const IMC::GpsFix& other__ = static_cast<const GpsFix&>(msg__);
       if (validity != other__.validity) return false;
       if (type != other__.type) return false;
       if (utc_year != other__.utc_year) return false;
@@ -4475,7 +4562,7 @@ namespace DUNE
     bool
     EulerAngles::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EulerAngles& other__ = dynamic_cast<const EulerAngles&>(msg__);
+      const IMC::EulerAngles& other__ = static_cast<const EulerAngles&>(msg__);
       if (time != other__.time) return false;
       if (phi != other__.phi) return false;
       if (theta != other__.theta) return false;
@@ -4555,7 +4642,7 @@ namespace DUNE
     bool
     EulerAnglesDelta::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EulerAnglesDelta& other__ = dynamic_cast<const EulerAnglesDelta&>(msg__);
+      const IMC::EulerAnglesDelta& other__ = static_cast<const EulerAnglesDelta&>(msg__);
       if (time != other__.time) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -4634,7 +4721,7 @@ namespace DUNE
     bool
     AngularVelocity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AngularVelocity& other__ = dynamic_cast<const AngularVelocity&>(msg__);
+      const IMC::AngularVelocity& other__ = static_cast<const AngularVelocity&>(msg__);
       if (time != other__.time) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -4708,7 +4795,7 @@ namespace DUNE
     bool
     Acceleration::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Acceleration& other__ = dynamic_cast<const Acceleration&>(msg__);
+      const IMC::Acceleration& other__ = static_cast<const Acceleration&>(msg__);
       if (time != other__.time) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -4782,7 +4869,7 @@ namespace DUNE
     bool
     MagneticField::fieldsEqual(const Message& msg__) const
     {
-      const IMC::MagneticField& other__ = dynamic_cast<const MagneticField&>(msg__);
+      const IMC::MagneticField& other__ = static_cast<const MagneticField&>(msg__);
       if (time != other__.time) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -4856,7 +4943,7 @@ namespace DUNE
     bool
     GroundVelocity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::GroundVelocity& other__ = dynamic_cast<const GroundVelocity&>(msg__);
+      const IMC::GroundVelocity& other__ = static_cast<const GroundVelocity&>(msg__);
       if (validity != other__.validity) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -4930,7 +5017,7 @@ namespace DUNE
     bool
     WaterVelocity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::WaterVelocity& other__ = dynamic_cast<const WaterVelocity&>(msg__);
+      const IMC::WaterVelocity& other__ = static_cast<const WaterVelocity&>(msg__);
       if (validity != other__.validity) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -5004,7 +5091,7 @@ namespace DUNE
     bool
     VelocityDelta::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VelocityDelta& other__ = dynamic_cast<const VelocityDelta&>(msg__);
+      const IMC::VelocityDelta& other__ = static_cast<const VelocityDelta&>(msg__);
       if (time != other__.time) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -5080,7 +5167,7 @@ namespace DUNE
     bool
     DeviceState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DeviceState& other__ = dynamic_cast<const DeviceState&>(msg__);
+      const IMC::DeviceState& other__ = static_cast<const DeviceState&>(msg__);
       if (x != other__.x) return false;
       if (y != other__.y) return false;
       if (z != other__.z) return false;
@@ -5162,7 +5249,7 @@ namespace DUNE
     bool
     BeamConfig::fieldsEqual(const Message& msg__) const
     {
-      const IMC::BeamConfig& other__ = dynamic_cast<const BeamConfig&>(msg__);
+      const IMC::BeamConfig& other__ = static_cast<const BeamConfig&>(msg__);
       if (beam_width != other__.beam_width) return false;
       if (beam_height != other__.beam_height) return false;
       return true;
@@ -5228,7 +5315,7 @@ namespace DUNE
     bool
     Distance::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Distance& other__ = dynamic_cast<const Distance&>(msg__);
+      const IMC::Distance& other__ = static_cast<const Distance&>(msg__);
       if (validity != other__.validity) return false;
       if (location != other__.location) return false;
       if (beam_config != other__.beam_config) return false;
@@ -5351,7 +5438,7 @@ namespace DUNE
     bool
     Temperature::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Temperature& other__ = dynamic_cast<const Temperature&>(msg__);
+      const IMC::Temperature& other__ = static_cast<const Temperature&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5419,7 +5506,7 @@ namespace DUNE
     bool
     Pressure::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Pressure& other__ = dynamic_cast<const Pressure&>(msg__);
+      const IMC::Pressure& other__ = static_cast<const Pressure&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5487,7 +5574,7 @@ namespace DUNE
     bool
     Depth::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Depth& other__ = dynamic_cast<const Depth&>(msg__);
+      const IMC::Depth& other__ = static_cast<const Depth&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5555,7 +5642,7 @@ namespace DUNE
     bool
     DepthOffset::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DepthOffset& other__ = dynamic_cast<const DepthOffset&>(msg__);
+      const IMC::DepthOffset& other__ = static_cast<const DepthOffset&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5623,7 +5710,7 @@ namespace DUNE
     bool
     SoundSpeed::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SoundSpeed& other__ = dynamic_cast<const SoundSpeed&>(msg__);
+      const IMC::SoundSpeed& other__ = static_cast<const SoundSpeed&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5691,7 +5778,7 @@ namespace DUNE
     bool
     WaterDensity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::WaterDensity& other__ = dynamic_cast<const WaterDensity&>(msg__);
+      const IMC::WaterDensity& other__ = static_cast<const WaterDensity&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5759,7 +5846,7 @@ namespace DUNE
     bool
     Conductivity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Conductivity& other__ = dynamic_cast<const Conductivity&>(msg__);
+      const IMC::Conductivity& other__ = static_cast<const Conductivity&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5827,7 +5914,7 @@ namespace DUNE
     bool
     Salinity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Salinity& other__ = dynamic_cast<const Salinity&>(msg__);
+      const IMC::Salinity& other__ = static_cast<const Salinity&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5897,7 +5984,7 @@ namespace DUNE
     bool
     WindSpeed::fieldsEqual(const Message& msg__) const
     {
-      const IMC::WindSpeed& other__ = dynamic_cast<const WindSpeed&>(msg__);
+      const IMC::WindSpeed& other__ = static_cast<const WindSpeed&>(msg__);
       if (direction != other__.direction) return false;
       if (speed != other__.speed) return false;
       if (turbulence != other__.turbulence) return false;
@@ -5963,7 +6050,7 @@ namespace DUNE
     bool
     RelativeHumidity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RelativeHumidity& other__ = dynamic_cast<const RelativeHumidity&>(msg__);
+      const IMC::RelativeHumidity& other__ = static_cast<const RelativeHumidity&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -6031,7 +6118,7 @@ namespace DUNE
     bool
     DevDataText::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DevDataText& other__ = dynamic_cast<const DevDataText&>(msg__);
+      const IMC::DevDataText& other__ = static_cast<const DevDataText&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -6087,7 +6174,7 @@ namespace DUNE
     bool
     DevDataBinary::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DevDataBinary& other__ = dynamic_cast<const DevDataBinary&>(msg__);
+      const IMC::DevDataBinary& other__ = static_cast<const DevDataBinary&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -6145,7 +6232,7 @@ namespace DUNE
     bool
     SonarConfig::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SonarConfig& other__ = dynamic_cast<const SonarConfig&>(msg__);
+      const IMC::SonarConfig& other__ = static_cast<const SonarConfig&>(msg__);
       if (frequency != other__.frequency) return false;
       if (min_range != other__.min_range) return false;
       if (max_range != other__.max_range) return false;
@@ -6219,7 +6306,7 @@ namespace DUNE
     bool
     SonarData::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SonarData& other__ = dynamic_cast<const SonarData&>(msg__);
+      const IMC::SonarData& other__ = static_cast<const SonarData&>(msg__);
       if (type != other__.type) return false;
       if (frequency != other__.frequency) return false;
       if (min_range != other__.min_range) return false;
@@ -6379,7 +6466,7 @@ namespace DUNE
     bool
     PulseDetectionControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PulseDetectionControl& other__ = dynamic_cast<const PulseDetectionControl&>(msg__);
+      const IMC::PulseDetectionControl& other__ = static_cast<const PulseDetectionControl&>(msg__);
       if (op != other__.op) return false;
       return true;
     }
@@ -6437,7 +6524,7 @@ namespace DUNE
     bool
     FuelLevel::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FuelLevel& other__ = dynamic_cast<const FuelLevel&>(msg__);
+      const IMC::FuelLevel& other__ = static_cast<const FuelLevel&>(msg__);
       if (value != other__.value) return false;
       if (confidence != other__.confidence) return false;
       if (opmodes != other__.opmodes) return false;
@@ -6529,7 +6616,7 @@ namespace DUNE
     bool
     GpsNavData::fieldsEqual(const Message& msg__) const
     {
-      const IMC::GpsNavData& other__ = dynamic_cast<const GpsNavData&>(msg__);
+      const IMC::GpsNavData& other__ = static_cast<const GpsNavData&>(msg__);
       if (itow != other__.itow) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -6656,7 +6743,7 @@ namespace DUNE
     bool
     ServoPosition::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ServoPosition& other__ = dynamic_cast<const ServoPosition&>(msg__);
+      const IMC::ServoPosition& other__ = static_cast<const ServoPosition&>(msg__);
       if (id != other__.id) return false;
       if (value != other__.value) return false;
       return true;
@@ -6741,7 +6828,7 @@ namespace DUNE
     bool
     DataSanity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DataSanity& other__ = dynamic_cast<const DataSanity&>(msg__);
+      const IMC::DataSanity& other__ = static_cast<const DataSanity&>(msg__);
       if (sane != other__.sane) return false;
       return true;
     }
@@ -6799,7 +6886,7 @@ namespace DUNE
     bool
     CameraZoom::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CameraZoom& other__ = dynamic_cast<const CameraZoom&>(msg__);
+      const IMC::CameraZoom& other__ = static_cast<const CameraZoom&>(msg__);
       if (id != other__.id) return false;
       if (zoom != other__.zoom) return false;
       if (action != other__.action) return false;
@@ -6878,7 +6965,7 @@ namespace DUNE
     bool
     SetThrusterActuation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SetThrusterActuation& other__ = dynamic_cast<const SetThrusterActuation&>(msg__);
+      const IMC::SetThrusterActuation& other__ = static_cast<const SetThrusterActuation&>(msg__);
       if (id != other__.id) return false;
       if (value != other__.value) return false;
       return true;
@@ -6964,7 +7051,7 @@ namespace DUNE
     bool
     SetServoPosition::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SetServoPosition& other__ = dynamic_cast<const SetServoPosition&>(msg__);
+      const IMC::SetServoPosition& other__ = static_cast<const SetServoPosition&>(msg__);
       if (id != other__.id) return false;
       if (value != other__.value) return false;
       return true;
@@ -7050,7 +7137,7 @@ namespace DUNE
     bool
     SetControlSurfaceDeflection::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SetControlSurfaceDeflection& other__ = dynamic_cast<const SetControlSurfaceDeflection&>(msg__);
+      const IMC::SetControlSurfaceDeflection& other__ = static_cast<const SetControlSurfaceDeflection&>(msg__);
       if (id != other__.id) return false;
       if (angle != other__.angle) return false;
       return true;
@@ -7124,7 +7211,7 @@ namespace DUNE
     bool
     RemoteActionsRequest::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RemoteActionsRequest& other__ = dynamic_cast<const RemoteActionsRequest&>(msg__);
+      const IMC::RemoteActionsRequest& other__ = static_cast<const RemoteActionsRequest&>(msg__);
       if (op != other__.op) return false;
       if (actions != other__.actions) return false;
       return true;
@@ -7185,7 +7272,7 @@ namespace DUNE
     bool
     RemoteActions::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RemoteActions& other__ = dynamic_cast<const RemoteActions&>(msg__);
+      const IMC::RemoteActions& other__ = static_cast<const RemoteActions&>(msg__);
       if (actions != other__.actions) return false;
       return true;
     }
@@ -7242,7 +7329,7 @@ namespace DUNE
     bool
     ButtonEvent::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ButtonEvent& other__ = dynamic_cast<const ButtonEvent&>(msg__);
+      const IMC::ButtonEvent& other__ = static_cast<const ButtonEvent&>(msg__);
       if (button != other__.button) return false;
       if (value != other__.value) return false;
       return true;
@@ -7316,7 +7403,7 @@ namespace DUNE
     bool
     LcdControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LcdControl& other__ = dynamic_cast<const LcdControl&>(msg__);
+      const IMC::LcdControl& other__ = static_cast<const LcdControl&>(msg__);
       if (op != other__.op) return false;
       if (text != other__.text) return false;
       return true;
@@ -7379,7 +7466,7 @@ namespace DUNE
     bool
     PowerOperation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PowerOperation& other__ = dynamic_cast<const PowerOperation&>(msg__);
+      const IMC::PowerOperation& other__ = static_cast<const PowerOperation&>(msg__);
       if (op != other__.op) return false;
       if (time_remain != other__.time_remain) return false;
       if (sched_time != other__.sched_time) return false;
@@ -7447,7 +7534,7 @@ namespace DUNE
     bool
     PowerChannelControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PowerChannelControl& other__ = dynamic_cast<const PowerChannelControl&>(msg__);
+      const IMC::PowerChannelControl& other__ = static_cast<const PowerChannelControl&>(msg__);
       if (name != other__.name) return false;
       if (op != other__.op) return false;
       if (sched_time != other__.sched_time) return false;
@@ -7553,7 +7640,7 @@ namespace DUNE
     bool
     PowerChannelState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PowerChannelState& other__ = dynamic_cast<const PowerChannelState&>(msg__);
+      const IMC::PowerChannelState& other__ = static_cast<const PowerChannelState&>(msg__);
       if (name != other__.name) return false;
       if (state != other__.state) return false;
       return true;
@@ -7615,7 +7702,7 @@ namespace DUNE
     bool
     LedBrightness::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LedBrightness& other__ = dynamic_cast<const LedBrightness&>(msg__);
+      const IMC::LedBrightness& other__ = static_cast<const LedBrightness&>(msg__);
       if (name != other__.name) return false;
       if (value != other__.value) return false;
       return true;
@@ -7688,7 +7775,7 @@ namespace DUNE
     bool
     QueryLedBrightness::fieldsEqual(const Message& msg__) const
     {
-      const IMC::QueryLedBrightness& other__ = dynamic_cast<const QueryLedBrightness&>(msg__);
+      const IMC::QueryLedBrightness& other__ = static_cast<const QueryLedBrightness&>(msg__);
       if (name != other__.name) return false;
       return true;
     }
@@ -7745,7 +7832,7 @@ namespace DUNE
     bool
     SetLedBrightness::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SetLedBrightness& other__ = dynamic_cast<const SetLedBrightness&>(msg__);
+      const IMC::SetLedBrightness& other__ = static_cast<const SetLedBrightness&>(msg__);
       if (name != other__.name) return false;
       if (value != other__.value) return false;
       return true;
@@ -7820,7 +7907,7 @@ namespace DUNE
     bool
     SetPWM::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SetPWM& other__ = dynamic_cast<const SetPWM&>(msg__);
+      const IMC::SetPWM& other__ = static_cast<const SetPWM&>(msg__);
       if (id != other__.id) return false;
       if (period != other__.period) return false;
       if (duty_cycle != other__.duty_cycle) return false;
@@ -7900,7 +7987,7 @@ namespace DUNE
     bool
     PWM::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PWM& other__ = dynamic_cast<const PWM&>(msg__);
+      const IMC::PWM& other__ = static_cast<const PWM&>(msg__);
       if (id != other__.id) return false;
       if (period != other__.period) return false;
       if (duty_cycle != other__.duty_cycle) return false;
@@ -7997,7 +8084,7 @@ namespace DUNE
     bool
     EstimatedState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EstimatedState& other__ = dynamic_cast<const EstimatedState&>(msg__);
+      const IMC::EstimatedState& other__ = static_cast<const EstimatedState&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (height != other__.height) return false;
@@ -8150,7 +8237,7 @@ namespace DUNE
     bool
     EstimatedStreamVelocity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EstimatedStreamVelocity& other__ = dynamic_cast<const EstimatedStreamVelocity&>(msg__);
+      const IMC::EstimatedStreamVelocity& other__ = static_cast<const EstimatedStreamVelocity&>(msg__);
       if (x != other__.x) return false;
       if (y != other__.y) return false;
       if (z != other__.z) return false;
@@ -8216,7 +8303,7 @@ namespace DUNE
     bool
     IndicatedSpeed::fieldsEqual(const Message& msg__) const
     {
-      const IMC::IndicatedSpeed& other__ = dynamic_cast<const IndicatedSpeed&>(msg__);
+      const IMC::IndicatedSpeed& other__ = static_cast<const IndicatedSpeed&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -8284,7 +8371,7 @@ namespace DUNE
     bool
     TrueSpeed::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrueSpeed& other__ = dynamic_cast<const TrueSpeed&>(msg__);
+      const IMC::TrueSpeed& other__ = static_cast<const TrueSpeed&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -8365,7 +8452,7 @@ namespace DUNE
     bool
     NavigationUncertainty::fieldsEqual(const Message& msg__) const
     {
-      const IMC::NavigationUncertainty& other__ = dynamic_cast<const NavigationUncertainty&>(msg__);
+      const IMC::NavigationUncertainty& other__ = static_cast<const NavigationUncertainty&>(msg__);
       if (x != other__.x) return false;
       if (y != other__.y) return false;
       if (z != other__.z) return false;
@@ -8494,7 +8581,7 @@ namespace DUNE
     bool
     NavigationData::fieldsEqual(const Message& msg__) const
     {
-      const IMC::NavigationData& other__ = dynamic_cast<const NavigationData&>(msg__);
+      const IMC::NavigationData& other__ = static_cast<const NavigationData&>(msg__);
       if (bias_psi != other__.bias_psi) return false;
       if (bias_r != other__.bias_r) return false;
       if (cog != other__.cog) return false;
@@ -8591,7 +8678,7 @@ namespace DUNE
     bool
     GpsFixRejection::fieldsEqual(const Message& msg__) const
     {
-      const IMC::GpsFixRejection& other__ = dynamic_cast<const GpsFixRejection&>(msg__);
+      const IMC::GpsFixRejection& other__ = static_cast<const GpsFixRejection&>(msg__);
       if (utc_time != other__.utc_time) return false;
       if (reason != other__.reason) return false;
       return true;
@@ -8654,7 +8741,7 @@ namespace DUNE
     bool
     LblRangeAcceptance::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LblRangeAcceptance& other__ = dynamic_cast<const LblRangeAcceptance&>(msg__);
+      const IMC::LblRangeAcceptance& other__ = static_cast<const LblRangeAcceptance&>(msg__);
       if (id != other__.id) return false;
       if (range != other__.range) return false;
       if (acceptance != other__.acceptance) return false;
@@ -8735,7 +8822,7 @@ namespace DUNE
     bool
     DvlRejection::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DvlRejection& other__ = dynamic_cast<const DvlRejection&>(msg__);
+      const IMC::DvlRejection& other__ = static_cast<const DvlRejection&>(msg__);
       if (type != other__.type) return false;
       if (reason != other__.reason) return false;
       if (value != other__.value) return false;
@@ -8863,7 +8950,7 @@ namespace DUNE
     bool
     LblEstimate::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LblEstimate& other__ = dynamic_cast<const LblEstimate&>(msg__);
+      const IMC::LblEstimate& other__ = static_cast<const LblEstimate&>(msg__);
       if (beacon != other__.beacon) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -8989,7 +9076,7 @@ namespace DUNE
     bool
     AlignmentState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AlignmentState& other__ = dynamic_cast<const AlignmentState&>(msg__);
+      const IMC::AlignmentState& other__ = static_cast<const AlignmentState&>(msg__);
       if (state != other__.state) return false;
       return true;
     }
@@ -9047,7 +9134,7 @@ namespace DUNE
     bool
     GroupStreamVelocity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::GroupStreamVelocity& other__ = dynamic_cast<const GroupStreamVelocity&>(msg__);
+      const IMC::GroupStreamVelocity& other__ = static_cast<const GroupStreamVelocity&>(msg__);
       if (x != other__.x) return false;
       if (y != other__.y) return false;
       if (z != other__.z) return false;
@@ -9113,7 +9200,7 @@ namespace DUNE
     bool
     DesiredHeading::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredHeading& other__ = dynamic_cast<const DesiredHeading&>(msg__);
+      const IMC::DesiredHeading& other__ = static_cast<const DesiredHeading&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -9182,7 +9269,7 @@ namespace DUNE
     bool
     DesiredZ::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredZ& other__ = dynamic_cast<const DesiredZ&>(msg__);
+      const IMC::DesiredZ& other__ = static_cast<const DesiredZ&>(msg__);
       if (value != other__.value) return false;
       if (z_units != other__.z_units) return false;
       return true;
@@ -9256,7 +9343,7 @@ namespace DUNE
     bool
     DesiredSpeed::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredSpeed& other__ = dynamic_cast<const DesiredSpeed&>(msg__);
+      const IMC::DesiredSpeed& other__ = static_cast<const DesiredSpeed&>(msg__);
       if (value != other__.value) return false;
       if (speed_units != other__.speed_units) return false;
       return true;
@@ -9329,7 +9416,7 @@ namespace DUNE
     bool
     DesiredRoll::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredRoll& other__ = dynamic_cast<const DesiredRoll&>(msg__);
+      const IMC::DesiredRoll& other__ = static_cast<const DesiredRoll&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -9397,7 +9484,7 @@ namespace DUNE
     bool
     DesiredPitch::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredPitch& other__ = dynamic_cast<const DesiredPitch&>(msg__);
+      const IMC::DesiredPitch& other__ = static_cast<const DesiredPitch&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -9465,7 +9552,7 @@ namespace DUNE
     bool
     DesiredVerticalRate::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredVerticalRate& other__ = dynamic_cast<const DesiredVerticalRate&>(msg__);
+      const IMC::DesiredVerticalRate& other__ = static_cast<const DesiredVerticalRate&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -9544,7 +9631,7 @@ namespace DUNE
     bool
     DesiredPath::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredPath& other__ = dynamic_cast<const DesiredPath&>(msg__);
+      const IMC::DesiredPath& other__ = static_cast<const DesiredPath&>(msg__);
       if (start_lat != other__.start_lat) return false;
       if (start_lon != other__.start_lon) return false;
       if (start_z != other__.start_z) return false;
@@ -9661,7 +9748,7 @@ namespace DUNE
     bool
     DesiredControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredControl& other__ = dynamic_cast<const DesiredControl&>(msg__);
+      const IMC::DesiredControl& other__ = static_cast<const DesiredControl&>(msg__);
       if (x != other__.x) return false;
       if (y != other__.y) return false;
       if (z != other__.z) return false;
@@ -9747,7 +9834,7 @@ namespace DUNE
     bool
     DesiredHeadingRate::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredHeadingRate& other__ = dynamic_cast<const DesiredHeadingRate&>(msg__);
+      const IMC::DesiredHeadingRate& other__ = static_cast<const DesiredHeadingRate&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -9821,7 +9908,7 @@ namespace DUNE
     bool
     DesiredVelocity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredVelocity& other__ = dynamic_cast<const DesiredVelocity&>(msg__);
+      const IMC::DesiredVelocity& other__ = static_cast<const DesiredVelocity&>(msg__);
       if (u != other__.u) return false;
       if (v != other__.v) return false;
       if (w != other__.w) return false;
@@ -9924,7 +10011,7 @@ namespace DUNE
     bool
     PathControlState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PathControlState& other__ = dynamic_cast<const PathControlState&>(msg__);
+      const IMC::PathControlState& other__ = static_cast<const PathControlState&>(msg__);
       if (start_lat != other__.start_lat) return false;
       if (start_lon != other__.start_lon) return false;
       if (start_z != other__.start_z) return false;
@@ -10067,7 +10154,7 @@ namespace DUNE
     bool
     AllocatedControlTorques::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AllocatedControlTorques& other__ = dynamic_cast<const AllocatedControlTorques&>(msg__);
+      const IMC::AllocatedControlTorques& other__ = static_cast<const AllocatedControlTorques&>(msg__);
       if (k != other__.k) return false;
       if (m != other__.m) return false;
       if (n != other__.n) return false;
@@ -10136,7 +10223,7 @@ namespace DUNE
     bool
     ControlParcel::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ControlParcel& other__ = dynamic_cast<const ControlParcel&>(msg__);
+      const IMC::ControlParcel& other__ = static_cast<const ControlParcel&>(msg__);
       if (p != other__.p) return false;
       if (i != other__.i) return false;
       if (d != other__.d) return false;
@@ -10207,7 +10294,7 @@ namespace DUNE
     bool
     Brake::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Brake& other__ = dynamic_cast<const Brake&>(msg__);
+      const IMC::Brake& other__ = static_cast<const Brake&>(msg__);
       if (op != other__.op) return false;
       return true;
     }
@@ -10273,7 +10360,7 @@ namespace DUNE
     bool
     Goto::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Goto& other__ = dynamic_cast<const Goto&>(msg__);
+      const IMC::Goto& other__ = static_cast<const Goto&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -10389,7 +10476,7 @@ namespace DUNE
     bool
     PopUp::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PopUp& other__ = dynamic_cast<const PopUp&>(msg__);
+      const IMC::PopUp& other__ = static_cast<const PopUp&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -10495,7 +10582,7 @@ namespace DUNE
     bool
     Teleoperation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Teleoperation& other__ = dynamic_cast<const Teleoperation&>(msg__);
+      const IMC::Teleoperation& other__ = static_cast<const Teleoperation&>(msg__);
       if (custom != other__.custom) return false;
       return true;
     }
@@ -10564,7 +10651,7 @@ namespace DUNE
     bool
     Loiter::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Loiter& other__ = dynamic_cast<const Loiter&>(msg__);
+      const IMC::Loiter& other__ = static_cast<const Loiter&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -10686,7 +10773,7 @@ namespace DUNE
     bool
     IdleManeuver::fieldsEqual(const Message& msg__) const
     {
-      const IMC::IdleManeuver& other__ = dynamic_cast<const IdleManeuver&>(msg__);
+      const IMC::IdleManeuver& other__ = static_cast<const IdleManeuver&>(msg__);
       if (duration != other__.duration) return false;
       if (custom != other__.custom) return false;
       return true;
@@ -10750,7 +10837,7 @@ namespace DUNE
     bool
     LowLevelControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LowLevelControl& other__ = dynamic_cast<const LowLevelControl&>(msg__);
+      const IMC::LowLevelControl& other__ = static_cast<const LowLevelControl&>(msg__);
       if (control != other__.control) return false;
       if (duration != other__.duration) return false;
       if (custom != other__.custom) return false;
@@ -10876,7 +10963,7 @@ namespace DUNE
     bool
     Rows::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Rows& other__ = dynamic_cast<const Rows&>(msg__);
+      const IMC::Rows& other__ = static_cast<const Rows&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -11009,7 +11096,7 @@ namespace DUNE
     bool
     PathPoint::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PathPoint& other__ = dynamic_cast<const PathPoint&>(msg__);
+      const IMC::PathPoint& other__ = static_cast<const PathPoint&>(msg__);
       if (x != other__.x) return false;
       if (y != other__.y) return false;
       if (z != other__.z) return false;
@@ -11084,7 +11171,7 @@ namespace DUNE
     bool
     FollowPath::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FollowPath& other__ = dynamic_cast<const FollowPath&>(msg__);
+      const IMC::FollowPath& other__ = static_cast<const FollowPath&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -11219,7 +11306,7 @@ namespace DUNE
     bool
     YoYo::fieldsEqual(const Message& msg__) const
     {
-      const IMC::YoYo& other__ = dynamic_cast<const YoYo&>(msg__);
+      const IMC::YoYo& other__ = static_cast<const YoYo&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -11367,7 +11454,7 @@ namespace DUNE
     bool
     StationKeeping::fieldsEqual(const Message& msg__) const
     {
-      const IMC::StationKeeping& other__ = dynamic_cast<const StationKeeping&>(msg__);
+      const IMC::StationKeeping& other__ = static_cast<const StationKeeping&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (z != other__.z) return false;
@@ -11474,7 +11561,7 @@ namespace DUNE
     bool
     Elevator::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Elevator& other__ = dynamic_cast<const Elevator&>(msg__);
+      const IMC::Elevator& other__ = static_cast<const Elevator&>(msg__);
       if (timeout != other__.timeout) return false;
       if (flags != other__.flags) return false;
       if (lat != other__.lat) return false;
@@ -11588,7 +11675,7 @@ namespace DUNE
     bool
     TrajectoryPoint::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrajectoryPoint& other__ = dynamic_cast<const TrajectoryPoint&>(msg__);
+      const IMC::TrajectoryPoint& other__ = static_cast<const TrajectoryPoint&>(msg__);
       if (x != other__.x) return false;
       if (y != other__.y) return false;
       if (z != other__.z) return false;
@@ -11668,7 +11755,7 @@ namespace DUNE
     bool
     FollowTrajectory::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FollowTrajectory& other__ = dynamic_cast<const FollowTrajectory&>(msg__);
+      const IMC::FollowTrajectory& other__ = static_cast<const FollowTrajectory&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -11796,7 +11883,7 @@ namespace DUNE
     bool
     CustomManeuver::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CustomManeuver& other__ = dynamic_cast<const CustomManeuver&>(msg__);
+      const IMC::CustomManeuver& other__ = static_cast<const CustomManeuver&>(msg__);
       if (timeout != other__.timeout) return false;
       if (name != other__.name) return false;
       if (custom != other__.custom) return false;
@@ -11865,7 +11952,7 @@ namespace DUNE
     bool
     VehicleFormationParticipant::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VehicleFormationParticipant& other__ = dynamic_cast<const VehicleFormationParticipant&>(msg__);
+      const IMC::VehicleFormationParticipant& other__ = static_cast<const VehicleFormationParticipant&>(msg__);
       if (vid != other__.vid) return false;
       if (off_x != other__.off_x) return false;
       if (off_y != other__.off_y) return false;
@@ -11947,7 +12034,7 @@ namespace DUNE
     bool
     VehicleFormation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VehicleFormation& other__ = dynamic_cast<const VehicleFormation&>(msg__);
+      const IMC::VehicleFormation& other__ = static_cast<const VehicleFormation&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (z != other__.z) return false;
@@ -12127,7 +12214,7 @@ namespace DUNE
     bool
     RegisterManeuver::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RegisterManeuver& other__ = dynamic_cast<const RegisterManeuver&>(msg__);
+      const IMC::RegisterManeuver& other__ = static_cast<const RegisterManeuver&>(msg__);
       if (mid != other__.mid) return false;
       return true;
     }
@@ -12185,7 +12272,7 @@ namespace DUNE
     bool
     ManeuverControlState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ManeuverControlState& other__ = dynamic_cast<const ManeuverControlState&>(msg__);
+      const IMC::ManeuverControlState& other__ = static_cast<const ManeuverControlState&>(msg__);
       if (state != other__.state) return false;
       if (eta != other__.eta) return false;
       if (info != other__.info) return false;
@@ -12258,7 +12345,7 @@ namespace DUNE
     bool
     FollowSystem::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FollowSystem& other__ = dynamic_cast<const FollowSystem&>(msg__);
+      const IMC::FollowSystem& other__ = static_cast<const FollowSystem&>(msg__);
       if (system != other__.system) return false;
       if (duration != other__.duration) return false;
       if (speed != other__.speed) return false;
@@ -12356,7 +12443,7 @@ namespace DUNE
     bool
     CommsRelay::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CommsRelay& other__ = dynamic_cast<const CommsRelay&>(msg__);
+      const IMC::CommsRelay& other__ = static_cast<const CommsRelay&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (speed != other__.speed) return false;
@@ -12448,7 +12535,7 @@ namespace DUNE
     bool
     PolygonVertex::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PolygonVertex& other__ = dynamic_cast<const PolygonVertex&>(msg__);
+      const IMC::PolygonVertex& other__ = static_cast<const PolygonVertex&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       return true;
@@ -12517,7 +12604,7 @@ namespace DUNE
     bool
     CoverArea::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CoverArea& other__ = dynamic_cast<const CoverArea&>(msg__);
+      const IMC::CoverArea& other__ = static_cast<const CoverArea&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (z != other__.z) return false;
@@ -12650,7 +12737,7 @@ namespace DUNE
     bool
     CompassCalibration::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CompassCalibration& other__ = dynamic_cast<const CompassCalibration&>(msg__);
+      const IMC::CompassCalibration& other__ = static_cast<const CompassCalibration&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -12770,7 +12857,7 @@ namespace DUNE
     bool
     FormationParameters::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FormationParameters& other__ = dynamic_cast<const FormationParameters&>(msg__);
+      const IMC::FormationParameters& other__ = static_cast<const FormationParameters&>(msg__);
       if (formation_name != other__.formation_name) return false;
       if (reference_frame != other__.reference_frame) return false;
       if (participants != other__.participants) return false;
@@ -12884,7 +12971,7 @@ namespace DUNE
     bool
     FormationPlanExecution::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FormationPlanExecution& other__ = dynamic_cast<const FormationPlanExecution&>(msg__);
+      const IMC::FormationPlanExecution& other__ = static_cast<const FormationPlanExecution&>(msg__);
       if (group_name != other__.group_name) return false;
       if (formation_name != other__.formation_name) return false;
       if (plan_id != other__.plan_id) return false;
@@ -13009,7 +13096,7 @@ namespace DUNE
     bool
     FollowReference::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FollowReference& other__ = dynamic_cast<const FollowReference&>(msg__);
+      const IMC::FollowReference& other__ = static_cast<const FollowReference&>(msg__);
       if (control_src != other__.control_src) return false;
       if (control_ent != other__.control_ent) return false;
       if (timeout != other__.timeout) return false;
@@ -13092,7 +13179,7 @@ namespace DUNE
     bool
     Reference::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Reference& other__ = dynamic_cast<const Reference&>(msg__);
+      const IMC::Reference& other__ = static_cast<const Reference&>(msg__);
       if (flags != other__.flags) return false;
       if (speed != other__.speed) return false;
       if (z != other__.z) return false;
@@ -13248,7 +13335,7 @@ namespace DUNE
     bool
     FollowRefState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FollowRefState& other__ = dynamic_cast<const FollowRefState&>(msg__);
+      const IMC::FollowRefState& other__ = static_cast<const FollowRefState&>(msg__);
       if (control_src != other__.control_src) return false;
       if (control_ent != other__.control_ent) return false;
       if (reference != other__.reference) return false;
@@ -13378,7 +13465,7 @@ namespace DUNE
     bool
     VehicleState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VehicleState& other__ = dynamic_cast<const VehicleState&>(msg__);
+      const IMC::VehicleState& other__ = static_cast<const VehicleState&>(msg__);
       if (op_mode != other__.op_mode) return false;
       if (error_count != other__.error_count) return false;
       if (error_ents != other__.error_ents) return false;
@@ -13485,7 +13572,7 @@ namespace DUNE
     bool
     VehicleCommand::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VehicleCommand& other__ = dynamic_cast<const VehicleCommand&>(msg__);
+      const IMC::VehicleCommand& other__ = static_cast<const VehicleCommand&>(msg__);
       if (type != other__.type) return false;
       if (request_id != other__.request_id) return false;
       if (command != other__.command) return false;
@@ -13612,7 +13699,7 @@ namespace DUNE
     bool
     MonitorEntityState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::MonitorEntityState& other__ = dynamic_cast<const MonitorEntityState&>(msg__);
+      const IMC::MonitorEntityState& other__ = static_cast<const MonitorEntityState&>(msg__);
       if (command != other__.command) return false;
       if (entities != other__.entities) return false;
       return true;
@@ -13680,7 +13767,7 @@ namespace DUNE
     bool
     EntityMonitoringState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EntityMonitoringState& other__ = dynamic_cast<const EntityMonitoringState&>(msg__);
+      const IMC::EntityMonitoringState& other__ = static_cast<const EntityMonitoringState&>(msg__);
       if (mcount != other__.mcount) return false;
       if (mnames != other__.mnames) return false;
       if (ecount != other__.ecount) return false;
@@ -13782,7 +13869,7 @@ namespace DUNE
     bool
     OperationalLimits::fieldsEqual(const Message& msg__) const
     {
-      const IMC::OperationalLimits& other__ = dynamic_cast<const OperationalLimits&>(msg__);
+      const IMC::OperationalLimits& other__ = static_cast<const OperationalLimits&>(msg__);
       if (mask != other__.mask) return false;
       if (max_depth != other__.max_depth) return false;
       if (min_altitude != other__.min_altitude) return false;
@@ -13932,7 +14019,7 @@ namespace DUNE
     bool
     Calibration::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Calibration& other__ = dynamic_cast<const Calibration&>(msg__);
+      const IMC::Calibration& other__ = static_cast<const Calibration&>(msg__);
       if (duration != other__.duration) return false;
       return true;
     }
@@ -13990,7 +14077,7 @@ namespace DUNE
     bool
     ControlLoops::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ControlLoops& other__ = dynamic_cast<const ControlLoops&>(msg__);
+      const IMC::ControlLoops& other__ = static_cast<const ControlLoops&>(msg__);
       if (enable != other__.enable) return false;
       if (mask != other__.mask) return false;
       if (scope_ref != other__.scope_ref) return false;
@@ -14056,7 +14143,7 @@ namespace DUNE
     bool
     VehicleMedium::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VehicleMedium& other__ = dynamic_cast<const VehicleMedium&>(msg__);
+      const IMC::VehicleMedium& other__ = static_cast<const VehicleMedium&>(msg__);
       if (medium != other__.medium) return false;
       return true;
     }
@@ -14113,7 +14200,7 @@ namespace DUNE
     bool
     Collision::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Collision& other__ = dynamic_cast<const Collision&>(msg__);
+      const IMC::Collision& other__ = static_cast<const Collision&>(msg__);
       if (value != other__.value) return false;
       if (type != other__.type) return false;
       return true;
@@ -14191,7 +14278,7 @@ namespace DUNE
     bool
     FormState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FormState& other__ = dynamic_cast<const FormState&>(msg__);
+      const IMC::FormState& other__ = static_cast<const FormState&>(msg__);
       if (possimerr != other__.possimerr) return false;
       if (converg != other__.converg) return false;
       if (turbulence != other__.turbulence) return false;
@@ -14257,6 +14344,68 @@ namespace DUNE
       IMC::toJSON(os__, "convergmon", convergmon, nindent__);
     }
 
+    AutopilotMode::AutopilotMode(void)
+    {
+      m_header.mgid = 511;
+      clear();
+    }
+
+    void
+    AutopilotMode::clear(void)
+    {
+      autonomy = 0;
+      mode.clear();
+    }
+
+    bool
+    AutopilotMode::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::AutopilotMode& other__ = static_cast<const AutopilotMode&>(msg__);
+      if (autonomy != other__.autonomy) return false;
+      if (mode != other__.mode) return false;
+      return true;
+    }
+
+    int
+    AutopilotMode::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    AutopilotMode::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(autonomy, ptr__);
+      ptr__ += IMC::serialize(mode, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    AutopilotMode::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(autonomy, bfr__, size__);
+      bfr__ += IMC::deserialize(mode, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    AutopilotMode::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(autonomy, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(mode, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    AutopilotMode::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "autonomy", autonomy, nindent__);
+      IMC::toJSON(os__, "mode", mode, nindent__);
+    }
+
     Abort::Abort(void)
     {
       m_header.mgid = 550;
@@ -14314,7 +14463,7 @@ namespace DUNE
     bool
     PlanVariable::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanVariable& other__ = dynamic_cast<const PlanVariable&>(msg__);
+      const IMC::PlanVariable& other__ = static_cast<const PlanVariable&>(msg__);
       if (name != other__.name) return false;
       if (value != other__.value) return false;
       if (type != other__.type) return false;
@@ -14391,7 +14540,7 @@ namespace DUNE
     bool
     PlanManeuver::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanManeuver& other__ = dynamic_cast<const PlanManeuver&>(msg__);
+      const IMC::PlanManeuver& other__ = static_cast<const PlanManeuver&>(msg__);
       if (maneuver_id != other__.maneuver_id) return false;
       if (data != other__.data) return false;
       if (start_actions != other__.start_actions) return false;
@@ -14531,7 +14680,7 @@ namespace DUNE
     bool
     PlanTransition::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanTransition& other__ = dynamic_cast<const PlanTransition&>(msg__);
+      const IMC::PlanTransition& other__ = static_cast<const PlanTransition&>(msg__);
       if (source_man != other__.source_man) return false;
       if (dest_man != other__.dest_man) return false;
       if (conditions != other__.conditions) return false;
@@ -14645,7 +14794,7 @@ namespace DUNE
     bool
     PlanSpecification::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanSpecification& other__ = dynamic_cast<const PlanSpecification&>(msg__);
+      const IMC::PlanSpecification& other__ = static_cast<const PlanSpecification&>(msg__);
       if (plan_id != other__.plan_id) return false;
       if (description != other__.description) return false;
       if (vnamespace != other__.vnamespace) return false;
@@ -14813,7 +14962,7 @@ namespace DUNE
     bool
     EmergencyControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EmergencyControl& other__ = dynamic_cast<const EmergencyControl&>(msg__);
+      const IMC::EmergencyControl& other__ = static_cast<const EmergencyControl&>(msg__);
       if (command != other__.command) return false;
       if (plan != other__.plan) return false;
       return true;
@@ -14921,7 +15070,7 @@ namespace DUNE
     bool
     EmergencyControlState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EmergencyControlState& other__ = dynamic_cast<const EmergencyControlState&>(msg__);
+      const IMC::EmergencyControlState& other__ = static_cast<const EmergencyControlState&>(msg__);
       if (state != other__.state) return false;
       if (plan_id != other__.plan_id) return false;
       if (comm_level != other__.comm_level) return false;
@@ -14993,7 +15142,7 @@ namespace DUNE
     bool
     PlanDB::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanDB& other__ = dynamic_cast<const PlanDB&>(msg__);
+      const IMC::PlanDB& other__ = static_cast<const PlanDB&>(msg__);
       if (type != other__.type) return false;
       if (op != other__.op) return false;
       if (request_id != other__.request_id) return false;
@@ -15124,7 +15273,7 @@ namespace DUNE
     bool
     PlanDBInformation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanDBInformation& other__ = dynamic_cast<const PlanDBInformation&>(msg__);
+      const IMC::PlanDBInformation& other__ = static_cast<const PlanDBInformation&>(msg__);
       if (plan_id != other__.plan_id) return false;
       if (plan_size != other__.plan_size) return false;
       if (change_time != other__.change_time) return false;
@@ -15212,7 +15361,7 @@ namespace DUNE
     bool
     PlanDBState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanDBState& other__ = dynamic_cast<const PlanDBState&>(msg__);
+      const IMC::PlanDBState& other__ = static_cast<const PlanDBState&>(msg__);
       if (plan_count != other__.plan_count) return false;
       if (plan_size != other__.plan_size) return false;
       if (change_time != other__.change_time) return false;
@@ -15335,7 +15484,7 @@ namespace DUNE
     bool
     PlanControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanControl& other__ = dynamic_cast<const PlanControl&>(msg__);
+      const IMC::PlanControl& other__ = static_cast<const PlanControl&>(msg__);
       if (type != other__.type) return false;
       if (op != other__.op) return false;
       if (request_id != other__.request_id) return false;
@@ -15473,7 +15622,7 @@ namespace DUNE
     bool
     PlanControlState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanControlState& other__ = dynamic_cast<const PlanControlState&>(msg__);
+      const IMC::PlanControlState& other__ = static_cast<const PlanControlState&>(msg__);
       if (state != other__.state) return false;
       if (plan_id != other__.plan_id) return false;
       if (plan_eta != other__.plan_eta) return false;
@@ -15567,7 +15716,7 @@ namespace DUNE
     bool
     PlanGeneration::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanGeneration& other__ = dynamic_cast<const PlanGeneration&>(msg__);
+      const IMC::PlanGeneration& other__ = static_cast<const PlanGeneration&>(msg__);
       if (cmd != other__.cmd) return false;
       if (op != other__.op) return false;
       if (plan_id != other__.plan_id) return false;
@@ -15657,7 +15806,7 @@ namespace DUNE
     bool
     LeaderState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LeaderState& other__ = dynamic_cast<const LeaderState&>(msg__);
+      const IMC::LeaderState& other__ = static_cast<const LeaderState&>(msg__);
       if (group_name != other__.group_name) return false;
       if (op != other__.op) return false;
       if (lat != other__.lat) return false;
@@ -15816,7 +15965,7 @@ namespace DUNE
     bool
     ReportedState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ReportedState& other__ = dynamic_cast<const ReportedState&>(msg__);
+      const IMC::ReportedState& other__ = static_cast<const ReportedState&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (depth != other__.depth) return false;
@@ -15918,7 +16067,7 @@ namespace DUNE
     bool
     RemoteSensorInfo::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RemoteSensorInfo& other__ = dynamic_cast<const RemoteSensorInfo&>(msg__);
+      const IMC::RemoteSensorInfo& other__ = static_cast<const RemoteSensorInfo&>(msg__);
       if (id != other__.id) return false;
       if (sensor_class != other__.sensor_class) return false;
       if (lat != other__.lat) return false;
@@ -16006,7 +16155,7 @@ namespace DUNE
     bool
     MapPoint::fieldsEqual(const Message& msg__) const
     {
-      const IMC::MapPoint& other__ = dynamic_cast<const MapPoint&>(msg__);
+      const IMC::MapPoint& other__ = static_cast<const MapPoint&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (alt != other__.alt) return false;
@@ -16078,7 +16227,7 @@ namespace DUNE
     bool
     MapFeature::fieldsEqual(const Message& msg__) const
     {
-      const IMC::MapFeature& other__ = dynamic_cast<const MapFeature&>(msg__);
+      const IMC::MapFeature& other__ = static_cast<const MapFeature&>(msg__);
       if (id != other__.id) return false;
       if (feature_type != other__.feature_type) return false;
       if (rgb_red != other__.rgb_red) return false;
@@ -16191,7 +16340,7 @@ namespace DUNE
     bool
     Map::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Map& other__ = dynamic_cast<const Map&>(msg__);
+      const IMC::Map& other__ = static_cast<const Map&>(msg__);
       if (id != other__.id) return false;
       if (features != other__.features) return false;
       return true;
@@ -16285,7 +16434,7 @@ namespace DUNE
     bool
     CcuEvent::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CcuEvent& other__ = dynamic_cast<const CcuEvent&>(msg__);
+      const IMC::CcuEvent& other__ = static_cast<const CcuEvent&>(msg__);
       if (type != other__.type) return false;
       if (id != other__.id) return false;
       if (arg != other__.arg) return false;
@@ -16398,7 +16547,7 @@ namespace DUNE
     bool
     VehicleLinks::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VehicleLinks& other__ = dynamic_cast<const VehicleLinks&>(msg__);
+      const IMC::VehicleLinks& other__ = static_cast<const VehicleLinks&>(msg__);
       if (localname != other__.localname) return false;
       if (links != other__.links) return false;
       return true;
@@ -16491,7 +16640,7 @@ namespace DUNE
     bool
     TrexObservation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrexObservation& other__ = dynamic_cast<const TrexObservation&>(msg__);
+      const IMC::TrexObservation& other__ = static_cast<const TrexObservation&>(msg__);
       if (timeline != other__.timeline) return false;
       if (predicate != other__.predicate) return false;
       if (attributes != other__.attributes) return false;
@@ -16559,7 +16708,7 @@ namespace DUNE
     bool
     TrexCommand::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrexCommand& other__ = dynamic_cast<const TrexCommand&>(msg__);
+      const IMC::TrexCommand& other__ = static_cast<const TrexCommand&>(msg__);
       if (command != other__.command) return false;
       if (goal_id != other__.goal_id) return false;
       if (goal_xml != other__.goal_xml) return false;
@@ -16628,7 +16777,7 @@ namespace DUNE
     bool
     TrexAttribute::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrexAttribute& other__ = dynamic_cast<const TrexAttribute&>(msg__);
+      const IMC::TrexAttribute& other__ = static_cast<const TrexAttribute&>(msg__);
       if (name != other__.name) return false;
       if (attr_type != other__.attr_type) return false;
       if (min != other__.min) return false;
@@ -16702,7 +16851,7 @@ namespace DUNE
     bool
     TrexToken::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrexToken& other__ = dynamic_cast<const TrexToken&>(msg__);
+      const IMC::TrexToken& other__ = static_cast<const TrexToken&>(msg__);
       if (timeline != other__.timeline) return false;
       if (predicate != other__.predicate) return false;
       if (attributes != other__.attributes) return false;
@@ -16801,7 +16950,7 @@ namespace DUNE
     bool
     TrexOperation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrexOperation& other__ = dynamic_cast<const TrexOperation&>(msg__);
+      const IMC::TrexOperation& other__ = static_cast<const TrexOperation&>(msg__);
       if (op != other__.op) return false;
       if (goal_id != other__.goal_id) return false;
       if (token != other__.token) return false;
@@ -16914,7 +17063,7 @@ namespace DUNE
     bool
     TrexPlan::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrexPlan& other__ = dynamic_cast<const TrexPlan&>(msg__);
+      const IMC::TrexPlan& other__ = static_cast<const TrexPlan&>(msg__);
       if (reactor != other__.reactor) return false;
       if (tokens != other__.tokens) return false;
       return true;
@@ -17012,7 +17161,7 @@ namespace DUNE
     bool
     VideoData::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VideoData& other__ = dynamic_cast<const VideoData&>(msg__);
+      const IMC::VideoData& other__ = static_cast<const VideoData&>(msg__);
       if (id != other__.id) return false;
       if (width != other__.width) return false;
       if (height != other__.height) return false;
@@ -17119,7 +17268,7 @@ namespace DUNE
     bool
     RawImage::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RawImage& other__ = dynamic_cast<const RawImage&>(msg__);
+      const IMC::RawImage& other__ = static_cast<const RawImage&>(msg__);
       if (width != other__.width) return false;
       if (height != other__.height) return false;
       if (channels != other__.channels) return false;
@@ -17196,7 +17345,7 @@ namespace DUNE
     bool
     CompressedImage::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CompressedImage& other__ = dynamic_cast<const CompressedImage&>(msg__);
+      const IMC::CompressedImage& other__ = static_cast<const CompressedImage&>(msg__);
       if (frameid != other__.frameid) return false;
       if (data != other__.data) return false;
       return true;
@@ -17260,7 +17409,7 @@ namespace DUNE
     bool
     ImageTxSettings::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ImageTxSettings& other__ = dynamic_cast<const ImageTxSettings&>(msg__);
+      const IMC::ImageTxSettings& other__ = static_cast<const ImageTxSettings&>(msg__);
       if (fps != other__.fps) return false;
       if (quality != other__.quality) return false;
       if (reps != other__.reps) return false;
@@ -17335,7 +17484,7 @@ namespace DUNE
     bool
     RemoteState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RemoteState& other__ = dynamic_cast<const RemoteState&>(msg__);
+      const IMC::RemoteState& other__ = static_cast<const RemoteState&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (depth != other__.depth) return false;
@@ -17417,7 +17566,7 @@ namespace DUNE
     bool
     Target::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Target& other__ = dynamic_cast<const Target&>(msg__);
+      const IMC::Target& other__ = static_cast<const Target&>(msg__);
       if (label != other__.label) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -17504,7 +17653,7 @@ namespace DUNE
     bool
     EntityParameter::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EntityParameter& other__ = dynamic_cast<const EntityParameter&>(msg__);
+      const IMC::EntityParameter& other__ = static_cast<const EntityParameter&>(msg__);
       if (name != other__.name) return false;
       if (value != other__.value) return false;
       return true;
@@ -17567,7 +17716,7 @@ namespace DUNE
     bool
     EntityParameters::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EntityParameters& other__ = dynamic_cast<const EntityParameters&>(msg__);
+      const IMC::EntityParameters& other__ = static_cast<const EntityParameters&>(msg__);
       if (name != other__.name) return false;
       if (params != other__.params) return false;
       return true;
@@ -17660,7 +17809,7 @@ namespace DUNE
     bool
     QueryEntityParameters::fieldsEqual(const Message& msg__) const
     {
-      const IMC::QueryEntityParameters& other__ = dynamic_cast<const QueryEntityParameters&>(msg__);
+      const IMC::QueryEntityParameters& other__ = static_cast<const QueryEntityParameters&>(msg__);
       if (name != other__.name) return false;
       if (visibility != other__.visibility) return false;
       if (scope != other__.scope) return false;
@@ -17728,7 +17877,7 @@ namespace DUNE
     bool
     SetEntityParameters::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SetEntityParameters& other__ = dynamic_cast<const SetEntityParameters&>(msg__);
+      const IMC::SetEntityParameters& other__ = static_cast<const SetEntityParameters&>(msg__);
       if (name != other__.name) return false;
       if (params != other__.params) return false;
       return true;
@@ -17819,7 +17968,7 @@ namespace DUNE
     bool
     SaveEntityParameters::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SaveEntityParameters& other__ = dynamic_cast<const SaveEntityParameters&>(msg__);
+      const IMC::SaveEntityParameters& other__ = static_cast<const SaveEntityParameters&>(msg__);
       if (name != other__.name) return false;
       return true;
     }
@@ -17875,7 +18024,7 @@ namespace DUNE
     bool
     CreateSession::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CreateSession& other__ = dynamic_cast<const CreateSession&>(msg__);
+      const IMC::CreateSession& other__ = static_cast<const CreateSession&>(msg__);
       if (timeout != other__.timeout) return false;
       return true;
     }
@@ -17931,7 +18080,7 @@ namespace DUNE
     bool
     CloseSession::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CloseSession& other__ = dynamic_cast<const CloseSession&>(msg__);
+      const IMC::CloseSession& other__ = static_cast<const CloseSession&>(msg__);
       if (sessid != other__.sessid) return false;
       return true;
     }
@@ -17988,7 +18137,7 @@ namespace DUNE
     bool
     SessionSubscription::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SessionSubscription& other__ = dynamic_cast<const SessionSubscription&>(msg__);
+      const IMC::SessionSubscription& other__ = static_cast<const SessionSubscription&>(msg__);
       if (sessid != other__.sessid) return false;
       if (messages != other__.messages) return false;
       return true;
@@ -18049,7 +18198,7 @@ namespace DUNE
     bool
     SessionKeepAlive::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SessionKeepAlive& other__ = dynamic_cast<const SessionKeepAlive&>(msg__);
+      const IMC::SessionKeepAlive& other__ = static_cast<const SessionKeepAlive&>(msg__);
       if (sessid != other__.sessid) return false;
       return true;
     }
@@ -18106,7 +18255,7 @@ namespace DUNE
     bool
     SessionStatus::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SessionStatus& other__ = dynamic_cast<const SessionStatus&>(msg__);
+      const IMC::SessionStatus& other__ = static_cast<const SessionStatus&>(msg__);
       if (sessid != other__.sessid) return false;
       if (status != other__.status) return false;
       return true;
@@ -18167,7 +18316,7 @@ namespace DUNE
     bool
     PushEntityParameters::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PushEntityParameters& other__ = dynamic_cast<const PushEntityParameters&>(msg__);
+      const IMC::PushEntityParameters& other__ = static_cast<const PushEntityParameters&>(msg__);
       if (name != other__.name) return false;
       return true;
     }
@@ -18223,7 +18372,7 @@ namespace DUNE
     bool
     PopEntityParameters::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PopEntityParameters& other__ = dynamic_cast<const PopEntityParameters&>(msg__);
+      const IMC::PopEntityParameters& other__ = static_cast<const PopEntityParameters&>(msg__);
       if (name != other__.name) return false;
       return true;
     }
@@ -18280,7 +18429,7 @@ namespace DUNE
     bool
     IoEvent::fieldsEqual(const Message& msg__) const
     {
-      const IMC::IoEvent& other__ = dynamic_cast<const IoEvent&>(msg__);
+      const IMC::IoEvent& other__ = static_cast<const IoEvent&>(msg__);
       if (type != other__.type) return false;
       if (error != other__.error) return false;
       return true;
@@ -18344,7 +18493,7 @@ namespace DUNE
     bool
     UamTxFrame::fieldsEqual(const Message& msg__) const
     {
-      const IMC::UamTxFrame& other__ = dynamic_cast<const UamTxFrame&>(msg__);
+      const IMC::UamTxFrame& other__ = static_cast<const UamTxFrame&>(msg__);
       if (seq != other__.seq) return false;
       if (sys_dst != other__.sys_dst) return false;
       if (flags != other__.flags) return false;
@@ -18418,7 +18567,7 @@ namespace DUNE
     bool
     UamRxFrame::fieldsEqual(const Message& msg__) const
     {
-      const IMC::UamRxFrame& other__ = dynamic_cast<const UamRxFrame&>(msg__);
+      const IMC::UamRxFrame& other__ = static_cast<const UamRxFrame&>(msg__);
       if (sys_src != other__.sys_src) return false;
       if (sys_dst != other__.sys_dst) return false;
       if (flags != other__.flags) return false;
@@ -18491,7 +18640,7 @@ namespace DUNE
     bool
     UamTxStatus::fieldsEqual(const Message& msg__) const
     {
-      const IMC::UamTxStatus& other__ = dynamic_cast<const UamTxStatus&>(msg__);
+      const IMC::UamTxStatus& other__ = static_cast<const UamTxStatus&>(msg__);
       if (seq != other__.seq) return false;
       if (value != other__.value) return false;
       if (error != other__.error) return false;
@@ -18571,7 +18720,7 @@ namespace DUNE
     bool
     UamRxRange::fieldsEqual(const Message& msg__) const
     {
-      const IMC::UamRxRange& other__ = dynamic_cast<const UamRxRange&>(msg__);
+      const IMC::UamRxRange& other__ = static_cast<const UamRxRange&>(msg__);
       if (seq != other__.seq) return false;
       if (sys != other__.sys) return false;
       if (value != other__.value) return false;
@@ -18693,7 +18842,7 @@ namespace DUNE
     bool
     FormCtrlParam::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FormCtrlParam& other__ = dynamic_cast<const FormCtrlParam&>(msg__);
+      const IMC::FormCtrlParam& other__ = static_cast<const FormCtrlParam&>(msg__);
       if (action != other__.action) return false;
       if (longain != other__.longain) return false;
       if (latgain != other__.latgain) return false;
@@ -18757,6 +18906,142 @@ namespace DUNE
       IMC::toJSON(os__, "bondthick", bondthick, nindent__);
       IMC::toJSON(os__, "leadgain", leadgain, nindent__);
       IMC::toJSON(os__, "deconflgain", deconflgain, nindent__);
+    }
+
+    MessagePart::MessagePart(void)
+    {
+      m_header.mgid = 877;
+      clear();
+    }
+
+    void
+    MessagePart::clear(void)
+    {
+      uid = 0;
+      frag_number = 0;
+      num_frags = 0;
+      data.clear();
+    }
+
+    bool
+    MessagePart::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::MessagePart& other__ = static_cast<const MessagePart&>(msg__);
+      if (uid != other__.uid) return false;
+      if (frag_number != other__.frag_number) return false;
+      if (num_frags != other__.num_frags) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    MessagePart::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    MessagePart::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(uid, ptr__);
+      ptr__ += IMC::serialize(frag_number, ptr__);
+      ptr__ += IMC::serialize(num_frags, ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    MessagePart::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(uid, bfr__, size__);
+      bfr__ += IMC::deserialize(frag_number, bfr__, size__);
+      bfr__ += IMC::deserialize(num_frags, bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    MessagePart::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(uid, bfr__, size__);
+      bfr__ += IMC::deserialize(frag_number, bfr__, size__);
+      bfr__ += IMC::deserialize(num_frags, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    MessagePart::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "uid", uid, nindent__);
+      IMC::toJSON(os__, "frag_number", frag_number, nindent__);
+      IMC::toJSON(os__, "num_frags", num_frags, nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
+    }
+
+    NeptusBlob::NeptusBlob(void)
+    {
+      m_header.mgid = 888;
+      clear();
+    }
+
+    void
+    NeptusBlob::clear(void)
+    {
+      content_type.clear();
+      content.clear();
+    }
+
+    bool
+    NeptusBlob::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::NeptusBlob& other__ = static_cast<const NeptusBlob&>(msg__);
+      if (content_type != other__.content_type) return false;
+      if (content != other__.content) return false;
+      return true;
+    }
+
+    int
+    NeptusBlob::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    NeptusBlob::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(content_type, ptr__);
+      ptr__ += IMC::serialize(content, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    NeptusBlob::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(content_type, bfr__, size__);
+      bfr__ += IMC::deserialize(content, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    NeptusBlob::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(content_type, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(content, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    NeptusBlob::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "content_type", content_type, nindent__);
+      IMC::toJSON(os__, "content", content, nindent__);
     }
   }
 }

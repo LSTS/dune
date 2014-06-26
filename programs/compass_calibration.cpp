@@ -68,7 +68,7 @@ main(int32_t argc, char** argv)
     {
       if (msg->getId() == DUNE_IMC_EULERANGLES)
       {
-        IMC::EulerAngles* ea = dynamic_cast<IMC::EulerAngles*>(msg);
+        IMC::EulerAngles* ea = static_cast<IMC::EulerAngles*>(msg);
 
         if (ea->getSourceEntity() != ahrs_eid)
           continue;
@@ -77,7 +77,7 @@ main(int32_t argc, char** argv)
       }
       else if (msg->getId() == DUNE_IMC_MAGNETICFIELD)
       {
-        IMC::MagneticField* mf = dynamic_cast<IMC::MagneticField*>(msg);
+        IMC::MagneticField* mf = static_cast<IMC::MagneticField*>(msg);
 
         if (mf->getSourceEntity() == ccal_eid)
         {
@@ -91,7 +91,7 @@ main(int32_t argc, char** argv)
       }
       else if (msg->getId() == DUNE_IMC_ENTITYINFO)
       {
-        IMC::EntityInfo* ei = dynamic_cast<IMC::EntityInfo*>(msg);
+        IMC::EntityInfo* ei = static_cast<IMC::EntityInfo*>(msg);
 
         if (!std::strcmp(ei->label.c_str(), "AHRS"))
           ahrs_eid = ei->id;

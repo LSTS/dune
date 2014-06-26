@@ -137,24 +137,6 @@ namespace Transports
         }
       }
 
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      {
-      }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
       //! Acquire resources.
       void
       onResourceAcquisition(void)
@@ -233,12 +215,12 @@ namespace Transports
         // Send to ardupilot
         try
         {
-          trace(DTR("Sending FDM to ardupilot.."));
+          trace("Sending FDM to ardupilot.");
           m_udp_sock_out->write((unsigned char*)&fdm, sizeof(SITL_fdm), m_sitl_addr.c_str(), m_sitl_port_out);
         }
         catch (...)
         {
-          inf(DTR("Unable to send fdm"));
+          inf(DTR("Unable to send FDM."));
         }
       }
 
@@ -255,7 +237,7 @@ namespace Transports
         if (resolveEntity(msg->getSourceEntity()) == "RcViaArdupilot")
         {
 
-          spew(DTR("Got PWM packet of ID: %d"), msg->id);
+          spew("Got PWM packet of ID: %d", msg->id);
 
           // Only accept 8 values. Ids are 1-indexed.
           if (msg->id > 8)
@@ -267,7 +249,7 @@ namespace Transports
           // Not optimal way of doing things though..
           if (msg->id == 8)
           {
-            spew(DTR("Sending raw pwm data.."));
+            spew("Sending raw pwm data.");
             try
             {
               m_udp_sock_out->write((unsigned char*)&m_pwm, sizeof(SITL_pwm_packet), m_sitl_addr.c_str(), m_sitl_port_out);
@@ -280,7 +262,7 @@ namespace Transports
         }
         else
         {
-          trace(DTR("Got PWM message from unknown entity."));
+          trace("Got PWM message from unknown entity.");
         }
       }
 
@@ -290,12 +272,6 @@ namespace Transports
         Memory::clear(m_udp_sock_rc_in);
         m_udp_sock_rc_in = new UDPSocket;
         m_udp_sock_rc_in->bind(m_sitl_port_in, "");
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
       }
 
       //! Release resources.
@@ -347,7 +323,7 @@ namespace Transports
             while (poll(0.0))
             {
 
-              spew(DTR("Got data from ardpilot SIL."));
+              spew("Got data from ardpilot SIL.");
               int n = receiveData(m_buf, sizeof(m_buf));
 
               if (n == sizeof(SITL_rc_control))

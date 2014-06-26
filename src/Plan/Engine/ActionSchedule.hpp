@@ -106,7 +106,7 @@ namespace Plan
       //! @param[in] cinfo map of components info
       ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
                      const std::vector<IMC::PlanManeuver*>& nodes,
-                     const Duration::ManeuverDuration& durations,
+                     const Plans::Duration& durations,
                      const Duration::ManeuverDuration::const_iterator last_dur,
                      const std::map<std::string, IMC::EntityInfo>& cinfo):
         m_task(task),

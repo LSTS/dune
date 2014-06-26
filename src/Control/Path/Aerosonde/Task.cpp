@@ -59,6 +59,8 @@ namespace Control
         //! Maximum bank angle - Defined by aircaft structural, navigation
         //! or control constraints
         double max_bank;
+        //!
+        bool use_controller;
       };
 
       struct Task: public DUNE::Control::PathController
@@ -86,6 +88,12 @@ namespace Control
           .defaultValue("30")
           .description("Limit for absolute value of output bank angle reference");
 
+          param("Use controller", m_args.use_controller)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
+          .defaultValue("false")
+          .description("Use this controller for maneuver");
+
           bind<IMC::IndicatedSpeed>(this);
        }
 
@@ -104,6 +112,8 @@ namespace Control
         void
         onPathActivation(void)
         {
+          if (!m_args.use_controller)
+            return;
           // Activate bank (roll) controller.
           enableControlLoops(IMC::CL_ROLL);
         }
@@ -119,6 +129,9 @@ namespace Control
         {
           // Unused state
           (void) state;
+
+          if (!m_args.use_controller)
+            return;
 
           //! Check if airspeed is larger than zero
           if (m_airspeed <= 0)

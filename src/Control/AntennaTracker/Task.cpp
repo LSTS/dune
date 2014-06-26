@@ -30,7 +30,7 @@
 
 namespace Control
 {
-  namespace PTU2
+  namespace AntennaTracker
   {
     using DUNE_NAMESPACES;
 
@@ -47,11 +47,11 @@ namespace Control
     {
       unsigned m_trg_id;
       Arguments m_args;
-      fp64_t m_lat, m_lon, m_hei, m_yaw;
+      double m_lat, m_lon;
+      float m_hei, m_yaw;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
-     
       {
         param("Target Vehicle", m_args.trg_name)
         .description("Vehicle to be tracked")
@@ -79,10 +79,6 @@ namespace Control
         bind<IMC::GpsFix>(this);
       }
 
-      ~Task(void)
-      {
-      }
-
       void
       onUpdateParameters(void)
       {
@@ -97,12 +93,18 @@ namespace Control
       void
       consume(const IMC::EulerAngles* euangles)
       {
+        if (getSystemId() != euangles->getSource())
+          return;
+
         m_yaw = Angles::radians(m_args.yaw_offset) + euangles->psi;
       }
 
       void
       consume(const IMC::GpsFix* gpsfix)
       {
+        if (getSystemId() != gpsfix->getSource())
+          return;
+
         m_lat = gpsfix->lat;
         m_lon = gpsfix->lon;
         m_hei = gpsfix->height;
@@ -116,38 +118,25 @@ namespace Control
 
         if (m_trg_id != estate->getSource())
           return;
-       
-        //! Distance between ptu and ref
-        fp32_t ptu_x, ptu_y, ptu_z;
-        WGS84::displacement(estate->lat, estate->lon, estate->height,
-                            m_lat, m_lon, m_hei, 
-                            &ptu_x, &ptu_y, &ptu_z);
 
-        //! Distance between target and ptu
-        fp32_t delta_x, delta_y, delta_z;
+        double azimuth, elevation;
+        double trg_lat = estate->lat;
+        double trg_lon = estate->lon;
+        float trg_hei = estate->height;
 
-        delta_x = estate->x - ptu_x;
-        delta_y = estate->y - ptu_y;
-        delta_z = estate->z - ptu_z;
+        WGS84::displace(estate->x, estate->y, estate->z, &trg_lat, &trg_lon, &trg_hei);
 
-        fp32_t dist_hor = std::sqrt(delta_x * delta_x + delta_y * delta_y);
+        WGS84::getAzimuthAndElevation(m_lat, m_lon, m_hei, trg_lat, trg_lon, trg_hei, &azimuth, &elevation);
 
-        spew("distance to target: %f", dist_hor);
+        IMC::SetControlSurfaceDeflection scsd;
 
-        float pan = std::atan2(delta_y, delta_x) + Math::c_pi + m_yaw;
+        scsd.id = 'p';
+        scsd.angle = azimuth - m_yaw;
+        dispatch(scsd);
 
-        float tilt = - (Math::c_half_pi - std::atan(-delta_z / dist_hor));
-
-        debug("%f, %f", Angles::degrees(pan), Angles::degrees(tilt));
-
-        IMC::RemoteActions ra;
-
-        std::stringstream ss;
-
-        ss << "Pan=" << pan << ";Tilt=" << tilt << ";";
-        spew("%s", ss.str().c_str());
-        ra.actions = ss.str();
-        dispatch(ra);
+        scsd.id = 't';
+        scsd.angle = elevation - Math::c_half_pi;
+        dispatch(scsd);
       }
 
       void

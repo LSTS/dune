@@ -48,6 +48,8 @@ namespace Autonomy
       //! Threshold (meters) after which the vehicle is considered to have arrived
       //! at destination in the vertical plane.
       uint16_t altitude_interval;
+      //! Name of TREX CPU power channel.
+      std::string aux_pwr_channel;
     };
 
     struct Task : public DUNE::Tasks::Task
@@ -66,6 +68,8 @@ namespace Autonomy
       IMC::VehicleState m_last_vehicle_state;
       //! Last plan control state
       IMC::PlanControlState m_last_plan_state;
+      //! Message to turn on/off TREX's CPU
+      IMC::PowerChannelControl m_pwr_cpu;
       //! Stores state of attached TREX
       bool m_trex_connected;
       //! Stores if TREX is currently controlling the vehicle
@@ -91,6 +95,10 @@ namespace Autonomy
         .defaultValue("2")
         .minimumValue("0");
 
+        param("CPU Power Channel", m_args.aux_pwr_channel)
+        .defaultValue("None")
+        .description("Name of the auxiliary CPU's power channel");
+
         // Register consumers.
         bind<IMC::Announce>(this);
         bind<IMC::Heartbeat>(this);
@@ -98,6 +106,7 @@ namespace Autonomy
         bind<IMC::PlanControlState>(this);
         bind<IMC::TrexOperation>(this);
         bind<IMC::Abort>(this);
+        bind<IMC::PlanControl>(this);
 
       }
 
@@ -166,6 +175,10 @@ namespace Autonomy
       consume(const IMC::VehicleState * msg)
       {
         m_last_vehicle_state = *msg;
+
+        // if the vehicle is in error mode, T-REX payload becomes inactive
+        if (msg->op_mode == IMC::VehicleState::VS_ERROR)
+        	requestDeactivation();
       }
 
       void
@@ -188,6 +201,22 @@ namespace Autonomy
       }
 
       void
+      consume(const IMC::PlanControl* msg)
+      {
+        if (msg->type == PlanControl::PC_REQUEST && msg->op == PlanControl::PC_STOP)
+        {
+          m_trex_control = m_last_plan_state.plan_id == "trex_plan"
+                      && m_last_plan_state.state == IMC::PlanControlState::PCS_EXECUTING;
+
+          if (m_trex_control)
+          {
+            requestDeactivation();
+            war(DTR("Stop TREX detected. Disabling TREX control..."));
+          }
+        }
+      }
+
+      void
       consume(const IMC::TrexOperation * msg)
       {
         switch (msg->op)
@@ -202,11 +231,8 @@ namespace Autonomy
             break;
           case IMC::TrexOperation::OP_REQUEST_PLAN:
           {
-            int i = system("services trex restart 1,2 > /dev/null &");
-            if (i == 0)
-              inf(DTR("T-REX has been started."));
-            else
-              war(DTR("Could not start T-REX: %d."), i);
+            war(DTR("Restarting auxiliary CPU..."));
+            resetAuxCpu();
             break;
           }
           case IMC::TrexOperation::OP_REPORT_PLAN:
@@ -225,18 +251,28 @@ namespace Autonomy
       }
 
       void
+      onUpdateParameters(void)
+      {
+        m_pwr_cpu.name = m_args.aux_pwr_channel;
+      }
+
+      void
       onActivation(void)
       {
         inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
-
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+        if (m_args.aux_pwr_channel != "None")
+        {
+        	m_pwr_cpu.op = PowerChannelControl::PCC_OP_TURN_ON;
+        	dispatch(m_pwr_cpu);
+        }
       }
 
       void
       onDeactivation(void)
       {
         inf("%s", DTR(Status::getString(Status::CODE_IDLE)));
-
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
@@ -253,7 +289,7 @@ namespace Autonomy
         man.control_ent = 255;
         man.control_src = m_args.trex_id;
         man.altitude_interval = m_args.altitude_interval;
-        man.timeout = m_args.connection_timeout;
+        man.timeout = m_args.connection_timeout + 10;
 
         IMC::PlanSpecification spec;
 
@@ -275,6 +311,7 @@ namespace Autonomy
       void
       stopExecution(void)
       {
+        inf("Stopping TREX plan...");
         IMC::PlanControl stopPlan;
         stopPlan.type = IMC::PlanControl::PC_REQUEST;
         stopPlan.op = IMC::PlanControl::PC_STOP;
@@ -288,18 +325,37 @@ namespace Autonomy
         m_trex_control = m_last_plan_state.plan_id == "trex_plan"
             && m_last_plan_state.state == IMC::PlanControlState::PCS_EXECUTING;
 
-        if (m_trex_control)
+        if (m_trex_control && !isActive())
         {
-          if (!isActive())
             stopExecution();
         }
-        else
+        else if (isActive() && m_trex_connected
+            && m_last_vehicle_state.op_mode == IMC::VehicleState::VS_SERVICE)
         {
-          if (isActive() && m_trex_connected
-              && m_last_vehicle_state.op_mode == IMC::VehicleState::VS_SERVICE)
-
             startExecution();
         }
+        else if (isActive() && !m_trex_connected && m_args.aux_pwr_channel != "None")
+        {
+          m_pwr_cpu.op = PowerChannelControl::PCC_OP_TURN_ON;
+          m_pwr_cpu.name = m_args.aux_pwr_channel;
+          dispatch(m_pwr_cpu);
+        }
+      }
+
+      void
+      resetAuxCpu(void) {
+        if (m_args.aux_pwr_channel == "None")
+        {
+          return;
+        }
+    	  // Send turn off signal
+    	  m_pwr_cpu.op = PowerChannelControl::PCC_OP_TURN_OFF;
+    	  dispatch(m_pwr_cpu);
+
+    	  // Schedule turn on signal for current time + 2 seconds
+    	  m_pwr_cpu.op = PowerChannelControl::PCC_OP_SCHED_ON;
+    	  m_pwr_cpu.sched_time = Clock::getSinceEpoch() + 2;
+    	  dispatch(m_pwr_cpu);
       }
 
       void
@@ -315,7 +371,7 @@ namespace Autonomy
           oldMap.insert(lastHeartBeat.begin(), lastHeartBeat.end());
           double now = Clock::get();
 
-          if (now - lastTest > 10.0)
+          if (now - lastTest > m_args.connection_timeout)
           {
             for (it = oldMap.begin(); it != oldMap.end(); it++)
             {
@@ -341,9 +397,7 @@ namespace Autonomy
           }
 
           dispatch(links);
-
           checkState();
-
           Delay::wait(1.0);
         }
       }

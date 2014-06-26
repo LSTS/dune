@@ -279,24 +279,15 @@ namespace Sensors
         m_uart->flush();
 
         {
-          NMEAWriter stn("CCCFG");
-          stn << "SRC" << m_address;
-          std::string cmd = stn.sentence();
-          sendCommand(cmd);
+          configureModem("CCCFG", "SRC", m_address);
         }
 
         {
-          NMEAWriter stn("CCCFG");
-          stn << "XST" << 0;
-          std::string cmd = stn.sentence();
-          sendCommand(cmd);
+          configureModem("CCCFG", "XST", 0);
         }
 
         {
-          NMEAWriter stn("CCCFG");
-          stn << "CTO" << 10;
-          std::string cmd = stn.sentence();
-          sendCommand(cmd);
+          configureModem("CCCFG", "CTO", 10);
         }
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -714,12 +705,13 @@ namespace Sensors
           if (ranges[i] == 0)
             continue;
 
-          IMC::LblRangeAcceptance lbl;
-          lbl.setSource(m_mimap[src]);
-          lbl.id = i;
-          lbl.range = ranges[i];
-          lbl.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
-          dispatch(lbl);
+          IMC::LblRangeAcceptance lmsg;
+          lmsg.setSource(m_mimap[src]);
+          lmsg.id = i;
+          lmsg.range = ranges[i];
+          lmsg.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
+          dispatch(lmsg);
+          inf("%s %u: %f", DTR("range to"), lmsg.id, lmsg.range);
         }
 
         IMC::EstimatedState es;
@@ -736,14 +728,18 @@ namespace Sensors
         pcs.plan_progress = (float)progress;
         dispatch(pcs);
 
+        // Inform if progress is valid.
+        if (pcs.plan_progress >= 0)
+          inf(DTR("plan progress is %f"), pcs.plan_progress);
+
         IMC::FuelLevel fuel;
         fuel.setSource(m_mimap[src]);
         fuel.value = (float)fuel_level;
         fuel.confidence = (float)fuel_conf;
         dispatch(fuel);
 
-        spew("lat %f | lon %f | depth %f | alt %f | yaw %f", es.lat, es.lon, es.depth, es.alt, es.psi);
-        spew("fuel %f | conf %f | plan progress %f", fuel.value, fuel.confidence, pcs.plan_progress);
+        debug("lat %f | lon %f | depth %f | alt %f | yaw %f", es.lat, es.lon, es.depth, es.alt, es.psi);
+        debug("fuel %f | conf %f | plan progress %f", fuel.value, fuel.confidence, pcs.plan_progress);
       }
 
       void
@@ -801,6 +797,22 @@ namespace Sensors
           dispatch(m_acop_out);
           resetOp();
         }
+      }
+
+      //! Configure a modem parameter.
+      //! @param[in] code NMEA code of the message to be transmitted.
+      //! @param[in] parameter modem parameter to be configured.
+      //! @param[in] value new configuration value.
+      void
+      configureModem(const std::string& code, const std::string& parameter, const unsigned value)
+      {
+        // Create NMEA message.
+        NMEAWriter stn(code);
+        stn << parameter << value;
+        std::string cmd = stn.sentence();
+
+        // Send to Modem.
+        sendCommand(cmd);
       }
 
       void

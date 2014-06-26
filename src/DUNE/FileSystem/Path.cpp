@@ -201,7 +201,7 @@ namespace DUNE
       return bfr;
 
       // Linux implementation.
-#elif defined(DUNE_OS_LINUX)
+#elif defined(DUNE_OS_LINUX) || defined(DUNE_OS_ANDROID)
       if (readlink("/proc/self/exe", bfr, PATH_MAX) == -1)
         return "";
 
@@ -249,7 +249,7 @@ namespace DUNE
     Path::storageCapacity(const Path& path)
     {
       // Darwin with 64 bit inodes.
-#if defined(_DARWIN_FEATURE_64_BIT_INODE)
+#if defined(_DARWIN_FEATURE_64_BIT_INODE) || defined(DUNE_OS_ANDROID)
       struct statfs bfr;
       if (statfs(path.c_str(), &bfr) == -1)
         throw System::Error(errno, "retrieving storage capacity", path.str());
@@ -303,7 +303,7 @@ namespace DUNE
     uint64_t
     Path::storageAvailable(const Path& path)
     {
-#if defined(_DARWIN_FEATURE_64_BIT_INODE)
+#if defined(_DARWIN_FEATURE_64_BIT_INODE) || defined(DUNE_OS_ANDROID)
       struct statfs bfr;
       if (statfs(path.c_str(), &bfr) == -1)
         throw System::Error(errno, "retrieving available storage", path.str());
@@ -517,6 +517,9 @@ namespace DUNE
         return;
 
       if (errno == EEXIST)
+        return;
+
+      if (isDirectory())
         return;
 
       throw System::Error(errno, "creating path", str());

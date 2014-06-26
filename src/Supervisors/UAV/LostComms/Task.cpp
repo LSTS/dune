@@ -116,11 +116,9 @@ namespace Supervisors
         {
           double now = Clock::get();
 
-          if(m_in_lc)
-            return;
-
           if ((now > (m_heartbeat_last + m_args.mission_tout) && m_in_mission) ||
-              now > (m_heartbeat_last + m_args.heartbeat_tout))
+              (now > (m_heartbeat_last + 2 * m_args.mission_tout) && m_in_lc) ||
+               now > (m_heartbeat_last + m_args.heartbeat_tout))
           {
             IMC::PlanControl p_control;
             p_control.plan_id = m_args.plan;

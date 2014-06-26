@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2014-02-18 15:16+0000\n"
+        "POT-Creation-Date: 2014-05-12 15:12+0100\n"
         "PO-Revision-Date: 2013-10-24 10:59-0000\n"
         "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
         "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -51,7 +51,7 @@ msgstr  "tamanho de mensagem inválido %u"
 msgid   "invalid z unit: %s"
 msgstr  "unidade de Z inválida: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Parsers/Config.hpp:127
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Parsers/Config.hpp:136
 #, c-format
 msgid   "unable to convert the value under section '%s' option '%s' to the required type and no valid default was given"
 msgstr  "incapaz de converter o valor da secção '%s' opção '%s' para o tipo exigido e não foi fornecido valor por defeito"
@@ -123,6 +123,10 @@ msgstr  "já tinha sido reservado um id único para a etiqueta de entidade: "
 msgid   "piecewise linear interpolation needs equally sized vectors"
 msgstr  "interpolação linear por partes precisa de vetores de tamanho igual"
 
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/System/Error.hpp:174
+msgid   "retrieving system error messages is not supported"
+msgstr  "receber mensagens de erro de sistema não suportado"
+
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/Exceptions.hpp:49
 #, c-format
 msgid   "unable to resolve hostname '%s'"
@@ -144,8 +148,16 @@ msgid   "host unreachable '%s'"
 msgstr  "anfitrião inacessível '%s'"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/Exceptions.hpp:93
+msgid   "connection error"
+msgstr  "erro de ligação"
+
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/Exceptions.hpp:101
 msgid   "connection closed"
 msgstr  "ligação terminada"
+
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Network/Exceptions.hpp:109
+msgid   "connection timeout"
+msgstr  "atingido tempo limite da ligação"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/KalmanFilter.hpp:117
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Navigation/KalmanFilter.hpp:182
@@ -304,23 +316,23 @@ msgstr  "falha ao obter distância"
 msgid   "character value '%d' is not a valid nibble"
 msgstr  "valor de caráter '%d' não é um \"nibble\" válido"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:134
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:136
 msgid   ": no maneuvers"
 msgstr  ": sem manobras"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:152
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:154
 msgid   ": actual maneuver not specified"
 msgstr  ": manobra atual não especificada"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:160
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:162
 msgid   ": maneuver is not supported"
 msgstr  ": manobra não suportada"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:190
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:192
 msgid   ": maneuver has no incoming transition and it's not the initial maneuver"
 msgstr  ": a manobra não sucede a nenhuma transição e não é a manobra inicial"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:203
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:205
 msgid   ": invalid start maneuver"
 msgstr  ": manobra de início inválida"
 
@@ -354,176 +366,84 @@ msgstr  "FIM %s ---"
 msgid   "failed to execute power down command"
 msgstr  "Falha ao executar comando de desligar"
 
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:112
-msgid   "Enabling rates."
-msgstr  "Habilitada Taxa de Rotação"
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:126
-msgid   "Disabled all streams."
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:138
-#, fuzzy
-msgid   "Enabled RC output."
-msgstr  "Permitir Relatórios"
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:176
+#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:158
 #, c-format
 msgid   "Error opening serial device: %s"
-msgstr  ""
+msgstr  "Erro a abrir porta série: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:180
-msgid   "Error opening serial device. "
-msgstr  ""
+#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:162
+msgid   "Error opening serial device."
+msgstr  "Erro a abrir porta série."
 
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:214
-msgid   "Sending something"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:231
+#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:207
 #, c-format
-msgid   "%s"
-msgstr  ""
+msgid   "Error receiving on serial device: %s"
+msgstr  "Erro a receber da porta série: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:232
-#: /home/josebraga/workspace/dune/trunk/src/Transports/ArdupilotSITL/Task.cpp:319
-#: /home/josebraga/workspace/dune/trunk/src/Transports/FlightGear/Task.cpp:212
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1046
+#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:208
+#: /home/josebraga/workspace/dune/trunk/src/Transports/ArdupilotSITL/Task.cpp:295
+#: /home/josebraga/workspace/dune/trunk/src/Transports/FlightGear/Task.cpp:194
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1097
 msgid   "Connection lost, retrying..."
 msgstr  "Ligação perdida, a tentar novamente..."
 
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:253
-#, fuzzy
-msgid   "Receive error"
-msgstr  "erro ao receber"
+#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:355
+msgid   "Timeout of previous packet received!"
+msgstr  "Atingido tempo limite desde a chegada do último pacote!"
 
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:265
-#, fuzzy, c-format
-msgid   "failed at state IDLE, count: %d"
-msgstr  "falhou a entrar em modo contínuo"
+#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:362
+msgid   "Got packet, all is ok."
+msgstr  "Pacote recebido, tudo OK."
 
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:268
-#, fuzzy
-msgid   "failed at state GOT_STX"
-msgstr  "falha ao definir tempo"
+#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:370
+msgid   "Still not got any RC packets, retrying rate setup..."
+msgstr  "Ainda não foi recebido nenhum pacote RC, a tentar reconfigurar taxa de envio..."
 
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:271
-msgid   "failed at state GOT_LENGTH"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:274
-#, fuzzy
-msgid   "failed at state GOT_SYSID"
-msgstr  "falha ao definir tempo"
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:277
-#, fuzzy
-msgid   "failed at state GOT_COMPID"
-msgstr  "erro ao atualizar a EEPROM"
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:280
-#, fuzzy
-msgid   "failed at state GOT_MSGID"
-msgstr  "erro ao atualizar a EEPROM"
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:283
-#, fuzzy
-msgid   "failed at state GOT_PAYLOAD"
-msgstr  "erro ao atualizar a EEPROM"
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:286
-#, fuzzy
-msgid   "failed at state GOT_CRC1"
-msgstr  "falha ao definir tempo"
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:289
-msgid   "failed OTHER"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:299
-#, c-format
-msgid   "UNDEF: %u"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:302
-msgid   "HEARTBEAT"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:305
-msgid   "STATUSTEXT"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:309
-msgid   "RC_CHANNELS_RAW"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:325
-#, fuzzy, c-format
-msgid   "Status: %s"
-msgstr  "entidade %s: %s"
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:337
-#, c-format
-msgid   "RC raw %d %d %d %d %d %d: "
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:379
-msgid   "Timeout of prev. packet received!"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:386
-msgid   "Got packet, all is ok. "
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/UserInterfaces/RCViaArdupilot/Task.cpp:394
-msgid   "Still not got any RC packets, retrying rate setup.."
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:137
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:135
 #, c-format
 msgid   "lat lon = 0 ? %f"
 msgstr  "lat lon = 0 ? %f"
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:161
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:159
 #: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:226
 #, c-format
 msgid   "ignored reference from non-authorized source: %d"
 msgstr  "ignorada referência de origem não autorizada: %d"
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:170
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:168
 #: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:235
 #, c-format
 msgid   "ignored reference from non-authorized entity: %d"
 msgstr  "ignorada referência de entidade não autorizada: %d"
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:395
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:406
 #, c-format
 msgid   "Loitering around (%f, %f, %f, %f)."
 msgstr  "em loiter em torno de (%f, %f, %f, %f)."
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:400
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:411
 #, c-format
 msgid   "Going towards (%f, %f, %f)."
 msgstr  "a ir em direção (%f, %f, %f)."
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:404
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:415
 msgid   "Waiting for next reference."
 msgstr  "à espera da primeira referência"
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:407
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:418
 msgid   "Bad connection, too long since last EstimatedState was received."
 msgstr  "Ligação fraca, demasiado tempo desde último EstimatedState recebido."
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:410
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:421
 #, c-format
 msgid   "Unexpected state %#x"
 msgstr  "Estado não esperado %#x"
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:425
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:436
 msgid   "LOITER, XY and Z NEAR"
 msgstr  "LOITER, XY e perto Z"
 
-#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:434
+#: /home/josebraga/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:445
 msgid   "GOTO, FAR"
 msgstr  "GOTO, LONGE"
 
@@ -619,7 +539,7 @@ msgstr  "Plano de Vôo a ser executado pelos veículos em formação"
 msgid   "vertical control type not supported"
 msgstr  "tipo de controlo vertical não suportado"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Utils/String.cpp:284
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Utils/String.cpp:287
 msgid   "invalid escape sequence"
 msgstr  "sequência de escape invalida"
 
@@ -751,31 +671,31 @@ msgstr  "ativação não está em progresso"
 msgid   "deactivation is not in progress"
 msgstr  "desativação não está em progresso"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:460
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:468
 msgid   "restarting"
 msgstr  "a reiniciar"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:461
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:469
 #, c-format
 msgid   "restarting in %u seconds due to error: %s"
 msgstr  "a reiniciar em %u segundos devido a erro: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:473
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:481
 #, c-format
 msgid   "failed to update parameters: %s"
 msgstr  "falha ao atualizar parâmetros: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:481
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:489
 #, c-format
 msgid   "task died with uncaught exception: %s: restarting"
 msgstr  "a tarefa morreu com uma exceção não apanhada: %s, a reiniciar"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:565
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:573
 #, c-format
 msgid   "updating entity parameters: %s: '%s'"
 msgstr  "a atualizar parâmetros de entidade: %s: '%s'"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:761
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:769
 #, c-format
 msgid   "invalid parameter '%s'"
 msgstr  "parâmetro inválido '%s'"
@@ -1231,19 +1151,19 @@ msgid   "fragment: %s"
 msgstr  "fragment: %s"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:40
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:328
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:333
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/OS4000/Task.cpp:147
 #: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:960
 msgid   "initializing"
 msgstr  "a iniciar"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:41
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:332
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:337
 msgid   "idle"
 msgstr  "em espera"
 
 #: /home/josebraga/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:42
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:334
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:339
 msgid   "active"
 msgstr  "ativo"
 
@@ -1347,15 +1267,11 @@ msgstr  "ativo (sem dados do meio: controlo do utilizador"
 msgid   "idle (no medium data: need user input)"
 msgstr  "em espera (sem dados do meio: controlo do utilizador"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:90
-msgid   "unable to unlock"
-msgstr  "impossível desbloquear"
-
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:160
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:138
 msgid   "unsupported vertical reference"
 msgstr  "referência vertical não suportada"
 
-#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:166
+#: /home/josebraga/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:144
 msgid   "no valid value for altitude has been received yet,maneuver will not proceed"
 msgstr  "não foi recebido valor de altitude válido, a manobra não irá prosseguir"
 
@@ -1402,93 +1318,93 @@ msgstr  "poucos pontos de trajetória"
 msgid   "water column is not deep enough"
 msgstr  "coluna de água não é suficientemente profunda"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:43
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:46
 msgid   "SERVICE"
 msgstr  "SERVIÇO"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:43
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:46
 msgid   "CALIBRATION"
 msgstr  "CALIBRAÇÂO"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:44
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:47
 msgid   "ERROR"
 msgstr  "ERRO"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:44
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:47
 msgid   "MANEUVERING"
 msgstr  "MANOBRAR"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:45
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:48
 msgid   "EXTERNAL CONTROL"
 msgstr  "CONTROLO EXTERNO"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:45
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:48
 msgid   "BOOT"
 msgstr  "ARRANQUE"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:185
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:208
 #, c-format
 msgid   "now in '%s' mode"
 msgstr  "agora no modo '%s'"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:219
-#: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:383
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:242
+#: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:365
 msgid   "got abort request"
 msgstr  "recebido pedido abort"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:331
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:354
 msgid   "entity errors cleared"
 msgstr  "erros de entidades limpos"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:335
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:358
 #, c-format
 msgid   "vehicle errors: %s"
 msgstr  "erros do veículo: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:398
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:423
 msgid   " maneuver error: "
 msgstr  " erro de manobra:"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:458
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:485
 msgid   "cannot calibrate: vehicle is in external mode"
 msgstr  "não é possível calibrar: veículo está em modo de controlo externo"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:472
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:499
 #, c-format
 msgid   "calibrating vehicle for %u seconds"
 msgstr  "a calibrar veículo por %u segundos"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:481
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:508
 msgid   "cannot stop calibration: vehicle is not calibrating"
 msgstr  "não é possível parar calibração: veículo não está a calibrar"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:485
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:512
 msgid   "stopped calibration"
 msgstr  "calibração parada"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:501
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:528
 msgid   "no maneuver specified"
 msgstr  "nenhuma manobra foi especificada"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:509
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:536
 msgid   " maneuver cannot be started in current mode"
 msgstr  " manobras não podem ser iniciadas no modo atual"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:518
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:545
 msgid   " maneuver started"
 msgstr  " manobra começada"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:549
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:576
 #: /home/josebraga/workspace/dune/trunk/src/Plan/DB/Task.cpp:630
 #: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:882
 msgid   "OK"
 msgstr  "OK"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:580
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:607
 msgid   "this vehicle does not allow for external control, disabling loops"
 msgstr  "este veículo não permite controlo externo, a desabilitar malhas de controlo"
 
-#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:596
+#: /home/josebraga/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:625
 msgid   "maneuver request timeout"
 msgstr  "pedido de manobra excedeu o tempo limite"
 
@@ -1541,7 +1457,7 @@ msgid   "failed to set property"
 msgstr  "falha ao configurar propriedade"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/GSM/Task.cpp:198
-#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Task.cpp:213
+#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Task.cpp:201
 msgid   "input error"
 msgstr  "erro de entrada"
 
@@ -1604,8 +1520,8 @@ msgid   "Source Level"
 msgstr  "Nível da Fonte"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:206
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:505
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:581
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:485
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:578
 msgid   "dynamic sound speed corrections are disabled"
 msgstr  "correção dinâmica de velocidade do som está desativada"
 
@@ -1655,18 +1571,18 @@ msgid   "Enable Reports"
 msgstr  "Permitir Relatórios"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:107
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:288
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:289
 msgid   "Reports Periodicity"
 msgstr  "Periodicidade de Relatórios"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:247
-#: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:258
+#: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:229
+#: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:240
 #, c-format
 msgid   "unknown system name: %s"
 msgstr  "nome de sistema desconhecido: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:480
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:605
+#: /home/josebraga/workspace/dune/trunk/src/Transports/UAN/Task.cpp:462
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:585
 msgid   "start plan detected"
 msgstr  "detetado arranque de plano"
 
@@ -1675,11 +1591,11 @@ msgstr  "detetado arranque de plano"
 msgid   "slot second %u"
 msgstr  "slot segundo %u"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:191
+#: /home/josebraga/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:161
 msgid   "messages doesn't fit in one frame"
 msgstr  "mensagens não cabem num única trama"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:220
+#: /home/josebraga/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:190
 #, c-format
 msgid   "deserialization error: %s"
 msgstr  "erro de desserialização: %s"
@@ -1692,36 +1608,13 @@ msgstr  "livro de registo limpo"
 msgid   "invalid or unsupported command"
 msgstr  "parâmetro inválido ou não suportado"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/ArdupilotSITL/Task.cpp:236
-msgid   "Sending FDM to ardupilot.."
-msgstr  ""
+#: /home/josebraga/workspace/dune/trunk/src/Transports/ArdupilotSITL/Task.cpp:223
+msgid   "Unable to send FDM."
+msgstr  "Incapaz de receber dados FDM."
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/ArdupilotSITL/Task.cpp:241
-#, fuzzy
-msgid   "Unable to send fdm"
-msgstr  "incapaz de receber dados"
-
-#: /home/josebraga/workspace/dune/trunk/src/Transports/ArdupilotSITL/Task.cpp:258
-#, c-format
-msgid   "Got PWM packet of ID: %d"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/Transports/ArdupilotSITL/Task.cpp:270
-msgid   "Sending raw pwm data.."
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/Transports/ArdupilotSITL/Task.cpp:277
-#, fuzzy
+#: /home/josebraga/workspace/dune/trunk/src/Transports/ArdupilotSITL/Task.cpp:259
 msgid   "Unable to send."
-msgstr  "incapaz de receber dados"
-
-#: /home/josebraga/workspace/dune/trunk/src/Transports/ArdupilotSITL/Task.cpp:283
-msgid   "Got PWM message from unknown entity."
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/Transports/ArdupilotSITL/Task.cpp:350
-msgid   "Got data from ardpilot SIL."
-msgstr  ""
+msgstr  "Incapaz de enviar dados"
 
 #: /home/josebraga/workspace/dune/trunk/src/Transports/Serial/Task.cpp:109
 #: /home/josebraga/workspace/dune/trunk/src/Simulators/UnderwaterAcoustics/Task.cpp:388
@@ -1733,16 +1626,16 @@ msgstr  "erro de leitura: %s"
 msgid   "unknown read error"
 msgstr  "erro de leitura desconhecido"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/FlightGear/Task.cpp:171
+#: /home/josebraga/workspace/dune/trunk/src/Transports/FlightGear/Task.cpp:153
 msgid   "UDP sockets for FlightGear setup."
 msgstr  "Sockets UDP para setup FlightGear."
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/FlightGear/Task.cpp:179
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:394
+#: /home/josebraga/workspace/dune/trunk/src/Transports/FlightGear/Task.cpp:161
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:391
 msgid   "Connection failed, retrying..."
 msgstr  "Ligação falhou, a tentar novamente..."
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/FlightGear/Task.cpp:309
+#: /home/josebraga/workspace/dune/trunk/src/Transports/FlightGear/Task.cpp:291
 #, c-format
 msgid   "Failed to send: %s"
 msgstr  "Falha ao enviar: %s"
@@ -1811,7 +1704,7 @@ msgstr  "outro nó neste computador está a anunciar o nosso nome '%s'"
 msgid   "another node on our network is advertising our node name '%s'"
 msgstr  "outro nó na nossa rede está a anunciar o nosso nome '%s'"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/Iridium/Task.cpp:163
+#: /home/josebraga/workspace/dune/trunk/src/Transports/Iridium/Task.cpp:204
 msgid   "error while parsing Iridium message"
 msgstr  "erro ao interpretar mensagem Iridium"
 
@@ -1819,17 +1712,17 @@ msgstr  "erro ao interpretar mensagem Iridium"
 msgid   "task is shutting down"
 msgstr  "a tarefa está a desligar"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Task.cpp:289
+#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Task.cpp:277
 #, c-format
 msgid   "failed with error %u"
 msgstr  "falha com erro %u"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Task.cpp:309
+#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Task.cpp:297
 #, c-format
 msgid   "invalid SBD message of size %u"
 msgstr  "tamanho de mensagem SBD inválido %u"
 
-#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Task.cpp:327
+#: /home/josebraga/workspace/dune/trunk/src/Transports/IridiumSBD/Task.cpp:315
 #, c-format
 msgid   "transmission failed: %s"
 msgstr  "transmissão falhada: %s"
@@ -1841,11 +1734,12 @@ msgstr  "Sucesso"
 #: /home/josebraga/workspace/dune/trunk/src/Simulators/UAV/Task.cpp:362
 #, c-format
 msgid   "UAV simulation type: %s"
-msgstr  "Tipo simulação UAV: %s"
+msgstr  "Tipo de simulação UAV: %s"
 
 #: /home/josebraga/workspace/dune/trunk/src/Simulators/Leaks/Task.cpp:125
 #: /home/josebraga/workspace/dune/trunk/src/Simulators/Leaks/Task.cpp:140
-#: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:560
+#: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:572
+#: /home/josebraga/workspace/dune/trunk/src/Actuators/SCRT/Task.cpp:368
 msgid   "leak detected"
 msgstr  "fuga detetada"
 
@@ -1877,63 +1771,46 @@ msgstr  "colisão detetada"
 msgid   "unexpected simulation message: %s"
 msgstr  "mensagem de simulação inesperada: %s"
 
-#: /home/josebraga/workspace/dune/trunk/src/Simulators/Multicopter/Task.cpp:228
+#: /home/josebraga/workspace/dune/trunk/src/Simulators/Multicopter/Task.cpp:210
 msgid   "Multicopter simulation started."
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/Simulators/Multicopter/Task.cpp:332
-msgid   "Got a SetPWM message from another source. Ignoring."
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/Simulators/Multicopter/Task.cpp:359
-msgid   "On ground!"
-msgstr  ""
-
-#: /home/josebraga/workspace/dune/trunk/src/Simulators/Multicopter/Task.cpp:374
-#, fuzzy
-msgid   "Bounce!"
-msgstr  "Anunciador"
+msgstr  "Simulação multicopter iniciada."
 
 #: /home/josebraga/workspace/dune/trunk/src/Simulators/LBL/Task.cpp:225
 #, c-format
 msgid   "maximum amount of beacons is %u"
 msgstr  "número máximo de transdutores é %u"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:389
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:386
 msgid   "Ardupilot interface initialized"
 msgstr  "Interface Ardupilot inicializada"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:537
-msgid   "Loiter"
-msgstr  "Loiter"
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:498
+msgid   "ArduPilot is in Manual mode, saving control loops."
+msgstr  "ArduPilot em modo manual, a gravar malhas de controlo."
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:647
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:645
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:251
 msgid   "speed control is NOT active"
 msgstr  "controlo de velocidade NÃO está ativo"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:669
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:667
 msgid   "ArduPilot is in Manual mode, saving desired path."
 msgstr  "ArduPilot em modo manual, a salvar caminho desejado."
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:676
-msgid   "ArduPilot in Auto mode but still in ground, performing takeoff first."
-msgstr  "ArduPilot em modo automático mas em Terra, a fazer takeoff primeiro"
-
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:683
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:673
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:370
 msgid   "path control is NOT active"
 msgstr  "controlo de caminho NÃO está ativo"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:895
-msgid   "Waypoint packet sent to Ardupilot"
-msgstr  "Pacote waypoints enviado para o Ardupilot"
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:680
+msgid   "ArduPilot in Auto mode but still in ground, performing takeoff first."
+msgstr  "ArduPilot em modo automático mas em Terra, a fazer takeoff primeiro"
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1457
+#: /home/josebraga/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1523
 msgid   "Controlling an unknown vehicle type."
 msgstr  "A controlar um tipo de veículo desconhecido."
 
-#: /home/josebraga/workspace/dune/trunk/src/Control/PTU2/Task.cpp:90
+#: /home/josebraga/workspace/dune/trunk/src/Control/AntennaTracker/Task.cpp:86
 #: /home/josebraga/workspace/dune/trunk/src/Control/PTU/Task.cpp:113
 #, c-format
 msgid   "Target name is %s, with ID %d"
@@ -2008,7 +1885,7 @@ msgstr  "Habilitar controlador de roll"
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex881A/Task.cpp:450
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:517
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:474
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:390
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:387
 #: /home/josebraga/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:212
 msgid   "failed to contact device"
 msgstr  "falha ao contactar dispositivo"
@@ -2023,12 +1900,12 @@ msgid   "strobe mode set to: %s"
 msgstr  "modo de strobe configurado para: %s"
 
 #: /home/josebraga/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:259
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:13
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:15
 msgid   "Camera"
 msgstr  "Câmara"
 
 #: /home/josebraga/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:313
-#: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:492
+#: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:497
 #: /home/josebraga/workspace/dune/trunk/src/Power/MCBv2/Task.cpp:634
 #: /home/josebraga/workspace/dune/trunk/src/Power/PSIMAR/Task.cpp:86
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:181
@@ -2042,20 +1919,30 @@ msgid   "firmware version %u.%u.%u"
 msgstr  "versão de \"firmware\": %u.%u.%u"
 
 #: /home/josebraga/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:461
-#: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:527
+#: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:532
 #: /home/josebraga/workspace/dune/trunk/src/Power/MCBv2/Task.cpp:584
 msgid   "device reported"
 msgstr  "o dispositivo reportou"
 
-#: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:383
+#: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:388
 msgid   "failed to update EEPROM"
 msgstr  "erro ao atualizar a EEPROM"
 
-#: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:452
+#: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:457
 msgid   "power down sequence aborted"
 msgstr  "sequencia de desligar interrompida"
 
-#: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:567
+#: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:562
+#: /home/josebraga/workspace/dune/trunk/src/Monitors/Medium/Task.cpp:192
+msgid   "water"
+msgstr  "água"
+
+#: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:562
+msgid   "air"
+msgstr  "ar"
+
+#: /home/josebraga/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:579
+#: /home/josebraga/workspace/dune/trunk/src/Actuators/SCRT/Task.cpp:375
 msgid   "no leak"
 msgstr  "sem fugas"
 
@@ -2073,6 +1960,7 @@ msgstr  "o dispositivo está a usar \"firmware\" instável"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/MiniSVS/Task.cpp:127
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:155
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/AIS/Task.cpp:211
 msgid   "I/O error"
 msgstr  "erro de entrada/saída"
 
@@ -2225,7 +2113,7 @@ msgid   "invalid PSATHPR sentence"
 msgstr  "frase PSATHPR é inválida"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:253
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:206
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:203
 msgid   "Use Device at Surface"
 msgstr  "Usar Dispositivo à Superfície"
 
@@ -2299,89 +2187,79 @@ msgstr  "a reiniciar para mudar porta TCP de comandos"
 msgid   "restarting to change TCP data port"
 msgstr  "a reiniciar para mudar porta TCP de dados"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:282
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:283
 msgid   "Acoustic Feedback"
 msgstr  "Feedback Acústico"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:283
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:284
 msgid   "None, Ranges, Full"
 msgstr  "Nenhum, Distâncias, Completo"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:330
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:335
 msgid   "waiting beacons configuration"
 msgstr  "à espera da configuração de transdutores"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:336
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:341
 msgid   "serial port communication error, modem not responding"
 msgstr  "erro comunicação de porta série, modem não responde"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:338
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:343
 msgid   "failed to configure modem, possible serial port communication error"
 msgstr  "falhou configuração de modem, possível erro de comunicação porta série"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:340
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:345
 msgid   "failed to set modem address"
 msgstr  "falhou ao definir endereço modem"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:383
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:388
 #, c-format
 msgid   "modem address for agent '%s' is invalid"
 msgstr  "endereço modem para agente '%s' é inválido"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:586
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:566
 msgid   "invalid change plan message"
 msgstr  "mensagem para mudar plano inválida"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:613
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:591
 msgid   "plan acknowledged"
 msgstr  "plano reconhecido"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:615
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:593
 msgid   "failed to acknowledge plan start"
 msgstr  "falha ao reconhecer aborte"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:629
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:607
 msgid   "received system restart request"
 msgstr  "recebido pedido para reiniciar sistema"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:637
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:613
 msgid   "restart request acknowledged"
 msgstr  "reconhecido o pedido de reinicialização"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:639
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:615
 msgid   "failed to acknowledge restart request"
 msgstr  "falhou reconhecimento ao pedido para reiniciar"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:646
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:622
 msgid   "acoustic abort detected"
 msgstr  "detetado aborte acústico"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:657
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:632
 msgid   "abort acknowledged"
 msgstr  "aborte recebido"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:661
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:634
 msgid   "failed to acknowledge abort"
 msgstr  "falhou ao reconhecer aborte"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:697
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:668
 #, c-format
 msgid   "discarded invalid range %0.2f"
 msgstr  "descartado range inválido %0.2f"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:779
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:747
 msgid   "failed to ping beacons, modem seems busy"
 msgstr  "falha ao pingar transdutores, o modem parece ocupado"
-
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:970
-#, c-format
-msgid   "reported range to %s = %u m"
-msgstr  "reportado distância para %s = %u m"
-
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:974
-#, c-format
-msgid   "failed to report range to %s"
-msgstr  "falha ao reportar distância para %s"
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/SW100/Task.cpp:182
 #, c-format
@@ -2423,7 +2301,7 @@ msgid   "unable to read prompt"
 msgstr  "incapaz de ler o \"prompt\""
 
 #: /home/josebraga/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:288
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:590
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:587
 msgid   "failed to start data sampling"
 msgstr  "falha ao começar amostragem de dados"
 
@@ -2511,62 +2389,68 @@ msgstr  "a reiniciar para mudar o GPIO de deteção de transdutor"
 msgid   "unable to use GPIO %d for transducer detection"
 msgstr  "incapaz de utilizar o GPIO %d para deteção de transdutor"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:338
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:329
 msgid   "transducer not connected"
 msgstr  "transdutor não está ligado"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:615
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:606
 msgid   "plan started"
 msgstr  "plano iniciado"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:634
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:625
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:714
 msgid   "range to"
 msgstr  "distância para"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:271
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:733
+#, c-format
+msgid   "plan progress is %f"
+msgstr  "progresso do plano é %f"
+
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:279
 msgid   "echo handling enabled, but got no RS-485 echo"
 msgstr  "habilitado processamento de eco, mas não foi recebido eco RS-485"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:281
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:288
 msgid   "received RS-485 echo doesn't match"
 msgstr  "eco RS-485 recebido não coincide"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:318
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:323
 msgid   "invalid CRC"
 msgstr  "CRC inválido"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:320
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:325
 msgid   "exceeded maximum consecutive CRC error count"
 msgstr  "excedido número máximo de erros CRC consecutivos"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:398
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:403
 msgid   "device not initialized, initializing"
 msgstr  "dispositivo não está inicializado, a inicializar"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:404
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:409
 #, c-format
 msgid   "got exception %d for command %d"
 msgstr  "lançada exceção %d para o comando %d"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:415
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:420
 #, c-format
 msgid   "initialized device: class=%d.%d firmware=%d"
 msgstr  "dispositivo inicializado: class=%d.%d firmware=%d"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:421
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:426
 #, c-format
 msgid   "device serial number=%u"
 msgstr  "número de série do dispositivo=%u"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:448
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:455
 msgid   "unable to initialize the device"
 msgstr  "falha ao inicializar dispositivo"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:456
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:463
 msgid   "unable to retrieve the serial number"
 msgstr  "falha ao obter o número de série"
 
-#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:474
+#: /home/josebraga/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:481
 msgid   "unable to zero the device"
 msgstr  "incapaz de zerar o dispositivo"
 
@@ -2597,29 +2481,28 @@ msgstr  "falha do IMU: %04X"
 msgid   "data might be unreliable: %04X"
 msgstr  "os dados podem não ser confiáveis: %04X"
 
-#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:124
+#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:133
 #, c-format
 msgid   "TREX disconnected for more than %d seconds"
 msgstr  "TREX desligado durante mais do que %d segundos"
 
-#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:186
+#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:195
 msgid   "Abort detected. Disabling TREX control..."
 msgstr  "Detetado aborte. A desabilitar controlo T-REX."
 
-#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:207
-msgid   "T-REX has been started."
-msgstr  "T-REX foi iniciado."
+#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:210
+msgid   "Stop TREX detected. Disabling TREX control..."
+msgstr  "Detetada paragem no TREX. A desabilitar controlo T-REX."
 
-#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:209
-#, c-format
-msgid   "Could not start T-REX: %d."
-msgstr  "Incapaz de iniciar T-REX: %d."
+#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:230
+msgid   "Restarting auxiliary CPU..."
+msgstr  "A reiniciar CPU auxiliar..."
 
-#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:216
+#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:238
 msgid   "T-REX has been stopped."
 msgstr  "T-REX interrompido."
 
-#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:218
+#: /home/josebraga/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:240
 #, c-format
 msgid   "Could not stop T-REX: %d."
 msgstr  "Incapaz de parar T-REX: %d."
@@ -2752,24 +2635,24 @@ msgstr  "possível falha no servo%d, %s"
 msgid   "potential fault in servo#%d, current consumption above %f"
 msgstr  "possível falha no servo#%d, consumo de corrente acima de %f"
 
-#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:77
+#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:80
 msgid   "SMS Recipient Number"
 msgstr  "Número de Destino de Mensagens SMS"
 
-#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:80
+#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:83
 msgid   "Phone number of the SMS recipient"
 msgstr  "Número de telefone do destinatário de mensagens SMS"
 
-#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:87
+#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:90
 msgid   "Lost Communications Timeout"
 msgstr  "Timeout de Perda de Comunicações"
 
-#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:150
+#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:198
 #, c-format
 msgid   "sending SMS %s | %u"
 msgstr  "a enviar SMS %s | %u"
 
-#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:160
+#: /home/josebraga/workspace/dune/trunk/src/Monitors/Emergency/Task.cpp:212
 msgid   "unknown location"
 msgstr  "localização desconhecida"
 
@@ -2942,12 +2825,7 @@ msgstr  "Incapaz de gerar plano usando modelo %s"
 msgid   "Plan generated automatically"
 msgstr  "Plano gerado automaticamente"
 
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Generator/Task.cpp:311
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Generator/Task.cpp:348
-msgid   "Plan generated automatically by DUNE."
-msgstr  "Plano gerado automaticamente pelo DUNE."
-
-#: /home/josebraga/workspace/dune/trunk/src/Plan/Generator/Task.cpp:350
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Generator/Task.cpp:349
 #, c-format
 msgid   "generating plan from '%s' template..."
 msgstr  "a gerar plano a partir do modelo '%s'..."
@@ -3103,6 +2981,10 @@ msgstr  "pedido -- %s (%s)"
 msgid   "engine not ready: entity state not normal"
 msgstr  "motor não está pronto: estado de entidade não normal"
 
+#: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:556
+msgid   "plan control operation not supported"
+msgstr  "operação de controlo de plano não suportada"
+
 #: /home/josebraga/workspace/dune/trunk/src/Plan/Engine/Task.cpp:572
 msgid   "cannot load plan now"
 msgstr  "incapaz de carregador plano agora"
@@ -3192,7 +3074,7 @@ msgstr  "execução abortada"
 
 #: /home/josebraga/workspace/dune/trunk/src/Main/Launcher.cpp:171
 msgid   "daemon crashed with signal "
-msgstr  "processo de arranque caiu com sinal"
+msgstr  "processo de arranque caiu com sinal "
 
 #: /home/josebraga/workspace/dune/trunk/private/src/Piccolo/Task.cpp:142
 #, c-format
@@ -3300,48 +3182,48 @@ msgstr  "falha ao especificar orientação da face do transdutor"
 msgid   "failed to set sampling frequency"
 msgstr  "falha ao configurar taxa de amostragem"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:212
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:209
 msgid   "Control Override"
 msgstr  "Controlo sobre Dispositivo"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:213
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:210
 msgid   "None, Deactivate, Activate"
 msgstr  "Nenhum, Desativar, Ativar"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:418
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:430
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:415
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:427
 msgid   "failed to request current output formats"
 msgstr  "falha ao pedir formatos de saída atuais"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:443
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:440
 msgid   "failed to configure output format"
 msgstr  "falha ao configurar formate de saída"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:603
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:600
 msgid   "failed to stop data sampling"
 msgstr  "falha ao parar amostragem de dados"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:610
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:607
 msgid   "failed to enable user-defined sound speed"
 msgstr  "falhou ao habilitar a velocidade do som definida por utilizador"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:617
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:614
 msgid   "failed to set initial sound speed"
 msgstr  "falha ao especificar velocidade do som inicial"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:699
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:696
 msgid   "invalid sample"
 msgstr  "amostra inválida"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:828
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:825
 msgid   "sensor data timeout"
 msgstr  "excedido o tempo limite dos dados do sensor"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:834
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:831
 msgid   "too many samples below threshold"
 msgstr  "demasiadas amostras abaixo do limite"
 
-#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:859
+#: /home/josebraga/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:856
 msgid   "rebooting"
 msgstr  "a reiniciar"
 
@@ -3374,476 +3256,566 @@ msgid   "AHRS"
 msgstr  "AHRS"
 
 #: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:2
+msgid   "AIS Receiver"
+msgstr  "Recetor AIS"
+
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:3
 msgid   "AUV Simulator"
 msgstr  "Simulador de AUV"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:3
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:4
 msgid   "Acoustic Modem"
 msgstr  "Modem Acústico"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:4
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:5
 msgid   "Allocator"
 msgstr  "Alocador"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:5
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:6
 msgid   "Announce"
 msgstr  "Anunciador"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:6
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:7
+msgid   "Antenna Tracker"
+msgstr  "Tracker da Antena"
+
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:8
 msgid   "Arduino Serial"
 msgstr  "Arduino Série"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:7
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:9
 msgid   "Attitude"
 msgstr  "Atitude"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:8
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:10
 msgid   "Autopilot"
 msgstr  "Piloto Automático"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:9
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:11
 msgid   "Autopilot Telemetry"
 msgstr  "Telemetria do Piloto Automático"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:10
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:12
 msgid   "CPU"
 msgstr  "CPU"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:11
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:13
 msgid   "CTD"
 msgstr  "CTD"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:12
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:14
 msgid   "Cache"
 msgstr  "Acumulador"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:14
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:16
 msgid   "Camera Module"
 msgstr  "Modulo da Câmara"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:15
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:17
 msgid   "Clock"
 msgstr  "Relógio"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:16
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:18
 msgid   "Collisions"
 msgstr  "Colisões"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:17
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:19
 msgid   "Communications Relay Maneuver"
 msgstr  "Manobra de Retransmissão de Comunicações"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:18
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:20
 msgid   "Compass Calibration Maneuver"
 msgstr  "Manobra de Calibração de Bússola"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:19
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:21
 msgid   "Cover Area"
 msgstr  "Cobre Área"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:20
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:22
 msgid   "DVL"
 msgstr  "DVL"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:21
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:23
 msgid   "Depth Control"
 msgstr  "Controlo de Profundidade"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:22
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:24
 msgid   "Depth Sensor"
 msgstr  "Sensor de Profundidade"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:23
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:25
 msgid   "Discovery"
 msgstr  "Descoberta"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:24
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:26
 msgid   "Diving"
 msgstr  "Mergulho"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:25
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:27
 msgid   "Docking"
 msgstr  "Docagem"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:26
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:28
 msgid   "Echo Sounder"
 msgstr  "Ecobatímetro"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:27
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:29
 msgid   "Elevator Maneuver"
 msgstr  "Manobra de Elevador"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:28
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:30
 msgid   "Emergency Monitor"
 msgstr  "Monitor de Emergências"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:29
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:31
 msgid   "Entity Monitor"
 msgstr  "Monitor de Entidades"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:30
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:32
 msgid   "Environment"
 msgstr  "Ambiente"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:31
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:33
 msgid   "FTP Server"
 msgstr  "Servidor FTP"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:32
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:34
 msgid   "Follow Path Maneuver"
 msgstr  "Manobra de Seguimento de Caminho"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:33
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:35
 msgid   "Follow Reference"
 msgstr  "Seguimento de Referência"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:34
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:36
 msgid   "Follow Reference Maneuver"
 msgstr  "Manobra Seguir Referência"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:35
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:37
 msgid   "Follow System Maneuver"
 msgstr  "Manobra de Seguimento de Sistema"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:36
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:38
 msgid   "Frame Grabber"
 msgstr  "Capturador de Tramas"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:37
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:39
 msgid   "Fuel"
 msgstr  "Energia"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:38
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:40
 msgid   "GPS"
 msgstr  "GPS"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:39
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:41
 msgid   "GSM"
 msgstr  "GSM"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:40
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:42
 msgid   "Gimbal"
 msgstr  "Gimbal"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:41
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:43
 msgid   "Goto Maneuver"
 msgstr  "Manobra Goto"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:42
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:44
 msgid   "HTTP Server"
 msgstr  "Servidor HTTP"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:43
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:45
 msgid   "Heave Motor"
 msgstr  "Motor de Elevação"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:44
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:46
 msgid   "Height Control"
 msgstr  "Controlo de Altitude"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:45
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:47
 msgid   "Horizontal Plane Control"
 msgstr  "Controlo no Plano Horizontal"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:46
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:48
 msgid   "IMU"
 msgstr  "IMU"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:47
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:49
 msgid   "IMU Power Supply"
 msgstr  "Fonte de Energia do IMU"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:48
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:50
 msgid   "INOV TCP"
 msgstr  "INOV TCP"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:49
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:51
 msgid   "INOV Target"
 msgstr  "INOV Target"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:50
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:52
 msgid   "Idle Maneuver"
 msgstr  "Manobra de Espera"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:51
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:53
 msgid   "Iridium Modem"
 msgstr  "Modem Iridium"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:52
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:54
 msgid   "Iridium Transport"
 msgstr  "Transporte Iridium"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:53
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:55
 msgid   "LBL"
 msgstr  "LBL"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:54
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:56
 msgid   "LBL Estimator"
 msgstr  "Estimador LBL"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:55
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:57
 msgid   "LCD"
 msgstr  "LCD"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:56
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:58
 msgid   "LED Driver"
 msgstr  "Controlador de LEDs"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:57
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:59
 msgid   "LEDs"
 msgstr  "LEDs"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:58
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:60
 msgid   "Leak Simulator"
 msgstr  "Simulador de Fugas"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:59
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:61
 msgid   "Log Book"
 msgstr  "Diário de Bordo"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:60
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:62
 msgid   "Logger"
 msgstr  "Registador"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:61
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:63
 msgid   "Loiter Maneuver"
 msgstr  "Manobra Loiter"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:62
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:64
 msgid   "Lost Comms"
 msgstr  "Perda de Comunicação"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:63
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:65
 msgid   "Lost Comms Monitor"
 msgstr  "Monitor de Perda de Comunicação"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:64
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:66
 msgid   "MCD4R"
 msgstr  "MCD4R"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:65
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:67
 msgid   "Mainboard"
 msgstr  "Placa Principal"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:66
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:68
 msgid   "Medium"
 msgstr  "Meio"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:67
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:69
+msgid   "Message Fragments"
+msgstr  "Fragmentos de Mensagens"
+
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:70
 msgid   "Motor"
 msgstr  "Motor"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:68
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:71
 msgid   "Motor Controller"
 msgstr  "Controlador de Motor"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:69
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:72
 msgid   "Multibeam"
 msgstr  "Sonar Multifeixe"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:70
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:73
 msgid   "Multicopter simple simulation"
-msgstr  ""
+msgstr  "Simulação multicopter simples"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:71
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:74
 msgid   "Navigation"
 msgstr  "Navegação"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:72
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:75
 msgid   "Noptilus"
 msgstr  "Noptilus"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:73
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:76
 msgid   "Operational Limits"
 msgstr  "Limites de Operação"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:74
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:77
+msgid   "PTUD48"
+msgstr  "PTUD48"
+
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:78
 msgid   "Panel"
 msgstr  "Painel"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:75
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:79
 msgid   "Panel Buttons"
 msgstr  "Botões do Painel"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:76
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:80
 msgid   "Path Control"
 msgstr  "Controlo de Caminho"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:77
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:81
 msgid   "Pencil Beam"
 msgstr  "Feixe de Distância"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:78
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:82
 msgid   "Photo Trigger"
 msgstr  "Gatilho da Câmara"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:79
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:83
 msgid   "Piccolo Communications"
 msgstr  "Comunicações Piccolo"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:80
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:84
 msgid   "Plan Database"
 msgstr  "Base de Dados de Planos"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:81
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:85
 msgid   "Plan Engine"
 msgstr  "Motor de Planos"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:82
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:86
 msgid   "Plan Generator"
 msgstr  "Gerador de Planos"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:83
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:87
 msgid   "Pop Up Maneuver"
 msgstr  "Manobra de \"Pop Up\""
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:84
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:88
 msgid   "Port Bow Motor"
 msgstr  "Motor de Proa a Bombordo"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:85
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:89
 msgid   "Port Stern Motor"
 msgstr  "Motor de Popa a Bombordo"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:86
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:90
 msgid   "Power Source"
 msgstr  "Fornecedor de Energia"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:87
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:91
 msgid   "Power Supervisor"
 msgstr  "Supervisor de Energia"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:88
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:92
 msgid   "Power Supply"
 msgstr  "Fonte de Energia"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:89
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:93
 msgid   "RcViaArdupilot"
 msgstr  "Piloto Automático"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:90
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:94
 msgid   "Remote Control"
 msgstr  "Controlo Remoto"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:91
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:95
 msgid   "Remote Operation"
 msgstr  "Operação Remota"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:92
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:96
 msgid   "Rows Maneuver"
 msgstr  "Manobra de Linhas"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:93
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:97
 msgid   "Service Announcer"
 msgstr  "Serviço de Anúncio"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:94
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:98
 msgid   "Service Discovery"
 msgstr  "Descoberta de Serviços"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:95
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:99
 msgid   "Servo Controller"
 msgstr  "Controlador de Servos"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:96
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:100
 msgid   "Servo Monitor"
 msgstr  "Monitor de Servos"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:97
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:101
 msgid   "Servos"
 msgstr  "Servos"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:98
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:102
 msgid   "Sidescan"
 msgstr  "Sonar de Varrimento Lateral"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:99
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:103
 msgid   "Simulation Engine"
 msgstr  "Motor de Simulação"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:100
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:104
 msgid   "Sitl Layer"
-msgstr  ""
+msgstr  "Camada SITL (Software-in-the-Loop)"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:101
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:105
 msgid   "Sound Speed Sensor"
 msgstr  "Sensor de Velocidade do Som"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:102
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:106
 msgid   "Speed Control"
 msgstr  "Controlo de Velocidade"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:103
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:107
 msgid   "Starboard Bow Motor"
 msgstr  "Motor de Proa a Estibordo"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:104
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:108
 msgid   "Starboard Stern Motor"
 msgstr  "Motor de Popa a Estibordo"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:105
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:109
 msgid   "Station Keeping Maneuver"
 msgstr  "Manobra de Posição Estacionária"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:106
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:110
 msgid   "TCP Server"
 msgstr  "Servidor TCP"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:107
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:111
 msgid   "TCP to Camera CPU"
 msgstr  "TCP para Computador da Câmara"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:108
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:112
 msgid   "TCP to Master"
 msgstr  "TCP para o Mestre"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:109
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:113
 msgid   "TREX"
 msgstr  "TREX"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:110
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:114
 msgid   "Teleoperation Maneuver"
 msgstr  "Manobra de Teleoperação"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:111
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:115
 msgid   "Text Message Parser"
 msgstr  "Processador de Mensagens de Texto"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:112
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:116
 msgid   "Thermal Zone"
 msgstr  "Zona Térmica"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:113
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:117
 msgid   "UAN"
 msgstr  "UAN"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:114
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:118
+msgid   "UAV Simulator"
+msgstr  "Simulador de AUV"
+
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:119
 msgid   "UDP"
 msgstr  "UDP"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:115
-msgid   "UDP to PTU"
-msgstr  "UDP para PTU"
-
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:116
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:120
 msgid   "UDP to TREX"
 msgstr  "UDP para TREX"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:117
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:121
 msgid   "USBL"
 msgstr  "USBL"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:118
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:122
 msgid   "Underwater Acoustics Simulator"
 msgstr  "Simulador de Comunicação Acústica Subaquática"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:119
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:123
 msgid   "Vehicle Supervisor"
 msgstr  "Supervisor de Veículo"
 
-#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:120
-msgid   "Visualisor"
-msgstr  ""
+#: /home/josebraga/workspace/dune/trunk/i18n/entity_labels.txt:124
+msgid   "Visualizer"
+msgstr  "Visualizador"
+
+#~ msgid        "UDP to PTU"
+#~ msgstr       "UDP para PTU"
+
+#~ msgid        "unable to unlock"
+#~ msgstr       "impossível desbloquear"
+
+#~ msgid        "T-REX has been started."
+#~ msgstr       "T-REX foi iniciado."
+
+#~ msgid        "Could not start T-REX: %d."
+#~ msgstr       "Incapaz de iniciar T-REX: %d."
+
+#~ msgid        "Loiter"
+#~ msgstr       "Loiter"
+
+#~ msgid        "reported range to %s = %u m"
+#~ msgstr       "reportado distância para %s = %u m"
+
+#~ msgid        "failed to report range to %s"
+#~ msgstr       "falha ao reportar distância para %s"
+
+#~ msgid        "Enabling rates."
+#~ msgstr       "Habilitada Taxa de Rotação"
+
+#, fuzzy
+#~ msgid        "Enabled RC output."
+#~ msgstr       "Permitir Relatórios"
+
+#, fuzzy
+#~ msgid        "failed at state IDLE, count: %d"
+#~ msgstr       "falhou a entrar em modo contínuo"
+
+#, fuzzy
+#~ msgid        "failed at state GOT_STX"
+#~ msgstr       "falha ao definir tempo"
+
+#, fuzzy
+#~ msgid        "failed at state GOT_SYSID"
+#~ msgstr       "falha ao definir tempo"
+
+#, fuzzy
+#~ msgid        "failed at state GOT_COMPID"
+#~ msgstr       "erro ao atualizar a EEPROM"
+
+#, fuzzy
+#~ msgid        "failed at state GOT_MSGID"
+#~ msgstr       "erro ao atualizar a EEPROM"
+
+#, fuzzy
+#~ msgid        "failed at state GOT_PAYLOAD"
+#~ msgstr       "erro ao atualizar a EEPROM"
+
+#, fuzzy
+#~ msgid        "failed at state GOT_CRC1"
+#~ msgstr       "falha ao definir tempo"
+
+#, fuzzy
+#~ msgid        "Status: %s"
+#~ msgstr       "entidade %s: %s"
+
+#, fuzzy
+#~ msgid        "Unable to send fdm"
+#~ msgstr       "incapaz de receber dados"
+
+#, fuzzy
+#~ msgid        "Bounce!"
+#~ msgstr       "Anunciador"
+
+#~ msgid        "Waypoint packet sent to Ardupilot"
+#~ msgstr       "Pacote waypoints enviado para o Ardupilot"
+
+#~ msgid        "Plan generated automatically by DUNE."
+#~ msgstr       "Plano gerado automaticamente pelo DUNE."
 
 #~ msgid        "None, Disable, Enable"
 #~ msgstr       "Nenhum, Desligar, Ligar"
@@ -3991,9 +3963,6 @@ msgstr  ""
 
 #~ msgid        "will now loiter for %d seconds"
 #~ msgstr       "loiter durante %d segundos"
-
-#~ msgid        "in progress"
-#~ msgstr       "em progresso"
 
 #~ msgid        "database connection closed"
 #~ msgstr       "fechada ligação à base de dados"

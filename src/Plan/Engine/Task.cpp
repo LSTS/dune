@@ -549,11 +549,11 @@ namespace Plan
           case IMC::PlanControl::PC_STOP:
             stopPlan();
             break;
-          case IMC::PlanControl::PC_LOAD:
-            loadPlan(pc->plan_id, pc->arg.isNull() ? 0 : pc->arg.get());
-            break;
           case IMC::PlanControl::PC_GET:
             getPlan();
+            break;
+          default:
+            onFailure(DTR("plan control operation not supported"));
             break;
         }
       }
@@ -575,11 +575,10 @@ namespace Plan
 
         if (arg)
         {
-          const IMC::PlanSpecification* given_plan;
-          given_plan = dynamic_cast<const IMC::PlanSpecification*>(arg);
-
-          if (given_plan)
+          if (arg->getId() == DUNE_IMC_PLANSPECIFICATION)
           {
+            const IMC::PlanSpecification* given_plan = static_cast<const IMC::PlanSpecification*>(arg);
+
             m_spec = *given_plan;
             m_spec.setSourceEntity(getEntityId());
           }
@@ -587,7 +586,7 @@ namespace Plan
           {
             // Quick plan
             IMC::PlanManeuver spec_man;
-            const IMC::Maneuver* man = dynamic_cast<const IMC::Maneuver*>(arg);
+            const IMC::Maneuver* man = static_cast<const IMC::Maneuver*>(arg);
 
             if (man)
             {
@@ -1027,7 +1026,7 @@ namespace Plan
         m_vc.command = command;
 
         if (arg)
-          m_vc.maneuver.set(*dynamic_cast<const IMC::Maneuver*>(arg));
+          m_vc.maneuver.set(*static_cast<const IMC::Maneuver*>(arg));
 
         if (command == IMC::VehicleCommand::VC_START_CALIBRATION)
         {

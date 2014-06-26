@@ -31,12 +31,33 @@ macro(dune_probe_os)
   message(STATUS "***      Probing Operating System      ***")
   message(STATUS "******************************************")
 
+  # Android
+  if(NOT DUNE_OS_NAME)
+    check_symbol_exists(__ANDROID__ stdio.h OS_ANDROID)
+    if(OS_ANDROID)
+      check_cxx_source_compiles("
+#include <android/api-level.h>
+#if __ANDROID_API__ >= 14
+#  error Android API 14 or greater
+#endif
+" OS_ANDROID_API_OLD)
+      if(OS_ANDROID_API_OLD)
+        message(ABORT "Android API 14 or greater is required")
+      endif()
+
+      set(DUNE_OS_NAME "Android")
+      set(DUNE_OS_CANONICAL "android")
+      set(DUNE_OS_ANDROID 1)
+      set(DUNE_OS_POSIX 1)
+    endif(OS_ANDROID)
+  endif(NOT DUNE_OS_NAME)
+
   # GNU/Linux 2.4
   if(NOT DUNE_OS_NAME)
     check_cxx_source_compiles("
 #include <linux/version.h>
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 5, 0)
-#  error Linux 2.5 or superior
+#  error Linux 2.5 or greater
 #endif
 " OS_LINUX24)
     if(OS_LINUX24)

@@ -194,8 +194,11 @@ namespace Sensors
 
         try
         {
-          if (!openSocket())
-            m_handle = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          if (openSocket())
+            return;
+
+          m_handle = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          m_handle->flush();
         }
         catch (...)
         {
@@ -234,8 +237,7 @@ namespace Sensors
       void
       consume(const IMC::VehicleMedium* msg)
       {
-        if ((msg->medium == IMC::VehicleMedium::VM_WATER ||
-             msg->medium == IMC::VehicleMedium::VM_GROUND) && !m_calibrated)
+        if ((msg->medium != IMC::VehicleMedium::VM_UNDERWATER) && !m_calibrated)
         {
           zero();
           m_calibrated = true;
@@ -254,8 +256,13 @@ namespace Sensors
         if (!m_args.uart_echo)
           return true;
 
-        while (Poll::poll(*m_handle, 0.1))
+        Time::Counter<double> tout(1.0);
+
+        while (!tout.overflow())
         {
+          if (!Poll::poll(*m_handle, tout.getRemaining()))
+            continue;
+
           i -= m_handle->read(rxbfr + (len - i), i);
           if (i == 0)
           {
@@ -267,8 +274,9 @@ namespace Sensors
         if (aborted)
         {
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+
           // No echo received, so something is seriously broken
-          throw std::runtime_error(DTR("echo handling enabled, but got no RS-485 echo"));
+          throw RestartNeeded(DTR("echo handling enabled, but got no RS-485 echo"), 5);
         }
 
         // Check for collisions here.
@@ -276,15 +284,12 @@ namespace Sensors
         {
           if (rxbfr[i] != bfr[i])
           {
-            // Echo doesn't match, bus error (may be fatal)
-            if (getEntityState() != IMC::EntityState::ESTA_ERROR)
-              err(DTR("received RS-485 echo doesn't match"));
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            m_handle->flush();
+            war(DTR("received RS-485 echo doesn't match"));
             return false;
           }
         }
 
-        // All ok.
         return true;
       }
 
@@ -317,7 +322,7 @@ namespace Sensors
           {
             err(DTR("invalid CRC"));
             if (++m_crc_err_count > c_max_crc_err)
-              throw std::runtime_error(DTR("exceeded maximum consecutive CRC error count"));;
+              throw RestartNeeded(DTR("exceeded maximum consecutive CRC error count"), 5);
             return false;
           }
         }
@@ -434,6 +439,8 @@ namespace Sensors
       void
       initialize(void)
       {
+        m_handle->flush();
+
         uint16_t crc = 0;
         uint8_t bfr[10] =
         {
@@ -445,7 +452,7 @@ namespace Sensors
         ByteCopy::toBE(crc, &bfr[2]);
         write(bfr, 4);
         if (!read())
-          throw std::runtime_error(DTR("unable to initialize the device"));
+          throw RestartNeeded(DTR("unable to initialize the device"), 5);
 
         bfr[0] = m_args.address;
         bfr[1] = CMD_READ_SERIAL_NUMBER;
@@ -453,7 +460,7 @@ namespace Sensors
         ByteCopy::toBE(crc, &bfr[2]);
         write(bfr, 4);
         if (!read())
-          throw std::runtime_error(DTR("unable to retrieve the serial number"));
+          throw RestartNeeded(DTR("unable to retrieve the serial number"), 5);
       }
 
       void
@@ -471,7 +478,7 @@ namespace Sensors
         ByteCopy::toBE(crc, &bfr[3]);
         write(bfr, 5);
         if (!read())
-          throw std::runtime_error(DTR("unable to zero the device"));
+          throw RestartNeeded(DTR("unable to zero the device"), 5);
       }
 
       void
@@ -503,10 +510,7 @@ namespace Sensors
         if (m_error_wdog.overflow())
         {
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-
-          // The device seems to be dead.. attempt to restart
-          onResourceAcquisition();
-          onResourceInitialization();
+          throw RestartNeeded(DTR(Status::getString(Status::CODE_COM_ERROR)), 5);
         }
       }
     };

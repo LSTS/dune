@@ -62,6 +62,8 @@ namespace Monitors
       float airspeed_threshold;
       //! Vehicle type.
       std::string vtype;
+      //! Medium Sensor Entity Label.
+      std::string label_medium;
     };
 
     //! %Medium task.
@@ -83,11 +85,18 @@ namespace Monitors
       float m_depth;
       //! Vehicle airspeed.
       float m_airspeed;
+      //! Vehicle groundspeed.
+      float m_gndspeed;
+      //! Medium Sensor entity id.
+      unsigned m_medium_eid;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Periodic(name, ctx)
+        Tasks::Periodic(name, ctx),
+        m_depth(0),
+        m_airspeed(0),
+        m_gndspeed(0)
       {
         param("Initialization Time", m_args.init_time)
         .units(Units::Second)
@@ -131,6 +140,10 @@ namespace Monitors
         .values("UUV, ASV, UAV")
         .description("Type of vehicle");
 
+        param("Entity Label - Medium Sensor", m_args.label_medium)
+        .defaultValue("Medium Sensor")
+        .description("Entity label of 'EntityState' Medium Sensor messages");
+
         // GPS validity.
         m_gps_val_bits = (IMC::GpsFix::GFV_VALID_DATE |
                           IMC::GpsFix::GFV_VALID_TIME |
@@ -143,11 +156,25 @@ namespace Monitors
         m_water_presence.setTop(c_water_presence);
 
         // Register consumers.
+        bind<IMC::EntityState>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::Salinity>(this);
         bind<IMC::SoundSpeed>(this);
         bind<IMC::IndicatedSpeed>(this);
+      }
+
+      void
+      onEntityResolution(void)
+      {
+        try
+        {
+          m_medium_eid = resolveEntity(m_args.label_medium);
+        }
+        catch (...)
+        {
+          m_medium_eid = UINT_MAX;
+        }
       }
 
       void
@@ -157,6 +184,18 @@ namespace Monitors
         m_init.setTop(m_args.init_time);
         m_water_status.setTop(m_args.water_timeout);
         m_gps_status.setTop(m_args.gps_timeout);
+      }
+
+      void
+      consume(const IMC::EntityState* msg)
+      {
+        if (msg->getSourceEntity() != m_medium_eid)
+          return;
+
+        m_water_presence.reset();
+
+        if (msg->description == DTR("water"))
+          m_water_status.reset();
       }
 
       void
@@ -182,6 +221,8 @@ namespace Monitors
       {
         if ((msg->validity & m_gps_val_bits) == m_gps_val_bits)
           m_gps_status.reset();
+
+        m_gndspeed = msg->sog;
       }
 
       void
@@ -255,8 +296,11 @@ namespace Monitors
       void
       check(void)
       {
-	checkWaterPresence();
-	checkDepth();
+        if (m_args.vtype == "UAV")
+          return;
+
+        checkWaterPresence();
+        checkDepth();
       }
 
       void
@@ -269,9 +313,8 @@ namespace Monitors
         // Initialization.
         if (getEntityState() == IMC::EntityState::ESTA_BOOT)
         {
-          if (m_args.vtype != "UAV")
-	    check();
-          else
+          check();
+          if (m_args.vtype == "UAV")
           {
             if (m_airspeed < m_args.airspeed_threshold)
               m_vm.medium = IMC::VehicleMedium::VM_GROUND;
@@ -299,13 +342,12 @@ namespace Monitors
         switch (m_vm.medium)
         {
           case (IMC::VehicleMedium::VM_AIR):
-            if (m_airspeed < m_args.airspeed_threshold)
+            if (m_airspeed < m_args.airspeed_threshold && m_gndspeed < 2)
               m_vm.medium = IMC::VehicleMedium::VM_GROUND;
             break;
 
           case (IMC::VehicleMedium::VM_GROUND):
             check();
-
             if (m_airspeed > m_args.airspeed_threshold && m_args.vtype == "UAV")
               m_vm.medium = IMC::VehicleMedium::VM_AIR;
             break;

@@ -57,8 +57,8 @@
 
 //! DUNE was compiled with Piccolo avionics support.
 #cmakedefine DUNE_USING_PICCOLO
-//! DUNE was compiled with GUI.
-#cmakedefine DUNE_USING_GUI
+//! DUNE was compiled with Qt5.
+#cmakedefine DUNE_USING_QT5
 //! DUNE was compiled with TLSF.
 #cmakedefine DUNE_USING_TLSF
 //! DUNE was compiled with JPEG library.
@@ -96,6 +96,8 @@
 #cmakedefine DUNE_OS_OPENBSD
 //! Defined on BSD variants.
 #cmakedefine DUNE_OS_BSD
+//! Defined on Android.
+#cmakedefine DUNE_OS_ANDROID
 //! Defined on POSIX compliant systems.
 #cmakedefine DUNE_OS_POSIX
 

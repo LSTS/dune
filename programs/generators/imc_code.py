@@ -118,7 +118,7 @@ class Message:
         # fieldsEqual()
         if self.has_fields():
             f = Function('fieldsEqual', 'bool', [Var('msg__', 'const Message&')], const = True)
-            f.add_body('const IMC::' + node.get('abbrev') + '& other__ = dynamic_cast<const ' + node.get('abbrev') + '&>(msg__);')
+            f.add_body('const IMC::' + node.get('abbrev') + '& other__ = static_cast<const ' + node.get('abbrev') + '&>(msg__);')
             f.add_body('\n'.join([get_not_equal(field) for field in node.findall('field')]))
             f.add_body('return true;')
             public.append(f)

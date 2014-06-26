@@ -278,7 +278,7 @@ namespace Actuators
             break;
 
           case LUCL::CommandTypeInvalidChecksum:
-            err("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
+            war("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
             break;
 
           default:

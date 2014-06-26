@@ -42,7 +42,8 @@ namespace Sensors
     {
     public:
       //! Constructor.
-      Driver(DUNE::Hardware::SerialPort& stream):
+      Driver(DUNE::Tasks::Task* task, DUNE::Hardware::SerialPort& stream):
+        m_task(task),
         m_id(-1),
         m_stream(stream),
         m_sentence_idx(0)
@@ -67,6 +68,7 @@ namespace Sensors
       }
 
     private:
+      DUNE::Tasks::Task* m_task;
       int m_id;
       char m_expr[64];
       DUNE::Hardware::SerialPort& m_stream;

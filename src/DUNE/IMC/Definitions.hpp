@@ -1262,6 +1262,89 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Message List.
+    class MsgList: public Message
+    {
+    public:
+      //! Messages.
+      MessageList<Message> msgs;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 20;
+      }
+
+      MsgList(void);
+
+      Message*
+      clone(void) const
+      {
+        return new MsgList(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return MsgList::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "MsgList";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return msgs.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
     //! Simulated State.
     class SimulatedState: public Message
     {
@@ -11916,7 +11999,9 @@ namespace DUNE
         //! Maneuver completed.
         MCS_DONE = 1,
         //! Maneuver error.
-        MCS_ERROR = 2
+        MCS_ERROR = 2,
+        //! Maneuver stopped.
+        MCS_STOPPED = 3
       };
 
       //! State.
@@ -13805,6 +13890,86 @@ namespace DUNE
       getFixedSerializationSize(void) const
       {
         return 15;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Autopilot Mode.
+    class AutopilotMode: public Message
+    {
+    public:
+      //! Autonomy Level.
+      enum AutonomyLevelEnum
+      {
+        //! Manual.
+        AL_MANUAL = 0,
+        //! Assisted.
+        AL_ASSISTED = 1,
+        //! Auto.
+        AL_AUTO = 2
+      };
+
+      //! Autonomy Level.
+      uint8_t autonomy;
+      //! Mode.
+      std::string mode;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 511;
+      }
+
+      AutopilotMode(void);
+
+      Message*
+      clone(void) const
+      {
+        return new AutopilotMode(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return AutopilotMode::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AutopilotMode";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(mode);
       }
 
       void
@@ -18145,6 +18310,148 @@ namespace DUNE
       getFixedSerializationSize(void) const
       {
         return 21;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Message Fragment.
+    class MessagePart: public Message
+    {
+    public:
+      //! Transmission Unique Id.
+      uint8_t uid;
+      //! Fragment Number.
+      uint8_t frag_number;
+      //! Total Number of fragments.
+      uint8_t num_frags;
+      //! Fragment Data.
+      std::vector<char> data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 877;
+      }
+
+      MessagePart(void);
+
+      Message*
+      clone(void) const
+      {
+        return new MessagePart(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return MessagePart::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "MessagePart";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 3;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Neptus Blob.
+    class NeptusBlob: public Message
+    {
+    public:
+      //! ContentType.
+      std::string content_type;
+      //! Content.
+      std::vector<char> content;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 888;
+      }
+
+      NeptusBlob(void);
+
+      Message*
+      clone(void) const
+      {
+        return new NeptusBlob(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return NeptusBlob::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "NeptusBlob";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(content_type) + IMC::getSerializationSize(content);
       }
 
       void

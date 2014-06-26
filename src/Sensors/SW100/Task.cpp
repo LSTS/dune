@@ -109,7 +109,7 @@ namespace Sensors
       onResourceAcquisition(void)
       {
         m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-        m_driver = new Driver(*m_uart);
+        m_driver = new Driver(this, *m_uart);
       }
 
       void

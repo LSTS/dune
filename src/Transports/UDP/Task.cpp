@@ -47,6 +47,10 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    //! Vector for Entity Mapping.
+    typedef std::vector<uint32_t> Entities;
+
+    //! Structure that contains information about rate info.
     struct RateInfo
     {
       // Interval between sending the same message (s).
@@ -55,6 +59,7 @@ namespace Transports
       double last;
     };
 
+    //! %Task arguments.
     struct Arguments
     {
       // Contact timeout.
@@ -71,6 +76,8 @@ namespace Transports
       bool trace_out;
       // Rate limits.
       std::vector<std::string> rate_lims;
+      // Filtered entities.
+      std::vector<std::string> entities_flt;
       // List of messages to publish.
       std::vector<std::string> messages;
       // Announce this transport to services or not
@@ -90,28 +97,31 @@ namespace Transports
 
     struct Task: public DUNE::Tasks::Task
     {
-      // Serialization buffer.
+      //! Serialization buffer.
       uint8_t* m_bfr;
-      // UDP Socket.
+      //! UDP Socket.
       UDPSocket m_sock;
-      // Set of static nodes.
+      //! Set of static nodes.
       std::set<NodeAddress> m_static_dsts;
-      // Message rate information.
+      //! Message rate information: rates per message id.
       std::map<uint32_t, double> m_rates_per_id;
+      //! Message rate information: rates per key id.
       std::map<uint32_t, RateInfo> m_rates;
-      // Set of destination nodes.
+      //! List of entities to be passed by given message.
+      std::map<uint32_t, Entities> m_filtered;
+      //! Set of destination nodes.
       NodeTable m_node_table;
-      // Task arguments.
+      //! Task arguments.
       Arguments m_args;
-      // Simulate communication limitations
+      //! Simulate communication limitations
       bool m_comm_limitations;
-      // Allow underwater communications when simulating limited comms
+      //! Allow underwater communications when simulating limited comms
       bool m_underwater_comms;
-      // Listener thread.
+      //! Listener thread.
       Listener* m_listener;
-      // Contact refresh counter.
+      //! Contact refresh counter.
       Time::Counter<float> m_contacts_refresh_counter;
-      // LimitedComms object
+      //! LimitedComms object
       LimitedComms* m_lcomms;
 
       Task(const std::string& name, Tasks::Context& ctx):
@@ -145,6 +155,9 @@ namespace Transports
 
         param("Rate Limiters", m_args.rate_lims)
         .description("List of <Message>:<Frequency>");
+
+        param("Filtered Entities", m_args.entities_flt)
+        .description("List of <Message>:<Entity>+<Entity> that define the source entities allowed to pass message of a specific message type.");
 
         param("Announce Service", m_args.announce_service)
         .defaultValue("true")
@@ -204,6 +217,36 @@ namespace Transports
           float rate = 0;
           std::sscanf(parts[1].c_str(), "%f", &rate);
           m_rates_per_id[id] = 1.0 / rate;
+        }
+
+        // Process filtered entities.
+        m_filtered.clear();
+        for (unsigned int i = 0; i < m_args.entities_flt.size(); ++i)
+        {
+          std::vector<std::string> parts;
+          String::split(m_args.entities_flt[i], ":", parts);
+          if (parts.size() != 2)
+            continue;
+
+          // Split entities.
+          uint32_t id = IMC::Factory::getIdFromAbbrev(parts[0]);
+          std::vector<std::string> entities;
+          String::split(parts[1], "+", entities);
+          m_filtered[id].resize(entities.size());
+
+          // Resolve entities id.
+          for (unsigned j = 0; j < entities.size(); j++)
+          {
+            // Resolve entities.
+            try
+            {
+              m_filtered[id][j] = resolveEntity(entities[j]);
+            }
+            catch (...)
+            {
+              m_filtered[id][j] = UINT_MAX;
+            }
+          }
         }
 
         m_underwater_comms = m_args.underwater_comms;
@@ -314,6 +357,22 @@ namespace Transports
           return;
 
         uint32_t key = (msg->getId() << 16) + (msg->getSourceEntity() << 8) + (msg->getSubId() & 0xff);
+
+        // Filter message by entity.
+        if (m_filtered[msg->getId()].size() > 0)
+        {
+          bool matched = false;
+          std::vector<uint32_t>::iterator itr = m_filtered[msg->getId()].begin();
+          for (; itr != m_filtered[msg->getId()].end(); ++itr)
+          {
+            if (*itr == msg->getSourceEntity())
+              matched = true;
+          }
+
+          // This entity is not listed to be passed.
+          if (!matched)
+            return;
+        }
 
         if (m_rates.find(key) == m_rates.end())
         {

@@ -96,7 +96,7 @@ main(int32_t argc, char** argv)
         {
           if (!got_name)
           {
-            IMC::LoggingControl* ptr = dynamic_cast<IMC::LoggingControl*>(msg);
+            IMC::LoggingControl* ptr = static_cast<IMC::LoggingControl*>(msg);
 
             if (ptr->op == IMC::LoggingControl::COP_STARTED)
             {
@@ -109,7 +109,7 @@ main(int32_t argc, char** argv)
         {
           if (msg->getTimeStamp() - estate.getTimeStamp() > c_timestep)
           {
-            IMC::EstimatedState* ptr = dynamic_cast<IMC::EstimatedState*>(msg);
+            IMC::EstimatedState* ptr = static_cast<IMC::EstimatedState*>(msg);
 
             if (!got_state)
             {
@@ -140,7 +140,7 @@ main(int32_t argc, char** argv)
         }
         else if (msg->getId() == DUNE_IMC_RPM)
         {
-          IMC::Rpm* ptr = dynamic_cast<IMC::Rpm*>(msg);
+          IMC::Rpm* ptr = static_cast<IMC::Rpm*>(msg);
           curr_rpm = ptr->value;
         }
         else if (msg->getId() == DUNE_IMC_SIMULATEDSTATE)

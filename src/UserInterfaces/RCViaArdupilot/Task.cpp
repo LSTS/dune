@@ -109,7 +109,7 @@ namespace UserInterfaces
       void
       setupRate(uint8_t rate)
       {
-        debug(DTR("Enabling rates."));
+        debug("Enabling rates.");
 
         uint8_t buf[512];
         mavlink_message_t* msg = new mavlink_message_t;
@@ -123,7 +123,7 @@ namespace UserInterfaces
 
         uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
         sendData(buf, n);
-        spew(DTR("Disabled all streams."));
+        spew("Disabled all streams.");
 
         mavlink_msg_request_data_stream_pack(255, 0, msg,
                                              m_sysid,
@@ -135,25 +135,7 @@ namespace UserInterfaces
         n = mavlink_msg_to_send_buffer(buf, msg);
         sendData(buf, n);
 
-        spew(DTR("Enabled RC output."));
-      }
-
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      {
-      }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
+        spew("Enabled RC output.");
       }
 
       //! Acquire resources.
@@ -177,14 +159,8 @@ namespace UserInterfaces
         }
         catch (...)
         {
-          err(DTR("Error opening serial device. "));
+          err(DTR("Error opening serial device."));
         }
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
       }
 
       //! Release resources.
@@ -211,7 +187,7 @@ namespace UserInterfaces
       {
         if (m_uart)
         {
-          trace(DTR("Sending something"));
+          trace("Sending something");
           return m_uart->write((char*)bfr, size);
         }
         return 0;
@@ -228,7 +204,7 @@ namespace UserInterfaces
           }
           catch (std::runtime_error& e)
           {
-            err(DTR("%s"), e.what());
+            err(DTR("Error receiving on serial device: %s"), e.what());
             war(DTR("Connection lost, retrying..."));
             Memory::clear(m_uart);
 
@@ -250,7 +226,7 @@ namespace UserInterfaces
 
           if (n < 0)
           {
-            debug(DTR("Receive error"));
+            debug("Receive error");
             break;
           }
 
@@ -262,31 +238,31 @@ namespace UserInterfaces
               switch (status.parse_state)
               {
                 case MAVLINK_PARSE_STATE_IDLE:
-                  spew(DTR("failed at state IDLE, count: %d"), status.packet_rx_drop_count);
+                  spew("failed at state IDLE, count: %d", status.packet_rx_drop_count);
                   break;
                 case MAVLINK_PARSE_STATE_GOT_STX:
-                  spew(DTR("failed at state GOT_STX"));
+                  spew("failed at state GOT_STX");
                   break;
                 case MAVLINK_PARSE_STATE_GOT_LENGTH:
-                  spew(DTR("failed at state GOT_LENGTH"));
+                  spew("failed at state GOT_LENGTH");
                   break;
                 case MAVLINK_PARSE_STATE_GOT_SYSID:
-                  spew(DTR("failed at state GOT_SYSID"));
+                  spew("failed at state GOT_SYSID");
                   break;
                 case MAVLINK_PARSE_STATE_GOT_COMPID:
-                  spew(DTR("failed at state GOT_COMPID"));
+                  spew("failed at state GOT_COMPID");
                   break;
                 case MAVLINK_PARSE_STATE_GOT_MSGID:
-                  spew(DTR("failed at state GOT_MSGID"));
+                  spew("failed at state GOT_MSGID");
                   break;
                 case MAVLINK_PARSE_STATE_GOT_PAYLOAD:
-                  spew(DTR("failed at state GOT_PAYLOAD"));
+                  spew("failed at state GOT_PAYLOAD");
                   break;
                 case MAVLINK_PARSE_STATE_GOT_CRC1:
-                  spew(DTR("failed at state GOT_CRC1"));
+                  spew("failed at state GOT_CRC1");
                   break;
                 default:
-                  spew(DTR("failed OTHER"));
+                  spew("failed OTHER");
                   break;
               }
             }
@@ -296,17 +272,17 @@ namespace UserInterfaces
               switch ((int)m_msg.msgid)
               {
                 default:
-                  spew(DTR("UNDEF: %u"), m_msg.msgid);
+                  spew("UNDEF: %u", m_msg.msgid);
                   break;
                 case MAVLINK_MSG_ID_HEARTBEAT:
-                  trace(DTR("HEARTBEAT"));
+                  trace("HEARTBEAT");
                   break;
                 case MAVLINK_MSG_ID_STATUSTEXT:
-                  trace(DTR("STATUSTEXT"));
+                  trace("STATUSTEXT");
                   handleStatusTextPacket(&m_msg);
                   break;
                 case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
-                  trace(DTR("RC_CHANNELS_RAW"));
+                  trace("RC_CHANNELS_RAW");
                   handleRCChannelsRawPacket(&m_msg);
                   break;
               }
@@ -322,7 +298,7 @@ namespace UserInterfaces
       {
         mavlink_statustext_t stat_tex;
         mavlink_msg_statustext_decode(msg, &stat_tex);
-        debug(DTR("Status: %s"), stat_tex.text);
+        debug("Status: %s", stat_tex.text);
       }
 
       void
@@ -334,7 +310,7 @@ namespace UserInterfaces
         mavlink_rc_channels_raw_t rc_raw;
         mavlink_msg_rc_channels_raw_decode(msg, &rc_raw);
 
-        debug(DTR("RC raw %d %d %d %d %d %d: "),
+        debug("RC raw %d %d %d %d %d %d: ",
               rc_raw.chan1_raw,
               rc_raw.chan2_raw,
               rc_raw.chan3_raw,
@@ -376,14 +352,14 @@ namespace UserInterfaces
           {
             if (getEntityState() == IMC::EntityState::ESTA_NORMAL)
             {
-              war(DTR("Timeout of prev. packet received!"));
+              war(DTR("Timeout of previous packet received!"));
               setEntityState(IMC::EntityState::ESTA_ERROR, "Timeout of packet.");
             }
           }
           // Not timeout and we were in an error state
           else if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
           {
-            inf(DTR("Got packet, all is ok. "));
+            inf(DTR("Got packet, all is ok."));
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           }
 
@@ -391,7 +367,7 @@ namespace UserInterfaces
           if (getEntityState() != IMC::EntityState::ESTA_NORMAL && (prev_try + 1) < now)
           {
             prev_try = Clock::get();
-            war(DTR("Still not got any RC packets, retrying rate setup.."));
+            war(DTR("Still not got any RC packets, retrying rate setup..."));
             setupRate(10);
           }
           // Handle IMC messages from bus

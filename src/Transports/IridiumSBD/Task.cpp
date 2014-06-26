@@ -137,18 +137,6 @@ namespace Transports
           m_driver->setTxRateMax(m_args.max_tx_rate);
       }
 
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
       //! Acquire resources.
       void
       onResourceAcquisition(void)

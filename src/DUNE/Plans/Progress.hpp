@@ -50,26 +50,13 @@ namespace DUNE
     //! Utility class to estimate a plan's progress.
     class Progress
     {
-    public:
+    private:
       //! Get waypoint number out of info message
       //! @param[in] mcs pointer to ManeuverControlState message
       //! @param[out] number waypoint number
       //! @return true if able to get number, false otherwise
       static bool
-      getPoint(const IMC::ManeuverControlState* mcs, unsigned& number)
-      {
-        std::vector<std::string> lst;
-        Utils::String::split(mcs->info, "=", lst);
-
-        if (!lst.size())
-          return false;
-        else if (lst.back() == "")
-          return false;
-
-        number = std::atoi(lst.back().c_str());
-
-        return true;
-      }
+      getPoint(const IMC::ManeuverControlState* mcs, unsigned& number);
 
       //! Compute progress for multiple waypoint maneuver
       //! @param[in] mcs pointer to ManeuverControlState message
@@ -78,20 +65,8 @@ namespace DUNE
       //! @return time left in seconds
       static float
       compute(const IMC::ManeuverControlState* mcs, const std::vector<float>& durations,
-              float total_duration)
-      {
-        unsigned curr = 0;
+              float total_duration);
 
-        if (!getPoint(mcs, curr))
-          return -1.0;
-
-        if (curr > durations.size())
-          return -1.0;
-
-        return total_duration - durations[curr] + (float)mcs->eta;
-      }
-
-#ifdef DUNE_IMC_FOLLOWPATH
       //! Compute progress of FollowPath maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in] mcs pointer to ManeuverControlState message
@@ -100,15 +75,8 @@ namespace DUNE
       //! @return time left in seconds
       static float
       compute(const IMC::FollowPath* maneuver, const IMC::ManeuverControlState* mcs,
-              const std::vector<float>& durations, float total_duration)
-      {
-        (void)maneuver;
+              const std::vector<float>& durations, float total_duration);
 
-        return compute(mcs, durations, total_duration);
-      };
-#endif
-
-#ifdef DUNE_IMC_ROWS
       //! Compute progress of Rows maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in] mcs pointer to ManeuverControlState message
@@ -117,14 +85,9 @@ namespace DUNE
       //! @return time left in seconds
       static float
       compute(const IMC::Rows* maneuver, const IMC::ManeuverControlState* mcs,
-              const std::vector<float>& durations, float total_duration)
-      {
-        (void)maneuver;
+              const std::vector<float>& durations, float total_duration);
 
-        return compute(mcs, durations, total_duration);
-      };
-#endif
-
+    public:
       //! Compute a plan's progress from maneuver and ManeuverControlState
       //! @param[in] man pointer to maneuver message
       //! @param[in] mcs pointer to ManeuverControlState message
@@ -133,61 +96,7 @@ namespace DUNE
       //! @return progress of the whole plan
       static float
       compute(const IMC::Message* man, const IMC::ManeuverControlState* mcs,
-              const std::vector<float>& durations, float total_duration)
-      {
-        if (man == NULL)
-          return -1.0;
-
-        if (!durations.size() || mcs->eta == c_max_eta)
-          return -1.0;
-
-        float time_left = -1.0;
-
-        switch (man->getId())
-        {
-#ifdef DUNE_IMC_GOTO
-          case DUNE_IMC_GOTO:
-#endif
-#ifdef DUNE_IMC_STATIONKEEPING
-          case DUNE_IMC_STATIONKEEPING:
-#endif
-#ifdef DUNE_IMC_LOITER
-          case DUNE_IMC_LOITER:
-#endif
-#ifdef DUNE_IMC_ELEVATOR
-          case DUNE_IMC_ELEVATOR:
-#endif
-#ifdef DUNE_IMC_YOYO
-          case DUNE_IMC_YOYO:
-#endif
-#ifdef DUNE_IMC_POPUP
-          case DUNE_IMC_POPUP:
-            time_left = total_duration - durations[0] + (float)mcs->eta;
-            break;
-#endif
-#ifdef DUNE_IMC_FOLLOWPATH
-          case DUNE_IMC_FOLLOWPATH:
-            time_left = compute(dynamic_cast<const IMC::FollowPath*>(man), mcs,
-                                durations, total_duration);
-            break;
-#endif
-#ifdef DUNE_IMC_ROWS
-          case DUNE_IMC_ROWS:
-            time_left = compute(dynamic_cast<const IMC::Rows*>(man), mcs,
-                                durations, total_duration);
-            break;
-#endif
-          default:
-            return -1.0;
-        }
-
-        if (time_left < 0.0)
-          return -1.0;
-
-        time_left = Math::trimValue(time_left, 0.0f, total_duration);
-
-        return 100.0f * Math::trimValue((1.0f - time_left / total_duration), 0.0f, 1.0f);
-      };
+              const std::vector<float>& durations, float total_duration);
     };
   }
 }
