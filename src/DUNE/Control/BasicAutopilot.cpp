@@ -160,10 +160,12 @@ namespace DUNE
       {
         m_vertical_mode = VERTICAL_MODE_DEPTH;
 
-        if (m_vertical_ref > m_max_depth)
+        float limit = m_max_depth - c_depth_margin;
+
+        if (m_vertical_ref > limit)
         {
-          m_vertical_ref = m_max_depth;
-          war(DTR("limiting depth to %.1f"), m_max_depth);
+          m_vertical_ref = limit;
+          war(DTR("limiting depth to %.1f"), limit);
         }
       }
       else if (msg->z_units == IMC::Z_ALTITUDE)
