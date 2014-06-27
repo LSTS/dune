@@ -388,7 +388,7 @@ namespace DUNE
       commandAlt(const double& altitude_cmd);
 
       //! This method sets the vehicle flight path angle command.
-      //! @param[in] pitch_cmd - applied flight path angle command
+      //! @param[in] fpa_cmd - applied flight path angle command
       void
       commandFPA(const double& fpa_cmd);
 
