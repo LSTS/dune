@@ -181,7 +181,7 @@ namespace Sensors
     //! Delta T beam height.
     static const float c_beam_height = 120.0;
     //! Minimum altitude for dynamic range modifier.
-    static const float c_min_alt = 1.5;
+    static const float c_min_alt = 0.3;
 
     //! %Task.
     struct Task: public Tasks::Periodic
