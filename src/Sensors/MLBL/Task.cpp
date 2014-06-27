@@ -197,8 +197,6 @@ namespace Sensors
       SerialPort* m_uart;
       // Range.
       IMC::LblRange m_range;
-      // Detection.
-      IMC::LblDetection m_detect;
       // Entity states.
       IMC::EntityState m_states[STA_MAX];
       // Commands to/from modem.
@@ -646,10 +644,6 @@ namespace Sensors
           {
             double travel = 0;
             *stn >> travel;
-            m_detect.tx = 0;
-            m_detect.channel = m_beacons[i].tx_channel;
-            m_detect.timer = (uint16_t)(Clock::get() * 1000);
-            dispatch(m_detect);
 
             // Compute range and dispatch message.
             double range = travel * m_sound_speed;
