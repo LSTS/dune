@@ -96,6 +96,78 @@ namespace Maneuver
         bool debug;
       };
 
+      struct RelState
+      {
+        //! Identifier of the vehicle whose relative state is being reported.
+        std::string s_id;
+        //! Distance between vehicles.
+        double dist;
+        //! Relative position error norm.
+        double err;
+        //! Weight in the computation of the desired acceleration.
+        double ctrl_imp;
+        //! Inter-vehicle direction vector.
+        double rel_dir_x;
+        double rel_dir_y;
+        double rel_dir_z;
+        //! Relative position error in the fixed reference frame.
+        double err_x;
+        double err_y;
+        double err_z;
+        //! Relative position error in the inter-vehicle reference frame.
+        double rf_err_x;
+        double rf_err_y;
+        double rf_err_z;
+        //! Relative velocity error in the inter-vehicle reference frame.
+        double rf_err_vx;
+        double rf_err_vy;
+        double rf_err_vz;
+        //! Deviation from convergence (sliding surface value).
+        double ss_x;
+        double ss_y;
+        double ss_z;
+        //! Relative virtual error.
+        //! (Component of the vehicle desired acceleration)
+        double virt_err_x;
+        double virt_err_y;
+        double virt_err_z;
+      };
+
+     struct FormMonitor
+      {
+        //! Commanded acceleration computed by the formation controller.
+        //! (Constrained by the vehicle operational limits)
+        double ax_cmd;
+        double ay_cmd;
+        double az_cmd;
+        //! Desired acceleration computed by the formation controller.
+        double ax_des;
+        double ay_des;
+        double az_des;
+        //! Formation combined virtual error.
+        //! (Component of the vehicle desired acceleration)
+        double virt_err_x;
+        double virt_err_y;
+        double virt_err_z;
+        //! Formation combined sliding surface feedback.
+        //! (Component of the vehicle desired acceleration)
+        double surf_fdbk_x;
+        double surf_fdbk_y;
+        double surf_fdbk_z;
+        //! Dynamics uncertainty compensation.
+        //! (Component of the vehicle desired acceleration)
+        double surf_unkn_x;
+        double surf_unkn_y;
+        double surf_unkn_z;
+        //! Combined deviation from convergence.
+        //! (Total sliding surface value)
+        double ss_x;
+        double ss_y;
+        double ss_z;
+        //! Inter-vehicle state data
+        std::vector<RelState*> rel_state;
+      };
+
       struct Task: public DUNE::Tasks::Periodic
       {
         //! Task arguments.
@@ -154,8 +226,9 @@ namespace Maneuver
         IMC::LeaderState m_init_leader;
         bool m_init_leader_set;
 
-        // Debug flag
+        // Debug variables
         bool m_debug;
+        FormMonitor* m_form_monitor;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Periodic(name, ctx),
@@ -435,6 +508,13 @@ namespace Maneuver
               //! Add model to the models vector
               m_models.push_back(model);
               debug("Simulated vehicle model initialized for vehicle %d.", ind_uav+1);
+            }
+
+            RelState* rel_state;
+            for (int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
+            {
+              rel_state = new RelState;
+              m_form_monitor->rel_state.push_back(rel_state);
             }
           }
 
@@ -802,15 +882,37 @@ namespace Maneuver
               */
 
               vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, m_args.uav_ind-1, m_args.uav_ind-1));
-              formationControl(m_uav_state, m_uav_accel, m_args.uav_ind, msg->getTimeStamp() - m_last_ctrl_update, &vd_cmd, m_debug);
+              formationControl(m_uav_state, m_uav_accel, m_args.uav_ind,
+                  msg->getTimeStamp() - m_last_ctrl_update, &vd_cmd, m_debug, m_form_monitor);
               m_uav_ctrl.set(0, 2, m_args.uav_ind-1, m_args.uav_ind-1, vd_cmd.get(0, 2, 0, 0));
 
-              /*
+              //! Update the monitoring message
               if (m_debug)
               {
-                //IMC::FormationEval form_eval;
-                IMC::FormationEval<IMC::RelativeState> form_rel_state;
-                IMC::RelativeState rel_state;
+                IMC::FormationMonitor form_monit;
+
+                form_monit.ax_cmd = m_form_monitor->ax_cmd;
+                form_monit.ay_cmd = m_form_monitor->ax_cmd;
+                //form_monit.az_cmd = m_form_monitor->ax_cmd;
+                form_monit.ax_des = m_form_monitor->ax_des;
+                form_monit.ay_des = m_form_monitor->ax_des;
+                //form_monit.az_des = m_form_monitor->ax_des;
+                form_monit.virt_err_x = m_form_monitor->virt_err_x;
+                form_monit.virt_err_y = m_form_monitor->virt_err_y;
+                //form_monit.virterr_z = m_form_monitor->virt_err_z;
+                form_monit.surf_fdbk_x = m_form_monitor->surf_fdbk_x;
+                form_monit.surf_fdbk_y = m_form_monitor->surf_fdbk_y;
+                //form_monit.surf_fdbk_z = m_form_monitor->surf_fdbk_z;
+                form_monit.surf_unkn_x = m_form_monitor->surf_unkn_x;
+                form_monit.surf_unkn_y = m_form_monitor->surf_unkn_y;
+                //form_monit.surf_unkn_z = m_form_monitor->surf_unkn_z;
+                form_monit.ss_x = m_form_monitor->ss_x;
+                form_monit.ss_y = m_form_monitor->ss_y;
+                //form_monit.ss_z = m_form_monitor->ss_z;
+
+                form_monit.rel_state.clear();
+                IMC::RelativeState relative_state;
+                RelState rel_state;
 
                 // Iterate point list
                 for (int ind_uav = 0; ind_uav <= m_uav_n; ind_uav++)
@@ -818,10 +920,47 @@ namespace Maneuver
                   if (m_args.uav_ind == ind_uav)
                     continue;
 
-                  form_rel_state.push_back(rel_state);
+                  rel_state = *(m_form_monitor->rel_state[ind_uav]);
+
+                  //! Identifier of the vehicle whose relative state is being reported.
+                  relative_state.s_id = rel_state.s_id;
+                  //! Distance between vehicles.
+                  relative_state.dist = rel_state.dist;
+                  //! Relative position error norm.
+                  relative_state.err = rel_state.err;
+                  //! Weight in the computation of the desired acceleration.
+                  relative_state.ctrl_imp = rel_state.ctrl_imp;
+                  //! Inter-vehicle direction vector.
+                  relative_state.rel_dir_x = rel_state.rel_dir_x;
+                  relative_state.rel_dir_y = rel_state.rel_dir_y;
+                  relative_state.rel_dir_z = rel_state.rel_dir_z;
+                  //! Relative position error in the fixed reference frame.
+                  relative_state.err_x = rel_state.err_x;
+                  relative_state.err_y = rel_state.err_y;
+                  relative_state.err_z = rel_state.err_z;
+                  //! Relative position error in the inter-vehicle reference frame.
+                  relative_state.rf_err_x = rel_state.rf_err_x;
+                  relative_state.rf_err_y = rel_state.rf_err_y;
+                  relative_state.rf_err_z = rel_state.rf_err_z;
+                  //! Relative velocity error in the inter-vehicle reference frame.
+                  relative_state.rf_err_vx = rel_state.rf_err_vx;
+                  relative_state.rf_err_vy = rel_state.rf_err_vy;
+                  relative_state.rf_err_vz = rel_state.rf_err_vz;
+                  //! Deviation from convergence (sliding surface value).
+                  relative_state.ss_x = rel_state.ss_x;
+                  relative_state.ss_y = rel_state.ss_y;
+                  relative_state.ss_z = rel_state.ss_z;
+                  //! Relative virtual error.
+                  //! (Component of the vehicle desired acceleration)
+                  relative_state.virt_err_x = rel_state.virt_err_x;
+                  relative_state.virt_err_y = rel_state.virt_err_y;
+                  relative_state.virt_err_z = rel_state.virt_err_z;
+
+                  form_monit.rel_state.push_back(relative_state);
                 }
+
+                dispatch(form_monit);
               }
-              */
 
               //! - Update own vehicle simulation model - Controls
               model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
@@ -890,7 +1029,8 @@ namespace Maneuver
 
               Matrix vd_uav_accel = Matrix(3, 1, 0.0);
               vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, ind_uav-1, ind_uav-1));
-              formationControl(m_uav_state, vd_uav_accel, ind_uav, 1/m_args.ctrl_frequency, &vd_cmd, false);
+              formationControl(m_uav_state, vd_uav_accel, ind_uav, 1/m_args.ctrl_frequency,
+                  &vd_cmd, false, m_form_monitor);
               m_uav_ctrl.set(0, 2, ind_uav-1, ind_uav-1, vd_cmd.get(0, 2, 0, 0));
 
               //! - Update current vehicle simulation model
@@ -1321,7 +1461,8 @@ namespace Maneuver
 
                 //! Compute simulated vehicle formation controls
                 vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, ind_uav-1, ind_uav-1));
-                formationControl(m_uav_state, vd_uav_accel, ind_uav, d_timestep_ctrl, &vd_cmd, false);
+                formationControl(m_uav_state, vd_uav_accel, ind_uav, d_timestep_ctrl,
+                    &vd_cmd, false, m_form_monitor);
                 m_uav_ctrl.set(0, 2, ind_uav-1, ind_uav-1, vd_cmd.get(0, 2, 0, 0));
 
                 //! Retrieve current vehicle model
@@ -1383,7 +1524,8 @@ namespace Maneuver
 
         void
         formationControl(const Matrix& md_uav_state, const Matrix& md_uav_accel,
-            const int& ind_uav, const double& d_time_step, Matrix* vd_cmd, const bool b_debug)
+            const int& ind_uav, const double& d_time_step, Matrix* vd_cmd,
+            const bool b_debug, FormMonitor* form_monitor)
         {
           /*
           double vt_uav_state_own1[6] = {md_uav_state(0, ind_uav), md_uav_state(1, ind_uav), md_uav_state(2, ind_uav),
@@ -1506,6 +1648,9 @@ namespace Maneuver
           Matrix vd_weight_gain = Matrix(m_uav_n+1, 1, 0.0);
 
           double d_time = Clock::get();
+
+          //! Monitoring data
+          RelState* rel_state;
 
           // ===========================================
           // Formation control
@@ -1833,57 +1978,50 @@ namespace Maneuver
                                 vd_inter_uav_des_acc - md_rot * vt_surf_deriv);
 
             //! Tracking output
-            /*
             if (b_debug)
             {
-              //IMC::FormationEval form_eval;
-              IMC::FormationEval<IMC::RelativeState> form_rel_state;
-              IMC::RelativeState* rel_state;
-
-              rel_state = new IMC::RelativeState();
+              rel_state = form_monitor->rel_state[ind_uav2];
 
               //! Distance between vehicles
-              rel_state->Dist = d_inter_uav_dist;
+              rel_state->dist = d_inter_uav_dist;
               // // ======== Formation perturbation test - Mesh stability =======
               // if (ind_uav == 2)
               //   vd_orig_err += vd_Pert;
               // end
               // // ======== Formation perturbation test - Mesh stability =======
               //! Relative position error norm
-              rel_state->Err =  vd_orig_err.norm_2();
+              rel_state->err =  vd_orig_err.norm_2();
               //! Inter-vehicle direction vector
-              rel_state->RelDirX = vd_inter_uav_x(0);
-              rel_state->RelDirY = vd_inter_uav_x(1);
-              //rel_state->RelDirZ = vd_inter_uav_x(2);
+              rel_state->rel_dir_x = vd_inter_uav_x(0);
+              rel_state->rel_dir_y = vd_inter_uav_x(1);
+              //rel_state->rel_dir_z = vd_inter_uav_x(2);
               //! Relative position error - Ground reference frame
               // // ======== Formation perturbation test - Mesh stability =======
               // if ind_UAV == 2
               //   vd_err = vd_err + vd_Pert;
               // end
               // // ======== Formation perturbation test - Mesh stability =======
-              rel_state->ErrX = vd_err(0);
-              rel_state->ErrY = vd_err(1);
-              //rel_state->ErrZ = vd_err(2);
+              rel_state->err_x = vd_err(0);
+              rel_state->err_y = vd_err(1);
+              //rel_state->err_z = vd_err(2);
               //! Relative position error - Inter-vehicle reference frame
-              rel_state->RFErrX = Matrix::dot(vd_err ,vd_inter_uav_x);
-              rel_state->RFErrY = Matrix::dot(vd_err, vd_inter_uav_y);
-              //rel_state->RFErrZ = Matrix::dot(vd_err, vd_inter_uav_z);
+              rel_state->rf_err_x = Matrix::dot(vd_err ,vd_inter_uav_x);
+              rel_state->rf_err_y = Matrix::dot(vd_err, vd_inter_uav_y);
+              //rel_state->rf_err_z = Matrix::dot(vd_err, vd_inter_uav_z);
               //! Relative velocity error - Inter-vehicle reference frame
-              rel_state->RFErrVX = Matrix::dot(vd_deriv_err, vd_inter_uav_x);
-              rel_state->RFErrVY = Matrix::dot(vd_deriv_err, vd_inter_uav_y);
-              //rel_state->RFErrVZ = Matrix::dot(vd_deriv_err, vd_inter_uav_z);
+              rel_state->rf_err_vx = Matrix::dot(vd_deriv_err, vd_inter_uav_x);
+              rel_state->rf_err_vy = Matrix::dot(vd_deriv_err, vd_inter_uav_y);
+              //rel_state->rf_err_vz = Matrix::dot(vd_deriv_err, vd_inter_uav_z);
               //! Deviation from convergence (sliding surface) - Inter-vehicle reference frame
-              rel_state->SSX = Matrix::dot(vd_surf_uav.get(0, 1, ind_uav2, ind_uav2), vd_inter_uav_x);
-              rel_state->SSY = Matrix::dot(vd_surf_uav.get(0, 1, ind_uav2, ind_uav2), vd_inter_uav_y);
-              //rel_state->SSZ = Matrix::dot(vd_surf_uav.get(0, 1, ind_uav2, ind_uav2), vd_inter_uav_z);
+              rel_state->ss_x = Matrix::dot(vd_surf_uav.get(0, 1, ind_uav2, ind_uav2), vd_inter_uav_x);
+              rel_state->ss_y = Matrix::dot(vd_surf_uav.get(0, 1, ind_uav2, ind_uav2), vd_inter_uav_y);
+              //rel_state->ss_z = Matrix::dot(vd_surf_uav.get(0, 1, ind_uav2, ind_uav2), vd_inter_uav_z);
               //! Inter-vehicle virtual error - Ground reference frame
-              rel_state->VirtErrX = vt_virt_err_uav(0, ind_uav2);
-              rel_state->VirtErrY = vt_virt_err_uav(1, ind_uav2);
-              //rel_state->VirtErrZ = vt_virt_err_uav(2, ind_uav2);
-
-              form_rel_state.push_back(rel_state);
+              rel_state->virt_err_x = vt_virt_err_uav(0, ind_uav2);
+              rel_state->virt_err_y = vt_virt_err_uav(1, ind_uav2);
+              //rel_state->virt_err_z = vt_virt_err_uav(2, ind_uav2);
             }
-            */
+
             // ========= Spew ===========
             if (b_debug && d_time >= m_last_time_spew + 0.5)
             {
@@ -1920,26 +2058,6 @@ namespace Maneuver
           double vt_uav_state_own[6] = {md_uav_state(0, ind_uav), md_uav_state(1, ind_uav), md_uav_state(2, ind_uav),
               md_uav_state(3, ind_uav), md_uav_state(4, ind_uav), md_uav_state(5, ind_uav)};
            */
-
-          // --- Used just for control performance evaluation ---
-          if (b_debug && d_time >= m_last_time_spew + 0.5)
-          {
-            vd_inter_uav_pos = vd_inter_uav_state.get(0, 1, 0, 0);
-            d_inter_uav_dist = vd_inter_uav_pos.norm_2();
-            //! Computing the rotation matrix - From inter-UAV frame to ground frame
-            d_inter_uav_angle = std::atan2(vd_inter_uav_pos(1),
-                vd_inter_uav_pos(0));
-            d_cos_inter_uav_angle = std::cos(d_inter_uav_angle);
-            d_sin_inter_uav_angle = std::sin(d_inter_uav_angle);
-            mt_rot[0] = d_cos_inter_uav_angle;
-            mt_rot[1] = -d_sin_inter_uav_angle;
-            mt_rot[2] = d_sin_inter_uav_angle;
-            mt_rot[3] = d_cos_inter_uav_angle;
-            md_rot = Matrix(mt_rot, 2, 2);
-            vd_inter_uav_x = md_rot.column(0);
-            vd_inter_uav_y = md_rot.column(1);
-          }
-
 
           if (i_formation_frame == 0)
           {
@@ -2035,74 +2153,73 @@ namespace Maneuver
           vt_virt_err_uav(1, ind_uav_lead) -= d_c3 * d_c4 * d_deriv_err_y/((d_err_y - d_c4)*(d_err_y - d_c4));
 
           //! Tracking output
-          /*
-        varargout{8}(ind_uav_lead, :) = vt_virt_err_uav(:, ind_uav_lead)';
-           */
-          /*
           if (b_debug)
           {
-            //IMC::FormationEval form_eval;
-            IMC::FormationEval<IMC::RelativeState> form_rel_state;
-            IMC::RelativeState* rel_state;
+            vd_inter_uav_pos = vd_inter_uav_state.get(0, 1, 0, 0);
+            d_inter_uav_dist = vd_inter_uav_pos.norm_2();
+            //! Computing the rotation matrix - From inter-UAV frame to ground frame
+            d_inter_uav_angle = std::atan2(vd_inter_uav_pos(1),
+                vd_inter_uav_pos(0));
+            d_cos_inter_uav_angle = std::cos(d_inter_uav_angle);
+            d_sin_inter_uav_angle = std::sin(d_inter_uav_angle);
+            mt_rot[0] = d_cos_inter_uav_angle;
+            mt_rot[1] = -d_sin_inter_uav_angle;
+            mt_rot[2] = d_sin_inter_uav_angle;
+            mt_rot[3] = d_cos_inter_uav_angle;
+            md_rot = Matrix(mt_rot, 2, 2);
+            vd_inter_uav_x = md_rot.column(0);
+            vd_inter_uav_y = md_rot.column(1);
 
-            rel_state = new IMC::RelativeState();
-
+            rel_state = form_monitor->rel_state[ind_uav_lead];
             //! Distance between vehicles
-            rel_state->Dist = d_inter_uav_dist;
+            rel_state->dist = d_inter_uav_dist;
             // // ======== Formation perturbation test - Mesh stability =======
             // if (ind_uav == 2)
-            //   vd_orig_err += vd_Pert;
+            //   vd_err += vd_Pert;
             // end
             // // ======== Formation perturbation test - Mesh stability =======
             //! Relative position error norm
-            rel_state->Err =  vd_err.norm_2();
+            rel_state->err =  vd_err.norm_2();
             //! Inter-vehicle direction vector
-            rel_state->RelDirX = vd_inter_uav_x(0);
-            rel_state->RelDirY = vd_inter_uav_x(1);
-            //rel_state->RelDirZ = vd_inter_uav_x(2);
+            rel_state->rel_dir_x = vd_inter_uav_x(0);
+            rel_state->rel_dir_y = vd_inter_uav_x(1);
+            //rel_state->rel_dir_z = vd_inter_uav_x(2);
             //! Relative position error - Ground reference frame
-            // // ======== Formation perturbation test - Mesh stability =======
-            // if ind_UAV == 2
-            //   vd_err = vd_err + vd_Pert;
-            // end
-            // // ======== Formation perturbation test - Mesh stability =======
-            rel_state->ErrX = vd_err(0);
-            rel_state->ErrY = vd_err(1);
-            //rel_state->ErrZ = vd_err(2);
+            rel_state->err_x = vd_err(0);
+            rel_state->err_y = vd_err(1);
+            //rel_state->err_z = vd_err(2);
             //! Relative position error - Inter-vehicle reference frame
-            rel_state->RFErrX = Matrix::dot(vd_err ,vd_inter_uav_x);
-            rel_state->RFErrY = Matrix::dot(vd_err, vd_inter_uav_y);
-            //rel_state->RFErrZ = Matrix::dot(vd_err, vd_inter_uav_z);
+            rel_state->rf_err_x = Matrix::dot(vd_err ,vd_inter_uav_x);
+            rel_state->rf_err_y = Matrix::dot(vd_err, vd_inter_uav_y);
+            //rel_state->rf_err_z = Matrix::dot(vd_err, vd_inter_uav_z);
             //! Relative velocity error - Inter-vehicle reference frame
-            rel_state->RFErrVX = Matrix::dot(vd_deriv_err, vd_inter_uav_x);
-            rel_state->RFErrVY = Matrix::dot(vd_deriv_err, vd_inter_uav_y);
-            //rel_state->RFErrVZ = Matrix::dot(vd_deriv_err, vd_inter_uav_z);
+            rel_state->rf_err_vx = Matrix::dot(vd_deriv_err, vd_inter_uav_x);
+            rel_state->rf_err_vy = Matrix::dot(vd_deriv_err, vd_inter_uav_y);
+            //rel_state->rf_err_vz = Matrix::dot(vd_deriv_err, vd_inter_uav_z);
             //! Deviation from convergence (sliding surface) - Inter-vehicle reference frame
-            rel_state->SSX = Matrix::dot(vd_surf_uav.get(0, 1, ind_uav_lead, ind_uav_lead), vd_inter_uav_x);
-            rel_state->SSY = Matrix::dot(vd_surf_uav.get(0, 1, ind_uav_lead, ind_uav_lead), vd_inter_uav_y);
-            //rel_state->SSZ = Matrix::dot(vd_surf_uav.get(0, 1, ind_uav_lead, ind_uav_lead), vd_inter_uav_z);
+            rel_state->ss_x = Matrix::dot(vd_surf_uav.get(0, 1, ind_uav_lead, ind_uav_lead), vd_inter_uav_x);
+            rel_state->ss_y = Matrix::dot(vd_surf_uav.get(0, 1, ind_uav_lead, ind_uav_lead), vd_inter_uav_y);
+            //rel_state->ss_z = Matrix::dot(vd_surf_uav.get(0, 1, ind_uav_lead, ind_uav_lead), vd_inter_uav_z);
             //! Inter-vehicle virtual error - Ground reference frame
-            rel_state->VirtErrX = vt_virt_err_uav(0, ind_uav_lead);
-            rel_state->VirtErrY = vt_virt_err_uav(1, ind_uav_lead);
-            //rel_state->VirtErrZ = vt_virt_err_uav(2, ind_uav_lead);
+            rel_state->virt_err_x = vt_virt_err_uav(0, ind_uav_lead);
+            rel_state->virt_err_y = vt_virt_err_uav(1, ind_uav_lead);
+            //rel_state->virt_err_z = vt_virt_err_uav(2, ind_uav_lead);
 
-            form_rel_state.push_back(rel_state);
-          }
-          */
-          // ========= Spew ===========
-          if (b_debug && d_time >= m_last_time_spew + 0.5)
-          {
-            //spew("Relative to the leader - Distance: %1.2fm", d_inter_uav_dist);
-            spew("Relative to the leader - Total position error: %1.2fm", vd_err.norm_2());
-            //spew("Relative to the leader - Position error - North: %1.2fm - East: %1.2fm",
-            //     vd_err(0), vd_err(1));
-            //spew("Relative to the leader - Position error - X: %1.2fm     - Y: %1.2fm",
-            //    Matrix::dot(vd_err ,vd_inter_uav_x), Matrix::dot(vd_err ,vd_inter_uav_y));
-            spew("Relative to the leader - Velocity error - X: %1.2fm/s   - Y: %1.2fm/s",
-                Matrix::dot(vd_deriv_err ,vd_inter_uav_x), Matrix::dot(vd_deriv_err ,vd_inter_uav_y));
-            spew("Relative to the leader - SS deviation - X: %1.2fm/s - Y: %1.2fm/s",
-                Matrix::dot(vd_surf_uav.get(0, 1, ind_uav_lead, ind_uav_lead), vd_inter_uav_x),
-                Matrix::dot(vd_surf_uav.get(0, 1, ind_uav_lead, ind_uav_lead), vd_inter_uav_y));
+            // ========= Spew ===========
+            if (d_time >= m_last_time_spew + 0.5)
+            {
+              //spew("Relative to the leader - Distance: %1.2fm", d_inter_uav_dist);
+              spew("Relative to the leader - Total position error: %1.2fm", vd_err.norm_2());
+              //spew("Relative to the leader - Position error - North: %1.2fm - East: %1.2fm",
+              //     vd_err(0), vd_err(1));
+              //spew("Relative to the leader - Position error - X: %1.2fm     - Y: %1.2fm",
+              //    Matrix::dot(vd_err ,vd_inter_uav_x), Matrix::dot(vd_err ,vd_inter_uav_y));
+              spew("Relative to the leader - Velocity error - X: %1.2fm/s   - Y: %1.2fm/s",
+                  Matrix::dot(vd_deriv_err ,vd_inter_uav_x), Matrix::dot(vd_deriv_err ,vd_inter_uav_y));
+              spew("Relative to the leader - SS deviation - X: %1.2fm/s - Y: %1.2fm/s",
+                  Matrix::dot(vd_surf_uav.get(0, 1, ind_uav_lead, ind_uav_lead), vd_inter_uav_x),
+                  Matrix::dot(vd_surf_uav.get(0, 1, ind_uav_lead, ind_uav_lead), vd_inter_uav_y));
+            }
           }
 
           //!-------------------------------------------
@@ -2116,11 +2233,20 @@ namespace Maneuver
           vd_ctrl_weight(ind_uav) = 0;
           vd_ctrl_weight &= vd_weight_gain;
           vd_ctrl_weight /= sum(vd_ctrl_weight);
-          /*
-        if nargout > 4
-        varargout{4} = vd_ctrl_weight';
-        end
-           */
+
+          //! Tracking output
+          if (b_debug)
+          {
+            for (int ind_uav2 = 0; ind_uav < m_uav_n; ind_uav2++)
+            {
+              if (ind_uav == ind_uav2)
+                continue;
+
+              rel_state = form_monitor->rel_state[ind_uav2];
+              rel_state->ctrl_imp = vd_ctrl_weight(ind_uav2);
+            }
+          }
+
           //! Sliding surface data mixing
           Matrix vd_surf = vd_surf_uav * vd_ctrl_weight;
           Matrix vt_virt_err = vt_virt_err_uav * vd_ctrl_weight;
@@ -2277,26 +2403,45 @@ namespace Maneuver
 
           //! Tracking output
           // ========= Spew ===========
-          if (b_debug && d_time >= m_last_time_spew + 0.5)
+          if (b_debug)
           {
-            spew("Long accel: %1.2fm/s/s - Lat accel: %1.2fm/s/s", vd_ctrl(0), vd_ctrl(1));
-            spew("Sliding surface deviation - North: %1.2fm/s - East: %1.2fm/s", vd_surf(0), vd_surf(1));
-            m_last_time_spew = d_time;
+            if (d_time >= m_last_time_spew + 0.5)
+            {
+              spew("Long accel: %1.2fm/s/s - Lat accel: %1.2fm/s/s", vd_ctrl(0), vd_ctrl(1));
+              spew("Sliding surface deviation - North: %1.2fm/s - East: %1.2fm/s", vd_surf(0), vd_surf(1));
+              m_last_time_spew = d_time;
+            };
+
+            //! Commanded acceleration computed by the formation controller.
+            //! (Constrained by the vehicle operational limits)
+            form_monitor->ax_cmd = vd_ctrl(0);
+            form_monitor->ay_cmd = vd_ctrl(1);
+            //form_monitor->az_cmd = vd_ctrl(2);
+            //! Desired acceleration computed by the formation controller.
+            form_monitor->ax_des = vd_accel(0);
+            form_monitor->ay_des = vd_accel(1);
+            //form_monitor->az_des = vd_accel(2);
+            //! Formation combined virtual error.
+            //! (Component of the vehicle desired acceleration)
+            form_monitor->virt_err_x = vt_virt_err(0);
+            form_monitor->virt_err_y = vt_virt_err(1);
+            //form_monitor->virt_err_z = vt_virt_err(2);
+            //! Formation combined sliding surface feedback.
+            //! (Component of the vehicle desired acceleration)
+            form_monitor->surf_fdbk_x = -vd_surf_conv(0);
+            form_monitor->surf_fdbk_y = -vd_surf_conv(1);
+            //form_monitor->surf_fdbk_z = -vd_surf_conv(2);
+            //! Dynamics uncertainty compensation.
+            //! (Component of the vehicle desired acceleration)
+            form_monitor->surf_unkn_x = -vd_surf_unkn(0);
+            form_monitor->surf_unkn_y = -vd_surf_unkn(1);
+            //form_monitor->surf_unkn_z = -vd_surf_unkn(2);
+            //! Combined deviation from convergence.
+            //! (Total sliding surface value)
+            form_monitor->ss_x = vd_surf(0);
+            form_monitor->ss_y = vd_surf(1);
+            //form_monitor->ss_z = vd_surf(2);
           }
-          /*
-        if nargout > 1
-          varargout{1} = vd_accel';
-          if nargout > 2
-            varargout{2} = [vt_virt_err; -vd_surf_conv; -vd_surf_unkn]';
-            if nargout > 10
-              varargout{10} = vd_surf';
-              if nargout > 11
-                varargout{11} = vd_ctrl';
-              end
-            end
-          end
-        end
-           */
         }
       };
     }
