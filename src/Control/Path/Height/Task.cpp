@@ -144,7 +144,8 @@ namespace Control
 
           double delta_h_phi = (delta_h / m_args.phi_h);
           double trimmed_d_h_phi = trimValue(delta_h_phi,-1,1);
-          double trimmed_ss = trimValue((delta_h_dot + (m_args.k_vr * m_airspeed * trimmed_d_h_phi)) / phi_ss,-1,1);
+          m_vrate.value = m_args.k_vr * m_airspeed * trimmed_d_h_phi;
+/*          double trimmed_ss = trimValue((delta_h_dot + (m_args.k_vr * m_airspeed * trimmed_d_h_phi)) / phi_ss,-1,1);
           h_dotdot = k_ss * trimmed_ss;
 
           if (std::abs(delta_h_phi) < 1)
@@ -155,7 +156,7 @@ namespace Control
           m_h_dot_cmd = trimValue(h_dot_cmd_tmp, -(m_airspeed * m_args.k_vr), (m_airspeed * m_args.k_vr));
 
           m_vrate.value = m_h_dot_cmd;
-
+*/
           // Send to bus
           dispatch(m_vrate);
         }
