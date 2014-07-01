@@ -76,6 +76,7 @@ namespace Simulators
         debug("Consuming GPS-Fix");
 
         requestActivation();
+        setEntityState(EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         //m_origin = *msg;
       }
 
