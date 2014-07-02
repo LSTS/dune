@@ -65,6 +65,8 @@ namespace Control
         //! Value range
         float val_max;
         float val_min;
+        //! Channel reverse
+        bool reverse;
       };
 
       //! %Task arguments.
@@ -282,6 +284,10 @@ namespace Control
           .units(Units::Degree)
           .description("Max Roll");
 
+          param("RC 1 REV", m_args.rc1.reverse)
+          .defaultValue("False")
+          .description("Reverse Roll Channel");
+
           param("RC 2 PWM MIN", m_args.rc2.pwm_min)
           .defaultValue("1000")
           .units(Units::Microsecond)
@@ -296,6 +302,10 @@ namespace Control
           .defaultValue("2.0")
           .units(Units::MeterPerSecond)
           .description("Max Climb Rate");
+
+          param("RC 2 REV", m_args.rc2.reverse)
+          .defaultValue("False")
+          .description("Reverse Pitch Channel");
 
           param("RC 3 PWM MIN", m_args.rc3.pwm_min)
           .defaultValue("1000")
@@ -316,6 +326,10 @@ namespace Control
           .defaultValue("30.0")
           .units(Units::MeterPerSecond)
           .description("Max Air Speed");
+
+          param("RC 3 REV", m_args.rc3.reverse)
+          .defaultValue("False")
+          .description("Reverse Speed Channel");
 
           param("HITL", m_args.hitl)
           .defaultValue("false")
@@ -607,15 +621,15 @@ namespace Control
 
           int pwm_roll = map2PWM(m_args.rc1.pwm_min, m_args.rc1.pwm_max,
                                  m_args.rc1.val_min, m_args.rc1.val_max,
-                                 m_droll);
+                                 m_droll, m_args.rc1.reverse);
 
           int pwm_climb = map2PWM(m_args.rc2.pwm_min, m_args.rc2.pwm_max,
                                   m_args.rc2.val_min, m_args.rc2.val_max,
-                                  m_dclimb);
+                                  m_dclimb, m_args.rc2.reverse);
 
           int pwm_speed = map2PWM(m_args.rc3.pwm_min, m_args.rc3.pwm_max,
                                   m_args.rc3.val_min, m_args.rc3.val_max,
-                                  m_dspeed);
+                                  m_dspeed, m_args.rc3.reverse);
 
           debug("V1: %f, V2: %f, V3: %f", m_droll, m_dclimb, m_dspeed);
           debug("RC1: %d, RC2: %d, RC3: %d", pwm_roll, pwm_climb, pwm_speed);
@@ -678,9 +692,15 @@ namespace Control
 
         //! Converts value in range min_value:max_value to a value_pwm in range min_pwm:max_pwm
         int
-        map2PWM(int min_pwm, int max_pwm, float min_value, float max_value, float value)
+        map2PWM(int min_pwm, int max_pwm, float min_value, float max_value, float value, bool reverse)
         {
-          int value_pwm = (int) ((max_pwm - min_pwm) * (value - min_value) / (max_value - min_value)) + min_pwm;
+          int value_pwm;
+
+          if (reverse)
+            value_pwm = (int) max_pwm - ((max_pwm - min_pwm) * (value - min_value) / (max_value - min_value));
+          else
+            value_pwm = (int) ((max_pwm - min_pwm) * (value - min_value) / (max_value - min_value)) + min_pwm;
+
           return trimValue(value_pwm, min_pwm, max_pwm);
         }
 
