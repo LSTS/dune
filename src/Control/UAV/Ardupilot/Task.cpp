@@ -1648,6 +1648,7 @@ namespace Control
                 m_external = true;
                 mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
                 mode.mode = "MANUAL";
+                m_critical = false;
                 if (m_mode == 2)
                 {
                   mode.autonomy = IMC::AutopilotMode::AL_ASSISTED;
@@ -1681,18 +1682,21 @@ namespace Control
                 mode.mode = "LOITER";
                 trace("LOITER");
                 m_external = false;
+                m_critical = false;
                 break;
               case 6:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
                 mode.mode = "FBWB";
                 trace("FBWB");
                 m_external = false;
+                m_critical = false;
                 break;
               case 15:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
                 mode.mode = "GUIDED";
                 trace("GUIDED");
                 m_external = false;
+                m_critical = false;
                 break;
             }
           }
