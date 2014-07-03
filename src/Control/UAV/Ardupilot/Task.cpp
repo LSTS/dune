@@ -102,6 +102,9 @@ namespace Control
         RadioChannel rc3;
         //! HITL
         bool hitl;
+        //! Formation Flight
+        bool form_fl;
+        std::string form_fl_ent;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -334,6 +337,16 @@ namespace Control
           param("HITL", m_args.hitl)
           .defaultValue("false")
           .description("Hardware in the loop");
+
+          param("Formation Flight", m_args.form_fl)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
+          .defaultValue("false")
+          .description("Receive control references from Formation Flight controller");
+
+          param("Formation Flight Entity", m_args.form_fl_ent)
+          .defaultValue("Formation Control")
+          .description("Entity that sends Formation Flight control references");
 
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
@@ -603,7 +616,7 @@ namespace Control
         {
           //! If in Manual mode, Taking-off, Landing or on Ground do not send
           //! control references to ArduPilot
-          if(m_external || m_critical || m_ground)
+          if (m_external || m_critical || m_ground)
           {
             debug("external: %d, critical: %d, ground: %d", (int)m_external, (int)m_critical, (int)m_ground);
             return;
@@ -614,6 +627,10 @@ namespace Control
             debug("bank control is NOT active");
             return;
           }
+
+          //! If in formation flight only keep bank references coming from Formation Control entity
+          if (m_args.form_fl && resolveEntity(m_args.form_fl_ent) != d_roll->getSourceEntity())
+            return;
 
           m_droll = Angles::degrees(d_roll->value);
 
@@ -998,6 +1015,9 @@ namespace Control
         void
         consume(const IMC::SimulatedState* sim_state)
         {
+          if (!m_ctx.profiles.isSelected("HITL"))
+            return;
+
           mavlink_message_t msg;
           uint8_t buf[512];
 
@@ -1549,7 +1569,7 @@ namespace Control
         void
         handleHeartbeatPacket(const mavlink_message_t* msg)
         {
-          if(!m_has_setup_rate)
+          if (!m_has_setup_rate)
           {
             m_has_setup_rate = true;
             setupRate(m_args.trate);
@@ -1583,7 +1603,6 @@ namespace Control
               break;
             }
           }
-
 
           m_mode = hbt.custom_mode;
           if (m_vehicle_type == VEHICLE_COPTER)
