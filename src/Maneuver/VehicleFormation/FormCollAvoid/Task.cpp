@@ -627,11 +627,11 @@ namespace Maneuver
           // should come from a formation synchronous message
           if (m_args.uav_ind > 0)
           {
-            // Check if it is a plan execution request
+            //! Check if it is a plan execution request
             if (msg->type != IMC::PlanControl::PC_REQUEST)
               return;
 
-            // Check if the vehicle is the intended destination of the plan
+            //! Check if the vehicle is the intended destination of the plan
             if (msg->getDestination() != getSystemId())
             {
               trace("PlanControl message rejected!");
@@ -639,7 +639,7 @@ namespace Maneuver
               return;
             }
 
-            // Check if the vehicle is itself the source of the plan
+            //! Check if the vehicle is itself the source of the plan
             // ToDo - For final implementation this blocking should be removed
             if (msg->getSource() == getSystemId())
             {
@@ -648,66 +648,45 @@ namespace Maneuver
               return;
             }
 
-            // Reset virtual leader state
-            // ToDo - Use global team position to set the leader initial state
-            m_init_leader.setDestination(resolveSystemName("form-leader-01"));
-            m_init_leader.op      = IMC::LeaderState::OP_SET;
-            m_init_leader.lat     = m_llh_ref_pos[0];
-            m_init_leader.lon     = m_llh_ref_pos[1];
-            m_init_leader.height  = m_llh_ref_pos[2];
-            m_init_leader.x       = m_uav_state(0, m_args.uav_ind);
-            m_init_leader.y       = m_uav_state(1, m_args.uav_ind);
-            m_init_leader.z       = m_uav_state(2, m_args.uav_ind);
-            m_init_leader.vx      = m_uav_state(3, m_args.uav_ind);
-            m_init_leader.vy      = m_uav_state(4, m_args.uav_ind);
-            m_init_leader.vz      = m_uav_state(5, m_args.uav_ind);
-            m_init_leader.phi     = m_uav_state(6, m_args.uav_ind);
-            m_init_leader.theta   = m_uav_state(7, m_args.uav_ind);
-            m_init_leader.psi     = m_uav_state(8, m_args.uav_ind);
-            m_init_leader.p       = m_uav_state(9, m_args.uav_ind);
-            m_init_leader.q       = m_uav_state(10, m_args.uav_ind);
-            m_init_leader.r       = m_uav_state(11, m_args.uav_ind);
-            m_init_leader.svx     = m_wind(0);
-            m_init_leader.svy     = m_wind(1);
-            m_init_leader.svz     = m_wind(2);
-            dispatch(m_init_leader);
+            //! Check if the PlanControl messages is for formation flight
+            if (std::strcmp(msg->plan_id.c_str(), m_args.plan.c_str()))
+            {
+              trace("PlanControl message rejected!");
+              trace("Plan ID not '%s'.", m_args.plan.c_str());
+              return;
+            }
 
             //! Reroute the PlanControl message to the virtual leader
             lead_plan_ctrl = *msg;
+            lead_plan_ctrl.setDestination(resolveSystemName("form-leader-01"));
+            dispatch(lead_plan_ctrl);
 
-            bool is_path_control;
-            bool isactive_path_control = true;
-
-            //! - Deserialize PlanControl messages to check if it is for formation flight
-            //! (if it is using only Path Control).
-            const IMC::SetEntityParameters* sep;
-            const IMC::PlanSpecification* planspec = static_cast<const IMC::PlanSpecification*>(msg->arg.get());
-            IMC::MessageList<IMC::PlanManeuver>::const_iterator it = planspec->maneuvers.begin();
-            for (; it != planspec->maneuvers.end(); it++ )
+            //! Reset virtual leader state, if the PlanControl action is "Start"
+            // ToDo - Use global team position to set the leader initial state
+            if (msg->op == IMC::PlanControl::PC_START)
             {
-              is_path_control = false;
-              IMC::MessageList<IMC::Message>::const_iterator it_sa = (*it)->start_actions.begin();
-              for (; it_sa != (*it)->start_actions.end(); it_sa++ )
-              {
-                sep = static_cast<const IMC::SetEntityParameters*>(*it_sa);
-                if (std::strcmp(sep->name.c_str(), "Path Control") == 0)
-                {
-                  is_path_control = true;
-                  IMC::MessageList<IMC::EntityParameter>::const_iterator it_ep = sep->params.begin();
-                  for (; it_ep != sep->params.end(); it_ep++ )
-                  {
-                    if (std::strcmp((*it_ep)->value.c_str(), "true") != 0)
-                      isactive_path_control = false;
-                  }
-                }
-              }
-              if (!is_path_control)
-                isactive_path_control = false;
-            }
-            if (isactive_path_control)
-            {
-              lead_plan_ctrl.setDestination(resolveSystemName("form-leader-01"));
-              dispatch(lead_plan_ctrl);
+              trace("Sending LeaderState to the leader.");
+              m_init_leader.setDestination(resolveSystemName("form-leader-01"));
+              m_init_leader.op      = IMC::LeaderState::OP_SET;
+              m_init_leader.lat     = m_llh_ref_pos[0];
+              m_init_leader.lon     = m_llh_ref_pos[1];
+              m_init_leader.height  = m_llh_ref_pos[2];
+              m_init_leader.x       = m_uav_state(0, m_args.uav_ind);
+              m_init_leader.y       = m_uav_state(1, m_args.uav_ind);
+              m_init_leader.z       = m_uav_state(2, m_args.uav_ind);
+              m_init_leader.vx      = m_uav_state(3, m_args.uav_ind);
+              m_init_leader.vy      = m_uav_state(4, m_args.uav_ind);
+              m_init_leader.vz      = m_uav_state(5, m_args.uav_ind);
+              m_init_leader.phi     = m_uav_state(6, m_args.uav_ind);
+              m_init_leader.theta   = m_uav_state(7, m_args.uav_ind);
+              m_init_leader.psi     = m_uav_state(8, m_args.uav_ind);
+              m_init_leader.p       = m_uav_state(9, m_args.uav_ind);
+              m_init_leader.q       = m_uav_state(10, m_args.uav_ind);
+              m_init_leader.r       = m_uav_state(11, m_args.uav_ind);
+              m_init_leader.svx     = m_wind(0);
+              m_init_leader.svy     = m_wind(1);
+              m_init_leader.svz     = m_wind(2);
+              dispatch(m_init_leader);
             }
 
             /*
@@ -723,6 +702,8 @@ namespace Maneuver
             //! Flag virtual leader state arrival
             m_team_plan_init = true;
           }
+          else
+            trace("PlanControl message received.");
         }
 
         void
@@ -1159,26 +1140,32 @@ namespace Maneuver
           //! Handle IMC messages from bus
           consumeMessages();
 
+          //! Declaration
+          double d_time = Clock::get();
+
           if (!isActive())
           {
             //! Initialize leader state
             if (m_args.uav_ind == 0)
               dispatch(m_init_leader);
 
-            spew("Formation flight task is inactive (%s).", this->getSystemName());
-            return;
-          }
+            // ========= Spew ===========
+            if (d_time >= m_last_time_trace + 1.0)
+            {
+              spew("Formation flight task is inactive (%s).", this->getSystemName());
+              m_last_time_trace = d_time;
+              return;
+            }
+         }
 
           if (m_args.uav_ind == 0)
           {
             //! Update the leader vehicle commands and states
 
             //! Declaration
-            double d_time;
             double d_timestep;
 
             //! Compute the time step
-            d_time  = Clock::get();
             d_timestep = d_time - m_last_leader_update;
             m_last_leader_update = d_time;
 
