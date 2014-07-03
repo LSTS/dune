@@ -672,12 +672,43 @@ namespace Maneuver
             m_init_leader.svz     = m_wind(2);
             dispatch(m_init_leader);
 
-            // Reroute the PlanControl message to the virtual leader
-            /*
+            //! Reroute the PlanControl message to the virtual leader
             lead_plan_ctrl = *msg;
-            lead_plan_ctrl.setDestination(resolveSystemName("form-leader-01"));
-            dispatch(lead_plan_ctrl);
-            */
+
+            bool is_path_control;
+            bool isactive_path_control = true;
+
+            //! - Deserialize PlanControl messages to check if it is for formation flight
+            //! (if it is using only Path Control).
+            const IMC::SetEntityParameters* sep;
+            const IMC::PlanSpecification* planspec = static_cast<const IMC::PlanSpecification*>(msg->arg.get());
+            IMC::MessageList<IMC::PlanManeuver>::const_iterator it = planspec->maneuvers.begin();
+            for (; it != planspec->maneuvers.end(); it++ )
+            {
+              is_path_control = false;
+              IMC::MessageList<IMC::Message>::const_iterator it_sa = (*it)->start_actions.begin();
+              for (; it_sa != (*it)->start_actions.end(); it_sa++ )
+              {
+                sep = static_cast<const IMC::SetEntityParameters*>(*it_sa);
+                if (std::strcmp(sep->name.c_str(), "Path Control") == 0)
+                {
+                  is_path_control = true;
+                  IMC::MessageList<IMC::EntityParameter>::const_iterator it_ep = sep->params.begin();
+                  for (; it_ep != sep->params.end(); it_ep++ )
+                  {
+                    if (std::strcmp((*it_ep)->value.c_str(), "true") != 0)
+                      isactive_path_control = false;
+                  }
+                }
+              }
+              if (!is_path_control)
+                isactive_path_control = false;
+            }
+            if (isactive_path_control)
+            {
+              lead_plan_ctrl.setDestination(resolveSystemName("form-leader-01"));
+              dispatch(lead_plan_ctrl);
+            }
 
             /*
             //! Initiate the leader vehicle plan
