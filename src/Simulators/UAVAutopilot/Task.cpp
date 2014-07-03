@@ -63,6 +63,12 @@ namespace Simulators
       }
 
       void
+      onResourceAcquisition(void)
+      {
+        setEntityState(EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
       onResourceRelease(void)
       {
         //Memory::clear(m_model);
@@ -76,7 +82,6 @@ namespace Simulators
         debug("Consuming GPS-Fix");
 
         requestActivation();
-        setEntityState(EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         //m_origin = *msg;
       }
 
