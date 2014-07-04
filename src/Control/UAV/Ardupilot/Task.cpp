@@ -191,6 +191,7 @@ namespace Control
           ref_lon(0.0),
           ref_hei(0.0),
           m_TCP_sock(NULL),
+          m_TCP_port(0),
           m_sysid(1),
           m_lat(0.0),
           m_lon(0.0),
@@ -211,7 +212,8 @@ namespace Control
           m_dclimb(0),
           m_dspeed(20),
           m_vehicle_type(VEHICLE_UNKNOWN),
-          m_service(false)
+          m_service(false),
+          m_last_wp(0)
         {
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
