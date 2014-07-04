@@ -94,6 +94,8 @@ namespace Maneuver
         double init_yaw;
         // Debug flag
         bool debug;
+        //! Path Controller
+        std::string pcontrol_ent;
       };
 
       struct RelState
@@ -457,6 +459,10 @@ namespace Maneuver
           .defaultValue("false")
           .description("Controller in debug mode");
 
+          param("Path Controller", m_args.pcontrol_ent)
+          .defaultValue("Path Control Leader")
+          .description("Leader Path Controller");
+
           // Message binding
           bind<IMC::LeaderState>(this);
           bind<IMC::PlanControl>(this);
@@ -797,6 +803,9 @@ namespace Maneuver
         void
         consume(const IMC::DesiredRoll* msg)
         {
+          if (msg->getSourceEntity() != resolveEntity(m_args.pcontrol_ent))
+            return;
+
           if (m_args.uav_ind == 0)
           {
             //! Get leader vehicle commanded roll
@@ -807,12 +816,12 @@ namespace Maneuver
               trace("Missing GPS-Fix!");
               return;
             }
-            if (msg->getSource() != getSystemId())
-            {
-              trace("Bank command rejected.");
-              trace("DesiredRoll received from system: %s", resolveSystemId(msg->getSource()));
-              return;
-            }
+//            if (msg->getSource() != getSystemId())
+//            {
+//              trace("Bank command rejected.");
+//              trace("DesiredRoll received from system: %s", resolveSystemId(msg->getSource()));
+//              return;
+//            }
 
             m_model->commandBank(msg->value);
 
@@ -824,6 +833,9 @@ namespace Maneuver
         void
         consume(const IMC::DesiredSpeed* msg)
         {
+          if (msg->getSourceEntity() != resolveEntity(m_args.pcontrol_ent))
+            return;
+
           if (m_args.uav_ind == 0)
           {
             //! Get leader vehicle commanded airspeed
