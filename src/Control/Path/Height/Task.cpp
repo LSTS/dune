@@ -63,7 +63,10 @@ namespace Control
         bool m_first_run;
 
         Task(const std::string& name, Tasks::Context& ctx):
-          DUNE::Control::PathController(name, ctx)
+          DUNE::Control::PathController(name, ctx),
+          m_h_dot_cmd(0),
+          m_airspeed(0),
+          m_first_run(true)
         {
           param("Sliding Surface maximum gain", m_args.tau_ss)
           .units(Units::MeterPerSquareSecond)
