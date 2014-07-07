@@ -45,7 +45,6 @@ namespace Maneuver
     {
       using DUNE_NAMESPACES;
 
-
       struct Arguments
       {
         //! Simulation and control frequencies
@@ -95,7 +94,7 @@ namespace Maneuver
         // Debug flag
         bool debug;
         //! Path Controller
-        std::string pcontrol_ent;
+        std::string pcontrol_ent_name;
       };
 
       struct RelState
@@ -283,6 +282,9 @@ namespace Maneuver
         FormMonitor* m_form_monitor;
         //std::vector<RelState*> m_rel_state;
 
+        //! Entity to receive path control from
+        unsigned int m_pcontrol_entity;
+
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Periodic(name, ctx),
           //m_models(NULL),
@@ -304,7 +306,8 @@ namespace Maneuver
           m_team_state_init(false),
           m_valid_airspeed(false),
           m_frequency(0.0),
-          m_debug(false)
+          m_debug(false),
+          m_pcontrol_entity(0)
         {
           param("Predicted Control Frequency", m_args.ctrl_frequency)
           .defaultValue("20.0")
@@ -459,7 +462,7 @@ namespace Maneuver
           .defaultValue("false")
           .description("Controller in debug mode");
 
-          param("Path Controller", m_args.pcontrol_ent)
+          param("Path Controller", m_args.pcontrol_ent_name)
           .defaultValue("Path Control Leader")
           .description("Leader Path Controller");
 
@@ -486,6 +489,7 @@ namespace Maneuver
         void
         onEntityResolution(void)
         {
+          m_pcontrol_entity = resolveEntity(m_args.pcontrol_ent_name);
         }
 
         void
@@ -803,11 +807,11 @@ namespace Maneuver
         void
         consume(const IMC::DesiredRoll* msg)
         {
-          if (msg->getSourceEntity() != resolveEntity(m_args.pcontrol_ent))
-            return;
-
           if (m_args.uav_ind == 0)
           {
+            if (msg->getSourceEntity() != m_pcontrol_entity)
+              return;
+
             //! Get leader vehicle commanded roll
             if (!isActive())
             {
@@ -833,11 +837,11 @@ namespace Maneuver
         void
         consume(const IMC::DesiredSpeed* msg)
         {
-          if (msg->getSourceEntity() != resolveEntity(m_args.pcontrol_ent))
-            return;
-
           if (m_args.uav_ind == 0)
           {
+            if (msg->getSourceEntity() != m_pcontrol_entity)
+              return;
+
             //! Get leader vehicle commanded airspeed
             if (!isActive())
             {
