@@ -570,15 +570,6 @@ namespace Simulators
       {
         spew("Consuming DesiredRoll");
 
-        //! Check if system is active
-        if (!isActive())
-        {
-          trace("Bank command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
-          return;
-        }
-
         // Filter command by systems and entities.
         bool matched = true;
         if (m_filtered_sys[0].size() > 0)
@@ -604,6 +595,15 @@ namespace Simulators
           return;
         }
 
+        //! Check if system is active
+        if (!isActive())
+        {
+          trace("Bank command rejected.");
+          trace("Simulation not active.");
+          trace("Missing GPS-Fix!");
+          return;
+        }
+
         m_model->commandBank(msg->value);
 
         // ========= Debug ===========
@@ -613,16 +613,7 @@ namespace Simulators
       void
       consume(const IMC::DesiredSpeed* msg)
       {
-        spew("Consuming DesiredSpeed");
-
-        //! Check if system is active
-        if (!isActive())
-        {
-          trace("Speed command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
-          return;
-        }
+        //spew("Consuming DesiredSpeed");
 
         // Filter command by systems and entities.
         bool matched = true;
@@ -649,6 +640,15 @@ namespace Simulators
           return;
         }
 
+        //! Check if system is active
+        if (!isActive())
+        {
+          trace("Speed command rejected.");
+          trace("Simulation not active.");
+          trace("Missing GPS-Fix!");
+          return;
+        }
+
         m_model->commandAirspeed(msg->value);
 
         // ========= Debug ===========
@@ -658,16 +658,7 @@ namespace Simulators
       void
       consume(const IMC::DesiredZ* msg)
       {
-        spew("Consuming DesiredZ");
-
-        //! Check if system is active
-        if (!isActive())
-        {
-          trace("Altitude command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
-          return;
-        }
+        //spew("Consuming DesiredZ");
 
         // Filter command by systems and entities.
         bool matched = true;
@@ -694,6 +685,15 @@ namespace Simulators
           return;
         }
 
+        //! Check if system is active
+        if (!isActive())
+        {
+          trace("Altitude command rejected.");
+          trace("Simulation not active.");
+          trace("Missing GPS-Fix!");
+          return;
+        }
+
         double alt_cmd;
         if (msg->z_units == IMC::Z_HEIGHT || msg->z_units == IMC::Z_ALTITUDE)
           alt_cmd = msg->value;
@@ -708,16 +708,7 @@ namespace Simulators
       void
       consume(const IMC::DesiredPitch* msg)
       {
-        spew("Consuming DesiredPitch");
-
-        //! Check if system is active
-        if (!isActive())
-        {
-          trace("Pitch command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
-          return;
-        }
+        //spew("Consuming DesiredPitch");
 
         // Filter command by systems and entities.
         bool matched = true;
@@ -744,6 +735,15 @@ namespace Simulators
           return;
         }
 
+        //! Check if system is active
+        if (!isActive())
+        {
+          trace("Pitch command rejected.");
+          trace("Simulation not active.");
+          trace("Missing GPS-Fix!");
+          return;
+        }
+
         m_model->commandFPA(msg->value);
 
         // ========= Debug ===========
@@ -754,10 +754,6 @@ namespace Simulators
       void
       consume(const IMC::SetServoPosition* msg)
       {
-        //! Check if system is active
-        if (!isActive())
-          return;
-
         // Filter command by systems and entities.
         bool matched = true;
         if (m_filtered_sys[4].size() > 0)
@@ -783,6 +779,10 @@ namespace Simulators
           return;
         }
 
+        //! Check if system is active
+        if (!isActive())
+          return;
+
         m_servo_pos(msg->id) = msg->value;
         // ========= Debug ===========
         spew("Servo command received (%1.2fm)", msg->value);
@@ -791,10 +791,6 @@ namespace Simulators
       void
       consume(const IMC::SetThrusterActuation* msg)
       {
-        //! Check if system is active
-        if (!isActive())
-          return;
-
         // Filter command by systems and entities.
         bool matched = true;
         if (m_filtered_sys[5].size() > 0)
@@ -819,6 +815,10 @@ namespace Simulators
               resolveEntity(msg->getSourceEntity()).c_str());
           return;
         }
+
+        //! Check if system is active
+        if (!isActive())
+          return;
 
         m_thruster_act = msg->value;
         // ========= Debug ===========
