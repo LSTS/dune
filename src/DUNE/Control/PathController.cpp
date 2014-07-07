@@ -291,7 +291,16 @@ namespace DUNE
     void
     PathController::onEntityResolution(void)
     {
-      m_filter_entity = resolveEntity(m_filter_entity_name);
+      if (!m_filter)
+        return;
+
+      try
+      {
+        m_filter_entity = resolveEntity(m_filter_entity_name);
+      }
+      catch (std::runtime_error& e) {
+        signalError(e.what());
+      }
     }
 
     void
