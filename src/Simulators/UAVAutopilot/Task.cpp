@@ -193,7 +193,8 @@ namespace Simulators
           return;
 
         //! Check if the source ID is from the system itself
-        if (msg->getSource() != getSystemId() || msg->getDestination() != getSystemId())
+        if (msg->getSource() != ((m_alias_id != UINT_MAX) ? m_alias_id : getSystemId()) ||
+            msg->getDestination() != ((m_alias_id != UINT_MAX) ? m_alias_id : getSystemId()))
         {
           spew("Simulated state rejected.");
           spew("SimulatedState sent from another source!");
