@@ -64,6 +64,7 @@ namespace DUNE
       m_setup(true),
       m_braking(false),
       m_jump_monitors(false),
+      m_filter_entity(0),
       m_aloops(0),
       m_btrack(NULL),
       m_scope_ref(0)
@@ -192,6 +193,14 @@ namespace DUNE
       .units(Units::Meter)
       .description("Admissible altitude when doing depth control");
 
+      param("Filter EstimatedState", m_filter)
+      .defaultValue("false")
+      .description("Enable or disable EstimateState filtering by entity");
+
+      param("Filter Entity", m_filter_entity_name)
+      .defaultValue("Autopilot")
+      .description("Only accepts EstimatedState from this entity");
+
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
 
@@ -277,6 +286,12 @@ namespace DUNE
     {
       if (m_btd.enabled)
         m_btd.args.eid = reserveEntity("Bottom Track");
+    }
+
+    void
+    PathController::onEntityResolution(void)
+    {
+      m_filter_entity = resolveEntity(m_filter_entity_name);
     }
 
     void
@@ -544,6 +559,9 @@ namespace DUNE
     void
     PathController::consume(const IMC::EstimatedState* es)
     {
+      if (m_filter && m_filter_entity != es->getSourceEntity())
+        return;
+
       if (m_btd.enabled)
       {
         try
