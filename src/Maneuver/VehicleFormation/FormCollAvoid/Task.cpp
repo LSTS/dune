@@ -714,7 +714,7 @@ namespace Maneuver
             if (msg->op == IMC::LeaderState::OP_SET)
             {
               // Check if the system is the intended destination of the state
-              if (msg->getDestination() != getSystemId())
+              if (msg->getDestination() != ((m_alias_id != UINT_MAX) ? m_alias_id : getSystemId()))
               {
                 trace("LeaderState message rejected!");
                 trace("Destination system: %s.", resolveSystemId(msg->getDestination()));
@@ -962,7 +962,7 @@ namespace Maneuver
             m_model->commandBank(msg->value);
 
             // ========= Debug ===========
-            trace("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
+            spew("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
           }
         }
 
@@ -1007,7 +1007,7 @@ namespace Maneuver
             m_model->commandAirspeed(msg->value);
 
             // ========= Debug ===========
-            trace("Speed command received (%1.2fm/s)", msg->value);
+            spew("Speed command received (%1.2fm/s)", msg->value);
           }
         }
 
@@ -1058,7 +1058,7 @@ namespace Maneuver
             m_model->commandAlt(alt_cmd);
 
             // ========= Debug ===========
-            trace("Altitude command received (%1.2fm)", alt_cmd);
+            spew("Altitude command received (%1.2fm)", alt_cmd);
           }
         }
 
@@ -1473,7 +1473,7 @@ namespace Maneuver
             m_sstate.svz = m_model->m_wind(2);
 
             //! Set the destination ID as the system own ID (for virtual leader autopilot simulation)
-            m_sstate.setDestination(getSystemId());
+            m_sstate.setDestination((m_alias_id != UINT_MAX) ? m_alias_id : getSystemId());
 
             //! Set source system alias
             if (m_alias_id != UINT_MAX)
