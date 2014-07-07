@@ -27,6 +27,7 @@
 
 // ISO C++ 98 headers.
 #include <cstring>
+#include <string>
 #include <cmath>
 #include <vector>
 
@@ -48,6 +49,8 @@ namespace Maneuver
 
       struct Arguments
       {
+        //! Source system alias
+        std::string src_alias;
         //! Simulation and control frequencies
         double ctrl_frequency;
         //! Controller parameters
@@ -281,6 +284,9 @@ namespace Maneuver
         FormMonitor* m_form_monitor;
         //std::vector<RelState*> m_rel_state;
 
+        // System alias id
+        uint32_t m_alias_id;
+
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Periodic(name, ctx),
           //m_models(NULL),
@@ -302,8 +308,13 @@ namespace Maneuver
           m_team_state_init(false),
           m_valid_airspeed(false),
           m_frequency(0.0),
-          m_debug(false)
+          m_debug(false),
+          m_alias_id(UINT_MAX)
         {
+          param("Source Alias", m_args.src_alias)
+          .defaultValue("")
+          .description("Emulated system id.");
+
           param("Predicted Control Frequency", m_args.ctrl_frequency)
           .defaultValue("20.0")
           .description("Frequency at which simulated vehicles control is executed");
@@ -384,11 +395,6 @@ namespace Maneuver
           param(DTR_RT("Formation Plan"), m_args.plan)
           .defaultValue("formation_plan")
           .description(DTR("Flight plan to be executed by the vehicles formation"));
-
-          param("Gravity Acceleration", m_args.gaccel)
-          .defaultValue("9.8066")
-          .units(Units::MeterPerSquareSecond)
-          .description("Gravity Acceleration at aircraft location");
 
           param("Maximum Flow Accel", m_args.flow_accel_max)
           .defaultValue("0.0")
@@ -475,6 +481,23 @@ namespace Maneuver
         {
           //! Parameters checking
           checkParameters();
+
+          //! Set source system alias
+          if (!m_args.src_alias.empty())
+          {
+            // Resolve systems.
+            try
+            {
+              m_alias_id = resolveSystemName(m_args.src_alias);
+            }
+            catch (...)
+            {
+              debug("No system found with designation '%s'.", m_args.src_alias.c_str());
+              m_alias_id = UINT_MAX;
+            }
+          }
+          else
+            m_alias_id = UINT_MAX;
         }
 
         void
@@ -613,6 +636,8 @@ namespace Maneuver
               IMC::CacheControl cop;
               cop.op = IMC::CacheControl::COP_STORE;
               cop.message.set(*msg);
+                if (m_alias_id != UINT_MAX)
+                  cop.setSource(m_alias_id);
               dispatch(cop);
                */
             }
@@ -649,7 +674,7 @@ namespace Maneuver
             }
 
             //! Check if the PlanControl messages is for formation flight
-            if (std::strcmp(msg->plan_id.c_str(), m_args.plan.c_str()))
+            if (msg->plan_id.compare(m_args.plan))
             {
               trace("PlanControl message rejected!");
               trace("Plan ID not '%s'.", m_args.plan.c_str());
@@ -659,6 +684,8 @@ namespace Maneuver
             //! Reroute the PlanControl message to the virtual leader
             lead_plan_ctrl = *msg;
             lead_plan_ctrl.setDestination(resolveSystemName("form-leader-01"));
+            if (m_alias_id != UINT_MAX)
+              lead_plan_ctrl.setSource(m_alias_id);
             dispatch(lead_plan_ctrl);
 
             //! Reset virtual leader state, if the PlanControl action is "Start"
@@ -686,6 +713,8 @@ namespace Maneuver
               m_init_leader.svx     = m_wind(0);
               m_init_leader.svy     = m_wind(1);
               m_init_leader.svz     = m_wind(2);
+              if (m_alias_id != UINT_MAX)
+                m_init_leader.setSource(m_alias_id);
               dispatch(m_init_leader);
             }
 
@@ -696,6 +725,8 @@ namespace Maneuver
             p_control.op = IMC::PlanControl::PC_START;
             p_control.type = IMC::PlanControl::PC_REQUEST;
             p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
+                if (m_alias_id != UINT_MAX)
+                  p_control.setSource(m_alias_id);
             dispatch(p_control);
              */
 
@@ -803,8 +834,7 @@ namespace Maneuver
             if (!isActive())
             {
               trace("Bank command rejected.");
-              trace("Simulation not active.");
-              trace("Missing GPS-Fix!");
+              trace("Leader simulation not active.");
               return;
             }
             if (msg->getSource() != getSystemId())
@@ -830,8 +860,7 @@ namespace Maneuver
             if (!isActive())
             {
               trace("Speed command rejected.");
-              trace("Simulation not active.");
-              trace("Missing GPS-Fix!");
+              trace("Leader simulation not active.");
               return;
             }
             if (msg->getSource() != getSystemId())
@@ -858,8 +887,7 @@ namespace Maneuver
             if (!isActive())
             {
               trace("Altitude command rejected.");
-              trace("Simulation not active.");
-              trace("Missing GPS-Fix!");
+              trace("Leader simulation not active.");
               return;
             }
 
@@ -1030,6 +1058,8 @@ namespace Maneuver
                   form_monit.rel_state.push_back(relative_state);
                 }
 
+                if (m_alias_id != UINT_MAX)
+                  form_monit.setSource(m_alias_id);
                 dispatch(form_monit);
               }
 
@@ -1048,17 +1078,23 @@ namespace Maneuver
               //===========================================
 
               m_bank_cmd.value = m_uav_ctrl(0, m_args.uav_ind-1);
-              dispatch(m_bank_cmd);
               m_airspeed_cmd.value = m_uav_ctrl(1, m_args.uav_ind-1);
+              //m_altitude_cmd.value = m_uav_ctrl(2, m_args.uav_ind-1);
+              //! Set source system alias
+              if (m_alias_id != UINT_MAX)
+              {
+                m_bank_cmd.setSource(m_alias_id);
+                m_airspeed_cmd.setSource(m_alias_id);
+                //m_altitude_cmd.setSource(m_alias_id);
+              }
+              dispatch(m_bank_cmd);
               dispatch(m_airspeed_cmd);
-              /*
-               m_altitude_cmd.value = m_uav_ctrl(2, m_args.uav_ind-1);
-               dispatch(m_altitude_cmd);
-               */
+              //dispatch(m_altitude_cmd);
             }
             else
             {
-              debug("EstimatedState start for vehicle %s", resolveSystemId(msg->getSource()));
+              spew("Process another system's EstimatedState - start for vehicle %s",
+                   resolveSystemId(msg->getSource()));
               //! Get team vehicle updated state
               //! ToDo - Check that the estimated state is from a team member
 
@@ -1069,11 +1105,13 @@ namespace Maneuver
               int ind_uav = 100;
 
               //! Get estimated state time stamp
-              debug("EstimatedState 1 for vehicle %s", resolveSystemId(msg->getSource()));
+              spew("Process another system's EstimatedState - 1 for vehicle %s",
+                  resolveSystemId(msg->getSource()));
               m_last_state_estim(ind_uav) = msg->getTimeStamp();
               m_last_simctrl_update(ind_uav-1)  = msg->getTimeStamp();
 
-              debug("EstimatedState 2 for vehicle %s", resolveSystemId(msg->getSource()));
+              spew("Process another system's EstimatedState - 2 for vehicle %s",
+                  resolveSystemId(msg->getSource()));
               //! - State update
               double vt_uav_state[12] = {msg->x,   msg->y,     msg->z,
                   msg->vx,  msg->vy,    msg->vz,
@@ -1147,7 +1185,13 @@ namespace Maneuver
           {
             //! Initialize leader state
             if (m_args.uav_ind == 0)
+            {
+              //! Set source system alias
+              if (m_alias_id != UINT_MAX)
+                m_init_leader.setSource(m_alias_id);
+
               dispatch(m_init_leader);
+            }
 
             // ========= Spew ===========
             if (d_time >= m_last_time_trace + 1.0)
@@ -1280,6 +1324,10 @@ namespace Maneuver
             //! Set the destination ID as the system own ID (for virtual leader autopilot simulation)
             m_sstate.setDestination(getSystemId());
 
+            //! Set source system alias
+            if (m_alias_id != UINT_MAX)
+              m_sstate.setSource(m_alias_id);
+
             //! Send simulated state message (with the system own ID as destination)
             dispatch(m_sstate);
 
@@ -1365,6 +1413,9 @@ namespace Maneuver
           origin.lon = lead_state->lon;
           origin.height = lead_state->height;
           origin.setDestination(getSystemId());
+          //! Set source system alias
+          if (m_alias_id != UINT_MAX)
+            origin.setSource(m_alias_id);
           dispatch(origin);
 
           //! Defining origin.
@@ -1622,7 +1673,7 @@ namespace Maneuver
           //! ====== Variables declaration and initialization ======
 
           //! Environment parameters
-          double d_g = m_args.gaccel;
+          double d_g = DUNE::Math::c_gravity;
 
           //! Control constraints
           double d_bank_lim = m_args.bank_lim;
