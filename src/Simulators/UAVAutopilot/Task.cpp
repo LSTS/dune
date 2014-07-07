@@ -25,6 +25,9 @@
 // Author: Ricardo Bencatel                                                 *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <cstring>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -34,25 +37,51 @@ namespace Simulators
   {
     using DUNE_NAMESPACES;
 
+    //! Vector for System Mapping.
+    typedef std::vector<uint32_t> Systems;
+
+    //! Vector for Entity Mapping.
+    typedef std::vector<uint32_t> Entities;
+
     struct Arguments
     {
+      //! State source
+      std::vector<std::string> filt_src;
+      //! Source system alias
+      std::string src_alias;
     };
 
     //! %UAV autopilot simulator task.
     struct Task: public DUNE::Tasks::Periodic
     {
+      //! Task arguments.
+      Arguments m_args;
       // Simulation vehicle.
       //UAVModel* m_model;
       //! Simulated position (X,Y,Z).
       IMC::SimulatedState m_sstate;
       //! Origin for simulated state.
       IMC::GpsFix m_origin;
-      //! Task arguments.
-      Arguments m_args;
+      //! List of systems allowed to define a command.
+      Systems m_filtered_sys;
+      //! List of entities allowed to define a command.
+      Entities m_filtered_ent;
+      // System alias id
+      uint32_t m_alias_id;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Periodic(name, ctx)
+        DUNE::Tasks::Periodic(name, ctx),
+        m_alias_id(UINT_MAX)
       {
+        // Definition of configuration parameters.
+        param("Filtered source", m_args.filt_src)
+        .defaultValue("")
+        .description("List of <System>+<System>:<Entity>+<Entity> that define the source systems and entities from which the state is accepted.");
+
+        param("Source Alias", m_args.src_alias)
+        .defaultValue("")
+        .description("Emulated system id.");
+
         bind<IMC::GpsFix>(this);
         bind<IMC::SimulatedState>(this);
       }
@@ -60,6 +89,77 @@ namespace Simulators
       ~Task(void)
       {
         Task::onResourceRelease();
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        //! Process the systems and entities allowed to define a command.
+        uint32_t i_src;
+        m_filtered_sys.clear();
+        m_filtered_ent.clear();
+        for (unsigned int i = 0; i < m_args.filt_src.size(); ++i)
+        {
+          std::vector<std::string> parts;
+          String::split(m_args.filt_src[i], ":", parts);
+          if (parts.size() < 1)
+            continue;
+
+          // Split systems and entities.
+          std::vector<std::string> systems;
+          String::split(parts[0], "+", systems);
+          std::vector<std::string> entities;
+          String::split(parts[1], "+", entities);
+
+          m_filtered_ent.resize(systems.size()*entities.size());
+          m_filtered_sys.resize(systems.size()*entities.size());
+          // Resolve systems id.
+          for (unsigned j = 0; j < systems.size(); j++)
+          {
+            // Resolve entities id.
+            for (unsigned k = 0; k < entities.size(); k++)
+            {
+              i_src = (j+1)*(k+1)-1;
+              // Resolve systems.
+              try
+              {
+                m_filtered_sys[i_src] = resolveSystemName(systems[j]);
+              }
+              catch (...)
+              {
+                debug("No system found with designation '%s'.", parts[0].c_str());
+                m_filtered_sys[i_src] = UINT_MAX;
+              }
+              // Resolve entities.
+              try
+              {
+                m_filtered_ent[i_src] = resolveEntity(entities[k]);
+              }
+              catch (...)
+              {
+                debug("No entity found with designation '%s'.", parts[1].c_str());
+                m_filtered_ent[i_src] = UINT_MAX;
+              }
+            }
+          }
+        }
+
+        //! Set source system alias
+        if (!m_args.src_alias.empty())
+        {
+          // Resolve systems.
+          try
+          {
+            m_alias_id = resolveSystemName(m_args.src_alias);
+          }
+          catch (...)
+          {
+            debug("No system found with designation '%s'.", m_args.src_alias.c_str());
+            m_alias_id = UINT_MAX;
+          }
+        }
+        else
+          m_alias_id = UINT_MAX;
       }
 
       void
@@ -97,6 +197,31 @@ namespace Simulators
         {
           spew("Simulated state rejected.");
           spew("SimulatedState sent from another source!");
+          return;
+        }
+
+        // Filter SimulatedState by systems and entities.
+        bool matched = true;
+        if (m_filtered_sys.size() > 0)
+        {
+          matched = false;
+          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys.begin();
+          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent.begin();
+          for (; itr_sys != m_filtered_sys.end(); ++itr_sys)
+          {
+            if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
+                (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+              matched = true;
+            ++itr_ent;
+          }
+        }
+        // This system and entity are not listed to be passed.
+        if (!matched)
+        {
+          trace("SimulatedState message rejected.");
+          trace("SimulatedState received from system '%s' and entity '%s'.",
+              resolveSystemId(msg->getSource()),
+              resolveEntity(msg->getSourceEntity()).c_str());
           return;
         }
 
@@ -191,6 +316,14 @@ namespace Simulators
         // Beta - Slip angle
         m_beta.value = std::atan2(vd_body_vel_2wind(1), vd_body_vel_2wind(0));
          */
+
+        //! Set source system alias
+        if (m_alias_id != UINT_MAX)
+        {
+          estate.setSource(m_alias_id);
+          speed.setSource(m_alias_id);
+          streamspeed.setSource(m_alias_id);
+        }
 
         //trace("Exporting estimated state (%s)!", this->getSystemName());
         dispatch(estate);
