@@ -46,9 +46,16 @@ namespace Maneuver
     {
       using DUNE_NAMESPACES;
 
+      //! Vector for System Mapping.
+      typedef std::vector<uint32_t> Systems;
+
+      //! Vector for Entity Mapping.
+      typedef std::vector<uint32_t> Entities;
 
       struct Arguments
       {
+        //! Command source
+        std::vector<std::string> cmd_src;
         //! Source system alias
         std::string src_alias;
         //! Simulation and control frequencies
@@ -97,8 +104,6 @@ namespace Maneuver
         double init_yaw;
         // Debug flag
         bool debug;
-        //! Path Controller
-        std::string pcontrol_ent;
       };
 
       struct RelState
@@ -286,6 +291,10 @@ namespace Maneuver
         FormMonitor* m_form_monitor;
         //std::vector<RelState*> m_rel_state;
 
+        //! List of systems allowed to define a command.
+        std::map<uint32_t, Systems> m_filtered_sys;
+        //! List of entities allowed to define a command.
+        std::map<uint32_t, Entities> m_filtered_ent;
         // System alias id
         uint32_t m_alias_id;
 
@@ -313,6 +322,11 @@ namespace Maneuver
           m_debug(false),
           m_alias_id(UINT_MAX)
         {
+          // Definition of configuration parameters.
+          param("Commands source", m_args.cmd_src)
+          .defaultValue("")
+          .description("List of <Command>:<System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass a specific command.");
+
           param("Source Alias", m_args.src_alias)
           .defaultValue("")
           .description("Emulated system id.");
@@ -465,10 +479,6 @@ namespace Maneuver
           .defaultValue("false")
           .description("Controller in debug mode");
 
-          param("Path Controller", m_args.pcontrol_ent)
-          .defaultValue("Path Control Leader")
-          .description("Leader Path Controller");
-
           // Message binding
           bind<IMC::LeaderState>(this);
           bind<IMC::PlanControl>(this);
@@ -487,6 +497,83 @@ namespace Maneuver
         {
           //! Parameters checking
           checkParameters();
+
+          //! Process the systems and entities allowed to define a command.
+          uint32_t i_cmd;
+          uint32_t i_cmd_final;
+          uint32_t i_src;
+          uint32_t i_src_ini;
+          m_filtered_sys.clear();
+          m_filtered_ent.clear();
+          for (unsigned int i = 0; i < m_args.cmd_src.size(); ++i)
+          {
+            std::vector<std::string> parts;
+            String::split(m_args.cmd_src[i], ":", parts);
+            if (parts.size() < 1)
+              continue;
+
+            if (parts[0].compare("DesiredRoll") == 0)
+              i_cmd = 0;
+            else if (parts[0].compare("DesiredSpeed") == 0)
+              i_cmd = 1;
+            else if (parts[0].compare("DesiredZ") == 0)
+              i_cmd = 2;
+            else if (parts[0].compare("DesiredPitch") == 0)
+              i_cmd = 3;
+            else
+              i_cmd = 4;
+
+            // Split systems and entities.
+            std::vector<std::string> systems;
+            String::split(parts[1], "+", systems);
+            std::vector<std::string> entities;
+            String::split(parts[2], "+", entities);
+
+            // Assign filtered systems and entities to the selected commands
+            if (i_cmd == 4)
+            {
+              i_cmd = 0;
+              i_cmd_final = 3;
+            }
+            else
+              i_cmd_final = i_cmd;
+            for (; i_cmd <= i_cmd_final; i_cmd++)
+            {
+              i_src_ini = m_filtered_sys[i_cmd].size();
+              m_filtered_ent[i_cmd].resize(i_src_ini+systems.size()*entities.size());
+              m_filtered_sys[i_cmd].resize(i_src_ini+systems.size()*entities.size());
+
+              // Resolve systems id.
+              for (unsigned j = 0; j < systems.size(); j++)
+              {
+                // Resolve entities id.
+                for (unsigned k = 0; k < entities.size(); k++)
+                {
+                  i_src = (j+1)*(k+1)-1;
+                  // Resolve systems.
+                  try
+                  {
+                    m_filtered_sys[i_cmd][i_src_ini+i_src] = resolveSystemName(systems[j]);
+                  }
+                  catch (...)
+                  {
+                    debug("No system found with designation '%s'.", parts[1].c_str());
+                    m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
+                  }
+                  // Resolve entities.
+                  try
+                  {
+                    m_filtered_ent[i_cmd][i_src_ini+i_src] = resolveEntity(entities[k]);
+                  }
+                  catch (...)
+                  {
+                    debug("No entity found with designation '%s'.", parts[2].c_str());
+                    m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
+                  }
+                }
+              }
+            }
+          }
 
           //! Set source system alias
           if (!m_args.src_alias.empty())
@@ -679,11 +766,13 @@ namespace Maneuver
               return;
             }
 
+            /*
             //! Check if the PlanControl messages is for formation flight
-            if (msg->plan_id.compare(m_args.plan))
+            if (msg->plan_id.compare(m_args.plan) == 0)
             {
               trace("PlanControl message rejected!");
-              trace("Plan ID not '%s'.", m_args.plan.c_str());
+              trace("Plan ID (%s) does not match the parameters plan (%s).",
+                  msg->plan_id.c_str(), m_args.plan.c_str());
               return;
             }
 
@@ -693,6 +782,7 @@ namespace Maneuver
             if (m_alias_id != UINT_MAX)
               lead_plan_ctrl.setSource(m_alias_id);
             dispatch(lead_plan_ctrl);
+            */
 
             //! Reset virtual leader state, if the PlanControl action is "Start"
             // ToDo - Use global team position to set the leader initial state
@@ -834,24 +924,40 @@ namespace Maneuver
         void
         consume(const IMC::DesiredRoll* msg)
         {
-          if (msg->getSourceEntity() != resolveEntity(m_args.pcontrol_ent))
-            return;
-
           if (m_args.uav_ind == 0)
           {
+            // Filter command by systems and entities.
+            bool matched = true;
+            if (m_filtered_sys[0].size() > 0)
+            {
+              matched = false;
+              std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[0].begin();
+              std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[0].begin();
+              for (; itr_sys != m_filtered_sys[0].end(); ++itr_sys)
+              {
+                if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
+                    (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+                  matched = true;
+                ++itr_ent;
+              }
+            }
+            // This system and entity are not listed to be passed.
+            if (!matched)
+            {
+              trace("Bank command rejected.");
+              trace("DesiredRoll received from system '%s' and entity '%s'.",
+                  resolveSystemId(msg->getSource()),
+                  resolveEntity(msg->getSourceEntity()).c_str());
+              return;
+            }
+
             //! Get leader vehicle commanded roll
             if (!isActive())
             {
-              trace("Bank command rejected.");
-              trace("Leader simulation not active.");
+              //trace("Bank command rejected.");
+              //trace("Leader simulation not active.");
               return;
             }
-//            if (msg->getSource() != getSystemId())
-//            {
-//              trace("Bank command rejected.");
-//              trace("DesiredRoll received from system: %s", resolveSystemId(msg->getSource()));
-//              return;
-//            }
 
             m_model->commandBank(msg->value);
 
@@ -863,22 +969,38 @@ namespace Maneuver
         void
         consume(const IMC::DesiredSpeed* msg)
         {
-          if (msg->getSourceEntity() != resolveEntity(m_args.pcontrol_ent))
-            return;
-
           if (m_args.uav_ind == 0)
           {
+            // Filter command by systems and entities.
+            bool matched = true;
+            if (m_filtered_sys[1].size() > 0)
+            {
+              matched = false;
+              std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[1].begin();
+              std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[1].begin();
+              for (; itr_sys != m_filtered_sys[1].end(); ++itr_sys)
+              {
+                if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
+                    (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+                  matched = true;
+                ++itr_ent;
+              }
+            }
+            // This system and entity are not listed to be passed.
+            if (!matched)
+            {
+              trace("Speed command rejected.");
+              trace("DesiredSpeed received from system '%s' and entity '%s'.",
+                  resolveSystemId(msg->getSource()),
+                  resolveEntity(msg->getSourceEntity()).c_str());
+              return;
+            }
+
             //! Get leader vehicle commanded airspeed
             if (!isActive())
             {
-              trace("Speed command rejected.");
-              trace("Leader simulation not active.");
-              return;
-            }
-            if (msg->getSource() != getSystemId())
-            {
-              trace("Speed command rejected.");
-              trace("DesiredSpeed received from system: %s", resolveSystemId(msg->getSource()));
+              //trace("Speed command rejected.");
+              //trace("Leader simulation not active.");
               return;
             }
 
@@ -895,19 +1017,36 @@ namespace Maneuver
           //! Get leader vehicle commanded airspeed
           if (m_args.uav_ind == 0)
           {
-            //! Check if system is active
-            if (!isActive())
+            // Filter command by systems and entities.
+            bool matched = true;
+            if (m_filtered_sys[2].size() > 0)
+            {
+              matched = false;
+              std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[2].begin();
+              std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[2].begin();
+              for (; itr_sys != m_filtered_sys[2].end(); ++itr_sys)
+              {
+                if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
+                    (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+                  matched = true;
+                ++itr_ent;
+              }
+            }
+            // This system and entity are not listed to be passed.
+            if (!matched)
             {
               trace("Altitude command rejected.");
-              trace("Leader simulation not active.");
+              trace("DesiredZ received from system '%s' and entity '%s'.",
+                  resolveSystemId(msg->getSource()),
+                  resolveEntity(msg->getSourceEntity()).c_str());
               return;
             }
 
-            //! Check if the source ID is from the system itself
-            if (msg->getSource() != getSystemId())
+            //! Check if system is active
+            if (!isActive())
             {
-              trace("Altitude command rejected.");
-              trace("DesiredZ received from system: %s", resolveSystemId(msg->getSource()));
+              //trace("Altitude command rejected.");
+              //trace("Leader simulation not active.");
               return;
             }
 
