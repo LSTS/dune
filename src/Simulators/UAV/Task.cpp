@@ -25,6 +25,12 @@
 // Author: Ricardo Bencatel                                                 *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <vector>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 #include <DUNE/Simulation/UAV.hpp>
@@ -35,8 +41,18 @@ namespace Simulators
   {
     using DUNE_NAMESPACES;
 
+    //! Vector for System Mapping.
+    typedef std::vector<uint32_t> Systems;
+
+    //! Vector for Entity Mapping.
+    typedef std::vector<uint32_t> Entities;
+
     struct Arguments
     {
+      //! Command source
+      std::vector<std::string> cmd_src;
+      //! Source system alias
+      std::string src_alias;
       //! Stream velocity parameters (m/s)
       //! - North
       double wx;
@@ -79,6 +95,8 @@ namespace Simulators
 
     struct Task: public DUNE::Tasks::Periodic
     {
+      //! Task arguments.
+      Arguments m_args;
       //! Simulation vehicle.
       DUNE::Simulation::UAVSimulation* m_model;
       //! Simulated position (X,Y,Z).
@@ -102,8 +120,12 @@ namespace Simulators
       Matrix m_wind;
       //! Gps simulator entity id.
 //      unsigned m_gps_eid;
-      //! Task arguments.
-      Arguments m_args;
+      //! List of systems allowed to define a command.
+      std::map<uint32_t, Systems> m_filtered_sys;
+      //! List of entities allowed to define a command.
+      std::map<uint32_t, Entities> m_filtered_ent;
+      // System alias id
+      uint32_t m_alias_id;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Periodic(name, ctx),
@@ -116,9 +138,18 @@ namespace Simulators
         m_servo_pos(4, 1, 0.0),
         m_position(6, 1, 0.0),
         m_velocity(6, 1, 0.0),
-        m_wind(3, 1, 0.0)
+        m_wind(3, 1, 0.0),
+        m_alias_id(UINT_MAX)
       {
         // Definition of configuration parameters.
+        param("Commands source", m_args.cmd_src)
+        .defaultValue("")
+        .description("List of <Command>:<System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass a specific command.");
+
+        param("Source Alias", m_args.src_alias)
+        .defaultValue("")
+        .description("Emulated system id.");
+
         param("Stream Speed North", m_args.wx)
         .units(Units::MeterPerSecond)
         .defaultValue("0.0")
@@ -132,11 +163,6 @@ namespace Simulators
         param("Simulation type", m_args.sim_type)
         .defaultValue("4DOF_bank")
         .description("Simulation type (DOF)");
-
-        param("Gravity Acceleration", m_args.gaccel)
-        .defaultValue("9.8066")
-        .units(Units::MeterPerSquareSecond)
-        .description("Gravity Acceleration at aircraft location");
 
         param("Bank Time Constant", m_args.c_bank)
         .defaultValue("1.0")
@@ -260,6 +286,108 @@ namespace Simulators
         bind<IMC::DesiredSpeed>(this);
         bind<IMC::DesiredZ>(this);
         bind<IMC::DesiredPitch>(this);
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        //! Process the systems and entities allowed to define a command.
+        uint32_t i_cmd;
+        uint32_t i_cmd_final;
+        uint32_t i_src;
+        uint32_t i_src_ini;
+        m_filtered_sys.clear();
+        m_filtered_ent.clear();
+        for (unsigned int i = 0; i < m_args.cmd_src.size(); ++i)
+        {
+          std::vector<std::string> parts;
+          String::split(m_args.cmd_src[i], ":", parts);
+          if (parts.size() < 1)
+            continue;
+
+          if (parts[0].compare("DesiredRoll") == 0)
+            i_cmd = 0;
+          else if (parts[0].compare("DesiredSpeed") == 0)
+            i_cmd = 1;
+          else if (parts[0].compare("DesiredZ") == 0)
+            i_cmd = 2;
+          else if (parts[0].compare("DesiredPitch") == 0)
+            i_cmd = 3;
+          else if (parts[0].compare("SetServoPosition") == 0)
+            i_cmd = 4;
+          else if (parts[0].compare("SetThrusterActuation") == 0)
+            i_cmd = 5;
+          else
+            i_cmd = 6;
+
+          // Split systems and entities.
+          std::vector<std::string> systems;
+          String::split(parts[1], "+", systems);
+          std::vector<std::string> entities;
+          String::split(parts[2], "+", entities);
+
+          // Assign filtered systems and entities to the selected commands
+          if (i_cmd == 6)
+          {
+            i_cmd = 0;
+            i_cmd_final = 5;
+          }
+          else
+            i_cmd_final = i_cmd;
+          for (; i_cmd <= i_cmd_final; i_cmd++)
+          {
+            i_src_ini = m_filtered_sys[i_cmd].size();
+            m_filtered_ent[i_cmd].resize(i_src_ini+systems.size()*entities.size());
+            m_filtered_sys[i_cmd].resize(i_src_ini+systems.size()*entities.size());
+
+            // Resolve systems id.
+            for (unsigned j = 0; j < systems.size(); j++)
+            {
+              // Resolve entities id.
+              for (unsigned k = 0; k < entities.size(); k++)
+              {
+                i_src = (j+1)*(k+1)-1;
+                // Resolve systems.
+                try
+                {
+                  m_filtered_sys[i_cmd][i_src_ini+i_src] = resolveSystemName(systems[j]);
+                }
+                catch (...)
+                {
+                  debug("No system found with designation '%s'.", parts[1].c_str());
+                  m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
+                }
+                // Resolve entities.
+                try
+                {
+                  m_filtered_ent[i_cmd][i_src_ini+i_src] = resolveEntity(entities[k]);
+                }
+                catch (...)
+                {
+                  debug("No entity found with designation '%s'.", parts[2].c_str());
+                  m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
+                }
+              }
+            }
+          }
+        }
+
+        //! Set source system alias
+        if (!m_args.src_alias.empty())
+        {
+          // Resolve systems.
+          try
+          {
+            m_alias_id = resolveSystemName(m_args.src_alias);
+          }
+          catch (...)
+          {
+            debug("No system found with designation '%s'.", m_args.src_alias.c_str());
+            m_alias_id = UINT_MAX;
+          }
+        }
+        else
+          m_alias_id = UINT_MAX;
       }
 
       void
@@ -451,18 +579,35 @@ namespace Simulators
           return;
         }
 
-        //! Check if the source ID is from the system itself
-        if (msg->getSource() != getSystemId())
+        // Filter command by systems and entities.
+        bool matched = true;
+        if (m_filtered_sys[0].size() > 0)
+        {
+          matched = false;
+          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[0].begin();
+          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[0].begin();
+          for (; itr_sys != m_filtered_sys[0].end(); ++itr_sys)
+          {
+            if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
+                (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+              matched = true;
+            ++itr_ent;
+          }
+        }
+        // This system and entity are not listed to be passed.
+        if (!matched)
         {
           trace("Bank command rejected.");
-          trace("DesiredRoll received from system: %s", resolveSystemId(msg->getSource()));
+          trace("DesiredRoll received from system '%s' and entity '%s'.",
+              resolveSystemId(msg->getSource()),
+              resolveEntity(msg->getSourceEntity()).c_str());
           return;
         }
 
         m_model->commandBank(msg->value);
 
         // ========= Debug ===========
-        trace("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
+        spew("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
       }
 
       void
@@ -479,18 +624,35 @@ namespace Simulators
           return;
         }
 
-        //! Check if the source ID is from the system itself
-        if (msg->getSource() != getSystemId())
+        // Filter command by systems and entities.
+        bool matched = true;
+        if (m_filtered_sys[1].size() > 0)
+        {
+          matched = false;
+          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[1].begin();
+          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[1].begin();
+          for (; itr_sys != m_filtered_sys[1].end(); ++itr_sys)
+          {
+            if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
+                (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+              matched = true;
+            ++itr_ent;
+          }
+        }
+        // This system and entity are not listed to be passed.
+        if (!matched)
         {
           trace("Speed command rejected.");
-          trace("DesiredSpeed received from system: %s", resolveSystemId(msg->getSource()));
+          trace("DesiredSpeed received from system '%s' and entity '%s'.",
+              resolveSystemId(msg->getSource()),
+              resolveEntity(msg->getSourceEntity()).c_str());
           return;
         }
 
         m_model->commandAirspeed(msg->value);
 
         // ========= Debug ===========
-        trace("Speed command received (%1.2fm/s)", msg->value);
+        spew("Speed command received (%1.2fm/s)", msg->value);
       }
 
       void
@@ -507,11 +669,28 @@ namespace Simulators
           return;
         }
 
-        //! Check if the source ID is from the system itself
-        if (msg->getSource() != getSystemId())
+        // Filter command by systems and entities.
+        bool matched = true;
+        if (m_filtered_sys[2].size() > 0)
+        {
+          matched = false;
+          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[2].begin();
+          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[2].begin();
+          for (; itr_sys != m_filtered_sys[2].end(); ++itr_sys)
+          {
+            if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
+                (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+              matched = true;
+            ++itr_ent;
+          }
+        }
+        // This system and entity are not listed to be passed.
+        if (!matched)
         {
           trace("Altitude command rejected.");
-          trace("DesiredZ received from system: %s", resolveSystemId(msg->getSource()));
+          trace("DesiredZ received from system '%s' and entity '%s'.",
+              resolveSystemId(msg->getSource()),
+              resolveEntity(msg->getSourceEntity()).c_str());
           return;
         }
 
@@ -523,7 +702,7 @@ namespace Simulators
         m_model->commandAlt(alt_cmd);
 
         // ========= Debug ===========
-        trace("Altitude command received (%1.2fm)", alt_cmd);
+        spew("Altitude command received (%1.2fm)", alt_cmd);
       }
 
       void
@@ -540,18 +719,35 @@ namespace Simulators
           return;
         }
 
-        //! Check if the source ID is from the system itself
-        if (msg->getSource() != getSystemId())
+        // Filter command by systems and entities.
+        bool matched = true;
+        if (m_filtered_sys[3].size() > 0)
+        {
+          matched = false;
+          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[3].begin();
+          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[3].begin();
+          for (; itr_sys != m_filtered_sys[3].end(); ++itr_sys)
+          {
+            if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
+                (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+              matched = true;
+            ++itr_ent;
+          }
+        }
+        // This system and entity are not listed to be passed.
+        if (!matched)
         {
           trace("Pitch command rejected.");
-          trace("DesiredPitch received from system: %s", resolveSystemId(msg->getSource()));
+          trace("DesiredPitch received from system '%s' and entity '%s'.",
+              resolveSystemId(msg->getSource()),
+              resolveEntity(msg->getSourceEntity()).c_str());
           return;
         }
 
         m_model->commandFPA(msg->value);
 
         // ========= Debug ===========
-        trace("Pitch command received (%1.2fm)", msg->value);
+        spew("Pitch command received (%1.2fm)", msg->value);
       }
 
        /*
@@ -562,15 +758,34 @@ namespace Simulators
         if (!isActive())
           return;
 
-        //! Check if the source ID is from the system itself
-        if (msg->getSource() != getSystemId())
+        // Filter command by systems and entities.
+        bool matched = true;
+        if (m_filtered_sys[4].size() > 0)
+        {
+          matched = false;
+          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[4].begin();
+          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[4].begin();
+          for (; itr_sys != m_filtered_sys[4].end(); ++itr_sys)
+          {
+            if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
+                (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+              matched = true;
+            ++itr_ent;
+          }
+        }
+        // This system and entity are not listed to be passed.
+        if (!matched)
         {
           trace("Servo command rejected.");
-          trace("SetServoPosition sent from another source!");
+          trace("SetServoPosition received from system '%s' and entity '%s'.",
+              resolveSystemId(msg->getSource()),
+              resolveEntity(msg->getSourceEntity()).c_str());
           return;
         }
 
         m_servo_pos(msg->id) = msg->value;
+        // ========= Debug ===========
+        spew("Servo command received (%1.2fm)", msg->value);
       }
 
       void
@@ -580,15 +795,34 @@ namespace Simulators
         if (!isActive())
           return;
 
-        //! Check if the source ID is from the system itself
-        if (msg->getSource() != getSystemId())
+        // Filter command by systems and entities.
+        bool matched = true;
+        if (m_filtered_sys[5].size() > 0)
+        {
+          matched = false;
+          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[5].begin();
+          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[5].begin();
+          for (; itr_sys != m_filtered_sys[5].end(); ++itr_sys)
+          {
+            if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
+                (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+              matched = true;
+            ++itr_ent;
+          }
+        }
+        // This system and entity are not listed to be passed.
+        if (!matched)
         {
           trace("Thruster command rejected.");
-          trace("SetThrusterActuation sent from another source!");
+          trace("SetThrusterActuation received from system '%s' and entity '%s'.",
+              resolveSystemId(msg->getSource()),
+              resolveEntity(msg->getSourceEntity()).c_str());
           return;
         }
 
         m_thruster_act = msg->value;
+        // ========= Debug ===========
+        spew("Thruster command received (%1.2fm)", msg->value);
       }
       */
 
@@ -756,6 +990,10 @@ namespace Simulators
 
         //! Set the destination ID as the system own ID
         m_sstate.setDestination(getSystemId());
+
+        //! Set source system alias
+        if (m_alias_id != UINT_MAX)
+          m_sstate.setSource(m_alias_id);
 
         dispatch(m_sstate);
 
