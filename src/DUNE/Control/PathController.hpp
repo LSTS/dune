@@ -65,6 +65,10 @@ namespace DUNE
       void
       onEntityReservation(void);
 
+      //! Entity reservation callback.
+      void
+      onEntityResolution(void);
+
       //! Consumer for Brake message.
       //! @param brake message to consume.
       void
@@ -405,6 +409,8 @@ namespace DUNE
       bool m_jump_monitors;
       //! Navigation jump timer to  disable monitors
       Time::Counter<float> m_jump_timer;
+      //! Filter Entity
+      unsigned int m_filter_entity;
 
       // Arguments
       //! Control period
@@ -421,6 +427,11 @@ namespace DUNE
       float m_eta_min_speed;
       //! Active loops
       uint32_t m_aloops;
+      // EstimatedState filtering
+      //! Enable filter
+      bool m_filter;
+      //! Filter Entity Name
+      std::string m_filter_entity_name;
 
       //! Current tracking state
       TrackingState m_ts;
