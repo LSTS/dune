@@ -48,9 +48,11 @@ namespace Maneuver
 
       //! Vector for System Mapping.
       typedef std::vector<uint32_t> Systems;
+      typedef std::vector<bool> Systems_defined;
 
       //! Vector for Entity Mapping.
       typedef std::vector<uint32_t> Entities;
+      typedef std::vector<bool> Entities_defined;
 
       struct Arguments
       {
@@ -293,8 +295,10 @@ namespace Maneuver
 
         //! List of systems allowed to define a command.
         std::map<uint32_t, Systems> m_filtered_sys;
+        std::map<uint32_t, Systems_defined> m_filtered_sys_def;
         //! List of entities allowed to define a command.
         std::map<uint32_t, Entities> m_filtered_ent;
+        std::map<uint32_t, Entities_defined> m_filtered_ent_def;
         // System alias id
         uint32_t m_alias_id;
 
@@ -495,85 +499,10 @@ namespace Maneuver
         void
         onUpdateParameters(void)
         {
-          //! Parameters checking
+          //! Initial parameters checking
           checkParameters();
-
-          //! Process the systems and entities allowed to define a command.
-          uint32_t i_cmd;
-          uint32_t i_cmd_final;
-          uint32_t i_src;
-          uint32_t i_src_ini;
-          m_filtered_sys.clear();
-          m_filtered_ent.clear();
-          for (unsigned int i = 0; i < m_args.cmd_src.size(); ++i)
-          {
-            std::vector<std::string> parts;
-            String::split(m_args.cmd_src[i], ":", parts);
-            if (parts.size() < 1)
-              continue;
-
-            if (parts[0].compare("DesiredRoll") == 0)
-              i_cmd = 0;
-            else if (parts[0].compare("DesiredSpeed") == 0)
-              i_cmd = 1;
-            else if (parts[0].compare("DesiredZ") == 0)
-              i_cmd = 2;
-            else if (parts[0].compare("DesiredPitch") == 0)
-              i_cmd = 3;
-            else
-              i_cmd = 4;
-
-            // Split systems and entities.
-            std::vector<std::string> systems;
-            String::split(parts[1], "+", systems);
-            std::vector<std::string> entities;
-            String::split(parts[2], "+", entities);
-
-            // Assign filtered systems and entities to the selected commands
-            if (i_cmd == 4)
-            {
-              i_cmd = 0;
-              i_cmd_final = 3;
-            }
-            else
-              i_cmd_final = i_cmd;
-            for (; i_cmd <= i_cmd_final; i_cmd++)
-            {
-              i_src_ini = m_filtered_sys[i_cmd].size();
-              m_filtered_ent[i_cmd].resize(i_src_ini+systems.size()*entities.size());
-              m_filtered_sys[i_cmd].resize(i_src_ini+systems.size()*entities.size());
-
-              // Resolve systems id.
-              for (unsigned j = 0; j < systems.size(); j++)
-              {
-                // Resolve entities id.
-                for (unsigned k = 0; k < entities.size(); k++)
-                {
-                  i_src = (j+1)*(k+1)-1;
-                  // Resolve systems.
-                  try
-                  {
-                    m_filtered_sys[i_cmd][i_src_ini+i_src] = resolveSystemName(systems[j]);
-                  }
-                  catch (...)
-                  {
-                    debug("No system found with designation '%s'.", parts[1].c_str());
-                    m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                  }
-                  // Resolve entities.
-                  try
-                  {
-                    m_filtered_ent[i_cmd][i_src_ini+i_src] = resolveEntity(entities[k]);
-                  }
-                  catch (...)
-                  {
-                    debug("No entity found with designation '%s'.", parts[2].c_str());
-                    m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                  }
-                }
-              }
-            }
-          }
+          debug("Number of UAVs -> %d", m_uav_n);
+          debug("Current UAV -> %d", m_args.uav_ind);
 
           //! Set source system alias
           if (!m_args.src_alias.empty())
@@ -591,21 +520,136 @@ namespace Maneuver
           }
           else
             m_alias_id = UINT_MAX;
+
+          // Debug flag - for control performance monitoring
+          m_debug = m_args.debug;
         }
 
         void
         onEntityResolution(void)
         {
+          //! Process the systems and entities allowed to define a command.
+          uint32_t i_cmd;
+          uint32_t i_cmd_final;
+          uint32_t i_src;
+          uint32_t i_src_ini;
+          m_filtered_sys.clear();
+          m_filtered_ent.clear();
+          m_filtered_sys_def.clear();
+          m_filtered_ent_def.clear();
+          for (unsigned int i = 0; i < m_args.cmd_src.size(); ++i)
+          {
+            std::vector<std::string> parts;
+            String::split(m_args.cmd_src[i], ":", parts);
+            debug("Part-1: %s", parts[0].c_str());
+            debug("Part-2: %s", parts[1].c_str());
+            debug("Part-3: %s", parts[2].c_str());
+            if (parts.size() < 1)
+              continue;
+
+            if (parts[0].compare("DesiredRoll") == 0)
+              i_cmd = 0;
+            else if (parts[0].compare("DesiredSpeed") == 0)
+              i_cmd = 1;
+            else if (parts[0].compare("DesiredZ") == 0)
+              i_cmd = 2;
+            else if (parts[0].compare("DesiredPitch") == 0)
+              i_cmd = 3;
+            else
+              i_cmd = 4;
+            debug("i_cmd: %u", i_cmd);
+
+
+            // Split systems and entities.
+            std::vector<std::string> systems;
+            String::split(parts[1], "+", systems);
+            std::vector<std::string> entities;
+            String::split(parts[2], "+", entities);
+            if (systems.size() == 0)
+              systems.resize(1);
+            if (entities.size() == 0)
+              entities.resize(1);
+            debug("Systems-1: %s", systems[0].c_str());
+            debug("Entities-1: %s", entities[0].c_str());
+
+            // Assign filtered systems and entities to the selected commands
+            if (i_cmd == 4)
+            {
+              i_cmd = 0;
+              i_cmd_final = 3;
+            }
+            else
+              i_cmd_final = i_cmd;
+            for (; i_cmd <= i_cmd_final; i_cmd++)
+            {
+              debug("i_cmd: %d", i_cmd);
+              i_src_ini = m_filtered_sys[i_cmd].size();
+              m_filtered_sys[i_cmd].resize(i_src_ini+systems.size()*entities.size());
+              m_filtered_ent[i_cmd].resize(i_src_ini+systems.size()*entities.size());
+              m_filtered_sys_def[i_cmd].resize(i_src_ini+systems.size()*entities.size());
+              m_filtered_ent_def[i_cmd].resize(i_src_ini+systems.size()*entities.size());
+              debug("filter size: %lu", m_filtered_sys[i_cmd].size());
+
+              // Resolve systems id.
+              for (unsigned j = 0; j < systems.size(); j++)
+              {
+                // Resolve entities id.
+                for (unsigned k = 0; k < entities.size(); k++)
+                {
+                  i_src = (j+1)*(k+1)-1;
+                  // Resolve systems.
+                  if (systems[j].empty())
+                  {
+                    m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
+                    m_filtered_sys_def[i_cmd][i_src_ini+i_src] = false;
+                    debug("Filter source system undefined");
+                  }
+                  else
+                  {
+                    try
+                    {
+                      m_filtered_sys[i_cmd][i_src_ini+i_src] = resolveSystemName(systems[j]);
+                      m_filtered_sys_def[i_cmd][i_src_ini+i_src] = true;
+                      debug("SystemID: %d", resolveSystemName(systems[j]));
+                    }
+                    catch (...)
+                    {
+                      debug("No system found with designation '%s'.", parts[1].c_str());
+                      m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
+                      m_filtered_sys_def[i_cmd][i_src_ini+i_src] = false;
+                    }
+                  }
+                  // Resolve entities.
+                  if (entities[j].empty())
+                  {
+                    m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
+                    m_filtered_ent_def[i_cmd][i_src_ini+i_src] = false;
+                    debug("Filter entity system undefined");
+                  }
+                  else
+                  {
+                    try
+                    {
+                      m_filtered_ent[i_cmd][i_src_ini+i_src] = resolveEntity(entities[k]);
+                      m_filtered_ent_def[i_cmd][i_src_ini+i_src] = true;
+                      debug("EntityID: %d", resolveEntity(entities[k]));
+                    }
+                    catch (...)
+                    {
+                      debug("No entity found with designation '%s'.", parts[2].c_str());
+                      m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
+                      m_filtered_ent_def[i_cmd][i_src_ini+i_src] = false;
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
 
         void
         onResourceAcquisition(void)
         {
-          //! Initial parameters checking
-          checkParameters();
-          debug("Number of UAVs -> %d", m_uav_n);
-          debug("Current UAV -> %d", m_args.uav_ind);
-
           m_llh_ref_pos[0] = 0.0;
           m_llh_ref_pos[1] = 0.0;
           m_llh_ref_pos[2] = 0.0;
@@ -615,8 +659,6 @@ namespace Maneuver
           m_airspeed_cmd.value = m_airspeed;
 
           m_frequency = this->getFrequency();
-          //if (m_args.debug == "Debug" || m_args.debug == "Trace" || m_args.debug == "Spew")
-          m_debug = m_args.debug;
 
           //! Initialize the leader vehicle model
           //! Model initialization
@@ -926,6 +968,14 @@ namespace Maneuver
         {
           if (m_args.uav_ind == 0)
           {
+            //! Get leader vehicle commanded roll
+            if (!isActive())
+            {
+              //trace("Bank command rejected.");
+              //trace("Leader simulation not active.");
+              return;
+            }
+
             // Filter command by systems and entities.
             bool matched = true;
             if (m_filtered_sys[0].size() > 0)
@@ -933,12 +983,28 @@ namespace Maneuver
               matched = false;
               std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[0].begin();
               std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[0].begin();
+              std::vector<bool>::iterator itr_sys_def = m_filtered_sys_def[0].begin();
+              std::vector<bool>::iterator itr_ent_def = m_filtered_ent_def[0].begin();
               for (; itr_sys != m_filtered_sys[0].end(); ++itr_sys)
               {
-                if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
-                    (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+                if (*itr_sys_def)
+                  trace("Source defined.");
+                else
+                  trace("Source undefined.");
+                trace("*itr_sys '%u'.", *itr_sys);
+                trace("Source '%u'.", msg->getSource());
+                if (*itr_ent_def)
+                  trace("Entity defined.");
+                else
+                  trace("Entity undefined.");
+                trace("*itr_ent '%u'.", *itr_ent);
+                trace("SourceEntity '%u'.", msg->getSourceEntity());
+                if ((*itr_sys == msg->getSource() || !(*itr_sys_def)) &&
+                    (*itr_ent == msg->getSourceEntity() || !(*itr_ent_def)))
                   matched = true;
+                ++itr_sys_def;
                 ++itr_ent;
+                ++itr_ent_def;
               }
             }
             // This system and entity are not listed to be passed.
@@ -951,18 +1017,13 @@ namespace Maneuver
               return;
             }
 
-            //! Get leader vehicle commanded roll
-            if (!isActive())
-            {
-              //trace("Bank command rejected.");
-              //trace("Leader simulation not active.");
-              return;
-            }
-
             m_model->commandBank(msg->value);
 
             // ========= Debug ===========
             spew("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
+            spew("DesiredRoll received from system '%s' and entity '%s'.",
+                resolveSystemId(msg->getSource()),
+                resolveEntity(msg->getSourceEntity()).c_str());
           }
         }
 
@@ -971,6 +1032,14 @@ namespace Maneuver
         {
           if (m_args.uav_ind == 0)
           {
+            //! Get leader vehicle commanded airspeed
+            if (!isActive())
+            {
+              //trace("Speed command rejected.");
+              //trace("Leader simulation not active.");
+              return;
+            }
+
             // Filter command by systems and entities.
             bool matched = true;
             if (m_filtered_sys[1].size() > 0)
@@ -996,18 +1065,13 @@ namespace Maneuver
               return;
             }
 
-            //! Get leader vehicle commanded airspeed
-            if (!isActive())
-            {
-              //trace("Speed command rejected.");
-              //trace("Leader simulation not active.");
-              return;
-            }
-
             m_model->commandAirspeed(msg->value);
 
             // ========= Debug ===========
             spew("Speed command received (%1.2fm/s)", msg->value);
+            spew("DesiredSpeed received from system '%s' and entity '%s'.",
+                resolveSystemId(msg->getSource()),
+                resolveEntity(msg->getSourceEntity()).c_str());
           }
         }
 
@@ -1017,6 +1081,14 @@ namespace Maneuver
           //! Get leader vehicle commanded airspeed
           if (m_args.uav_ind == 0)
           {
+            //! Check if system is active
+            if (!isActive())
+            {
+              //trace("Altitude command rejected.");
+              //trace("Leader simulation not active.");
+              return;
+            }
+
             // Filter command by systems and entities.
             bool matched = true;
             if (m_filtered_sys[2].size() > 0)
@@ -1042,14 +1114,6 @@ namespace Maneuver
               return;
             }
 
-            //! Check if system is active
-            if (!isActive())
-            {
-              //trace("Altitude command rejected.");
-              //trace("Leader simulation not active.");
-              return;
-            }
-
             double alt_cmd;
             if (msg->z_units == IMC::Z_HEIGHT || msg->z_units == IMC::Z_ALTITUDE)
               alt_cmd = msg->value;
@@ -1059,6 +1123,9 @@ namespace Maneuver
 
             // ========= Debug ===========
             spew("Altitude command received (%1.2fm)", alt_cmd);
+            spew("DesiredZ received from system '%s' and entity '%s'.",
+                resolveSystemId(msg->getSource()),
+                resolveEntity(msg->getSourceEntity()).c_str());
           }
         }
 
@@ -1367,6 +1434,7 @@ namespace Maneuver
 
             // ========= Spew ===========
 
+            /*
             if (d_time >= m_last_time_spew + 0.1)
             {
               //spew("Simulating: %s", m_model->m_sim_type);
@@ -1395,6 +1463,7 @@ namespace Maneuver
               spew("Current z wind speed: %1.4f", m_wind(2));
               m_last_time_spew = d_time;
             }
+            */
 
             //==========================================================================
             //! Dynamics
@@ -1563,7 +1632,7 @@ namespace Maneuver
           origin.lat = lead_state->lat;
           origin.lon = lead_state->lon;
           origin.height = lead_state->height;
-          origin.setDestination(getSystemId());
+          origin.setDestination((m_alias_id != UINT_MAX) ? m_alias_id : getSystemId());
           //! Set source system alias
           if (m_alias_id != UINT_MAX)
             origin.setSource(m_alias_id);
