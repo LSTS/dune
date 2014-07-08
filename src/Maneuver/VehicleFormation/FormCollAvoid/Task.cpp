@@ -335,11 +335,11 @@ namespace Maneuver
           .defaultValue("20.0")
           .description("Frequency at which simulated vehicles control is executed");
 
-          param("Formation Long Gain", m_args.k_longitudinal)
+          param("Formation Longitudinal Gain", m_args.k_longitudinal)
           .defaultValue("0.5")
           .description("Trajectory gain over the vehicle longitudinal direction");
 
-          param("Formation Lat Gain", m_args.k_lateral)
+          param("Formation Lateral Gain", m_args.k_lateral)
           .defaultValue("0.8")
           .description("Trajectory gain over the vehicle lateral direction");
 
@@ -1076,8 +1076,10 @@ namespace Maneuver
             }
 
             double alt_cmd;
-            if (msg->z_units == IMC::Z_HEIGHT || msg->z_units == IMC::Z_ALTITUDE)
+            if (msg->z_units == IMC::Z_ALTITUDE)
               alt_cmd = msg->value;
+            if (msg->z_units == IMC::Z_HEIGHT)
+              alt_cmd = msg->value-m_llh_ref_pos[2];
             else if (msg->z_units == IMC::Z_DEPTH)
               alt_cmd = -msg->value;
             m_model->commandAlt(trimValue(alt_cmd, m_args.alt_min,  m_args.alt_max));
@@ -1099,6 +1101,7 @@ namespace Maneuver
             //! Declaration
             UAVSimulation* model;
             Matrix vd_cmd = Matrix(3, 1);
+            IMC::PathControlState path_ctrl_state;
 
             // for debug
             //debug("EstimatedState received from vehicle %s", resolveSystemId(msg->getSource()));
@@ -1164,9 +1167,16 @@ namespace Maneuver
                   msg->getTimeStamp() - m_last_ctrl_update, &vd_cmd, m_debug, m_form_monitor);
               m_uav_ctrl.set(0, 2, m_args.uav_ind-1, m_args.uav_ind-1, vd_cmd.get(0, 2, 0, 0));
 
-              //! Update the monitoring message
               if (m_debug)
               {
+                // Set PathControlState
+                path_ctrl_state.end_lat = msg->lat;
+                path_ctrl_state.end_lon = msg->lon;
+                WGS84::displace(m_uav_state(0, 0), m_uav_state(1, 0),
+                    &(path_ctrl_state.end_lat), &(path_ctrl_state.end_lon));
+                dispatch(path_ctrl_state);
+
+                //! Update the monitoring message
                 IMC::FormationMonitor form_monit;
 
                 form_monit.ax_cmd = m_form_monitor->ax_cmd;
@@ -1846,12 +1856,12 @@ namespace Maneuver
 
           //! Vehicle formation control method
 
-          //! Controls:
-          //! - cmd(1) = bank_cmd
-          //! - cmd(2) = airspeed_cmd
-          //! - cmd(3) = alt_cmd
-
           //! ====== Variables declaration and initialization ======
+
+          //! Leader airspeed
+          // ToDo - get the leader airspeed
+          Matrix vd_leader_hor_vel = md_uav_state.get(3, 4, 0, 0);
+          double d_leader_gndspeed = vd_leader_hor_vel.norm_2();
 
           //! Environment parameters
           double d_g = DUNE::Math::c_gravity;
@@ -1867,9 +1877,9 @@ namespace Maneuver
           Matrix md_form_pos = m_args.formation_pos;
 
           //! Control parameters
+          // ToDo - substitute by the leader airspeed
+          double d_LeaderSpeed = d_leader_gndspeed;
           double mt_gain_mtx[2] = {m_args.k_longitudinal, m_args.k_lateral};
-          // ToDo - substitute the hardcoded value 20, by the leader commanded airspeed
-          double d_LeaderSpeed = 20;
           Matrix md_gain_mtx = Matrix(mt_gain_mtx, 2) * d_LeaderSpeed/2.5;
           double d_ss_bnd_layer = m_args.k_boundary * d_LeaderSpeed;
           double d_flow_accel_max = m_args.flow_accel_max;
@@ -1984,8 +1994,6 @@ namespace Maneuver
           //! Formation shape rotation
           //-------------------------------------------
 
-          Matrix vd_leader_hor_vel = md_uav_state.get(3, 4, 0, 0);
-          double d_leader_gndspeed = vd_leader_hor_vel.norm_2();
           double d_cos_form_course = md_uav_state(3, 0)/d_leader_gndspeed;
           double d_sin_form_course = md_uav_state(4, 0)/d_leader_gndspeed;
           double t_rot_formation[4] = {d_cos_form_course, -d_sin_form_course,
@@ -2059,7 +2067,7 @@ namespace Maneuver
           // da formação, em vez de elemento m_uav_n em apenas algumas
           for (int ind_uav2 = 1; ind_uav2 <= m_uav_n; ind_uav2++)
           {
-            // Skeeping the current UAV index
+            // Skiping the current UAV index
             if (ind_uav == ind_uav2)
               continue;
 
