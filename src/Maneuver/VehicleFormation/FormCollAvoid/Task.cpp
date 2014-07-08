@@ -1373,22 +1373,22 @@ namespace Maneuver
           if (!isActive())
           {
             //! Initialize leader state
-            if (m_args.uav_ind == 0)
-            {
-              //! Set source system alias
-              if (m_alias_id != UINT_MAX)
-                m_init_leader.setSource(m_alias_id);
-
-              dispatch(m_init_leader);
-            }
+//            if (m_args.uav_ind == 0)
+//            {
+//              //! Set source system alias
+//              if (m_alias_id != UINT_MAX)
+//                m_init_leader.setSource(m_alias_id);
+//
+//              dispatch(m_init_leader);
+//            }
 
             // ========= Spew ===========
             if (d_time >= m_last_time_trace + 1.0)
             {
               spew("Formation flight task is inactive (%s).", this->getSystemName());
               m_last_time_trace = d_time;
-              return;
             }
+            return;
          }
 
           if (m_args.uav_ind == 0)
@@ -1615,19 +1615,21 @@ namespace Maneuver
           m_sstate.height = lead_state->height;
 
           //! - State initialization
+          double bank_lim = Angles::radians(m_args.bank_lim);
+
           m_position = m_model->getPosition();
           m_position(0) = lead_state->x;
           m_position(1) = lead_state->y;
           m_position(2) = lead_state->z;
-          m_position(3) = lead_state->phi;
-          m_position(4) = lead_state->theta;
+          m_position(3) = trimValue(lead_state->phi, -bank_lim, bank_lim);
+          m_position(4) = 0;
           m_position(5) = lead_state->psi;
           m_model->setPosition(m_position);
           m_velocity(0) = lead_state->vx;
           m_velocity(1) = lead_state->vy;
           m_velocity(2) = lead_state->vz;
-          m_velocity(3) = lead_state->p;
-          m_velocity(4) = lead_state->q;
+          m_velocity(3) = 0;
+          m_velocity(4) = 0;
           m_velocity(5) = lead_state->r;
           m_model->setVelocity(m_velocity);
           m_wind(0) = lead_state->svx;
