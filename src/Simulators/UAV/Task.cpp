@@ -291,87 +291,6 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        //! Process the systems and entities allowed to define a command.
-        uint32_t i_cmd;
-        uint32_t i_cmd_final;
-        uint32_t i_src;
-        uint32_t i_src_ini;
-        m_filtered_sys.clear();
-        m_filtered_ent.clear();
-        for (unsigned int i = 0; i < m_args.cmd_src.size(); ++i)
-        {
-          std::vector<std::string> parts;
-          String::split(m_args.cmd_src[i], ":", parts);
-          if (parts.size() < 1)
-            continue;
-
-          if (parts[0].compare("DesiredRoll") == 0)
-            i_cmd = 0;
-          else if (parts[0].compare("DesiredSpeed") == 0)
-            i_cmd = 1;
-          else if (parts[0].compare("DesiredZ") == 0)
-            i_cmd = 2;
-          else if (parts[0].compare("DesiredPitch") == 0)
-            i_cmd = 3;
-          else if (parts[0].compare("SetServoPosition") == 0)
-            i_cmd = 4;
-          else if (parts[0].compare("SetThrusterActuation") == 0)
-            i_cmd = 5;
-          else
-            i_cmd = 6;
-
-          // Split systems and entities.
-          std::vector<std::string> systems;
-          String::split(parts[1], "+", systems);
-          std::vector<std::string> entities;
-          String::split(parts[2], "+", entities);
-
-          // Assign filtered systems and entities to the selected commands
-          if (i_cmd == 6)
-          {
-            i_cmd = 0;
-            i_cmd_final = 5;
-          }
-          else
-            i_cmd_final = i_cmd;
-          for (; i_cmd <= i_cmd_final; i_cmd++)
-          {
-            i_src_ini = m_filtered_sys[i_cmd].size();
-            m_filtered_ent[i_cmd].resize(i_src_ini+systems.size()*entities.size());
-            m_filtered_sys[i_cmd].resize(i_src_ini+systems.size()*entities.size());
-
-            // Resolve systems id.
-            for (unsigned j = 0; j < systems.size(); j++)
-            {
-              // Resolve entities id.
-              for (unsigned k = 0; k < entities.size(); k++)
-              {
-                i_src = (j+1)*(k+1)-1;
-                // Resolve systems.
-                try
-                {
-                  m_filtered_sys[i_cmd][i_src_ini+i_src] = resolveSystemName(systems[j]);
-                }
-                catch (...)
-                {
-                  debug("No system found with designation '%s'.", parts[1].c_str());
-                  m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                }
-                // Resolve entities.
-                try
-                {
-                  m_filtered_ent[i_cmd][i_src_ini+i_src] = resolveEntity(entities[k]);
-                }
-                catch (...)
-                {
-                  debug("No entity found with designation '%s'.", parts[2].c_str());
-                  m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                }
-              }
-            }
-          }
-        }
-
         //! Set source system alias
         if (!m_args.src_alias.empty())
         {
@@ -388,12 +307,6 @@ namespace Simulators
         }
         else
           m_alias_id = UINT_MAX;
-      }
-
-      void
-      onResourceAcquisition(void)
-      {
-        // Control and state initialization
 
         //! GPS position initialization
         debug("GPS-Fix initialization");
@@ -406,6 +319,12 @@ namespace Simulators
         m_sstate.height = m_args.init_alt;
         dispatch(init_fix);
         requestActivation();
+      }
+
+      void
+      onResourceAcquisition(void)
+      {
+        // Control and state initialization
 
         //! Model state initialization
         debug("Model initialization");
@@ -520,6 +439,91 @@ namespace Simulators
       }
 
       void
+      onEntityResolution(void)
+      {
+        //! Process the systems and entities allowed to define a command.
+        uint32_t i_cmd;
+        uint32_t i_cmd_final;
+        uint32_t i_src;
+        uint32_t i_src_ini;
+        m_filtered_sys.clear();
+        m_filtered_ent.clear();
+        for (unsigned int i = 0; i < m_args.cmd_src.size(); ++i)
+        {
+          std::vector<std::string> parts;
+          String::split(m_args.cmd_src[i], ":", parts);
+          if (parts.size() < 1)
+            continue;
+
+          if (parts[0].compare("DesiredRoll") == 0)
+            i_cmd = 0;
+          else if (parts[0].compare("DesiredSpeed") == 0)
+            i_cmd = 1;
+          else if (parts[0].compare("DesiredZ") == 0)
+            i_cmd = 2;
+          else if (parts[0].compare("DesiredPitch") == 0)
+            i_cmd = 3;
+          else if (parts[0].compare("SetServoPosition") == 0)
+            i_cmd = 4;
+          else if (parts[0].compare("SetThrusterActuation") == 0)
+            i_cmd = 5;
+          else
+            i_cmd = 6;
+
+          // Split systems and entities.
+          std::vector<std::string> systems;
+          String::split(parts[1], "+", systems);
+          std::vector<std::string> entities;
+          String::split(parts[2], "+", entities);
+
+          // Assign filtered systems and entities to the selected commands
+          if (i_cmd == 6)
+          {
+            i_cmd = 0;
+            i_cmd_final = 5;
+          }
+          else
+            i_cmd_final = i_cmd;
+          for (; i_cmd <= i_cmd_final; i_cmd++)
+          {
+            i_src_ini = m_filtered_sys[i_cmd].size();
+            m_filtered_ent[i_cmd].resize(i_src_ini+systems.size()*entities.size());
+            m_filtered_sys[i_cmd].resize(i_src_ini+systems.size()*entities.size());
+
+            // Resolve systems id.
+            for (unsigned j = 0; j < systems.size(); j++)
+            {
+              // Resolve entities id.
+              for (unsigned k = 0; k < entities.size(); k++)
+              {
+                i_src = (j+1)*(k+1)-1;
+                // Resolve systems.
+                try
+                {
+                  m_filtered_sys[i_cmd][i_src_ini+i_src] = resolveSystemName(systems[j]);
+                }
+                catch (...)
+                {
+                  debug("No system found with designation '%s'.", parts[1].c_str());
+                  m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
+                }
+                // Resolve entities.
+                try
+                {
+                  m_filtered_ent[i_cmd][i_src_ini+i_src] = resolveEntity(entities[k]);
+                }
+                catch (...)
+                {
+                  debug("No entity found with designation '%s'.", parts[2].c_str());
+                  m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      void
       onResourceRelease(void)
       {
         Memory::clear(m_model);
@@ -528,6 +532,14 @@ namespace Simulators
       void
       consume(const IMC::GpsFix* msg)
       {
+        // Check if the system is the destination
+        if (msg->getDestination() != ((m_alias_id != (unsigned int)UINT_MAX) ? m_alias_id : getSystemId()))
+        {
+          spew("GpsFix message rejected.");
+          spew("GpsFix sent from another source!");
+          return;
+        }
+
         //! Check if system is active and activate it if not
         if (!isActive())
           requestActivation();
@@ -579,8 +591,8 @@ namespace Simulators
           std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[0].begin();
           for (; itr_sys != m_filtered_sys[0].end(); ++itr_sys)
           {
-            if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
+                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
               matched = true;
             ++itr_ent;
           }
@@ -624,8 +636,8 @@ namespace Simulators
           std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[1].begin();
           for (; itr_sys != m_filtered_sys[1].end(); ++itr_sys)
           {
-            if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
+                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
               matched = true;
             ++itr_ent;
           }
@@ -669,8 +681,8 @@ namespace Simulators
           std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[2].begin();
           for (; itr_sys != m_filtered_sys[2].end(); ++itr_sys)
           {
-            if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
+                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
               matched = true;
             ++itr_ent;
           }
@@ -719,8 +731,8 @@ namespace Simulators
           std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[3].begin();
           for (; itr_sys != m_filtered_sys[3].end(); ++itr_sys)
           {
-            if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
+                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
               matched = true;
             ++itr_ent;
           }
@@ -763,8 +775,8 @@ namespace Simulators
           std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[4].begin();
           for (; itr_sys != m_filtered_sys[4].end(); ++itr_sys)
           {
-            if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
+                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
               matched = true;
             ++itr_ent;
           }
@@ -800,8 +812,8 @@ namespace Simulators
           std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[5].begin();
           for (; itr_sys != m_filtered_sys[5].end(); ++itr_sys)
           {
-            if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
+                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
               matched = true;
             ++itr_ent;
           }
@@ -992,7 +1004,7 @@ namespace Simulators
         m_sstate.setDestination(getSystemId());
 
         //! Set source system alias
-        if (m_alias_id != UINT_MAX)
+        if (m_alias_id != (unsigned int)UINT_MAX)
           m_sstate.setSource(m_alias_id);
 
         dispatch(m_sstate);
