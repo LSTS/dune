@@ -476,25 +476,25 @@ namespace DUNE
         return *this;
       }
 
-      if (m_sim_type == "4DOF_bank")
+      if (m_sim_type.compare("4DOF_bank") == 0)
         update4DOF_Bank(timestep);
-      else if (m_sim_type == "5DOF")
+      else if (m_sim_type.compare("5DOF") == 0)
       {
         if (m_altitude_cmd_ini || m_fpa_cmd_ini)
           update5DOF(timestep);
         else
           throw Error("Altitude command missing! The state was not updated.");
       }
-      else if (m_sim_type == "4DOF_alt")
+      else if (m_sim_type.compare("4DOF_alt") == 0)
       {
         if (m_altitude_cmd_ini || m_fpa_cmd_ini)
           update4DOF_Alt(timestep);
         else
           throw Error("Altitude command missing! The state was not updated.");
       }
-      else if (m_sim_type == "3DOF")
+      else if (m_sim_type.compare("3DOF") == 0)
         update3DOF(timestep);
-      //else if (m_sim_type == "6DOF_stab")
+      //else if (m_sim_type.compare("6DOF_stab") == 0)
       //  update6DOF_Stab(timestep);
 
       return *this;
@@ -606,12 +606,12 @@ namespace DUNE
       // Optimization variables
       m_cos_yaw = std::cos(m_position(5));
       m_sin_yaw = std::sin(m_position(5));
-      if (m_sim_type == "5DOF" || m_sim_type == "4DOF_alt")
+      if (m_sim_type.compare("5DOF") == 0 || m_sim_type.compare("4DOF_alt") == 0)
       {
         m_cos_pitch = std::cos(m_position(4));
         m_sin_pitch = std::sin(m_position(4));
       }
-      else if (m_sim_type == "6DOF_stab")
+      else if (m_sim_type.compare("6DOF_stab") == 0)
       {
         m_cos_roll = std::cos(m_position(3));
         m_sin_roll = std::sin(m_position(3));
@@ -1071,9 +1071,12 @@ namespace DUNE
       if (i_pos_size < 2 && i_pos_size > 6)
         throw Error("Invalid position vector dimension. Vector size must be between 2 and 6.");
 
-      //! Vehicle position
+      // Vehicle position
       m_position.set(0, i_pos_size-1, 0, 0, pos);
-      //! Simulation variables
+      // Reset the pitch angle for the simulations that do not update it
+      if (m_sim_type.compare("3DOF") == 0 || m_sim_type.compare("4DOF_bank") == 0)
+        m_position(4) = 0;
+      // Simulation variables
       m_cos_course = std::cos(m_position(5));
       m_sin_course = std::sin(m_position(5));
       m_cos_pitch = std::cos(m_position(4));
@@ -1091,6 +1094,12 @@ namespace DUNE
 
       //! Vehicle velocity vector, relative to the ground, in the ground reference frame
       m_velocity.set(0, i_vel_size-1, 0, 0, vel);
+      // Reset the vertical velocity for the simulations that do not update it
+      if (m_sim_type.compare("3DOF") == 0 || m_sim_type.compare("4DOF_bank") == 0)
+        m_velocity(2) = 0;
+      // Reset the pitch angular rate for the simulations that do not update it
+      if (m_sim_type.compare("6DOF_dyn") != 0)
+        m_velocity(4) = 0;
 
       calcUAV2AirData();
     }
@@ -1127,7 +1136,7 @@ namespace DUNE
       m_airspeed_cmd = airspeed_cmd;
       //! - Altitude
       m_altitude_cmd = altitude_cmd;
-      if (m_sim_type == "3DOF" || m_sim_type == "4DOF_bank")
+      if (m_sim_type.compare("3DOF") == 0 || m_sim_type.compare("4DOF_bank") == 0)
         m_position(2) = -altitude_cmd;
 
       //! Control commands initialization flags
@@ -1163,7 +1172,7 @@ namespace DUNE
       //! Control commands
       //! - Altitude
       m_altitude_cmd = altitude_cmd;
-      if (m_sim_type == "3DOF" || m_sim_type == "4DOF_bank")
+      if (m_sim_type.compare("3DOF") == 0 || m_sim_type.compare("4DOF_bank") == 0)
         m_position(2) = -altitude_cmd;
 
       //! Control commands initialization flags
