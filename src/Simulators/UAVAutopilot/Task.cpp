@@ -94,6 +94,33 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
+        //! Set source system alias
+        if (!m_args.src_alias.empty())
+        {
+          // Resolve systems.
+          try
+          {
+            m_alias_id = resolveSystemName(m_args.src_alias);
+          }
+          catch (...)
+          {
+            debug("No system found with designation '%s'.", m_args.src_alias.c_str());
+            m_alias_id = UINT_MAX;
+          }
+        }
+        else
+          m_alias_id = UINT_MAX;
+      }
+
+      void
+      onResourceAcquisition(void)
+      {
+        setEntityState(EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      onEntityResolution(void)
+      {
         //! Process the systems and entities allowed to define a command.
         uint32_t i_src;
         m_filtered_sys.clear();
@@ -143,29 +170,6 @@ namespace Simulators
             }
           }
         }
-
-        //! Set source system alias
-        if (!m_args.src_alias.empty())
-        {
-          // Resolve systems.
-          try
-          {
-            m_alias_id = resolveSystemName(m_args.src_alias);
-          }
-          catch (...)
-          {
-            debug("No system found with designation '%s'.", m_args.src_alias.c_str());
-            m_alias_id = UINT_MAX;
-          }
-        }
-        else
-          m_alias_id = UINT_MAX;
-      }
-
-      void
-      onResourceAcquisition(void)
-      {
-        setEntityState(EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
@@ -177,7 +181,8 @@ namespace Simulators
       void
       consume(const IMC::GpsFix* msg)
       {
-        if (msg->getSourceEntity() == getEntityId())
+        if (msg->getSourceEntity() == getEntityId() ||
+            msg->getSource() != ((m_alias_id != (unsigned int)UINT_MAX) ? m_alias_id : getSystemId()))
           return;
         debug("Consuming GPS-Fix");
 
@@ -193,8 +198,8 @@ namespace Simulators
           return;
 
         //! Check if the source ID is from the system itself
-        if (msg->getSource() != ((m_alias_id != UINT_MAX) ? m_alias_id : getSystemId()) ||
-            msg->getDestination() != ((m_alias_id != UINT_MAX) ? m_alias_id : getSystemId()))
+        if (msg->getSource() != ((m_alias_id != (unsigned int)UINT_MAX) ? m_alias_id : getSystemId()) ||
+            msg->getDestination() != ((m_alias_id != (unsigned int)UINT_MAX) ? m_alias_id : getSystemId()))
         {
           spew("Simulated state rejected.");
           spew("SimulatedState sent from another source!");
@@ -210,8 +215,8 @@ namespace Simulators
           std::vector<uint32_t>::iterator itr_ent = m_filtered_ent.begin();
           for (; itr_sys != m_filtered_sys.end(); ++itr_sys)
           {
-            if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
+                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
               matched = true;
             ++itr_ent;
           }
@@ -229,9 +234,7 @@ namespace Simulators
         spew("Consuming SimulatedState");
 
         if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
-        {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        }
 
         m_sstate = *msg;
       }
@@ -319,7 +322,7 @@ namespace Simulators
          */
 
         //! Set source system alias
-        if (m_alias_id != UINT_MAX)
+        if (m_alias_id != (unsigned int)UINT_MAX)
         {
           estate.setSource(m_alias_id);
           speed.setSource(m_alias_id);
