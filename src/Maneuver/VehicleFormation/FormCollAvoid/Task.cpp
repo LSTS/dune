@@ -1627,14 +1627,14 @@ namespace Maneuver
           m_model->setPosition(m_position);
           m_velocity(0) = lead_state->vx;
           m_velocity(1) = lead_state->vy;
-          m_velocity(2) = lead_state->vz;
+          m_velocity(2) = 0;
           m_velocity(3) = 0;
           m_velocity(4) = 0;
           m_velocity(5) = lead_state->r;
           m_model->setVelocity(m_velocity);
           m_wind(0) = lead_state->svx;
           m_wind(1) = lead_state->svy;
-          m_wind(2) = lead_state->svz;
+          m_wind(2) = 0;
           m_model->m_wind = m_wind;
 
           /*
