@@ -115,7 +115,6 @@ namespace Simulators
       void
       onResourceAcquisition(void)
       {
-        setEntityState(EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
@@ -148,24 +147,42 @@ namespace Simulators
             {
               i_src = (j+1)*(k+1)-1;
               // Resolve systems.
-              try
+              if (systems[j].empty())
               {
-                m_filtered_sys[i_src] = resolveSystemName(systems[j]);
-              }
-              catch (...)
-              {
-                debug("No system found with designation '%s'.", parts[0].c_str());
                 m_filtered_sys[i_src] = UINT_MAX;
+                debug("Filter source system undefined");
+              }
+              else
+              {
+                try
+                {
+                  m_filtered_sys[i_src] = resolveSystemName(systems[j]);
+                  debug("SystemID: %d", resolveSystemName(systems[j]));
+                }
+                catch (...)
+                {
+                  debug("No system found with designation '%s'.", parts[0].c_str());
+                  m_filtered_sys[i_src] = UINT_MAX;
+                }
               }
               // Resolve entities.
-              try
+              if (entities[j].empty())
               {
-                m_filtered_ent[i_src] = resolveEntity(entities[k]);
-              }
-              catch (...)
-              {
-                debug("No entity found with designation '%s'.", parts[1].c_str());
                 m_filtered_ent[i_src] = UINT_MAX;
+                debug("Filter entity system undefined");
+              }
+              else
+              {
+                try
+                {
+                  m_filtered_ent[i_src] = resolveEntity(entities[k]);
+                  debug("EntityID: %d", resolveEntity(entities[k]));
+                }
+                catch (...)
+                {
+                  debug("No entity found with designation '%s'.", parts[1].c_str());
+                  m_filtered_ent[i_src] = UINT_MAX;
+                }
               }
             }
           }
@@ -187,6 +204,7 @@ namespace Simulators
         debug("Consuming GPS-Fix");
 
         requestActivation();
+        setEntityState(EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         //m_origin = *msg;
       }
 
@@ -232,9 +250,6 @@ namespace Simulators
         }
 
         spew("Consuming SimulatedState");
-
-        if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
         m_sstate = *msg;
       }
