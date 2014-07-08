@@ -48,11 +48,9 @@ namespace Maneuver
 
       //! Vector for System Mapping.
       typedef std::vector<uint32_t> Systems;
-      typedef std::vector<bool> Systems_defined;
 
       //! Vector for Entity Mapping.
       typedef std::vector<uint32_t> Entities;
-      typedef std::vector<bool> Entities_defined;
 
       struct Arguments
       {
@@ -295,10 +293,8 @@ namespace Maneuver
 
         //! List of systems allowed to define a command.
         std::map<uint32_t, Systems> m_filtered_sys;
-        std::map<uint32_t, Systems_defined> m_filtered_sys_def;
         //! List of entities allowed to define a command.
         std::map<uint32_t, Entities> m_filtered_ent;
-        std::map<uint32_t, Entities_defined> m_filtered_ent_def;
         // System alias id
         uint32_t m_alias_id;
 
@@ -535,15 +531,10 @@ namespace Maneuver
           uint32_t i_src_ini;
           m_filtered_sys.clear();
           m_filtered_ent.clear();
-          m_filtered_sys_def.clear();
-          m_filtered_ent_def.clear();
           for (unsigned int i = 0; i < m_args.cmd_src.size(); ++i)
           {
             std::vector<std::string> parts;
             String::split(m_args.cmd_src[i], ":", parts);
-            debug("Part-1: %s", parts[0].c_str());
-            debug("Part-2: %s", parts[1].c_str());
-            debug("Part-3: %s", parts[2].c_str());
             if (parts.size() < 1)
               continue;
 
@@ -557,8 +548,6 @@ namespace Maneuver
               i_cmd = 3;
             else
               i_cmd = 4;
-            debug("i_cmd: %u", i_cmd);
-
 
             // Split systems and entities.
             std::vector<std::string> systems;
@@ -569,8 +558,6 @@ namespace Maneuver
               systems.resize(1);
             if (entities.size() == 0)
               entities.resize(1);
-            debug("Systems-1: %s", systems[0].c_str());
-            debug("Entities-1: %s", entities[0].c_str());
 
             // Assign filtered systems and entities to the selected commands
             if (i_cmd == 4)
@@ -582,13 +569,9 @@ namespace Maneuver
               i_cmd_final = i_cmd;
             for (; i_cmd <= i_cmd_final; i_cmd++)
             {
-              debug("i_cmd: %d", i_cmd);
               i_src_ini = m_filtered_sys[i_cmd].size();
               m_filtered_sys[i_cmd].resize(i_src_ini+systems.size()*entities.size());
               m_filtered_ent[i_cmd].resize(i_src_ini+systems.size()*entities.size());
-              m_filtered_sys_def[i_cmd].resize(i_src_ini+systems.size()*entities.size());
-              m_filtered_ent_def[i_cmd].resize(i_src_ini+systems.size()*entities.size());
-              debug("filter size: %lu", m_filtered_sys[i_cmd].size());
 
               // Resolve systems id.
               for (unsigned j = 0; j < systems.size(); j++)
@@ -601,7 +584,6 @@ namespace Maneuver
                   if (systems[j].empty())
                   {
                     m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                    m_filtered_sys_def[i_cmd][i_src_ini+i_src] = false;
                     debug("Filter source system undefined");
                   }
                   else
@@ -609,21 +591,18 @@ namespace Maneuver
                     try
                     {
                       m_filtered_sys[i_cmd][i_src_ini+i_src] = resolveSystemName(systems[j]);
-                      m_filtered_sys_def[i_cmd][i_src_ini+i_src] = true;
                       debug("SystemID: %d", resolveSystemName(systems[j]));
                     }
                     catch (...)
                     {
                       debug("No system found with designation '%s'.", parts[1].c_str());
                       m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                      m_filtered_sys_def[i_cmd][i_src_ini+i_src] = false;
                     }
                   }
                   // Resolve entities.
                   if (entities[j].empty())
                   {
                     m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                    m_filtered_ent_def[i_cmd][i_src_ini+i_src] = false;
                     debug("Filter entity system undefined");
                   }
                   else
@@ -631,14 +610,12 @@ namespace Maneuver
                     try
                     {
                       m_filtered_ent[i_cmd][i_src_ini+i_src] = resolveEntity(entities[k]);
-                      m_filtered_ent_def[i_cmd][i_src_ini+i_src] = true;
                       debug("EntityID: %d", resolveEntity(entities[k]));
                     }
                     catch (...)
                     {
                       debug("No entity found with designation '%s'.", parts[2].c_str());
                       m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                      m_filtered_ent_def[i_cmd][i_src_ini+i_src] = false;
                     }
                   }
                 }
@@ -983,28 +960,12 @@ namespace Maneuver
               matched = false;
               std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[0].begin();
               std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[0].begin();
-              std::vector<bool>::iterator itr_sys_def = m_filtered_sys_def[0].begin();
-              std::vector<bool>::iterator itr_ent_def = m_filtered_ent_def[0].begin();
               for (; itr_sys != m_filtered_sys[0].end(); ++itr_sys)
               {
-                if (*itr_sys_def)
-                  trace("Source defined.");
-                else
-                  trace("Source undefined.");
-                trace("*itr_sys '%u'.", *itr_sys);
-                trace("Source '%u'.", msg->getSource());
-                if (*itr_ent_def)
-                  trace("Entity defined.");
-                else
-                  trace("Entity undefined.");
-                trace("*itr_ent '%u'.", *itr_ent);
-                trace("SourceEntity '%u'.", msg->getSourceEntity());
-                if ((*itr_sys == msg->getSource() || !(*itr_sys_def)) &&
-                    (*itr_ent == msg->getSourceEntity() || !(*itr_ent_def)))
+                if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
+                    (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
                   matched = true;
-                ++itr_sys_def;
                 ++itr_ent;
-                ++itr_ent_def;
               }
             }
             // This system and entity are not listed to be passed.
@@ -1017,7 +978,7 @@ namespace Maneuver
               return;
             }
 
-            m_model->commandBank(msg->value);
+            m_model->commandBank(trimValue(msg->value, -m_args.bank_lim, m_args.bank_lim));
 
             // ========= Debug ===========
             spew("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
@@ -1065,7 +1026,7 @@ namespace Maneuver
               return;
             }
 
-            m_model->commandAirspeed(msg->value);
+            m_model->commandAirspeed(trimValue(msg->value, m_args.tas_min,  m_args.tas_max));
 
             // ========= Debug ===========
             spew("Speed command received (%1.2fm/s)", msg->value);
@@ -1119,7 +1080,7 @@ namespace Maneuver
               alt_cmd = msg->value;
             else if (msg->z_units == IMC::Z_DEPTH)
               alt_cmd = -msg->value;
-            m_model->commandAlt(alt_cmd);
+            m_model->commandAlt(trimValue(alt_cmd, m_args.alt_min,  m_args.alt_max));
 
             // ========= Debug ===========
             spew("Altitude command received (%1.2fm)", alt_cmd);
@@ -1896,7 +1857,7 @@ namespace Maneuver
           double d_g = DUNE::Math::c_gravity;
 
           //! Control constraints
-          double d_bank_lim = m_args.bank_lim;
+          double d_bank_lim = Angles::radians(m_args.bank_lim);
           double d_airspeed_max = m_args.tas_max;
           double d_airspeed_min = m_args.tas_min;
           double d_accel_lim_x = m_args.accel_lim_x;
