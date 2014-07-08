@@ -601,6 +601,7 @@ namespace DUNE
       double d_initial_yaw = m_position(5);
       //! Vertical position and Euler angles state update
       m_position.set(2, 5, 0, 0, m_position.get(2, 5, 0, 0) + m_velocity.get(2, 5, 0, 0)*timestep);
+      m_position(3) = DUNE::Math::Angles::normalizeRadian(m_position(3));
       m_position(5) = DUNE::Math::Angles::normalizeRadian(m_position(5));
       // Optimization variables
       m_cos_yaw = std::cos(m_position(5));
@@ -784,7 +785,7 @@ namespace DUNE
       //! - Computing flight path angle
       m_sin_pitch = -m_velocity(2)/m_airspeed;
       m_cos_pitch = std::sqrt(1 - m_sin_pitch*m_sin_pitch);
-      m_position(4) = std::asin(m_sin_pitch);
+      m_position(4) = Angles::normalizeRadian(std::asin(m_sin_pitch)*2)/2;
 
       //! Turn rate
       m_velocity(5) = m_g * std::tan(m_position(3))/m_airspeed;
@@ -953,7 +954,7 @@ namespace DUNE
       //! - Computing flight path angle
       m_sin_pitch = -m_velocity(2)/m_airspeed;
       m_cos_pitch = std::sqrt(1 - m_sin_pitch*m_sin_pitch);
-      m_position(4) = std::asin(m_sin_pitch);
+      m_position(4) = Angles::normalizeRadian(std::asin(m_sin_pitch)*2)/2;
 
       updateVelocity();
 
