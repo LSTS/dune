@@ -405,6 +405,10 @@ namespace DUNE
       //! Gravity acceleration
       double m_g;
 
+      //! Time step control
+      //! - If negative, the time step limitation is disabled
+      double m_timestep_lim;
+
     private:
       //! Vehicle position
       DUNE::Math::Matrix m_position;
@@ -461,6 +465,7 @@ namespace DUNE
       double m_airspeed;
       double m_ang_attack;
       double m_sideslip;
+
       //! Simulation optimization variables
       double m_cos_yaw;
       double m_sin_yaw;

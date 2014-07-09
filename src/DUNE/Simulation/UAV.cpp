@@ -108,6 +108,9 @@ namespace DUNE
       //! - Gravity acceleration
       m_g = model.m_g;
 
+      //! Time step control
+      m_timestep_lim = 1.0;
+
       //! Simulation variables
       m_airspeed = model.m_airspeed;
       m_cos_yaw = model.m_cos_yaw;
@@ -417,6 +420,9 @@ namespace DUNE
       m_wind = Math::Matrix(3, 1, 0.0);
       //! - Gravity acceleration
       m_g = 9.8066;
+      //! Time step control
+      m_timestep_lim = 1.0;
+
       //! Vehicle position
       m_position = Math::Matrix(6, 1, 0.0);
       //! Vehicle velocity vector
@@ -476,26 +482,33 @@ namespace DUNE
         return *this;
       }
 
+      //! Time step control
+      double d_timestep;
+      if (m_timestep_lim > 0.0 && timestep > m_timestep_lim)
+        d_timestep = m_timestep_lim;
+      else
+        d_timestep = timestep;
+
       if (m_sim_type.compare("4DOF_bank") == 0)
-        update4DOF_Bank(timestep);
+        update4DOF_Bank(d_timestep);
       else if (m_sim_type.compare("5DOF") == 0)
       {
         if (m_altitude_cmd_ini || m_fpa_cmd_ini)
-          update5DOF(timestep);
+          update5DOF(d_timestep);
         else
           throw Error("Altitude command missing! The state was not updated.");
       }
       else if (m_sim_type.compare("4DOF_alt") == 0)
       {
         if (m_altitude_cmd_ini || m_fpa_cmd_ini)
-          update4DOF_Alt(timestep);
+          update4DOF_Alt(d_timestep);
         else
           throw Error("Altitude command missing! The state was not updated.");
       }
       else if (m_sim_type.compare("3DOF") == 0)
-        update3DOF(timestep);
+        update3DOF(d_timestep);
       //else if (m_sim_type.compare("6DOF_stab") == 0)
-      //  update6DOF_Stab(timestep);
+      //  update6DOF_Stab(d_timestep);
 
       return *this;
     }
