@@ -268,6 +268,8 @@ namespace Maneuver
         //! Vehicle commands
         IMC::DesiredRoll m_bank_cmd;
         IMC::DesiredSpeed m_airspeed_cmd;
+        //! Leader commanded true airspeed
+        double m_tas_cmd_leader;
 
         //! Number of team vehicles
         int m_uav_n;
@@ -634,7 +636,8 @@ namespace Maneuver
           //! Airspeed value initialization
           m_airspeed = m_args.init_speed;
           m_airspeed_cmd.value = m_airspeed;
-
+          m_tas_cmd_leader = m_airspeed;
+          
           m_frequency = this->getFrequency();
 
           //! Initialize the leader vehicle model
@@ -1026,7 +1029,8 @@ namespace Maneuver
               return;
             }
 
-            m_model->commandAirspeed(trimValue(msg->value, m_args.tas_min,  m_args.tas_max));
+            m_tas_cmd_leader = trimValue(msg->value, m_args.tas_min,  m_args.tas_max);
+            m_model->commandAirspeed(m_tas_cmd_leader);
 
             // ========= Debug ===========
             spew("Speed command received (%1.2fm/s)", msg->value);
@@ -1077,11 +1081,13 @@ namespace Maneuver
 
             double alt_cmd;
             if (msg->z_units == IMC::Z_ALTITUDE)
+              alt_cmd = msg->value+m_llh_ref_pos[2];
+            else if (msg->z_units == IMC::Z_HEIGHT)
               alt_cmd = msg->value;
-            if (msg->z_units == IMC::Z_HEIGHT)
-              alt_cmd = msg->value-m_llh_ref_pos[2];
             else if (msg->z_units == IMC::Z_DEPTH)
               alt_cmd = -msg->value;
+            else
+	            alt_cmd = m_args.alt_min+m_llh_ref_pos[2];
             m_model->commandAlt(trimValue(alt_cmd, m_args.alt_min,  m_args.alt_max));
 
             // ========= Debug ===========
@@ -1879,11 +1885,9 @@ namespace Maneuver
           Matrix md_form_pos = m_args.formation_pos;
 
           //! Control parameters
-          // ToDo - substitute by the leader airspeed
-          double d_LeaderSpeed = d_leader_gndspeed;
           double mt_gain_mtx[2] = {m_args.k_longitudinal, m_args.k_lateral};
-          Matrix md_gain_mtx = Matrix(mt_gain_mtx, 2) * d_LeaderSpeed/2.5;
-          double d_ss_bnd_layer = m_args.k_boundary * d_LeaderSpeed;
+          Matrix md_gain_mtx = Matrix(mt_gain_mtx, 2) * m_tas_cmd_leader/2.5;
+          double d_ss_bnd_layer = m_args.k_boundary * m_tas_cmd_leader;
           double d_flow_accel_max = m_args.flow_accel_max;
           double d_control_margin = m_args.deconfliction_offset;
           double d_deconfliction_dist = m_args.safe_dist + d_control_margin;
