@@ -58,6 +58,8 @@ namespace Maneuver
         std::vector<std::string> cmd_src;
         //! Source system alias
         std::string src_alias;
+        //! Leader system name
+        std::string leader_alias;
         //! Simulation and control frequencies
         double ctrl_frequency;
         //! Controller parameters
@@ -96,12 +98,8 @@ namespace Maneuver
         double l_lon_accel;
         double l_vert_slope;
         // Initial state
-        double init_lat;
-        double init_lon;
-        double init_alt;
-        double init_speed;
-        double init_roll;
-        double init_yaw;
+        double default_alt;
+        double default_speed;
         // Debug flag
         bool debug;
       };
@@ -237,14 +235,14 @@ namespace Maneuver
         std::vector<UAVSimulation*> m_models;
         //! Leader vehicle model
         UAVSimulation* m_model;
-        //! Vehicls's referencial position (Latitude, Longitude, and height).
+        //! Vehicle's referential position (Latitude, Longitude, and height).
         double m_llh_ref_pos[3];
         //! Leader's simulated position (X,Y,Z,phi,theta,psi).
         Matrix m_position;
         //! Leader's simulated velocity (u,v,w,p,q,r).
         Matrix m_velocity;
-        //! Leader's simulated state
-        IMC::SimulatedState m_sstate;
+        //! Leader's estimated state
+        IMC::EstimatedState m_estate_leader;
         //! Simulation and control time variables
         double m_clock_diff;
         double m_last_leader_update;
@@ -268,6 +266,11 @@ namespace Maneuver
         //! Vehicle commands
         IMC::DesiredRoll m_bank_cmd;
         IMC::DesiredSpeed m_airspeed_cmd;
+        //IMC::DesiredZ m_altitude_cmd;
+        double m_tas_cmd_leader;
+        double m_alt_cmd_leader;
+        //! Command limits
+        double m_bank_lim;
 
         //! Number of team vehicles
         int m_uav_n;
@@ -297,6 +300,8 @@ namespace Maneuver
         std::map<uint32_t, Entities> m_filtered_ent;
         // System alias id
         uint32_t m_alias_id;
+        // Leader system id
+        uint32_t m_leader_id;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Periodic(name, ctx),
@@ -320,7 +325,8 @@ namespace Maneuver
           m_valid_airspeed(false),
           m_frequency(0.0),
           m_debug(false),
-          m_alias_id(UINT_MAX)
+          m_alias_id(UINT_MAX),
+          m_leader_id(UINT_MAX)
         {
           // Definition of configuration parameters.
           param("Commands source", m_args.cmd_src)
@@ -330,6 +336,10 @@ namespace Maneuver
           param("Source Alias", m_args.src_alias)
           .defaultValue("")
           .description("Emulated system id.");
+
+          param("Leader Name", m_args.leader_alias)
+          .defaultValue("")
+          .description("Leader system name.");
 
           param("Predicted Control Frequency", m_args.ctrl_frequency)
           .defaultValue("20.0")
@@ -390,7 +400,6 @@ namespace Maneuver
           param("Bank Limit", m_args.bank_lim)
           .defaultValue("30.0")
           .description("Aircraft Bank Limit");
-          m_args.bank_lim = DUNE::Math::Angles::radians(m_args.bank_lim);
 
           param("Formation Reference Frame", m_args.formation_frame)
           .defaultValue("0")
@@ -451,40 +460,23 @@ namespace Maneuver
           .units(Units::None)
           .description("Vertical slope limit to simulate altitude dynamics");
 
-          param("Initial Latitude", m_args.init_lat)
-          .defaultValue("39.09")
-          .description("Initial state latitude");
-
-          param("Initial Longitude", m_args.init_lon)
-          .defaultValue("-8.964")
-          .description("Initial state longitude");
-
-          param("Initial Altitude", m_args.init_alt)
+          param("Default Altitude", m_args.default_alt)
           .defaultValue("147.3")
           .description("Initial state WGS-84 geoid altitude");
 
-          param("Initial Speed", m_args.init_speed)
+          param("Default Speed", m_args.default_speed)
           .defaultValue("18.0")
           .description("Initial state airspeed");
-
-          param("Initial Roll", m_args.init_roll)
-          .defaultValue("0.0")
-          .description("Initial state bank");
-
-          param("Initial Yaw", m_args.init_yaw)
-          .defaultValue("0.0")
-          .description("Initial state yaw");
 
           param("Debug", m_args.debug)
           .defaultValue("false")
           .description("Controller in debug mode");
 
           // Message binding
-          bind<IMC::LeaderState>(this);
+          //bind<IMC::LeaderState>(this);
           bind<IMC::PlanControl>(this);
           bind<IMC::IndicatedSpeed>(this);
           bind<IMC::EstimatedStreamVelocity>(this);
-          bind<IMC::SimulatedState>(this);
           bind<IMC::Acceleration>(this);
           bind<IMC::DesiredRoll>(this);
           bind<IMC::DesiredSpeed>(this);
@@ -500,6 +492,9 @@ namespace Maneuver
           debug("Number of UAVs -> %d", m_uav_n);
           debug("Current UAV -> %d", m_args.uav_ind);
 
+          //! Parameters treatment
+          m_bank_lim = Angles::radians(m_args.bank_lim);
+
           //! Set source system alias
           if (!m_args.src_alias.empty())
           {
@@ -510,12 +505,30 @@ namespace Maneuver
             }
             catch (...)
             {
-              debug("No system found with designation '%s'.", m_args.src_alias.c_str());
+              war("Source system alias - No system found with designation '%s'.",
+                  m_args.src_alias.c_str());
               m_alias_id = UINT_MAX;
             }
           }
           else
             m_alias_id = UINT_MAX;
+
+          //! Set leader system id
+          if (!m_args.leader_alias.empty())
+          {
+            // Resolve systems.
+            try
+            {
+              m_leader_id = resolveSystemName(m_args.leader_alias);
+            }
+            catch (...)
+            {
+              war("Leader system name - No system found with designation '%s'.", m_args.leader_alias.c_str());
+              m_leader_id = UINT_MAX;
+            }
+          }
+          else
+            m_leader_id = UINT_MAX;
 
           // Debug flag - for control performance monitoring
           m_debug = m_args.debug;
@@ -632,27 +645,21 @@ namespace Maneuver
           m_llh_ref_pos[2] = 0.0;
 
           //! Airspeed value initialization
-          m_airspeed = m_args.init_speed;
+          m_airspeed = m_args.default_speed;
           m_airspeed_cmd.value = m_airspeed;
+          //m_altitude_cmd.value = m_args.default_alt;
+          m_tas_cmd_leader = m_airspeed;
+          m_alt_cmd_leader = m_args.default_alt;
 
           m_frequency = this->getFrequency();
 
           //! Initialize the leader vehicle model
           //! Model initialization
           debug("Formation leader model initialization");
-          //! - Altitude initialization
-          //m_position(2) = m_args.init_alt;
-          //! - Bank initialization
-          m_position(3) = DUNE::Math::Angles::radians(m_args.init_roll);
-          //! - Heading initialization
-          m_position(5) = DUNE::Math::Angles::radians(m_args.init_yaw);
-          //! - Velocity vector initialization
-          m_velocity(0) = m_args.init_speed*std::cos(m_position(5));
-          m_velocity(1) = m_args.init_speed*std::sin(m_position(5));
           //! - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
           //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed, -m_position(2));
+          m_model->command(0, m_args.default_speed, -m_args.default_alt);
           //! - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
@@ -688,9 +695,9 @@ namespace Maneuver
               model->command(m_position(3), m_airspeed, -m_position(2));
               //! - Limits definition
               if (m_args.l_bank_rate > 0)
-                m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
+                model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
               if (m_args.l_lon_accel > 0)
-                m_model->setAccelLim(m_args.l_lon_accel);
+                model->setAccelLim(m_args.l_lon_accel);
               //! Add model to the models vector
               m_models.push_back(model);
               debug("Simulated vehicle model initialized for vehicle %d.", ind_uav+1);
@@ -724,37 +731,37 @@ namespace Maneuver
 //          Memory::clear(m_form_monitor);
         }
 
-        void
-        consume(const IMC::LeaderState* msg)
-        {
-          if (m_args.uav_ind == 0)
-          {
-            // Set leader state
-            if (msg->op == IMC::LeaderState::OP_SET)
-            {
-              // Check if the system is the intended destination of the state
-              if (msg->getDestination() != ((m_alias_id != UINT_MAX) ? m_alias_id : getSystemId()))
-              {
-                trace("LeaderState message rejected!");
-                trace("Destination system: %s.", resolveSystemId(msg->getDestination()));
-                return;
-              }
-
-              debug("LeaderState received!");
-              setLeaderState(msg);
-
-              /*
-              // Save message to cache.
-              IMC::CacheControl cop;
-              cop.op = IMC::CacheControl::COP_STORE;
-              cop.message.set(*msg);
-                if (m_alias_id != UINT_MAX)
-                  cop.setSource(m_alias_id);
-              dispatch(cop);
-               */
-            }
-          }
-        }
+//        void
+//        consume(const IMC::LeaderState* msg)
+//        {
+//          if (m_args.uav_ind == 0)
+//          {
+//            // Set leader state
+//            if (msg->op == IMC::LeaderState::OP_SET)
+//            {
+//              // Check if the system is the intended destination of the state
+//              if (msg->getDestination() != ((m_alias_id != UINT_MAX) ? m_alias_id : getSystemId()))
+//              {
+//                trace("LeaderState message rejected!");
+//                trace("Destination system: %s.", resolveSystemId(msg->getDestination()));
+//                return;
+//              }
+//
+//              debug("LeaderState received!");
+//              setLeaderState(msg);
+//
+//              /*
+//              // Save message to cache.
+//              IMC::CacheControl cop;
+//              cop.op = IMC::CacheControl::COP_STORE;
+//              cop.message.set(*msg);
+//                if (m_alias_id != UINT_MAX)
+//                  cop.setSource(m_alias_id);
+//              dispatch(cop);
+//               */
+//            }
+//          }
+//        }
 
         void
         consume(const IMC::PlanControl* msg)
@@ -807,8 +814,7 @@ namespace Maneuver
             // ToDo - Use global team position to set the leader initial state
             if (msg->op == IMC::PlanControl::PC_START)
             {
-              trace("Sending LeaderState to the leader.");
-              m_init_leader.setDestination(resolveSystemName("form-leader-01"));
+              trace("Reseting the leader state.");
               m_init_leader.op      = IMC::LeaderState::OP_SET;
               m_init_leader.lat     = m_llh_ref_pos[0];
               m_init_leader.lon     = m_llh_ref_pos[1];
@@ -818,19 +824,16 @@ namespace Maneuver
               m_init_leader.z       = m_uav_state(2, m_args.uav_ind);
               m_init_leader.vx      = m_uav_state(3, m_args.uav_ind);
               m_init_leader.vy      = m_uav_state(4, m_args.uav_ind);
-              m_init_leader.vz      = m_uav_state(5, m_args.uav_ind);
-              m_init_leader.phi     = m_uav_state(6, m_args.uav_ind);
-              m_init_leader.theta   = m_uav_state(7, m_args.uav_ind);
+              m_init_leader.vz      = 0;
+              m_init_leader.phi     = trimValue(m_uav_state(6, m_args.uav_ind), -m_bank_lim, m_bank_lim);
+              m_init_leader.theta   = 0;
               m_init_leader.psi     = m_uav_state(8, m_args.uav_ind);
-              m_init_leader.p       = m_uav_state(9, m_args.uav_ind);
-              m_init_leader.q       = m_uav_state(10, m_args.uav_ind);
+              m_init_leader.p       = 0;
+              m_init_leader.q       = 0;
               m_init_leader.r       = m_uav_state(11, m_args.uav_ind);
               m_init_leader.svx     = m_wind(0);
               m_init_leader.svy     = m_wind(1);
-              m_init_leader.svz     = m_wind(2);
-              if (m_alias_id != UINT_MAX)
-                m_init_leader.setSource(m_alias_id);
-              dispatch(m_init_leader);
+              m_init_leader.svz     = 0;
             }
 
             /*
@@ -876,6 +879,7 @@ namespace Maneuver
           // ToDo - Send estimated wind to the global formation management thread
         }
 
+        /*
         void
         consume(const IMC::SimulatedState* msg)
         {
@@ -920,6 +924,7 @@ namespace Maneuver
               requestActivation();
           }
         }
+        */
 
         void
         consume(const IMC::Acceleration* msg)
@@ -943,153 +948,147 @@ namespace Maneuver
         void
         consume(const IMC::DesiredRoll* msg)
         {
-          if (m_args.uav_ind == 0)
+          //! Get leader vehicle commanded roll
+          if (!isActive())
           {
-            //! Get leader vehicle commanded roll
-            if (!isActive())
-            {
-              //trace("Bank command rejected.");
-              //trace("Leader simulation not active.");
-              return;
-            }
+            //trace("Bank command rejected.");
+            //trace("Leader simulation not active.");
+            return;
+          }
 
-            // Filter command by systems and entities.
-            bool matched = true;
-            if (m_filtered_sys[0].size() > 0)
+          // Filter command by systems and entities.
+          bool matched = true;
+          if (m_filtered_sys[0].size() > 0)
+          {
+            matched = false;
+            std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[0].begin();
+            std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[0].begin();
+            for (; itr_sys != m_filtered_sys[0].end(); ++itr_sys)
             {
-              matched = false;
-              std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[0].begin();
-              std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[0].begin();
-              for (; itr_sys != m_filtered_sys[0].end(); ++itr_sys)
-              {
-                if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
-                    (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
-                  matched = true;
-                ++itr_ent;
-              }
+              if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
+                  (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+                matched = true;
+              ++itr_ent;
             }
-            // This system and entity are not listed to be passed.
-            if (!matched)
-            {
-              trace("Bank command rejected.");
-              trace("DesiredRoll received from system '%s' and entity '%s'.",
-                  resolveSystemId(msg->getSource()),
-                  resolveEntity(msg->getSourceEntity()).c_str());
-              return;
-            }
-
-            m_model->commandBank(trimValue(msg->value, -m_args.bank_lim, m_args.bank_lim));
-
-            // ========= Debug ===========
-            spew("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
-            spew("DesiredRoll received from system '%s' and entity '%s'.",
+          }
+          // This system and entity are not listed to be passed.
+          if (!matched)
+          {
+            trace("Bank command rejected.");
+            trace("DesiredRoll received from system '%s' and entity '%s'.",
                 resolveSystemId(msg->getSource()),
                 resolveEntity(msg->getSourceEntity()).c_str());
+            return;
           }
+
+          m_model->commandBank(trimValue(msg->value, -m_bank_lim, m_bank_lim));
+
+          // ========= Debug ===========
+          spew("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
+          spew("DesiredRoll received from system '%s' and entity '%s'.",
+              resolveSystemId(msg->getSource()),
+              resolveEntity(msg->getSourceEntity()).c_str());
         }
 
         void
         consume(const IMC::DesiredSpeed* msg)
         {
-          if (m_args.uav_ind == 0)
+          //! Get leader vehicle commanded airspeed
+          if (!isActive())
           {
-            //! Get leader vehicle commanded airspeed
-            if (!isActive())
-            {
-              //trace("Speed command rejected.");
-              //trace("Leader simulation not active.");
-              return;
-            }
+            //trace("Speed command rejected.");
+            //trace("Leader simulation not active.");
+            return;
+          }
 
-            // Filter command by systems and entities.
-            bool matched = true;
-            if (m_filtered_sys[1].size() > 0)
+          // Filter command by systems and entities.
+          bool matched = true;
+          if (m_filtered_sys[1].size() > 0)
+          {
+            matched = false;
+            std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[1].begin();
+            std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[1].begin();
+            for (; itr_sys != m_filtered_sys[1].end(); ++itr_sys)
             {
-              matched = false;
-              std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[1].begin();
-              std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[1].begin();
-              for (; itr_sys != m_filtered_sys[1].end(); ++itr_sys)
-              {
-                if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
-                    (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
-                  matched = true;
-                ++itr_ent;
-              }
+              if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
+                  (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+                matched = true;
+              ++itr_ent;
             }
-            // This system and entity are not listed to be passed.
-            if (!matched)
-            {
-              trace("Speed command rejected.");
-              trace("DesiredSpeed received from system '%s' and entity '%s'.",
-                  resolveSystemId(msg->getSource()),
-                  resolveEntity(msg->getSourceEntity()).c_str());
-              return;
-            }
-
-            m_model->commandAirspeed(trimValue(msg->value, m_args.tas_min,  m_args.tas_max));
-
-            // ========= Debug ===========
-            spew("Speed command received (%1.2fm/s)", msg->value);
-            spew("DesiredSpeed received from system '%s' and entity '%s'.",
+          }
+          // This system and entity are not listed to be passed.
+          if (!matched)
+          {
+            trace("Speed command rejected.");
+            trace("DesiredSpeed received from system '%s' and entity '%s'.",
                 resolveSystemId(msg->getSource()),
                 resolveEntity(msg->getSourceEntity()).c_str());
+            return;
           }
+
+          m_tas_cmd_leader = trimValue(msg->value, m_args.tas_min,  m_args.tas_max);
+          m_model->commandAirspeed(m_tas_cmd_leader);
+
+          // ========= Debug ===========
+          spew("Speed command received (%1.2fm/s), assumed (%1.2fm/s)", msg->value, m_tas_cmd_leader);
+          spew("DesiredSpeed received from system '%s' and entity '%s'.",
+              resolveSystemId(msg->getSource()),
+              resolveEntity(msg->getSourceEntity()).c_str());
         }
 
         void
         consume(const IMC::DesiredZ* msg)
         {
-          //! Get leader vehicle commanded airspeed
-          if (m_args.uav_ind == 0)
+          //! Check if system is active
+          if (!isActive())
           {
-            //! Check if system is active
-            if (!isActive())
-            {
-              //trace("Altitude command rejected.");
-              //trace("Leader simulation not active.");
-              return;
-            }
+            //trace("Altitude command rejected.");
+            //trace("Leader simulation not active.");
+            return;
+          }
 
-            // Filter command by systems and entities.
-            bool matched = true;
-            if (m_filtered_sys[2].size() > 0)
+          // Filter command by systems and entities.
+          bool matched = true;
+          if (m_filtered_sys[2].size() > 0)
+          {
+            matched = false;
+            std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[2].begin();
+            std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[2].begin();
+            for (; itr_sys != m_filtered_sys[2].end(); ++itr_sys)
             {
-              matched = false;
-              std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[2].begin();
-              std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[2].begin();
-              for (; itr_sys != m_filtered_sys[2].end(); ++itr_sys)
-              {
-                if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
-                    (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
-                  matched = true;
-                ++itr_ent;
-              }
+              if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
+                  (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
+                matched = true;
+              ++itr_ent;
             }
-            // This system and entity are not listed to be passed.
-            if (!matched)
-            {
-              trace("Altitude command rejected.");
-              trace("DesiredZ received from system '%s' and entity '%s'.",
-                  resolveSystemId(msg->getSource()),
-                  resolveEntity(msg->getSourceEntity()).c_str());
-              return;
-            }
-
-            double alt_cmd;
-            if (msg->z_units == IMC::Z_ALTITUDE)
-              alt_cmd = msg->value;
-            if (msg->z_units == IMC::Z_HEIGHT)
-              alt_cmd = msg->value-m_llh_ref_pos[2];
-            else if (msg->z_units == IMC::Z_DEPTH)
-              alt_cmd = -msg->value;
-            m_model->commandAlt(trimValue(alt_cmd, m_args.alt_min,  m_args.alt_max));
-
-            // ========= Debug ===========
-            spew("Altitude command received (%1.2fm)", alt_cmd);
-            spew("DesiredZ received from system '%s' and entity '%s'.",
+          }
+          // This system and entity are not listed to be passed.
+          if (!matched)
+          {
+            trace("Altitude command rejected.");
+            trace("DesiredZ received from system '%s' and entity '%s'.",
                 resolveSystemId(msg->getSource()),
                 resolveEntity(msg->getSourceEntity()).c_str());
+            return;
           }
+
+          if (msg->z_units == IMC::Z_ALTITUDE)
+            m_alt_cmd_leader = msg->value+m_llh_ref_pos[2];
+          else if (msg->z_units == IMC::Z_HEIGHT)
+            m_alt_cmd_leader = msg->value;
+          else if (msg->z_units == IMC::Z_DEPTH)
+            m_alt_cmd_leader = -msg->value;
+          else
+            m_alt_cmd_leader = m_args.alt_min+m_llh_ref_pos[2];
+          m_model->commandAlt(trimValue(m_alt_cmd_leader,
+                                        m_args.alt_min+m_llh_ref_pos[2],
+                                        m_args.alt_max+m_llh_ref_pos[2]));
+
+          // ========= Debug ===========
+          spew("Altitude command received (%1.2fm), assumed (%1.2fm)", msg->value, m_alt_cmd_leader);
+          spew("DesiredZ received from system '%s' and entity '%s'.",
+              resolveSystemId(msg->getSource()),
+              resolveEntity(msg->getSourceEntity()).c_str());
         }
 
         void
@@ -1372,16 +1371,6 @@ namespace Maneuver
 
           if (!isActive())
           {
-            //! Initialize leader state
-//            if (m_args.uav_ind == 0)
-//            {
-//              //! Set source system alias
-//              if (m_alias_id != UINT_MAX)
-//                m_init_leader.setSource(m_alias_id);
-//
-//              dispatch(m_init_leader);
-//            }
-
             // ========= Spew ===========
             if (d_time >= m_last_time_trace + 1.0)
             {
@@ -1389,157 +1378,15 @@ namespace Maneuver
               m_last_time_trace = d_time;
             }
             return;
-         }
-
-          if (m_args.uav_ind == 0)
-          {
-            //! Update the leader vehicle commands and states
-
-            //! Declaration
-            double d_timestep;
-
-            //! Compute the time step
-            d_timestep = d_time - m_last_leader_update;
-            m_last_leader_update = d_time;
-
-
-            // ========= Spew ===========
-
-            /*
-            if (d_time >= m_last_time_spew + 0.1)
-            {
-              //spew("Simulating: %s", m_model->m_sim_type);
-              spew("Bank: %1.2fº        - Commanded bank: %1.2fº",
-                   DUNE::Math::Angles::degrees(m_position(3)),
-                   DUNE::Math::Angles::degrees(m_model->getBankCmd()));
-              spew("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->getAirspeedCmd());
-              spew("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
-              spew("Current latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
-              spew("Current longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
-              spew("Current altitude: %1.4fm", m_init_leader.height);
-              spew("Current x position: %1.4f", m_position(0));
-              spew("Current y position: %1.4f", m_position(1));
-              spew("Current z position: %1.4f", m_position(2));
-              spew("Current roll angle: %1.4f", m_position(3));
-              spew("Current pitch angle: %1.4f", m_position(4));
-              spew("Current yaw angle: %1.4f", m_position(5));
-              spew("Current x speed: %1.4f", m_velocity(0));
-              spew("Current y speed: %1.4f", m_velocity(1));
-              spew("Current z speed: %1.4f", m_velocity(2));
-              spew("Current roll rate: %1.4f", m_velocity(3));
-              spew("Current pitch rate: %1.4f", m_velocity(4));
-              spew("Current yaw rate: %1.4f", m_velocity(5));
-              spew("Current x wind speed: %1.4f", m_wind(0));
-              spew("Current y wind speed: %1.4f", m_wind(1));
-              spew("Current z wind speed: %1.4f", m_wind(2));
-              m_last_time_spew = d_time;
-            }
-            */
-
-            //==========================================================================
-            //! Dynamics
-            //==========================================================================
-
-            m_model->update(d_timestep);
-            m_position = m_model->getPosition();
-            m_velocity = m_model->getVelocity();
-
-            // ========= Trace ===========
-            /*
-            if (d_time >= m_last_time_trace + 1.0)
-            {
-              //trace("Simulating: %s", m_model->m_sim_type);
-              trace("Bank: %1.2fº        - Commanded bank: %1.2fº",
-                  DUNE::Math::Angles::degrees(m_position(3)),
-                  DUNE::Math::Angles::degrees(m_model->getBankCmd()));
-              trace("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->getAirspeedCmd());
-              trace("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
-              trace("Current latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
-              trace("Current longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
-              trace("Current altitude: %1.4fm", m_init_leader.height);
-              trace("Current x position: %1.4f", m_position(0));
-              trace("Current y position: %1.4f", m_position(1));
-              trace("Current z position: %1.4f", m_position(2));
-              trace("Current roll angle: %1.4f", m_position(3));
-              trace("Current pitch angle: %1.4f", m_position(4));
-              trace("Current yaw angle: %1.4f", m_position(5));
-              trace("Current x speed: %1.4f", m_velocity(0));
-              trace("Current y speed: %1.4f", m_velocity(1));
-              trace("Current z speed: %1.4f", m_velocity(2));
-              trace("Current roll rate: %1.4f", m_velocity(3));
-              trace("Current pitch rate: %1.4f", m_velocity(4));
-              trace("Current yaw rate: %1.4f", m_velocity(5));
-              trace("Current x wind speed: %1.4f", m_wind(0));
-              trace("Current y wind speed: %1.4f", m_wind(1));
-              trace("Current z wind speed: %1.4f", m_wind(2));
-              m_last_time_trace = d_time;
-            }
-             */
-            //==========================================================================
-            //! Output
-            //==========================================================================
-
-            //! Fill position.
-            m_sstate.x = m_position(0);
-            m_sstate.y = m_position(1);
-            m_sstate.z = m_position(2);
-
-            //! Fill attitude.
-            m_sstate.phi = m_position(3);
-            m_sstate.theta = m_position(4);
-            m_sstate.psi = m_position(5);
-
-            //! Rotation matrix
-            double euler_ang[3] = {m_position(3), m_position(4), m_position(5)};
-            Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
-            //! UAV velocity rotation to the body frame
-            Matrix vd_body_vel = transpose(md_rot_body2gnd) * m_velocity.get(0, 2, 0, 0);
-            //! Fill body-frame linear velocity, relative to the ground.
-            m_sstate.u = vd_body_vel(0);
-            m_sstate.v = vd_body_vel(1);
-            m_sstate.w = vd_body_vel(2);
-
-            //! UAV body-frame rotation rates
-            // vd_UAVRotRates = UAVRotRatTrans_1_00(vd_State);
-
-            //! Fill angular velocity.
-            m_sstate.p = m_velocity(3);
-            m_sstate.q = m_velocity(4);
-            m_sstate.r = m_velocity(5);
-
-            //! Fill stream velocity.
-            m_sstate.svx = m_model->m_wind(0);
-            m_sstate.svy = m_model->m_wind(1);
-            m_sstate.svz = m_model->m_wind(2);
-
-            //! Set the destination ID as the system own ID (for virtual leader autopilot simulation)
-            m_sstate.setDestination((m_alias_id != UINT_MAX) ? m_alias_id : getSystemId());
-
-            //! Set source system alias
-            if (m_alias_id != UINT_MAX)
-              m_sstate.setSource(m_alias_id);
-
-            //! Send simulated state message (with the system own ID as destination)
-            dispatch(m_sstate);
-
-            /*
-            //! Set the destination ID as the real vehicle system ID (for virtual leader data transmission)
-            m_sstate.setDestination(getSystemId());
-
-            //! Send simulated state message (with the real vehicle system ID as destination)
-            dispatch(m_sstate);
-             */
           }
-          else
-          {
-            //! Update the simulated vehicles commands and states
 
-            // ToDo - Check if leader simulation last update is recent enough: m_last_state_estim(0)
-            // ToDo - Check if team vehicles last update is recent enough: m_last_state_estim(1:m_uav_n)
+          //! Update the simulated vehicles commands and states
 
-            //! Update team simulated state for standard time periods
-            teamPeriodicUpdate(m_clock_diff + Clock::get());
-          }
+          // ToDo - Check if leader simulation last update is recent enough: m_last_state_estim(0)
+          // ToDo - Check if team vehicles last update is recent enough: m_last_state_estim(1:m_uav_n)
+
+          //! Update team simulated state for standard time periods
+          teamPeriodicUpdate(m_clock_diff + Clock::get());
         }
 
         void
@@ -1598,43 +1445,30 @@ namespace Maneuver
           if (!isActive())
             requestActivation();
 
-          //! Defining GpsFix for autopilot simulator
-          IMC::GpsFix origin;
-          origin.lat = lead_state->lat;
-          origin.lon = lead_state->lon;
-          origin.height = lead_state->height;
-          origin.setDestination((m_alias_id != UINT_MAX) ? m_alias_id : getSystemId());
-          //! Set source system alias
-          if (m_alias_id != UINT_MAX)
-            origin.setSource(m_alias_id);
-          dispatch(origin);
-
           //! Defining origin.
-          m_sstate.lat = lead_state->lat;
-          m_sstate.lon = lead_state->lon;
-          m_sstate.height = lead_state->height;
+          m_estate_leader.lat = lead_state->lat;
+          m_estate_leader.lon = lead_state->lon;
+          m_estate_leader.height = lead_state->height;
 
           //! - State initialization
-          double bank_lim = Angles::radians(m_args.bank_lim);
-
           m_position = m_model->getPosition();
           m_position(0) = lead_state->x;
           m_position(1) = lead_state->y;
           m_position(2) = lead_state->z;
-          m_position(3) = trimValue(lead_state->phi, -bank_lim, bank_lim);
+          m_position(3) = lead_state->phi;
           m_position(4) = 0;
           m_position(5) = lead_state->psi;
           m_model->setPosition(m_position);
           m_velocity(0) = lead_state->vx;
           m_velocity(1) = lead_state->vy;
-          m_velocity(2) = lead_state->vz;
-          m_velocity(3) = 0;
+          m_velocity(2) = 0;
+          m_velocity(3) = lead_state->p;
           m_velocity(4) = 0;
           m_velocity(5) = lead_state->r;
           m_model->setVelocity(m_velocity);
           m_wind(0) = lead_state->svx;
           m_wind(1) = lead_state->svy;
-          m_wind(2) = lead_state->svz;
+          m_wind(2) = 0;
           m_model->m_wind = m_wind;
 
           /*
@@ -1754,7 +1588,120 @@ namespace Maneuver
           {
             //! Leader state prediction - Update the simulated vehicle state
             if (m_last_state_estim(0) <= d_sim_time)
+            {
+              // ========= Spew ===========
+              /*
+              if (d_time >= m_last_time_spew + 0.1)
+              {
+                //spew("Simulating: %s", m_model->m_sim_type);
+                spew("Bank: %1.2fº        - Commanded bank: %1.2fº",
+                     DUNE::Math::Angles::degrees(m_position(3)),
+                     DUNE::Math::Angles::degrees(m_model->getBankCmd()));
+                spew("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->getAirspeedCmd());
+                spew("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
+                spew("Current latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
+                spew("Current longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
+                spew("Current altitude: %1.4fm", m_init_leader.height);
+                spew("Current x position: %1.4f", m_position(0));
+                spew("Current y position: %1.4f", m_position(1));
+                spew("Current z position: %1.4f", m_position(2));
+                spew("Current roll angle: %1.4f", m_position(3));
+                spew("Current pitch angle: %1.4f", m_position(4));
+                spew("Current yaw angle: %1.4f", m_position(5));
+                spew("Current x speed: %1.4f", m_velocity(0));
+                spew("Current y speed: %1.4f", m_velocity(1));
+                spew("Current z speed: %1.4f", m_velocity(2));
+                spew("Current roll rate: %1.4f", m_velocity(3));
+                spew("Current pitch rate: %1.4f", m_velocity(4));
+                spew("Current yaw rate: %1.4f", m_velocity(5));
+                spew("Current x wind speed: %1.4f", m_wind(0));
+                spew("Current y wind speed: %1.4f", m_wind(1));
+                spew("Current z wind speed: %1.4f", m_wind(2));
+                m_last_time_spew = d_time;
+              }
+              */
+
+              //==========================================================================
+              //! Dynamics
+              //==========================================================================
+
               m_model->update(d_timestep_sim);
+              m_position = m_model->getPosition();
+              m_velocity = m_model->getVelocity();
+
+              // ========= Trace ===========
+              /*
+              if (d_time >= m_last_time_trace + 1.0)
+              {
+                //trace("Simulating: %s", m_model->m_sim_type);
+                trace("Bank: %1.2fº        - Commanded bank: %1.2fº",
+                    DUNE::Math::Angles::degrees(m_position(3)),
+                    DUNE::Math::Angles::degrees(m_model->getBankCmd()));
+                trace("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->getAirspeedCmd());
+                trace("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
+                trace("Current latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
+                trace("Current longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
+                trace("Current altitude: %1.4fm", m_init_leader.height);
+                trace("Current x position: %1.4f", m_position(0));
+                trace("Current y position: %1.4f", m_position(1));
+                trace("Current z position: %1.4f", m_position(2));
+                trace("Current roll angle: %1.4f", m_position(3));
+                trace("Current pitch angle: %1.4f", m_position(4));
+                trace("Current yaw angle: %1.4f", m_position(5));
+                trace("Current x speed: %1.4f", m_velocity(0));
+                trace("Current y speed: %1.4f", m_velocity(1));
+                trace("Current z speed: %1.4f", m_velocity(2));
+                trace("Current roll rate: %1.4f", m_velocity(3));
+                trace("Current pitch rate: %1.4f", m_velocity(4));
+                trace("Current yaw rate: %1.4f", m_velocity(5));
+                trace("Current x wind speed: %1.4f", m_wind(0));
+                trace("Current y wind speed: %1.4f", m_wind(1));
+                trace("Current z wind speed: %1.4f", m_wind(2));
+                m_last_time_trace = d_time;
+              }
+               */
+
+              //==========================================================================
+              // Leader state output
+              //==========================================================================
+
+              if (m_leader_id != UINT_MAX)
+              {
+                //! Rotation matrix
+                double euler_ang[3] = {m_position(3), m_position(4), m_position(5)};
+                Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
+                //! UAV velocity rotation to the body frame
+                Matrix vd_body_vel = transpose(md_rot_body2gnd) * m_velocity.get(0, 2, 0, 0);
+                // UAV velocity components, on ground frame
+                Matrix vd_gnd_vel = md_rot_body2gnd * vd_body_vel;
+
+                //! Fill position.
+                m_estate_leader.x = m_position(0);
+                m_estate_leader.y = m_position(1);
+                m_estate_leader.z = m_position(2);
+                //! Fill body-frame linear velocity, relative to the ground.
+                m_estate_leader.u = vd_body_vel(0);
+                m_estate_leader.v = vd_body_vel(1);
+                m_estate_leader.w = vd_body_vel(2);
+                //! Fill attitude.
+                m_estate_leader.phi = m_position(3);
+                m_estate_leader.theta = m_position(4);
+                m_estate_leader.psi = m_position(5);
+                //! Fill angular velocity.
+                m_estate_leader.p = m_velocity(3);
+                m_estate_leader.q = m_velocity(4);
+                m_estate_leader.r = m_velocity(5);
+                // Fill ground linear velocity.
+                m_estate_leader.vx = vd_gnd_vel(0);
+                m_estate_leader.vy = vd_gnd_vel(1);
+                m_estate_leader.vz = vd_gnd_vel(2);
+
+                //! Set source system alias
+                m_estate_leader.setSource(m_leader_id);
+                //! Send simulated state message (with the system own ID as destination)
+                dispatch(m_estate_leader);
+              }
+            }
 
             //! Team state prediction - Update the simulated vehicles state
             for (int ind_uav = 1; ind_uav <= m_uav_n; ++ind_uav)
@@ -1869,7 +1816,6 @@ namespace Maneuver
           double d_g = DUNE::Math::c_gravity;
 
           //! Control constraints
-          double d_bank_lim = Angles::radians(m_args.bank_lim);
           double d_airspeed_max = m_args.tas_max;
           double d_airspeed_min = m_args.tas_min;
           double d_accel_lim_x = m_args.accel_lim_x;
@@ -1906,7 +1852,7 @@ namespace Maneuver
 
           // Maneuvering constrains
           Matrix vd_body_accel_lim_x = d_accel_lim_x*vd_body_x;
-          Matrix vd_body_accel_lim_y = d_g * std::tan(d_bank_lim*0.6)*vd_body_y;
+          Matrix vd_body_accel_lim_y = d_g * std::tan(m_bank_lim*0.6)*vd_body_y;
 
           //! Miscellaneous
           double t_uav_turnrad;
@@ -2719,7 +2665,7 @@ namespace Maneuver
           (*vd_cmd)(2) = trimValue((*vd_cmd)(2), m_args.alt_min, m_args.alt_max);
 
           //! Bank limits
-          (*vd_cmd)(0) = trimValue((*vd_cmd)(0), -d_bank_lim, d_bank_lim);
+          (*vd_cmd)(0) = trimValue((*vd_cmd)(0), -m_bank_lim, m_bank_lim);
           vd_ctrl(1) = d_g*std::tan((*vd_cmd)(0)); // Real lateral acceleration command
 
           /*
