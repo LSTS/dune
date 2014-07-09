@@ -273,22 +273,17 @@ namespace Simulators
         // Attitude.
         double vt_attitude[3] = {m_sstate.phi, m_sstate.theta, m_sstate.psi};
         Matrix vd_attitude = Matrix(vt_attitude, 3, 1);
-
         // Body velocity.
         double vt_velocity[3] = {m_sstate.u, m_sstate.v, m_sstate.w};
         Matrix vd_body_vel = Matrix(vt_velocity, 3, 1);
-
         // Stream velocity.
         double vt_stream_vel[3] = {m_sstate.svx, m_sstate.svy, m_sstate.svz};
         Matrix vd_stream_vel = Matrix(vt_stream_vel, 3, 1);
-
         // Rotation matrices
         double euler_ang[3] = {vd_attitude(0), vd_attitude(1), vd_attitude(2)};
         Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
-
         // UAV velocity components, on ground frame
         Matrix vd_gnd_vel = md_rot_body2gnd * vd_body_vel;
-
         // Air-relative UAV velocity components, on aircraft frame
         Matrix vd_body_vel_2wind = transpose(md_rot_body2gnd) * (vd_gnd_vel - vd_stream_vel);
 
@@ -296,27 +291,22 @@ namespace Simulators
         estate.lat = m_sstate.lat;
         estate.lon = m_sstate.lon;
         estate.height = m_sstate.height;
-
         // Fill position.
         estate.x = m_sstate.x;
         estate.y = m_sstate.y;
         estate.z = m_sstate.z;
-
-        // Fill attitude.
-        estate.phi = vd_attitude(0);
-        estate.theta = vd_attitude(1);
-        estate.psi = vd_attitude(2);
-
         // Fill body linear velocity.
         estate.u = vd_body_vel(0);
         estate.v = vd_body_vel(1);
         estate.w = vd_body_vel(2);
-
         // Fill ground linear velocity.
         estate.vx = vd_gnd_vel(0);
         estate.vy = vd_gnd_vel(1);
         estate.vz = vd_gnd_vel(2);
-
+        // Fill attitude.
+        estate.phi = vd_attitude(0);
+        estate.theta = vd_attitude(1);
+        estate.psi = vd_attitude(2);
         // Fill angular velocity.
         estate.p = m_sstate.p;
         estate.q = m_sstate.q;
