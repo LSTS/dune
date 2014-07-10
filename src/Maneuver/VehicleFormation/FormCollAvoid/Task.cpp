@@ -245,7 +245,6 @@ namespace Maneuver
         IMC::EstimatedState m_estate_leader;
         //! Simulation and control time variables
         double m_clock_diff;
-        double m_last_leader_update;
         double m_last_ctrl_update;
         Matrix m_last_state_estim;
         Matrix m_last_simctrl_update;
@@ -338,7 +337,7 @@ namespace Maneuver
           .description("Emulated system id.");
 
           param("Leader Name", m_args.leader_alias)
-          .defaultValue("")
+          .defaultValue("form-leader-01")
           .description("Leader system name.");
 
           param("Predicted Control Frequency", m_args.ctrl_frequency)
@@ -523,12 +522,11 @@ namespace Maneuver
             }
             catch (...)
             {
-              war("Leader system name - No system found with designation '%s'.", m_args.leader_alias.c_str());
-              m_leader_id = UINT_MAX;
+              err("Leader system name - No system found with designation '%s'.", m_args.leader_alias.c_str());
             }
           }
           else
-            m_leader_id = UINT_MAX;
+            err("Leader system name - No system found with designation '%s'.", m_args.leader_alias.c_str());
 
           // Debug flag - for control performance monitoring
           m_debug = m_args.debug;
@@ -714,9 +712,6 @@ namespace Maneuver
             //m_form_monitor->rel_state = m_rel_state;
           }
 
-          //! Start the simulation time
-          m_last_leader_update = Clock::get();
-
           //! Start the control time
           m_last_ctrl_update = Clock::get();
 
@@ -766,33 +761,28 @@ namespace Maneuver
         void
         consume(const IMC::PlanControl* msg)
         {
-          IMC::PlanControl lead_plan_ctrl;
-          // ToDo - For final implementation, the activation of plans
-          // should come from a formation synchronous message
-          if (m_args.uav_ind > 0)
+          //! Check if it is a plan execution request
+          if (msg->type != IMC::PlanControl::PC_REQUEST)
+            return;
+
+          //! Check if the vehicle is the intended destination of the plan
+          if (msg->getDestination() != getSystemId())
           {
-            //! Check if it is a plan execution request
-            if (msg->type != IMC::PlanControl::PC_REQUEST)
-              return;
+            trace("PlanControl message rejected!");
+            trace("Destination system: %s.", resolveSystemId(msg->getDestination()));
+            return;
+          }
 
-            //! Check if the vehicle is the intended destination of the plan
-            if (msg->getDestination() != getSystemId())
-            {
-              trace("PlanControl message rejected!");
-              trace("Destination system: %s.", resolveSystemId(msg->getDestination()));
-              return;
-            }
+          //! Check if the vehicle is itself the source of the plan
+          // ToDo - For final implementation this blocking should be removed
+          if (msg->getSource() == getSystemId())
+          {
+            trace("PlanControl message rejected!");
+            trace("Source is the system itself.");
+            return;
+          }
 
-            //! Check if the vehicle is itself the source of the plan
-            // ToDo - For final implementation this blocking should be removed
-            if (msg->getSource() == getSystemId())
-            {
-              trace("PlanControl message rejected!");
-              trace("Source is the system itself.");
-              return;
-            }
-
-            /*
+          /*
             //! Check if the PlanControl messages is for formation flight
             if (msg->plan_id.compare(m_args.plan) == 0)
             {
@@ -801,42 +791,44 @@ namespace Maneuver
                   msg->plan_id.c_str(), m_args.plan.c_str());
               return;
             }
+           */
 
-            //! Reroute the PlanControl message to the virtual leader
-            lead_plan_ctrl = *msg;
-            lead_plan_ctrl.setDestination(resolveSystemName("form-leader-01"));
-            if (m_alias_id != UINT_MAX)
-              lead_plan_ctrl.setSource(m_alias_id);
-            dispatch(lead_plan_ctrl);
-            */
+          //! Reset virtual leader state, if the PlanControl action is "Start"
+          // ToDo - Use global team position to set the leader initial state
+          if (msg->op == IMC::PlanControl::PC_START)
+          {
+            trace("Reseting the leader state.");
+            m_init_leader.op      = IMC::LeaderState::OP_SET;
+            m_init_leader.lat     = m_llh_ref_pos[0];
+            m_init_leader.lon     = m_llh_ref_pos[1];
+            m_init_leader.height  = m_llh_ref_pos[2];
+            m_init_leader.x       = m_uav_state(0, m_args.uav_ind);
+            m_init_leader.y       = m_uav_state(1, m_args.uav_ind);
+            m_init_leader.z       = m_uav_state(2, m_args.uav_ind);
+            m_init_leader.vx      = m_uav_state(3, m_args.uav_ind);
+            m_init_leader.vy      = m_uav_state(4, m_args.uav_ind);
+            m_init_leader.vz      = 0;
+            m_init_leader.phi     = trimValue(m_uav_state(6, m_args.uav_ind), -m_bank_lim, m_bank_lim);
+            m_init_leader.theta   = 0;
+            m_init_leader.psi     = m_uav_state(8, m_args.uav_ind);
+            m_init_leader.p       = 0;
+            m_init_leader.q       = 0;
+            m_init_leader.r       = m_uav_state(11, m_args.uav_ind);
+            m_init_leader.svx     = m_wind(0);
+            m_init_leader.svy     = m_wind(1);
+            m_init_leader.svz     = 0;
+            m_init_leader.setTimeStamp();
+            setLeaderState(&m_init_leader);
 
-            //! Reset virtual leader state, if the PlanControl action is "Start"
-            // ToDo - Use global team position to set the leader initial state
-            if (msg->op == IMC::PlanControl::PC_START)
-            {
-              trace("Reseting the leader state.");
-              m_init_leader.op      = IMC::LeaderState::OP_SET;
-              m_init_leader.lat     = m_llh_ref_pos[0];
-              m_init_leader.lon     = m_llh_ref_pos[1];
-              m_init_leader.height  = m_llh_ref_pos[2];
-              m_init_leader.x       = m_uav_state(0, m_args.uav_ind);
-              m_init_leader.y       = m_uav_state(1, m_args.uav_ind);
-              m_init_leader.z       = m_uav_state(2, m_args.uav_ind);
-              m_init_leader.vx      = m_uav_state(3, m_args.uav_ind);
-              m_init_leader.vy      = m_uav_state(4, m_args.uav_ind);
-              m_init_leader.vz      = 0;
-              m_init_leader.phi     = trimValue(m_uav_state(6, m_args.uav_ind), -m_bank_lim, m_bank_lim);
-              m_init_leader.theta   = 0;
-              m_init_leader.psi     = m_uav_state(8, m_args.uav_ind);
-              m_init_leader.p       = 0;
-              m_init_leader.q       = 0;
-              m_init_leader.r       = m_uav_state(11, m_args.uav_ind);
-              m_init_leader.svx     = m_wind(0);
-              m_init_leader.svy     = m_wind(1);
-              m_init_leader.svz     = 0;
-            }
+            // ToDo - For final implementation, the activation of plans
+            // should come from a formation synchronous message
+            if (!isActive())
+              requestActivation();
+          }
+          else if (msg->op == IMC::PlanControl::PC_STOP && isActive())
+            requestDeactivation();
 
-            /*
+          /*
             //! Initiate the leader vehicle plan
             IMC::PlanControl p_control;
             p_control.plan_id = m_args.plan;
@@ -846,13 +838,10 @@ namespace Maneuver
                 if (m_alias_id != UINT_MAX)
                   p_control.setSource(m_alias_id);
             dispatch(p_control);
-             */
+           */
 
-            //! Flag virtual leader state arrival
-            m_team_plan_init = true;
-          }
-          else
-            trace("PlanControl message received.");
+          //! Flag virtual leader state arrival
+          m_team_plan_init = true;
         }
 
         void
@@ -1445,31 +1434,35 @@ namespace Maneuver
           if (!isActive())
             requestActivation();
 
+          // Body to ground rotation matrix
+          double euler_ang[3] = {lead_state->phi, lead_state->theta, lead_state->psi};
+          Matrix md_rot_body2ground = Matrix(euler_ang, 3, 1).toDCM();
+
           //! Defining origin.
           m_estate_leader.lat = lead_state->lat;
           m_estate_leader.lon = lead_state->lon;
           m_estate_leader.height = lead_state->height;
 
-          //! - State initialization
-          m_position = m_model->getPosition();
-          m_position(0) = lead_state->x;
-          m_position(1) = lead_state->y;
-          m_position(2) = lead_state->z;
-          m_position(3) = lead_state->phi;
-          m_position(4) = 0;
-          m_position(5) = lead_state->psi;
-          m_model->setPosition(m_position);
-          m_velocity(0) = lead_state->vx;
-          m_velocity(1) = lead_state->vy;
-          m_velocity(2) = 0;
-          m_velocity(3) = lead_state->p;
-          m_velocity(4) = 0;
-          m_velocity(5) = lead_state->r;
-          m_model->setVelocity(m_velocity);
+          //! Update leader state variables
+          double t_leader[12] = {lead_state->x,       lead_state->y,       lead_state->z,
+              lead_state->vx,    lead_state->vy,    0,
+              euler_ang[0], 0, euler_ang[2],
+              lead_state->p,       0,       lead_state->r};
+          //! Adjust leader offset position from its reference
+          //! frame to the real vehicle reference frame
+          positionReframing(m_llh_ref_pos[0], m_llh_ref_pos[1], m_llh_ref_pos[2],
+              lead_state->lat, lead_state->lon, lead_state->height, &t_leader[0], &t_leader[1], &t_leader[2]);
+          //! Update formation leader state vectors
+          m_uav_state.set(0, 11, 0, 0, Matrix(t_leader, 12, 1));
+          m_model->setPosition(m_uav_state.get(0, 2, 0, 0).vertCat(m_uav_state.get(6, 8, 0, 0)));
+          m_model->setVelocity(m_uav_state.get(3, 5, 0, 0).vertCat(m_uav_state.get(9, 11, 0, 0)));
+          //! Update formation leader wind vector
           m_wind(0) = lead_state->svx;
           m_wind(1) = lead_state->svy;
           m_wind(2) = 0;
           m_model->m_wind = m_wind;
+          m_last_state_estim(0) = lead_state->getTimeStamp();
+
 
           /*
           debug("---------------------------");
@@ -1492,8 +1485,6 @@ namespace Maneuver
           debug("Initial y wind speed: %1.4f", m_wind(1));
           debug("Initial z wind speed: %1.4f", m_wind(2));
           */
-
-          m_last_leader_update = Clock::get();
         }
 
         Matrix
@@ -1665,42 +1656,39 @@ namespace Maneuver
               // Leader state output
               //==========================================================================
 
-              if (m_leader_id != UINT_MAX)
-              {
-                //! Rotation matrix
-                double euler_ang[3] = {m_position(3), m_position(4), m_position(5)};
-                Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
-                //! UAV velocity rotation to the body frame
-                Matrix vd_body_vel = transpose(md_rot_body2gnd) * m_velocity.get(0, 2, 0, 0);
-                // UAV velocity components, on ground frame
-                Matrix vd_gnd_vel = md_rot_body2gnd * vd_body_vel;
+              //! Rotation matrix
+              double euler_ang[3] = {m_position(3), m_position(4), m_position(5)};
+              Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
+              //! UAV velocity rotation to the body frame
+              Matrix vd_body_vel = transpose(md_rot_body2gnd) * m_velocity.get(0, 2, 0, 0);
+              // UAV velocity components, on ground frame
+              Matrix vd_gnd_vel = md_rot_body2gnd * vd_body_vel;
 
-                //! Fill position.
-                m_estate_leader.x = m_position(0);
-                m_estate_leader.y = m_position(1);
-                m_estate_leader.z = m_position(2);
-                //! Fill body-frame linear velocity, relative to the ground.
-                m_estate_leader.u = vd_body_vel(0);
-                m_estate_leader.v = vd_body_vel(1);
-                m_estate_leader.w = vd_body_vel(2);
-                //! Fill attitude.
-                m_estate_leader.phi = m_position(3);
-                m_estate_leader.theta = m_position(4);
-                m_estate_leader.psi = m_position(5);
-                //! Fill angular velocity.
-                m_estate_leader.p = m_velocity(3);
-                m_estate_leader.q = m_velocity(4);
-                m_estate_leader.r = m_velocity(5);
-                // Fill ground linear velocity.
-                m_estate_leader.vx = vd_gnd_vel(0);
-                m_estate_leader.vy = vd_gnd_vel(1);
-                m_estate_leader.vz = vd_gnd_vel(2);
+              //! Fill position.
+              m_estate_leader.x = m_position(0);
+              m_estate_leader.y = m_position(1);
+              m_estate_leader.z = m_position(2);
+              //! Fill body-frame linear velocity, relative to the ground.
+              m_estate_leader.u = vd_body_vel(0);
+              m_estate_leader.v = vd_body_vel(1);
+              m_estate_leader.w = vd_body_vel(2);
+              //! Fill attitude.
+              m_estate_leader.phi = m_position(3);
+              m_estate_leader.theta = m_position(4);
+              m_estate_leader.psi = m_position(5);
+              //! Fill angular velocity.
+              m_estate_leader.p = m_velocity(3);
+              m_estate_leader.q = m_velocity(4);
+              m_estate_leader.r = m_velocity(5);
+              // Fill ground linear velocity.
+              m_estate_leader.vx = vd_gnd_vel(0);
+              m_estate_leader.vy = vd_gnd_vel(1);
+              m_estate_leader.vz = vd_gnd_vel(2);
 
-                //! Set source system alias
-                m_estate_leader.setSource(m_leader_id);
-                //! Send simulated state message (with the system own ID as destination)
-                dispatch(m_estate_leader);
-              }
+              //! Set source system alias
+              m_estate_leader.setSource(m_leader_id);
+              //! Send simulated state message (with the system own ID as destination)
+              dispatch(m_estate_leader);
             }
 
             //! Team state prediction - Update the simulated vehicles state
