@@ -666,50 +666,48 @@ namespace Maneuver
           //! - Simulation type
           m_model->m_sim_type = m_args.sim_type;
 
-          if (m_args.uav_ind > 0)
+          //! Initialize the team vehicles' models
+          debug("Vehicles state and command vectors initialization");
+          //! Initialize vehicles state
+          m_uav_state = DUNE::Math::Matrix(12, m_uav_n+1, 0.0);
+          //! Initialize vehicles commands
+          m_uav_ctrl = DUNE::Math::Matrix(3, m_uav_n, 0.0);
+          //! Start the team vehicles simulation and control time
+          m_last_state_estim = Matrix(m_uav_n + 1, 1, 0.0);
+          m_last_simctrl_update = Matrix(m_uav_n, 1, -1);
+          //! Initialize the simulated vehicles models
+          debug("Simulated vehicles models initialization");
+          UAVSimulation* model;
+          for (int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
           {
-            debug("Vehicles state and command vectors initialization");
-            //! Initialize vehicles state
-            m_uav_state = DUNE::Math::Matrix(12, m_uav_n+1, 0.0);
-            //! Initialize vehicles commands
-            m_uav_ctrl = DUNE::Math::Matrix(3, m_uav_n, 0.0);
+            //! - State  and control parameters initialization
+            model = new DUNE::Simulation::UAVSimulation(
+                m_args.formation_pos.get(0, 2, ind_uav, ind_uav).vertCat(m_position.get(3, 5, 0, 0)),
+                m_velocity, m_args.c_bank, m_args.c_speed);
+            //! - Simulation type
+            model->m_sim_type = m_args.sim_type;
+            //! - Commands initialization
+            model->command(m_position(3), m_airspeed, -m_position(2));
+            //! - Limits definition
+            if (m_args.l_bank_rate > 0)
+              model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
+            if (m_args.l_lon_accel > 0)
+              model->setAccelLim(m_args.l_lon_accel);
+            //! Add model to the models vector
+            m_models.push_back(model);
+            debug("Simulated vehicle model initialized for vehicle %d.", ind_uav+1);
+          }
 
-            //! Start the team vehicles simulation and control time
-            m_last_state_estim = Matrix(m_uav_n + 1, 1, 0.0);
-            m_last_simctrl_update = Matrix(m_uav_n, 1, -1);
-
-            //! Initialize the simulated vehicles models
-            debug("Simulated vehicles models initialization");
-            UAVSimulation* model;
-            for (int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
-            {
-              //! - State  and control parameters initialization
-              model = new DUNE::Simulation::UAVSimulation(
-                  m_args.formation_pos.get(0, 2, ind_uav, ind_uav).vertCat(m_position.get(3, 5, 0, 0)),
-                  m_velocity, m_args.c_bank, m_args.c_speed);
-              //! - Simulation type
-              model->m_sim_type = m_args.sim_type;
-              //! - Commands initialization
-              model->command(m_position(3), m_airspeed, -m_position(2));
-              //! - Limits definition
-              if (m_args.l_bank_rate > 0)
-                model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
-              if (m_args.l_lon_accel > 0)
-                model->setAccelLim(m_args.l_lon_accel);
-              //! Add model to the models vector
-              m_models.push_back(model);
-              debug("Simulated vehicle model initialized for vehicle %d.", ind_uav+1);
-            }
-
+          //! Initialize the formation monitor message
+          if (m_debug)
+          {
             m_form_monitor = new FormMonitor;
             RelState* rel_state;
             for (int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
             {
               rel_state = new RelState();
               m_form_monitor->rel_state.push_back(rel_state);
-              //m_rel_state.push_back(rel_state);
             }
-            //m_form_monitor->rel_state = m_rel_state;
           }
 
           //! Start the control time
@@ -726,37 +724,34 @@ namespace Maneuver
 //          Memory::clear(m_form_monitor);
         }
 
-//        void
-//        consume(const IMC::LeaderState* msg)
-//        {
-//          if (m_args.uav_ind == 0)
-//          {
-//            // Set leader state
-//            if (msg->op == IMC::LeaderState::OP_SET)
-//            {
-//              // Check if the system is the intended destination of the state
-//              if (msg->getDestination() != ((m_alias_id != UINT_MAX) ? m_alias_id : getSystemId()))
-//              {
-//                trace("LeaderState message rejected!");
-//                trace("Destination system: %s.", resolveSystemId(msg->getDestination()));
-//                return;
-//              }
-//
-//              debug("LeaderState received!");
-//              setLeaderState(msg);
-//
-//              /*
-//              // Save message to cache.
-//              IMC::CacheControl cop;
-//              cop.op = IMC::CacheControl::COP_STORE;
-//              cop.message.set(*msg);
-//                if (m_alias_id != UINT_MAX)
-//                  cop.setSource(m_alias_id);
-//              dispatch(cop);
-//               */
-//            }
-//          }
-//        }
+        void
+        consume(const IMC::LeaderState* msg)
+        {
+          // Set leader state
+          if (msg->op == IMC::LeaderState::OP_SET)
+          {
+            // Check if the system is the intended destination of the state
+            if (msg->getDestination() != ((m_alias_id != UINT_MAX) ? m_alias_id : getSystemId()))
+            {
+              trace("LeaderState message rejected!");
+              trace("Destination system: %s.", resolveSystemId(msg->getDestination()));
+              return;
+            }
+
+            debug("LeaderState received!");
+            setLeaderState(msg);
+
+            /*
+              // Save message to cache.
+              IMC::CacheControl cop;
+              cop.op = IMC::CacheControl::COP_STORE;
+              cop.message.set(*msg);
+                if (m_alias_id != UINT_MAX)
+                  cop.setSource(m_alias_id);
+              dispatch(cop);
+             */
+          }
+        }
 
         void
         consume(const IMC::PlanControl* msg)
@@ -847,16 +842,16 @@ namespace Maneuver
         void
         consume(const IMC::IndicatedSpeed* msg)
         {
-          if (m_args.uav_ind > 0 && msg->getSource() == getSystemId())
+          if (msg->getSource() != getSystemId())
+            return;
+
+          //! Get current vehicle airspeed
+          m_airspeed = msg->value;
+          if (!m_valid_airspeed)
           {
-            //! Get current vehicle airspeed
-            m_airspeed = msg->value;
-            if (!m_valid_airspeed)
-            {
-              m_valid_airspeed = true;
-              trace("Valid airspeed received.");
-              m_uav_ctrl(1, m_args.uav_ind-1) = m_airspeed;
-            }
+            m_valid_airspeed = true;
+            trace("Valid airspeed received.");
+            m_uav_ctrl(1, m_args.uav_ind-1) = m_airspeed;
           }
         }
 
@@ -873,8 +868,9 @@ namespace Maneuver
         consume(const IMC::SimulatedState* msg)
         {
           // ToDo - Used formation leader name from configuration parameters or a formation definition message
-          if (m_args.uav_ind > 0 && msg->getSource() == resolveSystemName("form-leader-01"))
-          {
+          if (msg->getSource() != resolveSystemName("form-leader-01"))
+            return;
+
             //! Receive the leader simulated state from a parallel DUNE instance
 
             //! Get simulated state time stamp
@@ -911,26 +907,22 @@ namespace Maneuver
             m_team_leader_init = true;
             if (!isActive() && m_uav_n == 1)
               requestActivation();
-          }
         }
         */
 
         void
         consume(const IMC::Acceleration* msg)
         {
-          if (m_args.uav_ind > 0)
+          double mt_uav_accel[12] = {msg->x, msg->y, msg->z};
+          if (msg->getSource() == getSystemId())
           {
-            double mt_uav_accel[12] = {msg->x, msg->y, msg->z};
-            if (msg->getSource() == getSystemId())
-            {
-              //! Get current vehicle acceleration state
-              m_uav_accel.set(0, 2, m_args.uav_ind, m_args.uav_ind, Matrix(mt_uav_accel, 3, 1));
-            }
-            else // ToDo - Check that the acceleration state is from a team member
-            {
-              //! ToDo - Get team vehicles acceleration state
-              // m_uav_state.set(0, 11, m_args.uav_ind, m_args.uav_ind, Matrix(vt_uav_state, 12, 1));
-            }
+            //! Get current vehicle acceleration state
+            m_uav_accel.set(0, 2, m_args.uav_ind, m_args.uav_ind, Matrix(mt_uav_accel, 3, 1));
+          }
+          else // ToDo - Check that the acceleration state is from a team member
+          {
+            //! ToDo - Get team vehicles acceleration state
+            // m_uav_state.set(0, 11, m_args.uav_ind, m_args.uav_ind, Matrix(vt_uav_state, 12, 1));
           }
         }
 
@@ -941,7 +933,7 @@ namespace Maneuver
           if (!isActive())
           {
             //trace("Bank command rejected.");
-            //trace("Leader simulation not active.");
+            //trace("Formation controller is not active.");
             return;
           }
 
@@ -1083,269 +1075,265 @@ namespace Maneuver
         void
         consume(const IMC::EstimatedState* msg)
         {
-          //! Skip formation flight controller if running as the leader vehicle
-          if (m_args.uav_ind > 0)
+          //! Declaration
+          UAVSimulation* model;
+          Matrix vd_cmd = Matrix(3, 1);
+          IMC::PathControlState path_ctrl_state;
+
+          // for debug
+          debug("EstimatedState received from vehicle %s", resolveSystemId(msg->getSource()));
+          debug("On Vehicle %s", resolveSystemId(getSystemId()));
+          if (msg->getSource() == getSystemId())
           {
-            //! Declaration
-            UAVSimulation* model;
-            Matrix vd_cmd = Matrix(3, 1);
-            IMC::PathControlState path_ctrl_state;
+            //===========================================
+            //! Vehicle own updated state
+            //===========================================
+            m_llh_ref_pos[0] = msg->lat;
+            m_llh_ref_pos[1] = msg->lon;
+            m_llh_ref_pos[2] = msg->height;
+            double vt_uav_state[12] = {msg->x,   msg->y,     msg->z,
+                msg->vx,  msg->vy,    msg->vz,
+                msg->phi, msg->theta, msg->psi,
+                msg->p,   msg->q,     msg->r};
+            m_uav_state.set(0, 11, m_args.uav_ind, m_args.uav_ind, Matrix(vt_uav_state, 12, 1));
+            // ToDo - Check the difference between the vehicle real and simulated state
 
-            // for debug
-            //debug("EstimatedState received from vehicle %s", resolveSystemId(msg->getSource()));
-            //debug("On Vehicle %s", resolveSystemId(getSystemId()));
-            if (msg->getSource() == getSystemId())
+            //! - Update own vehicle simulation model
+            model = m_models[m_args.uav_ind-1];
+            model->setPosition(m_uav_state.get(0, 2, m_args.uav_ind, m_args.uav_ind).
+                               vertCat(m_uav_state.get(6, 8, m_args.uav_ind, m_args.uav_ind)));
+            model->setVelocity(m_uav_state.get(3, 5, m_args.uav_ind, m_args.uav_ind).
+                               vertCat(m_uav_state.get(9, 11, m_args.uav_ind, m_args.uav_ind)));
+            m_models[m_args.uav_ind-1] = model;
+
+            //! Update the time control variables
+            m_clock_diff = msg->getTimeStamp() - Clock::get();
+            m_last_state_estim(m_args.uav_ind) = msg->getTimeStamp();
+
+            if (!m_ctrl_active)
             {
-              //===========================================
-              //! Vehicle own updated state
-              //===========================================
-              m_llh_ref_pos[0] = msg->lat;
-              m_llh_ref_pos[1] = msg->lon;
-              m_llh_ref_pos[2] = msg->height;
-              double vt_uav_state[12] = {msg->x,   msg->y,     msg->z,
-                  msg->vx,  msg->vy,    msg->vz,
-                  msg->phi, msg->theta, msg->psi,
-                  msg->p,   msg->q,     msg->r};
-              m_uav_state.set(0, 11, m_args.uav_ind, m_args.uav_ind, Matrix(vt_uav_state, 12, 1));
-              // ToDo - Check the difference between the vehicle real and simulated state
-
-              //! - Update own vehicle simulation model
-              model = m_models[m_args.uav_ind-1];
-              model->setPosition(m_uav_state.get(0, 2, m_args.uav_ind, m_args.uav_ind).
-                                 vertCat(m_uav_state.get(6, 8, m_args.uav_ind, m_args.uav_ind)));
-              model->setVelocity(m_uav_state.get(3, 5, m_args.uav_ind, m_args.uav_ind).
-                                 vertCat(m_uav_state.get(9, 11, m_args.uav_ind, m_args.uav_ind)));
-              m_models[m_args.uav_ind-1] = model;
-
-              //! Update the time control variables
-              m_clock_diff = msg->getTimeStamp() - Clock::get();
-              m_last_state_estim(m_args.uav_ind) = msg->getTimeStamp();
-
+              checkActivCtrlCond();
               if (!m_ctrl_active)
-              {
-                checkActivCtrlCond();
-                if (!m_ctrl_active)
-                  return;
-              }
+                return;
+            }
 
-              //===========================================
-              //! Team prediction update
-              //===========================================
+            //===========================================
+            //! Team prediction update
+            //===========================================
 
-              /*
+            /*
               double vt_uav_state_own3[6] = {m_uav_state(0, m_args.uav_ind), m_uav_state(1, m_args.uav_ind), m_uav_state(2, m_args.uav_ind),
               m_uav_state(3, m_args.uav_ind), m_uav_state(4, m_args.uav_ind), m_uav_state(5, m_args.uav_ind)};
-               */
+             */
 
-              //! Update team simulated state for standard time periods
-              teamPeriodicUpdate(msg->getTimeStamp());
-              teamUnevenUpdate(msg->getTimeStamp());
+            //! Update team simulated state for standard time periods
+            teamPeriodicUpdate(msg->getTimeStamp());
+            teamUnevenUpdate(msg->getTimeStamp());
 
-              //===========================================
-              //! Control computation
-              //===========================================
+            //===========================================
+            //! Control computation
+            //===========================================
 
-              /*
+            /*
               double vt_uav_state_own2[6] = {m_uav_state(0, m_args.uav_ind), m_uav_state(1, m_args.uav_ind), m_uav_state(2, m_args.uav_ind),
                   m_uav_state(3, m_args.uav_ind), m_uav_state(4, m_args.uav_ind), m_uav_state(5, m_args.uav_ind)};
-               */
+             */
 
-              vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, m_args.uav_ind-1, m_args.uav_ind-1));
-              formationControl(m_uav_state, m_uav_accel, m_args.uav_ind,
-                  msg->getTimeStamp() - m_last_ctrl_update, &vd_cmd, m_debug, m_form_monitor);
-              m_uav_ctrl.set(0, 2, m_args.uav_ind-1, m_args.uav_ind-1, vd_cmd.get(0, 2, 0, 0));
+            vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, m_args.uav_ind-1, m_args.uav_ind-1));
+            formationControl(m_uav_state, m_uav_accel, m_args.uav_ind,
+                msg->getTimeStamp() - m_last_ctrl_update, &vd_cmd, m_debug, m_form_monitor);
+            m_uav_ctrl.set(0, 2, m_args.uav_ind-1, m_args.uav_ind-1, vd_cmd.get(0, 2, 0, 0));
 
-              if (m_debug)
-              {
-                // Set PathControlState
-                path_ctrl_state.end_lat = msg->lat;
-                path_ctrl_state.end_lon = msg->lon;
-                WGS84::displace(m_uav_state(0, 0), m_uav_state(1, 0),
-                    &(path_ctrl_state.end_lat), &(path_ctrl_state.end_lon));
-                dispatch(path_ctrl_state);
-
-                //! Update the monitoring message
-                IMC::FormationMonitor form_monit;
-
-                form_monit.ax_cmd = m_form_monitor->ax_cmd;
-                form_monit.ay_cmd = m_form_monitor->ax_cmd;
-                //form_monit.az_cmd = m_form_monitor->ax_cmd;
-                form_monit.ax_des = m_form_monitor->ax_des;
-                form_monit.ay_des = m_form_monitor->ax_des;
-                //form_monit.az_des = m_form_monitor->ax_des;
-                form_monit.virt_err_x = m_form_monitor->virt_err_x;
-                form_monit.virt_err_y = m_form_monitor->virt_err_y;
-                //form_monit.virterr_z = m_form_monitor->virt_err_z;
-                form_monit.surf_fdbk_x = m_form_monitor->surf_fdbk_x;
-                form_monit.surf_fdbk_y = m_form_monitor->surf_fdbk_y;
-                //form_monit.surf_fdbk_z = m_form_monitor->surf_fdbk_z;
-                form_monit.surf_unkn_x = m_form_monitor->surf_unkn_x;
-                form_monit.surf_unkn_y = m_form_monitor->surf_unkn_y;
-                //form_monit.surf_unkn_z = m_form_monitor->surf_unkn_z;
-                form_monit.ss_x = m_form_monitor->ss_x;
-                form_monit.ss_y = m_form_monitor->ss_y;
-                //form_monit.ss_z = m_form_monitor->ss_z;
-
-                form_monit.rel_state.clear();
-                IMC::RelativeState relative_state;
-                RelState rel_state;
-
-                // Iterate point list
-                for (int ind_uav = 0; ind_uav <= m_uav_n; ind_uav++)
-                {
-                  if (m_args.uav_ind == ind_uav)
-                    continue;
-
-                  rel_state = *(m_form_monitor->rel_state[ind_uav]);
-
-                  //! Identifier of the vehicle whose relative state is being reported.
-                  relative_state.s_id = rel_state.s_id;
-                  //! Distance between vehicles.
-                  relative_state.dist = rel_state.dist;
-                  //! Relative position error norm.
-                  relative_state.err = rel_state.err;
-                  //! Weight in the computation of the desired acceleration.
-                  relative_state.ctrl_imp = rel_state.ctrl_imp;
-                  //! Inter-vehicle direction vector.
-                  relative_state.rel_dir_x = rel_state.rel_dir_x;
-                  relative_state.rel_dir_y = rel_state.rel_dir_y;
-                  relative_state.rel_dir_z = rel_state.rel_dir_z;
-                  //! Relative position error in the fixed reference frame.
-                  relative_state.err_x = rel_state.err_x;
-                  relative_state.err_y = rel_state.err_y;
-                  relative_state.err_z = rel_state.err_z;
-                  //! Relative position error in the inter-vehicle reference frame.
-                  relative_state.rf_err_x = rel_state.rf_err_x;
-                  relative_state.rf_err_y = rel_state.rf_err_y;
-                  relative_state.rf_err_z = rel_state.rf_err_z;
-                  //! Relative velocity error in the inter-vehicle reference frame.
-                  relative_state.rf_err_vx = rel_state.rf_err_vx;
-                  relative_state.rf_err_vy = rel_state.rf_err_vy;
-                  relative_state.rf_err_vz = rel_state.rf_err_vz;
-                  //! Deviation from convergence (sliding surface value).
-                  relative_state.ss_x = rel_state.ss_x;
-                  relative_state.ss_y = rel_state.ss_y;
-                  relative_state.ss_z = rel_state.ss_z;
-                  //! Relative virtual error.
-                  //! (Component of the vehicle desired acceleration)
-                  relative_state.virt_err_x = rel_state.virt_err_x;
-                  relative_state.virt_err_y = rel_state.virt_err_y;
-                  relative_state.virt_err_z = rel_state.virt_err_z;
-
-                  form_monit.rel_state.push_back(relative_state);
-                }
-
-                if (m_alias_id != UINT_MAX)
-                  form_monit.setSource(m_alias_id);
-                dispatch(form_monit);
-              }
-
-              //! - Update own vehicle simulation model - Controls
-              model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
-              m_models[m_args.uav_ind-1] = model;
-
-              //! Update the time control variables
-              m_last_ctrl_update = msg->getTimeStamp();
-              m_last_simctrl_update(m_args.uav_ind-1) = msg->getTimeStamp();
-              //! Get estimated state time stamp
-              //              debug("Clock time: %2.3f; Estimated state time stamp: %2.3f", d_time, msg->getTimeStamp());
-
-              //===========================================
-              //! Commands output
-              //===========================================
-
-              m_bank_cmd.value = m_uav_ctrl(0, m_args.uav_ind-1);
-              m_airspeed_cmd.value = m_uav_ctrl(1, m_args.uav_ind-1);
-              //m_altitude_cmd.value = m_uav_ctrl(2, m_args.uav_ind-1);
-              //! Set source system alias
-              if (m_alias_id != UINT_MAX)
-              {
-                m_bank_cmd.setSource(m_alias_id);
-                m_airspeed_cmd.setSource(m_alias_id);
-                //m_altitude_cmd.setSource(m_alias_id);
-              }
-              dispatch(m_bank_cmd);
-              dispatch(m_airspeed_cmd);
-              //dispatch(m_altitude_cmd);
-            }
-            else
+            if (m_debug)
             {
-              spew("Process another system's EstimatedState - start for vehicle %s",
-                   resolveSystemId(msg->getSource()));
-              //! Get team vehicle updated state
-              //! ToDo - Check that the estimated state is from a team member
+              // Set PathControlState
+              path_ctrl_state.end_lat = msg->lat;
+              path_ctrl_state.end_lon = msg->lon;
+              WGS84::displace(m_uav_state(0, 0), m_uav_state(1, 0),
+                  &(path_ctrl_state.end_lat), &(path_ctrl_state.end_lon));
+              dispatch(path_ctrl_state);
 
-              if (m_uav_n < 2)
-                return;
+              //! Update the monitoring message
+              IMC::FormationMonitor form_monit;
 
-              //! ToDo - Get vehicle team index
-              int ind_uav = 100;
+              form_monit.ax_cmd = m_form_monitor->ax_cmd;
+              form_monit.ay_cmd = m_form_monitor->ax_cmd;
+              //form_monit.az_cmd = m_form_monitor->ax_cmd;
+              form_monit.ax_des = m_form_monitor->ax_des;
+              form_monit.ay_des = m_form_monitor->ax_des;
+              //form_monit.az_des = m_form_monitor->ax_des;
+              form_monit.virt_err_x = m_form_monitor->virt_err_x;
+              form_monit.virt_err_y = m_form_monitor->virt_err_y;
+              //form_monit.virterr_z = m_form_monitor->virt_err_z;
+              form_monit.surf_fdbk_x = m_form_monitor->surf_fdbk_x;
+              form_monit.surf_fdbk_y = m_form_monitor->surf_fdbk_y;
+              //form_monit.surf_fdbk_z = m_form_monitor->surf_fdbk_z;
+              form_monit.surf_unkn_x = m_form_monitor->surf_unkn_x;
+              form_monit.surf_unkn_y = m_form_monitor->surf_unkn_y;
+              //form_monit.surf_unkn_z = m_form_monitor->surf_unkn_z;
+              form_monit.ss_x = m_form_monitor->ss_x;
+              form_monit.ss_y = m_form_monitor->ss_y;
+              //form_monit.ss_z = m_form_monitor->ss_z;
 
-              //! Get estimated state time stamp
-              spew("Process another system's EstimatedState - 1 for vehicle %s",
-                  resolveSystemId(msg->getSource()));
-              m_last_state_estim(ind_uav) = msg->getTimeStamp();
-              m_last_simctrl_update(ind_uav-1)  = msg->getTimeStamp();
+              form_monit.rel_state.clear();
+              IMC::RelativeState relative_state;
+              RelState rel_state;
 
-              spew("Process another system's EstimatedState - 2 for vehicle %s",
-                  resolveSystemId(msg->getSource()));
-              //! - State update
-              double vt_uav_state[12] = {msg->x,   msg->y,     msg->z,
-                  msg->vx,  msg->vy,    msg->vz,
-                  msg->phi, msg->theta, msg->psi,
-                  msg->p,   msg->q,     msg->r};
-              //! Adjust vehicle offset position from its reference
-              //! frame to the real vehicle reference frame
-              positionReframing(m_llh_ref_pos[0], m_llh_ref_pos[1], m_llh_ref_pos[2],
-                  msg->lat, msg->lon, msg->height, &vt_uav_state[0], &vt_uav_state[1], &vt_uav_state[2]);
-              //! Update vehicle state vector
-              m_uav_state.set(0, 11, ind_uav, ind_uav, Matrix(vt_uav_state, 12, 1));
-
-              //! - Update own vehicle simulation model
-              model = m_models[ind_uav-1];
-              model->setPosition(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)));
-              model->setVelocity(m_uav_state.get(3, 5, ind_uav, ind_uav).vertCat(m_uav_state.get(9, 11, ind_uav, ind_uav)));
-              model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
-              m_models[ind_uav-1] = model;
-
-              //! - Commands update
-              // ToDo - Compute the estimated vehicle acceleration
-              if (!m_valid_airspeed)
-                return;
-
-              Matrix vd_uav_accel = Matrix(3, 1, 0.0);
-              vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, ind_uav-1, ind_uav-1));
-              formationControl(m_uav_state, vd_uav_accel, ind_uav, 1/m_args.ctrl_frequency,
-                  &vd_cmd, false, m_form_monitor);
-              m_uav_ctrl.set(0, 2, ind_uav-1, ind_uav-1, vd_cmd.get(0, 2, 0, 0));
-
-              //! - Update current vehicle simulation model
-              model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
-              m_models[ind_uav-1] = model;
-
-              //! Check if all vehicles states were initialized
-              if (!m_team_state_init)
+              // Iterate point list
+              for (int ind_uav = 0; ind_uav <= m_uav_n; ind_uav++)
               {
-                bool b_state_init = true;
-                for (ind_uav = 1; ind_uav <= m_uav_n; ++ind_uav)
-                {
-                  // Do not check current vehicle state initialization
-                  if (ind_uav == m_args.uav_ind)
-                    continue;
+                if (m_args.uav_ind == ind_uav)
+                  continue;
 
-                  if (m_last_simctrl_update(ind_uav-1) < 0.0)
-                  {
-                    b_state_init = false;
-                    break;
-                  }
-                }
-                m_team_state_init = b_state_init;
+                rel_state = *(m_form_monitor->rel_state[ind_uav]);
+
+                //! Identifier of the vehicle whose relative state is being reported.
+                relative_state.s_id = rel_state.s_id;
+                //! Distance between vehicles.
+                relative_state.dist = rel_state.dist;
+                //! Relative position error norm.
+                relative_state.err = rel_state.err;
+                //! Weight in the computation of the desired acceleration.
+                relative_state.ctrl_imp = rel_state.ctrl_imp;
+                //! Inter-vehicle direction vector.
+                relative_state.rel_dir_x = rel_state.rel_dir_x;
+                relative_state.rel_dir_y = rel_state.rel_dir_y;
+                relative_state.rel_dir_z = rel_state.rel_dir_z;
+                //! Relative position error in the fixed reference frame.
+                relative_state.err_x = rel_state.err_x;
+                relative_state.err_y = rel_state.err_y;
+                relative_state.err_z = rel_state.err_z;
+                //! Relative position error in the inter-vehicle reference frame.
+                relative_state.rf_err_x = rel_state.rf_err_x;
+                relative_state.rf_err_y = rel_state.rf_err_y;
+                relative_state.rf_err_z = rel_state.rf_err_z;
+                //! Relative velocity error in the inter-vehicle reference frame.
+                relative_state.rf_err_vx = rel_state.rf_err_vx;
+                relative_state.rf_err_vy = rel_state.rf_err_vy;
+                relative_state.rf_err_vz = rel_state.rf_err_vz;
+                //! Deviation from convergence (sliding surface value).
+                relative_state.ss_x = rel_state.ss_x;
+                relative_state.ss_y = rel_state.ss_y;
+                relative_state.ss_z = rel_state.ss_z;
+                //! Relative virtual error.
+                //! (Component of the vehicle desired acceleration)
+                relative_state.virt_err_x = rel_state.virt_err_x;
+                relative_state.virt_err_y = rel_state.virt_err_y;
+                relative_state.virt_err_z = rel_state.virt_err_z;
+
+                form_monit.rel_state.push_back(relative_state);
               }
 
-              //! Check if conditions are met to initiate team virtual state updates
-              if (!isActive() && m_team_state_init)
-                requestActivation();
+              if (m_alias_id != UINT_MAX)
+                form_monit.setSource(m_alias_id);
+              dispatch(form_monit);
             }
+
+            //! - Update own vehicle simulation model - Controls
+            model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
+            m_models[m_args.uav_ind-1] = model;
+
+            //! Update the time control variables
+            m_last_ctrl_update = msg->getTimeStamp();
+            m_last_simctrl_update(m_args.uav_ind-1) = msg->getTimeStamp();
+            //! Get estimated state time stamp
+            //              debug("Clock time: %2.3f; Estimated state time stamp: %2.3f", d_time, msg->getTimeStamp());
+
+            //===========================================
+            //! Commands output
+            //===========================================
+
+            m_bank_cmd.value = m_uav_ctrl(0, m_args.uav_ind-1);
+            m_airspeed_cmd.value = m_uav_ctrl(1, m_args.uav_ind-1);
+            //m_altitude_cmd.value = m_uav_ctrl(2, m_args.uav_ind-1);
+            //! Set source system alias
+            if (m_alias_id != UINT_MAX)
+            {
+              m_bank_cmd.setSource(m_alias_id);
+              m_airspeed_cmd.setSource(m_alias_id);
+              //m_altitude_cmd.setSource(m_alias_id);
+            }
+            dispatch(m_bank_cmd);
+            dispatch(m_airspeed_cmd);
+            //dispatch(m_altitude_cmd);
+          }
+          else
+          {
+            spew("Process another system's EstimatedState - start for vehicle %s",
+                 resolveSystemId(msg->getSource()));
+            //! Get team vehicle updated state
+            //! ToDo - Check that the estimated state is from a team member
+
+            if (m_uav_n < 2)
+              return;
+
+            //! ToDo - Get vehicle team index
+            int ind_uav = 100;
+
+            //! Get estimated state time stamp
+            spew("Process another system's EstimatedState - 1 for vehicle %s",
+                resolveSystemId(msg->getSource()));
+            m_last_state_estim(ind_uav) = msg->getTimeStamp();
+            m_last_simctrl_update(ind_uav-1)  = msg->getTimeStamp();
+
+            spew("Process another system's EstimatedState - 2 for vehicle %s",
+                resolveSystemId(msg->getSource()));
+            //! - State update
+            double vt_uav_state[12] = {msg->x,   msg->y,     msg->z,
+                msg->vx,  msg->vy,    msg->vz,
+                msg->phi, msg->theta, msg->psi,
+                msg->p,   msg->q,     msg->r};
+            //! Adjust vehicle offset position from its reference
+            //! frame to the real vehicle reference frame
+            positionReframing(m_llh_ref_pos[0], m_llh_ref_pos[1], m_llh_ref_pos[2],
+                msg->lat, msg->lon, msg->height, &vt_uav_state[0], &vt_uav_state[1], &vt_uav_state[2]);
+            //! Update vehicle state vector
+            m_uav_state.set(0, 11, ind_uav, ind_uav, Matrix(vt_uav_state, 12, 1));
+
+            //! - Update own vehicle simulation model
+            model = m_models[ind_uav-1];
+            model->setPosition(m_uav_state.get(0, 2, ind_uav, ind_uav).vertCat(m_uav_state.get(6, 8, ind_uav, ind_uav)));
+            model->setVelocity(m_uav_state.get(3, 5, ind_uav, ind_uav).vertCat(m_uav_state.get(9, 11, ind_uav, ind_uav)));
+            model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
+            m_models[ind_uav-1] = model;
+
+            //! - Commands update
+            // ToDo - Compute the estimated vehicle acceleration
+            if (!m_valid_airspeed)
+              return;
+
+            Matrix vd_uav_accel = Matrix(3, 1, 0.0);
+            vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, ind_uav-1, ind_uav-1));
+            formationControl(m_uav_state, vd_uav_accel, ind_uav, 1/m_args.ctrl_frequency,
+                &vd_cmd, false, m_form_monitor);
+            m_uav_ctrl.set(0, 2, ind_uav-1, ind_uav-1, vd_cmd.get(0, 2, 0, 0));
+
+            //! - Update current vehicle simulation model
+            model->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
+            m_models[ind_uav-1] = model;
+
+            //! Check if all vehicles states were initialized
+            if (!m_team_state_init)
+            {
+              bool b_state_init = true;
+              for (ind_uav = 1; ind_uav <= m_uav_n; ++ind_uav)
+              {
+                // Do not check current vehicle state initialization
+                if (ind_uav == m_args.uav_ind)
+                  continue;
+
+                if (m_last_simctrl_update(ind_uav-1) < 0.0)
+                {
+                  b_state_init = false;
+                  break;
+                }
+              }
+              m_team_state_init = b_state_init;
+            }
+
+            //! Check if conditions are met to initiate team virtual state updates
+            if (!isActive() && m_team_state_init)
+              requestActivation();
           }
         }
 
@@ -1381,6 +1369,9 @@ namespace Maneuver
         void
         checkParameters(void)
         {
+          if (m_args.uav_ind < 1)
+            err("UAV index is smaller than 1!");
+
           //! Check if the formation positions matrix has a suitable size
           if (m_args.formation_pos.rows()%3 != 0)
             err("Number of UAV positions coordinates in the formation matrix (%d) is not a multiple of 3!",
@@ -1431,6 +1422,8 @@ namespace Maneuver
         void
         setLeaderState(const IMC::LeaderState* lead_state)
         {
+          //! Flag virtual leader state arrival
+          m_team_leader_init = true;
           if (!isActive())
             requestActivation();
 
