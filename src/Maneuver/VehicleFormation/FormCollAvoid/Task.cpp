@@ -266,7 +266,9 @@ namespace Maneuver
         IMC::DesiredRoll m_bank_cmd;
         IMC::DesiredSpeed m_airspeed_cmd;
         //IMC::DesiredZ m_altitude_cmd;
+        //! Leader commanded true airspeed
         double m_tas_cmd_leader;
+        //! Leader commanded altitude
         double m_alt_cmd_leader;
         //! Command limits
         double m_bank_lim;
@@ -646,7 +648,9 @@ namespace Maneuver
           m_airspeed = m_args.default_speed;
           m_airspeed_cmd.value = m_airspeed;
           //m_altitude_cmd.value = m_args.default_alt;
+          //! Leader commanded true airspeed
           m_tas_cmd_leader = m_airspeed;
+          //! Leader commanded altitude
           m_alt_cmd_leader = m_args.default_alt;
 
           m_frequency = this->getFrequency();
@@ -1806,11 +1810,9 @@ namespace Maneuver
           Matrix md_form_pos = m_args.formation_pos;
 
           //! Control parameters
-          // ToDo - substitute by the leader airspeed
-          double d_LeaderSpeed = d_leader_gndspeed;
           double mt_gain_mtx[2] = {m_args.k_longitudinal, m_args.k_lateral};
-          Matrix md_gain_mtx = Matrix(mt_gain_mtx, 2) * d_LeaderSpeed/2.5;
-          double d_ss_bnd_layer = m_args.k_boundary * d_LeaderSpeed;
+          Matrix md_gain_mtx = Matrix(mt_gain_mtx, 2) * m_tas_cmd_leader/2.5;
+          double d_ss_bnd_layer = m_args.k_boundary * m_tas_cmd_leader;
           double d_flow_accel_max = m_args.flow_accel_max;
           double d_control_margin = m_args.deconfliction_offset;
           double d_deconfliction_dist = m_args.safe_dist + d_control_margin;
