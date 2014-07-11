@@ -258,6 +258,9 @@ namespace Maneuver
         Matrix m_uav_accel;
         double m_airspeed;
         Matrix m_wind;
+        Math::MovingAverage<fp64_t>* m_wind_avg_x;
+        Math::MovingAverage<fp64_t>* m_wind_avg_y;
+        Math::MovingAverage<fp64_t>* m_wind_avg_z;
 
         //! System command variables
         Matrix m_uav_ctrl;
@@ -537,6 +540,12 @@ namespace Maneuver
         void
         onEntityResolution(void)
         {
+          //! Initializing wind sliding average
+          m_wind_avg_x = new Math::MovingAverage<fp64_t>(300);
+          m_wind_avg_y = new Math::MovingAverage<fp64_t>(300);
+          m_wind_avg_z = new Math::MovingAverage<fp64_t>(300);
+
+
           //! Process the systems and entities allowed to define a command.
           uint32_t i_cmd;
           uint32_t i_cmd_final;
@@ -862,7 +871,11 @@ namespace Maneuver
         void
         consume(const IMC::EstimatedStreamVelocity* msg)
         {
-          double t_wind[3] = {msg->x, msg->y, msg->z};
+          m_wind_avg_x->update(msg->x);
+          m_wind_avg_y->update(msg->y);
+          m_wind_avg_z->update(msg->z);
+
+          double t_wind[3] = {m_wind_avg_x->mean(), m_wind_avg_y->mean(), m_wind_avg_z->mean()};
           m_wind = Matrix(t_wind, 3, 1);
           // ToDo - Send estimated wind to the global formation management thread
         }
@@ -1374,7 +1387,10 @@ namespace Maneuver
         checkParameters(void)
         {
           if (m_args.uav_ind < 1)
-            err("UAV index is smaller than 1!");
+          {
+            stop();
+            throw std::runtime_error("UAV index is smaller than 1!");
+          }
 
           //! Check if the formation positions matrix has a suitable size
           if (m_args.formation_pos.rows()%3 != 0)
@@ -1686,6 +1702,24 @@ namespace Maneuver
               m_estate_leader.setSource(m_leader_id);
               //! Send simulated state message (with the system own ID as destination)
               dispatch(m_estate_leader);
+
+              // Stream velocity.
+              // Air-relative UAV velocity components, on aircraft frame
+              Matrix vd_body_vel_2wind = transpose(md_rot_body2gnd) * (vd_gnd_vel - m_model->m_wind);
+              IMC::EstimatedStreamVelocity streamspeed;
+              IMC::IndicatedSpeed speed;
+              // Fill stream velocity.
+              streamspeed.x = m_model->m_wind(0);
+              streamspeed.y = m_model->m_wind(1);
+              streamspeed.z = m_model->m_wind(2);
+              // Absolute speed
+              speed.value = vd_body_vel_2wind.norm_2();
+              //! Set source system alias
+              speed.setSource(m_alias_id);
+              streamspeed.setSource(m_alias_id);
+              //trace("Exporting estimated state (%s)!", this->getSystemName());
+              dispatch(speed);
+              dispatch(streamspeed);
             }
 
             //! Team state prediction - Update the simulated vehicles state
