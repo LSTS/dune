@@ -1715,8 +1715,8 @@ namespace Maneuver
               // Absolute speed
               speed.value = vd_body_vel_2wind.norm_2();
               //! Set source system alias
-              speed.setSource(m_alias_id);
-              streamspeed.setSource(m_alias_id);
+              speed.setSource(m_leader_id);
+              streamspeed.setSource(m_leader_id);
               //trace("Exporting estimated state (%s)!", this->getSystemName());
               dispatch(speed);
               dispatch(streamspeed);
