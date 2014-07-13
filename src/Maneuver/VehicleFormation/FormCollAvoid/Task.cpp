@@ -72,7 +72,6 @@ namespace Maneuver
         double deconfliction_offset;
         double acc_safety_marg;
         //! Control constraints
-        double accel_lim_x;
         double tas_max;
         double tas_min;
         double bank_lim;
@@ -83,10 +82,7 @@ namespace Maneuver
         Matrix formation_pos;
         int uav_n;
         int uav_ind;
-        //! Leader flight plan
-        std::string plan;
         //! Environmental parameters
-        double gaccel;
         double flow_accel_max;
         //! UAV Model Parameters
         std::string sim_type; // Simulation type (3DOF, 4DOF_bank, 4DOF_alt, 5DOF, 6DOF_stabder, and 6DOF_geom)
@@ -95,7 +91,7 @@ namespace Maneuver
         double c_alt;
         //! - Constraints
         double l_bank_rate;
-        double l_lon_accel;
+        double l_accel_x;
         double l_vert_slope;
         // Initial state
         double default_alt;
@@ -337,6 +333,9 @@ namespace Maneuver
           m_leader_id(UINT_MAX)
         {
           // Definition of configuration parameters.
+          paramActive(Tasks::Parameter::SCOPE_PLAN,
+                      Tasks::Parameter::VISIBILITY_USER);
+
           param("Commands source", m_args.cmd_src)
           .defaultValue("")
           .description("List of <Command>:<System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass a specific command.");
@@ -365,6 +364,11 @@ namespace Maneuver
           .defaultValue("0.6")
           .description("Control sliding surface boundary layer thickness");
 
+          param("Maximum Flow Acceleration", m_args.flow_accel_max)
+          .defaultValue("0.0")
+          .units(Units::MeterPerSquareSecond)
+          .description("Maximum fluid flow acceleration at aircraft location");
+
           param("Formation Leader Gain", m_args.k_leader)
           .defaultValue("2.5")
           .description("Leader control importance gain (relative to the sum of every other formation vehicle)");
@@ -381,13 +385,9 @@ namespace Maneuver
           .defaultValue("7.0")
           .description("Aircraft Deconfliction Distance Offset");
 
-          param("Accel Safety Margin", m_args.acc_safety_marg)
+          param("Acceleration Safety Margin", m_args.acc_safety_marg)
           .defaultValue("0.3")
           .description("Acceleration safety margin");
-
-          param("Long Accel Limit", m_args.accel_lim_x)
-          .defaultValue("0.1")
-          .description("Aircraft Longitudinal Acceleration Limit");
 
           param("Maximum Airspeed", m_args.tas_max)
           .defaultValue("22.0")
@@ -425,15 +425,6 @@ namespace Maneuver
           .defaultValue("1")
           .description("Current UAV index in the formation");
 
-          param(DTR_RT("Formation Plan"), m_args.plan)
-          .defaultValue("formation_plan")
-          .description(DTR("Flight plan to be executed by the vehicles formation"));
-
-          param("Maximum Flow Accel", m_args.flow_accel_max)
-          .defaultValue("0.0")
-          .units(Units::MeterPerSquareSecond)
-          .description("Maximum fluid flow acceleration at aircraft location");
-
           param("Simulation type", m_args.sim_type)
           .defaultValue("4DOF_bank")
           .description("Simulation type (DOF)");
@@ -458,10 +449,10 @@ namespace Maneuver
           .units(Units::DegreePerSecond)
           .description("Bank rate limit to simulate bank dynamics");
 
-          param("Acceleration Limit", m_args.l_lon_accel)
-          .defaultValue("0.0")
+          param("Longitudinal Acceleration Limit", m_args.l_accel_x)
+          .defaultValue("0.1")
           .units(Units::MeterPerSquareSecond)
-          .description("Longitudinal acceleration limit to simulate speed dynamics");
+          .description("Vehicle longitudinal acceleration limit");
 
           param("Vertical Slope Limit", m_args.l_vert_slope)
           .defaultValue("0.0")
@@ -678,8 +669,8 @@ namespace Maneuver
           //! - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
-          if (m_args.l_lon_accel > 0)
-            m_model->setAccelLim(m_args.l_lon_accel);
+          if (m_args.l_accel_x > 0)
+            m_model->setAccelLim(m_args.l_accel_x);
           //! - Simulation type
           m_model->m_sim_type = m_args.sim_type;
 
@@ -708,8 +699,8 @@ namespace Maneuver
             //! - Limits definition
             if (m_args.l_bank_rate > 0)
               model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
-            if (m_args.l_lon_accel > 0)
-              model->setAccelLim(m_args.l_lon_accel);
+            if (m_args.l_accel_x > 0)
+              model->setAccelLim(m_args.l_accel_x);
             //! Add model to the models vector
             m_models.push_back(model);
             debug("Simulated vehicle model initialized for vehicle %d.", ind_uav+1);
@@ -834,11 +825,11 @@ namespace Maneuver
 
             // ToDo - For final implementation, the activation of plans
             // should come from a formation synchronous message
-            if (!isActive())
-              requestActivation();
+            // if (!isActive())
+            //  requestActivation();
           }
-          else if (msg->op == IMC::PlanControl::PC_STOP && isActive())
-            requestDeactivation();
+          // else if (msg->op == IMC::PlanControl::PC_STOP && isActive())
+          //  requestDeactivation();
 
           /*
             //! Initiate the leader vehicle plan
@@ -1353,8 +1344,8 @@ namespace Maneuver
             }
 
             //! Check if conditions are met to initiate team virtual state updates
-            if (!isActive() && m_team_state_init)
-              requestActivation();
+            //if (!isActive() && m_team_state_init)
+            //  requestActivation();
           }
         }
 
@@ -1448,8 +1439,8 @@ namespace Maneuver
         {
           //! Flag virtual leader state arrival
           m_team_leader_init = true;
-          if (!isActive())
-            requestActivation();
+          //if (!isActive())
+          //  requestActivation();
 
           // Body to ground rotation matrix
           double euler_ang[3] = {lead_state->phi, lead_state->theta, lead_state->psi};
@@ -1871,7 +1862,7 @@ namespace Maneuver
           //! Control constraints
           double d_airspeed_max = m_args.tas_max;
           double d_airspeed_min = m_args.tas_min;
-          double d_accel_lim_x = m_args.accel_lim_x;
+          double d_accel_lim_x = m_args.l_accel_x;
 
           //! Formation parameters
           int i_formation_frame = m_args.formation_frame;
