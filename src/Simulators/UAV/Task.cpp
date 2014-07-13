@@ -67,7 +67,7 @@ namespace Simulators
       double c_alt;
       //! - Constraints
       double l_bank_rate;
-      double l_lon_accel;
+      double l_accel_x;
       double l_vert_slope;
       double mass;
       double max_thrust;
@@ -184,10 +184,10 @@ namespace Simulators
         .units(Units::DegreePerSecond)
         .description("Bank rate limit to simulate bank dynamics");
 
-        param("Acceleration Limit", m_args.l_lon_accel)
+        param("Longitudinal Acceleration Limit", m_args.l_accel_x)
         .defaultValue("0.0")
         .units(Units::MeterPerSquareSecond)
-        .description("Longitudinal acceleration limit to simulate speed dynamics");
+        .description("Vehicle longitudinal acceleration limit to simulate the speed dynamics");
 
         param("Vertical Slope Limit", m_args.l_vert_slope)
         .defaultValue("0.0")
@@ -348,8 +348,8 @@ namespace Simulators
           //! - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
-          if (m_args.l_lon_accel > 0)
-            m_model->setAccelLim(m_args.l_lon_accel);
+          if (m_args.l_accel_x > 0)
+            m_model->setAccelLim(m_args.l_accel_x);
         }
         else if (m_args.sim_type == "4DOF_alt")
         {
@@ -372,8 +372,8 @@ namespace Simulators
           //! - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
-          if (m_args.l_lon_accel > 0)
-            m_model->setAccelLim(m_args.l_lon_accel);
+          if (m_args.l_accel_x > 0)
+            m_model->setAccelLim(m_args.l_accel_x);
         }
         else if (m_args.sim_type == "5DOF")
         {
@@ -385,8 +385,8 @@ namespace Simulators
           //! - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
-          if (m_args.l_lon_accel > 0)
-            m_model->setAccelLim(m_args.l_lon_accel);
+          if (m_args.l_accel_x > 0)
+            m_model->setAccelLim(m_args.l_accel_x);
           if (m_args.l_vert_slope > 0)
             m_model->setVertSlopeLim(m_args.l_vert_slope);
         }
