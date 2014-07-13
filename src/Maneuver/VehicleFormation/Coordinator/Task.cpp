@@ -36,13 +36,11 @@
 #include <DUNE/Simulation/UAV.hpp>
 using DUNE::Simulation::UAVSimulation;
 
-#define vel_lim 0.5
-
 namespace Maneuver
 {
   namespace VehicleFormation
   {
-    namespace FormCollAvoid
+    namespace Coordinator
     {
       using DUNE_NAMESPACES;
 
@@ -58,19 +56,9 @@ namespace Maneuver
         std::vector<std::string> cmd_src;
         //! Source system alias
         std::string src_alias;
-        //! Simulation and control frequencies
-        double ctrl_frequency;
-        //! Controller parameters
-        double k_longitudinal;
-        double k_lateral;
-        double k_boundary;
-        double k_leader;
-        double k_deconfliction;
-        double safe_dist;
-        double deconfliction_offset;
-        double acc_safety_marg;
+        //! Leader system name
+        std::string leader_alias;
         //! Control constraints
-        double accel_lim_x;
         double tas_max;
         double tas_min;
         double bank_lim;
@@ -79,13 +67,8 @@ namespace Maneuver
         //! Formation configuration parameters
         int formation_frame;
         Matrix formation_pos;
-        int uav_n;
-        int uav_ind;
-        //! Leader flight plan
-        std::string plan;
-        //! Environmental parameters
-        double gaccel;
-        double flow_accel_max;
+        std::vector<std::string> formation_systems;
+        unsigned int uav_n;
         //! UAV Model Parameters
         std::string sim_type; // Simulation type (3DOF, 4DOF_bank, 4DOF_alt, 5DOF, 6DOF_stabder, and 6DOF_geom)
         double c_speed;
@@ -93,7 +76,7 @@ namespace Maneuver
         double c_alt;
         //! - Constraints
         double l_bank_rate;
-        double l_lon_accel;
+        double l_accel_x;
         double l_vert_slope;
         // Initial state
         double default_lat;
@@ -109,8 +92,6 @@ namespace Maneuver
         //! Task arguments.
         Arguments m_args;
 
-        //! Simulated vehicles' models
-        std::vector<UAVSimulation*> m_models;
         //! Leader vehicle model
         UAVSimulation* m_model;
         //! Vehicle's referential position (Latitude, Longitude, and height).
@@ -124,9 +105,6 @@ namespace Maneuver
         //! Simulation and control time variables
         double m_clock_diff;
         double m_last_leader_update;
-        double m_last_ctrl_update;
-        Matrix m_last_state_estim;
-        Matrix m_last_simctrl_update;
         //! Last time debug information was shown
         double m_last_time_debug;
         double m_last_time_trace;
@@ -134,9 +112,12 @@ namespace Maneuver
 
         //! System state variables
         Matrix m_uav_state;
-        Matrix m_uav_accel;
-        double m_airspeed;
+        //! Environment variables
         Matrix m_wind;
+        double m_wind_speed;
+        Matrix m_wind_team;
+        double m_g;
+
 
         //! System command variables
         Matrix m_uav_ctrl;
@@ -147,16 +128,14 @@ namespace Maneuver
         //IMC::DesiredZ m_altitude_cmd;
         double m_tas_cmd_leader;
         double m_alt_cmd_leader;
+        //! Constraints
+        double m_tas_min;
+        double m_tas_max;
+        double m_bank_lim;
 
         //! Number of team vehicles
-        int m_uav_n;
-
-        //! Process logic control variables
-        bool m_ctrl_active;
-        bool m_team_plan_init;
-        bool m_team_leader_init;
-        bool m_team_state_init;
-        bool m_valid_airspeed;
+        unsigned int m_uav_n;
+        Systems m_uav_id;
 
         //! Simulation process frequency
         double m_frequency;
@@ -167,8 +146,6 @@ namespace Maneuver
 
         // Debug variables
         bool m_debug;
-        FormMonitor* m_form_monitor;
-        //std::vector<RelState*> m_rel_state;
 
         //! List of systems allowed to define a command.
         std::map<uint32_t, Systems> m_filtered_sys;
@@ -176,11 +153,11 @@ namespace Maneuver
         std::map<uint32_t, Entities> m_filtered_ent;
         // System alias id
         uint32_t m_alias_id;
+        // Leader system id
+        uint32_t m_leader_id;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Periodic(name, ctx),
-          //m_models(NULL),
-          //m_model(NULL),
           m_position(6, 1, 0.0),
           m_velocity(6, 1, 0.0),
           m_clock_diff(0.0),
@@ -188,67 +165,28 @@ namespace Maneuver
           m_last_time_trace(std::min(-1.0, Clock::get())),
           m_last_time_spew(std::min(-1.0, Clock::get())),
           m_uav_state(12, 1, 0.0),
-          m_uav_accel(3, 1, 0.0),
-          m_airspeed(0.0),
           m_wind(3, 1, 0.0),
+          m_wind_speed(0.0),
+          m_wind_team(3, 1, 0.0),
+          m_g(Math::c_gravity),
           m_uav_n(1),
-          m_ctrl_active(false),
-          m_team_plan_init(false),
-          m_team_leader_init(false),
-          m_team_state_init(false),
-          m_valid_airspeed(false),
           m_frequency(0.0),
           m_debug(false),
-          m_alias_id(UINT_MAX)
+          m_alias_id(UINT_MAX),
+          m_leader_id(UINT_MAX)
         {
           // Definition of configuration parameters.
-          param("Commands source", m_args.cmd_src)
+          param("Message source", m_args.cmd_src)
           .defaultValue("")
-          .description("List of <Command>:<System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass a specific command.");
+          .description("List of <Message>:<System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass a specific command.");
 
           param("Source Alias", m_args.src_alias)
           .defaultValue("")
           .description("Emulated system id.");
 
-          param("Predicted Control Frequency", m_args.ctrl_frequency)
-          .defaultValue("20.0")
-          .description("Frequency at which simulated vehicles control is executed");
-
-          param("Formation Longitudinal Gain", m_args.k_longitudinal)
-          .defaultValue("0.5")
-          .description("Trajectory gain over the vehicle longitudinal direction");
-
-          param("Formation Lateral Gain", m_args.k_lateral)
-          .defaultValue("0.8")
-          .description("Trajectory gain over the vehicle lateral direction");
-
-          param("Formation Boundary Layer", m_args.k_boundary)
-          .defaultValue("0.6")
-          .description("Control sliding surface boundary layer thickness");
-
-          param("Formation Leader Gain", m_args.k_leader)
-          .defaultValue("2.5")
-          .description("Leader control importance gain (relative to the sum of every other formation vehicle)");
-
-          param("Formation Deconfliction Gain", m_args.k_deconfliction)
-          .defaultValue("5.0")
-          .description("Individual vehicle importance gain (relative to the leader)");
-
-          param("Safety Distance", m_args.safe_dist)
-          .defaultValue("12.0")
-          .description("Aircraft Safety Distance");
-
-          param("Deconfliction Offset", m_args.deconfliction_offset)
-          .defaultValue("7.0")
-          .description("Aircraft Deconfliction Distance Offset");
-
-          param("Accel Safety Margin", m_args.acc_safety_marg)
-          .defaultValue("0.3")
-          .description("Acceleration safety margin");
-
-          param("Long Accel Limit", m_args.accel_lim_x)
-          .defaultValue("0.1")
-          .description("Aircraft Longitudinal Acceleration Limit");
+          param("Leader Name", m_args.leader_alias)
+          .defaultValue("form-leader-01")
+          .description("Leader system name.");
 
           param("Maximum Airspeed", m_args.tas_max)
           .defaultValue("22.0")
@@ -279,22 +217,13 @@ namespace Maneuver
           .defaultValue("0.0, 0.0, 0.0")
           .description("Formation positions matrix");
 
+          param("Vehicle List", m_args.formation_systems)
+          .defaultValue("")
+          .description("System ID list of the formation vehicles.");
+
           param("UAV Number", m_args.uav_n)
           .defaultValue("1")
           .description("UAV Number");
-
-          param("UAV Index", m_args.uav_ind)
-          .defaultValue("1")
-          .description("Current UAV index in the formation");
-
-          param(DTR_RT("Formation Plan"), m_args.plan)
-          .defaultValue("formation_plan")
-          .description(DTR("Flight plan to be executed by the vehicles formation"));
-
-          param("Maximum Flow Accel", m_args.flow_accel_max)
-          .defaultValue("0.0")
-          .units(Units::MeterPerSquareSecond)
-          .description("Maximum fluid flow acceleration at aircraft location");
 
           param("Simulation type", m_args.sim_type)
           .defaultValue("4DOF_bank")
@@ -320,10 +249,10 @@ namespace Maneuver
           .units(Units::DegreePerSecond)
           .description("Bank rate limit to simulate bank dynamics");
 
-          param("Acceleration Limit", m_args.l_lon_accel)
-          .defaultValue("0.0")
+          param("Longitudinal Acceleration Limit", m_args.l_accel_x)
+          .defaultValue("0.1")
           .units(Units::MeterPerSquareSecond)
-          .description("Longitudinal acceleration limit to simulate speed dynamics");
+          .description("Vehicle longitudinal acceleration limit to simulate the speed dynamics");
 
           param("Vertical Slope Limit", m_args.l_vert_slope)
           .defaultValue("0.0")
@@ -351,16 +280,12 @@ namespace Maneuver
           .description("Controller in debug mode");
 
           // Message binding
-          bind<IMC::LeaderState>(this);
-          bind<IMC::PlanControl>(this);
-          bind<IMC::IndicatedSpeed>(this);
+          //bind<IMC::LeaderState>(this);
           bind<IMC::EstimatedStreamVelocity>(this);
-          bind<IMC::SimulatedState>(this);
-          bind<IMC::Acceleration>(this);
           bind<IMC::DesiredRoll>(this);
           bind<IMC::DesiredSpeed>(this);
           bind<IMC::DesiredZ>(this);
-          bind<IMC::EstimatedState>(this);
+          //bind<IMC::EstimatedState>(this);
         }
 
         void
@@ -369,6 +294,21 @@ namespace Maneuver
           //! Initial parameters checking
           checkParameters();
           debug("Number of UAVs -> %d", m_uav_n);
+          // ToDo - Check if the resize is working as intended for matrix compression and expansion
+          m_wind_team.resizeAndKeep(3, m_uav_n);
+
+          // Process formation vehicle list
+          if (m_args.formation_systems.empty())
+          {
+            stop();
+            throw std::runtime_error("Formation vehicle list is empty!");
+          }
+          m_uav_id.clear();
+          for (unsigned int i = 0; i < m_args.formation_systems.size(); ++i)
+          {
+            m_uav_id.push_back(resolveSystemName(m_args.formation_systems[i]));
+          }
+          // ToDo - Update the function "checkParameters" to check also the list against m_uav_n
 
           //! Set source system alias
           if (!m_args.src_alias.empty())
@@ -386,6 +326,22 @@ namespace Maneuver
           }
           else
             m_alias_id = UINT_MAX;
+
+          //! Set leader system id
+          if (!m_args.leader_alias.empty())
+          {
+            // Resolve systems.
+            try
+            {
+              m_leader_id = resolveSystemName(m_args.leader_alias);
+            }
+            catch (...)
+            {
+              err("Leader system name - No system found with designation '%s'.", m_args.leader_alias.c_str());
+            }
+          }
+          else
+            err("Leader system name - No system found with designation '%s'.", m_args.leader_alias.c_str());
 
           // Debug flag - for control performance monitoring
           m_debug = m_args.debug;
@@ -418,8 +374,10 @@ namespace Maneuver
               i_cmd = 2;
             else if (parts[0].compare("DesiredPitch") == 0)
               i_cmd = 3;
-            else
+            else if (parts[0].compare("EstimatedStreamVelocity") == 0)
               i_cmd = 4;
+            else
+              i_cmd = 5;
 
             // Split systems and entities.
             std::vector<std::string> systems;
@@ -504,10 +462,9 @@ namespace Maneuver
           m_llh_ref_pos[2] = 0.0;
 
           //! Airspeed value initialization
-          m_airspeed = m_args.default_speed;
-          m_airspeed_cmd.value = m_airspeed;
+          m_airspeed_cmd.value = m_args.default_speed;
           //m_altitude_cmd.value = m_args.default_alt;
-          m_tas_cmd_leader = m_airspeed;
+          m_tas_cmd_leader = m_args.default_speed;
           m_alt_cmd_leader = m_args.default_alt;
 
           m_frequency = this->getFrequency();
@@ -522,8 +479,8 @@ namespace Maneuver
           //! - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
-          if (m_args.l_lon_accel > 0)
-            m_model->setAccelLim(m_args.l_lon_accel);
+          if (m_args.l_accel_x > 0)
+            m_model->setAccelLim(m_args.l_accel_x);
           //! - Simulation type
           m_model->m_sim_type = m_args.sim_type;
 
@@ -541,9 +498,9 @@ namespace Maneuver
 //          Memory::clear(m_form_monitor);
         }
 
-        void
-        consume(const IMC::LeaderState* msg)
-        {
+//        void
+//        consume(const IMC::LeaderState* msg)
+//        {
 //          if (m_args.uav_ind == 0)
 //          {
 //            // Set leader state
@@ -571,8 +528,9 @@ namespace Maneuver
 //               */
 //            }
 //          }
-        }
+//        }
 
+        /*
         void
         consume(const IMC::PlanControl* msg)
         {
@@ -602,23 +560,21 @@ namespace Maneuver
               return;
             }
 
-            /*
-            //! Check if the PlanControl messages is for formation flight
-            if (msg->plan_id.compare(m_args.plan) == 0)
-            {
-              trace("PlanControl message rejected!");
-              trace("Plan ID (%s) does not match the parameters plan (%s).",
-                  msg->plan_id.c_str(), m_args.plan.c_str());
-              return;
-            }
-
-            //! Reroute the PlanControl message to the virtual leader
-            lead_plan_ctrl = *msg;
-            lead_plan_ctrl.setDestination(resolveSystemName("form-leader-01"));
-            if (m_alias_id != UINT_MAX)
-              lead_plan_ctrl.setSource(m_alias_id);
-            dispatch(lead_plan_ctrl);
-            */
+//            //! Check if the PlanControl messages is for formation flight
+//            if (msg->plan_id.compare(m_args.plan) == 0)
+//            {
+//              trace("PlanControl message rejected!");
+//              trace("Plan ID (%s) does not match the parameters plan (%s).",
+//                  msg->plan_id.c_str(), m_args.plan.c_str());
+//              return;
+//            }
+//
+//            //! Reroute the PlanControl message to the virtual leader
+//            lead_plan_ctrl = *msg;
+//            lead_plan_ctrl.setDestination(resolveSystemName("form-leader-01"));
+//            if (m_alias_id != UINT_MAX)
+//              lead_plan_ctrl.setSource(m_alias_id);
+//            dispatch(lead_plan_ctrl);
 
             //! Reset virtual leader state, if the PlanControl action is "Start"
             // ToDo - Use global team position to set the leader initial state
@@ -650,31 +606,41 @@ namespace Maneuver
               dispatch(m_init_leader);
             }
 
-            /*
-            //! Initiate the leader vehicle plan
-            IMC::PlanControl p_control;
-            p_control.plan_id = m_args.plan;
-            p_control.op = IMC::PlanControl::PC_START;
-            p_control.type = IMC::PlanControl::PC_REQUEST;
-            p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
-                if (m_alias_id != UINT_MAX)
-                  p_control.setSource(m_alias_id);
-            dispatch(p_control);
-             */
-
-            //! Flag virtual leader state arrival
-            m_team_plan_init = true;
+//            //! Initiate the leader vehicle plan
+//            IMC::PlanControl p_control;
+//            p_control.plan_id = m_args.plan;
+//            p_control.op = IMC::PlanControl::PC_START;
+//            p_control.type = IMC::PlanControl::PC_REQUEST;
+//            p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
+//                if (m_alias_id != UINT_MAX)
+//                  p_control.setSource(m_alias_id);
+//            dispatch(p_control);
           }
           else
             trace("PlanControl message received.");
         }
+        */
 
         void
         consume(const IMC::EstimatedStreamVelocity* msg)
         {
-          double t_wind[3] = {msg->x, msg->y, msg->z};
-          m_wind = Matrix(t_wind, 3, 1);
-          // ToDo - Send estimated wind to the global formation management thread
+          // Set the current UAV index according to the group definition and the message source
+          unsigned int uav_ind = 0;
+          for (; uav_ind < m_uav_n; uav_ind++)
+            if (m_uav_id[uav_ind] == msg->getSource())
+              break;
+          m_wind_team(0, uav_ind) = msg->x;
+          m_wind_team(1, uav_ind) = msg->y;
+          m_wind_team(2, uav_ind) = msg->z;
+          // Average received wind estimations over the team members
+          double t_wind = 0.0;
+          for (unsigned int direction = 0; direction < 3; direction++)
+          {
+            for (uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+              t_wind =+ m_wind_team(direction, uav_ind);
+            m_wind(direction) = t_wind/m_uav_n;
+            m_wind_speed = m_wind.norm_2();
+          }
         }
 
         void
@@ -823,10 +789,10 @@ namespace Maneuver
               resolveEntity(msg->getSourceEntity()).c_str());
         }
 
-        void
-        consume(const IMC::EstimatedState* msg)
-        {
-        }
+//        void
+//        consume(const IMC::EstimatedState* msg)
+//        {
+//        }
 
         void
         task(void)
@@ -848,13 +814,8 @@ namespace Maneuver
             return;
           }
 
-          //! Update the simulated vehicles commands and states
-
-          // ToDo - Check if leader simulation last update is recent enough: m_last_state_estim(0)
-          // ToDo - Check if team vehicles last update is recent enough: m_last_state_estim(1:m_uav_n)
-
-          //! Update team simulated state for standard time periods
-          teamPeriodicUpdate(m_clock_diff + Clock::get());
+          //! Update leader state for standard time periods
+          periodicUpdate(m_clock_diff + Clock::get());
         }
 
         void
@@ -994,60 +955,17 @@ namespace Maneuver
           *d += hei1 - hei2;
         }
 
-        //! Update team simulated state for standard time periods
+        //! Update leader simulated state for standard time periods
         void
-        teamPeriodicUpdate(const double& d_time)
+        periodicUpdate(const double& d_time)
         {
           //! Variables initialization
-          double d_timestep_sim = 1/m_frequency;
-          double d_timestep_ctrl = 1/m_args.ctrl_frequency;
-          double d_sim_time;
-          Matrix vi_sim_time = Matrix(m_uav_n+1, 1);
-          int ind_time;
-          int i_time_n = m_uav_n;
-          Matrix vd_cmd = Matrix(3, 1);
-          UAVSimulation* model;
-
-          //! Order the update times as an increasing sequence
-          for (int ind_uav = 0; ind_uav <= m_uav_n; ++ind_uav)
-            vi_sim_time(ind_uav) = ind_uav;
-
-          for (int ind_uav = 1; ind_uav < i_time_n; ++ind_uav)
+          double d_timestep = 1/m_frequency;
+          //! Leader state prediction - Update the simulated vehicle state
+          while (m_last_leader_update <= d_time)
           {
-            for (int ind_uav2 = ind_uav + 1; ind_uav2 <= i_time_n; ++ind_uav2)
-            {
-              if (m_last_state_estim(vi_sim_time(ind_uav)) > m_last_state_estim(vi_sim_time(ind_uav2)))
-              {
-                ind_time = vi_sim_time(ind_uav);
-                vi_sim_time(ind_uav) = vi_sim_time(ind_uav2);
-                vi_sim_time(ind_uav2) = ind_time;
-              }
-              else if (m_last_state_estim(vi_sim_time(ind_uav)) == m_last_state_estim(vi_sim_time(ind_uav2)))
-              {
-                --i_time_n;
-                for (ind_time = ind_uav2; ind_time < i_time_n; ++ind_time)
-                  vi_sim_time(ind_time) = vi_sim_time(ind_time + 1);
-              }
-            }
-          }
-
-          //! Select the oldest prediction time reference
-          ind_time = 0;
-          d_sim_time = m_last_state_estim(vi_sim_time(ind_time));
-          while (d_sim_time <= 0.0 && ind_time <= i_time_n)
-          {
-            m_last_state_estim(vi_sim_time(ind_time)) = d_time;
-            if (ind_time < i_time_n)
-              ++ind_time;
-            d_sim_time = m_last_state_estim(vi_sim_time(ind_time));
-          }
-
-
-            //! Leader state prediction - Update the simulated vehicle state
-            if (m_last_state_estim(0) <= d_sim_time)
-            {
-              // ========= Spew ===========
-              /*
+            // ========= Spew ===========
+            /*
               if (d_time >= m_last_time_spew + 0.1)
               {
                 //spew("Simulating: %s", m_model->m_sim_type);
@@ -1076,18 +994,19 @@ namespace Maneuver
                 spew("Current z wind speed: %1.4f", m_wind(2));
                 m_last_time_spew = d_time;
               }
-              */
+             */
 
-              //==========================================================================
-              //! Dynamics
-              //==========================================================================
+            //==========================================================================
+            //! Dynamics
+            //==========================================================================
 
-              m_model->update(d_timestep_sim);
-              m_position = m_model->getPosition();
-              m_velocity = m_model->getVelocity();
+            m_model->update(d_timestep);
+            m_last_leader_update =+ d_timestep;
+            m_position = m_model->getPosition();
+            m_velocity = m_model->getVelocity();
 
-              // ========= Trace ===========
-              /*
+            // ========= Trace ===========
+            /*
               if (d_time >= m_last_time_trace + 1.0)
               {
                 //trace("Simulating: %s", m_model->m_sim_type);
@@ -1116,64 +1035,67 @@ namespace Maneuver
                 trace("Current z wind speed: %1.4f", m_wind(2));
                 m_last_time_trace = d_time;
               }
-               */
+             */
 
-              //==========================================================================
-              // Leader state output
-              //==========================================================================
+            //==========================================================================
+            // Leader state output
+            //==========================================================================
 
-              //! Fill position.
-              m_estate_leader.x = m_position(0);
-              m_estate_leader.y = m_position(1);
-              m_estate_leader.z = m_position(2);
+            //! Rotation matrix
+            double euler_ang[3] = {m_position(3), m_position(4), m_position(5)};
+            Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
+            //! UAV velocity rotation to the body frame
+            Matrix vd_body_vel = transpose(md_rot_body2gnd) * m_velocity.get(0, 2, 0, 0);
+            // UAV velocity components, on ground frame
+            Matrix vd_gnd_vel = md_rot_body2gnd * vd_body_vel;
 
-              //! Fill attitude.
-              m_estate_leader.phi = m_position(3);
-              m_estate_leader.theta = m_position(4);
-              m_estate_leader.psi = m_position(5);
+            //! Fill position.
+            m_estate_leader.x = m_position(0);
+            m_estate_leader.y = m_position(1);
+            m_estate_leader.z = m_position(2);
+            //! Fill body-frame linear velocity, relative to the ground.
+            m_estate_leader.u = vd_body_vel(0);
+            m_estate_leader.v = vd_body_vel(1);
+            m_estate_leader.w = vd_body_vel(2);
+            //! Fill attitude.
+            m_estate_leader.phi = m_position(3);
+            m_estate_leader.theta = m_position(4);
+            m_estate_leader.psi = m_position(5);
+            //! Fill angular velocity.
+            m_estate_leader.p = m_velocity(3);
+            m_estate_leader.q = m_velocity(4);
+            m_estate_leader.r = m_velocity(5);
+            // Fill ground linear velocity.
+            m_estate_leader.vx = vd_gnd_vel(0);
+            m_estate_leader.vy = vd_gnd_vel(1);
+            m_estate_leader.vz = vd_gnd_vel(2);
 
-              //! Rotation matrix
-              double euler_ang[3] = {m_position(3), m_position(4), m_position(5)};
-              Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
-              //! UAV velocity rotation to the body frame
-              Matrix vd_body_vel = transpose(md_rot_body2gnd) * m_velocity.get(0, 2, 0, 0);
-              //! Fill body-frame linear velocity, relative to the ground.
-              m_estate_leader.u = vd_body_vel(0);
-              m_estate_leader.v = vd_body_vel(1);
-              m_estate_leader.w = vd_body_vel(2);
+            //! Set leader system alias
+            m_estate_leader.setSource(m_leader_id);
+            //! Send simulated state message (with the system own ID as destination)
+            dispatch(m_estate_leader);
 
-              //! UAV body-frame rotation rates
-              // vd_UAVRotRates = UAVRotRatTrans_1_00(vd_State);
-
-              //! Fill angular velocity.
-              m_estate_leader.p = m_velocity(3);
-              m_estate_leader.q = m_velocity(4);
-              m_estate_leader.r = m_velocity(5);
-
-              //! Fill stream velocity.
-              m_estate_leader.svx = m_model->m_wind(0);
-              m_estate_leader.svy = m_model->m_wind(1);
-              m_estate_leader.svz = m_model->m_wind(2);
-
-              //! Set the destination ID as the system own ID (for virtual leader autopilot simulation)
-              m_estate_leader.setDestination((m_alias_id != UINT_MAX) ? m_alias_id : getSystemId());
-
+            if (m_debug)
+            {
+              // Stream velocity.
+              // Air-relative UAV velocity components, on aircraft frame
+              Matrix vd_body_vel_2wind = transpose(md_rot_body2gnd) * (vd_gnd_vel - m_model->m_wind);
+              IMC::EstimatedStreamVelocity streamspeed;
+              IMC::IndicatedSpeed speed;
+              // Fill stream velocity.
+              streamspeed.x = m_model->m_wind(0);
+              streamspeed.y = m_model->m_wind(1);
+              streamspeed.z = m_model->m_wind(2);
+              // Absolute speed
+              speed.value = vd_body_vel_2wind.norm_2();
               //! Set source system alias
-              if (m_alias_id != UINT_MAX)
-                m_estate_leader.setSource(m_alias_id);
-
-              //! Send simulated state message (with the system own ID as destination)
-              dispatch(m_estate_leader);
-
-              /*
-              //! Set the destination ID as the real vehicle system ID (for virtual leader data transmission)
-              m_estate_leader.setDestination(getSystemId());
-
-              //! Send simulated state message (with the real vehicle system ID as destination)
-              dispatch(m_estate_leader);
-               */
+              speed.setSource(m_leader_id);
+              streamspeed.setSource(m_leader_id);
+              //trace("Exporting estimated state (%s)!", this->getSystemName());
+              dispatch(speed);
+              dispatch(streamspeed);
             }
-
+          }
         }
 
         void
@@ -1182,72 +1104,77 @@ namespace Maneuver
           // Leader maneuverability limits
           if (m_args.formation_frame > 0)
           {
-            // Wind and formation reference speed
-            double  m_wind_speed = 2;
             double d_tas_cmd_leader_wind = m_tas_cmd_leader +  m_wind_speed;
             // Limit velocities
-            d_MinIAS = 0;
-            d_MaxIAS = inf;
-            for (ind_UAV = 1:i_UAV_N)
-            {
-              if (struc_UAV(ind_UAV).Lim.IAS_Min > d_MinIAS)
-                d_MinIAS = struc_UAV(ind_UAV).Lim.IAS_Min;
-              if (struc_UAV(ind_UAV).Lim.IAS_Max < d_MaxIAS)
-                d_MaxIAS = struc_UAV(ind_UAV).Lim.IAS_Max;
-            }
+
+            m_tas_min = m_args.tas_min;
+            m_tas_max = m_args.tas_max;
+            // ToDo - Get speed limits from the team vehicles
+//            for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+//            {
+//              if (m_tas_min_team[ind_UAV] > m_tas_min)
+//                m_tas_min = m_tas_min_team[ind_UAV];
+//              if (m_tas_max_team[ind_UAV] < m_tas_max)
+//                m_tas_max = m_tas_max_team[ind_UAV];
+//            }
 
             // Safety/deviation margins
-            d_Marg = 0.05;
-            d_SpdMarg = d_Marg*(d_MaxIAS - d_MinIAS);
-            d_MinIAS = d_MinIAS + d_SpdMarg +  m_wind_speed;
-            d_MaxIAS = d_MaxIAS - d_SpdMarg +  m_wind_speed;
+            double d_Marg = 0.05;
+            double d_SpdMarg = d_Marg*(m_tas_max - m_tas_min);
+            m_tas_min = m_tas_min + d_SpdMarg + m_wind_speed;
+            m_tas_max = m_tas_max - d_SpdMarg + m_wind_speed;
 
             // Maximum lateral distance between the leader and any follower
-            d_FollLatDist = 0;
-            d_FollLonDist = 0;
-            for (ind_UAV = 1:i_UAV_N)
+            double d_FollLatDist = 0;
+            double d_FollLonDist = 0;
+            double t_LatDist;
+            double t_LonDist;
+            for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
             {
-              t_LatDist = abs(struc_UAV(ind_UAV).Ctrl.FormCtrl.Pos(2));
+              t_LatDist = std::abs(m_args.formation_pos(1, uav_ind));
               if (t_LatDist > d_FollLatDist)
                 d_FollLatDist = t_LatDist;
-              t_LonDist = abs(struc_UAV(ind_UAV).Ctrl.FormCtrl.Pos(1));
+              t_LonDist = std::abs(m_args.formation_pos(0, uav_ind));
               if (t_LonDist > d_FollLonDist)
                 d_FollLonDist = t_LonDist;
             }
 
             // Minimum formation turn radius due to aircraft minimum velocity
-            d_FormRMin = d_MinIAS * d_FollLatDist/(m_tas_cmd_leader_W - d_MinIAS);
+            double d_FormRMin = m_tas_min * d_FollLatDist/(d_tas_cmd_leader_wind - m_tas_min);
             // Minimum formation turn radius due to aircraft maximum velocity
-            d_FormRMin = max(d_FormRMin, d_MaxIAS * d_FollLatDist/
-                               (d_MaxIAS - m_tas_cmd_leader_W));
+            d_FormRMin = std::max(d_FormRMin, m_tas_max * d_FollLatDist/
+                (m_tas_max - d_tas_cmd_leader_wind));
             // Minimum formation turn radius due to aircraft turning limits
-            for (ind_UAV = 1:i_UAV_N)
-            {
-              // Maximum of the minimum feaseable radius at maximum ground speed
-              t_MinRad = (m_tas_cmd_leader_W * ...
-                  (d_FormRMin + d_FollLatDist)/d_FormRMin)^2/...
-                      (RefData.LocalProp.g * tan(struc_UAV(ind_UAV).Lim.Bank_Max));
-              if t_MinRad > d_FormRMin
-              d_FormRMin = t_MinRad;
-            }
+            double t_MinRad;
+            // ToDo - Get bank limits from the team vehicles
+//            for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+//            {
+//              // Maximum of the minimum feasible radius at maximum ground speed
+//              t_MinRad = (d_tas_cmd_leader_wind *
+//                  ((d_FormRMin + d_FollLatDist)/d_FormRMin)*(d_FormRMin + d_FollLatDist)/d_FormRMin)/
+//                      (m_g * std::tan(m_bank_lim_team[uav_ind]));
+              // Maximum of the minimum feasible radius at maximum ground speed
+              t_MinRad = (d_tas_cmd_leader_wind *
+                  ((d_FormRMin + d_FollLatDist)/d_FormRMin)*(d_FormRMin + d_FollLatDist)/d_FormRMin)/
+                      (m_g * std::tan(m_bank_lim));
+              if (t_MinRad > d_FormRMin)
+                d_FormRMin = t_MinRad;
+//            }
 
             // Minimum leader turn radius
-            d_RMin = d_FormRMin;
+            double d_RMin = d_FormRMin;
             // Maximum formation arc length - For maximum wind speed compensation
-            d_ArcMax = d_FollLonDist/d_FormRMin;
-            if (d_ArcMax > pi)
+            double d_ArcMax = d_FollLonDist/d_FormRMin;
+            double d_WindGain;
+            if (d_ArcMax > M_PI)
               d_WindGain = 1;
             else
-              d_WindGain = d_ArcMax/pi;
+              d_WindGain = d_ArcMax/M_PI;
             // Maximum leader bank
-            struc_Team.LeaderData.Lim.Bank_Max = atan((m_tas_cmd_leader - ...
-                d_WindGain* m_wind_speed)^2/(d_RMin * RefData.LocalProp.g));
+            m_bank_lim = std::atan((m_tas_cmd_leader - d_WindGain* m_wind_speed)*(m_tas_cmd_leader - d_WindGain* m_wind_speed)
+                /(d_RMin * m_g));
           }
-          else
-          {
-            // Maximum leader bank
-            struc_Team.LeaderData.Lim.Bank_Max = struc_UAV(1).Lim.Bank_Max;
-          }
+          // ToDo - Send leader maneuverability limits to the vehicles
         }
       };
     }
