@@ -289,67 +289,6 @@ namespace Maneuver
         }
 
         void
-        onUpdateParameters(void)
-        {
-          //! Initial parameters checking
-          checkParameters();
-          debug("Number of UAVs -> %d", m_uav_n);
-          // ToDo - Check if the resize is working as intended for matrix compression and expansion
-          m_wind_team.resizeAndKeep(3, m_uav_n);
-
-          // Process formation vehicle list
-          if (m_args.formation_systems.empty())
-          {
-            stop();
-            throw std::runtime_error("Formation vehicle list is empty!");
-          }
-          m_uav_id.clear();
-          for (unsigned int i = 0; i < m_args.formation_systems.size(); ++i)
-          {
-            m_uav_id.push_back(resolveSystemName(m_args.formation_systems[i]));
-          }
-          // ToDo - Update the function "checkParameters" to check also the list against m_uav_n
-
-          //! Set source system alias
-          if (!m_args.src_alias.empty())
-          {
-            // Resolve systems.
-            try
-            {
-              m_alias_id = resolveSystemName(m_args.src_alias);
-            }
-            catch (...)
-            {
-              debug("No system found with designation '%s'.", m_args.src_alias.c_str());
-              m_alias_id = UINT_MAX;
-            }
-          }
-          else
-            m_alias_id = UINT_MAX;
-
-          //! Set leader system id
-          if (!m_args.leader_alias.empty())
-          {
-            // Resolve systems.
-            try
-            {
-              m_leader_id = resolveSystemName(m_args.leader_alias);
-            }
-            catch (...)
-            {
-              err("Leader system name - No system found with designation '%s'.", m_args.leader_alias.c_str());
-            }
-          }
-          else
-            err("Leader system name - No system found with designation '%s'.", m_args.leader_alias.c_str());
-
-          // Debug flag - for control performance monitoring
-          m_debug = m_args.debug;
-
-          updateLeaderLimits();
-        }
-
-        void
         onEntityResolution(void)
         {
           //! Process the systems and entities allowed to define a command.
@@ -469,21 +408,6 @@ namespace Maneuver
 
           m_frequency = this->getFrequency();
 
-          //! Initialize the leader vehicle model
-          //! Model initialization
-          debug("Formation leader model initialization");
-          //! - State  and control parameters initialization
-          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
-          //! - Commands initialization
-          m_model->command(0, m_args.default_speed, -m_args.default_alt);
-          //! - Limits definition
-          if (m_args.l_bank_rate > 0)
-            m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
-          if (m_args.l_accel_x > 0)
-            m_model->setAccelLim(m_args.l_accel_x);
-          //! - Simulation type
-          m_model->m_sim_type = m_args.sim_type;
-
           //! Start the simulation time
           m_last_leader_update = Clock::get();
 
@@ -496,6 +420,82 @@ namespace Maneuver
 //          for (int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
 //            Memory::clear(m_form_monitor->rel_state[ind_uav]);
 //          Memory::clear(m_form_monitor);
+        }
+
+        void
+        onUpdateParameters(void)
+        {
+          //! Initial parameters checking
+          checkParameters();
+          debug("Number of UAVs -> %d", m_uav_n);
+          // ToDo - Check if the resize is working as intended for matrix compression and expansion
+          m_wind_team.resizeAndKeep(3, m_uav_n);
+
+          // Process formation vehicle list
+          if (m_args.formation_systems.empty())
+          {
+            stop();
+            throw std::runtime_error("Formation vehicle list is empty!");
+          }
+          m_uav_id.clear();
+          for (unsigned int i = 0; i < m_args.formation_systems.size(); ++i)
+          {
+            m_uav_id.push_back(resolveSystemName(m_args.formation_systems[i]));
+          }
+          // ToDo - Update the function "checkParameters" to check also the list against m_uav_n
+
+          //! Initialize the leader vehicle model
+          //! Model initialization
+          debug("Formation leader model initialization");
+          //! - State  and control parameters initialization
+          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
+          //! - Commands initialization
+          m_model->command(0, m_tas_cmd_leader, -m_alt_cmd_leader);
+          //! - Limits definition
+          if (m_args.l_bank_rate > 0)
+            m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
+          if (m_args.l_accel_x > 0)
+            m_model->setAccelLim(m_args.l_accel_x);
+          //! - Simulation type
+          m_model->m_sim_type = m_args.sim_type;
+
+          //! Set source system alias
+          if (!m_args.src_alias.empty())
+          {
+            // Resolve systems.
+            try
+            {
+              m_alias_id = resolveSystemName(m_args.src_alias);
+            }
+            catch (...)
+            {
+              debug("No system found with designation '%s'.", m_args.src_alias.c_str());
+              m_alias_id = UINT_MAX;
+            }
+          }
+          else
+            m_alias_id = UINT_MAX;
+
+          //! Set leader system id
+          if (!m_args.leader_alias.empty())
+          {
+            // Resolve systems.
+            try
+            {
+              m_leader_id = resolveSystemName(m_args.leader_alias);
+            }
+            catch (...)
+            {
+              err("Leader system name - No system found with designation '%s'.", m_args.leader_alias.c_str());
+            }
+          }
+          else
+            err("Leader system name - No system found with designation '%s'.", m_args.leader_alias.c_str());
+
+          // Debug flag - for control performance monitoring
+          m_debug = m_args.debug;
+
+          updateLeaderLimits();
         }
 
 //        void
