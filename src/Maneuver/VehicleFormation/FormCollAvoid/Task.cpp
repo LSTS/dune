@@ -610,18 +610,19 @@ namespace Maneuver
                   if (systems[j].empty())
                   {
                     m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                    debug("Filter source system undefined");
+                    debug("Commands filtering - Filter source system undefined");
                   }
                   else
                   {
                     try
                     {
                       m_filtered_sys[i_cmd][i_src_ini+i_src] = resolveSystemName(systems[j]);
-                      debug("SystemID: %d", resolveSystemName(systems[j]));
+                      debug("Commands filtering - System '%s' with ID: %d",
+                          systems[j].c_str(), resolveSystemName(systems[j]));
                     }
                     catch (...)
                     {
-                      debug("No system found with designation '%s'.", parts[1].c_str());
+                      debug("Commands filtering - No system found with designation '%s'.", parts[1].c_str());
                       m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
                     }
                   }
@@ -629,18 +630,19 @@ namespace Maneuver
                   if (entities[j].empty())
                   {
                     m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                    debug("Filter entity system undefined");
+                    debug("Commands filtering - Filter entity system undefined");
                   }
                   else
                   {
                     try
                     {
                       m_filtered_ent[i_cmd][i_src_ini+i_src] = resolveEntity(entities[k]);
-                      debug("EntityID: %d", resolveEntity(entities[k]));
+                      debug("Commands filtering - Entity '%s' with ID: %d",
+                          entities[k].c_str(), resolveEntity(entities[k]));
                     }
                     catch (...)
                     {
-                      debug("No entity found with designation '%s'.", parts[2].c_str());
+                      debug("Commands filtering - No entity found with designation '%s'.", parts[2].c_str());
                       m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
                     }
                   }
@@ -1102,8 +1104,8 @@ namespace Maneuver
           IMC::PathControlState path_ctrl_state;
 
           // for debug
-          debug("EstimatedState received from vehicle %s", resolveSystemId(msg->getSource()));
-          debug("On Vehicle %s", resolveSystemId(getSystemId()));
+          //debug("EstimatedState received from vehicle %s", resolveSystemId(msg->getSource()));
+          //debug("On Vehicle %s", resolveSystemId(getSystemId()));
           if (msg->getSource() == getSystemId())
           {
             //===========================================
@@ -1676,10 +1678,10 @@ namespace Maneuver
               //! Rotation matrix
               double euler_ang[3] = {m_position(3), m_position(4), m_position(5)};
               Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
-              //! UAV velocity rotation to the body frame
-              Matrix vd_body_vel = transpose(md_rot_body2gnd) * m_velocity.get(0, 2, 0, 0);
               // UAV velocity components, on ground frame
-              Matrix vd_gnd_vel = md_rot_body2gnd * vd_body_vel;
+              Matrix vd_gnd_vel = m_velocity.get(0, 2, 0, 0);
+              //! UAV velocity rotation to the body frame
+              Matrix vd_body_vel = transpose(md_rot_body2gnd) * vd_gnd_vel;
 
               //! Fill position.
               m_estate_leader.x = m_position(0);
@@ -1719,20 +1721,46 @@ namespace Maneuver
 
                 // Stream velocity.
                 // Air-relative UAV velocity components, on aircraft frame
-                Matrix vd_body_vel_2wind = transpose(md_rot_body2gnd) * (vd_gnd_vel - m_model->m_wind);
+                IMC::SimulatedState sstate;
                 IMC::EstimatedStreamVelocity streamspeed;
                 IMC::IndicatedSpeed speed;
+                IMC::TrueSpeed groundspeed;
+                //! Fill position.
+                sstate.x = m_position(0);
+                sstate.y = m_position(1);
+                sstate.z = m_position(2);
+                //! Fill body-frame linear velocity, relative to the ground.
+                sstate.u = vd_body_vel(0);
+                sstate.v = vd_body_vel(1);
+                sstate.w = vd_body_vel(2);
+                //! Fill attitude.
+                sstate.phi = m_position(3);
+                sstate.theta = m_position(4);
+                sstate.psi = m_position(5);
+                //! Fill angular velocity.
+                sstate.p = m_velocity(3);
+                sstate.q = m_velocity(4);
+                sstate.r = m_velocity(5);
+                // Fill ground linear velocity.
+                sstate.svx = m_wind(0);
+                sstate.svy = m_wind(1);
+                sstate.svz = m_wind(2);
                 // Fill stream velocity.
                 streamspeed.x = m_model->m_wind(0);
                 streamspeed.y = m_model->m_wind(1);
                 streamspeed.z = m_model->m_wind(2);
-                // Absolute speed
-                speed.value = vd_body_vel_2wind.norm_2();
+                // True Airspeed
+                speed.value = m_model->getAirspeed();
+                // Ground speed
+                groundspeed.value = vd_gnd_vel.norm_2();
                 //! Set source system alias
+                sstate.setSource(m_leader_id);
                 speed.setSource(m_leader_id);
+                groundspeed.setSource(m_leader_id);
                 streamspeed.setSource(m_leader_id);
-                //trace("Exporting estimated state (%s)!", this->getSystemName());
+                dispatch(sstate);
                 dispatch(speed);
+                dispatch(groundspeed);
                 dispatch(streamspeed);
               }
             }
@@ -1801,13 +1829,14 @@ namespace Maneuver
           //! Temporary prediction variables initialization
           Matrix vd_pos(6, 1, 0.0);
           Matrix vd_vel(6, 1, 0.0);
-          UAVSimulation* model;
+          UAVSimulation model;
 
           //! Update team simulated state for remaining time
           //! - Leader state prediction - Update the simulated vehicle state
-          m_model->update(d_time - m_last_state_estim(0));
-          vd_pos = m_model->getPosition();
-          vd_vel = m_model->getVelocity();
+          model = *m_model;
+          model.update(d_time - m_last_state_estim(0));
+          vd_pos = model.getPosition();
+          vd_vel = model.getVelocity();
           m_uav_state.set(0, 11, 0, 0,
                           vd_pos.get(0, 2, 0, 0).
                           vertCat(vd_vel.get(0, 2, 0, 0).
@@ -1826,12 +1855,12 @@ namespace Maneuver
           for (int ind_uav = 1; ind_uav <= m_uav_n; ++ind_uav)
           {
             //!  * Retrieve current vehicle model
-            model = m_models[ind_uav-1];
+            model = *m_models[ind_uav-1];
 
             //!  * State update
-            model->update(d_time - m_last_state_estim(ind_uav));
-            vd_pos = model->getPosition();
-            vd_vel = model->getVelocity();
+            model.update(d_time - m_last_state_estim(ind_uav));
+            vd_pos = model.getPosition();
+            vd_vel = model.getVelocity();
             m_uav_state.set(0, 11, ind_uav, ind_uav,
                             vd_pos.get(0, 2, 0, 0).
                             vertCat(vd_vel.get(0, 2, 0, 0).
@@ -1968,7 +1997,7 @@ namespace Maneuver
           Matrix vt_virt_err_uav = Matrix(2, m_uav_n+1, 0.0);
           Matrix vd_weight_gain = Matrix(m_uav_n+1, 1, 0.0);
 
-          double d_time = Clock::get();
+          //double d_time = Clock::get();
 
           //! Monitoring data
           RelState* rel_state;
@@ -2346,21 +2375,21 @@ namespace Maneuver
             }
 
             // ========= Spew ===========
-            if (b_debug && d_time >= m_last_time_spew + 0.5)
-            {
-              spew("---------------------------------------------------");
-              spew("Relative to UAV %d - Distance: %1.2fm", ind_uav2, d_inter_uav_dist);
-              spew("Relative to UAV %d - Total position error: %1.2fm", ind_uav2, vd_err.norm_2());
-              //spew("Relative to UAV %d - Position error - North: %1.2fm - East: %1.2fm",
-              //     ind_uav2, vd_err(0), vd_err(1));
-              spew("Relative to UAV %d - Position error - X: %1.2fm     - Y: %1.2fm",
-                  ind_uav2, Matrix::dot(vd_err ,vd_inter_uav_x), Matrix::dot(vd_err ,vd_inter_uav_y));
-              spew("Relative to UAV %d - Velocity error - X: %1.2fm/s   - Y: %1.2fm/s",
-                  ind_uav2, Matrix::dot(vd_deriv_err ,vd_inter_uav_x), Matrix::dot(vd_deriv_err ,vd_inter_uav_y));
-              spew("Relative to the leader - SS deviation - X: %1.2fm/s - Y: %1.2fm/s",
-                  Matrix::dot(vd_surf_uav.get(0, 1, ind_uav2, ind_uav2), vd_inter_uav_x),
-                  Matrix::dot(vd_surf_uav.get(0, 1, ind_uav2, ind_uav2), vd_inter_uav_y));
-            }
+//            if (b_debug && d_time >= m_last_time_spew + 0.5)
+//            {
+//              spew("---------------------------------------------------");
+//              spew("Relative to UAV %d - Distance: %1.2fm", ind_uav2, d_inter_uav_dist);
+//              spew("Relative to UAV %d - Total position error: %1.2fm", ind_uav2, vd_err.norm_2());
+//              //spew("Relative to UAV %d - Position error - North: %1.2fm - East: %1.2fm",
+//              //     ind_uav2, vd_err(0), vd_err(1));
+//              spew("Relative to UAV %d - Position error - X: %1.2fm     - Y: %1.2fm",
+//                  ind_uav2, Matrix::dot(vd_err ,vd_inter_uav_x), Matrix::dot(vd_err ,vd_inter_uav_y));
+//              spew("Relative to UAV %d - Velocity error - X: %1.2fm/s   - Y: %1.2fm/s",
+//                  ind_uav2, Matrix::dot(vd_deriv_err ,vd_inter_uav_x), Matrix::dot(vd_deriv_err ,vd_inter_uav_y));
+//              spew("Relative to the leader - SS deviation - X: %1.2fm/s - Y: %1.2fm/s",
+//                  Matrix::dot(vd_surf_uav.get(0, 1, ind_uav2, ind_uav2), vd_inter_uav_x),
+//                  Matrix::dot(vd_surf_uav.get(0, 1, ind_uav2, ind_uav2), vd_inter_uav_y));
+//            }
           }
 
           //!---------------------------------------------------------------
@@ -2533,21 +2562,21 @@ namespace Maneuver
             //rel_state->virt_err_z = vt_virt_err_uav(2, ind_uav_lead);
 
             // ========= Spew ===========
-            if (d_time >= m_last_time_spew + 0.5)
-            {
-              spew("---------------------------------------------------");
-              //spew("Relative to the leader - Distance: %1.2fm", d_inter_uav_dist);
-              spew("Relative to the leader - Total position error: %1.2fm", vd_err.norm_2());
-              //spew("Relative to the leader - Position error - North: %1.2fm - East: %1.2fm",
-              //     vd_err(0), vd_err(1));
-              //spew("Relative to the leader - Position error - X: %1.2fm     - Y: %1.2fm",
-              //    Matrix::dot(vd_err ,vd_inter_uav_x), Matrix::dot(vd_err ,vd_inter_uav_y));
-              spew("Relative to the leader - Velocity error - X: %1.2fm/s   - Y: %1.2fm/s",
-                  Matrix::dot(vd_deriv_err ,vd_inter_uav_x), Matrix::dot(vd_deriv_err ,vd_inter_uav_y));
-              spew("Relative to the leader - SS deviation - X: %1.2fm/s - Y: %1.2fm/s",
-                  Matrix::dot(vd_surf_uav.get(0, 1, ind_uav_lead, ind_uav_lead), vd_inter_uav_x),
-                  Matrix::dot(vd_surf_uav.get(0, 1, ind_uav_lead, ind_uav_lead), vd_inter_uav_y));
-            }
+//            if (d_time >= m_last_time_spew + 0.5)
+//            {
+//              spew("---------------------------------------------------");
+//              //spew("Relative to the leader - Distance: %1.2fm", d_inter_uav_dist);
+//              spew("Relative to the leader - Total position error: %1.2fm", vd_err.norm_2());
+//              //spew("Relative to the leader - Position error - North: %1.2fm - East: %1.2fm",
+//              //     vd_err(0), vd_err(1));
+//              //spew("Relative to the leader - Position error - X: %1.2fm     - Y: %1.2fm",
+//              //    Matrix::dot(vd_err ,vd_inter_uav_x), Matrix::dot(vd_err ,vd_inter_uav_y));
+//              spew("Relative to the leader - Velocity error - X: %1.2fm/s   - Y: %1.2fm/s",
+//                  Matrix::dot(vd_deriv_err ,vd_inter_uav_x), Matrix::dot(vd_deriv_err ,vd_inter_uav_y));
+//              spew("Relative to the leader - SS deviation - X: %1.2fm/s - Y: %1.2fm/s",
+//                  Matrix::dot(vd_surf_uav.get(0, 1, ind_uav_lead, ind_uav_lead), vd_inter_uav_x),
+//                  Matrix::dot(vd_surf_uav.get(0, 1, ind_uav_lead, ind_uav_lead), vd_inter_uav_y));
+//            }
           }
 
           //!-------------------------------------------
@@ -2597,12 +2626,12 @@ namespace Maneuver
           if (d_ss_bnd_layer < d_surf_norm)
           {
             vd_sat_surf = vd_surf_unit;
-            if (b_debug && d_time >= m_last_time_spew + 0.5)
-            {
-              spew("---------------------------------------------------");
-              spew("Orig: %1.2f - %1.2f, %1.2f!", d_surf_norm, vd_surf(0), vd_surf(1));
-              spew("Sat:  %1.2f - %1.2f, %1.2f!", d_ss_bnd_layer, vd_surf_unit(0), vd_surf_unit(1));
-            }
+//            if (b_debug && d_time >= m_last_time_spew + 0.5)
+//            {
+//              spew("---------------------------------------------------");
+//              spew("Orig: %1.2f - %1.2f, %1.2f!", d_surf_norm, vd_surf(0), vd_surf(1));
+//              spew("Sat:  %1.2f - %1.2f, %1.2f!", d_ss_bnd_layer, vd_surf_unit(0), vd_surf_unit(1));
+//            }
           }
           else
             vd_sat_surf = vd_surf/d_ss_bnd_layer;
@@ -2735,14 +2764,14 @@ namespace Maneuver
           // ========= Spew ===========
           if (b_debug)
           {
-            if (d_time >= m_last_time_spew + 0.5)
-            {
-              spew("---------------------------------------------------");
-              spew("Long accel: %1.2fm/s/s - Lat accel: %1.2fm/s/s", vd_ctrl(0), vd_ctrl(1));
-              spew("Sliding surface deviation - North: %1.2fm/s - East: %1.2fm/s", vd_surf(0), vd_surf(1));
-              spew("---------------------------------------------------");
-              m_last_time_spew = d_time;
-            };
+//            if (d_time >= m_last_time_spew + 0.5)
+//            {
+//              spew("---------------------------------------------------");
+//              spew("Long accel: %1.2fm/s/s - Lat accel: %1.2fm/s/s", vd_ctrl(0), vd_ctrl(1));
+//              spew("Sliding surface deviation - North: %1.2fm/s - East: %1.2fm/s", vd_surf(0), vd_surf(1));
+//              spew("---------------------------------------------------");
+//              m_last_time_spew = d_time;
+//            };
 
             //! Commanded acceleration computed by the formation controller.
             //! (Constrained by the vehicle operational limits)
