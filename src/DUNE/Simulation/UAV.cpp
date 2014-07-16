@@ -57,6 +57,18 @@ namespace DUNE
 
     UAVSimulation::UAVSimulation(const UAVSimulation& model)
     {
+      //! modelation type
+      m_sim_type = model.m_sim_type;
+
+      //! Environment parameters
+      //! Wind state vector
+      m_wind = model.m_wind;
+      //! - Gravity acceleration
+      m_g = model.m_g;
+
+      //! Time step control
+      m_timestep_lim = 1.0;
+
       //! Vehicle position
       m_position = model.m_position;
       //! Vehicle velocity vector
@@ -74,22 +86,6 @@ namespace DUNE
       //! - Altitude time constant
       m_alt_time_cst = model.m_alt_time_cst;
       m_alt_time_cst_f = model.m_alt_time_cst_f;
-
-      //! modelation type
-      m_sim_type = model.m_sim_type;
-
-      //! Control commands
-      //! - Bank
-      m_bank_cmd = model.m_bank_cmd;
-      //! - Airspeed
-      m_airspeed_cmd = model.m_airspeed_cmd;
-      //! - Altitude
-      m_altitude_cmd = model.m_altitude_cmd;
-      //! Control commands initialization flags
-      //! - Airspeed
-      m_airspeed_cmd_ini = model.m_airspeed_cmd_ini;
-      //! - Altitude
-      m_altitude_cmd_ini = model.m_altitude_cmd_ini;
       //! Vehicle operation limits and respective initialization flags
       //! - Bank rate
       m_bank_rate_lim = model.m_bank_rate_lim;
@@ -101,18 +97,31 @@ namespace DUNE
       m_vert_slope_lim = model.m_vert_slope_lim;
       m_vert_slope_lim_f = model.m_vert_slope_lim_f;
 
-
-      //! Environment parameters
-      //! Wind state vector
-      m_wind = model.m_wind;
-      //! - Gravity acceleration
-      m_g = model.m_g;
-
-      //! Time step control
-      m_timestep_lim = 1.0;
+      //! Control commands
+      //! - Bank
+      m_bank_cmd = model.m_bank_cmd;
+      //! - Airspeed
+      m_airspeed_cmd = model.m_airspeed_cmd;
+      //! - Altitude
+      m_altitude_cmd = model.m_altitude_cmd;
+      //! - Flight path angle
+      m_fpa_cmd = model.m_fpa_cmd;
+      //! - Pitch
+      m_pitch_cmd = model.m_pitch_cmd;
+      //! Control commands initialization flags
+      //! - Airspeed
+      m_airspeed_cmd_ini = model.m_airspeed_cmd_ini;
+      //! - Altitude
+      m_altitude_cmd_ini = model.m_altitude_cmd_ini;
+      //! - Flight path angle
+      m_fpa_cmd_ini = model.m_fpa_cmd_ini;
+      //! - Pitch
+      m_pitch_cmd_ini = model.m_pitch_cmd_ini;
 
       //! Simulation variables
       m_airspeed = model.m_airspeed;
+      m_ang_attack = model.m_ang_attack;
+      m_sideslip = model.m_sideslip;
       m_cos_yaw = model.m_cos_yaw;
       m_sin_yaw = model.m_sin_yaw;
       m_cos_pitch = model.m_cos_pitch;
@@ -405,16 +414,91 @@ namespace DUNE
       m_altitude_cmd_ini = true;
     }
 
+    UAVSimulation&
+    UAVSimulation::operator=(const UAVSimulation& model)
+    {
+      //! Motion simulation type
+      m_sim_type = model.m_sim_type;
+
+      //! Environment parameters
+      //! Wind state vector
+      m_wind = model.m_wind;
+      //! - Gravity acceleration
+      m_g = model.m_g;
+
+      //! Time step control
+      m_timestep_lim = 1.0;
+
+      //! Vehicle position
+      m_position = model.m_position;
+      //! Vehicle velocity vector
+      m_velocity = model.m_velocity;
+      //! Vehicle velocity vector relative to the wind, in the ground reference frame
+      m_uav2wind_gnd_frm = model.m_uav2wind_gnd_frm;
+
+      //! Vehicle model parameters
+      //! - Bank time constant
+      m_bank_time_cst = model.m_bank_time_cst;
+      m_bank_time_cst_f = model.m_bank_time_cst_f;
+      //! - Airspeed time constant
+      m_speed_time_cst = model.m_speed_time_cst;
+      m_speed_time_cst_f = model.m_speed_time_cst_f;
+      //! - Altitude time constant
+      m_alt_time_cst = model.m_alt_time_cst;
+      m_alt_time_cst_f = model.m_alt_time_cst_f;
+      //! Vehicle operation limits and respective initialization flags
+      //! - Bank rate
+      m_bank_rate_lim = model.m_bank_rate_lim;
+      m_bank_rate_lim_f = model.m_bank_rate_lim_f;
+      //! - Longitudinal acceleration
+      m_lon_accel_lim = model.m_lon_accel_lim;
+      m_lon_accel_lim_f = model.m_lon_accel_lim_f;
+      //! - Vertical slope
+      m_vert_slope_lim = model.m_vert_slope_lim;
+      m_vert_slope_lim_f = model.m_vert_slope_lim_f;
+
+      //! Control commands
+      //! - Bank
+      m_bank_cmd = model.m_bank_cmd;
+      //! - Airspeed
+      m_airspeed_cmd = model.m_airspeed_cmd;
+      //! - Altitude
+      m_altitude_cmd = model.m_altitude_cmd;
+      //! - Flight path angle
+      m_fpa_cmd = model.m_fpa_cmd;
+      //! - Pitch
+      m_pitch_cmd = model.m_pitch_cmd;
+      //! Control commands initialization flags
+      //! - Airspeed
+      m_airspeed_cmd_ini = model.m_airspeed_cmd_ini;
+      //! - Altitude
+      m_altitude_cmd_ini = model.m_altitude_cmd_ini;
+      //! - Flight path angle
+      m_fpa_cmd_ini = model.m_fpa_cmd_ini;
+      //! - Pitch
+      m_pitch_cmd_ini = model.m_pitch_cmd_ini;
+
+      //! Simulation variables
+      m_airspeed = model.m_airspeed;
+      m_ang_attack = model.m_ang_attack;
+      m_sideslip = model.m_sideslip;
+      m_cos_yaw = model.m_cos_yaw;
+      m_sin_yaw = model.m_sin_yaw;
+      m_cos_pitch = model.m_cos_pitch;
+      m_sin_pitch = model.m_sin_pitch;
+      m_cos_roll = model.m_cos_roll;
+      m_sin_roll = model.m_sin_roll;
+      m_cos_course = model.m_cos_course;
+      m_sin_course = model.m_sin_course;
+      m_cos_fl_path_ang = model.m_cos_fl_path_ang;
+      m_sin_fl_path_ang = model.m_sin_fl_path_ang;
+
+      return *this;
+    }
+
     void
     UAVSimulation::resetModel(void)
     {
-      //! Control commands
-      //! - Bank
-      m_bank_cmd = 0.0;
-      //! - Airspeed
-      m_airspeed_cmd = 0.0;
-      //! - Altitude
-      m_altitude_cmd = 0.0;
       //! Environment parameters
       //! Wind state vector
       m_wind = Math::Matrix(3, 1, 0.0);
@@ -429,6 +513,7 @@ namespace DUNE
       m_velocity = Math::Matrix(6, 1, 0.0);
       //! Vehicle velocity vector relative to the wind, in the ground reference frame
       m_uav2wind_gnd_frm = Math::Matrix(3, 1, 0.0);
+
       //! Vehicle model parameters
       //! - Bank time constant
       m_bank_time_cst = 0.0;
@@ -439,11 +524,6 @@ namespace DUNE
       //! - Altitude time constant
       m_alt_time_cst = 0.0;
       m_alt_time_cst_f = false;
-      //! Control commands initialization flags
-      //! - Airspeed
-      m_airspeed_cmd_ini = false;
-      //! - Altitude
-      m_altitude_cmd_ini = false;
       //! Vehicle operation limits and respective initialization flags
       //! - Bank rate
       m_bank_rate_lim = 0.0;
@@ -454,6 +534,28 @@ namespace DUNE
       //! - Vertical slope
       m_vert_slope_lim = 0.0;
       m_vert_slope_lim_f = false;
+
+      //! Control commands
+      //! - Bank
+      m_bank_cmd = 0.0;
+      //! - Airspeed
+      m_airspeed_cmd = 0.0;
+      //! - Altitude
+      m_altitude_cmd = 0.0;
+      //! - Flight path angle
+      m_fpa_cmd = 0.0;
+      //! - Pitch
+      m_pitch_cmd = 0.0;
+      //! Control commands initialization flags
+      //! - Airspeed
+      m_airspeed_cmd_ini = false;
+      //! - Altitude
+      m_altitude_cmd_ini = false;
+      //! - Flight path angle
+      m_fpa_cmd_ini = false;
+      //! - Pitch
+      m_pitch_cmd_ini = false;
+
       //! Simulation variables
       m_airspeed = 0.0;
       m_ang_attack = 0.0;

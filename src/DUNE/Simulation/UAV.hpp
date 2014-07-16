@@ -215,6 +215,12 @@ namespace DUNE
           const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst,
           const double& airspeed_cmd, const double& bank_cmd, const double& altitude_cmd);
 
+      //! This method assigns a UAVSimulation with another UAVSimulation.
+      //! @param[in] model reference to UAV simulation model to be assigned
+      //! @return reference to resultant UAV simulation model
+      UAVSimulation&
+      operator=(const UAVSimulation& model);
+
       //! This method resets all the vehicle model variables.
       void
       resetModel(void);
@@ -399,9 +405,9 @@ namespace DUNE
 
       //! Simulation type
       std::string m_sim_type;
+
       //! Wind state vector
       DUNE::Math::Matrix m_wind;
-
       //! Gravity acceleration
       double m_g;
 
@@ -450,7 +456,6 @@ namespace DUNE
       double m_fpa_cmd;
       //! - Pitch
       double m_pitch_cmd;
-
       //! Control commands initialization flags
       //! - Airspeed
       bool m_airspeed_cmd_ini;
