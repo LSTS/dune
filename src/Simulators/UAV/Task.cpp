@@ -291,6 +291,13 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
+        // Application of the wind vector
+        if (m_model != NULL)
+        {
+          m_model->m_wind(0) = m_args.wx;
+          m_model->m_wind(1) = m_args.wy;
+        }
+
         //! Set source system alias
         if (!m_args.src_alias.empty())
         {
@@ -408,6 +415,9 @@ namespace Simulators
         //! - Simulation type
         m_model->m_sim_type = m_args.sim_type;
         inf(DTR("UAV simulation type: %s"), m_args.sim_type.c_str());
+        // Application of the wind vector
+        m_model->m_wind(0) = m_args.wx;
+        m_model->m_wind(1) = m_args.wy;
 
         //! Start the simulation time
         m_start_time = Clock::get();
@@ -501,18 +511,19 @@ namespace Simulators
                 if (systems[j].empty())
                 {
                   m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                  debug("Filter source system undefined");
+                  debug("Commands filtering - Filter source system undefined");
                 }
                 else
                 {
                   try
                   {
                     m_filtered_sys[i_cmd][i_src_ini+i_src] = resolveSystemName(systems[j]);
-                    debug("SystemID: %d", resolveSystemName(systems[j]));
+                    debug("Commands filtering - System '%s' with ID: %d",
+                        systems[j].c_str(), resolveSystemName(systems[j]));
                   }
                   catch (...)
                   {
-                    debug("No system found with designation '%s'.", parts[1].c_str());
+                    debug("Commands filtering - No system found with designation '%s'.", parts[1].c_str());
                     m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
                   }
                 }
@@ -520,18 +531,19 @@ namespace Simulators
                 if (entities[j].empty())
                 {
                   m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                  debug("Filter entity system undefined");
+                  debug("Commands filtering - Filter entity system undefined");
                 }
                 else
                 {
                   try
                   {
                     m_filtered_ent[i_cmd][i_src_ini+i_src] = resolveEntity(entities[k]);
-                    debug("EntityID: %d", resolveEntity(entities[k]));
+                    debug("Commands filtering - Entity '%s' with ID: %d",
+                        entities[k].c_str(), resolveEntity(entities[k]));
                   }
                   catch (...)
                   {
-                    debug("No entity found with designation '%s'.", parts[2].c_str());
+                    debug("Commands filtering - No entity found with designation '%s'.", parts[2].c_str());
                     m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
                   }
                 }
@@ -598,8 +610,6 @@ namespace Simulators
       void
       consume(const IMC::DesiredRoll* msg)
       {
-        spew("Consuming DesiredRoll");
-
         // Filter command by systems and entities.
         bool matched = true;
         if (m_filtered_sys[0].size() > 0)
@@ -638,6 +648,9 @@ namespace Simulators
 
         // ========= Debug ===========
         spew("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
+        spew("DesiredRoll received from system '%s' and entity '%s'.",
+            resolveSystemId(msg->getSource()),
+            resolveEntity(msg->getSourceEntity()).c_str());
       }
 
       void
@@ -683,6 +696,9 @@ namespace Simulators
 
         // ========= Debug ===========
         spew("Speed command received (%1.2fm/s)", msg->value);
+        spew("DesiredSpeed received from system '%s' and entity '%s'.",
+            resolveSystemId(msg->getSource()),
+            resolveEntity(msg->getSourceEntity()).c_str());
       }
 
       void
@@ -725,14 +741,19 @@ namespace Simulators
         }
 
         double alt_cmd;
-        if (msg->z_units == IMC::Z_HEIGHT || msg->z_units == IMC::Z_ALTITUDE)
+        if (msg->z_units == IMC::Z_HEIGHT)
           alt_cmd = msg->value;
         else if (msg->z_units == IMC::Z_DEPTH)
           alt_cmd = -msg->value;
+        else
+          alt_cmd = msg->value+m_sstate.height;
         m_model->commandAlt(alt_cmd);
 
         // ========= Debug ===========
         spew("Altitude command received (%1.2fm)", alt_cmd);
+        spew("DesiredZ received from system '%s' and entity '%s'.",
+            resolveSystemId(msg->getSource()),
+            resolveEntity(msg->getSourceEntity()).c_str());
       }
 
       void
