@@ -150,18 +150,19 @@ namespace Simulators
               if (systems[j].empty())
               {
                 m_filtered_sys[i_src] = UINT_MAX;
-                debug("Filter source system undefined");
+                debug("State filtering - Filter source system undefined");
               }
               else
               {
                 try
                 {
                   m_filtered_sys[i_src] = resolveSystemName(systems[j]);
-                  debug("SystemID: %d", resolveSystemName(systems[j]));
+                  debug("State filtering - System '%s' with ID: %d",
+                      systems[j].c_str(), resolveSystemName(systems[j]));
                 }
                 catch (...)
                 {
-                  debug("No system found with designation '%s'.", parts[0].c_str());
+                  debug("State filtering - No system found with designation '%s'.", parts[0].c_str());
                   m_filtered_sys[i_src] = UINT_MAX;
                 }
               }
@@ -169,18 +170,19 @@ namespace Simulators
               if (entities[j].empty())
               {
                 m_filtered_ent[i_src] = UINT_MAX;
-                debug("Filter entity system undefined");
+                debug("State filtering - Filter entity system undefined");
               }
               else
               {
                 try
                 {
                   m_filtered_ent[i_src] = resolveEntity(entities[k]);
-                  debug("EntityID: %d", resolveEntity(entities[k]));
+                  debug("State filtering - Entity '%s' with ID: %d",
+                      entities[k].c_str(), resolveEntity(entities[k]));
                 }
                 catch (...)
                 {
-                  debug("No entity found with designation '%s'.", parts[1].c_str());
+                  debug("State filtering - No entity found with designation '%s'.", parts[1].c_str());
                   m_filtered_ent[i_src] = UINT_MAX;
                 }
               }
@@ -268,6 +270,7 @@ namespace Simulators
         // Initialization
         IMC::EstimatedState estate;
         IMC::IndicatedSpeed speed;
+        IMC::TrueSpeed groundspeed;
         IMC::EstimatedStreamVelocity streamspeed;
 
         // Attitude.
@@ -326,17 +329,22 @@ namespace Simulators
         m_beta.value = std::atan2(vd_body_vel_2wind(1), vd_body_vel_2wind(0));
          */
 
+        // Ground speed
+        groundspeed.value = vd_gnd_vel.norm_2();
+
         //! Set source system alias
         if (m_alias_id != (unsigned int)UINT_MAX)
         {
           estate.setSource(m_alias_id);
           speed.setSource(m_alias_id);
+          groundspeed.setSource(m_alias_id);
           streamspeed.setSource(m_alias_id);
         }
 
         //trace("Exporting estimated state (%s)!", this->getSystemName());
         dispatch(estate);
         dispatch(speed);
+        dispatch(groundspeed);
         dispatch(streamspeed);
       }
     };
