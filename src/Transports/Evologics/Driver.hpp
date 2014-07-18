@@ -178,6 +178,15 @@ namespace Transports
         expectOK();
       }
 
+      //! Set highest address.
+      //! @param[in] highest address.
+      void
+      setHighestAddress(unsigned value)
+      {
+        sendAT(String::str("!AM%u", value));
+        expectOK();
+      }
+
       //! Send instant message.
       //! @param[in] data data to send.
       //! @param[in] data_size number of bytes to send.
@@ -381,7 +390,7 @@ namespace Transports
       expectOK(void)
       {
         std::string rv = readLine();
-        getTask()->inf("readline is %s", sanitize(rv).c_str());
+        getTask()->debug("readline is %s", sanitize(rv).c_str());
 
         if ((rv != "OK") && (rv != "[*]OK"))
           throw UnexpectedReply("OK", rv);
