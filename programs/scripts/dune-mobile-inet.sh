@@ -100,6 +100,21 @@ modem_probe()
     fi
 }
 
+# Update DynDNS IPv4 address.
+# @param[in] ip IPv4 address.
+dyndns_update()
+{
+    echo $DYNDNS_USER $DYNDNS_PASS $DYNDNS_HOST
+
+    if [ -z "$DYNDNS_USER" ] || [ -z "$DYNDNS_PASS" ] || [ -z "$DYNDNS_HOST" ]; then
+        return 0
+    fi
+
+    ip="$1"
+    url="http://$DYNDNS_USER:$DYNDNS_PASS@members.dyndns.org/nic/update?hostname=$DYNDNS_HOST&myip=$ip&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG"
+    wget "$url" -O -
+}
+
 ppp_get_ip()
 {
     ip="$(ifconfig "$FWL_EXT_ITF" 2> /dev/null | grep inet | cut -f2 -d: | cut -f1 -d' ')"
@@ -184,7 +199,10 @@ ppp_stop()
 
 ppp_watch()
 {
-    log info "ppp: external IP is $(ppp_get_ip)"
+    ip="$(ppp_get_ip)"
+    log info "ppp: external IP is $ip"
+
+    dyndns_update "$ip"
 
     while [ 1 ]; do
         ip="$(ppp_get_ip)"
