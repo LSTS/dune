@@ -1804,6 +1804,8 @@ namespace Maneuver
                 accel.setSource(m_leader_id);
                 dispatch(accel);
 
+                // Stream velocity.
+                // Air-relative UAV velocity components, on aircraft frame
                 IMC::SimulatedState sstate;
                 IMC::EstimatedStreamVelocity streamspeed;
                 IMC::IndicatedSpeed speed;
@@ -1836,12 +1838,12 @@ namespace Maneuver
                 speed.value = m_model->getAirspeed();
                 // Ground speed
                 groundspeed.value = vd_gnd_vel.norm_2();
-                //! Set source system alias
+                // Set source system alias
                 sstate.setSource(m_leader_id);
                 speed.setSource(m_leader_id);
                 groundspeed.setSource(m_leader_id);
                 streamspeed.setSource(m_leader_id);
-                //trace("Exporting estimated state (%s)!", this->getSystemName());
+                // Dispatch messages
                 dispatch(sstate);
                 dispatch(speed);
                 dispatch(groundspeed);

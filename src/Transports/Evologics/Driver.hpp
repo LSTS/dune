@@ -56,6 +56,8 @@ namespace Transports
       "RECVIM",
       "USBLLONG",
       "USBLANGLES",
+      "USBLPHYD",
+      "USBLPHYP",
       "BITRATE",
       "SRCLEVEL",
       "PHYON",
@@ -175,6 +177,15 @@ namespace Transports
       setPromiscuous(bool enable)
       {
         sendAT(String::str("!RP%u", enable ? 1 : 0));
+        expectOK();
+      }
+
+      //! Set highest address.
+      //! @param[in] value highest address.
+      void
+      setHighestAddress(unsigned value)
+      {
+        sendAT(String::str("!AM%u", value));
         expectOK();
       }
 
@@ -381,7 +392,7 @@ namespace Transports
       expectOK(void)
       {
         std::string rv = readLine();
-        getTask()->inf("readline is %s", sanitize(rv).c_str());
+        getTask()->debug("readline is %s", sanitize(rv).c_str());
 
         if ((rv != "OK") && (rv != "[*]OK"))
           throw UnexpectedReply("OK", rv);

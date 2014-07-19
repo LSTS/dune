@@ -261,7 +261,7 @@ namespace DUNE
 
       if (isFragment(m_line))
       {
-        getTask()->inf(DTR("fragment: %s"), Streams::sanitize(m_line).c_str());
+        getTask()->debug(DTR("fragment: %s"), Streams::sanitize(m_line).c_str());
         return false;
       }
 
@@ -285,6 +285,11 @@ namespace DUNE
       // Got a complete line, but it's empty.
       if (str.empty())
         return true;
+
+      IMC::DevDataText txt;
+      txt.value = str;
+      txt.setDestination(getTask()->getSystemId());
+      getTask()->dispatch(txt);
 
       m_task->spew("recv: %s", Streams::sanitize(str).c_str());
       m_line.clear();
