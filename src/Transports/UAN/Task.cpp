@@ -34,12 +34,16 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    // Synchronization byte.
+    static const uint8_t c_sync = 0xA1;
+    static const uint8_t c_poly = 0x07;
+
     enum Codes
     {
-      CODE_ABORT  = 0x00,
-      CODE_RANGE  = 0x01,
-      CODE_PLAN   = 0x02,
-      CODE_REPORT = 0x03,
+      CODE_ABORT   = 0x00,
+      CODE_RANGE   = 0x01,
+      CODE_PLAN    = 0x02,
+      CODE_REPORT  = 0x03,
       CODE_RESTART = 0x04
     };
 
@@ -216,8 +220,11 @@ namespace Transports
       void
       consume(const IMC::UamRxFrame* msg)
       {
-        if (msg->data.size() < 1)
+        if (msg->data.size() < 2)
+        {
+          war(DTR("invalid message size"));
           return;
+        }
 
         uint16_t imc_addr_src = 0;
         try
@@ -241,7 +248,21 @@ namespace Transports
           return;
         }
 
-        switch (msg->data[0])
+        if ((uint8_t)msg->data[0] != c_sync)
+        {
+          war(DTR("invalid synchronization number"));
+          return;
+        }
+
+        Algorithms::CRC8 crc(c_poly);
+        crc.putArray((uint8_t*)&msg->data[0], msg->data.size() - 1);
+        if (crc.get() != (uint8_t)(msg->data[msg->data.size() - 1]))
+        {
+          war(DTR("invalid CRC"));
+          return;
+        }
+
+        switch (msg->data[1])
         {
           case CODE_REPORT:
             recvReport(imc_addr_src, imc_addr_dst, msg);
@@ -336,6 +357,37 @@ namespace Transports
       }
 
       void
+      sendFrame(const std::string& sys, Codes code, bool ack)
+      {
+        std::vector<uint8_t> data;
+        data.push_back(code);
+        sendFrame(sys, data, ack);
+      }
+
+      void
+      sendFrame(const std::string& sys, const std::vector<uint8_t>& data, bool ack)
+      {
+        Algorithms::CRC8 crc(c_poly);
+
+        IMC::UamTxFrame frame;
+        frame.setDestination(getSystemId());
+        frame.sys_dst = sys;
+        frame.seq = m_seq++;
+        frame.flags = ack ? IMC::UamTxFrame::UTF_ACK : 0;
+
+        frame.data.push_back(c_sync);
+        crc.putByte(c_sync);
+        for (size_t i = 0; i < data.size(); ++i)
+        {
+          frame.data.push_back(data[i]);
+          crc.putByte(data[i]);
+        }
+        frame.data.push_back(crc.get());
+
+        dispatch(frame);
+      }
+
+      void
       replaceLastOp(const IMC::AcousticOperation* msg)
       {
         clearLastOp();
@@ -349,13 +401,7 @@ namespace Transports
       void
       sendAbort(const std::string& sys)
       {
-        IMC::UamTxFrame frame;
-        frame.setDestination(getSystemId());
-        frame.sys_dst = sys;
-        frame.seq = m_seq++;
-        frame.flags = IMC::UamTxFrame::UTF_ACK;
-        frame.data.push_back(CODE_ABORT);
-        dispatch(frame);
+        sendFrame(sys, CODE_ABORT, true);
       }
 
       void
@@ -374,14 +420,7 @@ namespace Transports
       sendRange(const std::string& sys)
       {
         spew("sending range to %s", sys.c_str());
-
-        IMC::UamTxFrame frame;
-        frame.setDestination(getSystemId());
-        frame.sys_dst = sys;
-        frame.seq = m_seq++;
-        frame.flags = IMC::UamTxFrame::UTF_ACK;
-        frame.data.push_back(CODE_RANGE);
-        dispatch(frame);
+        sendFrame(sys, CODE_RANGE, true);
       }
 
       void
@@ -429,14 +468,11 @@ namespace Transports
         if (msg->op != IMC::PlanControl::PC_START)
           return;
 
-        IMC::UamTxFrame frame;
-        frame.setDestination(getSystemId());
-        frame.sys_dst = sys;
-        frame.seq = m_seq++;
-        frame.flags = IMC::UamTxFrame::UTF_ACK;
-        frame.data.push_back(CODE_PLAN);
-        frame.data.push_back(msg->plan_id[0]);
-        dispatch(frame);
+        std::vector<uint8_t> data;
+        data.push_back(CODE_PLAN);
+        for (size_t i = 0; i < msg->plan_id.size(); ++i)
+          data.push_back((uint8_t)msg->plan_id[i]);
+        sendFrame(sys, data, true);
       }
 
       void
@@ -450,7 +486,7 @@ namespace Transports
 
         Delay::wait(1.0);
 
-        char plan_name[2] = {msg->data[1], 0};
+        char plan_name[2] = {msg->data[2], 0};
         IMC::PlanControl pc;
         pc.setSource(imc_src);
         pc.type = IMC::PlanControl::PC_REQUEST;
@@ -466,13 +502,7 @@ namespace Transports
       sendRestartSystem(const std::string& sys, const IMC::RestartSystem* msg)
       {
         (void)msg;
-        IMC::UamTxFrame frame;
-        frame.setDestination(getSystemId());
-        frame.sys_dst = sys;
-        frame.seq = m_seq++;
-        frame.flags = IMC::UamTxFrame::UTF_ACK;
-        frame.data.push_back(CODE_RESTART);
-        dispatch(frame);
+        sendFrame(sys, CODE_RESTART, true);
       }
 
       void
@@ -502,15 +532,11 @@ namespace Transports
         dat.fuel_conf = (uint8_t)m_fuel_conf;
         dat.progress = (int8_t)m_progress;
 
-        IMC::UamTxFrame tx;
-        tx.setDestination(getSystemId());
-        tx.sys_dst = "broadcast";
-        tx.seq = m_seq++;
-        tx.flags = 0;
-        tx.data.resize(sizeof(dat) + 1);
-        tx.data[0] = CODE_REPORT;
-        std::memcpy(&tx.data[1], &dat, sizeof(dat));
-        dispatch(tx);
+        std::vector<uint8_t> data;
+        data.resize(sizeof(dat) + 1);
+        data[0] = CODE_REPORT;
+        std::memcpy(&data[1], &dat, sizeof(dat));
+        sendFrame("broadcast", data, false);
       }
 
       void
@@ -519,7 +545,7 @@ namespace Transports
         (void)imc_dst;
 
         Report dat;
-        std::memcpy(&dat, &msg->data[1], sizeof(dat));
+        std::memcpy(&dat, &msg->data[2], sizeof(dat));
 
         IMC::EstimatedState es;
         es.setSource(imc_src);
