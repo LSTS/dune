@@ -222,7 +222,7 @@ namespace Transports
       {
         if (msg->data.size() < 2)
         {
-          war(DTR("invalid message size"));
+          debug("invalid message size");
           return;
         }
 
@@ -233,7 +233,7 @@ namespace Transports
         }
         catch (...)
         {
-          err(DTR("unknown system name: %s"), msg->sys_src.c_str());
+          debug("unknown system name: %s", msg->sys_src.c_str());
           return;
         }
 
@@ -244,13 +244,13 @@ namespace Transports
         }
         catch (...)
         {
-          err(DTR("unknown system name: %s"), msg->sys_dst.c_str());
+          debug("unknown system name: %s", msg->sys_dst.c_str());
           return;
         }
 
         if ((uint8_t)msg->data[0] != c_sync)
         {
-          war(DTR("invalid synchronization number"));
+          debug("invalid synchronization number");
           return;
         }
 
@@ -258,7 +258,7 @@ namespace Transports
         crc.putArray((uint8_t*)&msg->data[0], msg->data.size() - 1);
         if (crc.get() != (uint8_t)(msg->data[msg->data.size() - 1]))
         {
-          war(DTR("invalid CRC"));
+          debug("invalid CRC");
           return;
         }
 
