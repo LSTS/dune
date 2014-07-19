@@ -56,6 +56,8 @@ namespace Transports
       "RECVIM",
       "USBLLONG",
       "USBLANGLES",
+      "USBLPHYD",
+      "USBLPHYP",
       "BITRATE",
       "SRCLEVEL",
       "PHYON",
