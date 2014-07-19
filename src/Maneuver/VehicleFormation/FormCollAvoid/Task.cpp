@@ -80,8 +80,8 @@ namespace Maneuver
         double alt_min;
         //! Formation configuration parameters
         unsigned int formation_frame;
-        Matrix formation_pos;
         unsigned int uav_n;
+        Matrix formation_pos;
         std::vector<std::string> formation_systems;
         //! Environmental parameters
         double flow_accel_max;
@@ -267,7 +267,7 @@ namespace Maneuver
         //! Vehicle commands
         IMC::DesiredRoll m_bank_cmd;
         IMC::DesiredSpeed m_airspeed_cmd;
-        //IMC::DesiredZ m_altitude_cmd;
+        IMC::DesiredZ m_altitude_cmd;
         //! Leader commanded true airspeed
         double m_tas_cmd_leader;
         //! Leader commanded altitude
@@ -433,7 +433,7 @@ namespace Maneuver
           .description("Formation Reference Frame (0 - Earth; 1 - Path (no curvature); 2 - Path (with curvature)");
 
           param("Formation Positions", m_args.formation_pos)
-          .defaultValue("0.0, 0.0, 0.0")
+          .defaultValue("")
           .description("Formation positions matrix");
 
           param("UAV Number", m_args.uav_n)
@@ -505,12 +505,79 @@ namespace Maneuver
         void
         onUpdateParameters(void)
         {
-          Systems tmp_uav_id = m_uav_id;
-          //! Initial parameters checking
-          checkParameters();
+          //==========================================
+          // General parameters treatment
+          //==========================================
+          // Reset angular units
+          m_bank_lim = Angles::radians(m_args.bank_lim);
+          // Task update frequency
+          m_frequency = this->getFrequency();
+          // Simulation frequency
+          if (m_args.sim_frequency == 0.0)
+            m_timestep_sim = 1/m_frequency;
+          else
+            m_timestep_sim = 1/m_args.sim_frequency;
+          // Control frequency
+          m_timestep_ctrl = 1/m_args.ctrl_frequency;
+
+
+          //==========================================
+          // Check the formation parameters
+          //==========================================
+          // Check if the formation positions matrix has a suitable size
+          if (m_args.formation_pos.size() == 0)
+          {
+            stop();
+            throw std::runtime_error("Formation vehicles' positions matrix is empty!");
+          }
+          if (m_args.formation_pos.rows()%3 != 0)
+          {
+            stop();
+            throw std::runtime_error(static_cast<std::ostringstream*>( &(std::ostringstream() << "Number of UAV positions coordinates in the formation matrix (" << m_args.formation_pos.rows() << ") is not a multiple of 3!"))->str());
+          }
+          // Check if the formation positions matrix has the right size:
+          // 3 rows and as many columns as the number of UAVs
+          if (m_args.formation_pos.rows()/3 > 1)
+          {
+            // - If not, compute the number of UAVs included and resize the matrix
+            m_uav_n = m_args.formation_pos.rows()/3;
+            m_formation_pos.resizeAndKeep(3, m_uav_n);
+          }
+          else
+          {
+            m_uav_n = m_args.formation_pos.columns();
+            m_formation_pos = m_args.formation_pos;
+          }
+
+          // Check if the number of UAVs in the formation positions matrix
+          // matches that indicated as a parameter
+          if (m_uav_n != m_args.uav_n)
+          {
+            war("Number of the UAVs in the formation matrix (%u) is different from the total UAV count indicated (%u)!",
+                m_uav_n, m_args.uav_n);
+            debug("Formation position matrix:");
+            for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+              debug("UAV %u: [x=%1.1f, y=%1.1f, z=%1.1f]", ind_uav,
+                   m_formation_pos(0, ind_uav), m_formation_pos(1, ind_uav), m_formation_pos(2, ind_uav));
+            m_uav_n = (m_uav_n < m_args.uav_n)?m_uav_n:m_args.uav_n;
+          }
+
+          // Check if the number of UAVs in the formation vehicle list
+          // matches that indicated as a parameter
+          if (m_args.formation_systems.size() != m_args.uav_n)
+          {
+            war("Number of the UAVs in the formation vehicle list (%u) is different from the total UAV count indicated (%u)!",
+                (unsigned int)m_args.formation_systems.size(), m_args.uav_n);
+            debug("Formation vehicle list:");
+            for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+              debug("UAV %u: %s]", ind_uav, m_args.formation_systems[ind_uav].c_str());
+          }
+          m_uav_n = (m_uav_n < m_args.formation_systems.size())?m_uav_n:m_args.formation_systems.size();
+          // Vehicle quantity considered in the formation
           debug("Number of UAVs -> %d", m_uav_n);
 
           // Process formation vehicle list
+          Systems tmp_uav_id = m_uav_id;
           if (m_args.formation_systems.empty())
           {
             stop();
@@ -526,12 +593,18 @@ namespace Maneuver
           }
           debug("Current UAV -> %d", m_uav_ind);
 
+          //==========================================
+          // Simulation model initialization
+          //==========================================
+          // Check if the formation composition changed
+          // Reinitialize the simulation models if so
           if (tmp_uav_id != m_uav_id)
             initilizeModels();
 
-          //! Parameters treatment
-          m_bank_lim = Angles::radians(m_args.bank_lim);
-
+          //==========================================
+          // Set messages systems' sources:
+          // Main system alias identification and leader identification
+          //==========================================
           //! Set source system alias
           if (!m_args.src_alias.empty())
           {
@@ -566,16 +639,9 @@ namespace Maneuver
           else
             err("Leader system name - No system found with designation '%s'.", m_args.leader_alias.c_str());
 
-          // Task update frequency
-          m_frequency = this->getFrequency();
-          // Simulation frequency
-          if (m_args.sim_frequency == 0.0)
-            m_timestep_sim = 1/m_frequency;
-          else
-            m_timestep_sim = 1/m_args.sim_frequency;
-          // Control frequency
-          m_timestep_ctrl = 1/m_args.ctrl_frequency;
-
+          //==========================================
+          // Debug control variables
+          //==========================================
           // Debug flag - for control performance monitoring
           m_debug = m_args.debug;
           //! Initialize the formation monitor message
@@ -596,6 +662,11 @@ namespace Maneuver
         void
         onEntityResolution(void)
         {
+          // Parameters' initialization
+          m_llh_ref_pos[0] = 0.0;
+          m_llh_ref_pos[1] = 0.0;
+          m_llh_ref_pos[2] = 0.0;
+
           onUpdateParameters();
 
           //! Process the systems and entities allowed to define a command.
@@ -698,25 +769,20 @@ namespace Maneuver
               }
             }
           }
+
+          //! Airspeed value initialization
+          m_airspeed = m_args.default_speed;
+          m_airspeed_cmd.value = m_airspeed;
+          m_altitude_cmd.value = m_args.default_alt;
+          //! Leader commanded true airspeed
+          m_tas_cmd_leader = m_airspeed;
+          //! Leader commanded altitude
+          m_alt_cmd_leader = m_args.default_alt;
         }
 
         void
         onResourceAcquisition(void)
         {
-          m_llh_ref_pos[0] = 0.0;
-          m_llh_ref_pos[1] = 0.0;
-          m_llh_ref_pos[2] = 0.0;
-
-          //! Airspeed value initialization
-          m_airspeed = m_args.default_speed;
-          m_airspeed_cmd.value = m_airspeed;
-          //m_altitude_cmd.value = m_args.default_alt;
-          //! Leader commanded true airspeed
-          m_tas_cmd_leader = m_airspeed;
-          //! Leader commanded altitude
-          m_alt_cmd_leader = m_args.default_alt;
-
-          spew("Resource acquisition end");
         }
 
         void
@@ -1160,17 +1226,17 @@ namespace Maneuver
 
             m_bank_cmd.value = m_uav_ctrl(0, m_uav_ind);
             m_airspeed_cmd.value = m_uav_ctrl(1, m_uav_ind);
-            //m_altitude_cmd.value = m_uav_ctrl(2, m_uav_ind);
+            m_altitude_cmd.value = m_uav_ctrl(2, m_uav_ind);
             //! Set source system alias
             if (m_alias_id != UINT_MAX)
             {
               m_bank_cmd.setSource(m_alias_id);
               m_airspeed_cmd.setSource(m_alias_id);
-              //m_altitude_cmd.setSource(m_alias_id);
+              m_altitude_cmd.setSource(m_alias_id);
             }
             dispatch(m_bank_cmd);
             dispatch(m_airspeed_cmd);
-            //dispatch(m_altitude_cmd);
+            dispatch(m_altitude_cmd);
 
 
             if (m_debug)
@@ -1211,7 +1277,7 @@ namespace Maneuver
               // Iterate point list
               for (unsigned int ind_uav = 0; ind_uav <= m_uav_n; ind_uav++)
               {
-                if (m_uav_ind == ind_uav)
+                if (m_uav_ind+1 == ind_uav)
                   continue;
 
                 rel_state = *(m_form_monitor->rel_state[ind_uav]);
@@ -1382,54 +1448,6 @@ namespace Maneuver
 
           //! Update team simulated state for standard time periods
           teamPeriodicUpdate(m_clock_diff + Clock::get());
-        }
-
-        void
-        checkParameters(void)
-        {
-          //! Check if the formation positions matrix has a suitable size
-          if (m_args.formation_pos.rows()%3 != 0)
-            err("Number of UAV positions coordinates in the formation matrix (%d) is not a multiple of 3!",
-                m_args.formation_pos.rows());
-
-          //! Check if the formation positions matrix has the right size:
-          //! 3 rows and as many columns as the number of UAVs
-          if (m_args.formation_pos.rows()/3 > 1)
-          {
-            //! - If not, compute the number of UAVs included and resize the matrix
-            m_uav_n = m_args.formation_pos.rows()/3;
-            m_formation_pos.resizeAndKeep(3, m_uav_n);
-          }
-          else
-          {
-            m_uav_n = m_args.formation_pos.columns();
-            m_formation_pos = m_args.formation_pos;
-          }
-
-          //! Check if the number of UAVs in the formation positions matrix
-          //! matches that indicated as a parameter
-          if (m_uav_n != m_args.uav_n)
-          {
-            war("Number of the UAVs in the formation matrix (%u) is different from the total UAV count indicated (%u)!",
-                m_uav_n, m_args.uav_n);
-            debug("Formation position matrix:");
-            for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
-              debug("UAV %u: [x=%1.1f, y=%1.1f, z=%1.1f]", ind_uav,
-                   m_formation_pos(0, ind_uav), m_formation_pos(1, ind_uav), m_formation_pos(2, ind_uav));
-            m_uav_n = (m_uav_n < m_args.uav_n)?m_uav_n:m_args.uav_n;
-          }
-
-          //! Check if the number of UAVs in the formation vehicle list
-          //! matches that indicated as a parameter
-          if (m_args.formation_systems.size() != m_args.uav_n)
-          {
-            war("Number of the UAVs in the formation vehicle list (%u) is different from the total UAV count indicated (%u)!",
-                (unsigned int)m_args.formation_systems.size(), m_args.uav_n);
-            debug("Formation vehicle list:");
-            for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
-              debug("UAV %u: %s]", ind_uav, m_args.formation_systems[ind_uav].c_str());
-          }
-          m_uav_n = (m_uav_n < m_args.formation_systems.size())?m_uav_n:m_args.formation_systems.size();
         }
 
         void
@@ -2684,8 +2702,6 @@ namespace Maneuver
           }
           else
             vd_sat_surf = vd_surf/d_ss_bnd_layer;
-
-          // ToDo - Check - verificar conversão para c++
           Matrix vd_surf_conv = transpose(md_rot_ground2yaw)*md_gain_mtx*md_rot_ground2yaw * vd_sat_surf;
 
           //!-------------------------------------------
