@@ -161,9 +161,9 @@ namespace DUNE
       .description("Maximum Horizontal Dilution of Precision value accepted for GPS fixes");
 
       param("GPS Maximum HACC", m_max_hacc)
-      .defaultValue("6.0")
+      .defaultValue("14.0")
       .minimumValue("3.0")
-      .maximumValue("20.0")
+      .maximumValue("100.0")
       .description("Maximum Horizontal Accuracy Estimate value accepted for GPS fixes");
 
       param("GPS Maximum Dynamic HACC factor", m_gps_hacc_factor)
