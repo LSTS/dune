@@ -179,7 +179,7 @@ namespace Transports
       }
 
       //! Set highest address.
-      //! @param[in] highest address.
+      //! @param[in] value highest address.
       void
       setHighestAddress(unsigned value)
       {
