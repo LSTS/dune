@@ -599,10 +599,45 @@ namespace Maneuver
           // Check if the formation composition changed
           // Reinitialize the simulation models if so
           if (tmp_uav_id != m_uav_id)
-            initilizeModels();
+          {
+            // ToDo - Add data reallocation logic to keep the data from the remaining vehicles
+            //! Initialize the team vehicles' models
+            debug("Vehicles state and command vectors initialization");
+            m_team_state_init = false;
+            //! Initialize vehicles state
+            m_uav_state = DUNE::Math::Matrix(12, m_uav_n+1, 0.0);
+            //! Initialize vehicles commands
+            m_uav_ctrl = DUNE::Math::Matrix(3, m_uav_n, 0.0);
+            //! Start the team vehicles simulation and control time
+            m_last_state_estim = Matrix(m_uav_n + 1, 1, Clock::get());
+            m_last_simctrl_update = Matrix(m_uav_n, 1, Clock::get());
+            //! Initialize the simulated vehicles models
+            debug("Simulated vehicles models initialization");
+            UAVSimulation* model;
+            m_models.clear();
+            for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
+            {
+              //! - State  and control parameters initialization
+              model = new DUNE::Simulation::UAVSimulation(
+                  m_formation_pos.get(0, 2, ind_uav, ind_uav).vertCat(m_position.get(3, 5, 0, 0)),
+                  m_velocity, m_args.c_bank, m_args.c_speed);
+              //! - Simulation type
+              model->m_sim_type = m_args.sim_type;
+              //! - Commands initialization
+              model->command(0, m_tas_cmd_leader, -m_alt_cmd_leader);
+              //! - Limits definition
+              if (m_args.l_bank_rate > 0)
+                model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
+              if (m_args.l_accel_x > 0)
+                model->setAccelLim(m_args.l_accel_x);
+              //! Add model to the models vector
+              m_models.push_back(model);
+              debug("Simulated vehicle model initialized for vehicle %d.", ind_uav);
+            }
+          }
 
           //==========================================
-          // Set messages systems' sources:
+          // Set messages system source:
           // Main system alias identification and leader identification
           //==========================================
           //! Set source system alias
@@ -662,14 +697,48 @@ namespace Maneuver
         void
         onEntityResolution(void)
         {
-          // Parameters' initialization
+          //==========================================
+          // General parameters initialization
+          //==========================================
+          // Home reference latitude, longitude, and height
           m_llh_ref_pos[0] = 0.0;
           m_llh_ref_pos[1] = 0.0;
           m_llh_ref_pos[2] = 0.0;
+          // Airspeed value initialization
+          m_airspeed = m_args.default_speed;
+          // Leader commanded true airspeed
+          m_tas_cmd_leader = m_airspeed;
+          m_airspeed_cmd.value = m_tas_cmd_leader;
+          // Leader commanded altitude
+          m_alt_cmd_leader = m_args.default_alt + m_args.alt_min;
+          m_altitude_cmd.value = m_alt_cmd_leader;
 
+          //==========================================
+          // Initialize the leader vehicle model
+          //==========================================
+          // Model initialization
+          debug("Formation leader model initialization");
+          m_team_leader_init = false;
+          // - State  and control parameters initialization
+          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
+          // - Commands initialization
+          m_model->command(0, m_tas_cmd_leader, -m_alt_cmd_leader);
+          // - Limits definition
+          if (m_args.l_bank_rate > 0)
+            m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
+          if (m_args.l_accel_x > 0)
+            m_model->setAccelLim(m_args.l_accel_x);
+          // - Simulation type
+          m_model->m_sim_type = m_args.sim_type;
+
+          //==========================================
+          // Apply the task parameters
+          //==========================================
           onUpdateParameters();
 
-          //! Process the systems and entities allowed to define a command.
+          //==========================================
+          // Process the systems and entities allowed to define a command
+          //==========================================
           uint32_t i_cmd;
           uint32_t i_cmd_final;
           uint32_t i_src;
@@ -769,15 +838,6 @@ namespace Maneuver
               }
             }
           }
-
-          //! Airspeed value initialization
-          m_airspeed = m_args.default_speed;
-          m_airspeed_cmd.value = m_airspeed;
-          m_altitude_cmd.value = m_args.default_alt;
-          //! Leader commanded true airspeed
-          m_tas_cmd_leader = m_airspeed;
-          //! Leader commanded altitude
-          m_alt_cmd_leader = m_args.default_alt;
         }
 
         void
@@ -815,9 +875,7 @@ namespace Maneuver
               IMC::CacheControl cop;
               cop.op = IMC::CacheControl::COP_STORE;
               cop.message.set(*msg);
-                if (m_alias_id != UINT_MAX)
-                  cop.setSource(m_alias_id);
-              dispatch(cop);
+              dispatchAlias(&cop);
              */
           }
         }
@@ -899,9 +957,7 @@ namespace Maneuver
             p_control.op = IMC::PlanControl::PC_START;
             p_control.type = IMC::PlanControl::PC_REQUEST;
             p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
-                if (m_alias_id != UINT_MAX)
-                  p_control.setSource(m_alias_id);
-            dispatch(p_control);
+            dispatchAlias(&p_control);
            */
 
           //! Flag virtual leader state arrival
@@ -1154,6 +1210,8 @@ namespace Maneuver
             //===========================================
             //! Vehicle own updated state
             //===========================================
+            // ToDo - Check if the home reference has changed to adjust
+            // the leader and cooperation vehicles positions accordingly
             m_llh_ref_pos[0] = msg->lat;
             m_llh_ref_pos[1] = msg->lon;
             m_llh_ref_pos[2] = msg->height;
@@ -1227,16 +1285,9 @@ namespace Maneuver
             m_bank_cmd.value = m_uav_ctrl(0, m_uav_ind);
             m_airspeed_cmd.value = m_uav_ctrl(1, m_uav_ind);
             m_altitude_cmd.value = m_uav_ctrl(2, m_uav_ind);
-            //! Set source system alias
-            if (m_alias_id != UINT_MAX)
-            {
-              m_bank_cmd.setSource(m_alias_id);
-              m_airspeed_cmd.setSource(m_alias_id);
-              m_altitude_cmd.setSource(m_alias_id);
-            }
-            dispatch(m_bank_cmd);
-            dispatch(m_airspeed_cmd);
-            dispatch(m_altitude_cmd);
+            dispatchAlias(&m_bank_cmd);
+            dispatchAlias(&m_airspeed_cmd);
+            dispatchAlias(&m_altitude_cmd);
 
 
             if (m_debug)
@@ -1246,7 +1297,7 @@ namespace Maneuver
               path_ctrl_state.end_lon = msg->lon;
               WGS84::displace(m_uav_state(0, 0), m_uav_state(1, 0),
                   &(path_ctrl_state.end_lat), &(path_ctrl_state.end_lon));
-              dispatch(path_ctrl_state);
+              dispatchAlias(&path_ctrl_state);
 
               //! Update the monitoring message
               IMC::FormationMonitor form_monit;
@@ -1321,7 +1372,7 @@ namespace Maneuver
 
               if (m_alias_id != UINT_MAX)
                 form_monit.setSource(m_alias_id);
-              dispatch(form_monit);
+              dispatchAlias(&form_monit);
             }
           }
           else
@@ -1349,18 +1400,18 @@ namespace Maneuver
 
             spew("Process another system's EstimatedState - 2 for vehicle %s",
                 resolveSystemId(msg->getSource()));
-            //! - State update
+            // - State update
             double vt_uav_state[12] = {msg->x,   msg->y,     msg->z,
                 msg->vx,  msg->vy,    msg->vz,
                 msg->phi, msg->theta, msg->psi,
                 msg->p,   msg->q,     msg->r};
-            //! Adjust vehicle offset position from its reference
-            //! frame to the real vehicle reference frame
+            // Adjust the cooperating vehicle offset position from its reference
+            // frame to the current vehicle reference frame
             positionReframing(m_llh_ref_pos[0], m_llh_ref_pos[1], m_llh_ref_pos[2],
                 msg->lat, msg->lon, msg->height, &vt_uav_state[0], &vt_uav_state[1], &vt_uav_state[2]);
-            //! Update vehicle state vector
+            // Update vehicle state vector
             m_uav_state.set(0, 11, ind_uav+1, ind_uav+1, Matrix(vt_uav_state, 12, 1));
-            //! - Update own vehicle simulation model
+            // - Update own vehicle simulation model
             m_models[ind_uav]->setPosition(m_uav_state.
                                            get(0, 2, ind_uav+1, ind_uav+1).
                                            vertCat(m_uav_state.
@@ -1451,57 +1502,20 @@ namespace Maneuver
         }
 
         void
-        initilizeModels()
+        dispatchAlias(IMC::Message* msg)
         {
-          //! Initialize the leader vehicle model
-          //! Model initialization
-          debug("Formation leader model initialization");
-          m_team_leader_init = false;
-          //! - State  and control parameters initialization
-          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
-          //! - Commands initialization
-          m_model->command(0, m_tas_cmd_leader, -m_alt_cmd_leader);
-          //! - Limits definition
-          if (m_args.l_bank_rate > 0)
-            m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
-          if (m_args.l_accel_x > 0)
-            m_model->setAccelLim(m_args.l_accel_x);
-          //! - Simulation type
-          m_model->m_sim_type = m_args.sim_type;
+          // Dispatch message with alias source identification
+          if (m_alias_id != UINT_MAX)
+            msg->setSource(m_alias_id);
+          dispatch(*msg);
+        }
 
-          //! Initialize the team vehicles' models
-          debug("Vehicles state and command vectors initialization");
-          m_team_state_init = false;
-          //! Initialize vehicles state
-          m_uav_state = DUNE::Math::Matrix(12, m_uav_n+1, 0.0);
-          //! Initialize vehicles commands
-          m_uav_ctrl = DUNE::Math::Matrix(3, m_uav_n, 0.0);
-          //! Start the team vehicles simulation and control time
-          m_last_state_estim = Matrix(m_uav_n + 1, 1, Clock::get());
-          m_last_simctrl_update = Matrix(m_uav_n, 1, Clock::get());
-          //! Initialize the simulated vehicles models
-          debug("Simulated vehicles models initialization");
-          UAVSimulation* model;
-          m_models.clear();
-          for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
-          {
-            //! - State  and control parameters initialization
-            model = new DUNE::Simulation::UAVSimulation(
-                m_formation_pos.get(0, 2, ind_uav, ind_uav).vertCat(m_position.get(3, 5, 0, 0)),
-                m_velocity, m_args.c_bank, m_args.c_speed);
-            //! - Simulation type
-            model->m_sim_type = m_args.sim_type;
-            //! - Commands initialization
-            model->command(0, m_tas_cmd_leader, -m_alt_cmd_leader);
-            //! - Limits definition
-            if (m_args.l_bank_rate > 0)
-              model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
-            if (m_args.l_accel_x > 0)
-              model->setAccelLim(m_args.l_accel_x);
-            //! Add model to the models vector
-            m_models.push_back(model);
-            debug("Simulated vehicle model initialized for vehicle %d.", ind_uav);
-          }
+        void
+        dispatchLeader(IMC::Message* msg)
+        {
+          // Dispatch message with leader source identification
+          msg->setSource(m_leader_id);
+          dispatch(*msg);
         }
 
         void
@@ -1532,64 +1546,57 @@ namespace Maneuver
         }
 
         void
-        setLeaderState(const IMC::LeaderState* lead_state)
+        setLeaderState(const IMC::LeaderState* leader_state)
         {
-          //! Flag virtual leader state arrival
+          // Flag virtual leader state arrival
           m_team_leader_init = true;
           //if (!isActive())
           //  requestActivation();
 
-          // Body to ground rotation matrix
-          double euler_ang[3] = {lead_state->phi, lead_state->theta, lead_state->psi};
-          Matrix md_rot_body2ground = Matrix(euler_ang, 3, 1).toDCM();
+          // Leader home reference
+          m_estate_leader.lat = m_llh_ref_pos[0];
+          m_estate_leader.lon = m_llh_ref_pos[1];
+          m_estate_leader.height = m_llh_ref_pos[2];
 
-          //! Defining origin.
-          m_estate_leader.lat = lead_state->lat;
-          m_estate_leader.lon = lead_state->lon;
-          m_estate_leader.height = lead_state->height;
-
-          //! Update leader state variables
-          double t_leader[12] = {lead_state->x,       lead_state->y,       lead_state->z,
-              lead_state->vx,    lead_state->vy,    0,
-              euler_ang[0], 0, euler_ang[2],
-              lead_state->p,       0,       lead_state->r};
-          //! Adjust leader offset position from its reference
-          //! frame to the real vehicle reference frame
+          // Update leader state variables
+          double t_leader[12] = {leader_state->x,       leader_state->y,       leader_state->z,
+              leader_state->vx,    leader_state->vy,    0,
+              trimValue(leader_state->phi, -m_bank_lim, m_bank_lim), 0, leader_state->psi,
+              leader_state->p,       0,       leader_state->r};
+          // Adjust leader offset position from its reference
+          // frame to the vehicle reference frame
           positionReframing(m_llh_ref_pos[0], m_llh_ref_pos[1], m_llh_ref_pos[2],
-              lead_state->lat, lead_state->lon, lead_state->height, &t_leader[0], &t_leader[1], &t_leader[2]);
+              leader_state->lat, leader_state->lon, leader_state->height,
+              &t_leader[0], &t_leader[1], &t_leader[2]);
           //! Update formation leader state vectors
           m_uav_state.set(0, 11, 0, 0, Matrix(t_leader, 12, 1));
           m_model->setPosition(m_uav_state.get(0, 2, 0, 0).vertCat(m_uav_state.get(6, 8, 0, 0)));
           m_model->setVelocity(m_uav_state.get(3, 5, 0, 0).vertCat(m_uav_state.get(9, 11, 0, 0)));
-          //! Update formation leader wind vector
-          m_wind(0) = lead_state->svx;
-          m_wind(1) = lead_state->svy;
-          m_wind(2) = 0;
-          m_model->m_wind = m_wind;
-          m_last_state_estim(0) = lead_state->getTimeStamp();
-
-
+          // Update formation leader wind vector
+          m_model->m_wind(0) = leader_state->svx;
+          m_model->m_wind(1) = leader_state->svy;
+          m_last_state_estim(0) = leader_state->getTimeStamp();
 
           debug("---------------------------");
-          debug("Initial latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
-          debug("Initial longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
-          debug("Initial altitude: %1.4fm", m_init_leader.height);
-          debug("Initial x position: %1.4f", m_uav_state(0, 0));
-          debug("Initial y position: %1.4f", m_uav_state(1, 0));
-          debug("Initial z position: %1.4f", m_uav_state(2, 0));
-          debug("Initial roll angle: %1.4f", m_uav_state(6, 0));
-          debug("Initial pitch angle: %1.4f", m_uav_state(7, 0));
-          debug("Initial yaw angle: %1.4f", m_uav_state(8, 0));
-          debug("Initial x speed: %1.4f", m_uav_state(3, 0));
-          debug("Initial y speed: %1.4f", m_uav_state(4, 0));
-          debug("Initial z speed: %1.4f", m_uav_state(5, 0));
-          debug("Initial roll rate: %1.4f", m_uav_state(9, 0));
-          debug("Initial pitch rate: %1.4f", m_uav_state(10, 0));
-          debug("Initial yaw rate: %1.4f", m_uav_state(11, 0));
-          debug("Initial x wind speed: %1.4f", m_wind(0));
-          debug("Initial y wind speed: %1.4f", m_wind(1));
-          debug("Initial z wind speed: %1.4f", m_wind(2));
-
+          debug("Leader latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
+          debug("Leader longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
+          debug("Leader altitude: %1.4fm", m_init_leader.height);
+          debug("Leader x position: %1.4f", m_uav_state(0, 0));
+          debug("Leader y position: %1.4f", m_uav_state(1, 0));
+          debug("Leader z position: %1.4f", m_uav_state(2, 0));
+          debug("Leader roll angle: %1.4f", m_uav_state(6, 0));
+          debug("Leader pitch angle: %1.4f", m_uav_state(7, 0));
+          debug("Leader yaw angle: %1.4f", m_uav_state(8, 0));
+          debug("Leader x speed: %1.4f", m_uav_state(3, 0));
+          debug("Leader y speed: %1.4f", m_uav_state(4, 0));
+          debug("Leader z speed: %1.4f", m_uav_state(5, 0));
+          debug("Leader roll rate: %1.4f", m_uav_state(9, 0));
+          debug("Leader pitch rate: %1.4f", m_uav_state(10, 0));
+          debug("Leader yaw rate: %1.4f", m_uav_state(11, 0));
+          debug("Leader x wind speed: %1.4f", m_model->m_wind(0));
+          debug("Leader y wind speed: %1.4f", m_model->m_wind(1));
+          debug("Leader z wind speed: %1.4f", m_model->m_wind(2));
+          debug("---------------------------");
         }
 
         Matrix
@@ -1789,10 +1796,8 @@ namespace Maneuver
               m_estate_leader.vy = vd_gnd_vel(1);
               m_estate_leader.vz = vd_gnd_vel(2);
 
-              //! Set leader system alias
-              m_estate_leader.setSource(m_leader_id);
               //! Send estimated state message
-              dispatch(m_estate_leader);
+              dispatchLeader(&m_estate_leader);
 
               if (m_debug)
               {
@@ -1801,8 +1806,7 @@ namespace Maneuver
                 accel.x = m_uav_accel(0, 0);
                 accel.y = m_uav_accel(1, 0);
                 accel.z = m_uav_accel(2, 0);
-                accel.setSource(m_leader_id);
-                dispatch(accel);
+                dispatchLeader(&accel);
 
                 // Stream velocity.
                 // Air-relative UAV velocity components, on aircraft frame
@@ -1838,16 +1842,11 @@ namespace Maneuver
                 speed.value = m_model->getAirspeed();
                 // Ground speed
                 groundspeed.value = vd_gnd_vel.norm_2();
-                // Set source system alias
-                sstate.setSource(m_leader_id);
-                speed.setSource(m_leader_id);
-                groundspeed.setSource(m_leader_id);
-                streamspeed.setSource(m_leader_id);
                 // Dispatch messages
-                dispatch(sstate);
-                dispatch(speed);
-                dispatch(groundspeed);
-                dispatch(streamspeed);
+                dispatchLeader(&sstate);
+                dispatchLeader(&speed);
+                dispatchLeader(&groundspeed);
+                dispatchLeader(&streamspeed);
               }
             }
 
@@ -2114,7 +2113,7 @@ namespace Maneuver
           // spew('\nFormation rotation center: %3.1f, %3.1f\n', vd_FormRotCtr)
 
           //! Formation reference position, velocity and acceleration vectors
-          if (i_formation_frame > 0)
+          if (i_formation_frame > IMC::FormationParameters::OP_EARTH_FIXED)
           {
             if (md_uav_state(6, 0) == 0)
             {
@@ -2126,7 +2125,7 @@ namespace Maneuver
             Matrix vd_form_acc1[2] = {0, 0};
                */
             }
-            else if (i_formation_frame == 2)
+            else if (i_formation_frame == IMC::FormationParameters::OP_PATH_CURVED)
             {
               //! Path reference frame
               //! In-formation adjustment
@@ -2195,7 +2194,7 @@ namespace Maneuver
             //! - Position vector
             //! - Velocity vector
             //! - Acceleration vector
-            if (i_formation_frame == 0)
+            if (i_formation_frame == IMC::FormationParameters::OP_EARTH_FIXED)
             {
               //! Ground reference frame
               //! - Position
@@ -2216,7 +2215,8 @@ namespace Maneuver
             else
             {
               //! Path reference frame
-              if ((i_formation_frame == 2) && (md_uav_state(6, 0) != 0))
+              if ((i_formation_frame == IMC::FormationParameters::OP_PATH_CURVED) &&
+                  (md_uav_state(6, 0) != 0))
               {
                 //! Curved shape - Formation shape adjustment to path curvature
                 t_uav_turnrad = d_form_turnrad - m_formation_pos(1, ind_uav2);
@@ -2485,7 +2485,7 @@ namespace Maneuver
               md_uav_state(3, ind_uav+1), md_uav_state(4, ind_uav+1), md_uav_state(5, ind_uav+1)};
            */
 
-          if (i_formation_frame == 0)
+          if (i_formation_frame == IMC::FormationParameters::OP_EARTH_FIXED)
           {
             //! Earth reference frame
             //! - Position
