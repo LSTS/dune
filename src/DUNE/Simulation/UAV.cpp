@@ -1087,6 +1087,46 @@ namespace DUNE
     }
 
     void
+    UAVSimulation::setPosition(const DUNE::Math::Matrix& pos)
+    {
+      int i_pos_size = pos.rows();
+      if (i_pos_size < 2 && i_pos_size > 6)
+        throw Error("Invalid position vector dimension. Vector size must be between 2 and 6.");
+
+      // Vehicle position
+      m_position.set(0, i_pos_size-1, 0, 0, pos);
+      // Reset the pitch angle for the simulations that do not update it
+      if (m_sim_type.compare("3DOF") == 0 || m_sim_type.compare("4DOF_bank") == 0)
+        m_position(4) = 0;
+      // Simulation variables
+      m_cos_course = std::cos(m_position(5));
+      m_sin_course = std::sin(m_position(5));
+      m_cos_pitch = std::cos(m_position(4));
+      m_sin_pitch = std::sin(m_position(4));
+      m_cos_roll = std::cos(m_position(3));
+      m_sin_roll = std::sin(m_position(3));
+    }
+
+    void
+    UAVSimulation::setVelocity(const DUNE::Math::Matrix& vel)
+    {
+      int i_vel_size = vel.rows();
+      if (i_vel_size < 2 && i_vel_size > 6)
+        throw Error("Invalid velocity vector dimension. Vector size must be between 2 and 6.");
+
+      //! Vehicle velocity vector, relative to the ground, in the ground reference frame
+      m_velocity.set(0, i_vel_size-1, 0, 0, vel);
+      // Reset the vertical velocity for the simulations that do not update it
+      if (m_sim_type.compare("3DOF") == 0 || m_sim_type.compare("4DOF_bank") == 0)
+        m_velocity(2) = 0;
+      // Reset the pitch angular rate for the simulations that do not update it
+      if (m_sim_type.compare("6DOF_dyn") != 0)
+        m_velocity(4) = 0;
+
+      calcUAV2AirData();
+    }
+
+    void
     UAVSimulation::setCtrl(const double& bank_time_cst, const double& speed_time_cst)
     {
       //! Vehicle model parameters
@@ -1177,46 +1217,6 @@ namespace DUNE
     {
       //! Aircraft altitude
       return m_altitude_cmd;
-    }
-
-    void
-    UAVSimulation::setPosition(const DUNE::Math::Matrix& pos)
-    {
-      int i_pos_size = pos.rows();
-      if (i_pos_size < 2 && i_pos_size > 6)
-        throw Error("Invalid position vector dimension. Vector size must be between 2 and 6.");
-
-      // Vehicle position
-      m_position.set(0, i_pos_size-1, 0, 0, pos);
-      // Reset the pitch angle for the simulations that do not update it
-      if (m_sim_type.compare("3DOF") == 0 || m_sim_type.compare("4DOF_bank") == 0)
-        m_position(4) = 0;
-      // Simulation variables
-      m_cos_course = std::cos(m_position(5));
-      m_sin_course = std::sin(m_position(5));
-      m_cos_pitch = std::cos(m_position(4));
-      m_sin_pitch = std::sin(m_position(4));
-      m_cos_roll = std::cos(m_position(3));
-      m_sin_roll = std::sin(m_position(3));
-    }
-
-    void
-    UAVSimulation::setVelocity(const DUNE::Math::Matrix& vel)
-    {
-      int i_vel_size = vel.rows();
-      if (i_vel_size < 2 && i_vel_size > 6)
-        throw Error("Invalid velocity vector dimension. Vector size must be between 2 and 6.");
-
-      //! Vehicle velocity vector, relative to the ground, in the ground reference frame
-      m_velocity.set(0, i_vel_size-1, 0, 0, vel);
-      // Reset the vertical velocity for the simulations that do not update it
-      if (m_sim_type.compare("3DOF") == 0 || m_sim_type.compare("4DOF_bank") == 0)
-        m_velocity(2) = 0;
-      // Reset the pitch angular rate for the simulations that do not update it
-      if (m_sim_type.compare("6DOF_dyn") != 0)
-        m_velocity(4) = 0;
-
-      calcUAV2AirData();
     }
 
     void
