@@ -492,6 +492,8 @@ namespace Transports
           msg.flags |= IMC::UamRxFrame::URF_PROMISCUOUS;
 
         dispatch(msg);
+
+        m_driver->getMultipathStructure();
       }
 
       void
