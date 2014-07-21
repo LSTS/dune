@@ -53,6 +53,7 @@ namespace Transports
       "DELIVEREDIM",
       "FAILEDIM",
       "CANCELEDIM",
+      "RECVIMS",
       "RECVIM",
       "USBLLONG",
       "USBLANGLES",
@@ -415,6 +416,10 @@ namespace Transports
             last_comma = getCommaIndex(str, 10);
           else
             last_comma = getCommaIndex(str, 9);
+        }
+        else if (std::sscanf(str.c_str(), "RECVIMS,%u", &length) == 1)
+        {
+          last_comma = getCommaIndex(str, 9);
         }
         else
         {

@@ -319,7 +319,9 @@ namespace Transports
         if (msg->getDestinationEntity() != getEntityId())
           return;
 
-        if (String::startsWith(msg->value, "RECVIM"))
+        if (String::startsWith(msg->value, "RECVIMS"))
+          return;
+        else if (String::startsWith(msg->value, "RECVIM"))
           handleInstantMessage(msg->value);
         else if (String::startsWith(msg->value, "DELIVEREDIM"))
           handleInstantMessageDelivered(msg->value);
