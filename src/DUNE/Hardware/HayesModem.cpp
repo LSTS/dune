@@ -168,7 +168,7 @@ namespace DUNE
       txt.setDestination(getTask()->getSystemId());
       getTask()->dispatch(txt);
 
-      sendRaw((const uint8_t*)cmd.c_str(), cmd.size());
+      send(cmd);
     }
 
     void

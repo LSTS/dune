@@ -180,7 +180,7 @@ namespace DUNE
     void
     BasicModem::send(const std::string& str)
     {
-      getTask()->inf(DTR("send: %s"), Streams::sanitize(str).c_str());
+      getTask()->trace("send: %s", Streams::sanitize(str).c_str());
       sendRaw((uint8_t*)str.c_str(), str.size());
     }
 
@@ -291,7 +291,7 @@ namespace DUNE
       txt.setDestination(getTask()->getSystemId());
       getTask()->dispatch(txt);
 
-      m_task->spew("recv: %s", Streams::sanitize(str).c_str());
+      m_task->trace("recv: %s", Streams::sanitize(str).c_str());
       m_line.clear();
 
       if (!m_skip_line.empty())
