@@ -211,7 +211,7 @@ namespace Transports
         }
         catch (...)
         {
-          inf(DTR("dynamic sound speed corrections are disabled"));
+          debug("dynamic sound speed corrections are disabled");
           m_sound_speed = m_args.sound_speed_def;
         }
       }
