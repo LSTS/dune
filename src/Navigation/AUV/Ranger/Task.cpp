@@ -36,6 +36,7 @@ namespace Navigation
     {
       using DUNE_NAMESPACES;
 
+      //! Task arguments.
       struct Arguments
       {
         //! Ping periodicity.
@@ -70,23 +71,6 @@ namespace Navigation
 
           bind<IMC::LblConfig>(this);
           bind<IMC::UamRxRange>(this);
-
-          // IMC::LblConfig cfg;
-          // cfg.op = IMC::LblConfig::OP_SET_CFG;
-
-          // IMC::LblBeacon b0;
-          // b0.beacon = "lisa";
-          // cfg.beacons.push_back(b0);
-
-          // IMC::LblBeacon b1;
-          // b1.beacon = "carol";
-          // cfg.beacons.push_back(b1);
-
-          // IMC::LblBeacon b2;
-          // b2.beacon = "gw";
-          // cfg.beacons.push_back(b2);
-
-          // dispatch(cfg, DF_LOOP_BACK);
         }
 
         //! Update internal state with new parameter values.
@@ -96,35 +80,11 @@ namespace Navigation
           m_timer.setTop(m_args.ping_period);
         }
 
-        //! Reserve entity identifiers.
-        void
-        onEntityReservation(void)
-        {
-        }
-
-        //! Resolve entity names.
-        void
-        onEntityResolution(void)
-        {
-        }
-
-        //! Acquire resources.
-        void
-        onResourceAcquisition(void)
-        {
-        }
-
         //! Initialize resources.
         void
         onResourceInitialization(void)
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-        }
-
-        //! Release resources.
-        void
-        onResourceRelease(void)
-        {
         }
 
         void
@@ -160,14 +120,23 @@ namespace Navigation
         {
           unsigned id = 0;
 
-          // MessageList<IMC::LblBeacon>::const_iterator itr = m_lbl_config.beacons.begin();
-          // for (; itr < m_lbl_config.end(); ++itr)
-          // {
-          //   if (msg->
+          MessageList<IMC::LblBeacon>::const_iterator itr = m_lbl_config.beacons.begin();
+          for (; itr < m_lbl_config.beacons.end(); ++itr)
+          {
+            if ((*itr) == NULL)
+              continue;
 
+            if ((*itr)->beacon == msg->sys)
+            {
+              IMC::LblRange range;
+              range.id = id;
+              range.range = msg->value;
+              dispatch(range);
+              return;
+            }
 
-          //   ++id;
-          // }
+            ++id;
+          }
         }
 
         void
@@ -204,10 +173,7 @@ namespace Navigation
         {
           const IMC::LblBeacon* beacon = getNextBeacon();
           if (beacon == NULL)
-          {
-            err("beacon is null");
             return;
-          }
 
           ping(beacon->beacon);
         }
