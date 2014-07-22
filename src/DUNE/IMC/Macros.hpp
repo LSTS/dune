@@ -498,6 +498,8 @@
 #define DUNE_IMC_ABORTACKED 818
 //! FormCtrlParam identification number.
 #define DUNE_IMC_FORMCTRLPARAM 820
+//! FormationEval identification number.
+#define DUNE_IMC_FORMATIONEVAL 821
 //! MessagePart identification number.
 #define DUNE_IMC_MESSAGEPART 877
 //! NeptusBlob identification number.

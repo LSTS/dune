@@ -10,7 +10,7 @@
           xsi:noNamespaceSchemaLocation="IMC.xsd"
           name="IMC"
           long-name="Inter Module Communication"
-          version="5.4.1-rc1">
+          version="5.4.x">
 
   <description>
     This document describes the communications protocol associated
@@ -7620,6 +7620,27 @@
       <description>
         Collision avoidance and formation shape gain (position tracking relative to the other formation vehicles).
         Individual vehicle importance gain (relative to the leader), when the relative position or the velocity state indicate higher probability of collision.
+      </description>
+    </field>
+  </message>
+
+  <message id="821" name="Formation Evaluation Data" abbrev="FormationEval">
+    <description>
+      Formation control performance evaluation variables.
+    </description>
+    <field name="Mean position error" abbrev="err_mean" type="fp32_t">
+      <description>
+        Mean position error relative to the formation reference.
+      </description>
+    </field>
+    <field name="Absolute minimum distance" abbrev="dist_min_abs" type="fp32_t">
+      <description>
+        Overall minimum distance to any other vehicle in the formation.
+      </description>
+    </field>
+    <field name="Mean minimum distance" abbrev="dist_min_mean" type="fp32_t">
+      <description>
+        Mean minimum distance to any other vehicle in the formation.
       </description>
     </field>
   </message>

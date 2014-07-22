@@ -18544,6 +18544,71 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Formation Evaluation Data.
+    class FormationEval: public Message
+    {
+    public:
+      //! Mean position error.
+      fp32_t err_mean;
+      //! Absolute minimum distance.
+      fp32_t dist_min_abs;
+      //! Mean minimum distance.
+      fp32_t dist_min_mean;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 821;
+      }
+
+      FormationEval(void);
+
+      Message*
+      clone(void) const
+      {
+        return new FormationEval(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FormationEval::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FormationEval";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 12;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Message Fragment.
     class MessagePart: public Message
     {
