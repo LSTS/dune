@@ -111,6 +111,9 @@ namespace DUNE
       //! Concurrency lock.
       Concurrency::Mutex m_mutex;
 
+      //! Handle unsolicited or asynchronous commands.
+      //! @param[in] str command string.
+      //! @return true if command was handled, false otherwise.
       virtual bool
       handleUnsolicited(const std::string& str)
       {
