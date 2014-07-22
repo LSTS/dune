@@ -162,7 +162,7 @@ namespace Transports
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 5);
+          throw RestartNeeded(e.what(), 5, false);
         }
       }
 
