@@ -239,7 +239,7 @@ namespace Transports
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 5);
+          throw RestartNeeded(e.what(), 5, false);
         }
 
         m_driver = new Driver(this, m_sock);
@@ -439,6 +439,8 @@ namespace Transports
           catch (...)
           { }
         }
+
+        m_driver->getMultipathStructure();
 
         // Clear ticket.
         m_driver->setBusy(false);
