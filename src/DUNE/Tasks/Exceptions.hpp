@@ -40,8 +40,9 @@ namespace DUNE
 {
   namespace Tasks
   {
-    // Export DLL Symbol.
+    // Export DLL Symbols.
     class DUNE_DLL_SYM RestartNeeded;
+    class DUNE_DLL_SYM TryAgainLater;
 
     //! The emitting task has encountered an error that can possibly
     //! be recovered by a restart.
@@ -49,12 +50,14 @@ namespace DUNE
     {
     public:
       //! Constructor.
-      //! @param[in] error error message.
+      //! @param[in] msg message.
       //! @param[in] delay amount of seconds to wait before restarting
+      //! @param[in] error true if an error should be emitted, false otherwise.
       //! the task.
-      RestartNeeded(const std::string& error, unsigned delay = 1):
-        m_error(error),
-        m_delay(delay)
+      RestartNeeded(const std::string& msg, unsigned delay, bool error = true):
+        m_msg(msg),
+        m_delay(delay),
+        m_error(error)
       { }
 
       //! Retrieve the amount of seconds that must elapse before
@@ -65,19 +68,27 @@ namespace DUNE
         return m_delay;
       }
 
+      bool
+      isError(void) const
+      {
+        return m_error;
+      }
+
       //! Retrieve error message.
       //! @return error message.
       const char*
       getError(void)
       {
-        return m_error.c_str();
+        return m_msg.c_str();
       }
 
     private:
       //! Error message.
-      std::string m_error;
+      std::string m_msg;
       //! Delay.
       unsigned m_delay;
+      //! True if error.
+      bool m_error;
     };
 
     //! Thrown when the name of a task is not valid.
