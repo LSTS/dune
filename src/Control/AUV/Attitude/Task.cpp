@@ -266,9 +266,6 @@ namespace Control
         onResourceAcquisition(void)
         {
           BasicAutopilot::onResourceAcquisition();
-
-          if (m_ca_args.enabled)
-            m_ca = new CoarseAltitude(&m_ca_args);
         }
 
         //! Release Resources
@@ -284,7 +281,7 @@ namespace Control
         void
         onAutopilotActivation(void)
         {
-          if (m_ca_args.enabled)
+          if (m_ca != NULL)
             m_ca->activate();
         }
 
@@ -292,7 +289,7 @@ namespace Control
         void
         onAutopilotDeactivation(void)
         {
-          if (m_ca_args.enabled)
+          if (m_ca != NULL)
             m_ca->deactivate();
         }
 
@@ -329,6 +326,20 @@ namespace Control
 
           if (paramChanged(m_args.max_hrate))
             m_args.max_hrate = Angles::radians(m_args.max_hrate);
+
+          // Coarse altitude control
+          if (paramChanged(m_ca_args.enabled) ||
+              paramChanged(m_ca_args.wsizes) ||
+              paramChanged(m_ca_args.upper_gap) ||
+              paramChanged(m_ca_args.period) ||
+              paramChanged(m_ca_args.max_outside) ||
+              paramChanged(m_ca_args.sample_limit))
+          {
+            Memory::clear(m_ca);
+
+            if (m_ca_args.enabled)
+              m_ca = new CoarseAltitude(&m_ca_args);
+          }
 
           initializePIDs();
         }
@@ -466,7 +477,7 @@ namespace Control
                 {
                   float bfd = getBottomFollowDepth();
 
-                  if (m_ca_args.enabled)
+                  if (m_ca != NULL)
                   {
                     z_error = m_ca->update(timestep, msg->depth, bfd) - msg->depth;
 
