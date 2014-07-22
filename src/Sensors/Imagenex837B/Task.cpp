@@ -154,6 +154,8 @@ namespace Sensors
       float range_modifier_mul_k;
       //! Range Modifier Timer.
       float range_modifier_timer;
+      //! Distance between GPS (navigation origin) and device.
+      float offset;
       //! 837 file name.
       std::string file_name_837;
     };
@@ -344,6 +346,11 @@ namespace Sensors
         .defaultValue("10")
         .minimumValue("0")
         .description("Adaptive Multibeam range modifier timer");
+
+        param("X-Axis Distance to GPS", m_args.offset)
+        .defaultValue("0")
+        .units(Units::Meter)
+        .description("Position of the Multibeam relative to the GPS antenna in the x-axis of the body frame");
 
         // Initialize switch data.
         std::memset(m_sdata, 0, sizeof(m_sdata));
@@ -727,6 +734,15 @@ namespace Sensors
 
         double lat, lon;
         Coordinates::toWGS84(m_estate, lat, lon);
+
+        // Do not correct if offset is null.
+        if (std::fabs(m_args.offset) > 0)
+        {
+          double x = m_args.offset * std::cos(m_estate.psi);
+          double y = m_args.offset * std::sin(m_estate.psi);
+          Coordinates::WGS84::displace(x, y, &lat, &lon);
+        }
+
         m_frame.setGpsData(lat, lon);
         m_frame.setSpeed(m_estate.u);
         m_frame.setCourse(m_estate.psi);
