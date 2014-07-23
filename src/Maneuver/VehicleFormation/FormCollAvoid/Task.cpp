@@ -279,6 +279,28 @@ namespace Maneuver
         //! Command limits
         double m_bank_lim;
 
+        //! Controller parameters
+        IMC::FormCtrlParam m_formation_ctrl_params;
+        double m_k_longitudinal;
+        double m_k_lateral;
+        double m_k_boundary;
+        double m_k_leader;
+        double m_k_deconfliction;
+        double m_flow_accel_max;
+        double m_safe_dist;
+        double m_deconfliction_offset;
+        double m_acc_safety_marg;
+        double m_accel_lim_x;
+
+        //! Controller evaluation data
+        IMC::FormationEval m_formation_eval;
+        double m_dist_min_abs;
+        double m_dist_min_mean;
+        double m_err_mean;
+        double m_mean_time;
+        double m_mean_time_start;
+        bool m_mean_first;
+
         //! Number of team vehicles
         int m_uav_n;
 
@@ -325,6 +347,22 @@ namespace Maneuver
           m_airspeed(0.0),
           m_wind(3, 1, 0.0),
           m_g(Math::c_gravity),
+          m_k_longitudinal(0.0),
+          m_k_lateral(0.0),
+          m_k_boundary(0.0),
+          m_k_leader(0.0),
+          m_k_deconfliction(0.0),
+          m_flow_accel_max(0.0),
+          m_safe_dist(0.0),
+          m_deconfliction_offset(0.0),
+          m_acc_safety_marg(0.0),
+          m_accel_lim_x(0.0),
+          m_dist_min_abs(0.0),
+          m_dist_min_mean(0.0),
+          m_err_mean(0.0),
+          m_mean_time(0.0),
+          m_mean_time_start(0.0),
+          m_mean_first(true),
           m_uav_n(1),
           m_ctrl_active(false),
           m_team_plan_init(false),
@@ -502,6 +540,60 @@ namespace Maneuver
 
           //! Parameters treatment
           m_bank_lim = Angles::radians(m_args.bank_lim);
+
+          // Controller gains
+          double t_k_longitudinal = m_k_longitudinal;
+          double t_k_lateral = m_k_lateral;
+          double t_k_boundary = m_k_boundary;
+          double t_k_leader = m_k_leader;
+          double t_k_deconfliction = m_k_deconfliction;
+          double t_flow_accel_max = m_flow_accel_max;
+          double t_safe_dist = m_safe_dist;
+          double t_deconfliction_offset = m_deconfliction_offset;
+          double t_acc_safety_marg = m_acc_safety_marg;
+          double t_accel_lim_x = m_accel_lim_x;
+          m_k_longitudinal = m_args.k_longitudinal;
+          m_k_lateral = m_args.k_lateral;
+          m_k_boundary = m_args.k_boundary;
+          m_k_leader = m_args.k_leader;
+          m_k_deconfliction = m_args.k_deconfliction;
+          m_flow_accel_max = m_args.flow_accel_max;
+          m_safe_dist = m_args.safe_dist;
+          m_deconfliction_offset = m_args.deconfliction_offset;
+          m_acc_safety_marg = m_args.acc_safety_marg;
+          m_accel_lim_x = m_args.accel_lim_x;
+          if (t_k_longitudinal != m_k_longitudinal ||
+              t_k_lateral != m_k_lateral ||
+              t_k_boundary != m_k_boundary ||
+              t_k_leader != m_k_leader ||
+              t_k_deconfliction != m_k_deconfliction ||
+              t_flow_accel_max != m_flow_accel_max ||
+              t_safe_dist != m_safe_dist ||
+              t_deconfliction_offset != m_deconfliction_offset ||
+              t_acc_safety_marg != m_acc_safety_marg ||
+              t_accel_lim_x != m_accel_lim_x)
+          {
+            m_formation_ctrl_params.action = IMC::FormCtrlParam::OP_REP;
+            m_formation_ctrl_params.longain = m_k_longitudinal;
+            m_formation_ctrl_params.latgain = m_k_lateral;
+            m_formation_ctrl_params.bondthick = m_k_boundary;
+            m_formation_ctrl_params.leadgain = m_k_leader;
+            m_formation_ctrl_params.deconflgain = m_k_deconfliction;
+            dispatch(m_formation_ctrl_params);
+
+            if (m_dist_min_mean != 0.0)
+            {
+              m_formation_eval.dist_min_abs = m_dist_min_abs;
+              m_formation_eval.dist_min_mean = m_dist_min_mean;
+              m_formation_eval.err_mean = m_err_mean;
+              dispatch(m_formation_eval);
+              m_dist_min_abs = 0.0;
+              m_dist_min_mean = 0.0;
+              m_err_mean = 0.0;
+              m_mean_time = 0.0;
+              m_mean_first = true;
+            }
+          }
 
           //! Set source system alias
           if (!m_args.src_alias.empty())
@@ -1198,6 +1290,13 @@ namespace Maneuver
               form_monit.ss_y = m_form_monitor->ss_y;
               //form_monit.ss_z = m_form_monitor->ss_z;
 
+              if (m_mean_first)
+                m_mean_time_start = msg->getTimeStamp();
+              double d_mean_time_last = m_mean_time;
+              double d_timestep = msg->getTimeStamp() - m_last_ctrl_update;
+              m_mean_time = msg->getTimeStamp()-m_mean_time_start;
+              double t_dist_min_mean;
+
               form_monit.rel_state.clear();
               IMC::RelativeState relative_state;
               RelState rel_state;
@@ -1245,11 +1344,40 @@ namespace Maneuver
                 relative_state.virt_err_z = rel_state.virt_err_z;
 
                 form_monit.rel_state.push_back(relative_state);
+
+                // Compute the formation evaluation data
+                if (m_mean_first && ind_uav == 0)
+                {
+                  m_err_mean = rel_state.err;
+                  t_dist_min_mean = rel_state.dist;
+                  m_dist_min_abs = rel_state.dist;
+                }
+                else
+                {
+                  if (ind_uav == 0)
+                  {
+                    m_err_mean = (m_err_mean*d_mean_time_last + rel_state.err*d_timestep)/m_mean_time;
+                    t_dist_min_mean = rel_state.dist;
+                  }
+                  else if (t_dist_min_mean > rel_state.dist)
+                    t_dist_min_mean = rel_state.dist;
+                  if (m_dist_min_abs > rel_state.dist)
+                    m_dist_min_abs = rel_state.dist;
+                }
               }
 
               if (m_alias_id != UINT_MAX)
                 form_monit.setSource(m_alias_id);
               dispatch(form_monit);
+
+              // Compute and dispatch the formation evaluation data
+              if (m_mean_first)
+              {
+                m_dist_min_mean = t_dist_min_mean;
+                m_mean_first = false;
+              }
+              else
+                m_dist_min_mean = (m_dist_min_mean*d_mean_time_last + t_dist_min_mean*d_timestep)/m_mean_time;
             }
 
             //! - Update own vehicle simulation model - Controls
@@ -1900,22 +2028,21 @@ namespace Maneuver
           //! Control constraints
           double d_airspeed_max = m_args.tas_max;
           double d_airspeed_min = m_args.tas_min;
-          double d_accel_lim_x = m_args.accel_lim_x;
 
           //! Formation parameters
           int i_formation_frame = m_args.formation_frame;
           Matrix md_form_pos = m_args.formation_pos;
 
           //! Control parameters
-          double mt_gain_mtx[2] = {m_args.k_longitudinal, m_args.k_lateral};
+          double mt_gain_mtx[2] = {m_k_longitudinal, m_k_lateral};
           Matrix md_gain_mtx = Matrix(mt_gain_mtx, 2) * m_tas_cmd_leader/2.5;
-          double d_ss_bnd_layer = m_args.k_boundary * m_tas_cmd_leader;
-          double d_flow_accel_max = m_args.flow_accel_max;
-          double d_control_margin = m_args.deconfliction_offset;
-          double d_deconfliction_dist = m_args.safe_dist + d_control_margin;
-          double d_acc_saf_marg = m_args.acc_safety_marg;
-          double k_form_ref = (m_uav_n > 1)?m_args.k_leader*(m_uav_n-1):1.0;
-          double k_deconfl_vel = m_args.k_deconfliction*k_form_ref;
+          double d_ss_bnd_layer = m_k_boundary * m_tas_cmd_leader;
+          double d_flow_accel_max = m_flow_accel_max;
+          double d_control_margin = m_deconfliction_offset;
+          double d_deconfliction_dist = m_safe_dist + d_control_margin;
+          double d_acc_saf_marg = m_acc_safety_marg;
+          double k_form_ref = (m_uav_n > 1)?m_k_leader*(m_uav_n-1):1.0;
+          double k_deconfl_vel = m_k_deconfliction*k_form_ref;
           double k_deconfliction_dist = k_deconfl_vel/2;
           double k_long_dist1 = 1.5;
           double k_long_dist2 = 4;
@@ -1931,7 +2058,7 @@ namespace Maneuver
           Matrix vd_body_y = transpose(md_rot_ground2yaw.row(1));
 
           // Maneuvering constrains
-          Matrix vd_body_accel_lim_x = d_accel_lim_x*vd_body_x;
+          Matrix vd_body_accel_lim_x = m_accel_lim_x*vd_body_x;
           Matrix vd_body_accel_lim_y = m_g * std::tan(m_bank_lim*0.6)*vd_body_y;
 
           //! Miscellaneous
@@ -2715,7 +2842,7 @@ namespace Maneuver
           //! Speed control
           //-------------------------------------------
 
-          double d_accel_x_cmd = std::min(std::max(vd_ctrl(0), -d_accel_lim_x), d_accel_lim_x);
+          double d_accel_x_cmd = std::min(std::max(vd_ctrl(0), -m_accel_lim_x), m_accel_lim_x);
           vd_ctrl(0) = d_accel_x_cmd;
           (*vd_cmd)(1) += d_time_step * d_accel_x_cmd;
 
