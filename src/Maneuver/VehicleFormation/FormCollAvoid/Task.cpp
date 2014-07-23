@@ -1350,12 +1350,9 @@ namespace Maneuver
             m_last_state_estim(m_uav_ind+1) = msg->getTimeStamp();
 
             // Check if the control is active
+            checkActivCtrlCond();
             if (!m_ctrl_active)
-            {
-              checkActivCtrlCond();
-              if (!m_ctrl_active)
-                return;
-            }
+              return;
             // Check if the commands should be updated
             if (m_last_simctrl_update(m_uav_ind) + m_timestep_ctrl > msg->getTimeStamp())
               return;
@@ -1577,6 +1574,10 @@ namespace Maneuver
             //! Get estimated state time stamp
             m_last_state_estim(ind_uav+1) = msg->getTimeStamp();
 
+            // Check if the control is active
+            checkActivCtrlCond();
+            if (!m_ctrl_active)
+              return;
             // Check if the commands should be updated
             if (m_last_simctrl_update(ind_uav) + m_timestep_ctrl > msg->getTimeStamp())
               return;
