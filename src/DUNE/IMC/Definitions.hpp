@@ -18480,15 +18480,15 @@ namespace DUNE
       //! Action.
       uint8_t action;
       //! Longitudinal Gain.
-      uint32_t longain;
+      fp32_t longain;
       //! Lateral Gain.
-      uint32_t latgain;
+      fp32_t latgain;
       //! Boundary Layer Thickness.
       uint32_t bondthick;
       //! Leader Gain.
-      uint32_t leadgain;
+      fp32_t leadgain;
       //! Deconfliction Gain.
-      uint32_t deconflgain;
+      fp32_t deconflgain;
 
       static uint16_t
       getIdStatic(void)
@@ -18538,6 +18538,71 @@ namespace DUNE
       getFixedSerializationSize(void) const
       {
         return 21;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Formation Evaluation Data.
+    class FormationEval: public Message
+    {
+    public:
+      //! Mean position error.
+      fp32_t err_mean;
+      //! Absolute minimum distance.
+      fp32_t dist_min_abs;
+      //! Mean minimum distance.
+      fp32_t dist_min_mean;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 821;
+      }
+
+      FormationEval(void);
+
+      Message*
+      clone(void) const
+      {
+        return new FormationEval(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FormationEval::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FormationEval";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 12;
       }
 
       void

@@ -465,9 +465,12 @@ namespace DUNE
         }
         catch (RestartNeeded& e)
         {
-          setEntityState(IMC::EntityState::ESTA_FAILURE, DTR("restarting"));
-          err(DTR("restarting in %u seconds due to error: %s"),
-              e.getDelay(), e.getError());
+          if (e.isError())
+          {
+            setEntityState(IMC::EntityState::ESTA_FAILURE, DTR("restarting"));
+            err(DTR("restarting in %u seconds due to error: %s"),
+                e.getDelay(), e.getError());
+          }
           Time::Counter<unsigned int> counter(e.getDelay());
           while (!stopping() && !counter.overflow())
             Time::Delay::wait(1.0);

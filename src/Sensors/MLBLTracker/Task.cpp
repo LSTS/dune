@@ -278,17 +278,12 @@ namespace Sensors
         m_uart->setCanonicalInput(true);
         m_uart->flush();
 
-        {
-          configureModem("CCCFG", "SRC", m_address);
-        }
-
-        {
-          configureModem("CCCFG", "XST", 0);
-        }
-
-        {
-          configureModem("CCCFG", "CTO", 10);
-        }
+        // Set unit number.
+        configureModem("CCCFG", "SRC", m_address);
+        // Transmit stats messages.
+        configureModem("CCCFG", "XST", 0);
+        // Cycle-init timeout time.
+        configureModem("CCCFG", "CTO", 10);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }

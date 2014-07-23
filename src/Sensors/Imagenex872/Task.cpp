@@ -211,10 +211,9 @@ namespace Sensors
           pingBoth();
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
-        catch (...)
+        catch (std::runtime_error& e)
         {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-          throw;
+          throw RestartNeeded(e.what(), 10.0, false);
         }
       }
 

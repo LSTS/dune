@@ -275,6 +275,29 @@ namespace Maneuver
         //! Command limits
         double m_bank_lim;
 
+        //! Controller parameters
+        IMC::FormCtrlParam m_formation_ctrl_params;
+        bool m_param_init;
+        double m_k_longitudinal;
+        double m_k_lateral;
+        double m_k_boundary;
+        double m_k_leader;
+        double m_k_deconfliction;
+        double m_flow_accel_max;
+        double m_safe_dist;
+        double m_deconfliction_offset;
+        double m_acc_safety_marg;
+        double m_accel_lim_x;
+
+        //! Controller evaluation data
+        IMC::FormationEval m_formation_eval;
+        double m_dist_min_abs;
+        double m_dist_min_mean;
+        double m_err_mean;
+        double m_mean_time;
+        double m_mean_time_start;
+        bool m_mean_first;
+
         //! Number of team vehicles
         unsigned int m_uav_n;
         unsigned int m_uav_ind;
@@ -331,6 +354,23 @@ namespace Maneuver
           m_tas_cmd_leader(0.0),
           m_alt_cmd_leader(0.0),
           m_bank_lim(0.0),
+          m_param_init(false),
+          m_k_longitudinal(0.0),
+          m_k_lateral(0.0),
+          m_k_boundary(0.0),
+          m_k_leader(0.0),
+          m_k_deconfliction(0.0),
+          m_flow_accel_max(0.0),
+          m_safe_dist(0.0),
+          m_deconfliction_offset(0.0),
+          m_acc_safety_marg(0.0),
+          m_accel_lim_x(0.0),
+          m_dist_min_abs(0.0),
+          m_dist_min_mean(0.0),
+          m_err_mean(0.0),
+          m_mean_time(0.0),
+          m_mean_time_start(0.0),
+          m_mean_first(true),
           m_uav_n(1),
           m_uav_ind(0),
           m_formation_pos(3, 1, 0.0),
@@ -349,7 +389,7 @@ namespace Maneuver
         {
           // Definition of configuration parameters.
           paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                      Tasks::Parameter::VISIBILITY_USER);
+                      Tasks::Parameter::VISIBILITY_USER, false);
 
           param("Commands source", m_args.cmd_src)
           .defaultValue("")
@@ -528,7 +568,7 @@ namespace Maneuver
           if (m_args.formation_pos.size() == 0)
           {
             stop();
-            throw std::runtime_error("Formation vehicles' positions matrix is empty!");
+            throw std::runtime_error("Restarting - Formation vehicles' positions matrix is empty!");
           }
           if (m_args.formation_pos.rows()%3 != 0)
           {
@@ -592,6 +632,90 @@ namespace Maneuver
               m_uav_ind = uav_ind;
           }
           debug("Current UAV -> %d", m_uav_ind);
+
+          //==========================================
+          // Set controller gains
+          //==========================================
+          debug("Controller parameters definition.");
+          double t_k_longitudinal = m_k_longitudinal;
+          double t_k_lateral = m_k_lateral;
+          double t_k_boundary = m_k_boundary;
+          double t_k_leader = m_k_leader;
+          double t_k_deconfliction = m_k_deconfliction;
+          double t_flow_accel_max = m_flow_accel_max;
+          double t_safe_dist = m_safe_dist;
+          double t_deconfliction_offset = m_deconfliction_offset;
+          double t_acc_safety_marg = m_acc_safety_marg;
+          double t_accel_lim_x = m_accel_lim_x;
+          m_k_longitudinal = m_args.k_longitudinal;
+          m_k_lateral = m_args.k_lateral;
+          m_k_boundary = m_args.k_boundary;
+          m_k_leader = m_args.k_leader;
+          m_k_deconfliction = m_args.k_deconfliction;
+          m_flow_accel_max = m_args.flow_accel_max;
+          m_safe_dist = m_args.safe_dist;
+          m_deconfliction_offset = m_args.deconfliction_offset;
+          m_acc_safety_marg = m_args.acc_safety_marg;
+          m_accel_lim_x = m_args.l_accel_x;
+          // Output the controller parameter, if changed, and the controller evaluation data
+          if (!m_param_init && isActive())
+            debug("Controller parameters initialization");
+          if (t_k_longitudinal != m_k_longitudinal ||
+              t_k_lateral != m_k_lateral ||
+              t_k_boundary != m_k_boundary ||
+              t_k_leader != m_k_leader ||
+              t_k_deconfliction != m_k_deconfliction ||
+              t_flow_accel_max != m_flow_accel_max ||
+              t_safe_dist != m_safe_dist ||
+              t_deconfliction_offset != m_deconfliction_offset ||
+              t_acc_safety_marg != m_acc_safety_marg ||
+              t_accel_lim_x != m_accel_lim_x ||
+              (!m_param_init && isActive()))
+          {
+            // Controller parameters
+            m_formation_ctrl_params.action = IMC::FormCtrlParam::OP_REP;
+            m_formation_ctrl_params.longain = m_k_longitudinal;
+            m_formation_ctrl_params.latgain = m_k_lateral;
+            m_formation_ctrl_params.bondthick = m_k_boundary;
+            m_formation_ctrl_params.leadgain = m_k_leader;
+            m_formation_ctrl_params.deconflgain = m_k_deconfliction;
+            dispatchAlias(&m_formation_ctrl_params);
+            if (isActive())
+              m_param_init = true;
+
+            // Controller evaluation data
+            if (!m_mean_first)
+            {
+              // Output
+              m_formation_eval.dist_min_abs = m_dist_min_abs;
+              m_formation_eval.dist_min_mean = m_dist_min_mean;
+              m_formation_eval.err_mean = m_err_mean;
+              dispatchAlias(&m_formation_eval);
+              // Reset
+              m_dist_min_abs = 0.0;
+              m_dist_min_mean = 0.0;
+              m_err_mean = 0.0;
+              m_mean_time = 0.0;
+              m_mean_first = true;
+            }
+          }
+
+          //==========================================
+          // Reset the leader vehicle model parameters
+          //==========================================
+          if (m_model != NULL)
+          {
+            debug("Formation leader model reset");
+            // - State  and control parameters definition
+            m_model->setCtrl(m_args.c_bank, m_args.c_speed);
+            // - Limits definition
+            if (m_args.l_bank_rate > 0)
+              m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
+            if (m_accel_lim_x > 0)
+              m_model->setAccelLim(m_accel_lim_x);
+            // - Simulation type
+            m_model->m_sim_type = m_args.sim_type;
+          }
 
           //==========================================
           // Simulation model initialization
@@ -723,13 +847,6 @@ namespace Maneuver
           m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
           // - Commands initialization
           m_model->command(0, m_tas_cmd_leader, -m_alt_cmd_leader);
-          // - Limits definition
-          if (m_args.l_bank_rate > 0)
-            m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
-          if (m_args.l_accel_x > 0)
-            m_model->setAccelLim(m_args.l_accel_x);
-          // - Simulation type
-          m_model->m_sim_type = m_args.sim_type;
 
           //==========================================
           // Apply the task parameters
@@ -1274,6 +1391,7 @@ namespace Maneuver
             m_models[m_uav_ind]->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
 
             //! Update the time control variables
+            double d_timestep = msg->getTimeStamp() - m_last_simctrl_update(m_uav_ind);
             m_last_simctrl_update(m_uav_ind) = msg->getTimeStamp();
             //! Get estimated state time stamp
             //              debug("Clock time: %2.3f; Estimated state time stamp: %2.3f", d_time, msg->getTimeStamp());
@@ -1320,6 +1438,13 @@ namespace Maneuver
               form_monit.ss_x = m_form_monitor->ss_x;
               form_monit.ss_y = m_form_monitor->ss_y;
               //form_monit.ss_z = m_form_monitor->ss_z;
+
+              // Initialize the data for the controller evaluation
+              if (m_mean_first)
+                m_mean_time_start = msg->getTimeStamp();
+              double d_mean_time_last = m_mean_time;
+              m_mean_time = msg->getTimeStamp()-m_mean_time_start;
+              double t_dist_min_mean;
 
               form_monit.rel_state.clear();
               IMC::RelativeState relative_state;
@@ -1368,11 +1493,40 @@ namespace Maneuver
                 relative_state.virt_err_z = rel_state.virt_err_z;
 
                 form_monit.rel_state.push_back(relative_state);
+
+                // Compute the controller evaluation data
+                if (m_mean_first && ind_uav == 0)
+                {
+                  m_err_mean = rel_state.err;
+                  t_dist_min_mean = rel_state.dist;
+                  m_dist_min_abs = rel_state.dist;
+                }
+                else
+                {
+                  if (ind_uav == 0)
+                  {
+                    m_err_mean = (m_err_mean*d_mean_time_last + rel_state.err*d_timestep)/m_mean_time;
+                    t_dist_min_mean = rel_state.dist;
+                  }
+                  else if (t_dist_min_mean > rel_state.dist)
+                    t_dist_min_mean = rel_state.dist;
+                  if (m_dist_min_abs > rel_state.dist)
+                    m_dist_min_abs = rel_state.dist;
+                }
               }
 
               if (m_alias_id != UINT_MAX)
                 form_monit.setSource(m_alias_id);
               dispatchAlias(&form_monit);
+
+              // Compute and dispatch the controller evaluation data
+              if (m_mean_first)
+              {
+                m_dist_min_mean = t_dist_min_mean;
+                m_mean_first = false;
+              }
+              else
+                m_dist_min_mean = (m_dist_min_mean*d_mean_time_last + t_dist_min_mean*d_timestep)/m_mean_time;
             }
           }
           else
@@ -1972,21 +2126,17 @@ namespace Maneuver
           //! Control constraints
           double d_airspeed_max = m_args.tas_max;
           double d_airspeed_min = m_args.tas_min;
-          double d_accel_lim_x = m_args.l_accel_x;
 
           //! Formation parameters
           int i_formation_frame = m_args.formation_frame;
 
           //! Control parameters
-          double mt_gain_mtx[2] = {m_args.k_longitudinal, m_args.k_lateral};
+          double mt_gain_mtx[2] = {m_k_longitudinal, m_k_lateral};
           Matrix md_gain_mtx = Matrix(mt_gain_mtx, 2) * m_tas_cmd_leader/2.5;
-          double d_ss_bnd_layer = m_args.k_boundary * m_tas_cmd_leader;
-          double d_flow_accel_max = m_args.flow_accel_max;
-          double d_control_margin = m_args.deconfliction_offset;
-          double d_deconfliction_dist = m_args.safe_dist + d_control_margin;
-          double d_acc_saf_marg = m_args.acc_safety_marg;
-          double k_form_ref = (m_uav_n > 1)?m_args.k_leader*(m_uav_n-1):1.0;
-          double k_deconfl_vel = m_args.k_deconfliction*k_form_ref;
+          double d_ss_bnd_layer = m_k_boundary * m_tas_cmd_leader;
+          double d_deconfliction_dist = m_safe_dist + m_deconfliction_offset;
+          double k_form_ref = (m_uav_n > 1)?m_k_leader*(m_uav_n-1):1.0;
+          double k_deconfl_vel = m_k_deconfliction*k_form_ref;
           double k_deconfliction_dist = k_deconfl_vel/2;
           double k_long_dist1 = 1.5;
           double k_long_dist2 = 4;
@@ -2002,7 +2152,7 @@ namespace Maneuver
           Matrix vd_body_y = transpose(md_rot_ground2yaw.row(1));
 
           // Maneuvering constrains
-          Matrix vd_body_accel_lim_x = d_accel_lim_x*vd_body_x;
+          Matrix vd_body_accel_lim_x = m_accel_lim_x*vd_body_x;
           Matrix vd_body_accel_lim_y = m_g * std::tan(m_bank_lim*0.6)*vd_body_y;
 
           //! Miscellaneous
@@ -2294,14 +2444,14 @@ namespace Maneuver
             //! Avoid negative maximum relative velocities - Minimum is hard-coded with "vel_lim"
             d_c1 = std::max(d_airspeed_max - d_vel_proj_x, vel_lim);
             t_ctrl_marg_mult = 2 * d_airspeed_max/(d_airspeed_max + d_vel_proj_x);
-            d_c2 = d_control_margin * t_ctrl_marg_mult;
+            d_c2 = m_deconfliction_offset * t_ctrl_marg_mult;
             if (d_err_x < 0)
             {
-              d_c2 = std::max(4 * (1+d_acc_saf_marg) * d_c1*d_c1/(27 * d_accel_max_proj_x), d_c2);
+              d_c2 = std::max(4 * (1+m_acc_safety_marg) * d_c1*d_c1/(27 * d_accel_max_proj_x), d_c2);
               /*
             t_CtrlMarg = d_c2/t_ctrl_marg_mult;
-            d_deconfliction_dist = m_args.safe_dist + t_CtrlMarg;
-            if (t_CtrlMarg > d_control_margin*1.1)
+            d_deconfliction_dist = m_safe_dist + t_CtrlMarg;
+            if (t_CtrlMarg > m_deconfliction_offset*1.1)
               spew('Control margin: %1.1f m; UAV%d & UAV%d\n', t_CtrlMarg, ind_uav, ind_uav2);
                */
             }
@@ -2350,10 +2500,10 @@ namespace Maneuver
             d_des_dist = vd_inter_uav_des_pos.norm_2();
             d_dist2confl = d_inter_uav_dist-d_deconfliction_dist;
             d_vel_gain = 1 + (d_deriv_err_x*d_deriv_err_x/d_accel_max_proj_x -
-                d_dist2confl)/d_control_margin*k_deconfl_vel;
+                d_dist2confl)/m_deconfliction_offset*k_deconfl_vel;
             if (d_dist2confl < 0)
-              d_dist_gain = 1 + d_dist2confl/d_control_margin *
-              d_dist2confl/d_control_margin * k_deconfliction_dist;
+              d_dist_gain = 1 + d_dist2confl/m_deconfliction_offset *
+              d_dist2confl/m_deconfliction_offset * k_deconfliction_dist;
             else if (d_inter_uav_dist <= d_des_dist*k_long_dist1)
               d_dist_gain = 1;
             else if (d_inter_uav_dist < d_des_dist*k_long_dist2)
@@ -2370,13 +2520,13 @@ namespace Maneuver
             {
               //! Avoid negative maximum relative velocities - Minimum is hard-coded with "vel_lim" m/s
               d_c3 = std::max(d_airspeed_max - d_vel_proj_y, vel_lim);
-              d_c4 = 4 * (1+d_acc_saf_marg) * d_c3*d_c3/(27 * d_accel_max_proj_y);
+              d_c4 = 4 * (1+m_acc_safety_marg) * d_c3*d_c3/(27 * d_accel_max_proj_y);
             }
             else
             {
               //! Avoid positive minimum relative velocities - Maximum is hard-coded with -"vel_lim" m/s
               d_c3 = std::min(- d_airspeed_max - d_vel_proj_y, -vel_lim);
-              d_c4 = - 4 * (1+d_acc_saf_marg) * d_c3*d_c3/(27 * d_accel_max_proj_y);
+              d_c4 = - 4 * (1+m_acc_safety_marg) * d_c3*d_c3/(27 * d_accel_max_proj_y);
             }
 
             //! ======= Sliding surface ==============
@@ -2539,14 +2689,14 @@ namespace Maneuver
           {
             //! Avoid negative maximum relative velocities - Minimum is hard-coded with "vel_lim" m/s
             d_c1 = std::max(d_airspeed_max - md_uav_state(3, 0) + m_wind(0), vel_lim);
-            d_c2 = 4 * (1+d_acc_saf_marg) * d_c1*d_c1/ (27 * d_accel_max_proj_x);
+            d_c2 = 4 * (1+m_acc_safety_marg) * d_c1*d_c1/ (27 * d_accel_max_proj_x);
             // d_err_x_s_conv = std::max(d_err_x, -d_c2);
           }
           else
           {
             //! Avoid positive minimum relative velocities - Maximum is hard-coded with -"vel_lim" m/s
             d_c1 = std::min(- d_airspeed_max - md_uav_state(3, 0) + m_wind(0), -vel_lim);
-            d_c2 = - 4 * (1+d_acc_saf_marg) * d_c1*d_c1/ (27 * d_accel_max_proj_x);
+            d_c2 = - 4 * (1+m_acc_safety_marg) * d_c1*d_c1/ (27 * d_accel_max_proj_x);
             // d_err_x_s_conv = std::min(d_err_x, -d_c2);
           }
           //! Sliding Surface parameters - Inter-UAV Y axis
@@ -2554,14 +2704,14 @@ namespace Maneuver
           {
             //! Avoid negative maximum relative velocities - Minimum is hard-coded with "vel_lim" m/s
             d_c3 = std::max(d_airspeed_max - md_uav_state(4, 0) + m_wind(1), vel_lim); //! Avoid negative maximum relative velocities
-            d_c4 = 4 * (1+d_acc_saf_marg) * d_c3*d_c3/(27 * d_accel_max_proj_y);
+            d_c4 = 4 * (1+m_acc_safety_marg) * d_c3*d_c3/(27 * d_accel_max_proj_y);
             // d_err_y_s_conv = std::max(d_err_y, -d_c4);
           }
           else
           {
             //! Avoid positive minimum relative velocities - Maximum is hard-coded with -"vel_lim" m/s
             d_c3 =  std::min(- d_airspeed_max - md_uav_state(4, 0) + m_wind(1), -vel_lim);
-            d_c4 = - 4 * (1+d_acc_saf_marg) * d_c3*d_c3/(27 * d_accel_max_proj_y);
+            d_c4 = - 4 * (1+m_acc_safety_marg) * d_c3*d_c3/(27 * d_accel_max_proj_y);
             // d_err_y_s_conv = std::min(d_err_y, -d_c4);
           }
 
@@ -2710,10 +2860,10 @@ namespace Maneuver
           //! Sliding surface unknown disturbance term
           //!-------------------------------------------
 
-          // vd_surf_unkn = (2 * (m_uav_n-1) + k_form_ref) * d_flow_accel_max * vd_surf_unit;
+          // vd_surf_unkn = (2 * (m_uav_n-1) + k_form_ref) * m_flow_accel_max * vd_surf_unit;
 
           // vd_surf_unkn1 = ((m_uav_n-1)/(m_uav_n-1+k_form_ref)+1)*...
-          //     d_flow_accel_max*vd_surf_unit;
+          //     m_flow_accel_max*vd_surf_unit;
 
           vd_surf_unit = Matrix(2, 1);
 
@@ -2736,7 +2886,7 @@ namespace Maneuver
           if (t_SurfSqr)
             vd_surf_unit += k_form_ref*vd_surf_uav.get(0, 1, 0, 0)*vd_ctrl_weight(0)/std::sqrt(t_SurfSqr);
           //! Formation - Uncertainty compensation
-          Matrix vd_surf_unkn = vd_surf_unit*d_flow_accel_max/(m_uav_n-1+k_form_ref);
+          Matrix vd_surf_unkn = vd_surf_unit*m_flow_accel_max/(m_uav_n-1+k_form_ref);
           /*
         if (ind_uav == 0)
         {
@@ -2779,7 +2929,7 @@ namespace Maneuver
           //! Speed control
           //-------------------------------------------
 
-          double d_accel_x_cmd = std::min(std::max(vd_ctrl(0), -d_accel_lim_x), d_accel_lim_x);
+          double d_accel_x_cmd = std::min(std::max(vd_ctrl(0), -m_accel_lim_x), m_accel_lim_x);
           vd_ctrl(0) = d_accel_x_cmd;
           (*vd_cmd)(1) += d_time_step * d_accel_x_cmd;
 

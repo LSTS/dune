@@ -211,7 +211,7 @@ namespace Transports
         }
         catch (...)
         {
-          inf(DTR("dynamic sound speed corrections are disabled"));
+          debug("dynamic sound speed corrections are disabled");
           m_sound_speed = m_args.sound_speed_def;
         }
       }
@@ -239,7 +239,7 @@ namespace Transports
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 5);
+          throw RestartNeeded(e.what(), 5, false);
         }
 
         m_driver = new Driver(this, m_sock);
@@ -319,7 +319,9 @@ namespace Transports
         if (msg->getDestinationEntity() != getEntityId())
           return;
 
-        if (String::startsWith(msg->value, "RECVIM"))
+        if (String::startsWith(msg->value, "RECVIMS"))
+          return;
+        else if (String::startsWith(msg->value, "RECVIM"))
           handleInstantMessage(msg->value);
         else if (String::startsWith(msg->value, "DELIVEREDIM"))
           handleInstantMessageDelivered(msg->value);
@@ -438,6 +440,8 @@ namespace Transports
           { }
         }
 
+        m_driver->getMultipathStructure();
+
         // Clear ticket.
         m_driver->setBusy(false);
         clearTicket(IMC::UamTxStatus::UTS_DONE);
@@ -492,6 +496,8 @@ namespace Transports
           msg.flags |= IMC::UamRxFrame::URF_PROMISCUOUS;
 
         dispatch(msg);
+
+        m_driver->getMultipathStructure();
       }
 
       void

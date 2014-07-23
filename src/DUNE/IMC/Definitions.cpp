@@ -19285,6 +19285,74 @@ namespace DUNE
       IMC::toJSON(os__, "deconflgain", deconflgain, nindent__);
     }
 
+    FormationEval::FormationEval(void)
+    {
+      m_header.mgid = 821;
+      clear();
+    }
+
+    void
+    FormationEval::clear(void)
+    {
+      err_mean = 0;
+      dist_min_abs = 0;
+      dist_min_mean = 0;
+    }
+
+    bool
+    FormationEval::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FormationEval& other__ = static_cast<const FormationEval&>(msg__);
+      if (err_mean != other__.err_mean) return false;
+      if (dist_min_abs != other__.dist_min_abs) return false;
+      if (dist_min_mean != other__.dist_min_mean) return false;
+      return true;
+    }
+
+    int
+    FormationEval::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    FormationEval::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(err_mean, ptr__);
+      ptr__ += IMC::serialize(dist_min_abs, ptr__);
+      ptr__ += IMC::serialize(dist_min_mean, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FormationEval::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(err_mean, bfr__, size__);
+      bfr__ += IMC::deserialize(dist_min_abs, bfr__, size__);
+      bfr__ += IMC::deserialize(dist_min_mean, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FormationEval::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(err_mean, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(dist_min_abs, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(dist_min_mean, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FormationEval::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "err_mean", err_mean, nindent__);
+      IMC::toJSON(os__, "dist_min_abs", dist_min_abs, nindent__);
+      IMC::toJSON(os__, "dist_min_mean", dist_min_mean, nindent__);
+    }
+
     MessagePart::MessagePart(void)
     {
       m_header.mgid = 877;

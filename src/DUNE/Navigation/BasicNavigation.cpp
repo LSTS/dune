@@ -1087,7 +1087,7 @@ namespace DUNE
       float hpos_var = std::max(m_kal.getCovariance(STATE_X, STATE_X), m_kal.getCovariance(STATE_Y, STATE_Y));
 
       // Check if it exceeds the specified threshold value.
-      if (abort && hpos_var > m_max_hpos_var)
+      if (hpos_var > m_max_hpos_var)
       {
         switch (m_navstate)
         {
@@ -1095,8 +1095,11 @@ namespace DUNE
             // do nothing
             break;
           case SM_STATE_NORMAL:
-            setEntityState(IMC::EntityState::ESTA_ERROR, getUncertaintyMessage(hpos_var));
-            m_navstate = SM_STATE_UNSAFE; // Change state
+            if (abort)
+            {
+              setEntityState(IMC::EntityState::ESTA_ERROR, getUncertaintyMessage(hpos_var));
+              m_navstate = SM_STATE_UNSAFE; // Change state
+            }
             break;
           case SM_STATE_UNSAFE:
             // do nothing;
