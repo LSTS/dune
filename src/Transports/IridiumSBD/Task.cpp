@@ -86,6 +86,9 @@ namespace Transports
         m_driver(NULL),
         m_tx_request(NULL)
       {
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
         .description("Serial port device used to communicate with the modem");
@@ -99,6 +102,8 @@ namespace Transports
         .description("Name of the power channel that supplies the modem");
 
         param("Mailbox Check - Periodicity", m_args.mbox_check_per)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .units(Units::Second)
         .defaultValue("300")
         .description("Amount of time without alert rings or "
@@ -171,7 +176,20 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
+      onActivation(void)
+      {
+        m_mbox_check_timer.reset();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       //! Release resources.
@@ -354,6 +372,12 @@ namespace Transports
 
         if (m_driver->isCooling())
           return;
+
+        if (!isActive())
+        {
+          m_mbox_check_timer.reset();
+          return;
+        }
 
         if (m_tx_request != NULL)
         {
