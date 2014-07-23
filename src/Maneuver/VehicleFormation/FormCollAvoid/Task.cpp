@@ -1675,12 +1675,15 @@ namespace Maneuver
         void
         checkActivCtrlCond()
         {
+          // Deactivate the formation controller if the task is not active
+          if (!isActive() && m_ctrl_active)
+            m_ctrl_active = false;
           // Check formation control activation conditions
           // - Plan activation request
           // - Airspeed data
           // - Leader vehicle data
           // - Single vehicle formation or team vehicles' data
-          if (isActive() && !m_ctrl_active && m_team_plan_init && m_valid_airspeed
+          else if (isActive() && !m_ctrl_active && m_team_plan_init && m_valid_airspeed
               && m_team_leader_init && (m_uav_n == 1 || m_team_state_init))
             m_ctrl_active = true;
           else if (Clock::get() >= m_last_time_trace + 1.0)

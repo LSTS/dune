@@ -90,6 +90,7 @@ namespace Navigation
         void
         onActivation(void)
         {
+          m_timer.reset();
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
 
@@ -181,8 +182,10 @@ namespace Navigation
         void
         wait(void)
         {
-          double delay = m_timer.getRemaining() ;
-          waitForMessages(delay < 1.0 ? delay : 1.0);
+          double delay = m_timer.getRemaining();
+          if (delay < 0 || delay > 1.0)
+            delay = 1.0;
+          waitForMessages(delay);
         }
 
         //! Main loop.
