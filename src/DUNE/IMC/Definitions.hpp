@@ -18480,15 +18480,15 @@ namespace DUNE
       //! Action.
       uint8_t action;
       //! Longitudinal Gain.
-      uint32_t longain;
+      fp32_t longain;
       //! Lateral Gain.
-      uint32_t latgain;
+      fp32_t latgain;
       //! Boundary Layer Thickness.
       uint32_t bondthick;
       //! Leader Gain.
-      uint32_t leadgain;
+      fp32_t leadgain;
       //! Deconfliction Gain.
-      uint32_t deconflgain;
+      fp32_t deconflgain;
 
       static uint16_t
       getIdStatic(void)

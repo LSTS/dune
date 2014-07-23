@@ -7595,12 +7595,12 @@
       <value id="1" name="Set" abbrev="SET"/>
       <value id="2" name="Report" abbrev="REP"/>
     </field>
-    <field name="Longitudinal Gain" abbrev="LonGain" type="uint32_t">
+    <field name="Longitudinal Gain" abbrev="LonGain" type="fp32_t">
       <description>
         Trajectory gain over the vehicle longitudinal direction.
       </description>
     </field>
-    <field name="Lateral Gain" abbrev="LatGain" type="uint32_t">
+    <field name="Lateral Gain" abbrev="LatGain" type="fp32_t">
       <description>
         Trajectory gain over the vehicle lateral direction.
       </description>
@@ -7610,13 +7610,13 @@
         Control sliding surface boundary layer thickness.
       </description>
     </field>
-    <field name="Leader Gain" abbrev="LeadGain" type="uint32_t">
+    <field name="Leader Gain" abbrev="LeadGain" type="fp32_t">
       <description>
         Formation shape gain (absolute vehicle position tracking).
         Leader control importance gain (relative to the sum of every other formation vehicle).
       </description>
     </field>
-    <field name="Deconfliction Gain" abbrev="DeconflGain" type="uint32_t">
+    <field name="Deconfliction Gain" abbrev="DeconflGain" type="fp32_t">
       <description>
         Collision avoidance and formation shape gain (position tracking relative to the other formation vehicles).
         Individual vehicle importance gain (relative to the leader), when the relative position or the velocity state indicate higher probability of collision.
