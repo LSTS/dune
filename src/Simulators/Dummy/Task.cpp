@@ -56,17 +56,11 @@ namespace Simulators
       Time::Counter<float> m_act_timer;
       //! Timer for deactivation process
       Time::Counter<float> m_deact_timer;
-      //! Activating
-      bool m_activating;
-      //! Deactivating
-      bool m_deactivating;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Periodic(name, ctx),
-        m_activating(false),
-        m_deactivating(false)
+        Tasks::Periodic(name, ctx)
       {
         param("Actual Activation Time", m_args.actual_act_time)
         .defaultValue("30.0")
@@ -96,7 +90,6 @@ namespace Simulators
       onRequestActivation(void)
       {
         m_act_timer.reset();
-        m_activating = true;
       }
 
       //! On deactivation
@@ -104,21 +97,18 @@ namespace Simulators
       onRequestDeactivation(void)
       {
         m_deact_timer.reset();
-        m_deactivating = true;
       }
 
       void
       task(void)
       {
-        if (m_activating && m_act_timer.overflow())
+        if (isActivating() && m_act_timer.overflow())
         {
-          m_activating = false;
           activate();
         }
 
-        if (m_deactivating && m_deact_timer.overflow())
+        if (isDeactivating() && m_deact_timer.overflow())
         {
-          m_deactivating = false;
           deactivate();
         }
       }
