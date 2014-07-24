@@ -51,10 +51,6 @@ namespace Power
 
     struct Task: public Tasks::Task
     {
-      //! True if the task is activating.
-      bool m_activating;
-      //! True if the task is deactivating.
-      bool m_deactivating;
       //! Activation timer
       Counter<double> m_act_timer;
       //! True if slave CPU is alive.
@@ -66,8 +62,6 @@ namespace Power
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_activating(false),
-        m_deactivating(false),
         m_slave_alive(false)
       {
         // Define configuration parameters.
@@ -97,7 +91,7 @@ namespace Power
       void
       consume(const IMC::Heartbeat* msg)
       {
-        if (!m_activating || (msg->getSource() != m_slave_id))
+        if (!isActivating() || (msg->getSource() != m_slave_id))
           return;
 
         if (std::abs(msg->getTimeStamp() - Clock::getSinceEpoch()) <= 1.0)
@@ -147,21 +141,19 @@ namespace Power
       {
         m_slave_alive = false;
         sendPowerChannelControl(m_args.pwr_chn, true);
-        m_activating = true;
         m_act_timer.setTop(getActivationTime());
       }
 
       void
       checkActivation(void)
       {
-        if (!m_activating)
+        if (!isActivating())
           return;
 
         if (m_act_timer.overflow())
         {
           activationFailed(DTR("failed to contact device"));
           sendPowerChannelControl(m_args.pwr_chn, false);
-          m_activating = false;
           return;
         }
 
@@ -176,7 +168,6 @@ namespace Power
       void
       onActivation(void)
       {
-        m_activating = false;
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -191,14 +182,12 @@ namespace Power
         dispatch(pop);
 
         m_act_timer.setTop(getDeactivationTime());
-
-        m_deactivating = true;
       }
 
       void
       checkDeactivation(void)
       {
-        if (!m_deactivating)
+        if (!isDeactivating())
           return;
 
         if (m_act_timer.overflow())
@@ -208,7 +197,6 @@ namespace Power
       void
       onDeactivation(void)
       {
-        m_deactivating = false;
         sendPowerChannelControl(m_args.pwr_chn, false);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
