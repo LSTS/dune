@@ -178,8 +178,6 @@ namespace Sensors
       double m_sound_speed;
       //! Power channel control.
       IMC::PowerChannelControl m_power_channel_control;
-      //! True if task is activating.
-      bool m_activating;
       //! Activation/deactivation timer.
       Counter<double> m_countdown;
       //! Watchdog.
@@ -194,8 +192,7 @@ namespace Sensors
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
         m_parser(m_sonar.data),
-        m_sound_speed(c_sound_speed),
-        m_activating(false)
+        m_sound_speed(c_sound_speed)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -421,7 +418,6 @@ namespace Sensors
         dispatch(m_power_channel_control);
 
         m_countdown.reset();
-        m_activating = true;
       }
 
       void
@@ -429,7 +425,6 @@ namespace Sensors
       {
         inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        m_activating = false;
       }
 
       void
@@ -448,7 +443,6 @@ namespace Sensors
         if (m_countdown.overflow())
         {
           activationFailed(DTR("failed to contact device"));
-          m_activating = false;
           return;
         }
 
@@ -688,7 +682,7 @@ namespace Sensors
           else
           {
             waitForMessages(1.0);
-            if (m_activating)
+            if (isActivating())
               checkActivationProgress();
           }
         }
