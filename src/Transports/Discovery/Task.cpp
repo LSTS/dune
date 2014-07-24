@@ -214,6 +214,8 @@ namespace Transports
       {
         while (!stopping())
         {
+          consumeMessages();
+
           try
           {
             if (IO::Poll::poll(m_sock, 1.0))
