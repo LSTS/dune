@@ -1441,8 +1441,13 @@ namespace Maneuver
                 m_mean_time_start = msg->getTimeStamp();
               double d_mean_time_last = m_mean_time;
               m_mean_time = msg->getTimeStamp()-m_mean_time_start;
-              double t_dist_min_mean;
+              if (m_uav_n > 1)
+              {
+                double t_dist_min_mean = 0.0;
+                bool t_dist_min_mean_first = true;
+              }
 
+              // Initialize the inter-vehicle controller performance monitoring variables
               form_monit.rel_state.clear();
               IMC::RelativeState relative_state;
               RelState rel_state;
@@ -1492,23 +1497,30 @@ namespace Maneuver
                 form_monit.rel_state.push_back(relative_state);
 
                 // Compute the controller evaluation data
+                // - Position error relative to the reference position
                 if (m_mean_first && ind_uav == 0)
-                {
                   m_err_mean = rel_state.err;
-                  t_dist_min_mean = rel_state.dist;
-                  m_dist_min_abs = rel_state.dist;
-                }
-                else
-                {
-                  if (ind_uav == 0)
-                  {
+                else if (ind_uav == 0)
                     m_err_mean = (m_err_mean*d_mean_time_last + rel_state.err*d_timestep)/m_mean_time;
+                // - Mean and absolute minimum distance relative to other vehicles
+                else if (m_uav_n > 1)
+                {
+                  if (m_mean_first && t_dist_min_mean_first)
+                  {
                     t_dist_min_mean = rel_state.dist;
-                  }
-                  else if (t_dist_min_mean > rel_state.dist)
-                    t_dist_min_mean = rel_state.dist;
-                  if (m_dist_min_abs > rel_state.dist)
                     m_dist_min_abs = rel_state.dist;
+                    t_dist_min_mean_first = false;
+                  }
+                  else
+                  {
+                    if (t_dist_min_mean_first || t_dist_min_mean > rel_state.dist)
+                    {
+                      t_dist_min_mean = rel_state.dist;
+                      t_dist_min_mean_first = false;
+                    }
+                    if (m_dist_min_abs > rel_state.dist)
+                      m_dist_min_abs = rel_state.dist;
+                  }
                 }
               }
 
@@ -1517,13 +1529,16 @@ namespace Maneuver
               dispatchAlias(&form_monit);
 
               // Compute and dispatch the controller evaluation data
-              if (m_mean_first)
+              if (m_uav_n > 1)
               {
-                m_dist_min_mean = t_dist_min_mean;
-                m_mean_first = false;
+                if (m_mean_first)
+                {
+                  m_dist_min_mean = t_dist_min_mean;
+                  m_mean_first = false;
+                }
+                else
+                  m_dist_min_mean = (m_dist_min_mean*d_mean_time_last + t_dist_min_mean*d_timestep)/m_mean_time;
               }
-              else
-                m_dist_min_mean = (m_dist_min_mean*d_mean_time_last + t_dist_min_mean*d_timestep)/m_mean_time;
             }
           }
           else
@@ -1547,7 +1562,6 @@ namespace Maneuver
                 return;
               }
             }
-
 
             spew("Process another system's EstimatedState - 2 for vehicle %s",
                 resolveSystemId(msg->getSource()));
