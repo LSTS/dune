@@ -504,5 +504,7 @@
 #define DUNE_IMC_MESSAGEPART 877
 //! NeptusBlob identification number.
 #define DUNE_IMC_NEPTUSBLOB 888
+//! Aborted identification number.
+#define DUNE_IMC_ABORTED 889
 
 #endif
