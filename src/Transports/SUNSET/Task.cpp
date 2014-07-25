@@ -54,6 +54,8 @@ namespace Transports
       unsigned tcp_port;
       //! Sensor list.
       std::vector<std::string> sensors;
+      //! True to control source level based on medium.
+      bool src_level_control;
       //! Source Level - Unknown.
       unsigned src_level_unknown;
       //! Source Level - Water.
@@ -117,15 +119,27 @@ namespace Transports
         .defaultValue("30500")
         .description("SUNSET server TCP port");
 
+        param("Source Level - Control", m_args.src_level_control)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("false")
+        .description("Enable/disable source level control based on medium");
+
         param("Source Level - Unknown", m_args.src_level_unknown)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("3")
         .description("Source level when medium is unknown");
 
         param("Source Level - Water", m_args.src_level_water)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("2")
         .description("Source level when medium is water");
 
         param("Source Level - Underwater", m_args.src_level_underwater)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("1")
         .description("Source level when medium is underwater");
 
