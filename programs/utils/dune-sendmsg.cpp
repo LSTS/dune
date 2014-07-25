@@ -318,6 +318,7 @@ main(int argc, char** argv)
   {
     IMC::GpsFix* tmsg = new IMC::GpsFix;
     msg = tmsg;
+    tmsg->type = IMC::GpsFix::GFT_MANUAL_INPUT;
     tmsg->lat = Angles::radians(atof(argv[4]));
     tmsg->lon = Angles::radians(atof(argv[5]));
     tmsg->height = atof(argv[6]);
