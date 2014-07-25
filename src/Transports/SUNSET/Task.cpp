@@ -248,6 +248,9 @@ namespace Transports
       void
       consume(const IMC::VehicleMedium* msg)
       {
+        if (m_addr_local == 0)
+          return;
+
         if (msg->medium != m_medium.medium)
         {
           debug("medium changed to %u", msg->medium);
