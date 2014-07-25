@@ -149,6 +149,28 @@ namespace DUNE
         return m_eid;
       }
 
+      //! Retrieve the entity id of a given entity label.
+      //! @param[in] label entity label.
+      //! @throw NonexistentLabel if the label doesn't have an
+      //! associated id.
+      //! @return entity id.
+      unsigned int
+      resolveEntity(const std::string& label) const
+      {
+        return m_ctx.entities.resolve(label);
+      }
+
+      //! Retrieve the entity label of a given entity id.
+      //! @param[in] id entity id.
+      //! @throw NonexistentId if the id doesn't have an
+      //! associated label.
+      //! @return entity label.
+      std::string
+      resolveEntity(unsigned int id) const
+      {
+        return m_ctx.entities.resolve(id);
+      }
+
       //! Retrieve the task's activation time.
       //! @return activation time of the task.
       uint16_t
@@ -380,22 +402,6 @@ namespace DUNE
       //! @return entity id.
       unsigned int
       reserveEntity(const std::string& label);
-
-      //! Retrieve the entity id of a given entity label.
-      //! @param[in] label entity label.
-      //! @throw NonexistentLabel if the label doesn't have an
-      //! associated id.
-      //! @return entity id.
-      unsigned int
-      resolveEntity(const std::string& label) const;
-
-      //! Retrieve the entity label of a given entity id.
-      //! @param[in] id entity id.
-      //! @throw NonexistentId if the id doesn't have an
-      //! associated label.
-      //! @return entity label.
-      std::string
-      resolveEntity(unsigned int id) const;
 
       //! Test if task is stopping.
       //! @return true if task is stopping, false otherwise.

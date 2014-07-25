@@ -108,18 +108,6 @@ namespace DUNE
       return m_ctx.entities.reserve(label, getName(), m_args.act_time, m_args.deact_time);
     }
 
-    unsigned int
-    Task::resolveEntity(const std::string& label) const
-    {
-      return m_ctx.entities.resolve(label);
-    }
-
-    std::string
-    Task::resolveEntity(unsigned int id) const
-    {
-      return m_ctx.entities.resolve(id);
-    }
-
     void
     Task::reserveEntities(void)
     {
