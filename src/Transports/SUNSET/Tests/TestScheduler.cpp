@@ -25,59 +25,51 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef TRANSPORTS_SUNSET_EXCEPTIONS_HPP_INCLUDED_
-#define TRANSPORTS_SUNSET_EXCEPTIONS_HPP_INCLUDED_
-
 // ISO C++ 98 headers.
-#include <stdexcept>
+#include <string>
+#include <set>
+#include <vector>
+#include <sstream>
+#include <algorithm>
 
-// DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-namespace Transports
+// Task headers.
+#include <Transports/SUNSET/Scheduler.hpp>
+
+// Local headers.
+#include "Test.hpp"
+
+using DUNE_NAMESPACES;
+
+int
+main(int argc, char** argv)
 {
-  namespace SUNSET
-  {
-    class InvalidChecksum: public std::runtime_error
-    {
-    public:
-      InvalidChecksum(void):
-        std::runtime_error("invalid checksum")
-      { }
-    };
+  using namespace Transports::SUNSET;
 
-    class InvalidFormat: public std::runtime_error
-    {
-    public:
-      InvalidFormat(const std::string& str):
-        std::runtime_error(DUNE::Utils::String::str("invalid format: %s", str.c_str()))
-      { }
-    };
+  ScheduleKey key0("Temperature", 0, 1);
+  ScheduleKey key1("Temperature", 0, 1);
 
-    class InvalidVersion: public std::runtime_error
-    {
-    public:
-      InvalidVersion(void):
-        std::runtime_error("invalid version")
-      { }
-    };
+  std::map<ScheduleKey, std::string> map;
+  map[key0] = "Lixo1";
+  map[key1] = "Lixo2";
 
-    class InvalidRequest: public std::runtime_error
-    {
-    public:
-      InvalidRequest(void):
-        std::runtime_error("invalid request")
-      { }
-    };
 
-    class InvalidValue: public std::runtime_error
-    {
-    public:
-      InvalidValue(void):
-        std::runtime_error("invalid value")
-      { }
-    };
-  }
+  std::cerr << map.size() << std::endl;
+
+  // sched.setSchedule("Temperature", 0, 1, 1.0);
+  // sched.setSchedule("Temperature", 0, 2, 0.2);
+
+
+
+  // while (true)
+  // {
+  //   double delay = sched.getRemaining();
+  //   std::cerr << "Waiting " << delay << std::endl;
+
+  //   Delay::wait(delay);
+  //   sched.update();
+  // }
+
+  return 0;
 }
-
-#endif

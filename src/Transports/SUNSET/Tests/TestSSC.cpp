@@ -32,11 +32,15 @@
 #include <sstream>
 #include <algorithm>
 
+#include <DUNE/DUNE.hpp>
+
 // Task headers.
 #include <Transports/SUNSET/SSC/Commands.hpp>
 
 // Local headers.
 #include "Test.hpp"
+
+using DUNE_NAMESPACES;
 
 static std::string
 computeCRC(const std::string& str)
@@ -48,46 +52,29 @@ computeCRC(const std::string& str)
 int
 main(int argc, char** argv)
 {
-  Test test("Transports/SUNSET/Command");
+  // Test test("Transports/SUNSET/Command");
 
-  {
-    const char* text = "PlanAdd Encode/Decode";
-    try
-    {
-      Transports::SUNSET::PlanAdd cmd0;
-      cmd0.setSource(1)
-      .addDestination(2)
-      .setTTL(30)
-      .setFlags(0x01)
-      .setPriority(1);
-      cmd0.plan_name = "Test_Plan";
+  // {
+  //   try
+  //   {
+  //     Transports::SUNSET::Param cmd;
+  //     std::set<unsigned> dsts;
+  //     dsts.insert(0);
 
-      Transports::SUNSET::Goto man_goto;
-      man_goto.latitude = 41.124;
-      man_goto.longitude = 41.124;
-      cmd0.maneuver_list.push_back(&man_goto);
+  //     cmd.setTTL(30)
+  //     .setFlags(0x00)
+  //     .setPriority(0)
+  //     .setDestinations(dsts);
 
-      Transports::SUNSET::StationKeeping man_sk;
-      man_sk.latitude = 59.123;
-      man_sk.longitude = 79.124;
-      cmd0.maneuver_list.push_back(&man_sk);
+  //     std::string str = cmd.encode();
+  //     std::cerr << str << std::endl;
 
-      std::string str = cmd0.encode();
-      std::cerr << str << std::endl;
-
-      Transports::SUNSET::PlanAdd cmd1;
-      cmd1.decode(str);
-      std::string str1 = cmd1.encode();
-      std::cerr << str1 << std::endl;
-
-
-      // test.boolean(text, cmd0 == cmd1);
-    }
-    catch (std::exception& e)
-    {
-      test.failed(text, e.what());
-    }
-  }
+  //   }
+  //   catch (std::exception& e)
+  //   {
+  //     std::cerr << e.what() << std::endl;
+  //   }
+  // }
 
 
   // Test# 0.

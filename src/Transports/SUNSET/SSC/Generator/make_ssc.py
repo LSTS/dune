@@ -333,8 +333,8 @@ def do_enum(node, out):
     for value in values:
         name = value.attrib['name'].strip()
         f.add_body('case %s%s: args__.push_back("%s"); break;' % (field_prefix, name, name))
-    f.add_body('return 1;')
     f.add_body('}')
+    f.add_body('return 1;')
     out.append(f)
 
     # Decoder.
@@ -346,6 +346,15 @@ def do_enum(node, out):
         prefix = 'else '
     f.add_body('else throw InvalidValue();')
     f.add_body('return 1;')
+    out.append(f)
+
+    # toText().
+    f = Function('toText', 'void', [Var('os__', 'std::ostream&'), Var('value__', 'const %s&' % enum_name)])
+    f.add_body('switch (value__)\n{')
+    for value in values:
+        name = value.attrib['name'].strip()
+        f.add_body('case %s%s: os__ << "%s"; break;' % (field_prefix, name, name))
+    f.add_body('}')
     out.append(f)
 
 # Create structures.
@@ -413,8 +422,13 @@ def do_command(node, hpp):
     # encodeArgs()
     f = Function('encodeArgs', 'size_t', [Var('args__', 'std::vector<std::string>&')], const = True)
     if len(args) > 0:
+        f.add_body('size_t arg_count__ = 0;')
         for arg in args:
-            f.add_body('encodeType(args__, %s);' % get_cxx_var_name(arg))
+            f.add_body('arg_count__ += encodeType(args__, %s);' % get_cxx_var_name(arg))
+        f.add_body('return arg_count__;')
+    else:
+        f.add_body('(void)args__;')
+        f.add_body('return 0;')
     protected.append(f)
 
     # decodeArgs()
@@ -425,10 +439,22 @@ def do_command(node, hpp):
             f.add_body('index_cursor__ += decodeType(args__, index_cursor__, %s);' % get_cxx_var_name(arg))
         f.add_body('return index_cursor__ - index__;')
     else:
+        f.add_body('(void)args__;')
+        f.add_body('(void)index__;')
         f.add_body('return 0;')
     protected.append(f)
 
-    hpp.append('class %s: public Command' % class_name)
+    # encodeArgs()
+    f = Function('toTextArgs', 'void', [Var('os__', 'std::ostream&')], const = True)
+    # if len(args) > 0:
+    #     for arg in args:
+    #         if arg.attrib['type'] != 'List':
+    #             f.add_body('os__ << %s;' % get_cxx_var_name(arg))
+    # else:
+    f.add_body('(void)os__;')
+    protected.append(f)
+
+    hpp.append('class %s: public AbstractCommand' % class_name)
     hpp.append('{')
     hpp.append('public:')
     for p in public:
@@ -491,7 +517,7 @@ f.write()
 ################################################################################
 hpp = File('Commands.hpp', folder)
 hpp.add_isoc_headers('ostream', 'string', 'vector')
-hpp.add_local_headers('Command.hpp', 'Types.hpp')
+hpp.add_local_headers('AbstractCommand.hpp', 'Types.hpp')
 
 for cmd in root.findall('group/command'):
     do_command(cmd, hpp)

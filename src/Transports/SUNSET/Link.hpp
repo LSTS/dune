@@ -25,11 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef TRANSPORTS_SUNSET_EXCEPTIONS_HPP_INCLUDED_
-#define TRANSPORTS_SUNSET_EXCEPTIONS_HPP_INCLUDED_
-
-// ISO C++ 98 headers.
-#include <stdexcept>
+#ifndef TRANSPORTS_SUNSET_LINK_HPP_INCLUDED_
+#define TRANSPORTS_SUNSET_LINK_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -38,44 +35,78 @@ namespace Transports
 {
   namespace SUNSET
   {
-    class InvalidChecksum: public std::runtime_error
-    {
-    public:
-      InvalidChecksum(void):
-        std::runtime_error("invalid checksum")
-      { }
-    };
+    using DUNE_NAMESPACES;
 
-    class InvalidFormat: public std::runtime_error
+    class Link: public Concurrency::Thread
     {
     public:
-      InvalidFormat(const std::string& str):
-        std::runtime_error(DUNE::Utils::String::str("invalid format: %s", str.c_str()))
-      { }
-    };
+      Link(Tasks::Task* task, const Network::Address& addr, unsigned port):
+        m_task(task)
+      {
+        m_sock.setNoDelay(true);
+        m_sock.setSendTimeout(1.0);
+        m_sock.setReceiveTimeout(1.0);
+        m_sock.connect(addr, port);
+      }
 
-    class InvalidVersion: public std::runtime_error
-    {
-    public:
-      InvalidVersion(void):
-        std::runtime_error("invalid version")
-      { }
-    };
+      void
+      write(const std::string& cmd)
+      {
+        IMC::DevDataText text;
+        text.value = cmd;
+        m_task->dispatch(text);
+        m_task->spew("sending: %s", sanitize(cmd).c_str());
+        m_sock.write(cmd.c_str(), cmd.size());
+      }
 
-    class InvalidRequest: public std::runtime_error
-    {
-    public:
-      InvalidRequest(void):
-        std::runtime_error("invalid request")
-      { }
-    };
+    private:
+      //! Parent task.
+      Tasks::Task* m_task;
+      Network::TCPSocket m_sock;
 
-    class InvalidValue: public std::runtime_error
-    {
-    public:
-      InvalidValue(void):
-        std::runtime_error("invalid value")
-      { }
+      void
+      read(double timeout, IMC::DevDataText& text, uint8_t* bfr, size_t bfr_size)
+      {
+        if (!Poll::poll(m_sock, timeout))
+          return;
+
+        size_t rv = m_sock.read(bfr, bfr_size);
+        for (size_t i = 0; i < rv; ++i)
+        {
+          text.value.push_back((char)bfr[i]);
+          if (bfr[i] == '\n')
+          {
+            m_task->dispatch(&text, DF_LOOP_BACK);
+            text.value.clear();
+          }
+        }
+      }
+
+      void
+      run(void)
+      {
+        uint8_t bfr[128];
+        IMC::DevDataText text;
+        text.setDestinationEntity(m_task->getEntityId());
+
+        while (!isStopping())
+        {
+          try
+          {
+            read(1.0, text, bfr, sizeof(bfr));
+          }
+          catch (...)
+          {
+            IMC::IoEvent iov;
+            iov.setSource(m_task->getSystemId());
+            iov.setSourceEntity(m_task->getEntityId());
+            iov.setDestinationEntity(m_task->getEntityId());
+            iov.type = IMC::IoEvent::IOV_TYPE_INPUT_ERROR;
+            m_task->receive(&iov);
+            break;
+          }
+        }
+      }
     };
   }
 }
