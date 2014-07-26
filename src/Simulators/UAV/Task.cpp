@@ -499,12 +499,13 @@ namespace Simulators
             i_src_ini = m_filtered_sys[i_cmd].size();
             m_filtered_ent[i_cmd].resize(i_src_ini+systems.size()*entities.size());
             m_filtered_sys[i_cmd].resize(i_src_ini+systems.size()*entities.size());
-
+            unsigned int i_sys_n = systems.size();
+            unsigned int i_ent_n = entities.size();
             // Resolve systems id.
-            for (unsigned j = 0; j < systems.size(); j++)
+            for (unsigned j = 0; j < i_sys_n; j++)
             {
               // Resolve entities id.
-              for (unsigned k = 0; k < entities.size(); k++)
+              for (unsigned k = 0; k < i_ent_n; k++)
               {
                 i_src = (j+1)*(k+1)-1;
                 // Resolve systems.
@@ -523,8 +524,9 @@ namespace Simulators
                   }
                   catch (...)
                   {
-                    debug("Commands filtering - No system found with designation '%s'.", parts[1].c_str());
-                    m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
+                    war("Commands filtering - No system found with designation '%s'!", systems[j].c_str());
+                    i_sys_n--;
+                    j--;
                   }
                 }
                 // Resolve entities.
@@ -543,8 +545,9 @@ namespace Simulators
                   }
                   catch (...)
                   {
-                    debug("Commands filtering - No entity found with designation '%s'.", parts[2].c_str());
-                    m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
+                    war("Commands filtering - No entity found with designation '%s'!", entities[k].c_str());
+                    i_ent_n--;
+                    k--;
                   }
                 }
               }
