@@ -232,6 +232,9 @@ namespace DUNE
       replaceWhiteSpace(std::string& str, char rep);
 
       static std::string
+      replace(const std::string& str, char rep, const std::string& pat);
+
+      static std::string
       escape(const std::string& input);
 
       static std::string
