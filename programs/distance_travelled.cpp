@@ -244,10 +244,11 @@ main(int32_t argc, char** argv)
     total_distance += itr->second.distance;
     total_duration += itr->second.duration;
 
-    std::cout << std::endl;
-    std::cout << "* Total travelled distance:" << std::endl;
-    std::cout << " - "
+    std::cout << std::endl
+              << "* Total travelled distance:" << std::endl
+              << " - "
               << std::setprecision(4)
+              << std::fixed
               << itr->second.distance / 1000.0 << " km / "
               << (unsigned)itr->second.duration / 60 / 60 << " h "
               << (unsigned)(itr->second.duration / 60) % 60 << " m "
@@ -256,12 +257,13 @@ main(int32_t argc, char** argv)
 
   if (vehicles.size() > 1)
   {
-    std::cout << std::endl;
-    std::cout << "## Summary" << std::endl;
-    std::cout << " - Total distance: "
+    std::cout << std::endl
+              << "## Summary" << std::endl
+              << " - Total distance: "
               << std::setprecision(2)
-              << total_distance / 1000.0 << " km" << std::endl;
-    std::cout << " - Total duration: "
+              << std::fixed
+              << total_distance / 1000.0 << " km" << std::endl
+              << " - Total duration: "
               << (unsigned)total_duration / 60 / 60 << " h "
               << (unsigned)(total_duration / 60) % 60 << " m "
               << (unsigned)total_duration % 60 << " s" << std::endl;
