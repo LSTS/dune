@@ -261,20 +261,28 @@ namespace Maneuver
 
           param("Formation Reference Frame", m_args.formation_frame)
           .defaultValue("0")
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
           .description("Formation Reference Frame (0 - Earth; 1 - Path (no curvature); 2 - Path (with curvature)");
+
+          param("UAV Number", m_args.uav_n)
+          .defaultValue("1")
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
+          .description("UAV Number");
 
           param("Formation Positions", m_args.formation_pos)
           .defaultValue("0.0, 0.0, 0.0")
           .units(Units::Meter)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
           .description("Formation positions matrix");
 
           param("Vehicle List", m_args.formation_systems)
           .defaultValue("")
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
           .description("System ID list of the formation vehicles.");
-
-          param("UAV Number", m_args.uav_n)
-          .defaultValue("1")
-          .description("UAV Number");
 
           param("Simulation type", m_args.sim_type)
           .defaultValue("4DOF_bank")
@@ -1138,14 +1146,16 @@ namespace Maneuver
               m_wind_team(2, uav_ind) = msg->z;
               m_uav_wind_flag[uav_ind] = true;
               // Average the received wind estimations over the team members
-              double t_sum = 0.0;
-              unsigned int t_uav = 0;
+              double t_sum;
+              unsigned int t_uav;
               for (unsigned int i = 0; i < 3; i++)
               {
+                t_sum = 0.0;
+                t_uav = 0;
                 for (uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
                   if (m_uav_wind_flag[uav_ind])
                   {
-                    t_sum =+ m_wind_team(i, uav_ind);
+                    t_sum += m_wind_team(i, uav_ind);
                     t_uav++;
                   }
                 m_wind(i) = t_sum/t_uav;
@@ -1225,17 +1235,20 @@ namespace Maneuver
                 m_uav_state_flag[uav_ind] = true;
 
                 // Average the received state data over the team members
-                double t_sum = 0.0;
-                unsigned int t_uav = 0;
+                double t_sum;
+                unsigned int t_uav;
                 for (unsigned int i = 0; i < 9; i++)
                 {
+                  t_sum = 0.0;
+                  t_uav = 0;
                   for (uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
                     if (m_uav_state_flag[uav_ind])
                     {
-                      t_sum =+ m_uav_state(i, uav_ind);
+                      t_sum += m_uav_state(i, uav_ind);
                       t_uav++;
                     }
                   m_team_state(i) = t_sum/t_uav;
+                  // ToDo - Correct the average for heading angles
                 }
                 break;
               }
@@ -1428,7 +1441,7 @@ namespace Maneuver
             //==========================================================================
 
             m_model->update(m_timestep);
-            m_last_leader_update =+ m_timestep;
+            m_last_leader_update += m_timestep;
             m_position = m_model->getPosition();
             m_velocity = m_model->getVelocity();
 
