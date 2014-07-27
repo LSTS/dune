@@ -80,6 +80,7 @@ namespace Maneuver
         double alt_max;
         double alt_min;
         //! Formation configuration parameters
+        //IMC::FormationParameters::reference_frame formation_frame;
         unsigned int formation_frame;
         unsigned int uav_n;
         Matrix formation_pos;
@@ -257,6 +258,7 @@ namespace Maneuver
 
         //! System state variables
         Matrix m_uav_state;
+        std::vector<bool> m_uav_state_flag;
         Matrix m_uav_accel;
         double m_airspeed;
 
@@ -497,19 +499,27 @@ namespace Maneuver
 
           param("Formation Reference Frame", m_args.formation_frame)
           .defaultValue("0")
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
           .description("Formation Reference Frame (0 - Earth; 1 - Path (no curvature); 2 - Path (with curvature)");
+
+          param("UAV Number", m_args.uav_n)
+          .defaultValue("1")
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
+          .description("UAV Number");
 
           param("Formation Positions", m_args.formation_pos)
           .defaultValue("")
           .units(Units::Meter)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
           .description("Formation positions matrix");
-
-          param("UAV Number", m_args.uav_n)
-          .defaultValue("1")
-          .description("UAV Number");
 
           param("Vehicle List", m_args.formation_systems)
           .defaultValue("")
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
           .description("System ID list of the formation vehicles.");
 
           param("Simulation type", m_args.sim_type)
@@ -762,6 +772,9 @@ namespace Maneuver
             m_team_state_init = false;
             //! Initialize vehicles state
             m_uav_state = DUNE::Math::Matrix(12, m_uav_n+1, 0.0);
+            m_uav_state_flag.clear();
+            for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+              m_uav_state_flag.push_back(false);
             m_uav_accel = DUNE::Math::Matrix(3, m_uav_n+1, 0.0);
             //! Initialize vehicles commands
             m_uav_ctrl = DUNE::Math::Matrix(3, m_uav_n, 0.0);
@@ -822,6 +835,7 @@ namespace Maneuver
             try
             {
               m_leader_id = resolveSystemName(m_args.leader_alias);
+              inf("Leader output defined for system '%s' with id: %u", m_args.leader_alias.c_str(), m_leader_id);
             }
             catch (...)
             {
@@ -1128,16 +1142,15 @@ namespace Maneuver
         void
         consume(const IMC::IndicatedSpeed* msg)
         {
-          if (!isActive() || msg->getSource() != getSystemId())
+          if (msg->getSource() != getSystemId())
             return;
 
           //! Get current vehicle airspeed
-          m_airspeed = msg->value;
-          if (!m_valid_airspeed)
+          if (!isControlActive() || !m_valid_airspeed)
           {
+            m_uav_ctrl(1, m_uav_ind) = msg->value;
             m_valid_airspeed = true;
-            trace("Valid airspeed received.");
-            m_uav_ctrl(1, m_uav_ind) = m_airspeed;
+            spew("Valid airspeed received.");
           }
         }
 
@@ -1364,7 +1377,9 @@ namespace Maneuver
           IMC::PathControlState path_ctrl_state;
 
           // for debug
-          trace("EstimatedState received from vehicle %s", resolveSystemId(msg->getSource()));
+          if (resolveSystemName("form-leader-02") == msg->getSource())
+            trace("EstimatedState received from vehicle %s", resolveSystemId(msg->getSource()));
+          //trace("EstimatedState received from vehicle %s", resolveSystemId(msg->getSource()));
           //spew("On Vehicle %s", resolveSystemId(getSystemId()));
           if (msg->getSource() == getSystemId())
           {
@@ -1394,14 +1409,10 @@ namespace Maneuver
             m_clock_diff = msg->getTimeStamp() - Clock::get();
             m_last_state_estim(m_uav_ind+1) = msg->getTimeStamp();
 
-            debug("Starting own EstimatedState control");
+            //debug("Starting own EstimatedState control");
             // Check if the control is active
-            checkActivCtrlCond();
-            if (!m_ctrl_active)
-            {
-              war("Control is not active!");
+            if (!isControlActive())
               return;
-            }
             // Check if the commands should be updated
             if (m_last_simctrl_update(m_uav_ind) + m_timestep_ctrl > msg->getTimeStamp())
               return;
@@ -1609,6 +1620,7 @@ namespace Maneuver
                 return;
               }
             }
+            m_uav_state_flag[ind_uav] = true;
             spew("EstimatedState accepted! - Vehicle '%s' is the '%u' in the formation vehicle list.",
                 resolveSystemId(msg->getSource()), ind_uav);
 
@@ -1638,25 +1650,6 @@ namespace Maneuver
             //! Get estimated state time stamp
             m_last_state_estim(ind_uav+1) = msg->getTimeStamp();
 
-            //! Check if all vehicles states were initialized
-            if (!m_team_state_init)
-            {
-              bool b_state_init = true;
-              for (ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
-              {
-                // Do not check current vehicle state initialization
-                if (ind_uav == m_uav_ind)
-                  continue;
-
-                if (m_last_simctrl_update(ind_uav) < 0.0)
-                {
-                  b_state_init = false;
-                  break;
-                }
-              }
-              m_team_state_init = b_state_init;
-            }
-
             //! Check if conditions are met to initiate team virtual state updates
             //if (!isActive() && m_team_state_init)
             //  requestActivation();
@@ -1664,8 +1657,7 @@ namespace Maneuver
             //spew("Process another system's EstimatedState - 3 for vehicle %s",
             //    resolveSystemId(msg->getSource()));
             // Check if the control is active
-            checkActivCtrlCond();
-            if (!m_ctrl_active)
+            if (!isControlActive())
               return;
             // Check if the commands should be updated
             if (m_last_simctrl_update(ind_uav) + m_timestep_ctrl > msg->getTimeStamp())
@@ -1748,42 +1740,65 @@ namespace Maneuver
           dispatch(*msg);
         }
 
-        void
-        checkActivCtrlCond()
+        bool
+        isControlActive()
         {
-          // Deactivate the formation controller if the task is not active
-          if (!isActive() && m_ctrl_active)
+          // Check if the task activation state is different from the control activation state
+          if (isActive() != m_ctrl_active)
           {
-            m_ctrl_active = false;
-            if (Clock::get() >= m_last_time_verb_ctrlactiv + m_timestep_trace)
+            // Deactivate the formation controller if the task is not active
+            if (!isActive())
             {
-              m_last_time_verb_ctrlactiv = Clock::get();
-              trace("Control deactivation!");
+              m_ctrl_active = false;
+              inf("Formation control deactivation!");
+            }
+            else
+            {
+              //! Check if all vehicles states were initialized
+              if (!m_team_state_init)
+              {
+                m_team_state_init = true;
+                for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
+                {
+                  // Do not check current vehicle state initialization
+                  if (ind_uav == m_uav_ind)
+                    continue;
+
+                  if (!m_uav_state_flag[ind_uav])
+                  {
+                    m_team_state_init = false;
+                    break;
+                  }
+                }
+              }
+
+              // Check the formation control activation conditions
+              // - Plan activation request
+              // - Airspeed data
+              // - Leader vehicle data
+              // - Single vehicle formation or team vehicles' data
+              if (m_team_plan_init && m_valid_airspeed
+                  && m_team_leader_init && (m_uav_n == 1 || m_team_state_init))
+              {
+                m_ctrl_active = true;
+                inf("Activating the controller!");
+              }
+              else if (Clock::get() >= m_last_time_verb_ctrlactiv + m_timestep_trace)
+              {
+                m_last_time_verb_ctrlactiv = Clock::get();
+                if (!m_team_plan_init)
+                  war("Formation control is not active - Team plan missing!");
+                else if (!m_valid_airspeed)
+                  war("Formation control is not active - Airspeed missing!");
+                else if (!m_team_leader_init)
+                  war("Formation control is not active - Virtual leader state missing!");
+                else if (!(m_uav_n == 1 || m_team_state_init))
+                  war("Formation control is not active - Team vehicles' state missing!");
+              }
             }
           }
-          // Check formation control activation conditions
-          // - Plan activation request
-          // - Airspeed data
-          // - Leader vehicle data
-          // - Single vehicle formation or team vehicles' data
-          else if (isActive() && !m_ctrl_active && m_team_plan_init && m_valid_airspeed
-              && m_team_leader_init && (m_uav_n == 1 || m_team_state_init))
-          {
-            m_ctrl_active = true;
-            inf("Activating the controller!");
-          }
-          else if (Clock::get() >= m_last_time_verb_ctrlactiv + m_timestep_trace && isActive())
-          {
-            m_last_time_verb_ctrlactiv = Clock::get();
-          }
-            if (!m_team_plan_init)
-              war("Team plan missing!");
-            else if (!m_valid_airspeed)
-              war("Airspeed missing!");
-            else if (!m_team_leader_init)
-              war("Virtual leader state missing!");
-            else if (!(m_uav_n == 1 || m_team_state_init))
-              war("Team vehicles' state missing!");
+
+          return m_ctrl_active;
         }
 
         void
