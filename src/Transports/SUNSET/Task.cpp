@@ -251,6 +251,9 @@ namespace Transports
         if (m_addr_local == 0)
           return;
 
+        if (!m_args.src_level_control)
+          return;
+
         if (msg->medium != m_medium.medium)
         {
           debug("medium changed to %u", msg->medium);
