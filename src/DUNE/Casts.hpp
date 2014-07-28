@@ -147,7 +147,7 @@ namespace DUNE
   inline T
   castLexical(const std::string& str)
   {
-    T var;
+    T var = T();
     castLexical(str, var);
     return var;
   }

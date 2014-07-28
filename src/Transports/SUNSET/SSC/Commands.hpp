@@ -36,14 +36,14 @@
 #include <vector>
 
 // Local headers.
-#include "Command.hpp"
+#include "AbstractCommand.hpp"
 #include "Types.hpp"
 
 namespace Transports
 {
   namespace SUNSET
   {
-    class CommandOk: public Command
+    class CommandOk: public AbstractCommand
     {
     public:
       std::string name;
@@ -58,7 +58,9 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, name);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, name);
+        return arg_count__;
       }
 
       size_t
@@ -69,10 +71,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class CommandError: public Command
+    class CommandError: public AbstractCommand
     {
     public:
       ErrorType error_reason;
@@ -87,7 +95,9 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, error_reason);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, error_reason);
+        return arg_count__;
       }
 
       size_t
@@ -98,10 +108,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class CommandFailure: public Command
+    class CommandFailure: public AbstractCommand
     {
     public:
       FailureType failure_reason;
@@ -118,8 +134,10 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, failure_reason);
-        encodeType(args__, sequence_number);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, failure_reason);
+        arg_count__ += encodeType(args__, sequence_number);
+        return arg_count__;
       }
 
       size_t
@@ -131,10 +149,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class PacketTx: public Command
+    class PacketTx: public AbstractCommand
     {
     public:
       int data_length;
@@ -151,8 +175,10 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, data_length);
-        encodeType(args__, data);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, data_length);
+        arg_count__ += encodeType(args__, data);
+        return arg_count__;
       }
 
       size_t
@@ -164,10 +190,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class PacketTxStatus: public Command
+    class PacketTxStatus: public AbstractCommand
     {
     public:
       int sequence_number;
@@ -186,9 +218,11 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, sequence_number);
-        encodeType(args__, status);
-        encodeType(args__, error);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, sequence_number);
+        arg_count__ += encodeType(args__, status);
+        arg_count__ += encodeType(args__, error);
+        return arg_count__;
       }
 
       size_t
@@ -201,10 +235,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class PacketRx: public Command
+    class PacketRx: public AbstractCommand
     {
     public:
       int data_length;
@@ -221,8 +261,10 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, data_length);
-        encodeType(args__, data);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, data_length);
+        arg_count__ += encodeType(args__, data);
+        return arg_count__;
       }
 
       size_t
@@ -234,10 +276,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class Param: public Command
+    class Param: public AbstractCommand
     {
     public:
       ParamName name;
@@ -254,8 +302,10 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, name);
-        encodeType(args__, value);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, name);
+        arg_count__ += encodeType(args__, value);
+        return arg_count__;
       }
 
       size_t
@@ -267,10 +317,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class ParamGet: public Command
+    class ParamGet: public AbstractCommand
     {
     public:
       ParamName name;
@@ -285,7 +341,9 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, name);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, name);
+        return arg_count__;
       }
 
       size_t
@@ -296,10 +354,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class ParamSet: public Command
+    class ParamSet: public AbstractCommand
     {
     public:
       ParamName name;
@@ -316,8 +380,10 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, name);
-        encodeType(args__, value);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, name);
+        arg_count__ += encodeType(args__, value);
+        return arg_count__;
       }
 
       size_t
@@ -329,10 +395,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class Abort: public Command
+    class Abort: public AbstractCommand
     {
     public:
 
@@ -345,18 +417,28 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
+        (void)args__;
+        return 0;
       }
 
       size_t
       decodeArgs(const std::vector<std::string>& args__, size_t index__)
       {
+        (void)args__;
+        (void)index__;
         return 0;
+      }
+
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
       }
 
       private:
     };
 
-    class Aborted: public Command
+    class Aborted: public AbstractCommand
     {
     public:
 
@@ -369,18 +451,28 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
+        (void)args__;
+        return 0;
       }
 
       size_t
       decodeArgs(const std::vector<std::string>& args__, size_t index__)
       {
+        (void)args__;
+        (void)index__;
         return 0;
+      }
+
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
       }
 
       private:
     };
 
-    class PlanListGet: public Command
+    class PlanListGet: public AbstractCommand
     {
     public:
 
@@ -393,18 +485,28 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
+        (void)args__;
+        return 0;
       }
 
       size_t
       decodeArgs(const std::vector<std::string>& args__, size_t index__)
       {
+        (void)args__;
+        (void)index__;
         return 0;
+      }
+
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
       }
 
       private:
     };
 
-    class PlanList: public Command
+    class PlanList: public AbstractCommand
     {
     public:
       std::vector<std::string> plan_names;
@@ -419,7 +521,9 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, plan_names);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, plan_names);
+        return arg_count__;
       }
 
       size_t
@@ -430,10 +534,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class PlanGet: public Command
+    class PlanGet: public AbstractCommand
     {
     public:
       std::string plan_name;
@@ -448,7 +558,9 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, plan_name);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, plan_name);
+        return arg_count__;
       }
 
       size_t
@@ -459,10 +571,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class Plan: public Command
+    class Plan: public AbstractCommand
     {
     public:
       std::vector<Maneuver*> maneuver_list;
@@ -477,7 +595,9 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, maneuver_list);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, maneuver_list);
+        return arg_count__;
       }
 
       size_t
@@ -488,10 +608,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class PlanStart: public Command
+    class PlanStart: public AbstractCommand
     {
     public:
       std::string plan_name;
@@ -506,7 +632,9 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, plan_name);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, plan_name);
+        return arg_count__;
       }
 
       size_t
@@ -517,10 +645,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class PlanStarted: public Command
+    class PlanStarted: public AbstractCommand
     {
     public:
       std::string plan_name;
@@ -535,7 +669,9 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, plan_name);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, plan_name);
+        return arg_count__;
       }
 
       size_t
@@ -546,10 +682,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class PlanStop: public Command
+    class PlanStop: public AbstractCommand
     {
     public:
 
@@ -562,18 +704,28 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
+        (void)args__;
+        return 0;
       }
 
       size_t
       decodeArgs(const std::vector<std::string>& args__, size_t index__)
       {
+        (void)args__;
+        (void)index__;
         return 0;
+      }
+
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
       }
 
       private:
     };
 
-    class PlanStopped: public Command
+    class PlanStopped: public AbstractCommand
     {
     public:
       std::string plan_name;
@@ -588,7 +740,9 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, plan_name);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, plan_name);
+        return arg_count__;
       }
 
       size_t
@@ -599,10 +753,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class PlanDelete: public Command
+    class PlanDelete: public AbstractCommand
     {
     public:
       std::string plan_name;
@@ -617,7 +777,9 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, plan_name);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, plan_name);
+        return arg_count__;
       }
 
       size_t
@@ -628,10 +790,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class PlanDeleted: public Command
+    class PlanDeleted: public AbstractCommand
     {
     public:
       std::string plan_name;
@@ -646,7 +814,9 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, plan_name);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, plan_name);
+        return arg_count__;
       }
 
       size_t
@@ -657,10 +827,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class PlanAdd: public Command
+    class PlanAdd: public AbstractCommand
     {
     public:
       std::string plan_name;
@@ -677,8 +853,10 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, plan_name);
-        encodeType(args__, maneuver_list);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, plan_name);
+        arg_count__ += encodeType(args__, maneuver_list);
+        return arg_count__;
       }
 
       size_t
@@ -690,10 +868,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class PlanAdded: public Command
+    class PlanAdded: public AbstractCommand
     {
     public:
       std::string plan_name;
@@ -708,7 +892,9 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, plan_name);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, plan_name);
+        return arg_count__;
       }
 
       size_t
@@ -719,10 +905,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class SensorListGet: public Command
+    class SensorListGet: public AbstractCommand
     {
     public:
 
@@ -735,18 +927,28 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
+        (void)args__;
+        return 0;
       }
 
       size_t
       decodeArgs(const std::vector<std::string>& args__, size_t index__)
       {
+        (void)args__;
+        (void)index__;
         return 0;
+      }
+
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
       }
 
       private:
     };
 
-    class SensorList: public Command
+    class SensorList: public AbstractCommand
     {
     public:
       std::vector<std::string> measurement_names;
@@ -761,7 +963,9 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, measurement_names);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, measurement_names);
+        return arg_count__;
       }
 
       size_t
@@ -772,10 +976,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class SensorInfoGet: public Command
+    class SensorInfoGet: public AbstractCommand
     {
     public:
       std::string measurement_name;
@@ -790,7 +1000,9 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, measurement_name);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, measurement_name);
+        return arg_count__;
       }
 
       size_t
@@ -801,10 +1013,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class SensorInfo: public Command
+    class SensorInfo: public AbstractCommand
     {
     public:
       std::string measurement_name;
@@ -821,8 +1039,10 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, measurement_name);
-        encodeType(args__, tuples);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, measurement_name);
+        arg_count__ += encodeType(args__, tuples);
+        return arg_count__;
       }
 
       size_t
@@ -834,10 +1054,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class SensorSampleGet: public Command
+    class SensorSampleGet: public AbstractCommand
     {
     public:
       std::string measurement_name;
@@ -856,9 +1082,11 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, measurement_name);
-        encodeType(args__, sensor_identifier);
-        encodeType(args__, sampling_frequency);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, measurement_name);
+        arg_count__ += encodeType(args__, sensor_identifier);
+        arg_count__ += encodeType(args__, sampling_frequency);
+        return arg_count__;
       }
 
       size_t
@@ -871,10 +1099,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class SensorSample: public Command
+    class SensorSample: public AbstractCommand
     {
     public:
       PositionType position;
@@ -895,10 +1129,12 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, position);
-        encodeType(args__, measurement_name);
-        encodeType(args__, sensor_identifier);
-        encodeType(args__, sample);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, position);
+        arg_count__ += encodeType(args__, measurement_name);
+        arg_count__ += encodeType(args__, sensor_identifier);
+        arg_count__ += encodeType(args__, sample);
+        return arg_count__;
       }
 
       size_t
@@ -912,10 +1148,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class PositionGet: public Command
+    class PositionGet: public AbstractCommand
     {
     public:
       double frequency;
@@ -930,7 +1172,9 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, frequency);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, frequency);
+        return arg_count__;
       }
 
       size_t
@@ -941,10 +1185,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class Position: public Command
+    class Position: public AbstractCommand
     {
     public:
       PositionType value;
@@ -961,8 +1211,10 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, value);
-        encodeType(args__, heading);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, value);
+        arg_count__ += encodeType(args__, heading);
+        return arg_count__;
       }
 
       size_t
@@ -974,10 +1226,16 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class RangeGet: public Command
+    class RangeGet: public AbstractCommand
     {
     public:
       std::vector<int> targets;
@@ -994,8 +1252,10 @@ namespace Transports
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, targets);
-        encodeType(args__, frequency);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, targets);
+        arg_count__ += encodeType(args__, frequency);
+        return arg_count__;
       }
 
       size_t
@@ -1007,15 +1267,22 @@ namespace Transports
         return index_cursor__ - index__;
       }
 
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
+      }
+
       private:
     };
 
-    class Range: public Command
+    class Range: public AbstractCommand
     {
     public:
       int target;
       double travel_time;
       double bearing;
+      double elevation;
 
       Range(void)
       {
@@ -1023,15 +1290,19 @@ namespace Transports
         target = 0;
         travel_time = 0;
         bearing = 0;
+        elevation = 0;
       }
 
     protected:
       size_t
       encodeArgs(std::vector<std::string>& args__) const
       {
-        encodeType(args__, target);
-        encodeType(args__, travel_time);
-        encodeType(args__, bearing);
+        size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, target);
+        arg_count__ += encodeType(args__, travel_time);
+        arg_count__ += encodeType(args__, bearing);
+        arg_count__ += encodeType(args__, elevation);
+        return arg_count__;
       }
 
       size_t
@@ -1041,7 +1312,14 @@ namespace Transports
         index_cursor__ += decodeType(args__, index_cursor__, target);
         index_cursor__ += decodeType(args__, index_cursor__, travel_time);
         index_cursor__ += decodeType(args__, index_cursor__, bearing);
+        index_cursor__ += decodeType(args__, index_cursor__, elevation);
         return index_cursor__ - index__;
+      }
+
+      void
+      toTextArgs(std::ostream& os__) const
+      {
+        (void)os__;
       }
 
       private:

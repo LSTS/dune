@@ -22,98 +22,93 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Pedro Calado                                                     *
+// Author: Ricardo Martins                                                  *
 //***************************************************************************
+
+#ifndef TRANSPORTS_SUNSET_LINK_HPP_INCLUDED_
+#define TRANSPORTS_SUNSET_LINK_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-using DUNE_NAMESPACES;
-
-namespace Simulators
+namespace Transports
 {
-  //! %Dummy simulator for DUNE.
-  //! %Dummy task mimics basic parameters behavior
-  //! such as activation, deactivation times
-  //! and set entity parameter.
-  //!
-  //! @author Pedro Calado
-  namespace Dummy
+  namespace SUNSET
   {
-    //! %Task arguments.
-    struct Arguments
+    using DUNE_NAMESPACES;
+
+    class Link: public Concurrency::Thread
     {
-      //! Actual activation time of the device
-      float actual_act_time;
-      //! Actual deactivation time of the device
-      float actual_deact_time;
-    };
-
-    //! %Dummy simulator task
-    struct Task: public Tasks::Periodic
-    {
-      //! Timer for activation process
-      Time::Counter<float> m_act_timer;
-      //! Timer for deactivation process
-      Time::Counter<float> m_deact_timer;
-      //! Task arguments.
-      Arguments m_args;
-
-      Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Periodic(name, ctx)
+    public:
+      Link(Tasks::Task* task, const Network::Address& addr, unsigned port):
+        m_task(task)
       {
-        param("Actual Activation Time", m_args.actual_act_time)
-        .defaultValue("30.0")
-        .description("Actual activation time of the device");
-
-        param("Actual Deactivation Time", m_args.actual_deact_time)
-        .defaultValue("10.0")
-        .description("Actual deactivation time of the device");
-
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER);
-
-        // Initialize entity state.
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-      }
-
-      //! On update parameters
-      void
-      onUpdateParameters(void)
-      {
-        m_act_timer.setTop(m_args.actual_act_time);
-        m_deact_timer.setTop(m_args.actual_deact_time);
-      }
-
-      //! On activation
-      void
-      onRequestActivation(void)
-      {
-        m_act_timer.reset();
-      }
-
-      //! On deactivation
-      void
-      onRequestDeactivation(void)
-      {
-        m_deact_timer.reset();
+        m_sock.setNoDelay(true);
+        m_sock.setSendTimeout(1.0);
+        m_sock.setReceiveTimeout(1.0);
+        m_sock.connect(addr, port);
       }
 
       void
-      task(void)
+      write(const std::string& cmd)
       {
-        if (isActivating() && m_act_timer.overflow())
+        IMC::DevDataText text;
+        text.value = cmd;
+        m_task->dispatch(text);
+        m_task->spew("sending: %s", sanitize(cmd).c_str());
+        m_sock.write(cmd.c_str(), cmd.size());
+      }
+
+    private:
+      //! Parent task.
+      Tasks::Task* m_task;
+      Network::TCPSocket m_sock;
+
+      void
+      read(double timeout, IMC::DevDataText& text, uint8_t* bfr, size_t bfr_size)
+      {
+        if (!Poll::poll(m_sock, timeout))
+          return;
+
+        size_t rv = m_sock.read(bfr, bfr_size);
+        for (size_t i = 0; i < rv; ++i)
         {
-          activate();
+          text.value.push_back((char)bfr[i]);
+          if (bfr[i] == '\n')
+          {
+            m_task->dispatch(&text, DF_LOOP_BACK);
+            text.value.clear();
+          }
         }
+      }
 
-        if (isDeactivating() && m_deact_timer.overflow())
+      void
+      run(void)
+      {
+        uint8_t bfr[128];
+        IMC::DevDataText text;
+        text.setDestinationEntity(m_task->getEntityId());
+
+        while (!isStopping())
         {
-          deactivate();
+          try
+          {
+            read(1.0, text, bfr, sizeof(bfr));
+          }
+          catch (...)
+          {
+            IMC::IoEvent iov;
+            iov.setSource(m_task->getSystemId());
+            iov.setSourceEntity(m_task->getEntityId());
+            iov.setDestinationEntity(m_task->getEntityId());
+            iov.type = IMC::IoEvent::IOV_TYPE_INPUT_ERROR;
+            m_task->receive(&iov);
+            break;
+          }
         }
       }
     };
   }
 }
 
-DUNE_TASK
+#endif

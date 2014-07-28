@@ -62,6 +62,14 @@ namespace Transports
       { }
     };
 
+    class InvalidRequest: public std::runtime_error
+    {
+    public:
+      InvalidRequest(void):
+        std::runtime_error("invalid request")
+      { }
+    };
+
     class InvalidValue: public std::runtime_error
     {
     public:

@@ -46,71 +46,119 @@ namespace Control
 
       struct Arguments
       {
-        double tau_ss;
+//        double tau_ss;
         double k_vr;
-        double phi_sp_ss;
+//        double phi_sp_ss;
         double phi_h;
-        //!
-        bool use_controller;
+        std::string p_control_ent;
+        std::string e_state_ent;
       };
 
-      struct Task: public DUNE::Control::PathController
+      struct Task: public Tasks::Periodic
       {
         Arguments m_args;
         IMC::DesiredVerticalRate m_vrate;
         double m_h_dot_cmd;
         double m_airspeed;
+        double m_target_z;
         bool m_first_run;
+        unsigned int m_pc_ent;
+        unsigned int m_es_ent;
 
         Task(const std::string& name, Tasks::Context& ctx):
-          DUNE::Control::PathController(name, ctx),
+          Tasks::Periodic(name, ctx),
           m_h_dot_cmd(0),
           m_airspeed(0),
-          m_first_run(true)
+          m_first_run(true),
+          m_pc_ent(0),
+          m_es_ent(0)
         {
-          param("Sliding Surface maximum gain", m_args.tau_ss)
-          .units(Units::MeterPerSquareSecond)
-          .defaultValue("0.25")
-          .description("Sliding Surface maximum gain for control");
+          paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                      Tasks::Parameter::VISIBILITY_USER);
+
+//          param("Sliding Surface maximum gain", m_args.tau_ss)
+//          .units(Units::MeterPerSquareSecond)
+//          .defaultValue("0.25")
+//          .description("Sliding Surface maximum gain for control");
 
           param("Vertical Rate maximum gain", m_args.k_vr)
           .defaultValue("0.15")
           .description("Vertical Rate maximum gain for control");
 
-          param("Sliding Surface bandwidth scaler", m_args.phi_sp_ss)
-          .units(Units::MeterPerSecond)
-          .defaultValue("0.7")
-          .description("Sliding Surface bandwidth scaler");
+//          param("Sliding Surface bandwidth scaler", m_args.phi_sp_ss)
+//          .units(Units::MeterPerSecond)
+//          .defaultValue("0.7")
+//          .description("Sliding Surface bandwidth scaler");
 
           param("Height bandwidth", m_args.phi_h)
           .units(Units::Meter)
           .defaultValue("20")
           .description("Limit distance above and bellow desired height from which maximum control is used");
 
-          param("Use controller", m_args.use_controller)
-          .visibility(Tasks::Parameter::VISIBILITY_USER)
-          .scope(Tasks::Parameter::SCOPE_MANEUVER)
-          .defaultValue("false")
-          .description("Use this controller for maneuver");
+          param("DesiredZ Entity", m_args.p_control_ent)
+          .defaultValue("Path Control")
+          .description("Only accepts DesiredZ from this entity");
+
+          param("EstimatedState Entity", m_args.e_state_ent)
+          .defaultValue("Autopilot")
+          .description("Only accepts EstimatedState from this entity");
 
           bind<IMC::IndicatedSpeed>(this);
+          bind<IMC::DesiredZ>(this);
+          bind<IMC::EstimatedState>(this);
+          bind<IMC::ControlLoops>(this);
         }
 
         void
-        onUpdateParameters(void)
+        onActivation(void)
         {
-          PathController::onUpdateParameters();
+          // Activate vertical rate controller.
+          IMC::ControlLoops cloops;
+          cloops.enable = IMC::ControlLoops::CL_ENABLE;
+          cloops.mask = IMC::CL_VERTICAL_RATE;
+          dispatch(cloops);
+
+          m_first_run = true;
         }
 
         void
-        onPathActivation(void)
+        onDeactivation(void)
         {
-          if (!m_args.use_controller)
+          // Deactivate vertical rate controller.
+          IMC::ControlLoops cloops;
+          cloops.enable = IMC::ControlLoops::CL_DISABLE;
+          cloops.mask = IMC::CL_VERTICAL_RATE;
+          dispatch(cloops);
+        }
+
+        void
+        consume(const IMC::ControlLoops* c_loops)
+        {
+          if (!isActive())
             return;
 
-          // Activate vertical rate controller.
-          enableControlLoops(IMC::CL_VERTICAL_RATE);
-          m_first_run = true;
+          if ((c_loops->enable == IMC::ControlLoops::CL_ENABLE) &&
+              (c_loops->mask & IMC::CL_ALTITUDE))
+          {
+            // Activate vertical rate controller.
+            IMC::ControlLoops cloops;
+            cloops.enable = IMC::ControlLoops::CL_ENABLE;
+            cloops.mask = IMC::CL_VERTICAL_RATE;
+            dispatch(cloops);
+          }
+        }
+
+        void
+        onEntityResolution(void)
+        {
+          try
+          {
+            m_pc_ent = resolveEntity(m_args.p_control_ent);
+            m_es_ent = resolveEntity(m_args.e_state_ent);
+          }
+          catch (std::runtime_error& e) {
+            err("%s", e.what());
+          }
         }
 
         void
@@ -119,21 +167,27 @@ namespace Control
           m_airspeed = airspeed->value;
         }
 
-        bool
-        hasSpecificZControl(void) const
+        void
+        consume(const IMC::DesiredZ* desired_z)
         {
-          return true;
+          if (m_pc_ent != desired_z->getSourceEntity())
+            return;
+
+          m_target_z = desired_z->value;
         }
 
         void
-        step(const IMC::EstimatedState& state, const TrackingState& ts)
+        consume(const IMC::EstimatedState* state)
         {
-          if (!m_args.use_controller)
+          if (!isActive())
+            return;
+
+          if (m_es_ent != state->getSourceEntity())
             return;
 
           if (m_first_run)
           {
-            m_h_dot_cmd = state.vz;
+            m_h_dot_cmd = state->vz;
             m_first_run = false;
           }
 
@@ -142,7 +196,7 @@ namespace Control
           double k_ss = phi_ss / m_args.tau_ss;
           */
 
-          double delta_h = ts.end.z - (state.height - state.z);
+          double delta_h = m_target_z - (state->height - state->z);
 
           double delta_h_phi = (delta_h / m_args.phi_h);
           double trimmed_d_h_phi = trimValue(delta_h_phi,-1,1);
@@ -162,6 +216,13 @@ namespace Control
 
           m_vrate.value = m_h_dot_cmd;
            */
+        }
+
+        void
+        task(void)
+        {
+          if (!isActive())
+            return;
 
           // Send to bus
           dispatch(m_vrate);

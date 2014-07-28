@@ -127,8 +127,8 @@ namespace Transports
         case NODE_ID: args__.push_back("NODE_ID"); break;
         case BROADCAST_ID: args__.push_back("BROADCAST_ID"); break;
         case TX_POWER: args__.push_back("TX_POWER"); break;
-        return 1;
       }
+      return 1;
     }
 
     size_t
@@ -139,6 +139,17 @@ namespace Transports
       else if (args__[index__] == "TX_POWER") value__ = TX_POWER;
       else throw InvalidValue();
       return 1;
+    }
+
+    void
+    toText(std::ostream& os__, const ParamName& value__)
+    {
+      switch (value__)
+      {
+        case NODE_ID: os__ << "NODE_ID"; break;
+        case BROADCAST_ID: os__ << "BROADCAST_ID"; break;
+        case TX_POWER: os__ << "TX_POWER"; break;
+      }
     }
 
     enum ErrorType
@@ -168,8 +179,8 @@ namespace Transports
         case ERR_INVALID_REQUEST: args__.push_back("INVALID_REQUEST"); break;
         case ERR_INVALID_VALUE: args__.push_back("INVALID_VALUE"); break;
         case ERR_BUSY: args__.push_back("BUSY"); break;
-        return 1;
       }
+      return 1;
     }
 
     size_t
@@ -183,6 +194,20 @@ namespace Transports
       else if (args__[index__] == "BUSY") value__ = ERR_BUSY;
       else throw InvalidValue();
       return 1;
+    }
+
+    void
+    toText(std::ostream& os__, const ErrorType& value__)
+    {
+      switch (value__)
+      {
+        case ERR_INVALID_CRC: os__ << "INVALID_CRC"; break;
+        case ERR_INVALID_FORMAT: os__ << "INVALID_FORMAT"; break;
+        case ERR_INVALID_VERSION: os__ << "INVALID_VERSION"; break;
+        case ERR_INVALID_REQUEST: os__ << "INVALID_REQUEST"; break;
+        case ERR_INVALID_VALUE: os__ << "INVALID_VALUE"; break;
+        case ERR_BUSY: os__ << "BUSY"; break;
+      }
     }
 
     enum FailureType
@@ -210,8 +235,8 @@ namespace Transports
         case FAIL_EXPIRED: args__.push_back("EXPIRED"); break;
         case FAIL_INTERNAL_ERROR: args__.push_back("INTERNAL_ERROR"); break;
         case FAIL_BUSY: args__.push_back("BUSY"); break;
-        return 1;
       }
+      return 1;
     }
 
     size_t
@@ -224,6 +249,19 @@ namespace Transports
       else if (args__[index__] == "BUSY") value__ = FAIL_BUSY;
       else throw InvalidValue();
       return 1;
+    }
+
+    void
+    toText(std::ostream& os__, const FailureType& value__)
+    {
+      switch (value__)
+      {
+        case FAIL_INVALID_VERSION: os__ << "INVALID_VERSION"; break;
+        case FAIL_INVALID_REQUEST: os__ << "INVALID_REQUEST"; break;
+        case FAIL_EXPIRED: os__ << "EXPIRED"; break;
+        case FAIL_INTERNAL_ERROR: os__ << "INTERNAL_ERROR"; break;
+        case FAIL_BUSY: os__ << "BUSY"; break;
+      }
     }
 
     enum TxErrorType
@@ -245,8 +283,8 @@ namespace Transports
       {
         case TX_ERR_SUCCESS: args__.push_back("SUCCESS"); break;
         case TX_ERR_TX_RETRY_LIMIT: args__.push_back("TX_RETRY_LIMIT"); break;
-        return 1;
       }
+      return 1;
     }
 
     size_t
@@ -256,6 +294,16 @@ namespace Transports
       else if (args__[index__] == "TX_RETRY_LIMIT") value__ = TX_ERR_TX_RETRY_LIMIT;
       else throw InvalidValue();
       return 1;
+    }
+
+    void
+    toText(std::ostream& os__, const TxErrorType& value__)
+    {
+      switch (value__)
+      {
+        case TX_ERR_SUCCESS: os__ << "SUCCESS"; break;
+        case TX_ERR_TX_RETRY_LIMIT: os__ << "TX_RETRY_LIMIT"; break;
+      }
     }
 
     enum TxStatusType
@@ -291,8 +339,8 @@ namespace Transports
         case TX_STA_DELIVERED: args__.push_back("DELIVERED"); break;
         case TX_STA_EXPIRED: args__.push_back("EXPIRED"); break;
         case TX_STA_CANCELED: args__.push_back("CANCELED"); break;
-        return 1;
       }
+      return 1;
     }
 
     size_t
@@ -309,6 +357,23 @@ namespace Transports
       else if (args__[index__] == "CANCELED") value__ = TX_STA_CANCELED;
       else throw InvalidValue();
       return 1;
+    }
+
+    void
+    toText(std::ostream& os__, const TxStatusType& value__)
+    {
+      switch (value__)
+      {
+        case TX_STA_RECEIVED: os__ << "RECEIVED"; break;
+        case TX_STA_ERROR: os__ << "ERROR"; break;
+        case TX_STA_QUEUED: os__ << "QUEUED"; break;
+        case TX_STA_TX_START: os__ << "TX_START"; break;
+        case TX_STA_TX_END: os__ << "TX_END"; break;
+        case TX_STA_TRANSMITTED: os__ << "TRANSMITTED"; break;
+        case TX_STA_DELIVERED: os__ << "DELIVERED"; break;
+        case TX_STA_EXPIRED: os__ << "EXPIRED"; break;
+        case TX_STA_CANCELED: os__ << "CANCELED"; break;
+      }
     }
 
     enum ZUnits
@@ -330,8 +395,8 @@ namespace Transports
       {
         case DEPTH: args__.push_back("DEPTH"); break;
         case ALTITUDE: args__.push_back("ALTITUDE"); break;
-        return 1;
       }
+      return 1;
     }
 
     size_t
@@ -341,6 +406,16 @@ namespace Transports
       else if (args__[index__] == "ALTITUDE") value__ = ALTITUDE;
       else throw InvalidValue();
       return 1;
+    }
+
+    void
+    toText(std::ostream& os__, const ZUnits& value__)
+    {
+      switch (value__)
+      {
+        case DEPTH: os__ << "DEPTH"; break;
+        case ALTITUDE: os__ << "ALTITUDE"; break;
+      }
     }
 
     enum SpeedUnits
@@ -364,8 +439,8 @@ namespace Transports
         case METER_PS: args__.push_back("METER_PS"); break;
         case RPM: args__.push_back("RPM"); break;
         case PERCENTAGE: args__.push_back("PERCENTAGE"); break;
-        return 1;
       }
+      return 1;
     }
 
     size_t
@@ -376,6 +451,17 @@ namespace Transports
       else if (args__[index__] == "PERCENTAGE") value__ = PERCENTAGE;
       else throw InvalidValue();
       return 1;
+    }
+
+    void
+    toText(std::ostream& os__, const SpeedUnits& value__)
+    {
+      switch (value__)
+      {
+        case METER_PS: os__ << "METER_PS"; break;
+        case RPM: os__ << "RPM"; break;
+        case PERCENTAGE: os__ << "PERCENTAGE"; break;
+      }
     }
 
     struct PositionType

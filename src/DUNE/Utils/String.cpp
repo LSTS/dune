@@ -147,6 +147,22 @@ namespace DUNE
       }
     }
 
+    std::string
+    String::replace(const std::string& str, char rep, const std::string& pat)
+    {
+      std::string rv;
+
+      for (unsigned int i = 0; i < str.size(); ++i)
+      {
+        if (str[i] == rep)
+          rv.append(pat);
+        else
+          rv.push_back(str[i]);
+      }
+
+      return rv;
+    }
+
     void
     String::toLowerCase(std::string& str)
     {

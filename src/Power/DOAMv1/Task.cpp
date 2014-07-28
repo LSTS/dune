@@ -102,8 +102,6 @@ namespace Power
       IMC::Temperature m_temp;
       //! Power channel state.
       IMC::PowerChannelState m_power_state;
-      //! True if the task is activating.
-      bool m_activating;
       //! Task arguments.
       Arguments m_args;
       //! Activation timer
@@ -115,7 +113,6 @@ namespace Power
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_activating(false),
         m_slave_alive(false)
       {
         std::memset(m_adcs, 0, sizeof(m_adcs));
@@ -316,7 +313,7 @@ namespace Power
       void
       consume(const IMC::Heartbeat* msg)
       {
-        if (!m_activating || (msg->getSource() != m_slave_id))
+        if (!isActivating() || (msg->getSource() != m_slave_id))
           return;
 
         if (std::abs(msg->getTimeStamp() - Clock::getSinceEpoch()) <= 1.0)
@@ -362,7 +359,6 @@ namespace Power
         if (m_act_timer.overflow())
         {
           activationFailed(DTR("failed to contact device"));
-          m_activating = false;
           return;
         }
 
@@ -386,7 +382,6 @@ namespace Power
       {
         m_slave_alive = false;
         setPowerChannelState(1);
-        m_activating = true;
         m_act_timer.setTop(getActivationTime());
         spew("my getActivationTime() is %d", getActivationTime());
       }
@@ -402,7 +397,6 @@ namespace Power
       void
       onActivation(void)
       {
-        m_activating = false;
         setStrobeMode(STROBE_MODE_CAM);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
@@ -500,7 +494,7 @@ namespace Power
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
           }
 
-          if (m_activating)
+          if (isActivating())
             checkActivation();
         }
       }

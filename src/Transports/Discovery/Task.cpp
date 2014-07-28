@@ -103,6 +103,7 @@ namespace Transports
           {
             m_sock.bind(m_args.ports[i], Address::Any, false);
             inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), m_args.ports[i]);
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             return;
           }
           catch (...)
@@ -214,6 +215,8 @@ namespace Transports
       {
         while (!stopping())
         {
+          consumeMessages();
+
           try
           {
             if (IO::Poll::poll(m_sock, 1.0))

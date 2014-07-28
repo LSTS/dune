@@ -1159,6 +1159,12 @@
             Estimated bearing angle to the target node in degrees.
           </doc>
         </arg>
+
+        <arg name="Elevation" type="Real">
+          <doc>
+            Estimated elevation angle to the target node in degrees.
+          </doc>
+        </arg>
       </args>
     </command>
   </group>

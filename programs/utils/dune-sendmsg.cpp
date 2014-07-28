@@ -53,6 +53,7 @@ main(int argc, char** argv)
       fprintf(stdout, "  DataSanity, DesiredControl, DesiredHeading, DesiredHeadingRate\n");
       fprintf(stdout, "  DesiredPitch, DesiredSpeed, DesiredRoll, DesiredZ, DevCalibrationControl\n");
       fprintf(stdout, "  EmergencyControl, EntityList, EntityState, EntityActivationState, EstimatedState\n");
+      fprintf(stdout, "  FuelLevel\n");
       fprintf(stdout, "  GpsFix, Heartbeat, IridiumMsgTx, LblConfig, LblRange\n");
       fprintf(stdout, "  LeakSimulation, LogBookControl, LogBookEntry, LoggingControl\n");
       fprintf(stdout, "  MagneticField, MonitorEntityState, OperationalLimits\n");
@@ -304,10 +305,20 @@ main(int argc, char** argv)
     tmsg->depth = 0.0;
   }
 
+  if (strcmp(argv[3], "FuelLevel") == 0)
+  {
+    IMC::FuelLevel* tmsg = new IMC::FuelLevel;
+    msg = tmsg;
+    tmsg->setSource(atof(argv[4]));
+    tmsg->value = atof(argv[5]);
+    tmsg->confidence = atof(argv[6]);
+  }
+
   if (strcmp(argv[3], "GpsFix") == 0)
   {
     IMC::GpsFix* tmsg = new IMC::GpsFix;
     msg = tmsg;
+    tmsg->type = IMC::GpsFix::GFT_MANUAL_INPUT;
     tmsg->lat = Angles::radians(atof(argv[4]));
     tmsg->lon = Angles::radians(atof(argv[5]));
     tmsg->height = atof(argv[6]);

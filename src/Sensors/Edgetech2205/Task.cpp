@@ -90,22 +90,18 @@ namespace Sensors
       IMC::PowerChannelControl m_pwr_ss;
       //! Configuration parameters.
       Arguments m_args;
-      //! True if task is activating.
-      bool m_activating;
-      //! True if task is deactivating.
-      bool m_deactivating;
       //! True if first shot.
       bool m_first_shot;
       //! Activation/deactivation timer.
       Counter<double> m_countdown;
+      //! Power channel state.
+      IMC::PowerChannelState m_pwr_state;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_sock_dat(NULL),
         m_cmd(NULL),
         m_time_diff(0),
-        m_activating(false),
-        m_deactivating(false),
         m_first_shot(true)
       {
         // Define configuration parameters.
@@ -186,6 +182,7 @@ namespace Sensors
 
         bind<IMC::EstimatedState>(this);
         bind<IMC::LoggingControl>(this);
+        bind<IMC::PowerChannelState>(this);
       }
 
       void
@@ -227,8 +224,33 @@ namespace Sensors
       {
         m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
         dispatch(m_pwr_ss);
-        m_activating = true;
         m_countdown.setTop(getActivationTime());
+      }
+
+      void
+      checkActivationProgress(void)
+      {
+        if (m_countdown.overflow())
+        {
+          activationFailed(DTR("failed to contact device"));
+          m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+          dispatch(m_pwr_ss);
+          return;
+        }
+
+        Counter<double> timer(1.0);
+        try
+        {
+          m_cmd = new CommandLink(m_args.addr, m_args.port_cmd);
+          debug("activation took %0.2f s", m_countdown.getElapsed());
+          activate();
+        }
+        catch (...)
+        {
+          double delay = timer.getRemaining();
+          if (delay > 0.0)
+            Delay::wait(delay);
+        }
       }
 
       void
@@ -246,7 +268,6 @@ namespace Sensors
         setConfig();
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        m_activating = false;
       }
 
       void
@@ -267,18 +288,46 @@ namespace Sensors
           m_sock_dat = NULL;
         }
 
-        m_deactivating = true;
+        debug("deactivation time is %u s", getDeactivationTime());
         m_countdown.setTop(getDeactivationTime());
         m_first_shot = true;
       }
 
       void
+      checkDeactivationProgress(void)
+      {
+        if (m_countdown.overflow())
+        {
+          if (m_pwr_state.state == IMC::PowerChannelState::PCS_ON)
+          {
+            if (m_pwr_ss.op == IMC::PowerChannelControl::PCC_OP_TURN_ON)
+            {
+              debug("power channels is on, turning off");
+              m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+              dispatch(m_pwr_ss);
+            }
+          }
+          else if (m_pwr_state.state == IMC::PowerChannelState::PCS_OFF)
+          {
+            debug("power channels is off, deactivating");
+            deactivate();
+          }
+        }
+      }
+
+      void
       onDeactivation(void)
       {
-        m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
-        dispatch(m_pwr_ss);
-        m_deactivating = false;
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
+      consume(const IMC::PowerChannelState* msg)
+      {
+        if (msg->name != m_args.pwr_ss)
+          return;
+
+        m_pwr_state = *msg;
       }
 
       void
@@ -510,40 +559,6 @@ namespace Sensors
       }
 
       void
-      checkActivationProgress(void)
-      {
-        if (m_countdown.overflow())
-        {
-          activationFailed(DTR("failed to contact device"));
-          m_activating = false;
-          m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
-          dispatch(m_pwr_ss);
-          return;
-        }
-
-        Counter<double> timer(1.0);
-        try
-        {
-          m_cmd = new CommandLink(m_args.addr, m_args.port_cmd);
-          debug("activation took %0.2f s", m_countdown.getElapsed());
-          activate();
-        }
-        catch (...)
-        {
-          double delay = timer.getRemaining();
-          if (delay > 0.0)
-            Delay::wait(delay);
-        }
-      }
-
-      void
-      checkDeactivationProgress(void)
-      {
-        if (m_countdown.overflow())
-          deactivate();
-      }
-
-      void
       openLog(const Path& path)
       {
         if (path == m_log_path)
@@ -598,9 +613,9 @@ namespace Sensors
           else
           {
             waitForMessages(1.0);
-            if (m_activating)
+            if (isActivating())
               checkActivationProgress();
-            else if (m_deactivating)
+            else if (isDeactivating())
               checkDeactivationProgress();
           }
         }

@@ -24,31 +24,52 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
-// Automatically generated.                                                 *
-//***************************************************************************
 
-#ifndef DUNE_IMC_CONSTANTS_HPP_INCLUDED_
-#define DUNE_IMC_CONSTANTS_HPP_INCLUDED_
+// ISO C++ 98 headers.
+#include <string>
+#include <set>
+#include <vector>
+#include <sstream>
+#include <algorithm>
 
-//! IMC version string.
-#define DUNE_IMC_CONST_VERSION "5.4.x"
-//! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "fee095c810eafcaefc48cb7d3c93ba4f"
-//! Synchronization number.
-#define DUNE_IMC_CONST_SYNC 0xFE54
-//! Reversed synchronization number.
-#define DUNE_IMC_CONST_SYNC_REV 0x54FE
-//! Size of the header in bytes.
-#define DUNE_IMC_CONST_HEADER_SIZE 20
-//! Size of the footer in bytes.
-#define DUNE_IMC_CONST_FOOTER_SIZE 2
-//! Identification number of the null message.
-#define DUNE_IMC_CONST_NULL_ID 65535
-//! Maximum message data size.
-#define DUNE_IMC_CONST_MAX_SIZE 65535
-//! Unknown entity identifier.
-#define DUNE_IMC_CONST_UNK_EID 255
-//! System entity identifier.
-#define DUNE_IMC_CONST_SYS_EID 0
+#include <DUNE/DUNE.hpp>
 
-#endif
+// Task headers.
+#include <Transports/SUNSET/Scheduler.hpp>
+
+// Local headers.
+#include "Test.hpp"
+
+using DUNE_NAMESPACES;
+
+int
+main(int argc, char** argv)
+{
+  using namespace Transports::SUNSET;
+
+  ScheduleKey key0("Temperature", 0, 1);
+  ScheduleKey key1("Temperature", 0, 1);
+
+  std::map<ScheduleKey, std::string> map;
+  map[key0] = "Lixo1";
+  map[key1] = "Lixo2";
+
+
+  std::cerr << map.size() << std::endl;
+
+  // sched.setSchedule("Temperature", 0, 1, 1.0);
+  // sched.setSchedule("Temperature", 0, 2, 0.2);
+
+
+
+  // while (true)
+  // {
+  //   double delay = sched.getRemaining();
+  //   std::cerr << "Waiting " << delay << std::endl;
+
+  //   Delay::wait(delay);
+  //   sched.update();
+  // }
+
+  return 0;
+}

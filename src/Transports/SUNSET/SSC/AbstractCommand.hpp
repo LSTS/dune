@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef TRANSPORTS_SUNSET_SSC_COMMAND_HPP_INCLUDED_
-#define TRANSPORTS_SUNSET_SSC_COMMAND_HPP_INCLUDED_
+#ifndef TRANSPORTS_SUNSET_SSC_ABSTRACT_COMMAND_HPP_INCLUDED_
+#define TRANSPORTS_SUNSET_SSC_ABSTRACT_COMMAND_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>
@@ -45,7 +45,7 @@ namespace Transports
 {
   namespace SUNSET
   {
-    class Command
+    class AbstractCommand
     {
     public:
       //! Command flags.
@@ -57,7 +57,7 @@ namespace Transports
       };
 
       //! Default constructor.
-      Command(void):
+      AbstractCommand(void):
         m_version(0),
         m_src(0),
         m_flags(0),
@@ -68,7 +68,7 @@ namespace Transports
       //! Construct a Command object setting name and version.
       //! @param[in] name command name.
       //! @param[in] version command version.
-      Command(const std::string& name, unsigned version = 0):
+      AbstractCommand(const std::string& name, unsigned version = 0):
         m_name(name),
         m_version(version),
         m_src(0),
@@ -78,7 +78,7 @@ namespace Transports
       { }
 
       virtual
-      ~Command(void)
+      ~AbstractCommand(void)
       { }
 
       //! Clear command.
@@ -92,7 +92,7 @@ namespace Transports
       //! Set command version.
       //! @param[in] version command version.
       //! @return command object.
-      Command&
+      AbstractCommand&
       setVersion(unsigned version)
       {
         m_version = version;
@@ -110,7 +110,7 @@ namespace Transports
       //! Set command name.
       //! @param[in] name command name.
       //! @return command object.
-      Command&
+      AbstractCommand&
       setName(const std::string& name)
       {
         m_name = name;
@@ -128,7 +128,7 @@ namespace Transports
       //! Set command source address.
       //! @param[in] addr command source address.
       //! @return command object.
-      Command&
+      AbstractCommand&
       setSource(unsigned addr)
       {
         m_src = addr;
@@ -147,10 +147,21 @@ namespace Transports
       //! multiple times to add more than one destination address.
       //! @param[in] addr destination address.
       //! @return command object.
-      Command&
-      addDestination(unsigned addr)
+      AbstractCommand&
+      setDestination(unsigned addr)
       {
         m_dsts.insert(addr);
+        return *this;
+      }
+
+      //! Remove destination address. This function can be called
+      //! multiple times to remove more than one destination address.
+      //! @param[in] addr destination address.
+      //! @return command object.
+      AbstractCommand&
+      clearDestination(unsigned addr)
+      {
+        m_dsts.erase(addr);
         return *this;
       }
 
@@ -162,10 +173,19 @@ namespace Transports
         return m_dsts;
       }
 
+      //! Set destination addresses.
+      //! @return command object.
+      AbstractCommand&
+      setDestinations(const std::set<unsigned>& dsts)
+      {
+        m_dsts = dsts;
+        return *this;
+      }
+
       //! Set command time-to-live.
       //! @param[in] value number of seconds.
       //! @return command object.
-      Command&
+      AbstractCommand&
       setTTL(unsigned value)
       {
         m_ttl = value;
@@ -183,7 +203,7 @@ namespace Transports
       //! Set command flags.
       //! @param[in] value flags.
       //! @return command object.
-      Command&
+      AbstractCommand&
       setFlags(unsigned value)
       {
         m_flags = value;
@@ -201,7 +221,7 @@ namespace Transports
       //! Set command priority.
       //! @param[in] value priority.
       //! @return command object.
-      Command&
+      AbstractCommand&
       setPriority(unsigned value)
       {
         m_priority = value;
@@ -258,84 +278,84 @@ namespace Transports
         return cmd;
       }
 
-      //! Decode command in text form.
-      //! @param[in] cmd command in text form.
-      //! @return command object.
-      Command&
-      decode(const std::string& cmd)
-      {
-        // Validate CRC.
-        if (getCRC(cmd) != computeCRC(cmd, cmd.size() - c_ssc_footer_size))
-          throw InvalidChecksum();
+      // //! Decode command in text form.
+      // //! @param[in] cmd command in text form.
+      // //! @return command object.
+      // Command&
+      // decode(const std::string& cmd)
+      // {
+      //   // Validate CRC.
+      //   if (getCRC(cmd) != computeCRC(cmd, cmd.size() - c_ssc_footer_size))
+      //     throw InvalidChecksum();
 
-        // Split command.
-        std::vector<std::string> parts;
-        DUNE::Utils::String::split(cmd, ",", parts);
+      //   // Split command.
+      //   std::vector<std::string> parts;
+      //   DUNE::Utils::String::split(cmd, ",", parts);
 
-        clear();
+      //   clear();
 
-        // Check minimum arguments.
-        if (parts.size() < c_ssc_min_args)
-          throw InvalidFormat("minimum arguments not present");
+      //   // Check minimum arguments.
+      //   if (parts.size() < c_ssc_min_args)
+      //     throw InvalidFormat("minimum arguments not present");
 
-        // Extract prefix.
-        if (parts[0] != c_ssc_prefix)
-          throw InvalidFormat("invalid prefix");
+      //   // Extract prefix.
+      //   if (parts[0] != c_ssc_prefix)
+      //     throw InvalidFormat("invalid prefix");
 
-        // Extract version.
-        if (std::sscanf(parts[OFFS_VERSION].c_str(), "%u", &m_version) != 1)
-          throw InvalidVersion();
+      //   // Extract version.
+      //   if (std::sscanf(parts[OFFS_VERSION].c_str(), "%u", &m_version) != 1)
+      //     throw InvalidVersion();
 
-        // Extract flags.
-        if (std::sscanf(parts[OFFS_FLAGS].c_str(), "%02X", &m_flags) != 1)
-          throw InvalidFormat("invalid flags");
+      //   // Extract flags.
+      //   if (std::sscanf(parts[OFFS_FLAGS].c_str(), "%02X", &m_flags) != 1)
+      //     throw InvalidFormat("invalid flags");
 
-        // Extract TTL.
-        if (std::sscanf(parts[OFFS_TTL].c_str(), "%u", &m_ttl) != 1)
-          throw InvalidFormat("invalid ttl");
+      //   // Extract TTL.
+      //   if (std::sscanf(parts[OFFS_TTL].c_str(), "%u", &m_ttl) != 1)
+      //     throw InvalidFormat("invalid ttl");
 
-        // Extract priority.
-        if (std::sscanf(parts[OFFS_PRIORITY].c_str(), "%u", &m_priority) != 1)
-          throw InvalidFormat("invalid priority");
+      //   // Extract priority.
+      //   if (std::sscanf(parts[OFFS_PRIORITY].c_str(), "%u", &m_priority) != 1)
+      //     throw InvalidFormat("invalid priority");
 
-        // Extract source.
-        if (std::sscanf(parts[OFFS_SRC].c_str(), "%u", &m_src) != 1)
-          throw InvalidFormat("invalid source");
+      //   // Extract source.
+      //   if (std::sscanf(parts[OFFS_SRC].c_str(), "%u", &m_src) != 1)
+      //     throw InvalidFormat("invalid source");
 
-        // Extract number of destinations.
-        unsigned dst_count = 0;
-        if (std::sscanf(parts[OFFS_DST_COUNT].c_str(), "%u", &dst_count) != 1)
-          throw InvalidFormat("invalid destination count");
+      //   // Extract number of destinations.
+      //   unsigned dst_count = 0;
+      //   if (std::sscanf(parts[OFFS_DST_COUNT].c_str(), "%u", &dst_count) != 1)
+      //     throw InvalidFormat("invalid destination count");
 
-        // Extract destinations.
-        unsigned dst = 0;
-        for (unsigned i = 0; i < dst_count; ++i)
-        {
-          // FIXME: check size.
-          if (std::sscanf(parts[OFFS_DST + i].c_str(), "%u", &dst) != 1)
-            throw InvalidFormat("invalid destination");
-          m_dsts.insert(dst);
-        }
+      //   // Extract destinations.
+      //   unsigned dst = 0;
+      //   for (unsigned i = 0; i < dst_count; ++i)
+      //   {
+      //     // FIXME: check size.
+      //     if (std::sscanf(parts[OFFS_DST + i].c_str(), "%u", &dst) != 1)
+      //       throw InvalidFormat("invalid destination");
+      //     m_dsts.insert(dst);
+      //   }
 
-        // Command name.
-        m_name = parts[OFFS_DST + dst_count];
+      //   // Command name.
+      //   m_name = parts[OFFS_DST + dst_count];
 
-        // Check if we have arguments.
-        size_t args_start = OFFS_DST + dst_count + 1;
-        size_t args_end = parts.size() - 1;
+      //   // Check if we have arguments.
+      //   size_t args_start = OFFS_DST + dst_count + 1;
+      //   size_t args_end = parts.size() - 1;
 
-        // No arguments.
-        if (args_start == args_end)
-          return *this;
+      //   // No arguments.
+      //   if (args_start == args_end)
+      //     return *this;
 
-        // Arguments.
-        decodeArgs(parts, args_start);
+      //   // Arguments.
+      //   decodeArgs(parts, args_start);
 
-        // m_args.resize(args_end - args_start);
-        // std::copy(&parts[args_start], &parts[args_end], m_args.begin());
+      //   // m_args.resize(args_end - args_start);
+      //   // std::copy(&parts[args_start], &parts[args_end], m_args.begin());
 
-        return *this;
-      }
+      //   return *this;
+      // }
 
       void
       toText(std::ostream& os) const
@@ -362,32 +382,20 @@ namespace Transports
           os << "],\n";
         }
 
-        // //! Arguments.
-        // std::vector<std::string>::const_iterator arg_itr = m_args.begin();
-        // if (arg_itr == m_args.end())
-        // {
-        //   os << "  \"arguments\"     : []\n";
-        // }
-        // else
-        // {
-        //   os << "  \"arguments\"     : [\"" << *arg_itr << "\"";
-        //   for (++arg_itr; arg_itr != m_args.end(); ++arg_itr)
-        //     os << "," << "\"" << *arg_itr << "\"";
-        //   os << "],\n";
-        // }
+        toTextArgs(os);
 
         os << "}\n"
         ;
       }
 
       bool
-      operator==(const Command& b) const
+      operator==(const AbstractCommand& b) const
       {
         return !(*this != b);
       }
 
       bool
-      operator!=(const Command& b) const
+      operator!=(const AbstractCommand& b) const
       {
         if (m_name != b.m_name)
           return true;
@@ -412,52 +420,6 @@ namespace Transports
 
         return false;
       }
-
-    protected:
-      virtual size_t
-      encodeArgs(std::vector<std::string>& args) const = 0;
-
-      virtual size_t
-      decodeArgs(const std::vector<std::string>& args, size_t index) = 0;
-
-    private:
-      // Field offsets.
-      enum Offset
-      {
-        //! Prefix.
-        OFFS_PREFIX    = 0,
-        //! Version.
-        OFFS_VERSION   = 1,
-        //! Flags.
-        OFFS_FLAGS     = 2,
-        //! Time-to-live.
-        OFFS_TTL       = 3,
-        //! Priority.
-        OFFS_PRIORITY  = 4,
-        //! Source.
-        OFFS_SRC       = 5,
-        //! Number of destinations.
-        OFFS_DST_COUNT = 6,
-        //! First destination.
-        OFFS_DST       = 7,
-        //! Last fixed offset.
-        OFFS_LAST      = 8
-      };
-
-      //! Command name.
-      std::string m_name;
-      //! Version.
-      unsigned m_version;
-      //! Source address.
-      unsigned m_src;
-      //! Destination addresses.
-      std::set<unsigned> m_dsts;
-      //! Command flags.
-      unsigned m_flags;
-      //! Command time-to-live.
-      unsigned m_ttl;
-      //! Command priority.
-      unsigned m_priority;
 
       //! Retrieve CRC from an encoded command string.
       //! @param[in] cmd command string.
@@ -503,6 +465,55 @@ namespace Transports
 
         return DUNE::Utils::String::join(list.begin(), list.end(), " | ");
       }
+
+      // Field offsets.
+      enum Offset
+      {
+        //! Prefix.
+        OFFS_PREFIX    = 0,
+        //! Version.
+        OFFS_VERSION   = 1,
+        //! Flags.
+        OFFS_FLAGS     = 2,
+        //! Time-to-live.
+        OFFS_TTL       = 3,
+        //! Priority.
+        OFFS_PRIORITY  = 4,
+        //! Source.
+        OFFS_SRC       = 5,
+        //! Number of destinations.
+        OFFS_DST_COUNT = 6,
+        //! First destination.
+        OFFS_DST       = 7,
+        //! Last fixed offset.
+        OFFS_LAST      = 8
+      };
+
+      //    protected:
+      virtual size_t
+      encodeArgs(std::vector<std::string>& args) const = 0;
+
+      virtual size_t
+      decodeArgs(const std::vector<std::string>& args, size_t index) = 0;
+
+      virtual void
+      toTextArgs(std::ostream& os__) const = 0;
+
+    private:
+      //! Command name.
+      std::string m_name;
+      //! Version.
+      unsigned m_version;
+      //! Source address.
+      unsigned m_src;
+      //! Destination addresses.
+      std::set<unsigned> m_dsts;
+      //! Command flags.
+      unsigned m_flags;
+      //! Command time-to-live.
+      unsigned m_ttl;
+      //! Command priority.
+      unsigned m_priority;
     };
   }
 }

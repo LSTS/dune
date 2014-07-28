@@ -486,12 +486,11 @@ namespace Transports
 
         Delay::wait(1.0);
 
-        char plan_name[2] = {msg->data[2], 0};
         IMC::PlanControl pc;
         pc.setSource(imc_src);
         pc.type = IMC::PlanControl::PC_REQUEST;
         pc.op = IMC::PlanControl::PC_START;
-        pc.plan_id.assign(plan_name);
+        pc.plan_id.assign(&msg->data[2], msg->data.size() - 3);
         pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
         dispatch(pc);
 

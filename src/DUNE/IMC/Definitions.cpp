@@ -19488,5 +19488,44 @@ namespace DUNE
       IMC::toJSON(os__, "content_type", content_type, nindent__);
       IMC::toJSON(os__, "content", content, nindent__);
     }
+
+    Aborted::Aborted(void)
+    {
+      m_header.mgid = 889;
+      clear();
+    }
+
+    void
+    Aborted::clear(void)
+    {
+    }
+
+    int
+    Aborted::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    Aborted::serializeFields(uint8_t* bfr__) const
+    {
+      return bfr__;
+    }
+
+    uint16_t
+    Aborted::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      (void)bfr__;
+      (void)size__;
+      return 0;
+    }
+
+    uint16_t
+    Aborted::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      (void)bfr__;
+      (void)size__;
+      return 0;
+    }
   }
 }

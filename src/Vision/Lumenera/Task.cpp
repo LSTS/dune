@@ -107,8 +107,6 @@ namespace Vision
       unsigned m_file_count;
       // Timestamp for last frame
       double m_timestamp;
-      //! True if task is activating.
-      bool m_activating;
       //! Power GPIO.
       Hardware::GPIO* m_pwr_gpio;
 
@@ -119,7 +117,6 @@ namespace Vision
         m_log_dir(ctx.dir_log),
         m_volume_count(0),
         m_file_count(0),
-        m_activating(false),
         m_pwr_gpio(NULL)
       {
         // Retrieve configuration values.
@@ -236,7 +233,7 @@ namespace Vision
       void
       consume(const IMC::LoggingControl* msg)
       {
-        if (!m_activating && (msg->getDestination() != getSystemId()))
+        if (!isDeactivating() && (msg->getDestination() != getSystemId()))
           return;
 
         if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
@@ -250,8 +247,6 @@ namespace Vision
       {
         trace("received activation request");
 
-        m_activating = true;
-
         if (m_pwr_gpio != NULL)
           m_pwr_gpio->setValue(1);
 
@@ -263,7 +258,7 @@ namespace Vision
       void
       checkActivation(void)
       {
-        if (!m_activating)
+        if (!isActivating())
           return;
 
         try
@@ -280,7 +275,6 @@ namespace Vision
       void
       onActivation(void)
       {
-        m_activating = false;
         m_file_count = 0;
         m_volume_count = 0;
 

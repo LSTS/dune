@@ -149,6 +149,28 @@ namespace DUNE
         return m_eid;
       }
 
+      //! Retrieve the entity id of a given entity label.
+      //! @param[in] label entity label.
+      //! @throw NonexistentLabel if the label doesn't have an
+      //! associated id.
+      //! @return entity id.
+      unsigned int
+      resolveEntity(const std::string& label) const
+      {
+        return m_ctx.entities.resolve(label);
+      }
+
+      //! Retrieve the entity label of a given entity id.
+      //! @param[in] id entity id.
+      //! @throw NonexistentId if the id doesn't have an
+      //! associated label.
+      //! @return entity label.
+      std::string
+      resolveEntity(unsigned int id) const
+      {
+        return m_ctx.entities.resolve(id);
+      }
+
       //! Retrieve the task's activation time.
       //! @return activation time of the task.
       uint16_t
@@ -381,22 +403,6 @@ namespace DUNE
       unsigned int
       reserveEntity(const std::string& label);
 
-      //! Retrieve the entity id of a given entity label.
-      //! @param[in] label entity label.
-      //! @throw NonexistentLabel if the label doesn't have an
-      //! associated id.
-      //! @return entity id.
-      unsigned int
-      resolveEntity(const std::string& label) const;
-
-      //! Retrieve the entity label of a given entity id.
-      //! @param[in] id entity id.
-      //! @throw NonexistentId if the id doesn't have an
-      //! associated label.
-      //! @return entity label.
-      std::string
-      resolveEntity(unsigned int id) const;
-
       //! Test if task is stopping.
       //! @return true if task is stopping, false otherwise.
       bool
@@ -411,6 +417,22 @@ namespace DUNE
       isActive(void) const
       {
         return m_act_state.state == IMC::EntityActivationState::EAS_ACTIVE;
+      }
+
+      //! Test if task is activating.
+      //! @return true if task is activating, false otherwise.
+      bool
+      isActivating(void) const
+      {
+        return m_activating;
+      }
+
+      //! Test if task is deactivating.
+      //! @return true if task is deactivating, false otherwise.
+      bool
+      isDeactivating(void) const
+      {
+        return m_deactivating;
       }
 
       //! Wait for the receiving queue to contain at least one message
@@ -711,6 +733,10 @@ namespace DUNE
       std::string m_param_editor;
       //! Next activation state.
       NextActivationState m_next_act_state;
+      //! True if task is activating.
+      bool m_activating;
+      //! True if task is deactivating.
+      bool m_deactivating;
 
       //! Report current entity states by dispatching EntityState
       //! messages. This function will at least report the state of

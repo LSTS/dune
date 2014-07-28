@@ -208,8 +208,6 @@ namespace Sensors
       Path m_log_path;
       //! Power channel control.
       IMC::PowerChannelControl m_power_channel_control;
-      //! True if task is activating.
-      bool m_activating;
       //! Activation/deactivation timer.
       Counter<double> m_countdown;
       //! Range adaptive modifier counter.
@@ -220,8 +218,7 @@ namespace Sensors
       //! Constructor.
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
-        m_sock(NULL),
-        m_activating(false)
+        m_sock(NULL)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -448,7 +445,6 @@ namespace Sensors
         dispatch(m_power_channel_control);
 
         m_countdown.reset();
-        m_activating = true;
       }
 
       void
@@ -456,7 +452,6 @@ namespace Sensors
       {
         inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        m_activating = false;
       }
 
       void
@@ -479,7 +474,6 @@ namespace Sensors
         if (m_countdown.overflow())
         {
           activationFailed(DTR("failed to contact device"));
-          m_activating = false;
           return;
         }
 
@@ -797,7 +791,7 @@ namespace Sensors
           else
           {
             waitForMessages(1.0);
-            if (m_activating)
+            if (isActivating())
               checkActivationProgress();
           }
         }

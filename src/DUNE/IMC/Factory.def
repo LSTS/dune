@@ -264,4 +264,5 @@ MESSAGE(820, FormCtrlParam)
 MESSAGE(821, FormationEval)
 MESSAGE(877, MessagePart)
 MESSAGE(888, NeptusBlob)
+MESSAGE(889, Aborted)
 #undef MESSAGE
