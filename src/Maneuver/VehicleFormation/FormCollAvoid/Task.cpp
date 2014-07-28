@@ -1750,7 +1750,7 @@ namespace Maneuver
             if (!isActive())
             {
               m_ctrl_active = false;
-              inf("Formation control deactivation!");
+              war("Formation controller deactivation");
             }
             else
             {
@@ -1781,7 +1781,7 @@ namespace Maneuver
                   && m_team_leader_init && (m_uav_n == 1 || m_team_state_init))
               {
                 m_ctrl_active = true;
-                inf("Activating the controller!");
+                war("Activating the formation controller");
               }
               else if (Clock::get() >= m_last_time_verb_ctrlactiv + m_timestep_trace)
               {
