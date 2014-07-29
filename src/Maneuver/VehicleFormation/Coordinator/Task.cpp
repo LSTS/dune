@@ -56,6 +56,8 @@ namespace Maneuver
         std::vector<std::string> cmd_src;
         //! Source system alias
         std::string src_alias;
+        // Main coordinator flag
+        bool main;
         //! Simulation and control frequencies
         double ctrl_frequency;
         double sync_frequency;
@@ -154,7 +156,7 @@ namespace Maneuver
         double m_timestep_sync;
 
         //! Formation synchronization messages
-        IMC::FormationPlanExecution m_uav_formation;
+        IMC::UAVFormation m_uav_formation;
         //! Leader initial state
         IMC::LeaderState m_init_leader;
         // Formation control activation state
@@ -208,20 +210,24 @@ namespace Maneuver
           m_alias_id(UINT_MAX)
         {
           // Definition of configuration parameters.
-//          paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-//                      Tasks::Parameter::VISIBILITY_USER);
+          paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                      Tasks::Parameter::VISIBILITY_USER);
 
           param("Commands source", m_args.cmd_src)
           .defaultValue("")
           .description("List of <Command>:<System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass a specific command.");
 
-//          param("Message source", m_args.cmd_src)
+//          param("Message source", m_args.msg_src)
 //          .defaultValue("")
 //          .description("List of <Message>:<System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass a specific message.");
 //
           param("Source Alias", m_args.src_alias)
           .defaultValue("")
           .description("Emulated system id.");
+
+          param("Main Coordinator", m_args.main)
+          .defaultValue("")
+          .description("Flag indicating that the coordinator in this system is the main coordinator task.");
 
           param("Control Frequency", m_args.ctrl_frequency)
           .defaultValue("20.0")
@@ -351,6 +357,7 @@ namespace Maneuver
           //bind<IMC::LeaderState>(this);
           bind<IMC::PlanControl>(this);
           bind<IMC::PlanDB>(this);
+          bind<IMC::UAVFormation>(this);
           bind<IMC::EntityActivationState>(this);
           //bind<IMC::SetEntityParameters>(this);
 //          bind<IMC::DesiredRoll>(this);
@@ -473,39 +480,6 @@ namespace Maneuver
             m_tas_max_uav = Matrix(1, m_uav_n, m_args.tas_max);
             m_bank_lim_uav = Matrix(1, m_uav_n, Angles::radians(m_args.bank_lim));
           }
-
-          //==========================================
-          // Formation configuration messages
-          //==========================================
-          // ToDo - Set the hardcoded variables as configurable
-          m_uav_formation.group_name = "AsasF";
-          m_uav_formation.formation_name = "AsasF";
-          m_uav_formation.plan_id = m_plan_ctrl_last.plan_id;
-          m_uav_formation.description = "Test formation configuration";
-          m_uav_formation.leader_speed = m_tas_cmd_leader;
-          m_uav_formation.leader_bank_lim = m_bank_lim;
-          m_uav_formation.pos_sim_err_lim = 20;
-          m_uav_formation.pos_sim_err_wrn = 10;
-          m_uav_formation.pos_sim_err_timeout = 10;
-          m_uav_formation.converg_max = 5;
-          m_uav_formation.converg_timeout = 10;
-          m_uav_formation.comms_timeout = 5;
-          m_uav_formation.turb_lim = 10;
-
-          IMC::FormationParameters formation_param;
-          IMC::VehicleFormationParticipant formation_uav;
-          formation_param.formation_name = "AsasF";
-          formation_param.reference_frame = m_args.formation_frame;
-          formation_param.participants.clear();
-          for (unsigned int uav_ind; uav_ind < m_uav_n; uav_ind++)
-          {
-            formation_uav.vid = m_uav_id[uav_ind];
-            formation_uav.off_x = m_formation_pos(0, uav_ind);
-            formation_uav.off_y = m_formation_pos(1, uav_ind);
-            formation_uav.off_z = m_formation_pos(2, uav_ind);
-            formation_param.participants.push_back(formation_uav);
-          }
-          dispatchAlias(&formation_param);
 
           //==========================================
           // Compute the leader limits from the formation configuration
@@ -901,21 +875,6 @@ namespace Maneuver
           if (!is_formation_control)
             return;
 
-
-//          IMC::SetEntityParameters sep;
-//          IMC::EntityParameter ep;
-//          // Request formation controller activation
-//          ep.name = "Active";
-//          ep.value = "true";
-//          sep.params.push_back(ep);
-//          sep.name = "Formation Control";
-//          dispatchAlias(&sep);
-//          // Request path controller activation
-//          sep.name = "Path Control Leader";
-//          dispatchAlias(&sep);
-//          sep.name = "Path Control Coordinator";
-//          dispatchAlias(&sep);
-
           if (m_plan_ctrl_last.op == IMC::PlanControl::PC_START)
           {
             // Set the leader initial state with the global team state
@@ -947,13 +906,84 @@ namespace Maneuver
           // Deactivate the task if the PlanControl action is "Stop"
           else if (m_plan_ctrl_last.op == IMC::PlanControl::PC_STOP)
             requestDeactivation();
-          // Reroute the PlanControl message to the vehicle formation controllers
+//          // Reroute the PlanControl message to the vehicle formation controllers
+//          for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+//            if (m_uav_id[ind_uav] != getSystemId())
+//            {
+//              m_plan_ctrl_last.setSourceEntity(getEntityId());
+//              m_plan_ctrl_last.setDestination(m_uav_id[ind_uav]);
+//              dispatchAlias(&m_plan_ctrl_last);
+//            }
+          //==========================================
+          // Activate the formation plan in the cooperating vehicles
+          //==========================================
+          // UAVFormation message
+          // ToDo - Set the hardcoded variables as configurable
+          IMC::VehicleFormationParticipant formation_uav;
+          m_uav_formation.group_name = "AsasF";
+          m_uav_formation.formation_name = "AsasF";
+          m_uav_formation.plan_id = m_plan_ctrl_last.plan_id;
+          m_uav_formation.description = "Test formation configuration";
+          m_uav_formation.reference_frame = m_args.formation_frame;
+          m_uav_formation.participants.clear();
+          for (unsigned int uav_ind; uav_ind < m_uav_n; uav_ind++)
+          {
+            formation_uav.vid = m_uav_id[uav_ind];
+            formation_uav.off_x = m_formation_pos(0, uav_ind);
+            formation_uav.off_y = m_formation_pos(1, uav_ind);
+            formation_uav.off_z = m_formation_pos(2, uav_ind);
+            m_uav_formation.participants.push_back(formation_uav);
+          }
+          m_uav_formation.leader_speed_min = m_tas_min;
+          m_uav_formation.leader_speed_max = m_tas_max;
+          m_uav_formation.leader_bank_lim = m_bank_lim;
+          m_uav_formation.pos_sim_err_lim = 20;
+          m_uav_formation.pos_sim_err_wrn = 10;
+          m_uav_formation.pos_sim_err_timeout = 10;
+          m_uav_formation.converg_max = 5;
+          m_uav_formation.converg_timeout = 10;
+          m_uav_formation.comms_timeout = 5;
+          m_uav_formation.turb_lim = 10;
+
+          dispatchAlias(&m_uav_formation);
+
+        }
+
+        void
+        consume(const IMC::UAVFormation* msg)
+        {
+//          requestActivation();
+          // Activate the formation controller
+          IMC::SetEntityParameters sep;
+          IMC::EntityParameter ep;
+          // Request formation controller activation
+          ep.name = "Active";
+          ep.value = "true";
+          sep.params.push_back(ep);
+          sep.name = "Formation Control";
+          dispatchAlias(&sep);
+          //          // Request path controller activation
+          //          sep.name = "Path Control Leader";
+          //          dispatchAlias(&sep);
+          //          sep.name = "Path Control Coordinator";
+          //          dispatchAlias(&sep);
+
+          // Send a PlanControl message to activate the formation control plan
+          if (((m_alias_id != UINT_MAX)?m_alias_id:getSystemId()) != msg->getSource())
+            return;
+          inf("PlanControl message sent!");
           for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
-            if (m_uav_id[ind_uav] != getSystemId())
+            if (m_uav_id[ind_uav] == getSystemId())
             {
-              m_plan_ctrl_last.setSourceEntity(getEntityId());
-              m_plan_ctrl_last.setDestination(m_uav_id[ind_uav]);
-              dispatchAlias(&m_plan_ctrl_last);
+              IMC::PlanControl plan;
+              plan.type = IMC::PlanControl::PC_REQUEST;
+              plan.op = IMC::PlanControl::PC_START;
+              plan.plan_id = msg->plan_id;
+              plan.arg.clear();
+              plan.setSourceEntity(getEntityId());
+              plan.setDestination(m_uav_id[ind_uav]);
+              dispatchAlias(&plan);
+              break;
             }
         }
 
@@ -1068,7 +1098,6 @@ namespace Maneuver
           m_tas_cmd_leader = trimValue(msg->value, m_args.tas_min,  m_args.tas_max);
           m_model->commandAirspeed(m_tas_cmd_leader);
 
-          m_uav_formation.leader_speed = m_tas_cmd_leader;
           updateLeaderLimits();
 
           // ========= Debug ===========
@@ -1575,7 +1604,7 @@ namespace Maneuver
               m_tas_max = m_tas_max_uav(uav_ind);
           }
 
-          if (m_args.formation_frame == IMC::FormationParameters::OP_EARTH_FIXED)
+          if (m_args.formation_frame == IMC::UAVFormation::OP_EARTH_FIXED)
           {
             //------------------------------------------
             // Ground aligned formation reference frame
