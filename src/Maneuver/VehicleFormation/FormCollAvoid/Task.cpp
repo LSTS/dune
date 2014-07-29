@@ -80,7 +80,6 @@ namespace Maneuver
         double alt_max;
         double alt_min;
         //! Formation configuration parameters
-        //IMC::FormationParameters::reference_frame formation_frame;
         unsigned int formation_frame;
         unsigned int uav_n;
         Matrix formation_pos;
@@ -284,7 +283,7 @@ namespace Maneuver
         double m_bank_lim;
 
         //! Controller parameters
-        IMC::FormCtrlParam m_formation_ctrl_params;
+        IMC::FormationControlParams m_formation_ctrl_params;
         bool m_param_init;
         double m_k_longitudinal;
         double m_k_lateral;
@@ -298,7 +297,7 @@ namespace Maneuver
         double m_accel_lim_x;
 
         //! Controller evaluation data
-        IMC::FormationEval m_formation_eval;
+        IMC::FormationEvaluation m_formation_eval;
         double m_dist_min_abs;
         double m_dist_min_mean;
         double m_err_mean;
@@ -403,8 +402,8 @@ namespace Maneuver
           m_leader_id(UINT_MAX)
         {
           // Definition of configuration parameters.
-          paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                      Tasks::Parameter::VISIBILITY_USER);
+//          paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+//                      Tasks::Parameter::VISIBILITY_USER);
 
           param("Commands source", m_args.cmd_src)
           .defaultValue("")
@@ -715,12 +714,17 @@ namespace Maneuver
               (!m_param_init && isActive()))
           {
             // Controller parameters
-            m_formation_ctrl_params.action = IMC::FormCtrlParam::OP_REP;
-            m_formation_ctrl_params.longain = m_k_longitudinal;
-            m_formation_ctrl_params.latgain = m_k_lateral;
-            m_formation_ctrl_params.bondthick = m_k_boundary;
-            m_formation_ctrl_params.leadgain = m_k_leader;
-            m_formation_ctrl_params.deconflgain = m_k_deconfliction;
+            m_formation_ctrl_params.action = IMC::FormationControlParams::OP_REP;
+            m_formation_ctrl_params.lon_gain = m_k_longitudinal;
+            m_formation_ctrl_params.lat_gain = m_k_lateral;
+            m_formation_ctrl_params.bond_thick = m_k_boundary;
+            m_formation_ctrl_params.lead_gain = m_k_leader;
+            m_formation_ctrl_params.deconfl_gain = m_k_deconfliction;
+            m_formation_ctrl_params.accel_switch_gain = m_flow_accel_max;
+            m_formation_ctrl_params.safe_dist = m_safe_dist;
+            m_formation_ctrl_params.deconflict_offset = m_deconfliction_offset;
+            m_formation_ctrl_params.accel_safe_margin = m_acc_safety_marg;
+            m_formation_ctrl_params.accel_lim_x = m_accel_lim_x;
             dispatchAlias(&m_formation_ctrl_params);
             if (isActive())
               m_param_init = true;
@@ -2393,7 +2397,7 @@ namespace Maneuver
           // spew('\nFormation rotation center: %3.1f, %3.1f\n', vd_FormRotCtr)
 
           //! Formation reference position, velocity and acceleration vectors
-          if (i_formation_frame > IMC::FormationParameters::OP_EARTH_FIXED)
+          if (i_formation_frame > IMC::UAVFormation::OP_EARTH_FIXED)
           {
             if (md_uav_state(6, 0) == 0)
             {
@@ -2405,7 +2409,7 @@ namespace Maneuver
             Matrix vd_form_acc1[2] = {0, 0};
                */
             }
-            else if (i_formation_frame == IMC::FormationParameters::OP_PATH_CURVED)
+            else if (i_formation_frame == IMC::UAVFormation::OP_PATH_CURVED)
             {
               //! Path reference frame
               //! In-formation adjustment
@@ -2477,7 +2481,7 @@ namespace Maneuver
             //! - Position vector
             //! - Velocity vector
             //! - Acceleration vector
-            if (i_formation_frame == IMC::FormationParameters::OP_EARTH_FIXED)
+            if (i_formation_frame == IMC::UAVFormation::OP_EARTH_FIXED)
             {
               //! Ground reference frame
               //! - Position
@@ -2498,7 +2502,7 @@ namespace Maneuver
             else
             {
               //! Path reference frame
-              if ((i_formation_frame == IMC::FormationParameters::OP_PATH_CURVED) &&
+              if ((i_formation_frame == IMC::UAVFormation::OP_PATH_CURVED) &&
                   (md_uav_state(6, 0) != 0))
               {
                 //! Curved shape - Formation shape adjustment to path curvature
@@ -2764,7 +2768,7 @@ namespace Maneuver
               md_uav_state(3, ind_uav+1), md_uav_state(4, ind_uav+1), md_uav_state(5, ind_uav+1)};
            */
 
-          if (i_formation_frame == IMC::FormationParameters::OP_EARTH_FIXED)
+          if (i_formation_frame == IMC::UAVFormation::OP_EARTH_FIXED)
           {
             //! Earth reference frame
             //! - Position
