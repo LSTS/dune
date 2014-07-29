@@ -356,20 +356,18 @@
 #define DUNE_IMC_POLYGONVERTEX 474
 //! CompassCalibration identification number.
 #define DUNE_IMC_COMPASSCALIBRATION 475
-//! FormationParameters identification number.
-#define DUNE_IMC_FORMATIONPARAMETERS 476
-//! FormationPlanExecution identification number.
-#define DUNE_IMC_FORMATIONPLANEXECUTION 477
 //! FollowReference identification number.
-#define DUNE_IMC_FOLLOWREFERENCE 478
+#define DUNE_IMC_FOLLOWREFERENCE 476
 //! Reference identification number.
-#define DUNE_IMC_REFERENCE 479
+#define DUNE_IMC_REFERENCE 477
 //! FollowRefState identification number.
-#define DUNE_IMC_FOLLOWREFSTATE 480
+#define DUNE_IMC_FOLLOWREFSTATE 478
+//! UAVFormation identification number.
+#define DUNE_IMC_UAVFORMATION 479
 //! FormationMonitor identification number.
-#define DUNE_IMC_FORMATIONMONITOR 481
+#define DUNE_IMC_FORMATIONMONITOR 480
 //! RelativeState identification number.
-#define DUNE_IMC_RELATIVESTATE 482
+#define DUNE_IMC_RELATIVESTATE 481
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.
@@ -390,8 +388,8 @@
 #define DUNE_IMC_VEHICLEMEDIUM 508
 //! Collision identification number.
 #define DUNE_IMC_COLLISION 509
-//! FormState identification number.
-#define DUNE_IMC_FORMSTATE 510
+//! FormationState identification number.
+#define DUNE_IMC_FORMATIONSTATE 510
 //! AutopilotMode identification number.
 #define DUNE_IMC_AUTOPILOTMODE 511
 //! Abort identification number.
@@ -496,10 +494,10 @@
 #define DUNE_IMC_UAMRXRANGE 817
 //! AbortAcked identification number.
 #define DUNE_IMC_ABORTACKED 818
-//! FormCtrlParam identification number.
-#define DUNE_IMC_FORMCTRLPARAM 820
-//! FormationEval identification number.
-#define DUNE_IMC_FORMATIONEVAL 821
+//! FormationControlParams identification number.
+#define DUNE_IMC_FORMATIONCONTROLPARAMS 820
+//! FormationEvaluation identification number.
+#define DUNE_IMC_FORMATIONEVALUATION 821
 //! MessagePart identification number.
 #define DUNE_IMC_MESSAGEPART 877
 //! NeptusBlob identification number.

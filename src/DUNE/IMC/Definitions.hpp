@@ -12485,199 +12485,6 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
-    //! Formation Parameters.
-    class FormationParameters: public Maneuver
-    {
-    public:
-      //! Formation Reference Frame.
-      enum FormationReferenceFrameEnum
-      {
-        //! Earth Fixed.
-        OP_EARTH_FIXED = 0,
-        //! Path Fixed.
-        OP_PATH_FIXED = 1,
-        //! Path Curved.
-        OP_PATH_CURVED = 2
-      };
-
-      //! Formation Name.
-      std::string formation_name;
-      //! Formation Reference Frame.
-      uint8_t reference_frame;
-      //! Formation Participants.
-      MessageList<VehicleFormationParticipant> participants;
-      //! Custom settings for formation.
-      std::string custom;
-
-      static uint16_t
-      getIdStatic(void)
-      {
-        return 476;
-      }
-
-      FormationParameters(void);
-
-      Message*
-      clone(void) const
-      {
-        return new FormationParameters(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return FormationParameters::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "FormationParameters";
-      }
-
-      unsigned
-      getFixedSerializationSize(void) const
-      {
-        return 1;
-      }
-
-      unsigned
-      getVariableSerializationSize(void) const
-      {
-        return IMC::getSerializationSize(formation_name) + participants.getSerializationSize() + IMC::getSerializationSize(custom);
-      }
-
-      void
-      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
-
-    protected:
-      void
-      setTimeStampNested(double value__);
-
-      void
-      setSourceNested(uint16_t value__);
-
-      void
-      setSourceEntityNested(uint8_t value__);
-
-      void
-      setDestinationNested(uint16_t value__);
-
-      void
-      setDestinationEntityNested(uint8_t value__);
-    };
-
-    //! Formation Plan Execution.
-    class FormationPlanExecution: public Maneuver
-    {
-    public:
-      //! Target Group Name.
-      std::string group_name;
-      //! Formation Name.
-      std::string formation_name;
-      //! Formation Plan ID.
-      std::string plan_id;
-      //! Plan Description.
-      std::string description;
-      //! Formation Leader Flight Airspeed.
-      fp32_t leader_speed;
-      //! Formation leader flight bank limit.
-      fp32_t leader_bank_lim;
-      //! Position mismatch limit.
-      fp32_t pos_sim_err_lim;
-      //! Position mismatch threshold.
-      fp32_t pos_sim_err_wrn;
-      //! Position mismatch time-out.
-      uint16_t pos_sim_err_timeout;
-      //! Convergence threshold.
-      fp32_t converg_max;
-      //! Convergence time-out.
-      uint16_t converg_timeout;
-      //! Communications time-out.
-      uint16_t comms_timeout;
-      //! Turbulence limit.
-      fp32_t turb_lim;
-      //! Custom settings for maneuver.
-      std::string custom;
-
-      static uint16_t
-      getIdStatic(void)
-      {
-        return 477;
-      }
-
-      FormationPlanExecution(void);
-
-      Message*
-      clone(void) const
-      {
-        return new FormationPlanExecution(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return FormationPlanExecution::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "FormationPlanExecution";
-      }
-
-      unsigned
-      getFixedSerializationSize(void) const
-      {
-        return 30;
-      }
-
-      unsigned
-      getVariableSerializationSize(void) const
-      {
-        return IMC::getSerializationSize(group_name) + IMC::getSerializationSize(formation_name) + IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(description) + IMC::getSerializationSize(custom);
-      }
-
-      void
-      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
-    };
-
     //! Follow Reference Maneuver.
     class FollowReference: public Maneuver
     {
@@ -12696,7 +12503,7 @@ namespace DUNE
       static uint16_t
       getIdStatic(void)
       {
-        return 478;
+        return 476;
       }
 
       FollowReference(void);
@@ -12782,7 +12589,7 @@ namespace DUNE
       static uint16_t
       getIdStatic(void)
       {
-        return 479;
+        return 477;
       }
 
       Reference(void);
@@ -12901,7 +12708,7 @@ namespace DUNE
       static uint16_t
       getIdStatic(void)
       {
-        return 480;
+        return 478;
       }
 
       FollowRefState(void);
@@ -12952,6 +12759,132 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return reference.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! UAV Formation.
+    class UAVFormation: public Maneuver
+    {
+    public:
+      //! Formation Reference Frame.
+      enum FormationReferenceFrameEnum
+      {
+        //! Earth Fixed.
+        OP_EARTH_FIXED = 0,
+        //! Path Fixed.
+        OP_PATH_FIXED = 1,
+        //! Path Curved.
+        OP_PATH_CURVED = 2
+      };
+
+      //! Formation Name.
+      std::string formation_name;
+      //! Target Group Name.
+      std::string group_name;
+      //! Formation Plan ID.
+      std::string plan_id;
+      //! Plan Description.
+      std::string description;
+      //! Formation Reference Frame.
+      uint8_t reference_frame;
+      //! Formation Participants.
+      MessageList<VehicleFormationParticipant> participants;
+      //! Formation Leader Minimum Speed.
+      fp32_t leader_speed_min;
+      //! Formation Leader Maximum Speed.
+      fp32_t leader_speed_max;
+      //! Formation Leader Bank Limit.
+      fp32_t leader_bank_lim;
+      //! Position mismatch limit.
+      fp32_t pos_sim_err_lim;
+      //! Position mismatch threshold.
+      fp32_t pos_sim_err_wrn;
+      //! Position mismatch time-out.
+      uint16_t pos_sim_err_timeout;
+      //! Convergence threshold.
+      fp32_t converg_max;
+      //! Convergence time-out.
+      uint16_t converg_timeout;
+      //! Communications time-out.
+      uint16_t comms_timeout;
+      //! Turbulence limit.
+      fp32_t turb_lim;
+      //! Custom settings for maneuver.
+      std::string custom;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 479;
+      }
+
+      UAVFormation(void);
+
+      Message*
+      clone(void) const
+      {
+        return new UAVFormation(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return UAVFormation::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "UAVFormation";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 35;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(formation_name) + IMC::getSerializationSize(group_name) + IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(description) + participants.getSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -13026,7 +12959,7 @@ namespace DUNE
       static uint16_t
       getIdStatic(void)
       {
-        return 482;
+        return 481;
       }
 
       RelativeState(void);
@@ -13087,6 +13020,8 @@ namespace DUNE
     class FormationMonitor: public Message
     {
     public:
+      //! Minimum Distance.
+      fp32_t dist_min;
       //! Commanded X Acceleration (North).
       fp32_t ax_cmd;
       //! Commanded Y Acceleration (East).
@@ -13129,7 +13064,7 @@ namespace DUNE
       static uint16_t
       getIdStatic(void)
       {
-        return 481;
+        return 480;
       }
 
       FormationMonitor(void);
@@ -13173,7 +13108,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 72;
+        return 76;
       }
 
       unsigned
@@ -14025,7 +13960,7 @@ namespace DUNE
     };
 
     //! Formation Tracking State.
-    class FormState: public Message
+    class FormationState: public Message
     {
     public:
       //! Position Mismatch Monitor.
@@ -14076,12 +14011,12 @@ namespace DUNE
         return 510;
       }
 
-      FormState(void);
+      FormationState(void);
 
       Message*
       clone(void) const
       {
-        return new FormState(*this);
+        return new FormationState(*this);
       }
 
       void
@@ -14105,13 +14040,13 @@ namespace DUNE
       uint16_t
       getId(void) const
       {
-        return FormState::getIdStatic();
+        return FormationState::getIdStatic();
       }
 
       const char*
       getName(void) const
       {
-        return "FormState";
+        return "FormationState";
       }
 
       unsigned
@@ -18463,7 +18398,7 @@ namespace DUNE
     };
 
     //! Formation Control Parameters.
-    class FormCtrlParam: public Message
+    class FormationControlParams: public Message
     {
     public:
       //! Action.
@@ -18480,15 +18415,25 @@ namespace DUNE
       //! Action.
       uint8_t action;
       //! Longitudinal Gain.
-      fp32_t longain;
+      fp32_t lon_gain;
       //! Lateral Gain.
-      fp32_t latgain;
+      fp32_t lat_gain;
       //! Boundary Layer Thickness.
-      uint32_t bondthick;
+      fp32_t bond_thick;
       //! Leader Gain.
-      fp32_t leadgain;
+      fp32_t lead_gain;
       //! Deconfliction Gain.
-      fp32_t deconflgain;
+      fp32_t deconfl_gain;
+      //! Acceleration Switch Gain.
+      fp32_t accel_switch_gain;
+      //! Safety Distance.
+      fp32_t safe_dist;
+      //! Deconfliction Offset.
+      fp32_t deconflict_offset;
+      //! Acceleration Safety Margin.
+      fp32_t accel_safe_margin;
+      //! Maximum Longitudinal Acceleration.
+      fp32_t accel_lim_x;
 
       static uint16_t
       getIdStatic(void)
@@ -18496,12 +18441,12 @@ namespace DUNE
         return 820;
       }
 
-      FormCtrlParam(void);
+      FormationControlParams(void);
 
       Message*
       clone(void) const
       {
-        return new FormCtrlParam(*this);
+        return new FormationControlParams(*this);
       }
 
       void
@@ -18525,19 +18470,19 @@ namespace DUNE
       uint16_t
       getId(void) const
       {
-        return FormCtrlParam::getIdStatic();
+        return FormationControlParams::getIdStatic();
       }
 
       const char*
       getName(void) const
       {
-        return "FormCtrlParam";
+        return "FormationControlParams";
       }
 
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 21;
+        return 41;
       }
 
       void
@@ -18545,7 +18490,7 @@ namespace DUNE
     };
 
     //! Formation Evaluation Data.
-    class FormationEval: public Message
+    class FormationEvaluation: public Message
     {
     public:
       //! Mean position error.
@@ -18554,6 +18499,8 @@ namespace DUNE
       fp32_t dist_min_abs;
       //! Mean minimum distance.
       fp32_t dist_min_mean;
+      //! Evaluation Time.
+      fp32_t time;
 
       static uint16_t
       getIdStatic(void)
@@ -18561,12 +18508,12 @@ namespace DUNE
         return 821;
       }
 
-      FormationEval(void);
+      FormationEvaluation(void);
 
       Message*
       clone(void) const
       {
-        return new FormationEval(*this);
+        return new FormationEvaluation(*this);
       }
 
       void
@@ -18590,19 +18537,19 @@ namespace DUNE
       uint16_t
       getId(void) const
       {
-        return FormationEval::getIdStatic();
+        return FormationEvaluation::getIdStatic();
       }
 
       const char*
       getName(void) const
       {
-        return "FormationEval";
+        return "FormationEvaluation";
       }
 
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 12;
+        return 16;
       }
 
       void
