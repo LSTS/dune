@@ -308,8 +308,8 @@ namespace DUNE
       dispatch(m_act_state);
 
       spew("calling on request activation");
-      onRequestActivation();
       m_activating = true;
+      onRequestActivation();
     }
 
     void
