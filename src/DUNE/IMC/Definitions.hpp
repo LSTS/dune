@@ -12781,8 +12781,8 @@ namespace DUNE
       setDestinationEntityNested(uint8_t value__);
     };
 
-    //! UAV Formation.
-    class UAVFormation: public Maneuver
+    //! Formation.
+    class Formation: public Maneuver
     {
     public:
       //! Formation Reference Frame.
@@ -12837,12 +12837,12 @@ namespace DUNE
         return 479;
       }
 
-      UAVFormation(void);
+      Formation(void);
 
       Message*
       clone(void) const
       {
-        return new UAVFormation(*this);
+        return new Formation(*this);
       }
 
       void
@@ -12866,13 +12866,13 @@ namespace DUNE
       uint16_t
       getId(void) const
       {
-        return UAVFormation::getIdStatic();
+        return Formation::getIdStatic();
       }
 
       const char*
       getName(void) const
       {
-        return "UAVFormation";
+        return "Formation";
       }
 
       unsigned

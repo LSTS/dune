@@ -13202,7 +13202,7 @@ namespace DUNE
       }
     }
 
-    UAVFormation::UAVFormation(void)
+    Formation::Formation(void)
     {
       m_header.mgid = 479;
       clear();
@@ -13210,7 +13210,7 @@ namespace DUNE
     }
 
     void
-    UAVFormation::clear(void)
+    Formation::clear(void)
     {
       formation_name.clear();
       group_name.clear();
@@ -13232,9 +13232,9 @@ namespace DUNE
     }
 
     bool
-    UAVFormation::fieldsEqual(const Message& msg__) const
+    Formation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::UAVFormation& other__ = static_cast<const UAVFormation&>(msg__);
+      const IMC::Formation& other__ = static_cast<const Formation&>(msg__);
       if (formation_name != other__.formation_name) return false;
       if (group_name != other__.group_name) return false;
       if (plan_id != other__.plan_id) return false;
@@ -13256,13 +13256,13 @@ namespace DUNE
     }
 
     int
-    UAVFormation::validate(void) const
+    Formation::validate(void) const
     {
       return false;
     }
 
     uint8_t*
-    UAVFormation::serializeFields(uint8_t* bfr__) const
+    Formation::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
       ptr__ += IMC::serialize(formation_name, ptr__);
@@ -13286,7 +13286,7 @@ namespace DUNE
     }
 
     uint16_t
-    UAVFormation::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    Formation::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(formation_name, bfr__, size__);
@@ -13310,7 +13310,7 @@ namespace DUNE
     }
 
     uint16_t
-    UAVFormation::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    Formation::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::reverseDeserialize(formation_name, bfr__, size__);
@@ -13334,7 +13334,7 @@ namespace DUNE
     }
 
     void
-    UAVFormation::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    Formation::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "formation_name", formation_name, nindent__);
       IMC::toJSON(os__, "group_name", group_name, nindent__);
@@ -13356,31 +13356,31 @@ namespace DUNE
     }
 
     void
-    UAVFormation::setTimeStampNested(double value__)
+    Formation::setTimeStampNested(double value__)
     {
       participants.setTimeStamp(value__);
     }
 
     void
-    UAVFormation::setSourceNested(uint16_t value__)
+    Formation::setSourceNested(uint16_t value__)
     {
       participants.setSource(value__);
     }
 
     void
-    UAVFormation::setSourceEntityNested(uint8_t value__)
+    Formation::setSourceEntityNested(uint8_t value__)
     {
       participants.setSourceEntity(value__);
     }
 
     void
-    UAVFormation::setDestinationNested(uint16_t value__)
+    Formation::setDestinationNested(uint16_t value__)
     {
       participants.setDestination(value__);
     }
 
     void
-    UAVFormation::setDestinationEntityNested(uint8_t value__)
+    Formation::setDestinationEntityNested(uint8_t value__)
     {
       participants.setDestinationEntity(value__);
     }

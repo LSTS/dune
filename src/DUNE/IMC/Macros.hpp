@@ -362,8 +362,8 @@
 #define DUNE_IMC_REFERENCE 477
 //! FollowRefState identification number.
 #define DUNE_IMC_FOLLOWREFSTATE 478
-//! UAVFormation identification number.
-#define DUNE_IMC_UAVFORMATION 479
+//! Formation identification number.
+#define DUNE_IMC_FORMATION 479
 //! FormationMonitor identification number.
 #define DUNE_IMC_FORMATIONMONITOR 480
 //! RelativeState identification number.

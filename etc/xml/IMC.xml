@@ -310,7 +310,7 @@
       <message-type abbrev="CoverArea"/>
       <message-type abbrev="FollowReference"/>
       <message-type abbrev="CommsRelay"/>
-      <message-type abbrev="UAVFormation"/>
+      <message-type abbrev="Formation"/>
     </message-group>
 
     <message-group name="Control Command" abbrev="ControlCommand">
@@ -5605,13 +5605,13 @@
     </field>
   </message>
 
-  <message id="479" name="UAV Formation" abbrev="UAVFormation" source="ccu,vehicle">
+  <message id="479" name="Formation" abbrev="Formation" source="ccu,vehicle">
     <description>
-      The "UAV Formation" is a maneuver specifying a plan for a team of vehicles.
-      The maneuver defines:
+      The "Formation" is a controller to execute a maneuver with a team of vehicles.
+      It defines the:
       - Vehicles included in the formation group
-      - The vehicles relative positions inside the formation
-      - The reference frame where the relative positions are defined
+      - Vehicles relative positions inside the formation
+      - Reference frame where the relative positions are defined
       - Formation shape configuration
       - Plan (set of maneuvers) to be followed by the formation center
       - Plan contrains (virtual leader speed and bank limits)
