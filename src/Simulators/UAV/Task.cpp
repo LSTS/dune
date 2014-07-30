@@ -87,6 +87,7 @@ namespace Simulators
       // Initial state
       double init_lat;
       double init_lon;
+      double init_hei;
       double init_alt;
       double init_speed;
       double init_roll;
@@ -252,16 +253,20 @@ namespace Simulators
         .defaultValue("Simulated GPS")
         .description("Entity label of simulated 'GpsFix' messages");
 
-        param("Initial Latitude", m_args.init_lat)
-        .defaultValue("39.09")
-        .description("Initial state latitude");
+        param("Reference Ground Height", m_args.init_hei)
+        .defaultValue("47.3")
+        .description("Home reference ground height");
 
-        param("Initial Longitude", m_args.init_lon)
+        param("Initial Reference Latitude", m_args.init_lat)
+        .defaultValue("39.09")
+        .description("Initial home reference latitude");
+
+        param("Initial Reference Longitude", m_args.init_lon)
         .defaultValue("-8.964")
-        .description("Initial state longitude");
+        .description("Initial home reference longitude");
 
         param("Initial Altitude", m_args.init_alt)
-        .defaultValue("147.3")
+        .defaultValue("100")
         .description("Initial state WGS-84 geoid altitude");
 
         param("Initial Speed", m_args.init_speed)
@@ -320,10 +325,10 @@ namespace Simulators
         IMC::GpsFix init_fix;
         init_fix.lat = DUNE::Math::Angles::radians(m_args.init_lat);
         init_fix.lon = DUNE::Math::Angles::radians(m_args.init_lon);
-        init_fix.height = m_args.init_alt;
+        init_fix.height = m_args.init_hei;
         m_sstate.lat = init_fix.lat;
         m_sstate.lon = init_fix.lon;
-        m_sstate.height = m_args.init_alt;
+        m_sstate.height = m_args.init_hei;
         dispatch(init_fix);
         requestActivation();
       }
@@ -745,11 +750,11 @@ namespace Simulators
 
         double alt_cmd;
         if (msg->z_units == IMC::Z_HEIGHT)
-          alt_cmd = msg->value;
+          alt_cmd = msg->value-m_sstate.height;
         else if (msg->z_units == IMC::Z_DEPTH)
           alt_cmd = -msg->value;
         else
-          alt_cmd = msg->value+m_sstate.height;
+          alt_cmd = msg->value;
         m_model->commandAlt(alt_cmd);
 
         // ========= Debug ===========
