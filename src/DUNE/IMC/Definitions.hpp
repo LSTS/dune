@@ -12785,6 +12785,30 @@ namespace DUNE
     class Formation: public Maneuver
     {
     public:
+      //! Type.
+      enum TypeEnum
+      {
+        //! Request.
+        FC_REQUEST = 0,
+        //! Report.
+        FC_REPORT = 1
+      };
+
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Start.
+        OP_START = 0,
+        //! Stop.
+        OP_STOP = 1,
+        //! Ready.
+        OP_READY = 2,
+        //! Executing.
+        OP_EXECUTING = 3,
+        //! Failure.
+        OP_FAILURE = 4
+      };
+
       //! Formation Reference Frame.
       enum FormationReferenceFrameEnum
       {
@@ -12798,6 +12822,10 @@ namespace DUNE
 
       //! Formation Name.
       std::string formation_name;
+      //! Type.
+      uint8_t type;
+      //! Operation.
+      uint8_t op;
       //! Target Group Name.
       std::string group_name;
       //! Formation Plan ID.
@@ -12878,7 +12906,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 35;
+        return 37;
       }
 
       unsigned

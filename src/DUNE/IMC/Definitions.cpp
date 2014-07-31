@@ -13213,6 +13213,8 @@ namespace DUNE
     Formation::clear(void)
     {
       formation_name.clear();
+      type = 0;
+      op = 0;
       group_name.clear();
       plan_id.clear();
       description.clear();
@@ -13236,6 +13238,8 @@ namespace DUNE
     {
       const IMC::Formation& other__ = static_cast<const Formation&>(msg__);
       if (formation_name != other__.formation_name) return false;
+      if (type != other__.type) return false;
+      if (op != other__.op) return false;
       if (group_name != other__.group_name) return false;
       if (plan_id != other__.plan_id) return false;
       if (description != other__.description) return false;
@@ -13266,6 +13270,8 @@ namespace DUNE
     {
       uint8_t* ptr__ = bfr__;
       ptr__ += IMC::serialize(formation_name, ptr__);
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(op, ptr__);
       ptr__ += IMC::serialize(group_name, ptr__);
       ptr__ += IMC::serialize(plan_id, ptr__);
       ptr__ += IMC::serialize(description, ptr__);
@@ -13290,6 +13296,8 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(formation_name, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::deserialize(group_name, bfr__, size__);
       bfr__ += IMC::deserialize(plan_id, bfr__, size__);
       bfr__ += IMC::deserialize(description, bfr__, size__);
@@ -13314,6 +13322,8 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::reverseDeserialize(formation_name, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(group_name, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(plan_id, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(description, bfr__, size__);
@@ -13337,6 +13347,8 @@ namespace DUNE
     Formation::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "formation_name", formation_name, nindent__);
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "op", op, nindent__);
       IMC::toJSON(os__, "group_name", group_name, nindent__);
       IMC::toJSON(os__, "plan_id", plan_id, nindent__);
       IMC::toJSON(os__, "description", description, nindent__);

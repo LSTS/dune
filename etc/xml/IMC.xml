@@ -5634,6 +5634,43 @@
         Name of the formation configuration.
       </description>
     </field>
+    <field name="Type" abbrev="type" type="uint8_t" unit="Enumerated" prefix="FC">
+      <description>
+        Indicates if the message is a request, or a reply to a previous request.
+      </description>
+      <value id="0" name="Request" abbrev="REQUEST"/>
+      <value id="1" name="Report" abbrev="REPORT"/>
+    </field>
+    <field name="Operation" abbrev="op" type="uint8_t" unit="Enumerated" prefix="OP">
+      <description>
+        Operation to perform.
+      </description>
+      <value id="0" name="Start" abbrev="START">
+        <description>
+          Start the formation maneuver.
+        </description>
+      </value>
+      <value id="1" name="Stop" abbrev="STOP">
+        <description>
+          Stop the formation maneuver.
+        </description>
+      </value>
+      <value id="2" name="Ready" abbrev="READY">
+        <description>
+          Stop the formation maneuver.
+        </description>
+      </value>
+      <value id="3" name="Executing" abbrev="EXECUTING">
+        <description>
+          Stop the formation maneuver.
+        </description>
+      </value>
+      <value id="4" name="Failure" abbrev="FAILURE">
+        <description>
+          Stop the formation maneuver.
+        </description>
+      </value>
+    </field>
     <field name="Target Group Name" abbrev="group_name" type="plaintext">
       <description>
         Target group for the formation plan.
