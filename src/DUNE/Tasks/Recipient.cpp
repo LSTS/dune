@@ -58,32 +58,27 @@ namespace DUNE
     void
     Recipient::unbindAll(void)
     {
-      std::map<uint32_t, AbstractConsumer*>::iterator itr = m_cbacks.begin();
+      std::map<uint32_t, std::vector<AbstractConsumer*> >::iterator itr = m_cbacks.begin();
 
       for (; itr != m_cbacks.end(); ++itr)
       {
-        if (itr->second)
-        {
-          m_ctx.mbus.unregisterRecipient(m_task, itr->first);
-          delete itr->second;
-          itr->second = NULL;
-        }
+        m_ctx.mbus.unregisterRecipient(m_task, itr->first);
+
+        for (size_t i = 0; i < itr->second.size(); ++i)
+          delete itr->second[i];
+
+        itr->second.clear();
       }
     }
 
     void
     Recipient::bind(uint32_t id, AbstractConsumer* consumer)
     {
-      std::map<uint32_t, AbstractConsumer*>::iterator itr = m_cbacks.find(id);
+      std::map<uint32_t, std::vector<AbstractConsumer*> >::iterator itr = m_cbacks.find(id);
+      if (itr == m_cbacks.end())
+        m_ctx.mbus.registerRecipient(m_task, id);
 
-      if (itr != m_cbacks.end())
-      {
-        m_ctx.mbus.unregisterRecipient(m_task, id);
-        delete itr->second;
-      }
-
-      m_cbacks[id] = consumer;
-      m_ctx.mbus.registerRecipient(m_task, id);
+      m_cbacks[id].push_back(consumer);
     }
 
     void
@@ -110,7 +105,8 @@ namespace DUNE
         if (msg)
         {
           uint32_t id = msg->getId();
-          m_cbacks[id]->consume(msg);
+          for (size_t j = 0; j < m_cbacks[id].size(); ++j)
+            m_cbacks[id][j]->consume(msg);
           delete msg;
         }
       }
