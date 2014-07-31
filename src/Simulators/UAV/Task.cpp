@@ -163,6 +163,7 @@ namespace Simulators
 
         param("Simulation type", m_args.sim_type)
         .defaultValue("4DOF_bank")
+        .values("3DOF, 4DOF_alt, 4DOF_bank, 5DOF")
         .description("Simulation type (DOF)");
 
         param("Bank Time Constant", m_args.c_bank)
@@ -646,9 +647,14 @@ namespace Simulators
         //! Check if system is active
         if (!isActive())
         {
-          trace("Bank command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
+          trace("Bank command rejected - Simulation not active - Missing GPS-Fix!");
+          return;
+        }
+
+        //! Check that the command is a real value
+        if (isnan(msg->value) != 0)
+        {
+          war("Bank command rejected - Commanded value is not a number!");
           return;
         }
 
@@ -694,9 +700,14 @@ namespace Simulators
         //! Check if system is active
         if (!isActive())
         {
-          trace("Speed command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
+          trace("Speed command rejected - Simulation not active - Missing GPS-Fix!");
+          return;
+        }
+
+        //! Check that the command is a real value
+        if (isnan(msg->value) != 0)
+        {
+          war("Speed command rejected - Commanded value is not a number!");
           return;
         }
 
@@ -742,9 +753,14 @@ namespace Simulators
         //! Check if system is active
         if (!isActive())
         {
-          trace("Altitude command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
+          trace("Altitude command rejected - Simulation not active - Missing GPS-Fix!");
+          return;
+        }
+
+        //! Check that the command is a real value
+        if (isnan(msg->value) != 0)
+        {
+          war("Altitude command rejected - Commanded value is not a number!");
           return;
         }
 
@@ -797,9 +813,14 @@ namespace Simulators
         //! Check if system is active
         if (!isActive())
         {
-          trace("Pitch command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
+          trace("Pitch command rejected - Simulation not active - Missing GPS-Fix!");
+          return;
+        }
+
+        //! Check that the command is a real value
+        if (isnan(msg->value) != 0)
+        {
+          war("Pitch command rejected - Commanded value is not a number!");
           return;
         }
 
@@ -807,6 +828,9 @@ namespace Simulators
 
         // ========= Debug ===========
         spew("Pitch command received (%1.2fm)", msg->value);
+        spew("DesiredPitch received from system '%s' and entity '%s'.",
+            resolveSystemId(msg->getSource()),
+            resolveEntity(msg->getSourceEntity()).c_str());
       }
 
        /*
@@ -840,11 +864,24 @@ namespace Simulators
 
         //! Check if system is active
         if (!isActive())
+        {
+          trace("Servo command rejected - Simulation not active - Missing GPS-Fix!");
           return;
+        }
+
+        //! Check that the command is a real value
+        if (isnan(msg->value) != 0)
+        {
+          war("Servo command rejected - Commanded value is not a number!");
+          return;
+        }
 
         m_servo_pos(msg->id) = msg->value;
         // ========= Debug ===========
         spew("Servo command received (%1.2fm)", msg->value);
+        spew("SetServoPosition received from system '%s' and entity '%s'.",
+            resolveSystemId(msg->getSource()),
+            resolveEntity(msg->getSourceEntity()).c_str());
       }
 
       void
@@ -877,11 +914,24 @@ namespace Simulators
 
         //! Check if system is active
         if (!isActive())
+        {
+          trace("Thruster command rejected - Simulation not active - Missing GPS-Fix!");
           return;
+        }
+
+        //! Check that the command is a real value
+        if (isnan(msg->value) != 0)
+        {
+          war("Thruster command rejected - Commanded value is not a number!");
+          return;
+        }
 
         m_thruster_act = msg->value;
         // ========= Debug ===========
         spew("Thruster command received (%1.2fm)", msg->value);
+        spew("SetThrusterActuation received from system '%s' and entity '%s'.",
+            resolveSystemId(msg->getSource()),
+            resolveEntity(msg->getSourceEntity()).c_str());
       }
       */
 
