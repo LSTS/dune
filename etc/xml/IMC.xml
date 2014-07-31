@@ -4014,6 +4014,16 @@
           fields will be ignored.
         </description>
       </value>
+      <value id="0x40" abbrev="TAKEOFF" name="Takeoff">
+        <description>
+          Indicates that takeoff should be done before going to the end position.
+        </description>
+      </value>
+      <value id="0x80" abbrev="LAND" name="Land">
+        <description>
+          Indicates that the system should land at the end position.
+        </description>
+      </value>
     </field>
   </message>
 

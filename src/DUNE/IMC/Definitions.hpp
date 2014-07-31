@@ -9711,7 +9711,11 @@ namespace DUNE
         //! Counter-Clockwise loiter.
         FL_CCLOCKW = 0x10,
         //! Loiter from current position.
-        FL_LOITER_CURR = 0x20
+        FL_LOITER_CURR = 0x20,
+        //! Takeoff.
+        FL_TAKEOFF = 0x40,
+        //! Land.
+        FL_LAND = 0x80
       };
 
       //! Start Point -- Latitude WGS-84.
