@@ -98,6 +98,8 @@ namespace Maneuver
 
         // Activation flag
         bool m_active;
+        // Flag indicating if the task is coordinating only other systems
+        bool m_standalone;
         //! Leader vehicle model
         UAVSimulation* m_model;
         //! Vehicle's referential position (Latitude, Longitude, and height).
@@ -178,6 +180,7 @@ namespace Maneuver
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Periodic(name, ctx),
           m_active(false),
+          m_standalone(false),
           m_model(NULL),
           m_position(6, 1, 0.0),
           m_velocity(6, 1, 0.0),
@@ -226,7 +229,7 @@ namespace Maneuver
           .description("Emulated system id.");
 
           param("Main Coordinator", m_args.main)
-          .defaultValue("")
+          .defaultValue("false")
           .description("Flag indicating that the coordinator in this system is the main coordinator task.");
 
           param("Control Frequency", m_args.ctrl_frequency)
@@ -269,6 +272,7 @@ namespace Maneuver
           .defaultValue("0")
           .visibility(Tasks::Parameter::VISIBILITY_USER)
           .scope(Tasks::Parameter::SCOPE_MANEUVER)
+          .values("0, 1, 2")
           .description("Formation Reference Frame (0 - Earth; 1 - Path (no curvature); 2 - Path (with curvature)");
 
           param("UAV Number", m_args.uav_n)
@@ -292,6 +296,7 @@ namespace Maneuver
 
           param("Simulation type", m_args.sim_type)
           .defaultValue("4DOF_bank")
+          .values("3DOF, 4DOF_alt, 4DOF_bank, 5DOF")
           .description("Simulation type (DOF)");
 
           param("Speed Time Constant", m_args.c_speed)
@@ -397,31 +402,29 @@ namespace Maneuver
 
             // Check if the formation positions matrix has a suitable size
             if (m_args.formation_pos.size() == 0)
-            {
-              stop();
-              throw std::runtime_error("Formation vehicles' positions matrix is empty!");
-            }
+              throw RestartNeeded("Formation vehicles' positions matrix is empty!", 10);
             if (m_args.formation_pos.rows()%3 != 0)
-            {
-              stop();
-              throw std::runtime_error(static_cast<std::ostringstream*>( &(std::ostringstream() << "Number of UAV positions coordinates in the formation matrix (" << m_args.formation_pos.rows() << ") is not a multiple of 3!"))->str());
-            }
+              throw RestartNeeded(static_cast<std::ostringstream*>(
+                  &(std::ostringstream() <<
+                      "Number of UAV positions coordinates in the formation matrix (" <<
+                      m_args.formation_pos.rows() << ") is not a multiple of 3!"))->str(), 10);
             // Check if the formation positions matrix has the right size:
             // 3 rows and as many columns as the number of UAVs
+            m_formation_pos = m_args.formation_pos;
             if (m_args.formation_pos.rows()/3 > 1)
             {
               // - If not, compute the number of UAVs included and resize the matrix
-              m_uav_n = m_args.formation_pos.rows()/3;
+              m_uav_n = m_formation_pos.rows()/3;
               m_formation_pos.resizeAndKeep(3, m_uav_n);
+              for (unsigned int ind_uav = 1; ind_uav < m_uav_n; ind_uav++)
+                for (unsigned int i = 0; i < 3; i++)
+                  m_formation_pos(i, ind_uav) = m_args.formation_pos(i+ind_uav*3);
             }
             else
-            {
               m_uav_n = m_args.formation_pos.columns();
-              m_formation_pos = m_args.formation_pos;
-            }
-            spew("Formation position matrix:");
+            debug("Formation position matrix:");
             for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
-              spew("UAV %u: [x=%1.1f, y=%1.1f, z=%1.1f]", ind_uav,
+              debug("UAV %u: [x=%1.1f, y=%1.1f, z=%1.1f]", ind_uav,
                    m_formation_pos(0, ind_uav), m_formation_pos(1, ind_uav), m_formation_pos(2, ind_uav));
 
             // Check if the number of UAVs in the formation positions matrix
@@ -430,10 +433,6 @@ namespace Maneuver
             {
               war("Number of the UAVs in the formation matrix (%u) is different from the total UAV count indicated (%u)!",
                   m_uav_n, m_args.uav_n);
-              debug("Formation position matrix:");
-              for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
-                debug("UAV %u: [x=%1.1f, y=%1.1f, z=%1.1f]", ind_uav,
-                      m_formation_pos(0, ind_uav), m_formation_pos(1, ind_uav), m_formation_pos(2, ind_uav));
               m_uav_n = (m_uav_n < m_args.uav_n)?m_uav_n:m_args.uav_n;
             }
 
@@ -445,31 +444,31 @@ namespace Maneuver
           if (paramChanged(m_args.formation_systems))
           {
             inf("New Formation vehicles' list.");
+            for (unsigned int ind_uav = 0; ind_uav < m_args.formation_systems.size(); ind_uav++)
+              debug("UAV %u: %s", ind_uav, m_args.formation_systems[ind_uav].c_str());
 
-            // Check if the number of UAVs in the formation vehicle list
-            // matches that indicated as a parameter
-            if (m_args.formation_systems.size() != m_args.uav_n)
-            {
-              war("Number of the UAVs in the formation vehicle list (%u) is different from the total UAV count indicated (%u)!",
-                  (unsigned int)m_args.formation_systems.size(), m_args.uav_n);
-              debug("Formation vehicle list:");
-              for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
-                debug("UAV %u: %s", ind_uav, m_args.formation_systems[ind_uav].c_str());
-            }
-            m_uav_n = (m_uav_n < m_args.formation_systems.size())?m_uav_n:m_args.formation_systems.size();
-            // Vehicle quantity considered in the formation
-            debug("Number of UAVs -> %d", m_uav_n);
-
-            // Process formation vehicle list
+            m_uav_id.clear();
             if (m_args.formation_systems.empty())
             {
-              stop();
-              throw std::runtime_error("Formation vehicle list is empty!");
+              war("Formation vehicle list is empty!");
+              m_uav_id.push_back(getSystemId());
+              m_uav_n = 1;
             }
-            m_uav_id.clear();
-            for (unsigned int uav_ind = 0; uav_ind < m_uav_n; ++uav_ind)
-              m_uav_id.push_back(resolveSystemName(m_args.formation_systems[uav_ind]));
+            else
+            {
+              // Check if the number of UAVs in the formation vehicle list
+              // matches that indicated as a parameter
+              if (m_args.formation_systems.size() != m_args.uav_n)
+                war("Number of the UAVs in the formation vehicle list (%u) is different from the total UAV count indicated (%u)!",
+                    (unsigned int)m_args.formation_systems.size(), m_args.uav_n);
+              m_uav_n = (m_uav_n < m_args.formation_systems.size())?m_uav_n:m_args.formation_systems.size();
+              // Process formation vehicle list
+              for (unsigned int uav_ind = 0; uav_ind < m_uav_n; ++uav_ind)
+                m_uav_id.push_back(resolveSystemName(m_args.formation_systems[uav_ind]));
+            }
           }
+          // Vehicle quantity considered in the formation
+          debug("Number of UAVs -> %d", m_uav_n);
 
           //==========================================
           // Data resizing
@@ -504,21 +503,24 @@ namespace Maneuver
           // Set messages system source
           //==========================================
           //! Set source system alias
-          if (!m_args.src_alias.empty())
+          if (paramChanged(m_args.src_alias))
           {
-            // Resolve systems.
-            try
+            if (!m_args.src_alias.empty())
             {
-              m_alias_id = resolveSystemName(m_args.src_alias);
+              // Resolve systems.
+              try
+              {
+                m_alias_id = resolveSystemName(m_args.src_alias);
+              }
+              catch (...)
+              {
+                debug("No system found with designation '%s'.", m_args.src_alias.c_str());
+                m_alias_id = UINT_MAX;
+              }
             }
-            catch (...)
-            {
-              debug("No system found with designation '%s'.", m_args.src_alias.c_str());
+            else
               m_alias_id = UINT_MAX;
-            }
           }
-          else
-            m_alias_id = UINT_MAX;
 
 //          //==========================================
 //          // Activating the coordinator
@@ -729,6 +731,124 @@ namespace Maneuver
 //          Memory::clear(m_form_monitor);
         }
 
+        void
+        onRequestActivation(void)
+        {
+          // ToDo - Check if there exist a formation controller task in the current system
+          if (!m_standalone)
+          {
+            // Requesting the formation controller activation in the current system
+            war("Requesting the formation controller activation.");
+
+            IMC::SetEntityParameters sep;
+            IMC::EntityParameter ep;
+            sep.name = "Formation Control";
+            sep.setDestination(getSystemId());
+
+            // Request formation controller activation
+            ep.name = "Active";
+            ep.value = "true";
+            sep.params.push_back(ep);
+
+            // Set formation controller parameters
+            // -  Formation reference frame
+            ep.name = "Formation Reference Frame";
+            ep.value = static_cast<std::ostringstream*>(
+                &(std::ostringstream() << m_args.formation_frame))->str();
+            sep.params.push_back(ep);
+            // - Number of UAVs in the formation
+            ep.name = "UAV Number";
+            ep.value = static_cast<std::ostringstream*>(
+                &(std::ostringstream() << m_uav_n))->str();
+            sep.params.push_back(ep);
+            // - Vehicle formation' positions
+            ep.name = "Formation Positions";
+            ep.value = static_cast<std::ostringstream*>(
+                &(std::ostringstream() << m_formation_pos(0, 0)))->str();
+            debug("UAV %u - position %u: %1.2f", 0, 0, m_formation_pos(0, 0));
+            for (unsigned int i = 1; i < 3; i++)
+            {
+              debug("UAV %u - position %u: %1.2f", 0, i, m_formation_pos(i, 0));
+              ep.value.append(", ");
+              ep.value.append(static_cast<std::ostringstream*>(
+                  &(std::ostringstream() << m_formation_pos(i, 0)))->str());
+            }
+            for (unsigned int ind_uav = 1; ind_uav < m_uav_n; ind_uav++)
+              for (unsigned int i = 0; i < 3; i++)
+              {
+                debug("UAV %u - position %u: %1.2f", ind_uav, i, m_formation_pos(i, ind_uav));
+                ep.value.append(", ");
+                ep.value.append(static_cast<std::ostringstream*>(
+                    &(std::ostringstream() << m_formation_pos(i, ind_uav)))->str());
+              }
+            debug("%s: %s", ep.name.c_str(), ep.value.c_str());
+            sep.params.push_back(ep);
+            // - Vehicle list
+            ep.name = "Vehicle List";
+            ep.value = m_args.formation_systems[0];
+            for (unsigned int ind_uav = 1; ind_uav < m_uav_n; ind_uav++)
+            {
+              ep.value.append(", ");
+              ep.value.append(m_args.formation_systems[ind_uav]);
+            }
+            sep.params.push_back(ep);
+
+            dispatchAlias(&sep);
+
+            // ToDo - Change the Path Control parameters to control the virtual leader
+            //          // Request path controller activation
+            //          sep.name = "Path Control Leader";
+            //          dispatchAlias(&sep);
+            //          sep.name = "Path Control Coordinator";
+            //          dispatchAlias(&sep);
+          }
+
+          // Activating the formation coordinator
+          spew("Activating the formation coordinator");
+        }
+
+        void
+        onRequestDeactivation(void)
+        {
+          // Deactivate the formation controller in the cooperating vehicles
+          if (m_args.main)
+          {
+            IMC::VehicleFormationParticipant formation_uav;
+            m_uav_formation.type = IMC::Formation::FC_REQUEST;
+            m_uav_formation.op = IMC::Formation::OP_STOP;
+            dispatchAlias(&m_uav_formation);
+          }
+
+          // ToDo - Check if there exist a formation controller task in the current system
+          if (!m_standalone)
+          {
+            // Requesting the formation controller deactivation in the current system
+            war("Requesting the formation controller deactivation.");
+
+            IMC::SetEntityParameters sep;
+            IMC::EntityParameter ep;
+            sep.name = "Formation Control";
+            sep.setDestination(getSystemId());
+
+            // Request formation controller activation
+            ep.name = "Active";
+            ep.value = "false";
+            sep.params.push_back(ep);
+            dispatchAlias(&sep);
+
+            // ToDo - Change the Path Control parameters to control the real vehicle
+            //          // Request path controller activation
+            //          sep.name = "Path Control Leader";
+            //          dispatchAlias(&sep);
+            //          sep.name = "Path Control Coordinator";
+            //          dispatchAlias(&sep);
+          }
+
+          // Deactivating the formation coordinator
+          spew("Deactivating the formation coordinator");
+          deactivate();
+        }
+
 //        void
 //        consume(const IMC::LeaderState* msg)
 //        {
@@ -765,6 +885,10 @@ namespace Maneuver
           // ToDo - For final implementation, the activation should
           // depend from the assertion that all formation vehicles are in reach
 
+          // Only execute if this task is the main formation coordinator
+          if (!m_args.main)
+            return;
+
           // Check if it is a plan execution request
           if (msg->type != IMC::PlanControl::PC_REQUEST)
           {
@@ -789,10 +913,9 @@ namespace Maneuver
             return;
           }
 
-          // Request plan information to check if it is a formation flight plan
-          // if the PlanControl action is "Start"
-          if (msg->op == IMC::PlanControl::PC_START || msg->op == IMC::PlanControl::PC_STOP)
+          if (msg->op == IMC::PlanControl::PC_START)
           {
+            // Request plan information to check if it is a formation flight plan
             trace("PlanControl message received - Requesting plan information.");
             m_plan_ctrl_last = *msg;
 
@@ -803,11 +926,18 @@ namespace Maneuver
             plan_db.op = IMC::PlanDB::DBOP_GET;
             dispatchAlias(&plan_db);
           }
+          // Deactivate the task if the PlanControl action is "Stop"
+          else if (msg->op == IMC::PlanControl::PC_STOP)
+            requestDeactivation();
         }
 
         void
         consume(const IMC::PlanDB* msg)
         {
+          // Only execute if this task is the main formation coordinator
+          if (!m_args.main)
+            return;
+
           //================================================
           // Check if the plan is a formation flight plan
           //================================================
@@ -856,7 +986,7 @@ namespace Maneuver
           bool is_formation_control = false;
           try
           {
-            const IMC::SetEntityParameters* sep;
+            const IMC::SetEntityParameters* t_sep;
             const IMC::PlanSpecification* planspec = static_cast<const IMC::PlanSpecification*>(msg->arg.get());
             IMC::MessageList<IMC::PlanManeuver>::const_iterator it = planspec->maneuvers.begin();
             for (; it != planspec->maneuvers.end(); it++ )
@@ -864,11 +994,11 @@ namespace Maneuver
               IMC::MessageList<IMC::Message>::const_iterator it_sa = (*it)->start_actions.begin();
               for (; it_sa != (*it)->start_actions.end(); it_sa++ )
               {
-                sep = static_cast<const IMC::SetEntityParameters*>(*it_sa);
-                if (sep->name.compare("Autopilot") == 0)
+                t_sep = static_cast<const IMC::SetEntityParameters*>(*it_sa);
+                if (t_sep->name.compare("Autopilot") == 0)
                 {
-                  IMC::MessageList<IMC::EntityParameter>::const_iterator it_ep = sep->params.begin();
-                  for (; it_ep != sep->params.end(); it_ep++ )
+                  IMC::MessageList<IMC::EntityParameter>::const_iterator it_ep = t_sep->params.begin();
+                  for (; it_ep != t_sep->params.end(); it_ep++ )
                   {
                     if ((*it_ep)->name.compare("Formation Flight") == 0 &&
                         (*it_ep)->value.compare("true") == 0)
@@ -889,69 +1019,54 @@ namespace Maneuver
           if (!is_formation_control)
           {
             trace("Plan is not a formation control plan.");
+
+            // Deactivate the formation control
+            if (isActive())
+              requestDeactivation();
+
             return;
           }
           trace("Plan is a formation control plan.");
 
-          if (m_plan_ctrl_last.op == IMC::PlanControl::PC_START)
-          {
-            // Set the leader initial state with the global team state
-            trace("Sending LeaderState to the vehicles.");
-            m_init_leader.op      = IMC::LeaderState::OP_SET;
-            m_init_leader.lat     = m_llh_ref_pos[0];
-            m_init_leader.lon     = m_llh_ref_pos[1];
-            m_init_leader.height  = m_llh_ref_pos[2];
-            m_init_leader.x       = m_team_state(0);
-            m_init_leader.y       = m_team_state(1);
-            m_init_leader.z       = m_team_state(2);
-            m_init_leader.vx      = m_team_state(3);
-            m_init_leader.vy      = m_team_state(4);
-            m_init_leader.vz      = m_team_state(5);
-            m_init_leader.phi     = m_team_state(6);
-            m_init_leader.theta   = m_team_state(7);
-            m_init_leader.psi     = m_team_state(8);
-            m_init_leader.p       = m_team_state(9);
-            m_init_leader.q       = m_team_state(10);
-            m_init_leader.r       = m_team_state(11);
-            m_init_leader.svx     = m_wind(0);
-            m_init_leader.svy     = m_wind(1);
-            m_init_leader.svz     = m_wind(2);
-            setLeaderState(&m_init_leader);
-            //m_init_leader.setDestination(m_uav_id[ind_uav]);
-            dispatchAlias(&m_init_leader);
-            m_last_time_sync = Clock::get();
-          }
-          // Deactivate the task if the PlanControl action is "Stop"
-          else if (m_plan_ctrl_last.op == IMC::PlanControl::PC_STOP)
-            requestDeactivation();
-//          // Reroute the PlanControl message to the vehicle formation controllers
-//          for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
-//            if (m_uav_id[ind_uav] != getSystemId())
-//            {
-//              m_plan_ctrl_last.setSourceEntity(getEntityId());
-//              m_plan_ctrl_last.setDestination(m_uav_id[ind_uav]);
-//              dispatchAlias(&m_plan_ctrl_last);
-//            }
+          if (m_plan_ctrl_last.op != IMC::PlanControl::PC_START || isActive())
+            return;
+
+          // Set the leader initial state with the global team state
+          trace("Sending LeaderState to the vehicles.");
+          m_init_leader.op      = IMC::LeaderState::OP_SET;
+          m_init_leader.lat     = m_llh_ref_pos[0];
+          m_init_leader.lon     = m_llh_ref_pos[1];
+          m_init_leader.height  = m_llh_ref_pos[2];
+          m_init_leader.x       = m_team_state(0);
+          m_init_leader.y       = m_team_state(1);
+          m_init_leader.z       = m_team_state(2);
+          m_init_leader.vx      = m_team_state(3);
+          m_init_leader.vy      = m_team_state(4);
+          m_init_leader.vz      = m_team_state(5);
+          m_init_leader.phi     = m_team_state(6);
+          m_init_leader.theta   = m_team_state(7);
+          m_init_leader.psi     = m_team_state(8);
+          m_init_leader.p       = m_team_state(9);
+          m_init_leader.q       = m_team_state(10);
+          m_init_leader.r       = m_team_state(11);
+          m_init_leader.svx     = m_wind(0);
+          m_init_leader.svy     = m_wind(1);
+          m_init_leader.svz     = m_wind(2);
+          setLeaderState(&m_init_leader);
+          //m_init_leader.setDestination(m_uav_id[ind_uav]);
+          dispatchAlias(&m_init_leader);
+          m_last_time_sync = Clock::get();
+
           //==========================================
           // Activate the formation control and plan
           //==========================================
-          // Activate formation controller in the current system
-          war("Requesting the formation controller activation.");
-          // Activate the formation controller
-          IMC::SetEntityParameters sep;
-          IMC::EntityParameter ep;
-          // Request formation controller activation
-          ep.name = "Active";
-          ep.value = "true";
-          sep.params.push_back(ep);
-          sep.name = "Formation Control";
-          dispatchAlias(&sep);
-
           // UAVFormation message to activate the cooperating vehicles
           // ToDo - Set the hardcoded variables as configurable
           IMC::VehicleFormationParticipant formation_uav;
-          m_uav_formation.group_name = "AsasF";
+          m_uav_formation.type = IMC::Formation::FC_REQUEST;
+          m_uav_formation.op = IMC::Formation::OP_START;
           m_uav_formation.formation_name = "AsasF";
+          m_uav_formation.group_name = "AsasF";
           m_uav_formation.plan_id = m_plan_ctrl_last.plan_id;
           m_uav_formation.description = "Test formation configuration";
           m_uav_formation.reference_frame = m_args.formation_frame;
@@ -977,6 +1092,8 @@ namespace Maneuver
 
           dispatchAlias(&m_uav_formation);
 
+          // Activate the formation controller in the current system
+          requestActivation();
         }
 
         void
@@ -989,38 +1106,36 @@ namespace Maneuver
             return;
           }
 
-          //          requestActivation();
-          war("Requesting the formation controller activation.");
-          // Activate the formation controller
-          IMC::SetEntityParameters sep;
-          IMC::EntityParameter ep;
-          // Request formation controller activation
-          ep.name = "Active";
-          ep.value = "true";
-          sep.params.push_back(ep);
-          sep.name = "Formation Control";
-          dispatchAlias(&sep);
-          //          // Request path controller activation
-          //          sep.name = "Path Control Leader";
-          //          dispatchAlias(&sep);
-          //          sep.name = "Path Control Coordinator";
-          //          dispatchAlias(&sep);
-
-          // Send a PlanControl message to activate the formation control plan
-          inf("PlanControl for formation control sent!");
-          for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
-            if (m_uav_id[ind_uav] == getSystemId())
+          if (msg->type == IMC::Formation::FC_REQUEST)
+          {
+            if (msg->op == IMC::Formation::OP_START)
             {
-              IMC::PlanControl plan;
-              plan.type = IMC::PlanControl::PC_REQUEST;
-              plan.op = IMC::PlanControl::PC_START;
-              plan.plan_id = msg->plan_id;
-              plan.arg.clear();
-              plan.setSourceEntity(getEntityId());
-              plan.setDestination(m_uav_id[ind_uav]);
-              dispatchAlias(&plan);
-              break;
+              //requestActivation();
+              // Activate the formation controller in the current system
+              requestActivation();
+
+              // Send a PlanControl message to activate the formation control plan
+              for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+                if (m_uav_id[ind_uav] == getSystemId())
+                {
+                  IMC::PlanControl plan;
+                  plan.type = IMC::PlanControl::PC_REQUEST;
+                  plan.op = IMC::PlanControl::PC_START;
+                  plan.plan_id = msg->plan_id;
+                  plan.arg.clear();
+                  plan.setSourceEntity(getEntityId());
+                  plan.setDestination(m_uav_id[ind_uav]);
+                  dispatchAlias(&plan);
+                  inf("Formation control plan execution requested!");
+                  break;
+                }
             }
+            else if (msg->op == IMC::Formation::OP_STOP)
+            {
+              // Deactivate the formation controller in the current system
+              requestDeactivation();
+            }
+          }
         }
 
         void
@@ -1030,31 +1145,28 @@ namespace Maneuver
           {
             if (msg->state == IMC::EntityActivationState::EAS_ACTIVE)
             {
-              requestActivation();
-              debug("Entity '%s' in system '%s' is 'active'!", resolveEntity(msg->getSourceEntity()).c_str(),
+              // ToDo - Implement the rest of the logic to assert if all
+              // the team vehicles are in formation control,
+              // in particular if the coordinator is running as a stand-alone task
+              if (isActivating())
+                activate();
+              trace("Entity '%s' in system '%s' is 'active'!", resolveEntity(msg->getSourceEntity()).c_str(),
                    resolveSystemId(msg->getSource()));
             }
             else if (msg->state == IMC::EntityActivationState::EAS_INACTIVE)
-              debug("Entity '%s' in system '%s' is 'inactive'!", resolveEntity(msg->getSourceEntity()).c_str(),
+              trace("Entity '%s' in system '%s' is 'inactive'!", resolveEntity(msg->getSourceEntity()).c_str(),
                    resolveSystemId(msg->getSource()));
             else
-              spew("Entity '%s' in system '%s' is 'another'!", resolveEntity(msg->getSourceEntity()).c_str(),
+              trace("Entity '%s' in system '%s' is 'another'!", resolveEntity(msg->getSourceEntity()).c_str(),
                    resolveSystemId(msg->getSource()));
           }
         }
-
-//        void
-//        consume(const IMC::SetEntityParameters* msg)
-//        {
-//          IMC::SetEntityParameters sep = *msg;
-//          dispatchAlias(&sep);
-//        }
 
         void
         consume(const IMC::DesiredRoll* msg)
         {
           //! Get leader vehicle commanded roll
-          if (!isActive())
+          if (!m_standalone || !isActive())
           {
             //trace("Bank command rejected.");
             //trace("Leader simulation not active.");
@@ -1099,7 +1211,7 @@ namespace Maneuver
         consume(const IMC::DesiredSpeed* msg)
         {
           //! Get leader vehicle commanded airspeed
-          if (!isActive())
+          if (!m_standalone || !isActive())
           {
             //trace("Speed command rejected.");
             //trace("Leader simulation not active.");
@@ -1147,7 +1259,7 @@ namespace Maneuver
         consume(const IMC::DesiredZ* msg)
         {
           //! Check if system is active
-          if (!isActive())
+          if (!m_standalone || !isActive())
           {
             //trace("Altitude command rejected.");
             //trace("Leader simulation not active.");
@@ -1234,7 +1346,9 @@ namespace Maneuver
         consume(const IMC::EstimatedState* msg)
         {
           // Get the virtual leader state
-          if (((m_alias_id != UINT_MAX)?m_alias_id:getSystemId()) == msg->getSource())
+          // ToDo - Replace the source system verification by the source entity verification
+          if (!m_standalone && ((m_alias_id != UINT_MAX)?m_alias_id:getSystemId()) == msg->getSource() &&
+              (isActivating() || isActive()))
           {
             if (m_last_time_sync + m_timestep_sync <= Clock::get())
             {
@@ -1341,9 +1455,6 @@ namespace Maneuver
               IMC::QueryEntityActivationState qeas;
               qeas.setDestinationEntity(resolveEntity("Formation Control"));
               dispatchAlias(&qeas);
-//              IMC::QueryEntityState qes;
-//              qes.setDestinationEntity(resolveEntity("Formation Control"));
-//              dispatchAlias(&qes);
             }
             return;
           }
@@ -1353,14 +1464,11 @@ namespace Maneuver
             spew("Formation coordination task is active (%s).",
                  (m_alias_id != UINT_MAX)?m_args.src_alias.c_str():this->getSystemName());
             m_last_time_trace = d_time;
-
-            //IMC::QueryEntityActivationState qeas;
-            //qeas.setDestinationEntity(resolveEntity("Formation Control"));
-            //dispatchAlias(&qeas);
           }
 
           //! Update leader state for standard time periods
-          //periodicUpdate(m_clock_diff + Clock::get());
+          if (m_standalone)
+            periodicUpdate(m_clock_diff + Clock::get());
         }
 
         void
