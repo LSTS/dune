@@ -62,6 +62,12 @@ namespace Sensors
     static const unsigned c_base_frequency = 22000;
     //! Channel to frequency.
     static const unsigned c_chn_frequency = 1000;
+    // Acoustic Report code.
+    static const uint8_t c_code_report = 0x1;
+    // Start plan code.
+    static const uint8_t c_code_plan = 0x2;
+    // Binary message size.
+    static const uint8_t c_binary_size = 32;
 
     enum EntityStates
     {
@@ -187,8 +193,6 @@ namespace Sensors
 
     struct Task: public DUNE::Tasks::Task
     {
-      // Change plan source address.
-      static const unsigned c_plan_addr = 15;
       // Maximum buffer size.
       static const int c_bfr_size = 256;
       // Beacons.
@@ -552,47 +556,6 @@ namespace Sensors
         if (dst != m_addr)
           return;
 
-        // Change plan request.
-        if (src == c_plan_addr)
-        {
-          std::string val;
-          unsigned value = 0;
-          *stn >> val;
-          inf("%s", val.c_str());
-          if (std::sscanf(val.c_str(), "%04X", &value) != 1)
-          {
-            err(DTR("invalid change plan message"));
-            return;
-          }
-
-          IMC::OperationalLimits ol;
-          ol.mask = 0;
-          dispatch(ol);
-
-          Delay::wait(1.0);
-
-          char plan_name[2] = {(char)value, 0};
-
-          IMC::PlanControl pc;
-          pc.type = IMC::PlanControl::PC_REQUEST;
-          pc.op = IMC::PlanControl::PC_START;
-          pc.plan_id.assign(plan_name);
-          pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
-          dispatch(pc);
-
-          war(DTR("start plan detected"));
-
-          std::string cmd = String::str("$CCMUC,%u,%u,%04x\r\n", m_addr, src, c_code_plan_ack);
-          sendDelayedCommand(cmd, m_args.mpk_delay_bef, m_args.mpk_delay_aft);
-
-          if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
-            inf(DTR("plan acknowledged"));
-          else
-            inf(DTR("failed to acknowledge plan start"));
-
-          return;
-        }
-
         // Get value.
         std::string val;
         *stn >> val;
@@ -707,6 +670,8 @@ namespace Sensors
               addResult(RS_MPK_SENT);
             else if (std::strcmp(stn->code(), "CACFG") == 0)
               handleConfigParam(stn);
+            else if (std::strcmp(stn->code(), "CARXD") == 0)
+              handleCARXD(stn);
           }
           catch (std::exception& e)
           {
@@ -714,6 +679,74 @@ namespace Sensors
           }
         }
       }
+
+      void
+      handleCARXD(std::auto_ptr<NMEAReader>& stn)
+      {
+        unsigned src;
+        unsigned dst;
+        unsigned ack;
+        unsigned fnr;
+        std::string hex;
+
+        try
+        {
+          *stn >> src >> dst >> ack >> fnr >> hex;
+        }
+        catch (...)
+        {
+          return;
+        }
+
+        // not for me.
+        if (dst != m_addr)
+          return;
+
+        std::string msg = String::fromHex(hex);
+        const char* msg_raw = msg.data();
+
+        uint8_t code;
+        std::memcpy(&code, msg_raw + 0, 1);
+
+        if (code == c_code_plan)
+        {
+          IMC::OperationalLimits ol;
+          ol.mask = 0;
+          dispatch(ol);
+
+          Delay::wait(1.0);
+
+          char plan_name[c_binary_size - 1];
+          for (uint8_t i = 0; i < c_binary_size - 1; ++i)
+            std::memcpy(&plan_name[i], msg_raw + i + 1, 1);
+
+          IMC::PlanControl pc;
+          pc.type = IMC::PlanControl::PC_REQUEST;
+          pc.op = IMC::PlanControl::PC_START;
+          pc.plan_id.assign(plan_name);
+          pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
+          dispatch(pc);
+
+          war(DTR("start plan detected"));
+
+          std::string cmd = String::str("$CCMUC,%u,%u,%04x\r\n", m_addr, src, c_code_plan_ack);
+          sendDelayedCommand(cmd, m_args.mpk_delay_bef, m_args.mpk_delay_aft);
+
+          if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
+            inf(DTR("plan acknowledged"));
+          else
+            inf(DTR("failed to acknowledge plan start"));
+        }
+        else if (code == c_code_report)
+        {
+          debug("ignore acoustic report");
+        }
+        else
+        {
+          debug("wrong code id");
+        }
+      }
+
 
       void
       ping(void)
@@ -766,17 +799,18 @@ namespace Sensors
             ranges[i] = 0;
         }
 
-        std::vector<char> msg(32, 0);
-        std::memcpy(&msg[0], &f_lat, 4);
-        std::memcpy(&msg[4], &f_lon, 4);
-        std::memcpy(&msg[8], &u_depth, 1);
-        std::memcpy(&msg[9], &i_yaw, 2);
-        std::memcpy(&msg[11], &i_alt, 2);
-        std::memcpy(&msg[13], &ranges[0], 2);
-        std::memcpy(&msg[15], &ranges[1], 2);
-        std::memcpy(&msg[17], &prog, 1);
-        std::memcpy(&msg[18], &fuel, 1);
-        std::memcpy(&msg[19], &conf, 1);
+        std::vector<char> msg(c_binary_size, 0);
+        std::memcpy(&msg[0], &c_code_report, 1);
+        std::memcpy(&msg[1], &f_lat, 4);
+        std::memcpy(&msg[5], &f_lon, 4);
+        std::memcpy(&msg[9], &u_depth, 1);
+        std::memcpy(&msg[10], &i_yaw, 2);
+        std::memcpy(&msg[12], &i_alt, 2);
+        std::memcpy(&msg[14], &ranges[0], 2);
+        std::memcpy(&msg[16], &ranges[1], 2);
+        std::memcpy(&msg[18], &prog, 1);
+        std::memcpy(&msg[19], &fuel, 1);
+        std::memcpy(&msg[20], &conf, 1);
 
         std::string hex = String::toHex(msg);
         std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n",
