@@ -19160,45 +19160,6 @@ namespace DUNE
       IMC::toJSON(os__, "value", value, nindent__);
     }
 
-    AbortAcked::AbortAcked(void)
-    {
-      m_header.mgid = 818;
-      clear();
-    }
-
-    void
-    AbortAcked::clear(void)
-    {
-    }
-
-    int
-    AbortAcked::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    AbortAcked::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    AbortAcked::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    AbortAcked::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
     FormCtrlParam::FormCtrlParam(void)
     {
       m_header.mgid = 820;

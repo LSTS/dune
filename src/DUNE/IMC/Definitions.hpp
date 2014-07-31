@@ -18413,59 +18413,6 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
-    //! Abort Acknowledged.
-    class AbortAcked: public Message
-    {
-    public:
-
-      static uint16_t
-      getIdStatic(void)
-      {
-        return 818;
-      }
-
-      AbortAcked(void);
-
-      Message*
-      clone(void) const
-      {
-        return new AbortAcked(*this);
-      }
-
-      void
-      clear(void);
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return AbortAcked::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "AbortAcked";
-      }
-
-      unsigned
-      getFixedSerializationSize(void) const
-      {
-        return 0;
-      }
-    };
-
     //! Formation Control Parameters.
     class FormCtrlParam: public Message
     {

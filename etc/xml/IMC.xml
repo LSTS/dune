@@ -7587,12 +7587,6 @@
     <field name="Value" abbrev="value" type="fp32_t"/>
   </message>
 
-  <message id="818" name="Abort Acknowledged" abbrev="AbortAcked" source="vehicle">
-    <description>
-      An 'Abort' message was received and acted upon.
-    </description>
-  </message>
-
   <message id="820" name="Formation Control Parameters" abbrev="FormCtrlParam" source="ccu,vehicle">
     <description>
       Formation controller paramenters, as: trajectory gains, control boundary layer thickness, and formation shape gains.
