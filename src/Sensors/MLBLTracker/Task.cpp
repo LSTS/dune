@@ -113,8 +113,6 @@ namespace Sensors
       static const unsigned c_code_abort_ack = 0x000b;
       //! Start plan acknowledge code.
       static const unsigned c_code_plan_ack = 0x000c;
-      // Address used to send change plan messages.
-      static const unsigned c_plan_addr = 15;
       // Quick tracking mask.
       static const unsigned c_mask_qtrack = 0x1000;
       // Quick tracking beacon mask.
@@ -123,6 +121,13 @@ namespace Sensors
       static const unsigned c_mask_qtrack_range = 0x03ff;
       // Maximum buffer size.
       static const int c_bfr_size = 256;
+      // Acoustic Report code.
+      static const uint8_t c_code_report = 0x1;
+      // Start plan code.
+      static const uint8_t c_code_plan = 0x2;
+      // Binary message size.
+      static const uint8_t c_binary_size = 32;
+      // Start Acoustic Plan Code.
       // Serial port handle.
       SerialPort* m_uart;
       // Map of narrow band transponders.
@@ -391,8 +396,27 @@ namespace Sensors
 
           if (pc->op == IMC::PlanControl::PC_START)
           {
-            if (pc->plan_id.size() == 1)
-              command = String::str("$CCMUC,%u,%u,%04x\r\n", c_plan_addr, itr->second, pc->plan_id[0] & 0xff);
+            std::vector<char> pmsg(c_binary_size, 0);
+
+            if (pc->plan_id.size() > c_binary_size - 1)
+            {
+              err(DTR("unable to send plan %s"), pc->plan_id.c_str());
+              return;
+            }
+
+            std::memcpy(&pmsg[0], &c_code_plan, 1);
+
+            for (uint8_t i = 0; i < std::min(c_binary_size - 1, (int)pc->plan_id.size()); ++i)
+              std::memcpy(&pmsg[i + 1], &pc->plan_id[i], 1);
+
+            std::string hex = String::toHex(pmsg);
+            std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n",
+                                          m_address, itr->second, hex.c_str());
+            sendCommand(cmd);
+
+            std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n", m_address, itr->second);
+            sendCommand(cyc);
+
           }
         }
 
@@ -673,68 +697,82 @@ namespace Sensors
         std::string msg = String::fromHex(hex);
         const char* msg_raw = msg.data();
 
-        float lat;
-        float lon;
-        uint8_t depth;
-        int16_t yaw;
-        int16_t alt;
-        uint16_t ranges[2];
+        uint8_t code;
+        std::memcpy(&code, msg_raw + 0, 1);
 
-        int8_t progress;
-        uint8_t fuel_level;
-        uint8_t fuel_conf;
-
-        std::memcpy(&lat, msg_raw + 0, 4);
-        std::memcpy(&lon, msg_raw + 4, 4);
-        std::memcpy(&depth, msg_raw + 8, 1);
-        std::memcpy(&yaw, msg_raw + 9, 2);
-        std::memcpy(&alt, msg_raw + 11, 2);
-        std::memcpy(&ranges[0], msg_raw + 13, 2);
-        std::memcpy(&ranges[1], msg_raw + 15, 2);
-        std::memcpy(&progress, msg_raw + 17, 1);
-        std::memcpy(&fuel_level, msg_raw + 18, 1);
-        std::memcpy(&fuel_conf, msg_raw + 19, 1);
-
-        for (int i = 0; i < 2; ++i)
+        if (code == c_code_report)
         {
-          if (ranges[i] == 0)
-            continue;
+          float lat;
+          float lon;
+          uint8_t depth;
+          int16_t yaw;
+          int16_t alt;
+          uint16_t ranges[2];
 
-          IMC::LblRangeAcceptance lmsg;
-          lmsg.setSource(m_mimap[src]);
-          lmsg.id = i;
-          lmsg.range = ranges[i];
-          lmsg.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
-          dispatch(lmsg);
-          inf("%s %u: %f", DTR("range to"), lmsg.id, lmsg.range);
+          int8_t progress;
+          uint8_t fuel_level;
+          uint8_t fuel_conf;
+
+          std::memcpy(&lat, msg_raw + 1, 4);
+          std::memcpy(&lon, msg_raw + 5, 4);
+          std::memcpy(&depth, msg_raw + 9, 1);
+          std::memcpy(&yaw, msg_raw + 10, 2);
+          std::memcpy(&alt, msg_raw + 12, 2);
+          std::memcpy(&ranges[0], msg_raw + 14, 2);
+          std::memcpy(&ranges[1], msg_raw + 16, 2);
+          std::memcpy(&progress, msg_raw + 18, 1);
+          std::memcpy(&fuel_level, msg_raw + 19, 1);
+          std::memcpy(&fuel_conf, msg_raw + 20, 1);
+
+          for (int i = 0; i < 2; ++i)
+          {
+            if (ranges[i] == 0)
+              continue;
+
+            IMC::LblRangeAcceptance lmsg;
+            lmsg.setSource(m_mimap[src]);
+            lmsg.id = i;
+            lmsg.range = ranges[i];
+            lmsg.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
+            dispatch(lmsg);
+            inf("%s %u: %f", DTR("range to"), lmsg.id, lmsg.range);
+          }
+
+          IMC::EstimatedState es;
+          es.setSource(m_mimap[src]);
+          es.lat = lat;
+          es.lon = lon;
+          es.depth = (float)depth;
+          es.psi = (float)yaw / 100.0;
+          es.alt = (float)alt / 10.0;
+          dispatch(es);
+
+          IMC::PlanControlState pcs;
+          pcs.setSource(m_mimap[src]);
+          pcs.plan_progress = (float)progress;
+          dispatch(pcs);
+
+          // Inform if progress is valid.
+          if (pcs.plan_progress >= 0)
+            inf(DTR("plan progress is %f"), pcs.plan_progress);
+
+          IMC::FuelLevel fuel;
+          fuel.setSource(m_mimap[src]);
+          fuel.value = (float)fuel_level;
+          fuel.confidence = (float)fuel_conf;
+          dispatch(fuel);
+
+          trace("lat %f | lon %f | depth %f | alt %f | yaw %f", es.lat, es.lon, es.depth, es.alt, es.psi);
+          trace("fuel %f | conf %f | plan progress %f", fuel.value, fuel.confidence, pcs.plan_progress);
         }
-
-        IMC::EstimatedState es;
-        es.setSource(m_mimap[src]);
-        es.lat = lat;
-        es.lon = lon;
-        es.depth = (float)depth;
-        es.psi = (float)yaw / 100.0;
-        es.alt = (float)alt / 10.0;
-        dispatch(es);
-
-        IMC::PlanControlState pcs;
-        pcs.setSource(m_mimap[src]);
-        pcs.plan_progress = (float)progress;
-        dispatch(pcs);
-
-        // Inform if progress is valid.
-        if (pcs.plan_progress >= 0)
-          inf(DTR("plan progress is %f"), pcs.plan_progress);
-
-        IMC::FuelLevel fuel;
-        fuel.setSource(m_mimap[src]);
-        fuel.value = (float)fuel_level;
-        fuel.confidence = (float)fuel_conf;
-        dispatch(fuel);
-
-        debug("lat %f | lon %f | depth %f | alt %f | yaw %f", es.lat, es.lon, es.depth, es.alt, es.psi);
-        debug("fuel %f | conf %f | plan progress %f", fuel.value, fuel.confidence, pcs.plan_progress);
+        else if (code == c_code_plan)
+        {
+          debug("ignore start plan");
+        }
+        else
+        {
+          debug("wrong code id");
+        }
       }
 
       void

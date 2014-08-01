@@ -30,6 +30,7 @@
 
 // ISO C++ 98 headers.
 #include <map>
+#include <vector>
 
 // DUNE headers.
 #include <DUNE/Concurrency/TSQueue.hpp>
@@ -76,7 +77,7 @@ namespace DUNE
       //! Context.
       Context& m_ctx;
       //! Callbacks.
-      std::map<uint32_t, AbstractConsumer*> m_cbacks;
+      std::map<uint32_t, std::vector<AbstractConsumer*> > m_cbacks;
       //! Message queue.
       Concurrency::TSQueue<IMC::Message*> m_mqueue;
     };

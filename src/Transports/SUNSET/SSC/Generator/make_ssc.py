@@ -103,9 +103,7 @@ def do_scalar(node, out):
     if type_name == 'Integer':
         # Encoder.
         f = encoder([Var('value__', 'const int&'), Var('format__', 'const char*', '"%d"')])
-        f.add_body('char bfr[16] = {0};')
-        f.add_body('std::snprintf(bfr, sizeof(bfr) - 1, format__, value__);')
-        f.add_body('args__.push_back(bfr);')
+        f.add_body('args__.push_back(DUNE::Utils::String::str(format__, value__));')
         f.add_body('return 1;')
         out.append(f)
 
@@ -119,9 +117,7 @@ def do_scalar(node, out):
     elif type_name == 'Unsigned':
         # Encoder.
         f = encoder([Var('value__', 'const unsigned&'),  Var('format__', 'const char*', '"%u"')])
-        f.add_body('char bfr[16] = {0};')
-        f.add_body('std::snprintf(bfr, sizeof(bfr) - 1, format__, value__);')
-        f.add_body('args__.push_back(bfr);')
+        f.add_body('args__.push_back(DUNE::Utils::String::str(format__, value__));')
         f.add_body('return 1;')
         out.append(f)
 
@@ -135,9 +131,7 @@ def do_scalar(node, out):
     elif type_name == 'Real':
         # Encoder.
         f = encoder([Var('value__', 'const double&')])
-        f.add_body('char bfr[16] = {0};')
-        f.add_body('std::snprintf(bfr, sizeof(bfr) - 1, "%0.6f", value__);')
-        f.add_body('args__.push_back(bfr);')
+        f.add_body('args__.push_back(DUNE::Utils::String::str("%0.6f", value__));')
         f.add_body('return 1;')
         out.append(f)
 
@@ -501,6 +495,7 @@ f.write()
 f = File('Types.hpp', folder)
 f.add_isoc_headers('string', 'cstdio')
 f.add_local_headers('Exceptions.hpp')
+f.add_dune_headers('Utils/String.hpp')
 for type in root.findall('types/type'):
     do_scalar(type, f)
 for type in root.findall('types/type'):
