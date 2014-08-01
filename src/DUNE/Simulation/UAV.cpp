@@ -1158,7 +1158,10 @@ namespace DUNE
     {
       //! Vehicle operation bank rate limit and respective initialization flag
       m_bank_rate_lim = bank_rate_lim;
-      m_bank_rate_lim_f = true;
+      if (bank_rate_lim > 0)
+        m_bank_rate_lim_f = true;
+      else
+        m_bank_rate_lim_f = false;
     }
 
     void
@@ -1166,7 +1169,10 @@ namespace DUNE
     {
       //! Vehicle operation longitudinal acceleration limit and respective initialization flag
       m_lon_accel_lim = lon_accel_lim;
-      m_lon_accel_lim_f = true;
+      if (lon_accel_lim > 0)
+        m_lon_accel_lim_f = true;
+      else
+        m_lon_accel_lim_f = false;
     }
 
     void
@@ -1174,7 +1180,10 @@ namespace DUNE
     {
       //! Vehicle operation vertical slope limit and respective initialization flag
       m_vert_slope_lim = vert_slope_lim;
-      m_vert_slope_lim_f = true;
+      if (vert_slope_lim > 0)
+        m_vert_slope_lim_f = true;
+      else
+        m_vert_slope_lim_f = false;
     }
 
     DUNE::Math::Matrix
