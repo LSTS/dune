@@ -34,6 +34,9 @@
 #include <string>
 #include <cstdio>
 
+// DUNE headers.
+#include <DUNE/Utils/String.hpp>
+
 // Local headers.
 #include "Exceptions.hpp"
 
@@ -44,9 +47,7 @@ namespace Transports
     size_t
     encodeType(std::vector<std::string>& args__, const int& value__, const char* format__ = "%d")
     {
-      char bfr[16] = {0};
-      std::snprintf(bfr, sizeof(bfr) - 1, format__, value__);
-      args__.push_back(bfr);
+      args__.push_back(DUNE::Utils::String::str(format__, value__));
       return 1;
     }
 
@@ -61,9 +62,7 @@ namespace Transports
     size_t
     encodeType(std::vector<std::string>& args__, const unsigned& value__, const char* format__ = "%u")
     {
-      char bfr[16] = {0};
-      std::snprintf(bfr, sizeof(bfr) - 1, format__, value__);
-      args__.push_back(bfr);
+      args__.push_back(DUNE::Utils::String::str(format__, value__));
       return 1;
     }
 
@@ -78,9 +77,7 @@ namespace Transports
     size_t
     encodeType(std::vector<std::string>& args__, const double& value__)
     {
-      char bfr[16] = {0};
-      std::snprintf(bfr, sizeof(bfr) - 1, "%0.6f", value__);
-      args__.push_back(bfr);
+      args__.push_back(DUNE::Utils::String::str("%0.6f", value__));
       return 1;
     }
 
