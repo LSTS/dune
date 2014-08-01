@@ -74,8 +74,8 @@ namespace Maneuver
         double deconfliction_offset;
         double acc_safety_marg;
         //! Control constraints
-        double tas_max;
-        double tas_min;
+        double speed_max;
+        double speed_min;
         double bank_lim;
         double alt_max;
         double alt_min;
@@ -275,9 +275,11 @@ namespace Maneuver
         IMC::DesiredSpeed m_airspeed_cmd;
         IMC::DesiredZ m_altitude_cmd;
         //! Leader commanded true airspeed
-        double m_tas_cmd_leader;
+        double m_speed_cmd_leader;
+        uint8_t m_speed_units_leader;
         //! Leader commanded altitude
         double m_alt_cmd_leader;
+        uint8_t m_alt_units_leader;
         //! Command limits
         double m_bank_lim;
 
@@ -361,8 +363,10 @@ namespace Maneuver
           m_wind_avg_y(new Math::MovingAverage<fp64_t>(300)),
           m_wind_avg_z(new Math::MovingAverage<fp64_t>(300)),
           m_g(Math::c_gravity),
-          m_tas_cmd_leader(0.0),
+          m_speed_cmd_leader(0.0),
+          m_speed_units_leader(IMC::SUNITS_METERS_PS),
           m_alt_cmd_leader(0.0),
+          m_alt_units_leader(IMC::Z_ALTITUDE),
           m_bank_lim(0.0),
           m_k_longitudinal(0.0),
           m_k_lateral(0.0),
@@ -467,12 +471,12 @@ namespace Maneuver
           .defaultValue("0.3")
           .description("Acceleration safety margin");
 
-          param("Maximum Airspeed", m_args.tas_max)
+          param("Maximum Airspeed", m_args.speed_max)
           .defaultValue("22.0")
           .units(Units::MeterPerSecond)
           .description("Aircraft maximum airspeed");
 
-          param("Minimum Airspeed", m_args.tas_min)
+          param("Minimum Airspeed", m_args.speed_min)
           .defaultValue("18.0")
           .units(Units::MeterPerSecond)
           .description("Aircraft minimum airspeed");
@@ -816,7 +820,7 @@ namespace Maneuver
               //! - Simulation type
               model->m_sim_type = m_args.sim_type;
               //! - Commands initialization
-              model->command(0, m_tas_cmd_leader, -m_alt_cmd_leader);
+              model->command(0, m_speed_cmd_leader, -m_alt_cmd_leader);
               //! - Limits definition
               if (m_args.l_bank_rate > 0)
                 model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
@@ -908,8 +912,8 @@ namespace Maneuver
           // Airspeed value initialization
           m_airspeed = m_args.default_speed;
           // Leader commanded true airspeed
-          m_tas_cmd_leader = m_airspeed;
-          m_airspeed_cmd.value = m_tas_cmd_leader;
+          m_speed_cmd_leader = m_airspeed;
+          m_airspeed_cmd.value = m_speed_cmd_leader;
           // Leader commanded altitude
           m_alt_cmd_leader = m_args.default_alt + m_args.alt_min;
           m_altitude_cmd.value = m_alt_cmd_leader;
@@ -923,7 +927,7 @@ namespace Maneuver
           // - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
           // - Commands initialization
-          m_model->command(0, m_tas_cmd_leader, -m_alt_cmd_leader);
+          m_model->command(0, m_speed_cmd_leader, -m_alt_cmd_leader);
 
           //==========================================
           // Apply the task parameters
@@ -1357,11 +1361,18 @@ namespace Maneuver
             return;
           }
 
-          m_tas_cmd_leader = trimValue(msg->value, m_args.tas_min,  m_args.tas_max);
-          m_model->commandAirspeed(m_tas_cmd_leader);
+          m_speed_units_leader = msg->speed_units;
+          if (m_speed_units_leader != IMC::SUNITS_METERS_PS)
+          {
+            war("Speed command rejected - units are not in m/s");
+            return;
+          }
+
+          m_speed_cmd_leader = trimValue(msg->value, m_args.speed_min,  m_args.speed_max);
+          m_model->commandAirspeed(m_speed_cmd_leader);
 
           // ========= Debug ===========
-          spew("Speed command received (%1.2fm/s), assumed (%1.2fm/s)", msg->value, m_tas_cmd_leader);
+          spew("Speed command received (%1.2fm/s), assumed (%1.2fm/s)", msg->value, m_speed_cmd_leader);
           spew("DesiredSpeed received from system '%s' and entity '%s'.",
               resolveSystemId(msg->getSource()),
               resolveEntity(msg->getSourceEntity()).c_str());
@@ -1403,17 +1414,16 @@ namespace Maneuver
             return;
           }
 
+          m_alt_units_leader = msg->z_units;
           if (msg->z_units == IMC::Z_ALTITUDE)
-            m_alt_cmd_leader = msg->value+m_llh_ref_pos[2];
-          else if (msg->z_units == IMC::Z_HEIGHT)
             m_alt_cmd_leader = msg->value;
+          else if (msg->z_units == IMC::Z_HEIGHT)
+            m_alt_cmd_leader = msg->value-m_llh_ref_pos[2];
           else if (msg->z_units == IMC::Z_DEPTH)
             m_alt_cmd_leader = -msg->value;
           else
-            m_alt_cmd_leader = m_args.alt_min+m_llh_ref_pos[2];
-          m_model->commandAlt(trimValue(m_alt_cmd_leader,
-                                        m_args.alt_min+m_llh_ref_pos[2],
-                                        m_args.alt_max+m_llh_ref_pos[2]));
+            m_alt_cmd_leader = m_args.alt_min;
+          m_model->commandAlt(trimValue(m_alt_cmd_leader, m_args.alt_min, m_args.alt_max));
 
           // ========= Debug ===========
           spew("Altitude command received (%1.2fm), assumed (%1.2fm)", msg->value, m_alt_cmd_leader);
@@ -1509,11 +1519,21 @@ namespace Maneuver
             //===========================================
 
             m_bank_cmd.value = m_uav_ctrl(0, m_uav_ind);
-            m_airspeed_cmd.value = m_uav_ctrl(1, m_uav_ind);
-            m_altitude_cmd.value = m_uav_ctrl(2, m_uav_ind);
-            m_altitude_cmd.z_units = IMC::Z_HEIGHT;
             dispatchAlias(&m_bank_cmd);
+
+            m_airspeed_cmd.value = m_uav_ctrl(1, m_uav_ind);
             dispatchAlias(&m_airspeed_cmd);
+
+            m_altitude_cmd.value = m_uav_ctrl(2, m_uav_ind);
+            if (m_alt_units_leader == IMC::Z_ALTITUDE)
+              m_altitude_cmd.value = m_uav_ctrl(2, m_uav_ind);
+            else if (m_alt_units_leader == IMC::Z_HEIGHT)
+              m_altitude_cmd.value = m_uav_ctrl(2, m_uav_ind)+m_llh_ref_pos[2];
+            else if (m_alt_units_leader == IMC::Z_DEPTH)
+              m_altitude_cmd.value = -m_uav_ctrl(2, m_uav_ind);
+            else
+              m_altitude_cmd.value = m_uav_ctrl(2, m_uav_ind);
+            m_altitude_cmd.z_units = m_alt_units_leader;
             dispatchAlias(&m_altitude_cmd);
 
 
@@ -2306,16 +2326,16 @@ namespace Maneuver
 
           //! Control constraints
           //debug("formationControl - start");
-          double d_airspeed_max = m_args.tas_max;
-          double d_airspeed_min = m_args.tas_min;
+          double d_airspeed_max = m_args.speed_max;
+          double d_airspeed_min = m_args.speed_min;
 
           //! Formation parameters
           int i_formation_frame = m_args.formation_frame;
 
           //! Control parameters
           double mt_gain_mtx[2] = {m_k_longitudinal, m_k_lateral};
-          Matrix md_gain_mtx = Matrix(mt_gain_mtx, 2) * m_tas_cmd_leader/2.5;
-          double d_ss_bnd_layer = m_k_boundary * m_tas_cmd_leader;
+          Matrix md_gain_mtx = Matrix(mt_gain_mtx, 2) * m_speed_cmd_leader/2.5;
+          double d_ss_bnd_layer = m_k_boundary * m_speed_cmd_leader;
           double d_deconfliction_dist = m_safe_dist + m_deconfliction_offset;
           double k_form_ref = (m_uav_n > 1)?m_k_leader*(m_uav_n-1):1.0;
           double k_deconfl_vel = m_k_deconfliction*k_form_ref;
@@ -3063,13 +3083,8 @@ namespace Maneuver
            */
 
           //-------------------------------------------
-          //! Acceleration command
+          // Acceleration desired
           //-------------------------------------------
-
-          /*
-        t_rot_ground2yaw = {d_cos_heading, d_sin_heading, -d_sin_heading/m_airspeed, d_cos_heading/m_airspeed};
-        md_rot_ground2yaw = Matrix(t_rot_ground2yaw, 2, 2);
-           */
 
           // Control vector
           // vd_accel = (vt_virt_err - vd_surf_conv - vd_surf_unkn)/...
@@ -3077,69 +3092,34 @@ namespace Maneuver
           Matrix vd_accel = vt_virt_err - vd_surf_conv - vd_surf_unkn;
           Matrix vd_ctrl = md_rot_ground2yaw*vd_accel;
 
-          ////debug("formationControl - 5");
-          /*
-          // Debug
-          double vt_virt_err1[2] = {vt_virt_err(0), vt_virt_err(1)};
-          double vt_surf_conv1[2] = {vd_surf_conv(0), vd_surf_conv(1)};
-          double vt_surf_unkn1[2] = {vd_surf_unkn(0), vd_surf_unkn(1)};
-          double vt_accel1[2] = {vd_accel(0), vd_accel(1)};
-          double vt_ctrl2[2] = {vd_ctrl(0), vd_ctrl(1)};
-           */
+          //debug("formationControl - 5");
 
           //-------------------------------------------
-          //! Altitude control
-          //-------------------------------------------
-
-          (*vd_cmd)(2) = m_formation_pos(2, ind_uav) + md_uav_state(2, 0);
-
-          //-------------------------------------------
-          //! Speed control
-          //-------------------------------------------
-
-          //debug("formationControl - 5.1");
-          double d_accel_x_cmd = std::min(std::max(vd_ctrl(0), -m_accel_lim_x), m_accel_lim_x);
-          vd_ctrl(0) = d_accel_x_cmd;
-          (*vd_cmd)(1) += d_time_step * d_accel_x_cmd;
-
-          /*
-          // Debug
-          double vt_ctrl1[2] = {vd_ctrl(0), vd_ctrl(1)};
-           */
-
-          //-------------------------------------------
-          //! Course control
+          // Course control
           //-------------------------------------------
           //debug("formationControl - 5.2");
 
           // Bank command
-          (*vd_cmd)(0) = std::atan(vd_ctrl(1)/m_g); // Desired bank
+          (*vd_cmd)(0) = trimValue(std::atan(vd_ctrl(1)/m_g), -m_bank_lim, m_bank_lim);
+          // Lateral acceleration command
+          vd_ctrl(1) = m_g*std::tan((*vd_cmd)(0));
 
-          /*
-          // Debug
-          double vt_cmd1[3] = {(*vd_cmd)(0), (*vd_cmd)(1), (*vd_cmd)(2)};
-           */
+          //-------------------------------------------
+          // Speed control
+          //-------------------------------------------
 
-          //===========================================
-          // Control limits
-          //===========================================
-          //debug("formationControl - 5.3");
+          // Longitudinal acceleration command
+          vd_ctrl(0) = trimValue(vd_ctrl(0), -m_accel_lim_x, m_accel_lim_x);
+          // Speed command
+          (*vd_cmd)(1) = trimValue((*vd_cmd)(1) + d_time_step*vd_ctrl(0), d_airspeed_min, d_airspeed_max);
 
-          //! Velocity limits
-          (*vd_cmd)(1) = trimValue((*vd_cmd)(1), d_airspeed_min, d_airspeed_max);
+          //-------------------------------------------
+          // Altitude control
+          //-------------------------------------------
 
-          //! Altitude limits
-          (*vd_cmd)(2) = trimValue((*vd_cmd)(2), m_args.alt_min, m_args.alt_max);
-
-          //! Bank limits
-          (*vd_cmd)(0) = trimValue((*vd_cmd)(0), -m_bank_lim, m_bank_lim);
-          vd_ctrl(1) = m_g*std::tan((*vd_cmd)(0)); // Real lateral acceleration command
-
-          /*
-          // Debug
-          double vt_cmd2[3] = {(*vd_cmd)(0), (*vd_cmd)(1), (*vd_cmd)(2)};
-          inf("Debugging");
-           */
+          // Altitude command
+          (*vd_cmd)(2) = trimValue(-m_formation_pos(2, ind_uav) - md_uav_state(2, 0),
+                                   m_args.alt_min, m_args.alt_max);
 
           //===========================================
           // Log data
