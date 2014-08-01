@@ -500,7 +500,7 @@ namespace Sensors
         closeLog();
 
         m_log_path = path;
-        m_log_file.open(m_log_path.c_str(), std::ios::binary);
+        m_log_file.open(m_log_path.c_str(), std::ofstream::app | std::ios::binary);
         debug("opening %s", m_log_path.c_str());
       }
 
