@@ -385,9 +385,8 @@ namespace DUNE
       dispatch(m_act_state);
 
       spew("calling on request deactivation");
-      onRequestDeactivation();
-
       m_deactivating = true;
+      onRequestDeactivation();
     }
 
     void
