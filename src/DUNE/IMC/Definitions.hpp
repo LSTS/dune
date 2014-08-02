@@ -9711,7 +9711,11 @@ namespace DUNE
         //! Counter-Clockwise loiter.
         FL_CCLOCKW = 0x10,
         //! Loiter from current position.
-        FL_LOITER_CURR = 0x20
+        FL_LOITER_CURR = 0x20,
+        //! Takeoff.
+        FL_TAKEOFF = 0x40,
+        //! Land.
+        FL_LAND = 0x80
       };
 
       //! Start Point -- Latitude WGS-84.
@@ -12836,12 +12840,16 @@ namespace DUNE
       uint8_t reference_frame;
       //! Formation Participants.
       MessageList<VehicleFormationParticipant> participants;
+      //! Formation Leader Bank Limit.
+      fp32_t leader_bank_lim;
       //! Formation Leader Minimum Speed.
       fp32_t leader_speed_min;
       //! Formation Leader Maximum Speed.
       fp32_t leader_speed_max;
-      //! Formation Leader Bank Limit.
-      fp32_t leader_bank_lim;
+      //! Formation Leader Minimum Altitude.
+      fp32_t leader_alt_min;
+      //! Formation Leader Maximum Altitude.
+      fp32_t leader_alt_max;
       //! Position mismatch limit.
       fp32_t pos_sim_err_lim;
       //! Position mismatch threshold.
@@ -12906,7 +12914,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 37;
+        return 45;
       }
 
       unsigned

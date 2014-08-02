@@ -4013,6 +4013,16 @@
           fields will be ignored.
         </description>
       </value>
+      <value id="0x40" abbrev="TAKEOFF" name="Takeoff">
+        <description>
+          Indicates that takeoff should be done before going to the end position.
+        </description>
+      </value>
+      <value id="0x80" abbrev="LAND" name="Land">
+        <description>
+          Indicates that the system should land at the end position.
+        </description>
+      </value>
     </field>
   </message>
 
@@ -5700,6 +5710,11 @@
         List of formation participants.
       </description>
     </field>
+    <field name="Formation Leader Bank Limit" abbrev="leader_bank_lim" type="fp32_t" unit="rad">
+      <description>
+        Maximum absolute bank allowed for the formation leader.
+      </description>
+    </field>
     <field name="Formation Leader Minimum Speed" abbrev="leader_speed_min" type="fp32_t" unit="m/s">
       <description>
         Minimum speed allowed for the formation leader flight.
@@ -5710,9 +5725,14 @@
         Maximum speed allowed for the formation leader flight.
       </description>
     </field>
-    <field name="Formation Leader Bank Limit" abbrev="leader_bank_lim" type="fp32_t" unit="m/s">
+    <field name="Formation Leader Minimum Altitude" abbrev="leader_alt_min" type="fp32_t" unit="m">
       <description>
-        Maximum absolute bank allowed for the formation leader.
+        Minimum altitude allowed for the formation leader flight.
+      </description>
+    </field>
+    <field name="Formation Leader Maximum Altitude" abbrev="leader_alt_max" type="fp32_t" unit="m">
+      <description>
+        Maximum altitude allowed for the formation leader flight.
       </description>
     </field>
     <field name="Position mismatch limit" abbrev="pos_sim_err_lim" type="fp32_t" unit="m">
