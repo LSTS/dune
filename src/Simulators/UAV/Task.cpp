@@ -342,7 +342,7 @@ namespace Simulators
         //! Model state initialization
         debug("Model initialization");
         //! - Altitude initialization
-        m_position(2) = m_args.init_alt;
+        m_position(2) = -m_args.init_alt;
         //! - Bank initialization
         m_position(3) = DUNE::Math::Angles::radians(m_args.init_roll);
         //! - Heading initialization
@@ -619,6 +619,8 @@ namespace Simulators
       void
       consume(const IMC::DesiredRoll* msg)
       {
+        spew("Consuming DesiredRoll");
+
         // Filter command by systems and entities.
         bool matched = true;
         if (m_filtered_sys[0].size() > 0)
@@ -670,7 +672,7 @@ namespace Simulators
       void
       consume(const IMC::DesiredSpeed* msg)
       {
-        //spew("Consuming DesiredSpeed");
+        spew("Consuming DesiredSpeed");
 
         // Filter command by systems and entities.
         bool matched = true;
@@ -723,7 +725,7 @@ namespace Simulators
       void
       consume(const IMC::DesiredZ* msg)
       {
-        //spew("Consuming DesiredZ");
+        spew("Consuming DesiredZ");
 
         // Filter command by systems and entities.
         bool matched = true;
