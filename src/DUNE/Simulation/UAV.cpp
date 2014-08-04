@@ -737,8 +737,8 @@ namespace DUNE
       else
       {
         double d_turn_radius = m_airspeed/m_velocity(5);
-        m_position(0) += d_turn_radius*(m_sin_yaw - std::sin(d_initial_yaw));
-        m_position(1) += d_turn_radius*(std::cos(d_initial_yaw) - m_cos_yaw);
+        m_position(0) += d_turn_radius*(m_sin_yaw - std::sin(d_initial_yaw))+m_wind(0)*timestep;
+        m_position(1) += d_turn_radius*(std::cos(d_initial_yaw) - m_cos_yaw)+m_wind(1)*timestep;
       }
 
       /*
