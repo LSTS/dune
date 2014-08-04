@@ -226,7 +226,6 @@ namespace Maneuver
 
         // Controller flags
         bool m_param_update_first;
-        bool m_formation_update;
         //! Simulated vehicles' models
         std::vector<UAVSimulation*> m_models;
         //! Leader vehicle model
@@ -355,7 +354,6 @@ namespace Maneuver
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Periodic(name, ctx),
           m_param_update_first(true),
-          m_formation_update(false),
           //m_models(NULL),
           m_model(NULL),
           m_position(6, 1, 0.0),
@@ -425,8 +423,8 @@ namespace Maneuver
           m_leader_id(UINT_MAX)
         {
           // Definition of configuration parameters.
-          paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                      Tasks::Parameter::VISIBILITY_DEVELOPER);
+//          paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+//                      Tasks::Parameter::VISIBILITY_DEVELOPER);
 
           param("Commands source", m_args.cmd_src)
           .defaultValue("")
@@ -633,36 +631,15 @@ namespace Maneuver
           // Check the formation parameters
           //==========================================
           spew("onUpdateParameters - 1");
-          if (m_formation_update)
+          if (m_uav_id.empty())
           {
-            m_formation_update = false;
-
-            inf("Formation vehicles' list:");
-            // Process formation vehicle list
-            if (m_uav_id.empty())
-            {
+            if (!m_param_update_first)
               war("Formation vehicle list is empty!");
-              m_uav_id.push_back(getSystemId());
-              m_uav_n = 1;
-              m_uav_ind = 0;
-            }
-            for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
-            {
-              inf("UAV %u: %s", uav_ind, resolveSystemId(m_uav_id[uav_ind]));
-              // Set the current UAV index according to the group definition
-              if (m_uav_id[uav_ind] == this->getSystemId())
-                m_uav_ind = uav_ind;
-            }
-
-            inf("Formation vehicles' positions matrix:");
-            for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
-              inf("UAV %u: [x=%1.1f, y=%1.1f, z=%1.1f]", ind_uav,
-                   m_formation_pos(0, ind_uav), m_formation_pos(1, ind_uav), m_formation_pos(2, ind_uav));
+            m_uav_id.push_back(getSystemId());
+            m_uav_n = 1;
+            m_uav_ind = 0;
+            m_formation_pos = Matrix(3, 1, 0.0);
           }
-
-          // Vehicle quantity considered in the formation
-          debug("Number of UAVs -> %d", m_uav_n);
-          debug("Current UAV -> %d", m_uav_ind);
 
           //==========================================
           // Set controller gains
@@ -1116,7 +1093,8 @@ namespace Maneuver
 
             if (msg->op == IMC::Formation::OP_START)
             {
-              m_formation_update = true;
+              inf("Formation activation request received!");
+
               // Update the controller configuration
               m_formation_frame = msg->reference_frame;
               unsigned int uav_ind = 0;
@@ -1134,7 +1112,7 @@ namespace Maneuver
                 m_formation_pos(0, uav_ind) = (*it)->off_x;
                 m_formation_pos(1, uav_ind) = (*it)->off_y;
                 m_formation_pos(2, uav_ind) = (*it)->off_z;
-                m_uav_n = uav_ind++;
+                m_uav_n = ++uav_ind;
               }
               m_leader_bank_lim = msg->leader_bank_lim;
               m_leader_speed_min = msg->leader_speed_min;
@@ -1142,7 +1120,35 @@ namespace Maneuver
               m_leader_alt_min = msg->leader_alt_min;
               m_leader_alt_max = msg->leader_alt_max;
 
+              inf("Formation vehicles' list:");
+              // Process formation vehicle list
+              if (m_uav_id.empty())
+              {
+                war("Formation vehicle list is empty!");
+                m_uav_id.push_back(getSystemId());
+                m_uav_n = 1;
+                m_uav_ind = 0;
+                m_formation_pos = Matrix(3, 1, 0.0);
+              }
+              for (uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+              {
+                inf("UAV %u: %s", uav_ind, resolveSystemId(m_uav_id[uav_ind]));
+                // Set the current UAV index according to the group definition
+                if (m_uav_id[uav_ind] == this->getSystemId())
+                  m_uav_ind = uav_ind;
+              }
+
+              inf("Formation vehicles' positions matrix:");
+              for (uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+                inf("UAV %u: [x=%1.1f, y=%1.1f, z=%1.1f]", uav_ind,
+                    m_formation_pos(0, uav_ind), m_formation_pos(1, uav_ind), m_formation_pos(2, uav_ind));
+
+              // Vehicle quantity considered in the formation
+              debug("Number of UAVs -> %d", m_uav_n);
+              debug("Current UAV -> %d", m_uav_ind);
+
               // Activate the formation controller in the current system
+              onUpdateParameters();
               requestActivation();
 
 //              // ToDo - Change the Path Control parameters to control the virtual leader
@@ -1169,6 +1175,7 @@ namespace Maneuver
             }
             else if (msg->op == IMC::Formation::OP_STOP)
             {
+              inf("Formation deactivation request received!");
               // Deactivate the formation controller in the current system
               requestDeactivation();
 
@@ -1293,6 +1300,9 @@ namespace Maneuver
         void
         consume(const IMC::EstimatedStreamVelocity* msg)
         {
+          if (msg->getSource() != getSystemId())
+            return;
+
           m_wind_avg_x->update(msg->x);
           m_wind_avg_y->update(msg->y);
           m_wind_avg_z->update(msg->z);
@@ -1591,7 +1601,7 @@ namespace Maneuver
             //===========================================
 
             vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, m_uav_ind, m_uav_ind));
-            inf("Own control computation");
+            spew("Own control computation");
             formationControl(m_vehicle_state, m_vehicle_accel, m_uav_ind,
                 m_timestep_ctrl, &vd_cmd, m_debug, m_form_monitor);
             m_uav_ctrl.set(0, 2, m_uav_ind, m_uav_ind, vd_cmd.get(0, 2, 0, 0));
@@ -1837,7 +1847,7 @@ namespace Maneuver
             spew("Starting team-mate EstimatedState control 3");
             //! - Commands update
             vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, ind_uav, ind_uav));
-            inf("Cooperating vehicle simulated control computation");
+            spew("Cooperating vehicle simulated control computation");
             formationControl(m_vehicle_state, m_vehicle_accel, ind_uav, m_timestep_ctrl,
                 &vd_cmd, false, m_form_monitor);
             m_uav_ctrl.set(0, 2, ind_uav, ind_uav, vd_cmd.get(0, 2, 0, 0));
@@ -1863,7 +1873,7 @@ namespace Maneuver
           {
             if (Clock::get() >= m_last_time_verb_task + m_timestep_trace)
             {
-              trace("Formation flight task is inactive (%s).", this->getSystemName());
+              trace("Formation flight task is not active (%s).", this->getSystemName());
               m_last_time_verb_task = Clock::get();
             }
             return;
@@ -1902,8 +1912,9 @@ namespace Maneuver
         isControlActive(void)
         {
           // Deactivate the formation controller if the task is not active
-          if (!isActive() && m_ctrl_active)
+          if (isDeactivating())
           {
+            deactivate();
             m_ctrl_active = false;
             war("Formation controller deactivation");
           }
@@ -2062,7 +2073,7 @@ namespace Maneuver
 
           // ToDo - Limit the maximum difference between the current time and the last estimate time
           // for example with the time-out duration
-          debug("Update state estimate up to: %1.2f", d_time);
+          spew("Update state estimate up to: %1.2f", d_time);
           for (unsigned int ind_uav = 0; ind_uav < i_time_n; ++ind_uav)
           {
             for (unsigned int ind_uav2 = ind_uav + 1; ind_uav2 <= i_time_n; ++ind_uav2)
@@ -2080,10 +2091,10 @@ namespace Maneuver
                   vi_sim_time(ind_time) = vi_sim_time(ind_time + 1);
               }
             }
-            debug("UAV %1.0f last state estimate: %1.2f",
+            spew("UAV %1.0f last state estimate: %1.2f",
                 vi_sim_time(ind_uav), m_last_state_estim(vi_sim_time(ind_uav)));
           }
-          debug("UAV %1.0f last state estimate: %1.2f",
+          spew("UAV %1.0f last state estimate: %1.2f",
               vi_sim_time(i_time_n), m_last_state_estim(vi_sim_time(i_time_n)));
 
           spew("Periodic update 2");
@@ -2100,12 +2111,11 @@ namespace Maneuver
           }
 
           spew("Periodic update 3");
-          printState("Current", m_models[m_uav_ind]->getPosition(), m_models[m_uav_ind]->getVelocity());
           //! Loop the time references to update all prediction up to the "current" time
           while (d_sim_time + m_timestep_sim <= d_time)
           {
             spew("Periodic update 3.1");
-            debug("Simulating up to current time: %1.2f", d_sim_time + m_timestep_sim);
+            spew("Simulating up to current time: %1.2f", d_sim_time + m_timestep_sim);
             //! Leader state prediction - Update the simulated vehicle state
             if (m_last_state_estim(0) <= d_sim_time && m_team_leader_init)
             {
@@ -2282,10 +2292,6 @@ namespace Maneuver
                 m_models[ind_uav]->update(m_timestep_sim);
                 m_last_state_estim(ind_uav+1) += m_timestep_sim;
               }
-            debug("Roll command = %1.2f deg", Angles::degrees(m_models[m_uav_ind]->getBankCmd()));
-            debug("Speed command = %1.2f m/s", m_models[m_uav_ind]->getAirspeedCmd());
-            debug("Altitude command = %1.2f m", m_models[m_uav_ind]->getAltCmd());
-            printState("New predicted", m_models[m_uav_ind]->getPosition(), m_models[m_uav_ind]->getVelocity());
 
             spew("Periodic update 3.4");
             //! Team control prediction - Update the simulated vehicles commands
@@ -2299,22 +2305,12 @@ namespace Maneuver
                 //spew("Periodic update 3.4.1");
                 //! Asynchronous update team simulated state
                 teamUnevenUpdate(d_sim_time + m_timestep_sim);
-                Matrix t_pos = m_vehicle_state.get(0, 2, m_uav_ind+1, m_uav_ind+1);
-                Matrix t_vel = m_vehicle_state.get(3, 5, m_uav_ind+1, m_uav_ind+1);
-                printState("Asynchronous predicted",
-                    t_pos.vertCat(m_vehicle_state.get(6, 8, m_uav_ind+1, m_uav_ind+1)),
-                    t_vel.vertCat(m_vehicle_state.get(9, 11, m_uav_ind+1, m_uav_ind+1)));
-                t_pos = m_vehicle_state.get(0, 2, 0, 0);
-                t_vel = m_vehicle_state.get(3, 5, 0, 0);
-                printState("Leader asynchronous predicted",
-                    t_pos.vertCat(m_vehicle_state.get(6, 8, 0, 0)),
-                    t_vel.vertCat(m_vehicle_state.get(9, 11, 0, 0)));
 
                 //spew("Periodic update 3.4.2");
                 //! Compute simulated vehicle formation controls
                 vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, ind_uav, ind_uav));
                 //spew("Periodic update 3.4.2.1");
-                inf("Simulated control computation");
+                spew("Simulated control computation");
                 formationControl(m_vehicle_state, m_vehicle_accel, ind_uav, m_timestep_ctrl,
                     &vd_cmd, false, m_form_monitor);
                 //spew("Periodic update 3.4.2.2");
