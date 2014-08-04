@@ -254,7 +254,7 @@ namespace Maneuver
 
         //! System state variables
         Matrix m_vehicle_state;
-        Matrix m_uav_accel;
+        Matrix m_vehicle_accel;
         double m_airspeed;
 
         //! Environment variables
@@ -369,7 +369,7 @@ namespace Maneuver
           m_timestep_trace(2.0),
           m_timestep_spew(0.5),
           m_vehicle_state(12, 1, 0.0),
-          m_uav_accel(3, 1, 0.0),
+          m_vehicle_accel(3, 1, 0.0),
           m_airspeed(0.0),
           m_wind(3, 1, 0.0),
           m_wind_avg_x(new Math::MovingAverage<fp64_t>(300)),
@@ -586,16 +586,11 @@ namespace Maneuver
         {
           spew("Starting the parameters update.");
 
-          if (isActive())
-            war("Formation controller is active");
-          else if (isActivating())
-            war("Formation controller is activating");
-          else
-            war("Formation controller is inactive");
-
           //==========================================
           // General parameters treatment
           //==========================================
+          // Debug flag - for control performance monitoring
+          m_debug = m_args.debug;
           // Maneuverability constraints
           m_bank_lim = Angles::radians(m_args.bank_lim);
           m_speed_min = m_args.speed_min;
@@ -675,8 +670,7 @@ namespace Maneuver
           spew("onUpdateParameters - 2");
           debug("Controller parameters definition.");
           // Output the controller parameter, if changed, and the controller evaluation data
-          if (m_debug &&
-              (paramChanged(m_args.k_longitudinal) ||
+          if (paramChanged(m_args.k_longitudinal) ||
               paramChanged(m_args.k_lateral) ||
               paramChanged(m_args.k_boundary) ||
               paramChanged(m_args.k_leader) ||
@@ -685,7 +679,7 @@ namespace Maneuver
               paramChanged(m_args.safe_dist) ||
               paramChanged(m_args.deconfliction_offset) ||
               paramChanged(m_args.acc_safety_marg) ||
-              paramChanged(m_args.l_accel_x)))
+              paramChanged(m_args.l_accel_x))
           {
             m_k_longitudinal = m_args.k_longitudinal;
             m_k_lateral = m_args.k_lateral;
@@ -697,13 +691,16 @@ namespace Maneuver
             m_deconfliction_offset = m_args.deconfliction_offset;
             m_acc_safety_marg = m_args.acc_safety_marg;
             m_accel_lim_x = m_args.l_accel_x;
-            dispatchFormationParameters();
-
-            // Controller evaluation data
-            if (!m_mean_first)
+            if (m_debug)
             {
-              formationEvaluation();
-              m_mean_first = true;
+              dispatchFormationParameters();
+
+              // Controller evaluation data
+              if (!m_mean_first)
+              {
+                formationEvaluation();
+                m_mean_first = true;
+              }
             }
           }
 
@@ -716,7 +713,8 @@ namespace Maneuver
             // Model initialization
             debug("Formation leader model initialization");
             // - State  and control parameters initialization
-            m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
+            m_model = new DUNE::Simulation::UAVSimulation(
+                m_position, m_velocity, m_args.c_bank, m_args.c_speed);
             // - Commands initialization
             m_model->command(0, m_speed_cmd_leader, -m_alt_cmd_leader);
           }
@@ -738,6 +736,7 @@ namespace Maneuver
           spew("onUpdateParameters - 4");
           // Check if the formation composition changed
           // Reinitialize the simulation models if so
+          // ToDo - Check - data reallocation logic to keep the data from the remaining vehicles
           bool b_formation_change = true;
           unsigned int t_uav_n = m_uav_id_last.size();
           if (!m_param_update_first)
@@ -755,37 +754,45 @@ namespace Maneuver
           if (b_formation_change)
           {
             m_uav_id_last = m_uav_id;
-            // ToDo - Add data reallocation logic to keep the data from the remaining vehicles
             //! Initialize the team vehicles' models
             debug("Vehicles state and command vectors initialization");
             m_team_state_init = false;
 
             //! Save existing vehicles state
-            Matrix t_uav_svtate = m_vehicle_state;
+            Matrix t_vehicle_state = m_vehicle_state;
             std::vector<bool> t_vehicle_state_flag = m_vehicle_state_flag;
-            Matrix t_uav_accel = m_uav_accel;
+            Matrix t_vehicle_accel = m_vehicle_accel;
             Matrix t_uav_ctrl = m_uav_ctrl;
             Matrix t_last_state_estim = m_last_state_estim;
             Matrix t_last_simctrl_update = m_last_simctrl_update;
             std::vector<UAVSimulation*> t_models = m_models;
 
+            spew("onUpdateParameters - 4.1");
+            // Keep the leader data
+            m_vehicle_state.resizeAndKeep(12, 1);
+            m_vehicle_accel.resizeAndKeep(3, 1);
+            m_last_state_estim.resizeAndKeep(1, 1);
+
+            spew("onUpdateParameters - 4.2");
             //! Initialize vehicles state
-            m_vehicle_state.resizeAndKeep(12, 1); // Keep the leader state data
             m_vehicle_state.resizeAndKeep(12, m_uav_n+1);
+            spew("onUpdateParameters - 4.2.1");
             m_vehicle_state_flag.clear();
             for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
               m_vehicle_state_flag.push_back(false);
-            m_uav_accel.resizeAndKeep(3, 1); // Keep the leader acceleration data
-            m_uav_accel.resizeAndKeep(3, m_uav_n+1);
+            spew("onUpdateParameters - 4.2.2");
+            m_vehicle_accel.resizeAndKeep(3, m_uav_n+1);
             //! Initialize vehicles commands
+            spew("onUpdateParameters - 4.2.3");
             m_uav_ctrl = DUNE::Math::Matrix(3, m_uav_n, 0.0);
             //! Start the team vehicles simulation and control time
-            m_last_state_estim = Matrix(m_uav_n + 1, 1, Time::Clock::getSinceEpoch());
+            spew("onUpdateParameters - 4.2.4");
+            m_last_state_estim.resizeAndKeep(m_uav_n+1, 1);
+            m_last_state_estim.set(1, m_uav_n, 0, 0, Matrix(m_uav_n, 1, Time::Clock::getSinceEpoch()));
+            spew("onUpdateParameters - 4.2.5");
             m_last_simctrl_update = Matrix(m_uav_n, 1, Time::Clock::getSinceEpoch());
-            // Keep the leader state update time data
-            if (!m_param_update_first)
-              m_last_state_estim(0) = t_last_state_estim(0);
 
+            spew("onUpdateParameters - 4.3");
             //! Initialize the simulated vehicles models
             debug("Simulated vehicles models initialization");
             UAVSimulation* model;
@@ -803,20 +810,22 @@ namespace Maneuver
                   {
                     t_keep_data[ind_uav2] = true;
                     m_vehicle_state.set(0, 11, ind_uav+1, ind_uav+1,
-                                        t_uav_svtate.get(0, 11, ind_uav2+1, ind_uav2+1));
+                                        t_vehicle_state.get(0, 11, ind_uav2+1, ind_uav2+1));
                     m_vehicle_state_flag[ind_uav] = t_vehicle_state_flag[ind_uav2];
-                    m_uav_accel.set(0, 2, ind_uav+1, ind_uav+1,
-                                    t_uav_accel.get(0, 2, ind_uav2+1, ind_uav2+1));
+                    m_vehicle_accel.set(0, 2, ind_uav+1, ind_uav+1,
+                                    t_vehicle_accel.get(0, 2, ind_uav2+1, ind_uav2+1));
                     m_uav_ctrl.set(0, 2, ind_uav, ind_uav,
                                    t_uav_ctrl.get(0, 2, ind_uav2, ind_uav2));
                     m_last_state_estim(ind_uav+1) = t_last_state_estim(ind_uav2+1);
                     m_last_simctrl_update(ind_uav) = t_last_simctrl_update(ind_uav2);
                     m_models.push_back(t_models[ind_uav2]);
-                    debug("Simulated vehicle model maintained for vehicle %d.", ind_uav);
+                    debug("Simulated vehicle model maintained for vehicle: %s",
+                        resolveSystemId(m_uav_id[ind_uav]));
                     continue;
                   }
                 }
 
+              spew("onUpdateParameters - 4.4");
               //! - State  and control parameters initialization
               model = new DUNE::Simulation::UAVSimulation(
                   m_formation_pos.get(0, 2, ind_uav, ind_uav).vertCat(m_position.get(3, 5, 0, 0)),
@@ -835,10 +844,12 @@ namespace Maneuver
               debug("Simulated vehicle model initialized for vehicle %d.", ind_uav);
             }
 
+            spew("onUpdateParameters - 4.5");
             // Clean missing vehicles data
             for (unsigned int ind_uav2 = 0; ind_uav2 < t_uav_n; ++ind_uav2)
               if (!t_keep_data[ind_uav2])
                 delete t_models[ind_uav2];
+            spew("onUpdateParameters - 4.6");
           }
 
           //==========================================
@@ -888,18 +899,21 @@ namespace Maneuver
           }
 
           //==========================================
-          // Debug control variables
+          // Monitoring variables initialization
           //==========================================
           spew("onUpdateParameters - 6");
-          // Debug flag - for control performance monitoring
-          m_debug = m_args.debug;
           //! Initialize the formation monitor message
           if (m_debug)
           {
             if (m_form_monitor == NULL)
               m_form_monitor = new FormMonitor;
             RelState* rel_state;
-            m_form_monitor->rel_state.clear();
+            if (!m_form_monitor->rel_state.empty())
+            {
+              for (unsigned int ind_uav = 0; ind_uav <= m_form_monitor->rel_state.size(); ++ind_uav)
+                delete m_form_monitor->rel_state[ind_uav];
+              m_form_monitor->rel_state.clear();
+            }
             for (unsigned int ind_uav = 0; ind_uav <= m_uav_n; ++ind_uav)
             {
               rel_state = new RelState();
@@ -1084,6 +1098,13 @@ namespace Maneuver
         void
         consume(const IMC::Formation* msg)
         {
+//          // Check if the message is from the system itself
+//          if (((m_alias_id != UINT_MAX)?m_alias_id:getSystemId()) == msg->getSource())
+//          {
+//            trace("Formation message rejected! - Source is the coordinator itself.");
+//            return;
+//          }
+
           if (msg->type == IMC::Formation::FC_REQUEST)
           {
             IMC::PlanControl plan;
@@ -1137,7 +1158,8 @@ namespace Maneuver
 //              sep.name = "Path Control Coordinator";
 //              dispatchLeader(&sep);
 
-              if (msg->getSource() == m_leader_id)
+              // Check if the message is from the same system leader
+              if (msg->getSource() != m_leader_id)
               {
                 // Send a PlanControl message to start the formation control plan
                 plan.op = IMC::PlanControl::PC_START;
@@ -1150,7 +1172,8 @@ namespace Maneuver
               // Deactivate the formation controller in the current system
               requestDeactivation();
 
-              if (msg->getSource() == m_leader_id)
+              // Check if the message is from the same system leader
+              if (msg->getSource() != m_leader_id)
               {
                 // Send a PlanControl message to stop the formation control plan
                 plan.op = IMC::PlanControl::PC_STOP;
@@ -1331,8 +1354,8 @@ namespace Maneuver
           //! Get current vehicle acceleration state
           if (msg->getSource() == getSystemId())
           {
-            double mt_uav_accel[12] = {msg->x, msg->y, msg->z};
-            m_uav_accel.set(0, 2, m_uav_ind+1, m_uav_ind+1, Matrix(mt_uav_accel, 3, 1));
+            double mt_vehicle_accel[12] = {msg->x, msg->y, msg->z};
+            m_vehicle_accel.set(0, 2, m_uav_ind+1, m_uav_ind+1, Matrix(mt_vehicle_accel, 3, 1));
           }
         }
 
@@ -1559,26 +1582,17 @@ namespace Maneuver
             //! Team prediction update
             //===========================================
 
-            /*
-              double vt_uav_state_own3[6] = {m_vehicle_state(0, m_uav_ind+1), m_vehicle_state(1, m_uav_ind+1), m_vehicle_state(2, m_uav_ind+1),
-              m_vehicle_state(3, m_uav_ind+1), m_vehicle_state(4, m_uav_ind+1), m_vehicle_state(5, m_uav_ind+1)};
-             */
-
             //! Update team simulated state for standard time periods
-            teamPeriodicUpdate(msg->getTimeStamp());
-            teamUnevenUpdate(msg->getTimeStamp());
+            teamPeriodicUpdate(Time::Clock::getSinceEpoch());
+            teamUnevenUpdate(Time::Clock::getSinceEpoch());
 
             //===========================================
             //! Control computation
             //===========================================
 
-            /*
-              double vt_uav_state_own2[6] = {m_vehicle_state(0, m_uav_ind+1), m_vehicle_state(1, m_uav_ind+1), m_vehicle_state(2, m_uav_ind+1),
-                  m_vehicle_state(3, m_uav_ind+1), m_vehicle_state(4, m_uav_ind+1), m_vehicle_state(5, m_uav_ind+1)};
-             */
-
             vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, m_uav_ind, m_uav_ind));
-            formationControl(m_vehicle_state, m_uav_accel, m_uav_ind,
+            inf("Own control computation");
+            formationControl(m_vehicle_state, m_vehicle_accel, m_uav_ind,
                 m_timestep_ctrl, &vd_cmd, m_debug, m_form_monitor);
             m_uav_ctrl.set(0, 2, m_uav_ind, m_uav_ind, vd_cmd.get(0, 2, 0, 0));
 
@@ -1807,7 +1821,7 @@ namespace Maneuver
             //spew("Process another system's EstimatedState - 3 for vehicle %s",
             //    resolveSystemId(msg->getSource()));
             // Check if the control is active
-            if (!isActive())
+            if (!isControlActive())
               return;
             // Check if the commands should be updated
             if (m_last_simctrl_update(ind_uav) + m_timestep_ctrl > msg->getTimeStamp())
@@ -1823,7 +1837,8 @@ namespace Maneuver
             spew("Starting team-mate EstimatedState control 3");
             //! - Commands update
             vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, ind_uav, ind_uav));
-            formationControl(m_vehicle_state, m_uav_accel, ind_uav, m_timestep_ctrl,
+            inf("Cooperating vehicle simulated control computation");
+            formationControl(m_vehicle_state, m_vehicle_accel, ind_uav, m_timestep_ctrl,
                 &vd_cmd, false, m_form_monitor);
             m_uav_ctrl.set(0, 2, ind_uav, ind_uav, vd_cmd.get(0, 2, 0, 0));
 
@@ -1861,7 +1876,8 @@ namespace Maneuver
           // ToDo - Check if team vehicles last update is recent enough: m_last_state_estim(1:m_uav_n)
 
           //! Update team simulated state for standard time periods
-          teamPeriodicUpdate(Time::Clock::getSinceEpoch());
+          if (isControlActive())
+            teamPeriodicUpdate(Time::Clock::getSinceEpoch());
           spew("Ending periodic task");
         }
 
@@ -1883,7 +1899,7 @@ namespace Maneuver
         }
 
         bool
-        isControlActive()
+        isControlActive(void)
         {
           // Deactivate the formation controller if the task is not active
           if (!isActive() && m_ctrl_active)
@@ -1899,17 +1915,11 @@ namespace Maneuver
             {
               m_team_state_init = true;
               for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
-              {
-                // Do not check current vehicle state initialization
-                if (ind_uav == m_uav_ind)
-                  continue;
-
                 if (!m_vehicle_state_flag[ind_uav])
                 {
                   m_team_state_init = false;
                   break;
                 }
-              }
             }
 
             // Check the formation control activation conditions
@@ -2052,7 +2062,7 @@ namespace Maneuver
 
           // ToDo - Limit the maximum difference between the current time and the last estimate time
           // for example with the time-out duration
-          spew("Update state estimate up to: %1.2f", d_time);
+          debug("Update state estimate up to: %1.2f", d_time);
           for (unsigned int ind_uav = 0; ind_uav < i_time_n; ++ind_uav)
           {
             for (unsigned int ind_uav2 = ind_uav + 1; ind_uav2 <= i_time_n; ++ind_uav2)
@@ -2070,10 +2080,10 @@ namespace Maneuver
                   vi_sim_time(ind_time) = vi_sim_time(ind_time + 1);
               }
             }
-            spew("UAV %1.0f last state estimate: %1.2f",
+            debug("UAV %1.0f last state estimate: %1.2f",
                 vi_sim_time(ind_uav), m_last_state_estim(vi_sim_time(ind_uav)));
           }
-          spew("UAV %1.0f last state estimate: %1.2f",
+          debug("UAV %1.0f last state estimate: %1.2f",
               vi_sim_time(i_time_n), m_last_state_estim(vi_sim_time(i_time_n)));
 
           spew("Periodic update 2");
@@ -2090,10 +2100,12 @@ namespace Maneuver
           }
 
           spew("Periodic update 3");
+          printState("Current", m_models[m_uav_ind]->getPosition(), m_models[m_uav_ind]->getVelocity());
           //! Loop the time references to update all prediction up to the "current" time
           while (d_sim_time + m_timestep_sim <= d_time)
           {
             spew("Periodic update 3.1");
+            debug("Simulating up to current time: %1.2f", d_sim_time + m_timestep_sim);
             //! Leader state prediction - Update the simulated vehicle state
             if (m_last_state_estim(0) <= d_sim_time && m_team_leader_init)
             {
@@ -2106,25 +2118,25 @@ namespace Maneuver
                      DUNE::Math::Angles::degrees(m_position(3)),
                      DUNE::Math::Angles::degrees(m_model->getBankCmd()));
                 spew("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->getAirspeedCmd());
-                spew("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
+                spew("Yaw: %1.2f", DUNE::Math::Anglest_posm_position(5)));
                 spew("Current latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
                 spew("Current longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
                 spew("Current altitude: %1.4fm", m_init_leader.height);
-                spew("Current x position: %1.4f", m_position(0));
-                spew("Current y position: %1.4f", m_position(1));
-                spew("Current z position: %1.4f", m_position(2));
-                spew("Current roll angle: %1.4f", m_position(3));
-                spew("Current pitch angle: %1.4f", m_position(4));
-                spew("Current yaw angle: %1.4f", m_position(5));
-                spew("Current x speed: %1.4f", m_velocity(0));
-                spew("Current y speed: %1.4f", m_velocity(1));
-                spew("Current z speed: %1.4f", m_velocity(2));
-                spew("Current roll rate: %1.4f", m_velocity(3));
-                spew("Current pitch rate: %1.4f", m_velocity(4));
-                spew("Current yaw rate: %1.4f", m_velocity(5));
-                spew("Current x wind speed: %1.4f", m_wind(0));
-                spew("Current y wind speed: %1.4f", m_wind(1));
-                spew("Current z wind speed: %1.4f", m_wind(2));
+                spew("Current x position: %1.4f m", m_position(0));
+                spew("Current y position: %1.4f m", m_position(1));
+                spew("Current z position: %1.4f m", m_position(2));
+                spew("Current roll angle: %1.4f deg", Angles::degrees(m_position(3)));
+                spew("Current pitch angle: %1.4f deg", Angles::degrees(m_position(4)));
+                spew("Current yaw angle: %1.4f deg", Angles::degrees(m_position(5)));
+                spew("Current x speed: %1.4f m/s", m_velocity(0));
+                spew("Current y speed: %1.4f m/s", m_velocity(1));
+                spew("Current z speed: %1.4f m/s", m_velocity(2));
+                spew("Current roll rate: %1.4f deg/s", Angles::degrees(m_velocity(3)));
+                spew("Current pitch rate: %1.4f deg/s", Angles::degrees(m_velocity(4)));
+                spew("Current yaw rate: %1.4f deg/s", Angles::degrees(m_velocity(5)));
+                spew("Current x wind speed: %1.4f m/s", m_wind(0));
+                spew("Current y wind speed: %1.4f m/s", m_wind(1));
+                spew("Current z wind speed: %1.4f m/s", m_wind(2));
                 m_last_time_verb_leaderspew = d_time;
               }
               */
@@ -2151,21 +2163,21 @@ namespace Maneuver
                 trace("Current latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
                 trace("Current longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
                 trace("Current altitude: %1.4fm", m_init_leader.height);
-                trace("Current x position: %1.4f", m_position(0));
-                trace("Current y position: %1.4f", m_position(1));
-                trace("Current z position: %1.4f", m_position(2));
-                trace("Current roll angle: %1.4f", m_position(3));
-                trace("Current pitch angle: %1.4f", m_position(4));
-                trace("Current yaw angle: %1.4f", m_position(5));
-                trace("Current x speed: %1.4f", m_velocity(0));
-                trace("Current y speed: %1.4f", m_velocity(1));
-                trace("Current z speed: %1.4f", m_velocity(2));
-                trace("Current roll rate: %1.4f", m_velocity(3));
-                trace("Current pitch rate: %1.4f", m_velocity(4));
-                trace("Current yaw rate: %1.4f", m_velocity(5));
-                trace("Current x wind speed: %1.4f", m_wind(0));
-                trace("Current y wind speed: %1.4f", m_wind(1));
-                trace("Current z wind speed: %1.4f", m_wind(2));
+                trace("Current x position: %1.4f m", m_position(0));
+                trace("Current y position: %1.4f m", m_position(1));
+                trace("Current z position: %1.4f m", m_position(2));
+                trace("Current roll angle: %1.4f deg", Angles::degrees(m_position(3)));
+                trace("Current pitch angle: %1.4f deg", Angles::degrees(m_position(4)));
+                trace("Current yaw angle: %1.4f deg", Angles::degrees(m_position(5)));
+                trace("Current x speed: %1.4f m/s", m_velocity(0));
+                trace("Current y speed: %1.4f m/s", m_velocity(1));
+                trace("Current z speed: %1.4f m/s", m_velocity(2));
+                trace("Current roll rate: %1.4f deg/s", Angles::degrees(m_velocity(3)));
+                trace("Current pitch rate: %1.4f deg/s", Angles::degrees(m_velocity(4)));
+                trace("Current yaw rate: %1.4f deg/s", Angles::degrees(m_velocity(5)));
+                trace("Current x wind speed: %1.4f m/s", m_wind(0));
+                trace("Current y wind speed: %1.4f m/s", m_wind(1));
+                trace("Current z wind speed: %1.4f m/s", m_wind(2));
                 m_last_time_verb_leadertrace = d_time;
               }
                */
@@ -2214,9 +2226,9 @@ namespace Maneuver
                 {
                   //! Leader acceleration
                   IMC::Acceleration accel;
-                  accel.x = m_uav_accel(0, 0);
-                  accel.y = m_uav_accel(1, 0);
-                  accel.z = m_uav_accel(2, 0);
+                  accel.x = m_vehicle_accel(0, 0);
+                  accel.y = m_vehicle_accel(1, 0);
+                  accel.z = m_vehicle_accel(2, 0);
                   dispatchLeader(&accel);
 
                   // Stream velocity.
@@ -2270,6 +2282,10 @@ namespace Maneuver
                 m_models[ind_uav]->update(m_timestep_sim);
                 m_last_state_estim(ind_uav+1) += m_timestep_sim;
               }
+            debug("Roll command = %1.2f deg", Angles::degrees(m_models[m_uav_ind]->getBankCmd()));
+            debug("Speed command = %1.2f m/s", m_models[m_uav_ind]->getAirspeedCmd());
+            debug("Altitude command = %1.2f m", m_models[m_uav_ind]->getAltCmd());
+            printState("New predicted", m_models[m_uav_ind]->getPosition(), m_models[m_uav_ind]->getVelocity());
 
             spew("Periodic update 3.4");
             //! Team control prediction - Update the simulated vehicles commands
@@ -2283,23 +2299,39 @@ namespace Maneuver
                 //spew("Periodic update 3.4.1");
                 //! Asynchronous update team simulated state
                 teamUnevenUpdate(d_sim_time + m_timestep_sim);
+                Matrix t_pos = m_vehicle_state.get(0, 2, m_uav_ind+1, m_uav_ind+1);
+                Matrix t_vel = m_vehicle_state.get(3, 5, m_uav_ind+1, m_uav_ind+1);
+                printState("Asynchronous predicted",
+                    t_pos.vertCat(m_vehicle_state.get(6, 8, m_uav_ind+1, m_uav_ind+1)),
+                    t_vel.vertCat(m_vehicle_state.get(9, 11, m_uav_ind+1, m_uav_ind+1)));
+                t_pos = m_vehicle_state.get(0, 2, 0, 0);
+                t_vel = m_vehicle_state.get(3, 5, 0, 0);
+                printState("Leader asynchronous predicted",
+                    t_pos.vertCat(m_vehicle_state.get(6, 8, 0, 0)),
+                    t_vel.vertCat(m_vehicle_state.get(9, 11, 0, 0)));
 
                 //spew("Periodic update 3.4.2");
                 //! Compute simulated vehicle formation controls
                 vd_cmd.set(0, 2, 0, 0, m_uav_ctrl.get(0, 2, ind_uav, ind_uav));
                 //spew("Periodic update 3.4.2.1");
-                formationControl(m_vehicle_state, m_uav_accel, ind_uav, m_timestep_ctrl,
+                inf("Simulated control computation");
+                formationControl(m_vehicle_state, m_vehicle_accel, ind_uav, m_timestep_ctrl,
                     &vd_cmd, false, m_form_monitor);
                 //spew("Periodic update 3.4.2.2");
-                m_uav_ctrl.set(0, 2, ind_uav, ind_uav, vd_cmd.get(0, 2, 0, 0));
+                if (isnan(vd_cmd(0)) == 0 || isnan(vd_cmd(1)) == 0 || isnan(vd_cmd(2)) == 0)
+                {
+                  m_uav_ctrl.set(0, 2, ind_uav, ind_uav, vd_cmd.get(0, 2, 0, 0));
 
-                //spew("Periodic update 3.4.3");
-                //! - Update current vehicle model control commands
-                m_models[ind_uav]->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
+                  //spew("Periodic update 3.4.3");
+                  //! - Update current vehicle model control commands
+                  m_models[ind_uav]->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
 
-                //spew("Periodic update 3.4.4");
-                //! Update the control prediction time
-                m_last_simctrl_update(ind_uav) = d_sim_time + m_timestep_sim;
+                  //spew("Periodic update 3.4.4");
+                  //! Update the control prediction time
+                  m_last_simctrl_update(ind_uav) = d_sim_time + m_timestep_sim;
+                }
+                else
+                  war("Simulated control is computing invalid commands");
               }
             }
 
@@ -2325,7 +2357,7 @@ namespace Maneuver
           Matrix vd_pos(6, 1, 0.0);
           Matrix vd_vel(6, 1, 0.0);
           UAVSimulation model;
-          double mt_uav_accel[3] = {0, 0, 0};
+          double mt_vehicle_accel[3] = {0, 0, 0};
           double d_cos_psi;
           double d_sin_psi;
           double t_rot[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -2345,7 +2377,7 @@ namespace Maneuver
                             vertCat(vd_vel.get(0, 2, 0, 0).
                                     vertCat(vd_pos.get(3, 5, 0, 0).
                                             vertCat(vd_vel.get(3, 5, 0, 0)))));
-            mt_uav_accel[1] = m_g*std::tan(vd_pos(3));
+            mt_vehicle_accel[1] = m_g*std::tan(vd_pos(3));
             d_cos_psi = std::cos(vd_pos(5));
             d_sin_psi = std::sin(vd_pos(5));
             t_rot[0] = d_cos_psi;
@@ -2353,7 +2385,7 @@ namespace Maneuver
             t_rot[3] = d_sin_psi;
             t_rot[4] = d_cos_psi;
             md_rot = Matrix(t_rot, 3, 3);
-            m_uav_accel.set(0, 2, 0, 0, md_rot*Matrix(mt_uav_accel, 3, 1));
+            m_vehicle_accel.set(0, 2, 0, 0, md_rot*Matrix(mt_vehicle_accel, 3, 1));
           }
 
           spew("Assynchronous update 2");
@@ -2378,7 +2410,7 @@ namespace Maneuver
               //spew("Assynchronous update 2.3");
               if (ind_uav != m_uav_ind)
               {
-                mt_uav_accel[1] = m_g*std::tan(vd_pos(3));
+                mt_vehicle_accel[1] = m_g*std::tan(vd_pos(3));
                 d_cos_psi = std::cos(vd_pos(5));
                 d_sin_psi = std::sin(vd_pos(5));
                 t_rot[0] = d_cos_psi;
@@ -2386,14 +2418,14 @@ namespace Maneuver
                 t_rot[3] = d_sin_psi;
                 t_rot[4] = d_cos_psi;
                 md_rot = Matrix(t_rot, 3, 3);
-                m_uav_accel.set(0, 2, ind_uav+1, ind_uav+1, md_rot*Matrix(mt_uav_accel, 3, 1));
+                m_vehicle_accel.set(0, 2, ind_uav+1, ind_uav+1, md_rot*Matrix(mt_vehicle_accel, 3, 1));
               }
             }
           spew("Assynchronous update - End");
         }
 
         void
-        formationControl(const Matrix& md_uav_state, const Matrix& md_uav_accel,
+        formationControl(const Matrix& md_uav_state, const Matrix& md_vehicle_accel,
             const unsigned int& ind_uav, const double& d_time_step, Matrix* vd_cmd,
             const bool b_debug, FormMonitor* form_monitor)
         {
@@ -2432,7 +2464,7 @@ namespace Maneuver
 
           // Maneuvering constrains
           Matrix vd_body_accel_lim_x = m_accel_lim_x*vd_body_x;
-          Matrix vd_body_accel_lim_y = m_g * std::tan(m_bank_lim*0.6)*vd_body_y;
+          Matrix vd_body_accel_lim_y = m_g * std::tan(m_bank_lim*0.75)*vd_body_y;
 
           //! Miscellaneous
           double t_uav_turnrad;
@@ -2840,7 +2872,7 @@ namespace Maneuver
             vt_surf_deriv(1) = d_c3 * d_c4 * d_deriv_err_y/((d_err_y - d_c4)*(d_err_y - d_c4)) -
                 t_surf_x * d_inter_uav_angle_dot;
             vt_virt_err_uav.set(0, 1, ind_uav2+1, ind_uav2+1,
-                                md_uav_accel.get(0, 1, ind_uav2+1, ind_uav2+1) +
+                                md_vehicle_accel.get(0, 1, ind_uav2+1, ind_uav2+1) +
                                 vd_inter_uav_des_acc - md_rot * vt_surf_deriv);
 
             //debug("formationControl - 2.11");
@@ -3003,10 +3035,48 @@ namespace Maneuver
 
           //! ======= Virtual error and feedback linearization ================
           vt_virt_err_uav.set(0, 1, ind_uav_lead, ind_uav_lead,
-                              vd_inter_uav_des_acc + md_uav_accel.get(0, 1, ind_uav_lead, ind_uav_lead));
+                              vd_inter_uav_des_acc + md_vehicle_accel.get(0, 1, ind_uav_lead, ind_uav_lead));
           vt_virt_err_uav(0, ind_uav_lead) -= d_c1 * d_c2 * d_deriv_err_x/((d_err_x - d_c2)*(d_err_x - d_c2));
           vt_virt_err_uav(1, ind_uav_lead) -= d_c3 * d_c4 * d_deriv_err_y/((d_err_y - d_c4)*(d_err_y - d_c4));
 
+          if (isnan(vt_virt_err_uav(0, ind_uav_lead)) != 0 || isnan(vt_virt_err_uav(1, ind_uav_lead)) != 0
+              || isnan(vd_surf_uav(0, ind_uav_lead)) != 0 || isnan(vd_surf_uav(1, ind_uav_lead)) != 0)
+          {
+            war("-------------------------------------------------------");
+            war("Maximum acceleration projected in x = %1.2f", d_accel_max_proj_x);
+            war("Longitudinal acceleration limit = %1.2f", m_accel_lim_x);
+            war("Body x axis = %1.2f, %1.2f", vd_body_x(0), vd_body_x(1));
+            war("Body acceleration limit in x = %1.2f, %1.2f", vd_body_accel_lim_x(0), vd_body_accel_lim_x(1));
+            war("Body acceleration limit in y = %1.2f, %1.2f", vd_body_accel_lim_y(0), vd_body_accel_lim_y(1));
+            war("C1 = %1.2f", d_c1);
+            war("C2 = %1.2f", d_c2);
+            war("C3 = %1.2f", d_c3);
+            war("C4 = %1.2f", d_c4);
+            war("Error in x = %1.2f", d_err_x);
+            war("Error in y = %1.2f", d_err_y);
+            war("Error derivative in x = %1.2f", d_deriv_err_x);
+            war("Error derivative in y = %1.2f", d_deriv_err_y);
+            if (isnan(vd_inter_uav_des_acc(0, ind_uav_lead)) != 0)
+              war("Leader-UAV desired acceleration is not a number in x!");
+            if (isnan(vd_inter_uav_des_acc(1, ind_uav_lead)) != 0)
+              war("Leader-UAV desired acceleration is not a number in y!");
+            if (isnan(md_vehicle_accel(0, ind_uav_lead)) != 0)
+              war("Leader current acceleration is not a number in x!");
+            if (isnan(md_vehicle_accel(1, ind_uav_lead)) != 0)
+              war("Leader current acceleration is not a number in y!");
+            if (isnan(d_deriv_err_x) != 0)
+              war("Leader error derivative is not a number in x!");
+            if (isnan(d_deriv_err_y) != 0)
+              war("Leader error derivative is not a number in y!");
+            if (isnan(vt_virt_err_uav(0, ind_uav_lead)) != 0)
+              war("Leader virtual error is not a number in x!");
+            if (isnan(vt_virt_err_uav(1, ind_uav_lead)) != 0)
+              war("Leader virtual error is not a number in y!");
+            if (isnan(vd_surf_uav(0, ind_uav_lead)) != 0)
+              war("Leader convergence command is not a number in x!");
+            if (isnan(vd_surf_uav(1, ind_uav_lead)) != 0)
+              war("Leader cConvergence command is not a number in y!");
+          }
           //! Tracking output
           if (b_debug)
           {
@@ -3168,6 +3238,26 @@ namespace Maneuver
           //     (m_uav_n-1+k_form_ref);
           Matrix vd_accel = vt_virt_err - vd_surf_conv - vd_surf_unkn;
           Matrix vd_ctrl = md_rot_ground2yaw*vd_accel;
+          if (isnan(vd_accel(0)) != 0 || isnan(vd_accel(1)) != 0)
+          {
+            war("-------------------------------------------------------");
+            if (isnan(vd_accel(0)) != 0)
+              war("Desired acceleration command is not a number in x!");
+            if (isnan(vd_accel(1)) != 0)
+              war("Desired acceleration command is not a number in y!");
+            if (isnan(vt_virt_err(0)) != 0)
+              war("Total virtual error is not a number in x!");
+            if (isnan(vt_virt_err(1)) != 0)
+              war("Total virtual error is not a number in y!");
+            if (isnan(vd_surf_conv(0)) != 0)
+              war("Convergence command is not a number in x!");
+            if (isnan(vd_surf_conv(1)) != 0)
+              war("Convergence command is not a number in y!");
+            if (isnan(vd_surf_unkn(0)) != 0)
+              war("Unknown perturbation command is not a number in x!");
+            if (isnan(vd_surf_unkn(1)) != 0)
+              war("Unknown perturbation command is not a number in y!");
+          }
 
           //debug("formationControl - 5");
 
@@ -3180,13 +3270,13 @@ namespace Maneuver
           if (isnan((*vd_cmd)(0)) != 0 || isnan((*vd_cmd)(1)) != 0)
           {
             war("-------------------------------------------------------");
-            if (isnan((*vd_cmd)(0)))
+            if (isnan((*vd_cmd)(0)) != 0)
               war("Formation bank command is not a number!");
-            if (isnan((*vd_cmd)(1)))
+            if (isnan((*vd_cmd)(1)) != 0)
               war("Formation speed command is not a number!");
             war("Heading value: %1.2f deg - cos = %1.2f - sin = %1.2f",
                 Angles::degrees(md_uav_state(8, ind_uav+1)), d_cos_heading, d_sin_heading);
-            war("-------------------------------------------------------");
+            war("=======================================================");
           }
 
           // Bank command
@@ -3285,6 +3375,25 @@ namespace Maneuver
           m_dist_min_mean = 0.0;
           m_err_mean = 0.0;
           m_mean_time = 0.0;
+        }
+
+        void
+        printState(const std::string what, const Matrix pos, const Matrix vel)
+        {
+          inf("============================");
+          inf("%s x position: %1.4f m", what.c_str(), pos(0));
+          inf("%s y position: %1.4f m", what.c_str(), pos(1));
+          inf("%s z position: %1.4f m", what.c_str(), pos(2));
+          inf("%s roll angle: %1.4f deg", what.c_str(), Angles::degrees(pos(3)));
+          inf("%s pitch angle: %1.4f deg", what.c_str(), Angles::degrees(pos(4)));
+          inf("%s yaw angle: %1.4f deg", what.c_str(), Angles::degrees(pos(5)));
+          inf("%s x speed: %1.4f m/s", what.c_str(), vel(0));
+          inf("%s y speed: %1.4f m/s", what.c_str(), vel(1));
+          inf("%s z speed: %1.4f m/s", what.c_str(), vel(2));
+          inf("%s roll rate: %1.4f deg/s", what.c_str(), Angles::degrees(vel(3)));
+          inf("%s pitch rate: %1.4f deg/s", what.c_str(), Angles::degrees(vel(4)));
+          inf("%s yaw rate: %1.4f deg/s", what.c_str(), Angles::degrees(vel(5)));
+          inf("-----------------------------");
         }
       };
     }
