@@ -132,66 +132,98 @@ namespace Vision
         .description("IPv4 address of the camera");
 
         param("Frames Per Second", m_args.fps)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("15")
         .description("Frames per second");
 
         param("Auto Exposure", m_args.auto_exposure)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("true")
         .description("Enable automatic exposure");
 
         param("Exposure Value", m_args.exposure_value)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("0.008")
         .description("Exposure value if auto exposure is disabled");
 
         param("Autoexposure Knee", m_args.exposure_knee)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("5")
         .description("Exposure limit before increasing the gain (in miliseconds)");
 
         param("Maximum Exposure", m_args.exposure_max)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("10")
         .description("Maximum exposure in miliseconds");
 
         param("Auto Gain", m_args.auto_gain)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("true")
         .description("Enable automatic gain");
 
         param("Gain Value", m_args.gain_value)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("1.0")
         .description("Gain value if auto gain is disabled");
 
         param("Autogain Knee", m_args.gain_knee)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("2.0")
         .description("Gain limit before increasing the exposure");
 
         param("Maximum Gain", m_args.gain_max)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("4.0")
         .description("Maximum gain");
 
         param("Gamma", m_args.gamma)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("1.4")
         .description("Gamma Value");
 
         param("Median Filter", m_args.median_filter)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("false")
         .description("Enable Median Filter");
 
         param("Auto White Balance", m_args.auto_whitebalance)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("true")
         .description("Enable Continuous Automatic White Balance");
 
         param("White Balance Gain Red", m_args.gain_red)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("2.0")
         .description("White Balance Gain Red");
 
         param("White Balance Gain Green", m_args.gain_green)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("1.0")
         .description("White Balance Gain Green");
 
         param("White Balance Gain Blue", m_args.gain_blue)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("2.0")
         .description("White Balance Gain Blue");
 
         param("Strobe", m_args.strobe)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("true")
         .description("Enable Strobe");
 
@@ -203,6 +235,12 @@ namespace Vision
         .description("Number of photos per volume");
 
         bind<IMC::LoggingControl>(this);
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        setProperties();
       }
 
       void
