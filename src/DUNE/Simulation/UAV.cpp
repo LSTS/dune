@@ -264,9 +264,9 @@ namespace DUNE
 
       //! Control commands
       //! - Bank
-      m_bank_cmd = bank_cmd;
+      commandBank(bank_cmd);
       //! - Airspeed
-      m_airspeed_cmd = airspeed_cmd;
+      commandAirspeed(airspeed_cmd);
     }
 
     UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel):
@@ -372,10 +372,9 @@ namespace DUNE
 
       //! Control commands
       //! - Bank
-      m_bank_cmd = bank_cmd;
+      commandBank(bank_cmd);
       //! - Airspeed
-      m_airspeed_cmd = airspeed_cmd;
-      m_airspeed_cmd_ini = true;
+      commandAirspeed(airspeed_cmd);
     }
 
     UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
@@ -405,13 +404,11 @@ namespace DUNE
 
       //! Control commands
       //! - Bank
-      m_bank_cmd = bank_cmd;
+      commandBank(bank_cmd);
       //! - Airspeed
-      m_airspeed_cmd = airspeed_cmd;
-      m_airspeed_cmd_ini = true;
+      commandAirspeed(airspeed_cmd);
       //! - Altitude
-      m_altitude_cmd = altitude_cmd;
-      m_altitude_cmd_ini = true;
+      commandAlt(altitude_cmd);
     }
 
     UAVSimulation&
@@ -619,7 +616,7 @@ namespace DUNE
     UAVSimulation::update(const double& timestep, const double& bank_cmd)
     {
       //! - Bank
-      m_bank_cmd = bank_cmd;
+      commandBank(bank_cmd);
 
       //! Computed the updated state
       return update(timestep);
@@ -629,9 +626,9 @@ namespace DUNE
     UAVSimulation::update(const double& timestep, const double& bank_cmd, const double& airspeed_cmd)
     {
       //! - Bank
-      m_bank_cmd = bank_cmd;
+      commandBank(bank_cmd);
       //! - Airspeed
-      m_airspeed_cmd = airspeed_cmd;
+      commandAirspeed(airspeed_cmd);
 
       //! Computed the updated state
       return update(timestep);
@@ -641,11 +638,11 @@ namespace DUNE
     UAVSimulation::update(const double& timestep, const double& bank_cmd, const double& airspeed_cmd, const double& altitude_cmd)
     {
       //! - Bank
-      m_bank_cmd = bank_cmd;
+      commandBank(bank_cmd);
       //! - Airspeed
       m_airspeed_cmd = airspeed_cmd;
       //! - Altitude
-      m_altitude_cmd = altitude_cmd;
+      commandAlt(altitude_cmd);
 
       //! Computed the updated state
       return update(timestep);
@@ -666,7 +663,7 @@ namespace DUNE
     UAVSimulation::update(const double& timestep, const double& bank_cmd, const double& wind)
     {
       //! - Bank
-      m_bank_cmd = bank_cmd;
+      commandBank(bank_cmd);
       //! Wind state vector
       m_wind = wind;
 
@@ -678,9 +675,9 @@ namespace DUNE
     UAVSimulation::update(const double& timestep, const double& bank_cmd, const double& airspeed_cmd, const double& wind)
     {
       //! - Bank
-      m_bank_cmd = bank_cmd;
+      commandBank(bank_cmd);
       //! - Airspeed
-      m_airspeed_cmd = airspeed_cmd;
+      commandAirspeed(airspeed_cmd);
       //! Wind state vector
       m_wind = wind;
 
@@ -692,11 +689,11 @@ namespace DUNE
     UAVSimulation::update(const double& timestep, const double& bank_cmd, const double& airspeed_cmd, const double& altitude_cmd, const double& wind)
     {
       //! - Bank
-      m_bank_cmd = bank_cmd;
+      commandBank(bank_cmd);
       //! - Airspeed
-      m_airspeed_cmd = airspeed_cmd;
+      commandAirspeed(airspeed_cmd);
       //! - Altitude
-      m_altitude_cmd = altitude_cmd;
+      commandAlt(altitude_cmd);
       //! Wind state vector
       m_wind = wind;
 
@@ -1233,7 +1230,7 @@ namespace DUNE
     {
       //! Control commands
       //! - Bank
-      m_bank_cmd = bank_cmd;
+      commandBank(bank_cmd);
     }
 
     void
@@ -1241,13 +1238,9 @@ namespace DUNE
     {
       //! Control commands
       //! - Bank
-      m_bank_cmd = bank_cmd;
+      commandBank(bank_cmd);
       //! - Airspeed
-      m_airspeed_cmd = airspeed_cmd;
-
-      //! Control commands initialization flags
-      //! - Airspeed
-      m_airspeed_cmd_ini = 1;
+      commandAirspeed(airspeed_cmd);
     }
 
     void
@@ -1255,89 +1248,88 @@ namespace DUNE
     {
       //! Control commands
       //! - Bank
-      m_bank_cmd = bank_cmd;
+      commandBank(bank_cmd);
       //! - Airspeed
-      m_airspeed_cmd = airspeed_cmd;
+      commandAirspeed(airspeed_cmd);
       //! - Altitude
-      m_altitude_cmd = altitude_cmd;
-      if (m_sim_type.compare("3DOF") == 0 || m_sim_type.compare("4DOF_bank") == 0)
-        m_position(2) = -altitude_cmd;
-
-      //! Control commands initialization flags
-      //! - Airspeed
-      m_airspeed_cmd_ini = 1;
-      //! - Altitude
-      m_altitude_cmd_ini = 1;
+      commandAlt(altitude_cmd);
     }
 
     void
     UAVSimulation::commandBank(const double& bank_cmd)
     {
-      //! Control commands
-      //! - Bank
-      m_bank_cmd = bank_cmd;
+      if (isnan(bank_cmd) == 0) // Check that the command is a real value
+        m_bank_cmd = bank_cmd;
+      else
+        std::printf("UAV Simulation - Bank command rejected - Commanded value is not a number!\n");
     }
 
     void
     UAVSimulation::commandAirspeed(const double& airspeed_cmd)
     {
-      //! Control commands
-      //! - Airspeed
-      m_airspeed_cmd = airspeed_cmd;
-
-      //! Control commands initialization flags
-      //! - Airspeed
-      m_airspeed_cmd_ini = 1;
+      if (isnan(airspeed_cmd) == 0) // Check that the command is a real value
+      {
+        m_airspeed_cmd = airspeed_cmd;
+        m_airspeed_cmd_ini = true;
+      }
+      else
+        std::printf("UAV Simulation - Speed command rejected - Commanded value is not a number!\n");
     }
 
     void
     UAVSimulation::commandAlt(const double& altitude_cmd)
     {
-      //! Control commands
-      //! - Altitude
-      m_altitude_cmd = altitude_cmd;
-      if (m_sim_type.compare("3DOF") == 0 || m_sim_type.compare("4DOF_bank") == 0)
-        m_position(2) = -altitude_cmd;
-
-      //! Control commands initialization flags
-      //! - Altitude
-      m_altitude_cmd_ini = 1;
-      //! - Disallow flight path angle reference
-      m_fpa_cmd_ini = 0;
-      //! - Disallow pitch reference
-      m_pitch_cmd_ini = 0;
+      if (isnan(altitude_cmd) == 0) // Check that the command is a real value
+      {
+        //! Altitude command
+        m_altitude_cmd = altitude_cmd;
+        if (m_sim_type.compare("3DOF") == 0 || m_sim_type.compare("4DOF_bank") == 0)
+          m_position(2) = -altitude_cmd;
+        //! Altitude command initialization flags
+        m_altitude_cmd_ini = true;
+        //! Disallow flight path angle reference
+        m_fpa_cmd_ini = false;
+        //! Disallow pitch reference
+        m_pitch_cmd_ini = false;
+      }
+      else
+        std::printf("UAV Simulation - Altitude command rejected - Commanded value is not a number!\n");
     }
 
     void
     UAVSimulation::commandFPA(const double& fpa_cmd)
     {
-      //! Control commands
-      //! - Flight path angle
-    	m_fpa_cmd = fpa_cmd;
-
-      //! Control commands initialization flags
-      //! - Disallow altitude reference
-      m_altitude_cmd_ini = 0;
-      //! - Flight path angle
-      m_fpa_cmd_ini = 1;
-      //! - Disallow pitch reference
-      m_pitch_cmd_ini = 0;
+      if (isnan(fpa_cmd) == 0) // Check that the command is a real value
+      {
+        //! Flight path angle command
+        m_fpa_cmd = fpa_cmd;
+        //! Disallow altitude reference
+        m_altitude_cmd_ini = false;
+        //! Flight path angle command initialization flags
+        m_fpa_cmd_ini = true;
+        //! Disallow pitch reference
+        m_pitch_cmd_ini = false;
+      }
+      else
+        std::printf("UAV Simulation - Flight path angle command rejected - Commanded value is not a number!\n");
     }
 
     void
     UAVSimulation::commandPitch(const double& pitch_cmd)
     {
-      //! Control commands
-      //! - Pitch
-      m_pitch_cmd = pitch_cmd;
-
-      //! Control commands initialization flags
-      //! - Disallow altitude reference
-      m_altitude_cmd_ini = 0;
-      //! - Disallow flight path angle reference
-      m_fpa_cmd_ini = 0;
-      //! - Pitch
-      m_pitch_cmd_ini = 1;
+      if (isnan(pitch_cmd) == 0) // Check that the command is a real value
+      {
+        //! Flight path angle command
+        m_pitch_cmd = pitch_cmd;
+        //! Disallow altitude reference
+        m_altitude_cmd_ini = false;
+        //! Disallow flight path angle reference
+        m_fpa_cmd_ini = false;
+        //! Pitch command initialization flags
+        m_pitch_cmd_ini = true;
+      }
+      else
+        std::printf("UAV Simulation - Pitch command rejected - Commanded value is not a number!\n");
     }
   }
 }
