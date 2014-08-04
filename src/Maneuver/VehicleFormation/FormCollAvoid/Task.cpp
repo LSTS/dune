@@ -589,17 +589,6 @@ namespace Maneuver
           //==========================================
           // Debug flag - for control performance monitoring
           m_debug = m_args.debug;
-          // Maneuverability constraints
-          m_bank_lim = Angles::radians(m_args.bank_lim);
-          m_speed_min = m_args.speed_min;
-          m_speed_max = m_args.speed_max;
-          m_alt_min = m_args.alt_min;
-          m_alt_max = m_args.alt_max;
-          m_leader_bank_lim = m_bank_lim;
-          m_leader_speed_min = m_args.speed_min;
-          m_leader_speed_max = m_args.speed_max;
-          m_leader_alt_min = m_args.alt_min;
-          m_leader_alt_max = m_args.alt_max;
           // Task update frequency
           m_frequency = this->getFrequency();
           // Simulation frequency
@@ -611,8 +600,20 @@ namespace Maneuver
           m_timestep_ctrl = 1/m_args.ctrl_frequency;
           // Leader state output frequency (used for the path tracking)
           m_timestep_leader = 1/m_args.leader_frequency;
+          // Vehicle maneuverability constraints
+          m_bank_lim = Angles::radians(m_args.bank_lim);
+          m_speed_min = m_args.speed_min;
+          m_speed_max = m_args.speed_max;
+          m_alt_min = m_args.alt_min;
+          m_alt_max = m_args.alt_max;
           if (m_param_update_first)
           {
+            // Leader maneuverability constraints
+            m_leader_bank_lim = m_bank_lim;
+            m_leader_speed_min = m_args.speed_min;
+            m_leader_speed_max = m_args.speed_max;
+            m_leader_alt_min = m_args.alt_min;
+            m_leader_alt_max = m_args.alt_max;
             // Home reference latitude, longitude, and height
             m_llh_ref_pos[0] = 0.0;
             m_llh_ref_pos[1] = 0.0;
@@ -1593,8 +1594,8 @@ namespace Maneuver
             //===========================================
 
             //! Update team simulated state for standard time periods
-            teamPeriodicUpdate(Time::Clock::getSinceEpoch());
-            teamUnevenUpdate(Time::Clock::getSinceEpoch());
+            teamPeriodicUpdate(msg->getTimeStamp());
+            teamUnevenUpdate(msg->getTimeStamp());
 
             //===========================================
             //! Control computation
