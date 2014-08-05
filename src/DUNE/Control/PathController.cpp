@@ -323,6 +323,7 @@ namespace DUNE
 
       double now = Clock::get();
       m_pcs.flags = 0;
+      m_pcs.path_ref = dpath->path_ref;
       bool no_start = false;
 
       if (dpath->flags & IMC::DesiredPath::FL_START)
