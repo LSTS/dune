@@ -113,6 +113,9 @@ namespace Maneuver
       void
       consume(const IMC::PathControlState* pcs)
       {
+        if (!checkPathReference(pcs))
+          return;
+
         std::stringstream ss;
         ss << "waypoint=" << m_curr;
 
