@@ -314,6 +314,9 @@ namespace Maneuver
       void
       consume(const IMC::PathControlState* pcs)
       {
+        if (!checkPathReference(pcs))
+          return;
+
         switch (m_pstate)
         {
           case ST_GO_TO:
