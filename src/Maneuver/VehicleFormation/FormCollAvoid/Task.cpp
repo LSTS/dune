@@ -239,6 +239,7 @@ namespace Maneuver
         //! Leader's estimated state
         IMC::EstimatedState m_estate_leader;
         //! Simulation and control time variables
+        Matrix m_last_state_update;
         Matrix m_last_state_estim;
         Matrix m_last_simctrl_update;
         double m_last_leader_output;
@@ -741,6 +742,7 @@ namespace Maneuver
             std::vector<bool> t_vehicle_state_flag = m_vehicle_state_flag;
             Matrix t_vehicle_accel = m_vehicle_accel;
             Matrix t_uav_ctrl = m_uav_ctrl;
+            Matrix t_last_state_update = m_last_state_update;
             Matrix t_last_state_estim = m_last_state_estim;
             Matrix t_last_simctrl_update = m_last_simctrl_update;
             std::vector<UAVSimulation*> t_models = m_models;
@@ -748,6 +750,7 @@ namespace Maneuver
             // Keep the leader data
             m_vehicle_state.resizeAndKeep(12, 1);
             m_vehicle_accel.resizeAndKeep(3, 1);
+            m_last_state_update.resizeAndKeep(1, 1);
             m_last_state_estim.resizeAndKeep(1, 1);
 
             //! Initialize vehicles state
@@ -758,7 +761,8 @@ namespace Maneuver
             m_vehicle_accel.resizeAndKeep(3, m_uav_n+1);
             //! Initialize vehicles commands
             m_uav_ctrl = DUNE::Math::Matrix(3, m_uav_n, 0.0);
-            //! Start the team vehicles simulation and control time
+            //! Start the team vehicles synchronization, simulation and control time
+            m_last_state_update.resizeAndKeep(m_uav_n+1, 1);
             m_last_state_estim.resizeAndKeep(m_uav_n+1, 1);
             m_last_state_estim.set(1, m_uav_n, 0, 0, Matrix(m_uav_n, 1, Time::Clock::getSinceEpoch()));
             m_last_simctrl_update = Matrix(m_uav_n, 1, Time::Clock::getSinceEpoch());
@@ -786,6 +790,7 @@ namespace Maneuver
                                     t_vehicle_accel.get(0, 2, ind_uav2+1, ind_uav2+1));
                     m_uav_ctrl.set(0, 2, ind_uav, ind_uav,
                                    t_uav_ctrl.get(0, 2, ind_uav2, ind_uav2));
+                    m_last_state_update(ind_uav+1) = t_last_state_update(ind_uav2+1);
                     m_last_state_estim(ind_uav+1) = t_last_state_estim(ind_uav2+1);
                     m_last_simctrl_update(ind_uav) = t_last_simctrl_update(ind_uav2);
                     m_models.push_back(t_models[ind_uav2]);
@@ -1579,6 +1584,16 @@ namespace Maneuver
           if (msg->getSource() == getSystemId())
           {
             spew("Starting own EstimatedState");
+            //! Update the time control variables
+            if (m_last_state_update(m_uav_ind+1) > msg->getTimeStamp())
+            {
+              war("Old EstimatedState received from vehicle %s. (Received: %1.2f < Current: %1.2f)",
+                  resolveSystemId(msg->getSource()), msg->getTimeStamp(), m_last_state_update(m_uav_ind+1));
+              return;
+            }
+            m_last_state_update(m_uav_ind+1) = msg->getTimeStamp();
+            m_last_state_estim(m_uav_ind+1) = msg->getTimeStamp();
+
             m_vehicle_state_flag[m_uav_ind] = true;
             //===========================================
             //! Vehicle own updated state
@@ -1600,9 +1615,6 @@ namespace Maneuver
                                vertCat(m_vehicle_state.get(6, 8, m_uav_ind+1, m_uav_ind+1)));
             m_models[m_uav_ind]->setVelocity(m_vehicle_state.get(3, 5, m_uav_ind+1, m_uav_ind+1).
                                vertCat(m_vehicle_state.get(9, 11, m_uav_ind+1, m_uav_ind+1)));
-
-            //! Update the time control variables
-            m_last_state_estim(m_uav_ind+1) = msg->getTimeStamp();
 
             spew("Starting own EstimatedState control");
             // Check if the control is active
@@ -1816,6 +1828,15 @@ namespace Maneuver
                 return;
               }
             }
+            //! Get estimated state time stamp
+            if (m_last_state_update(m_uav_ind+1) > msg->getTimeStamp())
+            {
+              war("Old EstimatedState received from vehicle %s. (Received: %1.2f < Current: %1.2f)",
+                  resolveSystemId(msg->getSource()), msg->getTimeStamp(), m_last_state_update(m_uav_ind+1));
+              return;
+            }
+            m_last_state_update(ind_uav+1) = msg->getTimeStamp();
+            m_last_state_estim(ind_uav+1) = msg->getTimeStamp();
             spew("EstimatedState accepted! - Vehicle '%s' is the '%u' in the formation vehicle list.",
                 resolveSystemId(msg->getSource()), ind_uav);
 
@@ -1846,8 +1867,6 @@ namespace Maneuver
                                            get(3, 5, ind_uav+1, ind_uav+1).
                                            vertCat(m_vehicle_state.
                                                    get(9, 11, ind_uav+1, ind_uav+1)));
-            //! Get estimated state time stamp
-            m_last_state_estim(ind_uav+1) = msg->getTimeStamp();
 
             //! Check if conditions are met to initiate team virtual state updates
             //if (!isActive() && m_team_state_init)
