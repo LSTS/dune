@@ -241,6 +241,9 @@ namespace Maneuver
       void
       consume(const IMC::PathControlState* pcs)
       {
+        if (!checkPathReference(pcs))
+          return;
+
         if ((pcs->flags & IMC::PathControlState::FL_LOITERING) && !m_yoyo_ing)
         {
           setControl(IMC::CL_PATH | IMC::CL_PITCH);
