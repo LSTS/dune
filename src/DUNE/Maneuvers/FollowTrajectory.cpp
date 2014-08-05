@@ -112,9 +112,12 @@ namespace DUNE
     }
 
     void
-    FollowTrajectory::consume(const IMC::PathControlState* msg)
+    FollowTrajectory::consume(const IMC::PathControlState* pcs)
     {
-      if (msg->flags & IMC::PathControlState::FL_NEAR)
+      if (!checkPathReference(pcs))
+        return;
+
+      if (pcs->flags & IMC::PathControlState::FL_NEAR)
       {
         if (m_approach)
         {

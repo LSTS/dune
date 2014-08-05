@@ -86,9 +86,9 @@ namespace DUNE
       step(const IMC::EstimatedState& state) = 0;
 
       //! Consumer for IMC::PathControlState message.
-      //! @param msg path control state message
+      //! @param pcs path control state message
       void
-      consume(const IMC::PathControlState* msg);
+      consume(const IMC::PathControlState* pcs);
 
       //! Abstract method called upon path completion.
       //! This will not be called in approach stage (see isApproaching()).
