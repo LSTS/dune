@@ -167,6 +167,9 @@ namespace Maneuver
       void
       consume(const IMC::PathControlState* pcs)
       {
+        if (!checkPathReference(pcs))
+          return;
+
         m_elevate->updatePathControl(pcs);
 
         if (m_elevate->isDone())
