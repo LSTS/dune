@@ -238,7 +238,7 @@ namespace Maneuver
         Matrix m_velocity;
         //! Leader's estimated state
         IMC::EstimatedState m_estate_leader;
-        //! Simulation and control time variables
+        //! Synchronization, simulation and control time variables
         Matrix m_last_state_update;
         Matrix m_last_state_estim;
         Matrix m_last_simctrl_update;
@@ -1829,10 +1829,10 @@ namespace Maneuver
               }
             }
             //! Get estimated state time stamp
-            if (m_last_state_update(m_uav_ind+1) > msg->getTimeStamp())
+            if (m_last_state_update(ind_uav+1) > msg->getTimeStamp())
             {
               war("Old EstimatedState received from vehicle %s. (Received: %1.2f < Current: %1.2f)",
-                  resolveSystemId(msg->getSource()), msg->getTimeStamp(), m_last_state_update(m_uav_ind+1));
+                  resolveSystemId(msg->getSource()), msg->getTimeStamp(), m_last_state_update(ind_uav+1));
               return;
             }
             m_last_state_update(ind_uav+1) = msg->getTimeStamp();
