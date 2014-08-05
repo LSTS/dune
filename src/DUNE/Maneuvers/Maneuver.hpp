@@ -141,6 +141,27 @@ namespace DUNE
       void
       setControl(uint32_t mask);
 
+      //! Dispatch needs to be handled in a special fashion for DesiredPath
+      //! @param[in] msg message pointer.
+      //! @param[in] flags bitfield with flags.
+      void
+      dispatch(IMC::Message* msg, unsigned int flags = 0);
+
+      //! Dispatch message to the message bus.
+      //! @param[in] msg message reference.
+      //! @param[in] flags bitfield with flags (see DispatchFlags).
+      void
+      dispatch(IMC::Message& msg, unsigned int flags = 0)
+      {
+        dispatch(&msg, flags);
+      }
+
+      //! Check if path reference is valid
+      //! @param[in] dp pointer to PathControlState message
+      //! @return true if valid, false otherwise
+      bool
+      checkPathReference(const IMC::PathControlState* pcs);
+
       //! State report handler.
       //! It should be overriden by maneuvers where it
       //! convenient to do so in time-triggered manner
@@ -213,6 +234,11 @@ namespace DUNE
       //! @return new sequence number for the scope
       uint32_t
       changeScopeRef(void);
+
+      //! Update path reference
+      //! @return new sequence number for the desired path
+      uint32_t
+      changePathRef(void);
 
       IMC::ManeuverControlState m_mcs;
       IMC::RegisterManeuver m_rm;

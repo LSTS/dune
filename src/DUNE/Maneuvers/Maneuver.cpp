@@ -34,8 +34,10 @@ namespace DUNE
   namespace Maneuvers
   {
     static Concurrency::Mutex s_amask_lock;
+    static Concurrency::Mutex s_path_lock;
     static uint32_t s_amask;
     static uint32_t s_scope_ref;
+    static uint32_t s_path_ref;
 
     Maneuver::Maneuver(const std::string& name, Tasks::Context& ctx):
       Tasks::Task(name, ctx)
@@ -103,6 +105,27 @@ namespace DUNE
         }
       }
     }
+
+    uint32_t
+    Maneuver::changePathRef(void)
+    {
+      while (1)
+      {
+        try
+        {
+          Concurrency::ScopedMutex l(s_path_lock);
+
+          s_path_ref += 1;
+
+          return s_path_ref;
+        }
+        catch (...)
+        {
+
+        }
+      }
+    }
+
 
     void
     Maneuver::consume(const IMC::StopManeuver* sm)
@@ -189,6 +212,24 @@ namespace DUNE
         dispatch(cloops);
         updateLoops(&cloops);
       }
+    }
+
+    void
+    Maneuver::dispatch(IMC::Message* msg, unsigned int flags)
+    {
+      if (msg->getId() == DUNE_IMC_DESIREDPATH)
+      {
+        IMC::DesiredPath* dp = static_cast<IMC::DesiredPath*>(msg);
+        dp->path_ref = changePathRef();
+      }
+
+      Task::dispatch(msg, flags);
+    }
+
+    bool
+    Maneuver::checkPathReference(const IMC::PathControlState* pcs)
+    {
+      return (s_path_ref == pcs->path_ref);
     }
 
     void
