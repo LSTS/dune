@@ -400,6 +400,9 @@ namespace Maneuver
       void
       consume(const IMC::PathControlState* pcs)
       {
+        if (!checkPathReference(pcs))
+          return;
+
         if (pcs->flags & IMC::PathControlState::FL_NEAR)
         {
           trace("Arrived at point");
