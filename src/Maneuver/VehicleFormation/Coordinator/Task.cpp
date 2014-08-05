@@ -126,6 +126,7 @@ namespace Maneuver
         std::vector<bool> m_vehicle_state_flag;
         std::vector<bool> m_vehicle_wind_flag;
         Matrix m_team_state;
+        Matrix m_last_state_update;
         //! Environment variables
         Matrix m_wind;
         double m_wind_speed;
@@ -199,6 +200,7 @@ namespace Maneuver
           m_last_time_spew(std::min(-1.0, Clock::get())),
           m_vehicle_state(12, 1, 0.0),
           m_team_state(12, 1, 0.0),
+          m_last_state_update(1, 1, 0.0),
           m_wind(3, 1, 0.0),
           m_wind_speed(0.0),
           m_wind_team(3, 1, 0.0),
@@ -518,6 +520,10 @@ namespace Maneuver
             Matrix t_wind_team = m_wind_team;
             std::vector<bool> t_vehicle_state_flag = m_vehicle_state_flag;
             std::vector<bool> t_vehicle_wind_flag = m_vehicle_wind_flag;
+            Matrix t_last_state_update = m_last_state_update;
+
+            // Keep the leader data
+            m_last_state_update.resizeAndKeep(1, 1);
 
             spew("onUpdateParameters - 3.1");
             // Initialize the team vehicles' state matrix
@@ -530,6 +536,8 @@ namespace Maneuver
               m_vehicle_state_flag.push_back(false);
               m_vehicle_wind_flag.push_back(false);
             }
+            //! Start the team vehicles synchronization time
+            m_last_state_update.resizeAndKeep(m_uav_n+1, 1);
 
             spew("onUpdateParameters - 3.2");
             // Data reallocation to keep the data from the remaining vehicles
@@ -544,6 +552,7 @@ namespace Maneuver
                                     t_wind_team.get(0, 2, ind_uav2, ind_uav2));
                     m_vehicle_state_flag[ind_uav] = t_vehicle_state_flag[ind_uav2];
                     m_vehicle_wind_flag[ind_uav] = t_vehicle_wind_flag[ind_uav2];
+                    m_last_state_update(ind_uav+1) = t_last_state_update(ind_uav2+1);
                     debug("Vehicle state data maintained for vehicle: %s",
                         resolveSystemId(m_uav_id[ind_uav]));
                   }
@@ -1417,10 +1426,19 @@ namespace Maneuver
         consume(const IMC::EstimatedState* msg)
         {
           // Get the virtual leader state
-          // ToDo - Replace the source system verification by the source entity verification
+          // ToDo - Add a source entity verification
           if (!m_standalone && ((m_alias_id != UINT_MAX)?m_alias_id:getSystemId()) == msg->getSource() &&
               (isActivating() || isActive()))
           {
+            // Check if the received message is new
+            if (m_last_state_update(0) > msg->getTimeStamp())
+            {
+              war("Old EstimatedState received from vehicle %s. (Received: %1.2f < Current: %1.2f)",
+                  resolveSystemId(msg->getSource()), msg->getTimeStamp(), m_last_state_update(0));
+              return;
+            }
+            m_last_state_update(0) = msg->getTimeStamp();
+
             if (m_last_time_sync + m_timestep_sync <= Clock::get())
             {
               m_last_time_sync = Clock::get();
@@ -1459,6 +1477,15 @@ namespace Maneuver
             for (; uav_ind < m_uav_n; uav_ind++)
               if (m_uav_id[uav_ind] == msg->getSource())
               {
+                // Check if the received message is new
+                if (m_last_state_update(uav_ind+1) > msg->getTimeStamp())
+                {
+                  war("Old EstimatedState received from vehicle %s. (Received: %1.2f < Current: %1.2f)",
+                      resolveSystemId(msg->getSource()), msg->getTimeStamp(), m_last_state_update(uav_ind+1));
+                  return;
+                }
+                m_last_state_update(uav_ind+1) = msg->getTimeStamp();
+
                 spew("EstimatedState received from vehicle %s", resolveSystemId(msg->getSource()));
                 // Update the relative formation state from a team vehicle
                 double vt_uav_state[9] = {
