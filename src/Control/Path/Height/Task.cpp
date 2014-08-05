@@ -107,7 +107,7 @@ namespace Control
           .defaultValue("20")
           .description("Limit distance above and bellow desired height from which maximum control is used");
 
-          param("DesiredZ source", m_args.cmd_src)
+          param("DesiredZ Filter", m_args.cmd_src)
           .defaultValue("")
           .description("List of <System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass DesiredZ.");
 
