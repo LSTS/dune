@@ -184,9 +184,12 @@ namespace DUNE
     }
 
     void
-    VehicleFormation::consume(const IMC::PathControlState* msg)
+    VehicleFormation::consume(const IMC::PathControlState* pcs)
     {
-      if (msg->flags & IMC::PathControlState::FL_NEAR)
+      if (!checkPathReference(pcs))
+        return;
+
+      if (pcs->flags & IMC::PathControlState::FL_NEAR)
       {
         if (m_approach)
         {
