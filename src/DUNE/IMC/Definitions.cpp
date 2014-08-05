@@ -13818,6 +13818,80 @@ namespace DUNE
       rel_state.setDestinationEntity(value__);
     }
 
+    Dislodge::Dislodge(void)
+    {
+      m_header.mgid = 483;
+      clear();
+    }
+
+    void
+    Dislodge::clear(void)
+    {
+      timeout = 0;
+      rpm = 0;
+      direction = 0;
+      custom.clear();
+    }
+
+    bool
+    Dislodge::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Dislodge& other__ = static_cast<const Dislodge&>(msg__);
+      if (timeout != other__.timeout) return false;
+      if (rpm != other__.rpm) return false;
+      if (direction != other__.direction) return false;
+      if (custom != other__.custom) return false;
+      return true;
+    }
+
+    int
+    Dislodge::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    Dislodge::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(timeout, ptr__);
+      ptr__ += IMC::serialize(rpm, ptr__);
+      ptr__ += IMC::serialize(direction, ptr__);
+      ptr__ += IMC::serialize(custom, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Dislodge::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(timeout, bfr__, size__);
+      bfr__ += IMC::deserialize(rpm, bfr__, size__);
+      bfr__ += IMC::deserialize(direction, bfr__, size__);
+      bfr__ += IMC::deserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Dislodge::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rpm, bfr__, size__);
+      bfr__ += IMC::deserialize(direction, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    Dislodge::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "timeout", timeout, nindent__);
+      IMC::toJSON(os__, "rpm", rpm, nindent__);
+      IMC::toJSON(os__, "direction", direction, nindent__);
+      IMC::toJSON(os__, "custom", custom, nindent__);
+    }
+
     VehicleState::VehicleState(void)
     {
       m_header.mgid = 500;

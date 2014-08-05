@@ -13206,6 +13206,90 @@ namespace DUNE
       setDestinationEntityNested(uint8_t value__);
     };
 
+    //! Dislodge Maneuver.
+    class Dislodge: public Maneuver
+    {
+    public:
+      //! Direction.
+      enum DirectionEnum
+      {
+        //! Let the vehicle decide.
+        DIR_AUTO = 0,
+        //! Attempt to move forward.
+        DIR_FORWARD = 1,
+        //! Attempt to move backward.
+        DIR_BACKWARD = 2
+      };
+
+      //! Timeout.
+      uint16_t timeout;
+      //! RPM.
+      fp32_t rpm;
+      //! Direction.
+      uint8_t direction;
+      //! Custom settings for maneuver.
+      std::string custom;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 483;
+      }
+
+      Dislodge(void);
+
+      Message*
+      clone(void) const
+      {
+        return new Dislodge(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return Dislodge::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Dislodge";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 7;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(custom);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Vehicle State.
     class VehicleState: public Message
     {
