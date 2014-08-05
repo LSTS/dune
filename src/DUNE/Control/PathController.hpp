@@ -409,8 +409,11 @@ namespace DUNE
       bool m_jump_monitors;
       //! Navigation jump timer to  disable monitors
       Time::Counter<float> m_jump_timer;
-      //! Filter Entity
-      unsigned int m_filter_entity;
+      //! List of systems and entities allowed to pass EstimatedState.
+      typedef std::vector<uint32_t> Systems;
+      typedef std::vector<uint32_t> Entities;
+      Systems m_state_filtered_sys;
+      Entities m_state_filtered_ent;
 
       // Arguments
       //! Control period
@@ -428,10 +431,7 @@ namespace DUNE
       //! Active loops
       uint32_t m_aloops;
       // EstimatedState filtering
-      //! Enable filter
-      bool m_filter;
-      //! Filter Entity Name
-      std::string m_filter_entity_name;
+      std::vector<std::string> m_state_src;
 
       //! Current tracking state
       TrackingState m_ts;
