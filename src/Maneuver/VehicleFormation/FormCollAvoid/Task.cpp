@@ -745,32 +745,24 @@ namespace Maneuver
             Matrix t_last_simctrl_update = m_last_simctrl_update;
             std::vector<UAVSimulation*> t_models = m_models;
 
-            spew("onUpdateParameters - 4.1");
             // Keep the leader data
             m_vehicle_state.resizeAndKeep(12, 1);
             m_vehicle_accel.resizeAndKeep(3, 1);
             m_last_state_estim.resizeAndKeep(1, 1);
 
-            spew("onUpdateParameters - 4.2");
             //! Initialize vehicles state
             m_vehicle_state.resizeAndKeep(12, m_uav_n+1);
-            spew("onUpdateParameters - 4.2.1");
             m_vehicle_state_flag.clear();
             for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
               m_vehicle_state_flag.push_back(false);
-            spew("onUpdateParameters - 4.2.2");
             m_vehicle_accel.resizeAndKeep(3, m_uav_n+1);
             //! Initialize vehicles commands
-            spew("onUpdateParameters - 4.2.3");
             m_uav_ctrl = DUNE::Math::Matrix(3, m_uav_n, 0.0);
             //! Start the team vehicles simulation and control time
-            spew("onUpdateParameters - 4.2.4");
             m_last_state_estim.resizeAndKeep(m_uav_n+1, 1);
             m_last_state_estim.set(1, m_uav_n, 0, 0, Matrix(m_uav_n, 1, Time::Clock::getSinceEpoch()));
-            spew("onUpdateParameters - 4.2.5");
             m_last_simctrl_update = Matrix(m_uav_n, 1, Time::Clock::getSinceEpoch());
 
-            spew("onUpdateParameters - 4.3");
             //! Initialize the simulated vehicles models
             debug("Simulated vehicles models initialization");
             UAVSimulation* model;
@@ -803,7 +795,6 @@ namespace Maneuver
                   }
                 }
 
-              spew("onUpdateParameters - 4.4");
               //! - State  and control parameters initialization
               model = new DUNE::Simulation::UAVSimulation(
                   m_formation_pos.get(0, 2, ind_uav, ind_uav).vertCat(m_position.get(3, 5, 0, 0)),
@@ -822,12 +813,10 @@ namespace Maneuver
               debug("Simulated vehicle model initialized for vehicle %d.", ind_uav);
             }
 
-            spew("onUpdateParameters - 4.5");
             // Clean missing vehicles data
             for (unsigned int ind_uav2 = 0; ind_uav2 < t_uav_n; ++ind_uav2)
               if (!t_keep_data[ind_uav2])
                 delete t_models[ind_uav2];
-            spew("onUpdateParameters - 4.6");
           }
 
           //==========================================
@@ -888,10 +877,11 @@ namespace Maneuver
             RelState* rel_state;
             if (!m_form_monitor->rel_state.empty())
             {
-              for (unsigned int ind_uav = 0; ind_uav <= m_form_monitor->rel_state.size(); ++ind_uav)
+              for (unsigned int ind_uav = 0; ind_uav < m_form_monitor->rel_state.size(); ++ind_uav)
                 delete m_form_monitor->rel_state[ind_uav];
               m_form_monitor->rel_state.clear();
             }
+            debug("onUpdateParameters - 6.3");
             for (unsigned int ind_uav = 0; ind_uav <= m_uav_n; ++ind_uav)
             {
               rel_state = new RelState();
@@ -900,7 +890,7 @@ namespace Maneuver
           }
 
           m_param_update_first = false;
-          spew("Ending the parameters update.");
+          debug("Ending the parameters update.");
         }
 
         void
@@ -1131,12 +1121,16 @@ namespace Maneuver
                 m_uav_ind = 0;
                 m_formation_pos = Matrix(3, 1, 0.0);
               }
+              bool is_in_formation = false;
               for (uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
               {
                 inf("UAV %u: %s", uav_ind, resolveSystemId(m_uav_id[uav_ind]));
                 // Set the current UAV index according to the group definition
                 if (m_uav_id[uav_ind] == this->getSystemId())
+                {
                   m_uav_ind = uav_ind;
+                  is_in_formation = true;
+                }
               }
 
               inf("Formation vehicles' positions matrix:");
@@ -1148,30 +1142,59 @@ namespace Maneuver
               debug("Number of UAVs -> %d", m_uav_n);
               debug("Current UAV -> %d", m_uav_ind);
 
-              // Activate the formation controller in the current system
-              onUpdateParameters();
-              requestActivation();
-
-//              // ToDo - Change the Path Control parameters to control the virtual leader
-//              IMC::SetEntityParameters sep;
-//              IMC::EntityParameter ep;
-//              // Request formation controller activation
-//              ep.name = "Active";
-//              ep.value = "true";
-//              sep.params.push_back(ep);
-//              // Request path controller activation
-//              sep.name = "Path Control Leader";
-//              dispatchAlias(&sep);
-//              sep.name = "Path Control Coordinator";
-//              dispatchLeader(&sep);
-
-              // Check if the message is from the same system leader
-              if (msg->getSource() != m_leader_id)
+              if (is_in_formation)
               {
-                // Send a PlanControl message to start the formation control plan
-                plan.op = IMC::PlanControl::PC_START;
-                dispatchLeader(&plan);
-                inf("Formation control plan - Start requested!");
+                // Activate the formation controller in the current system
+                onUpdateParameters();
+                requestActivation();
+
+                //              // ToDo - Change the Path Control parameters to control the virtual leader
+                //              IMC::SetEntityParameters sep;
+                //              IMC::EntityParameter ep;
+                //              // Request formation controller activation
+                //              ep.name = "Active";
+                //              ep.value = "true";
+                //              sep.params.push_back(ep);
+                //              // Request path controller activation
+                //              sep.name = "Path Control Leader";
+                //              dispatchAlias(&sep);
+                //              sep.name = "Path Control Coordinator";
+                //              dispatchLeader(&sep);
+
+                // Check if the message is from the same system leader
+                if (msg->getSource() != m_leader_id)
+                {
+                  // Send a PlanControl message to start the formation control plan
+                  plan.op = IMC::PlanControl::PC_START;
+                  dispatchLeader(&plan);
+                  inf("Formation control plan - Start requested!");
+                }
+              }
+              else
+              {
+                war("Vehicle is not in the formation list!");
+                m_uav_id.clear();
+                m_uav_id.push_back(getSystemId());
+                m_uav_n = 1;
+                m_uav_ind = 0;
+                m_formation_pos = Matrix(3, 1, 0.0);
+
+                if (isActive())
+                {
+                  inf("Formation deactivation request received!");
+                  // Deactivate the formation controller in the current system
+                  requestDeactivation();
+
+                  // Check if the message is from the same system leader
+                  if (msg->getSource() != m_leader_id)
+                  {
+                    inf("Formation deactivation request received!");
+                    // Send a PlanControl message to stop the formation control plan
+                    plan.op = IMC::PlanControl::PC_STOP;
+                    dispatchLeader(&plan);
+                    inf("Formation control plan - Stop requested!");
+                  }
+                }
               }
             }
             else if (msg->op == IMC::Formation::OP_STOP)
@@ -1637,15 +1660,16 @@ namespace Maneuver
             dispatchAlias(&m_altitude_cmd);
 
 
+            // Set PathControlState
+            path_ctrl_state.end_lat = msg->lat;
+            path_ctrl_state.end_lon = msg->lon;
+            WGS84::displace(m_vehicle_state(0, 0)+m_formation_pos(0, m_uav_ind),
+                m_vehicle_state(1, 0)+m_formation_pos(1, m_uav_ind),
+                &(path_ctrl_state.end_lat), &(path_ctrl_state.end_lon));
+            dispatchAlias(&path_ctrl_state);
+
             if (m_debug)
             {
-              // Set PathControlState
-              path_ctrl_state.end_lat = msg->lat;
-              path_ctrl_state.end_lon = msg->lon;
-              WGS84::displace(m_vehicle_state(0, 0), m_vehicle_state(1, 0),
-                  &(path_ctrl_state.end_lat), &(path_ctrl_state.end_lon));
-              dispatchAlias(&path_ctrl_state);
-
               //! Update the monitoring message
               IMC::FormationMonitor form_monit;
 
