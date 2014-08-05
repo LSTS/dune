@@ -109,6 +109,8 @@ namespace Vision
       double m_timestamp;
       //! Power GPIO.
       Hardware::GPIO* m_pwr_gpio;
+      //! Config is dirty.
+      bool m_cfg_dirty;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -117,7 +119,8 @@ namespace Vision
         m_log_dir(ctx.dir_log),
         m_volume_count(0),
         m_file_count(0),
-        m_pwr_gpio(NULL)
+        m_pwr_gpio(NULL),
+        m_cfg_dirty(false)
       {
         // Retrieve configuration values.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -240,7 +243,7 @@ namespace Vision
       void
       onUpdateParameters(void)
       {
-        setProperties();
+        m_cfg_dirty = true;
       }
 
       void
@@ -614,9 +617,30 @@ namespace Vision
             continue;
           }
 
-          if (m_http == NULL)
+          if (m_cfg_dirty)
           {
-            startVideo();
+            try
+            {
+              setProperties();
+              m_cfg_dirty = false;
+            }
+            catch (std::runtime_error& e)
+            {
+              err("%s", e.what());
+            }
+          }
+
+          if (m_http == NULL && !m_cfg_dirty)
+          {
+            try
+            {
+              startVideo();
+            }
+            catch (std::runtime_error& e)
+            {
+              err("%s", e.what());
+              stopVideo();
+            }
             continue;
           }
 
