@@ -203,6 +203,9 @@ namespace Maneuver
         void
         consume(const IMC::PathControlState* pcs)
         {
+          if (!checkPathReference(pcs))
+            return;
+
           m_pcs = *pcs;
           updateFollowRefStateFlags();
           dispatch(m_fref_state);

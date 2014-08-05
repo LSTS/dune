@@ -274,6 +274,9 @@ namespace Maneuver
         void
         consume(const IMC::PathControlState* pcs)
         {
+          if (!checkPathReference(pcs))
+            return;
+
           m_pcs = *pcs;
         }
 
@@ -333,7 +336,7 @@ namespace Maneuver
           bool at_z_target = z_dist < m_args.vertical_tolerance;
           bool at_xy_target = xy_dist < std::fabs(ref->radius) + m_args.horizontal_tolerance;
           bool target_at_surface = desired_path.end_z == 0
-                                        && desired_path.end_z_units == Z_DEPTH;
+                                      && desired_path.end_z_units == Z_DEPTH;
 
           bool still_same_reference = sameReference(ref, &m_last_ref);
 
@@ -386,7 +389,7 @@ namespace Maneuver
           }
           else
           {
-        	  desired_path.lradius = 0;
+            desired_path.lradius = 0;
           }
 
           m_fref_state.proximity = 0;
@@ -629,7 +632,7 @@ namespace Maneuver
               {
                 dispatch(desired_path);
                 inf(DTR("going towards (%f, %f, %f)."), Angles::degrees(desired_path.end_lat),
-                  Angles::degrees(desired_path.end_lon), desired_path.end_z);
+                    Angles::degrees(desired_path.end_lon), desired_path.end_z);
               }
               break;
             default:
