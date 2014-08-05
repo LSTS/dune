@@ -93,6 +93,8 @@ namespace Maneuver
         // Initial state
         double default_alt;
         double default_speed;
+        // Wind average
+        unsigned int wind_average_window;
         // Debug flag
         bool debug;
       };
@@ -563,6 +565,11 @@ namespace Maneuver
           .units(Units::MeterPerSecond)
           .description("Initial state airspeed");
 
+          param("Wind Average Window", m_args.wind_average_window)
+          .defaultValue("180.0")
+          .units(Units::Second)
+          .description("Window time length for the wind average");
+
           param("Debug", m_args.debug)
           .defaultValue("false")
           .description("Controller in debug mode");
@@ -893,6 +900,21 @@ namespace Maneuver
               m_form_monitor->rel_state.push_back(rel_state);
             }
           }
+
+          //==========================================
+          // Wind average setup
+          //==========================================
+          unsigned int window_size;
+          if (m_args.wind_average_window > 0)
+            window_size = m_args.wind_average_window;
+          else
+          {
+            war("Wind average window length parameter is too low: 0");
+            window_size = 120;
+          }
+          *m_wind_avg_x = Math::MovingAverage<fp64_t>(window_size);
+          *m_wind_avg_y = Math::MovingAverage<fp64_t>(window_size);
+          *m_wind_avg_z = Math::MovingAverage<fp64_t>(window_size);
 
           m_param_update_first = false;
           debug("Ending the parameters update.");
@@ -1640,37 +1662,44 @@ namespace Maneuver
             spew("Own control computation");
             formationControl(m_vehicle_state, m_vehicle_accel, m_uav_ind,
                 m_timestep_ctrl, &vd_cmd, m_debug, m_form_monitor);
-            m_uav_ctrl.set(0, 2, m_uav_ind, m_uav_ind, vd_cmd.get(0, 2, 0, 0));
+            if (isnan(vd_cmd(0)) == 0 || isnan(vd_cmd(1)) == 0 || isnan(vd_cmd(2)) == 0)
+            {
+              m_uav_ctrl.set(0, 2, m_uav_ind, m_uav_ind, vd_cmd.get(0, 2, 0, 0));
 
-            //! - Update own vehicle simulation model - Controls
-            m_models[m_uav_ind]->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
+              //! - Update own vehicle simulation model - Controls
+              m_models[m_uav_ind]->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
 
-            //! Update the time control variables
-            double d_timestep = msg->getTimeStamp() - m_last_simctrl_update(m_uav_ind);
-            m_last_simctrl_update(m_uav_ind) = msg->getTimeStamp();
+              //! Update the time control variables
+              m_last_simctrl_update(m_uav_ind) = msg->getTimeStamp();
 
-            //===========================================
-            //! Commands output
-            //===========================================
+              //===========================================
+              //! Commands output
+              //===========================================
 
-            m_bank_cmd.value = m_uav_ctrl(0, m_uav_ind);
-            dispatchAlias(&m_bank_cmd);
+              m_bank_cmd.value = m_uav_ctrl(0, m_uav_ind);
+              dispatchAlias(&m_bank_cmd);
 
-            m_airspeed_cmd.value = m_uav_ctrl(1, m_uav_ind);
-            dispatchAlias(&m_airspeed_cmd);
+              m_airspeed_cmd.value = m_uav_ctrl(1, m_uav_ind);
+              dispatchAlias(&m_airspeed_cmd);
 
-            m_altitude_cmd.value = m_uav_ctrl(2, m_uav_ind);
-            if (m_alt_units_leader == IMC::Z_ALTITUDE)
               m_altitude_cmd.value = m_uav_ctrl(2, m_uav_ind);
-            else if (m_alt_units_leader == IMC::Z_HEIGHT)
-              m_altitude_cmd.value = m_uav_ctrl(2, m_uav_ind)+m_llh_ref_pos[2];
-            else if (m_alt_units_leader == IMC::Z_DEPTH)
-              m_altitude_cmd.value = -m_uav_ctrl(2, m_uav_ind);
+              if (m_alt_units_leader == IMC::Z_ALTITUDE)
+                m_altitude_cmd.value = m_uav_ctrl(2, m_uav_ind);
+              else if (m_alt_units_leader == IMC::Z_HEIGHT)
+                m_altitude_cmd.value = m_uav_ctrl(2, m_uav_ind)+m_llh_ref_pos[2];
+              else if (m_alt_units_leader == IMC::Z_DEPTH)
+                m_altitude_cmd.value = -m_uav_ctrl(2, m_uav_ind);
+              else
+                m_altitude_cmd.value = m_uav_ctrl(2, m_uav_ind);
+              m_altitude_cmd.z_units = m_alt_units_leader;
+              dispatchAlias(&m_altitude_cmd);
+            }
             else
-              m_altitude_cmd.value = m_uav_ctrl(2, m_uav_ind);
-            m_altitude_cmd.z_units = m_alt_units_leader;
-            dispatchAlias(&m_altitude_cmd);
+              war("Formation control is computing invalid commands");
 
+            //===========================================
+            //! Monitoring messages
+            //===========================================
 
             // Set PathControlState
             path_ctrl_state.end_lat = msg->lat;
@@ -1680,6 +1709,7 @@ namespace Maneuver
                 &(path_ctrl_state.end_lat), &(path_ctrl_state.end_lon));
             dispatchAlias(&path_ctrl_state);
 
+            double d_timestep = msg->getTimeStamp() - m_last_simctrl_update(m_uav_ind);
             if (m_debug)
             {
               //! Update the monitoring message
@@ -1894,12 +1924,17 @@ namespace Maneuver
             spew("Cooperating vehicle simulated control computation");
             formationControl(m_vehicle_state, m_vehicle_accel, ind_uav, m_timestep_ctrl,
                 &vd_cmd, false, m_form_monitor);
-            m_uav_ctrl.set(0, 2, ind_uav, ind_uav, vd_cmd.get(0, 2, 0, 0));
+            if (isnan(vd_cmd(0)) == 0 || isnan(vd_cmd(1)) == 0 || isnan(vd_cmd(2)) == 0)
+            {
+              m_uav_ctrl.set(0, 2, ind_uav, ind_uav, vd_cmd.get(0, 2, 0, 0));
 
-            spew("Starting team-mate EstimatedState control 4");
-            //! - Update current vehicle simulation model
-            m_models[ind_uav]->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
-            m_last_simctrl_update(ind_uav) = msg->getTimeStamp();
+              spew("Starting team-mate EstimatedState control 4");
+              //! - Update current vehicle simulation model
+              m_models[ind_uav]->command(vd_cmd(0), vd_cmd(1), vd_cmd(2));
+              m_last_simctrl_update(ind_uav) = msg->getTimeStamp();
+            }
+            else
+              war("Cooperating vehicle simulated control is computing invalid commands");
 
             spew("Process another system's EstimatedState and control - end for vehicle %s",
                 resolveSystemId(msg->getSource()));
