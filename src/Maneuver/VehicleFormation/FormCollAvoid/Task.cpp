@@ -330,6 +330,7 @@ namespace Maneuver
         bool m_team_state_init;
         bool m_valid_airspeed;
         std::vector<bool> m_vehicle_state_flag;
+        std::string m_current_plan_id;
 
         //! Simulation process frequency
         double m_frequency;
@@ -416,6 +417,7 @@ namespace Maneuver
           m_team_leader_init(false),
           m_team_state_init(false),
           m_valid_airspeed(false),
+          m_current_plan_id(""),
           m_frequency(0.0),
           m_timestep_sim(0.0),
           m_timestep_ctrl(0.0),
@@ -577,7 +579,7 @@ namespace Maneuver
           // Message binding
           bind<IMC::LeaderState>(this);
           bind<IMC::Formation>(this);
-          //bind<IMC::PlanControl>(this);
+          bind<IMC::PlanControl>(this);
           bind<IMC::IndicatedSpeed>(this);
           bind<IMC::EstimatedStreamVelocity>(this);
           bind<IMC::Acceleration>(this);
@@ -1171,6 +1173,7 @@ namespace Maneuver
 
               if (is_in_formation)
               {
+                m_current_plan_id = msg->plan_id;
                 // Activate the formation controller in the current system
                 onUpdateParameters();
                 requestActivation();
@@ -1242,20 +1245,13 @@ namespace Maneuver
           }
         }
 
-//        void
-//        consume(const IMC::PlanControl* msg)
-//        {
-//          if (getSystemId() == resolveSystemName("x8-02") && msg->plan_id.compare("loiter_exp") == 0)
-//          {
-//            debug("Plan: '%s' @ %s - Source: %s - Destination: %s",
-//                  msg->plan_id.c_str(), resolveSystemId(getSystemId()),
-//                  resolveSystemId(msg->getSource()), resolveSystemId(msg->getDestination()));
-//          }
-//
-//          //! Check if it is a plan execution request
-//          if (msg->type != IMC::PlanControl::PC_REQUEST)
-//            return;
-//
+        void
+        consume(const IMC::PlanControl* msg)
+        {
+          //! Check if it is a plan execution request
+          if (msg->type != IMC::PlanControl::PC_REQUEST)
+            return;
+
 //          //! Check if the vehicle is the intended destination of the plan
 //          if (msg->getDestination() != getSystemId())
 //          {
@@ -1263,75 +1259,13 @@ namespace Maneuver
 //            trace("Destination system: %s.", resolveSystemId(msg->getDestination()));
 //            return;
 //          }
-//
-//          //! Check if the vehicle is itself the source of the plan
-//          // ToDo - For final implementation this blocking should be removed
-//          if (msg->getSource() == getSystemId())
-//          {
-//            trace("PlanControl message rejected!");
-//            trace("Source is the system itself.");
-//            return;
-//          }
-//
-//          /*
-//            //! Check if the PlanControl messages is for formation flight
-//            if (msg->plan_id.compare(m_args.plan) == 0)
-//            {
-//              trace("PlanControl message rejected!");
-//              trace("Plan ID (%s) does not match the parameters plan (%s).",
-//                  msg->plan_id.c_str(), m_args.plan.c_str());
-//              return;
-//            }
-//           */
-//
-//          //! Reset virtual leader state, if the PlanControl action is "Start"
-//          // ToDo - Use global team position to set the leader initial state
-//          if (!m_team_leader_init && msg->op == IMC::PlanControl::PC_START)
-//          {
-//            trace("Reseting the leader state.");
-//            m_init_leader.op      = IMC::LeaderState::OP_SET;
-//            m_init_leader.lat     = m_llh_ref_pos[0];
-//            m_init_leader.lon     = m_llh_ref_pos[1];
-//            m_init_leader.height  = m_llh_ref_pos[2];
-//            m_init_leader.x       = m_vehicle_state(0, m_uav_ind+1) - m_formation_pos(0, m_uav_ind);
-//            m_init_leader.y       = m_vehicle_state(1, m_uav_ind+1) - m_formation_pos(1, m_uav_ind);
-//            m_init_leader.z       = m_vehicle_state(2, m_uav_ind+1) - m_formation_pos(2, m_uav_ind);
-//            m_init_leader.vx      = m_vehicle_state(3, m_uav_ind+1);
-//            m_init_leader.vy      = m_vehicle_state(4, m_uav_ind+1);
-//            m_init_leader.vz      = 0;
-//            m_init_leader.phi     = trimValue(m_vehicle_state(6, m_uav_ind+1), -m_leader_bank_lim, m_leader_bank_lim);
-//            m_init_leader.theta   = 0;
-//            m_init_leader.psi     = m_vehicle_state(8, m_uav_ind+1);
-//            m_init_leader.p       = 0;
-//            m_init_leader.q       = 0;
-//            m_init_leader.r       = m_vehicle_state(11, m_uav_ind+1);
-//            m_init_leader.svx     = m_wind(0);
-//            m_init_leader.svy     = m_wind(1);
-//            m_init_leader.svz     = 0;
-//            m_init_leader.setTimeStamp();
-//            setLeaderState(&m_init_leader);
-//
-//            // ToDo - For final implementation, the activation of plans
-//            // should come from a formation synchronous message
-//            // if (!isActive())
-//            //  requestActivation();
-//          }
-//          // else if (msg->op == IMC::PlanControl::PC_STOP && isActive())
-//          //  requestDeactivation();
-//
-//          /*
-//            //! Initiate the leader vehicle plan
-//            IMC::PlanControl p_control;
-//            p_control.plan_id = m_args.plan;
-//            p_control.op = IMC::PlanControl::PC_START;
-//            p_control.type = IMC::PlanControl::PC_REQUEST;
-//            p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
-//            dispatchAlias(&p_control);
-//           */
-//
-//          //! Flag virtual leader state arrival
-//          m_team_plan_init = true;
-//        }
+
+          // Request deactivation the formation controller if there is
+          // a STOP request or a start request for a different plan
+          if (isActive() && (msg->op == IMC::PlanControl::PC_STOP ||
+              (msg->op == IMC::PlanControl::PC_START && msg->plan_id.compare(m_current_plan_id) != 0)))
+            requestDeactivation();
+        }
 
         void
         consume(const IMC::IndicatedSpeed* msg)
