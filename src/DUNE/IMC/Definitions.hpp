@@ -9718,6 +9718,8 @@ namespace DUNE
         FL_LAND = 0x80
       };
 
+      //! Path Reference.
+      uint32_t path_ref;
       //! Start Point -- Latitude WGS-84.
       fp64_t start_lat;
       //! Start Point -- WGS-84 Longitude.
@@ -9790,7 +9792,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 52;
+        return 56;
       }
 
       void
@@ -10063,6 +10065,8 @@ namespace DUNE
         FL_CCLOCKW = 0x10
       };
 
+      //! Path Reference.
+      uint32_t path_ref;
       //! Start Point -- Latitude WGS-84.
       fp64_t start_lat;
       //! Start Point -- WGS-84 Longitude.
@@ -10147,7 +10151,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 77;
+        return 81;
       }
 
       void
