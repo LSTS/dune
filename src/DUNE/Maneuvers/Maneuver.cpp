@@ -43,6 +43,7 @@ namespace DUNE
       Tasks::Task(name, ctx)
     {
       bind<IMC::StopManeuver>(this);
+      bind<IMC::PathControlState>(this);
     }
 
     Maneuver::~Maneuver(void)
@@ -145,6 +146,18 @@ namespace DUNE
     }
 
     void
+    Maneuver::consume(const IMC::PathControlState* pcs)
+    {
+      if (!isActive())
+        return;
+
+      if (s_path_ref != pcs->path_ref)
+        return;
+
+      onPathControlState(pcs);
+    }
+
+    void
     Maneuver::signalError(const std::string& msg)
     {
       err("%s", msg.c_str());
@@ -224,12 +237,6 @@ namespace DUNE
       }
 
       Task::dispatch(msg, flags);
-    }
-
-    bool
-    Maneuver::checkPathReference(const IMC::PathControlState* pcs)
-    {
-      return (s_path_ref == pcs->path_ref);
     }
 
     void

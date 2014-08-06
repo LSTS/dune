@@ -73,6 +73,13 @@ namespace DUNE
       onManeuverDeactivation(void)
       { }
 
+      //! On Path Control State
+      virtual void
+      onPathControlState(const IMC::PathControlState* pcs)
+      {
+        (void)pcs;
+      }
+
       //! On task activation
       //! Should be used only by parent class Maneuver
       void
@@ -136,6 +143,11 @@ namespace DUNE
       void
       consume(const IMC::StopManeuver* sm);
 
+      //! Consumer for PathControlState message.
+      //! @param pcs message to consume.
+      void
+      consume(const IMC::PathControlState* pcs);
+
       //! Set or reconfigure control loops used by maneuver task.
       //! @param mask mask identifying controllers that should be made active.
       void
@@ -155,12 +167,6 @@ namespace DUNE
       {
         dispatch(&msg, flags);
       }
-
-      //! Check if path reference is valid
-      //! @param[in] dp pointer to PathControlState message
-      //! @return true if valid, false otherwise
-      bool
-      checkPathReference(const IMC::PathControlState* pcs);
 
       //! State report handler.
       //! It should be overriden by maneuvers where it
