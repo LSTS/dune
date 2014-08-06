@@ -256,6 +256,10 @@ namespace Maneuver
         switch (m_pstate)
         {
           case ST_GET_FIX:
+          case ST_SKEEP:
+            if (!(msg->validity & IMC::GpsFix::GFV_VALID_POS))
+              break;
+
             double lat;
             double lon;
             Coordinates::toWGS84(m_state, lat, lon);
@@ -263,7 +267,8 @@ namespace Maneuver
             dist = Coordinates::WGS84::distance(lat, lon, 0.0,
                                                 msg->lat, msg->lon, 0.0);
 
-            if (dist < m_args.min_distance)
+            if (msg->satellites >= m_args.min_sats &&
+                dist < m_args.min_distance)
             {
               goDown();
               m_pstate = ST_GO_DOWN;
