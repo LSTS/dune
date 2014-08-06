@@ -274,6 +274,7 @@ namespace Vision
       {
         trace("releasing");
         stopVideo();
+        inf(DTR("stopped video stream"));
 
         if (m_pwr_gpio != NULL)
         {
@@ -335,6 +336,7 @@ namespace Vision
       onDeactivation(void)
       {
         stopVideo();
+        inf(DTR("stopped video stream"));
 
         setStrobePower(false);
 
@@ -410,7 +412,6 @@ namespace Vision
         debug("stopping video stream");
         delete m_http;
         m_http = NULL;
-        inf(DTR("stopped video stream"));
       }
 
       void
@@ -632,10 +633,16 @@ namespace Vision
             {
               setProperties();
               m_cfg_dirty = false;
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+              inf(DTR("successfully configured camera"));
             }
             catch (std::runtime_error& e)
             {
-              err("%s", e.what());
+              if (getEntityState() != IMC::EntityState::ESTA_FAULT)
+              {
+                setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_COM_ERROR);
+                err("%s", e.what());
+              }
               continue;
             }
           }
@@ -648,10 +655,15 @@ namespace Vision
             try
             {
               startVideo();
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             }
             catch (std::runtime_error& e)
             {
-              err("%s", e.what());
+              if (getEntityState() != IMC::EntityState::ESTA_FAULT)
+              {
+                setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_COM_ERROR);
+                err("%s", e.what());
+              }
               stopVideo();
             }
             continue;
