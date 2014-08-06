@@ -327,7 +327,7 @@ namespace Maneuver
             if (isSKeepTooFar(state))
             {
               startStationKeeping();
-              inf("moved station keeping");
+              inf(DTR("relocated station keeping"));
             }
 
             m_skeep->update(state);
