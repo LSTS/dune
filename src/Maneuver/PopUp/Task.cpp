@@ -197,6 +197,10 @@ namespace Maneuver
         m_maneuver = *maneuver;
         m_dur_timer.setTop(m_maneuver.duration);
 
+        // Waiting or station keeping will be the same
+        if (mustKeep() || mustWait())
+          m_maneuver.flags |= IMC::PopUp::FLG_WAIT_AT_SURFACE | IMC::PopUp::FLG_STATION_KEEP;
+
         if (useCurr())
         {
           goUp();
