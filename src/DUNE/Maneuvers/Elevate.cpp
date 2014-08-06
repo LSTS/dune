@@ -71,8 +71,6 @@ namespace DUNE
       m_path.end_z_units = m_elevator.end_z_units;
 
       computeElevatorDirection(msg);
-
-      m_task->dispatch(m_path);
     }
 
     void
@@ -104,6 +102,7 @@ namespace DUNE
           m_els = ST_HELICOID;
 
           startHelicoid(msg);
+          m_task->dispatch(m_path);
           break;
         case ST_HELICOID:
           // check if it is in the neighborhood of the desired depth
