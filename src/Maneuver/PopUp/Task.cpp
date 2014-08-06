@@ -55,6 +55,8 @@ namespace Maneuver
       float min_distance;
       //! Radius for the elevator behavior
       float elev_radius;
+      //! Maximum distance from station keeping radial circle
+      float max_sk_dist;
     };
 
     //! Maneuver states for the state machine
@@ -99,6 +101,10 @@ namespace Maneuver
       bool m_at_surface;
       //! Estimated time of arrival from PathControlState
       unsigned m_path_eta;
+      //! Latitude where the stationkeep behavior was centered
+      double m_sk_lat;
+      //! Longitude where the stationkeep behavior was centered
+      double m_sk_lon;
       //! Station keeping behavior in case it is necessary
       Maneuvers::StationKeep* m_skeep;
       //! Elevator behavior
@@ -130,6 +136,11 @@ namespace Maneuver
         .defaultValue("15.0")
         .units(Units::Meter)
         .description("Radius for the elevator behavior");
+
+        param("Maximum Distance From Station", m_args.max_sk_dist)
+        .defaultValue("15.0")
+        .units(Units::Meter)
+        .description("Maximum distance from station keeping radial circle");
 
         bindToManeuver<Task, IMC::PopUp>();
         bind<IMC::EstimatedState>(this);
@@ -184,6 +195,32 @@ namespace Maneuver
       }
 
       void
+      startStationKeeping(void)
+      {
+        Memory::clear(m_skeep);
+
+        // Deploy a station keeping right where the vehicle "thinks it is"
+        Coordinates::toWGS84(m_state, m_sk_lat, m_sk_lon);
+        m_skeep = new Maneuvers::StationKeep(this, m_sk_lat, m_sk_lon,
+                                             m_args.elev_radius, 0.0, IMC::Z_DEPTH,
+                                             m_maneuver.speed,
+                                             m_maneuver.speed_units);
+      }
+
+      bool
+      isSKeepTooFar(const IMC::EstimatedState* state)
+      {
+        double lat;
+        double lon;
+        Coordinates::toWGS84(*state, lat, lon);
+
+        float dist = Coordinates::WGS84::distance(lat, lon, 0.0,
+                                                  m_sk_lat, m_sk_lon, 0.0);
+
+        return (dist > m_args.elev_radius + m_args.max_sk_dist);
+      }
+
+      void
       consume(const IMC::PopUp* maneuver)
       {
         m_maneuver = *maneuver;
@@ -231,11 +268,7 @@ namespace Maneuver
                 m_pstate = ST_SKEEP;
                 m_dur_timer.reset();
 
-                Memory::clear(m_skeep);
-                m_skeep = new Maneuvers::StationKeep(this, m_maneuver.lat, m_maneuver.lon,
-                                                     m_args.elev_radius, 0.0, IMC::Z_DEPTH,
-                                                     m_maneuver.speed,
-                                                     m_maneuver.speed_units);
+                startStationKeeping();
               }
               else
               {
@@ -291,6 +324,12 @@ namespace Maneuver
             m_elevate->update(state);
             break;
           case ST_SKEEP:
+            if (isSKeepTooFar(state))
+            {
+              startStationKeeping();
+              inf("moved station keeping");
+            }
+
             m_skeep->update(state);
             if (m_dur_timer.overflow())
             {
