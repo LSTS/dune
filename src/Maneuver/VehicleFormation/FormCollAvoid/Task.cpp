@@ -785,12 +785,14 @@ namespace Maneuver
               t_keep_data.push_back(false);
             for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
             {
+              bool remaining_vehicle = false;
               // Data reallocation to keep the data from the remaining vehicles
               if (!m_param_update_first)
                 for (unsigned int ind_uav2 = 0; ind_uav2 < t_uav_n; ++ind_uav2)
                 {
                   if (m_uav_id_last[ind_uav2] == m_uav_id[ind_uav])
                   {
+                    remaining_vehicle = true;
                     t_keep_data[ind_uav2] = true;
                     m_vehicle_state.set(0, 11, ind_uav+1, ind_uav+1,
                                         t_vehicle_state.get(0, 11, ind_uav2+1, ind_uav2+1));
@@ -805,9 +807,11 @@ namespace Maneuver
                     m_models.push_back(t_models[ind_uav2]);
                     debug("Simulated vehicle model maintained for vehicle: %s",
                         resolveSystemId(m_uav_id[ind_uav]));
-                    continue;
+                    break;
                   }
                 }
+              if (remaining_vehicle)
+                continue;
 
               //! - State  and control parameters initialization
               model = new DUNE::Simulation::UAVSimulation(
@@ -895,7 +899,6 @@ namespace Maneuver
                 delete m_form_monitor->rel_state[ind_uav];
               m_form_monitor->rel_state.clear();
             }
-            debug("onUpdateParameters - 6.3");
             for (unsigned int ind_uav = 0; ind_uav <= m_uav_n; ++ind_uav)
             {
               rel_state = new RelState();
@@ -1529,14 +1532,8 @@ namespace Maneuver
         {
           //! Declaration
           Matrix vd_cmd = Matrix(3, 1);
-          IMC::PathControlState path_ctrl_state;
-
-          // for debug
-          if (resolveSystemName("form-leader-02") == msg->getSource())
-            trace("EstimatedState received from vehicle %s", resolveSystemId(msg->getSource()));
 
           spew("EstimatedState received from vehicle %s", resolveSystemId(msg->getSource()));
-          //spew("On Vehicle %s", resolveSystemId(getSystemId()));
           if (msg->getSource() == getSystemId())
           {
             spew("Starting own EstimatedState");
@@ -1636,6 +1633,7 @@ namespace Maneuver
             //===========================================
 
             // Set PathControlState
+            IMC::PathControlState path_ctrl_state;
             path_ctrl_state.end_lat = msg->lat;
             path_ctrl_state.end_lon = msg->lon;
             WGS84::displace(m_vehicle_state(0, 0)+m_formation_pos(0, m_uav_ind),
