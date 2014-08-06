@@ -246,7 +246,7 @@ namespace Control
           }
 
           //==========================================
-          //! Process the systems and entities allowed to pass the SimulatedState
+          //! Process the systems and entities allowed to pass the EstimatedState
           //==========================================
           m_state_filtered_sys.clear();
           m_state_filtered_ent.clear();
@@ -348,8 +348,7 @@ namespace Control
           // This system and entity are not listed to be passed.
           if (!matched)
           {
-            trace("Altitude command rejected.");
-            trace("DesiredZ received from system '%s' and entity '%s'.",
+            trace("DesiredZ rejected (received from system '%s' and entity '%s')",
                 resolveSystemId(desired_z->getSource()),
                 resolveEntity(desired_z->getSourceEntity()).c_str());
             return;
@@ -364,7 +363,7 @@ namespace Control
           if (!isActive())
             return;
 
-          // Filter SimulatedState by systems and entities.
+          // Filter EstimatedState by systems and entities.
           bool matched = true;
           if (m_state_filtered_sys.size() > 0)
           {
@@ -382,8 +381,7 @@ namespace Control
           // This system and entity are not listed to be passed.
           if (!matched)
           {
-            trace("SimulatedState message rejected.");
-            trace("SimulatedState received from system '%s' and entity '%s'.",
+            trace("EstimatedState rejected (from system '%s' and entity '%s')",
                 resolveSystemId(state->getSource()),
                 resolveEntity(state->getSourceEntity()).c_str());
             return;
