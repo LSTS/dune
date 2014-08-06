@@ -1509,8 +1509,8 @@ namespace Control
 
           double wind_dir_rad = wind.direction * Math::c_pi / 180;
 
-          m_stream.x = std::cos(wind_dir_rad) * wind.speed;
-          m_stream.y = std::sin(wind_dir_rad) * wind.speed;
+          m_stream.x = -std::cos(wind_dir_rad) * wind.speed;
+          m_stream.y = -std::sin(wind_dir_rad) * wind.speed;
           m_stream.z = wind.speed_z;
 
           dispatch(m_stream);
