@@ -95,6 +95,11 @@ namespace DUNE
       virtual void
       onPathCompletion(void) = 0;
 
+      //! Inherited from Maneuver class.
+      //! @param pcs path control state message
+      void
+      onPathControlState(const IMC::PathControlState* pcs);
+
       //! Method called upon maneuver deactivation.
       void
       onManeuverDeactivation(void);
