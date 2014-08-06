@@ -747,14 +747,13 @@ namespace Maneuver
         void
         onResourceAcquisition(void)
         {
+          // Initialize entity state.
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
 
         void
         onResourceRelease(void)
         {
-//          for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
-//            Memory::clear(m_form_monitor->rel_state[ind_uav]);
-//          Memory::clear(m_form_monitor);
         }
 
         void
@@ -952,7 +951,7 @@ namespace Maneuver
           // Check if it is a plan execution request
           if (msg->type != IMC::PlanControl::PC_REQUEST)
           {
-            trace("PlanControl message rejected! (It is not a plan execution request.)");
+            trace("PlanControl rejected (it is not a plan execution request)");
             return;
           }
 
@@ -960,7 +959,7 @@ namespace Maneuver
           if (msg->getDestination() != getSystemId() &&
               msg->getDestination() != UINT16_MAX)
           {
-            trace("PlanControl message rejected! - Destination system: %s.",
+            trace("PlanControl rejected (destination system: %s)",
                   resolveSystemId(msg->getDestination()));
             return;
           }
@@ -968,14 +967,14 @@ namespace Maneuver
           // Check if the coordinator is itself the source of the plan
           if ((m_alias_id != UINT_MAX)?(msg->getSource() == m_alias_id):false)
           {
-            trace("PlanControl message rejected! - Source is the coordinator itself.");
+            trace("PlanControl rejected (source is the coordinator itself)");
             return;
           }
 
           if (msg->op == IMC::PlanControl::PC_START && m_args.main)
           {
             // Request plan information to check if it is a formation flight plan
-            trace("PlanControl message received - Requesting plan information.");
+            trace("PlanControl accepted - Requesting plan information.");
             m_plan_ctrl_last = *msg;
             //m_plan_new = true;
 
@@ -989,7 +988,7 @@ namespace Maneuver
           // Deactivate the task if the PlanControl action is "Stop"
           else if (msg->op == IMC::PlanControl::PC_STOP)
           {
-            debug("PlanControl message received - Stop plan.");
+            debug("PlanControl accepted - Stop plan.");
             requestDeactivation();
           }
         }
