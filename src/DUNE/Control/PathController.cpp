@@ -646,10 +646,8 @@ namespace DUNE
       // This system and entity are not listed to be passed.
       if (!matched)
       {
-        trace("SimulatedState message rejected.");
-        trace("SimulatedState received from system '%s' and entity '%s'.",
-            resolveSystemId(es->getSource()),
-            resolveEntity(es->getSourceEntity()).c_str());
+        trace("EstimatedState rejected (from system '%s' and entity '%s')",
+            resolveSystemId(es->getSource()), resolveEntity(es->getSourceEntity()).c_str());
         return;
       }
 
