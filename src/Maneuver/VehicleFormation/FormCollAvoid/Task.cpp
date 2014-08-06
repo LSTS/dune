@@ -928,6 +928,10 @@ namespace Maneuver
         onEntityResolution(void)
         {
           spew("Entity resolution.");
+
+          // Initialize the PlanControl message plan id
+          m_current_plan.plan_id = "";
+
           //==========================================
           // Process the systems and entities allowed to define a command
           //==========================================
