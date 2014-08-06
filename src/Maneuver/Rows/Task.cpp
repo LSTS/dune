@@ -50,7 +50,6 @@ namespace Maneuver
         m_parser(NULL)
       {
         bindToManeuver<Task, IMC::Rows>();
-        bind<IMC::PathControlState>(this);
       }
 
       void
@@ -86,11 +85,8 @@ namespace Maneuver
       }
 
       void
-      consume(const IMC::PathControlState* pcs)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
-        if (!checkPathReference(pcs))
-          return;
-
         std::stringstream ss;
         ss << "waypoint=" << m_parser->getIndex();
 
