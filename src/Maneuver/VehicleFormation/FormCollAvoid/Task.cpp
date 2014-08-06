@@ -322,6 +322,7 @@ namespace Maneuver
         std::vector<std::string> m_formation_systems;
         unsigned int m_formation_frame;
         Matrix m_formation_pos;
+        IMC::PlanControl m_current_plan;
 
         //! Process logic control variables
         bool m_ctrl_active;
@@ -330,7 +331,6 @@ namespace Maneuver
         bool m_team_state_init;
         bool m_valid_airspeed;
         std::vector<bool> m_vehicle_state_flag;
-        std::string m_current_plan_id;
 
         //! Simulation process frequency
         double m_frequency;
@@ -417,7 +417,6 @@ namespace Maneuver
           m_team_leader_init(false),
           m_team_state_init(false),
           m_valid_airspeed(false),
-          m_current_plan_id(""),
           m_frequency(0.0),
           m_timestep_sim(0.0),
           m_timestep_ctrl(0.0),
@@ -1039,6 +1038,8 @@ namespace Maneuver
         void
         onResourceAcquisition(void)
         {
+          // Initialize entity state.
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
 
         void
@@ -1052,6 +1053,21 @@ namespace Maneuver
         void
         onRequestActivation(void)
         {
+          if (!m_team_leader_init)
+            return;
+
+          // Check if the message is from the same system leader
+          //if (msg->getSource() != m_leader_id)
+          //{
+            // Send a PlanControl message to start the formation control plan
+            // This is a resend in the vehicle where the coordinator is running
+            // to make sure all the virtual leaders maneuver starting points are the same
+            // ToDo - Set the maneuver start point directly
+            m_current_plan.op = IMC::PlanControl::PC_START;
+            dispatchLeader(&m_current_plan);
+            inf("Formation control plan - Start requested!");
+          //}
+
           // Controller parameters
           if (m_debug)
             dispatchFormationParameters();
@@ -1085,8 +1101,7 @@ namespace Maneuver
 //            // Check if the system is the intended destination of the state
 //            if (msg->getDestination() != ((m_alias_id != UINT_MAX) ? m_alias_id : getSystemId()))
 //            {
-//              trace("LeaderState message rejected!");
-//              trace("Destination system: %s.", resolveSystemId(msg->getDestination()));
+//              trace("LeaderState rejected (destination system: %s)", resolveSystemId(msg->getDestination()));
 //              return;
 //            }
 
@@ -1107,12 +1122,11 @@ namespace Maneuver
 
           if (msg->type == IMC::Formation::FC_REQUEST)
           {
-            IMC::PlanControl plan;
-            plan.type = IMC::PlanControl::PC_REQUEST;
-            plan.plan_id = msg->plan_id;
-            plan.arg.clear();
-            plan.setSourceEntity(getEntityId());
-            plan.setDestination(getSystemId());
+            m_current_plan.type = IMC::PlanControl::PC_REQUEST;
+            m_current_plan.plan_id = msg->plan_id;
+            m_current_plan.arg.clear();
+            m_current_plan.setSourceEntity(getEntityId());
+            m_current_plan.setDestination(getSystemId());
 
             if (msg->op == IMC::Formation::OP_START)
             {
@@ -1176,7 +1190,6 @@ namespace Maneuver
 
               if (is_in_formation)
               {
-                m_current_plan_id = msg->plan_id;
                 // Activate the formation controller in the current system
                 onUpdateParameters();
                 requestActivation();
@@ -1193,15 +1206,6 @@ namespace Maneuver
                 //              dispatchAlias(&sep);
                 //              sep.name = "Path Control Coordinator";
                 //              dispatchLeader(&sep);
-
-                // Check if the message is from the same system leader
-                if (msg->getSource() != m_leader_id)
-                {
-                  // Send a PlanControl message to start the formation control plan
-                  plan.op = IMC::PlanControl::PC_START;
-                  dispatchLeader(&plan);
-                  inf("Formation control plan - Start requested!");
-                }
               }
               else
               {
@@ -1223,8 +1227,8 @@ namespace Maneuver
                   {
                     inf("Formation deactivation request received!");
                     // Send a PlanControl message to stop the formation control plan
-                    plan.op = IMC::PlanControl::PC_STOP;
-                    dispatchLeader(&plan);
+                    m_current_plan.op = IMC::PlanControl::PC_STOP;
+                    dispatchLeader(&m_current_plan);
                     inf("Formation control plan - Stop requested!");
                   }
                 }
@@ -1240,8 +1244,8 @@ namespace Maneuver
               if (msg->getSource() != m_leader_id)
               {
                 // Send a PlanControl message to stop the formation control plan
-                plan.op = IMC::PlanControl::PC_STOP;
-                dispatchLeader(&plan);
+                m_current_plan.op = IMC::PlanControl::PC_STOP;
+                dispatchLeader(&m_current_plan);
                 inf("Formation control plan - Stop requested!");
               }
             }
@@ -1258,15 +1262,14 @@ namespace Maneuver
 //          //! Check if the vehicle is the intended destination of the plan
 //          if (msg->getDestination() != getSystemId())
 //          {
-//            trace("PlanControl message rejected!");
-//            trace("Destination system: %s.", resolveSystemId(msg->getDestination()));
+//            trace("PlanControl rejected (destination system: %s)", resolveSystemId(msg->getDestination()));
 //            return;
 //          }
 
           // Request deactivation the formation controller if there is
           // a STOP request or a start request for a different plan
           if (isActive() && (msg->op == IMC::PlanControl::PC_STOP ||
-              (msg->op == IMC::PlanControl::PC_START && msg->plan_id.compare(m_current_plan_id) != 0)))
+              (msg->op == IMC::PlanControl::PC_START && msg->plan_id.compare(m_current_plan.plan_id) != 0)))
             requestDeactivation();
         }
 
@@ -1363,8 +1366,7 @@ namespace Maneuver
           //! Get leader vehicle commanded roll
           if (!isActive())
           {
-            //trace("Bank command rejected.");
-            //trace("Formation controller is not active.");
+            //trace("DesiredRoll rejected - Formation controller is not active.");
             return;
           }
 
@@ -1386,7 +1388,7 @@ namespace Maneuver
           // This system and entity are not listed to be passed.
           if (!matched)
           {
-            trace("Bank command rejected - DesiredRoll received from system '%s' and entity '%s'.",
+            trace("DesiredRoll rejected (from system '%s' and entity '%s')",
                 resolveSystemId(msg->getSource()),
                 resolveEntity(msg->getSourceEntity()).c_str());
             return;
@@ -1395,15 +1397,16 @@ namespace Maneuver
           //! Check that the command is a real value
           if (isnan(msg->value) != 0)
           {
-            war("Roll command rejected - Commanded value is not a number!");
+            war("DesiredRoll rejected - Commanded value is not a number!");
             return;
           }
 
           m_model->commandBank(trimValue(msg->value, -m_leader_bank_lim, m_leader_bank_lim));
 
           // ========= Debug ===========
-          spew("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
-          spew("DesiredRoll received from system '%s' and entity '%s'.",
+          spew("DesiredRoll accepted (%1.2fdeg), assumed (%1.2fdeg) - from system '%s' and entity '%s'",
+              DUNE::Math::Angles::degrees(msg->value),
+              DUNE::Math::Angles::degrees(m_model->getBankCmd()),
               resolveSystemId(msg->getSource()),
               resolveEntity(msg->getSourceEntity()).c_str());
         }
@@ -1414,8 +1417,7 @@ namespace Maneuver
           //! Get leader vehicle commanded airspeed
           if (!isActive())
           {
-            //trace("Speed command rejected.");
-            //trace("Leader simulation not active.");
+            //trace("DesiredSpeed rejected - Formation controller is not active.");
             return;
           }
 
@@ -1437,7 +1439,7 @@ namespace Maneuver
           // This system and entity are not listed to be passed.
           if (!matched)
           {
-            trace("Speed command rejected - DesiredSpeed received from system '%s' and entity '%s'.",
+            trace("DesiredSpeed rejected (from system '%s' and entity '%s')",
                 resolveSystemId(msg->getSource()),
                 resolveEntity(msg->getSourceEntity()).c_str());
             return;
@@ -1446,14 +1448,14 @@ namespace Maneuver
           //! Check that the command is a real value
           if (isnan(msg->value) != 0)
           {
-            war("Speed command rejected - Commanded value is not a number!");
+            war("DesiredSpeed rejected - Commanded value is not a number!");
             return;
           }
 
           m_speed_units_leader = msg->speed_units;
           if (m_speed_units_leader != IMC::SUNITS_METERS_PS)
           {
-            war("Speed command rejected - units are not in m/s");
+            war("DesiredSpeed rejected - units are not in m/s");
             return;
           }
 
@@ -1461,8 +1463,8 @@ namespace Maneuver
           m_model->commandAirspeed(m_speed_cmd_leader);
 
           // ========= Debug ===========
-          spew("Speed command received (%1.2fm/s), assumed (%1.2fm/s)", msg->value, m_speed_cmd_leader);
-          spew("DesiredSpeed received from system '%s' and entity '%s'.",
+          spew("DesiredSpeed accepted (%1.2fm/s), assumed (%1.2fm/s) - from system '%s' and entity '%s'",
+              msg->value, m_speed_cmd_leader,
               resolveSystemId(msg->getSource()),
               resolveEntity(msg->getSourceEntity()).c_str());
         }
@@ -1473,8 +1475,7 @@ namespace Maneuver
           //! Check if system is active
           if (!isActive())
           {
-            //trace("Altitude command rejected.");
-            //trace("Leader simulation not active.");
+            //trace("DesiredZ rejected - Formation controller is not active.");
             return;
           }
 
@@ -1496,7 +1497,7 @@ namespace Maneuver
           // This system and entity are not listed to be passed.
           if (!matched)
           {
-            trace("Altitude command rejected - DesiredZ received from system '%s' and entity '%s'.",
+            trace("DesiredZ rejected (from system '%s' and entity '%s')",
                 resolveSystemId(msg->getSource()),
                 resolveEntity(msg->getSourceEntity()).c_str());
             return;
@@ -1505,7 +1506,7 @@ namespace Maneuver
           //! Check that the command is a real value
           if (isnan(msg->value) != 0)
           {
-            war("Altitude command rejected - Commanded value is not a number!");
+            war("DesiredZ rejected - Commanded value is not a number!");
             return;
           }
 
@@ -1521,8 +1522,8 @@ namespace Maneuver
           m_model->commandAlt(trimValue(m_alt_cmd_leader, m_leader_alt_min, m_leader_alt_max));
 
           // ========= Debug ===========
-          spew("Altitude command received (%1.2fm), assumed (%1.2fm)", msg->value, m_alt_cmd_leader);
-          spew("DesiredZ received from system '%s' and entity '%s'.",
+          spew("DesiredZ accepted (%1.2fm), assumed (%1.2fm) - from system '%s' and entity '%s'",
+              msg->value, m_alt_cmd_leader,
               resolveSystemId(msg->getSource()),
               resolveEntity(msg->getSourceEntity()).c_str());
         }
@@ -1997,12 +1998,15 @@ namespace Maneuver
               &t_leader[0], &t_leader[1], &t_leader[2]);
           //! Update formation leader state vectors
           m_vehicle_state.set(0, 11, 0, 0, Matrix(t_leader, 12, 1));
-          m_model->setPosition(m_vehicle_state.get(0, 2, 0, 0).vertCat(m_vehicle_state.get(6, 8, 0, 0)));
-          m_model->setVelocity(m_vehicle_state.get(3, 5, 0, 0).vertCat(m_vehicle_state.get(9, 11, 0, 0)));
+          m_position = m_vehicle_state.get(0, 2, 0, 0).vertCat(m_vehicle_state.get(6, 8, 0, 0));
+          m_velocity = m_vehicle_state.get(3, 5, 0, 0).vertCat(m_vehicle_state.get(9, 11, 0, 0));
+          m_model->setPosition(m_position);
+          m_model->setVelocity(m_velocity);
           // Update formation leader wind vector
           m_model->m_wind(0) = leader_state->svx;
           m_model->m_wind(1) = leader_state->svy;
           m_last_state_estim(0) = leader_state->getTimeStamp();
+          leaderOutput();
 
           trace("---------------------------");
           trace("Leader latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
@@ -2024,6 +2028,96 @@ namespace Maneuver
           trace("Leader y wind speed: %1.4f", m_model->m_wind(1));
           trace("Leader z wind speed: %1.4f", m_model->m_wind(2));
           trace("---------------------------");
+
+          if (isActivating())
+            onRequestActivation();
+        }
+
+        void
+        leaderOutput(void)
+        {
+          m_last_leader_output = Clock::get();
+          //! Rotation matrix
+          double euler_ang[3] = {m_position(3), m_position(4), m_position(5)};
+          Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
+          // UAV velocity components, on ground frame
+          Matrix vd_gnd_vel = m_velocity.get(0, 2, 0, 0);
+          //! UAV velocity rotation to the body frame
+          Matrix vd_body_vel = transpose(md_rot_body2gnd) * vd_gnd_vel;
+
+          //! Fill position.
+          m_estate_leader.x = m_position(0);
+          m_estate_leader.y = m_position(1);
+          m_estate_leader.z = m_position(2);
+          //! Fill body-frame linear velocity, relative to the ground.
+          m_estate_leader.u = vd_body_vel(0);
+          m_estate_leader.v = vd_body_vel(1);
+          m_estate_leader.w = vd_body_vel(2);
+          //! Fill attitude.
+          m_estate_leader.phi = m_position(3);
+          m_estate_leader.theta = m_position(4);
+          m_estate_leader.psi = m_position(5);
+          //! Fill angular velocity.
+          m_estate_leader.p = m_velocity(3);
+          m_estate_leader.q = m_velocity(4);
+          m_estate_leader.r = m_velocity(5);
+          // Fill ground linear velocity.
+          m_estate_leader.vx = vd_gnd_vel(0);
+          m_estate_leader.vy = vd_gnd_vel(1);
+          m_estate_leader.vz = vd_gnd_vel(2);
+
+          //! Send estimated state message
+          dispatchLeader(&m_estate_leader);
+
+          if (m_debug)
+          {
+            //! Leader acceleration
+            IMC::Acceleration accel;
+            accel.x = m_vehicle_accel(0, 0);
+            accel.y = m_vehicle_accel(1, 0);
+            accel.z = m_vehicle_accel(2, 0);
+            dispatchLeader(&accel);
+
+            // Stream velocity.
+            // Air-relative UAV velocity components, on aircraft frame
+            IMC::SimulatedState sstate;
+            IMC::EstimatedStreamVelocity streamspeed;
+            IMC::IndicatedSpeed speed;
+            IMC::TrueSpeed groundspeed;
+            //! Fill position.
+            sstate.x = m_position(0);
+            sstate.y = m_position(1);
+            sstate.z = m_position(2);
+            //! Fill body-frame linear velocity, relative to the ground.
+            sstate.u = vd_body_vel(0);
+            sstate.v = vd_body_vel(1);
+            sstate.w = vd_body_vel(2);
+            //! Fill attitude.
+            sstate.phi = m_position(3);
+            sstate.theta = m_position(4);
+            sstate.psi = m_position(5);
+            //! Fill angular velocity.
+            sstate.p = m_velocity(3);
+            sstate.q = m_velocity(4);
+            sstate.r = m_velocity(5);
+            // Fill ground linear velocity.
+            sstate.svx = m_wind(0);
+            sstate.svy = m_wind(1);
+            sstate.svz = m_wind(2);
+            // Fill stream velocity.
+            streamspeed.x = m_model->m_wind(0);
+            streamspeed.y = m_model->m_wind(1);
+            streamspeed.z = m_model->m_wind(2);
+            // True Airspeed
+            speed.value = m_model->getAirspeed();
+            // Ground speed
+            groundspeed.value = vd_gnd_vel.norm_2();
+            // Dispatch messages
+            dispatchLeader(&sstate);
+            dispatchLeader(&speed);
+            dispatchLeader(&groundspeed);
+            dispatchLeader(&streamspeed);
+          }
         }
 
         Matrix
@@ -2208,91 +2302,7 @@ namespace Maneuver
               //==========================================================================
 
               if (m_last_leader_output + m_timestep_leader <= Clock::get())
-              {
-                m_last_leader_output = Clock::get();
-                //! Rotation matrix
-                double euler_ang[3] = {m_position(3), m_position(4), m_position(5)};
-                Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
-                // UAV velocity components, on ground frame
-                Matrix vd_gnd_vel = m_velocity.get(0, 2, 0, 0);
-                //! UAV velocity rotation to the body frame
-                Matrix vd_body_vel = transpose(md_rot_body2gnd) * vd_gnd_vel;
-
-                //! Fill position.
-                m_estate_leader.x = m_position(0);
-                m_estate_leader.y = m_position(1);
-                m_estate_leader.z = m_position(2);
-                //! Fill body-frame linear velocity, relative to the ground.
-                m_estate_leader.u = vd_body_vel(0);
-                m_estate_leader.v = vd_body_vel(1);
-                m_estate_leader.w = vd_body_vel(2);
-                //! Fill attitude.
-                m_estate_leader.phi = m_position(3);
-                m_estate_leader.theta = m_position(4);
-                m_estate_leader.psi = m_position(5);
-                //! Fill angular velocity.
-                m_estate_leader.p = m_velocity(3);
-                m_estate_leader.q = m_velocity(4);
-                m_estate_leader.r = m_velocity(5);
-                // Fill ground linear velocity.
-                m_estate_leader.vx = vd_gnd_vel(0);
-                m_estate_leader.vy = vd_gnd_vel(1);
-                m_estate_leader.vz = vd_gnd_vel(2);
-
-                //! Send estimated state message
-                dispatchLeader(&m_estate_leader);
-
-                spew("Periodic update 3.2");
-                if (m_debug)
-                {
-                  //! Leader acceleration
-                  IMC::Acceleration accel;
-                  accel.x = m_vehicle_accel(0, 0);
-                  accel.y = m_vehicle_accel(1, 0);
-                  accel.z = m_vehicle_accel(2, 0);
-                  dispatchLeader(&accel);
-
-                  // Stream velocity.
-                  // Air-relative UAV velocity components, on aircraft frame
-                  IMC::SimulatedState sstate;
-                  IMC::EstimatedStreamVelocity streamspeed;
-                  IMC::IndicatedSpeed speed;
-                  IMC::TrueSpeed groundspeed;
-                  //! Fill position.
-                  sstate.x = m_position(0);
-                  sstate.y = m_position(1);
-                  sstate.z = m_position(2);
-                  //! Fill body-frame linear velocity, relative to the ground.
-                  sstate.u = vd_body_vel(0);
-                  sstate.v = vd_body_vel(1);
-                  sstate.w = vd_body_vel(2);
-                  //! Fill attitude.
-                  sstate.phi = m_position(3);
-                  sstate.theta = m_position(4);
-                  sstate.psi = m_position(5);
-                  //! Fill angular velocity.
-                  sstate.p = m_velocity(3);
-                  sstate.q = m_velocity(4);
-                  sstate.r = m_velocity(5);
-                  // Fill ground linear velocity.
-                  sstate.svx = m_wind(0);
-                  sstate.svy = m_wind(1);
-                  sstate.svz = m_wind(2);
-                  // Fill stream velocity.
-                  streamspeed.x = m_model->m_wind(0);
-                  streamspeed.y = m_model->m_wind(1);
-                  streamspeed.z = m_model->m_wind(2);
-                  // True Airspeed
-                  speed.value = m_model->getAirspeed();
-                  // Ground speed
-                  groundspeed.value = vd_gnd_vel.norm_2();
-                  // Dispatch messages
-                  dispatchLeader(&sstate);
-                  dispatchLeader(&speed);
-                  dispatchLeader(&groundspeed);
-                  dispatchLeader(&streamspeed);
-                }
-              }
+                leaderOutput();
             }
 
             spew("Periodic update 3.3");
