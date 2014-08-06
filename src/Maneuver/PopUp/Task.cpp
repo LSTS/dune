@@ -70,8 +70,6 @@ namespace Maneuver
       ST_NEAR_SURFACE,
       //! Get a fix
       ST_GET_FIX,
-      //! Wait at the surface
-      ST_WAIT,
       //! Station keep at the surface
       ST_SKEEP,
       //! Come back down
@@ -231,12 +229,7 @@ namespace Maneuver
           case ST_NEAR_SURFACE:
             if (msg->medium == IMC::VehicleMedium::VM_WATER)
             {
-              if (mustWait())
-              {
-                m_pstate = ST_WAIT;
-                m_dur_timer.reset();
-              }
-              else if (mustKeep())
+              if (mustKeep())
               {
                 m_pstate = ST_SKEEP;
                 m_dur_timer.reset();
@@ -297,8 +290,6 @@ namespace Maneuver
             break;
           case ST_SKEEP:
             m_skeep->update(state);
-            // fall through
-          case ST_WAIT:
             if (m_dur_timer.overflow())
             {
               goDown();
@@ -362,7 +353,7 @@ namespace Maneuver
       inline void
       computeETA(void)
       {
-        if (m_pstate == ST_WAIT)
+        if (m_pstate == ST_SKEEP)
         {
           signalProgress((uint16_t)std::ceil(m_dur_timer.getRemaining()));
         }
