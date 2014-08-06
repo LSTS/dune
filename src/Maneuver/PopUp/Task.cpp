@@ -145,34 +145,26 @@ namespace Maneuver
       }
 
       void
-      elevate(float z_value, unsigned z_units, bool current)
+      elevate(float z_value, unsigned z_units)
       {
         // Elevate upwards
         Memory::clear(m_elevate);
 
         IMC::Elevator elev;
 
-        if (current)
-        {
-          elev.flags = IMC::Elevator::FLG_CURR_POS;
-          // Start z doesn't matter
-          elev.start_z = 0;
-          elev.start_z_units = IMC::Z_DEPTH;
-        }
-        else
-        {
-          elev.flags = 0;
-          elev.start_z = z_value;
-          elev.start_z_units = z_units;
-        }
-
-        elev.lat = m_maneuver.lat;
-        elev.lon = m_maneuver.lon;
+        elev.flags = IMC::Elevator::FLG_CURR_POS;
+        // Start z doesn't matter
+        elev.start_z = 0;
+        elev.start_z_units = IMC::Z_DEPTH;
 
         // End does however
         elev.end_z = z_value;
         elev.end_z_units = z_units;
         elev.radius = m_args.elev_radius;
+
+        elev.lat = m_maneuver.lat;
+        elev.lon = m_maneuver.lon;
+
         elev.speed = m_maneuver.speed;
         elev.speed_units = m_maneuver.speed_units;
 
@@ -182,19 +174,20 @@ namespace Maneuver
       inline void
       goUp(void)
       {
-        elevate(0.0, IMC::Z_DEPTH, true);
+        elevate(0.0, IMC::Z_DEPTH);
       }
 
       inline void
       goDown(void)
       {
-        elevate(m_maneuver.z, m_maneuver.z_units, false);
+        elevate(m_maneuver.z, m_maneuver.z_units);
       }
 
       void
       consume(const IMC::PopUp* maneuver)
       {
         m_maneuver = *maneuver;
+
         m_dur_timer.setTop(m_maneuver.duration);
 
         // Waiting or station keeping will be the same
