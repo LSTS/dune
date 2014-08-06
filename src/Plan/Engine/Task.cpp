@@ -76,8 +76,6 @@ namespace Plan
       Calibration* m_calib;
       //! True if a stop for calibration has been requested
       bool m_stopped_calib;
-      //! True if just waiting for minimum time of calibration
-      bool m_wait_min;
       //! Plan control interface
       IMC::PlanControlState m_pcs;
       IMC::PlanControl m_reply;
@@ -113,7 +111,6 @@ namespace Plan
         m_plan(NULL),
         m_calib(NULL),
         m_stopped_calib(false),
-        m_wait_min(false),
         m_db(NULL),
         m_get_plan_stmt(NULL)
       {
@@ -377,7 +374,6 @@ namespace Plan
         if (vs->op_mode == IMC::VehicleState::VS_CALIBRATION && !m_calib->inProgress())
         {
           m_calib->start();
-          m_wait_min = false;
         }
         else if (vs->op_mode != IMC::VehicleState::VS_CALIBRATION && m_calib->inProgress())
         {
