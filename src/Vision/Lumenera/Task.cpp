@@ -84,6 +84,10 @@ namespace Vision
       unsigned volume_size;
       //! Power GPIO.
       int pwr_gpio;
+      //! Whether to configure the camera.
+      bool camera_cfg;
+      //! Whether to capture from the camera.
+      bool camera_capt;
     };
 
     //! Device driver task.
@@ -236,6 +240,14 @@ namespace Vision
         param("Volume Size", m_args.volume_size)
         .defaultValue("1000")
         .description("Number of photos per volume");
+
+        param("Enable Camera Configuration", m_args.camera_cfg)
+        .defaultValue("true")
+        .description("Attempt to configure the camera");
+
+        param("Enable Camera Streaming", m_args.camera_capt)
+        .defaultValue("true")
+        .description("Attempt to capture frames from the camera");
 
         bind<IMC::LoggingControl>(this);
       }
@@ -392,14 +404,12 @@ namespace Vision
       void
       stopVideo(void)
       {
+        if (m_http == NULL)
+          return;
+
         debug("stopping video stream");
-
-        if (m_http != NULL)
-        {
-          delete m_http;
-          m_http = NULL;
-        }
-
+        delete m_http;
+        m_http = NULL;
         inf(DTR("stopped video stream"));
       }
 
@@ -616,7 +626,7 @@ namespace Vision
             continue;
           }
 
-          if (m_cfg_dirty)
+          if (m_args.camera_cfg && m_cfg_dirty)
           {
             try
             {
@@ -629,6 +639,9 @@ namespace Vision
               continue;
             }
           }
+
+          if (!m_args.camera_capt)
+            continue;
 
           if (m_http == NULL)
           {
