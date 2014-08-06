@@ -55,6 +55,8 @@ namespace Maneuver
       float min_distance;
       //! Radius for the elevator behavior
       float elev_radius;
+      //! Maximum distance from station keeping radial circle
+      float max_sk_dist;
     };
 
     //! Maneuver states for the state machine
@@ -70,8 +72,6 @@ namespace Maneuver
       ST_NEAR_SURFACE,
       //! Get a fix
       ST_GET_FIX,
-      //! Wait at the surface
-      ST_WAIT,
       //! Station keep at the surface
       ST_SKEEP,
       //! Come back down
@@ -101,6 +101,10 @@ namespace Maneuver
       bool m_at_surface;
       //! Estimated time of arrival from PathControlState
       unsigned m_path_eta;
+      //! Latitude where the stationkeep behavior was centered
+      double m_sk_lat;
+      //! Longitude where the stationkeep behavior was centered
+      double m_sk_lon;
       //! Station keeping behavior in case it is necessary
       Maneuvers::StationKeep* m_skeep;
       //! Elevator behavior
@@ -133,6 +137,11 @@ namespace Maneuver
         .units(Units::Meter)
         .description("Radius for the elevator behavior");
 
+        param("Maximum Distance From Station", m_args.max_sk_dist)
+        .defaultValue("15.0")
+        .units(Units::Meter)
+        .description("Maximum distance from station keeping radial circle");
+
         bindToManeuver<Task, IMC::PopUp>();
         bind<IMC::EstimatedState>(this);
         bind<IMC::GpsFix>(this);
@@ -147,34 +156,26 @@ namespace Maneuver
       }
 
       void
-      elevate(float z_value, unsigned z_units, bool current)
+      elevate(float z_value, unsigned z_units)
       {
         // Elevate upwards
         Memory::clear(m_elevate);
 
         IMC::Elevator elev;
 
-        if (current)
-        {
-          elev.flags = IMC::Elevator::FLG_CURR_POS;
-          // Start z doesn't matter
-          elev.start_z = 0;
-          elev.start_z_units = IMC::Z_DEPTH;
-        }
-        else
-        {
-          elev.flags = 0;
-          elev.start_z = z_value;
-          elev.start_z_units = z_units;
-        }
-
-        elev.lat = m_maneuver.lat;
-        elev.lon = m_maneuver.lon;
+        elev.flags = IMC::Elevator::FLG_CURR_POS;
+        // Start z doesn't matter
+        elev.start_z = 0;
+        elev.start_z_units = IMC::Z_DEPTH;
 
         // End does however
         elev.end_z = z_value;
         elev.end_z_units = z_units;
         elev.radius = m_args.elev_radius;
+
+        elev.lat = m_maneuver.lat;
+        elev.lon = m_maneuver.lon;
+
         elev.speed = m_maneuver.speed;
         elev.speed_units = m_maneuver.speed_units;
 
@@ -184,20 +185,51 @@ namespace Maneuver
       inline void
       goUp(void)
       {
-        elevate(0.0, IMC::Z_DEPTH, true);
+        elevate(0.0, IMC::Z_DEPTH);
       }
 
       inline void
       goDown(void)
       {
-        elevate(m_maneuver.z, m_maneuver.z_units, false);
+        elevate(m_maneuver.z, m_maneuver.z_units);
+      }
+
+      void
+      startStationKeeping(void)
+      {
+        Memory::clear(m_skeep);
+
+        // Deploy a station keeping right where the vehicle "thinks it is"
+        Coordinates::toWGS84(m_state, m_sk_lat, m_sk_lon);
+        m_skeep = new Maneuvers::StationKeep(this, m_sk_lat, m_sk_lon,
+                                             m_args.elev_radius, 0.0, IMC::Z_DEPTH,
+                                             m_maneuver.speed,
+                                             m_maneuver.speed_units);
+      }
+
+      bool
+      isSKeepTooFar(const IMC::EstimatedState* state)
+      {
+        double lat;
+        double lon;
+        Coordinates::toWGS84(*state, lat, lon);
+
+        float dist = Coordinates::WGS84::distance(lat, lon, 0.0,
+                                                  m_sk_lat, m_sk_lon, 0.0);
+
+        return (dist > m_args.elev_radius + m_args.max_sk_dist);
       }
 
       void
       consume(const IMC::PopUp* maneuver)
       {
         m_maneuver = *maneuver;
+
         m_dur_timer.setTop(m_maneuver.duration);
+
+        // Waiting or station keeping will be the same
+        if (mustKeep() || mustWait())
+          m_maneuver.flags |= IMC::PopUp::FLG_WAIT_AT_SURFACE | IMC::PopUp::FLG_STATION_KEEP;
 
         if (useCurr())
         {
@@ -231,21 +263,12 @@ namespace Maneuver
           case ST_NEAR_SURFACE:
             if (msg->medium == IMC::VehicleMedium::VM_WATER)
             {
-              if (mustWait())
-              {
-                m_pstate = ST_WAIT;
-                m_dur_timer.reset();
-              }
-              else if (mustKeep())
+              if (mustKeep())
               {
                 m_pstate = ST_SKEEP;
                 m_dur_timer.reset();
 
-                Memory::clear(m_skeep);
-                m_skeep = new Maneuvers::StationKeep(this, m_maneuver.lat, m_maneuver.lon,
-                                                     m_args.elev_radius, 0.0, IMC::Z_DEPTH,
-                                                     m_maneuver.speed,
-                                                     m_maneuver.speed_units);
+                startStationKeeping();
               }
               else
               {
@@ -266,6 +289,10 @@ namespace Maneuver
         switch (m_pstate)
         {
           case ST_GET_FIX:
+          case ST_SKEEP:
+            if (!(msg->validity & IMC::GpsFix::GFV_VALID_POS))
+              break;
+
             double lat;
             double lon;
             Coordinates::toWGS84(m_state, lat, lon);
@@ -273,7 +300,8 @@ namespace Maneuver
             dist = Coordinates::WGS84::distance(lat, lon, 0.0,
                                                 msg->lat, msg->lon, 0.0);
 
-            if (dist < m_args.min_distance)
+            if (msg->satellites >= m_args.min_sats &&
+                dist < m_args.min_distance)
             {
               goDown();
               m_pstate = ST_GO_DOWN;
@@ -296,9 +324,13 @@ namespace Maneuver
             m_elevate->update(state);
             break;
           case ST_SKEEP:
+            if (isSKeepTooFar(state))
+            {
+              startStationKeeping();
+              inf("moved station keeping");
+            }
+
             m_skeep->update(state);
-            // fall through
-          case ST_WAIT:
             if (m_dur_timer.overflow())
             {
               goDown();
@@ -362,7 +394,7 @@ namespace Maneuver
       inline void
       computeETA(void)
       {
-        if (m_pstate == ST_WAIT)
+        if (m_pstate == ST_SKEEP)
         {
           signalProgress((uint16_t)std::ceil(m_dur_timer.getRemaining()));
         }
