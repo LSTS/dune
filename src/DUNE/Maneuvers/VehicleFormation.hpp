@@ -89,10 +89,10 @@ namespace DUNE
       void
       consume(const IMC::EstimatedState* msg);
 
-      //! Consumer for IMC::PathControlState message.
+      //! Inherited from Maneuver class.
       //! @param pcs path control state message
       void
-      consume(const IMC::PathControlState* pcs);
+      onPathControlState(const IMC::PathControlState* pcs);
 
       //! Abstract method called upon path completion.
       //! This will not be called in approach stage (see isApproaching()).
