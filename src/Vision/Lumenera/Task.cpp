@@ -302,15 +302,8 @@ namespace Vision
         if (!isActivating())
           return;
 
-        try
-        {
-          setProperties();
-          activate();
-        }
-        catch (std::runtime_error& e)
-        {
-          err("%s", e.what());
-        }
+        m_cfg_dirty = true;
+        activate();
       }
 
       void
@@ -329,6 +322,8 @@ namespace Vision
       void
       onDeactivation(void)
       {
+        stopVideo();
+
         setStrobePower(false);
 
         if (m_pwr_gpio != NULL)
@@ -404,6 +399,8 @@ namespace Vision
           delete m_http;
           m_http = NULL;
         }
+
+        inf(DTR("stopped video stream"));
       }
 
       void
@@ -609,6 +606,8 @@ namespace Vision
           if (isActive())
           {
             consumeMessages();
+            if (!isActive())
+              continue;
           }
           else
           {
@@ -627,10 +626,11 @@ namespace Vision
             catch (std::runtime_error& e)
             {
               err("%s", e.what());
+              continue;
             }
           }
 
-          if (m_http == NULL && !m_cfg_dirty)
+          if (m_http == NULL)
           {
             try
             {
