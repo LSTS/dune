@@ -43,7 +43,6 @@ namespace DUNE
 
       bindToManeuver<FollowTrajectory, IMC::FollowTrajectory>();
       bind<IMC::EstimatedState>(this);
-      bind<IMC::PathControlState>(this);
     }
 
     FollowTrajectory::~FollowTrajectory(void)
@@ -112,9 +111,9 @@ namespace DUNE
     }
 
     void
-    FollowTrajectory::consume(const IMC::PathControlState* msg)
+    FollowTrajectory::onPathControlState(const IMC::PathControlState* pcs)
     {
-      if (msg->flags & IMC::PathControlState::FL_NEAR)
+      if (pcs->flags & IMC::PathControlState::FL_NEAR)
       {
         if (m_approach)
         {

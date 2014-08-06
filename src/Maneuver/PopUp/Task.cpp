@@ -135,7 +135,6 @@ namespace Maneuver
 
         bindToManeuver<Task, IMC::PopUp>();
         bind<IMC::EstimatedState>(this);
-        bind<IMC::PathControlState>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::VehicleMedium>(this);
       }
@@ -312,7 +311,7 @@ namespace Maneuver
       }
 
       void
-      consume(const IMC::PathControlState* pcs)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
         switch (m_pstate)
         {

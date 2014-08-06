@@ -113,7 +113,6 @@ namespace Maneuver
           bindToManeuver<Task, IMC::FollowReference>();
           bind<IMC::Reference>(this);
           bind<IMC::EstimatedState>(this);
-          bind<IMC::PathControlState>(this);
         }
 
         void
@@ -201,7 +200,7 @@ namespace Maneuver
         }
 
         void
-        consume(const IMC::PathControlState* pcs)
+        onPathControlState(const IMC::PathControlState* pcs)
         {
           m_pcs = *pcs;
           updateFollowRefStateFlags();

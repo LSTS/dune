@@ -119,7 +119,6 @@ namespace Maneuver
         bind<IMC::RemoteState>(this);
         bind<IMC::EstimatedState>(this, true); // consume even if inactive
         bind<IMC::Announce>(this);
-        bind<IMC::PathControlState>(this);
       }
 
       void
@@ -279,7 +278,7 @@ namespace Maneuver
 
       //! Function to check if the vehicle is getting near to the next waypoint
       void
-      consume(const IMC::PathControlState* pcs)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
         if (pcs->flags & IMC::PathControlState::FL_NEAR)
           enableMovement(false);

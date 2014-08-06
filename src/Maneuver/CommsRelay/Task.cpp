@@ -59,7 +59,6 @@ namespace Maneuver
         m_moving(false)
       {
         bindToManeuver<Task, IMC::CommsRelay>();
-        bind<IMC::PathControlState>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::Announce>(this);
       }

@@ -60,7 +60,6 @@ namespace Maneuver
         .description("Minimum radius to prevent incompatibility with path controller");
 
         bindToManeuver<Task, IMC::Loiter>();
-        bind<IMC::PathControlState>(this);
       }
 
       void
@@ -96,7 +95,7 @@ namespace Maneuver
       }
 
       void
-      consume(const IMC::PathControlState* pcs)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
         if (pcs->flags & IMC::PathControlState::FL_LOITERING)
         {

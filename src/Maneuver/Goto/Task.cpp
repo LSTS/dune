@@ -43,7 +43,6 @@ namespace Maneuver
         DUNE::Maneuvers::Maneuver(name, ctx)
       {
         bindToManeuver<Task, IMC::Goto>();
-        bind<IMC::PathControlState>(this);
       }
 
       void
@@ -62,7 +61,7 @@ namespace Maneuver
       }
 
       void
-      consume(const IMC::PathControlState* pcs)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
         if (pcs->flags & IMC::PathControlState::FL_NEAR)
           signalCompletion();

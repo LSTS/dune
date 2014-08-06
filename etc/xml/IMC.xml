@@ -3909,6 +3909,14 @@
       radius ('lradius'), duration ('lduration'), and clockwise or
       counter-clockwise direction ('CCLOCKW' flag).
     </description>
+    <field name = "Path Reference" abbrev="path_ref" type="uint32_t">
+      <description>
+        Unsigned integer reference for the scope of the desired path message.
+        Path reference should only be set by a maneuver.
+        Should be set to an always increasing reference at the time of dispatching this message.
+        Lower level path controllers must inherit the same path reference sent by maneuver.
+      </description>
+    </field>
     <field name="Start Point -- Latitude WGS-84" abbrev="start_lat" type="fp64_t" unit="rad" min="-1.5707963267948966" max="1.5707963267948966">
       <description>
         WGS-84 latitude of start point. This will be ignored unless
@@ -4186,6 +4194,13 @@
     <description>
       Path control state issued by Path Controller.
     </description>
+    <field name = "Path Reference" abbrev="path_ref" type="uint32_t">
+      <description>
+        Unsigned integer reference of the desired path message to which this
+	PathControlState message refers to.
+	Path reference should only be set by a maneuver, not by path controllers.
+      </description>
+    </field>
     <field name="Start Point -- Latitude WGS-84" abbrev="start_lat" type="fp64_t" unit="rad" min="-1.5707963267948966" max="1.5707963267948966">
       <description>
         WGS-84 latitude of start point.

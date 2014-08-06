@@ -111,7 +111,6 @@ namespace Maneuver
         .description("Number of 360 degree turns until calibration");
 
         bindToManeuver<Task, IMC::CompassCalibration>();
-        bind<IMC::PathControlState>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::EulerAngles>(this);
         bind<IMC::MagneticField>(this);
@@ -239,7 +238,7 @@ namespace Maneuver
       }
 
       void
-      consume(const IMC::PathControlState* pcs)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
         if ((pcs->flags & IMC::PathControlState::FL_LOITERING) && !m_yoyo_ing)
         {

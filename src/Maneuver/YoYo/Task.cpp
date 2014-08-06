@@ -90,7 +90,6 @@ namespace Maneuver
         .description("Maximum course error admissible");
 
         bindToManeuver<Task, IMC::YoYo>();
-        bind<IMC::PathControlState>(this);
         bind<IMC::EstimatedState>(this);
       }
 
@@ -163,7 +162,7 @@ namespace Maneuver
       }
 
       void
-      consume(const IMC::PathControlState* pcs)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
         if (pcs->flags & IMC::PathControlState::FL_NEAR)
         {
