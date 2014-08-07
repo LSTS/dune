@@ -455,7 +455,7 @@ namespace Plan
           {
             m_calib->forceRemainingTime(scheduledTimeLeft());
           }
-          else if (m_calib->getElapsedTime() > m_min_cal_time)
+          else if (m_calib->getElapsedTime() >= m_min_cal_time)
           {
             // If we're past the minimum calibration time
             m_calib->stop();
