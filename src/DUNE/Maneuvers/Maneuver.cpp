@@ -228,18 +228,6 @@ namespace DUNE
     }
 
     void
-    Maneuver::dispatch(IMC::Message* msg, unsigned int flags)
-    {
-      if (msg->getId() == DUNE_IMC_DESIREDPATH)
-      {
-        IMC::DesiredPath* dp = static_cast<IMC::DesiredPath*>(msg);
-        dp->path_ref = changePathRef();
-      }
-
-      Task::dispatch(msg, flags);
-    }
-
-    void
     Maneuver::onMain(void)
     {
       dispatch(m_rm);

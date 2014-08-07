@@ -153,17 +153,44 @@ namespace DUNE
       void
       setControl(uint32_t mask);
 
-      //! Dispatch needs to be handled in a special fashion for DesiredPath
+      //! Dispatch needs to be handled in a special fashion for DesiredPath.
+      //! This template handles every other kind of message.
+      //! @param[in] msg message pointer.
+      //! @param[in] flags bitfield with flags.
+      template <typename M>
+      void
+      dispatch(M* msg, unsigned int flags = 0)
+      {
+        Task::dispatch(msg, flags);
+      }
+
+      //! Dispatch needs to be handled in a special fashion for DesiredPath.
+      //! This template handles every other kind of message.
+      //! @param[in] msg message reference.
+      //! @param[in] flags bitfield with flags.
+      template <typename M>
+      void
+      dispatch(M& msg, unsigned int flags = 0)
+      {
+        Task::dispatch(&msg, flags);
+      }
+
+      //! Dispatch needs to be handled in a special fashion for DesiredPath.
       //! @param[in] msg message pointer.
       //! @param[in] flags bitfield with flags.
       void
-      dispatch(IMC::Message* msg, unsigned int flags = 0);
+      dispatch(IMC::DesiredPath* msg, unsigned int flags = 0)
+      {
+        msg->path_ref = changePathRef();
 
-      //! Dispatch message to the message bus.
+        Task::dispatch(msg, flags);
+      }
+
+      //! Dispatch needs to be handled in a special fashion for DesiredPath.
       //! @param[in] msg message reference.
-      //! @param[in] flags bitfield with flags (see DispatchFlags).
+      //! @param[in] flags bitfield with flags.
       void
-      dispatch(IMC::Message& msg, unsigned int flags = 0)
+      dispatch(IMC::DesiredPath& msg, unsigned int flags = 0)
       {
         dispatch(&msg, flags);
       }
