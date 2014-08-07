@@ -490,7 +490,7 @@ namespace Supervisors
         changeMode(IMC::VehicleState::VS_CALIBRATION);
 
         requestOK(msg, String::str(DTR("calibrating vehicle for %u seconds"),
-                                   msg->cablib_time));
+                                   msg->calib_time));
       }
 
       void
