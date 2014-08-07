@@ -74,8 +74,6 @@ namespace Supervisors
       bool m_in_safe_plan;
       //! Counter for printing errors
       Time::Counter<float> m_err_timer;
-      //! Calibration message.
-      IMC::Calibration m_calibration;
       //! Vehicle command message.
       IMC::VehicleCommand m_vc_reply;
       //! Vehicle state message.
@@ -491,13 +489,8 @@ namespace Supervisors
 
         changeMode(IMC::VehicleState::VS_CALIBRATION);
 
-        m_calibration.duration = msg->calib_time;
-        dispatch(m_calibration);
-
-        m_switch_time = Clock::get();
-
         requestOK(msg, String::str(DTR("calibrating vehicle for %u seconds"),
-                                   m_calibration.duration));
+                                   msg->cablib_time));
       }
 
       void
@@ -509,7 +502,7 @@ namespace Supervisors
           return;
         }
 
-        requestOK(msg, String::str(DTR("stopped calibration"), m_calibration.duration));
+        requestOK(msg, DTR("stopped calibration"));
 
         debug("calibration over");
         changeMode(IMC::VehicleState::VS_SERVICE);
@@ -615,23 +608,13 @@ namespace Supervisors
 
         double delta = Clock::get() - m_switch_time;
 
-        if (calibrationMode() && (delta > m_calibration.duration))
-        {
-          debug("calibration over");
-          changeMode(IMC::VehicleState::VS_SERVICE);
-        }
-        else if (maneuverMode() && (delta > c_man_timeout))
+        if (maneuverMode() && (delta > c_man_timeout))
         {
           inf(DTR("maneuver request timeout"));
           reset();
           changeMode(IMC::VehicleState::VS_SERVICE);
+          m_switch_time = -1.0;
         }
-        else
-        {
-          return;
-        }
-
-        m_switch_time = -1.0;
       }
 
       //! Check if the entities in error are relevant for performing an emergency plan
