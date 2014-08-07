@@ -440,7 +440,7 @@ namespace Plan
       void
       updateCalibration(const IMC::VehicleState* vs)
       {
-        if (vs->op_mode == IMC::VehicleState::VS_CALIBRATION && !m_calib->inProgress())
+        if (vs->op_mode == IMC::VehicleState::VS_CALIBRATION && m_calib->notStarted())
         {
           m_calib->start();
         }
