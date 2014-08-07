@@ -72,8 +72,6 @@ namespace Plan
     {
       //! Pointer to Plan class
       Plan* m_plan;
-      //! True if a stop for calibration has been requested
-      bool m_stopped_calib;
       //! Plan control interface
       IMC::PlanControlState m_pcs;
       IMC::PlanControl m_reply;
@@ -107,7 +105,6 @@ namespace Plan
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_plan(NULL),
-        m_stopped_calib(false),
         m_db(NULL),
         m_get_plan_stmt(NULL)
       {
@@ -372,8 +369,11 @@ namespace Plan
           if (m_plan->isCalibrationDone())
           {
             if ((vs->op_mode == IMC::VehicleState::VS_CALIBRATION) &&
-                !m_stopped_calib)
-              vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
+                !pendingReply())
+            {
+              IMC::PlanManeuver* pman = m_plan->loadStartManeuver();
+              startManeuver(pman);
+            }
           }
           else if (m_plan->hasCalibrationFailed())
           {
@@ -1006,14 +1006,10 @@ namespace Plan
           m_plan->calibrationStarted();
           // one second of tolerance for the vehicle supervisor
           m_vc.calib_time = (uint16_t)(m_plan->getEstimatedCalibrationTime() + 1.0);
-          m_stopped_calib = false;
         }
         else
         {
           m_vc.calib_time = 0;
-
-          if (command == IMC::VehicleCommand::VC_STOP_CALIBRATION)
-            m_stopped_calib = true;
         }
 
         dispatch(m_vc);
