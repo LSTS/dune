@@ -214,7 +214,7 @@ namespace Supervisors
           }
         }
 
-        if (maneuverMode() || calibrationMode())
+        if (maneuverMode() || (calibrationMode() && maneuver))
         {
           // original entity ID is the Plan.Engine's
           maneuver->setSourceEntity(getEntityId());
