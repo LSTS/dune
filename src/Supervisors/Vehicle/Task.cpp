@@ -214,7 +214,7 @@ namespace Supervisors
           }
         }
 
-        if (maneuverMode())
+        if (maneuverMode() || calibrationMode())
         {
           // original entity ID is the Plan.Engine's
           maneuver->setSourceEntity(getEntityId());
@@ -487,7 +487,19 @@ namespace Supervisors
         if (maneuverMode())
           reset();
 
-        changeMode(IMC::VehicleState::VS_CALIBRATION);
+        const IMC::Message* m = 0;
+
+        if (!msg->maneuver.isNull())
+        {
+          m = msg->maneuver.get();
+
+          m_man_sup->addStop();
+          IMC::Message* clone = m->clone();
+          changeMode(IMC::VehicleState::VS_CALIBRATION, clone);
+          delete clone;
+
+          inf(DTR("performing maneuver %s while calibrating"), m->getName());
+        }
 
         requestOK(msg, String::str(DTR("calibrating vehicle for %u seconds"),
                                    msg->calib_time));
@@ -513,16 +525,16 @@ namespace Supervisors
       }
 
       void
-      startManeuver(const IMC::VehicleCommand* cmd)
+      startManeuver(const IMC::VehicleCommand* msg)
       {
         const IMC::Message* m = 0;
 
-        if (!cmd->maneuver.isNull())
-          m = cmd->maneuver.get();
+        if (!msg->maneuver.isNull())
+          m = msg->maneuver.get();
 
         if (!m)
         {
-          requestFailed(cmd, DTR("no maneuver specified"));
+          requestFailed(msg, DTR("no maneuver specified"));
           return;
         }
 
@@ -530,7 +542,7 @@ namespace Supervisors
 
         if (externalMode())
         {
-          requestFailed(cmd, mtype + DTR(" maneuver cannot be started in current mode"));
+          requestFailed(msg, mtype + DTR(" maneuver cannot be started in current mode"));
           return;
         }
 
@@ -539,7 +551,7 @@ namespace Supervisors
         changeMode(IMC::VehicleState::VS_MANEUVER, clone);
         delete clone;
 
-        requestOK(cmd, mtype + DTR(" maneuver started"));
+        requestOK(msg, mtype + DTR(" maneuver started"));
       }
 
       void
