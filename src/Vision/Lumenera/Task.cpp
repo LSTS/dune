@@ -34,6 +34,7 @@
 
 // Local headers.
 #include "HTTPClient.hpp"
+#include "EntityActivationMaster.hpp"
 
 namespace Vision
 {
@@ -88,6 +89,8 @@ namespace Vision
       bool camera_cfg;
       //! Whether to capture from the camera.
       bool camera_capt;
+      //! Slave entities
+      std::vector<std::string> slave_entities;
     };
 
     //! Device driver task.
@@ -115,6 +118,10 @@ namespace Vision
       Hardware::GPIO* m_pwr_gpio;
       //! Config is dirty.
       bool m_cfg_dirty;
+      //! Slave entities
+      EntityActivationMaster* m_slave_entities;
+      //! Activation timer
+      Counter<double> m_act_timer;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -124,7 +131,8 @@ namespace Vision
         m_volume_count(0),
         m_file_count(0),
         m_pwr_gpio(NULL),
-        m_cfg_dirty(false)
+        m_cfg_dirty(false),
+        m_slave_entities(NULL)
       {
         // Retrieve configuration values.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -249,13 +257,21 @@ namespace Vision
         .defaultValue("true")
         .description("Attempt to capture frames from the camera");
 
+        param("Slave Entities", m_args.slave_entities)
+        .defaultValue("")
+        .description("Slave entities to activate/deactivate");
+
         bind<IMC::LoggingControl>(this);
+        bind<IMC::EntityActivationState>(this);
       }
 
       void
       onUpdateParameters(void)
       {
         m_cfg_dirty = true;
+
+        if (m_slave_entities)
+          m_slave_entities->addEntities(m_args.slave_entities);
       }
 
       void
@@ -267,20 +283,27 @@ namespace Vision
           m_pwr_gpio->setDirection(Hardware::GPIO::GPIO_DIR_OUTPUT);
           m_pwr_gpio->setValue(0);
         }
+
+        m_slave_entities = new EntityActivationMaster(this);
+        m_slave_entities->addEntities(m_args.slave_entities);
       }
 
       void
       onResourceRelease(void)
       {
         trace("releasing");
-        stopVideo();
-        inf(DTR("stopped video stream"));
+        requestDeactivation();
 
         if (m_pwr_gpio != NULL)
         {
-          m_pwr_gpio->setValue(0);
           delete m_pwr_gpio;
           m_pwr_gpio = NULL;
+        }
+
+        if (m_slave_entities != NULL)
+        {
+          delete m_slave_entities;
+          m_slave_entities = NULL;
         }
       }
 
@@ -304,19 +327,55 @@ namespace Vision
         if (m_pwr_gpio != NULL)
           m_pwr_gpio->setValue(1);
 
+        m_slave_entities->activate();
+        m_act_timer.setTop(getActivationTime());
+
         IMC::LoggingControl log_ctl;
         log_ctl.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
         dispatch(log_ctl);
       }
 
       void
-      checkActivation(void)
+      checkActivationProgress(void)
       {
-        if (!isActivating())
+        trace("checking activation");
+
+        if (m_act_timer.overflow() && m_act_timer.getTop() != 0)
+        {
+          activationFailed(DTR("failed to activate required entities"));
+          m_slave_entities->deactivate();
+          return;
+        }
+
+        if (!m_slave_entities->areActive())
           return;
 
         m_cfg_dirty = true;
         activate();
+        debug("activation took %0.2f s", getActivationTime() - m_act_timer.getRemaining());
+      }
+
+      void
+      onRequestDeactivation(void)
+      {
+        trace("received deactivation request");
+        m_slave_entities->deactivate();
+
+        m_act_timer.setTop(getDeactivationTime());
+      }
+
+      void
+      checkDeactivationProgress(void)
+      {
+        trace("checking deactivation");
+
+        if (m_act_timer.overflow() && m_act_timer.getTop() != 0)
+          deactivationFailed(DTR("failed to deactivate required entities"));
+
+        if (m_slave_entities->areActive())
+          return;
+
+        deactivate();
       }
 
       void
@@ -344,6 +403,19 @@ namespace Vision
           m_pwr_gpio->setValue(0);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
+      consume(const IMC::EntityActivationState* msg)
+      {
+        if (msg->getSourceEntity() == DUNE_IMC_CONST_UNK_EID)
+        {
+          err("invalid entity");
+          return;
+        }
+
+        std::string name = resolveEntity(msg->getSourceEntity());
+        m_slave_entities->onEntityActivationState(name, msg->state);
       }
 
       void
@@ -623,7 +695,10 @@ namespace Vision
           else
           {
             waitForMessages(1.0);
-            checkActivation();
+            if (isActivating())
+              checkActivationProgress();
+            else if (isDeactivating())
+              checkDeactivationProgress();
             continue;
           }
 
@@ -643,6 +718,7 @@ namespace Vision
                 setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_COM_ERROR);
                 err("%s", e.what());
               }
+              waitForMessages(0.2);
               continue;
             }
           }
