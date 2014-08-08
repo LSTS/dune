@@ -149,7 +149,7 @@ namespace Plan
         .units(Units::RPM)
         .description("Speed in RPM for the station keeping");
 
-        param("StationKeeping While Calibrating", m_args.sk_radius)
+        param("StationKeeping Radius", m_args.sk_radius)
         .defaultValue("20")
         .minimumValue("15")
         .units(Units::Meter)
