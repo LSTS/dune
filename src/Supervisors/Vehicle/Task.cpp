@@ -500,6 +500,10 @@ namespace Supervisors
 
           inf(DTR("performing maneuver %s while calibrating"), m->getName());
         }
+        else
+        {
+          changeMode(IMC::VehicleState::VS_CALIBRATION);
+        }
 
         requestOK(msg, String::str(DTR("calibrating vehicle for %u seconds"),
                                    msg->calib_time));
