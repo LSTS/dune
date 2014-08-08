@@ -151,7 +151,6 @@ namespace Plan
 
         param("StationKeeping Radius", m_args.sk_radius)
         .defaultValue("20")
-        .minimumValue("15")
         .units(Units::Meter)
         .description("Radius for the station keeping");
 
