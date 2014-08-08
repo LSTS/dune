@@ -94,6 +94,8 @@ namespace Supervisors
       Time::Counter<float> m_loops_timer;
       //! Maneuver handler
       ManeuverSupervisor* m_man_sup;
+      //! A timeout for calibration state
+      float m_calib_timeout;
       //! Task arguments.
       Arguments m_args;
 
@@ -511,6 +513,11 @@ namespace Supervisors
         IMC::Calibration calib;
         calib.duration = msg->calib_time;
         dispatch(calib);
+
+        // Make the timeout 1.5 times larger than the requested time
+        // And do not consider calibration times longer than 15 seconds
+        m_calib_timeout = 1.5 * std::max((uint16_t)15, msg->calib_time);
+        m_switch_time = Clock::get();
       }
 
       void
@@ -628,9 +635,21 @@ namespace Supervisors
 
         double delta = Clock::get() - m_switch_time;
 
+        bool timedout = false;
+
         if (maneuverMode() && (delta > c_man_timeout))
         {
           inf(DTR("maneuver request timeout"));
+          timedout = true;
+        }
+        else if (calibrationMode() && (delta > m_calib_timeout))
+        {
+          inf(DTR("calibration timed out"));
+          timedout = true;
+        }
+
+        if (timedout)
+        {
           reset();
           changeMode(IMC::VehicleState::VS_SERVICE);
           m_switch_time = -1.0;
