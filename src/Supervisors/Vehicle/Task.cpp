@@ -491,6 +491,10 @@ namespace Supervisors
 
         requestOK(msg, String::str(DTR("calibrating vehicle for %u seconds"),
                                    msg->calib_time));
+
+        IMC::Calibration calib;
+        calib.duration = msg->calib_time;
+        dispatch(calib);
       }
 
       void
