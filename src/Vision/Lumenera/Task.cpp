@@ -347,7 +347,7 @@ namespace Vision
           return;
         }
 
-        if (!m_slave_entities->areActive())
+        if (!m_slave_entities->checkActivation())
           return;
 
         m_cfg_dirty = true;
@@ -372,10 +372,8 @@ namespace Vision
         if (m_act_timer.overflow() && m_act_timer.getTop() != 0)
           deactivationFailed(DTR("failed to deactivate required entities"));
 
-        if (m_slave_entities->areActive())
-          return;
-
-        deactivate();
+        if (m_slave_entities->checkDeactivation())
+          deactivate();
       }
 
       void
@@ -415,7 +413,7 @@ namespace Vision
         }
 
         std::string name = resolveEntity(msg->getSourceEntity());
-        m_slave_entities->onEntityActivationState(name, msg->state);
+        m_slave_entities->onEntityActivationState(name, msg);
       }
 
       void

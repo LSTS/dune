@@ -55,13 +55,13 @@ namespace Vision
       void
       addEntity(const std::string& label)
       {
-        m_slave_entities[label] = false;
+        m_slave_entities[label] = IMC::EntityActivationState::EAS_INACTIVE;
       }
 
       void
       activate(void)
       {
-        std::map<std::string,bool>::const_iterator itr = m_slave_entities.begin();
+        std::map<std::string,IMC::EntityActivationState::StateEnum>::const_iterator itr = m_slave_entities.begin();
         for (; itr != m_slave_entities.end(); ++itr)
         {
           setActiveParameter(itr->first, true);
@@ -71,7 +71,7 @@ namespace Vision
       void
       deactivate(void)
       {
-        std::map<std::string, bool>::const_iterator itr = m_slave_entities.begin();
+        std::map<std::string, IMC::EntityActivationState::StateEnum>::const_iterator itr = m_slave_entities.begin();
         for (; itr != m_slave_entities.end(); ++itr)
         {
           setActiveParameter(itr->first, false);
@@ -79,36 +79,62 @@ namespace Vision
       }
 
       bool
-      areActive(void)
+      checkActivation(void)
       {
-        std::map<std::string, bool>::const_iterator itr = m_slave_entities.begin();
+        bool rv = true;
+
+        std::map<std::string, IMC::EntityActivationState::StateEnum>::const_iterator itr = m_slave_entities.begin();
         for (; itr != m_slave_entities.end(); ++itr)
         {
-          if (itr->second == false)
+          if  (itr->second == IMC::EntityActivationState::EAS_INACTIVE)
           {
-            std::cerr << "entity " << itr->first << " is not active" << std::endl;
-            return false;
+            setActiveParameter(itr->first, true);
+          }
+          if (itr->second != IMC::EntityActivationState::EAS_ACTIVE)
+          {
+            m_owner->war("entity %s is not active", itr->first.c_str());
+            rv = false;
           }
         }
-        std::cerr << "all entities are active" << std::endl;
-        return true;
+        return rv;
+      }
+
+      bool
+      checkDeactivation(void)
+      {
+        bool rv = true;
+
+        std::map<std::string, IMC::EntityActivationState::StateEnum>::const_iterator itr = m_slave_entities.begin();
+        for (; itr != m_slave_entities.end(); ++itr)
+        {
+          if  (itr->second == IMC::EntityActivationState::EAS_ACTIVE)
+          {
+            setActiveParameter(itr->first, false);
+          }
+          if (itr->second != IMC::EntityActivationState::EAS_INACTIVE)
+          {
+            m_owner->war("entity %s is not active", itr->first.c_str());
+            rv = false;
+          }
+        }
+        return rv;
       }
 
       void
-      onEntityActivationState(std::string name, unsigned int state)
+      onEntityActivationState(const std::string &name, const IMC::EntityActivationState* msg)
       {
-        std::map<std::string, bool>::iterator itr = m_slave_entities.find(name);
+        std::map<std::string, IMC::EntityActivationState::StateEnum>::iterator itr = m_slave_entities.find(name);
         if (itr == m_slave_entities.end())
           return;
 
-        itr->second = (state == IMC::EntityActivationState::EAS_ACTIVE);
+        itr->second = (const IMC::EntityActivationState::StateEnum)(msg->state);
       }
 
     private:
       //! Owner task
       DUNE::Tasks::Task* m_owner;
       //! Slave entity labels.
-      std::map<std::string, bool> m_slave_entities;
+      std::map<std::string, IMC::EntityActivationState::StateEnum> m_slave_entities;
 
       void
       setActiveParameter(std::string name, bool value)
