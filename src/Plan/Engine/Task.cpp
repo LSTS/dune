@@ -66,6 +66,12 @@ namespace Plan
       uint16_t calibration_time;
       //! Abort when a payload fails to activate
       bool actfail_abort;
+      //! Perform station keeping while calibrating
+      bool sk_calib;
+      //! Radius for the station keeping
+      float sk_radius;
+      //! Speed in RPM for the station keeping
+      float sk_rpm;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -133,6 +139,21 @@ namespace Plan
         param("Abort On Failed Activation", m_args.actfail_abort)
         .defaultValue("false")
         .description("Abort when a payload fails to activate");
+
+        param("StationKeeping While Calibrating", m_args.sk_calib)
+        .defaultValue("false")
+        .description("Perform station keeping while calibrating");
+
+        param("StationKeeping Speed in RPM", m_args.sk_rpm)
+        .defaultValue("1600")
+        .units(Units::RPM)
+        .description("Speed in RPM for the station keeping");
+
+        param("StationKeeping While Calibrating", m_args.sk_radius)
+        .defaultValue("20")
+        .minimumValue("15")
+        .units(Units::Meter)
+        .description("Radius for the station keeping");
 
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
@@ -784,7 +805,22 @@ namespace Plan
           return false;
         }
 
-        vehicleRequest(IMC::VehicleCommand::VC_START_CALIBRATION);
+        IMC::Message* m = 0;
+
+        IMC::StationKeeping sk;
+
+        if (m_args.sk_calib)
+        {
+          Coordinates::toWGS84(m_state, sk.lat, sk.lon);
+          sk.z_units = IMC::Z_DEPTH;
+          sk.z = 0;
+          sk.radius = m_args.sk_radius;
+          sk.speed_units = IMC::SUNITS_RPM;
+          sk.speed = m_args.sk_rpm;
+          m = static_cast<IMC::Message*>(&sk);
+        }
+
+        vehicleRequest(IMC::VehicleCommand::VC_START_CALIBRATION, m);
         return true;
       }
 
