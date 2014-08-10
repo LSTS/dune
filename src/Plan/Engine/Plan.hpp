@@ -68,6 +68,7 @@ namespace Plan
       //! Default constructor.
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] compute_progress true if progress should be computed
+      //! @param[in] min_cal_time minimum calibration time in s.
       //! @param[in] speed_rpm_factor factor to convert from RPMs to m/s
       //! @param[in] speed_act_factor factor to convert from actuation to m/s
       Plan(const IMC::PlanSpecification* spec, bool compute_progress,
@@ -94,6 +95,7 @@ namespace Plan
       //! No speed conversion constructor
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] compute_progress true if progress should be computed
+      //! @param[in] min_cal_time minimum calibration time in s.
       Plan(const IMC::PlanSpecification* spec, bool compute_progress,
            uint16_t min_cal_time)
       {
@@ -418,7 +420,6 @@ namespace Plan
 
       //! Get current plan progress
       //! @param[in] mcs pointer to maneuver control state message
-      //! @param[in] calib pointer to calibration information
       //! @return progress in percent (-1.0 if unable to compute)
       float
       updateProgress(const IMC::ManeuverControlState* mcs)
