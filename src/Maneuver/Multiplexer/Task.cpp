@@ -32,6 +32,7 @@
 // Local headers.
 #include "Goto.hpp"
 #include "Loiter.hpp"
+#include "StationKeeping.hpp"
 #include "Idle.hpp"
 
 namespace Maneuver
@@ -46,6 +47,8 @@ namespace Maneuver
       TYPE_GOTO,
       //! Type Loiter
       TYPE_LOITER,
+      //! Type StationKeeping
+      TYPE_SKEEP,
       //! Type Idle
       TYPE_IDLE
     };
@@ -54,14 +57,18 @@ namespace Maneuver
     {
       //! Loiter Arguments
       Loiter::LoiterArgs loiter;
+      //! StationKeeping Arguments
+      StationKeeping::StationKeepingArgs sk;
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
     {
-      //! Loiter
-      Loiter* m_loiter;
       //! Goto
       Goto* m_goto;
+      //! Loiter
+      Loiter* m_loiter;
+      //! StationKeeping
+      StationKeeping* m_sk;
       //! Idle
       Idle* m_idle;
       //! Type of maneuver to perform
@@ -71,17 +78,24 @@ namespace Maneuver
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Maneuvers::Maneuver(name, ctx),
-        m_loiter(NULL),
         m_goto(NULL),
+        m_loiter(NULL),
+        m_sk(NULL),
         m_idle(NULL)
       {
         param("Loiter -- Minimum Radius", m_args.loiter.min_radius)
         .defaultValue("10.0")
-        .description("Minimum radius to prevent incompatibility with path controller");
+        .description("Minimum radius for Loiter to prevent incompatibility with path controller");
+
+        param("StationKeeping -- Minimum Radius", m_args.sk.min_radius)
+        .defaultValue("10.0")
+        .description("Minimum radius for StationKeeping to prevent incompatibility with path controller");
 
         bindToManeuver<Task, IMC::Goto>();
         bindToManeuver<Task, IMC::Loiter>();
+        bindToManeuver<Task, IMC::StationKeeping>();
         bindToManeuver<Task, IMC::IdleManeuver>();
+        bind<IMC::EstimatedState>(this);
       }
 
       void
@@ -89,6 +103,7 @@ namespace Maneuver
       {
         m_goto = new Goto(static_cast<Maneuvers::Maneuver*>(this));
         m_loiter = new Loiter(static_cast<Maneuvers::Maneuver*>(this), &m_args.loiter);
+        m_sk = new StationKeeping(static_cast<Maneuvers::Maneuver*>(this), &m_args.sk);
         m_idle = new Idle(static_cast<Maneuvers::Maneuver*>(this));
       }
 
@@ -97,14 +112,8 @@ namespace Maneuver
       {
         Memory::clear(m_goto);
         Memory::clear(m_loiter);
+        Memory::clear(m_sk);
         Memory::clear(m_idle);
-      }
-
-      void
-      consume(const IMC::IdleManeuver* maneuver)
-      {
-        m_type = TYPE_IDLE;
-        m_idle->start(maneuver);
       }
 
       void
@@ -122,28 +131,61 @@ namespace Maneuver
       }
 
       void
-      onPathControlState(const IMC::PathControlState* pcs)
+      consume(const IMC::IdleManeuver* maneuver)
+      {
+        m_type = TYPE_IDLE;
+        m_idle->start(maneuver);
+      }
+
+      void
+      consume(const IMC::StationKeeping* maneuver)
+      {
+        m_type = TYPE_SKEEP;
+        m_sk->start(maneuver);
+      }
+
+      void
+      consume(const IMC::EstimatedState* msg)
       {
         switch (m_type)
         {
-          case TYPE_GOTO:
-            m_goto->onPathControlState(pcs);
-            break;
-          case TYPE_LOITER:
-            m_loiter->onPathControlState(pcs);
+          case TYPE_SKEEP:
+            m_sk->onEstimatedState(msg);
             break;
           default:
             break;
         }
       }
 
-      void
-      onStateReport(void)
-      {
-        switch (m_type)
-        {
-          case TYPE_IDLE:
-            m_idle->onStateReport();
+       void
+       onPathControlState(const IMC::PathControlState* pcs)
+       {
+         switch (m_type)
+         {
+           case TYPE_GOTO:
+             m_goto->onPathControlState(pcs);
+             break;
+           case TYPE_LOITER:
+             m_loiter->onPathControlState(pcs);
+             break;
+           case TYPE_SKEEP:
+             m_sk->onPathControlState(pcs);
+             break;
+           default:
+             break;
+         }
+       }
+
+       void
+       onStateReport(void)
+       {
+         switch (m_type)
+         {
+           case TYPE_IDLE:
+             m_idle->onStateReport();
+             break;
+          case TYPE_SKEEP:
+            m_sk->onStateReport();
             break;
           default:
             break;
