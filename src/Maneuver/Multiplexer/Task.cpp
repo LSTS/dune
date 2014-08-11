@@ -36,6 +36,7 @@
 #include "YoYo.hpp"
 #include "Rows.hpp"
 #include "FollowPath.hpp"
+#include "Elevator.hpp"
 #include "Idle.hpp"
 
 namespace Maneuver
@@ -58,6 +59,8 @@ namespace Maneuver
       TYPE_ROWS,
       //! Type FollowPath
       TYPE_FOLLOWPATH,
+      //! Type Elevator
+      TYPE_ELEVATOR,
       //! Type Idle
       TYPE_IDLE
     };
@@ -70,6 +73,8 @@ namespace Maneuver
       StationKeeping::StationKeepingArgs sk;
       //! Yoyo Arguments
       YoYo::YoYoArgs yoyo;
+      //! Elevator Arguments
+      Elevator::ElevatorArgs elevator;
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -86,6 +91,8 @@ namespace Maneuver
       Rows* m_rows;
       //! FollowPath
       FollowPath* m_followpath;
+      //! Elevator
+      Elevator* m_elevator;
       //! Idle
       Idle* m_idle;
       //! Type of maneuver to perform
@@ -101,6 +108,7 @@ namespace Maneuver
         m_yoyo(NULL),
         m_rows(NULL),
         m_followpath(NULL),
+        m_elevator(NULL),
         m_idle(NULL)
       {
         param("Loiter -- Minimum Radius", m_args.loiter.min_radius)
@@ -130,12 +138,38 @@ namespace Maneuver
         .units(Units::Degree)
         .description("Maximum course error admissible");
 
+        param("Elevator -- Depth Tolerance", m_args.elevator.depth_tolerance)
+        .defaultValue("1.0")
+        .units(Units::Meter)
+        .description("Depth tolerance when elevating towards a new depth");
+
+        param("Elevator -- Radius Tolerance", m_args.elevator.radius_tolerance)
+        .defaultValue("2.0")
+        .units(Units::Meter)
+        .description("Distance tolerance to start loitering near elevator's location");
+
+        param("Elevator -- VMonitor -- Minimum Speed", m_args.elevator.vmonitor_speed)
+        .defaultValue("-1.0")
+        .units(Units::MeterPerSecond)
+        .description("Negative values will disable vertical progress monitor");
+
+        param("Elevator -- VMonitor -- Timeout", m_args.elevator.vmonitor_timeout)
+        .defaultValue("15.0")
+        .units(Units::Second)
+        .description("Timeout when progress is below the specified value");
+
+        param("Elevator -- Minimum Radius", m_args.elevator.min_radius)
+        .defaultValue("10.0")
+        .units(Units::Meter)
+        .description("Minimum radius to prevent incompatibility with path controller");
+
         bindToManeuver<Task, IMC::Goto>();
         bindToManeuver<Task, IMC::Loiter>();
         bindToManeuver<Task, IMC::StationKeeping>();
         bindToManeuver<Task, IMC::YoYo>();
         bindToManeuver<Task, IMC::Rows>();
         bindToManeuver<Task, IMC::FollowPath>();
+        bindToManeuver<Task, IMC::Elevator>();
         bindToManeuver<Task, IMC::IdleManeuver>();
         bind<IMC::EstimatedState>(this);
       }
@@ -159,6 +193,7 @@ namespace Maneuver
         m_yoyo = new YoYo(static_cast<Maneuvers::Maneuver*>(this), &m_args.yoyo);
         m_rows = new Rows(static_cast<Maneuvers::Maneuver*>(this));
         m_followpath = new FollowPath(static_cast<Maneuvers::Maneuver*>(this));
+        m_elevator = new Elevator(static_cast<Maneuvers::Maneuver*>(this), &m_args.elevator);
         m_idle = new Idle(static_cast<Maneuvers::Maneuver*>(this));
       }
 
@@ -171,6 +206,7 @@ namespace Maneuver
         Memory::clear(m_yoyo);
         Memory::clear(m_rows);
         Memory::clear(m_followpath);
+        Memory::clear(m_elevator);
         Memory::clear(m_idle);
       }
 
@@ -224,6 +260,13 @@ namespace Maneuver
       }
 
       void
+      consume(const IMC::Elevator* maneuver)
+      {
+        m_type = TYPE_ELEVATOR;
+        m_elevator->start(maneuver);
+      }
+
+      void
       consume(const IMC::EstimatedState* msg)
       {
         switch (m_type)
@@ -233,6 +276,9 @@ namespace Maneuver
             break;
           case TYPE_YOYO:
             m_yoyo->onEstimatedState(msg);
+            break;
+          case TYPE_ELEVATOR:
+            m_elevator->onEstimatedState(msg);
             break;
           default:
             break;
@@ -261,6 +307,9 @@ namespace Maneuver
              break;
            case TYPE_FOLLOWPATH:
              m_followpath->onPathControlState(pcs);
+             break;
+           case TYPE_ELEVATOR:
+             m_elevator->onPathControlState(pcs);
              break;
            default:
              break;
