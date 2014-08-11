@@ -60,6 +60,7 @@ namespace Maneuver
       //! @param[in] maneuver pointer to Maneuver task
       //! @param[in] args yoyo arguments
       YoYo(Maneuvers::Maneuver* task, YoYoArgs* args):
+        m_yoyo(NULL),
         m_task(task),
         m_args(args)
       { }
