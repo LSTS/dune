@@ -22,51 +22,52 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Pedro Calado                                                     *
+// Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-// ISO C++ 98 headers.
-#include <iomanip>
-#include <vector>
+#ifndef DUNE_MANEUVER_ROWS_HPP_INCLUDED_
+#define DUNE_MANEUVER_ROWS_HPP_INCLUDED_
 
-// DUNE headers.
 #include <DUNE/DUNE.hpp>
+
+using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
-  namespace Rows
+  namespace Multiplexer
   {
-    using DUNE_NAMESPACES;
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM Rows;
 
-    struct Task: public DUNE::Maneuvers::Maneuver
+    //! Plan Specification parser
+    class Rows
     {
-      //! Rows stages parser
-      Maneuvers::RowsStages* m_parser;
-      //! Desired path message
-      IMC::DesiredPath m_path;
+    public:
+      //! Default constructor.
+      //! @param[in] maneuver pointer to Maneuver task
+      Rows(Maneuvers::Maneuver* task):
+        m_parser(NULL),
+        m_task(task)
+      { }
 
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx),
-        m_parser(NULL)
-      {
-        bindToManeuver<Task, IMC::Rows>();
-      }
-
-      void
-      onManeuverDeactivation(void)
+      //! Destructor
+      ~Rows(void)
       {
         Memory::clear(m_parser);
       }
 
+      //! Start maneuver function
+      //! @param[in] maneuver rows maneuver message
       void
-      consume(const IMC::Rows* maneuver)
+      start(const IMC::Rows* maneuver)
       {
         Memory::clear(m_parser);
 
-        m_parser = new Maneuvers::RowsStages(maneuver, this);
+        m_parser = new Maneuvers::RowsStages(maneuver, m_task);
 
         // Get it started
-        setControl(IMC::CL_PATH);
+        m_task->setControl(IMC::CL_PATH);
         m_path.speed = maneuver->speed;
         m_path.speed_units = maneuver->speed_units;
         m_path.end_z = maneuver->z;
@@ -77,20 +78,22 @@ namespace Maneuver
 
         if (m_parser->getFirstPoint(&lat, &lon))
         {
-          signalCompletion();
+          m_task->signalCompletion();
           return;
         }
 
         sendPath(lat, lon);
       }
 
+      //! On PathControlState message
+      //! @param[in] pcs pointer to PathControlState message
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {
         std::stringstream ss;
         ss << "waypoint=" << m_parser->getIndex();
 
-        signalProgress(pcs->eta, ss.str());
+        m_task->signalProgress(pcs->eta, ss.str());
 
         if (!(pcs->flags & IMC::PathControlState::FL_NEAR))
           return;
@@ -100,7 +103,7 @@ namespace Maneuver
 
         if (m_parser->getNextPoint(&lat, &lon))
         {
-          signalCompletion();
+          m_task->signalCompletion();
           return;
         }
 
@@ -117,10 +120,18 @@ namespace Maneuver
         m_path.end_lat = lat;
         m_path.end_lon = lon;
         m_path.flags = 0;
-        dispatch(m_path);
+        m_task->dispatch(m_path);
       }
+
+    private:
+      //! Rows stages parser
+      Maneuvers::RowsStages* m_parser;
+      //! Desired path message
+      IMC::DesiredPath m_path;
+      //! Pointer to task
+      Maneuvers::Maneuver* m_task;
     };
   }
 }
 
-DUNE_TASK
+#endif
