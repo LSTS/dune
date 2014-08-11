@@ -111,6 +111,8 @@ namespace Vision
       Hardware::GPIO* m_pwr_gpio;
       //! Config is dirty.
       bool m_cfg_dirty;
+      //! True if received the logging path.
+      bool m_log_dir_updated;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -120,7 +122,8 @@ namespace Vision
         m_volume_count(0),
         m_file_count(0),
         m_pwr_gpio(NULL),
-        m_cfg_dirty(false)
+        m_cfg_dirty(false),
+        m_log_dir_updated(false)
       {
         // Retrieve configuration values.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -280,7 +283,8 @@ namespace Vision
         if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
         {
           m_log_dir = m_ctx.dir_log / msg->name / "Photos";
-          changeVolume();
+          m_log_dir_updated = true;
+          trace("received new log dir");
         }
       }
 
@@ -300,7 +304,7 @@ namespace Vision
       void
       checkActivation(void)
       {
-        if (!isActivating())
+        if (!isActivating() || !m_log_dir_updated)
           return;
 
         m_cfg_dirty = true;
@@ -326,6 +330,7 @@ namespace Vision
         stopVideo();
 
         setStrobePower(false);
+        m_log_dir_updated = false;
 
         if (m_pwr_gpio != NULL)
           m_pwr_gpio->setValue(0);
