@@ -30,6 +30,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers.
+#include "Goto.hpp"
 #include "Loiter.hpp"
 
 namespace Maneuver
@@ -56,6 +57,8 @@ namespace Maneuver
     {
       //! Loiter
       Loiter* m_loiter;
+      //! Goto
+      Goto* m_goto;
       //! Type of maneuver to perform
       ManeuverType m_type;
       //! Task arguments
@@ -76,12 +79,14 @@ namespace Maneuver
       void
       onResourceAcquisition(void)
       {
+        m_goto = new Goto(static_cast<Maneuvers::Maneuver*>(this));
         m_loiter = new Loiter(static_cast<Maneuvers::Maneuver*>(this), &m_args.loiter);
       }
 
       void
       onResourceRelease(void)
       {
+        Memory::clear(m_goto);
         Memory::clear(m_loiter);
       }
 
@@ -89,25 +94,13 @@ namespace Maneuver
       consume(const IMC::Goto* maneuver)
       {
         m_type = TYPE_GOTO;
-
-        setControl(IMC::CL_PATH);
-
-        IMC::DesiredPath path;
-        path.end_lat = maneuver->lat;
-        path.end_lon = maneuver->lon;
-        path.end_z = maneuver->z;
-        path.end_z_units = maneuver->z_units;
-        path.speed = maneuver->speed;
-        path.speed_units = maneuver->speed_units;
-
-        dispatch(path);
+        m_goto->start(maneuver);
       }
 
       void
       consume(const IMC::Loiter* maneuver)
       {
         m_type = TYPE_LOITER;
-
         m_loiter->start(maneuver);
       }
 
@@ -117,10 +110,7 @@ namespace Maneuver
         switch (m_type)
         {
           case TYPE_GOTO:
-            if (pcs->flags & IMC::PathControlState::FL_NEAR)
-              signalCompletion();
-            else
-              signalProgress(pcs->eta);
+            m_goto->onPathControlState(pcs);
             break;
           case TYPE_LOITER:
             m_loiter->onPathControlState(pcs);
