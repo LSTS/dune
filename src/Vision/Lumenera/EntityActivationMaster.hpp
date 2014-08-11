@@ -113,7 +113,7 @@ namespace Vision
           }
           if (itr->second != IMC::EntityActivationState::EAS_INACTIVE)
           {
-            m_owner->war("entity %s is not active", itr->first.c_str());
+            m_owner->war("entity %s is still active", itr->first.c_str());
             rv = false;
           }
         }
