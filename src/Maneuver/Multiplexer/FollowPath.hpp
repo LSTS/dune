@@ -45,7 +45,7 @@ namespace Maneuver
     {
     public:
       //! Default constructor.
-      //! @param[in] maneuver pointer to Maneuver task
+      //! @param[in] task pointer to Maneuver task
       FollowPath(Maneuvers::Maneuver* task):
         m_task(task)
       { }

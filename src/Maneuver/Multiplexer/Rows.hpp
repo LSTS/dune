@@ -40,12 +40,12 @@ namespace Maneuver
     // Export DLL Symbol.
     class DUNE_DLL_SYM Rows;
 
-    //! Plan Specification parser
+    //! Rows maneuver
     class Rows
     {
     public:
       //! Default constructor.
-      //! @param[in] maneuver pointer to Maneuver task
+      //! @param[in] task pointer to Maneuver task
       Rows(Maneuvers::Maneuver* task):
         m_parser(NULL),
         m_task(task)

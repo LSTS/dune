@@ -40,7 +40,7 @@ namespace Maneuver
     // Export DLL Symbol.
     class DUNE_DLL_SYM Loiter;
 
-    //! Plan Specification parser
+    //! Loiter maneuver
     class Loiter
     {
     public:

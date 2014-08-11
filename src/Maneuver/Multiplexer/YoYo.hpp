@@ -40,7 +40,7 @@ namespace Maneuver
     // Export DLL Symbol.
     class DUNE_DLL_SYM YoYo;
 
-    //! Plan Specification parser
+    //! Yoyo maneuver
     class YoYo
     {
     public:
@@ -57,7 +57,7 @@ namespace Maneuver
       };
 
       //! Default constructor.
-      //! @param[in] maneuver pointer to Maneuver task
+      //! @param[in] task pointer to Maneuver task
       //! @param[in] args yoyo arguments
       YoYo(Maneuvers::Maneuver* task, YoYoArgs* args):
         m_yoyo(NULL),

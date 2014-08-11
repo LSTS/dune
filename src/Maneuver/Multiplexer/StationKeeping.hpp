@@ -40,7 +40,7 @@ namespace Maneuver
     // Export DLL Symbol.
     class DUNE_DLL_SYM StationKeeping;
 
-    //! Plan Specification parser
+    //! StationKeeping maneuver
     class StationKeeping
     {
     public:
@@ -51,7 +51,7 @@ namespace Maneuver
       };
 
       //! Default constructor.
-      //! @param[in] maneuver pointer to Maneuver task
+      //! @param[in] task pointer to Maneuver task
       //! @param[in] args stationkeeping arguments
       StationKeeping(Maneuvers::Maneuver* task, StationKeepingArgs* args):
         m_skeep(NULL),

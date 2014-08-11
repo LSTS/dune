@@ -40,7 +40,7 @@ namespace Maneuver
     // Export DLL Symbol.
     class DUNE_DLL_SYM Idle;
 
-    //! Plan Specification parser
+    //! Idle maneuver
     class Idle
     {
     public:
