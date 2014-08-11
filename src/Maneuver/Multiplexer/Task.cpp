@@ -32,6 +32,7 @@
 // Local headers.
 #include "Goto.hpp"
 #include "Loiter.hpp"
+#include "Idle.hpp"
 
 namespace Maneuver
 {
@@ -44,7 +45,9 @@ namespace Maneuver
       //! Type Goto
       TYPE_GOTO,
       //! Type Loiter
-      TYPE_LOITER
+      TYPE_LOITER,
+      //! Type Idle
+      TYPE_IDLE
     };
 
     struct Arguments
@@ -59,6 +62,8 @@ namespace Maneuver
       Loiter* m_loiter;
       //! Goto
       Goto* m_goto;
+      //! Idle
+      Idle* m_idle;
       //! Type of maneuver to perform
       ManeuverType m_type;
       //! Task arguments
@@ -66,7 +71,9 @@ namespace Maneuver
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Maneuvers::Maneuver(name, ctx),
-        m_loiter(NULL)
+        m_loiter(NULL),
+        m_goto(NULL),
+        m_idle(NULL)
       {
         param("Loiter -- Minimum Radius", m_args.loiter.min_radius)
         .defaultValue("10.0")
@@ -74,6 +81,7 @@ namespace Maneuver
 
         bindToManeuver<Task, IMC::Goto>();
         bindToManeuver<Task, IMC::Loiter>();
+        bindToManeuver<Task, IMC::IdleManeuver>();
       }
 
       void
@@ -81,6 +89,7 @@ namespace Maneuver
       {
         m_goto = new Goto(static_cast<Maneuvers::Maneuver*>(this));
         m_loiter = new Loiter(static_cast<Maneuvers::Maneuver*>(this), &m_args.loiter);
+        m_idle = new Idle(static_cast<Maneuvers::Maneuver*>(this));
       }
 
       void
@@ -88,6 +97,14 @@ namespace Maneuver
       {
         Memory::clear(m_goto);
         Memory::clear(m_loiter);
+        Memory::clear(m_idle);
+      }
+
+      void
+      consume(const IMC::IdleManeuver* maneuver)
+      {
+        m_type = TYPE_IDLE;
+        m_idle->start(maneuver);
       }
 
       void
@@ -114,6 +131,21 @@ namespace Maneuver
             break;
           case TYPE_LOITER:
             m_loiter->onPathControlState(pcs);
+            break;
+          default:
+            break;
+        }
+      }
+
+      void
+      onStateReport(void)
+      {
+        switch (m_type)
+        {
+          case TYPE_IDLE:
+            m_idle->onStateReport();
+            break;
+          default:
             break;
         }
       }

@@ -22,41 +22,49 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Pedro Calado                                                     *
+// Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-// DUNE headers.
+#ifndef DUNE_MANEUVER_IDLE_HPP_INCLUDED_
+#define DUNE_MANEUVER_IDLE_HPP_INCLUDED_
+
 #include <DUNE/DUNE.hpp>
+
+using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
-  namespace Idle
+  namespace Multiplexer
   {
-    using DUNE_NAMESPACES;
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM Idle;
 
-    struct Task: public DUNE::Maneuvers::Maneuver
+    //! Plan Specification parser
+    class Idle
     {
-      double m_end_time;
+    public:
+      //! Default constructor.
+      //! @param[in] task pointer to Maneuver task
+      Idle(Maneuvers::Maneuver* task):
+        m_task(task)
+      { }
 
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx)
-      {
-        bindToManeuver<Task, IMC::IdleManeuver>();
-      }
-
+      //! Start maneuver function
+      //! @param[in] maneuver idle maneuver message
       void
-      consume(const IMC::IdleManeuver* maneuver)
+      start(const IMC::IdleManeuver* maneuver)
       {
-        setControl(0); // maneuver does not enable any control
+        m_task->setControl(0); // maneuver does not enable any control
 
         if (maneuver->duration)
         {
           m_end_time = Clock::get() + maneuver->duration;
-          signalProgress(maneuver->duration);
+          m_task->signalProgress(maneuver->duration);
         }
         else
         {
-          signalProgress();
+          m_task->signalProgress();
           m_end_time = -1;
         }
       }
@@ -66,19 +74,28 @@ namespace Maneuver
       {
         if (m_end_time < 0)
         {
-          signalProgress();
+          m_task->signalProgress();
           return;
         }
 
         double time_left = m_end_time - Clock::get();
 
         if (time_left < 0)
-          signalCompletion();
+          m_task->signalCompletion();
         else
-          signalProgress((uint16_t)time_left);
+          m_task->signalProgress((uint16_t)time_left);
       }
+
+      ~Idle(void)
+      { }
+
+    private:
+      //! Pointer to task
+      Maneuvers::Maneuver* m_task;
+      //! End time of the loiter
+      double m_end_time;
     };
   }
 }
 
-DUNE_TASK
+#endif
