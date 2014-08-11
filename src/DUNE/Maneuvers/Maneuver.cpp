@@ -230,7 +230,13 @@ namespace DUNE
     void
     Maneuver::onMain(void)
     {
-      dispatch(m_rm);
+      std::set<uint16_t>::const_iterator it;
+      for (it = m_reg_man.begin(); it != m_reg_man.end(); it++)
+      {
+        IMC::RegisterManeuver rm;
+        rm.mid = *it;
+        dispatch(rm);
+      }
 
       while (!stopping())
       {

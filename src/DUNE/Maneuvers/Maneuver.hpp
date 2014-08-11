@@ -112,7 +112,7 @@ namespace DUNE
       {
         void (Maneuver::* startfunc)(const M*) = &Maneuver::startManeuver<T, M>;
         Task::bind<M>(this, startfunc);
-        m_rm.mid = M::getIdStatic();
+        m_reg_man.insert(M::getIdStatic());
       }
 
       template <typename M, typename T>
@@ -272,7 +272,8 @@ namespace DUNE
       changePathRef(void);
 
       IMC::ManeuverControlState m_mcs;
-      IMC::RegisterManeuver m_rm;
+      //! Set of registered maneuvers
+      std::set<uint16_t> m_reg_man;
     };
   }
 }
