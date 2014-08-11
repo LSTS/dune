@@ -66,16 +66,18 @@ namespace Plan
       uint16_t calibration_time;
       //! Abort when a payload fails to activate
       bool actfail_abort;
+      //! Perform station keeping while calibrating
+      bool sk_calib;
+      //! Radius for the station keeping
+      float sk_radius;
+      //! Speed in RPM for the station keeping
+      float sk_rpm;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
       //! Pointer to Plan class
       Plan* m_plan;
-      //! Calibration object
-      Calibration* m_calib;
-      //! True if a stop for calibration has been requested
-      bool m_stopped_calib;
       //! Plan control interface
       IMC::PlanControlState m_pcs;
       IMC::PlanControl m_reply;
@@ -109,8 +111,6 @@ namespace Plan
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_plan(NULL),
-        m_calib(NULL),
-        m_stopped_calib(false),
         m_db(NULL),
         m_get_plan_stmt(NULL)
       {
@@ -140,6 +140,20 @@ namespace Plan
         .defaultValue("false")
         .description("Abort when a payload fails to activate");
 
+        param("StationKeeping While Calibrating", m_args.sk_calib)
+        .defaultValue("false")
+        .description("Perform station keeping while calibrating");
+
+        param("StationKeeping Speed in RPM", m_args.sk_rpm)
+        .defaultValue("1600")
+        .units(Units::RPM)
+        .description("Speed in RPM for the station keeping");
+
+        param("StationKeeping Radius", m_args.sk_radius)
+        .defaultValue("20")
+        .units(Units::Meter)
+        .description("Radius for the station keeping");
+
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::EstimatedState>(this);
@@ -168,16 +182,13 @@ namespace Plan
       onResourceRelease(void)
       {
         Memory::clear(m_plan);
-        Memory::clear(m_calib);
       }
 
       void
       onResourceAcquisition(void)
       {
-        m_plan = new Plan(&m_spec, m_args.progress,
+        m_plan = new Plan(&m_spec, m_args.progress, m_args.calibration_time,
                           m_args.speed_conv_rpm, m_args.speed_conv_act);
-
-        m_calib = new Calibration(m_args.calibration_time);
       }
 
       void
@@ -371,36 +382,25 @@ namespace Plan
         }
 
         // update calibration status
-        if (vs->op_mode == IMC::VehicleState::VS_CALIBRATION && !m_calib->inProgress())
+        if (m_plan != NULL)
         {
-          m_calib->start();
-        }
-        else if (vs->op_mode != IMC::VehicleState::VS_CALIBRATION && m_calib->inProgress())
-        {
-          m_calib->stop();
-        }
-        else if (m_calib->inProgress())
-        {
-          if (m_plan != NULL)
+          m_plan->updateCalibration(vs);
+
+          if (m_plan->isCalibrationDone())
           {
-            // check if some calibration time can be skipped
-            if (m_plan->waitingForDevice())
+            if ((vs->op_mode == IMC::VehicleState::VS_CALIBRATION) &&
+                !pendingReply())
             {
-              m_calib->forceRemainingTime(m_plan->calibTimeLeft());
-            }
-            // If we're past the minimum calibration time and have not yet
-            // send a request to stop calibration
-            else if (!m_stopped_calib && m_calib->pastMinimum())
-            {
-              vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
+              IMC::PlanManeuver* pman = m_plan->loadStartManeuver();
+              startManeuver(pman);
             }
           }
-        }
-        else if (m_calib->hasFailed())
-        {
-          onFailure(m_calib->getInfo());
-          m_reply.plan_id = m_spec.plan_id;
-          changeMode(IMC::PlanControlState::PCS_READY, m_calib->getInfo());
+          else if (m_plan->hasCalibrationFailed())
+          {
+            onFailure(m_plan->getCalibrationInfo());
+            m_reply.plan_id = m_spec.plan_id;
+            changeMode(IMC::PlanControlState::PCS_READY, m_plan->getCalibrationInfo());
+          }
         }
       }
 
@@ -771,9 +771,6 @@ namespace Plan
 
         if (flags & IMC::PlanControl::FLG_CALIBRATE)
         {
-          // Set calibration time (there is a minimum)
-          m_calib->setTime(m_plan->getCalibrationTime());
-
           if (!startCalibration())
             return stopped;
         }
@@ -807,7 +804,22 @@ namespace Plan
           return false;
         }
 
-        vehicleRequest(IMC::VehicleCommand::VC_START_CALIBRATION);
+        IMC::Message* m = 0;
+
+        IMC::StationKeeping sk;
+
+        if (m_args.sk_calib)
+        {
+          Coordinates::toWGS84(m_state, sk.lat, sk.lon);
+          sk.z_units = IMC::Z_DEPTH;
+          sk.z = 0;
+          sk.radius = m_args.sk_radius;
+          sk.speed_units = IMC::SUNITS_RPM;
+          sk.speed = m_args.sk_rpm;
+          m = static_cast<IMC::Message*>(&sk);
+        }
+
+        vehicleRequest(IMC::VehicleCommand::VC_START_CALIBRATION, m);
         return true;
       }
 
@@ -968,7 +980,7 @@ namespace Plan
         if (m_plan == NULL || (!execMode() && !initMode()))
           return;
 
-        m_pcs.plan_progress = m_plan->updateProgress(&m_mcs, m_calib);
+        m_pcs.plan_progress = m_plan->updateProgress(&m_mcs);
         m_pcs.plan_eta = (int32_t)m_plan->getPlanEta();
       }
 
@@ -1026,17 +1038,13 @@ namespace Plan
 
         if (command == IMC::VehicleCommand::VC_START_CALIBRATION)
         {
-          m_plan->calibrationStarted(m_calib);
+          m_plan->calibrationStarted();
           // one second of tolerance for the vehicle supervisor
-          m_vc.calib_time = (uint16_t)(m_calib->getTime() + 1.0);
-          m_stopped_calib = false;
+          m_vc.calib_time = (uint16_t)m_plan->getEstimatedCalibrationTime();
         }
         else
         {
           m_vc.calib_time = 0;
-
-          if (command == IMC::VehicleCommand::VC_STOP_CALIBRATION)
-            m_stopped_calib = true;
         }
 
         dispatch(m_vc);

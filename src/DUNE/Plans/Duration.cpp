@@ -348,18 +348,24 @@ namespace DUNE
         travel_time = 0;
       }
 
-      // Rising time
+      // Rising time and descending time
       float rising_time;
+      float descending_time;
       if (maneuver->z_units == IMC::Z_DEPTH)
-        rising_time = std::fabs(last_pos.z) / speed;
+      {
+        rising_time = (std::fabs(last_pos.z) / std::sin(c_rated_pitch)) / speed;
+        descending_time = (std::fabs(maneuver->z) / std::sin(c_rated_pitch)) / speed;
+      }
       else // altitude, assume zero
+      {
         rising_time = 0.0;
+        descending_time = 0.0;
+      }
 
       // surface time
-      bool wait = (maneuver->flags & IMC::PopUp::FLG_WAIT_AT_SURFACE) != 0;
-      float surface_time = wait ? maneuver->duration : c_fix_time;
+      float surface_time = c_fix_time;
 
-      m_accum_dur->addDuration(travel_time + rising_time + surface_time);
+      m_accum_dur->addDuration(travel_time + rising_time + surface_time + descending_time);
 
       return true;
     }
