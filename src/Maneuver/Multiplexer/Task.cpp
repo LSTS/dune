@@ -33,6 +33,7 @@
 #include "Goto.hpp"
 #include "Loiter.hpp"
 #include "StationKeeping.hpp"
+#include "YoYo.hpp"
 #include "Idle.hpp"
 
 namespace Maneuver
@@ -49,6 +50,8 @@ namespace Maneuver
       TYPE_LOITER,
       //! Type StationKeeping
       TYPE_SKEEP,
+      //! Type Yoyo
+      TYPE_YOYO,
       //! Type Idle
       TYPE_IDLE
     };
@@ -59,6 +62,8 @@ namespace Maneuver
       Loiter::LoiterArgs loiter;
       //! StationKeeping Arguments
       StationKeeping::StationKeepingArgs sk;
+      //! Yoyo Arguments
+      YoYo::YoYoArgs yoyo;
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -69,6 +74,8 @@ namespace Maneuver
       Loiter* m_loiter;
       //! StationKeeping
       StationKeeping* m_sk;
+      //! YoYo
+      YoYo* m_yoyo;
       //! Idle
       Idle* m_idle;
       //! Type of maneuver to perform
@@ -81,6 +88,7 @@ namespace Maneuver
         m_goto(NULL),
         m_loiter(NULL),
         m_sk(NULL),
+        m_yoyo(NULL),
         m_idle(NULL)
       {
         param("Loiter -- Minimum Radius", m_args.loiter.min_radius)
@@ -91,11 +99,41 @@ namespace Maneuver
         .defaultValue("10.0")
         .description("Minimum radius for StationKeeping to prevent incompatibility with path controller");
 
+        param("YoYo -- Maximum Pitch Variation", m_args.yoyo.variation)
+        .defaultValue("2")
+        .units(Units::Degree)
+        .description("Maximum pitch variation step when changing z direction");
+
+        param("YoYo -- Check Path Errors", m_args.yoyo.check_errors)
+        .defaultValue("false")
+        .description("True if we should check path errors and stabilize pitch");
+
+        param("YoYo -- Maximum Cross Track Error", m_args.yoyo.u_ctrack)
+        .defaultValue("6")
+        .units(Units::Meter)
+        .description("Maximum cross track error admissible");
+
+        param("YoYo -- Maximum Course Error", m_args.yoyo.u_course)
+        .defaultValue("15")
+        .units(Units::Degree)
+        .description("Maximum course error admissible");
+
         bindToManeuver<Task, IMC::Goto>();
         bindToManeuver<Task, IMC::Loiter>();
         bindToManeuver<Task, IMC::StationKeeping>();
+        bindToManeuver<Task, IMC::YoYo>();
         bindToManeuver<Task, IMC::IdleManeuver>();
         bind<IMC::EstimatedState>(this);
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        if (paramChanged(m_args.yoyo.variation))
+          m_args.yoyo.variation = Angles::radians(m_args.yoyo.variation);
+
+        if (paramChanged(m_args.yoyo.u_course))
+          m_args.yoyo.u_course = Angles::radians(m_args.yoyo.u_course);
       }
 
       void
@@ -104,6 +142,7 @@ namespace Maneuver
         m_goto = new Goto(static_cast<Maneuvers::Maneuver*>(this));
         m_loiter = new Loiter(static_cast<Maneuvers::Maneuver*>(this), &m_args.loiter);
         m_sk = new StationKeeping(static_cast<Maneuvers::Maneuver*>(this), &m_args.sk);
+        m_yoyo = new YoYo(static_cast<Maneuvers::Maneuver*>(this), &m_args.yoyo);
         m_idle = new Idle(static_cast<Maneuvers::Maneuver*>(this));
       }
 
@@ -113,6 +152,7 @@ namespace Maneuver
         Memory::clear(m_goto);
         Memory::clear(m_loiter);
         Memory::clear(m_sk);
+        Memory::clear(m_yoyo);
         Memory::clear(m_idle);
       }
 
@@ -145,12 +185,22 @@ namespace Maneuver
       }
 
       void
+      consume(const IMC::YoYo* maneuver)
+      {
+        m_type = TYPE_YOYO;
+        m_yoyo->start(maneuver);
+      }
+
+      void
       consume(const IMC::EstimatedState* msg)
       {
         switch (m_type)
         {
           case TYPE_SKEEP:
             m_sk->onEstimatedState(msg);
+            break;
+          case TYPE_YOYO:
+            m_yoyo->onEstimatedState(msg);
             break;
           default:
             break;
@@ -170,6 +220,9 @@ namespace Maneuver
              break;
            case TYPE_SKEEP:
              m_sk->onPathControlState(pcs);
+             break;
+           case TYPE_YOYO:
+             m_yoyo->onPathControlState(pcs);
              break;
            default:
              break;
