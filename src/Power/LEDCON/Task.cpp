@@ -59,10 +59,13 @@ namespace Power
       unsigned m_slave_id;
       //! Task arguments.
       Arguments m_args;
+      //! True if CCU induced power down is in progress.
+      bool m_ccu_pdown;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_slave_alive(false)
+        m_slave_alive(false),
+        m_ccu_pdown(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -104,9 +107,23 @@ namespace Power
       void
       consume(const IMC::PowerOperation* msg)
       {
+        trace("power operation dest msg %d slave %d", msg->getDestination(), m_slave_id);
         if (msg->getDestination() == m_slave_id)
         {
+          if (msg->op == IMC::PowerOperation::POP_PWR_UP)
+          {
+            trace("power operation up");
+            m_ccu_pdown = false;
+            sendPowerChannelControl(m_args.pwr_chn, true);
+          }
 
+          if (msg->op == IMC::PowerOperation::POP_PWR_DOWN)
+          {
+            trace("power operation down");
+            sendPowerDown();
+            m_ccu_pdown = true;
+            m_act_timer.setTop(getDeactivationTime());
+          }
         }
       }
 
@@ -140,6 +157,7 @@ namespace Power
       onRequestActivation(void)
       {
         m_slave_alive = false;
+        m_ccu_pdown = false;
         sendPowerChannelControl(m_args.pwr_chn, true);
         m_act_timer.setTop(getActivationTime());
       }
@@ -172,15 +190,19 @@ namespace Power
       }
 
       void
-      onRequestDeactivation(void)
+      sendPowerDown(void)
       {
-        setActiveParameter(false);
-
         IMC::PowerOperation pop;
         pop.setDestination(m_slave_id);
         pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
         dispatch(pop);
+      }
 
+      void
+      onRequestDeactivation(void)
+      {
+        setActiveParameter(false);
+        sendPowerDown();
         m_act_timer.setTop(getDeactivationTime());
       }
 
@@ -202,6 +224,19 @@ namespace Power
       }
 
       void
+      checkPowerDown(void)
+      {
+        if (!m_ccu_pdown)
+          return;
+
+        if (m_act_timer.overflow())
+        {
+          sendPowerChannelControl(m_args.pwr_chn, false);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        }
+      }
+
+      void
       onMain(void)
       {
         while (!stopping())
@@ -215,6 +250,7 @@ namespace Power
 
           checkActivation();
           checkDeactivation();
+          checkPowerDown();
         }
       }
     };
