@@ -94,6 +94,7 @@ namespace Maneuver
       }
 
       //! On PathControlState message
+      //! @param[in] pcs pointer to PathControlState message
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {
