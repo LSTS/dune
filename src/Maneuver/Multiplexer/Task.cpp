@@ -65,7 +65,7 @@ namespace Maneuver
         DUNE::Maneuvers::Maneuver(name, ctx),
         m_loiter(NULL)
       {
-        param("Loiter: Minimum Radius", m_args.loiter.min_radius)
+        param("Loiter -- Minimum Radius", m_args.loiter.min_radius)
         .defaultValue("10.0")
         .description("Minimum radius to prevent incompatibility with path controller");
 
