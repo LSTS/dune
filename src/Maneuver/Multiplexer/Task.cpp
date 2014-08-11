@@ -22,51 +22,110 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Pedro Calado                                                     *
+// Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "Loiter.hpp"
+
 namespace Maneuver
 {
-  namespace Goto
+  namespace Multiplexer
   {
     using DUNE_NAMESPACES;
 
+    enum ManeuverType
+    {
+      //! Type Goto
+      TYPE_GOTO,
+      //! Type Loiter
+      TYPE_LOITER
+    };
+
+    struct Arguments
+    {
+      //! Loiter Arguments
+      Loiter::LoiterArgs loiter;
+    };
+
     struct Task: public DUNE::Maneuvers::Maneuver
     {
-      //! Desired Path message to send to path control
-      IMC::DesiredPath m_path;
+      //! Loiter
+      Loiter* m_loiter;
+      //! Type of maneuver to perform
+      ManeuverType m_type;
+      //! Task arguments
+      Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx)
+        DUNE::Maneuvers::Maneuver(name, ctx),
+        m_loiter(NULL)
       {
+        param("Loiter: Minimum Radius", m_args.loiter.min_radius)
+        .defaultValue("10.0")
+        .description("Minimum radius to prevent incompatibility with path controller");
+
         bindToManeuver<Task, IMC::Goto>();
+        bindToManeuver<Task, IMC::Loiter>();
+      }
+
+      void
+      onResourceAcquisition(void)
+      {
+        m_loiter = new Loiter(static_cast<Maneuvers::Maneuver*>(this), &m_args.loiter);
+      }
+
+      void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_loiter);
       }
 
       void
       consume(const IMC::Goto* maneuver)
       {
+        m_type = TYPE_GOTO;
+
         setControl(IMC::CL_PATH);
 
-        m_path.end_lat = maneuver->lat;
-        m_path.end_lon = maneuver->lon;
-        m_path.end_z = maneuver->z;
-        m_path.end_z_units = maneuver->z_units;
-        m_path.speed = maneuver->speed;
-        m_path.speed_units = maneuver->speed_units;
+        IMC::DesiredPath path;
+        path.end_lat = maneuver->lat;
+        path.end_lon = maneuver->lon;
+        path.end_z = maneuver->z;
+        path.end_z_units = maneuver->z_units;
+        path.speed = maneuver->speed;
+        path.speed_units = maneuver->speed_units;
 
-        dispatch(m_path);
+        dispatch(path);
+      }
+
+      void
+      consume(const IMC::Loiter* maneuver)
+      {
+        m_type = TYPE_LOITER;
+
+        m_loiter->start(maneuver);
       }
 
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {
-        if (pcs->flags & IMC::PathControlState::FL_NEAR)
-          signalCompletion();
-        else
-          signalProgress(pcs->eta);
+        switch (m_type)
+        {
+          case TYPE_GOTO:
+            if (pcs->flags & IMC::PathControlState::FL_NEAR)
+              signalCompletion();
+            else
+              signalProgress(pcs->eta);
+            break;
+          case TYPE_LOITER:
+            m_loiter->onPathControlState(pcs);
+            break;
+        }
       }
     };
   }
