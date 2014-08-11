@@ -35,6 +35,7 @@
 #include "StationKeeping.hpp"
 #include "YoYo.hpp"
 #include "Rows.hpp"
+#include "FollowPath.hpp"
 #include "Idle.hpp"
 
 namespace Maneuver
@@ -55,6 +56,8 @@ namespace Maneuver
       TYPE_YOYO,
       //! Type Rows
       TYPE_ROWS,
+      //! Type FollowPath
+      TYPE_FOLLOWPATH,
       //! Type Idle
       TYPE_IDLE
     };
@@ -81,6 +84,8 @@ namespace Maneuver
       YoYo* m_yoyo;
       //! Rows
       Rows* m_rows;
+      //! FollowPath
+      FollowPath* m_followpath;
       //! Idle
       Idle* m_idle;
       //! Type of maneuver to perform
@@ -95,6 +100,7 @@ namespace Maneuver
         m_sk(NULL),
         m_yoyo(NULL),
         m_rows(NULL),
+        m_followpath(NULL),
         m_idle(NULL)
       {
         param("Loiter -- Minimum Radius", m_args.loiter.min_radius)
@@ -129,6 +135,7 @@ namespace Maneuver
         bindToManeuver<Task, IMC::StationKeeping>();
         bindToManeuver<Task, IMC::YoYo>();
         bindToManeuver<Task, IMC::Rows>();
+        bindToManeuver<Task, IMC::FollowPath>();
         bindToManeuver<Task, IMC::IdleManeuver>();
         bind<IMC::EstimatedState>(this);
       }
@@ -151,6 +158,7 @@ namespace Maneuver
         m_sk = new StationKeeping(static_cast<Maneuvers::Maneuver*>(this), &m_args.sk);
         m_yoyo = new YoYo(static_cast<Maneuvers::Maneuver*>(this), &m_args.yoyo);
         m_rows = new Rows(static_cast<Maneuvers::Maneuver*>(this));
+        m_followpath = new FollowPath(static_cast<Maneuvers::Maneuver*>(this));
         m_idle = new Idle(static_cast<Maneuvers::Maneuver*>(this));
       }
 
@@ -162,6 +170,7 @@ namespace Maneuver
         Memory::clear(m_sk);
         Memory::clear(m_yoyo);
         Memory::clear(m_rows);
+        Memory::clear(m_followpath);
         Memory::clear(m_idle);
       }
 
@@ -208,6 +217,13 @@ namespace Maneuver
       }
 
       void
+      consume(const IMC::FollowPath* maneuver)
+      {
+        m_type = TYPE_FOLLOWPATH;
+        m_followpath->start(maneuver);
+      }
+
+      void
       consume(const IMC::EstimatedState* msg)
       {
         switch (m_type)
@@ -242,6 +258,9 @@ namespace Maneuver
              break;
            case TYPE_ROWS:
              m_rows->onPathControlState(pcs);
+             break;
+           case TYPE_FOLLOWPATH:
+             m_followpath->onPathControlState(pcs);
              break;
            default:
              break;
