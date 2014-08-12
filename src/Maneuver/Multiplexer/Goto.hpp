@@ -26,8 +26,8 @@
 // Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-#ifndef DUNE_MANEUVER_GOTO_HPP_INCLUDED_
-#define DUNE_MANEUVER_GOTO_HPP_INCLUDED_
+#ifndef MANEUVER_MULTIPLEXER_GOTO_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_GOTO_HPP_INCLUDED_
 
 #include <DUNE/DUNE.hpp>
 
