@@ -176,6 +176,12 @@ namespace Plan
       {
         if (paramChanged(m_args.speriod))
           m_args.speriod = 1.0 / m_args.speriod;
+
+        if ((m_plan != NULL) && (paramChanged(m_args.progress) ||
+                                 paramChanged(m_args.calibration_time) ||
+                                 paramChanged(m_args.speed_conv_rpm) ||
+                                 paramChanged(m_args.speed_conv_act)))
+          throw RestartNeeded(DTR("restarting to relaunch plan parser"), 0, false);
       }
 
       void
@@ -382,7 +388,7 @@ namespace Plan
         }
 
         // update calibration status
-        if (m_plan != NULL)
+        if (m_plan != NULL && initMode())
         {
           m_plan->updateCalibration(vs);
 
