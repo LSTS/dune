@@ -37,6 +37,7 @@
 #include "Rows.hpp"
 #include "FollowPath.hpp"
 #include "Elevator.hpp"
+#include "PopUp.hpp"
 #include "Idle.hpp"
 
 namespace Maneuver
@@ -47,7 +48,7 @@ namespace Maneuver
 
     static const std::string c_labels[] = {"Goto", "Loiter", "StationKeeping",
                                            "YoYo", "Rows", "FollowPath",
-                                           "Elevator", "Idle"};
+                                           "Elevator", "PopUp", "Idle"};
 
     enum ManeuverType
     {
@@ -65,6 +66,8 @@ namespace Maneuver
       TYPE_FOLLOWPATH,
       //! Type Elevator
       TYPE_ELEVATOR,
+      //! Type PopUp
+      TYPE_POPUP,
       //! Type Idle
       TYPE_IDLE,
       //! Total number of maneuvers
@@ -81,6 +84,8 @@ namespace Maneuver
       YoYo::YoYoArgs yoyo;
       //! Elevator Arguments
       Elevator::ElevatorArgs elevator;
+      //! PopUp Arguments
+      PopUp::PopUpArgs popup;
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -99,6 +104,8 @@ namespace Maneuver
       FollowPath* m_followpath;
       //! Elevator
       Elevator* m_elevator;
+      //! PopUp
+      PopUp* m_popup;
       //! Idle
       Idle* m_idle;
       //! Type of maneuver to perform
@@ -117,6 +124,7 @@ namespace Maneuver
         m_rows(NULL),
         m_followpath(NULL),
         m_elevator(NULL),
+        m_popup(NULL),
         m_idle(NULL)
       {
         param("Loiter -- Minimum Radius", m_args.loiter.min_radius)
@@ -171,6 +179,25 @@ namespace Maneuver
         .units(Units::Meter)
         .description("Minimum radius to prevent incompatibility with path controller");
 
+        param("PopUp -- Minimum Satellites", m_args.popup.min_sats)
+        .defaultValue("7")
+        .description("Least number of satellites to accept fixes");
+
+        param("PopUp -- Minimum Distance", m_args.popup.min_distance)
+        .defaultValue("3.0")
+        .units(Units::Meter)
+        .description("Minimum distance between gps_fix position and the estimated state");
+
+        param("PopUp -- Elevator Radius", m_args.popup.elev_radius)
+        .defaultValue("15.0")
+        .units(Units::Meter)
+        .description("Radius for the elevator behavior");
+
+        param("PopUp -- Maximum Distance From Station", m_args.popup.max_sk_dist)
+        .defaultValue("15.0")
+        .units(Units::Meter)
+        .description("Maximum distance from station keeping radial circle");
+
         bindToManeuver<Task, IMC::Goto>();
         bindToManeuver<Task, IMC::Loiter>();
         bindToManeuver<Task, IMC::StationKeeping>();
@@ -178,8 +205,11 @@ namespace Maneuver
         bindToManeuver<Task, IMC::Rows>();
         bindToManeuver<Task, IMC::FollowPath>();
         bindToManeuver<Task, IMC::Elevator>();
+        bindToManeuver<Task, IMC::PopUp>();
         bindToManeuver<Task, IMC::IdleManeuver>();
         bind<IMC::EstimatedState>(this);
+        bind<IMC::GpsFix>(this);
+        bind<IMC::VehicleMedium>(this);
       }
 
       void
@@ -202,6 +232,7 @@ namespace Maneuver
         m_rows = new Rows(static_cast<Maneuvers::Maneuver*>(this));
         m_followpath = new FollowPath(static_cast<Maneuvers::Maneuver*>(this));
         m_elevator = new Elevator(static_cast<Maneuvers::Maneuver*>(this), &m_args.elevator);
+        m_popup = new PopUp(static_cast<Maneuvers::Maneuver*>(this), &m_args.popup);
         m_idle = new Idle(static_cast<Maneuvers::Maneuver*>(this));
       }
 
@@ -215,6 +246,7 @@ namespace Maneuver
         Memory::clear(m_rows);
         Memory::clear(m_followpath);
         Memory::clear(m_elevator);
+        Memory::clear(m_popup);
         Memory::clear(m_idle);
       }
 
@@ -310,6 +342,15 @@ namespace Maneuver
       }
 
       void
+      consume(const IMC::PopUp* maneuver)
+      {
+        m_type = TYPE_POPUP;
+        changeEntity();
+
+        m_popup->start(maneuver);
+      }
+
+      void
       consume(const IMC::EstimatedState* msg)
       {
         switch (m_type)
@@ -322,6 +363,35 @@ namespace Maneuver
             break;
           case TYPE_ELEVATOR:
             m_elevator->onEstimatedState(msg);
+            break;
+          case TYPE_POPUP:
+            m_popup->onEstimatedState(msg);
+            break;
+          default:
+            break;
+        }
+      }
+
+      void
+      consume(const IMC::GpsFix* msg)
+      {
+        switch (m_type)
+        {
+          case TYPE_POPUP:
+            m_popup->onGpsFix(msg);
+            break;
+          default:
+            break;
+        }
+      }
+
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        switch (m_type)
+        {
+          case TYPE_POPUP:
+            m_popup->onVehicleMedium(msg);
             break;
           default:
             break;
@@ -354,6 +424,9 @@ namespace Maneuver
           case TYPE_ELEVATOR:
             m_elevator->onPathControlState(pcs);
             break;
+          case TYPE_POPUP:
+            m_popup->onPathControlState(pcs);
+            break;
           default:
             break;
         }
@@ -369,6 +442,9 @@ namespace Maneuver
             break;
           case TYPE_SKEEP:
             m_sk->onStateReport();
+            break;
+          case TYPE_POPUP:
+            m_popup->onStateReport();
             break;
           default:
             break;

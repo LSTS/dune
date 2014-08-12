@@ -25,142 +25,65 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-// DUNE headers.
+#ifndef MANEUVER_MULTIPLEXER_POPUP_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_POPUP_HPP_INCLUDED_
+
+// DUNE headers
 #include <DUNE/DUNE.hpp>
 
-// ISO C++ 98 headers.
-#include <cmath>
+// Local headers
+#include "Constants.hpp"
+
+using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
-  //! This task is responsible for emerging
-  //! to acquire a gps fix.
-  //!
-  //! @author Pedro Calado
-  namespace PopUp
+  namespace Multiplexer
   {
-    using DUNE_NAMESPACES;
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM PopUp;
 
-    //! Minimum radius for the elevators
-    static const float c_min_radius = 10.0f;
-    //! Tolerance in depth when reaching target depth in elevator
-    static const float c_depth_tol = 0.3f;
-
-    //! %Task arguments
-    struct Arguments
+    //! PopUp maneuver
+    class PopUp
     {
-      //! Minimum number of satelites to accept fix
-      unsigned min_sats;
-      //! Minimum distance between gps_fix position and the estimated state
-      float min_distance;
-      //! Radius for the elevator behavior
-      float elev_radius;
-      //! Maximum distance from station keeping radial circle
-      float max_sk_dist;
-    };
+    public:
+      //! Arguments
+      struct PopUpArgs
+      {
+        //! Minimum number of satelites to accept fix
+        unsigned min_sats;
+        //! Minimum distance between gps_fix position and the estimated state
+        float min_distance;
+        //! Radius for the elevator behavior
+        float elev_radius;
+        //! Maximum distance from station keeping radial circle
+        float max_sk_dist;
+      };
 
-    //! Maneuver states for the state machine
-    enum PopUpState
-    {
-      //! Initial useless state
-      ST_INITIAL,
-      //! Go to point
-      ST_GO_TO,
-      //! Go up
-      ST_GO_UP,
-      //! Reaching the surface
-      ST_NEAR_SURFACE,
-      //! Get a fix
-      ST_GET_FIX,
-      //! Station keep at the surface
-      ST_SKEEP,
-      //! Come back down
-      ST_GO_DOWN,
-      //! Maneuver is done
-      ST_DONE
-    };
-
-    //! %PopUp task.
-    struct Task: public DUNE::Maneuvers::Maneuver
-    {
-      //! DesiredPath message
-      IMC::DesiredPath m_path;
-      //! EstimatedState message
-      IMC::EstimatedState m_state;
-      //! PopUp maneuver message
-      IMC::PopUp m_maneuver;
-      //! Last GpsFix latitude
-      double m_gps_lat;
-      //! Last GpsFix longitude
-      double m_gps_lon;
-      //! True if a fix has been received yet
-      bool m_got_fix;
-      //! Matched criteria for popping up
-      bool m_matched_criteria;
-      //! Vehicle is not underwater
-      bool m_at_surface;
-      //! Estimated time of arrival from PathControlState
-      unsigned m_path_eta;
-      //! Latitude where the stationkeep behavior was centered
-      double m_sk_lat;
-      //! Longitude where the stationkeep behavior was centered
-      double m_sk_lon;
-      //! Station keeping behavior in case it is necessary
-      Maneuvers::StationKeep* m_skeep;
-      //! Elevator behavior
-      Maneuvers::Elevate* m_elevate;
-      //! Timer counter for duration
-      Time::Counter<float> m_dur_timer;
-      //! PopUp maneuver state
-      PopUpState m_pstate;
-      //! Task arguments
-      Arguments m_args;
-
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx),
-        m_path_eta(Plans::c_max_eta),
+      //! Default constructor.
+      //! @param[in] task pointer to Maneuver task
+      //! @param[in] args popup arguments
+      PopUp(Maneuvers::Maneuver* task, PopUpArgs* args):
         m_skeep(NULL),
         m_elevate(NULL),
-        m_pstate(ST_INITIAL)
-      {
-        param("Minimum Satellites", m_args.min_sats)
-        .defaultValue("7")
-        .description("Least number of satellites to accept fixes");
+        m_pstate(ST_INITIAL),
+        m_args(args),
+        m_task(task)
+      { }
 
-        param("Minimum Distance", m_args.min_distance)
-        .defaultValue("3.0")
-        .units(Units::Meter)
-        .description("Minimum distance between gps_fix position and the estimated state");
-
-        param("Elevator Radius", m_args.elev_radius)
-        .defaultValue("15.0")
-        .units(Units::Meter)
-        .description("Radius for the elevator behavior");
-
-        param("Maximum Distance From Station", m_args.max_sk_dist)
-        .defaultValue("15.0")
-        .units(Units::Meter)
-        .description("Maximum distance from station keeping radial circle");
-
-        bindToManeuver<Task, IMC::PopUp>();
-        bind<IMC::EstimatedState>(this);
-        bind<IMC::GpsFix>(this);
-        bind<IMC::VehicleMedium>(this);
-      }
-
-      void
-      onResourceRelease(void)
+      //! Destructor
+      ~PopUp(void)
       {
         Memory::clear(m_skeep);
         Memory::clear(m_elevate);
       }
 
+      //! Start elevating up or down
+      //! @param[in] z_value value of z to where we're elevating
+      //! @param[in] z_units units for the z reference
       void
       elevate(float z_value, unsigned z_units)
       {
-        // Elevate upwards
-        Memory::clear(m_elevate);
-
         IMC::Elevator elev;
 
         elev.flags = IMC::Elevator::FLG_CURR_POS;
@@ -171,7 +94,7 @@ namespace Maneuver
         // End does however
         elev.end_z = z_value;
         elev.end_z_units = z_units;
-        elev.radius = m_args.elev_radius;
+        elev.radius = m_args->elev_radius;
 
         elev.lat = m_maneuver.lat;
         elev.lon = m_maneuver.lon;
@@ -179,21 +102,25 @@ namespace Maneuver
         elev.speed = m_maneuver.speed;
         elev.speed_units = m_maneuver.speed_units;
 
-        m_elevate = new Maneuvers::Elevate(&elev, this, c_min_radius, c_depth_tol);
+        Memory::clear(m_elevate);
+        m_elevate = new Maneuvers::Elevate(&elev, m_task, c_min_elev_radius, c_depth_tol);
       }
 
+      //! Go up to the surface
       inline void
       goUp(void)
       {
         elevate(0.0, IMC::Z_DEPTH);
       }
 
+      //! Go down to the maneuver's z reference
       inline void
       goDown(void)
       {
         elevate(m_maneuver.z, m_maneuver.z_units);
       }
 
+      //! Start station keeping
       void
       startStationKeeping(void)
       {
@@ -201,12 +128,15 @@ namespace Maneuver
 
         // Deploy a station keeping right where the vehicle "thinks it is"
         Coordinates::toWGS84(m_state, m_sk_lat, m_sk_lon);
-        m_skeep = new Maneuvers::StationKeep(this, m_sk_lat, m_sk_lon,
-                                             m_args.elev_radius, 0.0, IMC::Z_DEPTH,
+        m_skeep = new Maneuvers::StationKeep(m_task, m_sk_lat, m_sk_lon,
+                                             m_args->elev_radius, 0.0, IMC::Z_DEPTH,
                                              m_maneuver.speed,
                                              m_maneuver.speed_units);
       }
 
+      //! Check if the station keeping maneuver's center is too far
+      //! @param[in] state pointer to EstimatedState message
+      //! @return true if the center is indeed too far
       bool
       isSKeepTooFar(const IMC::EstimatedState* state)
       {
@@ -217,11 +147,13 @@ namespace Maneuver
         float dist = Coordinates::WGS84::distance(lat, lon, 0.0,
                                                   m_sk_lat, m_sk_lon, 0.0);
 
-        return (dist > m_args.elev_radius + m_args.max_sk_dist);
+        return (dist > m_args->elev_radius + m_args->max_sk_dist);
       }
 
+      //! Start maneuver function
+      //! @param[in] maneuver rows maneuver message
       void
-      consume(const IMC::PopUp* maneuver)
+      start(const IMC::PopUp* maneuver)
       {
         m_maneuver = *maneuver;
 
@@ -238,7 +170,7 @@ namespace Maneuver
         }
         else
         {
-          setControl(IMC::CL_PATH);
+          m_task->setControl(IMC::CL_PATH);
 
           IMC::DesiredPath path;
           path.end_lat = m_maneuver.lat;
@@ -248,15 +180,16 @@ namespace Maneuver
           path.speed = m_maneuver.speed;
           path.speed_units = m_maneuver.speed_units;
 
-          dispatch(path);
+          m_task->dispatch(path);
 
           m_pstate = ST_GO_TO;
         }
       }
 
-      //! Used to check if we're at the surface
+      //! On message VehicleMedium
+      //! @param[in] msg pointer to VehicleMedium message
       void
-      consume(const IMC::VehicleMedium* msg)
+      onVehicleMedium(const IMC::VehicleMedium* msg)
       {
         switch (m_pstate)
         {
@@ -281,8 +214,10 @@ namespace Maneuver
         }
       }
 
+      //! On message GpsFix
+      //! @param[in] msg pointer to GpsFix message
       void
-      consume(const IMC::GpsFix* msg)
+      onGpsFix(const IMC::GpsFix* msg)
       {
         float dist;
 
@@ -300,8 +235,8 @@ namespace Maneuver
             dist = Coordinates::WGS84::distance(lat, lon, 0.0,
                                                 msg->lat, msg->lon, 0.0);
 
-            if (msg->satellites >= m_args.min_sats &&
-                dist < m_args.min_distance)
+            if (msg->satellites >= m_args->min_sats &&
+                dist < m_args->min_distance)
             {
               goDown();
               m_pstate = ST_GO_DOWN;
@@ -312,25 +247,27 @@ namespace Maneuver
         }
       }
 
+      //! On message EstimatedState
+      //! @param[in] msg pointer to EstimatedState message
       void
-      consume(const IMC::EstimatedState* state)
+      onEstimatedState(const IMC::EstimatedState* msg)
       {
-        m_state = *state;
+        m_state = *msg;
 
         switch (m_pstate)
         {
           case ST_GO_UP:
           case ST_GO_DOWN:
-            m_elevate->update(state);
+            m_elevate->update(msg);
             break;
           case ST_SKEEP:
-            if (isSKeepTooFar(state))
+            if (isSKeepTooFar(msg))
             {
               startStationKeeping();
-              inf(DTR("relocated station keeping"));
+              m_task->inf(DTR("relocated station keeping"));
             }
 
-            m_skeep->update(state);
+            m_skeep->update(msg);
             if (m_dur_timer.overflow())
             {
               goDown();
@@ -342,6 +279,8 @@ namespace Maneuver
         }
       }
 
+      //! On PathControlState message
+      //! @param[in] pcs pointer to PathControlState message
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {
@@ -360,7 +299,7 @@ namespace Maneuver
             // reached surface?
             if (m_elevate->isDone())
             {
-              setControl(IMC::CL_NONE);
+              m_task->setControl(IMC::CL_NONE);
               m_pstate = ST_NEAR_SURFACE;
             }
 
@@ -377,18 +316,20 @@ namespace Maneuver
             m_skeep->updatePathControl(pcs);
             break;
           case ST_DONE:
-            signalCompletion();
+            m_task->signalCompletion();
             break;
           default:
             break;
         }
       }
 
+      //! On state report
       void
       onStateReport(void)
       {
         computeETA();
       }
+
 
       //! Compute ETA
       inline void
@@ -396,11 +337,11 @@ namespace Maneuver
       {
         if (m_pstate == ST_SKEEP)
         {
-          signalProgress((uint16_t)std::ceil(m_dur_timer.getRemaining()));
+          m_task->signalProgress((uint16_t)std::ceil(m_dur_timer.getRemaining()));
         }
         else if (m_pstate == ST_DONE)
         {
-          signalProgress(0);
+          m_task->signalProgress(0);
         }
         else
         {
@@ -431,8 +372,51 @@ namespace Maneuver
       {
         return (m_maneuver.flags & IMC::PopUp::FLG_STATION_KEEP) != 0;
       }
+
+    private:
+      //! Maneuver states for the state machine
+      enum PopUpState
+      {
+        //! Initial useless state
+        ST_INITIAL,
+        //! Go to point
+        ST_GO_TO,
+        //! Go up
+        ST_GO_UP,
+        //! Reaching the surface
+        ST_NEAR_SURFACE,
+        //! Get a fix
+        ST_GET_FIX,
+        //! Station keep at the surface
+        ST_SKEEP,
+        //! Come back down
+        ST_GO_DOWN,
+        //! Maneuver is done
+        ST_DONE
+      };
+
+      //! EstimatedState message
+      IMC::EstimatedState m_state;
+      //! PopUp maneuver message
+      IMC::PopUp m_maneuver;
+      //! Latitude where the stationkeep behavior was centered
+      double m_sk_lat;
+      //! Longitude where the stationkeep behavior was centered
+      double m_sk_lon;
+      //! Station keeping behavior in case it is necessary
+      Maneuvers::StationKeep* m_skeep;
+      //! Elevator behavior
+      Maneuvers::Elevate* m_elevate;
+      //! Timer counter for duration
+      Time::Counter<float> m_dur_timer;
+      //! PopUp maneuver state
+      PopUpState m_pstate;
+      //! Arguments
+      PopUpArgs* m_args;
+      //! Pointer to task
+      Maneuvers::Maneuver* m_task;
     };
   }
 }
 
-DUNE_TASK
+#endif
