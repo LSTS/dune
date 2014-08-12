@@ -45,10 +45,14 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
+    static const std::string c_labels[] = {"Goto", "Loiter", "StationKeeping",
+                                           "YoYo", "Rows", "FollowPath",
+                                           "Elevator", "Idle"};
+
     enum ManeuverType
     {
       //! Type Goto
-      TYPE_GOTO,
+      TYPE_GOTO = 0,
       //! Type Loiter
       TYPE_LOITER,
       //! Type StationKeeping
@@ -62,7 +66,9 @@ namespace Maneuver
       //! Type Elevator
       TYPE_ELEVATOR,
       //! Type Idle
-      TYPE_IDLE
+      TYPE_IDLE,
+      //! Total number of maneuvers
+      TYPE_TOTAL
     };
 
     struct Arguments
@@ -97,6 +103,8 @@ namespace Maneuver
       Idle* m_idle;
       //! Type of maneuver to perform
       ManeuverType m_type;
+      //! Array of entity ids
+      unsigned m_ents[TYPE_TOTAL];
       //! Task arguments
       Arguments m_args;
 
@@ -211,9 +219,30 @@ namespace Maneuver
       }
 
       void
+      onEntityReservation(void)
+      {
+        for (unsigned i = 0; i < TYPE_TOTAL; i++)
+          m_ents[i] = reserveEntity(c_labels[i]);
+      }
+
+      void
+      onManeuverDeactivation(void)
+      {
+        setEntityId(getEntityId());
+      }
+
+      void
+      changeEntity(void)
+      {
+        setEntityId(m_ents[m_type]);
+      }
+
+      void
       consume(const IMC::Goto* maneuver)
       {
         m_type = TYPE_GOTO;
+        changeEntity();
+
         m_goto->start(maneuver);
       }
 
@@ -221,6 +250,8 @@ namespace Maneuver
       consume(const IMC::Loiter* maneuver)
       {
         m_type = TYPE_LOITER;
+        changeEntity();
+
         m_loiter->start(maneuver);
       }
 
@@ -228,6 +259,8 @@ namespace Maneuver
       consume(const IMC::IdleManeuver* maneuver)
       {
         m_type = TYPE_IDLE;
+        changeEntity();
+
         m_idle->start(maneuver);
       }
 
@@ -235,6 +268,8 @@ namespace Maneuver
       consume(const IMC::StationKeeping* maneuver)
       {
         m_type = TYPE_SKEEP;
+        changeEntity();
+
         m_sk->start(maneuver);
       }
 
@@ -242,6 +277,8 @@ namespace Maneuver
       consume(const IMC::YoYo* maneuver)
       {
         m_type = TYPE_YOYO;
+        changeEntity();
+
         m_yoyo->start(maneuver);
       }
 
@@ -249,6 +286,8 @@ namespace Maneuver
       consume(const IMC::Rows* maneuver)
       {
         m_type = TYPE_ROWS;
+        changeEntity();
+
         m_rows->start(maneuver);
       }
 
@@ -256,6 +295,8 @@ namespace Maneuver
       consume(const IMC::FollowPath* maneuver)
       {
         m_type = TYPE_FOLLOWPATH;
+        changeEntity();
+
         m_followpath->start(maneuver);
       }
 
@@ -263,6 +304,8 @@ namespace Maneuver
       consume(const IMC::Elevator* maneuver)
       {
         m_type = TYPE_ELEVATOR;
+        changeEntity();
+
         m_elevator->start(maneuver);
       }
 
@@ -285,45 +328,45 @@ namespace Maneuver
         }
       }
 
-       void
-       onPathControlState(const IMC::PathControlState* pcs)
-       {
-         switch (m_type)
-         {
-           case TYPE_GOTO:
-             m_goto->onPathControlState(pcs);
-             break;
-           case TYPE_LOITER:
-             m_loiter->onPathControlState(pcs);
-             break;
-           case TYPE_SKEEP:
-             m_sk->onPathControlState(pcs);
-             break;
-           case TYPE_YOYO:
-             m_yoyo->onPathControlState(pcs);
-             break;
-           case TYPE_ROWS:
-             m_rows->onPathControlState(pcs);
-             break;
-           case TYPE_FOLLOWPATH:
-             m_followpath->onPathControlState(pcs);
-             break;
-           case TYPE_ELEVATOR:
-             m_elevator->onPathControlState(pcs);
-             break;
-           default:
-             break;
-         }
-       }
+      void
+      onPathControlState(const IMC::PathControlState* pcs)
+      {
+        switch (m_type)
+        {
+          case TYPE_GOTO:
+            m_goto->onPathControlState(pcs);
+            break;
+          case TYPE_LOITER:
+            m_loiter->onPathControlState(pcs);
+            break;
+          case TYPE_SKEEP:
+            m_sk->onPathControlState(pcs);
+            break;
+          case TYPE_YOYO:
+            m_yoyo->onPathControlState(pcs);
+            break;
+          case TYPE_ROWS:
+            m_rows->onPathControlState(pcs);
+            break;
+          case TYPE_FOLLOWPATH:
+            m_followpath->onPathControlState(pcs);
+            break;
+          case TYPE_ELEVATOR:
+            m_elevator->onPathControlState(pcs);
+            break;
+          default:
+            break;
+        }
+      }
 
-       void
-       onStateReport(void)
-       {
-         switch (m_type)
-         {
-           case TYPE_IDLE:
-             m_idle->onStateReport();
-             break;
+      void
+      onStateReport(void)
+      {
+        switch (m_type)
+        {
+          case TYPE_IDLE:
+            m_idle->onStateReport();
+            break;
           case TYPE_SKEEP:
             m_sk->onStateReport();
             break;
