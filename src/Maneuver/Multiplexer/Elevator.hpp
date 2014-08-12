@@ -23,13 +23,16 @@
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
-// Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-#ifndef DUNE_MANEUVER_ELEVATOR_HPP_INCLUDED_
-#define DUNE_MANEUVER_ELEVATOR_HPP_INCLUDED_
+#ifndef MANEUVER_MULTIPLEXER_ELEVATOR_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_ELEVATOR_HPP_INCLUDED_
 
+// DUNE headers.
 #include <DUNE/DUNE.hpp>
+
+// Local headers.
+#include "Constants.hpp"
 
 using DUNE_NAMESPACES;
 
@@ -39,11 +42,6 @@ namespace Maneuver
   {
     // Export DLL Symbol.
     class DUNE_DLL_SYM Elevator;
-
-    //! Number of samples for vertical monitor moving average
-    static const unsigned c_vsamples = 10;
-    //! Value to be consider at surface
-    static const float c_depth_tol = 0.3;
 
     //! Elevator maneuver
     class Elevator
@@ -66,6 +64,7 @@ namespace Maneuver
 
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
+      //! @param[in] args elevator arguments
       Elevator(Maneuvers::Maneuver* task, ElevatorArgs* args):
         m_elevate(NULL),
         m_vmon(NULL),
