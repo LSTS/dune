@@ -22,71 +22,66 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Pedro Calado                                                     *
+// Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-// DUNE headers.
+#ifndef MANEUVER_MULTIPLEXER_STATIONKEEPING_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_STATIONKEEPING_HPP_INCLUDED_
+
 #include <DUNE/DUNE.hpp>
+
+using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
-  namespace StationKeeping
+  namespace Multiplexer
   {
-    using DUNE_NAMESPACES;
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM StationKeeping;
 
-    //! Task arguments
-    struct Arguments
+    //! StationKeeping maneuver
+    class StationKeeping
     {
-      //! Minimum radius to prevent incompatibility with path controller
-      double min_radius;
-    };
-
-    struct Task: public DUNE::Maneuvers::Maneuver
-    {
-      //! Station Keeping behavior
-      Maneuvers::StationKeep* m_skeep;
-      //! PathControlState message
-      IMC::PathControlState m_pcs;
-      //! Maneuver's duration
-      float m_duration;
-      //! End time for the maneuver
-      double m_end_time;
-      //! Task arguments
-      Arguments m_args;
-
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx),
-        m_skeep(NULL),
-        m_end_time(0.0)
+    public:
+      struct StationKeepingArgs
       {
-        param("Minimum Radius", m_args.min_radius)
-        .defaultValue("10.0")
-        .description("Minimum radius to prevent incompatibility with path controller");
+        //! Minimum radius to prevent incompatibility with path controller
+        double min_radius;
+      };
 
-        bindToManeuver<Task, IMC::StationKeeping>();
-        bind<IMC::EstimatedState>(this);
-      }
+      //! Default constructor.
+      //! @param[in] task pointer to Maneuver task
+      //! @param[in] args stationkeeping arguments
+      StationKeeping(Maneuvers::Maneuver* task, StationKeepingArgs* args):
+        m_skeep(NULL),
+        m_task(task),
+        m_args(args)
+      { }
 
-      void
-      onResourceRelease(void)
+      ~StationKeeping(void)
       {
         Memory::clear(m_skeep);
       }
 
+      //! Start maneuver function
+      //! @param[in] maneuver stationkeeping maneuver message
       void
-      consume(const IMC::StationKeeping* maneuver)
+      start(const IMC::StationKeeping* maneuver)
       {
         m_duration = maneuver->duration;
 
         Memory::clear(m_skeep);
-        m_skeep = new Maneuvers::StationKeep(maneuver, this, m_args.min_radius);
+        m_skeep = new Maneuvers::StationKeep(maneuver, m_task, m_args->min_radius);
 
         if (m_duration > 0)
           m_end_time = -1.0;
       }
 
+      //! On EstimatedState message
+      //! @param[in] state EstimatedState message
       void
-      consume(const IMC::EstimatedState* state)
+      onEstimatedState(const IMC::EstimatedState* msg)
       {
         if (m_skeep == NULL)
           return;
@@ -94,9 +89,11 @@ namespace Maneuver
         if (m_skeep->isInside() && (m_end_time < 0))
           m_end_time = Clock::get() + m_duration;
 
-        m_skeep->update(state);
+        m_skeep->update(msg);
       }
 
+      //! On PathControlState message
+      //! @param[in] state PathControlState message
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {
@@ -108,6 +105,7 @@ namespace Maneuver
         m_skeep->updatePathControl(pcs);
       }
 
+      //! On state report function
       void
       onStateReport(void)
       {
@@ -116,18 +114,32 @@ namespace Maneuver
           double time_left = m_end_time - Clock::get();
 
           if (time_left <= 0)
-            signalCompletion();
+            m_task->signalCompletion();
           else
-            signalProgress((uint16_t)Math::round(time_left));
+            m_task->signalProgress((uint16_t)Math::round(time_left));
         }
         else if (m_skeep != NULL)
         {
           if (m_skeep->isMoving())
-            signalProgress(m_pcs.eta);
+            m_task->signalProgress(m_pcs.eta);
         }
       }
+
+    private:
+      //! Station Keeping behavior
+      Maneuvers::StationKeep* m_skeep;
+      //! PathControlState message
+      IMC::PathControlState m_pcs;
+      //! Maneuver's duration
+      float m_duration;
+      //! End time for the maneuver
+      double m_end_time;
+      //! Pointer to task
+      Maneuvers::Maneuver* m_task;
+      //! Task arguments
+      StationKeepingArgs* m_args;
     };
   }
 }
 
-DUNE_TASK
+#endif

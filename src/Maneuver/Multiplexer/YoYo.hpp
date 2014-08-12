@@ -22,108 +22,73 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Pedro Calado                                                     *
+// Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-// DUNE headers.
+#ifndef MANEUVER_MULTIPLEXER_YOYO_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_YOYO_HPP_INCLUDED_
+
 #include <DUNE/DUNE.hpp>
+
+using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
-  namespace YoYo
+  namespace Multiplexer
   {
-    using DUNE_NAMESPACES;
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM YoYo;
 
-    struct Arguments
+    //! Yoyo maneuver
+    class YoYo
     {
-      //! Saturation level for variation in pitch references.
-      double variation;
-      //! True if we should check path errors and stabilize pitch
-      bool check_errors;
-      //! Max course error.
-      double u_course;
-      //! Max cross. track error.
-      double u_ctrack;
-    };
+    public:
+      struct YoYoArgs
+      {
+        //! Saturation level for variation in pitch references.
+        double variation;
+        //! True if we should check path errors and stabilize pitch
+        bool check_errors;
+        //! Max course error.
+        double u_course;
+        //! Max cross. track error.
+        double u_ctrack;
+      };
 
-    struct Task: public DUNE::Maneuvers::Maneuver
-    {
-      //! Desired path message.
-      IMC::DesiredPath m_path;
-      //! Desired pitch message.
-      IMC::DesiredPitch m_pitch;
-      //! Z units for this maneuver
-      IMC::ZUnits m_zunits;
-      //! Yoyo motion controller
-      DUNE::Control::YoYoMotion* m_yoyo;
-      //! On course flag.
-      bool m_on_course;
-      //! Course recovered flag.
-      bool m_course_recovered;
-      //! Some pitch reference has been dispatched already.
-      bool m_dispatched;
-      //! Task arguments.
-      Arguments m_args;
-
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx),
+      //! Default constructor.
+      //! @param[in] task pointer to Maneuver task
+      //! @param[in] args yoyo arguments
+      YoYo(Maneuvers::Maneuver* task, YoYoArgs* args):
         m_yoyo(NULL),
-        m_dispatched(false)
-      {
-        param("Maximum Pitch Variation", m_args.variation)
-        .defaultValue("2")
-        .units(Units::Degree)
-        .description("Maximum pitch variation step when changing z direction");
+        m_task(task),
+        m_args(args)
+      { }
 
-        param("Check Path Errors", m_args.check_errors)
-        .defaultValue("false")
-        .description("True if we should check path errors and stabilize pitch");
-
-        param("Maximum Cross Track Error", m_args.u_ctrack)
-        .defaultValue("6")
-        .units(Units::Meter)
-        .description("Maximum cross track error admissible");
-
-        param("Maximum Course Error", m_args.u_course)
-        .defaultValue("15")
-        .units(Units::Degree)
-        .description("Maximum course error admissible");
-
-        bindToManeuver<Task, IMC::YoYo>();
-        bind<IMC::EstimatedState>(this);
-      }
-
-      void
-      onUpdateParameters(void)
-      {
-        if (paramChanged(m_args.variation))
-          m_args.variation = Angles::radians(m_args.variation);
-
-        if (paramChanged(m_args.u_course))
-          m_args.u_course = Angles::radians(m_args.u_course);
-      }
-
-      void
-      onResourceRelease(void)
+      //! Destructor
+      ~YoYo(void)
       {
         Memory::clear(m_yoyo);
       }
 
+      //! Start maneuver function
+      //! @param[in] maneuver yoyo maneuver message
       void
-      consume(const IMC::YoYo* maneuver)
+      start(const IMC::YoYo* maneuver)
       {
         // Enable path, pitch and speed control
-        setControl(IMC::CL_PATH | IMC::CL_PITCH);
+        m_task->setControl(IMC::CL_PATH | IMC::CL_PITCH);
 
-        m_path.end_lat = maneuver->lat;
-        m_path.end_lon = maneuver->lon;
+        IMC::DesiredPath path;
+        path.end_lat = maneuver->lat;
+        path.end_lon = maneuver->lon;
 
-        m_path.speed = maneuver->speed;
-        m_path.speed_units = maneuver->speed_units;
+        path.speed = maneuver->speed;
+        path.speed_units = maneuver->speed_units;
 
         // disable depth control within path control
-        m_path.flags = IMC::DesiredPath::FL_NO_Z;
-        dispatch(m_path);
+        path.flags = IMC::DesiredPath::FL_NO_Z;
+        m_task->dispatch(path);
 
         m_zunits = static_cast<IMC::ZUnits>(maneuver->z_units);
 
@@ -139,16 +104,16 @@ namespace Maneuver
         }
         else
         {
-          signalInvalidZ();
+          m_task->signalInvalidZ();
           return;
         }
 
-        debug("altitude/depth :[%0.2f %0.2f] | %s: %0.2f %s | %s: %0.2f %s %d %s",
-              std::fabs(maneuver->z - maneuver->amplitude),
-              std::fabs(maneuver->z + maneuver->amplitude),
-              "pitch", Angles::degrees(maneuver->pitch),
-              "degrees", "speed", m_path.speed,
-              "in", (int)m_path.speed_units, "units");
+        m_task->debug("altitude/depth :[%0.2f %0.2f] | %s: %0.2f %s | %s: %0.2f %s %d %s",
+                      std::fabs(maneuver->z - maneuver->amplitude),
+                      std::fabs(maneuver->z + maneuver->amplitude),
+                      "pitch", Angles::degrees(maneuver->pitch),
+                      "degrees", "speed", path.speed,
+                      "in", (int)path.speed_units, "units");
 
         // basic init.
         m_on_course = false;
@@ -157,10 +122,12 @@ namespace Maneuver
         // initialize yoyo motion controller
         Memory::clear(m_yoyo);
 
-        m_yoyo = new YoYoMotion(this, maneuver->pitch, zref,
-                                maneuver->amplitude, m_args.variation);
+        m_yoyo = new YoYoMotion(m_task, maneuver->pitch, zref,
+                                maneuver->amplitude, m_args->variation);
       }
 
+      //! On PathControlState message
+      //! @param[in] pcs pointer to PathControlState message
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {
@@ -168,17 +135,17 @@ namespace Maneuver
         {
           // done, stabilize pitch at the end
           m_pitch.value = 0;
-          dispatch(m_pitch);
-          signalCompletion();
+          m_task->dispatch(m_pitch);
+          m_task->signalCompletion();
           return;
         }
 
-        signalProgress(pcs->eta);
+        m_task->signalProgress(pcs->eta);
 
         // Check if off-track (stabilize pitch otherwise)
-        if (m_args.check_errors &&
-            (std::fabs(pcs->course_error) >= m_args.u_course ||
-             std::fabs(pcs->y) >= m_args.u_ctrack))
+        if (m_args->check_errors &&
+            (std::fabs(pcs->course_error) >= m_args->u_course ||
+             std::fabs(pcs->y) >= m_args->u_ctrack))
         {
           m_on_course = false;
           m_course_recovered = false;
@@ -190,20 +157,22 @@ namespace Maneuver
         }
       }
 
+      //! On EstimatedState message
+      //! @param[in] state EstimatedState message
       void
-      consume(const IMC::EstimatedState* state)
+      onEstimatedState(const IMC::EstimatedState* msg)
       {
         if (m_zunits == IMC::Z_DEPTH)
         {
-          update(state->depth, state->theta);
+          update(msg->depth, msg->theta);
         }
-        else if ((state->alt >= 0) && (m_zunits == IMC::Z_ALTITUDE))
+        else if ((msg->alt >= 0) && (m_zunits == IMC::Z_ALTITUDE))
         {
-          update(-state->alt, state->theta);
+          update(-msg->alt, msg->theta);
         }
         else
         {
-          signalNoAltitude();
+          m_task->signalNoAltitude();
           return;
         }
       }
@@ -241,12 +210,30 @@ namespace Maneuver
 
         // Dispatch pitch message
         m_pitch.value = v;
-        dispatch(m_pitch);
+        m_task->dispatch(m_pitch);
 
         m_dispatched = true;
       }
+
+    private:
+      //! Desired pitch message.
+      IMC::DesiredPitch m_pitch;
+      //! Z units for this maneuver
+      IMC::ZUnits m_zunits;
+      //! Yoyo motion controller
+      DUNE::Control::YoYoMotion* m_yoyo;
+      //! On course flag.
+      bool m_on_course;
+      //! Course recovered flag.
+      bool m_course_recovered;
+      //! Some pitch reference has been dispatched already.
+      bool m_dispatched;
+      //! Pointer to task
+      Maneuvers::Maneuver* m_task;
+      //! Pointer to args
+      YoYoArgs* m_args;
     };
   }
 }
 
-DUNE_TASK
+#endif

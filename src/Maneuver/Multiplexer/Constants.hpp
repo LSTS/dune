@@ -22,54 +22,23 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Pedro Calado                                                     *
 //***************************************************************************
 
-// DUNE headers.
-#include <DUNE/DUNE.hpp>
+#ifndef MANEUVER_MULTIPLEXER_CONSTANTS_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_CONSTANTS_HPP_INCLUDED_
 
 namespace Maneuver
 {
-  namespace Goto
+  namespace Multiplexer
   {
-    using DUNE_NAMESPACES;
-
-    struct Task: public DUNE::Maneuvers::Maneuver
-    {
-      //! Desired Path message to send to path control
-      IMC::DesiredPath m_path;
-
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx)
-      {
-        bindToManeuver<Task, IMC::Goto>();
-      }
-
-      void
-      consume(const IMC::Goto* maneuver)
-      {
-        setControl(IMC::CL_PATH);
-
-        m_path.end_lat = maneuver->lat;
-        m_path.end_lon = maneuver->lon;
-        m_path.end_z = maneuver->z;
-        m_path.end_z_units = maneuver->z_units;
-        m_path.speed = maneuver->speed;
-        m_path.speed_units = maneuver->speed_units;
-
-        dispatch(m_path);
-      }
-
-      void
-      onPathControlState(const IMC::PathControlState* pcs)
-      {
-        if (pcs->flags & IMC::PathControlState::FL_NEAR)
-          signalCompletion();
-        else
-          signalProgress(pcs->eta);
-      }
-    };
+    //! Number of samples for vertical monitor moving average in elevator
+    static const unsigned c_vsamples = 10;
+    //! Value to be consider at surface
+    static const float c_depth_tol = 0.3f;
+    //! Minimum radius for the elevators
+    static const float c_min_elev_radius = 10.0f;
   }
 }
 
-DUNE_TASK
+#endif

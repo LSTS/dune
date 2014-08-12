@@ -22,63 +22,71 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Pedro Calado                                                     *
+// Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-// DUNE headers.
+#ifndef MANEUVER_MULTIPLEXER_GOTO_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_GOTO_HPP_INCLUDED_
+
 #include <DUNE/DUNE.hpp>
+
+using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
-  namespace Idle
+  namespace Multiplexer
   {
-    using DUNE_NAMESPACES;
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM Goto;
 
-    struct Task: public DUNE::Maneuvers::Maneuver
+    //! Plan Specification parser
+    class Goto
     {
-      double m_end_time;
+    public:
+      //! Default constructor.
+      //! @param[in] task pointer to Maneuver task
+      Goto(Maneuvers::Maneuver* task):
+        m_task(task)
+      { }
 
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx)
-      {
-        bindToManeuver<Task, IMC::IdleManeuver>();
-      }
-
+      //! Start maneuver function
+      //! @param[in] maneuver goto maneuver message
       void
-      consume(const IMC::IdleManeuver* maneuver)
+      start(const IMC::Goto* maneuver)
       {
-        setControl(0); // maneuver does not enable any control
+        m_task->setControl(IMC::CL_PATH);
 
-        if (maneuver->duration)
-        {
-          m_end_time = Clock::get() + maneuver->duration;
-          signalProgress(maneuver->duration);
-        }
-        else
-        {
-          signalProgress();
-          m_end_time = -1;
-        }
+        IMC::DesiredPath path;
+        path.end_lat = maneuver->lat;
+        path.end_lon = maneuver->lon;
+        path.end_z = maneuver->z;
+        path.end_z_units = maneuver->z_units;
+        path.speed = maneuver->speed;
+        path.speed_units = maneuver->speed_units;
+
+        m_task->dispatch(path);
       }
 
+      //! On PathControlState message
+      //! @param[in] pcs pointer to PathControlState message
       void
-      onStateReport(void)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
-        if (m_end_time < 0)
-        {
-          signalProgress();
-          return;
-        }
-
-        double time_left = m_end_time - Clock::get();
-
-        if (time_left < 0)
-          signalCompletion();
+        if (pcs->flags & IMC::PathControlState::FL_NEAR)
+          m_task->signalCompletion();
         else
-          signalProgress((uint16_t)time_left);
+          m_task->signalProgress(pcs->eta);
       }
+
+      ~Goto(void)
+      { }
+
+    private:
+      //! Pointer to task
+      Maneuvers::Maneuver* m_task;
     };
   }
 }
 
-DUNE_TASK
+#endif
