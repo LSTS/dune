@@ -46,8 +46,8 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
-    static const std::string c_labels[] = {"Goto", "Loiter", "StationKeeping",
-                                           "YoYo", "Rows", "FollowPath",
+    static const std::string c_labels[] = {"Goto", "Loiter", "Station Keeping",
+                                           "YoYo", "Rows", "Follow Path",
                                            "Elevator", "PopUp", "Idle"};
 
     enum ManeuverType
@@ -254,7 +254,7 @@ namespace Maneuver
       onEntityReservation(void)
       {
         for (unsigned i = 0; i < TYPE_TOTAL; i++)
-          m_ents[i] = reserveEntity(c_labels[i]);
+          m_ents[i] = reserveEntity(c_labels[i] + " Maneuver");
       }
 
       void
