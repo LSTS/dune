@@ -388,7 +388,7 @@ namespace Plan
         }
 
         // update calibration status
-        if (m_plan != NULL)
+        if (m_plan != NULL && initMode())
         {
           m_plan->updateCalibration(vs);
 
