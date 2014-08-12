@@ -46,9 +46,9 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
-    static const std::string c_labels[] = {"Goto", "Loiter", "Station Keeping",
-                                           "YoYo", "Rows", "Follow Path",
-                                           "Elevator", "PopUp", "Idle"};
+    static const std::string c_names[] = {"Goto", "Loiter", "StationKeeping",
+                                          "YoYo", "Rows", "FollowPath",
+                                          "Elevator", "PopUp", "Idle"};
 
     enum ManeuverType
     {
@@ -76,6 +76,8 @@ namespace Maneuver
 
     struct Arguments
     {
+      //! Entity labels
+      std::string labels[TYPE_TOTAL];
       //! Loiter Arguments
       Loiter::LoiterArgs loiter;
       //! StationKeeping Arguments
@@ -127,6 +129,13 @@ namespace Maneuver
         m_popup(NULL),
         m_idle(NULL)
       {
+        for (unsigned i = 0; i < TYPE_TOTAL; i++)
+        {
+          param("Entity Label -- " + c_names[i], m_args.labels[i])
+          .defaultValue("")
+          .description(c_names[i] + " maneuver's entity label");
+        }
+
         param("Loiter -- Minimum Radius", m_args.loiter.min_radius)
         .defaultValue("10.0")
         .description("Minimum radius for Loiter to prevent incompatibility with path controller");
@@ -254,7 +263,7 @@ namespace Maneuver
       onEntityReservation(void)
       {
         for (unsigned i = 0; i < TYPE_TOTAL; i++)
-          m_ents[i] = reserveEntity(c_labels[i] + " Maneuver");
+          m_ents[i] = reserveEntity(m_args.labels[i]);
       }
 
       void
