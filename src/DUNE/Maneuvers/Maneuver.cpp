@@ -50,6 +50,12 @@ namespace DUNE
     { }
 
     void
+    Maneuver::onEntityReservation(void)
+    {
+      m_eid = getEntityId();
+    }
+
+    void
     Maneuver::onActivation(void)
     {
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
