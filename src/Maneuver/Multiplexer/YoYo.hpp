@@ -92,6 +92,8 @@ namespace Maneuver
 
         m_zunits = static_cast<IMC::ZUnits>(maneuver->z_units);
 
+        m_dispatched = false;
+
         double zref;
 
         if (maneuver->z_units == IMC::Z_ALTITUDE)
