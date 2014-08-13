@@ -42,61 +42,77 @@ using DUNE_NAMESPACES;
 int
 main(int32_t argc, char** argv)
 {
-  if (argc != 3)
+  if (argc < 2)
   {
-    std::cerr << "Usage: " << argv[0] << " Data.lsf[.gz] <abbrev of imc message>"
+    std::cerr << "Usage: " << argv[0] << " <abbrev of imc message> Data.lsf[.gz] .. Data.lsf[.gz]"
               << std::endl;
+    std::cerr << "This program does not sort the input Data.lsf files." << std::endl;
     return 1;
   }
-
-  std::istream* is = 0;
-  Compression::Methods method = Compression::Factory::detect(argv[1]);
-  if (method == METHOD_UNKNOWN)
-    is = new std::ifstream(argv[1], std::ios::binary);
-  else
-    is = new Compression::FileInput(argv[1], method);
 
   ByteBuffer buffer;
   std::ofstream lsf("FilteredData.lsf", std::ios::binary);
 
   IMC::Message* msg;
 
-  unsigned i = 0;
+  uint32_t accum = 0;
 
-  // place an empty estimatedstate message in the log
-  IMC::EstimatedState state;
-  IMC::Packet::serialize(&state, buffer);
-  lsf.write(buffer.getBufferSigned(), buffer.getSize());
+  bool done_first = false;
 
   uint32_t id;
-  id = IMC::Factory::getIdFromAbbrev(argv[2]);
+  id = IMC::Factory::getIdFromAbbrev(argv[1]);
 
-  try
+  for (uint32_t j = 2; j < (uint32_t)argc; ++j)
   {
-    while ((msg = IMC::Packet::deserialize(*is)) != 0)
+    std::istream* is = 0;
+    Compression::Methods method = Compression::Factory::detect(argv[j]);
+    if (method == METHOD_UNKNOWN)
+      is = new std::ifstream(argv[j], std::ios::binary);
+    else
+      is = new Compression::FileInput(argv[j], method);
+
+    uint32_t i = 0;
+
+    try
     {
-      if (msg->getId() == id)
+      while ((msg = IMC::Packet::deserialize(*is)) != 0)
       {
-        IMC::Packet::serialize(msg, buffer);
-        lsf.write(buffer.getBufferSigned(), buffer.getSize());
+        if (!done_first)
+        {
+          // place an empty estimatedstate message in the log
+          IMC::EstimatedState state;
+          state.setTimeStamp(msg->getTimeStamp());
+          IMC::Packet::serialize(&state, buffer);
+          lsf.write(buffer.getBufferSigned(), buffer.getSize());
+          done_first = true;
+        }
 
-        ++i;
+        if (msg->getId() == id)
+        {
+          IMC::Packet::serialize(msg, buffer);
+          lsf.write(buffer.getBufferSigned(), buffer.getSize());
+
+          ++i;
+        }
+
+        delete msg;
       }
-
-      delete msg;
     }
-  }
-  catch (std::runtime_error& e)
-  {
-    std::cerr << "ERROR: " << e.what() << std::endl;
-    return -1;
+    catch (std::runtime_error& e)
+    {
+      std::cerr << "ERROR: " << e.what() << std::endl;
+      return -1;
+    }
+
+    std::cerr << i << " messages in " << argv[j] << std::endl;
+    accum += i;
+
+    delete is;
   }
 
   lsf.close();
 
-  delete is;
-
-  std::cerr << "Got " << i << " " << argv[1] << " messages." << std::endl;
+  std::cerr << "Total of " << accum << " " << argv[1] << " messages." << std::endl;
 
   return 0;
 }
