@@ -686,7 +686,7 @@ namespace Monitors
           else if (m_redo_timer.overflow()) // only redo estimate every once in a while
           {
             float pseudo_init = computeInitialEstimate();
-            if (computeConfidence(pseudo_init) > m_args.low_confidence)
+            if (computeConfidence(pseudo_init) > computeConfidence())
             {
               refresh = true;
               m_redo_timer.reset();
