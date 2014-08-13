@@ -44,8 +44,11 @@ main(int32_t argc, char** argv)
 {
   if (argc < 2)
   {
-    std::cerr << "Usage: " << argv[0] << " <abbrev of imc message> Data.lsf[.gz] .. Data.lsf[.gz]"
+    std::cerr << "Usage: " << argv[0] << " <abbrev of imc message 1>,<abbrev of imc message 2>,..,"
+              << "<abbrev of imc message n> Data.lsf[.gz] .. Data.lsf[.gz]"
               << std::endl;
+    std::cerr << argv[0] << " accepts multiple IMC messages comma separated and "
+              << "multiple Data.lsf files space separated." << std::endl;
     std::cerr << "This program does not sort the input Data.lsf files." << std::endl;
     return 1;
   }
@@ -59,8 +62,16 @@ main(int32_t argc, char** argv)
 
   bool done_first = false;
 
-  uint32_t id;
-  id = IMC::Factory::getIdFromAbbrev(argv[1]);
+  std::set<uint32_t> ids;
+  std::vector<std::string> msgs;
+  Utils::String::split(argv[1], ",", msgs);
+
+  for (unsigned k = 0; k < msgs.size(); ++k)
+  {
+    uint32_t got = IMC::Factory::getIdFromAbbrev(Utils::String::trim(msgs[k]));
+    std::cerr << "got this " << (unsigned)got << std::endl;
+    ids.insert(got);
+  }
 
   for (uint32_t j = 2; j < (uint32_t)argc; ++j)
   {
@@ -87,7 +98,10 @@ main(int32_t argc, char** argv)
           done_first = true;
         }
 
-        if (msg->getId() == id)
+        std::set<uint32_t>::const_iterator it;
+        it = ids.find(msg->getId());
+
+        if (it != ids.end())
         {
           IMC::Packet::serialize(msg, buffer);
           lsf.write(buffer.getBufferSigned(), buffer.getSize());
