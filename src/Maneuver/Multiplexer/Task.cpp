@@ -262,6 +262,8 @@ namespace Maneuver
       void
       onEntityReservation(void)
       {
+        Maneuver::onEntityReservation();
+
         for (unsigned i = 0; i < TYPE_TOTAL; i++)
           m_ents[i] = reserveEntity(m_args.labels[i]);
       }
