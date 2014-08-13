@@ -34,6 +34,7 @@
 #include <DUNE/Maneuvers.hpp>
 #include <DUNE/Math.hpp>
 #include <DUNE/Control.hpp>
+#include <DUNE/Memory.hpp>
 
 namespace DUNE
 {
@@ -69,6 +70,12 @@ namespace DUNE
       Duration(void):
         m_accum_dur(NULL)
       { };
+
+      //! Destructor
+      ~Duration(void)
+      {
+        Memory::clear(m_accum_dur);
+      }
 
       //! Parse plan duration from plan specification
       //! @param[in] nodes vector of plan maneuver nodes
