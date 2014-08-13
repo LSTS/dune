@@ -23,66 +23,70 @@
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
+// Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-// DUNE headers.
+#ifndef MANEUVER_MULTIPLEXER_GOTO_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_GOTO_HPP_INCLUDED_
+
 #include <DUNE/DUNE.hpp>
+
+using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
-  namespace Dubin
+  namespace Multiplexer
   {
-    using DUNE_NAMESPACES;
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM Goto;
 
-    struct Task: public DUNE::Maneuvers::Maneuver
+    //! Plan Specification parser
+    class Goto
     {
-      IMC::DesiredSpeed m_speed;
-      IMC::DesiredHeading m_heading;
-      bool m_got_href;
+    public:
+      //! Default constructor.
+      //! @param[in] task pointer to Maneuver task
+      Goto(Maneuvers::Maneuver* task):
+        m_task(task)
+      { }
 
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx),
-        m_got_href(false)
+      //! Start maneuver function
+      //! @param[in] maneuver goto maneuver message
+      void
+      start(const IMC::Goto* maneuver)
       {
-        bindToManeuver<Task, IMC::Dubin>();
-        bind<IMC::EstimatedState>(this);
+        m_task->setControl(IMC::CL_PATH);
+
+        IMC::DesiredPath path;
+        path.end_lat = maneuver->lat;
+        path.end_lon = maneuver->lon;
+        path.end_z = maneuver->z;
+        path.end_z_units = maneuver->z_units;
+        path.speed = maneuver->speed;
+        path.speed_units = maneuver->speed_units;
+
+        m_task->dispatch(path);
       }
 
+      //! On PathControlState message
+      //! @param[in] pcs pointer to PathControlState message
       void
-      consume(const IMC::Dubin* maneuver)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
-        setControl(IMC::CL_DEPTH | IMC::CL_SPEED | IMC::CL_YAW);
-
-        if ((maneuver->z_units == IMC::Z_DEPTH) || (maneuver->z_units == IMC::Z_ALTITUDE))
-        {
-          IMC::DesiredZ zref;
-          zref.value = maneuver->z;
-          zref.z_units = maneuver->z_units;
-          dispatch(zref);
-        }
+        if (pcs->flags & IMC::PathControlState::FL_NEAR)
+          m_task->signalCompletion();
         else
-        {
-          signalError(DTR("vertical control type not supported"));
-        }
-
-        m_speed.value = maneuver->speed;
-        m_speed.speed_units = maneuver->speed_units;
-        dispatch(m_speed);
+          m_task->signalProgress(pcs->eta);
       }
 
-      void
-      consume(const IMC::EstimatedState* msg)
-      {
-        if (!m_got_href)
-        {
-          m_heading.value = msg->psi;
-          dispacth(m_heading);
+      ~Goto(void)
+      { }
 
-          m_got_href = true;
-        }
-      }
+    private:
+      //! Pointer to task
+      Maneuvers::Maneuver* m_task;
     };
   }
 }
 
-DUNE_TASK
+#endif

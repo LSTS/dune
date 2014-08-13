@@ -73,6 +73,8 @@ namespace Maneuver
       uint16_t m_duration;
       //! In calibrating phase
       bool m_calibrating;
+      //! True if a pitch message has been dispatched already
+      bool m_dispatched;
       //! AHRS entity id.
       unsigned m_ahrs_eid;
       //! Started yoyo movements (not necessarily calibrating)
@@ -186,6 +188,7 @@ namespace Maneuver
         m_end_time = -1;
         m_calibrating = false;
         m_yoyo_ing = false;
+        m_dispatched = false;
 
         double zref;
 
@@ -353,12 +356,14 @@ namespace Maneuver
 
         double v = m_yoyo->update(startup, state_z, m_estate.theta);
 
-        if (v == m_pitch.value)
+        if ((v == m_pitch.value) && m_dispatched)
           return;
 
         // Dispatch pitch message
         m_pitch.value = v;
         dispatch(m_pitch);
+
+        m_dispatched = true;
       }
     };
   }
