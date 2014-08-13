@@ -41,15 +41,82 @@ namespace Vision
     {
     public:
       EntityActivation(DUNE::Tasks::Task* task):
-        m_owner(task)
+        m_owner(task),
+        m_id(DUNE_IMC_CONST_UNK_EID),
+        m_sys_id(DUNE_IMC_CONST_NULL_ID),
+        m_act_state(IMC::EntityActivationState::EAS_INACTIVE)
+      { }
+
+      void
+      setEntity(unsigned int id)
       {
-        m_act_state = IMC::EntityActivationState::EAS_INACTIVE;
+        m_id = id;
+        m_name = "";
       }
 
       void
-      setName(const std::string& label)
+      setEntity(const std::string& name)
       {
-        m_name = label;
+        m_name = name;
+        m_id = DUNE_IMC_CONST_UNK_EID;
+      }
+
+      void
+      setSystem(const std::string& system)
+      {
+        m_system = system;
+        m_sys_id = DUNE_IMC_CONST_NULL_ID;
+      }
+
+      void
+      setSystem(unsigned int id)
+      {
+        m_sys_id = id;
+        m_system = "";
+      }
+
+      unsigned int
+      getSystemId(void)
+      {
+        if (m_sys_id != DUNE_IMC_CONST_NULL_ID)
+          return m_sys_id;
+        else if (m_system != "")
+          return m_owner->resolveSystemName(m_system.c_str());
+        else
+          return DUNE_IMC_CONST_NULL_ID;
+      }
+
+      const std::string
+      getSystemName(void)
+      {
+        if (m_system != "")
+          return m_system;
+        else if (m_sys_id != DUNE_IMC_CONST_NULL_ID)
+          return std::string(m_owner->resolveSystemId(m_sys_id));
+        else
+          return std::string("");
+      }
+
+      unsigned int
+      getEntityId(void)
+      {
+        if (m_id != DUNE_IMC_CONST_UNK_EID)
+          return m_id;
+        else if (m_name != "")
+          return m_owner->resolveEntity(m_name.c_str());
+        else
+          return DUNE_IMC_CONST_UNK_EID;
+      }
+
+      const std::string
+      getEntityLabel(void)
+      {
+        if (m_name != "")
+          return m_name;
+        else if (m_id != DUNE_IMC_CONST_UNK_EID)
+          return std::string(m_owner->resolveEntity(m_id));
+        else
+          return std::string("");
       }
 
       void
@@ -99,6 +166,12 @@ namespace Vision
       DUNE::Tasks::Task* m_owner;
       //! Slave entity label.
       std::string m_name;
+      //! Slave entity id.
+      unsigned int m_id;
+      //! Slave system name.
+      std::string m_system;
+      //! Slave system id.
+      unsigned int m_sys_id;
       //! Last activation state
       IMC::EntityActivationState::StateEnum m_act_state;
 

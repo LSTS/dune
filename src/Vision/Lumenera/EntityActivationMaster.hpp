@@ -48,11 +48,19 @@ namespace Vision
       { }
 
       void
-      addEntity(const std::string& label)
+      addEntity(const std::string& entity, const std::string& system = "")
       {
-        std::pair<std::string,EntityActivation> entity(label,EntityActivation(m_owner));
-        std::pair<std::map<std::string,EntityActivation>::iterator, bool> rv = m_slave_entities.insert(entity);
-        rv.first->second.setName(label);
+        std::pair<std::string,EntityActivation> epair(entity,EntityActivation(m_owner));
+        std::pair<std::map<std::string,EntityActivation>::iterator, bool> rv = m_slave_entities.insert(epair);
+
+        EntityActivation& ea = rv.first->second;
+        ea.setEntity(entity);
+        if (system == "")
+          ea.setSystem(std::string(m_owner->getSystemName()));
+        else
+          ea.setSystem(system);
+
+        m_owner->trace("Added %s:%s", ea.getSystemName().c_str(), ea.getEntityLabel().c_str());
       }
 
       void

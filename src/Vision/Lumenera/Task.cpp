@@ -274,10 +274,18 @@ namespace Vision
         if (m_slave_entities == NULL)
           return;
 
+        std::size_t sep;
         std::vector<std::string>::const_iterator itr = m_args.slave_entities.begin();
         for (; itr != m_args.slave_entities.end(); ++itr)
         {
-          m_slave_entities->addEntity(*itr);
+          sep = itr->find_first_of(':');
+
+          if (sep == std::string::npos)
+            // Local entity
+            m_slave_entities->addEntity(*itr);
+          else
+            // Remote entity
+            m_slave_entities->addEntity(itr->substr(sep), itr->substr(0, sep));
         }
       }
 
