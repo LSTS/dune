@@ -76,7 +76,7 @@ namespace Vision
       }
 
       unsigned int
-      getSystemId(void)
+      getSystemId(void) const
       {
         if (m_sys_id != DUNE_IMC_CONST_NULL_ID)
           return m_sys_id;
@@ -87,7 +87,7 @@ namespace Vision
       }
 
       const std::string
-      getSystemName(void)
+      getSystemName(void) const
       {
         if (m_system != "")
           return m_system;
@@ -98,7 +98,7 @@ namespace Vision
       }
 
       unsigned int
-      getEntityId(void)
+      getEntityId(void) const
       {
         if (m_id != DUNE_IMC_CONST_UNK_EID)
           return m_id;
@@ -109,7 +109,7 @@ namespace Vision
       }
 
       const std::string
-      getEntityLabel(void)
+      getEntityLabel(void) const
       {
         if (m_name != "")
           return m_name;
@@ -179,7 +179,7 @@ namespace Vision
       setActiveParameter(bool value) const
       {
         IMC::SetEntityParameters ep;
-        ep.name = m_name;
+        ep.name = getEntityLabel();
         IMC::EntityParameter ea;
         ea.name = "Active";
         ea.value = value ? "true" : "false";

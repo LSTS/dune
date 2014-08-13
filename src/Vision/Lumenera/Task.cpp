@@ -274,6 +274,8 @@ namespace Vision
         if (m_slave_entities == NULL)
           return;
 
+        m_slave_entities->clear();
+
         std::size_t sep;
         std::vector<std::string>::const_iterator itr = m_args.slave_entities.begin();
         for (; itr != m_args.slave_entities.end(); ++itr)

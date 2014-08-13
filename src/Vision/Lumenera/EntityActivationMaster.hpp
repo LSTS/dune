@@ -48,12 +48,17 @@ namespace Vision
       { }
 
       void
+      clear(void)
+      {
+        m_slave_entities.clear();
+      }
+
+      void
       addEntity(const std::string& entity, const std::string& system = "")
       {
-        std::pair<std::string,EntityActivation> epair(entity,EntityActivation(m_owner));
-        std::pair<std::map<std::string,EntityActivation>::iterator, bool> rv = m_slave_entities.insert(epair);
+        m_slave_entities.push_back(EntityActivation(m_owner));
+        EntityActivation& ea = m_slave_entities.back();
 
-        EntityActivation& ea = rv.first->second;
         ea.setEntity(entity);
         if (system == "")
           ea.setSystem(std::string(m_owner->getSystemName()));
@@ -66,20 +71,20 @@ namespace Vision
       void
       activate(void)
       {
-        std::map<std::string,EntityActivation>::const_iterator itr = m_slave_entities.begin();
+        std::vector<EntityActivation>::const_iterator itr = m_slave_entities.begin();
         for (; itr != m_slave_entities.end(); ++itr)
         {
-          itr->second.activate();
+          itr->activate();
         }
       }
 
       void
       deactivate(void)
       {
-        std::map<std::string,EntityActivation>::const_iterator itr = m_slave_entities.begin();
+        std::vector<EntityActivation>::const_iterator itr = m_slave_entities.begin();
         for (; itr != m_slave_entities.end(); ++itr)
         {
-          itr->second.deactivate();
+          itr->deactivate();
         }
       }
 
@@ -88,13 +93,13 @@ namespace Vision
       {
         bool rv = true;
 
-        std::map<std::string,EntityActivation>::const_iterator itr = m_slave_entities.begin();
+        std::vector<EntityActivation>::const_iterator itr = m_slave_entities.begin();
         for (; itr != m_slave_entities.end(); ++itr)
         {
-          if (!itr->second.checkActivation())
+          if (!itr->checkActivation())
           {
             rv = false;
-            m_owner->trace("slave entity is not yet active: %s", itr->first.c_str());
+            m_owner->trace("slave entity is not yet active: %s:%s", itr->getSystemName().c_str(), itr->getEntityLabel().c_str());
           }
         }
         return rv;
@@ -105,13 +110,13 @@ namespace Vision
       {
         bool rv = true;
 
-        std::map<std::string,EntityActivation>::const_iterator itr = m_slave_entities.begin();
+        std::vector<EntityActivation>::const_iterator itr = m_slave_entities.begin();
         for (; itr != m_slave_entities.end(); ++itr)
         {
-          if (!itr->second.checkDeactivation())
+          if (!itr->checkDeactivation())
           {
             rv = false;
-            m_owner->trace("slave entity is still active: %s", itr->first.c_str());
+            m_owner->trace("slave entity is still active: %s:%s", itr->getSystemName().c_str(), itr->getEntityLabel().c_str());
           }
         }
         return rv;
@@ -120,29 +125,38 @@ namespace Vision
       void
       onEntityActivationState(const IMC::EntityActivationState* msg)
       {
-        std::string name;
-        if (msg->getSource() == m_owner->getSystemId())
+        std::vector<EntityActivation>::iterator itr = m_slave_entities.begin();
+        for (; itr != m_slave_entities.end(); ++itr)
         {
-          name = m_owner->resolveEntity(msg->getSourceEntity());
-        }
-        else
-        {
-          m_owner->err("message from different system");
-          return;
-        }
+          try
+          {
+            if (itr->getSystemId() != msg->getSource())
+              continue;
 
-        std::map<std::string,EntityActivation>::iterator itr = m_slave_entities.find(name);
-        if (itr == m_slave_entities.end())
-          return;
+            if (msg->getSource() != m_owner->getSystemId())
+            {
+              m_owner->err("Message from remote entity not supported yet: %s:%d", itr->getSystemName().c_str(), msg->getSourceEntity());
+            }
 
-        itr->second.entityActivationUpdate((const IMC::EntityActivationState::StateEnum)(msg->state));
+            if (itr->getEntityId() != msg->getSourceEntity())
+              continue;
+          }
+          catch (...)
+          {
+            continue;
+          }
+
+          itr->entityActivationUpdate((const IMC::EntityActivationState::StateEnum)(msg->state));
+          break;
+        }
       }
 
     private:
       //! Owner task
       DUNE::Tasks::Task* m_owner;
       //! Slave entity labels.
-      std::map<std::string,EntityActivation> m_slave_entities;
+      std::vector<EntityActivation> m_slave_entities;
+
     };
   }
 }
