@@ -31,6 +31,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "EntityActivation.hpp"
+
 namespace Vision
 {
   namespace Lumenera
@@ -55,26 +58,28 @@ namespace Vision
       void
       addEntity(const std::string& label)
       {
-        m_slave_entities[label] = IMC::EntityActivationState::EAS_INACTIVE;
+        std::pair<std::string,EntityActivation> entity(label,EntityActivation(m_owner));
+        std::pair<std::map<std::string,EntityActivation>::iterator, bool> rv = m_slave_entities.insert(entity);
+        rv.first->second.setName(label);
       }
 
       void
       activate(void)
       {
-        std::map<std::string,IMC::EntityActivationState::StateEnum>::const_iterator itr = m_slave_entities.begin();
+        std::map<std::string,EntityActivation>::const_iterator itr = m_slave_entities.begin();
         for (; itr != m_slave_entities.end(); ++itr)
         {
-          setActiveParameter(itr->first, true);
+          itr->second.activate();
         }
       }
 
       void
       deactivate(void)
       {
-        std::map<std::string, IMC::EntityActivationState::StateEnum>::const_iterator itr = m_slave_entities.begin();
+        std::map<std::string,EntityActivation>::const_iterator itr = m_slave_entities.begin();
         for (; itr != m_slave_entities.end(); ++itr)
         {
-          setActiveParameter(itr->first, false);
+          itr->second.deactivate();
         }
       }
 
@@ -83,17 +88,13 @@ namespace Vision
       {
         bool rv = true;
 
-        std::map<std::string, IMC::EntityActivationState::StateEnum>::const_iterator itr = m_slave_entities.begin();
+        std::map<std::string,EntityActivation>::const_iterator itr = m_slave_entities.begin();
         for (; itr != m_slave_entities.end(); ++itr)
         {
-          if  (itr->second == IMC::EntityActivationState::EAS_INACTIVE)
+          if (!itr->second.checkActivation())
           {
-            setActiveParameter(itr->first, true);
-          }
-          if (itr->second != IMC::EntityActivationState::EAS_ACTIVE)
-          {
-            m_owner->war("entity %s is not active", itr->first.c_str());
             rv = false;
+            m_owner->trace("slave entity is not yet active: %s", itr->first.c_str());
           }
         }
         return rv;
@@ -104,49 +105,44 @@ namespace Vision
       {
         bool rv = true;
 
-        std::map<std::string, IMC::EntityActivationState::StateEnum>::const_iterator itr = m_slave_entities.begin();
+        std::map<std::string,EntityActivation>::const_iterator itr = m_slave_entities.begin();
         for (; itr != m_slave_entities.end(); ++itr)
         {
-          if  (itr->second == IMC::EntityActivationState::EAS_ACTIVE)
+          if (!itr->second.checkDeactivation())
           {
-            setActiveParameter(itr->first, false);
-          }
-          if (itr->second != IMC::EntityActivationState::EAS_INACTIVE)
-          {
-            m_owner->war("entity %s is still active", itr->first.c_str());
             rv = false;
+            m_owner->trace("slave entity is still active: %s", itr->first.c_str());
           }
         }
         return rv;
       }
 
       void
-      onEntityActivationState(const std::string &name, const IMC::EntityActivationState* msg)
+      onEntityActivationState(const IMC::EntityActivationState* msg)
       {
-        std::map<std::string, IMC::EntityActivationState::StateEnum>::iterator itr = m_slave_entities.find(name);
+        std::string name;
+        if (msg->getSource() == m_owner->getSystemId())
+        {
+          name = m_owner->resolveEntity(msg->getSourceEntity());
+        }
+        else
+        {
+          m_owner->err("message from different system");
+          return;
+        }
+
+        std::map<std::string,EntityActivation>::iterator itr = m_slave_entities.find(name);
         if (itr == m_slave_entities.end())
           return;
 
-        itr->second = (const IMC::EntityActivationState::StateEnum)(msg->state);
+        itr->second.entityActivationUpdate((const IMC::EntityActivationState::StateEnum)(msg->state));
       }
 
     private:
       //! Owner task
       DUNE::Tasks::Task* m_owner;
       //! Slave entity labels.
-      std::map<std::string, IMC::EntityActivationState::StateEnum> m_slave_entities;
-
-      void
-      setActiveParameter(std::string name, bool value)
-      {
-        IMC::SetEntityParameters ep;
-        ep.name = name;
-        IMC::EntityParameter ea;
-        ea.name = "Active";
-        ea.value = value ? "true" : "false";
-        ep.params.push_back(ea);
-        m_owner->dispatch(ep);
-      }
+      std::map<std::string,EntityActivation> m_slave_entities;
     };
   }
 }

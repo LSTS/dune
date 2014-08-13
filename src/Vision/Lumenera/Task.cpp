@@ -417,9 +417,7 @@ namespace Vision
           err("invalid entity");
           return;
         }
-
-        std::string name = resolveEntity(msg->getSourceEntity());
-        m_slave_entities->onEntityActivationState(name, msg);
+        m_slave_entities->onEntityActivationState(msg);
       }
 
       void
