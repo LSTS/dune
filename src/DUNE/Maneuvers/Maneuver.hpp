@@ -289,8 +289,6 @@ namespace DUNE
 
       //! Entity to use when dispatching message
       unsigned m_eid;
-      //! ManeuverControlState message
-      IMC::ManeuverControlState m_mcs;
       //! Set of registered maneuvers
       std::set<uint16_t> m_reg_man;
     };

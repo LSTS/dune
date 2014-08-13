@@ -168,10 +168,11 @@ namespace DUNE
     {
       err("%s", msg.c_str());
       requestDeactivation();
-      m_mcs.state = IMC::ManeuverControlState::MCS_ERROR;
-      m_mcs.info = msg;
-      m_mcs.eta = 0;
-      dispatch(m_mcs);
+      IMC::ManeuverControlState mcs;
+      mcs.state = IMC::ManeuverControlState::MCS_ERROR;
+      mcs.info = msg;
+      mcs.eta = 0;
+      dispatch(mcs);
     }
 
     void
@@ -192,19 +193,21 @@ namespace DUNE
     {
       debug("%s", msg.c_str());
       requestDeactivation();
-      m_mcs.state = IMC::ManeuverControlState::MCS_DONE;
-      m_mcs.info = msg;
-      m_mcs.eta = 0;
-      dispatch(m_mcs);
+      IMC::ManeuverControlState mcs;
+      mcs.state = IMC::ManeuverControlState::MCS_DONE;
+      mcs.info = msg;
+      mcs.eta = 0;
+      dispatch(mcs);
     }
 
     void
     Maneuver::signalProgress(uint16_t time_left, const std::string& msg)
     {
-      m_mcs.state = IMC::ManeuverControlState::MCS_EXECUTING;
-      m_mcs.info = msg;
-      m_mcs.eta = time_left;
-      dispatch(m_mcs);
+      IMC::ManeuverControlState mcs;
+      mcs.state = IMC::ManeuverControlState::MCS_EXECUTING;
+      mcs.info = msg;
+      mcs.eta = time_left;
+      dispatch(mcs);
     }
 
     void
