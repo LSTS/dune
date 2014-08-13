@@ -158,7 +158,7 @@ namespace Maneuver
       }
 
       //! On EstimatedState message
-      //! @param[in] state EstimatedState message
+      //! @param[in] msg EstimatedState message
       void
       onEstimatedState(const IMC::EstimatedState* msg)
       {

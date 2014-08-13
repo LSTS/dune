@@ -79,7 +79,7 @@ namespace Maneuver
       }
 
       //! On EstimatedState message
-      //! @param[in] state EstimatedState message
+      //! @param[in] msg EstimatedState message
       void
       onEstimatedState(const IMC::EstimatedState* msg)
       {
@@ -93,7 +93,7 @@ namespace Maneuver
       }
 
       //! On PathControlState message
-      //! @param[in] state PathControlState message
+      //! @param[in] pcs PathControlState message
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {

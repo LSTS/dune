@@ -51,7 +51,7 @@ namespace Maneuver
       };
 
       //! Default constructor.
-      //! @param[in] maneuver pointer to Maneuver task
+      //! @param[in] task pointer to Maneuver task
       //! @param[in] args loiter arguments
       Loiter(Maneuvers::Maneuver* task, LoiterArgs* args):
         m_task(task),
