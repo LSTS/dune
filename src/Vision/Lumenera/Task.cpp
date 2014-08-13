@@ -269,12 +269,23 @@ namespace Vision
       }
 
       void
+      updateSlaveEntities(void)
+      {
+        if (m_slave_entities == NULL)
+          return;
+
+        std::vector<std::string>::const_iterator itr = m_args.slave_entities.begin();
+        for (; itr != m_args.slave_entities.end(); ++itr)
+        {
+          m_slave_entities->addEntity(*itr);
+        }
+      }
+
+      void
       onUpdateParameters(void)
       {
         m_cfg_dirty = true;
-
-        if (m_slave_entities)
-          m_slave_entities->addEntities(m_args.slave_entities);
+        updateSlaveEntities();
       }
 
       void
@@ -288,7 +299,7 @@ namespace Vision
         }
 
         m_slave_entities = new EntityActivationMaster(this);
-        m_slave_entities->addEntities(m_args.slave_entities);
+        updateSlaveEntities();
       }
 
       void

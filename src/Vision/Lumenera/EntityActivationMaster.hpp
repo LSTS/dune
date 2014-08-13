@@ -48,14 +48,6 @@ namespace Vision
       { }
 
       void
-      addEntities(const std::vector<std::string>& labels)
-      {
-        std::vector<std::string>::const_iterator itr = labels.begin();
-        for (; itr != labels.end(); ++itr)
-          addEntity(*itr);
-      }
-
-      void
       addEntity(const std::string& label)
       {
         std::pair<std::string,EntityActivation> entity(label,EntityActivation(m_owner));
