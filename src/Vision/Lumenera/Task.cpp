@@ -285,7 +285,7 @@ namespace Vision
             m_slave_entities->addEntity(*itr);
           else
             // Remote entity
-            m_slave_entities->addEntity(itr->substr(sep), itr->substr(0, sep));
+            m_slave_entities->addEntity(itr->substr(sep + 1), itr->substr(0, sep));
         }
       }
 
