@@ -50,6 +50,8 @@ namespace Monitors
     static const float c_top_conf = 100.0f;
     //! Electric current stable value to consider an estimate refresh
     static const float c_stable_current = 1.0;
+    //! Minimum time to wait before redoing estimate
+    static const float c_redo_time = 600.0;
     //! Time to consider stabilization after maneuvering
     static const float c_sane_time = 10.0;
     //! Discharge curve model names
@@ -145,6 +147,8 @@ namespace Monitors
       bool m_redid_estimate;
       //! Array of entities
       unsigned m_eids[BatteryData::BM_TOTAL];
+      //! Timer Counter for redoing the estimation
+      Time::Counter<float> m_redo_timer;
       //! Timer Counter for stabilization time after maneuvering
       Time::Counter<float> m_sane_timer;
       //! True if maneuvering. Start as true.
@@ -160,7 +164,7 @@ namespace Monitors
         m_last_time(-1.0),
         m_total_samples(0),
         m_cold_estimate(false),
-        m_redid_estimate(false),
+        m_redo_timer(c_redo_time),
         m_sane_timer(c_sane_time),
         m_is_maneuvering(true)
       {
@@ -679,17 +683,13 @@ namespace Monitors
             m_cold_estimate = false;
             refresh = true;
           }
-          else if (!m_redid_estimate) // only redo once
+          else if (m_redo_timer.overflow()) // only redo estimate every once in a while
           {
-            // consider refreshing estimate if present one is unreliable
-            if (m_fuel.confidence < m_args.low_confidence)
+            float pseudo_init = computeInitialEstimate();
+            if (computeConfidence(pseudo_init) > m_args.low_confidence)
             {
-              float pseudo_init = computeInitialEstimate();
-              if (computeConfidence(pseudo_init) > m_args.low_confidence)
-              {
-                refresh = true;
-                m_redid_estimate = true;
-              }
+              refresh = true;
+              m_redo_timer.reset();
             }
           }
 
