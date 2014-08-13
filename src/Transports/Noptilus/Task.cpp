@@ -121,6 +121,9 @@ namespace Transports
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         Memory::clear(m_estate);
         m_estate = new EstimatedState(*msg);
       }

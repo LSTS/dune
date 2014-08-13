@@ -194,6 +194,9 @@ namespace Maneuver
         void
         consume(const IMC::EstimatedState* msg)
         {
+          if (msg->getSource() != getSystemId())
+            return;
+
           m_estate = *msg;
           // as EstimatedState is received regularly, use this event to process regularly!?
           checkTimeout();

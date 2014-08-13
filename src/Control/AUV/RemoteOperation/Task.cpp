@@ -247,7 +247,9 @@ namespace Control
         void
         consume(const IMC::EstimatedState* msg)
         {
-          (void)msg;
+          if (msg->getSource() != getSystemId())
+            return;
+
           m_last_estate.reset();
         }
 

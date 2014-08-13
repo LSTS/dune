@@ -215,6 +215,9 @@ namespace DUNE
       if (!isActive())
         return;
 
+      if (msg->getSource() != getSystemId())
+        return;
+
       m_estate = *msg;
 
       // check if vertical control mode is valid

@@ -308,6 +308,9 @@ namespace Control
           if (!isActive())
             return;
 
+          if (msg->getSource() != getSystemId())
+            return;
+
           // Compute time delta.
           double timestep = m_last_mps.getDelta();
 

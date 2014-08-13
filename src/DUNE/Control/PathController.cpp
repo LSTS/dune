@@ -569,6 +569,9 @@ namespace DUNE
     void
     PathController::consume(const IMC::EstimatedState* es)
     {
+      if (es->getSource() != getSystemId())
+        return;
+
       if (m_filter && m_filter_entity != es->getSourceEntity())
         return;
 
