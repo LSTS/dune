@@ -278,7 +278,10 @@ namespace Monitors
             // Reset energy consumed
             m_energy_consumed = 0.0;
 
-            m_task->debug("recomputed estimate");
+            if (m_task != NULL)
+              m_task->debug("recomputed estimate");
+            else
+              std::cerr << "recomputed estimate" << std::endl;
           }
         }
 
