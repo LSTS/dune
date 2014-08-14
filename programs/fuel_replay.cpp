@@ -182,7 +182,8 @@ main(int32_t argc, char** argv)
   //! Array of entities
   unsigned m_eids[BatteryData::BM_TOTAL];
 
-  FuelFilter* m_fuel_filter = new FuelFilter(&m_args.filter_args, m_eids, NULL);
+  // Filter pointer
+  FuelFilter* m_fuel_filter = NULL;
 
   bool resolved_entities[BatteryData::BM_TOTAL];
   for (unsigned i = 0; i < BatteryData::BM_TOTAL; ++i)
@@ -235,6 +236,8 @@ main(int32_t argc, char** argv)
         got_first = true;
 
         std::cerr << "got first timestamp" << std::endl;
+
+        m_fuel_filter = new FuelFilter(&m_args.filter_args, m_eids, NULL, true, msg->getTimeStamp());
       }
 
       if (!got_entities)
@@ -329,7 +332,8 @@ main(int32_t argc, char** argv)
     std::cerr << "ERROR: " << e.what() << std::endl;
   }
 
-  delete m_fuel_filter;
+  if (m_fuel_filter != NULL)
+    delete m_fuel_filter;
 
   delete is;
 
