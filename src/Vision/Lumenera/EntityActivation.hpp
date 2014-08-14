@@ -37,6 +37,9 @@ namespace Vision
   {
     using DUNE_NAMESPACES;
 
+    //! Minimum time between activation/deactivation attempts
+    const float c_min_delta = 2.0;
+
     class EntityActivation
     {
     public:
@@ -44,7 +47,8 @@ namespace Vision
         m_owner(task),
         m_id(DUNE_IMC_CONST_UNK_EID),
         m_sys_id(DUNE_IMC_CONST_NULL_ID),
-        m_act_state(IMC::EntityActivationState::EAS_INACTIVE)
+        m_act_state(IMC::EntityActivationState::EAS_INACTIVE),
+        m_timer(c_min_delta)
       { }
 
       void
@@ -137,7 +141,7 @@ namespace Vision
         if (m_act_state == IMC::EntityActivationState::EAS_ACTIVE)
           return true;
 
-        if (m_act_state == IMC::EntityActivationState::EAS_INACTIVE)
+        if (m_act_state == IMC::EntityActivationState::EAS_INACTIVE && m_timer.overflow())
           setActiveParameter(true);
 
         return false;
@@ -149,7 +153,7 @@ namespace Vision
         if (m_act_state == IMC::EntityActivationState::EAS_INACTIVE)
           return true;
 
-        if (m_act_state == IMC::EntityActivationState::EAS_ACTIVE)
+        if (m_act_state == IMC::EntityActivationState::EAS_ACTIVE && m_timer.overflow())
           setActiveParameter(false);
 
         return false;
@@ -172,11 +176,13 @@ namespace Vision
       std::string m_system;
       //! Slave system id.
       unsigned int m_sys_id;
-      //! Last activation state
+      //! Last activation state.
       IMC::EntityActivationState::StateEnum m_act_state;
+      //! Last activation message time delta.
+      Time::Counter<float> m_timer;
 
       void
-      setActiveParameter(bool value) const
+      setActiveParameter(bool value)
       {
         IMC::SetEntityParameters ep;
         ep.name = getEntityLabel();
@@ -185,6 +191,8 @@ namespace Vision
         ea.value = value ? "true" : "false";
         ep.params.push_back(ea);
         m_owner->dispatch(ep);
+
+        m_timer.reset();
       }
 
       unsigned int
