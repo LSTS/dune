@@ -137,6 +137,7 @@ namespace Monitors
         m_is_maneuvering(true),
         m_task(task)
       {
+        m_bdata = new BatteryData(m_args->avg_win);
         m_bdata->setEntities(eids);
       }
 
