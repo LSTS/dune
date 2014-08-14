@@ -330,7 +330,8 @@ namespace Monitors
       inline float
       getDeviationFromModel(const Models model)
       {
-        return (m_initial_estimate - m_energy_consumed - getModelEstimate(model)) / getModelEstimate(model) * 100.0f;
+        float modest = getModelEstimate(model);
+        return (m_initial_estimate - m_energy_consumed - modest) / modest * 100.0f;
       }
 
       //! Compute deviation from a merged model
@@ -339,7 +340,8 @@ namespace Monitors
       inline float
       getDeviationMergedModel(const MergedModels model)
       {
-        return (m_initial_estimate - m_energy_consumed - getMergedEstimate(model)) / getMergedEstimate(model) * 100.0f;
+        float mergedest = getMergedEstimate(model);
+        return (m_initial_estimate - m_energy_consumed - mergedest) / mergedest * 100.0f;
       }
 
       //! Compute an estimate based on a current discharge model
@@ -513,6 +515,29 @@ namespace Monitors
         return std::min(value, m_args->full_capacity * (1 - m_args->decay_factor));
       }
 
+      //! Find the optimistic and pessimistic confidence
+      void
+      goodBadConfidence(float& good_conf, float& bad_conf)
+      {
+        good_conf = c_mod_conf;
+        bad_conf = c_mod_conf;
+
+        float prox_interval = c_mod_prox * interval;
+        float conf_gap = c_top_conf - c_mod_conf;
+        float bad_est_diff = std::fabs(bad_est - merged_est);
+        float good_est_diff = std::fabs(good_est - merged_est);
+
+        if (bad_est_diff < prox_interval)
+        {
+          bad_conf += (conf_gap) * (1 - bad_est_diff)  / (prox_interval);
+        }
+
+        if (good_est_diff < prox_interval)
+        {
+          good_conf += (conf_gap) * (1 - good_est_diff) / (prox_interval);
+        }
+      }
+
       //! Compute a rough estimate of the confidence on the measure of energy (in %)
       //! @param[in] energy to use
       //! @return value of confidence computed
@@ -523,20 +548,15 @@ namespace Monitors
         float good_est = getModelEstimate(MDL_OPT);
         float bad_est = getModelEstimate(MDL_PES);
         float merged_est = getMergedEstimate(MGD_RATED);
-
-        float good_conf = c_mod_conf;
-        float bad_conf = c_mod_conf;
         float interval = std::fabs(good_est - bad_est);
 
         // division by zero check (should never happen)
         if (interval == 0.0)
           return -1.0;
 
-        if (std::fabs(bad_est - merged_est) < c_mod_prox * interval)
-          bad_conf = c_mod_conf + (c_top_conf - c_mod_conf) * (1 - std::fabs(bad_est - merged_est) / (c_mod_prox * interval));
-
-        if (std::fabs(good_est - merged_est) < c_mod_prox * interval)
-          good_conf = c_mod_conf + (c_top_conf - c_mod_conf) * (1 - std::fabs(good_est - merged_est) / (c_mod_prox * interval));
+        float good_conf;
+        float bad_conf;
+        goodBadConfidence(good_conf, bad_conf);
 
         std::vector<float> vec_energs, vec_confs;
 
