@@ -52,31 +52,27 @@ namespace Vision
       { }
 
       void
-      setEntity(unsigned int id)
+      setEntityId(unsigned int id)
       {
         m_id = id;
-        m_name = "";
       }
 
       void
-      setEntity(const std::string& name)
+      setEntityLabel(const std::string& name)
       {
         m_name = name;
-        m_id = DUNE_IMC_CONST_UNK_EID;
       }
 
       void
-      setSystem(const std::string& system)
+      setSystemName(const std::string& system)
       {
         m_system = system;
-        m_sys_id = DUNE_IMC_CONST_NULL_ID;
       }
 
       void
-      setSystem(unsigned int id)
+      setSystemId(unsigned int id)
       {
         m_sys_id = id;
-        m_system = "";
       }
 
       unsigned int

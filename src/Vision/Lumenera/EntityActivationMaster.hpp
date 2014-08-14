@@ -59,11 +59,11 @@ namespace Vision
         m_slave_entities.push_back(EntityActivation(m_owner));
         EntityActivation& ea = m_slave_entities.back();
 
-        ea.setEntity(entity);
+        ea.setEntityLabel(entity);
         if (system == "")
-          ea.setSystem(std::string(m_owner->getSystemName()));
+          ea.setSystemName(std::string(m_owner->getSystemName()));
         else
-          ea.setSystem(system);
+          ea.setSystemName(system);
 
         m_owner->trace("Added %s:%s", ea.getSystemName().c_str(), ea.getEntityLabel().c_str());
       }
@@ -123,6 +123,30 @@ namespace Vision
       }
 
       void
+      onEntityInfo(const IMC::EntityInfo* msg)
+      {
+        // Only care about remote systems
+        if (m_owner->getSystemId() == msg->getSource())
+          return;
+
+        std::vector<EntityActivation>::iterator itr = m_slave_entities.begin();
+        for (; itr != m_slave_entities.end(); ++itr)
+        {
+          if (itr->getSystemId() != msg->getSource())
+            continue;
+
+          if (itr->getEntityId() != DUNE_IMC_CONST_UNK_EID)
+            continue;
+
+          if (itr->getEntityLabel() == msg->label)
+          {
+            itr->setEntityId(msg->getSourceEntity());
+            return;
+          }
+        }
+      }
+
+      void
       onEntityActivationState(const IMC::EntityActivationState* msg)
       {
         std::vector<EntityActivation>::iterator itr = m_slave_entities.begin();
@@ -132,11 +156,6 @@ namespace Vision
           {
             if (itr->getSystemId() != msg->getSource())
               continue;
-
-            if (msg->getSource() != m_owner->getSystemId())
-            {
-              m_owner->err("Message from remote entity not supported yet: %s:%d", itr->getSystemName().c_str(), msg->getSourceEntity());
-            }
 
             if (itr->getEntityId() != msg->getSourceEntity())
               continue;

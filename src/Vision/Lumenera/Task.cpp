@@ -266,6 +266,7 @@ namespace Vision
 
         bind<IMC::LoggingControl>(this);
         bind<IMC::EntityActivationState>(this);
+        bind<IMC::EntityInfo>(this);
       }
 
       void
@@ -440,6 +441,13 @@ namespace Vision
         }
         m_slave_entities->onEntityActivationState(msg);
       }
+
+      void
+      consume(const IMC::EntityInfo* msg)
+      {
+        m_slave_entities->onEntityInfo(msg);
+      }
+
 
       void
       setStrobePower(bool value)
