@@ -161,6 +161,9 @@ namespace Control
         void
         consume(const IMC::EstimatedState* msg)
         {
+          if (msg->getSource() != getSystemId())
+            return;
+
           m_dh_data = true;
           m_start_depth = msg->depth;
           m_start_heading = msg->psi;

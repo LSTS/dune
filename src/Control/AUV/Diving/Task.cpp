@@ -259,6 +259,9 @@ namespace Control
           if (!isActive())
             return;
 
+          if (msg->getSource() != getSystemId())
+            return;
+
           m_depth = msg->depth;
           m_alt = msg->alt;
         }

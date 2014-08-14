@@ -123,6 +123,9 @@ namespace Vision
       void
       consume(const IMC::EstimatedState* e_state)
       {
+        if (e_state->getSource() != getSystemId())
+          return;
+
         Coordinates::toWGS84(*e_state, m_lat, m_lon, m_hei);
 
         if(!m_args.dist_trigger)

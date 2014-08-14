@@ -138,6 +138,9 @@ namespace Maneuver
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         // do not do a thing if the announce method is not active
         if (!m_args.announce_active)
           return;

@@ -183,6 +183,9 @@ namespace Navigation
         void
         consume(const IMC::EstimatedState* msg)
         {
+          if (msg->getSource() != getSystemId())
+            return;
+
           m_last_depth = msg->depth;
 
           // Increment process noise covariance.

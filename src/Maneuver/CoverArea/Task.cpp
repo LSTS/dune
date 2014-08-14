@@ -379,6 +379,9 @@ namespace Maneuver
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         m_estate = *msg;
 
         if (!isActive())

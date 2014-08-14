@@ -160,6 +160,9 @@ namespace Control
         void
         consume(const IMC::EstimatedState* msg)
         {
+          if (msg->getSource() != getSystemId())
+            return;
+
           if (!isActive())
           {
             m_dhead = msg->psi;

@@ -22,64 +22,52 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Goncalo Cruz                                                     *
-// Author: Joao Fortuna                                                     *
-// Author: Christian Fuchs                                                  *
+// Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-// Preliminary version of Fly By Camera
-// Flies vehicle based on camera orientation
+#ifndef DUNE_SENSORS_AIM104_MULTI_IO_HPP_INCLUDED_
+#define DUNE_SENSORS_AIM104_MULTI_IO_HPP_INCLUDED_
+
+// ISO C++ 98 headers
+#include <string>
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
+#include <DUNE/Config.hpp>
+#include <DUNE/Hardware/IOPort.hpp>
 
-namespace Maneuver
+namespace Sensors
 {
-  namespace FlyByCamera
+  namespace AIM104MultiIO
   {
-    using DUNE_NAMESPACES;
-
-    struct Task: public DUNE::Maneuvers::Maneuver
+    class Driver
     {
-      IMC::DesiredHeading m_heading_msg;
-      double m_heading_v_desired;
-      double m_heading_c_current;
+    public:
+      Driver(uint32_t address, fp32_t input_range, bool mode_dif);
 
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx)
-      {
-        param("Desired Vehicle Heading", m_heading_v_desired)
-        .description("Desired Heading for the vehicle to follow")
-        .defaultValue("0");
+      ~Driver(void);
 
-        param("Current Camera Heading", m_heading_c_current)
-        .description("Current Camera heading in respect to the vehicle")
-        .defaultValue("0");
-
-        bind<IMC::EstimatedState>(this);
-      }
+      bool
+      setChannel(uint8_t channel);
 
       void
-      onResourceAcquisition(void)
-      {
-        setControl(IMC::CL_YAW);
-        inf("yaw controller activated");
-      }
+      setInputRange(fp64_t input_range);
 
-      void
-      consume(const IMC::EstimatedState* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
+      bool
+      sample(fp64_t& value);
 
-        m_heading_c_current=msg->psi+(3.14/20);
-        m_heading_v_desired=m_heading_c_current;
-        m_heading_msg.value=m_heading_v_desired;
-        dispatch(m_heading_msg);
-        inf("The desired heading is %f", m_heading_msg.value);
-      }
+    private:
+      //! Direct hardware I/O.
+      DUNE::Hardware::IOPort* m_io;
+      // Full-Scale input range.
+      fp64_t m_input_range;
+      //! A/D channels.
+      uint8_t m_channels;
+      //! Current A/D channel.
+      uint8_t m_channel;
+      //! Channel select table.
+      const uint8_t* m_chan_table;
     };
   }
 }
 
-DUNE_TASK
+#endif
