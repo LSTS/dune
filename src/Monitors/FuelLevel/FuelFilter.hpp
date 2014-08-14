@@ -124,7 +124,7 @@ namespace Monitors
       };
 
       FuelFilter(Arguments* args, unsigned eids[BatteryData::BM_TOTAL],
-                 Tasks::Task* task = NULL):
+                 Tasks::Task* task = NULL, bool real_clock = false, double start_time = 0.0):
         m_args(args),
         m_bdata(NULL),
         m_energy_consumed(0.0),
@@ -132,8 +132,8 @@ namespace Monitors
         m_last_time(-1.0),
         m_total_samples(0),
         m_cold_estimate(false),
-        m_redo_timer(c_redo_time),
-        m_sane_timer(c_sane_time),
+        m_redo_timer(c_redo_time, real_clock, start_time),
+        m_sane_timer(c_sane_time, real_clock, start_time),
         m_is_maneuvering(true),
         m_task(task)
       {
@@ -151,6 +151,9 @@ namespace Monitors
       void
       onVoltage(const IMC::Voltage* msg)
       {
+        m_redo_timer.update(msg->getTimeStamp());
+        m_sane_timer.update(msg->getTimeStamp());
+
         // If value was changed
         if (m_bdata->update(msg))
         {
@@ -605,6 +608,67 @@ namespace Monitors
         return computeConfidence(m_initial_estimate - m_energy_consumed);
       }
 
+      struct DualClock
+      {
+        //! Monotonic clock
+        Time::Counter<float> mono;
+        //! Realtime clock now
+        double real;
+        //! Realtime clock start
+        double start;
+        //! Top of the clock
+        double top;
+        //! True if realtime clock
+        bool type_real;
+
+        DualClock(double t = 0.0, bool type = false, double start_time = 0.0):
+          mono(t),
+          real(start_time),
+          start(start_time),
+          top(t),
+          type_real(type)
+        { }
+
+        void
+        setTop(double new_top)
+        {
+          if (type_real)
+            top = new_top;
+          else
+            mono.setTop(new_top);
+
+          reset();
+        }
+
+
+        void
+        reset(void)
+        {
+          if (type_real)
+            start = real;
+          else
+            mono.reset();
+        }
+
+        inline bool
+        overflow(void)
+        {
+          if (type_real)
+            return real - start > top;
+          else
+            return mono.overflow();
+        }
+
+        void
+        update(double time)
+        {
+          if (!type_real)
+            return;
+
+          real = time;
+        }
+      };
+
       //! Filter's arguments
       const Arguments* m_args;
       //! Battery related data being measured
@@ -622,9 +686,9 @@ namespace Monitors
       //! Present estimate was performed in cold temperatures
       bool m_cold_estimate;
       //! Timer for redoing estimate
-      Time::Counter<float> m_redo_timer;
+      DualClock m_redo_timer;
       //! Timer Counter for stabilization time after maneuvering
-      Time::Counter<float> m_sane_timer;
+      DualClock m_sane_timer;
       //! True if maneuvering. Start as true.
       bool m_is_maneuvering;
       //! Pointer to typename T (which could be class Task)
