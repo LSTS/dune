@@ -51,6 +51,11 @@ namespace DUNE
       m_last_action(-1.0),
       m_scope_ref(0)
     {
+      // Define configuration parameters.
+      paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                  Tasks::Parameter::VISIBILITY_DEVELOPER,
+                  false);
+
       param("Connection Timeout", m_connection_timeout)
       .defaultValue("1.0")
       .units(Units::Second);
@@ -58,8 +63,6 @@ namespace DUNE
       addActionButton("Exit");
 
       m_actions.op = IMC::RemoteActionsRequest::OP_REPORT;
-
-      requestDeactivation();
 
       // Register handler routines.
       bind<IMC::RemoteActions>(this);
