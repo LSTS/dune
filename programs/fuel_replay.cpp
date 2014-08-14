@@ -108,6 +108,7 @@ struct PeriodicRun
 
   PeriodicRun(double p):
     active(false),
+    last_time(0.0),
     period(p)
   { }
 
@@ -193,7 +194,7 @@ main(int32_t argc, char** argv)
   PeriodicRun pr(1.0);
 
   ByteBuffer buffer;
-  std::ofstream lsf("FilteredData.lsf", std::ios::binary);
+  std::ofstream lsf("NewFuel.lsf", std::ios::binary);
 
   std::istream* is = 0;
   DUNE::Compression::Methods method = DUNE::Compression::Factory::detect(argv[2]);
@@ -201,6 +202,17 @@ main(int32_t argc, char** argv)
     is = new std::ifstream(argv[2], std::ios::binary);
   else
     is = new DUNE::Compression::FileInput(argv[2], method);
+
+  if (!is)
+  {
+    std::cerr << "bad file" << std::endl;
+    return 1;
+  }
+
+  is->seekg(0, is->end);
+  unsigned file_length = is->tellg();
+  is->seekg(0, is->beg);
+  Time::Counter<float> prog_timer(5.0);
 
   DUNE::IMC::Message* msg = NULL;
 
@@ -221,6 +233,8 @@ main(int32_t argc, char** argv)
         IMC::Packet::serialize(&state, buffer);
         lsf.write(buffer.getBufferSigned(), buffer.getSize());
         got_first = true;
+
+        std::cerr << "got first timestamp" << std::endl;
       }
 
       if (!got_entities)
@@ -244,6 +258,9 @@ main(int32_t argc, char** argv)
           }
 
           got_entities = got_all;
+
+          if (got_entities)
+            std::cerr << "Got all entities" << std::endl;
         }
 
         IMC::Packet::serialize(msg, buffer);
@@ -272,6 +289,10 @@ main(int32_t argc, char** argv)
         m_fuel_filter->onVehicleState(static_cast<IMC::VehicleState*>(msg));
         log_it = true;
       }
+      else if (msg->getId() == DUNE_IMC_FUELLEVEL)
+      {
+        log_it = true;
+      }
 
       if (timer.isValid() && pr.doRun(timer.getTime()))
       {
@@ -294,6 +315,12 @@ main(int32_t argc, char** argv)
         lsf.write(buffer.getBufferSigned(), buffer.getSize());
       }
 
+      if (prog_timer.overflow())
+      {
+        std::cerr << (float)is->tellg() / file_length * 100.0 << "%" << std::endl;
+        prog_timer.reset();
+      }
+
       delete msg;
     }
   }
@@ -303,6 +330,8 @@ main(int32_t argc, char** argv)
   }
 
   delete m_fuel_filter;
+
+  delete is;
 
   return 0;
 }
