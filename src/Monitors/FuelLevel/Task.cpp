@@ -55,48 +55,10 @@ namespace Monitors
     //! Discharge curve model names
     static const std::string c_model_names[] = {"Optimistic", "Pessimistic", "Zero", "Very Cold"};
 
-    enum Models
-    {
-      //! Optimistic model.
-      MDL_OPT,
-      //! Pessimistic model.
-      MDL_PES,
-      //! Model for 0º Celsius of temperature
-      MDL_ZERO,
-      //! Very cold model.
-      MDL_VCOLD,
-      //! Number of models available.
-      MDL_TOTAL
-    };
-
-    enum MergedModels
-    {
-      //! Optimistic and pessimistic model merge
-      MGD_RATED,
-      //! Rated and cold model merge to find energy for
-      //! fixed cold temperature and any electric current
-      MGD_FTAC,
-      //! Rated and cold model merge (temperature map)
-      //! to find energy for any temperature and any electric current
-      MGD_ATAC
-    };
-
-    struct BatteryModel
-    {
-      //! Voltage values
-      std::vector<float> voltage;
-      //! Energy values
-      std::vector<float> energy;
-      //! Electric current value
-      float current;
-      //! Temperature value
-      float temp;
-    };
-
     struct Arguments
     {
-      //! Number of samples for measures' moving average filter.
-      unsigned avg_win[BatteryData::BM_TOTAL];
+      //! Arguments for the fuel filter.
+      FuelFilter::Arguments filter_args;
       //! Entity label for measurement readings.
       std::string elb[BatteryData::BM_TOTAL];
       //! Energy capacity of the batteries advertised by manufacturer.
@@ -105,8 +67,6 @@ namespace Monitors
       unsigned min_samples;
       //! Decay factor given by percentage of actual_capacity/advertised_capacity.
       float decay_factor;
-      //! Battery models.
-      BatteryModel models[MDL_TOTAL];
       //! Temperature of the optimistic and pessimistic models.
       float rated_temp;
       //! Label of the operation modes.
@@ -175,7 +135,7 @@ namespace Monitors
           .description("Entity label of the " + c_measure_names[i] + " measures.");
         }
 
-        param("Batteries Energy Capacity", m_args.full_capacity)
+        param("Batteries Energy Capacity", m_args.filter_args.full_capacity)
         .defaultValue("498.8")
         .minimumValue("0.0")
         .units(Units::WattHour)
@@ -193,24 +153,24 @@ namespace Monitors
         .units(Units::Percentage)
         .description("Decay factor given by percentage of actual/advertised capacity");
 
-        for (unsigned i = 0; i < MDL_TOTAL; ++i)
+        for (unsigned i = 0; i < FuelFilter::MDL_TOTAL; ++i)
         {
-          param(c_model_names[i] + " Model Voltage", m_args.models[i].voltage)
+          param(c_model_names[i] + " Model Voltage", m_args.filter_args.models[i].voltage)
           .defaultValue("")
           .units(Units::Volt)
           .description("Voltage values for " + c_model_names[i] + " model");
 
-          param(c_model_names[i] + " Model Current", m_args.models[i].current)
+          param(c_model_names[i] + " Model Current", m_args.filter_args.models[i].current)
           .defaultValue("")
           .units(Units::Ampere)
           .description("Current values for " + c_model_names[i] + " model");
 
-          param(c_model_names[i] + " Model Energy", m_args.models[i].energy)
+          param(c_model_names[i] + " Model Energy", m_args.filter_args.models[i].energy)
           .defaultValue("")
           .units(Units::WattHour)
           .description("Energy values for " + c_model_names[i] + " model");
 
-          param(c_model_names[i] + " Model Temperature", m_args.models[i].temp)
+          param(c_model_names[i] + " Model Temperature", m_args.filter_args.models[i].temp)
           .defaultValue("")
           .units(Units::DegreeCelsius)
           .description("Temperature of the " + c_model_names[i] + " model.");
@@ -293,15 +253,13 @@ namespace Monitors
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_bdata);
+        Memory::clear(m_fuel_filter);
       }
 
       void
       onResourceAcquisition(void)
       {
-        m_bdata = new BatteryData(m_args.avg_win);
-
-        m_bdata->setEntities(m_eids);
+        m_fuel_filter = new FuelFilter(m_args.avg_win);
       }
 
       void
@@ -323,223 +281,25 @@ namespace Monitors
       void
       consume(const IMC::Voltage* msg)
       {
-        // If value was changed
-        if (m_bdata->update(msg))
-        {
-          ++m_total_samples;
-
-          if (m_total_samples % m_args.avg_win[BatteryData::BM_VOLTAGE] == 0)
-          {
-            if (m_last_time < 0.0)
-            {
-              m_last_time = msg->getTimeStamp();
-              return;
-            }
-
-            double delta = msg->getTimeStamp() - m_last_time;
-            m_last_time = msg->getTimeStamp();
-
-            // Check if we have a valid time delta.
-            if (delta < 0)
-              return;
-
-            // integrate energy consumed even if there is no estimate yet
-            m_energy_consumed += m_bdata->getEnergyDrop(delta);
-          }
-        }
+        m_fuel_filter->onVoltage(msg);
       }
 
       void
       consume(const IMC::Current* msg)
       {
-        m_bdata->update(msg);
+        m_fuel_filter->onCurrent(msg);
       }
 
       void
       consume(const IMC::Temperature* msg)
       {
-        m_bdata->update(msg);
+        m_fuel_filter->onTemperature(msg);
       }
 
       void
       consume(const IMC::VehicleState* msg)
       {
-        // Check if vehicle is not maneuvering atm
-        if ((msg->op_mode != IMC::VehicleState::VS_MANEUVER) &&
-            (msg->op_mode != IMC::VehicleState::VS_CALIBRATION) &&
-            (msg->op_mode != IMC::VehicleState::VS_EXTERNAL))
-        {
-          if (m_is_maneuvering)
-          {
-            m_sane_timer.reset();
-            m_is_maneuvering = false;
-          }
-        }
-        else
-        {
-          m_is_maneuvering = true;
-        }
-      }
-
-      //! Compute deviation from model
-      //! @param[in] model model to be used to compute deviation
-      //! @return deviation from given model
-      inline float
-      getDeviationFromModel(const Models model)
-      {
-        return (m_initial_estimate - m_energy_consumed - getModelEstimate(model)) / getModelEstimate(model) * 100.0f;
-      }
-
-      //! Compute deviation from a merged model
-      //! @param[in] model merged model to be used to compute deviation
-      //! @return deviation from given merged model
-      inline float
-      getDeviationMergedModel(const MergedModels model)
-      {
-        return (m_initial_estimate - m_energy_consumed - getMergedEstimate(model)) / getMergedEstimate(model) * 100.0f;
-      }
-
-      //! Compute an estimate based on a current discharge model
-      //! @param[in] model model to be used in computing the estimate
-      //! @return estimate computed
-      inline float
-      getModelEstimate(const Models model)
-      {
-        return getModelEstimate(model, m_bdata->getVoltage());
-      }
-
-      //! Compute an estimate based on a current discharge model
-      //! @param[in] model model to be used in computing the estimate
-      //! @param[in] voltage voltage to be used in optimistic and pessimistic model
-      //! @return estimate computed
-      inline float
-      getModelEstimate(const Models model, float voltage)
-      {
-        return piecewiseLI(m_args.models[model].energy,
-                           m_args.models[model].voltage,
-                           voltage);
-      }
-
-      //! Find closest model to a certain temperature
-      //! @param[in] temperature temperature value to use
-      //! @return closest model to the given temperature
-      Models
-      getClosestModel(float temperature)
-      {
-        Models closest = (Models)0;
-
-        if (MDL_TOTAL == 1)
-          return closest;
-
-        float lowest_diff = std::fabs(m_args.models[closest].temp - temperature);
-
-        for (unsigned i = 1; i < MDL_TOTAL; ++i)
-        {
-          float diff = std::fabs(m_args.models[i].temp - temperature);
-          if (diff < lowest_diff)
-          {
-            lowest_diff = diff;
-            closest = (Models)i;
-          }
-        }
-
-        return closest;
-      }
-
-      //! Compute estimate for temperature map merged model
-      //! @param[in] model temperature model to use
-      //! @param[in] current electric current value to use in estimate
-      //! @return estimate for the cold map merged model
-      float
-      getMapEstimate(const Models model, float current)
-      {
-        float ex = getModelEstimate(model);
-        float v1 = getInvertedEstimate(MDL_OPT, ex);
-        float v2 = getInvertedEstimate(MDL_PES, ex);
-        float i1 = m_args.models[MDL_OPT].current;
-        float i2 = m_args.models[MDL_PES].current;
-        float vt = v1 + (current - i1) / (i2 - i1) * (v2 - v1);
-        float vn = v1 + (m_args.models[model].current - i1) / (i2 - i1) * (v2 - v1);
-        float vf = m_bdata->getVoltage() + (vn - vt);
-        return getModelEstimate(model, vf);
-      }
-
-      //! Compute voltage using energy value.
-      //! This works as an inverted getModelEstimate().
-      //! @param[in] model model to be used in compute the estimate
-      //! @param[in] energy energy value to interpolate with to find voltage.
-      //! @return computed voltage value by interpolation
-      inline float
-      getInvertedEstimate(const Models model, float energy)
-      {
-        return piecewiseLI(m_args.models[model].voltage,
-                           m_args.models[model].energy,
-                           energy);
-      }
-
-      //! Compute a merged estimate using an electric current value
-      //! @param[in] model merged model to use
-      //! @param[in] current electric current value to use
-      //! @param[in] temperature temperature value to use
-      //! @return merged estimate value
-      float
-      getMergedEstimate(const MergedModels model, float current, float temperature)
-      {
-        switch (model)
-        {
-          case MGD_RATED:
-            return linearInterpolation(LinIntParam<float>(getModelEstimate(MDL_PES),
-                                                          getModelEstimate(MDL_OPT),
-                                                          m_args.models[MDL_PES].current,
-                                                          m_args.models[MDL_OPT].current,
-                                                          current));
-          case MGD_FTAC:
-            return getMapEstimate(getClosestModel(temperature), current);
-          case MGD_ATAC:
-            if (temperature < m_args.models[MDL_ZERO].temp)
-            {
-              float e_zero = getMapEstimate(MDL_ZERO, current);
-              float e_vcold = getMapEstimate(MDL_VCOLD, current);
-              return linearInterpolation(LinIntParam<float>(e_zero, e_vcold,
-                                                            m_args.models[MDL_ZERO].temp,
-                                                            m_args.models[MDL_VCOLD].temp,
-                                                            temperature));
-            }
-            else if (temperature < m_args.models[MDL_OPT].temp)
-            {
-              float e_zero = getMapEstimate(MDL_ZERO, current);
-              float e_opt = getMergedEstimate(MGD_RATED);
-              return linearInterpolation(LinIntParam<float>(e_zero, e_opt,
-                                                            m_args.models[MDL_ZERO].temp,
-                                                            m_args.models[MDL_OPT].temp,
-                                                            temperature));
-            }
-            else
-            {
-              // fall through
-            }
-          default:
-            return -1.0;
-        }
-      }
-
-      //! Compute a merged estimate using an electric current value (overload)
-      //! @param[in] model merged model to use
-      //! @return merged estimate value
-      inline float
-      getMergedEstimate(const MergedModels model)
-      {
-        return getMergedEstimate(model, m_bdata->getCurrent(), m_bdata->getTemperature());
-      }
-
-      //! Estimate likely time left for operation in a certain power regime
-      //! for available energy left in batteries
-      //! @param[in] power_rate rate of power consumption
-      //! @return remaining time at consumption rate
-      inline float
-      getRemainingTime(float power_rate)
-      {
-        return (m_initial_estimate - m_energy_consumed) / power_rate * 3600.0;
+        m_fuel_filter->onVehicleState(msg);
       }
 
       //! Compute an initial estimate for the energy left in batteries
