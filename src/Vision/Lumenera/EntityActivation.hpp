@@ -86,7 +86,7 @@ namespace Vision
           return DUNE_IMC_CONST_NULL_ID;
       }
 
-      const std::string
+      std::string const
       getSystemName(void) const
       {
         if (m_system != "")
@@ -103,36 +103,36 @@ namespace Vision
         if (m_id != DUNE_IMC_CONST_UNK_EID)
           return m_id;
         else if (m_name != "")
-          return m_owner->resolveEntity(m_name.c_str());
+          return resolveEntity(m_name);
         else
           return DUNE_IMC_CONST_UNK_EID;
       }
 
-      const std::string
+      std::string
       getEntityLabel(void) const
       {
         if (m_name != "")
           return m_name;
         else if (m_id != DUNE_IMC_CONST_UNK_EID)
-          return std::string(m_owner->resolveEntity(m_id));
+          return resolveEntity(m_sys_id);
         else
           return std::string("");
       }
 
       void
-      activate(void) const
+      activate(void)
       {
         setActiveParameter(true);
       }
 
       void
-      deactivate(void) const
+      deactivate(void)
       {
         setActiveParameter(false);
       }
 
       bool
-      checkActivation(void) const
+      checkActivation(void)
       {
         if (m_act_state == IMC::EntityActivationState::EAS_ACTIVE)
           return true;
@@ -144,7 +144,7 @@ namespace Vision
       }
 
       bool
-      checkDeactivation(void) const
+      checkDeactivation(void)
       {
         if (m_act_state == IMC::EntityActivationState::EAS_INACTIVE)
           return true;
@@ -186,6 +186,35 @@ namespace Vision
         ep.params.push_back(ea);
         m_owner->dispatch(ep);
       }
+
+      unsigned int
+      resolveEntity(const std::string& label) const
+      {
+        if (getSystemId() == m_owner->getSystemId())
+        {
+          return m_owner->resolveEntity(m_name.c_str());
+        }
+        else
+        {
+          m_owner->trace("tried to resolve unknown remote entity label: %s", label.c_str());
+          return DUNE_IMC_CONST_UNK_EID;
+        }
+      }
+
+      std::string
+      resolveEntity(const unsigned int id) const
+      {
+        if (getSystemId() == m_owner->getSystemId())
+        {
+          return m_owner->resolveEntity(id);
+        }
+        else
+        {
+          m_owner->trace("tried to resolve unknown remote entity id: %d", id);
+          return "";
+        }
+      }
+
     };
   }
 }
