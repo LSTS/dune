@@ -516,8 +516,9 @@ namespace Monitors
       }
 
       //! Find the optimistic and pessimistic confidence
-      void
-      goodBadConfidence(float& good_conf, float& bad_conf)
+      inline void
+      goodBadConfidence(float& good_conf, float& bad_conf, float interval,
+                        float good_est, float bad_est, float merged_est)
       {
         good_conf = c_mod_conf;
         bad_conf = c_mod_conf;
@@ -556,7 +557,8 @@ namespace Monitors
 
         float good_conf;
         float bad_conf;
-        goodBadConfidence(good_conf, bad_conf);
+        goodBadConfidence(good_conf, bad_conf, interval,
+                          good_est, bad_est, merged_est);
 
         std::vector<float> vec_energs, vec_confs;
 
