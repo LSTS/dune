@@ -166,6 +166,11 @@ namespace Monitors
         .units(Units::DegreeCelsius)
         .description("Acceptable temperature level for estimating.");
 
+        param("Minimum Update Confidence", m_args.filter_args.min_update_conf)
+        .defaultValue("95.0")
+        .units(Units::Percentage)
+        .description("Minimum confidence for recomputing update");
+
         // Register listeners.
         bind<IMC::Voltage>(this);
         bind<IMC::Current>(this);

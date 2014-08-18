@@ -121,6 +121,8 @@ namespace Monitors
         float rated_temp;
         //! Acceptable temperature level for estimating.
         float acceptable_temperature;
+        //! Minimum confidence for recomputing update
+        float min_update_conf;
       };
 
       FuelFilter(Arguments* args, unsigned eids[BatteryData::BM_TOTAL],
@@ -268,7 +270,9 @@ namespace Monitors
           else if (m_redo_timer.overflow()) // only redo estimate every once in a while
           {
             float pseudo_init = computeInitialEstimate();
-            if (computeConfidence(pseudo_init) > computeConfidence())
+            float pseudo_conf = computeConfidence(pseudo_init);
+            if (pseudo_conf > computeConfidence() &&
+                pseudo_conf > m_args->min_update_conf)
             {
               refresh = true;
               m_redo_timer.reset();
