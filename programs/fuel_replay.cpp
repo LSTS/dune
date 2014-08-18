@@ -218,6 +218,8 @@ main(int32_t argc, char** argv)
 
   DUNE::IMC::Message* msg = NULL;
 
+  DUNE::IMC::FuelLevel* ptr = NULL;
+
   bool got_first = false;
 
   try
@@ -308,6 +310,20 @@ main(int32_t argc, char** argv)
           fl.setTimeStamp(msg->getTimeStamp());
           
           m_fuel_filter->fillMessage(fl, m_args.op_labels, m_args.op_values);
+
+          if (ptr != NULL)
+          {
+            float diff = ptr->value - fl.value;
+            char sign = (diff > 0)? '-' : '+';
+            if (std::fabs(diff) > 1.0)
+              std::cerr << "jumped " << sign
+                        << std::fabs(diff) / 100 * m_args.filter_args.full_capacity
+                        << " (" << std::fabs(diff) << "%)" << std::endl;
+          }
+
+          Memory::clear(ptr);
+          ptr = static_cast<IMC::FuelLevel*>(fl.clone());
+
           IMC::Packet::serialize(&fl, buffer);
           lsf.write(buffer.getBufferSigned(), buffer.getSize());
         }
@@ -333,8 +349,8 @@ main(int32_t argc, char** argv)
     std::cerr << "ERROR: " << e.what() << std::endl;
   }
 
-  if (m_fuel_filter != NULL)
-    delete m_fuel_filter;
+  Memory::clear(m_fuel_filter);
+  Memory::clear(ptr);
 
   delete is;
 
