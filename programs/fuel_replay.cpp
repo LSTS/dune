@@ -38,6 +38,7 @@
 // Battery Data
 #include <Monitors/FuelLevel/BatteryData.hpp>
 #include <Monitors/FuelLevel/FuelFilter.hpp>
+#include <Monitors/FuelLevel/EntityPower.hpp>
 
 // Minimum number of samples before starting to count energy
 const unsigned c_min_samples = 20;
@@ -62,6 +63,10 @@ struct Arguments
   float err_lvl;
   //! Value below which fuel estimation is unreliable.
   float low_confidence;
+  //! List of entity labels that must be estimated.
+  std::vector<std::string> est_list;
+  //! List of estimated power consumed by the entities
+  std::vector<float> est_power;
 };
 
 struct PseudoTimer
@@ -163,6 +168,9 @@ readArgs(char* file, Arguments& args)
   cfg.get(sec, "Warning Level", "30.0", args.war_lvl);
   cfg.get(sec, "Error Level", "10.0", args.err_lvl);
   cfg.get(sec, "Low Confidence Level", "40.0", args.low_confidence);
+
+  cfg.get(sec, "Estimated Entity Label List", "", args.est_list);
+  cfg.get(sec, "Estimated Entity Power List", "", args.est_power);
 }
 
 int
@@ -189,6 +197,8 @@ main(int32_t argc, char** argv)
   bool resolved_entities[BatteryData::BM_TOTAL];
   for (unsigned i = 0; i < BatteryData::BM_TOTAL; ++i)
     resolved_entities[i] = false;
+
+  std::set<EntityPower> m_epower;
 
   bool got_entities = false;
 
@@ -240,7 +250,8 @@ main(int32_t argc, char** argv)
 
         std::cerr << "got first timestamp" << std::endl;
 
-        m_fuel_filter = new FuelFilter(&m_args.filter_args, m_eids, NULL, true, msg->getTimeStamp());
+        m_fuel_filter = new FuelFilter(&m_args.filter_args, m_eids, &m_epower,
+                                       NULL, true, msg->getTimeStamp());
       }
 
       if (!got_entities)
