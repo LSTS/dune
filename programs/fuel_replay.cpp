@@ -310,6 +310,11 @@ main(int32_t argc, char** argv)
       {
         log_it = true;
       }
+      else if (msg->getId() == DUNE_IMC_ENTITYACTIVATIONSTATE)
+      {
+        m_fuel_filter->onEntityActivationState(static_cast<IMC::EntityActivationState*>(msg));
+        log_it = true;
+      }
 
       if (timer.isValid() && pr.doRun(timer.getTime()))
       {
