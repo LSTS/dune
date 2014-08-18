@@ -34,6 +34,7 @@
 
 // Local headers.
 #include "BatteryData.hpp"
+#include "EntityPower.hpp"
 #include "FuelFilter.hpp"
 
 namespace Monitors
@@ -61,6 +62,10 @@ namespace Monitors
       float err_lvl;
       //! Value below which fuel estimation is unreliable.
       float low_confidence;
+      //! List of entity labels that must be estimated.
+      std::vector<std::string> est_list;
+      //! List of estimated power consumed by the entities
+      std::vector<float> est_power;
     };
 
     struct Task: public DUNE::Tasks::Periodic
@@ -73,6 +78,8 @@ namespace Monitors
       unsigned m_eids[BatteryData::BM_TOTAL];
       //! True if filter is ready and computing estimates
       bool m_filter_ready;
+      //! Set to gather estimated power consumption of certain entities
+      std::set<EntityPower> m_epower;
       //! Task arguments.
       Arguments m_args;
 
@@ -171,6 +178,15 @@ namespace Monitors
         .units(Units::Percentage)
         .description("Minimum confidence for recomputing update");
 
+        param("Estimated Entity Label List", m_args.est_list)
+        .defaultValue("")
+        .description("List of entity labels that must be estimated");
+
+        param("Esimated Entity Power List", m_args.est_power)
+        .defaultValue("")
+        .units(Units::Watt)
+        .description("List of estimated power consumed by the entities");
+
         // Register listeners.
         bind<IMC::Voltage>(this);
         bind<IMC::Current>(this);
@@ -221,7 +237,7 @@ namespace Monitors
       void
       onResourceAcquisition(void)
       {
-        m_fuel_filter = new FuelFilter(&m_args.filter_args, m_eids, this);
+        m_fuel_filter = new FuelFilter(&m_args.filter_args, m_eids, &m_epower, this);
       }
 
       void
@@ -237,6 +253,17 @@ namespace Monitors
           {
             m_eids[i] = 0;
           }
+        }
+
+        for (unsigned i = 0; i < m_args.est_list.size(); ++i)
+        {
+          try
+          {
+            unsigned ent = resolveEntity(m_args.est_list[i]);
+            m_epower.insert(EntityPower(ent, m_args.est_power[i]));
+          }
+          catch (...)
+          { }
         }
       }
 

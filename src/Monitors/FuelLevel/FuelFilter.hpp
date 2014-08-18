@@ -42,6 +42,7 @@
 
 // Local headers.
 #include "BatteryData.hpp"
+#include "EntityPower.hpp"
 
 namespace Monitors
 {
@@ -126,9 +127,11 @@ namespace Monitors
       };
 
       FuelFilter(Arguments* args, unsigned eids[BatteryData::BM_TOTAL],
-                 Tasks::Task* task = NULL, bool real_clock = false, double start_time = 0.0):
+                 const std::set<EntityPower>* epower, Tasks::Task* task = NULL,
+                 bool real_clock = false, double start_time = 0.0):
         m_args(args),
         m_bdata(NULL),
+        m_epower(epower),
         m_energy_consumed(0.0),
         m_has_initial_estimate(false),
         m_last_time(-1.0),
@@ -644,7 +647,6 @@ namespace Monitors
           reset();
         }
 
-
         void
         reset(void)
         {
@@ -677,6 +679,8 @@ namespace Monitors
       const Arguments* m_args;
       //! Battery related data being measured
       BatteryData* m_bdata;
+      //! Pointer to set to gather estimated power consumption of certain entities
+      const std::set<EntityPower>* m_epower;
       //! Estimated amount of energy consumed in Wh since the task started
       float m_energy_consumed;
       //! Do we have an initial estimate
