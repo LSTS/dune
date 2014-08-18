@@ -44,7 +44,7 @@ namespace Monitors
     class EntityPower
     {
     public:
-      EntityPower(unsigned ent, float power):
+      EntityPower(unsigned ent, float power = 0.0):
         m_ent(ent),
         m_power(power)
       { }
@@ -73,6 +73,13 @@ namespace Monitors
               const EntityPower& ep2)
     {
       return ep1.getEntity() < ep2.getEntity();
+    }
+
+    bool
+    operator==(const EntityPower& ep1,
+               const EntityPower& ep2)
+    {
+      return ep1.getEntity() == ep2.getEntity();
     }
   }
 }

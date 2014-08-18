@@ -223,6 +223,20 @@ namespace Monitors
         }
       }
 
+      //! On EntityActivationState message
+      void
+      onEntityActivationState(const IMC::EntityActivationState* msg)
+      {
+        if (!m_epower->size())
+          return;
+
+        std::set<EntityPower>::const_iterator it;
+        it = m_epower->find(EntityPower(msg->getSourceEntity()));
+
+        if (it == m_epower->end())
+          return;
+      }
+
       //! Update fuel filter
       bool
       update(void)

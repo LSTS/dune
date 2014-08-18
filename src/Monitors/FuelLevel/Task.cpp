@@ -192,6 +192,7 @@ namespace Monitors
         bind<IMC::Current>(this);
         bind<IMC::Temperature>(this);
         bind<IMC::VehicleState>(this);
+        bind<IMC::EntityActivationState>(this);
       }
 
       void
@@ -289,6 +290,12 @@ namespace Monitors
       consume(const IMC::VehicleState* msg)
       {
         m_fuel_filter->onVehicleState(msg);
+      }
+
+      void
+      consume(const IMC::EntityActivationState* msg)
+      {
+        m_fuel_filter->onEntityActivationState(msg);
       }
 
       void
