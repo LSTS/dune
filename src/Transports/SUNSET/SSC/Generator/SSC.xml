@@ -2,12 +2,11 @@
 
 <ssc revision="0">
   <doc>
-    This document defines and describes a command-oriented protocol
-    for interaction with the SUNSET framework. The syntax defined
-    herein is applicable to resource constrained computational systems
-    such as the ones used in autonomous vehicles. However, the
-    semantics of the commands can be used with different data formats,
-    such as XML.
+    This document defines and describes a command-oriented protocol for
+    interaction with the SUNSET framework. The syntax defined herein is
+    applicable to resource constrained computational systems such as the
+    ones used in autonomous vehicles. However, the semantics of the
+    commands can be used with other data formats, such as XML.
   </doc>
 
   <types>
@@ -66,6 +65,8 @@
     </type>
 
     <type name="ErrorType" prefix="ERR">
+      <doc>
+      </doc>
       <values>
         <value name="INVALID_CRC">
           <doc>
@@ -106,6 +107,8 @@
     </type>
 
     <type name="FailureType" prefix="FAIL">
+      <doc>
+      </doc>
       <values>
         <value name="INVALID_VERSION">
           <doc>
@@ -143,6 +146,8 @@
     </type>
 
     <type name="TxErrorType" prefix="TX_ERR">
+      <doc>
+      </doc>
       <values>
         <value name="SUCCESS">
           <doc>
@@ -159,6 +164,8 @@
     </type>
 
     <type name="TxStatusType" prefix="TX_STA">
+      <doc>
+      </doc>
       <values>
         <value name="RECEIVED">
           <doc>
@@ -343,6 +350,8 @@
     </type>
 
     <type name="Maneuver">
+      <doc>
+      </doc>
       <type name="Goto">
         <doc>
           A "Goto" is a maneuver specifying a movement of the
