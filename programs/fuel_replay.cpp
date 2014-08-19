@@ -254,12 +254,12 @@ main(int32_t argc, char** argv)
                                        NULL, true, msg->getTimeStamp());
       }
 
-      if (!got_entities)
+      if (msg->getId() == DUNE_IMC_ENTITYINFO)
       {
-        if (msg->getId() == DUNE_IMC_ENTITYINFO)
-        {
-          IMC::EntityInfo* ent = static_cast<IMC::EntityInfo*>(msg);
+        IMC::EntityInfo* ent = static_cast<IMC::EntityInfo*>(msg);
 
+        if (!got_entities)
+        {
           bool got_all = true;
 
           for (unsigned i = 0; i < BatteryData::BM_TOTAL; ++i)
@@ -279,6 +279,19 @@ main(int32_t argc, char** argv)
           if (got_entities)
             std::cerr << "Got all entities" << std::endl;
         }
+
+        for (unsigned i = 0; i < m_args.est_list.size(); i++)
+        {
+          if (ent->label == m_args.est_list[i])
+          {
+            m_epower.insert(EntityPower(ent->id, m_args.est_power[i]));
+            std::cerr << "inserted " << ent->label << " with "
+                      << m_args.est_power[i] << std::endl;
+          }
+        }
+
+        if (m_args.est_list.size() < m_epower.size())
+          std::cerr << "TOO MANY ENTRIES!" << std::endl;
 
         IMC::Packet::serialize(msg, buffer);
         lsf.write(buffer.getBufferSigned(), buffer.getSize());
