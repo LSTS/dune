@@ -69,7 +69,6 @@ main(int32_t argc, char** argv)
   for (unsigned k = 0; k < msgs.size(); ++k)
   {
     uint32_t got = IMC::Factory::getIdFromAbbrev(Utils::String::trim(msgs[k]));
-    std::cerr << "got this " << (unsigned)got << std::endl;
     ids.insert(got);
   }
 
