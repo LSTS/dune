@@ -61,6 +61,12 @@ namespace Monitors
         return m_power;
       }
 
+      float
+      getPowerPerSecond(void) const
+      {
+        return getPower() / 3600.0;
+      }
+
     private:
       //! Entity number
       unsigned m_ent;
