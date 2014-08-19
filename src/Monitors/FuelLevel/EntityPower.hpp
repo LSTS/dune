@@ -49,19 +49,19 @@ namespace Monitors
         m_power(power)
       { }
 
-      unsigned
+      inline unsigned
       getEntity(void) const
       {
         return m_ent;
       }
 
-      float
+      inline float
       getPower(void) const
       {
         return m_power;
       }
 
-      float
+      inline float
       getPowerPerSecond(void) const
       {
         return getPower() / 3600.0;
