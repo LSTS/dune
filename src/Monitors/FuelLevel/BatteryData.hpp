@@ -61,7 +61,7 @@ namespace Monitors
 
       //! Constructor.
       //! @param[in] window_size moving averages window sizes
-      BatteryData(unsigned window_size[BM_TOTAL])
+      BatteryData(const unsigned window_size[BM_TOTAL])
       {
         for (unsigned i = 0; i < BM_TOTAL; ++i)
         {
