@@ -140,6 +140,7 @@ namespace Monitors
         m_redo_timer(c_redo_time, real_clock, start_time),
         m_sane_timer(c_sane_time, real_clock, start_time),
         m_is_maneuvering(true),
+        m_est_rate(0.0),
         m_task(task)
       {
         m_bdata = new BatteryData(m_args->avg_win);
@@ -180,7 +181,8 @@ namespace Monitors
               return;
 
             // integrate energy consumed even if there is no estimate yet
-            m_energy_consumed += m_bdata->getEnergyDrop(delta);
+            // take energy from estimated entities into account
+            m_energy_consumed += m_bdata->getEnergyDrop(delta) + m_est_rate * delta;
           }
         }
       }
@@ -224,6 +226,7 @@ namespace Monitors
       }
 
       //! On EntityActivationState message
+      //! @param[in] msg pointer to EntityActivationState message
       void
       onEntityActivationState(const IMC::EntityActivationState* msg)
       {
@@ -235,9 +238,29 @@ namespace Monitors
 
         if (it == m_epower->end())
           return;
+
+        std::set<unsigned>::iterator ut;
+        ut = m_act_ent.find(it->getEntity());
+        bool exists = ut != m_act_ent.end();
+
+        if (msg->state == IMC::EntityActivationState::EAS_ACTIVE && !exists)
+          m_act_ent.insert(it->getEntity());
+
+        if (msg->state != IMC::EntityActivationState::EAS_ACTIVE && exists)
+          m_act_ent.erase(it->getEntity());
+
+        // update estimated rate
+        m_est_rate = 0.0;
+
+        for (ut = m_act_ent.begin(); ut != m_act_ent.end(); ut++)
+        {
+          it = m_epower->find(EntityPower(*ut));
+          m_est_rate += it->getPowerPerSecond();
+        }
       }
 
       //! Update fuel filter
+      //! @return true if the filter has gathered enough data to start estimating, false otherwise
       bool
       update(void)
       {
@@ -713,6 +736,10 @@ namespace Monitors
       DualClock m_sane_timer;
       //! True if maneuvering. Start as true.
       bool m_is_maneuvering;
+      //! Set of active entities
+      std::set<unsigned> m_act_ent;
+      //! Energy rate consumed by entities we're estimating
+      float m_est_rate;
       //! Pointer to typename T (which could be class Task)
       Tasks::Task* m_task;
     };
