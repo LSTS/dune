@@ -28,6 +28,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "AscentRate.hpp"
+
 namespace Supervisors
 {
   namespace AUV
@@ -44,6 +47,8 @@ namespace Supervisors
         float depth_threshold;
         //! Threshold for the depth rate of change
         float min_ascent_rate;
+        //! Window size for the moving average of the ascent rate
+        unsigned ascent_wsize;
       };
 
       enum AssistState
@@ -62,13 +67,56 @@ namespace Supervisors
 
       struct Task: public DUNE::Tasks::Periodic
       {
+        //! Current depth
+        float m_depth;
+        //! Current Medium
+        uint8_t m_medium;
+        //! Current vehicle state
+        uint8_t m_vstate;
+        //! Rate of ascent
+        AscentRate* m_ar;
         //! Task arguments.
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
-          Tasks::Periodic(name, ctx)
+          Tasks::Periodic(name, ctx),
+          m_ar(NULL)
         {
+          param("Dislodging RPMs", m_args.dislodge_rpm)
+          .defaultValue("1600")
+          .units(Units::RPM)
+          .description("RPM value for dislodging the vehicle");
 
+          param("Depth Threshold", m_args.depth_threshold)
+          .defaultValue("0.2")
+          .units(Units::Meter)
+          .description("Depth threshold to consider that it is submerged");
+
+          param("Minimum Ascent Rate", m_args.min_ascent_rate)
+          .defaultValue("0.2")
+          .units(Units::MeterPerSecond)
+          .description("Threshold for the depth rate of change");
+
+          param("Ascent Rate Window Size", m_args.ascent_wsize)
+          .defaultValue("5")
+          .description("Window size for the moving average of the ascent rate");
+
+          bind<IMC::VehicleState>(this);
+          bind<IMC::VehicleMedium>(this);
+          bind<IMC::EstimatedState>(this);
+          bind<IMC::PlanGeneration>(this);
+        }
+
+        void
+        onResourceAcquisition(void)
+        {
+          m_ar = new AscentRate(m_args.ascent_wsize);
+        }
+
+        void
+        onResourceRelease(void)
+        {
+          Memory::clear(m_ar);
         }
 
         void
@@ -79,9 +127,33 @@ namespace Supervisors
         }
 
         void
+        consume(const IMC::VehicleState* msg)
+        {
+          m_vstate = msg->op_mode;
+        }
+
+        void
+        consume(const IMC::VehicleMedium* msg)
+        {
+          m_medium = msg->medium;
+        }
+
+        void
+        consume(const IMC::EstimatedState* msg)
+        {
+          m_ar->update(msg->depth);
+        }
+
+        void
+        consume(const IMC::PlanGeneration* msg)
+        {
+          (void)msg;
+        }
+
+        void
         task(void)
         {
-          
+
         }
       };
     }
