@@ -122,6 +122,7 @@ namespace Supervisors
           bind<IMC::VehicleMedium>(this);
           bind<IMC::EstimatedState>(this);
           bind<IMC::PlanGeneration>(this);
+          bind<IMC::PlanControl>(this);
         }
 
         void
@@ -181,6 +182,27 @@ namespace Supervisors
           }
 
           goToState(ST_WAIT_DISLODGE);
+        }
+
+        void
+        consume(const IMC::PlanControl* msg)
+        {
+          if (m_astate != ST_WAIT_DISLODGE)
+            return;
+
+          if (msg->type == IMC::PlanControl::PC_REQUEST)
+            return;
+
+          if (msg->type != IMC::PlanControl::PC_START)
+            return;
+
+          if (msg->plan_id != "dislodge")
+            return;
+
+          if (msg->type == IMC::PlanControl::PC_SUCCESS)
+            goToState(ST_IDLE);
+          else if (msg->type == IMC::PlanControl::PC_FAILURE)
+            goToState(ST_CHECK_STUCK);
         }
 
         inline void
@@ -268,6 +290,12 @@ namespace Supervisors
         }
 
         void
+        onWaitDislodge(void)
+        {
+
+        }
+
+        void
         task(void)
         {
           switch (m_astate)
@@ -279,6 +307,10 @@ namespace Supervisors
               onCheckStuck();
               break;
             case ST_START_DISLODGE:
+              onStartDislodge();
+              break;
+            case ST_WAIT_DISLODGE:
+              onWaitDislodge();
               break;
             default:
               break;
