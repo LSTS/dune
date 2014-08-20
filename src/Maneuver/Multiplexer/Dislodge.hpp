@@ -61,6 +61,8 @@ namespace Maneuver
       //! @param[in] task pointer to Maneuver task
       Dislodge(Maneuvers::Maneuver* task, DislodgeArgs* args):
         m_state(ST_START),
+        m_got_depth(false),
+        m_bursting(false),
         m_task(task),
         m_args(args)
       { }
@@ -72,8 +74,15 @@ namespace Maneuver
       {
         m_task->setControl(IMC::CL_SPEED);
 
-        m_rpm = maneuver->rpm;
+        m_rpm = std::fabs(maneuver->rpm);
         m_dir = maneuver->direction;
+
+        m_attempts = 0;
+
+        if (m_dir == IMC::Dislodge::DIR_FORWARD)
+          goToState(ST_FRONT);
+        else
+          goToState(ST_BACK);
       }
 
       //! On EstimatedState message
@@ -82,6 +91,44 @@ namespace Maneuver
       onEstimatedState(const IMC::EstimatedState* msg)
       {
         m_estate = *msg;
+
+        if (!m_got_depth)
+          m_init_depth = msg->depth;
+
+        switch (m_state)
+        {
+          case ST_START:
+            break;
+          case ST_BACK:
+          case ST_FRONT:
+            if (m_timer.overflow())
+            {
+              if (m_bursting)
+              {
+                ++m_bursts;
+                if (m_bursts >= m_args->bursts)
+                {
+                  goToState(ST_CHECK_RESULTS);
+                  break;
+                }
+
+                stopBurst();
+                m_bursting = false;
+                m_timer.setTop(m_args->interval_time);
+              }
+              else
+              {
+                startBurst(m_state);
+                m_bursting = true;
+                m_timer.setTop(m_args->burst_time);
+              }
+            }
+            break;
+          case ST_CHECK_RESULTS:
+            break;
+          case ST_FAILED:
+            break;
+        }
       }
 
       ~Dislodge(void)
@@ -102,6 +149,51 @@ namespace Maneuver
         ST_FAILED
       };
 
+      //! Go to state
+      //! @param[in] state transition to this state
+      void
+      goToState(State state)
+      {
+        switch (state)
+        {
+          case ST_BACK:
+          case ST_FRONT:
+            m_bursts = 0;
+            m_bursting = false;
+            m_timer.setTop(m_args->burst_time);
+            startBurst(state);
+            break;
+          default:
+            break;
+        }
+      }
+
+      //! Start bursting
+      //! @param[in] state reference to the desired state for burst direction
+      void
+      startBurst(State state)
+      {
+        float value = m_rpm;
+
+        if (state == ST_BACK)
+          value *= -1.0;
+
+        IMC::DesiredSpeed ds;
+        ds.value = value;
+        ds.speed_units = IMC::SUNITS_RPM;
+        m_task->dispatch(ds);
+      }
+
+      //! Stop bursting
+      void
+      stopBurst(void)
+      {
+        IMC::DesiredSpeed ds;
+        ds.value = 0.0;
+        ds.speed_units = IMC::SUNITS_RPM;
+        m_task->dispatch(ds);
+      }
+
       //! State of the state machine
       State m_state;
       //! EstimatedState data
@@ -110,6 +202,18 @@ namespace Maneuver
       float m_rpm;
       //! Direction for dislodge
       uint8_t m_dir;
+      //! Initial depth
+      float m_init_depth;
+      //! Got initial depth
+      bool m_got_depth;
+      //! True if bursting
+      bool m_bursting;
+      //! Number of bursts so far
+      unsigned m_bursts;
+      //! Number of attempts so far
+      unsigned m_attempts;
+      //! Timer for bursts and intervals
+      Time::Counter<float> m_timer;
       //! Pointer to task
       Maneuvers::Maneuver* m_task;
       //! Pointer to args
