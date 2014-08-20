@@ -39,6 +39,11 @@ namespace Supervisors
     {
       using DUNE_NAMESPACES;
 
+      //! Time between depth updates
+      static const float c_depth_period = 5.0;
+      //! Plan generation command timeout
+      static const float c_gen_timeout = 3.0;
+
       struct Arguments
       {
         //! RPM value for dislodging the vehicle
@@ -49,6 +54,8 @@ namespace Supervisors
         float min_ascent_rate;
         //! Window size for the moving average of the ascent rate
         unsigned ascent_wsize;
+        //! Minimum time with a low ascent rate before triggering assist
+        float trigger_time;
       };
 
       enum AssistState
@@ -75,12 +82,17 @@ namespace Supervisors
         uint8_t m_vstate;
         //! Rate of ascent
         AscentRate* m_ar;
+        //! Task's state
+        AssistState m_astate;
+        //! Timer for triggering the dislodge
+        Time::Counter<float> m_dtimer;
         //! Task arguments.
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Periodic(name, ctx),
-          m_ar(NULL)
+          m_ar(NULL),
+          m_astate(ST_IDLE)
         {
           param("Dislodging RPMs", m_args.dislodge_rpm)
           .defaultValue("1600")
@@ -101,6 +113,11 @@ namespace Supervisors
           .defaultValue("5")
           .description("Window size for the moving average of the ascent rate");
 
+          param("Stuck Trigger Time", m_args.trigger_time)
+          .defaultValue("30.0")
+          .units(Units::Second)
+          .description("Amount of time, after meeting conditions, before triggering dislodging behavior");
+
           bind<IMC::VehicleState>(this);
           bind<IMC::VehicleMedium>(this);
           bind<IMC::EstimatedState>(this);
@@ -110,7 +127,7 @@ namespace Supervisors
         void
         onResourceAcquisition(void)
         {
-          m_ar = new AscentRate(m_args.ascent_wsize);
+          m_ar = new AscentRate(m_args.ascent_wsize, c_depth_period);
         }
 
         void
@@ -142,18 +159,130 @@ namespace Supervisors
         consume(const IMC::EstimatedState* msg)
         {
           m_ar->update(msg->depth);
+          m_depth = msg->depth;
         }
 
         void
         consume(const IMC::PlanGeneration* msg)
         {
-          (void)msg;
+          if (m_astate != ST_START_DISLODGE)
+            return;
+
+          if (msg->cmd != IMC::PlanGeneration::CMD_EXECUTE)
+            return;
+
+          if (msg->plan_id != "dislodge")
+            return;
+
+          if (msg->op != IMC::PlanGeneration::OP_SUCCESS)
+          {
+            failedStartPlan();
+            return;
+          }
+
+          goToState(ST_WAIT_DISLODGE);
+        }
+
+        inline void
+        failedStartPlan(void)
+        {
+          err(DTR("failed to start dislodge maneuver"));
+        }
+
+        inline void
+        dispatchDislodge(void)
+        {
+          IMC::PlanGeneration pg;
+          pg.op = IMC::PlanGeneration::OP_REQUEST;
+          pg.cmd = IMC::PlanGeneration::CMD_EXECUTE;
+          pg.plan_id = "dislodge";
+          pg.params = Utils::String::str("rpm=%.1f", m_args.dislodge_rpm);
+          dispatch(pg);
+        }
+
+        bool
+        mainConditions(void)
+        {
+          if ((m_vstate != IMC::VehicleState::VS_SERVICE) &&
+              (m_vstate != IMC::VehicleState::VS_ERROR))
+            return false;
+
+          if (m_medium != IMC::VehicleMedium::VM_UNDERWATER)
+            return false;
+
+          if (m_depth < m_args.depth_threshold)
+            return false;
+
+          if (m_ar->mean() >= m_args.min_ascent_rate)
+            return false;
+
+          return true;
+        }
+
+        void
+        goToState(AssistState state)
+        {
+          switch (state)
+          {
+            case ST_CHECK_STUCK:
+              m_dtimer.setTop(m_args.trigger_time);
+            case ST_START_DISLODGE:
+              m_dtimer.setTop(c_gen_timeout);
+              dispatchDislodge();
+              break;
+            default:
+              break;
+          }
+
+          m_astate = state;
+        }
+
+        void
+        onIdle(void)
+        {
+          if (mainConditions())
+            goToState(ST_CHECK_STUCK);
+        }
+
+        void
+        onCheckStuck(void)
+        {
+          if (!mainConditions())
+          {
+            goToState(ST_IDLE);
+            return;
+          }
+
+          if (m_dtimer.overflow())
+            goToState(ST_START_DISLODGE);
+        }
+
+        void
+        onStartDislodge(void)
+        {
+          if (m_dtimer.overflow())
+          {
+            failedStartPlan();
+            goToState(ST_CHECK_STUCK);
+          }
         }
 
         void
         task(void)
         {
-
+          switch (m_astate)
+          {
+            case ST_IDLE:
+              onIdle();
+              break;
+            case ST_CHECK_STUCK:
+              onCheckStuck();
+              break;
+            case ST_START_DISLODGE:
+              break;
+            default:
+              break;
+          }
         }
       };
     }
