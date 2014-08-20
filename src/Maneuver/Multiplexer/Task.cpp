@@ -38,6 +38,7 @@
 #include "FollowPath.hpp"
 #include "Elevator.hpp"
 #include "PopUp.hpp"
+#include "Dislodge.hpp"
 #include "Idle.hpp"
 
 namespace Maneuver
@@ -48,7 +49,8 @@ namespace Maneuver
 
     static const std::string c_names[] = {"Goto", "Loiter", "StationKeeping",
                                           "YoYo", "Rows", "FollowPath",
-                                          "Elevator", "PopUp", "Idle"};
+                                          "Elevator", "PopUp", "Dislodge",
+                                          "Idle"};
 
     enum ManeuverType
     {
@@ -68,6 +70,8 @@ namespace Maneuver
       TYPE_ELEVATOR,
       //! Type PopUp
       TYPE_POPUP,
+      //! Type Dislodge
+      TYPE_DISLODGE,
       //! Type Idle
       TYPE_IDLE,
       //! Total number of maneuvers
@@ -108,6 +112,8 @@ namespace Maneuver
       Elevator* m_elevator;
       //! PopUp
       PopUp* m_popup;
+      //! Dislodge
+      Dislodge* m_dislodge;
       //! Idle
       Idle* m_idle;
       //! Type of maneuver to perform
@@ -127,6 +133,7 @@ namespace Maneuver
         m_followpath(NULL),
         m_elevator(NULL),
         m_popup(NULL),
+        m_dislodge(NULL),
         m_idle(NULL)
       {
         for (unsigned i = 0; i < TYPE_TOTAL; i++)
@@ -215,6 +222,7 @@ namespace Maneuver
         bindToManeuver<Task, IMC::FollowPath>();
         bindToManeuver<Task, IMC::Elevator>();
         bindToManeuver<Task, IMC::PopUp>();
+        bindToManeuver<Task, IMC::Dislodge>();
         bindToManeuver<Task, IMC::IdleManeuver>();
         bind<IMC::EstimatedState>(this);
         bind<IMC::GpsFix>(this);
@@ -242,6 +250,7 @@ namespace Maneuver
         m_followpath = new FollowPath(static_cast<Maneuvers::Maneuver*>(this));
         m_elevator = new Elevator(static_cast<Maneuvers::Maneuver*>(this), &m_args.elevator);
         m_popup = new PopUp(static_cast<Maneuvers::Maneuver*>(this), &m_args.popup);
+        m_dislodge = new Dislodge(static_cast<Maneuvers::Maneuver*>(this));
         m_idle = new Idle(static_cast<Maneuvers::Maneuver*>(this));
       }
 
@@ -256,6 +265,7 @@ namespace Maneuver
         Memory::clear(m_followpath);
         Memory::clear(m_elevator);
         Memory::clear(m_popup);
+        Memory::clear(m_dislodge);
         Memory::clear(m_idle);
       }
 
@@ -359,6 +369,15 @@ namespace Maneuver
         changeEntity();
 
         m_popup->start(maneuver);
+      }
+
+      void
+      consume(const IMC::Dislodge* maneuver)
+      {
+        m_type = TYPE_DISLODGE;
+        changeEntity();
+
+        m_dislodge->start(maneuver);
       }
 
       void
