@@ -43,10 +43,26 @@ namespace Maneuver
     class Dislodge
     {
     public:
+      struct DislodgeArgs
+      {
+        //! Number of bursts
+        unsigned bursts;
+        //! Number of total attempts
+        unsigned attempts;
+        //! Burst duration
+        float burst_time;
+        //! Interval between bursts
+        float interval_time;
+        //! Minimum distance to ground or object to stop burst
+        float min_distance;
+      };
+
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
-      Dislodge(Maneuvers::Maneuver* task):
-        m_task(task)
+      Dislodge(Maneuvers::Maneuver* task, DislodgeArgs* args):
+        m_state(ST_START),
+        m_task(task),
+        m_args(args)
       { }
 
       //! Start maneuver function
@@ -86,6 +102,8 @@ namespace Maneuver
         ST_FAILED
       };
 
+      //! State of the state machine
+      State m_state;
       //! EstimatedState data
       IMC::EstimatedState m_estate;
       //! Speed in rpms
@@ -94,6 +112,8 @@ namespace Maneuver
       uint8_t m_dir;
       //! Pointer to task
       Maneuvers::Maneuver* m_task;
+      //! Pointer to args
+      DislodgeArgs* m_args;
     };
   }
 }

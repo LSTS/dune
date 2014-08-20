@@ -92,6 +92,8 @@ namespace Maneuver
       Elevator::ElevatorArgs elevator;
       //! PopUp Arguments
       PopUp::PopUpArgs popup;
+      //! Dislodge Arguments
+      Dislodge::DislodgeArgs dislodge;
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -214,6 +216,29 @@ namespace Maneuver
         .units(Units::Meter)
         .description("Maximum distance from station keeping radial circle");
 
+        param("Dislodge -- Bursts", m_args.dislodge.bursts)
+        .defaultValue("5")
+        .description("Number of bursts with the motor");
+
+        param("Dislodge -- Attempts", m_args.dislodge.attempts)
+        .defaultValue("5")
+        .description("Number of total attempts");
+
+        param("Dislodge -- Burst Time", m_args.dislodge.burst_time)
+        .defaultValue("5.0")
+        .units(Units::Second)
+        .description("Burst duration");
+
+        param("Dislodge -- Interval Time", m_args.dislodge.interval_time)
+        .defaultValue("5.0")
+        .units(Units::Second)
+        .description("Time interval between bursts");
+
+        param("Dislodge -- Minimum Distance", m_args.dislodge.min_distance)
+        .defaultValue("3.0")
+        .units(Units::Meter)
+        .description("Minimum distance to ground or object to stop burst");
+
         bindToManeuver<Task, IMC::Goto>();
         bindToManeuver<Task, IMC::Loiter>();
         bindToManeuver<Task, IMC::StationKeeping>();
@@ -250,7 +275,7 @@ namespace Maneuver
         m_followpath = new FollowPath(static_cast<Maneuvers::Maneuver*>(this));
         m_elevator = new Elevator(static_cast<Maneuvers::Maneuver*>(this), &m_args.elevator);
         m_popup = new PopUp(static_cast<Maneuvers::Maneuver*>(this), &m_args.popup);
-        m_dislodge = new Dislodge(static_cast<Maneuvers::Maneuver*>(this));
+        m_dislodge = new Dislodge(static_cast<Maneuvers::Maneuver*>(this), &m_args.dislodge);
         m_idle = new Idle(static_cast<Maneuvers::Maneuver*>(this));
       }
 
