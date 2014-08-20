@@ -54,13 +54,44 @@ namespace Maneuver
       void
       start(const IMC::Dislodge* maneuver)
       {
-        (void)maneuver;
+        m_task->setControl(IMC::CL_SPEED);
+
+        m_rpm = maneuver->rpm;
+        m_dir = maneuver->direction;
+      }
+
+      //! On EstimatedState message
+      //! @param[in] msg EstimatedState message
+      void
+      onEstimatedState(const IMC::EstimatedState* msg)
+      {
+        m_estate = *msg;
       }
 
       ~Dislodge(void)
       { }
 
     private:
+      enum State
+      {
+        //! Starting state
+        ST_START,
+        //! Going backwards
+        ST_BACK,
+        //! Going forward
+        ST_FRONT,
+        //! Check results
+        ST_CHECK_RESULTS,
+        //! Failed state
+        ST_FAILED
+      };
+
+      //! EstimatedState data
+      IMC::EstimatedState m_estate;
+      //! Speed in rpms
+      float m_rpm;
+      //! Direction for dislodge
+      uint8_t m_dir;
       //! Pointer to task
       Maneuvers::Maneuver* m_task;
     };

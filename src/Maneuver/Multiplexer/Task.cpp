@@ -397,6 +397,9 @@ namespace Maneuver
           case TYPE_POPUP:
             m_popup->onEstimatedState(msg);
             break;
+          case TYPE_DISLODGE:
+            m_dislodge->onEstimatedState(msg);
+            break;
           default:
             break;
         }
