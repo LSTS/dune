@@ -218,7 +218,8 @@ namespace Supervisors
           pg.op = IMC::PlanGeneration::OP_REQUEST;
           pg.cmd = IMC::PlanGeneration::CMD_EXECUTE;
           pg.plan_id = "dislodge";
-          pg.params = Utils::String::str("rpm=%.1f", m_args.dislodge_rpm);
+          pg.params = (Utils::String::str("rpm=%.1f", m_args.dislodge_rpm) +
+                       "ignore_errors=true");
           dispatch(pg);
         }
 
