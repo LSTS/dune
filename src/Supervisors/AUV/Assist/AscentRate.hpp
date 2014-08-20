@@ -43,11 +43,10 @@ namespace Supervisors
       class AscentRate
       {
       public:
-        AscentRate(unsigned window_size):
-          m_last_depth(-1.0),
-          m_last_time(-1.0)
+        AscentRate(unsigned window_size, float period)
         {
           m_avg = new Math::MovingAverage<float>(window_size);
+          m_timer.setTop(period);
         }
 
         ~AscentRate(void)
@@ -58,20 +57,17 @@ namespace Supervisors
         float
         update(float depth)
         {
-          if (m_last_time < 0.0 || m_last_depth < 0.0)
-            return 0.0;
+          if (!m_timer.overflow())
+            return mean();
 
           float value;
-          value = m_avg->update((depth - m_last_depth) / (Time::Clock::get() - m_last_time));
-
-          m_last_time = Time::Clock::get();
-          m_last_depth = depth;
+          value = m_avg->update(-m_deriv.update(depth));
 
           return value;
         }
 
         float
-        mean(void)
+        mean(void) const
         {
           return m_avg->mean();
         }
@@ -79,10 +75,10 @@ namespace Supervisors
       private:
         //! Moving average for the ascent rate
         Math::MovingAverage<float>* m_avg;
-        //! Last depth value
-        float m_last_depth;
-        //! Measure time elapsed between measurements
-        float m_last_time;
+        //! Derivative of the depth
+        Math::Derivative<float> m_deriv;
+        //! Counter for the time between updates
+        Time::Counter<float> m_timer;
       };
     }
   }
