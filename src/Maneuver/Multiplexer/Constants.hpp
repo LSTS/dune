@@ -38,6 +38,8 @@ namespace Maneuver
     static const float c_depth_tol = 0.3f;
     //! Minimum radius for the elevators
     static const float c_min_elev_radius = 10.0f;
+    //! Stabilization time for the dislodge maneuver
+    static const float c_stab_time = 30.0f;
   }
 }
 

@@ -125,6 +125,10 @@ namespace Maneuver
             }
             break;
           case ST_CHECK_RESULTS:
+            if (m_timer.overflow())
+            {
+
+            }
             break;
           case ST_FAILED:
             break;
@@ -162,6 +166,9 @@ namespace Maneuver
             m_bursting = false;
             m_timer.setTop(m_args->burst_time);
             startBurst(state);
+            break;
+          case ST_CHECK_RESULTS:
+            m_timer.setTop(c_stab_time);
             break;
           default:
             break;
