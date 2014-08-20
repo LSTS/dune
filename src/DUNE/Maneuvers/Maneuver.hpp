@@ -56,6 +56,10 @@ namespace DUNE
       virtual
       ~Maneuver();
 
+      //! On entity reservation
+      void
+      onEntityReservation(void);
+
       //! On resource initialization
       void
       onResourceInitialization(void)
@@ -72,6 +76,13 @@ namespace DUNE
       virtual void
       onManeuverDeactivation(void)
       { }
+
+      //! On Path Control State
+      virtual void
+      onPathControlState(const IMC::PathControlState* pcs)
+      {
+        (void)pcs;
+      }
 
       //! On task activation
       //! Should be used only by parent class Maneuver
@@ -105,7 +116,7 @@ namespace DUNE
       {
         void (Maneuver::* startfunc)(const M*) = &Maneuver::startManeuver<T, M>;
         Task::bind<M>(this, startfunc);
-        m_rm.mid = M::getIdStatic();
+        m_reg_man.insert(M::getIdStatic());
       }
 
       template <typename M, typename T>
@@ -136,10 +147,67 @@ namespace DUNE
       void
       consume(const IMC::StopManeuver* sm);
 
+      //! Consumer for PathControlState message.
+      //! @param pcs message to consume.
+      void
+      consume(const IMC::PathControlState* pcs);
+
       //! Set or reconfigure control loops used by maneuver task.
       //! @param mask mask identifying controllers that should be made active.
       void
       setControl(uint32_t mask);
+
+      //! Set entity Id for dispatching message
+      //! Useful for maneuvers binding to more than one maneuver message
+      void
+      setEntityId(unsigned eid)
+      {
+        m_eid = eid;
+      }
+
+      //! Dispatch needs to be handled in a special fashion for DesiredPath.
+      //! This function handles every other kind of message.
+      //! @param[in] msg message pointer.
+      //! @param[in] flags bitfield with flags.
+      void
+      dispatch(IMC::Message* msg, unsigned int flags = 0)
+      {
+        msg->setSourceEntity(m_eid);
+        flags |= Tasks::DF_KEEP_SRC_EID;
+        Task::dispatch(msg, flags);
+      }
+
+      //! Dispatch needs to be handled in a special fashion for DesiredPath.
+      //! This function handles every other kind of message.
+      //! @param[in] msg message reference.
+      //! @param[in] flags bitfield with flags.
+      void
+      dispatch(IMC::Message& msg, unsigned int flags = 0)
+      {
+        dispatch(&msg, flags);
+      }
+
+      //! Dispatch needs to be handled in a special fashion for DesiredPath.
+      //! @param[in] msg message pointer.
+      //! @param[in] flags bitfield with flags.
+      void
+      dispatch(IMC::DesiredPath* msg, unsigned int flags = 0)
+      {
+        msg->path_ref = changePathRef();
+
+        msg->setSourceEntity(m_eid);
+        flags |= Tasks::DF_KEEP_SRC_EID;
+        Task::dispatch(msg, flags);
+      }
+
+      //! Dispatch needs to be handled in a special fashion for DesiredPath.
+      //! @param[in] msg message reference.
+      //! @param[in] flags bitfield with flags.
+      void
+      dispatch(IMC::DesiredPath& msg, unsigned int flags = 0)
+      {
+        dispatch(&msg, flags);
+      }
 
       //! State report handler.
       //! It should be overriden by maneuvers where it
@@ -214,8 +282,15 @@ namespace DUNE
       uint32_t
       changeScopeRef(void);
 
-      IMC::ManeuverControlState m_mcs;
-      IMC::RegisterManeuver m_rm;
+      //! Update path reference
+      //! @return new sequence number for the desired path
+      uint32_t
+      changePathRef(void);
+
+      //! Entity to use when dispatching message
+      unsigned m_eid;
+      //! Set of registered maneuvers
+      std::set<uint16_t> m_reg_man;
     };
   }
 }

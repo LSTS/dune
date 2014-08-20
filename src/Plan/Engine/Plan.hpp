@@ -68,35 +68,45 @@ namespace Plan
       //! Default constructor.
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] compute_progress true if progress should be computed
+      //! @param[in] min_cal_time minimum calibration time in s.
       //! @param[in] speed_rpm_factor factor to convert from RPMs to m/s
       //! @param[in] speed_act_factor factor to convert from actuation to m/s
       Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-           float speed_rpm_factor, float speed_act_factor):
+           uint16_t min_cal_time, float speed_rpm_factor,
+           float speed_act_factor):
         m_spec(spec),
         m_curr_node(NULL),
         m_sequential(false),
         m_compute_progress(compute_progress),
         m_progress(0.0),
-        m_calibration(0),
+        m_est_cal_time(0),
         m_beyond_dur(false),
         m_sched(NULL),
-        m_started_maneuver(false)
+        m_started_maneuver(false),
+        m_calib(NULL),
+        m_min_cal_time(min_cal_time)
       {
         m_speed_conv.rpm_factor = speed_rpm_factor;
         m_speed_conv.act_factor = speed_act_factor;
+
+        m_calib = new Calibration();
       }
 
       //! No speed conversion constructor
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] compute_progress true if progress should be computed
-      Plan(const IMC::PlanSpecification* spec, bool compute_progress)
+      //! @param[in] min_cal_time minimum calibration time in s.
+      Plan(const IMC::PlanSpecification* spec, bool compute_progress,
+           uint16_t min_cal_time)
       {
-        *this = Plan(spec, compute_progress, 0.0, 0.0);
+        *this = Plan(spec, compute_progress, min_cal_time, 0.0, 0.0);
       }
 
       ~Plan(void)
       {
         Memory::clear(m_sched);
+        Memory::clear(m_sched);
+        Memory::clear(m_calib);
       }
 
       //! Reset data
@@ -108,7 +118,6 @@ namespace Plan
         m_sequential = false;
         m_durations.clear();
         m_progress = -1.0;
-        m_calibration = 0;
         m_beyond_dur = false;
         m_last_dur = m_durations.end();
         m_started_maneuver = false;
@@ -220,14 +229,15 @@ namespace Plan
 
             // Estimate necessary calibration time
             float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
-            m_calibration = (uint16_t)trimValue(diff, 0.0, diff);
+            m_est_cal_time = (uint16_t)trimValue(diff, 0.0, diff);
+            m_est_cal_time = (uint16_t)std::max(m_min_cal_time, m_est_cal_time);
           }
           else if (!m_sequential)
           {
             Memory::clear(m_sched);
             m_sched = new ActionSchedule(task, m_spec, m_seq_nodes, cinfo);
 
-            m_calibration = 0;
+            m_est_cal_time = m_min_cal_time;
           }
         }
 
@@ -260,9 +270,9 @@ namespace Plan
 
       //! Signal that calibration has started
       void
-      calibrationStarted(const Calibration* calib)
+      calibrationStarted(void)
       {
-        m_calibration = (uint16_t)calib->getTime();
+        m_calib->setTime(m_est_cal_time);
       }
 
       //! Signal that a maneuver has started
@@ -303,9 +313,9 @@ namespace Plan
       //! Get necessary calibration time
       //! @return necessary calibration time
       uint16_t
-      getCalibrationTime(void) const
+      getEstimatedCalibrationTime(void) const
       {
-        return m_calibration;
+        return m_est_cal_time;
       }
 
       //! Check if plan has been completed
@@ -373,7 +383,7 @@ namespace Plan
       float
       getTotalDuration(void) const
       {
-        return getExecutionDuration() + getCalibrationTime();
+        return getExecutionDuration() + getEstimatedCalibrationTime();
       }
 
       //! Get execution percentage
@@ -384,14 +394,37 @@ namespace Plan
         return getExecutionDuration() / getTotalDuration() * 100.0;
       }
 
+      //! Get calibration info string
+      //! @return calibration info string
+      inline const std::string
+      getCalibrationInfo(void) const
+      {
+        return m_calib->getInfo();
+      }
+
+      //! Is calibration done
+      //! @return true if so, false otherwise
+      inline bool
+      isCalibrationDone(void) const
+      {
+        return m_calib->isDone();
+      }
+
+      //! Has calibration failed
+      //! @return true if so, false otherwise
+      inline bool
+      hasCalibrationFailed(void) const
+      {
+        return m_calib->hasFailed();
+      }
+
       //! Get current plan progress
       //! @param[in] mcs pointer to maneuver control state message
-      //! @param[in] calib pointer to calibration information
       //! @return progress in percent (-1.0 if unable to compute)
       float
-      updateProgress(const IMC::ManeuverControlState* mcs, Calibration* calib)
+      updateProgress(const IMC::ManeuverControlState* mcs)
       {
-        float prog = progress(mcs, calib);
+        float prog = progress(mcs);
 
         if (prog >= 0.0 && m_sched != NULL)
         {
@@ -402,6 +435,33 @@ namespace Plan
         }
 
         return prog;
+      }
+
+      //! Update calibration process
+      void
+      updateCalibration(const IMC::VehicleState* vs)
+      {
+        if (vs->op_mode == IMC::VehicleState::VS_CALIBRATION && m_calib->notStarted())
+        {
+          m_calib->start();
+        }
+        else if (vs->op_mode != IMC::VehicleState::VS_CALIBRATION && m_calib->inProgress())
+        {
+          m_calib->stop();
+        }
+        else if (m_calib->inProgress())
+        {
+          // check if some calibration time can be skipped
+          if (waitingForDevice())
+          {
+            m_calib->forceRemainingTime(scheduledTimeLeft());
+          }
+          else if (m_calib->getElapsedTime() >= m_min_cal_time)
+          {
+            // If we're past the minimum calibration time
+            m_calib->stop();
+          }
+        }
       }
 
       //! Pass EntityActivationState to scheduler
@@ -474,7 +534,7 @@ namespace Plan
       //! Returns calibration time left according to scheduler
       //! @return calibration time left or -1 if no scheduler is active
       float
-      calibTimeLeft(void) const
+      scheduledTimeLeft(void) const
       {
         if (m_sched != NULL)
           return m_sched->calibTimeLeft();
@@ -555,10 +615,9 @@ namespace Plan
 
       //! Compute current progress
       //! @param[in] pointer to ManeuverControlState message
-      //! @param[in] calib pointer to calibration information
       //! @return progress in percent (-1.0 if unable to compute)
       float
-      progress(const IMC::ManeuverControlState* mcs, const Calibration* calib)
+      progress(const IMC::ManeuverControlState* mcs)
       {
         if (!m_compute_progress)
           return -1.0;
@@ -568,16 +627,16 @@ namespace Plan
           return -1.0;
 
         // If calibration has not started yet, but will later
-        if (calib->notStarted())
+        if (m_calib->notStarted())
           return -1.0;
 
         float total_duration = getTotalDuration();
         float exec_duration = getExecutionDuration();
 
         // Check if its calibrating
-        if (calib->inProgress())
+        if (m_calib->inProgress())
         {
-          float time_left = calib->getRemaining() + exec_duration;
+          float time_left = m_calib->getRemaining() + exec_duration;
           m_progress = 100.0 * trimValue(1.0 - time_left / total_duration, 0.0, 1.0);
           return m_progress;
         }
@@ -646,8 +705,8 @@ namespace Plan
       bool m_compute_progress;
       //! Current progress if any
       float m_progress;
-      //! Current plan's calibration time if any
-      uint16_t m_calibration;
+      //! Estimated required calibration time
+      uint16_t m_est_cal_time;
       //! Vector of message pointers to cycle through (sequential) plan
       std::vector<IMC::PlanManeuver*> m_seq_nodes;
       //! Maneuver durations
@@ -664,6 +723,10 @@ namespace Plan
       std::vector<std::string> m_affected_ents;
       //! Signal that a maneuver has started
       bool m_started_maneuver;
+      //! Calibration object pointer
+      Calibration* m_calib;
+      //! Minimum calibration time
+      uint16_t m_min_cal_time;
     };
   }
 }

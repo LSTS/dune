@@ -34,17 +34,26 @@ namespace DUNE
   namespace Maneuvers
   {
     static Concurrency::Mutex s_amask_lock;
+    static Concurrency::Mutex s_path_lock;
     static uint32_t s_amask;
     static uint32_t s_scope_ref;
+    static uint32_t s_path_ref;
 
     Maneuver::Maneuver(const std::string& name, Tasks::Context& ctx):
       Tasks::Task(name, ctx)
     {
       bind<IMC::StopManeuver>(this);
+      bind<IMC::PathControlState>(this);
     }
 
     Maneuver::~Maneuver(void)
     { }
+
+    void
+    Maneuver::onEntityReservation(void)
+    {
+      m_eid = getEntityId();
+    }
 
     void
     Maneuver::onActivation(void)
@@ -104,6 +113,27 @@ namespace DUNE
       }
     }
 
+    uint32_t
+    Maneuver::changePathRef(void)
+    {
+      while (1)
+      {
+        try
+        {
+          Concurrency::ScopedMutex l(s_path_lock);
+
+          s_path_ref += 1;
+
+          return s_path_ref;
+        }
+        catch (...)
+        {
+
+        }
+      }
+    }
+
+
     void
     Maneuver::consume(const IMC::StopManeuver* sm)
     {
@@ -122,14 +152,27 @@ namespace DUNE
     }
 
     void
+    Maneuver::consume(const IMC::PathControlState* pcs)
+    {
+      if (!isActive())
+        return;
+
+      if (s_path_ref != pcs->path_ref)
+        return;
+
+      onPathControlState(pcs);
+    }
+
+    void
     Maneuver::signalError(const std::string& msg)
     {
       err("%s", msg.c_str());
       requestDeactivation();
-      m_mcs.state = IMC::ManeuverControlState::MCS_ERROR;
-      m_mcs.info = msg;
-      m_mcs.eta = 0;
-      dispatch(m_mcs);
+      IMC::ManeuverControlState mcs;
+      mcs.state = IMC::ManeuverControlState::MCS_ERROR;
+      mcs.info = msg;
+      mcs.eta = 0;
+      dispatch(mcs);
     }
 
     void
@@ -150,19 +193,21 @@ namespace DUNE
     {
       debug("%s", msg.c_str());
       requestDeactivation();
-      m_mcs.state = IMC::ManeuverControlState::MCS_DONE;
-      m_mcs.info = msg;
-      m_mcs.eta = 0;
-      dispatch(m_mcs);
+      IMC::ManeuverControlState mcs;
+      mcs.state = IMC::ManeuverControlState::MCS_DONE;
+      mcs.info = msg;
+      mcs.eta = 0;
+      dispatch(mcs);
     }
 
     void
     Maneuver::signalProgress(uint16_t time_left, const std::string& msg)
     {
-      m_mcs.state = IMC::ManeuverControlState::MCS_EXECUTING;
-      m_mcs.info = msg;
-      m_mcs.eta = time_left;
-      dispatch(m_mcs);
+      IMC::ManeuverControlState mcs;
+      mcs.state = IMC::ManeuverControlState::MCS_EXECUTING;
+      mcs.info = msg;
+      mcs.eta = time_left;
+      dispatch(mcs);
     }
 
     void
@@ -194,7 +239,13 @@ namespace DUNE
     void
     Maneuver::onMain(void)
     {
-      dispatch(m_rm);
+      std::set<uint16_t>::const_iterator it;
+      for (it = m_reg_man.begin(); it != m_reg_man.end(); it++)
+      {
+        IMC::RegisterManeuver rm;
+        rm.mid = *it;
+        dispatch(rm);
+      }
 
       while (!stopping())
       {

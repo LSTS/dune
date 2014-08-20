@@ -83,6 +83,8 @@ namespace Control
           m_hrate(0),
           m_thrust(0),
           m_acceleration(0),
+          m_verfin(0),
+          m_horfin(0),
           m_torque_control(false),
           m_analog_thrust(false)
         {
@@ -247,7 +249,9 @@ namespace Control
         void
         consume(const IMC::EstimatedState* msg)
         {
-          (void)msg;
+          if (msg->getSource() != getSystemId())
+            return;
+
           m_last_estate.reset();
         }
 

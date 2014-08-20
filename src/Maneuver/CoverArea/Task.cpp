@@ -52,7 +52,6 @@ namespace Maneuver
       {
         bindToManeuver<Task, IMC::CoverArea>();
         bind<IMC::EstimatedState>(this);
-        bind<IMC::PathControlState>(this);
         //    bind<Task, IMC::EstimatedStreamVelocity>(*this);
 
         param("Laps", m_param_times)
@@ -380,6 +379,9 @@ namespace Maneuver
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         m_estate = *msg;
 
         if (!isActive())
@@ -398,7 +400,7 @@ namespace Maneuver
 
       // Function to check if the vehicle is getting near to the next waypoint
       void
-      consume(const IMC::PathControlState* pcs)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
         if (pcs->flags & IMC::PathControlState::FL_NEAR)
         {

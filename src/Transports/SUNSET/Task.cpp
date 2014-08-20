@@ -368,6 +368,9 @@ namespace Transports
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         double lat = 0;
         double lon = 0;
 

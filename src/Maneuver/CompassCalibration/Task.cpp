@@ -73,6 +73,8 @@ namespace Maneuver
       uint16_t m_duration;
       //! In calibrating phase
       bool m_calibrating;
+      //! True if a pitch message has been dispatched already
+      bool m_dispatched;
       //! AHRS entity id.
       unsigned m_ahrs_eid;
       //! Started yoyo movements (not necessarily calibrating)
@@ -111,7 +113,6 @@ namespace Maneuver
         .description("Number of 360 degree turns until calibration");
 
         bindToManeuver<Task, IMC::CompassCalibration>();
-        bind<IMC::PathControlState>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::EulerAngles>(this);
         bind<IMC::MagneticField>(this);
@@ -187,6 +188,7 @@ namespace Maneuver
         m_end_time = -1;
         m_calibrating = false;
         m_yoyo_ing = false;
+        m_dispatched = false;
 
         double zref;
 
@@ -214,6 +216,9 @@ namespace Maneuver
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         m_estate = *msg;
 
         if (!m_yoyo_ing)
@@ -239,7 +244,7 @@ namespace Maneuver
       }
 
       void
-      consume(const IMC::PathControlState* pcs)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
         if ((pcs->flags & IMC::PathControlState::FL_LOITERING) && !m_yoyo_ing)
         {
@@ -354,12 +359,14 @@ namespace Maneuver
 
         double v = m_yoyo->update(startup, state_z, m_estate.theta);
 
-        if (v == m_pitch.value)
+        if ((v == m_pitch.value) && m_dispatched)
           return;
 
         // Dispatch pitch message
         m_pitch.value = v;
         dispatch(m_pitch);
+
+        m_dispatched = true;
       }
     };
   }

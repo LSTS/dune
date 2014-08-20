@@ -149,6 +149,9 @@ namespace Transports
         if (!isActive())
           return;
 
+        if (es->getSource() != getSystemId())
+          return;
+
         updateStats(m_sstats["x"], es->x - m_estate.x);
         updateStats(m_sstats["y"], es->y - m_estate.y);
         updateStats(m_sstats["z"], es->z - m_estate.z);

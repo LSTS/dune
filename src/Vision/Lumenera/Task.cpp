@@ -34,6 +34,7 @@
 
 // Local headers.
 #include "HTTPClient.hpp"
+#include "EntityActivationMaster.hpp"
 
 namespace Vision
 {
@@ -84,6 +85,12 @@ namespace Vision
       unsigned volume_size;
       //! Power GPIO.
       int pwr_gpio;
+      //! Whether to configure the camera.
+      bool camera_cfg;
+      //! Whether to capture from the camera.
+      bool camera_capt;
+      //! Slave entities
+      std::vector<std::string> slave_entities;
     };
 
     //! Device driver task.
@@ -109,6 +116,14 @@ namespace Vision
       double m_timestamp;
       //! Power GPIO.
       Hardware::GPIO* m_pwr_gpio;
+      //! Config is dirty.
+      bool m_cfg_dirty;
+      //! Slave entities
+      EntityActivationMaster* m_slave_entities;
+      //! Activation timer
+      Counter<double> m_act_timer;
+      //! True if received the logging path.
+      bool m_log_dir_updated;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -117,7 +132,10 @@ namespace Vision
         m_log_dir(ctx.dir_log),
         m_volume_count(0),
         m_file_count(0),
-        m_pwr_gpio(NULL)
+        m_pwr_gpio(NULL),
+        m_cfg_dirty(false),
+        m_slave_entities(NULL),
+        m_log_dir_updated(false)
       {
         // Retrieve configuration values.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -132,66 +150,98 @@ namespace Vision
         .description("IPv4 address of the camera");
 
         param("Frames Per Second", m_args.fps)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("15")
         .description("Frames per second");
 
         param("Auto Exposure", m_args.auto_exposure)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("true")
         .description("Enable automatic exposure");
 
         param("Exposure Value", m_args.exposure_value)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("0.008")
         .description("Exposure value if auto exposure is disabled");
 
         param("Autoexposure Knee", m_args.exposure_knee)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("5")
         .description("Exposure limit before increasing the gain (in miliseconds)");
 
         param("Maximum Exposure", m_args.exposure_max)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("10")
         .description("Maximum exposure in miliseconds");
 
         param("Auto Gain", m_args.auto_gain)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("true")
         .description("Enable automatic gain");
 
         param("Gain Value", m_args.gain_value)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("1.0")
         .description("Gain value if auto gain is disabled");
 
         param("Autogain Knee", m_args.gain_knee)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("2.0")
         .description("Gain limit before increasing the exposure");
 
         param("Maximum Gain", m_args.gain_max)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("4.0")
         .description("Maximum gain");
 
         param("Gamma", m_args.gamma)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("1.4")
         .description("Gamma Value");
 
         param("Median Filter", m_args.median_filter)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("false")
         .description("Enable Median Filter");
 
         param("Auto White Balance", m_args.auto_whitebalance)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("true")
         .description("Enable Continuous Automatic White Balance");
 
         param("White Balance Gain Red", m_args.gain_red)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("2.0")
         .description("White Balance Gain Red");
 
         param("White Balance Gain Green", m_args.gain_green)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("1.0")
         .description("White Balance Gain Green");
 
         param("White Balance Gain Blue", m_args.gain_blue)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("2.0")
         .description("White Balance Gain Blue");
 
         param("Strobe", m_args.strobe)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("true")
         .description("Enable Strobe");
 
@@ -202,7 +252,51 @@ namespace Vision
         .defaultValue("1000")
         .description("Number of photos per volume");
 
+        param("Enable Camera Configuration", m_args.camera_cfg)
+        .defaultValue("true")
+        .description("Attempt to configure the camera");
+
+        param("Enable Camera Streaming", m_args.camera_capt)
+        .defaultValue("true")
+        .description("Attempt to capture frames from the camera");
+
+        param("Slave Entities", m_args.slave_entities)
+        .defaultValue("")
+        .description("Slave entities to activate/deactivate");
+
         bind<IMC::LoggingControl>(this);
+        bind<IMC::EntityActivationState>(this);
+        bind<IMC::EntityInfo>(this);
+      }
+
+      void
+      updateSlaveEntities(void)
+      {
+        if (m_slave_entities == NULL)
+          return;
+
+        m_slave_entities->clear();
+
+        std::size_t sep;
+        std::vector<std::string>::const_iterator itr = m_args.slave_entities.begin();
+        for (; itr != m_args.slave_entities.end(); ++itr)
+        {
+          sep = itr->find_first_of(':');
+
+          if (sep == std::string::npos)
+            // Local entity
+            m_slave_entities->addEntity(*itr);
+          else
+            // Remote entity
+            m_slave_entities->addEntity(itr->substr(sep + 1), itr->substr(0, sep));
+        }
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        m_cfg_dirty = true;
+        updateSlaveEntities();
       }
 
       void
@@ -214,19 +308,27 @@ namespace Vision
           m_pwr_gpio->setDirection(Hardware::GPIO::GPIO_DIR_OUTPUT);
           m_pwr_gpio->setValue(0);
         }
+
+        m_slave_entities = new EntityActivationMaster(this);
+        updateSlaveEntities();
       }
 
       void
       onResourceRelease(void)
       {
         trace("releasing");
-        stopVideo();
+        requestDeactivation();
 
         if (m_pwr_gpio != NULL)
         {
-          m_pwr_gpio->setValue(0);
           delete m_pwr_gpio;
           m_pwr_gpio = NULL;
+        }
+
+        if (m_slave_entities != NULL)
+        {
+          delete m_slave_entities;
+          m_slave_entities = NULL;
         }
       }
 
@@ -239,6 +341,8 @@ namespace Vision
         if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
         {
           m_log_dir = m_ctx.dir_log / msg->name / "Photos";
+          m_log_dir_updated = true;
+          trace("received new log dir");
         }
       }
 
@@ -250,26 +354,53 @@ namespace Vision
         if (m_pwr_gpio != NULL)
           m_pwr_gpio->setValue(1);
 
+        m_slave_entities->activate();
+        m_act_timer.setTop(getActivationTime());
+
         IMC::LoggingControl log_ctl;
         log_ctl.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
         dispatch(log_ctl);
       }
 
       void
-      checkActivation(void)
+      checkActivationProgress(void)
       {
-        if (!isActivating())
+        trace("checking activation");
+
+        if (m_act_timer.overflow() && m_act_timer.getTop() != 0)
+        {
+          activationFailed(DTR("failed to activate required entities"));
+          m_slave_entities->deactivate();
+          return;
+        }
+
+        if (!m_slave_entities->checkActivation() || !m_log_dir_updated)
           return;
 
-        try
-        {
-          setProperties();
-          activate();
-        }
-        catch (std::runtime_error& e)
-        {
-          err("%s", e.what());
-        }
+        m_cfg_dirty = true;
+        activate();
+        debug("activation took %0.2f s", getActivationTime() - m_act_timer.getRemaining());
+      }
+
+      void
+      onRequestDeactivation(void)
+      {
+        trace("received deactivation request");
+        m_slave_entities->deactivate();
+
+        m_act_timer.setTop(getDeactivationTime());
+      }
+
+      void
+      checkDeactivationProgress(void)
+      {
+        trace("checking deactivation");
+
+        if (m_act_timer.overflow() && m_act_timer.getTop() != 0)
+          deactivationFailed(DTR("failed to deactivate required entities"));
+
+        if (m_slave_entities->checkDeactivation())
+          deactivate();
       }
 
       void
@@ -288,13 +419,35 @@ namespace Vision
       void
       onDeactivation(void)
       {
+        stopVideo();
+        inf(DTR("stopped video stream"));
+
         setStrobePower(false);
+        m_log_dir_updated = false;
 
         if (m_pwr_gpio != NULL)
           m_pwr_gpio->setValue(0);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
+
+      void
+      consume(const IMC::EntityActivationState* msg)
+      {
+        if (msg->getSourceEntity() == DUNE_IMC_CONST_UNK_EID)
+        {
+          err("invalid entity");
+          return;
+        }
+        m_slave_entities->onEntityActivationState(msg);
+      }
+
+      void
+      consume(const IMC::EntityInfo* msg)
+      {
+        m_slave_entities->onEntityInfo(msg);
+      }
+
 
       void
       setStrobePower(bool value)
@@ -356,13 +509,12 @@ namespace Vision
       void
       stopVideo(void)
       {
-        debug("stopping video stream");
+        if (m_http == NULL)
+          return;
 
-        if (m_http != NULL)
-        {
-          delete m_http;
-          m_http = NULL;
-        }
+        debug("stopping video stream");
+        delete m_http;
+        m_http = NULL;
       }
 
       void
@@ -568,17 +720,59 @@ namespace Vision
           if (isActive())
           {
             consumeMessages();
+            if (!isActive())
+              continue;
           }
           else
           {
             waitForMessages(1.0);
-            checkActivation();
+            if (isActivating())
+              checkActivationProgress();
+            else if (isDeactivating())
+              checkDeactivationProgress();
             continue;
           }
 
+          if (m_args.camera_cfg && m_cfg_dirty)
+          {
+            try
+            {
+              setProperties();
+              m_cfg_dirty = false;
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+              inf(DTR("successfully configured camera"));
+            }
+            catch (std::runtime_error& e)
+            {
+              if (getEntityState() != IMC::EntityState::ESTA_FAULT)
+              {
+                setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_COM_ERROR);
+                err("%s", e.what());
+              }
+              waitForMessages(0.2);
+              continue;
+            }
+          }
+
+          if (!m_args.camera_capt)
+            continue;
+
           if (m_http == NULL)
           {
-            startVideo();
+            try
+            {
+              startVideo();
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            }
+            catch (std::runtime_error& e)
+            {
+              if (getEntityState() != IMC::EntityState::ESTA_FAULT)
+              {
+                setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_COM_ERROR);
+                err("%s", e.what());
+              }
+              stopVideo();
+            }
             continue;
           }
 

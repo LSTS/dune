@@ -67,7 +67,6 @@ registerStaticTasks(void);
 using DUNE_NAMESPACES;
 
 static bool s_stop = false;
-static const unsigned c_max_restarts = 5;
 static const double c_restart_period = 30.0;
 
 // POSIX implementation.

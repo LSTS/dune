@@ -22,43 +22,39 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Pedro Calado                                                     *
+// Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-// DUNE headers.
+#ifndef MANEUVER_MULTIPLEXER_FOLLOWPATH_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_FOLLOWPATH_HPP_INCLUDED_
+
 #include <DUNE/DUNE.hpp>
+
+using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
-  namespace FollowPath
+  namespace Multiplexer
   {
-    using DUNE_NAMESPACES;
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM FollowPath;
 
-    struct Task: public DUNE::Maneuvers::Maneuver
+    //! FollowPath maneuver
+    class FollowPath
     {
-      //! Struct for waypoint
-      struct Waypoint
-      {
-        double lat;
-        double lon;
-        double z;
-        uint8_t z_units;
-      };
+    public:
+      //! Default constructor.
+      //! @param[in] task pointer to Maneuver task
+      FollowPath(Maneuvers::Maneuver* task):
+        m_task(task)
+      { }
 
-      //! Desired path message.
-      IMC::DesiredPath m_path;
-      //! Vector of waypoints.
-      std::vector<Waypoint> m_wpts;
-      //! Current waypoint.
-      unsigned int m_curr;
+      //! Destructor
+      ~FollowPath(void)
+      { }
 
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx)
-      {
-        bindToManeuver<Task, IMC::FollowPath>();
-        bind<IMC::PathControlState>(this);
-      }
-
+      //! Reset function
       void
       reset(void)
       {
@@ -66,14 +62,10 @@ namespace Maneuver
         m_curr = 0;
       }
 
+      //! Start maneuver function
+      //! @param[in] maneuver followpath maneuver message
       void
-      onManeuverDeactivation(void)
-      {
-        reset();
-      }
-
-      void
-      consume(const IMC::FollowPath* maneuver)
+      start(const IMC::FollowPath* maneuver)
       {
         reset();
 
@@ -97,33 +89,35 @@ namespace Maneuver
 
         if (!m_wpts.size())
         {
-          signalCompletion();
+          m_task->signalCompletion();
           return;
         }
 
-        debug("starting path with %lu waypoints", (long unsigned int)m_wpts.size());
+        m_task->debug("starting path with %lu waypoints", (long unsigned int)m_wpts.size());
 
-        setControl(IMC::CL_PATH);
+        m_task->setControl(IMC::CL_PATH);
 
         m_path.speed = maneuver->speed;
         m_path.speed_units = maneuver->speed_units;
         gotoNextPoint();
       }
 
+      //! On PathControlState message
+      //! @param[in] pcs pointer to PathControlState message
       void
-      consume(const IMC::PathControlState* pcs)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
         std::stringstream ss;
         ss << "waypoint=" << m_curr;
 
-        signalProgress(pcs->eta, ss.str());
+        m_task->signalProgress(pcs->eta, ss.str());
 
         if (!(pcs->flags & IMC::PathControlState::FL_NEAR))
           return;
 
         if (m_curr + 1 == m_wpts.size())
         {
-          signalCompletion();
+          m_task->signalCompletion();
           return;
         }
 
@@ -142,10 +136,29 @@ namespace Maneuver
         m_path.flags = 0;
         m_path.end_z = w.z;
         m_path.end_z_units = w.z_units;
-        dispatch(m_path);
+        m_task->dispatch(m_path);
       }
+
+    private:
+      //! Struct for waypoint
+      struct Waypoint
+      {
+        double lat;
+        double lon;
+        double z;
+        uint8_t z_units;
+      };
+
+      //! Desired path message.
+      IMC::DesiredPath m_path;
+      //! Vector of waypoints.
+      std::vector<Waypoint> m_wpts;
+      //! Current waypoint.
+      unsigned int m_curr;
+      //! Pointer to task
+      Maneuvers::Maneuver* m_task;
     };
   }
 }
 
-DUNE_TASK
+#endif

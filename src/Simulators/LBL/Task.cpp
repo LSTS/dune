@@ -118,7 +118,7 @@ namespace Simulators
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER,
-                    true);
+                    false);
 
         param("Ping Delay", m_args.ping_delay)
         .units(Units::Second)
@@ -148,9 +148,6 @@ namespace Simulators
         param("PRNG Seed", m_args.prng_seed)
         .defaultValue("-1");
 
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
-        requestDeactivation();
-
         // Register consumers.
         bind<IMC::LblConfig>(this);
         bind<IMC::GpsFix>(this);
@@ -168,6 +165,7 @@ namespace Simulators
       void
       onResourceAcquisition(void)
       {
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
         m_prng = Random::Factory::create(m_args.prng_type, m_args.prng_seed);
       }
 

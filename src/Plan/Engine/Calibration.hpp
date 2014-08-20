@@ -63,8 +63,7 @@ namespace Plan
       };
 
       //! Default constructor.
-      Calibration(uint16_t min_time):
-        m_min_time(min_time),
+      Calibration(void):
         m_time(-1.0),
         m_state(CS_NONE)
       {
@@ -76,7 +75,7 @@ namespace Plan
       void
       setTime(float time)
       {
-        m_time = std::max((float)m_min_time, time);
+        m_time = time;
 
         if (m_time > 0)
           m_state = CS_NOT_STARTED;
@@ -132,14 +131,6 @@ namespace Plan
         m_time = new_top + elapsed;
       }
 
-      //! Get the calibration time
-      //! @return calibration time
-      float
-      getTime(void) const
-      {
-        return m_time;
-      }
-
       //! Get remaining time in calibration
       //! @return remaining time
       float
@@ -148,12 +139,12 @@ namespace Plan
         return m_timer.getRemaining();
       }
 
-      //! Check if calibration time is past minimum time
-      //! @return true if elapsed calibration time is larger than minimum
-      bool
-      pastMinimum(void) const
+      //! Get elapsed calibration time
+      //! @return elapsed calibration time
+      float
+      getElapsedTime(void) const
       {
-        return (m_time - m_timer.getRemaining() > m_min_time);
+        return m_time - m_timer.getRemaining();
       }
 
       //! Check if calibration is in progress
@@ -197,8 +188,6 @@ namespace Plan
       }
 
     private:
-      //! Minimum time for the calibration
-      uint16_t m_min_time;
       //! Current plan's calibration time if any
       float m_time;
       //! Calibration state

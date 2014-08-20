@@ -323,6 +323,7 @@ namespace DUNE
 
       double now = Clock::get();
       m_pcs.flags = 0;
+      m_pcs.path_ref = dpath->path_ref;
       bool no_start = false;
 
       if (dpath->flags & IMC::DesiredPath::FL_START)
@@ -568,6 +569,9 @@ namespace DUNE
     void
     PathController::consume(const IMC::EstimatedState* es)
     {
+      if (es->getSource() != getSystemId())
+        return;
+
       if (m_filter && m_filter_entity != es->getSourceEntity())
         return;
 

@@ -174,6 +174,9 @@ namespace Transports
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         m_estate = *msg;
       }
 

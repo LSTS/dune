@@ -246,6 +246,13 @@ namespace DUNE
       //! @return true if 'str' starts with 'prefix', false otherwise.
       static bool
       startsWith(const std::string& str, const std::string& prefix);
+
+      //! Test if string 'str' ends with a specified 'suffix'.
+      //! @param[in] str string.
+      //! @param[in] suffix suffix.
+      //! @return true if 'str' ends with 'suffix', false otherwise.
+      static bool
+      endsWith(const std::string& str, const std::string& suffix);
     };
   }
 }

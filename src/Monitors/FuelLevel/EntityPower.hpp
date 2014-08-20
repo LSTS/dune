@@ -22,106 +22,72 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Pedro Calado                                                     *
 //***************************************************************************
 
+#ifndef MONITORS_FUELLEVEL_ENTITYPOWER_HPP_INCLUDED_
+#define MONITORS_FUELLEVEL_ENTITYPOWER_HPP_INCLUDED_
+
 // ISO C++ 98 headers.
-#include <iomanip>
-#include <vector>
+#include <cstring>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-namespace Maneuver
+namespace Monitors
 {
-  namespace Rows
+  namespace FuelLevel
   {
     using DUNE_NAMESPACES;
 
-    struct Task: public DUNE::Maneuvers::Maneuver
+    //! Entity Power for Fuel Level
+    class EntityPower
     {
-      //! Rows stages parser
-      Maneuvers::RowsStages* m_parser;
-      //! Desired path message
-      IMC::DesiredPath m_path;
+    public:
+      EntityPower(unsigned ent, float power = 0.0):
+        m_ent(ent),
+        m_power(power)
+      { }
 
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx),
-        m_parser(NULL)
+      inline unsigned
+      getEntity(void) const
       {
-        bindToManeuver<Task, IMC::Rows>();
-        bind<IMC::PathControlState>(this);
+        return m_ent;
       }
 
-      void
-      onManeuverDeactivation(void)
+      inline float
+      getPower(void) const
       {
-        Memory::clear(m_parser);
+        return m_power;
       }
 
-      void
-      consume(const IMC::Rows* maneuver)
+      inline float
+      getPowerPerSecond(void) const
       {
-        Memory::clear(m_parser);
-
-        m_parser = new Maneuvers::RowsStages(maneuver, this);
-
-        // Get it started
-        setControl(IMC::CL_PATH);
-        m_path.speed = maneuver->speed;
-        m_path.speed_units = maneuver->speed_units;
-        m_path.end_z = maneuver->z;
-        m_path.end_z_units = maneuver->z_units;
-
-        double lat;
-        double lon;
-
-        if (m_parser->getFirstPoint(&lat, &lon))
-        {
-          signalCompletion();
-          return;
-        }
-
-        sendPath(lat, lon);
+        return getPower() / 3600.0;
       }
 
-      void
-      consume(const IMC::PathControlState* pcs)
-      {
-        std::stringstream ss;
-        ss << "waypoint=" << m_parser->getIndex();
-
-        signalProgress(pcs->eta, ss.str());
-
-        if (!(pcs->flags & IMC::PathControlState::FL_NEAR))
-          return;
-
-        double lat;
-        double lon;
-
-        if (m_parser->getNextPoint(&lat, &lon))
-        {
-          signalCompletion();
-          return;
-        }
-
-        sendPath(lat, lon);
-      }
-
-      //! Send new desired path
-      //! @param[in] lat latitude for new desired path
-      //! @param[in] lon longitude for new desired path
-      void
-      sendPath(double lat, double lon)
-      {
-        // Calculate WGS-84 coordinates and fill DesiredPath message
-        m_path.end_lat = lat;
-        m_path.end_lon = lon;
-        m_path.flags = 0;
-        dispatch(m_path);
-      }
+    private:
+      //! Entity number
+      unsigned m_ent;
+      //! Entity estimated power consumption
+      float m_power;
     };
+
+    bool
+    operator<(const EntityPower& ep1,
+              const EntityPower& ep2)
+    {
+      return ep1.getEntity() < ep2.getEntity();
+    }
+
+    bool
+    operator==(const EntityPower& ep1,
+               const EntityPower& ep2)
+    {
+      return ep1.getEntity() == ep2.getEntity();
+    }
   }
 }
 
-DUNE_TASK
+#endif

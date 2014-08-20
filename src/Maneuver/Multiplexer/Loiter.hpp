@@ -22,81 +22,81 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Pedro Calado                                                     *
+// Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-// DUNE headers.
+#ifndef MANEUVER_MULTIPLEXER_LOITER_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_LOITER_HPP_INCLUDED_
+
 #include <DUNE/DUNE.hpp>
+
+using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
-  namespace Loiter
+  namespace Multiplexer
   {
-    using DUNE_NAMESPACES;
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM Loiter;
 
-    //! Task arguments
-    struct Arguments
+    //! Loiter maneuver
+    class Loiter
     {
-      //! Minimum radius to prevent incompatibility with path controller
-      double min_radius;
-    };
-
-    struct Task: public DUNE::Maneuvers::Maneuver
-    {
-      //! Desired path message
-      IMC::DesiredPath m_path;
-      //! End time of the loiter
-      double m_end_time;
-      //! Duration of the loiter in seconds
-      uint16_t m_duration;
-      //! Task arguments
-      Arguments m_args;
-
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx)
+    public:
+      struct LoiterArgs
       {
-        param("Minimum Radius", m_args.min_radius)
-        .defaultValue("10.0")
-        .description("Minimum radius to prevent incompatibility with path controller");
+        //! Minimum radius to prevent incompatibility with path controller
+        double min_radius;
+      };
 
-        bindToManeuver<Task, IMC::Loiter>();
-        bind<IMC::PathControlState>(this);
-      }
+      //! Default constructor.
+      //! @param[in] task pointer to Maneuver task
+      //! @param[in] args loiter arguments
+      Loiter(Maneuvers::Maneuver* task, LoiterArgs* args):
+        m_task(task),
+        m_args(args)
+      { }
 
+      //! Start maneuver function
+      //! @param[in] maneuver loiter maneuver message
       void
-      consume(const IMC::Loiter* maneuver)
+      start(const IMC::Loiter* maneuver)
       {
-        setControl(IMC::CL_PATH);
+        m_task->setControl(IMC::CL_PATH);
 
         float radius = maneuver->radius;
 
-        if (radius < m_args.min_radius)
+        if (radius < m_args->min_radius)
         {
-          war(DTR("forcing minimum radius of %.1f"), m_args.min_radius);
-          radius = m_args.min_radius;
+          m_task->war(DTR("forcing minimum radius of %.1f"), m_args->min_radius);
+          radius = m_args->min_radius;
         }
 
-        m_path.end_lat = maneuver->lat;
-        m_path.end_lon = maneuver->lon;
-        m_path.end_z = maneuver->z;
-        m_path.end_z_units = maneuver->z_units;
-        m_path.lradius = radius;
+        IMC::DesiredPath path;
+        path.end_lat = maneuver->lat;
+        path.end_lon = maneuver->lon;
+        path.end_z = maneuver->z;
+        path.end_z_units = maneuver->z_units;
+        path.lradius = radius;
 
         if (maneuver->direction == IMC::Loiter::LD_CCLOCKW)
-          m_path.flags = IMC::DesiredPath::FL_CCLOCKW;
+          path.flags = IMC::DesiredPath::FL_CCLOCKW;
         else
-          m_path.flags = 0;  // clockwise by default
+          path.flags = 0;  // clockwise by default
 
-        m_path.speed = maneuver->speed;
-        m_path.speed_units = maneuver->speed_units;
-        dispatch(m_path);
+        path.speed = maneuver->speed;
+        path.speed_units = maneuver->speed_units;
+        m_task->dispatch(path);
 
         m_duration = maneuver->duration;
         m_end_time = -1;
       }
 
+      //! On PathControlState message
+      //! @param[in] pcs pointer to PathControlState message
       void
-      consume(const IMC::PathControlState* pcs)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
         if (pcs->flags & IMC::PathControlState::FL_LOITERING)
         {
@@ -106,29 +106,42 @@ namespace Maneuver
 
             if (m_end_time < 0)
             {
-              debug("will now loiter for %d seconds", m_duration);
+              m_task->debug("will now loiter for %d seconds", m_duration);
               m_end_time = now + m_duration;
             }
             else if (now >= m_end_time)
             {
-              signalCompletion();
+              m_task->signalCompletion();
             }
             else
             {
-              signalProgress((uint16_t)Math::round(m_end_time - now));
+              m_task->signalProgress((uint16_t)Math::round(m_end_time - now));
             }
           }
         }
         else
         {
           if (m_duration > 0)
-            signalProgress(pcs->eta + m_duration);
+            m_task->signalProgress(pcs->eta + m_duration);
           else
-            signalProgress();
+            m_task->signalProgress();
         }
       }
+
+      ~Loiter(void)
+      { }
+
+    private:
+      //! Loiter: End time
+      double m_end_time;
+      //! Loiter: Duration in seconds
+      uint16_t m_duration;
+      //! Pointer to task
+      Maneuvers::Maneuver* m_task;
+      //! Pointer to loiter args
+      LoiterArgs* m_args;
     };
   }
 }
 
-DUNE_TASK
+#endif

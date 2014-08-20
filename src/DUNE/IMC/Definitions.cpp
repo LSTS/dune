@@ -9614,6 +9614,7 @@ namespace DUNE
     void
     DesiredPath::clear(void)
     {
+      path_ref = 0;
       start_lat = 0;
       start_lon = 0;
       start_z = 0;
@@ -9632,6 +9633,7 @@ namespace DUNE
     DesiredPath::fieldsEqual(const Message& msg__) const
     {
       const IMC::DesiredPath& other__ = static_cast<const DesiredPath&>(msg__);
+      if (path_ref != other__.path_ref) return false;
       if (start_lat != other__.start_lat) return false;
       if (start_lon != other__.start_lon) return false;
       if (start_z != other__.start_z) return false;
@@ -9657,6 +9659,7 @@ namespace DUNE
     DesiredPath::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(path_ref, ptr__);
       ptr__ += IMC::serialize(start_lat, ptr__);
       ptr__ += IMC::serialize(start_lon, ptr__);
       ptr__ += IMC::serialize(start_z, ptr__);
@@ -9676,6 +9679,7 @@ namespace DUNE
     DesiredPath::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(path_ref, bfr__, size__);
       bfr__ += IMC::deserialize(start_lat, bfr__, size__);
       bfr__ += IMC::deserialize(start_lon, bfr__, size__);
       bfr__ += IMC::deserialize(start_z, bfr__, size__);
@@ -9695,6 +9699,7 @@ namespace DUNE
     DesiredPath::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(path_ref, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(start_lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(start_lon, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(start_z, bfr__, size__);
@@ -9713,6 +9718,7 @@ namespace DUNE
     void
     DesiredPath::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      IMC::toJSON(os__, "path_ref", path_ref, nindent__);
       IMC::toJSON(os__, "start_lat", start_lat, nindent__);
       IMC::toJSON(os__, "start_lon", start_lon, nindent__);
       IMC::toJSON(os__, "start_z", start_z, nindent__);
@@ -9988,6 +9994,7 @@ namespace DUNE
     void
     PathControlState::clear(void)
     {
+      path_ref = 0;
       start_lat = 0;
       start_lon = 0;
       start_z = 0;
@@ -10012,6 +10019,7 @@ namespace DUNE
     PathControlState::fieldsEqual(const Message& msg__) const
     {
       const IMC::PathControlState& other__ = static_cast<const PathControlState&>(msg__);
+      if (path_ref != other__.path_ref) return false;
       if (start_lat != other__.start_lat) return false;
       if (start_lon != other__.start_lon) return false;
       if (start_z != other__.start_z) return false;
@@ -10043,6 +10051,7 @@ namespace DUNE
     PathControlState::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(path_ref, ptr__);
       ptr__ += IMC::serialize(start_lat, ptr__);
       ptr__ += IMC::serialize(start_lon, ptr__);
       ptr__ += IMC::serialize(start_z, ptr__);
@@ -10068,6 +10077,7 @@ namespace DUNE
     PathControlState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(path_ref, bfr__, size__);
       bfr__ += IMC::deserialize(start_lat, bfr__, size__);
       bfr__ += IMC::deserialize(start_lon, bfr__, size__);
       bfr__ += IMC::deserialize(start_z, bfr__, size__);
@@ -10093,6 +10103,7 @@ namespace DUNE
     PathControlState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(path_ref, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(start_lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(start_lon, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(start_z, bfr__, size__);
@@ -10117,6 +10128,7 @@ namespace DUNE
     void
     PathControlState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      IMC::toJSON(os__, "path_ref", path_ref, nindent__);
       IMC::toJSON(os__, "start_lat", start_lat, nindent__);
       IMC::toJSON(os__, "start_lon", start_lon, nindent__);
       IMC::toJSON(os__, "start_z", start_z, nindent__);

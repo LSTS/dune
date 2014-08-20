@@ -22,55 +22,71 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Pedro Calado                                                     *
+// Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-// DUNE headers.
+#ifndef MANEUVER_MULTIPLEXER_GOTO_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_GOTO_HPP_INCLUDED_
+
 #include <DUNE/DUNE.hpp>
+
+using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
-  namespace Goto
+  namespace Multiplexer
   {
-    using DUNE_NAMESPACES;
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM Goto;
 
-    struct Task: public DUNE::Maneuvers::Maneuver
+    //! Plan Specification parser
+    class Goto
     {
-      //! Desired Path message to send to path control
-      IMC::DesiredPath m_path;
+    public:
+      //! Default constructor.
+      //! @param[in] task pointer to Maneuver task
+      Goto(Maneuvers::Maneuver* task):
+        m_task(task)
+      { }
 
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx)
+      //! Start maneuver function
+      //! @param[in] maneuver goto maneuver message
+      void
+      start(const IMC::Goto* maneuver)
       {
-        bindToManeuver<Task, IMC::Goto>();
-        bind<IMC::PathControlState>(this);
+        m_task->setControl(IMC::CL_PATH);
+
+        IMC::DesiredPath path;
+        path.end_lat = maneuver->lat;
+        path.end_lon = maneuver->lon;
+        path.end_z = maneuver->z;
+        path.end_z_units = maneuver->z_units;
+        path.speed = maneuver->speed;
+        path.speed_units = maneuver->speed_units;
+
+        m_task->dispatch(path);
       }
 
+      //! On PathControlState message
+      //! @param[in] pcs pointer to PathControlState message
       void
-      consume(const IMC::Goto* maneuver)
-      {
-        setControl(IMC::CL_PATH);
-
-        m_path.end_lat = maneuver->lat;
-        m_path.end_lon = maneuver->lon;
-        m_path.end_z = maneuver->z;
-        m_path.end_z_units = maneuver->z_units;
-        m_path.speed = maneuver->speed;
-        m_path.speed_units = maneuver->speed_units;
-
-        dispatch(m_path);
-      }
-
-      void
-      consume(const IMC::PathControlState* pcs)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
         if (pcs->flags & IMC::PathControlState::FL_NEAR)
-          signalCompletion();
+          m_task->signalCompletion();
         else
-          signalProgress(pcs->eta);
+          m_task->signalProgress(pcs->eta);
       }
+
+      ~Goto(void)
+      { }
+
+    private:
+      //! Pointer to task
+      Maneuvers::Maneuver* m_task;
     };
   }
 }
 
-DUNE_TASK
+#endif

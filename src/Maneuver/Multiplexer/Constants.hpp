@@ -25,64 +25,20 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-// DUNE headers.
-#include <DUNE/DUNE.hpp>
+#ifndef MANEUVER_MULTIPLEXER_CONSTANTS_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_CONSTANTS_HPP_INCLUDED_
 
 namespace Maneuver
 {
-  namespace Dubin
+  namespace Multiplexer
   {
-    using DUNE_NAMESPACES;
-
-    struct Task: public DUNE::Maneuvers::Maneuver
-    {
-      IMC::DesiredSpeed m_speed;
-      IMC::DesiredHeading m_heading;
-      bool m_got_href;
-
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx),
-        m_got_href(false)
-      {
-        bindToManeuver<Task, IMC::Dubin>();
-        bind<IMC::EstimatedState>(this);
-      }
-
-      void
-      consume(const IMC::Dubin* maneuver)
-      {
-        setControl(IMC::CL_DEPTH | IMC::CL_SPEED | IMC::CL_YAW);
-
-        if ((maneuver->z_units == IMC::Z_DEPTH) || (maneuver->z_units == IMC::Z_ALTITUDE))
-        {
-          IMC::DesiredZ zref;
-          zref.value = maneuver->z;
-          zref.z_units = maneuver->z_units;
-          dispatch(zref);
-        }
-        else
-        {
-          signalError(DTR("vertical control type not supported"));
-        }
-
-        m_speed.value = maneuver->speed;
-        m_speed.speed_units = maneuver->speed_units;
-        dispatch(m_speed);
-      }
-
-      void
-      consume(const IMC::EstimatedState* msg)
-      {
-        if (!m_got_href)
-        {
-          m_heading.value = msg->psi;
-          dispacth(m_heading);
-
-          m_got_href = true;
-        }
-      }
-    };
+    //! Number of samples for vertical monitor moving average in elevator
+    static const unsigned c_vsamples = 10;
+    //! Value to be consider at surface
+    static const float c_depth_tol = 0.3f;
+    //! Minimum radius for the elevators
+    static const float c_min_elev_radius = 10.0f;
   }
 }
 
-DUNE_TASK
+#endif
