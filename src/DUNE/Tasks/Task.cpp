@@ -750,7 +750,7 @@ namespace DUNE
           break;
 
         case IMC::LogBookEntry::LBET_DEBUG:
-          DUNE_MSG(getName(), bfr);
+          DUNE_DEV(getName(), bfr);
           break;
       }
     }
