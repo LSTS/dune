@@ -216,6 +216,8 @@ namespace Maneuver
               return false;
             else
               return true;
+          default:
+            return false;
         }
       }
 
