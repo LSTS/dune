@@ -82,9 +82,9 @@ namespace Maneuver
         m_attempts = 0;
 
         if (burstDirection())
-          goToState(ST_FRONT);
+          setState(ST_FRONT);
         else
-          goToState(ST_BACK);
+          setState(ST_BACK);
       }
 
       //! On EstimatedState message
@@ -110,7 +110,7 @@ namespace Maneuver
                 ++m_bursts;
                 if (m_bursts >= m_args->bursts)
                 {
-                  goToState(ST_CHECK_RESULTS);
+                  setState(ST_CHECK_RESULTS);
                   break;
                 }
 
@@ -134,14 +134,14 @@ namespace Maneuver
                 if (msg->depth < c_depth_tol)
                 {
                   m_task->signalCompletion();
-                  goToState(ST_DONE);
+                  setState(ST_DONE);
                   break;
                 }
               }
               else if (m_init_depth - msg->depth > m_args->safe_gap)
               {
                 m_task->signalCompletion();
-                goToState(ST_DONE);
+                setState(ST_DONE);
                 break;
               }
 
@@ -178,7 +178,7 @@ namespace Maneuver
       //! Go to state
       //! @param[in] state transition to this state
       void
-      goToState(State state)
+      setState(State state)
       {
         switch (state)
         {
@@ -253,16 +253,16 @@ namespace Maneuver
 
         if (m_attempts >= m_args->attempts)
         {
-          goToState(ST_FAILED);
+          setState(ST_FAILED);
           return;
         }
 
         m_task->inf(DTR("trying again to dislodge"));
 
         if (burstDirection())
-          goToState(ST_FRONT);
+          setState(ST_FRONT);
         else
-          goToState(ST_BACK);
+          setState(ST_BACK);
       }
 
       //! State of the state machine
