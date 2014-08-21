@@ -43,10 +43,10 @@ namespace Supervisors
       class AscentRate
       {
       public:
-        AscentRate(unsigned window_size, float period)
+        AscentRate(unsigned window_size, float period):
+          m_timer(period)
         {
           m_avg = new Math::MovingAverage<float>(window_size);
-          m_timer.setTop(period);
         }
 
         ~AscentRate(void)
