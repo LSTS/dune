@@ -46,6 +46,27 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
+    // Abort code.
+    static const unsigned c_code_abort = 0x000a;
+    // Abort acked code.
+    static const unsigned c_code_abort_ack = 0x000b;
+    //! Start plan acknowledge code.
+    static const unsigned c_code_plan_ack = 0x000c;
+    // Quick tracking mask.
+    static const unsigned c_mask_qtrack = 0x1000;
+    // Quick tracking beacon mask.
+    static const unsigned c_mask_qtrack_beacon = 0x0c00;
+    // Quick tracking range mask.
+    static const unsigned c_mask_qtrack_range = 0x03ff;
+    // Maximum buffer size.
+    static const int c_bfr_size = 256;
+    // Acoustic Report code.
+    static const uint8_t c_code_report = 0x1;
+    // Start plan code.
+    static const uint8_t c_code_plan = 0x2;
+    // Binary message size.
+    static const uint8_t c_binary_size = 32;
+
     enum Operation
     {
       // No operation is in progress.
@@ -107,27 +128,6 @@ namespace Sensors
 
     struct Task: public DUNE::Tasks::Task
     {
-      // Abort code.
-      static const unsigned c_code_abort = 0x000a;
-      // Abort acked code.
-      static const unsigned c_code_abort_ack = 0x000b;
-      //! Start plan acknowledge code.
-      static const unsigned c_code_plan_ack = 0x000c;
-      // Quick tracking mask.
-      static const unsigned c_mask_qtrack = 0x1000;
-      // Quick tracking beacon mask.
-      static const unsigned c_mask_qtrack_beacon = 0x0c00;
-      // Quick tracking range mask.
-      static const unsigned c_mask_qtrack_range = 0x03ff;
-      // Maximum buffer size.
-      static const int c_bfr_size = 256;
-      // Acoustic Report code.
-      static const uint8_t c_code_report = 0x1;
-      // Start plan code.
-      static const uint8_t c_code_plan = 0x2;
-      // Binary message size.
-      static const uint8_t c_binary_size = 32;
-      // Start Acoustic Plan Code.
       // Serial port handle.
       SerialPort* m_uart;
       // Map of narrow band transponders.
@@ -404,10 +404,9 @@ namespace Sensors
               return;
             }
 
-            std::memcpy(&pmsg[0], &c_code_plan, 1);
-
-            for (uint8_t i = 0; i < std::min(c_binary_size - 1, (int)pc->plan_id.size()); ++i)
-              std::memcpy(&pmsg[i + 1], &pc->plan_id[i], 1);
+            // Make packet.
+            pmsg[0] = (char)c_code_plan;
+            std::memcpy(&pmsg[1], &pc->plan_id[0], std::min(c_binary_size - 1, (int)pc->plan_id.size()));
 
             std::string hex = String::toHex(pmsg);
             std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n",
@@ -697,8 +696,7 @@ namespace Sensors
         std::string msg = String::fromHex(hex);
         const char* msg_raw = msg.data();
 
-        uint8_t code;
-        std::memcpy(&code, msg_raw + 0, 1);
+        uint8_t code = static_cast<uint8_t>(msg_raw[0]);
 
         if (code == c_code_report)
         {
