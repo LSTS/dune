@@ -55,6 +55,8 @@ namespace Maneuver
         float interval_time;
         //! Minimum distance to ground or object to stop burst
         float min_distance;
+        //! Safe depth change to consider the maneuver was successful
+        float safe_gap;
       };
 
       //! Default constructor.
@@ -79,7 +81,7 @@ namespace Maneuver
 
         m_attempts = 0;
 
-        if (m_dir == IMC::Dislodge::DIR_FORWARD)
+        if (burstDirection())
           goToState(ST_FRONT);
         else
           goToState(ST_BACK);
@@ -127,10 +129,28 @@ namespace Maneuver
           case ST_CHECK_RESULTS:
             if (m_timer.overflow())
             {
+              if (m_init_depth < m_args->safe_gap + 0.5)
+              {
+                if (msg->depth < c_depth_tol)
+                {
+                  m_task->signalCompletion();
+                  goToState(ST_DONE);
+                  break;
+                }
+              }
+              else if (m_init_depth - msg->depth > m_args->safe_gap)
+              {
+                m_task->signalCompletion();
+                goToState(ST_DONE);
+                break;
+              }
 
+              failedAttempt();
             }
             break;
           case ST_FAILED:
+            break;
+          case ST_DONE:
             break;
         }
       }
@@ -150,7 +170,9 @@ namespace Maneuver
         //! Check results
         ST_CHECK_RESULTS,
         //! Failed state
-        ST_FAILED
+        ST_FAILED,
+        //! Done state
+        ST_DONE
       };
 
       //! Go to state
@@ -170,8 +192,30 @@ namespace Maneuver
           case ST_CHECK_RESULTS:
             m_timer.setTop(c_stab_time);
             break;
+          case ST_FAILED:
+            m_task->signalError(DTR("dislodge failed"));
+            break;
           default:
             break;
+        }
+      }
+
+      //! Burst direction
+      //! @return true for front, false for back
+      bool
+      burstDirection(void)
+      {
+        switch (m_dir)
+        {
+          case IMC::Dislodge::DIR_FORWARD:
+            return true;
+          case IMC::Dislodge::DIR_BACKWARD:
+            return false;
+          case IMC::Dislodge::DIR_AUTO:
+            if (m_attempts % 2 == 0)
+              return false;
+            else
+              return true;
         }
       }
 
@@ -199,6 +243,26 @@ namespace Maneuver
         ds.value = 0.0;
         ds.speed_units = IMC::SUNITS_RPM;
         m_task->dispatch(ds);
+      }
+
+      //! Failed attempt of dislodging
+      void
+      failedAttempt(void)
+      {
+        ++m_attempts;
+
+        if (m_attempts >= m_args->attempts)
+        {
+          goToState(ST_FAILED);
+          return;
+        }
+
+        m_task->inf(DTR("trying again to dislodge"));
+
+        if (burstDirection())
+          goToState(ST_FRONT);
+        else
+          goToState(ST_BACK);
       }
 
       //! State of the state machine

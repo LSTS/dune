@@ -225,7 +225,7 @@ namespace Maneuver
         .description("Number of total attempts");
 
         param("Dislodge -- Burst Time", m_args.dislodge.burst_time)
-        .defaultValue("5.0")
+        .defaultValue("10.0")
         .units(Units::Second)
         .description("Burst duration");
 
@@ -238,6 +238,11 @@ namespace Maneuver
         .defaultValue("3.0")
         .units(Units::Meter)
         .description("Minimum distance to ground or object to stop burst");
+
+        param("Dislodge -- Safe Depth Gap", m_args.dislodge.safe_gap)
+        .defaultValue("3.0")
+        .units(Units::Meter)
+        .description("Safe depth change to consider the maneuver was successful");
 
         bindToManeuver<Task, IMC::Goto>();
         bindToManeuver<Task, IMC::Loiter>();
