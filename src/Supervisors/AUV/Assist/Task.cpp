@@ -255,6 +255,7 @@ namespace Supervisors
           {
             case ST_CHECK_STUCK:
               m_dtimer.setTop(m_args.trigger_time);
+              break;
             case ST_START_DISLODGE:
               m_dtimer.setTop(c_gen_timeout);
               dispatchDislodge();
