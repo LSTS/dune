@@ -181,7 +181,7 @@ namespace Supervisors
             return;
           }
 
-          goToState(ST_WAIT_DISLODGE);
+          setState(ST_WAIT_DISLODGE);
         }
 
         void
@@ -200,9 +200,9 @@ namespace Supervisors
             return;
 
           if (msg->type == IMC::PlanControl::PC_SUCCESS)
-            goToState(ST_IDLE);
+            setState(ST_IDLE);
           else if (msg->type == IMC::PlanControl::PC_FAILURE)
-            goToState(ST_CHECK_STUCK);
+            setState(ST_CHECK_STUCK);
         }
 
         inline void
@@ -243,7 +243,7 @@ namespace Supervisors
         }
 
         void
-        goToState(AssistState state)
+        setState(AssistState state)
         {
           switch (state)
           {
@@ -264,7 +264,7 @@ namespace Supervisors
         onIdle(void)
         {
           if (mainConditions())
-            goToState(ST_CHECK_STUCK);
+            setState(ST_CHECK_STUCK);
         }
 
         void
@@ -272,12 +272,12 @@ namespace Supervisors
         {
           if (!mainConditions())
           {
-            goToState(ST_IDLE);
+            setState(ST_IDLE);
             return;
           }
 
           if (m_dtimer.overflow())
-            goToState(ST_START_DISLODGE);
+            setState(ST_START_DISLODGE);
         }
 
         void
@@ -286,7 +286,7 @@ namespace Supervisors
           if (m_dtimer.overflow())
           {
             failedStartPlan();
-            goToState(ST_CHECK_STUCK);
+            setState(ST_CHECK_STUCK);
           }
         }
 
