@@ -189,4 +189,12 @@ namespace DUNE
   << " [" << module << "] >> " << code << "\n"                          \
   << ::DUNE::Streams::dune_term_flush
 
+//! Prints a development message to standard error with the given
+//! parameters.
+#define DUNE_DEV(module, code)                                          \
+  ::DUNE::Streams::dune_term.lock()                                     \
+  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << DTR("DBG") \
+  << " [" << module << "] >> " << code << "\n"                          \
+  << ::DUNE::Streams::dune_term_flush
+
 #endif
