@@ -105,7 +105,7 @@ namespace Supervisors
           .description("Depth threshold to consider that it is submerged");
 
           param("Minimum Ascent Rate", m_args.min_ascent_rate)
-          .defaultValue("0.2")
+          .defaultValue("0.1")
           .units(Units::MeterPerSecond)
           .description("Threshold for the depth rate of change");
 
