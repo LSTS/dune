@@ -705,8 +705,7 @@ namespace Sensors
         std::string msg = String::fromHex(hex);
         const char* msg_raw = msg.data();
 
-        uint8_t code;
-        std::memcpy(&code, msg_raw + 0, 1);
+        uint8_t code = static_cast<uint8_t>(msg_raw[0]);
 
         if (code == c_code_plan)
         {
@@ -716,9 +715,9 @@ namespace Sensors
 
           Delay::wait(1.0);
 
+          // Get plan name.
           char plan_name[c_binary_size - 1];
-          for (uint8_t i = 0; i < c_binary_size - 1; ++i)
-            std::memcpy(&plan_name[i], msg_raw + i + 1, 1);
+          std::memcpy(&plan_name[0], msg_raw + 1, c_binary_size - 1);
 
           IMC::PlanControl pc;
           pc.type = IMC::PlanControl::PC_REQUEST;
