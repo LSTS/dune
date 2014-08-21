@@ -60,10 +60,8 @@ namespace Supervisors
           if (!m_timer.overflow())
             return mean();
 
-          float value;
-          value = m_avg->update(-m_deriv.update(depth));
-
-          return value;
+          float der = -m_deriv.update(depth);
+          return m_avg->update(der);
         }
 
         float
