@@ -43,6 +43,8 @@ namespace Supervisors
       static const float c_depth_period = 5.0;
       //! Plan generation command timeout
       static const float c_gen_timeout = 3.0;
+      //! Stabilization time before testing ascent rate
+      static const float c_stab_time = 20.0;
 
       struct Arguments
       {
@@ -92,7 +94,8 @@ namespace Supervisors
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Periodic(name, ctx),
           m_ar(NULL),
-          m_astate(ST_IDLE)
+          m_astate(ST_IDLE),
+          m_dtimer(c_stab_time)
         {
           param("Dislodging RPMs", m_args.dislodge_rpm)
           .defaultValue("1600")
@@ -236,10 +239,13 @@ namespace Supervisors
           if (m_depth < m_args.depth_threshold)
             return false;
 
-          if (m_ar->mean() >= m_args.min_ascent_rate)
-            return false;
-
           return true;
+        }
+
+        bool
+        ascentCondition(void)
+        {
+          return (m_ar->mean() < m_args.min_ascent_rate);
         }
 
         void
@@ -263,8 +269,17 @@ namespace Supervisors
         void
         onIdle(void)
         {
-          if (mainConditions())
+          if (!mainConditions())
+          {
+            m_dtimer.setTop(c_stab_time);
+            return;
+          }
+
+          if (m_dtimer.overflow())
+          {
             setState(ST_CHECK_STUCK);
+            m_dtimer.reset();
+          }
         }
 
         void
@@ -276,8 +291,11 @@ namespace Supervisors
             return;
           }
 
-          if (m_dtimer.overflow())
+          if (ascentCondition() && m_dtimer.overflow())
+          {
             setState(ST_START_DISLODGE);
+            m_dtimer.reset();
+          }
         }
 
         void
