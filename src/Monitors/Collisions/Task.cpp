@@ -60,6 +60,8 @@ namespace Monitors
       std::string elabel_device;
       //! Depth value below which collisions will be ignored
       float min_depth;
+      //! Collision output frequency.
+      uint8_t frequency;
     };
 
     //! Collisions task.
@@ -79,6 +81,8 @@ namespace Monitors
       MovingAverage<double>* m_avg_z_abs;
       //! Time window to remain in error mode after colliding.
       Time::Counter<double> m_twindow;
+      //! Collision message report period.
+      Time::Counter<double> m_treport;
       //! Collision detected.
       IMC::Collision m_collision;
       //! Vehicle Medium.
@@ -154,6 +158,12 @@ namespace Monitors
         .maximumValue("10.0")
         .description("Depth value below which collisions will be ignored");
 
+        param("Collision Output Frequency", m_args.frequency)
+        .defaultValue("5")
+        .minimumValue("1")
+        .maximumValue("250")
+        .description("Frequency to output Collision messages");
+
         // Register consumers.
         bind<IMC::Acceleration>(this);
         bind<IMC::Brake>(this);
@@ -166,6 +176,7 @@ namespace Monitors
       onUpdateParameters(void)
       {
         m_twindow.setTop(m_args.t_error);
+        m_treport.setTop(1 / m_args.frequency);
         m_args.max_x = std::abs(m_args.max_x);
         m_args.max_z = std::abs(m_args.max_z);
       }
@@ -329,12 +340,16 @@ namespace Monitors
         // Reset counter.
         m_twindow.reset();
 
-        // Dispatch collision.
-        dispatch(m_collision);
-
         // If certain conditions are met, do not trigger an error
         if (ignoreCollision())
           return;
+
+        // Dispatch collision.
+        if (m_treport.overflow())
+        {
+          dispatch(m_collision);
+          m_treport.reset();
+        }
 
         // Change state and send state to the bus.
         setEntityState(IMC::EntityState::ESTA_ERROR, DTR("collision detected"));
