@@ -100,10 +100,7 @@ namespace Supervisors
           m_dtimer(c_stab_time),
           m_finish_depth(-1.0)
         {
-          param("Dislodging RPMs", m_args.dislodge_rpm)
-          .defaultValue("1600")
-          .units(Units::RPM)
-          .description("RPM value for dislodging the vehicle");
+          m_ctx.config.get("General", "Maximum Underwater RPMs", "1700.0", m_args.dislodge_rpm);
 
           param("Depth Threshold", m_args.depth_threshold)
           .defaultValue("0.2")
