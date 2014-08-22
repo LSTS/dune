@@ -370,6 +370,8 @@
 #define DUNE_IMC_FORMATIONMONITOR 481
 //! RelativeState identification number.
 #define DUNE_IMC_RELATIVESTATE 482
+//! Dislodge identification number.
+#define DUNE_IMC_DISLODGE 483
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.

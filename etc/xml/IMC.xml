@@ -312,6 +312,7 @@
       <message-type abbrev="CommsRelay"/>
       <message-type abbrev="FormationParameters"/>
       <message-type abbrev="FormationPlanExecution"/>
+      <message-type abbrev="Dislodge"/>
     </message-group>
 
     <message-group name="Control Command" abbrev="ControlCommand">
@@ -5999,6 +6000,41 @@
       <description>
 	Components of the vehicle desired acceleration.
 	Relative virtual error: downward direction.
+      </description>
+    </field>
+  </message>
+
+  <message id="483" name="Dislodge Maneuver" abbrev="Dislodge" source="ccu">
+    <description>
+      A "Dislodge" is a maneuver ordering the vehicle to attempt a
+      series of thruster operations that will hopefully get it
+      unstuck from an entangled condition.
+
+      Parameters are RPMs for the motor when attempting dislodge and
+      and a flag specifying whether the thrust burst should be attempted
+      forward, backward or auto (letting the vehicle decide).
+    </description>
+    <field name="Timeout" abbrev="timeout" type="uint16_t" unit="s">
+      <description>
+        The amount of time the maneuver is allowed to run.
+      </description>
+    </field>
+    <field name="RPM" abbrev="rpm" type="fp32_t">
+      <description>
+        Maneuver RPM reference.
+      </description>
+    </field>
+    <field name="Direction" abbrev="direction" type="uint8_t" unit="Enumerated" prefix="DIR">
+      <description>
+	Direction to which the vehicle should attempt to unstuck.
+      </description>
+      <value abbrev="AUTO" name="Let the vehicle decide" id="0"/>
+      <value abbrev="FORWARD" name="Attempt to move forward" id="1"/>
+      <value abbrev="BACKWARD" name="Attempt to move backward" id="2"/>
+    </field>
+    <field name="Custom settings for maneuver" abbrev="custom" unit="TupleList" type="plaintext">
+      <description>
+        Custom settings for maneuver.
       </description>
     </field>
   </message>

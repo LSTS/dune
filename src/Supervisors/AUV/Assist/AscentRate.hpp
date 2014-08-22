@@ -25,22 +25,57 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef MANEUVER_MULTIPLEXER_CONSTANTS_HPP_INCLUDED_
-#define MANEUVER_MULTIPLEXER_CONSTANTS_HPP_INCLUDED_
+#ifndef SUPERVISORS_AUV_ASSIST_ASCENTRATE_HPP_INCLUDED_
+#define SUPERVISORS_AUV_ASSIST_ASCENTRATE_HPP_INCLUDED_
 
-namespace Maneuver
+// DUNE headers.
+#include <DUNE/Math.hpp>
+#include <DUNE/Time.hpp>
+
+namespace Supervisors
 {
-  namespace Multiplexer
+  namespace AUV
   {
-    //! Number of samples for vertical monitor moving average in elevator
-    static const unsigned c_vsamples = 10;
-    //! Value to be consider at surface
-    static const float c_depth_tol = 0.3f;
-    //! Minimum radius for the elevators
-    static const float c_min_elev_radius = 10.0f;
-    //! Stabilization time for the dislodge maneuver
-    static const float c_stab_time = 30.0f;
+    namespace Assist
+    {
+      using DUNE_NAMESPACES;
+
+      class AscentRate
+      {
+      public:
+        AscentRate(unsigned window_size, float period):
+          m_timer(period)
+        {
+          m_avg = new Math::MovingAverage<float>(window_size);
+        }
+
+        ~AscentRate(void)
+        {
+          delete m_avg;
+        }
+
+        float
+        update(float vz)
+        {
+          if (!m_timer.overflow())
+            return mean();
+
+          return m_avg->update(vz);
+        }
+
+        float
+        mean(void) const
+        {
+          return m_avg->mean();
+        }
+
+      private:
+        //! Moving average for the ascent rate
+        Math::MovingAverage<float>* m_avg;
+        //! Counter for the time between updates
+        Time::Counter<float> m_timer;
+      };
+    }
   }
 }
-
 #endif

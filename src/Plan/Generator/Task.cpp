@@ -177,6 +177,9 @@ namespace Plan
       //! <em>sk</em>:
       //!   - This template is similar to 'go' but generates only the maneuver StationKeeping at the desired
       //!     location.
+      //!
+      //! <em>dislodge</em>:
+      //!   - Attempt to unstuck the vehicle from an entangled condition.
       void
       consume(const IMC::PlanGeneration* msg)
       {
@@ -223,6 +226,9 @@ namespace Plan
 
           if (tlist.get("calibrate") != "false")
             pcontrol.flags = IMC::PlanControl::FLG_CALIBRATE;
+
+          if (tlist.get("ignore_errors") == "true")
+            pcontrol.flags |= IMC::PlanControl::FLG_IGNORE_ERRORS;
 
           pcontrol.plan_id = spec.plan_id;
           pcontrol.request_id = 0;
@@ -589,6 +595,21 @@ namespace Plan
             }
             delete yoyo;
           }
+
+          sequentialPlan(plan_id, &maneuvers, result);
+          return true;
+        }
+
+        // This template generates a plan that attempts to dislodge the vehicle (dislodge)
+        if (plan_id == "dislodge")
+        {
+          IMC::MessageList<IMC::Maneuver> maneuvers;
+
+          IMC::Dislodge* dislodge = new IMC::Dislodge();
+          dislodge->rpm = params.get("rpm", 1600.0);
+          dislodge->direction = IMC::Dislodge::DIR_AUTO;
+          maneuvers.push_back(*dislodge);
+          delete dislodge;
 
           sequentialPlan(plan_id, &maneuvers, result);
           return true;
