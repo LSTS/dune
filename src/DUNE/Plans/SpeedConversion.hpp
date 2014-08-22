@@ -78,6 +78,11 @@ namespace DUNE
       static float
       toAct(const SpeedModel& sm, float value, uint8_t units);
 
+      //! Validate the speed model
+      //! @param[in] sm struct with vector of values used for conversion
+      static void
+      validate(const SpeedModel& sm);
+
     private:
       //! Convert from any unit to any other unit
       //! @param[in] sm struct with vector of values used for conversion

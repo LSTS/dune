@@ -50,6 +50,20 @@ namespace DUNE
       return convert(sm, value, (IMC::SpeedUnits)units, IMC::SUNITS_PERCENTAGE);
     }
 
+    void
+    SpeedConversion::validate(const SpeedModel& sm)
+    {
+      unsigned psize = sm.values[IMC::SUNITS_PERCENTAGE].size();
+      unsigned rsize = sm.values[IMC::SUNITS_RPM].size();
+      unsigned msize = sm.values[IMC::SUNITS_METERS_PS].size();
+
+      if (psize != rsize || psize != msize)
+        throw std::runtime_error("speed model sizes do not match");
+
+      if (!psize)
+        throw std::runtime_error("speed model values are empty");
+    }
+
     float
     SpeedConversion::convert(const SpeedModel& sm, float value,
                              uint8_t from, uint8_t to)
