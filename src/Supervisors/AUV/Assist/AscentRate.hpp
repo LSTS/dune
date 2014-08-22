@@ -55,13 +55,12 @@ namespace Supervisors
         }
 
         float
-        update(float depth)
+        update(float vz)
         {
           if (!m_timer.overflow())
             return mean();
 
-          float der = -m_deriv.update(depth);
-          return m_avg->update(der);
+          return m_avg->update(vz);
         }
 
         float
@@ -73,8 +72,6 @@ namespace Supervisors
       private:
         //! Moving average for the ascent rate
         Math::MovingAverage<float>* m_avg;
-        //! Derivative of the depth
-        Math::Derivative<float> m_deriv;
         //! Counter for the time between updates
         Time::Counter<float> m_timer;
       };

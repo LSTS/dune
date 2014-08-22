@@ -40,7 +40,7 @@ namespace Supervisors
       using DUNE_NAMESPACES;
 
       //! Time between depth updates
-      static const float c_depth_period = 5.0;
+      static const float c_depth_period = 1.0;
       //! Plan generation command timeout
       static const float c_gen_timeout = 3.0;
       //! Stabilization time before testing ascent rate
@@ -120,7 +120,7 @@ namespace Supervisors
           .description("Window size for the moving average of the ascent rate");
 
           param("Stuck Trigger Time", m_args.trigger_time)
-          .defaultValue("30.0")
+          .defaultValue("60.0")
           .units(Units::Second)
           .description("Amount of time, after meeting conditions, before triggering dislodging behavior");
 
@@ -165,7 +165,7 @@ namespace Supervisors
         void
         consume(const IMC::EstimatedState* msg)
         {
-          m_ar->update(msg->depth);
+          m_ar->update(msg->vz);
           m_depth = msg->depth;
 
           // reset finish depth if the vehicle comes to the surface
