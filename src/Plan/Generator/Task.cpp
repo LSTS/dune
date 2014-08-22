@@ -58,6 +58,8 @@ namespace Plan
       int dive_time;
       //! The speed (in RPMS) to be commanded when generating maneuvers.
       int speed_rpms;
+      //! Maximum RPMs for urgent maneuvering
+      float max_rpms;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -96,6 +98,8 @@ namespace Plan
         param("RPM Speed", m_args.speed_rpms)
         .description("Speed in RPMs to be used in the generated maneuvers")
         .defaultValue("1000");
+
+        m_ctx.config.get("General", "Maximum Underwater RPMs", "1700.0", m_args.max_rpms);
 
         bind<IMC::Announce>(this);
         bind<IMC::PlanGeneration>(this);
@@ -606,7 +610,7 @@ namespace Plan
           IMC::MessageList<IMC::Maneuver> maneuvers;
 
           IMC::Dislodge* dislodge = new IMC::Dislodge();
-          dislodge->rpm = params.get("rpm", 1600.0);
+          dislodge->rpm = params.get("rpm", m_args.max_rpms);
           dislodge->direction = IMC::Dislodge::DIR_AUTO;
           maneuvers.push_back(*dislodge);
           delete dislodge;
