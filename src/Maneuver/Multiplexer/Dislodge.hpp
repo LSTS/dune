@@ -57,6 +57,8 @@ namespace Maneuver
         float min_distance;
         //! Safe depth change to consider the maneuver was successful
         float safe_gap;
+        //! Depth threshold to be considered surface
+        float depth_threshold;
       };
 
       //! Default constructor.
@@ -131,7 +133,7 @@ namespace Maneuver
             {
               if (m_init_depth < m_args->safe_gap + 0.5)
               {
-                if (msg->depth < c_depth_tol)
+                if (msg->depth < m_args->depth_threshold)
                 {
                   m_task->signalCompletion();
                   setState(ST_DONE);
