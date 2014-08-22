@@ -50,8 +50,6 @@ namespace Maneuver
       //! Arguments
       struct ElevatorArgs
       {
-        //! Depth tolerance when elevating towards a new depth
-        float depth_tolerance;
         //! Distance tolerance to start loitering near elevator's location
         float radius_tolerance;
         //! Negative values will disable vertical progress monitor
@@ -87,8 +85,7 @@ namespace Maneuver
         m_maneuver = *maneuver;
 
         Memory::clear(m_elevate);
-        m_elevate = new Maneuvers::Elevate(maneuver, m_task,
-                                           m_args->min_radius, m_args->depth_tolerance);
+        m_elevate = new Maneuvers::Elevate(maneuver, m_task, m_args->min_radius);
 
         if (m_args->vmonitor_speed > 0.0)
         {
