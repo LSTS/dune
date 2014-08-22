@@ -52,7 +52,7 @@ namespace DUNE
     template <typename Type>
     float
     Duration::parseSimple(const Type* maneuver, Position& last_pos,
-                          const SpeedConversion& speed_conv)
+                          const SpeedModel& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
@@ -73,19 +73,14 @@ namespace DUNE
 
     template <typename Type>
     float
-    Duration::convertSpeed(const Type* maneuver, const SpeedConversion& conv)
+    Duration::convertSpeed(const Type* maneuver, const SpeedModel& conv)
     {
-      switch (maneuver->speed_units)
-      {
-        case IMC::SUNITS_METERS_PS:
-          return maneuver->speed;
-        case IMC::SUNITS_RPM:
-          return maneuver->speed * conv.rpm_factor;
-        case IMC::SUNITS_PERCENTAGE:
-          return maneuver->speed * conv.act_factor;
-        default:
-          return 0.0;
-      }
+      float value = SpeedConversion::toMPS(conv, maneuver->speed, maneuver->speed_units);
+
+      if (value < 0.0)
+        return 0.0;
+
+      return value;
     }
 
     inline float
@@ -188,7 +183,7 @@ namespace DUNE
 
     bool
     Duration::parse(const IMC::FollowPath* maneuver, Position& last_pos,
-                    const SpeedConversion& speed_conv)
+                    const SpeedModel& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
@@ -231,7 +226,7 @@ namespace DUNE
 
     bool
     Duration::parse(const IMC::Rows* maneuver, Position& last_pos,
-                    const SpeedConversion& speed_conv)
+                    const SpeedModel& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
@@ -267,7 +262,7 @@ namespace DUNE
 
     bool
     Duration::parse(const IMC::YoYo* maneuver, Position& last_pos,
-                    const SpeedConversion& speed_conv)
+                    const SpeedModel& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
@@ -293,7 +288,7 @@ namespace DUNE
 
     bool
     Duration::parse(const IMC::Elevator* maneuver, Position& last_pos,
-                    const SpeedConversion& speed_conv)
+                    const SpeedModel& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
@@ -319,7 +314,7 @@ namespace DUNE
 
     bool
     Duration::parse(const IMC::PopUp* maneuver, Position& last_pos,
-                    const SpeedConversion& speed_conv)
+                    const SpeedModel& speed_conv)
     {
       float speed = convertSpeed(maneuver, speed_conv);
 
@@ -373,7 +368,7 @@ namespace DUNE
     Duration::ManeuverDuration::const_iterator
     Duration::parse(const std::vector<IMC::PlanManeuver*>& nodes,
                     const IMC::EstimatedState* state,
-                    const SpeedConversion& speed_conv)
+                    const SpeedModel& speed_conv)
     {
       Position pos;
       extractPosition(state, pos);
