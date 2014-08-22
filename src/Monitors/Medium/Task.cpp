@@ -56,7 +56,7 @@ namespace Monitors
       float init_time;
       //! GPS timeout.
       float gps_timeout;
-      //! Depth threshold.
+      //! Depth threshold to be considered surface.
       float depth_threshold;
       //! Air Speed threshold.
       float airspeed_threshold;
@@ -123,12 +123,7 @@ namespace Monitors
         .minimumValue("2.0")
         .description("No valid GPS fixes timeout");
 
-        param("Underwater Depth Threshold", m_args.depth_threshold)
-        .units(Units::Meter)
-        .defaultValue("0.3")
-        .minimumValue("0.2")
-        .maximumValue("0.8")
-        .description("Minimum depth necessary to consider a vehicle underwater");
+        m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_threshold);
 
         param("Air Speed Threshold", m_args.airspeed_threshold)
         .units(Units::Meter)
