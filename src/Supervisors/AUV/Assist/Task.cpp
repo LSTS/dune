@@ -102,10 +102,7 @@ namespace Supervisors
         {
           m_ctx.config.get("General", "Maximum Underwater RPMs", "1700.0", m_args.dislodge_rpm);
 
-          param("Depth Threshold", m_args.depth_threshold)
-          .defaultValue("0.2")
-          .units(Units::Meter)
-          .description("Depth threshold to consider that it is submerged");
+          m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_threshold);
 
           param("Minimum Ascent Rate", m_args.min_ascent_rate)
           .defaultValue("0.1")
