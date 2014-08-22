@@ -59,8 +59,9 @@ namespace DUNE
       typedef std::map< std::string, std::vector<float> > ManeuverDuration;
 
       //! Constructor
-      Duration(void):
-        m_accum_dur(NULL)
+      Duration(const SpeedModel* speed_model):
+        m_accum_dur(NULL),
+        m_speed_model(speed_model)
       { };
 
       //! Destructor
@@ -72,11 +73,10 @@ namespace DUNE
       //! Parse plan duration from plan specification
       //! @param[in] nodes vector of plan maneuver nodes
       //! @param[in] state current estimated state
-      //! @param[in] speed_conv speed conversion factors
+      //! @param[in] speed_model speed conversion factors
       //! @return iterator to last computed maneuver, returns end() if unable to compute
       ManeuverDuration::const_iterator
-      parse(const std::vector<IMC::PlanManeuver*>& nodes, const IMC::EstimatedState* state,
-            const SpeedModel& speed_conv);
+      parse(const std::vector<IMC::PlanManeuver*>& nodes, const IMC::EstimatedState* state);
 
       //! Clear the vector
       inline void
@@ -177,11 +177,6 @@ namespace DUNE
         float last_duration;
       };
 
-      //! Vector of maneuver durations
-      ManeuverDuration m_durations;
-      //! Vector of accumulated durations
-      AccumulatedDurations* m_accum_dur;
-
       //! Find 2D distance between two positions
       //! @param[in] new_pos object where the new position info will be stored
       //! @param[in] last_pos last position to consider when computing duration
@@ -202,19 +197,18 @@ namespace DUNE
       //! @return duration in seconds, -1 if unable to compute
       template <typename Type>
       float
-      parseSimple(const Type* maneuver, Position& last_pos,
-                  const SpeedModel& speed_conv);
+      parseSimple(const Type* maneuver, Position& last_pos);
 
       //! Convert speed to meters per second
       //! @param[in] pointer to maneuver message
-      //! @param[in] conv speed conversion factors
       //! @return converted speed
       template <typename Type>
       float
-      convertSpeed(const Type* maneuver, const SpeedModel& conv);
+      convertSpeed(const Type* maneuver);
 
       //! Compensate travelled distance with path control time factor
       //! @param[in] dist travelled distance to compensate
+      //! @param[in] speed speed to compensate for
       //! @return compensated travelled distance
       float
       compensate(float distance, float speed);
@@ -260,13 +254,11 @@ namespace DUNE
       //! Parse a Goto maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
-      //! @param[out] durations vector of accumulated durations for this maneuver
       //! @return true if parse successfully, false otherwise
       bool
-      parse(const IMC::Goto* maneuver, Position& last_pos,
-            const SpeedModel& speed_conv)
+      parse(const IMC::Goto* maneuver, Position& last_pos)
       {
-        float value = parseSimple(maneuver, last_pos, speed_conv);
+        float value = parseSimple(maneuver, last_pos);
         if (value < 0.0)
           return false;
 
@@ -280,13 +272,12 @@ namespace DUNE
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @return true if parse successfully, false otherwise
       bool
-      parse(const IMC::StationKeeping* maneuver, Position& last_pos,
-            const SpeedModel& speed_conv)
+      parse(const IMC::StationKeeping* maneuver, Position& last_pos)
       {
         if (!maneuver->duration)
           return false;
 
-        float value = parseSimple(maneuver, last_pos, speed_conv);
+        float value = parseSimple(maneuver, last_pos);
 
         if (value < 0.0)
           return false;
@@ -300,13 +291,12 @@ namespace DUNE
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @return true if parse successfully, false otherwise
       bool
-      parse(const IMC::Loiter* maneuver, Position& last_pos,
-            const SpeedModel& speed_conv)
+      parse(const IMC::Loiter* maneuver, Position& last_pos)
       {
         if (!maneuver->duration)
           return false;
 
-        float value = parseSimple(maneuver, last_pos, speed_conv);
+        float value = parseSimple(maneuver, last_pos);
 
         if (value < 0.0)
           return false;
@@ -320,53 +310,47 @@ namespace DUNE
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @return true if parse successfully, false otherwise
       bool
-      parse(const IMC::FollowPath* maneuver, Position& last_pos,
-            const SpeedModel& speed_conv);
+      parse(const IMC::FollowPath* maneuver, Position& last_pos);
 
       //! Parse a Rows maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @return true if parse successfully, false otherwise
       bool
-      parse(const IMC::Rows* maneuver, Position& last_pos,
-            const SpeedModel& speed_conv);
+      parse(const IMC::Rows* maneuver, Position& last_pos);
 
       //! Parse a YoYo maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @return true if parse successfully, false otherwise
       bool
-      parse(const IMC::YoYo* maneuver, Position& last_pos,
-            const SpeedModel& speed_conv);
+      parse(const IMC::YoYo* maneuver, Position& last_pos);
 
       //! Parse an Elevator maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @return true if parse successfully, false otherwise
       bool
-      parse(const IMC::Elevator* maneuver, Position& last_pos,
-            const SpeedModel& speed_conv);
+      parse(const IMC::Elevator* maneuver, Position& last_pos);
 
       //! Parse a PopUp maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @return true if parse successfully, false otherwise
       bool
-      parse(const IMC::PopUp* maneuver, Position& last_pos,
-            const SpeedModel& speed_conv);
+      parse(const IMC::PopUp* maneuver, Position& last_pos);
 
       //! Parse a Compass Calibration maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
       //! @return true if parse successfully, false otherwise
       bool
-      parse(const IMC::CompassCalibration* maneuver, Position& last_pos,
-            const SpeedModel& speed_conv)
+      parse(const IMC::CompassCalibration* maneuver, Position& last_pos)
       {
         if (!maneuver->duration)
           return false;
 
-        float value = parseSimple(maneuver, last_pos, speed_conv);
+        float value = parseSimple(maneuver, last_pos);
 
         if (value < 0.0)
           return false;
@@ -374,6 +358,13 @@ namespace DUNE
         m_accum_dur->addDuration(value + maneuver->duration);
         return true;
       }
+
+      //! Vector of maneuver durations
+      ManeuverDuration m_durations;
+      //! Vector of accumulated durations
+      AccumulatedDurations* m_accum_dur;
+      //! Pointer to model for speed conversion
+      const Plans::SpeedModel* m_speed_model;
     };
   }
 }
