@@ -163,10 +163,7 @@ namespace Control
           .units(Units::RPM)
           .description("Minimum value admissible for desired RPMs");
 
-          param("Maximum RPM Limit", m_args.max_rpm)
-          .defaultValue("1800")
-          .units(Units::RPM)
-          .description("Maximum value admissible for desired RPMs for the MPS controller");
+          m_ctx.config.get("General", "Maximum Underwater RPMs", "1700.0", m_args.max_rpm);
 
           param("Maximum RPM Acceleration", m_args.max_accel)
           .defaultValue("70")

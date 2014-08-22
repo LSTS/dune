@@ -34,8 +34,6 @@ namespace Maneuver
   {
     //! Number of samples for vertical monitor moving average in elevator
     static const unsigned c_vsamples = 10;
-    //! Value to be consider at surface
-    static const float c_depth_tol = 0.3f;
     //! Minimum radius for the elevators
     static const float c_min_elev_radius = 10.0f;
     //! Stabilization time for the dislodge maneuver

@@ -172,11 +172,6 @@ namespace Maneuver
         .units(Units::Degree)
         .description("Maximum course error admissible");
 
-        param("Elevator -- Depth Tolerance", m_args.elevator.depth_tolerance)
-        .defaultValue("1.0")
-        .units(Units::Meter)
-        .description("Depth tolerance when elevating towards a new depth");
-
         param("Elevator -- Radius Tolerance", m_args.elevator.radius_tolerance)
         .defaultValue("2.0")
         .units(Units::Meter)
@@ -243,6 +238,8 @@ namespace Maneuver
         .defaultValue("3.0")
         .units(Units::Meter)
         .description("Safe depth change to consider the maneuver was successful");
+
+        m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.dislodge.depth_threshold);
 
         bindToManeuver<Task, IMC::Goto>();
         bindToManeuver<Task, IMC::Loiter>();

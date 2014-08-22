@@ -103,7 +103,7 @@ namespace Maneuver
         elev.speed_units = m_maneuver.speed_units;
 
         Memory::clear(m_elevate);
-        m_elevate = new Maneuvers::Elevate(&elev, m_task, c_min_elev_radius, c_depth_tol);
+        m_elevate = new Maneuvers::Elevate(&elev, m_task, c_min_elev_radius);
       }
 
       //! Go up to the surface
