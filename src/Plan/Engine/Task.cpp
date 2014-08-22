@@ -176,6 +176,15 @@ namespace Plan
         if (paramChanged(m_args.speriod))
           m_args.speriod = 1.0 / m_args.speriod;
 
+        try
+        {
+          SpeedConversion::validate(m_args.speed_model);
+        }
+        catch (std::runtime_error& e)
+        {
+          err("%s", e.what());
+        }
+
         if ((m_plan != NULL) && (paramChanged(m_args.progress) ||
                                  paramChanged(m_args.calibration_time)))
           throw RestartNeeded(DTR("restarting to relaunch plan parser"), 0, false);
