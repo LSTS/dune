@@ -43,6 +43,9 @@ namespace Supervisors
       class AscentRate
       {
       public:
+        //! Constructor
+        //! @param[in] window_size number of samples in the moving average
+        //! @param[in] period interval of time between samples
         AscentRate(unsigned window_size, float period):
           m_timer(period)
         {
@@ -54,6 +57,9 @@ namespace Supervisors
           delete m_avg;
         }
 
+        //! Update the ascent rate computation
+        //! @param[in] vz speed in the z axis from EstimatedState message
+        //! @return newly computed value for the ascent rate
         float
         update(float vz)
         {
@@ -63,6 +69,8 @@ namespace Supervisors
           return m_avg->update(vz);
         }
 
+        //! Output the mean ascent rate
+        //! @return most recently computed value for the ascent rate
         float
         mean(void) const
         {

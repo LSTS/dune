@@ -207,6 +207,9 @@ namespace Supervisors
           }
         }
 
+        //! Check if the received PlanControl message reports to
+        //! a successful Dislodge plan request
+        //! @param[in] msg pointer to PlanControl message
         void
         checkDislodgeResult(const IMC::PlanControl* msg)
         {
@@ -225,6 +228,10 @@ namespace Supervisors
             setState(ST_CHECK_STUCK);
         }
 
+        //! Check if the received PlanControl message reports to
+        //! a plan that has just finished.
+        //! If so, save the depth at which the plan ended
+        //! @param[in] msg pointer to PlanControl message
         void
         getFinishDepth(const IMC::PlanControl* msg)
         {
@@ -235,12 +242,14 @@ namespace Supervisors
           m_finish_depth = m_depth;
         }
 
+        //! Signal that the start of the dislodge plan has failed
         inline void
         failedStartPlan(void)
         {
           err(DTR("failed to start dislodge maneuver"));
         }
 
+        //! Dispatch the dislodge plan
         inline void
         dispatchDislodge(void)
         {
@@ -253,6 +262,8 @@ namespace Supervisors
           dispatch(pg);
         }
 
+        //! Test the main conditions to consider throwing a dislodge plan
+        //! @return true if the conditions hold, false otherwise
         bool
         mainConditions(void)
         {
@@ -272,12 +283,16 @@ namespace Supervisors
           return true;
         }
 
+        //! Test if the ascent rate condition hold
+        //! @return true if condition holds, false otherwise
         bool
         ascentCondition(void)
         {
           return (m_ar->mean() < m_args.min_ascent_rate);
         }
 
+        //! Set the state machine's current state
+        //! @param[in] target state to which the machine should transition
         void
         setState(AssistState state)
         {
@@ -297,6 +312,7 @@ namespace Supervisors
           m_astate = state;
         }
 
+        //! Routine to run when on idle state
         void
         onIdle(void)
         {
@@ -313,6 +329,7 @@ namespace Supervisors
           }
         }
 
+        //! Routine to run when on checkstuck state
         void
         onCheckStuck(void)
         {
@@ -329,6 +346,7 @@ namespace Supervisors
           }
         }
 
+        //! Routine to run when on startdislodge state
         void
         onStartDislodge(void)
         {
@@ -339,6 +357,7 @@ namespace Supervisors
           }
         }
 
+        //! Routine to run when waiting for dislodge to end
         void
         onWaitDislodge(void)
         {
