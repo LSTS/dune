@@ -46,8 +46,6 @@ namespace Control
       using std::cos;
       using std::tan;
 
-      //! Depth tolerance to be considered surface
-      static const float c_depth_tol = 0.1f;
       //! Depth reference when altitude is ignored
       static const float c_min_depth_ref = 1.5f;
       //! Controllable loops
@@ -115,6 +113,8 @@ namespace Control
         float min_dvl_alt;
         //! Depth value below which altitude from DVL will be ignored
         float min_dvl_depth;
+        //! Depth threshold to be considered surface
+        float depth_threshold;
       };
 
       struct Task: public DUNE::Control::BasicAutopilot
@@ -252,6 +252,8 @@ namespace Control
           param("Coarse Altitude -- Sample Limit", m_ca_args.sample_limit)
           .defaultValue("10")
           .description("Limit of a fixed number of incoming samples per second");
+
+          m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_threshold);
         }
 
         //! Initialize resources
@@ -459,12 +461,12 @@ namespace Control
             switch (getVerticalMode())
             {
               case VERTICAL_MODE_DEPTH:
-                if ((getVerticalRef() < c_depth_tol) && m_args.force_pitch)
+                if ((getVerticalRef() < m_args.depth_threshold) && m_args.force_pitch)
                   surface = true;
 
                 z_error = getVerticalRef() - msg->depth;
 
-                if ((getVerticalRef() < c_depth_tol) && (m_args.depth_offset > 0))
+                if ((getVerticalRef() < m_args.depth_threshold) && (m_args.depth_offset > 0))
                   use_offset = false;
 
                 break;
