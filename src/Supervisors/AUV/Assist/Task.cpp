@@ -88,6 +88,8 @@ namespace Supervisors
         AssistState m_astate;
         //! Timer for triggering the dislodge
         Time::Counter<float> m_dtimer;
+        //! Finish depth of the running plan
+        float m_finish_depth;
         //! Task arguments.
         Arguments m_args;
 
@@ -95,7 +97,8 @@ namespace Supervisors
           Tasks::Periodic(name, ctx),
           m_ar(NULL),
           m_astate(ST_IDLE),
-          m_dtimer(c_stab_time)
+          m_dtimer(c_stab_time),
+          m_finish_depth(-1.0)
         {
           param("Dislodging RPMs", m_args.dislodge_rpm)
           .defaultValue("1600")
@@ -164,6 +167,10 @@ namespace Supervisors
         {
           m_ar->update(msg->depth);
           m_depth = msg->depth;
+
+          // reset finish depth if the vehicle comes to the surface
+          if (m_depth < m_args.depth_threshold)
+            m_finish_depth = -1.0;
         }
 
         void
@@ -190,9 +197,19 @@ namespace Supervisors
         void
         consume(const IMC::PlanControl* msg)
         {
-          if (m_astate != ST_WAIT_DISLODGE)
-            return;
+          if (m_astate == ST_WAIT_DISLODGE)
+          {
+            checkDislodgeResult(msg);
+          }
+          else if ((m_astate == ST_IDLE) || (m_astate == ST_CHECK_STUCK))
+          {
+            getFinishDepth(msg);
+          }
+        }
 
+        void
+        checkDislodgeResult(const IMC::PlanControl* msg)
+        {
           if (msg->type == IMC::PlanControl::PC_REQUEST)
             return;
 
@@ -206,6 +223,16 @@ namespace Supervisors
             setState(ST_IDLE);
           else if (msg->type == IMC::PlanControl::PC_FAILURE)
             setState(ST_CHECK_STUCK);
+        }
+
+        void
+        getFinishDepth(const IMC::PlanControl* msg)
+        {
+          if ((msg->type != IMC::PlanControl::PC_SUCCESS) &&
+              (msg->type != IMC::PlanControl::PC_FAILURE))
+            return;
+
+          m_finish_depth = m_depth;
         }
 
         inline void
@@ -237,6 +264,9 @@ namespace Supervisors
             return false;
 
           if (m_depth < m_args.depth_threshold)
+            return false;
+
+          if (m_finish_depth < m_args.depth_threshold)
             return false;
 
           return true;
