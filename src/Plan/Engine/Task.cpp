@@ -58,10 +58,8 @@ namespace Plan
       bool progress;
       //! State report period
       float speriod;
-      //! Factor to convert from RPMs to meters per second
-      float speed_conv_rpm;
-      //! Conv to convert from actuation to meters per second
-      float speed_conv_act;
+      //! Speed conversion parameters
+      Plans::SpeedModel speed_model;
       //! Duration of vehicle calibration process.
       uint16_t calibration_time;
       //! Abort when a payload fails to activate
@@ -123,14 +121,6 @@ namespace Plan
         .units(Units::Hertz)
         .description("Frequency of plan control state");
 
-        param("RPM Conversion Factor", m_args.speed_conv_rpm)
-        .defaultValue("0.001")
-        .description("Factor to convert from RPMs to meters per second");
-
-        param("Actuation Conversion Factor", m_args.speed_conv_act)
-        .defaultValue("0.02")
-        .description("Factor to convert from actuation to meters per second");
-
         param("Minimum Calibration Time", m_args.calibration_time)
         .defaultValue("10")
         .units(Units::Second)
@@ -153,6 +143,15 @@ namespace Plan
         .defaultValue("20")
         .units(Units::Meter)
         .description("Radius for the station keeping");
+
+        m_ctx.config.get("General", "Speed Conversion -- Actuation",
+                         "", m_args.speed_model.values[IMC::SUNITS_PERCENTAGE]);
+
+        m_ctx.config.get("General", "Speed Conversion -- RPM",
+                         "", m_args.speed_model.values[IMC::SUNITS_RPM]);
+
+        m_ctx.config.get("General", "Speed Conversion -- MPS",
+                         "", m_args.speed_model.values[IMC::SUNITS_METERS_PS]);
 
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
@@ -177,10 +176,17 @@ namespace Plan
         if (paramChanged(m_args.speriod))
           m_args.speriod = 1.0 / m_args.speriod;
 
+        try
+        {
+          SpeedConversion::validate(m_args.speed_model);
+        }
+        catch (std::runtime_error& e)
+        {
+          err("%s", e.what());
+        }
+
         if ((m_plan != NULL) && (paramChanged(m_args.progress) ||
-                                 paramChanged(m_args.calibration_time) ||
-                                 paramChanged(m_args.speed_conv_rpm) ||
-                                 paramChanged(m_args.speed_conv_act)))
+                                 paramChanged(m_args.calibration_time)))
           throw RestartNeeded(DTR("restarting to relaunch plan parser"), 0, false);
       }
 
@@ -194,7 +200,7 @@ namespace Plan
       onResourceAcquisition(void)
       {
         m_plan = new Plan(&m_spec, m_args.progress, m_args.calibration_time,
-                          m_args.speed_conv_rpm, m_args.speed_conv_act);
+                          &m_args.speed_model);
       }
 
       void

@@ -69,42 +69,29 @@ namespace Plan
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] compute_progress true if progress should be computed
       //! @param[in] min_cal_time minimum calibration time in s.
-      //! @param[in] speed_rpm_factor factor to convert from RPMs to m/s
-      //! @param[in] speed_act_factor factor to convert from actuation to m/s
+      //! @param[in] speed_model pointer to model for speed conversions
       Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-           uint16_t min_cal_time, float speed_rpm_factor,
-           float speed_act_factor):
+           uint16_t min_cal_time, const SpeedModel* speed_model):
         m_spec(spec),
         m_curr_node(NULL),
         m_sequential(false),
         m_compute_progress(compute_progress),
         m_progress(0.0),
         m_est_cal_time(0),
+        m_durations(NULL),
         m_beyond_dur(false),
         m_sched(NULL),
         m_started_maneuver(false),
         m_calib(NULL),
         m_min_cal_time(min_cal_time)
       {
-        m_speed_conv.rpm_factor = speed_rpm_factor;
-        m_speed_conv.act_factor = speed_act_factor;
-
+        m_durations = new Plans::Duration(speed_model);
         m_calib = new Calibration();
-      }
-
-      //! No speed conversion constructor
-      //! @param[in] spec pointer to PlanSpecification message
-      //! @param[in] compute_progress true if progress should be computed
-      //! @param[in] min_cal_time minimum calibration time in s.
-      Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-           uint16_t min_cal_time)
-      {
-        *this = Plan(spec, compute_progress, min_cal_time, 0.0, 0.0);
       }
 
       ~Plan(void)
       {
-        Memory::clear(m_sched);
+        Memory::clear(m_durations);
         Memory::clear(m_sched);
         Memory::clear(m_calib);
       }
@@ -116,10 +103,10 @@ namespace Plan
         m_graph.clear();
         m_seq_nodes.clear();
         m_sequential = false;
-        m_durations.clear();
+        m_durations->clear();
         m_progress = -1.0;
         m_beyond_dur = false;
-        m_last_dur = m_durations.end();
+        m_last_dur = m_durations->end();
         m_started_maneuver = false;
       }
 
@@ -225,7 +212,7 @@ namespace Plan
 
             Memory::clear(m_sched);
             m_sched = new ActionSchedule(task, m_spec, m_seq_nodes,
-                                         m_durations, m_last_dur, cinfo);
+                                         *m_durations, m_last_dur, cinfo);
 
             // Estimate necessary calibration time
             float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
@@ -298,7 +285,7 @@ namespace Plan
         if (m_curr_node == NULL)
           return;
 
-        if (m_last_dur != m_durations.end())
+        if (m_last_dur != m_durations->end())
         {
           if (m_curr_node->pman->maneuver_id == m_last_dur->first)
             m_beyond_dur = true;
@@ -369,10 +356,10 @@ namespace Plan
       float
       getExecutionDuration(void) const
       {
-        if (!m_sequential || !m_durations.size())
+        if (!m_sequential || !m_durations->size())
           return -1.0;
 
-        if (m_last_dur == m_durations.end())
+        if (m_last_dur == m_durations->end())
           return -1.0;
 
         return m_last_dur->second.back();
@@ -591,7 +578,7 @@ namespace Plan
       void
       computeDurations(const IMC::EstimatedState* state)
       {
-        m_last_dur = m_durations.parse(m_seq_nodes, state, m_speed_conv);
+        m_last_dur = m_durations->parse(m_seq_nodes, state);
       }
 
       //! Get maneuver from id
@@ -623,7 +610,7 @@ namespace Plan
           return -1.0;
 
         // Compute only if sequential and durations exists
-        if (!m_sequential || !m_durations.size())
+        if (!m_sequential || !m_durations->size())
           return -1.0;
 
         // If calibration has not started yet, but will later
@@ -647,10 +634,10 @@ namespace Plan
           return m_progress;
 
         Duration::ManeuverDuration::const_iterator itr;
-        itr = m_durations.find(getCurrentId());
+        itr = m_durations->find(getCurrentId());
 
         // If not found
-        if (itr == m_durations.end())
+        if (itr == m_durations->end())
         {
           // If beyond the last maneuver with valid duration
           if (m_beyond_dur)
@@ -709,10 +696,8 @@ namespace Plan
       uint16_t m_est_cal_time;
       //! Vector of message pointers to cycle through (sequential) plan
       std::vector<IMC::PlanManeuver*> m_seq_nodes;
-      //! Maneuver durations
-      Plans::Duration m_durations;
-      //! Speed conversion factors for plan duration
-      Duration::SpeedConversion m_speed_conv;
+      //! Pointer to maneuver durations
+      Plans::Duration* m_durations;
       //! Iterator to last maneuver with a valid duration
       Duration::ManeuverDuration::const_iterator m_last_dur;
       //! Flag to signal that the plan is past the last maneuver with a valid duration

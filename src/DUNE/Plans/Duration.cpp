@@ -51,10 +51,9 @@ namespace DUNE
 
     template <typename Type>
     float
-    Duration::parseSimple(const Type* maneuver, Position& last_pos,
-                          const SpeedConversion& speed_conv)
+    Duration::parseSimple(const Type* maneuver, Position& last_pos)
     {
-      float speed = convertSpeed(maneuver, speed_conv);
+      float speed = convertSpeed(maneuver);
 
       if (speed == 0.0)
         return -1.0;
@@ -73,19 +72,17 @@ namespace DUNE
 
     template <typename Type>
     float
-    Duration::convertSpeed(const Type* maneuver, const SpeedConversion& conv)
+    Duration::convertSpeed(const Type* maneuver)
     {
-      switch (maneuver->speed_units)
-      {
-        case IMC::SUNITS_METERS_PS:
-          return maneuver->speed;
-        case IMC::SUNITS_RPM:
-          return maneuver->speed * conv.rpm_factor;
-        case IMC::SUNITS_PERCENTAGE:
-          return maneuver->speed * conv.act_factor;
-        default:
-          return 0.0;
-      }
+      if (m_speed_model == NULL)
+        return 0.0;
+
+      float value = SpeedConversion::toMPS(*m_speed_model, maneuver->speed, maneuver->speed_units);
+
+      if (value < 0.0)
+        return 0.0;
+
+      return value;
     }
 
     inline float
@@ -187,10 +184,9 @@ namespace DUNE
     }
 
     bool
-    Duration::parse(const IMC::FollowPath* maneuver, Position& last_pos,
-                    const SpeedConversion& speed_conv)
+    Duration::parse(const IMC::FollowPath* maneuver, Position& last_pos)
     {
-      float speed = convertSpeed(maneuver, speed_conv);
+      float speed = convertSpeed(maneuver);
 
       if (speed == 0.0)
         return false;
@@ -230,10 +226,9 @@ namespace DUNE
     }
 
     bool
-    Duration::parse(const IMC::Rows* maneuver, Position& last_pos,
-                    const SpeedConversion& speed_conv)
+    Duration::parse(const IMC::Rows* maneuver, Position& last_pos)
     {
-      float speed = convertSpeed(maneuver, speed_conv);
+      float speed = convertSpeed(maneuver);
 
       if (speed == 0.0)
         return false;
@@ -266,10 +261,9 @@ namespace DUNE
     }
 
     bool
-    Duration::parse(const IMC::YoYo* maneuver, Position& last_pos,
-                    const SpeedConversion& speed_conv)
+    Duration::parse(const IMC::YoYo* maneuver, Position& last_pos)
     {
-      float speed = convertSpeed(maneuver, speed_conv);
+      float speed = convertSpeed(maneuver);
 
       if (speed == 0.0)
         return false;
@@ -292,10 +286,9 @@ namespace DUNE
     }
 
     bool
-    Duration::parse(const IMC::Elevator* maneuver, Position& last_pos,
-                    const SpeedConversion& speed_conv)
+    Duration::parse(const IMC::Elevator* maneuver, Position& last_pos)
     {
-      float speed = convertSpeed(maneuver, speed_conv);
+      float speed = convertSpeed(maneuver);
 
       if (speed == 0.0)
         return false;
@@ -318,10 +311,9 @@ namespace DUNE
     }
 
     bool
-    Duration::parse(const IMC::PopUp* maneuver, Position& last_pos,
-                    const SpeedConversion& speed_conv)
+    Duration::parse(const IMC::PopUp* maneuver, Position& last_pos)
     {
-      float speed = convertSpeed(maneuver, speed_conv);
+      float speed = convertSpeed(maneuver);
 
       if (speed == 0.0)
         return false;
@@ -372,8 +364,7 @@ namespace DUNE
 
     Duration::ManeuverDuration::const_iterator
     Duration::parse(const std::vector<IMC::PlanManeuver*>& nodes,
-                    const IMC::EstimatedState* state,
-                    const SpeedConversion& speed_conv)
+                    const IMC::EstimatedState* state)
     {
       Position pos;
       extractPosition(state, pos);
@@ -402,39 +393,39 @@ namespace DUNE
         switch (msg->getId())
         {
           case DUNE_IMC_GOTO:
-            parsed = parse(static_cast<IMC::Goto*>(msg), pos, speed_conv);
+            parsed = parse(static_cast<IMC::Goto*>(msg), pos);
             break;
 
           case DUNE_IMC_STATIONKEEPING:
-            parsed = parse(static_cast<IMC::StationKeeping*>(msg), pos, speed_conv);
+            parsed = parse(static_cast<IMC::StationKeeping*>(msg), pos);
             break;
 
           case DUNE_IMC_LOITER:
-            parsed = parse(static_cast<IMC::Loiter*>(msg), pos, speed_conv);
+            parsed = parse(static_cast<IMC::Loiter*>(msg), pos);
             break;
 
           case DUNE_IMC_FOLLOWPATH:
-            parsed = parse(static_cast<IMC::FollowPath*>(msg), pos, speed_conv);
+            parsed = parse(static_cast<IMC::FollowPath*>(msg), pos);
             break;
 
           case DUNE_IMC_ROWS:
-            parsed = parse(static_cast<IMC::Rows*>(msg), pos, speed_conv);
+            parsed = parse(static_cast<IMC::Rows*>(msg), pos);
             break;
 
           case DUNE_IMC_YOYO:
-            parsed = parse(static_cast<IMC::YoYo*>(msg), pos, speed_conv);
+            parsed = parse(static_cast<IMC::YoYo*>(msg), pos);
             break;
 
           case DUNE_IMC_ELEVATOR:
-            parsed = parse(static_cast<IMC::Elevator*>(msg), pos, speed_conv);
+            parsed = parse(static_cast<IMC::Elevator*>(msg), pos);
             break;
 
           case DUNE_IMC_POPUP:
-            parsed = parse(static_cast<IMC::PopUp*>(msg), pos, speed_conv);
+            parsed = parse(static_cast<IMC::PopUp*>(msg), pos);
             break;
 
           case DUNE_IMC_COMPASSCALIBRATION:
-            parsed = parse(static_cast<IMC::CompassCalibration*>(msg), pos, speed_conv);
+            parsed = parse(static_cast<IMC::CompassCalibration*>(msg), pos);
             break;
 
           default:
