@@ -73,7 +73,6 @@ namespace DUNE
       //! Parse plan duration from plan specification
       //! @param[in] nodes vector of plan maneuver nodes
       //! @param[in] state current estimated state
-      //! @param[in] speed_model speed conversion factors
       //! @return iterator to last computed maneuver, returns end() if unable to compute
       ManeuverDuration::const_iterator
       parse(const std::vector<IMC::PlanManeuver*>& nodes, const IMC::EstimatedState* state);
