@@ -286,7 +286,7 @@ namespace Supervisors
         }
 
         //! Set the state machine's current state
-        //! @param[in] target state to which the machine should transition
+        //! @param[in] state target state to which the machine should transition
         void
         setState(AssistState state)
         {
