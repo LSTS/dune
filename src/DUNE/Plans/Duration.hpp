@@ -141,16 +141,22 @@ namespace DUNE
       //! Accumulated durations
       struct AccumulatedDurations
       {
+        //! Constructor
+        //! @param[in] value last computed duration
         AccumulatedDurations(float value):
           last_duration(value)
         { };
 
+        //! Add a maneuver's duration
+        //! @param[in] value duration value
         void
         addDuration(float value)
         {
           vec.push_back(value + getLastDuration());
         }
 
+        //! Get the last computed duration
+        //! @return last computed duration
         float
         getLastDuration(void) const
         {
@@ -165,12 +171,15 @@ namespace DUNE
           return vec.back();
         }
 
+        //! Get the vector size or number of durations
+        //! @return size of vec
         size_t
         size(void) const
         {
           return vec.size();
         }
 
+        //! Vector of durations
         std::vector<float> vec;
         //! Last duration
         float last_duration;

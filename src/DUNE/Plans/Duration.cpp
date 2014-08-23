@@ -448,7 +448,8 @@ namespace DUNE
           return dtr;
         }
 
-        std::pair<std::string, std::vector<float> > ent((*itr)->maneuver_id, m_accum_dur->vec);
+        std::pair<std::string, std::vector<float> > ent((*itr)->maneuver_id,
+                                                        m_accum_dur->vec);
         m_durations.insert(ent);
       }
 

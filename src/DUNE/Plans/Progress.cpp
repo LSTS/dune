@@ -65,12 +65,12 @@ namespace DUNE
 
     float
     Progress::compute(const IMC::FollowPath* maneuver, const IMC::ManeuverControlState* mcs,
-      const std::vector<float>& durations, float total_duration)
+                      const std::vector<float>& durations, float total_duration)
     {
-    (void)maneuver;
+      (void)maneuver;
 
-    return compute(mcs, durations, total_duration);
-  }
+      return compute(mcs, durations, total_duration);
+    }
 
     float
     Progress::compute(const IMC::Rows* maneuver, const IMC::ManeuverControlState* mcs,
