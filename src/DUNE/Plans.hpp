@@ -37,5 +37,6 @@ namespace DUNE
 
 #include <DUNE/Plans/Duration.hpp>
 #include <DUNE/Plans/Progress.hpp>
+#include <DUNE/Plans/SpeedConversion.hpp>
 
 #endif
