@@ -29,7 +29,7 @@
 #define MONITORS_FUELLEVEL_ENTITYPOWER_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
-#include <cstring>
+#include <map>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -44,16 +44,9 @@ namespace Monitors
     class EntityPower
     {
     public:
-      EntityPower(unsigned ent, float power = 0.0):
-        m_ent(ent),
+      EntityPower(float power = 0.0):
         m_power(power)
       { }
-
-      inline unsigned
-      getEntity(void) const
-      {
-        return m_ent;
-      }
 
       inline float
       getPower(void) const
@@ -68,25 +61,14 @@ namespace Monitors
       }
 
     private:
-      //! Entity number
-      unsigned m_ent;
       //! Entity estimated power consumption
       float m_power;
     };
 
-    bool
-    operator<(const EntityPower& ep1,
-              const EntityPower& ep2)
-    {
-      return ep1.getEntity() < ep2.getEntity();
-    }
-
-    bool
-    operator==(const EntityPower& ep1,
-               const EntityPower& ep2)
-    {
-      return ep1.getEntity() == ep2.getEntity();
-    }
+    //! Entity to power pair
+    typedef std::pair<unsigned, EntityPower> EPPair;
+    //! Map of entities to respective power
+    typedef std::map<unsigned, EntityPower> EPMap;
   }
 }
 

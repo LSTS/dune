@@ -79,7 +79,7 @@ namespace Monitors
       //! True if filter is ready and computing estimates
       bool m_filter_ready;
       //! Set to gather estimated power consumption of certain entities
-      std::set<EntityPower> m_epower;
+      EPMap m_epower;
       //! Task arguments.
       Arguments m_args;
 
@@ -261,7 +261,7 @@ namespace Monitors
           try
           {
             unsigned ent = resolveEntity(m_args.est_list[i]);
-            m_epower.insert(EntityPower(ent, m_args.est_power[i]));
+            m_epower.insert(EPPair(ent, m_args.est_power[i]));
           }
           catch (...)
           { }
