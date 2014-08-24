@@ -40,6 +40,8 @@
 #include <DUNE/Plans.hpp>
 #include <DUNE/IMC.hpp>
 #include "Calibration.hpp"
+#include "Timeline.hpp"
+#include "ComponentActiveTime.hpp"
 
 using namespace DUNE::IMC;
 using namespace DUNE::Plans;
@@ -288,6 +290,13 @@ namespace Plan
       std::map<std::string, TimedStack>::iterator
       nextSchedule(void);
 
+      //! Fill the object component active time
+      //! @param[in] nodes vector of sequenced plan maneuvers
+      //! @param[in] timeline plan timeline with all ETAs
+      void
+      fillComponentActiveTime(const std::vector<IMC::PlanManeuver*>& nodes,
+                              const Timeline& timeline);
+
       //! Printed timed actions
       void
       printTimed(void);
@@ -313,6 +322,8 @@ namespace Plan
       float m_time_left;
       //! Set of activation requests yet to be confirmed
       std::map<std::string, TimedAction> m_reqs;
+      //! Component active time list
+      ComponentActiveTime m_cat;
       //! Expected plan duration disregarding calibration time
       float m_plan_duration;
     };
