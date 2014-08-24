@@ -27,6 +27,7 @@
 
 // Local headers
 #include "ActionSchedule.hpp"
+#include "Timeline.hpp"
 
 namespace Plan
 {
@@ -56,6 +57,9 @@ namespace Plan
       float maneuver_start_eta = -1.0;
       float maneuver_end_eta = -1.0;
 
+      // Create a timeline of plan's and maneuvers' ETAs
+      Timeline tl;
+
       // Iterate through plan maneuvers
       for (; itr != nodes.end(); ++itr)
       {
@@ -73,6 +77,9 @@ namespace Plan
           maneuver_end_eta = m_plan_duration - dur->second.back();
         else
           maneuver_end_eta = -1.0;
+
+        // Fill timeline
+        tl.setManeuverETA((*itr)->maneuver_id, maneuver_start_eta, maneuver_end_eta);
 
         EventActions eact;
 
@@ -94,6 +101,9 @@ namespace Plan
         m_earliest = 0.0;
       else
         m_earliest = next->second.top().sched_time;
+
+      // Fill timeline plan ETA
+      tl.setPlanETA(std::max(m_earliest, m_plan_duration));
     }
 
     ActionSchedule::ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
