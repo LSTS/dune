@@ -31,6 +31,7 @@
 // ISO C++ 98 headers.
 #include <string>
 #include <map>
+#include <cmath>
 
 namespace Plan
 {
@@ -71,19 +72,41 @@ namespace Plan
           itr->second += value;
       }
 
+      //! Subtract active time from a component
+      //! @param[in] id component name
+      //! @param[in] value time active to subtract in seconds
+      void
+      subtractActiveTime(const std::string& id, float value)
+      {
+        ATMap::iterator itr;
+        itr = m_list.find(id);
+
+        if (itr == m_list.end())
+          return;
+        else
+          itr->second = std::max(0.0f, itr->second - value);
+      }
+
       //! Get component's active time
       //! @param[in] id component name
       //! @return active time, -1.0 if canont find id
       float
       getActiveTime(const std::string& id) const
       {
-        ATMap::iterator itr;
+        ATMap::const_iterator itr;
         itr = m_list.find(id);
 
         if (itr == m_list.end())
           return -1.0;
         else
           return itr->second;
+      }
+
+      //! Clear the contents
+      void
+      clear(void)
+      {
+        m_list.clear();
       }
 
     private:
