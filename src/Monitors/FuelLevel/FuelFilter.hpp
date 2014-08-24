@@ -127,7 +127,7 @@ namespace Monitors
       };
 
       FuelFilter(Arguments* args, unsigned eids[BatteryData::BM_TOTAL],
-                 const std::set<EntityPower>* epower, Tasks::Task* task = NULL,
+                 const EPMap* epower, Tasks::Task* task = NULL,
                  bool real_clock = false, double start_time = 0.0):
         m_args(args),
         m_bdata(NULL),
@@ -233,29 +233,29 @@ namespace Monitors
         if (!m_epower->size())
           return;
 
-        std::set<EntityPower>::const_iterator it;
-        it = m_epower->find(EntityPower(msg->getSourceEntity()));
+        EPMap::const_iterator it;
+        it = m_epower->find(msg->getSourceEntity());
 
         if (it == m_epower->end())
           return;
 
         std::set<unsigned>::iterator ut;
-        ut = m_act_ent.find(it->getEntity());
+        ut = m_act_ent.find(it->first);
         bool exists = ut != m_act_ent.end();
 
         if (msg->state == IMC::EntityActivationState::EAS_ACTIVE && !exists)
-          m_act_ent.insert(it->getEntity());
+          m_act_ent.insert(it->first);
 
         if (msg->state != IMC::EntityActivationState::EAS_ACTIVE && exists)
-          m_act_ent.erase(it->getEntity());
+          m_act_ent.erase(it->first);
 
         // update estimated rate
         m_est_rate = 0.0;
 
         for (ut = m_act_ent.begin(); ut != m_act_ent.end(); ut++)
         {
-          it = m_epower->find(EntityPower(*ut));
-          m_est_rate += it->getPowerPerSecond();
+          it = m_epower->find(*ut);
+          m_est_rate += it->second.getPowerPerSecond();
         }
       }
 
@@ -717,7 +717,7 @@ namespace Monitors
       //! Battery related data being measured
       BatteryData* m_bdata;
       //! Pointer to set to gather estimated power consumption of certain entities
-      const std::set<EntityPower>* m_epower;
+      const EPMap* m_epower;
       //! Estimated amount of energy consumed in Wh since the task started
       float m_energy_consumed;
       //! Do we have an initial estimate
