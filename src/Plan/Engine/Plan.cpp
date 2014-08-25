@@ -297,7 +297,7 @@ namespace Plan
       if (prog >= 0.0 && m_sched != NULL)
       {
         if (!m_beyond_dur)
-          m_sched->updateSchedule(getPlanEta());
+          m_sched->updateSchedule(getETA());
         else // if we're beyond computed durations, flush all timed actions
           m_sched->flushTimed();
       }
@@ -341,7 +341,7 @@ namespace Plan
     }
 
     float
-    Plan::getPlanEta(void) const
+    Plan::getETA(void) const
     {
       if (m_progress >= 0.0)
         return getTotalDuration() * (1.0 - 0.01 * m_progress);

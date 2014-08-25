@@ -170,10 +170,10 @@ namespace Plan
       bool
       onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg);
 
-      //! Get plan estimated time of arrival
+      //! Get current estimated time of arrival
       //! @return ETA
       float
-      getPlanEta(void) const;
+      getETA(void) const;
 
     private:
       //! Get duration of the execution phase of the plan
