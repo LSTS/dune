@@ -74,8 +74,6 @@ namespace Plan
         m_earliest = 0.0;
       else
         m_earliest = next->second.top().sched_time;
-
-      printTimed();
     }
 
     ActionSchedule::ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
