@@ -34,56 +34,30 @@ namespace Plan
   {
     ActionSchedule::ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
                                    const std::vector<IMC::PlanManeuver*>& nodes,
-                                   const Plans::Duration& durations,
-                                   const Duration::ManeuverDuration::const_iterator last_dur,
+                                   const Timeline& tline,
                                    const std::map<std::string, IMC::EntityInfo>& cinfo):
       m_task(task),
       m_cinfo(&cinfo)
     {
-      // Get plan duration
-      if (last_dur == durations.end())
-        m_plan_duration = -1.0;
-      else
-        m_plan_duration = last_dur->second.back();
+      // Set execution duration
+      m_execution_duration = tline.getExecutionDuration();
 
       // start by adding "start" plan actions
-      parseStartActions(spec->start_actions, &m_plan_actions, m_plan_duration);
+      parseStartActions(spec->start_actions, &m_plan_actions, m_execution_duration);
 
       std::vector<IMC::PlanManeuver*>::const_iterator itr;
       itr = nodes.begin();
 
-      // Maneuver's start and end ETA
-      float maneuver_start_eta = -1.0;
-      float maneuver_end_eta = -1.0;
-
-      // Create a timeline of plan's and maneuvers' ETAs
-      Timeline tl;
-
       // Iterate through plan maneuvers
       for (; itr != nodes.end(); ++itr)
       {
-        if (itr == nodes.begin())
-          maneuver_start_eta = m_plan_duration;
-        else
-          maneuver_start_eta = maneuver_end_eta;
-
-        Duration::ManeuverDuration::const_iterator dur;
-        dur = durations.find((*itr)->maneuver_id);
-
-        if (dur == durations.end())
-          maneuver_end_eta = -1.0;
-        else if (dur->second.size())
-          maneuver_end_eta = m_plan_duration - dur->second.back();
-        else
-          maneuver_end_eta = -1.0;
-
-        // Fill timeline
-        tl.setManeuverETA((*itr)->maneuver_id, maneuver_start_eta, maneuver_end_eta);
-
         EventActions eact;
 
-        parseStartActions((*itr)->start_actions, &eact, maneuver_start_eta);
-        parseEndActions((*itr)->end_actions, &eact, maneuver_end_eta);
+        parseStartActions((*itr)->start_actions, &eact,
+                          tline.getManeuverStartETA((*itr)->maneuver_id));
+
+        parseEndActions((*itr)->end_actions, &eact,
+                        tline.getManeuverEndETA((*itr)->maneuver_id));
 
         m_onevent.insert(std::pair<std::string, EventActions>((*itr)->maneuver_id, eact));
       }
@@ -101,8 +75,7 @@ namespace Plan
       else
         m_earliest = next->second.top().sched_time;
 
-      // Fill timeline plan ETA
-      tl.setPlanETA(std::max(m_earliest, m_plan_duration));
+      printTimed();
     }
 
     ActionSchedule::ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
@@ -111,10 +84,10 @@ namespace Plan
       m_task(task),
       m_cinfo(&cinfo)
     {
-      m_plan_duration = -1.0;
+      m_execution_duration = -1.0;
 
       // start by adding "start" plan actions
-      parseStartActions(spec->start_actions, &m_plan_actions, m_plan_duration);
+      parseStartActions(spec->start_actions, &m_plan_actions, m_execution_duration);
 
       std::vector<IMC::PlanManeuver*>::const_iterator itr;
       itr = nodes.begin();
@@ -310,7 +283,7 @@ namespace Plan
 
       if (next != m_timed.end())
       {
-        if (next->second.top().sched_time >= m_plan_duration)
+        if (next->second.top().sched_time >= m_execution_duration)
           return true;
       }
 
@@ -327,7 +300,7 @@ namespace Plan
       next = nextSchedule();
 
       if (next != m_timed.end())
-        return next->second.top().sched_time - m_plan_duration;
+        return next->second.top().sched_time - m_execution_duration;
 
       return -1.0;
     }
@@ -385,7 +358,7 @@ namespace Plan
           uint16_t act_time = getActivationTime(sep->name);
           uint16_t deact_time = getDeactivationTime(sep->name);
 
-          if ((act_time > 0 || deact_time > 0) && (m_plan_duration >= 0.0))
+          if ((act_time > 0 || deact_time > 0) && (m_execution_duration >= 0.0))
           {
             event_based = false;
 

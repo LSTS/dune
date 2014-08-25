@@ -61,14 +61,12 @@ namespace Plan
       //! @param[in] task pointer to task
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] nodes vector of sequential PlanManeuvers that describe the plan
-      //! @param[in] durations information regarding each maneuvers duration
-      //! @param[in] last_dur iterator to last maneuver with a valid duration
+      //! @param[in] tline plan timeline with maneuvers' and plan's ETAs
       //! @param[in] cinfo map of components info
       ActionSchedule(Tasks::Task* task,
                      const IMC::PlanSpecification* spec,
                      const std::vector<IMC::PlanManeuver*>& nodes,
-                     const Plans::Duration& durations,
-                     const Duration::ManeuverDuration::const_iterator last_dur,
+                     const Timeline& tline,
                      const std::map<std::string, IMC::EntityInfo>& cinfo);
 
       //! Alternative constructor for when plan is not sequential.
@@ -77,7 +75,8 @@ namespace Plan
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] nodes vector of sequential PlanManeuvers that describe the plan
       //! @param[in] cinfo map of components info
-      ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
+      ActionSchedule(Tasks::Task* task,
+                     const IMC::PlanSpecification* spec,
                      const std::vector<IMC::PlanManeuver*>& nodes,
                      const std::map<std::string, IMC::EntityInfo>& cinfo);
 
@@ -325,7 +324,7 @@ namespace Plan
       //! Component active time list
       ComponentActiveTime m_cat;
       //! Expected plan duration disregarding calibration time
-      float m_plan_duration;
+      float m_execution_duration;
     };
   }
 }
