@@ -31,6 +31,7 @@
 // ISO C++ 98 headers.
 #include <string>
 #include <map>
+#include <cmath>
 
 namespace Plan
 {
@@ -61,6 +62,7 @@ namespace Plan
       Timeline(void)
       {
         m_plan.end = 0.0;
+        m_execution_duration = -1.0;
       }
 
       //! Destructor
@@ -91,6 +93,11 @@ namespace Plan
         ETA eta;
         eta.start = start_eta;
         eta.end = end_eta;
+
+        if (m_execution_duration < 0.0)
+          m_execution_duration = eta.start;
+        else
+          m_execution_duration = std::max(m_execution_duration, eta.start);
 
         m_list.insert(ETAPair(id, eta));
       }
@@ -125,11 +132,21 @@ namespace Plan
           return itr->second.end;
       }
 
+      //! Get execution duration
+      //! @return execution duration in seconds
+      inline float
+      getExecutionDuration(void) const
+      {
+        return m_execution_duration;
+      }
+
     private:
       //! Map maneuvers and their ETAs
       ETAMap m_list;
       //! Plan's ETA
       ETA m_plan;
+      //! Execution duration
+      float m_execution_duration;
     };
   }
 }
