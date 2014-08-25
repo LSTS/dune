@@ -67,7 +67,7 @@ namespace DUNE
         waitNsec(msec * 1000000);
       }
 
-      //! Suspends the execution of the calling entity for the
+      //! Suspends the execution of the calling thread for the
       //! specified amount of time (in seconds).
       //! @param s the amount of time to suspend.
       static void
