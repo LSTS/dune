@@ -59,8 +59,8 @@ namespace Transports
       std::map<std::string, IMC::UamTxFrame*> m_txs;
       //! Destination of last transmission.
       std::string m_tx_last;
-      //! Seconds.
-      std::set<unsigned> m_seconds;
+      //! TDMA slots
+      DUNE::Network::TDMA m_tdma;
       //! Task arguments.
       Arguments m_args;
 
@@ -103,19 +103,7 @@ namespace Transports
       void
       onUpdateParameters(void)
       {
-        m_seconds.clear();
-        unsigned slot = 0;
-        for (unsigned i = 0; i < 60; i += m_args.slot_dur)
-        {
-          if (slot == m_args.slot_number)
-          {
-            m_seconds.insert(i);
-            inf(DTR("slot second %u"), i);
-          }
-
-          if (++slot > m_args.slot_count)
-            slot = 0;
-        }
+        m_tdma.reset(m_args.slot_count, m_args.slot_number, m_args.slot_dur);
       }
 
       void
@@ -207,11 +195,7 @@ namespace Transports
       void
       consume(const IMC::GpsFix* msg)
       {
-        unsigned thour = (unsigned)(msg->utc_time / 3600);
-        unsigned tmin = (unsigned)(((msg->utc_time / 3600.0) - thour) * 60);
-        unsigned tsec = (unsigned)Math::round(((((msg->utc_time / 3600.0) - thour) * 60.0) - tmin) * 60.0);
-
-        if (m_seconds.find(tsec) != m_seconds.end())
+        if (m_tdma.check(msg->utc_time))
         {
           if (m_args.tx_estate)
             transmit();
