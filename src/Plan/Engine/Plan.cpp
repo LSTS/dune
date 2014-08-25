@@ -163,13 +163,21 @@ namespace Plan
         {
           computeDurations(state);
 
+          Timeline tline;
+          fillTimeline(tline);
+
           Memory::clear(m_sched);
           m_sched = new ActionSchedule(task, m_spec, m_seq_nodes,
-                                       *m_durations, m_last_dur, cinfo);
+                                       tline, cinfo);
+
+          // Update timeline with scheduled calibration time if any
+          tline.setPlanETA(std::max(m_sched->getEarliestSchedule(), getExecutionDuration()));
+
+          m_sched->fillComponentActiveTime(m_seq_nodes, tline, m_cat);
 
           // Estimate necessary calibration time
           float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
-          m_est_cal_time = (uint16_t)trimValue(diff, 0.0, diff);
+          m_est_cal_time = (uint16_t)std::max(0.0f, diff);
           m_est_cal_time = (uint16_t)std::max(m_min_cal_time, m_est_cal_time);
         }
         else if (!m_sequential)
@@ -507,6 +515,41 @@ namespace Plan
       m_progress = prog > m_progress ? prog : m_progress;
 
       return m_progress;
+    }
+
+    void
+    Plan::fillTimeline(Timeline& tl)
+    {
+      float execution_duration = getExecutionDuration();
+
+      std::vector<IMC::PlanManeuver*>::const_iterator itr;
+      itr = m_seq_nodes.begin();
+
+      // Maneuver's start and end ETA
+      float maneuver_start_eta = -1.0;
+      float maneuver_end_eta = -1.0;
+
+      // Iterate through plan maneuvers
+      for (; itr != m_seq_nodes.end(); ++itr)
+      {
+        if (itr == m_seq_nodes.begin())
+          maneuver_start_eta = execution_duration;
+        else
+          maneuver_start_eta = maneuver_end_eta;
+
+        Duration::ManeuverDuration::const_iterator dur;
+        dur = m_durations->find((*itr)->maneuver_id);
+
+        if (dur == m_durations->end())
+          maneuver_end_eta = -1.0;
+        else if (dur->second.size())
+          maneuver_end_eta = execution_duration - dur->second.back();
+        else
+          maneuver_end_eta = -1.0;
+
+        // Fill timeline
+        tl.setManeuverETA((*itr)->maneuver_id, maneuver_start_eta, maneuver_end_eta);
+      }
     }
   }
 }

@@ -37,6 +37,7 @@
 #include <DUNE/Plans.hpp>
 #include "Calibration.hpp"
 #include "ActionSchedule.hpp"
+#include "Timeline.hpp"
 
 namespace Plan
 {
@@ -234,6 +235,11 @@ namespace Plan
       float
       progress(const IMC::ManeuverControlState* mcs);
 
+      //! Fill in plan timeline
+      //! @param[out] tl plan timeline filled in
+      void
+      fillTimeline(Timeline& tl);
+
       //! Graph nodes (a maneuver and its outgoing transitions)
       struct Node
       {
@@ -280,6 +286,8 @@ namespace Plan
       Calibration* m_calib;
       //! Minimum calibration time
       uint16_t m_min_cal_time;
+      //! Component active time for fuel estimation
+      ComponentActiveTime m_cat;
     };
   }
 }
