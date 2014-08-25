@@ -379,7 +379,7 @@ namespace Plan
             // Check if it has already been activated
             std::set<std::string>::const_iterator ae_itr;
             ae_itr = active_entities.find(entity_id);
-            bool is_active = (ae_itr == active_entities.end());
+            bool is_active = (ae_itr != active_entities.end());
 
             // Get the eta for these actions we're parsing right now
             float eta;
@@ -391,13 +391,52 @@ namespace Plan
             if ((*act_itr)->value == "true")
             {
               if (!is_active)
+              {
                 cat.addActiveTime(entity_id, eta);
+                active_entities.insert(entity_id);
+              }
             }
             else if (is_active)
             {
               cat.subtractActiveTime(entity_id, eta);
+              active_entities.erase(entity_id);
             }
           }
+        }
+      }
+
+      // Get timed actions into component active time
+      std::map<std::string, TimedStack> clone = m_timed;
+
+      std::map<std::string, TimedStack>::iterator itr = clone.begin();
+      for (; itr != clone.end(); ++itr)
+      {
+        while (!itr->second.empty())
+        {
+          TimedAction* ta = &itr->second.top();
+          // Check if it has already been activated
+          std::set<std::string>::const_iterator ae_itr;
+          ae_itr = active_entities.find(itr->first);
+          bool is_active = (ae_itr != active_entities.end());
+
+          if (ta->type == TYPE_DEACT)
+          {
+            if (is_active)
+            {
+              cat.subtractActiveTime(itr->first, ta->sched_time);
+              active_entities.erase(itr->first);
+            }
+          }
+          else
+          {
+            if (!is_active)
+            {
+              cat.addActiveTime(itr->first, ta->sched_time);
+              active_entities.insert(itr->first);
+            }
+          }
+
+          itr->second.pop();
         }
       }
     }
