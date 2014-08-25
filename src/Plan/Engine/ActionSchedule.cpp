@@ -305,6 +305,105 @@ namespace Plan
       return -1.0;
     }
 
+    void
+    ActionSchedule::fillComponentActiveTime(const std::vector<IMC::PlanManeuver*>& nodes,
+                                            const Timeline& timeline,
+                                            ComponentActiveTime& cat)
+    {
+      cat.clear();
+      std::set<std::string> active_entities;
+
+      {
+        // Get the plan start actions first
+        std::vector<IMC::SetEntityParameters*>::const_iterator itr;
+        itr = m_plan_actions.start_actions.begin();
+        for (; itr != m_plan_actions.start_actions.end(); ++itr)
+        {
+          // Iterator to parameter active
+          IMC::MessageList<IMC::EntityParameter>::const_iterator act_itr;
+          act_itr = getParameterActive((*itr)->params);
+
+          if (act_itr == (*itr)->params.end())
+            continue;
+
+          if ((*act_itr)->value == "true")
+            active_entities.insert((*itr)->name);
+          else
+            active_entities.erase((*itr)->name);
+        }
+      }
+
+      // Update ComponentActiveTime
+      {
+        std::set<std::string>::const_iterator cat_itr;
+        cat_itr = active_entities.begin();
+        for (; cat_itr != active_entities.end(); ++cat_itr)
+          cat.addActiveTime(*cat_itr, timeline.getPlanETA());
+      }
+
+      // Get the maneuver start and end actions
+      // Cycle through the nodes
+      std::vector<IMC::PlanManeuver*>::const_iterator pitr;
+      pitr = nodes.begin();
+      for (; pitr != nodes.end(); ++pitr)
+      {
+        std::string maneuver_id = (*pitr)->maneuver_id;
+
+        EventMap::const_iterator eitr;
+        eitr = m_onevent.find(maneuver_id);
+
+        if (eitr == m_onevent.end())
+          continue;
+
+        // Create two pointers to EventActions.start_actions and .end_actions
+        const std::vector<IMC::SetEntityParameters*>* actions[2];
+        actions[0] = &eitr->second.start_actions;
+        actions[1] = &eitr->second.end_actions;
+
+        // Cycle through both sets of maneuver actions
+        for (unsigned i = 0; i < 2; i++)
+        {
+          std::vector<IMC::SetEntityParameters*>::const_iterator itr;
+          itr = actions[i]->begin();
+
+          // Cycle through maneuver's start (i == 0) or end actions (i == 1)
+          for (; itr != actions[i]->end(); ++itr)
+          {
+            std::string entity_id = (*itr)->name;
+
+            // Iterator to parameter active
+            IMC::MessageList<IMC::EntityParameter>::const_iterator act_itr;
+            act_itr = getParameterActive((*itr)->params);
+
+            if (act_itr == (*itr)->params.end())
+              continue; // cannot find parameter active
+
+            // Check if it has already been activated
+            std::set<std::string>::const_iterator ae_itr;
+            ae_itr = active_entities.find(entity_id);
+            bool is_active = (ae_itr == active_entities.end());
+
+            // Get the eta for these actions we're parsing right now
+            float eta;
+            if (i == 0)
+              eta = timeline.getManeuverStartETA(maneuver_id);
+            else
+              eta = timeline.getManeuverEndETA(maneuver_id);
+
+            if ((*act_itr)->value == "true")
+            {
+              if (!is_active)
+                cat.addActiveTime(entity_id, eta);
+            }
+            else if (is_active)
+            {
+              cat.subtractActiveTime(entity_id, eta);
+            }
+          }
+        }
+      }
+    }
+
     // Private
 
     void
@@ -587,104 +686,6 @@ namespace Plan
       }
 
       return next;
-    }
-
-    void
-    ActionSchedule::fillComponentActiveTime(const std::vector<IMC::PlanManeuver*>& nodes,
-                                            const Timeline& timeline)
-    {
-      m_cat.clear();
-      std::set<std::string> active_entities;
-
-      {
-        // Get the plan start actions first
-        std::vector<IMC::SetEntityParameters*>::const_iterator itr;
-        itr = m_plan_actions.start_actions.begin();
-        for (; itr != m_plan_actions.start_actions.end(); ++itr)
-        {
-          // Iterator to parameter active
-          IMC::MessageList<IMC::EntityParameter>::const_iterator act_itr;
-          act_itr = getParameterActive((*itr)->params);
-
-          if (act_itr == (*itr)->params.end())
-            continue;
-
-          if ((*act_itr)->value == "true")
-            active_entities.insert((*itr)->name);
-          else
-            active_entities.erase((*itr)->name);
-        }
-      }
-
-      // Update ComponentActiveTime
-      {
-        std::set<std::string>::const_iterator cat_itr;
-        cat_itr = active_entities.begin();
-        for (; cat_itr != active_entities.end(); ++cat_itr)
-          m_cat.addActiveTime(*cat_itr, timeline.getPlanETA());
-      }
-
-      // Get the maneuver start and end actions
-      // Cycle through the nodes
-      std::vector<IMC::PlanManeuver*>::const_iterator pitr;
-      pitr = nodes.begin();
-      for (; pitr != nodes.end(); ++pitr)
-      {
-        std::string maneuver_id = (*pitr)->maneuver_id;
-
-        EventMap::const_iterator eitr;
-        eitr = m_onevent.find(maneuver_id);
-
-        if (eitr == m_onevent.end())
-          continue;
-
-        // Create two pointers to EventActions.start_actions and .end_actions
-        const std::vector<IMC::SetEntityParameters*>* actions[2];
-        actions[0] = &eitr->second.start_actions;
-        actions[1] = &eitr->second.end_actions;
-
-        // Cycle through both sets of maneuver actions
-        for (unsigned i = 0; i < 2; i++)
-        {
-          std::vector<IMC::SetEntityParameters*>::const_iterator itr;
-          itr = actions[i]->begin();
-
-          // Cycle through maneuver's start (i == 0) or end actions (i == 1)
-          for (; itr != actions[i]->end(); ++itr)
-          {
-            std::string entity_id = (*itr)->name;
-
-            // Iterator to parameter active
-            IMC::MessageList<IMC::EntityParameter>::const_iterator act_itr;
-            act_itr = getParameterActive((*itr)->params);
-
-            if (act_itr == (*itr)->params.end())
-              continue; // cannot find parameter active
-
-            // Check if it has already been activated
-            std::set<std::string>::const_iterator ae_itr;
-            ae_itr = active_entities.find(entity_id);
-            bool is_active = (ae_itr == active_entities.end());
-
-            // Get the eta for these actions we're parsing right now
-            float eta;
-            if (i == 0)
-              eta = timeline.getManeuverStartETA(maneuver_id);
-            else
-              eta = timeline.getManeuverEndETA(maneuver_id);
-
-            if ((*act_itr)->value == "true")
-            {
-              if (!is_active)
-                m_cat.addActiveTime(entity_id, eta);
-            }
-            else if (is_active)
-            {
-              m_cat.subtractActiveTime(entity_id, eta);
-            }
-          }
-        }
-      }
     }
 
     void
