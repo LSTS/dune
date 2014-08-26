@@ -523,6 +523,9 @@ namespace DUNE
     void
     Task::consume(const IMC::QueryEntityInfo* msg)
     {
+      if (msg->getDestinationEntity() != getEntityId() || msg->getDestinationEntity() != DUNE_IMC_CONST_UNK_EID)
+        return;
+
       dispatchReply(*msg, m_ent_info);
     }
 
