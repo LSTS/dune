@@ -116,6 +116,9 @@ namespace Control
           .maximumValue("10")
           .defaultValue("0")
           .description("M_Integrator inital value");
+
+          // Everything is ok so set task entity state at normal with 'Active' message.
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
 
         void
@@ -142,13 +145,6 @@ namespace Control
         {
           // Activate heading cotroller.
           enableControlLoops(IMC::CL_YAW);
-        }
-
-        void
-        onReportEntityState(void)
-        {
-          // Everything is ok so set task entity state at normal with 'Active' message.
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
 
         void
