@@ -51,6 +51,7 @@
 #include <DUNE/Tasks/Context.hpp>
 #include <DUNE/Tasks/BasicParameterParser.hpp>
 #include <DUNE/Tasks/ParameterTable.hpp>
+#include <DUNE/Tasks/Entity.hpp>
 
 #if defined(DUNE_SHARED)
 #  define DUNE_TASK_EXPORT(class, mangled)                              \
@@ -146,7 +147,7 @@ namespace DUNE
       unsigned int
       getEntityId(void) const
       {
-        return m_eid;
+        return m_entity.getId();
       }
 
       //! Retrieve the entity id of a given entity label.
@@ -361,7 +362,7 @@ namespace DUNE
       const char*
       getEntityLabel(void) const
       {
-        return m_elabel.c_str();
+        return m_entity.getLabel().c_str();
       }
 
       //! Set the main entity label of the task.
@@ -369,7 +370,7 @@ namespace DUNE
       void
       setEntityLabel(const std::string& label)
       {
-        m_elabel = label;
+        m_entity.setLabel(label);
       }
 
       //! Set current entity state with an optional pre-defined
@@ -379,21 +380,27 @@ namespace DUNE
       //! @param[in] code status code.
       void
       setEntityState(IMC::EntityState::StateEnum state,
-                     Status::Code code);
+                     Status::Code code)
+      {
+        m_entity.setState(state, code);
+      }
 
       //! Set current entity state with a custom description.
       //! @param[in] state entity state.
       //! @param[in] description custom state description.
       void
       setEntityState(IMC::EntityState::StateEnum state,
-                     const std::string& description);
+                     const std::string& description)
+      {
+        m_entity.setState(state, description);
+      }
 
       //! Retrieve the current entity state.
       //! @return entity state.
       IMC::EntityState::StateEnum
       getEntityState(void) const
       {
-        return static_cast<IMC::EntityState::StateEnum>(m_entity_state.state);
+        return m_entity.getState();
       }
 
       //! Associate an entity label with an automatically generated
@@ -677,6 +684,8 @@ namespace DUNE
     private:
       struct BasicArguments
       {
+        //! Main entity label.
+        std::string elabel;
         //! Activation time.
         uint16_t act_time;
         //! Deactivation time.
@@ -707,18 +716,12 @@ namespace DUNE
       std::string m_name;
       //! Task parameters.
       ParameterTable m_params;
-      //! Entity Id.
-      unsigned int m_eid;
-      //! Entity Label.
-      std::string m_elabel;
+      //! Main Entity
+      Entity m_entity;
       //! Debug level (as a string).
       std::string m_debug_level_string;
       //! Debug level.
       DebugLevel m_debug_level;
-      //! Main entity state.
-      IMC::EntityState m_entity_state;
-      //! Last entity state description code (-1 means none).
-      int m_entity_state_code;
       //! Entity information message.
       IMC::EntityInfo m_ent_info;
       //! Arguments.

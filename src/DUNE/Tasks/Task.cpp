@@ -56,9 +56,8 @@ namespace DUNE
       m_ctx(ctx),
       m_recipient(0),
       m_name(n),
-      m_eid(DUNE_IMC_CONST_UNK_EID),
+      m_entity(this),
       m_debug_level(DEBUG_LEVEL_NONE),
-      m_entity_state_code(-1),
       m_honours_active(false),
       m_next_act_state(NAS_SAME),
       m_activating(false),
@@ -70,7 +69,7 @@ namespace DUNE
       m_args.active = false;
       m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
 
-      param(DTR_RT("Entity Label"), m_elabel)
+      param(DTR_RT("Entity Label"), m_args.elabel)
       .defaultValue("")
       .description(DTR("Main entity label"));
 
@@ -90,7 +89,7 @@ namespace DUNE
 
       m_recipient = new Recipient(this, ctx);
 
-      // Initialize main entity state.
+      // Initialize main entity.
       setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
 
       bind<IMC::QueryEntityInfo>(this);
@@ -111,10 +110,10 @@ namespace DUNE
     void
     Task::reserveEntities(void)
     {
-      if (m_elabel.empty())
+      if (m_entity.getLabel().empty())
         throw std::runtime_error(DTR("entity label is not configured"));
 
-      m_eid = m_ctx.entities.reserve(m_elabel, getName(), m_args.act_time, m_args.deact_time);
+      m_entity.setId(reserveEntity(m_entity.getLabel()));
       onEntityReservation();
     }
 
@@ -125,38 +124,9 @@ namespace DUNE
     }
 
     void
-    Task::setEntityState(IMC::EntityState::StateEnum state,
-                         Status::Code code)
-    {
-      bool new_state = (state != m_entity_state.state);
-
-      m_entity_state.state = state;
-      if (code != m_entity_state_code)
-        m_entity_state.description = DTR(Status::getString(code));
-      m_entity_state_code = code;
-
-      if (new_state && (m_eid != DUNE_IMC_CONST_UNK_EID))
-        dispatch(m_entity_state);
-    }
-
-    void
-    Task::setEntityState(IMC::EntityState::StateEnum state,
-                         const std::string& message)
-    {
-      bool new_state = (state != m_entity_state.state);
-
-      m_entity_state.state = state;
-      m_entity_state.description = message;
-      m_entity_state_code = -1;
-
-      if (new_state && (m_eid != DUNE_IMC_CONST_UNK_EID))
-        dispatch(m_entity_state);
-    }
-
-    void
     Task::reportEntityState(void)
     {
-      dispatch(m_entity_state);
+      m_entity.reportState();
       onReportEntityState();
     }
 
@@ -230,6 +200,7 @@ namespace DUNE
     void
     Task::updateParameters(bool act_deact)
     {
+      m_entity.setLabel(m_args.elabel);
       m_ent_info.label = getEntityLabel();
       m_ent_info.component = getName();
       m_ent_info.act_time = m_args.act_time;
