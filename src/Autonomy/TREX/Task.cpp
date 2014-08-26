@@ -117,7 +117,7 @@ namespace Autonomy
       }
 
       void
-      onReportEntityState(void)
+      updateEntityState(void)
       {
         if (!isActive()) {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
@@ -367,6 +367,7 @@ namespace Autonomy
         while (!stopping())
         {
           consumeMessages();
+          updateEntityState();
           oldMap.clear();
           oldMap.insert(lastHeartBeat.begin(), lastHeartBeat.end());
           double now = Clock::get();
