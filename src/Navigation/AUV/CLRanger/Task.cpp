@@ -112,6 +112,20 @@ namespace Navigation
           setTDMA();
         }
 
+        //! Initialize resources.
+        void
+        onResourceInitialization(void)
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        }
+
+        //! On task deactivation.
+        void
+        onDeactivation(void)
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        }
+
         void
         consume(const IMC::EstimatedState* msg)
         {
@@ -207,7 +221,26 @@ namespace Navigation
         void
         updateLbl(void)
         {
-          // @todo
+          MessageList<IMC::LblBeacon>::const_iterator itr = m_lbl_config.beacons.begin();
+          for (; itr < m_lbl_config.beacons.end(); ++itr)
+          {
+            if ((*itr) == NULL)
+              continue;
+
+            // Update AUV "beacon" position.
+            if ((*itr)->beacon == m_args.dst)
+            {
+              double lat, lon;
+              Coordinates::toWGS84(*m_estate, lat, lon);
+              (*itr)->lat = lat;
+              (*itr)->lon = lon;
+              (*itr)->depth = m_estate->depth;
+              dispatch(m_lbl_config);
+              return;
+            }
+          }
+
+          err(DTR("destination system is not in beacon configuration"));
         }
 
         //! Compute TDMA slots.
@@ -225,6 +258,8 @@ namespace Navigation
               slot_number.push_back(i + (m_args.slot_order - 1) * slot_count);
 
             m_tdma.reset(slot_count, slot_number, m_args.slot_duration);
+
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           }
           else
           {
