@@ -53,9 +53,9 @@ namespace DUNE
 
       //! Constructor.
       //! @param[in] slot_count total number of slots.
-      //! @param[in] slot_number slot.
+      //! @param[in] slot_number slots.
       //! @param[in] duration slots duration in seconds.
-      TDMA(unsigned slot_count, unsigned slot_number, unsigned duration)
+      TDMA(unsigned slot_count, std::vector<unsigned>& slot_number, unsigned duration)
       {
         reset(slot_count, slot_number, duration);
       }
@@ -99,7 +99,7 @@ namespace DUNE
       //! Set slot number.
       //! @param[in] number slot number.
       void
-      setSlotNumber(unsigned number)
+      setSlotNumber(std::vector<unsigned>& number)
       {
         m_slot_number = number;
       }
@@ -121,10 +121,10 @@ namespace DUNE
 
       //! Reset TDMA slots with given parameters.
       //! @param[in] slot_count total number of slots.
-      //! @param[in] slot_number slot.
+      //! @param[in] slot_number slots.
       //! @param[in] duration slots duration in seconds.
       void
-      reset(unsigned slot_count, unsigned slot_number, unsigned duration)
+      reset(unsigned slot_count, std::vector<unsigned>& slot_number, unsigned duration)
       {
         setTotalSlots(slot_count);
         setSlotNumber(slot_number);
@@ -141,8 +141,14 @@ namespace DUNE
         unsigned slot = 0;
         for (unsigned i = 0; i < 60; i += m_slot_duration)
         {
-          if (slot == m_slot_number)
-            m_seconds.insert(i);
+          for (unsigned j = 0; j < m_slot_number.size(); ++j)
+          {
+            if (slot == m_slot_number[j])
+            {
+              m_seconds.insert(i);
+              break;
+            }
+          }
 
           if (++slot >= m_slot_count)
             slot = 0;
@@ -153,8 +159,8 @@ namespace DUNE
       std::set<unsigned> m_seconds;
       //! Number of TDMA slots.
       unsigned m_slot_count;
-      //! TDMA slot number.
-      unsigned m_slot_number;
+      //! TDMA slot numbers
+      std::vector<unsigned> m_slot_number;
       //! TDMA slot duration.
       unsigned m_slot_duration;
     };
