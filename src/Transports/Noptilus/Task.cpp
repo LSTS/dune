@@ -39,7 +39,7 @@ namespace Transports
       //! Number of TDMA slots.
       unsigned slot_count;
       //! TDMA slot number.
-      unsigned slot_number;
+      std::vector<unsigned> slot_number;
       //! TDMA slot duration.
       unsigned slot_dur;
       //! Destination
