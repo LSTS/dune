@@ -28,9 +28,6 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// Local headers.
-#include "Codecs.hpp"
-
 namespace Transports
 {
   namespace Noptilus
@@ -167,8 +164,8 @@ namespace Transports
         IMC::Message* rmsg = NULL;
         switch (id)
         {
-          case CodedEstimatedState::c_id:
-            rmsg = CodedEstimatedState::decode(msg);
+          case Utils::Codecs::CodedEstimatedState::c_id:
+            rmsg = Utils::Codecs::CodedEstimatedState::decode(msg);
             break;
 
           default:
@@ -249,7 +246,7 @@ namespace Transports
         IMC::UamTxFrame frame;
         frame.setDestination(getSystemId());
         frame.sys_dst = m_args.dst;
-        CodedEstimatedState::encode(m_estate, &frame);
+        Utils::Codecs::CodedEstimatedState::encode(m_estate, &frame);
         dispatch(frame);
       }
 
