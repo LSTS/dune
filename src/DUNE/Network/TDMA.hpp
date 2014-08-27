@@ -139,6 +139,9 @@ namespace DUNE
       {
         m_seconds.clear();
 
+        if (m_slot_count == 0)
+          return;
+
         for (unsigned i = 0; i < std::ceil(60 / m_slot_count); ++i)
         {
           for (unsigned j = 0; j < m_slot_number.size(); ++j)
