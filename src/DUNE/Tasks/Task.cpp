@@ -60,9 +60,7 @@ namespace DUNE
       m_debug_level(DEBUG_LEVEL_NONE),
       m_entity_state_code(-1),
       m_honours_active(false),
-      m_next_act_state(NAS_SAME),
-      m_activating(false),
-      m_deactivating(false)
+      m_next_act_state(NAS_SAME)
     {
       m_args.priority = 10;
       m_args.act_time = 0;
@@ -309,7 +307,6 @@ namespace DUNE
 
       spew("calling on request activation");
       onRequestActivation();
-      m_activating = true;
     }
 
     void
@@ -334,8 +331,6 @@ namespace DUNE
 
       if (m_next_act_state == NAS_INACTIVE)
         requestDeactivation();
-
-      m_activating = false;
     }
 
     void
@@ -349,8 +344,6 @@ namespace DUNE
       m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
       m_act_state.error.clear();
       dispatch(m_act_state);
-
-      m_activating = false;
     }
 
     void
@@ -386,8 +379,6 @@ namespace DUNE
 
       spew("calling on request deactivation");
       onRequestDeactivation();
-
-      m_deactivating = true;
     }
 
     void
@@ -411,8 +402,6 @@ namespace DUNE
 
       if (m_next_act_state == NAS_ACTIVE)
         requestActivation();
-
-      m_deactivating = false;
     }
 
     void
@@ -427,8 +416,6 @@ namespace DUNE
       m_act_state.state = IMC::EntityActivationState::EAS_ACTIVE;
       m_act_state.error.clear();
       dispatch(m_act_state);
-
-      m_deactivating = false;
     }
 
     void
