@@ -138,20 +138,21 @@ namespace DUNE
       setup(void)
       {
         m_seconds.clear();
-        unsigned slot = 0;
-        for (unsigned i = 0; i < 60; i += m_slot_duration)
+
+        for (unsigned i = 0; i < std::ceil(60 / m_slot_count); ++i)
         {
           for (unsigned j = 0; j < m_slot_number.size(); ++j)
           {
-            if (slot == m_slot_number[j])
-            {
-              m_seconds.insert(i);
+            if (m_slot_number[j] >= m_slot_count)
               break;
-            }
-          }
 
-          if (++slot >= m_slot_count)
-            slot = 0;
+            unsigned value = (m_slot_number[j] + i * m_slot_count) * m_slot_duration;
+
+            if (value >= 60)
+              break;
+
+            m_seconds.insert(value);
+          }
         }
       }
 
