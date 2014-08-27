@@ -585,7 +585,10 @@ namespace DUNE
       std::map<std::string, std::string> map;
       std::map<std::string, Parameter*>::const_iterator itr = m_params.begin();
       for (; itr != m_params.end(); ++itr)
-        map[itr->second->name()] = itr->second->value();
+      {
+        if (itr->second->getScope() != Parameter::SCOPE_GLOBAL)
+          map[itr->second->name()] = itr->second->value();
+      }
 
       m_params_stack.push(map);
     }
