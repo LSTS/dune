@@ -10,7 +10,7 @@
           xsi:noNamespaceSchemaLocation="IMC.xsd"
           name="IMC"
           long-name="Inter Module Communication"
-          version="5.4.x">
+          version="5.5.x">
 
   <description>
     This document describes the communications protocol associated
@@ -340,7 +340,7 @@
       supplemental fields, it is always placed at the beginning of a
       packet.
     </description>
-    <field name="Synchronization Number" abbrev="sync" type="uint16_t" value="0xFE54" fixed="true">
+    <field name="Synchronization Number" abbrev="sync" type="uint16_t" value="0xFE55" fixed="true">
       <description>
         The synchronization number marks the beginning of a packet.
 
