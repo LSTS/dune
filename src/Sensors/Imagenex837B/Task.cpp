@@ -452,6 +452,10 @@ namespace Sensors
       {
         inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+        IMC::LoggingControl lc;
+        lc.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
+        dispatch(lc);
       }
 
       void
@@ -516,6 +520,7 @@ namespace Sensors
             debug("removing empty log '%s'", m_log_path.c_str());
             m_log_path.remove();
           }
+          m_log_path = Path();
         }
       }
 
@@ -540,7 +545,7 @@ namespace Sensors
         switch (msg->op)
         {
           case IMC::LoggingControl::COP_STARTED:
-            closeLog();
+          case IMC::LoggingControl::COP_CURRENT_NAME:
             openLog(m_ctx.dir_log / msg->name / m_args.file_name_837);
             break;
 
@@ -717,7 +722,8 @@ namespace Sensors
         m_frame.setSerialStatus(m_rdata_hdr[4]);
         m_frame.setFirmwareVersion(m_rdata_hdr[6]);
 
-        m_log_file.write((const char*)m_frame.getData(), m_frame.getSize());
+        if (m_log_file.is_open())
+          m_log_file.write((const char*)m_frame.getData(), m_frame.getSize());
       }
 
       //! Update vehicle state in 837 files.
