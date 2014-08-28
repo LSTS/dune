@@ -318,14 +318,21 @@ namespace Simulators
         distance = WGS84::distance(lat, lon, m_sstate.z,
                                    beacon->lat, beacon->lon, beacon->depth);
 
-        IMC::LblRange msg;
-        msg.id = id;
-        msg.range = distance;
-        msg.range += error;
-        dispatch(msg);
-
-        trace("beacon %u, range of %0.2f m, simulated error of %0.2f m",
-              msg.id, msg.range, error);
+        if (m_args.wait_request)
+        {
+          IMC::UamRxRange msg;
+          msg.sys = sys_name;
+          msg.value = distance + error;
+          dispatch(msg);
+        }
+        else
+        {
+          IMC::LblRange msg;
+          msg.id = id;
+          msg.range = distance;
+          msg.range += error;
+          dispatch(msg);
+        }
       }
 
       void
