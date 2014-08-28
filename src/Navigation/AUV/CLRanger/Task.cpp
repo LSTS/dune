@@ -259,7 +259,7 @@ namespace Navigation
             for (uint8_t i = 0; i < slot_count - 1; ++i)
               slot_number.push_back(i + (m_args.slot_order - 1) * slot_count);
 
-            m_tdma.reset(slot_count, slot_number, m_args.slot_duration);
+            m_tdma.reset(2 * slot_count, slot_number, m_args.slot_duration);
 
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           }
