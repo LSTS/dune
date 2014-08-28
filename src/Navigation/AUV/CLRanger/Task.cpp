@@ -132,8 +132,10 @@ namespace Navigation
           if (msg->getSource() != getSystemId())
             return;
 
-          Memory::clear(m_estate);
-          m_estate = new EstimatedState(*msg);
+          if (m_estate)
+            *m_estate = *msg;
+          else
+            m_estate = new IMC::EstimatedState(*msg);
         }
 
         void
