@@ -175,10 +175,12 @@ namespace Navigation
           uint8_t id = msg->data[0];
 
           IMC::Message* rmsg = NULL;
+          IMC::EstimatedState* estate = NULL;
           switch (id)
           {
             case Utils::Codecs::CodedEstimatedState::c_id:
               rmsg = Utils::Codecs::CodedEstimatedState::decode(msg);
+              estate = static_cast<IMC::EstimatedState*>(rmsg);
               break;
 
             default:
@@ -188,7 +190,7 @@ namespace Navigation
           if (rmsg != NULL)
           {
             // With EstimatedState from other AUV we need to update LblConfig.
-            updateLbl();
+            updateLblConfig(estate);
             uint16_t src = resolveSystemName(msg->sys_src);
             rmsg->setSource(src);
             dispatch(*rmsg);
@@ -221,7 +223,7 @@ namespace Navigation
 
         //! Update LBL configuration.
         void
-        updateLbl(void)
+        updateLblConfig(const IMC::EstimatedState* estate)
         {
           MessageList<IMC::LblBeacon>::const_iterator itr = m_lbl_config.beacons.begin();
           for (; itr < m_lbl_config.beacons.end(); ++itr)
@@ -232,11 +234,12 @@ namespace Navigation
             // Update AUV "beacon" position.
             if ((*itr)->beacon == m_args.dst)
             {
+              debug("update AUV beacon position");
               double lat, lon;
-              Coordinates::toWGS84(*m_estate, lat, lon);
+              Coordinates::toWGS84(*estate, lat, lon);
               (*itr)->lat = lat;
               (*itr)->lon = lon;
-              (*itr)->depth = m_estate->depth;
+              (*itr)->depth = estate->depth;
               dispatch(m_lbl_config);
               return;
             }
