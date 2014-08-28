@@ -12850,248 +12850,9 @@ namespace DUNE
       IMC::toJSON(os__, "custom", custom, nindent__);
     }
 
-    FormationParameters::FormationParameters(void)
-    {
-      m_header.mgid = 476;
-      clear();
-      participants.setParent(this);
-    }
-
-    void
-    FormationParameters::clear(void)
-    {
-      formation_name.clear();
-      reference_frame = 0;
-      participants.clear();
-      custom.clear();
-    }
-
-    bool
-    FormationParameters::fieldsEqual(const Message& msg__) const
-    {
-      const IMC::FormationParameters& other__ = static_cast<const FormationParameters&>(msg__);
-      if (formation_name != other__.formation_name) return false;
-      if (reference_frame != other__.reference_frame) return false;
-      if (participants != other__.participants) return false;
-      if (custom != other__.custom) return false;
-      return true;
-    }
-
-    int
-    FormationParameters::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    FormationParameters::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(formation_name, ptr__);
-      ptr__ += IMC::serialize(reference_frame, ptr__);
-      ptr__ += participants.serialize(ptr__);
-      ptr__ += IMC::serialize(custom, ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    FormationParameters::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(formation_name, bfr__, size__);
-      bfr__ += IMC::deserialize(reference_frame, bfr__, size__);
-      bfr__ += participants.deserialize(bfr__, size__);
-      bfr__ += IMC::deserialize(custom, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    FormationParameters::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::reverseDeserialize(formation_name, bfr__, size__);
-      bfr__ += IMC::deserialize(reference_frame, bfr__, size__);
-      bfr__ += participants.reverseDeserialize(bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    void
-    FormationParameters::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      IMC::toJSON(os__, "formation_name", formation_name, nindent__);
-      IMC::toJSON(os__, "reference_frame", reference_frame, nindent__);
-      participants.toJSON(os__, "participants", nindent__);
-      IMC::toJSON(os__, "custom", custom, nindent__);
-    }
-
-    void
-    FormationParameters::setTimeStampNested(double value__)
-    {
-      participants.setTimeStamp(value__);
-    }
-
-    void
-    FormationParameters::setSourceNested(uint16_t value__)
-    {
-      participants.setSource(value__);
-    }
-
-    void
-    FormationParameters::setSourceEntityNested(uint8_t value__)
-    {
-      participants.setSourceEntity(value__);
-    }
-
-    void
-    FormationParameters::setDestinationNested(uint16_t value__)
-    {
-      participants.setDestination(value__);
-    }
-
-    void
-    FormationParameters::setDestinationEntityNested(uint8_t value__)
-    {
-      participants.setDestinationEntity(value__);
-    }
-
-    FormationPlanExecution::FormationPlanExecution(void)
-    {
-      m_header.mgid = 477;
-      clear();
-    }
-
-    void
-    FormationPlanExecution::clear(void)
-    {
-      group_name.clear();
-      formation_name.clear();
-      plan_id.clear();
-      description.clear();
-      leader_speed = 0;
-      leader_bank_lim = 0;
-      pos_sim_err_lim = 0;
-      pos_sim_err_wrn = 0;
-      pos_sim_err_timeout = 0;
-      converg_max = 0;
-      converg_timeout = 0;
-      comms_timeout = 0;
-      turb_lim = 0;
-      custom.clear();
-    }
-
-    bool
-    FormationPlanExecution::fieldsEqual(const Message& msg__) const
-    {
-      const IMC::FormationPlanExecution& other__ = static_cast<const FormationPlanExecution&>(msg__);
-      if (group_name != other__.group_name) return false;
-      if (formation_name != other__.formation_name) return false;
-      if (plan_id != other__.plan_id) return false;
-      if (description != other__.description) return false;
-      if (leader_speed != other__.leader_speed) return false;
-      if (leader_bank_lim != other__.leader_bank_lim) return false;
-      if (pos_sim_err_lim != other__.pos_sim_err_lim) return false;
-      if (pos_sim_err_wrn != other__.pos_sim_err_wrn) return false;
-      if (pos_sim_err_timeout != other__.pos_sim_err_timeout) return false;
-      if (converg_max != other__.converg_max) return false;
-      if (converg_timeout != other__.converg_timeout) return false;
-      if (comms_timeout != other__.comms_timeout) return false;
-      if (turb_lim != other__.turb_lim) return false;
-      if (custom != other__.custom) return false;
-      return true;
-    }
-
-    int
-    FormationPlanExecution::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    FormationPlanExecution::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(group_name, ptr__);
-      ptr__ += IMC::serialize(formation_name, ptr__);
-      ptr__ += IMC::serialize(plan_id, ptr__);
-      ptr__ += IMC::serialize(description, ptr__);
-      ptr__ += IMC::serialize(leader_speed, ptr__);
-      ptr__ += IMC::serialize(leader_bank_lim, ptr__);
-      ptr__ += IMC::serialize(pos_sim_err_lim, ptr__);
-      ptr__ += IMC::serialize(pos_sim_err_wrn, ptr__);
-      ptr__ += IMC::serialize(pos_sim_err_timeout, ptr__);
-      ptr__ += IMC::serialize(converg_max, ptr__);
-      ptr__ += IMC::serialize(converg_timeout, ptr__);
-      ptr__ += IMC::serialize(comms_timeout, ptr__);
-      ptr__ += IMC::serialize(turb_lim, ptr__);
-      ptr__ += IMC::serialize(custom, ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    FormationPlanExecution::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(group_name, bfr__, size__);
-      bfr__ += IMC::deserialize(formation_name, bfr__, size__);
-      bfr__ += IMC::deserialize(plan_id, bfr__, size__);
-      bfr__ += IMC::deserialize(description, bfr__, size__);
-      bfr__ += IMC::deserialize(leader_speed, bfr__, size__);
-      bfr__ += IMC::deserialize(leader_bank_lim, bfr__, size__);
-      bfr__ += IMC::deserialize(pos_sim_err_lim, bfr__, size__);
-      bfr__ += IMC::deserialize(pos_sim_err_wrn, bfr__, size__);
-      bfr__ += IMC::deserialize(pos_sim_err_timeout, bfr__, size__);
-      bfr__ += IMC::deserialize(converg_max, bfr__, size__);
-      bfr__ += IMC::deserialize(converg_timeout, bfr__, size__);
-      bfr__ += IMC::deserialize(comms_timeout, bfr__, size__);
-      bfr__ += IMC::deserialize(turb_lim, bfr__, size__);
-      bfr__ += IMC::deserialize(custom, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    FormationPlanExecution::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::reverseDeserialize(group_name, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(formation_name, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(plan_id, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(description, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(leader_speed, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(leader_bank_lim, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(pos_sim_err_lim, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(pos_sim_err_wrn, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(pos_sim_err_timeout, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(converg_max, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(converg_timeout, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(comms_timeout, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(turb_lim, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    void
-    FormationPlanExecution::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      IMC::toJSON(os__, "group_name", group_name, nindent__);
-      IMC::toJSON(os__, "formation_name", formation_name, nindent__);
-      IMC::toJSON(os__, "plan_id", plan_id, nindent__);
-      IMC::toJSON(os__, "description", description, nindent__);
-      IMC::toJSON(os__, "leader_speed", leader_speed, nindent__);
-      IMC::toJSON(os__, "leader_bank_lim", leader_bank_lim, nindent__);
-      IMC::toJSON(os__, "pos_sim_err_lim", pos_sim_err_lim, nindent__);
-      IMC::toJSON(os__, "pos_sim_err_wrn", pos_sim_err_wrn, nindent__);
-      IMC::toJSON(os__, "pos_sim_err_timeout", pos_sim_err_timeout, nindent__);
-      IMC::toJSON(os__, "converg_max", converg_max, nindent__);
-      IMC::toJSON(os__, "converg_timeout", converg_timeout, nindent__);
-      IMC::toJSON(os__, "comms_timeout", comms_timeout, nindent__);
-      IMC::toJSON(os__, "turb_lim", turb_lim, nindent__);
-      IMC::toJSON(os__, "custom", custom, nindent__);
-    }
-
     FollowReference::FollowReference(void)
     {
-      m_header.mgid = 478;
+      m_header.mgid = 476;
       clear();
     }
 
@@ -13171,7 +12932,7 @@ namespace DUNE
 
     Reference::Reference(void)
     {
-      m_header.mgid = 479;
+      m_header.mgid = 477;
       clear();
       speed.setParent(this);
       z.setParent(this);
@@ -13329,7 +13090,7 @@ namespace DUNE
 
     FollowRefState::FollowRefState(void)
     {
-      m_header.mgid = 480;
+      m_header.mgid = 478;
       clear();
       reference.setParent(this);
     }
@@ -13453,9 +13214,143 @@ namespace DUNE
       }
     }
 
+    FormationPlanExecution::FormationPlanExecution(void)
+    {
+      m_header.mgid = 479;
+      clear();
+    }
+
+    void
+    FormationPlanExecution::clear(void)
+    {
+      group_name.clear();
+      formation_name.clear();
+      plan_id.clear();
+      description.clear();
+      leader_speed = 0;
+      leader_bank_lim = 0;
+      pos_sim_err_lim = 0;
+      pos_sim_err_wrn = 0;
+      pos_sim_err_timeout = 0;
+      converg_max = 0;
+      converg_timeout = 0;
+      comms_timeout = 0;
+      turb_lim = 0;
+      custom.clear();
+    }
+
+    bool
+    FormationPlanExecution::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FormationPlanExecution& other__ = static_cast<const FormationPlanExecution&>(msg__);
+      if (group_name != other__.group_name) return false;
+      if (formation_name != other__.formation_name) return false;
+      if (plan_id != other__.plan_id) return false;
+      if (description != other__.description) return false;
+      if (leader_speed != other__.leader_speed) return false;
+      if (leader_bank_lim != other__.leader_bank_lim) return false;
+      if (pos_sim_err_lim != other__.pos_sim_err_lim) return false;
+      if (pos_sim_err_wrn != other__.pos_sim_err_wrn) return false;
+      if (pos_sim_err_timeout != other__.pos_sim_err_timeout) return false;
+      if (converg_max != other__.converg_max) return false;
+      if (converg_timeout != other__.converg_timeout) return false;
+      if (comms_timeout != other__.comms_timeout) return false;
+      if (turb_lim != other__.turb_lim) return false;
+      if (custom != other__.custom) return false;
+      return true;
+    }
+
+    int
+    FormationPlanExecution::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    FormationPlanExecution::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(group_name, ptr__);
+      ptr__ += IMC::serialize(formation_name, ptr__);
+      ptr__ += IMC::serialize(plan_id, ptr__);
+      ptr__ += IMC::serialize(description, ptr__);
+      ptr__ += IMC::serialize(leader_speed, ptr__);
+      ptr__ += IMC::serialize(leader_bank_lim, ptr__);
+      ptr__ += IMC::serialize(pos_sim_err_lim, ptr__);
+      ptr__ += IMC::serialize(pos_sim_err_wrn, ptr__);
+      ptr__ += IMC::serialize(pos_sim_err_timeout, ptr__);
+      ptr__ += IMC::serialize(converg_max, ptr__);
+      ptr__ += IMC::serialize(converg_timeout, ptr__);
+      ptr__ += IMC::serialize(comms_timeout, ptr__);
+      ptr__ += IMC::serialize(turb_lim, ptr__);
+      ptr__ += IMC::serialize(custom, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FormationPlanExecution::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(group_name, bfr__, size__);
+      bfr__ += IMC::deserialize(formation_name, bfr__, size__);
+      bfr__ += IMC::deserialize(plan_id, bfr__, size__);
+      bfr__ += IMC::deserialize(description, bfr__, size__);
+      bfr__ += IMC::deserialize(leader_speed, bfr__, size__);
+      bfr__ += IMC::deserialize(leader_bank_lim, bfr__, size__);
+      bfr__ += IMC::deserialize(pos_sim_err_lim, bfr__, size__);
+      bfr__ += IMC::deserialize(pos_sim_err_wrn, bfr__, size__);
+      bfr__ += IMC::deserialize(pos_sim_err_timeout, bfr__, size__);
+      bfr__ += IMC::deserialize(converg_max, bfr__, size__);
+      bfr__ += IMC::deserialize(converg_timeout, bfr__, size__);
+      bfr__ += IMC::deserialize(comms_timeout, bfr__, size__);
+      bfr__ += IMC::deserialize(turb_lim, bfr__, size__);
+      bfr__ += IMC::deserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FormationPlanExecution::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(group_name, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(formation_name, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(plan_id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(description, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(leader_speed, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(leader_bank_lim, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(pos_sim_err_lim, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(pos_sim_err_wrn, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(pos_sim_err_timeout, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(converg_max, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(converg_timeout, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(comms_timeout, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(turb_lim, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FormationPlanExecution::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "group_name", group_name, nindent__);
+      IMC::toJSON(os__, "formation_name", formation_name, nindent__);
+      IMC::toJSON(os__, "plan_id", plan_id, nindent__);
+      IMC::toJSON(os__, "description", description, nindent__);
+      IMC::toJSON(os__, "leader_speed", leader_speed, nindent__);
+      IMC::toJSON(os__, "leader_bank_lim", leader_bank_lim, nindent__);
+      IMC::toJSON(os__, "pos_sim_err_lim", pos_sim_err_lim, nindent__);
+      IMC::toJSON(os__, "pos_sim_err_wrn", pos_sim_err_wrn, nindent__);
+      IMC::toJSON(os__, "pos_sim_err_timeout", pos_sim_err_timeout, nindent__);
+      IMC::toJSON(os__, "converg_max", converg_max, nindent__);
+      IMC::toJSON(os__, "converg_timeout", converg_timeout, nindent__);
+      IMC::toJSON(os__, "comms_timeout", comms_timeout, nindent__);
+      IMC::toJSON(os__, "turb_lim", turb_lim, nindent__);
+      IMC::toJSON(os__, "custom", custom, nindent__);
+    }
+
     RelativeState::RelativeState(void)
     {
-      m_header.mgid = 482;
+      m_header.mgid = 481;
       clear();
     }
 
@@ -13637,7 +13532,7 @@ namespace DUNE
 
     FormationMonitor::FormationMonitor(void)
     {
-      m_header.mgid = 481;
+      m_header.mgid = 480;
       clear();
       rel_state.setParent(this);
     }
@@ -13828,6 +13723,111 @@ namespace DUNE
     FormationMonitor::setDestinationEntityNested(uint8_t value__)
     {
       rel_state.setDestinationEntity(value__);
+    }
+
+    FormationParameters::FormationParameters(void)
+    {
+      m_header.mgid = 482;
+      clear();
+      participants.setParent(this);
+    }
+
+    void
+    FormationParameters::clear(void)
+    {
+      formation_name.clear();
+      reference_frame = 0;
+      participants.clear();
+      custom.clear();
+    }
+
+    bool
+    FormationParameters::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FormationParameters& other__ = static_cast<const FormationParameters&>(msg__);
+      if (formation_name != other__.formation_name) return false;
+      if (reference_frame != other__.reference_frame) return false;
+      if (participants != other__.participants) return false;
+      if (custom != other__.custom) return false;
+      return true;
+    }
+
+    int
+    FormationParameters::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    FormationParameters::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(formation_name, ptr__);
+      ptr__ += IMC::serialize(reference_frame, ptr__);
+      ptr__ += participants.serialize(ptr__);
+      ptr__ += IMC::serialize(custom, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FormationParameters::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(formation_name, bfr__, size__);
+      bfr__ += IMC::deserialize(reference_frame, bfr__, size__);
+      bfr__ += participants.deserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FormationParameters::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(formation_name, bfr__, size__);
+      bfr__ += IMC::deserialize(reference_frame, bfr__, size__);
+      bfr__ += participants.reverseDeserialize(bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FormationParameters::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "formation_name", formation_name, nindent__);
+      IMC::toJSON(os__, "reference_frame", reference_frame, nindent__);
+      participants.toJSON(os__, "participants", nindent__);
+      IMC::toJSON(os__, "custom", custom, nindent__);
+    }
+
+    void
+    FormationParameters::setTimeStampNested(double value__)
+    {
+      participants.setTimeStamp(value__);
+    }
+
+    void
+    FormationParameters::setSourceNested(uint16_t value__)
+    {
+      participants.setSource(value__);
+    }
+
+    void
+    FormationParameters::setSourceEntityNested(uint8_t value__)
+    {
+      participants.setSourceEntity(value__);
+    }
+
+    void
+    FormationParameters::setDestinationNested(uint16_t value__)
+    {
+      participants.setDestination(value__);
+    }
+
+    void
+    FormationParameters::setDestinationEntityNested(uint8_t value__)
+    {
+      participants.setDestinationEntity(value__);
     }
 
     Dislodge::Dislodge(void)
