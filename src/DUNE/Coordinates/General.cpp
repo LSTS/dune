@@ -54,5 +54,27 @@ namespace DUNE
 
       toWGS84(estate, lat, lon, hae);
     }
+
+    void
+    toWGS84(const IMC::SimulatedState& estate, double& lat, double& lon, float& hae)
+    {
+      // Define reference.
+      lat = estate.lat;
+      lon = estate.lon;
+      hae = estate.height;
+
+      // Call the general method.
+      WGS84::displace(estate.x, estate.y, estate.z, &lat, &lon, &hae);
+    }
+
+    void
+    toWGS84(const IMC::SimulatedState& estate, double& lat, double& lon)
+    {
+      // Use reference height.
+      float hae = estate.height;
+
+      toWGS84(estate, lat, lon, hae);
+    }
+
   }
 }

@@ -37,7 +37,11 @@
 namespace DUNE
 {
   // Forward declarations.
-  namespace IMC { class EstimatedState; }
+  namespace IMC
+  {
+    class EstimatedState;
+    class SimulatedState;
+  }
 
   namespace Coordinates
   {
@@ -174,6 +178,22 @@ namespace DUNE
     //! @param[out] lon WGS84 longitude.
     void
     toWGS84(const IMC::EstimatedState& estate, double& lat, double& lon);
+
+    //! Convert the position in a simulated state message to WGS84 coordinates.
+    //! @param[in] estate simulated state message.
+    //! @param[out] lat WGS84 latitude.
+    //! @param[out] lon WGS84 longitude.
+    //! @param[out] hae height above WGS84 ellipsoid.
+    void
+    toWGS84(const IMC::SimulatedState& estate, double& lat, double& lon, float& hae);
+
+    //! Convert the position in a simulated state message to WGS84 coordinates.
+    //! @param[in] estate simulated state message.
+    //! @param[out] lat WGS84 latitude.
+    //! @param[out] lon WGS84 longitude.
+    void
+    toWGS84(const IMC::SimulatedState& estate, double& lat, double& lon);
+
   }
 }
 
