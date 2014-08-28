@@ -324,7 +324,6 @@ namespace Navigation
             frame.data.push_back(0);
           }
 
-          frame.toText(std::cerr);
           dispatch(frame);
         }
 
