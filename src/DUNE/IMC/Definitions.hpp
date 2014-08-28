@@ -12494,7 +12494,7 @@ namespace DUNE
     };
 
     //! Formation Parameters.
-    class FormationParameters: public Maneuver
+    class FormationParameters: public Message
     {
     public:
       //! Formation Reference Frame.

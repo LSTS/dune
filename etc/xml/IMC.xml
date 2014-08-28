@@ -310,7 +310,6 @@
       <message-type abbrev="CoverArea"/>
       <message-type abbrev="FollowReference"/>
       <message-type abbrev="CommsRelay"/>
-      <message-type abbrev="FormationParameters"/>
       <message-type abbrev="FormationPlanExecution"/>
       <message-type abbrev="Dislodge"/>
     </message-group>
