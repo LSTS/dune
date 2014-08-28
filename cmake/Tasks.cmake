@@ -170,6 +170,7 @@ if(TASK_FILE)
 else(TASK_FILE)
   dune_add_tasks(${PROJECT_SOURCE_DIR}/src)
   dune_add_tasks(${PROJECT_SOURCE_DIR}/private/src)
+  dune_add_tasks(${PROJECT_SOURCE_DIR}/user/src)
 endif(TASK_FILE)
 
 list(SORT DUNE_TASKS_ENABLED)

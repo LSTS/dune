@@ -213,6 +213,12 @@ foreach(extlib ${extlibs})
   include(${extlib})
 endforeach(extlib ${extlibs})
 
+# User Libraries.
+file(GLOB extlibs ${PROJECT_SOURCE_DIR}/user/vendor/libraries/*/Library.cmake)
+foreach(extlib ${extlibs})
+  include(${extlib})
+endforeach(extlib ${extlibs})
+
 include_directories(${DUNE_GENERATED}/src ${PROJECT_SOURCE_DIR}/src ${DUNE_VENDOR_INCS_DIR})
 link_directories(${DUNE_VENDOR_LIBS_DIR})
 set(DUNE_CORE_FILES ${DUNE_CORE_SOURCES} ${DUNE_VENDOR_FILES})
