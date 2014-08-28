@@ -148,7 +148,6 @@ namespace Navigation
           tx.sys_dst = sys_name;
           tx.flags = IMC::UamTxFrame::UTF_ACK;
           tx.data.push_back(0);
-          tx.toText(std::cerr);
           dispatch(tx);
         }
 
