@@ -68,6 +68,8 @@ namespace DUNE
       FileSystem::Path dir_app;
       //! Path to configuration directory.
       FileSystem::Path dir_cfg;
+      //! Path to user configuration directory.
+      FileSystem::Path dir_usr_cfg;
       //! Path to HTTP server directory.
       FileSystem::Path dir_www;
       //! Path to log directory.
