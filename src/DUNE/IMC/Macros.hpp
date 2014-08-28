@@ -356,20 +356,20 @@
 #define DUNE_IMC_POLYGONVERTEX 474
 //! CompassCalibration identification number.
 #define DUNE_IMC_COMPASSCALIBRATION 475
-//! FormationParameters identification number.
-#define DUNE_IMC_FORMATIONPARAMETERS 476
-//! FormationPlanExecution identification number.
-#define DUNE_IMC_FORMATIONPLANEXECUTION 477
 //! FollowReference identification number.
-#define DUNE_IMC_FOLLOWREFERENCE 478
+#define DUNE_IMC_FOLLOWREFERENCE 476
 //! Reference identification number.
-#define DUNE_IMC_REFERENCE 479
+#define DUNE_IMC_REFERENCE 477
 //! FollowRefState identification number.
-#define DUNE_IMC_FOLLOWREFSTATE 480
+#define DUNE_IMC_FOLLOWREFSTATE 478
+//! FormationPlanExecution identification number.
+#define DUNE_IMC_FORMATIONPLANEXECUTION 479
 //! FormationMonitor identification number.
-#define DUNE_IMC_FORMATIONMONITOR 481
+#define DUNE_IMC_FORMATIONMONITOR 480
 //! RelativeState identification number.
-#define DUNE_IMC_RELATIVESTATE 482
+#define DUNE_IMC_RELATIVESTATE 481
+//! FormationParameters identification number.
+#define DUNE_IMC_FORMATIONPARAMETERS 482
 //! Dislodge identification number.
 #define DUNE_IMC_DISLODGE 483
 //! VehicleState identification number.
