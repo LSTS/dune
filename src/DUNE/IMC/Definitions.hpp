@@ -16811,6 +16811,75 @@ namespace DUNE
       setDestinationEntityNested(uint8_t value__);
     };
 
+    //! Event.
+    class Event: public Message
+    {
+    public:
+      //! Topic.
+      std::string topic;
+      //! Data.
+      std::string data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 660;
+      }
+
+      Event(void);
+
+      Message*
+      clone(void) const
+      {
+        return new Event(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return Event::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Event";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(topic) + IMC::getSerializationSize(data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Video Data.
     class VideoData: public Message
     {
