@@ -67,7 +67,12 @@ namespace DUNE
 
       last_pos = pos;
 
-      return travelled / speed;
+      float duration = travelled / speed;
+
+      // Update speed profile
+      m_speed_vec->push_back(SpeedProfile(maneuver, duration));
+
+      return duration;
     }
 
     template <typename Type>
@@ -199,6 +204,10 @@ namespace DUNE
 
       if (!maneuver->points.size())
       {
+        // Update speed profile
+        m_speed_vec->push_back(SpeedProfile(0.0, 0));
+
+        // Update duration
         m_accum_dur->addDuration(0.0);
       }
       else
@@ -217,8 +226,13 @@ namespace DUNE
 
           last_pos = pos;
 
+          float duration = compensate(travelled, speed) / speed;
+
+          // Update speed profile
+          m_speed_vec->push_back(SpeedProfile(maneuver, duration));
+
           // compensate with path controller's eta factor
-          m_accum_dur->addDuration(compensate(travelled, speed) / speed);
+          m_accum_dur->addDuration(duration);
         }
       }
 
@@ -254,7 +268,12 @@ namespace DUNE
       {
         // compensate with path controller's eta factor
         float travelled = compensate(*itr, speed);
-        m_accum_dur->addDuration(travelled / speed);
+        float duration = travelled / speed;
+
+        // Update speed profile
+        m_speed_vec->push_back(SpeedProfile(maneuver, duration));
+
+        m_accum_dur->addDuration(duration);
       }
 
       return true;
@@ -280,7 +299,12 @@ namespace DUNE
 
       last_pos = pos;
 
-      m_accum_dur->addDuration(travelled / speed);
+      float duration = travelled / speed;
+
+      // Update speed profile
+      m_speed_vec->push_back(SpeedProfile(maneuver, duration));
+
+      m_accum_dur->addDuration(duration);
 
       return true;
     }
@@ -305,7 +329,12 @@ namespace DUNE
       // compensate with path controller's eta factor
       travelled = compensate(travelled, speed);
 
-      m_accum_dur->addDuration(travelled / speed);
+      float duration = travelled / speed;
+
+      // Update speed profile
+      m_speed_vec->push_back(SpeedProfile(maneuver, duration));
+
+      m_accum_dur->addDuration(duration);
 
       return true;
     }
@@ -340,6 +369,9 @@ namespace DUNE
         travel_time = 0;
       }
 
+      // Update speed profile
+      m_speed_vec->push_back(SpeedProfile(maneuver, travel_time));
+
       // Rising time and descending time
       float rising_time;
       float descending_time;
@@ -356,6 +388,11 @@ namespace DUNE
 
       // surface time
       float surface_time = c_fix_time;
+
+      // Update speed profile
+      m_speed_vec->push_back(SpeedProfile(maneuver, rising_time));
+      m_speed_vec->push_back(SpeedProfile(0.0, 0, surface_time));
+      m_speed_vec->push_back(SpeedProfile(maneuver, descending_time));
 
       m_accum_dur->addDuration(travel_time + rising_time + surface_time + descending_time);
 
@@ -387,6 +424,9 @@ namespace DUNE
 
         Memory::clear(m_accum_dur);
         m_accum_dur = new AccumulatedDurations(last_duration);
+
+        Memory::clear(m_speed_vec);
+        m_speed_vec = new std::vector<SpeedProfile>();
 
         bool parsed = false;
 
@@ -448,12 +488,19 @@ namespace DUNE
           return dtr;
         }
 
+        // Update durations
         std::pair<std::string, std::vector<float> > ent((*itr)->maneuver_id,
                                                         m_accum_dur->vec);
         m_durations.insert(ent);
+
+        // Update speeds
+        std::pair<std::string, std::vector<SpeedProfile> > spd((*itr)->maneuver_id,
+                                                               *m_speed_vec);
+        m_speeds.insert(spd);
       }
 
       Memory::clear(m_accum_dur);
+      Memory::clear(m_speed_vec);
 
       return m_durations.find(nodes.back()->maneuver_id);
     }

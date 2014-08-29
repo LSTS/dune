@@ -55,13 +55,49 @@ namespace DUNE
     class Duration
     {
     public:
+      struct SpeedProfile
+      {
+        SpeedProfile(float sp, uint8_t su, float t = 0.0):
+          speed(sp),
+          speed_units(su),
+          time(t)
+        { }
+
+        template <typename Type>
+        SpeedProfile(const Type* maneuver, float t = 0.0)
+        {
+          speed = maneuver->speed;
+          speed_units = maneuver->speed_units;
+          time = t;
+        }
+
+        ~SpeedProfile(void)
+        { }
+
+        void
+        setTime(float t)
+        {
+          time = t;
+        }
+
+        //! Speed value
+        float speed;
+        //! Speed units
+        uint8_t speed_units;
+        //! Time of the profile
+        float time;
+      };
+
       //! Mapping between maneuver IDs and point durations
       typedef std::map< std::string, std::vector<float> > ManeuverDuration;
+      //! Mapping between maneuver IDs and speed profiles
+      typedef std::map< std::string, std::vector<SpeedProfile> > ManeuverSpeed;
 
       //! Constructor
       Duration(const SpeedModel* speed_model):
         m_accum_dur(NULL),
-        m_speed_model(speed_model)
+        m_speed_model(speed_model),
+        m_speed_vec(NULL)
       { };
 
       //! Destructor
@@ -271,7 +307,6 @@ namespace DUNE
           return false;
 
         m_accum_dur->addDuration(value);
-
         return true;
       };
 
@@ -289,6 +324,9 @@ namespace DUNE
 
         if (value < 0.0)
           return false;
+
+        // Update speed profile
+        m_speed_vec->push_back(SpeedProfile(0.0, 0, maneuver->duration));
 
         m_accum_dur->addDuration(value + maneuver->duration);
         return true;
@@ -308,6 +346,9 @@ namespace DUNE
 
         if (value < 0.0)
           return false;
+
+        // Update speed profile
+        m_speed_vec->push_back(SpeedProfile(maneuver, maneuver->duration));
 
         m_accum_dur->addDuration(value + maneuver->duration);
         return true;
@@ -363,6 +404,9 @@ namespace DUNE
         if (value < 0.0)
           return false;
 
+        // Update speed profile
+        m_speed_vec->push_back(SpeedProfile(maneuver, maneuver->duration));
+
         m_accum_dur->addDuration(value + maneuver->duration);
         return true;
       }
@@ -373,6 +417,10 @@ namespace DUNE
       AccumulatedDurations* m_accum_dur;
       //! Pointer to model for speed conversion
       const Plans::SpeedModel* m_speed_model;
+      //! Map of maneuver id and speed profiles
+      ManeuverSpeed m_speeds;
+      //! Pointer to vector of speed profiles
+      std::vector<SpeedProfile>* m_speed_vec;
     };
   }
 }
