@@ -5547,91 +5547,49 @@
     </field>
   </message>
 
-  <message id="476" name="Follow Reference Maneuver" abbrev="FollowReference" source="ccu">
+  <message id="476" name="Formation Parameters" abbrev="FormationParameters" source="ccu">
     <description>
-      This maneuver follows a reference given by an external entity.
+      A "Formation" is defined by the relative positions of the vehicles
+      inside the formation, and the reference frame where this positions are defined.
+
+      The formation reference frame may be:
+      - Earth Fixed: Where the vehicles relative position do not depend on the followed path.
+      This results in all UAVs following the same path with an offset relative to each other;
+      - Path Fixed:  Where the vehicles relative position depends on the followed path,
+      changing the inter-vehicle offset direction with the path direction.
+      - Path Curved:  Where the vehicles relative position depends on the followed path,
+      changing the inter-vehicle offset direction with the path direction and direction
+      change rate.
+      An offset in the xx axis results in a distance over the curved path line.
+      An offset in the yy axis results in an offset of the vehicle path line relative to the
+      formation center path line.
     </description>
-    <field name="Controlling Source" abbrev="control_src" type="uint16_t">
+    <field name="Formation Name" abbrev="formation_name" type="plaintext">
       <description>
-        The IMC identifier of the source system that is allowed to provide references to this maneuver.
-        If the value ''0xFFFF'' is used, any system is allowed to command references.
+        Name of the formation configuration.
       </description>
     </field>
-    <field name="Controlling Entity" abbrev="control_ent" type="uint8_t">
+    <field name="Formation Reference Frame" abbrev="reference_frame" type="uint8_t" unit="Enumerated" prefix="OP">
       <description>
-        The entity identifier of the entity that is allowed to provide references to this maneuver.
-        If the value ''0xFF'' is used, any entity is allowed to command references.
+        Formation reference frame
+      </description>
+      <value id="0" name="Earth Fixed" abbrev="EARTH_FIXED"/>
+      <value id="1" name="Path Fixed" abbrev="PATH_FIXED"/>
+      <value id="2" name="Path Curved" abbrev="PATH_CURVED"/>
+    </field>
+    <field name="Formation Participants" abbrev="participants" type="message-list" message-type="VehicleFormationParticipant">
+      <description>
+        List of formation participants.
       </description>
     </field>
-    <field name="Reference Update Timeout" abbrev="timeout" type="fp32_t">
+    <field name="Custom settings for formation" abbrev="custom" unit="TupleList" type="plaintext">
       <description>
-        The ammount of time, in seconds, after which the maneuver will be terminated if no reference has
-        been received. In other words, the controlling entity should send reference updates in shorter periods than
-        'timeout'.
-      </description>
-    </field>
-    <field name="Loiter Radius" abbrev="loiter_radius" type="fp32_t">
-      <description>
-        Whenever an intended reference is achieved, this maneuver will maintain the vehicle in vaticiny of that
-        location. The loiter radius is used to define the radius of this (xy) area.
-      </description>
-    </field>
-    <field name="Altitude Interval" abbrev="altitude_interval" type="fp32_t">
-      <description>
-        Similarly to Loiter Radius, this field is used to define the "z" distance considered to be inside the vacitiny of
-        the target location. An AUV may, for instance, be floating until it more than z units above the current reference,
-        in which case it actively changes its position in order to achieve the desired depth / altitude.
+        Custom settings for the formation configuration.
       </description>
     </field>
   </message>
 
-  <message id="477" name="Reference To Follow" abbrev="Reference" source="ccu,vehicle">
-    <field name="Flags" abbrev="flags" type="uint8_t" unit="Bitfield" prefix="FLAG">
-      <value abbrev="LOCATION" name="Use Location Reference" id="0x01"/>
-      <value abbrev="SPEED" name="Use Speed Reference" id="0x02"/>
-      <value abbrev="Z" name="Use Z Reference" id="0x04"/>
-      <value abbrev="RADIUS" name="Use Radius Reference" id="0x08"/>
-      <value abbrev="MANDONE" name="Flag Maneuver Completion" id="0x80"/>
-    </field>
-    <field name="Speed Reference" abbrev="speed" type="message" message-type="DesiredSpeed"/>
-    <field name="Z Reference" abbrev="z" type="message" message-type="DesiredZ"/>
-    <field name="Latitude Reference" abbrev="lat" type="fp64_t"/>
-    <field name="Longitude Reference" abbrev="lon" type="fp64_t"/>
-    <field name="Radius" abbrev="radius" type="fp32_t"/>
-  </message>
-
-  <message id="478" name="Follow Reference State" abbrev="FollowRefState" source="vehicle">
-    <field name="Controlling Source" abbrev="control_src" type="uint16_t">
-      <description>
-        The IMC identifier of the source system that is allowed to control the vehicle.
-        If the value ''0xFFFF'' is used, any system is allowed to command references.
-      </description>
-    </field>
-    <field name="Controlling Entity" abbrev="control_ent" type="uint8_t">
-      <description>
-        The entity identifier of the entity that is allowed to control the vehicle.
-        If the value ''0xFF'' is used, any entity is allowed to command references.
-      </description>
-    </field>
-    <field name="Reference" abbrev="reference" type="message" message-type="Reference">
-      <description>Reference currently being followed.</description>
-    </field>
-    <field name="State" abbrev="state" type="uint8_t" unit="Enumerated" prefix="FR">
-      <value abbrev="WAIT" name="Waiting for first reference" id="1"/>
-      <value abbrev="GOTO" name="Going towards received reference" id="2"/>
-      <value abbrev="LOITER" name="Loitering after arriving at the reference" id="3"/>
-      <value abbrev="HOVER" name="Hovering after arriving at the reference" id="4"/>
-      <value abbrev="ELEVATOR" name="Moving in z after arriving at the target cylinder" id="5"/>
-      <value abbrev="TIMEOUT" name="Controlling system timed out" id="6"/>
-    </field>
-    <field name="Proximity" abbrev="proximity" type="uint8_t" unit="Bitfield" prefix="PROX">
-      <value abbrev="FAR" name="Far from the destination" id="0x01"/>
-      <value abbrev="XY_NEAR" name="Near in the horizontal plane" id="0x02"/>
-      <value abbrev="Z_NEAR" name="Near in the vertical plane" id="0x04"/>
-    </field>
-  </message>
-
-  <message id="479" name="Formation Plan Execution" abbrev="FormationPlanExecution" source="ccu">
+  <message id="477" name="Formation Plan Execution" abbrev="FormationPlanExecution" source="ccu">
     <description>
       A "Formation Plan" is a maneuver specifying a plan for a team of vehicles.
       The maneuver defines:
@@ -5717,7 +5675,91 @@
     </field>
   </message>
 
-  <message id="480" name="Formation Monitoring Data" abbrev="FormationMonitor">
+  <message id="478" name="Follow Reference Maneuver" abbrev="FollowReference" source="ccu">
+    <description>
+      This maneuver follows a reference given by an external entity.
+    </description>
+    <field name="Controlling Source" abbrev="control_src" type="uint16_t">
+      <description>
+        The IMC identifier of the source system that is allowed to provide references to this maneuver.
+        If the value ''0xFFFF'' is used, any system is allowed to command references.
+      </description>
+    </field>
+    <field name="Controlling Entity" abbrev="control_ent" type="uint8_t">
+      <description>
+        The entity identifier of the entity that is allowed to provide references to this maneuver.
+        If the value ''0xFF'' is used, any entity is allowed to command references.
+      </description>
+    </field>
+    <field name="Reference Update Timeout" abbrev="timeout" type="fp32_t">
+      <description>
+        The ammount of time, in seconds, after which the maneuver will be terminated if no reference has
+        been received. In other words, the controlling entity should send reference updates in shorter periods than
+        'timeout'.
+      </description>
+    </field>
+    <field name="Loiter Radius" abbrev="loiter_radius" type="fp32_t">
+      <description>
+        Whenever an intended reference is achieved, this maneuver will maintain the vehicle in vaticiny of that
+        location. The loiter radius is used to define the radius of this (xy) area.
+      </description>
+    </field>
+    <field name="Altitude Interval" abbrev="altitude_interval" type="fp32_t">
+      <description>
+        Similarly to Loiter Radius, this field is used to define the "z" distance considered to be inside the vacitiny of
+        the target location. An AUV may, for instance, be floating until it more than z units above the current reference,
+        in which case it actively changes its position in order to achieve the desired depth / altitude.
+      </description>
+    </field>
+  </message>
+
+  <message id="479" name="Reference To Follow" abbrev="Reference" source="ccu,vehicle">
+    <field name="Flags" abbrev="flags" type="uint8_t" unit="Bitfield" prefix="FLAG">
+      <value abbrev="LOCATION" name="Use Location Reference" id="0x01"/>
+      <value abbrev="SPEED" name="Use Speed Reference" id="0x02"/>
+      <value abbrev="Z" name="Use Z Reference" id="0x04"/>
+      <value abbrev="RADIUS" name="Use Radius Reference" id="0x08"/>
+      <value abbrev="MANDONE" name="Flag Maneuver Completion" id="0x80"/>
+    </field>
+    <field name="Speed Reference" abbrev="speed" type="message" message-type="DesiredSpeed"/>
+    <field name="Z Reference" abbrev="z" type="message" message-type="DesiredZ"/>
+    <field name="Latitude Reference" abbrev="lat" type="fp64_t"/>
+    <field name="Longitude Reference" abbrev="lon" type="fp64_t"/>
+    <field name="Radius" abbrev="radius" type="fp32_t"/>
+  </message>
+
+  <message id="480" name="Follow Reference State" abbrev="FollowRefState" source="vehicle">
+    <field name="Controlling Source" abbrev="control_src" type="uint16_t">
+      <description>
+        The IMC identifier of the source system that is allowed to control the vehicle.
+        If the value ''0xFFFF'' is used, any system is allowed to command references.
+      </description>
+    </field>
+    <field name="Controlling Entity" abbrev="control_ent" type="uint8_t">
+      <description>
+        The entity identifier of the entity that is allowed to control the vehicle.
+        If the value ''0xFF'' is used, any entity is allowed to command references.
+      </description>
+    </field>
+    <field name="Reference" abbrev="reference" type="message" message-type="Reference">
+      <description>Reference currently being followed.</description>
+    </field>
+    <field name="State" abbrev="state" type="uint8_t" unit="Enumerated" prefix="FR">
+      <value abbrev="WAIT" name="Waiting for first reference" id="1"/>
+      <value abbrev="GOTO" name="Going towards received reference" id="2"/>
+      <value abbrev="LOITER" name="Loitering after arriving at the reference" id="3"/>
+      <value abbrev="HOVER" name="Hovering after arriving at the reference" id="4"/>
+      <value abbrev="ELEVATOR" name="Moving in z after arriving at the target cylinder" id="5"/>
+      <value abbrev="TIMEOUT" name="Controlling system timed out" id="6"/>
+    </field>
+    <field name="Proximity" abbrev="proximity" type="uint8_t" unit="Bitfield" prefix="PROX">
+      <value abbrev="FAR" name="Far from the destination" id="0x01"/>
+      <value abbrev="XY_NEAR" name="Near in the horizontal plane" id="0x02"/>
+      <value abbrev="Z_NEAR" name="Near in the vertical plane" id="0x04"/>
+    </field>
+  </message>
+
+  <message id="481" name="Formation Monitoring Data" abbrev="FormationMonitor">
     <description>
       Monitoring variables for the formation state and performance.
     </description>
@@ -5842,7 +5884,7 @@
     </field>
   </message>
 
-  <message id="481" name="Relative State" abbrev="RelativeState">
+  <message id="482" name="Relative State" abbrev="RelativeState">
     <description>
       Inter-vehicle formation state.
     </description>
@@ -5957,48 +5999,6 @@
       <description>
 	Components of the vehicle desired acceleration.
 	Relative virtual error: downward direction.
-      </description>
-    </field>
-  </message>
-
-  <message id="482" name="Formation Parameters" abbrev="FormationParameters" source="ccu">
-    <description>
-      A "Formation" is defined by the relative positions of the vehicles
-      inside the formation, and the reference frame where this positions are defined.
-
-      The formation reference frame may be:
-      - Earth Fixed: Where the vehicles relative position do not depend on the followed path.
-      This results in all UAVs following the same path with an offset relative to each other;
-      - Path Fixed:  Where the vehicles relative position depends on the followed path,
-      changing the inter-vehicle offset direction with the path direction.
-      - Path Curved:  Where the vehicles relative position depends on the followed path,
-      changing the inter-vehicle offset direction with the path direction and direction
-      change rate.
-      An offset in the xx axis results in a distance over the curved path line.
-      An offset in the yy axis results in an offset of the vehicle path line relative to the
-      formation center path line.
-    </description>
-    <field name="Formation Name" abbrev="formation_name" type="plaintext">
-      <description>
-        Name of the formation configuration.
-      </description>
-    </field>
-    <field name="Formation Reference Frame" abbrev="reference_frame" type="uint8_t" unit="Enumerated" prefix="OP">
-      <description>
-        Formation reference frame
-      </description>
-      <value id="0" name="Earth Fixed" abbrev="EARTH_FIXED"/>
-      <value id="1" name="Path Fixed" abbrev="PATH_FIXED"/>
-      <value id="2" name="Path Curved" abbrev="PATH_CURVED"/>
-    </field>
-    <field name="Formation Participants" abbrev="participants" type="message-list" message-type="VehicleFormationParticipant">
-      <description>
-        List of formation participants.
-      </description>
-    </field>
-    <field name="Custom settings for formation" abbrev="custom" unit="TupleList" type="plaintext">
-      <description>
-        Custom settings for the formation configuration.
       </description>
     </field>
   </message>
