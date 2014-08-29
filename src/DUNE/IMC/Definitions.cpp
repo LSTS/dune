@@ -17602,6 +17602,68 @@ namespace DUNE
       tokens.setDestinationEntity(value__);
     }
 
+    Event::Event(void)
+    {
+      m_header.mgid = 660;
+      clear();
+    }
+
+    void
+    Event::clear(void)
+    {
+      topic.clear();
+      data.clear();
+    }
+
+    bool
+    Event::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Event& other__ = static_cast<const Event&>(msg__);
+      if (topic != other__.topic) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    Event::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    Event::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(topic, ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Event::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(topic, bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Event::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(topic, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    Event::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "topic", topic, nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
+    }
+
     VideoData::VideoData(void)
     {
       m_header.mgid = 700;

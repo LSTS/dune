@@ -450,6 +450,8 @@
 #define DUNE_IMC_TREXTOKEN 657
 //! TrexPlan identification number.
 #define DUNE_IMC_TREXPLAN 658
+//! Event identification number.
+#define DUNE_IMC_EVENT 660
 //! VideoData identification number.
 #define DUNE_IMC_VIDEODATA 700
 //! RawImage identification number.
