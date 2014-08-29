@@ -431,7 +431,7 @@ namespace DUNE
       bool
       isActivating(void) const
       {
-        return m_activating;
+        return m_act_state.state == IMC::EntityActivationState::EAS_ACT_IP;
       }
 
       //! Test if task is deactivating.
@@ -439,7 +439,7 @@ namespace DUNE
       bool
       isDeactivating(void) const
       {
-        return m_deactivating;
+        return m_act_state.state == IMC::EntityActivationState::EAS_DEACT_IP;
       }
 
       //! Wait for the receiving queue to contain at least one message
@@ -736,10 +736,6 @@ namespace DUNE
       std::string m_param_editor;
       //! Next activation state.
       NextActivationState m_next_act_state;
-      //! True if task is activating.
-      bool m_activating;
-      //! True if task is deactivating.
-      bool m_deactivating;
 
       //! Report current entity states by dispatching EntityState
       //! messages. This function will at least report the state of

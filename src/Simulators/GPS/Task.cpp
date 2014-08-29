@@ -180,6 +180,7 @@ namespace Simulators
         m_fix.cog = 0.0;
         m_fix.hdop += 1.0 / getFrequency();
         m_fix.hacc += 1.0 / getFrequency();
+        m_fix.utc_time = ((uint32_t)Clock::getSinceEpoch()) % 86400;
         dispatch(m_fix);
       }
 

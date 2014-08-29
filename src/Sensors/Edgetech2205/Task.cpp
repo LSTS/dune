@@ -281,12 +281,7 @@ namespace Sensors
         setPing(SUBSYS_SSH, "None");
         m_cmd->shutdown();
         Memory::clear(m_cmd);
-
-        if (m_sock_dat != NULL)
-        {
-          delete m_sock_dat;
-          m_sock_dat = NULL;
-        }
+        Memory::clear(m_sock_dat);
 
         debug("deactivation time is %u s", getDeactivationTime());
         m_countdown.setTop(getDeactivationTime());

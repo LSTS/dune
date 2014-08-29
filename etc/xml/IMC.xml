@@ -310,7 +310,6 @@
       <message-type abbrev="CoverArea"/>
       <message-type abbrev="FollowReference"/>
       <message-type abbrev="CommsRelay"/>
-      <message-type abbrev="FormationParameters"/>
       <message-type abbrev="FormationPlanExecution"/>
       <message-type abbrev="Dislodge"/>
     </message-group>
@@ -7381,6 +7380,18 @@
     <field name="Tokens" abbrev="tokens" type="message-list" message-type="TrexToken" />
   </message>
 
+  <message id="660" abbrev="Event" name="Event" source="vehicle,ccu">
+    <description>
+      This message is used for signaling asynchronous events between different (sub) systems.
+    </description>
+    <field name="Topic" abbrev="topic" type="plaintext">
+      <description>The name or type of this event</description>
+    </field>
+    <field name="Data" abbrev="data" type="plaintext" unit="TupleList">
+      <description>A map with additional event information.</description>
+    </field>
+  </message>
+
   <!-- Vision -->
   <message id="700" name="Video Data" abbrev="VideoData" source="ccu, vehicle">
     <description/>
@@ -7713,7 +7724,8 @@
   </message>
 
   <message id="889" abbrev="Aborted" name="Aborted">
-    This message signals that an :ref:`Abort` message was received and
-    acted upon.
+    <description>
+      This message signals that an :ref:`Abort` message was received and acted upon.
+    </description>
   </message>
 </messages>

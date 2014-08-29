@@ -39,7 +39,7 @@ namespace Transports
       //! Number of TDMA slots.
       unsigned slot_count;
       //! TDMA slot number.
-      unsigned slot_number;
+      std::vector<unsigned> slot_number;
       //! TDMA slot duration.
       unsigned slot_dur;
       //! Destination
@@ -109,8 +109,10 @@ namespace Transports
         if (msg->getSource() != getSystemId())
           return;
 
-        Memory::clear(m_estate);
-        m_estate = new EstimatedState(*msg);
+        if (m_estate)
+          *m_estate = *msg;
+        else
+          m_estate = new IMC::EstimatedState(*msg);
       }
 
       void
