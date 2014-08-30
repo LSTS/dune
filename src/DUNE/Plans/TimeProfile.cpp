@@ -26,21 +26,21 @@
 //***************************************************************************
 
 // DUNE headers.
-#include <DUNE/Plans/Duration.hpp>
+#include <DUNE/Plans/TimeProfile.hpp>
 
 namespace DUNE
 {
   namespace Plans
   {
     float
-    Duration::distance2D(const Position& new_pos, const Position& last_pos)
+    TimeProfile::distance2D(const Position& new_pos, const Position& last_pos)
     {
       return Coordinates::WGS84::distance(new_pos.lat, new_pos.lon, 0.0,
                                           last_pos.lat, last_pos.lon, 0.0);
     }
 
     float
-    Duration::distance3D(const Position& new_pos, const Position& last_pos)
+    TimeProfile::distance3D(const Position& new_pos, const Position& last_pos)
     {
       float value = distance2D(new_pos, last_pos);
 
@@ -51,7 +51,7 @@ namespace DUNE
 
     template <typename Type>
     float
-    Duration::parseSimple(const Type* maneuver, Position& last_pos)
+    TimeProfile::parseSimple(const Type* maneuver, Position& last_pos)
     {
       float speed = convertSpeed(maneuver);
 
@@ -77,7 +77,7 @@ namespace DUNE
 
     template <typename Type>
     float
-    Duration::convertSpeed(const Type* maneuver)
+    TimeProfile::convertSpeed(const Type* maneuver)
     {
       if (m_speed_model == NULL)
         return 0.0;
@@ -91,13 +91,13 @@ namespace DUNE
     }
 
     inline float
-    Duration::compensate(float distance, float speed)
+    TimeProfile::compensate(float distance, float speed)
     {
       return std::max(0.0f, distance - Control::c_time_factor * speed);
     }
 
     float
-    Duration::computeZOffset(const Position& new_pos, const Position& last_pos)
+    TimeProfile::computeZOffset(const Position& new_pos, const Position& last_pos)
     {
       if (last_pos.z_units == new_pos.z_units)
       {
@@ -135,7 +135,7 @@ namespace DUNE
     }
 
     void
-    Duration::extractBathymetry(const std::string& str, Position& pos)
+    TimeProfile::extractBathymetry(const std::string& str, Position& pos)
     {
       (void)str;
 
@@ -145,7 +145,7 @@ namespace DUNE
 
     template <typename Type>
     void
-    Duration::extractPosition(const Type* maneuver, Position& pos)
+    TimeProfile::extractPosition(const Type* maneuver, Position& pos)
     {
       pos.lat = maneuver->lat;
       pos.lon = maneuver->lon;
@@ -157,7 +157,7 @@ namespace DUNE
     }
 
     void
-    Duration::extractPosition(const IMC::EstimatedState* state, Position& pos)
+    TimeProfile::extractPosition(const IMC::EstimatedState* state, Position& pos)
     {
       DUNE::Coordinates::toWGS84(*state, pos.lat, pos.lon);
       pos.z = state->depth;
@@ -167,7 +167,7 @@ namespace DUNE
     }
 
     void
-    Duration::extractPosition(const IMC::Elevator* maneuver, Position& pos)
+    TimeProfile::extractPosition(const IMC::Elevator* maneuver, Position& pos)
     {
       pos.lat = maneuver->lat;
       pos.lon = maneuver->lon;
@@ -178,7 +178,7 @@ namespace DUNE
     }
 
     void
-    Duration::extractPosition(const IMC::PopUp* maneuver, Position& pos)
+    TimeProfile::extractPosition(const IMC::PopUp* maneuver, Position& pos)
     {
       pos.lat = maneuver->lat;
       pos.lon = maneuver->lon;
@@ -189,7 +189,7 @@ namespace DUNE
     }
 
     bool
-    Duration::parse(const IMC::FollowPath* maneuver, Position& last_pos)
+    TimeProfile::parse(const IMC::FollowPath* maneuver, Position& last_pos)
     {
       float speed = convertSpeed(maneuver);
 
@@ -240,7 +240,7 @@ namespace DUNE
     }
 
     bool
-    Duration::parse(const IMC::Rows* maneuver, Position& last_pos)
+    TimeProfile::parse(const IMC::Rows* maneuver, Position& last_pos)
     {
       float speed = convertSpeed(maneuver);
 
@@ -280,7 +280,7 @@ namespace DUNE
     }
 
     bool
-    Duration::parse(const IMC::YoYo* maneuver, Position& last_pos)
+    TimeProfile::parse(const IMC::YoYo* maneuver, Position& last_pos)
     {
       float speed = convertSpeed(maneuver);
 
@@ -310,7 +310,7 @@ namespace DUNE
     }
 
     bool
-    Duration::parse(const IMC::Elevator* maneuver, Position& last_pos)
+    TimeProfile::parse(const IMC::Elevator* maneuver, Position& last_pos)
     {
       float speed = convertSpeed(maneuver);
 
@@ -340,7 +340,7 @@ namespace DUNE
     }
 
     bool
-    Duration::parse(const IMC::PopUp* maneuver, Position& last_pos)
+    TimeProfile::parse(const IMC::PopUp* maneuver, Position& last_pos)
     {
       float speed = convertSpeed(maneuver);
 
@@ -399,8 +399,8 @@ namespace DUNE
       return true;
     }
 
-    Duration::ManeuverDuration::const_iterator
-    Duration::parse(const std::vector<IMC::PlanManeuver*>& nodes,
+    TimeProfile::const_iterator
+    TimeProfile::parse(const std::vector<IMC::PlanManeuver*>& nodes,
                     const IMC::EstimatedState* state)
     {
       Position pos;
@@ -411,7 +411,7 @@ namespace DUNE
       for (; itr != nodes.end(); ++itr)
       {
         if ((*itr)->data.isNull())
-          return m_durations.end();
+          return m_profiles.end();
 
         IMC::Message* msg = (*itr)->data.get();
 
@@ -423,7 +423,7 @@ namespace DUNE
         }
 
         Memory::clear(m_accum_dur);
-        m_accum_dur = new AccumulatedDurations(last_duration);
+        m_accum_dur = new TimeProfile::AccumulatedDurations(last_duration);
 
         Memory::clear(m_speed_vec);
         m_speed_vec = new std::vector<SpeedProfile>();
@@ -475,34 +475,32 @@ namespace DUNE
 
         if (!parsed)
         {
-          if (m_durations.empty() || itr == nodes.begin())
-            return m_durations.end();
+          if (m_profiles.empty() || itr == nodes.begin())
+            return m_profiles.end();
 
           // return the duration from the previously computed maneuver
-          ManeuverDuration::const_iterator dtr;
-          dtr = m_durations.find((*(--itr))->maneuver_id);
+          const_iterator dtr;
+          dtr = m_profiles.find((*(--itr))->maneuver_id);
 
-          if (dtr->second.empty())
-            return m_durations.end();
+          if (dtr->second.durations.empty())
+            return m_profiles.end();
 
           return dtr;
         }
 
-        // Update durations
-        std::pair<std::string, std::vector<float> > ent((*itr)->maneuver_id,
-                                                        m_accum_dur->vec);
-        m_durations.insert(ent);
+        // Update speeds and durations
+        Profile prof;
+        prof.durations = m_accum_dur->vec;
+        prof.speeds = *m_speed_vec;
 
-        // Update speeds
-        std::pair<std::string, std::vector<SpeedProfile> > spd((*itr)->maneuver_id,
-                                                               *m_speed_vec);
-        m_speeds.insert(spd);
+        std::pair<std::string, Profile > p_pair((*itr)->maneuver_id, prof);
+        m_profiles.insert(p_pair);
       }
 
       Memory::clear(m_accum_dur);
       Memory::clear(m_speed_vec);
 
-      return m_durations.find(nodes.back()->maneuver_id);
+      return m_profiles.find(nodes.back()->maneuver_id);
     }
   }
 }
