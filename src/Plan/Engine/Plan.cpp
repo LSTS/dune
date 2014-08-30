@@ -40,20 +40,20 @@ namespace Plan
       m_compute_progress(compute_progress),
       m_progress(0.0),
       m_est_cal_time(0),
-      m_durations(NULL),
+      m_profiles(NULL),
       m_beyond_dur(false),
       m_sched(NULL),
       m_started_maneuver(false),
       m_calib(NULL),
       m_min_cal_time(min_cal_time)
     {
-      m_durations = new Plans::Duration(speed_model);
+      m_profiles = new Plans::TimeProfile(speed_model);
       m_calib = new Calibration();
     }
 
     Plan::~Plan(void)
     {
-      Memory::clear(m_durations);
+      Memory::clear(m_profiles);
       Memory::clear(m_sched);
       Memory::clear(m_calib);
     }
@@ -64,10 +64,10 @@ namespace Plan
       m_graph.clear();
       m_seq_nodes.clear();
       m_sequential = false;
-      m_durations->clear();
+      m_profiles->clear();
       m_progress = -1.0;
       m_beyond_dur = false;
-      m_last_dur = m_durations->end();
+      m_last_dur = m_profiles->end();
       m_started_maneuver = false;
     }
 
@@ -240,7 +240,7 @@ namespace Plan
       if (m_curr_node == NULL)
         return;
 
-      if (m_last_dur != m_durations->end())
+      if (m_last_dur != m_profiles->end())
       {
         if (m_curr_node->pman->maneuver_id == m_last_dur->first)
           m_beyond_dur = true;
@@ -354,13 +354,13 @@ namespace Plan
     float
     Plan::getExecutionDuration(void) const
     {
-      if (!m_sequential || !m_durations->size())
+      if (!m_sequential || !m_profiles->size())
         return -1.0;
 
-      if (m_last_dur == m_durations->end())
+      if (m_last_dur == m_profiles->end())
         return -1.0;
 
-      return m_last_dur->second.back();
+      return m_last_dur->second.durations.back();
     }
 
     bool
@@ -423,7 +423,7 @@ namespace Plan
     void
     Plan::computeDurations(const IMC::EstimatedState* state)
     {
-      m_last_dur = m_durations->parse(m_seq_nodes, state);
+      m_last_dur = m_profiles->parse(m_seq_nodes, state);
     }
 
     IMC::PlanManeuver*
@@ -449,7 +449,7 @@ namespace Plan
         return -1.0;
 
       // Compute only if sequential and durations exists
-      if (!m_sequential || !m_durations->size())
+      if (!m_sequential || !m_profiles->size())
         return -1.0;
 
       // If calibration has not started yet, but will later
@@ -472,11 +472,11 @@ namespace Plan
           mcs->eta == 0)
         return m_progress;
 
-      Duration::ManeuverDuration::const_iterator itr;
-      itr = m_durations->find(getCurrentId());
+      TimeProfile::const_iterator itr;
+      itr = m_profiles->find(getCurrentId());
 
       // If not found
-      if (itr == m_durations->end())
+      if (itr == m_profiles->end())
       {
         // If beyond the last maneuver with valid duration
         if (m_beyond_dur)
@@ -491,13 +491,13 @@ namespace Plan
       }
 
       // If durations vector for this maneuver is empty
-      if (!itr->second.size())
+      if (!itr->second.durations.size())
         return m_progress;
 
       IMC::Message* man = m_graph.find(getCurrentId())->second.pman->data.get();
 
       // Get execution progress
-      float exec_prog = Progress::compute(man, mcs, itr->second, exec_duration);
+      float exec_prog = Progress::compute(man, mcs, itr->second.durations, exec_duration);
 
       float prog = 100.0 - getExecutionPercentage() * (1.0 - exec_prog / 100.0);
 
@@ -537,13 +537,13 @@ namespace Plan
         else
           maneuver_start_eta = maneuver_end_eta;
 
-        Duration::ManeuverDuration::const_iterator dur;
-        dur = m_durations->find((*itr)->maneuver_id);
+        TimeProfile::const_iterator dur;
+        dur = m_profiles->find((*itr)->maneuver_id);
 
-        if (dur == m_durations->end())
+        if (dur == m_profiles->end())
           maneuver_end_eta = -1.0;
-        else if (dur->second.size())
-          maneuver_end_eta = execution_duration - dur->second.back();
+        else if (dur->second.durations.size())
+          maneuver_end_eta = execution_duration - dur->second.durations.back();
         else
           maneuver_end_eta = -1.0;
 

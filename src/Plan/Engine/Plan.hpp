@@ -271,9 +271,9 @@ namespace Plan
       //! Vector of message pointers to cycle through (sequential) plan
       std::vector<IMC::PlanManeuver*> m_seq_nodes;
       //! Pointer to maneuver durations
-      Plans::Duration* m_durations;
+      Plans::TimeProfile* m_profiles;
       //! Iterator to last maneuver with a valid duration
-      Duration::ManeuverDuration::const_iterator m_last_dur;
+      TimeProfile::const_iterator m_last_dur;
       //! Flag to signal that the plan is past the last maneuver with a valid duration
       bool m_beyond_dur;
       //! Schedule for actions to take during plan
