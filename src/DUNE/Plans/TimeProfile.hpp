@@ -130,6 +130,7 @@ namespace DUNE
       }
 
       //! Last position of the vector
+      //! @return const iterator to end()
       inline const_iterator
       end(void) const
       {
@@ -137,6 +138,7 @@ namespace DUNE
       }
 
       //! Size of the map
+      //! @return size of the map
       inline size_t
       size(void) const
       {
@@ -144,6 +146,8 @@ namespace DUNE
       }
 
       //! Find function for the map
+      //! @param[in] str map's key of object to find
+      //! @return const iterator to the map's object
       inline const_iterator
       find(const std::string& str) const
       {
@@ -151,6 +155,7 @@ namespace DUNE
       }
 
       //! ID of last maneuver with a valid duration
+      //! @return ID string of the maneuver
       inline const std::string&
       lastValid(void) const
       {
