@@ -129,6 +129,14 @@ namespace DUNE
         m_last_valid.clear();
       }
 
+      //! First position of the vector
+      //! @return const iterator to begin()
+      inline const_iterator
+      begin(void) const
+      {
+        return m_profiles.begin();
+      }
+
       //! Last position of the vector
       //! @return const iterator to end()
       inline const_iterator
