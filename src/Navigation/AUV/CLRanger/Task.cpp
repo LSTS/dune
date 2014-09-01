@@ -247,12 +247,19 @@ namespace Navigation
               (*itr)->lat = lat;
               (*itr)->lon = lon;
               (*itr)->depth = estate->depth;
-              dispatch(m_lbl_config);
-              return;
+            }
+
+            // Update own modem if exists.
+            if ((*itr)->beacon == getSystemName())
+            {
+              debug("update own position");
+              double lat, lon;
+              Coordinates::toWGS84(*m_estate, lat, lon);
+              (*itr)->lat = lat;
+              (*itr)->lon = lon;
+              (*itr)->depth = m_estate->depth;
             }
           }
-
-          err(DTR("destination system is not in beacon configuration"));
         }
 
         //! Compute TDMA slots.
@@ -264,6 +271,7 @@ namespace Navigation
           // Only if beacons are available.
           if (m_lbl_config.beacons.size() > 0)
           {
+            bool destination_check = false;
             unsigned slot_count = m_args.extra_slots;
             MessageList<IMC::LblBeacon>::const_iterator itr = m_lbl_config.beacons.begin();
             for (; itr < m_lbl_config.beacons.end(); ++itr)
@@ -274,7 +282,13 @@ namespace Navigation
               // Do not count own system for the slot count.
               if ((*itr)->beacon != getSystemName())
                 slot_count++;
+
+              if ((*itr)->beacon == m_args.dst)
+                destination_check = true;
             }
+
+            if (!destination_check)
+              err(DTR("destination is not in the LBL configuration"));
 
             for (uint8_t i = 0; i < slot_count - 1; ++i)
               slot_number.push_back(i + (m_args.slot_order - 1) * slot_count);
