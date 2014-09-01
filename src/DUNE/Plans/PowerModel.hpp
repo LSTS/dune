@@ -54,26 +54,26 @@ namespace DUNE
     public:
       //! Constructor
       //! @param[in] cfg reference to Config parser
-      PowerModel(Parsers::Config& cfg)
+      PowerModel(Parsers::Config* cfg)
       {
         std::string sec = "General";
 
-        cfg.get(sec, "Power Model -- Conversion - Watt", "50.0", m_conv_watt);
-        cfg.get(sec, "Power Model -- Conversion - RPM", "1000.0", m_conv_rpm);
-        cfg.get(sec, "Power Model -- Hotel Load", "40.0", m_hotel_load);
+        cfg->get(sec, "Power Model -- Conversion - Watt", "50.0", m_conv_watt);
+        cfg->get(sec, "Power Model -- Conversion - RPM", "1000.0", m_conv_rpm);
+        cfg->get(sec, "Power Model -- Hotel Load", "40.0", m_hotel_load);
 
         for (unsigned i = 0; i < c_max_payloads; ++i)
         {
           std::string option = Utils::String::str("Power Model -- Payload%u - Label", i);
           std::string label;
-          cfg.get(sec, option, "", label);
+          cfg->get(sec, option, "", label);
 
           if (label.empty())
             break;
 
           option = Utils::String::str("Power Model -- Payload%u - Power", i);
           float power;
-          cfg.get(sec, option, "", power);
+          cfg->get(sec, option, "", power);
 
           std::pair<std::string, float> pl(label, power);
           m_payloads.insert(pl);
@@ -96,7 +96,7 @@ namespace DUNE
       //! @param[in] duration amount of time rotating at rpm
       //! @return energy consumed in Wh
       float
-      computeMotionEnergy(float rpm, float duration)
+      computeMotionEnergy(float rpm, float duration) const
       {
         if (rpm <= 0.0f || duration <= 0.0f)
           return 0.0;
@@ -116,7 +116,7 @@ namespace DUNE
       //! @param[in] duration amount of time active
       //! @return energy consumed in Wh
       float
-      computePayloadEnergy(const std::string& label, float duration)
+      computePayloadEnergy(const std::string& label, float duration) const
       {
         if (!m_payloads.size())
           return 0.0;
@@ -133,7 +133,7 @@ namespace DUNE
       //! @param[in] duration amount of time in seconds
       //! @return energy consumed in Wh
       float
-      computeHotelEnergy(float duration)
+      computeHotelEnergy(float duration) const
       {
         return m_hotel_load * duration / 3600.0;
       }
