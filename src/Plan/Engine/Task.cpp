@@ -58,8 +58,6 @@ namespace Plan
       bool progress;
       //! State report period
       float speriod;
-      //! Speed conversion parameters
-      Plans::SpeedModel speed_model;
       //! Duration of vehicle calibration process.
       uint16_t calibration_time;
       //! Abort when a payload fails to activate
@@ -144,15 +142,6 @@ namespace Plan
         .units(Units::Meter)
         .description("Radius for the station keeping");
 
-        m_ctx.config.get("General", "Speed Conversion -- Actuation",
-                         "", m_args.speed_model.values[IMC::SUNITS_PERCENTAGE]);
-
-        m_ctx.config.get("General", "Speed Conversion -- RPM",
-                         "", m_args.speed_model.values[IMC::SUNITS_RPM]);
-
-        m_ctx.config.get("General", "Speed Conversion -- MPS",
-                         "", m_args.speed_model.values[IMC::SUNITS_METERS_PS]);
-
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::EstimatedState>(this);
@@ -176,15 +165,6 @@ namespace Plan
         if (paramChanged(m_args.speriod))
           m_args.speriod = 1.0 / m_args.speriod;
 
-        try
-        {
-          SpeedConversion::validate(m_args.speed_model);
-        }
-        catch (std::runtime_error& e)
-        {
-          err("%s", e.what());
-        }
-
         if ((m_plan != NULL) && (paramChanged(m_args.progress) ||
                                  paramChanged(m_args.calibration_time)))
           throw RestartNeeded(DTR("restarting to relaunch plan parser"), 0, false);
@@ -199,8 +179,15 @@ namespace Plan
       void
       onResourceAcquisition(void)
       {
-        m_plan = new Plan(&m_spec, m_args.progress, m_args.calibration_time,
-                          &m_args.speed_model, &m_ctx.config);
+        try
+        {
+          m_plan = new Plan(&m_spec, m_args.progress,
+                            m_args.calibration_time, &m_ctx.config);
+        }
+        catch (std::runtime_error& e)
+        {
+          err("%s", e.what());
+        }
       }
 
       void

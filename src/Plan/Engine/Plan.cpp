@@ -33,8 +33,7 @@ namespace Plan
   namespace Engine
   {
     Plan::Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-               uint16_t min_cal_time, const SpeedModel* speed_model,
-               Parsers::Config* cfg):
+               uint16_t min_cal_time, Parsers::Config* cfg):
       m_spec(spec),
       m_curr_node(NULL),
       m_sequential(false),
@@ -47,9 +46,12 @@ namespace Plan
       m_started_maneuver(false),
       m_calib(NULL),
       m_min_cal_time(min_cal_time),
-      m_speed_model(speed_model),
       m_config(cfg)
     {
+      m_speed_model = new Plans::SpeedModel(cfg);
+      m_speed_model->validate();
+      m_power_model = new Plans::PowerModel(cfg);
+      m_power_model->validate();
       m_profiles = new Plans::TimeProfile(m_speed_model);
       m_calib = new Calibration();
     }
@@ -59,6 +61,8 @@ namespace Plan
       Memory::clear(m_profiles);
       Memory::clear(m_sched);
       Memory::clear(m_calib);
+      Memory::clear(m_speed_model);
+      Memory::clear(m_power_model);
     }
 
     void
@@ -182,7 +186,8 @@ namespace Plan
           m_est_cal_time = (uint16_t)std::max(0.0f, diff);
           m_est_cal_time = (uint16_t)std::max(m_min_cal_time, m_est_cal_time);
 
-          FuelPrediction fpred(m_config, m_profiles, &m_cat, m_speed_model, tline.getPlanETA());
+          FuelPrediction fpred(m_profiles, &m_cat, m_power_model,
+                               m_speed_model, tline.getPlanETA());
         }
         else if (!m_sequential)
         {
