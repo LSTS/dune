@@ -58,7 +58,8 @@ namespace Plan
       //! @param[in] min_cal_time minimum calibration time in s.
       //! @param[in] speed_model pointer to model for speed conversions
       Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-           uint16_t min_cal_time, const SpeedModel* speed_model);
+           uint16_t min_cal_time, const SpeedModel* speed_model,
+           Parsers::Config* cfg);
 
       //! Destructor
       ~Plan(void);
@@ -286,6 +287,10 @@ namespace Plan
       uint16_t m_min_cal_time;
       //! Component active time for fuel estimation
       ComponentActiveTime m_cat;
+      //! Pointer to speed model for speed conversions
+      const Plans::SpeedModel* m_speed_model;
+      //! Pointer to power conversion and estimation model
+      Parsers::Config* m_config;
     };
   }
 }

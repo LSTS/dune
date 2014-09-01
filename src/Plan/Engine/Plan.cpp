@@ -33,7 +33,8 @@ namespace Plan
   namespace Engine
   {
     Plan::Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-               uint16_t min_cal_time, const SpeedModel* speed_model):
+               uint16_t min_cal_time, const SpeedModel* speed_model,
+               Parsers::Config* cfg):
       m_spec(spec),
       m_curr_node(NULL),
       m_sequential(false),
@@ -45,9 +46,11 @@ namespace Plan
       m_sched(NULL),
       m_started_maneuver(false),
       m_calib(NULL),
-      m_min_cal_time(min_cal_time)
+      m_min_cal_time(min_cal_time),
+      m_speed_model(speed_model),
+      m_config(cfg)
     {
-      m_profiles = new Plans::TimeProfile(speed_model);
+      m_profiles = new Plans::TimeProfile(m_speed_model);
       m_calib = new Calibration();
     }
 
