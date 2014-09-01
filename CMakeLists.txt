@@ -341,6 +341,11 @@ install(DIRECTORY www DESTINATION .)
 # Install configuration files.
 install(DIRECTORY etc DESTINATION .)
 
+if(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
+  # Install user configuration files.
+  install(DIRECTORY user/etc DESTINATION ./user/)
+endif(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
+
 # Install firmware files.
 install(DIRECTORY firmware DESTINATION .)
 
