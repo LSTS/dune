@@ -26,36 +26,58 @@
 //***************************************************************************
 
 // DUNE headers.
-#include <DUNE/Plans/SpeedConversion.hpp>
+#include <DUNE/Plans/SpeedModel.hpp>
 
 namespace DUNE
 {
   namespace Plans
   {
-    float
-    SpeedConversion::toMPS(const SpeedModel& sm, float value, uint8_t units)
+    SpeedModel::SpeedModel(Parsers::Config* config)
     {
-      return convert(sm, value, (IMC::SpeedUnits)units, IMC::SUNITS_METERS_PS);
+      const std::string sec = "General";
+      config->get(sec, "Speed Conversion -- Actuation",
+                  "", m_models[IMC::SUNITS_PERCENTAGE]);
+
+      config->get(sec, "Speed Conversion -- RPM",
+                  "", m_models[IMC::SUNITS_RPM]);
+
+      config->get(sec, "Speed Conversion -- MPS",
+                  "", m_models[IMC::SUNITS_METERS_PS]);
+    }
+
+    SpeedModel::SpeedModel(const std::vector<float>& act,
+                           const std::vector<float>& rpm,
+                           const std::vector<float>& mps)
+    {
+      m_models[IMC::SUNITS_PERCENTAGE] = act;
+      m_models[IMC::SUNITS_METERS_PS] = rpm;
+      m_models[IMC::SUNITS_RPM] = mps;
     }
 
     float
-    SpeedConversion::toRPM(const SpeedModel& sm, float value, uint8_t units)
+    SpeedModel::toMPS(float value, uint8_t units) const
     {
-      return convert(sm, value, (IMC::SpeedUnits)units, IMC::SUNITS_RPM);
+      return convert(value, (IMC::SpeedUnits)units, IMC::SUNITS_METERS_PS);
     }
 
     float
-    SpeedConversion::toAct(const SpeedModel& sm, float value, uint8_t units)
+    SpeedModel::toRPM(float value, uint8_t units) const
     {
-      return convert(sm, value, (IMC::SpeedUnits)units, IMC::SUNITS_PERCENTAGE);
+      return convert(value, (IMC::SpeedUnits)units, IMC::SUNITS_RPM);
+    }
+
+    float
+    SpeedModel::toAct(float value, uint8_t units) const
+    {
+      return convert(value, (IMC::SpeedUnits)units, IMC::SUNITS_PERCENTAGE);
     }
 
     void
-    SpeedConversion::validate(const SpeedModel& sm)
+    SpeedModel::validate(void) const
     {
-      unsigned psize = sm.values[IMC::SUNITS_PERCENTAGE].size();
-      unsigned rsize = sm.values[IMC::SUNITS_RPM].size();
-      unsigned msize = sm.values[IMC::SUNITS_METERS_PS].size();
+      unsigned psize = m_models[IMC::SUNITS_PERCENTAGE].size();
+      unsigned rsize = m_models[IMC::SUNITS_RPM].size();
+      unsigned msize = m_models[IMC::SUNITS_METERS_PS].size();
 
       if (psize != rsize || psize != msize)
         throw std::runtime_error("speed model sizes do not match");
@@ -65,18 +87,17 @@ namespace DUNE
     }
 
     float
-    SpeedConversion::convert(const SpeedModel& sm, float value,
-                             uint8_t from, uint8_t to)
+    SpeedModel::convert(float value, uint8_t from, uint8_t to) const
     {
       if (value < 0.0)
         return -1.0;
 
-      if (!sm.values[0].size())
+      if (!m_models[0].size())
         return -1.0;
 
       // make simple conversion
-      if (sm.values[0].size() == 1)
-        return value * sm.values[to][0] / sm.values[from][0];
+      if (m_models[0].size() == 1)
+        return value * m_models[to][0] / m_models[from][0];
 
       switch (from)
       {
@@ -87,7 +108,7 @@ namespace DUNE
             if (from == to)
               return value;
 
-            return Math::piecewiseLI(sm.values[to] , sm.values[from], value);
+            return Math::piecewiseLI(m_models[to] , m_models[from], value);
           }
         default:
           return -1.0;
