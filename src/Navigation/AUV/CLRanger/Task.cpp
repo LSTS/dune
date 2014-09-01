@@ -54,6 +54,8 @@ namespace Navigation
         uint8_t slot_order;
         //! TDMA slot duration.
         uint8_t slot_duration;
+        //! Extra TDMA slots.
+        uint8_t extra_slots;
         //! AUV to range.
         std::string dst;
       };
@@ -88,6 +90,11 @@ namespace Navigation
           .minimumValue("2")
           .units(Units::Second)
           .description("TDMA slot duration");
+
+          param("Extra Slots", m_args.extra_slots)
+          .defaultValue("1")
+          .minimumValue("0")
+          .description("Extra TDMA slots");
 
           param("Destination", m_args.dst)
           .description("Destination name");
@@ -257,7 +264,17 @@ namespace Navigation
           // Only if beacons are available.
           if (m_lbl_config.beacons.size() > 0)
           {
-            unsigned slot_count = m_lbl_config.beacons.size() + 1;
+            unsigned slot_count = m_args.extra_slots;
+            MessageList<IMC::LblBeacon>::const_iterator itr = m_lbl_config.beacons.begin();
+            for (; itr < m_lbl_config.beacons.end(); ++itr)
+            {
+              if ((*itr) == NULL)
+                continue;
+
+              // Do not count own system for the slot count.
+              if ((*itr)->beacon != getSystemName())
+                slot_count++;
+            }
 
             for (uint8_t i = 0; i < slot_count - 1; ++i)
               slot_number.push_back(i + (m_args.slot_order - 1) * slot_count);
@@ -285,6 +302,13 @@ namespace Navigation
               if (++m_cursor == m_lbl_config.beacons.end())
                 m_cursor = m_lbl_config.beacons.begin();
 
+              // Do not ping itself.
+              if ((*m_cursor)->beacon == getSystemName())
+              {
+                if (++m_cursor == m_lbl_config.beacons.end())
+                  m_cursor = m_lbl_config.beacons.begin();
+              }
+
               return beacon;
             }
           }
@@ -298,7 +322,7 @@ namespace Navigation
         {
           const IMC::LblBeacon* beacon = getNextBeacon();
           if (beacon == NULL)
-            return;;
+            return;
 
           ping(beacon->beacon);
         }
