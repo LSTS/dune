@@ -67,7 +67,6 @@ namespace Plan
       m_profiles->clear();
       m_progress = -1.0;
       m_beyond_dur = false;
-      m_last_dur = m_profiles->end();
       m_started_maneuver = false;
     }
 
@@ -240,9 +239,11 @@ namespace Plan
       if (m_curr_node == NULL)
         return;
 
-      if (m_last_dur != m_profiles->end())
+      const std::string& str_last = m_profiles->lastValid();
+
+      if (!str_last.empty())
       {
-        if (m_curr_node->pman->maneuver_id == m_last_dur->first)
+        if (m_curr_node->pman->maneuver_id == str_last)
           m_beyond_dur = true;
       }
 
@@ -357,10 +358,16 @@ namespace Plan
       if (!m_sequential || !m_profiles->size())
         return -1.0;
 
-      if (m_last_dur == m_profiles->end())
+      const std::string& str_last = m_profiles->lastValid();
+
+      if (str_last.empty())
         return -1.0;
 
-      return m_last_dur->second.durations.back();
+      TimeProfile::const_iterator itr = m_profiles->find(str_last);
+      if (itr == m_profiles->end())
+        return -1.0;
+
+      return itr->second.durations.back();
     }
 
     bool
@@ -423,7 +430,7 @@ namespace Plan
     void
     Plan::computeDurations(const IMC::EstimatedState* state)
     {
-      m_last_dur = m_profiles->parse(m_seq_nodes, state);
+      m_profiles->parse(m_seq_nodes, state);
     }
 
     IMC::PlanManeuver*
