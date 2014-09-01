@@ -82,7 +82,7 @@ namespace DUNE
       if (m_speed_model == NULL)
         return 0.0;
 
-      float value = SpeedConversion::toMPS(*m_speed_model, maneuver->speed, maneuver->speed_units);
+      float value = m_speed_model->toMPS(maneuver->speed, maneuver->speed_units);
 
       if (value < 0.0)
         return 0.0;

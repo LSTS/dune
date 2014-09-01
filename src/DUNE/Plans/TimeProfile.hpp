@@ -35,7 +35,7 @@
 #include <DUNE/Math.hpp>
 #include <DUNE/Control.hpp>
 #include <DUNE/Memory.hpp>
-#include <DUNE/Plans/SpeedConversion.hpp>
+#include <DUNE/Plans/SpeedModel.hpp>
 
 namespace DUNE
 {
