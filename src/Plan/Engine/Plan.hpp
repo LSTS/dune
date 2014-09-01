@@ -38,6 +38,7 @@
 #include "Calibration.hpp"
 #include "ActionSchedule.hpp"
 #include "Timeline.hpp"
+#include "FuelPrediction.hpp"
 
 namespace Plan
 {

@@ -181,6 +181,8 @@ namespace Plan
           float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
           m_est_cal_time = (uint16_t)std::max(0.0f, diff);
           m_est_cal_time = (uint16_t)std::max(m_min_cal_time, m_est_cal_time);
+
+          FuelPrediction fpred(m_config, m_profiles, &m_cat, m_speed_model, tline.getPlanETA());
         }
         else if (!m_sequential)
         {
