@@ -36,7 +36,7 @@
 #include <DUNE/Memory.hpp>
 #include <DUNE/Plans/TimeProfile.hpp>
 #include <DUNE/Plans/PowerModel.hpp>
-#include <DUNE/Plans/SpeedConversion.hpp>
+#include <DUNE/Plans/SpeedModel.hpp>
 
 // Local headers.
 #include "ComponentActiveTime.hpp"
@@ -68,17 +68,13 @@ namespace Plan
     {
     public:
       //! Constructor.
-      FuelPrediction(Parsers::Config* cfg,
-                     const Plans::TimeProfile* profiles,
+      FuelPrediction(const Plans::TimeProfile* profiles,
                      const ComponentActiveTime* cat,
+                     const Plans::PowerModel* power_model,
                      const Plans::SpeedModel* speed_model,
                      float total_duration):
-        m_pmodel(NULL)
+        m_pmodel(power_model)
       {
-        m_pmodel = new Plans::PowerModel(*cfg);
-
-        m_pmodel->validate();
-
         computeHotelEnergy(total_duration);
         computeMotionEnergy(profiles, speed_model);
         computePayloadEnergy(cat);
@@ -86,9 +82,7 @@ namespace Plan
 
       //! Destructor
       ~FuelPrediction(void)
-      {
-        Memory::clear(m_pmodel);
-      }
+      { }
 
       //! Get the total estimated fuel consumption
       //! @return estimated fuel consumed in Wh
@@ -133,7 +127,8 @@ namespace Plan
       //! @param[in] profiles pointer to TimeProfiles object with speed profiles
       //! @param[in] speed_model motion model parameters of the vehicle
       void
-      computeMotionEnergy(const Plans::TimeProfile* profiles, const Plans::SpeedModel* speed_model)
+      computeMotionEnergy(const Plans::TimeProfile* profiles,
+                          const Plans::SpeedModel* speed_model)
       {
         Plans::TimeProfile::const_iterator itr;
 
@@ -147,9 +142,8 @@ namespace Plan
 
           for (unsigned i = 0; i < sptr->size(); i++)
           {
-            float rpm = Plans::SpeedConversion::toRPM(*speed_model,
-                                                      sptr->at(i).speed,
-                                                      sptr->at(i).speed_units);
+            float rpm = speed_model->toRPM(sptr->at(i).speed,
+                                           sptr->at(i).speed_units);
             gspeed.add(rpm, sptr->at(i).time);
           }
         }
@@ -183,7 +177,7 @@ namespace Plan
       //! Parcels of estimated fuel consumed
       float m_fuel_parcels[FP_TOTAL];
       //! Power model for the estimation
-      Plans::PowerModel* m_pmodel;
+      const Plans::PowerModel* m_pmodel;
     };
   }
 }
