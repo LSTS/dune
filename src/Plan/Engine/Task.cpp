@@ -200,7 +200,7 @@ namespace Plan
       onResourceAcquisition(void)
       {
         m_plan = new Plan(&m_spec, m_args.progress, m_args.calibration_time,
-                          &m_args.speed_model);
+                          &m_args.speed_model, &m_ctx.config);
       }
 
       void
