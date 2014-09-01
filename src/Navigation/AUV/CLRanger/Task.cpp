@@ -260,6 +260,9 @@ namespace Navigation
               (*itr)->depth = m_estate->depth;
             }
           }
+
+          m_lbl_config.op = IMC::LblConfig::OP_SET_CFG;
+          dispatch(m_lbl_config);
         }
 
         //! Compute TDMA slots.
