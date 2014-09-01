@@ -48,6 +48,8 @@ namespace Plan
       typedef std::pair<const std::string, float> ActiveTime;
       //! Map of strings to floats
       typedef std::map<std::string, float> ATMap;
+      //! Const iterator
+      typedef ATMap::const_iterator const_iterator;
 
       //! Constructor
       ComponentActiveTime(void)
@@ -107,6 +109,22 @@ namespace Plan
       clear(void)
       {
         m_list.clear();
+      }
+
+      //! First position of the vector
+      //! @return const iterator to begin()
+      inline const_iterator
+      begin(void) const
+      {
+        return m_list.begin();
+      }
+
+      //! Last position of the vector
+      //! @return const iterator to end()
+      inline const_iterator
+      end(void) const
+      {
+        return m_list.end();
       }
 
     private:
