@@ -118,8 +118,7 @@ namespace DUNE
       //! Parse plan duration and speeds from vector of plan maneuver nodes
       //! @param[in] nodes vector of plan maneuver nodes
       //! @param[in] state current estimated state
-      //! @return iterator to last computed maneuver, returns end() if unable to compute
-      const_iterator
+      void
       parse(const std::vector<IMC::PlanManeuver*>& nodes, const IMC::EstimatedState* state);
 
       //! Clear the vector
@@ -127,6 +126,7 @@ namespace DUNE
       clear(void)
       {
         m_profiles.clear();
+        m_last_valid.clear();
       }
 
       //! Last position of the vector
@@ -148,6 +148,13 @@ namespace DUNE
       find(const std::string& str) const
       {
         return m_profiles.find(str);
+      }
+
+      //! ID of last maneuver with a valid duration
+      inline const std::string&
+      lastValid(void) const
+      {
+        return m_last_valid;
       }
 
     private:
@@ -428,6 +435,8 @@ namespace DUNE
       const Plans::SpeedModel* m_speed_model;
       //! Pointer to vector of speed profiles
       std::vector<SpeedProfile>* m_speed_vec;
+      //! ID of last maneuver with a valid duration
+      std::string m_last_valid;
     };
   }
 }

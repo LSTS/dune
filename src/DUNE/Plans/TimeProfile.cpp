@@ -399,9 +399,9 @@ namespace DUNE
       return true;
     }
 
-    TimeProfile::const_iterator
+    void
     TimeProfile::parse(const std::vector<IMC::PlanManeuver*>& nodes,
-                    const IMC::EstimatedState* state)
+                       const IMC::EstimatedState* state)
     {
       Position pos;
       extractPosition(state, pos);
@@ -411,7 +411,7 @@ namespace DUNE
       for (; itr != nodes.end(); ++itr)
       {
         if ((*itr)->data.isNull())
-          return m_profiles.end();
+          return;
 
         IMC::Message* msg = (*itr)->data.get();
 
@@ -476,16 +476,17 @@ namespace DUNE
         if (!parsed)
         {
           if (m_profiles.empty() || itr == nodes.begin())
-            return m_profiles.end();
+            return;
 
           // return the duration from the previously computed maneuver
           const_iterator dtr;
           dtr = m_profiles.find((*(--itr))->maneuver_id);
 
           if (dtr->second.durations.empty())
-            return m_profiles.end();
+            return;
 
-          return dtr;
+          m_last_valid = dtr->first;
+          return;
         }
 
         // Update speeds and durations
@@ -500,7 +501,8 @@ namespace DUNE
       Memory::clear(m_accum_dur);
       Memory::clear(m_speed_vec);
 
-      return m_profiles.find(nodes.back()->maneuver_id);
+      m_last_valid = nodes.back()->maneuver_id;
+      return;
     }
   }
 }
