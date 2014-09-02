@@ -27,6 +27,7 @@
 
 if(DUNE_PROGRAM_PYTHON)
   set(IMC_TAG "master" CACHE STRING "IMC git branch name, commit id or tag")
+  set(IMC_URL "https://www.github.com/LSTS/imc" CACHE STRING "IMC git URL")
 
   set(DUNE_IMC_XML ${CMAKE_BINARY_DIR}/IMC/IMC.xml)
   set(DUNE_IMC_ADDRESSES_XML ${CMAKE_BINARY_DIR}/IMC/IMC_Addresses.xml)
@@ -35,6 +36,7 @@ if(DUNE_PROGRAM_PYTHON)
   add_custom_target(imc_download
     COMMAND ${DUNE_PROGRAM_PYTHON}
     ${PROJECT_SOURCE_DIR}/programs/generators/imc_download.py
+    -u ${IMC_URL}
     -t ${IMC_TAG} ${CMAKE_BINARY_DIR}/IMC)
 
   # Generate.
