@@ -166,6 +166,7 @@ namespace Navigation
           {
             IMC::LblConfig cfg(m_lbl_config);
             cfg.op = IMC::LblConfig::OP_CUR_CFG;
+            cfg.setSource(getSystemId());
             dispatch(cfg);
           }
         }
@@ -262,6 +263,7 @@ namespace Navigation
           }
 
           m_lbl_config.op = IMC::LblConfig::OP_SET_CFG;
+          m_lbl_config.setSource(getSystemId());
           dispatch(m_lbl_config);
         }
 
