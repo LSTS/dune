@@ -62,20 +62,15 @@ namespace DUNE
         cfg->get(sec, "Power Model -- Conversion - RPM", "1000.0", m_conv_rpm);
         cfg->get(sec, "Power Model -- Hotel Load", "40.0", m_hotel_load);
 
-        for (unsigned i = 0; i < c_max_payloads; ++i)
+        std::vector<std::string> labels;
+        cfg->get(sec, "Power Model -- Payload Labels", "", labels);
+
+        std::vector<float> powers;
+        cfg->get(sec, "Power Model -- Payload Powers", "", powers);
+
+        for (unsigned i = 0; i < labels.size(); ++i)
         {
-          std::string option = Utils::String::str("Power Model -- Payload%u - Label", i);
-          std::string label;
-          cfg->get(sec, option, "", label);
-
-          if (label.empty())
-            break;
-
-          option = Utils::String::str("Power Model -- Payload%u - Power", i);
-          float power;
-          cfg->get(sec, option, "", power);
-
-          std::pair<std::string, float> pl(label, power);
+          std::pair<std::string, float> pl(labels[i], powers[i]);
           m_payloads.insert(pl);
         }
       }
