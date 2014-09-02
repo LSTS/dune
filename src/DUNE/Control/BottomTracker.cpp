@@ -153,7 +153,7 @@ namespace DUNE
       {
         zed.setTimeStamp();
         zed.setSourceEntity(m_args->task->getEntityId());
-        dispatch(zed);
+        dispatch(zed, Tasks::DF_KEEP_TIME | Tasks::DF_KEEP_SRC_EID);
       }
     }
 
@@ -180,7 +180,7 @@ namespace DUNE
         m_last_run = Time::Clock::get();
 
         // dispatch debug message
-        dispatch(m_cparcel);
+        dispatch(m_cparcel, Tasks::DF_KEEP_TIME | Tasks::DF_KEEP_SRC_EID);
       }
     }
 
@@ -568,7 +568,7 @@ namespace DUNE
       IMC::Brake brk;
       brk.setSourceEntity(m_args->eid);
       brk.op = start ? IMC::Brake::OP_START : IMC::Brake::OP_STOP;
-      dispatchLoop(brk);
+      dispatch(brk, Tasks::DF_KEEP_SRC_EID | Tasks::DF_LOOP_BACK);
 
       if (start)
         info(DTR("Started braking"));
@@ -591,7 +591,7 @@ namespace DUNE
       else
         new_ddepth.value = std::max((float)0.0, depth_at_slope - m_args->alt_tol);
 
-      dispatch(new_ddepth);
+      dispatch(new_ddepth, Tasks::DF_KEEP_SRC_EID);
 
       debug(String::str("dispatching new depth: %.2f", new_ddepth.value));
     }
@@ -604,7 +604,7 @@ namespace DUNE
       limit_depth.value = m_args->depth_limit;
       limit_depth.z_units = IMC::Z_DEPTH;
 
-      dispatch(limit_depth);
+      dispatch(limit_depth, Tasks::DF_KEEP_SRC_EID);
 
       debug(String::str("dispatching limit depth: %.2f", limit_depth.value));
     }
@@ -615,7 +615,7 @@ namespace DUNE
       IMC::DesiredZ same_z = m_z_ref;
       same_z.setSourceEntity(m_args->eid);
 
-      dispatch(same_z);
+      dispatch(same_z, Tasks::DF_KEEP_SRC_EID);
 
       debug(String::str("dispatching same z ref: %.2f", same_z.value));
     }
@@ -628,7 +628,7 @@ namespace DUNE
       zed.value = m_args->alt_tol;
       zed.z_units = IMC::Z_ALTITUDE;
 
-      dispatch(zed);
+      dispatch(zed, Tasks::DF_KEEP_SRC_EID);
 
       debug(String::str("dispatching altitude ref: %.2f", zed.value));
     }
@@ -641,7 +641,7 @@ namespace DUNE
       zed.value = m_args->adm_alt;
       zed.z_units = IMC::Z_ALTITUDE;
 
-      dispatch(zed);
+      dispatch(zed, Tasks::DF_KEEP_SRC_EID);
     }
 
     bool
@@ -659,15 +659,9 @@ namespace DUNE
     }
 
     inline void
-    BottomTracker::dispatch(IMC::Message& msg) const
+    BottomTracker::dispatch(IMC::Message& msg, unsigned int flags) const
     {
-      m_args->task->dispatch(msg);
-    }
-
-    inline void
-    BottomTracker::dispatchLoop(IMC::Message& msg) const
-    {
-      m_args->task->dispatch(msg, Tasks::DF_LOOP_BACK);
+      m_args->task->dispatch(msg, flags);
     }
 
     void
