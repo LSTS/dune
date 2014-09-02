@@ -561,6 +561,16 @@ namespace DUNE
           m_mstate = SM_DEPTH;
           return;
         }
+        else if ((m_z_ref.z_units == IMC::Z_DEPTH) && (m_args->depth_avoid))
+        {
+          debug("situation is now safe, carry on");
+
+          // Stop braking
+          brake(false);
+          dispatchSameZ();
+          m_mstate = SM_DEPTH;
+          return;
+        }
       }
     }
 
