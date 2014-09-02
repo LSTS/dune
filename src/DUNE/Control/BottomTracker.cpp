@@ -92,6 +92,8 @@ namespace DUNE
       m_dspeed = 0.0;
 
       m_last_run = Time::Clock::get();
+
+      m_cparcel.clear();
     }
 
     void
