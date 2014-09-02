@@ -107,27 +107,7 @@ endif(PROFILE)
 # Set a build name with more details than the default.
 set(BUILDNAME "${DUNE_SYSTEM_NAME_VAR}")
 
-##########################################################################
-# IMC                                                                    #
-##########################################################################
-set(DUNE_MESSAGES_IMC_XML ${PROJECT_SOURCE_DIR}/etc/xml/IMC.xml)
-
-if(DUNE_PROGRAM_PYTHON)
-  add_custom_target(imc
-    COMMAND ${DUNE_PROGRAM_PYTHON}
-    ${PROJECT_SOURCE_DIR}/programs/generators/imc_code.py
-    ${DUNE_MESSAGES_IMC_XML} ${PROJECT_SOURCE_DIR}/src/DUNE/IMC
-    COMMAND ${DUNE_PROGRAM_PYTHON}
-    ${PROJECT_SOURCE_DIR}/programs/generators/imc_blob.py
-    ${DUNE_MESSAGES_IMC_XML} ${PROJECT_SOURCE_DIR}/src/DUNE/IMC
-    COMMAND ${DUNE_PROGRAM_PYTHON}
-    ${PROJECT_SOURCE_DIR}/programs/generators/imc_tests.py
-    ${DUNE_MESSAGES_IMC_XML} ${PROJECT_SOURCE_DIR}/programs/tests
-    DEPENDS ${xml})
-endif(DUNE_PROGRAM_PYTHON)
-
-install(FILES ${DUNE_MESSAGES_IMC_XML} RENAME IMC.xml
-  DESTINATION etc/xml)
+include(cmake/IMC.cmake)
 
 ##########################################################################
 # Piccolo                                                                #
