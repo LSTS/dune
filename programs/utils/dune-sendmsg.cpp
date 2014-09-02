@@ -50,8 +50,8 @@ main(int argc, char** argv)
       fprintf(stdout, "  Abort, AcousticMessage, AcousticPing, AcousticRange, AcousticSystemsQuery\n");
       fprintf(stdout, "  Brake, ButtonEvent\n");
       fprintf(stdout, "  CacheControl, Calibration, ClockControl, ControlLoops\n");
-      fprintf(stdout, "  DataSanity, DesiredControl, DesiredHeading, DesiredHeadingRate\n");
-      fprintf(stdout, "  DesiredPitch, DesiredSpeed, DesiredRoll, DesiredZ, DevCalibrationControl\n");
+      fprintf(stdout, "  DataSanity, DesiredControl, DesiredHeading, DesiredHeadingRate, DesiredPitch\n");
+      fprintf(stdout, "  DesiredSpeed, DesiredRoll, DesiredZ, DevCalibrationControl, DevDataText\n");
       fprintf(stdout, "  EmergencyControl, EntityList, EntityState, EntityActivationState, EstimatedState\n");
       fprintf(stdout, "  FuelLevel\n");
       fprintf(stdout, "  GpsFix, Heartbeat, IridiumMsgTx, LblConfig, LblRange\n");
@@ -245,6 +245,13 @@ main(int argc, char** argv)
     msg = tmsg;
     tmsg->setDestinationEntity(atoi(argv[4]));
     tmsg->op = atoi(argv[5]);
+  }
+
+  if (strcmp(argv[3], "DevDataText") == 0)
+  {
+    IMC::DevDataText * tmsg = new IMC::DevDataText;
+    msg = tmsg;
+    tmsg->value = argv[4];
   }
 
   if (strcmp(argv[3], "EmergencyControl") == 0)
