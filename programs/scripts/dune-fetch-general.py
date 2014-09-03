@@ -196,7 +196,6 @@ for v in range(len(profile_cols)):
                                  len(all_values[0]), start_row + len(options),
                                  all_values);
 
-    print(values_list)
     editIni(first_row[profile_cols[v]], options, values_list)
     print('Wrote profile ' + first_row[profile_cols[v]] + '.');
 
