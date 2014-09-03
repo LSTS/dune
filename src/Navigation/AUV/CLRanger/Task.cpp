@@ -295,7 +295,7 @@ namespace Navigation
             if (!destination_check)
               err(DTR("destination is not in the LBL configuration"));
 
-            for (uint8_t i = 0; i < slot_count - 1; ++i)
+            for (uint8_t i = 0; i < slot_count - m_args.extra_slots; ++i)
               slot_number.push_back(i + (m_args.slot_order - 1) * slot_count);
 
             m_tdma.reset(2 * slot_count, slot_number, m_args.slot_duration);
