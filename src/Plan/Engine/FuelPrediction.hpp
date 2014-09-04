@@ -51,6 +51,9 @@ namespace Plan
     // Export DLL Symbol.
     class DUNE_DLL_SYM FuelPrediction;
 
+    //! Tolerance for RPMs to group them together
+    static const float c_rpm_tolerance = 10.0f;
+
     enum FuelParcels
     {
       //! Hotel energy consumed
@@ -59,6 +62,8 @@ namespace Plan
       FP_MOTION,
       //! Payload energy
       FP_PAYLOAD,
+      //! IMU energy
+      FP_IMU,
       //! Total number of parcels
       FP_TOTAL
     };
@@ -72,12 +77,19 @@ namespace Plan
                      const ComponentActiveTime* cat,
                      const Plans::PowerModel* power_model,
                      const Plans::SpeedModel* speed_model,
+                     bool imu_enabled,
                      float total_duration):
+
         m_pmodel(power_model)
       {
         computeHotelEnergy(total_duration);
         computeMotionEnergy(profiles, speed_model);
         computePayloadEnergy(cat);
+
+        if (imu_enabled)
+          computeIMUEnergy(total_duration);
+        else
+          m_fuel_parcels[FP_IMU] = 0.0f;
       }
 
       //! Destructor
@@ -114,6 +126,12 @@ namespace Plan
         return m_fuel_parcels[FP_MOTION];
       }
 
+      inline float
+      getIMU(void) const
+      {
+        return m_fuel_parcels[FP_IMU];
+      }
+
     private:
       //! Compute hotel consumed energy
       //! @param[in] total_duration total amount of time of the plan
@@ -133,7 +151,7 @@ namespace Plan
         Plans::TimeProfile::const_iterator itr;
 
         // object to group the speeds together in a map
-        GroupSpeed gspeed(10.0);
+        GroupSpeed gspeed(c_rpm_tolerance);
 
         for (itr = profiles->begin(); itr != profiles->end(); ++itr)
         {
@@ -168,12 +186,20 @@ namespace Plan
         for (itr = cat->begin(); itr != cat->end(); ++itr)
         {
           float energy = m_pmodel->computePayloadEnergy(itr->first, itr->second);
-          accum += energy > 0.0 ? energy : 0.0;
+          accum += energy > 0.0f ? energy : 0.0f;
         }
 
         m_fuel_parcels[FP_PAYLOAD] = accum;
       }
-      
+
+      //! Compute energy consumed by IMU
+      //! @param[in] total_duration total amount of time of the plan
+      void
+      computeIMUEnergy(float total_duration)
+      {
+        m_fuel_parcels[FP_IMU] = m_pmodel->computeIMUEnergy(total_duration);
+      }
+
       //! Parcels of estimated fuel consumed
       float m_fuel_parcels[FP_TOTAL];
       //! Power model for the estimation
