@@ -80,7 +80,8 @@ namespace Plan
     bool
     Plan::parse(std::string& desc, const std::set<uint16_t>* supported_maneuvers,
                 bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
-                Tasks::Task* task, const IMC::EstimatedState* state)
+                Tasks::Task* task, bool imu_enabled,
+                const IMC::EstimatedState* state)
     {
       bool start_maneuver_ok = false;
 
@@ -187,7 +188,7 @@ namespace Plan
           m_est_cal_time = (uint16_t)std::max(m_min_cal_time, m_est_cal_time);
 
           FuelPrediction fpred(m_profiles, &m_cat, m_power_model,
-                               m_speed_model, tline.getPlanETA());
+                               m_speed_model, imu_enabled, tline.getPlanETA());
         }
         else if (!m_sequential)
         {
