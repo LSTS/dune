@@ -43,10 +43,14 @@ parser.add_argument('-u', '--url', metavar='GIT_URL',
     help="IMC git URL")
 args = parser.parse_args()
 
+
 shutil.rmtree(args.dest_folder, ignore_errors=True)
 
 subprocess.check_output(['git', 'clone', args.url, args.dest_folder],
                         universal_newlines = True)
 
-subprocess.check_output(['git', '-C', args.dest_folder, 'checkout', args.tag],
+import os
+os.chdir(args.dest_folder)
+
+subprocess.check_output(['git', 'checkout', args.tag],
                         universal_newlines = True)
