@@ -732,11 +732,14 @@ namespace Plan
       inline bool
       parsePlan(bool plan_startup)
       {
-        std::string desc;
-        if (!m_plan->parse(desc, &m_supported_maneuvers, plan_startup,
-                           m_cinfo, m_imu_enabled, &m_state))
+        try
         {
-          onFailure(desc);
+          m_plan->parse(&m_supported_maneuvers, plan_startup,
+                        m_cinfo, m_imu_enabled, &m_state);
+        }
+        catch (Plan::ParseError& pe)
+        {
+          onFailure(pe.what());
           return false;
         }
 
