@@ -32,6 +32,7 @@
 #include <string>
 
 // DUNE headers.
+#include <DUNE/IMC.hpp>
 #include <DUNE/Parsers.hpp>
 #include <DUNE/Memory.hpp>
 #include <DUNE/Plans/TimeProfile.hpp>
@@ -80,7 +81,8 @@ namespace Plan
                      bool imu_enabled,
                      float total_duration):
 
-        m_pmodel(power_model)
+        m_pmodel(power_model),
+        m_starting_fuel(-1.0f)
       {
         computeHotelEnergy(total_duration);
         computeMotionEnergy(profiles, speed_model);
@@ -96,6 +98,42 @@ namespace Plan
       ~FuelPrediction(void)
       { }
 
+      //! Use fuel level messages to compute error in prediction
+      //! @param[in] msg FuelLevel message
+      void
+      onFuelLevel(const IMC::FuelLevel* msg)
+      {
+        if (m_starting_fuel < 0.0f)
+          m_starting_fuel = msg->value;
+
+        m_current_fuel = msg->value;
+      }
+
+      //! Check if prediction error can be computed
+      //! @return true if prediction error is valid, false otherwise
+      inline bool
+      isFuelValid(void)
+      {
+        return (m_starting_fuel >= 0.0);
+      }
+
+      //! Get the prediction error
+      //! Check if the fuel values are valid first!
+      //! @return error in prediction in percentage
+      inline float
+      getPredictionError(void)
+      {
+        return getRelativeTotal() - (m_starting_fuel - m_current_fuel);
+      }
+
+      //! Compute error in prediction
+      //! @return get total energy relatively to battery capacity
+      inline float
+      getRelativeTotal(void) const
+      {
+        return getTotal() / m_pmodel->getBatteryCapacity();
+      }
+
       //! Get the total estimated fuel consumption
       //! @return estimated fuel consumed in Wh
       float
@@ -108,24 +146,32 @@ namespace Plan
         return total;
       }
 
+      //! Get the hotel estimated fuel consumption
+      //! @return estimated fuel consumed in Wh
       inline float
       getHotel(void) const
       {
         return m_fuel_parcels[FP_HOTEL];
       }
 
+      //! Get the payload estimated fuel consumption
+      //! @return estimated fuel consumed in Wh
       inline float
       getPayload(void) const
       {
         return m_fuel_parcels[FP_PAYLOAD];
       }
 
+      //! Get the motion estimated fuel consumption
+      //! @return estimated fuel consumed in Wh
       inline float
       getMotion(void) const
       {
         return m_fuel_parcels[FP_MOTION];
       }
 
+      //! Get the estimated fuel consumption by the IMU
+      //! @return estimated fuel consumed in Wh
       inline float
       getIMU(void) const
       {
@@ -204,6 +250,10 @@ namespace Plan
       float m_fuel_parcels[FP_TOTAL];
       //! Power model for the estimation
       const Plans::PowerModel* m_pmodel;
+      //! Starting value of fuel level
+      float m_starting_fuel;
+      //! Current value of fuel level
+      float m_current_fuel;
     };
   }
 }
