@@ -370,12 +370,14 @@ folder = sys.argv[2]
 consts = {}
 
 # Retrieve Git info.
+import os
 import subprocess
 git_dir = os.path.dirname(sys.argv[1])
 consts['git_info'] = 'unknown'
+cwd_old = os.getcwd()
+os.chdir(git_dir)
 try:
     consts['git_info'] = subprocess.check_output(['git',
-                                                  '-C', git_dir,
                                                   'log',
                                                   "--pretty=format:%ad %h %d",
                                                   '--abbrev-commit',
@@ -383,6 +385,8 @@ try:
                                                  universal_newlines = True).strip()
 except:
     pass
+
+os.chdir(cwd_old)
 
 # Compute MD5 sum.
 import hashlib
