@@ -53,6 +53,14 @@ namespace Plan
     class Plan
     {
     public:
+      //! Exception for plan parsing errors
+      struct ParseError: public std::runtime_error
+      {
+        ParseError(const std::string& label):
+          std::runtime_error(DTR("parse error: ") + label)
+        { }
+      };
+
       //! Default constructor.
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] compute_progress true if progress should be computed
@@ -70,15 +78,13 @@ namespace Plan
       clear(void);
 
       //! Parse a given plan
-      //! @param[out] desc description of the failure if any
       //! @param[in] supported_maneuvers list of supported maneuvers
       //! @param[in] plan_startup true if the plan is starting up
       //! @param[in] cinfo map of components info
-      //! @param[in] task pointer to task
+      //! @param[in] imu_enabled true if imu enabled, false otherwise
       //! @param[in] state pointer to EstimatedState message
-      //! @return true if was able to parse the plan
-      bool
-      parse(std::string& desc, const std::set<uint16_t>* supported_maneuvers,
+      void
+      parse(const std::set<uint16_t>* supported_maneuvers,
             bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
             bool imu_enabled = false, const IMC::EstimatedState* state = NULL);
 

@@ -81,9 +81,9 @@ namespace Plan
       m_started_maneuver = false;
     }
 
-    bool
-    Plan::parse(std::string& desc, const std::set<uint16_t>* supported_maneuvers,
-                bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
+    void
+    Plan::parse(const std::set<uint16_t>* supported_maneuvers, bool plan_startup,
+                const std::map<std::string, IMC::EntityInfo>& cinfo,
                 bool imu_enabled, const IMC::EstimatedState* state)
     {
       bool start_maneuver_ok = false;
@@ -91,10 +91,7 @@ namespace Plan
       clear();
 
       if (!m_spec->maneuvers.size())
-      {
-        desc = m_spec->plan_id + DTR(": no maneuvers");
-        return false;
-      }
+        throw ParseError(m_spec->plan_id + DTR(": no maneuvers"));
 
       IMC::MessageList<IMC::PlanManeuver>::const_iterator mitr;
       mitr = m_spec->maneuvers.begin();
@@ -109,18 +106,12 @@ namespace Plan
         }
 
         if ((*mitr)->data.isNull())
-        {
-          desc = (*mitr)->maneuver_id + DTR(": actual maneuver not specified");
-          return false;
-        }
+          throw ParseError((*mitr)->maneuver_id + DTR(": actual maneuver not specified"));
 
         const IMC::Message* m = (*mitr)->data.get();
 
         if (supported_maneuvers->find(m->getId()) == supported_maneuvers->end())
-        {
-          desc = (*mitr)->maneuver_id + DTR(": maneuver is not supported");
-          return false;
-        }
+          throw ParseError((*mitr)->maneuver_id + DTR(": maneuver is not supported"));
 
         if ((*mitr)->maneuver_id == m_spec->start_man_id)
           start_maneuver_ok = true;
@@ -150,8 +141,7 @@ namespace Plan
         {
           std::string str = DTR(": maneuver has no incoming transition"
                                 " and it's not the initial maneuver");
-          desc = (*mitr)->maneuver_id + str;
-          return false;
+          throw ParseError((*mitr)->maneuver_id + str);
         }
 
         m_graph[(*mitr)->maneuver_id] = node;
@@ -160,10 +150,7 @@ namespace Plan
       while (mitr != m_spec->maneuvers.end());
 
       if (!start_maneuver_ok)
-      {
-        desc = m_spec->start_man_id + DTR(": invalid start maneuver");
-        return false;
-      }
+        throw ParseError(m_spec->start_man_id + DTR(": invalid start maneuver"));
 
       if (m_compute_progress && plan_startup)
       {
@@ -205,7 +192,7 @@ namespace Plan
 
       m_last_id = m_spec->start_man_id;
 
-      return true;
+      return;
     }
 
     void
