@@ -59,7 +59,8 @@ namespace Plan
       //! @param[in] min_cal_time minimum calibration time in s.
       //! @param[in] speed_model pointer to model for speed conversions
       Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-           uint16_t min_cal_time, Parsers::Config* cfg);
+           Tasks::Task* task, uint16_t min_cal_time,
+           Parsers::Config* cfg);
 
       //! Destructor
       ~Plan(void);
@@ -79,8 +80,7 @@ namespace Plan
       bool
       parse(std::string& desc, const std::set<uint16_t>* supported_maneuvers,
             bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
-            Tasks::Task* task, bool imu_enabled = false,
-            const IMC::EstimatedState* state = NULL);
+            bool imu_enabled = false, const IMC::EstimatedState* state = NULL);
 
       //! Signal that the plan has started
       void
@@ -171,6 +171,11 @@ namespace Plan
       //! @return false if something failed to be activated, true otherwise
       bool
       onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg);
+
+      //! Pass FuelLevel to FuelPrediction
+      //! @param[in] msg FuelLevel message
+      void
+      onFuelLevel(const IMC::FuelLevel* msg);
 
       //! Get current estimated time of arrival
       //! @return ETA
@@ -294,6 +299,10 @@ namespace Plan
       const Plans::PowerModel* m_power_model;
       //! Pointer to power conversion and estimation model
       Parsers::Config* m_config;
+      //! Pointer to Fuel Prediction object
+      FuelPrediction* m_fpred;
+      //! Pointer to task
+      Tasks::Task* m_task;
     };
   }
 }

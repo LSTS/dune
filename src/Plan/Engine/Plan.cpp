@@ -33,7 +33,8 @@ namespace Plan
   namespace Engine
   {
     Plan::Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-               uint16_t min_cal_time, Parsers::Config* cfg):
+               Tasks::Task* task, uint16_t min_cal_time,
+               Parsers::Config* cfg):
       m_spec(spec),
       m_curr_node(NULL),
       m_sequential(false),
@@ -46,7 +47,9 @@ namespace Plan
       m_started_maneuver(false),
       m_calib(NULL),
       m_min_cal_time(min_cal_time),
-      m_config(cfg)
+      m_config(cfg),
+      m_fpred(NULL),
+      m_task(task)
     {
       m_speed_model = new Plans::SpeedModel(cfg);
       m_speed_model->validate();
@@ -63,6 +66,7 @@ namespace Plan
       Memory::clear(m_calib);
       Memory::clear(m_speed_model);
       Memory::clear(m_power_model);
+      Memory::clear(m_fpred);
     }
 
     void
@@ -80,8 +84,7 @@ namespace Plan
     bool
     Plan::parse(std::string& desc, const std::set<uint16_t>* supported_maneuvers,
                 bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
-                Tasks::Task* task, bool imu_enabled,
-                const IMC::EstimatedState* state)
+                bool imu_enabled, const IMC::EstimatedState* state)
     {
       bool start_maneuver_ok = false;
 
@@ -174,7 +177,7 @@ namespace Plan
           fillTimeline(tline);
 
           Memory::clear(m_sched);
-          m_sched = new ActionSchedule(task, m_spec, m_seq_nodes,
+          m_sched = new ActionSchedule(m_task, m_spec, m_seq_nodes,
                                        tline, cinfo);
 
           // Update timeline with scheduled calibration time if any
@@ -187,13 +190,14 @@ namespace Plan
           m_est_cal_time = (uint16_t)std::max(0.0f, diff);
           m_est_cal_time = (uint16_t)std::max(m_min_cal_time, m_est_cal_time);
 
-          FuelPrediction fpred(m_profiles, &m_cat, m_power_model,
-                               m_speed_model, imu_enabled, tline.getPlanETA());
+          Memory::clear(m_fpred);
+          m_fpred = new FuelPrediction(m_profiles, &m_cat, m_power_model,
+                                       m_speed_model, imu_enabled, tline.getPlanETA());
         }
         else if (!m_sequential)
         {
           Memory::clear(m_sched);
-          m_sched = new ActionSchedule(task, m_spec, m_seq_nodes, cinfo);
+          m_sched = new ActionSchedule(m_task, m_spec, m_seq_nodes, cinfo);
 
           m_est_cal_time = m_min_cal_time;
         }
@@ -218,10 +222,18 @@ namespace Plan
     void
     Plan::planStopped(void)
     {
-      if (m_sched == NULL)
-        return;
+      if (m_sched != NULL)
+        m_sched->planStopped(m_affected_ents);
 
-      m_sched->planStopped(m_affected_ents);
+      if (m_fpred != NULL)
+      {
+        if (!m_fpred->isFuelValid())
+          m_task->inf(DTR("fuel prediction error is not valid"));
+        else
+          m_task->inf(DTR("fuel prediction error: %.1f (%.1f)"),
+                      m_fpred->getPredictionError(),
+                      m_fpred->getRelativeTotal());
+      }
     }
 
     void
@@ -350,6 +362,15 @@ namespace Plan
         return m_sched->onEntityActivationState(id, msg);
       else
         return true;
+    }
+
+    void
+    Plan::onFuelLevel(const IMC::FuelLevel* msg)
+    {
+      if (m_fpred == NULL)
+        return;
+
+      m_fpred->onFuelLevel(msg);
     }
 
     float
