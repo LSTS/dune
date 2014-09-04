@@ -73,6 +73,8 @@ namespace DUNE
           std::pair<std::string, float> pl(labels[i], powers[i]);
           m_payloads.insert(pl);
         }
+
+        cfg->get(sec, "Power Model -- IMU Power", "0.0", m_imu_power);
       }
 
       //! Validate the model
@@ -103,7 +105,7 @@ namespace DUNE
         else
           power = Math::piecewiseLI(m_conv_watt , m_conv_rpm, rpm);
 
-        return power * duration / 3600.0;
+        return toWh(power, duration);
       }
 
       //! Compute energy consumed by a payload entity
@@ -121,7 +123,7 @@ namespace DUNE
         if (itr == m_payloads.end())
           return 0.0;
 
-        return itr->second * duration / 3600.0;
+        return toWh(itr->second, duration);
       }
 
       //! Compute energy consumed by minimal resources
@@ -130,10 +132,29 @@ namespace DUNE
       float
       computeHotelEnergy(float duration) const
       {
-        return m_hotel_load * duration / 3600.0;
+        return toWh(m_hotel_load, duration);
+      }
+
+      //! Compute energy consumed by IMU
+      //! @param[in] duration amount of time in seconds
+      //! @return energy consumed in Wh
+      float
+      computeIMUEnergy(float duration) const
+      {
+        return toWh(m_imu_power, duration);
       }
 
     private:
+      //! Converts W to Wh using time in seconds
+      //! @param[in] power value of power in W
+      //! @param[in] duration amount of time in seconds
+      //! @return energy consumed in Wh
+      inline float
+      toWh(float power, float duration) const
+      {
+        return power * duration / 3600.0;
+      }
+
       //! Conversion values for power (Watt)
       std::vector<float> m_conv_watt;
       //! Conversion values for speed (rpm)
@@ -142,6 +163,8 @@ namespace DUNE
       float m_hotel_load;
       //! Map of payloads to power consumed
       std::map<std::string, float> m_payloads;
+      //! Power consumed by IMU
+      float m_imu_power;
     };
   }
 }
