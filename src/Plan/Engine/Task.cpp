@@ -68,6 +68,8 @@ namespace Plan
       float sk_radius;
       //! Speed in RPM for the station keeping
       float sk_rpm;
+      //! Entity label of the IMU
+      std::string label_imu;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -101,6 +103,10 @@ namespace Plan
       Time::Counter<float> m_report_timer;
       //! Map of component names to entityinfo
       std::map<std::string, IMC::EntityInfo> m_cinfo;
+      //! Source entity of the IMU
+      unsigned m_eid_imu;
+      //! IMU is enabled or not
+      bool m_imu_enabled;
       //! Task arguments.
       Arguments m_args;
 
@@ -108,7 +114,8 @@ namespace Plan
         DUNE::Tasks::Task(name, ctx),
         m_plan(NULL),
         m_db(NULL),
-        m_get_plan_stmt(NULL)
+        m_get_plan_stmt(NULL),
+        m_imu_enabled(false)
       {
         param("Compute Progress", m_args.progress)
         .defaultValue("false")
@@ -142,6 +149,10 @@ namespace Plan
         .units(Units::Meter)
         .description("Radius for the station keeping");
 
+        param("IMU Entity Label", m_args.label_imu)
+        .defaultValue("IMU")
+        .description("Entity label of the IMU for fuel prediction");
+
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::EstimatedState>(this);
@@ -157,6 +168,19 @@ namespace Plan
       ~Task()
       {
         closeDB();
+      }
+
+      void
+      onEntityResolution(void)
+      {
+        try
+        {
+          m_eid_imu = resolveEntity(m_args.label_imu);
+        }
+        catch (...)
+        {
+          m_eid_imu = 0;
+        }
       }
 
       void
@@ -286,6 +310,14 @@ namespace Plan
               err("%s", error.c_str());
             }
           }
+        }
+
+        if (msg->getSourceEntity() == m_eid_imu)
+        {
+          if (msg->state == IMC::EntityActivationState::EAS_ACTIVE)
+            m_imu_enabled = true;
+          else
+            m_imu_enabled = false;
         }
       }
 
@@ -692,7 +724,7 @@ namespace Plan
       {
         std::string desc;
         if (!m_plan->parse(desc, &m_supported_maneuvers, plan_startup,
-                           m_cinfo, this, &m_state))
+                           m_cinfo, this, m_imu_enabled, &m_state))
         {
           onFailure(desc);
           return false;
