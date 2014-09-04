@@ -163,6 +163,7 @@ namespace Plan
         bind<IMC::VehicleState>(this);
         bind<IMC::EntityInfo>(this);
         bind<IMC::EntityActivationState>(this);
+        bind<IMC::FuelLevel>(this);
       }
 
       ~Task()
@@ -205,7 +206,7 @@ namespace Plan
       {
         try
         {
-          m_plan = new Plan(&m_spec, m_args.progress,
+          m_plan = new Plan(&m_spec, m_args.progress, this,
                             m_args.calibration_time, &m_ctx.config);
         }
         catch (std::runtime_error& e)
@@ -319,6 +320,15 @@ namespace Plan
           else
             m_imu_enabled = false;
         }
+      }
+
+      void
+      consume(const IMC::FuelLevel* msg)
+      {
+        if (m_plan == NULL)
+          return;
+
+        m_plan->onFuelLevel(msg);
       }
 
       void
@@ -724,7 +734,7 @@ namespace Plan
       {
         std::string desc;
         if (!m_plan->parse(desc, &m_supported_maneuvers, plan_startup,
-                           m_cinfo, this, m_imu_enabled, &m_state))
+                           m_cinfo, m_imu_enabled, &m_state))
         {
           onFailure(desc);
           return false;
