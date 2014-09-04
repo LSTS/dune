@@ -75,6 +75,8 @@ namespace DUNE
         }
 
         cfg->get(sec, "Power Model -- IMU Power", "0.0", m_imu_power);
+
+        cfg->get(sec, "Battery Capacity", "700.0", m_capacity);
       }
 
       //! Validate the model
@@ -144,6 +146,14 @@ namespace DUNE
         return toWh(m_imu_power, duration);
       }
 
+      //! Get the battery capacity
+      //! @return battery energy capacity in Wh
+      inline float
+      getBatteryCapacity(void) const
+      {
+        return m_capacity;
+      }
+
     private:
       //! Converts W to Wh using time in seconds
       //! @param[in] power value of power in W
@@ -165,6 +175,8 @@ namespace DUNE
       std::map<std::string, float> m_payloads;
       //! Power consumed by IMU
       float m_imu_power;
+      //! Battery energy capacity
+      float m_capacity;
     };
   }
 }
