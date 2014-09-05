@@ -32,6 +32,7 @@ using DUNE_NAMESPACES;
 
 namespace Sensors
 {
+  //! Device driver for the AML OEM MetrecX
   namespace MetrecX
   {
     // using DUNE_NAMESPACES;
@@ -63,9 +64,19 @@ namespace Sensors
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL)
       {
-        m_args.uart_dev = "/dev/ttyUSB0";
-        m_args.uart_baud = 2400;
-        m_args.input_timeout = 3;
+        param("Serial Port - Device", m_args.uart_dev)
+        .defaultValue("")
+        .description("Serial port device used to communicate with the sensor");
+
+        param("Serial Port - Baud Rate", m_args.uart_baud)
+        .defaultValue("38400")
+        .description("Serial port baud rate");
+
+        param("Input Timeout", m_args.input_timeout)
+        .defaultValue("4.0")
+        .minimumValue("1.0")
+        .units(Units::Second)
+        .description("Amount of seconds to wait for data before reporting an error");
       }
 
       //! Update internal state with new parameter values.
@@ -90,15 +101,10 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
         m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
         m_uart->setCanonicalInput(true);
         m_uart->flush();
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
       }
 
       //! Release resources.
@@ -108,28 +114,73 @@ namespace Sensors
         Memory::clear(m_uart);
       }
 
+      bool
+      sendCommand(const char* cmd, const char* reply)
+      {
+        char bfr[128];
+
+        m_uart->writeString(cmd);
+
+        if (Poll::poll(*m_uart, 1.0))
+        {
+          m_uart->readString(bfr, sizeof(bfr));
+          if (std::strcmp(bfr, reply) == 0)
+            return true;
+            }
+
+        return false;
+        }
+
+      void
+      onResourceInitialization(void)
+      {
+        m_uart->writeString("\r");
+        Delay::wait(1.0);
+        m_uart->flush();
+
+        if (!sendCommand("\r", "\r\n"))
+          throw RestartNeeded(DTR("failed to enter command mode"), 5);
+
+        if (!sendCommand("SET S 1 s\r", ">SET S 1 s\r\n"))
+          throw RestartNeeded(DTR("failed to set sampling rate"), 5);
+
+        if (!sendCommand("MONITOR\r", ">MONITOR\r\n"))
+        throw RestartNeeded(DTR("failed to enter monitor mode"), 5);
+
+        m_wdog.setTop(m_args.input_timeout);
+      }
+
       //! Main loop.
       void
       onMain(void)
       {
         char bfr[255];
-        size_t rv;
-
-        m_uart->writeString("CR");
 
         while (!stopping())
         {
 
-          if (!Poll::poll(*m_uart, 1.0))
+          consumeMessages();
+
+          if (m_wdog.overflow())
           {
-            m_uart->writeString("DISPLAY OPTIONS\r\n");
-            continue;
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
           }
 
-          rv = m_uart->readString(bfr,sizeof(bfr));
-          printf("Message recieved - %s ",bfr);
+          if (!Poll::poll(*m_uart, 1.0))
+            continue;
 
-       }
+          size_t rv = m_uart->readString(bfr, sizeof(bfr));printf("rv %lu \n",rv);
+          printf("DBG: %s",bfr);
+
+          if (rv == 0)
+            throw RestartNeeded(DTR("I/O error"), 5);
+
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+          m_wdog.reset();
+
+        }
       }
     };
   }
