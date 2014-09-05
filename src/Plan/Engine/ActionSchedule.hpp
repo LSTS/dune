@@ -137,6 +137,7 @@ namespace Plan
       //! Fill the object component active time
       //! @param[in] nodes vector of sequenced plan maneuvers
       //! @param[in] timeline plan timeline with all ETAs
+      //! @param[in] cat component active time object to fill
       void
       fillComponentActiveTime(const std::vector<IMC::PlanManeuver*>& nodes,
                               const Timeline& timeline,

@@ -87,6 +87,8 @@ namespace Plan
 
       //! Set maneuver's ETA
       //! @param[in] id maneuver id
+      //! @param[in] start_eta estimated time of arrival of the start of the maneuver
+      //! @param[in] end_eta estimated time of arrival of the end of the maneuver
       void
       setManeuverETA(const std::string& id, float start_eta, float end_eta)
       {

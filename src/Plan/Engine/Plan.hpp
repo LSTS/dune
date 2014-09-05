@@ -64,8 +64,9 @@ namespace Plan
       //! Default constructor.
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] compute_progress true if progress should be computed
+      //! @param[in] task pointer to task
       //! @param[in] min_cal_time minimum calibration time in s.
-      //! @param[in] speed_model pointer to model for speed conversions
+      //! @param[in] cfg pointer to config object
       Plan(const IMC::PlanSpecification* spec, bool compute_progress,
            Tasks::Task* task, uint16_t min_cal_time,
            Parsers::Config* cfg);
