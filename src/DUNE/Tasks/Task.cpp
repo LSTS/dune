@@ -89,12 +89,13 @@ namespace DUNE
       setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
 
       bind<IMC::QueryEntityInfo>(this);
-      bind<IMC::QueryEntityState>(this);
-      bind<IMC::QueryEntityActivationState>(this);
       bind<IMC::QueryEntityParameters>(this);
       bind<IMC::SetEntityParameters>(this);
       bind<IMC::PushEntityParameters>(this);
       bind<IMC::PopEntityParameters>(this);
+
+      bind<IMC::QueryEntityState, Entity>(&m_entity);
+      bind<IMC::QueryEntityActivationState, Entity>(&m_entity);
     }
 
     unsigned int
@@ -412,22 +413,6 @@ namespace DUNE
         return;
 
       dispatchReply(*msg, m_ent_info);
-    }
-
-    void
-    Task::consume(const IMC::QueryEntityState* msg)
-    {
-      (void)msg;
-      reportEntityState();
-    }
-
-    void
-    Task::consume(const IMC::QueryEntityActivationState* msg)
-    {
-      if (msg->getDestinationEntity() != getEntityId())
-        return;
-
-      m_entity.reportActivationState();
     }
 
     void

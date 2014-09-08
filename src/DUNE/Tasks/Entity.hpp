@@ -155,6 +155,16 @@ namespace DUNE
       void
       succeedDeactivation(void);
 
+      //! Consume QueryEntityState messages andreply accordingly.
+      //! @param[in] msg QueryEntityState message.
+      void
+      consume(const IMC::QueryEntityState* msg);
+
+      //! Consume QueryEntityActivationState messages and replyaccordingly.
+      //! @param[in] msg QueryEntityActivationState message.
+      void
+      consume(const IMC::QueryEntityActivationState* msg);
+
     private:
       enum NextActivationState
       {

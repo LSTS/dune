@@ -186,5 +186,22 @@ namespace DUNE
       m_act_state.error.clear();
       m_owner->dispatch(m_act_state);
     }
+
+    void
+    Entity::consume(const IMC::QueryEntityState* msg)
+    {
+      (void)msg;
+      reportState();
+    }
+
+    void
+    Entity::consume(const IMC::QueryEntityActivationState* msg)
+    {
+      if (msg->getDestinationEntity() != getId())
+        return;
+
+      reportActivationState();
+    }
+
   }
 }

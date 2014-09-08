@@ -749,18 +749,8 @@ namespace DUNE
       void
       consume(const IMC::QueryEntityInfo* msg);
 
-      //! Consume QueryEntityState messages and reply accordingly.
-      //! @param[in] msg QueryEntityState message.
-      void
-      consume(const IMC::QueryEntityState* msg);
-
       void
       consume(const IMC::QueryEntityParameters* msg);
-
-      //! Consume QueryEntityActivationState messages and reply accordingly.
-      //! @param[in] msg QueryEntityActivationState message.
-      void
-      consume(const IMC::QueryEntityActivationState* msg);
 
       void
       consume(const IMC::SetEntityParameters* msg);
