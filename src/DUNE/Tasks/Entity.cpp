@@ -71,5 +71,120 @@ namespace DUNE
       m_owner->dispatch(m_entity_state);
     }
 
+    void
+    Entity::reportActivationState(void)
+    {
+      m_owner->dispatch(m_act_state);
+    }
+
+    void
+    Entity::requestActivation(void)
+    {
+      if (m_act_state.state != IMC::EntityActivationState::EAS_INACTIVE)
+      {
+        m_owner->spew("task is not inactive");
+
+        if ((m_act_state.state == IMC::EntityActivationState::EAS_DEACT_IP)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_DEACT_DONE)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_DEACT_FAIL)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_FAIL))
+        {
+          m_owner->spew("saving activation request");
+          m_next_act_state = NAS_ACTIVE;
+        }
+        else if (m_act_state.state == IMC::EntityActivationState::EAS_ACT_IP)
+        {
+          m_owner->spew("activation is in progress");
+          m_next_act_state = NAS_ACTIVE;
+        }
+
+        m_owner->dispatch(m_act_state);
+        return;
+      }
+
+      m_next_act_state = NAS_SAME;
+      m_act_state.state = IMC::EntityActivationState::EAS_ACT_IP;
+      m_owner->dispatch(m_act_state);
+    }
+
+    void
+    Entity::requestDeactivation(void)
+    {
+      if (m_act_state.state != IMC::EntityActivationState::EAS_ACTIVE)
+      {
+        m_owner->spew("task is not active");
+
+        if ((m_act_state.state == IMC::EntityActivationState::EAS_DEACT_FAIL)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_IP)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_DONE)
+            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_FAIL))
+        {
+          m_owner->spew("saving deactivation request");
+          m_next_act_state = NAS_INACTIVE;
+        }
+        else if (m_act_state.state == IMC::EntityActivationState::EAS_DEACT_IP)
+        {
+          m_owner->spew("deactivation is in progress");
+          m_next_act_state = NAS_INACTIVE;
+        }
+
+        m_owner->dispatch(m_act_state);
+        return;
+      }
+
+      m_next_act_state = NAS_SAME;
+      m_act_state.state = IMC::EntityActivationState::EAS_DEACT_IP;
+      m_owner->dispatch(m_act_state);
+    }
+
+    void
+    Entity::failActivation(const std::string& reason)
+    {
+      m_act_state.state = IMC::EntityActivationState::EAS_ACT_FAIL;
+      m_act_state.error = reason;
+      m_owner->dispatch(m_act_state);
+
+      m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
+      m_act_state.error.clear();
+      m_owner->dispatch(m_act_state);
+    }
+
+    void
+    Entity::succeedActivation(void)
+    {
+      m_act_state.state = IMC::EntityActivationState::EAS_ACT_DONE;
+      m_owner->dispatch(m_act_state);
+
+      m_act_state.state = IMC::EntityActivationState::EAS_ACTIVE;
+      m_owner->dispatch(m_act_state);
+
+      if (m_next_act_state == NAS_INACTIVE)
+        requestDeactivation();
+    }
+
+    void
+    Entity::succeedDeactivation(void)
+    {
+      m_act_state.state = IMC::EntityActivationState::EAS_DEACT_DONE;
+      m_owner->dispatch(m_act_state);
+
+      m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
+      m_owner->dispatch(m_act_state);
+
+      if (m_next_act_state == NAS_ACTIVE)
+        requestActivation();
+    }
+
+    void
+    Entity::failDeactivation(const std::string& reason)
+    {
+      m_act_state.state = IMC::EntityActivationState::EAS_DEACT_FAIL;
+      m_act_state.error = reason;
+      m_owner->dispatch(m_act_state);
+
+      m_act_state.state = IMC::EntityActivationState::EAS_ACTIVE;
+      m_act_state.error.clear();
+      m_owner->dispatch(m_act_state);
+    }
   }
 }

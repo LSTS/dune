@@ -423,7 +423,7 @@ namespace DUNE
       bool
       isActive(void) const
       {
-        return m_act_state.state == IMC::EntityActivationState::EAS_ACTIVE;
+        return m_entity.isActive();
       }
 
       //! Test if task is activating.
@@ -431,7 +431,7 @@ namespace DUNE
       bool
       isActivating(void) const
       {
-        return m_act_state.state == IMC::EntityActivationState::EAS_ACT_IP;
+        return m_entity.isActivating();
       }
 
       //! Test if task is deactivating.
@@ -439,7 +439,7 @@ namespace DUNE
       bool
       isDeactivating(void) const
       {
-        return m_act_state.state == IMC::EntityActivationState::EAS_DEACT_IP;
+        return m_entity.isDeactivating();
       }
 
       //! Wait for the receiving queue to contain at least one message
@@ -700,16 +700,6 @@ namespace DUNE
         std::string active_visibility;
       };
 
-      enum NextActivationState
-      {
-        //! Keep current activation state.
-        NAS_SAME,
-        //! Request activation.
-        NAS_ACTIVE,
-        //! Request deactivation.
-        NAS_INACTIVE
-      };
-
       //! Message recipient (queue).
       Recipient* m_recipient;
       //! Task name.
@@ -728,14 +718,10 @@ namespace DUNE
       BasicArguments m_args;
       //! Parameters stack.
       std::stack<std::map<std::string, std::string> > m_params_stack;
-      //! Activation state.
-      IMC::EntityActivationState m_act_state;
       //! True if task honours changes to 'Active' parameter.
       bool m_honours_active;
       //! Name of parameter section editor.
       std::string m_param_editor;
-      //! Next activation state.
-      NextActivationState m_next_act_state;
 
       //! Report current entity states by dispatching EntityState
       //! messages. This function will at least report the state of

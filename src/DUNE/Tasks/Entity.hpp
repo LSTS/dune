@@ -43,8 +43,11 @@ namespace DUNE
       Entity(Task* task):
         m_owner(task),
         m_id(DUNE_IMC_CONST_UNK_EID),
-        m_entity_state_code(-1)
-      { }
+        m_entity_state_code(-1),
+        m_next_act_state(NAS_SAME)
+      {
+        m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
+      }
 
       //! Retrieve the entity label.
       //! @return entity label.
@@ -98,7 +101,71 @@ namespace DUNE
       void
       reportState(void);
 
+      //! Report the activation state.
+      void
+      reportActivationState(void);
+
+      //! Test if entity is active.
+      //! @return true if entity is active, false otherwise.
+      bool
+      isActive(void) const
+      {
+        return m_act_state.state == IMC::EntityActivationState::EAS_ACTIVE;
+      }
+
+      //! Test if entity is activating.
+      //! @return true if entity is activating, false otherwise.
+      bool
+      isActivating(void) const
+      {
+        return m_act_state.state == IMC::EntityActivationState::EAS_ACT_IP;
+      }
+
+      //! Test if entity is deactivating.
+      //! @return true if entity is deactivating, false otherwise.
+      bool
+      isDeactivating(void) const
+      {
+        return m_act_state.state == IMC::EntityActivationState::EAS_DEACT_IP;
+      }
+
+      IMC::EntityActivationState::StateEnum
+      getActivationState(void) const
+      {
+        return static_cast<IMC::EntityActivationState::StateEnum>(m_act_state.state);
+      }
+
+      //! Request entity activation
+      void
+      requestActivation(void);
+
+      //! Request entity deactivation
+      void
+      requestDeactivation(void);
+
+      void
+      failActivation(const std::string& reason);
+
+      void
+      succeedActivation(void);
+
+      void
+      failDeactivation(const std::string& reason);
+
+      void
+      succeedDeactivation(void);
+
     private:
+      enum NextActivationState
+      {
+        //! Keep current activation state.
+        NAS_SAME,
+        //! Request activation.
+        NAS_ACTIVE,
+        //! Request deactivation.
+        NAS_INACTIVE
+      };
+
       //! Owner task.
       Task* m_owner;
       //! Entity Id.
@@ -109,6 +176,10 @@ namespace DUNE
       IMC::EntityState m_entity_state;
       //! Last entity state description code (-1 means none).
       int m_entity_state_code;
+      //! Activation state.
+      IMC::EntityActivationState m_act_state;
+      //! Next activation state.
+      NextActivationState m_next_act_state;
     };
   }
 }
