@@ -712,8 +712,6 @@ namespace DUNE
       std::string m_debug_level_string;
       //! Debug level.
       DebugLevel m_debug_level;
-      //! Entity information message.
-      IMC::EntityInfo m_ent_info;
       //! Arguments.
       BasicArguments m_args;
       //! Parameters stack.
@@ -745,9 +743,6 @@ namespace DUNE
              IMC::Factory::getAbbrevFromId(message_id).c_str());
         m_recipient->bind(message_id, consumer);
       }
-
-      void
-      consume(const IMC::QueryEntityInfo* msg);
 
       void
       consume(const IMC::QueryEntityParameters* msg);

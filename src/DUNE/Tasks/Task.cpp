@@ -88,12 +88,12 @@ namespace DUNE
       // Initialize main entity.
       setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
 
-      bind<IMC::QueryEntityInfo>(this);
       bind<IMC::QueryEntityParameters>(this);
       bind<IMC::SetEntityParameters>(this);
       bind<IMC::PushEntityParameters>(this);
       bind<IMC::PopEntityParameters>(this);
 
+      bind<IMC::QueryEntityInfo, Entity>(&m_entity);
       bind<IMC::QueryEntityState, Entity>(&m_entity);
       bind<IMC::QueryEntityActivationState, Entity>(&m_entity);
     }
@@ -198,11 +198,8 @@ namespace DUNE
     Task::updateParameters(bool act_deact)
     {
       m_entity.setLabel(m_args.elabel);
-      m_ent_info.label = getEntityLabel();
-      m_ent_info.component = getName();
-      m_ent_info.act_time = m_args.act_time;
-      m_ent_info.deact_time = m_args.deact_time;
-      dispatch(m_ent_info);
+      m_entity.setActTimes(m_args.act_time, m_args.deact_time);
+      m_entity.reportInfo();
 
       if (m_debug_level_string == "Debug")
         m_debug_level = DEBUG_LEVEL_DEBUG;
@@ -404,15 +401,6 @@ namespace DUNE
         m_ctx.mbus.dispatch(msg, this);
       else
         m_ctx.mbus.dispatch(msg);
-    }
-
-    void
-    Task::consume(const IMC::QueryEntityInfo* msg)
-    {
-      if (msg->getDestinationEntity() != getEntityId() || msg->getDestinationEntity() != DUNE_IMC_CONST_UNK_EID)
-        return;
-
-      dispatchReply(*msg, m_ent_info);
     }
 
     void

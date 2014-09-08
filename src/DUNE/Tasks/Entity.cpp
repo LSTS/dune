@@ -37,6 +37,14 @@ namespace DUNE
   namespace Tasks
   {
     void
+    Entity::setLabel(const std::string& label)
+    {
+      m_label = label;
+      m_ent_info.label = label;
+      m_ent_info.component = m_owner->getName();
+    }
+
+    void
     Entity::setState(IMC::EntityState::StateEnum state,
                            Status::Code code)
     {
@@ -185,6 +193,21 @@ namespace DUNE
       m_act_state.state = IMC::EntityActivationState::EAS_ACTIVE;
       m_act_state.error.clear();
       m_owner->dispatch(m_act_state);
+    }
+
+    void
+    Entity::reportInfo(void)
+    {
+      m_owner->dispatch(m_ent_info);
+    }
+
+    void
+    Entity::consume(const IMC::QueryEntityInfo* msg)
+    {
+      if (msg->getDestinationEntity() != getId() || msg->getDestinationEntity() != DUNE_IMC_CONST_UNK_EID)
+        return;
+
+      m_owner->dispatchReply(*msg, m_ent_info);
     }
 
     void

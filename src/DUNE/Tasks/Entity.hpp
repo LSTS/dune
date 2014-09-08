@@ -60,10 +60,7 @@ namespace DUNE
       //! Set the entity label.
       //! @param[in] label entity label.
       void
-      setLabel(const std::string& label)
-      {
-        m_label = label;
-      }
+      setLabel(const std::string& label);
 
       //! Retrieve the entity identifier.
       //! @return entity identifier.
@@ -100,6 +97,13 @@ namespace DUNE
       //! Report the entity state.
       void
       reportState(void);
+
+      void
+      setActTimes(uint16_t act_time, uint16_t deact_time)
+      {
+        m_ent_info.act_time = act_time;
+        m_ent_info.deact_time = deact_time;
+      }
 
       //! Report the activation state.
       void
@@ -155,6 +159,12 @@ namespace DUNE
       void
       succeedDeactivation(void);
 
+      void
+      reportInfo(void);
+
+      void
+      consume(const IMC::QueryEntityInfo* msg);
+
       //! Consume QueryEntityState messages andreply accordingly.
       //! @param[in] msg QueryEntityState message.
       void
@@ -182,6 +192,8 @@ namespace DUNE
       unsigned int m_id;
       //! Entity Label.
       std::string m_label;
+      //! Entity information message.
+      IMC::EntityInfo m_ent_info;
       //! Entity state.
       IMC::EntityState m_entity_state;
       //! Last entity state description code (-1 means none).
