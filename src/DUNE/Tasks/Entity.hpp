@@ -175,6 +175,18 @@ namespace DUNE
       void
       consume(const IMC::QueryEntityActivationState* msg);
 
+      bool
+      operator==(std::string label)
+      {
+        return getLabel() == label;
+      }
+
+      bool
+      operator==(unsigned int id)
+      {
+        return getId() == id;
+      }
+
     private:
       enum NextActivationState
       {
