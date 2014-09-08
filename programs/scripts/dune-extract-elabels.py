@@ -34,7 +34,7 @@ def get_entity_labels(path):
     labels = set()
     fd = open(path, 'r')
     for line in fd:
-        m = re.match('Entity Label\s*=\s*([\w\s]+)\Z', line)
+        m = re.match('Entity Label\s*=\s*/?\s*([\w\s]+/?[\w\s]+)\Z', line)
         if m is not None:
             labels.add(m.group(1).strip())
     return labels
