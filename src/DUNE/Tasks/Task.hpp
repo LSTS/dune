@@ -410,6 +410,13 @@ namespace DUNE
       unsigned int
       reserveEntity(const std::string& label);
 
+      //! Associate an entity object with an automatically generated
+      //! number (entity id).
+      //! @param[in,out] label entity name/label.
+      //! @return Entity object.
+      void
+      reserveEntity(Entity& entity);
+
       //! Test if task is stopping.
       //! @return true if task is stopping, false otherwise.
       bool

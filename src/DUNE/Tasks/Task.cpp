@@ -92,10 +92,6 @@ namespace DUNE
       bind<IMC::SetEntityParameters>(this);
       bind<IMC::PushEntityParameters>(this);
       bind<IMC::PopEntityParameters>(this);
-
-      bind<IMC::QueryEntityInfo, Entity>(&m_entity);
-      bind<IMC::QueryEntityState, Entity>(&m_entity);
-      bind<IMC::QueryEntityActivationState, Entity>(&m_entity);
     }
 
     unsigned int
@@ -105,12 +101,22 @@ namespace DUNE
     }
 
     void
-    Task::reserveEntities(void)
+    Task::reserveEntity(Entity& entity)
     {
-      if (m_entity.getLabel().empty())
+      if (entity.getLabel().empty())
         throw std::runtime_error(DTR("entity label is not configured"));
 
-      m_entity.setId(reserveEntity(m_entity.getLabel()));
+      entity.setId(m_ctx.entities.reserve(entity.getLabel(), getName(), m_args.act_time, m_args.deact_time));
+
+      bind<IMC::QueryEntityInfo, Entity>(&entity);
+      bind<IMC::QueryEntityState, Entity>(&entity);
+      bind<IMC::QueryEntityActivationState, Entity>(&entity);
+    }
+
+    void
+    Task::reserveEntities(void)
+    {
+      reserveEntity(m_entity);
       onEntityReservation();
     }
 
