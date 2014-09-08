@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ############################################################################
 # Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
@@ -22,24 +23,34 @@
 # language governing permissions and limitations at                        #
 # https://www.lsts.pt/dune/licence.                                        #
 ############################################################################
+# Author: Ricardo Martins                                                  #
+############################################################################
 
-[Require ../common/plans.ini]
+import sys
+import subprocess
+import argparse
+import shutil
 
-[Maneuver.Multiplexer]
-Enabled                                 = Always
-Entity Label                            = Multiplexer Maneuver
-Entity Label -- Goto                    = Goto Maneuver
-Entity Label -- Loiter                  = Loiter Maneuver
-Entity Label -- StationKeeping          = Station Keeping Maneuver
-Entity Label -- YoYo                    = YoYo Maneuver
-Entity Label -- Rows                    = Rows Maneuver
-Entity Label -- FollowPath              = Follow Path Maneuver
-Entity Label -- Elevator                = Elevator Maneuver
-Entity Label -- PopUp                   = Pop Up Maneuver
-Entity Label -- Dislodge                = Dislodge Maneuver
-Entity Label -- Idle                    = Idle Maneuver
-Loiter -- Minimum Radius                = 10.0
+# Parse command line arguments.
+parser = argparse.ArgumentParser(
+    description="This script will download the IMC specification.")
+parser.add_argument('dest_folder', metavar='DEST_FOLDER',
+    help="destination folder")
+parser.add_argument('-t', '--tag', metavar='GIT_TAG', default='master',
+    required=False, help="IMC git tag, branch, or commit hash")
+parser.add_argument('-u', '--url', metavar='GIT_URL',
+    default='https://www.github.com/LSTS/imc', required=False,
+    help="IMC git URL")
+args = parser.parse_args()
 
-[Maneuver.Teleoperation]
-Enabled                                 = Always
-Entity Label                            = Teleoperation Maneuver
+
+shutil.rmtree(args.dest_folder, ignore_errors=True)
+
+subprocess.check_output(['git', 'clone', args.url, args.dest_folder],
+                        universal_newlines = True)
+
+import os
+os.chdir(args.dest_folder)
+
+subprocess.check_output(['git', 'checkout', args.tag],
+                        universal_newlines = True)

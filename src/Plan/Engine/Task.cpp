@@ -676,11 +676,12 @@ namespace Plan
             vehicleRequest(IMC::VehicleCommand::VC_STOP_MANEUVER);
 
             m_reply.plan_id = m_spec.plan_id;
-            changeMode(IMC::PlanControlState::PCS_READY, DTR("plan stopped"));
             m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
+            changeMode(IMC::PlanControlState::PCS_READY, DTR("plan stopped"));
           }
           else
           {
+            m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
             debug("switching to new plan");
             return false;
           }

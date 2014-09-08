@@ -22,24 +22,40 @@
 # language governing permissions and limitations at                        #
 # https://www.lsts.pt/dune/licence.                                        #
 ############################################################################
+# Author: Ricardo Martins                                                  #
+############################################################################
 
-[Require ../common/plans.ini]
+if(DUNE_PROGRAM_PYTHON)
+  set(IMC_TAG "master" CACHE STRING "IMC git branch name, commit id or tag")
+  set(IMC_URL "https://www.github.com/LSTS/imc" CACHE STRING "IMC git URL")
 
-[Maneuver.Multiplexer]
-Enabled                                 = Always
-Entity Label                            = Multiplexer Maneuver
-Entity Label -- Goto                    = Goto Maneuver
-Entity Label -- Loiter                  = Loiter Maneuver
-Entity Label -- StationKeeping          = Station Keeping Maneuver
-Entity Label -- YoYo                    = YoYo Maneuver
-Entity Label -- Rows                    = Rows Maneuver
-Entity Label -- FollowPath              = Follow Path Maneuver
-Entity Label -- Elevator                = Elevator Maneuver
-Entity Label -- PopUp                   = Pop Up Maneuver
-Entity Label -- Dislodge                = Dislodge Maneuver
-Entity Label -- Idle                    = Idle Maneuver
-Loiter -- Minimum Radius                = 10.0
+  set(DUNE_IMC_XML ${CMAKE_BINARY_DIR}/IMC/IMC.xml)
+  set(DUNE_IMC_ADDRESSES_XML ${CMAKE_BINARY_DIR}/IMC/IMC_Addresses.xml)
 
-[Maneuver.Teleoperation]
-Enabled                                 = Always
-Entity Label                            = Teleoperation Maneuver
+  # Download.
+  add_custom_target(imc_download
+    COMMAND ${DUNE_PROGRAM_PYTHON}
+    ${PROJECT_SOURCE_DIR}/programs/generators/imc_download.py
+    -u ${IMC_URL}
+    -t ${IMC_TAG} ${CMAKE_BINARY_DIR}/IMC)
+
+  # Generate.
+  add_custom_target(imc
+    COMMAND ${DUNE_PROGRAM_PYTHON}
+    ${PROJECT_SOURCE_DIR}/programs/generators/imc_code.py
+    ${DUNE_IMC_XML} ${PROJECT_SOURCE_DIR}/src/DUNE/IMC
+
+    COMMAND ${DUNE_PROGRAM_PYTHON}
+    ${PROJECT_SOURCE_DIR}/programs/generators/imc_blob.py
+    ${DUNE_IMC_XML} ${PROJECT_SOURCE_DIR}/src/DUNE/IMC
+
+    COMMAND ${DUNE_PROGRAM_PYTHON}
+    ${PROJECT_SOURCE_DIR}/programs/generators/imc_tests.py
+    ${DUNE_IMC_XML} ${PROJECT_SOURCE_DIR}/programs/tests
+
+    COMMAND ${DUNE_PROGRAM_PYTHON}
+    ${PROJECT_SOURCE_DIR}/programs/generators/imc_addresses.py
+    ${DUNE_IMC_ADDRESSES_XML} ${PROJECT_SOURCE_DIR}/etc/common/imc-addresses.ini
+
+    DEPENDS ${xml})
+endif(DUNE_PROGRAM_PYTHON)

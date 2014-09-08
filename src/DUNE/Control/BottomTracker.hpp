@@ -227,13 +227,9 @@ namespace DUNE
 
       //! Inline function to call dispatch
       //! @param[in] msg pointer to message to dispatch
+      //! @param[in] flags bitfield with flags (see DispatchFlags in Tasks/Task.hpp).
       inline void
-      dispatch(IMC::Message& msg) const;
-
-      //! Inline function to call dispatch
-      //! @param[in] msg
-      inline void
-      dispatchLoop(IMC::Message& msg) const;
+      dispatch(IMC::Message& msg, unsigned int flags = 0) const;
 
       //! Function for info messages.
       //! @param[in] msg string message to output.

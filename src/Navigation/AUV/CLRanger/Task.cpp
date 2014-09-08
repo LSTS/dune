@@ -54,6 +54,8 @@ namespace Navigation
         uint8_t slot_order;
         //! TDMA slot duration.
         uint8_t slot_duration;
+        //! Extra TDMA slots.
+        uint8_t extra_slots;
         //! AUV to range.
         std::string dst;
       };
@@ -88,6 +90,11 @@ namespace Navigation
           .minimumValue("2")
           .units(Units::Second)
           .description("TDMA slot duration");
+
+          param("Extra Slots", m_args.extra_slots)
+          .defaultValue("1")
+          .minimumValue("0")
+          .description("Extra TDMA slots");
 
           param("Destination", m_args.dst)
           .description("Destination name");
@@ -159,6 +166,7 @@ namespace Navigation
           {
             IMC::LblConfig cfg(m_lbl_config);
             cfg.op = IMC::LblConfig::OP_CUR_CFG;
+            cfg.setSource(getSystemId());
             dispatch(cfg);
           }
         }
@@ -240,12 +248,23 @@ namespace Navigation
               (*itr)->lat = lat;
               (*itr)->lon = lon;
               (*itr)->depth = estate->depth;
-              dispatch(m_lbl_config);
-              return;
+            }
+
+            // Update own modem if exists.
+            if ((*itr)->beacon == getSystemName())
+            {
+              debug("update own position");
+              double lat, lon;
+              Coordinates::toWGS84(*m_estate, lat, lon);
+              (*itr)->lat = lat;
+              (*itr)->lon = lon;
+              (*itr)->depth = m_estate->depth;
             }
           }
 
-          err(DTR("destination system is not in beacon configuration"));
+          m_lbl_config.op = IMC::LblConfig::OP_SET_CFG;
+          m_lbl_config.setSource(getSystemId());
+          dispatch(m_lbl_config);
         }
 
         //! Compute TDMA slots.
@@ -257,9 +276,26 @@ namespace Navigation
           // Only if beacons are available.
           if (m_lbl_config.beacons.size() > 0)
           {
-            unsigned slot_count = m_lbl_config.beacons.size() + 1;
+            bool destination_check = false;
+            unsigned slot_count = m_args.extra_slots;
+            MessageList<IMC::LblBeacon>::const_iterator itr = m_lbl_config.beacons.begin();
+            for (; itr < m_lbl_config.beacons.end(); ++itr)
+            {
+              if ((*itr) == NULL)
+                continue;
 
-            for (uint8_t i = 0; i < slot_count - 1; ++i)
+              // Do not count own system for the slot count.
+              if ((*itr)->beacon != getSystemName())
+                slot_count++;
+
+              if ((*itr)->beacon == m_args.dst)
+                destination_check = true;
+            }
+
+            if (!destination_check)
+              err(DTR("destination is not in the LBL configuration"));
+
+            for (uint8_t i = 0; i < slot_count - m_args.extra_slots; ++i)
               slot_number.push_back(i + (m_args.slot_order - 1) * slot_count);
 
             m_tdma.reset(2 * slot_count, slot_number, m_args.slot_duration);
@@ -285,6 +321,13 @@ namespace Navigation
               if (++m_cursor == m_lbl_config.beacons.end())
                 m_cursor = m_lbl_config.beacons.begin();
 
+              // Do not ping itself.
+              if ((*m_cursor)->beacon == getSystemName())
+              {
+                if (++m_cursor == m_lbl_config.beacons.end())
+                  m_cursor = m_lbl_config.beacons.begin();
+              }
+
               return beacon;
             }
           }
@@ -298,7 +341,7 @@ namespace Navigation
         {
           const IMC::LblBeacon* beacon = getNextBeacon();
           if (beacon == NULL)
-            return;;
+            return;
 
           ping(beacon->beacon);
         }

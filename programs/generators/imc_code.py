@@ -369,6 +369,25 @@ folder = sys.argv[2]
 # Initialize constant values.
 consts = {}
 
+# Retrieve Git info.
+import os
+import subprocess
+git_dir = os.path.dirname(sys.argv[1])
+consts['git_info'] = 'unknown'
+cwd_old = os.getcwd()
+os.chdir(git_dir)
+try:
+    consts['git_info'] = subprocess.check_output(['git',
+                                                  'log',
+                                                  "--pretty=format:%ad %h %d",
+                                                  '--abbrev-commit',
+                                                  '--date=short', '-1'],
+                                                 universal_newlines = True).strip()
+except:
+    pass
+
+os.chdir(cwd_old)
+
 # Compute MD5 sum.
 import hashlib
 m = hashlib.md5()
@@ -440,6 +459,7 @@ f = File('Constants.hpp', folder, ns = False)
 
 # Macros
 f.append(Macro('CONST_VERSION', '"%(version)s"' % consts, 'IMC version string'))
+f.append(Macro('CONST_GIT_INFO', '"%(git_info)s"' % consts, 'Git repository information'))
 f.append(Macro('CONST_MD5', '"%(md5)s"' % consts, 'MD5 sum of XML specification file'))
 f.append(Macro('CONST_SYNC', consts['sync'], 'Synchronization number'))
 f.append(Macro('CONST_SYNC_REV', consts['sync_rev'], 'Reversed synchronization number'))

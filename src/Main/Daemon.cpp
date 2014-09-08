@@ -269,13 +269,8 @@ main(int argc, char** argv)
     }
     catch (std::runtime_error& e2)
     {
-      std::cerr << String::str("ERROR: %s\n", e2.what()) << std::endl;
-      return 1;
-    }
-
-    if (context.dir_cfg != context.dir_usr_cfg)
-    {
       std::cerr << String::str("ERROR: %s\n", e.what()) << std::endl;
+      std::cerr << String::str("ERROR: %s\n", e2.what()) << std::endl;
       return 1;
     }
   }

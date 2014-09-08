@@ -141,7 +141,7 @@ namespace Maneuver
         for (unsigned i = 0; i < TYPE_TOTAL; i++)
         {
           param("Entity Label -- " + c_names[i], m_args.labels[i])
-          .defaultValue("")
+          .defaultValue(c_names[i] + " Maneuver")
           .description(c_names[i] + " maneuver's entity label");
         }
 

@@ -182,7 +182,7 @@ namespace Monitors
         .defaultValue("")
         .description("List of entity labels that must be estimated");
 
-        param("Esimated Entity Power List", m_args.est_power)
+        param("Estimated Entity Power List", m_args.est_power)
         .defaultValue("")
         .units(Units::Watt)
         .description("List of estimated power consumed by the entities");
