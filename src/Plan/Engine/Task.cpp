@@ -56,6 +56,8 @@ namespace Plan
     {
       //! Whether or not to compute plan's progress
       bool progress;
+      //! Whether or not to compute fuel prediction
+      bool fpredict;
       //! State report period
       float speriod;
       //! Duration of vehicle calibration process.
@@ -120,6 +122,10 @@ namespace Plan
         param("Compute Progress", m_args.progress)
         .defaultValue("false")
         .description("True if plan progress should be computed");
+
+        param("Fuel Prediction", m_args.fpredict)
+        .defaultValue("true")
+        .description("True if plan's fuel prediction should be computed");
 
         param("State Report Frequency", m_args.speriod)
         .defaultValue("3.0")
@@ -206,8 +212,8 @@ namespace Plan
       {
         try
         {
-          m_plan = new Plan(&m_spec, m_args.progress, this,
-                            m_args.calibration_time, &m_ctx.config);
+          m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict,
+                            this, m_args.calibration_time, &m_ctx.config);
         }
         catch (std::runtime_error& e)
         {
