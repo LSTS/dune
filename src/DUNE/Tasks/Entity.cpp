@@ -29,29 +29,13 @@
 #include <stdexcept>
 
 // DUNE headers.
+#include <DUNE/Tasks/Entity.hpp>
 #include <DUNE/Tasks/Task.hpp>
-#include <DUNE/Status/Messages.hpp>
 
 namespace DUNE
 {
   namespace Tasks
   {
-    void
-    Entity::setLabel(const std::string& label)
-    {
-      // Throw exception to prevent relabeling after reservation
-      if (m_id != DUNE_IMC_CONST_UNK_EID)
-      {
-        std::string prevlabel = m_owner->resolveEntity(m_id);
-        if (prevlabel != label)
-          throw std::runtime_error(DTR("entity label already set: ") + prevlabel + " -> " + label);
-      }
-
-      m_label = label;
-      m_ent_info.label = label;
-      m_ent_info.component = m_owner->getName();
-    }
-
     void
     Entity::setState(IMC::EntityState::StateEnum state,
                            Status::Code code)
@@ -63,7 +47,7 @@ namespace DUNE
         m_entity_state.description = DTR(Status::getString(code));
       m_entity_state_code = code;
 
-      if (new_state && (m_id != DUNE_IMC_CONST_UNK_EID))
+      if (new_state && (getId() != DUNE_IMC_CONST_UNK_EID))
         dispatch(m_entity_state);
     }
 
@@ -77,7 +61,7 @@ namespace DUNE
       m_entity_state.description = message;
       m_entity_state_code = -1;
 
-      if (new_state && (m_id != DUNE_IMC_CONST_UNK_EID))
+      if (new_state && (getId() != DUNE_IMC_CONST_UNK_EID))
         dispatch(m_entity_state);
     }
 
@@ -204,21 +188,6 @@ namespace DUNE
     }
 
     void
-    Entity::reportInfo(void)
-    {
-      dispatch(m_ent_info);
-    }
-
-    void
-    Entity::consume(const IMC::QueryEntityInfo* msg)
-    {
-      if (msg->getDestinationEntity() != getId() || msg->getDestinationEntity() != DUNE_IMC_CONST_UNK_EID)
-        return;
-
-      dispatchReply(*msg, m_ent_info);
-    }
-
-    void
     Entity::consume(const IMC::QueryEntityState* msg)
     {
       (void)msg;
@@ -233,13 +202,5 @@ namespace DUNE
 
       reportActivationState();
     }
-
-    void
-    Entity::dispatch(IMC::Message* msg)
-    {
-      msg->setSourceEntity(getId());
-      m_owner->dispatch(msg, DF_KEEP_SRC_EID);
-    }
-
   }
 }

@@ -101,14 +101,20 @@ namespace DUNE
     }
 
     void
-    Task::reserveEntity(Entity& entity)
+    Task::reserveEntity(PlainEntity& entity)
     {
       if (entity.getLabel().empty())
         throw std::runtime_error(DTR("entity label is not configured"));
 
       entity.setId(m_ctx.entities.reserve(entity.getLabel(), getName()));
 
-      bind<IMC::QueryEntityInfo, Entity>(&entity);
+      bind<IMC::QueryEntityInfo, PlainEntity>(&entity);
+    }
+
+    void
+    Task::reserveEntity(Entity& entity)
+    {
+      reserveEntity(static_cast<PlainEntity&>(entity));
       bind<IMC::QueryEntityState, Entity>(&entity);
       bind<IMC::QueryEntityActivationState, Entity>(&entity);
     }

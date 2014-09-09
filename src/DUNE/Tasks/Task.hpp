@@ -410,7 +410,14 @@ namespace DUNE
       unsigned int
       reserveEntity(const std::string& label);
 
-      //! Associate an entity object with an automatically generated
+      //! Associate a PlainEntity object with an automatically generated
+      //! number (entity id).
+      //! @param[in,out] label entity name/label.
+      //! @return PlainEntity object.
+      void
+      reserveEntity(PlainEntity& entity);
+
+      //! Associate an Entity object with an automatically generated
       //! number (entity id).
       //! @param[in,out] label entity name/label.
       //! @return Entity object.

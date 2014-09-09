@@ -31,51 +31,24 @@
 // ISO C++ 98 headers.
 #include <stdexcept>
 
+#include <DUNE/Tasks/PlainEntity.hpp>
+#include <DUNE/Status/Messages.hpp>
+
 namespace DUNE
 {
   namespace Tasks
   {
     class Task;
 
-    class Entity
+    class Entity : public PlainEntity
     {
     public:
       Entity(Task* task):
-        m_owner(task),
-        m_id(DUNE_IMC_CONST_UNK_EID),
+        PlainEntity(task),
         m_entity_state_code(-1),
         m_next_act_state(NAS_SAME)
       {
         m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
-      }
-
-      //! Retrieve the entity label.
-      //! @return entity label.
-      const std::string
-      getLabel(void) const
-      {
-        return m_label;
-      }
-
-      //! Set the entity label.
-      //! @param[in] label entity label.
-      void
-      setLabel(const std::string& label);
-
-      //! Retrieve the entity identifier.
-      //! @return entity identifier.
-      unsigned int
-      getId(void) const
-      {
-        return m_id;
-      }
-
-      //! Set the entity identifier.
-      //! @param[in] id entity identifier.
-      void
-      setId(unsigned int id)
-      {
-        m_id = id;
       }
 
       void
@@ -159,22 +132,6 @@ namespace DUNE
       void
       succeedDeactivation(void);
 
-      void
-      reportInfo(void);
-
-      void
-      consume(const IMC::QueryEntityInfo* msg);
-
-      //! Consume QueryEntityState messages andreply accordingly.
-      //! @param[in] msg QueryEntityState message.
-      void
-      consume(const IMC::QueryEntityState* msg);
-
-      //! Consume QueryEntityActivationState messages and replyaccordingly.
-      //! @param[in] msg QueryEntityActivationState message.
-      void
-      consume(const IMC::QueryEntityActivationState* msg);
-
       bool
       operator==(std::string label)
       {
@@ -187,6 +144,16 @@ namespace DUNE
         return getId() == id;
       }
 
+      //! Consume QueryEntityState messages andreply accordingly.
+      //! @param[in] msg QueryEntityState message.
+      void
+      consume(const IMC::QueryEntityState* msg);
+
+      //! Consume QueryEntityActivationState messages and replyaccordingly.
+      //! @param[in] msg QueryEntityActivationState message.
+      void
+      consume(const IMC::QueryEntityActivationState* msg);
+
     private:
       enum NextActivationState
       {
@@ -198,14 +165,6 @@ namespace DUNE
         NAS_INACTIVE
       };
 
-      //! Owner task.
-      Task* m_owner;
-      //! Entity Id.
-      unsigned int m_id;
-      //! Entity Label.
-      std::string m_label;
-      //! Entity information message.
-      IMC::EntityInfo m_ent_info;
       //! Entity state.
       IMC::EntityState m_entity_state;
       //! Last entity state description code (-1 means none).
@@ -214,32 +173,6 @@ namespace DUNE
       IMC::EntityActivationState m_act_state;
       //! Next activation state.
       NextActivationState m_next_act_state;
-
-      //! Dispatch message to the message bus.
-      //! @param[in] msg message pointer.
-      void
-      dispatch(IMC::Message* msg);
-
-      //! Dispatch message to the message bus.
-      //! @param[in] msg message reference.
-
-      void
-      dispatch(IMC::Message& msg)
-      {
-        dispatch(&msg);
-      }
-
-      //! Dispatch message to the message bus in reply to another
-      //! message.
-      //! @param[in] original original message.
-      //! @param[in] msg message reference.
-      void
-      dispatchReply(const IMC::Message& original, IMC::Message& msg)
-      {
-        msg.setDestination(original.getSource());
-        msg.setDestinationEntity(original.getSourceEntity());
-        dispatch(msg);
-      }
     };
   }
 }
