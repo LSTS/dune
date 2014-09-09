@@ -27,6 +27,8 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include "Functions.hpp"
+
 
 namespace Sensors
 {
@@ -162,10 +164,15 @@ namespace Sensors
       }
 
       void
-      getName(char bfr[],int &i)
+      getAnalogName()
       {
-        if(i>=5)
-          return;
+        printf("getAnalogName!!!\n");
+      }
+
+
+      void
+      getDigName(char bfr[],int &i,int &k)
+      {
         if(strstr(bfr,P_SV) != NULL)
         {
           P_SV_flag = 1;
@@ -202,13 +209,9 @@ namespace Sensors
           i++;
         }
         if(strstr(bfr,"empty") != NULL)
-        {
-          S_L_Tu_flag = 1;
-          strcpy(s_config[i].name, "empty");
-          s_config[i].channel = bfr[0] - '0';
-          i++;
-        }
-        std::cout<<"Name - "<<s_config[i-1].name<<" | "<<"Channel - "<<s_config[i-1].channel<<std::endl;
+          k++;
+
+        std::cout<<"Name - "<<s_config[i-1].name<<" | "<<"Channel - "<<s_config[i-1].channel<<" | "<<"i+k - "<<(i+k)<<std::endl;
       }
 
       void
@@ -216,16 +219,29 @@ namespace Sensors
       {
         char bfr[255];
         int i;
+        int k;
 
         i = 0;
+        k = 0;
 
         while(0 != std::strcmp(bfr,"Detection complete\r\n"))
         {
           if(!Poll::poll(*m_uart, 1.0))
             continue;
+
           //! Check sensor configuration
           m_uart->readString(bfr,sizeof(bfr));
-          getName(bfr,i);
+
+          //! Avoid to send garbage to functions
+          if(0 != strcmp(bfr,"Detecting Sensors"))
+          {
+            //! Function to detect digital sensors configuration
+            if((i+k)<5)
+              getDigName(bfr,i,k);
+            //! Function to detect analog sensors configuration
+            if(i>=5)
+              getAnalogName();
+          }
         }
 
             if( (P_SV_flag == 1 || P_C_flag == 1) && S_U_P_flag == 1 && S_U_T_flag == 1)
@@ -326,7 +342,6 @@ namespace Sensors
         float vals[8];
         int n_data;
         int n;
-        int k;
 
         while (!stopping())
         {
@@ -348,21 +363,13 @@ namespace Sensors
           n_data = 0;
           n = 0;
           while( 1 == sscanf(ptr,"%f%n",&vals[n_data],&n) )
-          {std::cout<<"While - "<<vals[n_data]<<" | "<<n_data<<std::endl;
+          {//std::cout<<"While - "<<vals[n_data]<<" | "<<n_data<<std::endl;
             n_data++;
             ptr +=n;
           }
-          k = 0;
-          //! Extract Data before dispatch
-          for(int i = 0; i<n_data; i++)
-          {
-            if(strcmp(s_config[i].name, "empty") != 0)
-            {
-              s_config[i].value = vals[k];std::cout<<"For - "<<s_config[i].value<<" | "<<s_config[i].name<<" | "<<s_config[i].channel<<std::endl;
-              k++;
-            }
-          }
 
+          for(int i = 0; i<n_data; i++)
+            std::cout<<"Name - "<<s_config[i].name<<" | "<<"Channel - "<<s_config[i].channel<<std::endl;
 
           if (rv == 0)
             throw RestartNeeded(DTR("I/O error"), 5);
