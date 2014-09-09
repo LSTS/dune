@@ -214,6 +214,32 @@ namespace DUNE
       IMC::EntityActivationState m_act_state;
       //! Next activation state.
       NextActivationState m_next_act_state;
+
+      //! Dispatch message to the message bus.
+      //! @param[in] msg message pointer.
+      void
+      dispatch(IMC::Message* msg);
+
+      //! Dispatch message to the message bus.
+      //! @param[in] msg message reference.
+
+      void
+      dispatch(IMC::Message& msg)
+      {
+        dispatch(&msg);
+      }
+
+      //! Dispatch message to the message bus in reply to another
+      //! message.
+      //! @param[in] original original message.
+      //! @param[in] msg message reference.
+      void
+      dispatchReply(const IMC::Message& original, IMC::Message& msg)
+      {
+        msg.setDestination(original.getSource());
+        msg.setDestinationEntity(original.getSourceEntity());
+        dispatch(msg);
+      }
     };
   }
 }

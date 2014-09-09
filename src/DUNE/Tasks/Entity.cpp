@@ -56,7 +56,7 @@ namespace DUNE
       m_entity_state_code = code;
 
       if (new_state && (m_id != DUNE_IMC_CONST_UNK_EID))
-        m_owner->dispatch(m_entity_state);
+        dispatch(m_entity_state);
     }
 
     void
@@ -70,19 +70,19 @@ namespace DUNE
       m_entity_state_code = -1;
 
       if (new_state && (m_id != DUNE_IMC_CONST_UNK_EID))
-        m_owner->dispatch(m_entity_state);
+        dispatch(m_entity_state);
     }
 
     void
     Entity::reportState(void)
     {
-      m_owner->dispatch(m_entity_state);
+      dispatch(m_entity_state);
     }
 
     void
     Entity::reportActivationState(void)
     {
-      m_owner->dispatch(m_act_state);
+      dispatch(m_act_state);
     }
 
     void
@@ -106,13 +106,13 @@ namespace DUNE
           m_next_act_state = NAS_ACTIVE;
         }
 
-        m_owner->dispatch(m_act_state);
+        dispatch(m_act_state);
         return;
       }
 
       m_next_act_state = NAS_SAME;
       m_act_state.state = IMC::EntityActivationState::EAS_ACT_IP;
-      m_owner->dispatch(m_act_state);
+      dispatch(m_act_state);
     }
 
     void
@@ -136,13 +136,13 @@ namespace DUNE
           m_next_act_state = NAS_INACTIVE;
         }
 
-        m_owner->dispatch(m_act_state);
+        dispatch(m_act_state);
         return;
       }
 
       m_next_act_state = NAS_SAME;
       m_act_state.state = IMC::EntityActivationState::EAS_DEACT_IP;
-      m_owner->dispatch(m_act_state);
+      dispatch(m_act_state);
     }
 
     void
@@ -150,21 +150,21 @@ namespace DUNE
     {
       m_act_state.state = IMC::EntityActivationState::EAS_ACT_FAIL;
       m_act_state.error = reason;
-      m_owner->dispatch(m_act_state);
+      dispatch(m_act_state);
 
       m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
       m_act_state.error.clear();
-      m_owner->dispatch(m_act_state);
+      dispatch(m_act_state);
     }
 
     void
     Entity::succeedActivation(void)
     {
       m_act_state.state = IMC::EntityActivationState::EAS_ACT_DONE;
-      m_owner->dispatch(m_act_state);
+      dispatch(m_act_state);
 
       m_act_state.state = IMC::EntityActivationState::EAS_ACTIVE;
-      m_owner->dispatch(m_act_state);
+      dispatch(m_act_state);
 
       if (m_next_act_state == NAS_INACTIVE)
         requestDeactivation();
@@ -174,10 +174,10 @@ namespace DUNE
     Entity::succeedDeactivation(void)
     {
       m_act_state.state = IMC::EntityActivationState::EAS_DEACT_DONE;
-      m_owner->dispatch(m_act_state);
+      dispatch(m_act_state);
 
       m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
-      m_owner->dispatch(m_act_state);
+      dispatch(m_act_state);
 
       if (m_next_act_state == NAS_ACTIVE)
         requestActivation();
@@ -188,17 +188,17 @@ namespace DUNE
     {
       m_act_state.state = IMC::EntityActivationState::EAS_DEACT_FAIL;
       m_act_state.error = reason;
-      m_owner->dispatch(m_act_state);
+      dispatch(m_act_state);
 
       m_act_state.state = IMC::EntityActivationState::EAS_ACTIVE;
       m_act_state.error.clear();
-      m_owner->dispatch(m_act_state);
+      dispatch(m_act_state);
     }
 
     void
     Entity::reportInfo(void)
     {
-      m_owner->dispatch(m_ent_info);
+      dispatch(m_ent_info);
     }
 
     void
@@ -207,7 +207,7 @@ namespace DUNE
       if (msg->getDestinationEntity() != getId() || msg->getDestinationEntity() != DUNE_IMC_CONST_UNK_EID)
         return;
 
-      m_owner->dispatchReply(*msg, m_ent_info);
+      dispatchReply(*msg, m_ent_info);
     }
 
     void
@@ -224,6 +224,13 @@ namespace DUNE
         return;
 
       reportActivationState();
+    }
+
+    void
+    Entity::dispatch(IMC::Message* msg)
+    {
+      msg->setSourceEntity(getId());
+      m_owner->dispatch(msg, DF_KEEP_SRC_EID);
     }
 
   }
