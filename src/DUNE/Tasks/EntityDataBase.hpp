@@ -52,10 +52,6 @@ namespace DUNE
         std::string task_name;
         // Id.
         unsigned int id;
-        // Activation time.
-        uint16_t act_time;
-        // Deactivation time.
-        uint16_t deact_time;
       };
 
       struct InvalidLabel: public std::runtime_error
@@ -121,8 +117,7 @@ namespace DUNE
       }
 
       unsigned int
-      reserve(const std::string& label, const std::string& task_name,
-              uint16_t act_time, uint16_t deact_time)
+      reserve(const std::string& label, const std::string& task_name)
       {
         if (label.size() == 0)
           throw InvalidLabel();
@@ -138,8 +133,6 @@ namespace DUNE
         entry->label = label;
         entry->id = id;
         entry->task_name = task_name;
-        entry->act_time = act_time;
-        entry->deact_time = deact_time;
         m_by_id[id] = entry;
         m_by_label[label] = entry;
 
