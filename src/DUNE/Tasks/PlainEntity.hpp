@@ -97,12 +97,6 @@ namespace DUNE
       void
       consume(const IMC::QueryEntityInfo* msg);
 
-    protected:
-      //! Owner task.
-      Task* m_owner;
-      //! Entity information message.
-      IMC::EntityInfo m_ent_info;
-
       //! Dispatch message to the message bus.
       //! @param[in] msg message pointer.
       void
@@ -110,7 +104,6 @@ namespace DUNE
 
       //! Dispatch message to the message bus.
       //! @param[in] msg message reference.
-
       void
       dispatch(IMC::Message& msg)
       {
@@ -128,6 +121,12 @@ namespace DUNE
         msg.setDestinationEntity(original.getSourceEntity());
         dispatch(msg);
       }
+
+    protected:
+      //! Owner task.
+      Task* m_owner;
+      //! Entity information message.
+      IMC::EntityInfo m_ent_info;
 
     private:
       //! Entity Id.
