@@ -60,8 +60,12 @@ namespace Monitors
       float depth_threshold;
       //! Air Speed threshold.
       float airspeed_threshold;
+      //! Altitude threshold
+      float altitude_threshold;
       //! Vehicle type.
       std::string vtype;
+      //! Vehicle subtype
+      std::string stype;
       //! Medium Sensor Entity Label.
       std::string label_medium;
     };
@@ -89,6 +93,8 @@ namespace Monitors
       float m_gndspeed;
       //! Medium Sensor entity id.
       unsigned m_medium_eid;
+      //! Vehicle Altitude
+      float m_altitude;
       //! Task arguments.
       Arguments m_args;
 
@@ -96,7 +102,8 @@ namespace Monitors
         Tasks::Periodic(name, ctx),
         m_depth(0),
         m_airspeed(0),
-        m_gndspeed(0)
+        m_gndspeed(0),
+        m_altitude(0)
       {
         param("Initialization Time", m_args.init_time)
         .units(Units::Second)
@@ -130,10 +137,20 @@ namespace Monitors
         .defaultValue("12.0")
         .description("Minimum air speed necessary to consider a vehicle in air");
 
+        param("Altitude Threshold", m_args.altitude_threshold)
+        .units(Units::Meter)
+        .defaultValue("1")
+        .description("Minimum altitude necessary to consider a vehicle (Copter) in air");
+
         param("Vehicle Type", m_args.vtype)
         .defaultValue("UUV")
         .values("UUV, ASV, UAV")
         .description("Type of vehicle");
+
+        param("Vehicle Sub-Type", m_args.stype)
+        .defaultValue("FixedWing")
+        .values("FixedWing, Copter")
+        .description("Sub-Type of vehicle");
 
         param("Entity Label - Medium Sensor", m_args.label_medium)
         .defaultValue("Medium Sensor")
@@ -200,6 +217,8 @@ namespace Monitors
           return;
 
         m_depth = msg->depth;
+        // For UAVs: Height is positive upwards, z is positive downwards.
+        m_altitude = msg->height - msg->z;
       }
 
       void
@@ -314,11 +333,22 @@ namespace Monitors
           check();
           if (m_args.vtype == "UAV")
           {
-            if (m_airspeed < m_args.airspeed_threshold)
-              m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+            if (m_args.stype == "Copter")
+            {
+              if (m_altitude < m_args.altitude_threshold)
+                m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+              else
+                m_vm.medium = IMC::VehicleMedium::VM_AIR;
+            }
             else
-              m_vm.medium = IMC::VehicleMedium::VM_AIR;
+            {
+              if (m_airspeed < m_args.airspeed_threshold)
+                m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+              else
+                m_vm.medium = IMC::VehicleMedium::VM_AIR;
+            }
           }
+
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           dispatch(m_vm);
@@ -340,14 +370,33 @@ namespace Monitors
         switch (m_vm.medium)
         {
           case (IMC::VehicleMedium::VM_AIR):
-            if (m_airspeed < m_args.airspeed_threshold && m_gndspeed < 2)
-              m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+            {
+              if (m_args.stype == "Copter")
+              {
+                if (m_altitude < m_args.altitude_threshold)
+                  m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+              }
+              else {
+                if (m_airspeed < m_args.airspeed_threshold && m_gndspeed < 2)
+                  m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+              }
+            }
             break;
 
           case (IMC::VehicleMedium::VM_GROUND):
-            check();
-            if (m_airspeed > m_args.airspeed_threshold && m_args.vtype == "UAV")
-              m_vm.medium = IMC::VehicleMedium::VM_AIR;
+            {
+              check();
+              if (m_args.stype == "Copter")
+              {
+                if (m_altitude > m_args.altitude_threshold)
+                  m_vm.medium = IMC::VehicleMedium::VM_AIR;
+              }
+              else
+              {
+                if (m_airspeed > m_args.airspeed_threshold && m_args.vtype == "UAV")
+                  m_vm.medium = IMC::VehicleMedium::VM_AIR;
+              }
+            }
             break;
 
           case (IMC::VehicleMedium::VM_WATER):
