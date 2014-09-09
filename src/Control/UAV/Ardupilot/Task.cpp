@@ -937,6 +937,7 @@ namespace Control
           m_pcs.flags = PathControlState::FL_3DTRACK | PathControlState::FL_CCLOCKW;
           m_pcs.flags &= dpath->flags;
           m_pcs.lradius = dpath->lradius;
+          m_pcs.path_ref = dpath->path_ref;
 
           dispatch(m_pcs);
 
