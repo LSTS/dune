@@ -127,11 +127,11 @@ namespace Plan
       }
 
       //! Compute error in prediction
-      //! @return get total energy relatively to battery capacity
+      //! @return get total energy relatively to battery capacity in percentage
       inline float
       getRelativeTotal(void) const
       {
-        return getTotal() / m_pmodel->getBatteryCapacity();
+        return getTotal() / m_pmodel->getBatteryCapacity() * 100.0;
       }
 
       //! Get the total estimated fuel consumption
