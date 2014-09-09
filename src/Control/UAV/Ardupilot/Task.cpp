@@ -57,6 +57,30 @@ namespace Control
         VEHICLE_COPTER
       };
 
+      //! List of arducopter modes
+      enum APM_copterModes {
+        CP_MODE_STABILIZE=0,                     // hold level position
+        CP_MODE_ACRO=1,                          // rate control
+        CP_MODE_ALT_HOLD=2,                      // AUTO control
+        CP_MODE_AUTO=3,                          // AUTO control
+        CP_MODE_GUIDED=4,                        // AUTO control
+        CP_MODE_LOITER=5,                        // Hold a single location
+        CP_MODE_RTL=6,                           // AUTO control
+        CP_MODE_CIRCLE=7,                        // AUTO control
+        CP_MODE_POSITION=8,                      // AUTO control
+        CP_MODE_LAND=9,                          // AUTO control
+        CP_MODE_OF_LOITER=10,                    // Hold a single location using optical flow sensor
+        CP_MODE_DRIFT=11,                        // DRIFT mode (Note: 12 is no longer used)
+        CP_MODE_DUNE=12,
+        CP_MODE_SPORT=13                       // earth frame rate control
+      };
+
+      //! List of ArduPlane modes
+      enum APM_planeModes {
+        PL_MODE_AUTO=10,
+        PL_MODE_GUIDED=15
+      };
+
       struct RadioChannel
       {
         //! PWM range
@@ -1733,9 +1757,17 @@ namespace Control
           if (!m_args.ardu_tracker)
             return;
 
+          //! Check of guided mode
+          bool is_valid_mode = false;
+
+          if (m_vehicle_type == VEHICLE_COPTER)
+            is_valid_mode = (m_mode == CP_MODE_GUIDED || (m_mode == CP_MODE_AUTO && m_current_wp == 3)) ? true : false;
+          else
+            is_valid_mode = (m_mode == 15             || (m_mode == 10           && m_current_wp == 3)) ? true : false;
+
           if ((nav_out.wp_dist <= m_desired_radius + m_args.ltolerance)
              && (nav_out.wp_dist >= m_desired_radius - m_args.ltolerance)
-             && (m_mode == 15 || (m_mode == 10 && m_current_wp == 3)))
+             && is_valid_mode)
           {
             m_pcs.flags |= PathControlState::FL_LOITERING;
           }
@@ -1745,7 +1777,7 @@ namespace Control
           if (!m_changing_wp
              && (nav_out.wp_dist <= m_desired_radius + m_args.secs * m_gnd_speed)
              && (nav_out.wp_dist >= m_desired_radius - m_args.secs * m_gnd_speed)
-             && (m_mode == 15 || (m_mode == 10 && m_current_wp == 3))
+             && is_valid_mode
              && since_last_wp > 1.0)
           {
             m_pcs.flags |= PathControlState::FL_NEAR;
