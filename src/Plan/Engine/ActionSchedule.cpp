@@ -34,50 +34,30 @@ namespace Plan
   {
     ActionSchedule::ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
                                    const std::vector<IMC::PlanManeuver*>& nodes,
-                                   const Plans::Duration& durations,
-                                   const Duration::ManeuverDuration::const_iterator last_dur,
+                                   const Timeline& tline,
                                    const std::map<std::string, IMC::EntityInfo>& cinfo):
       m_task(task),
       m_cinfo(&cinfo)
     {
-      // Get plan duration
-      if (last_dur == durations.end())
-        m_plan_duration = -1.0;
-      else
-        m_plan_duration = last_dur->second.back();
+      // Set execution duration
+      m_execution_duration = tline.getExecutionDuration();
 
       // start by adding "start" plan actions
-      parseStartActions(spec->start_actions, &m_plan_actions, m_plan_duration);
+      parseStartActions(spec->start_actions, &m_plan_actions, m_execution_duration);
 
       std::vector<IMC::PlanManeuver*>::const_iterator itr;
       itr = nodes.begin();
 
-      // Maneuver's start and end ETA
-      float maneuver_start_eta = -1.0;
-      float maneuver_end_eta = -1.0;
-
       // Iterate through plan maneuvers
       for (; itr != nodes.end(); ++itr)
       {
-        if (itr == nodes.begin())
-          maneuver_start_eta = m_plan_duration;
-        else
-          maneuver_start_eta = maneuver_end_eta;
-
-        Duration::ManeuverDuration::const_iterator dur;
-        dur = durations.find((*itr)->maneuver_id);
-
-        if (dur == durations.end())
-          maneuver_end_eta = -1.0;
-        else if (dur->second.size())
-          maneuver_end_eta = m_plan_duration - dur->second.back();
-        else
-          maneuver_end_eta = -1.0;
-
         EventActions eact;
 
-        parseStartActions((*itr)->start_actions, &eact, maneuver_start_eta);
-        parseEndActions((*itr)->end_actions, &eact, maneuver_end_eta);
+        parseStartActions((*itr)->start_actions, &eact,
+                          tline.getManeuverStartETA((*itr)->maneuver_id));
+
+        parseEndActions((*itr)->end_actions, &eact,
+                        tline.getManeuverEndETA((*itr)->maneuver_id));
 
         m_onevent.insert(std::pair<std::string, EventActions>((*itr)->maneuver_id, eact));
       }
@@ -102,10 +82,10 @@ namespace Plan
       m_task(task),
       m_cinfo(&cinfo)
     {
-      m_plan_duration = -1.0;
+      m_execution_duration = -1.0;
 
       // start by adding "start" plan actions
-      parseStartActions(spec->start_actions, &m_plan_actions, m_plan_duration);
+      parseStartActions(spec->start_actions, &m_plan_actions, m_execution_duration);
 
       std::vector<IMC::PlanManeuver*>::const_iterator itr;
       itr = nodes.begin();
@@ -301,7 +281,7 @@ namespace Plan
 
       if (next != m_timed.end())
       {
-        if (next->second.top().sched_time >= m_plan_duration)
+        if (next->second.top().sched_time >= m_execution_duration)
           return true;
       }
 
@@ -318,9 +298,147 @@ namespace Plan
       next = nextSchedule();
 
       if (next != m_timed.end())
-        return next->second.top().sched_time - m_plan_duration;
+        return next->second.top().sched_time - m_execution_duration;
 
       return -1.0;
+    }
+
+    void
+    ActionSchedule::fillComponentActiveTime(const std::vector<IMC::PlanManeuver*>& nodes,
+                                            const Timeline& timeline,
+                                            ComponentActiveTime& cat)
+    {
+      cat.clear();
+      std::set<std::string> active_entities;
+
+      {
+        // Get the plan start actions first
+        std::vector<IMC::SetEntityParameters*>::const_iterator itr;
+        itr = m_plan_actions.start_actions.begin();
+        for (; itr != m_plan_actions.start_actions.end(); ++itr)
+        {
+          // Iterator to parameter active
+          IMC::MessageList<IMC::EntityParameter>::const_iterator act_itr;
+          act_itr = getParameterActive((*itr)->params);
+
+          if (act_itr == (*itr)->params.end())
+            continue;
+
+          if ((*act_itr)->value == "true")
+            active_entities.insert((*itr)->name);
+          else
+            active_entities.erase((*itr)->name);
+        }
+      }
+
+      // Update ComponentActiveTime
+      {
+        std::set<std::string>::const_iterator cat_itr;
+        cat_itr = active_entities.begin();
+        for (; cat_itr != active_entities.end(); ++cat_itr)
+          cat.addActiveTime(*cat_itr, timeline.getPlanETA());
+      }
+
+      // Get the maneuver start and end actions
+      // Cycle through the nodes
+      std::vector<IMC::PlanManeuver*>::const_iterator pitr;
+      pitr = nodes.begin();
+      for (; pitr != nodes.end(); ++pitr)
+      {
+        std::string maneuver_id = (*pitr)->maneuver_id;
+
+        EventMap::const_iterator eitr;
+        eitr = m_onevent.find(maneuver_id);
+
+        if (eitr == m_onevent.end())
+          continue;
+
+        // Create two pointers to EventActions.start_actions and .end_actions
+        const std::vector<IMC::SetEntityParameters*>* actions[2];
+        actions[0] = &eitr->second.start_actions;
+        actions[1] = &eitr->second.end_actions;
+
+        // Cycle through both sets of maneuver actions
+        for (unsigned i = 0; i < 2; i++)
+        {
+          std::vector<IMC::SetEntityParameters*>::const_iterator itr;
+          itr = actions[i]->begin();
+
+          // Cycle through maneuver's start (i == 0) or end actions (i == 1)
+          for (; itr != actions[i]->end(); ++itr)
+          {
+            std::string entity_id = (*itr)->name;
+
+            // Iterator to parameter active
+            IMC::MessageList<IMC::EntityParameter>::const_iterator act_itr;
+            act_itr = getParameterActive((*itr)->params);
+
+            if (act_itr == (*itr)->params.end())
+              continue; // cannot find parameter active
+
+            // Check if it has already been activated
+            std::set<std::string>::const_iterator ae_itr;
+            ae_itr = active_entities.find(entity_id);
+            bool is_active = (ae_itr != active_entities.end());
+
+            // Get the eta for these actions we're parsing right now
+            float eta;
+            if (i == 0)
+              eta = timeline.getManeuverStartETA(maneuver_id);
+            else
+              eta = timeline.getManeuverEndETA(maneuver_id);
+
+            if ((*act_itr)->value == "true")
+            {
+              if (!is_active)
+              {
+                cat.addActiveTime(entity_id, eta);
+                active_entities.insert(entity_id);
+              }
+            }
+            else if (is_active)
+            {
+              cat.subtractActiveTime(entity_id, eta);
+              active_entities.erase(entity_id);
+            }
+          }
+        }
+      }
+
+      // Get timed actions into component active time
+      std::map<std::string, TimedStack> clone = m_timed;
+
+      std::map<std::string, TimedStack>::iterator itr = clone.begin();
+      for (; itr != clone.end(); ++itr)
+      {
+        while (!itr->second.empty())
+        {
+          TimedAction* ta = &itr->second.top();
+          // Check if it has already been activated
+          std::set<std::string>::const_iterator ae_itr;
+          ae_itr = active_entities.find(itr->first);
+          bool is_active = (ae_itr != active_entities.end());
+
+          if (ta->type == TYPE_DEACT)
+          {
+            if (is_active)
+            {
+              cat.subtractActiveTime(itr->first, ta->sched_time);
+              active_entities.erase(itr->first);
+            }
+          }
+          else
+          {
+            if (!is_active)
+            {
+              cat.addActiveTime(itr->first, ta->sched_time);
+              active_entities.insert(itr->first);
+            }
+          }
+
+          itr->second.pop();
+        }
+      }
     }
 
     // Private
@@ -376,7 +494,7 @@ namespace Plan
           uint16_t act_time = getActivationTime(sep->name);
           uint16_t deact_time = getDeactivationTime(sep->name);
 
-          if ((act_time > 0 || deact_time > 0) && (m_plan_duration >= 0.0))
+          if ((act_time > 0 || deact_time > 0) && (m_execution_duration >= 0.0))
           {
             event_based = false;
 

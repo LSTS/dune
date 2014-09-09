@@ -56,10 +56,10 @@ namespace Plan
     {
       //! Whether or not to compute plan's progress
       bool progress;
+      //! Whether or not to compute fuel prediction
+      bool fpredict;
       //! State report period
       float speriod;
-      //! Speed conversion parameters
-      Plans::SpeedModel speed_model;
       //! Duration of vehicle calibration process.
       uint16_t calibration_time;
       //! Abort when a payload fails to activate
@@ -70,6 +70,8 @@ namespace Plan
       float sk_radius;
       //! Speed in RPM for the station keeping
       float sk_rpm;
+      //! Entity label of the IMU
+      std::string label_imu;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -103,6 +105,10 @@ namespace Plan
       Time::Counter<float> m_report_timer;
       //! Map of component names to entityinfo
       std::map<std::string, IMC::EntityInfo> m_cinfo;
+      //! Source entity of the IMU
+      unsigned m_eid_imu;
+      //! IMU is enabled or not
+      bool m_imu_enabled;
       //! Task arguments.
       Arguments m_args;
 
@@ -110,11 +116,16 @@ namespace Plan
         DUNE::Tasks::Task(name, ctx),
         m_plan(NULL),
         m_db(NULL),
-        m_get_plan_stmt(NULL)
+        m_get_plan_stmt(NULL),
+        m_imu_enabled(false)
       {
         param("Compute Progress", m_args.progress)
         .defaultValue("false")
         .description("True if plan progress should be computed");
+
+        param("Fuel Prediction", m_args.fpredict)
+        .defaultValue("true")
+        .description("True if plan's fuel prediction should be computed");
 
         param("State Report Frequency", m_args.speriod)
         .defaultValue("3.0")
@@ -144,14 +155,9 @@ namespace Plan
         .units(Units::Meter)
         .description("Radius for the station keeping");
 
-        m_ctx.config.get("General", "Speed Conversion -- Actuation",
-                         "", m_args.speed_model.values[IMC::SUNITS_PERCENTAGE]);
-
-        m_ctx.config.get("General", "Speed Conversion -- RPM",
-                         "", m_args.speed_model.values[IMC::SUNITS_RPM]);
-
-        m_ctx.config.get("General", "Speed Conversion -- MPS",
-                         "", m_args.speed_model.values[IMC::SUNITS_METERS_PS]);
+        param("IMU Entity Label", m_args.label_imu)
+        .defaultValue("IMU")
+        .description("Entity label of the IMU for fuel prediction");
 
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
@@ -163,6 +169,7 @@ namespace Plan
         bind<IMC::VehicleState>(this);
         bind<IMC::EntityInfo>(this);
         bind<IMC::EntityActivationState>(this);
+        bind<IMC::FuelLevel>(this);
       }
 
       ~Task()
@@ -171,19 +178,23 @@ namespace Plan
       }
 
       void
+      onEntityResolution(void)
+      {
+        try
+        {
+          m_eid_imu = resolveEntity(m_args.label_imu);
+        }
+        catch (...)
+        {
+          m_eid_imu = 0;
+        }
+      }
+
+      void
       onUpdateParameters(void)
       {
         if (paramChanged(m_args.speriod))
           m_args.speriod = 1.0 / m_args.speriod;
-
-        try
-        {
-          SpeedConversion::validate(m_args.speed_model);
-        }
-        catch (std::runtime_error& e)
-        {
-          err("%s", e.what());
-        }
 
         if ((m_plan != NULL) && (paramChanged(m_args.progress) ||
                                  paramChanged(m_args.calibration_time)))
@@ -199,8 +210,15 @@ namespace Plan
       void
       onResourceAcquisition(void)
       {
-        m_plan = new Plan(&m_spec, m_args.progress, m_args.calibration_time,
-                          &m_args.speed_model);
+        try
+        {
+          m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict,
+                            this, m_args.calibration_time, &m_ctx.config);
+        }
+        catch (std::runtime_error& e)
+        {
+          err("%s", e.what());
+        }
       }
 
       void
@@ -300,6 +318,23 @@ namespace Plan
             }
           }
         }
+
+        if (msg->getSourceEntity() == m_eid_imu)
+        {
+          if (msg->state == IMC::EntityActivationState::EAS_ACTIVE)
+            m_imu_enabled = true;
+          else
+            m_imu_enabled = false;
+        }
+      }
+
+      void
+      consume(const IMC::FuelLevel* msg)
+      {
+        if (m_plan == NULL)
+          return;
+
+        m_plan->onFuelLevel(msg);
       }
 
       void
@@ -704,11 +739,14 @@ namespace Plan
       inline bool
       parsePlan(bool plan_startup)
       {
-        std::string desc;
-        if (!m_plan->parse(desc, &m_supported_maneuvers, plan_startup,
-                           m_cinfo, this, &m_state))
+        try
         {
-          onFailure(desc);
+          m_plan->parse(&m_supported_maneuvers, plan_startup,
+                        m_cinfo, m_imu_enabled, &m_state);
+        }
+        catch (Plan::ParseError& pe)
+        {
+          onFailure(pe.what());
           return false;
         }
 
@@ -997,7 +1035,7 @@ namespace Plan
           return;
 
         m_pcs.plan_progress = m_plan->updateProgress(&m_mcs);
-        m_pcs.plan_eta = (int32_t)m_plan->getPlanEta();
+        m_pcs.plan_eta = (int32_t)m_plan->getETA();
       }
 
       void

@@ -26,21 +26,21 @@
 //***************************************************************************
 
 // DUNE headers.
-#include <DUNE/Plans/Duration.hpp>
+#include <DUNE/Plans/TimeProfile.hpp>
 
 namespace DUNE
 {
   namespace Plans
   {
     float
-    Duration::distance2D(const Position& new_pos, const Position& last_pos)
+    TimeProfile::distance2D(const Position& new_pos, const Position& last_pos)
     {
       return Coordinates::WGS84::distance(new_pos.lat, new_pos.lon, 0.0,
                                           last_pos.lat, last_pos.lon, 0.0);
     }
 
     float
-    Duration::distance3D(const Position& new_pos, const Position& last_pos)
+    TimeProfile::distance3D(const Position& new_pos, const Position& last_pos)
     {
       float value = distance2D(new_pos, last_pos);
 
@@ -51,7 +51,7 @@ namespace DUNE
 
     template <typename Type>
     float
-    Duration::parseSimple(const Type* maneuver, Position& last_pos)
+    TimeProfile::parseSimple(const Type* maneuver, Position& last_pos)
     {
       float speed = convertSpeed(maneuver);
 
@@ -67,17 +67,22 @@ namespace DUNE
 
       last_pos = pos;
 
-      return travelled / speed;
+      float duration = travelled / speed;
+
+      // Update speed profile
+      m_speed_vec->push_back(SpeedProfile(maneuver, duration));
+
+      return duration;
     }
 
     template <typename Type>
     float
-    Duration::convertSpeed(const Type* maneuver)
+    TimeProfile::convertSpeed(const Type* maneuver)
     {
       if (m_speed_model == NULL)
         return 0.0;
 
-      float value = SpeedConversion::toMPS(*m_speed_model, maneuver->speed, maneuver->speed_units);
+      float value = m_speed_model->toMPS(maneuver->speed, maneuver->speed_units);
 
       if (value < 0.0)
         return 0.0;
@@ -86,13 +91,13 @@ namespace DUNE
     }
 
     inline float
-    Duration::compensate(float distance, float speed)
+    TimeProfile::compensate(float distance, float speed)
     {
       return std::max(0.0f, distance - Control::c_time_factor * speed);
     }
 
     float
-    Duration::computeZOffset(const Position& new_pos, const Position& last_pos)
+    TimeProfile::computeZOffset(const Position& new_pos, const Position& last_pos)
     {
       if (last_pos.z_units == new_pos.z_units)
       {
@@ -130,7 +135,7 @@ namespace DUNE
     }
 
     void
-    Duration::extractBathymetry(const std::string& str, Position& pos)
+    TimeProfile::extractBathymetry(const std::string& str, Position& pos)
     {
       (void)str;
 
@@ -140,7 +145,7 @@ namespace DUNE
 
     template <typename Type>
     void
-    Duration::extractPosition(const Type* maneuver, Position& pos)
+    TimeProfile::extractPosition(const Type* maneuver, Position& pos)
     {
       pos.lat = maneuver->lat;
       pos.lon = maneuver->lon;
@@ -152,7 +157,7 @@ namespace DUNE
     }
 
     void
-    Duration::extractPosition(const IMC::EstimatedState* state, Position& pos)
+    TimeProfile::extractPosition(const IMC::EstimatedState* state, Position& pos)
     {
       DUNE::Coordinates::toWGS84(*state, pos.lat, pos.lon);
       pos.z = state->depth;
@@ -162,7 +167,7 @@ namespace DUNE
     }
 
     void
-    Duration::extractPosition(const IMC::Elevator* maneuver, Position& pos)
+    TimeProfile::extractPosition(const IMC::Elevator* maneuver, Position& pos)
     {
       pos.lat = maneuver->lat;
       pos.lon = maneuver->lon;
@@ -173,7 +178,7 @@ namespace DUNE
     }
 
     void
-    Duration::extractPosition(const IMC::PopUp* maneuver, Position& pos)
+    TimeProfile::extractPosition(const IMC::PopUp* maneuver, Position& pos)
     {
       pos.lat = maneuver->lat;
       pos.lon = maneuver->lon;
@@ -184,7 +189,7 @@ namespace DUNE
     }
 
     bool
-    Duration::parse(const IMC::FollowPath* maneuver, Position& last_pos)
+    TimeProfile::parse(const IMC::FollowPath* maneuver, Position& last_pos)
     {
       float speed = convertSpeed(maneuver);
 
@@ -199,6 +204,10 @@ namespace DUNE
 
       if (!maneuver->points.size())
       {
+        // Update speed profile
+        m_speed_vec->push_back(SpeedProfile(0.0, 0));
+
+        // Update duration
         m_accum_dur->addDuration(0.0);
       }
       else
@@ -217,8 +226,13 @@ namespace DUNE
 
           last_pos = pos;
 
+          float duration = compensate(travelled, speed) / speed;
+
+          // Update speed profile
+          m_speed_vec->push_back(SpeedProfile(maneuver, duration));
+
           // compensate with path controller's eta factor
-          m_accum_dur->addDuration(compensate(travelled, speed) / speed);
+          m_accum_dur->addDuration(duration);
         }
       }
 
@@ -226,7 +240,7 @@ namespace DUNE
     }
 
     bool
-    Duration::parse(const IMC::Rows* maneuver, Position& last_pos)
+    TimeProfile::parse(const IMC::Rows* maneuver, Position& last_pos)
     {
       float speed = convertSpeed(maneuver);
 
@@ -254,14 +268,19 @@ namespace DUNE
       {
         // compensate with path controller's eta factor
         float travelled = compensate(*itr, speed);
-        m_accum_dur->addDuration(travelled / speed);
+        float duration = travelled / speed;
+
+        // Update speed profile
+        m_speed_vec->push_back(SpeedProfile(maneuver, duration));
+
+        m_accum_dur->addDuration(duration);
       }
 
       return true;
     }
 
     bool
-    Duration::parse(const IMC::YoYo* maneuver, Position& last_pos)
+    TimeProfile::parse(const IMC::YoYo* maneuver, Position& last_pos)
     {
       float speed = convertSpeed(maneuver);
 
@@ -280,13 +299,18 @@ namespace DUNE
 
       last_pos = pos;
 
-      m_accum_dur->addDuration(travelled / speed);
+      float duration = travelled / speed;
+
+      // Update speed profile
+      m_speed_vec->push_back(SpeedProfile(maneuver, duration));
+
+      m_accum_dur->addDuration(duration);
 
       return true;
     }
 
     bool
-    Duration::parse(const IMC::Elevator* maneuver, Position& last_pos)
+    TimeProfile::parse(const IMC::Elevator* maneuver, Position& last_pos)
     {
       float speed = convertSpeed(maneuver);
 
@@ -305,13 +329,18 @@ namespace DUNE
       // compensate with path controller's eta factor
       travelled = compensate(travelled, speed);
 
-      m_accum_dur->addDuration(travelled / speed);
+      float duration = travelled / speed;
+
+      // Update speed profile
+      m_speed_vec->push_back(SpeedProfile(maneuver, duration));
+
+      m_accum_dur->addDuration(duration);
 
       return true;
     }
 
     bool
-    Duration::parse(const IMC::PopUp* maneuver, Position& last_pos)
+    TimeProfile::parse(const IMC::PopUp* maneuver, Position& last_pos)
     {
       float speed = convertSpeed(maneuver);
 
@@ -340,6 +369,9 @@ namespace DUNE
         travel_time = 0;
       }
 
+      // Update speed profile
+      m_speed_vec->push_back(SpeedProfile(maneuver, travel_time));
+
       // Rising time and descending time
       float rising_time;
       float descending_time;
@@ -357,14 +389,19 @@ namespace DUNE
       // surface time
       float surface_time = c_fix_time;
 
+      // Update speed profile
+      m_speed_vec->push_back(SpeedProfile(maneuver, rising_time));
+      m_speed_vec->push_back(SpeedProfile(0.0, 0, surface_time));
+      m_speed_vec->push_back(SpeedProfile(maneuver, descending_time));
+
       m_accum_dur->addDuration(travel_time + rising_time + surface_time + descending_time);
 
       return true;
     }
 
-    Duration::ManeuverDuration::const_iterator
-    Duration::parse(const std::vector<IMC::PlanManeuver*>& nodes,
-                    const IMC::EstimatedState* state)
+    void
+    TimeProfile::parse(const std::vector<IMC::PlanManeuver*>& nodes,
+                       const IMC::EstimatedState* state)
     {
       Position pos;
       extractPosition(state, pos);
@@ -374,7 +411,7 @@ namespace DUNE
       for (; itr != nodes.end(); ++itr)
       {
         if ((*itr)->data.isNull())
-          return m_durations.end();
+          return;
 
         IMC::Message* msg = (*itr)->data.get();
 
@@ -386,7 +423,10 @@ namespace DUNE
         }
 
         Memory::clear(m_accum_dur);
-        m_accum_dur = new AccumulatedDurations(last_duration);
+        m_accum_dur = new TimeProfile::AccumulatedDurations(last_duration);
+
+        Memory::clear(m_speed_vec);
+        m_speed_vec = new std::vector<SpeedProfile>();
 
         bool parsed = false;
 
@@ -435,27 +475,34 @@ namespace DUNE
 
         if (!parsed)
         {
-          if (m_durations.empty() || itr == nodes.begin())
-            return m_durations.end();
+          if (m_profiles.empty() || itr == nodes.begin())
+            return;
 
           // return the duration from the previously computed maneuver
-          ManeuverDuration::const_iterator dtr;
-          dtr = m_durations.find((*(--itr))->maneuver_id);
+          const_iterator dtr;
+          dtr = m_profiles.find((*(--itr))->maneuver_id);
 
-          if (dtr->second.empty())
-            return m_durations.end();
+          if (dtr->second.durations.empty())
+            return;
 
-          return dtr;
+          m_last_valid = dtr->first;
+          return;
         }
 
-        std::pair<std::string, std::vector<float> > ent((*itr)->maneuver_id,
-                                                        m_accum_dur->vec);
-        m_durations.insert(ent);
+        // Update speeds and durations
+        Profile prof;
+        prof.durations = m_accum_dur->vec;
+        prof.speeds = *m_speed_vec;
+
+        std::pair<std::string, Profile > p_pair((*itr)->maneuver_id, prof);
+        m_profiles.insert(p_pair);
       }
 
       Memory::clear(m_accum_dur);
+      Memory::clear(m_speed_vec);
 
-      return m_durations.find(nodes.back()->maneuver_id);
+      m_last_valid = nodes.back()->maneuver_id;
+      return;
     }
   }
 }
