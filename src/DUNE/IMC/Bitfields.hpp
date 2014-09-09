@@ -61,6 +61,8 @@ namespace DUNE
       CL_VERTICAL_RATE = 0x00000200,
       //! Torque Control.
       CL_TORQUE = 0x00000400,
+      //! Force Control.
+      CL_FORCE = 0x00000800,
       //! Unspecified External Control.
       CL_EXTERNAL = 0x40000000,
       //! Non-overridable control.

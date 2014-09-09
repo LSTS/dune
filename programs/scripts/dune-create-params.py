@@ -93,15 +93,17 @@ for i18n in sint:
     lang = name + '.UTF-8'
 
     for ini in list_ini:
-        out =  ini + '.' + name + '.xml'
         os.environ['LC_ALL'] = lang
         os.environ['LANG'] = lang
         os.environ['LANGUAGE'] = lang
         subprocess.check_call(['./dune', '-c', ini, '-p', 'Hardware', '-X', dst_dir])
-        if os.path.exists(out):
-            try:
-                subprocess.check_call(['xmllint', '--format', out, '-o', 'tmp.xml'])
-                os.remove(out)
-                os.rename('tmp.xml', out)
-            except:
-                pass
+
+
+xmls = glob.glob(os.path.join(dst_dir, '*.xml'))
+for xml in xmls:
+    try:
+        subprocess.check_call(['xmllint', '--format', xml, '-o', 'tmp.xml'])
+        os.remove(xml)
+        os.rename('tmp.xml', xml)
+    except:
+        pass

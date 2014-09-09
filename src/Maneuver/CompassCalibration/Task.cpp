@@ -49,6 +49,8 @@ namespace Maneuver
       float cross_tol;
       //! Number of 360 degree turns until calibration
       float turns;
+      //! Perform compass calibration if true
+      bool compass_calib;
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -112,6 +114,10 @@ namespace Maneuver
         .defaultValue("1.0")
         .description("Number of 360 degree turns until calibration");
 
+        param("Calibrate Compass", m_args.compass_calib)
+        .defaultValue("true")
+        .description("Perform compass calibration if true");
+
         bindToManeuver<Task, IMC::CompassCalibration>();
         bind<IMC::EstimatedState>(this);
         bind<IMC::EulerAngles>(this);
@@ -123,6 +129,10 @@ namespace Maneuver
       {
         if (paramChanged(m_args.variation))
           m_args.variation = Angles::radians(m_args.variation);
+
+        if (paramChanged(m_args.compass_calib))
+          if (!isActive())
+            m_ccal.clear();
       }
 
       void
@@ -190,6 +200,9 @@ namespace Maneuver
         m_yoyo_ing = false;
         m_dispatched = false;
 
+        // Clear compass_calibration data
+        m_ccal.clear();
+
         double zref;
 
         if (m_zunits == IMC::Z_DEPTH)
@@ -231,16 +244,18 @@ namespace Maneuver
       consume(const IMC::EulerAngles* msg)
       {
         // Update Direct Cosine Matrix.
-        if (msg->getSourceEntity() == m_ahrs_eid)
-          m_ccal.updateDCM(*msg);
+        if (m_args.compass_calib)
+          if (msg->getSourceEntity() == m_ahrs_eid)
+            m_ccal.updateDCM(*msg);
       }
 
       void
       consume(const IMC::MagneticField* msg)
       {
         // Update stabilized magnetic field.
-        if (msg->getSourceEntity() == m_ahrs_eid)
-          m_ccal.updateField(*msg);
+        if (m_args.compass_calib)
+          if (msg->getSourceEntity() == m_ahrs_eid)
+            m_ccal.updateField(*msg);
       }
 
       void
@@ -327,6 +342,9 @@ namespace Maneuver
       void
       calibrate(void)
       {
+        if (!m_args.compass_calib)
+          return;
+
         Math::Matrix params = m_ccal.getCalibrationParams();
 
         // Fill message and send to bus.
@@ -353,6 +371,7 @@ namespace Maneuver
         }
         else
         {
+          m_ccal.clear();
           signalNoAltitude();
           return;
         }
