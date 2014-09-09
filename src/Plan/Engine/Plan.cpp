@@ -33,12 +33,13 @@ namespace Plan
   namespace Engine
   {
     Plan::Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-               Tasks::Task* task, uint16_t min_cal_time,
-               Parsers::Config* cfg):
+               bool fpredict, Tasks::Task* task,
+               uint16_t min_cal_time, Parsers::Config* cfg):
       m_spec(spec),
       m_curr_node(NULL),
       m_sequential(false),
       m_compute_progress(compute_progress),
+      m_predict_fuel(fpredict),
       m_progress(0.0),
       m_est_cal_time(0),
       m_profiles(NULL),
@@ -177,9 +178,12 @@ namespace Plan
           m_est_cal_time = (uint16_t)std::max(0.0f, diff);
           m_est_cal_time = (uint16_t)std::max(m_min_cal_time, m_est_cal_time);
 
-          Memory::clear(m_fpred);
-          m_fpred = new FuelPrediction(m_profiles, &m_cat, m_power_model,
-                                       m_speed_model, imu_enabled, tline.getPlanETA());
+          if (m_predict_fuel)
+          {
+            Memory::clear(m_fpred);
+            m_fpred = new FuelPrediction(m_profiles, &m_cat, m_power_model,
+                                         m_speed_model, imu_enabled, tline.getPlanETA());
+          }
         }
         else if (!m_sequential)
         {
@@ -212,14 +216,17 @@ namespace Plan
       if (m_sched != NULL)
         m_sched->planStopped(m_affected_ents);
 
-      if (m_fpred != NULL)
+      if (m_predict_fuel)
       {
-        if (!m_fpred->isFuelValid())
-          m_task->inf(DTR("fuel prediction error is not valid"));
-        else
-          m_task->inf(DTR("fuel prediction error: %.1f (%.1f)"),
-                      m_fpred->getPredictionError(),
-                      m_fpred->getRelativeTotal());
+        if (m_fpred != NULL)
+        {
+          if (!m_fpred->isFuelValid())
+            m_task->inf(DTR("fuel prediction error is not valid"));
+          else
+            m_task->inf(DTR("fuel prediction error: %.1f (%.1f)"),
+                        m_fpred->getPredictionError(),
+                        m_fpred->getRelativeTotal());
+        }
       }
     }
 
@@ -354,6 +361,9 @@ namespace Plan
     void
     Plan::onFuelLevel(const IMC::FuelLevel* msg)
     {
+      if (!m_predict_fuel)
+        return;
+
       if (m_fpred == NULL)
         return;
 

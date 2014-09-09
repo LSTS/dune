@@ -64,12 +64,13 @@ namespace Plan
       //! Default constructor.
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] compute_progress true if progress should be computed
+      //! @param[in] fpredict true if fuel prediction should be computed
       //! @param[in] task pointer to task
       //! @param[in] min_cal_time minimum calibration time in s.
       //! @param[in] cfg pointer to config object
       Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-           Tasks::Task* task, uint16_t min_cal_time,
-           Parsers::Config* cfg);
+           bool fpredict, Tasks::Task* task,
+           uint16_t min_cal_time, Parsers::Config* cfg);
 
       //! Destructor
       ~Plan(void);
@@ -278,6 +279,8 @@ namespace Plan
       bool m_sequential;
       //! Whether or not to compute plan's progress
       bool m_compute_progress;
+      //! Whether or not to compute fuel prediction
+      bool m_predict_fuel;
       //! Current progress if any
       float m_progress;
       //! Estimated required calibration time
