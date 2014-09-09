@@ -46,11 +46,6 @@ namespace DUNE
     class ControlCommand: public Message
     {
     };
-
-    //! Super type Payload.
-    class Payload: public Message
-    {
-    };
   }
 }
 
