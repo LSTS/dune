@@ -203,7 +203,16 @@ namespace DUNE
     void
     Task::updateParameters(bool act_deact)
     {
-      m_entity.setLabel(m_args.elabel);
+      try
+      {
+        m_entity.setLabel(m_args.elabel);
+      }
+      catch(std::exception& e)
+      {
+        err(DTR("unable to set main entity label: %s"), e.what());
+        m_params.set(DTR_RT("Entity Label"), m_entity.getLabel());
+      }
+
       m_entity.setActTimes(m_args.act_time, m_args.deact_time);
       m_entity.reportInfo();
 
