@@ -55,6 +55,7 @@ namespace Maneuver
       //! @param[in] args stationkeeping arguments
       StationKeeping(Maneuvers::Maneuver* task, StationKeepingArgs* args):
         m_skeep(NULL),
+        m_end_time(-1.0),
         m_task(task),
         m_args(args)
       { }
