@@ -39,6 +39,14 @@ namespace DUNE
     void
     Entity::setLabel(const std::string& label)
     {
+      // Throw exception to prevent relabeling after reservation
+      if (m_id != DUNE_IMC_CONST_UNK_EID)
+      {
+        std::string prevlabel = m_owner->resolveEntity(m_id);
+        if (prevlabel != label)
+          throw std::runtime_error(DTR("entity label already set: ") + prevlabel + " -> " + label);
+      }
+
       m_label = label;
       m_ent_info.label = label;
       m_ent_info.component = m_owner->getName();
