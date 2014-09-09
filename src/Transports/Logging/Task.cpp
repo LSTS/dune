@@ -256,8 +256,6 @@ namespace Transports
           info.id = devs[i]->id;
           info.label = devs[i]->label;
           info.component = devs[i]->task_name;
-          info.act_time = devs[i]->act_time;
-          info.deact_time = devs[i]->deact_time;
           logMessage(&info);
         }
 
