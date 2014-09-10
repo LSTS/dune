@@ -82,8 +82,16 @@ namespace Plan
                      float total_duration):
 
         m_pmodel(power_model),
-        m_starting_fuel(-1.0f)
+        m_starting_fuel(-1.0f),
+        m_valid(true)
       {
+        if (profiles == NULL || cat == NULL ||
+            speed_model == NULL || power_model == NULL)
+        {
+          m_valid = false;
+          return;
+        }
+
         computeHotelEnergy(total_duration);
         computeMotionEnergy(profiles, speed_model);
         computePayloadEnergy(cat);
@@ -131,7 +139,10 @@ namespace Plan
       inline float
       getRelativeTotal(void) const
       {
-        return getTotal() / m_pmodel->getBatteryCapacity() * 100.0;
+        if (m_valid)
+          return getTotal() / m_pmodel->getBatteryCapacity() * 100.0;
+        else
+          return -1.0;
       }
 
       //! Get the total estimated fuel consumption
@@ -139,9 +150,12 @@ namespace Plan
       float
       getTotal(void) const
       {
+        if (!m_valid)
+          return -1.0;
+
         float total = 0.0f;
         for (unsigned i = 0; i < FP_TOTAL; ++i)
-          total += m_fuel_parcels[i];
+          total += getParcel(i);
 
         return total;
       }
@@ -151,7 +165,7 @@ namespace Plan
       inline float
       getHotel(void) const
       {
-        return m_fuel_parcels[FP_HOTEL];
+        return getParcel(FP_HOTEL);
       }
 
       //! Get the payload estimated fuel consumption
@@ -159,7 +173,7 @@ namespace Plan
       inline float
       getPayload(void) const
       {
-        return m_fuel_parcels[FP_PAYLOAD];
+        return getParcel(FP_PAYLOAD);
       }
 
       //! Get the motion estimated fuel consumption
@@ -167,7 +181,7 @@ namespace Plan
       inline float
       getMotion(void) const
       {
-        return m_fuel_parcels[FP_MOTION];
+        return getParcel(FP_MOTION);
       }
 
       //! Get the estimated fuel consumption by the IMU
@@ -175,10 +189,21 @@ namespace Plan
       inline float
       getIMU(void) const
       {
-        return m_fuel_parcels[FP_IMU];
+        return getParcel(FP_IMU);
       }
 
     private:
+      //! Get a certain parcel
+      //! @return -1.0 if invalid
+      inline float
+      getParcel(unsigned parcel) const
+      {
+        if (m_valid && parcel < FP_TOTAL)
+          return m_fuel_parcels[parcel];
+        else
+          return -1.0;
+      }
+
       //! Compute hotel consumed energy
       //! @param[in] total_duration total amount of time of the plan
       void
@@ -254,6 +279,8 @@ namespace Plan
       float m_starting_fuel;
       //! Current value of fuel level
       float m_current_fuel;
+      //! True if parcels are valid
+      bool m_valid;
     };
   }
 }
