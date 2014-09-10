@@ -25,16 +25,39 @@
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
+# This script will convert the IMC.xml definition to a stripped and        #
+# compressed C++ array.                                                    #
+############################################################################
 
 import sys
 import os.path
+import argparse
 
 from imc.utils import *
 from imc.file import *
 from imc.code import *
 
-xml = sys.argv[1]
-folder = sys.argv[2]
+HPP = 'Blob.hpp'
+CXX = 'Blob.cpp'
+
+# Parse command line arguments.
+parser = argparse.ArgumentParser(
+    description="Strip, compress and generate IMC.xml blob.")
+parser.add_argument('dest_folder', metavar='DEST_FOLDER',
+                    help="destination folder")
+parser.add_argument('-x', '--xml', metavar='IMC_XML',
+                    help="IMC XML file")
+parser.add_argument('-f', '--force', required=False,
+                    help="Force creation of blob file")
+args = parser.parse_args()
+
+xml = args.xml
+folder = args.dest_folder
+
+if not args.force:
+    if compare_versions(xml, folder):
+        print("*", os.path.join(folder, CXX), '[Skipped]')
+        sys.exit(0)
 
 # Parse XML specification.
 import xml.etree.ElementTree as ET
@@ -62,8 +85,8 @@ f_out.close()
 # Blob.cpp                                                                     #
 ################################################################################
 
-fd = File('Blob.cpp', folder)
-fd.add_dune_headers('IMC/Blob.hpp')
+fd = File(CXX, folder)
+fd.add_dune_headers('IMC/' + HPP)
 
 # Byte array.
 fd.append('static const unsigned char c_imc_blob[] = \n{')

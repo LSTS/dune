@@ -145,3 +145,20 @@ def abbrev_to_macro(abbrev, prefix = ''):
         return name
     else:
         return prefix + '_' + name[1:].upper()
+
+def compare_versions(imc_xml, generated_folder):
+    # Compute XML MD5 sum.
+    import hashlib
+    m = hashlib.md5()
+    m.update(open(imc_xml, 'rb').read())
+    xml_md5 = m.hexdigest()
+
+    # Get MD5 sum from existing generated version.
+    import os.path
+    fd = open(os.path.join(generated_folder, 'Constants.hpp'), 'r')
+    for line in fd:
+        if line.strip().startswith(u'#define DUNE_IMC_CONST_MD5'):
+            parts = line.split('"')
+            cpp_md5 = parts[1]
+
+    return xml_md5 == cpp_md5
