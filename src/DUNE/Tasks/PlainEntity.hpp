@@ -100,27 +100,30 @@ namespace DUNE
 
       //! Dispatch message to the message bus.
       //! @param[in] msg message pointer.
+      //! @param[in] flags bitfield with flags (see Tasks::DispatchFlags).
       void
-      dispatch(IMC::Message* msg);
+      dispatch(IMC::Message* msg, unsigned int flags = 0);
 
       //! Dispatch message to the message bus.
       //! @param[in] msg message reference.
+      //! @param[in] flags bitfield with flags (see Tasks::DispatchFlags).
       void
-      dispatch(IMC::Message& msg)
+      dispatch(IMC::Message& msg, unsigned int flags = 0)
       {
-        dispatch(&msg);
+        dispatch(&msg, flags);
       }
 
       //! Dispatch message to the message bus in reply to another
       //! message.
       //! @param[in] original original message.
       //! @param[in] msg message reference.
+      //! @param[in] flags bitfield with flags (see Tasks::DispatchFlags).
       void
-      dispatchReply(const IMC::Message& original, IMC::Message& msg)
+      dispatchReply(const IMC::Message& original, IMC::Message& msg, unsigned int flags = 0)
       {
         msg.setDestination(original.getSource());
         msg.setDestinationEntity(original.getSourceEntity());
-        dispatch(msg);
+        dispatch(msg, flags);
       }
 
     protected:

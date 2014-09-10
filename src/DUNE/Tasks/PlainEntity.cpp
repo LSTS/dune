@@ -69,10 +69,12 @@ namespace DUNE
     }
 
     void
-    PlainEntity::dispatch(IMC::Message* msg)
+    PlainEntity::dispatch(IMC::Message* msg, unsigned int flags)
     {
-      msg->setSourceEntity(getId());
-      m_owner->dispatch(msg, DF_KEEP_SRC_EID);
+      if ((flags && DF_KEEP_SRC_EID) == 0)
+        msg->setSourceEntity(getId());
+
+      m_owner->dispatch(msg, DF_KEEP_SRC_EID | flags);
     }
 
   }
