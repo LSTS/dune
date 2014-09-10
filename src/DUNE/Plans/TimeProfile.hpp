@@ -105,8 +105,12 @@ namespace DUNE
       TimeProfile(const SpeedModel* speed_model):
         m_accum_dur(NULL),
         m_speed_model(speed_model),
-        m_speed_vec(NULL)
-      { };
+        m_speed_vec(NULL),
+        m_valid_model(true)
+      {
+        if (m_speed_model == NULL)
+          m_valid_model = false;
+      };
 
       //! Destructor
       ~TimeProfile(void)
@@ -450,6 +454,8 @@ namespace DUNE
       std::vector<SpeedProfile>* m_speed_vec;
       //! ID of last maneuver with a valid duration
       std::string m_last_valid;
+      //! Valid speed model
+      bool m_valid_model;
     };
   }
 }
