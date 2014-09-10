@@ -45,7 +45,7 @@ if(DUNE_PROGRAM_PYTHON)
   add_custom_target(imc
     COMMAND ${DUNE_PROGRAM_PYTHON}
     ${PROJECT_SOURCE_DIR}/programs/generators/imc_code.py
-    ${DUNE_IMC_XML} ${DUNE_IMC_FOLDER}
+    -x ${DUNE_IMC_XML} ${DUNE_IMC_FOLDER}
 
     COMMAND ${DUNE_PROGRAM_PYTHON}
     ${PROJECT_SOURCE_DIR}/programs/generators/imc_blob.py
@@ -53,12 +53,11 @@ if(DUNE_PROGRAM_PYTHON)
 
     COMMAND ${DUNE_PROGRAM_PYTHON}
     ${PROJECT_SOURCE_DIR}/programs/generators/imc_tests.py
-    -x ${DUNE_IMC_XML} -i ${DUNE_IMC_FOLDER}
-    ${DUNE_IMC_TEST_FOLDER}
+    -x ${DUNE_IMC_XML} ${DUNE_IMC_TEST_FOLDER}
 
     COMMAND ${DUNE_PROGRAM_PYTHON}
     ${PROJECT_SOURCE_DIR}/programs/generators/imc_addresses.py
-    ${DUNE_IMC_ADDRESSES_XML} ${PROJECT_SOURCE_DIR}/etc/common/imc-addresses.ini
+    -x ${DUNE_IMC_ADDRESSES_XML} ${PROJECT_SOURCE_DIR}/etc/common/imc-addresses.ini
 
     DEPENDS ${xml})
 
