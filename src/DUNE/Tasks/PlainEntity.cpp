@@ -62,10 +62,10 @@ namespace DUNE
     void
     PlainEntity::consume(const IMC::QueryEntityInfo* msg)
     {
-      if (msg->getDestinationEntity() != getId() || msg->getDestinationEntity() != DUNE_IMC_CONST_UNK_EID)
-        return;
-
-      dispatchReply(*msg, m_ent_info);
+      if (msg->getDestinationEntity() == getId())
+        dispatchReply(*msg, m_ent_info);
+      else if (msg->getDestinationEntity() == DUNE_IMC_CONST_UNK_EID)
+        dispatch(m_ent_info);
     }
 
     void
