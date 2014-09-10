@@ -31,7 +31,6 @@
 
 import sys
 import os.path
-import argparse
 
 from imc.utils import *
 from imc.file import *
@@ -41,27 +40,28 @@ HPP = 'Blob.hpp'
 CXX = 'Blob.cpp'
 
 # Parse command line arguments.
+import argparse
 parser = argparse.ArgumentParser(
     description="Strip, compress and generate IMC.xml blob.")
 parser.add_argument('dest_folder', metavar='DEST_FOLDER',
                     help="destination folder")
 parser.add_argument('-x', '--xml', metavar='IMC_XML',
                     help="IMC XML file")
-parser.add_argument('-f', '--force', required=False,
+parser.add_argument('-f', '--force', action='store_true', required=False,
                     help="Force creation of blob file")
 args = parser.parse_args()
 
-xml = args.xml
-folder = args.dest_folder
+xml_md5 = compute_md5(args.xml);
+dest_folder = args.dest_folder
 
 if not args.force:
-    if compare_versions(xml, folder):
-        print("*", os.path.join(folder, CXX), '[Skipped]')
+    if file_md5_matches(os.path.join(dest_folder, CXX), xml_md5):
+        print('* ' + os.path.join(dest_folder, CXX) + ' [Skipped]')
         sys.exit(0)
 
 # Parse XML specification.
 import xml.etree.ElementTree as ET
-tree = ET.parse(xml)
+tree = ET.parse(args.xml)
 
 # Remove 'description' tags.
 for parent in tree.getiterator():
@@ -85,7 +85,7 @@ f_out.close()
 # Blob.cpp                                                                     #
 ################################################################################
 
-fd = File(CXX, folder)
+fd = File(CXX, dest_folder, md5 = xml_md5)
 fd.add_dune_headers('IMC/' + HPP)
 
 # Byte array.
