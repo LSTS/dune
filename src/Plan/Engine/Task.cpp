@@ -216,15 +216,8 @@ namespace Plan
       void
       onResourceAcquisition(void)
       {
-        try
-        {
-          m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict,
-                            this, m_args.calibration_time, &m_ctx.config);
-        }
-        catch (std::runtime_error& e)
-        {
-          err("%s", e.what());
-        }
+        m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict,
+                          this, m_args.calibration_time, &m_ctx.config);
       }
 
       void

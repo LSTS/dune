@@ -52,10 +52,28 @@ namespace Plan
       m_fpred(NULL),
       m_task(task)
     {
-      m_speed_model = new Plans::SpeedModel(cfg);
-      m_speed_model->validate();
-      m_power_model = new Plans::PowerModel(cfg);
-      m_power_model->validate();
+      try
+      {
+        m_speed_model = new Plans::SpeedModel(cfg);
+        m_speed_model->validate();
+      }
+      catch (...)
+      {
+        Memory::clear(m_speed_model);
+        m_task->inf("SPEED MODEL INVALID");
+      }
+
+      try
+      {
+        m_power_model = new Plans::PowerModel(cfg);
+        m_power_model->validate();
+      }
+      catch (...)
+      {
+        Memory::clear(m_power_model);
+        m_task->inf("POWER MODEL INVALID");
+      }
+
       m_profiles = new Plans::TimeProfile(m_speed_model);
       m_calib = new Calibration();
     }
@@ -76,10 +94,12 @@ namespace Plan
       m_graph.clear();
       m_seq_nodes.clear();
       m_sequential = false;
-      m_profiles->clear();
       m_progress = -1.0;
       m_beyond_dur = false;
       m_started_maneuver = false;
+
+      if (m_profiles != NULL)
+        m_profiles->clear();
     }
 
     void
