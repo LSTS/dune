@@ -29,37 +29,72 @@
 // IMC XML MD5: b756b37277f77273f0da757e06bff4be                            *
 //***************************************************************************
 
-#ifndef DUNE_IMC_HEADER_HPP_INCLUDED_
-#define DUNE_IMC_HEADER_HPP_INCLUDED_
-
 // DUNE headers.
-#include <DUNE/Config.hpp>
+#include <DUNE/IMC/SuperTypes.hpp>
 
 namespace DUNE
 {
   namespace IMC
   {
-    //! Header format.
-    struct Header
+    Maneuver::Maneuver(void)
     {
-      //! Synchronization Number.
-      uint16_t sync;
-      //! Message Identification Number.
-      uint16_t mgid;
-      //! Message size.
-      uint16_t size;
-      //! Time stamp.
-      fp64_t timestamp;
-      //! Source Address.
-      uint16_t src;
-      //! Source Entity.
-      uint8_t src_ent;
-      //! Destination Address.
-      uint16_t dst;
-      //! Destination Entity.
-      uint8_t dst_ent;
-    };
+      clear();
+    }
+
+    void
+    Maneuver::clear(void)
+    {
+      plan_ref = 0;
+      id.clear();
+      memento.clear();
+    }
+
+    bool
+    Maneuver::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Maneuver& other__ = static_cast<const Maneuver&>(msg__);
+      if (plan_ref != other__.plan_ref) return false;
+      if (id != other__.id) return false;
+      if (memento != other__.memento) return false;
+      return true;
+    }
+
+    uint8_t*
+    Maneuver::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(plan_ref, ptr__);
+      ptr__ += IMC::serialize(id, ptr__);
+      ptr__ += IMC::serialize(memento, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Maneuver::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(plan_ref, bfr__, size__);
+      bfr__ += IMC::deserialize(id, bfr__, size__);
+      bfr__ += IMC::deserialize(memento, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Maneuver::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(plan_ref, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(memento, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    Maneuver::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "plan_ref", plan_ref, nindent__);
+      IMC::toJSON(os__, "id", id, nindent__);
+      IMC::toJSON(os__, "memento", memento, nindent__);
+    }
   }
 }
-
-#endif

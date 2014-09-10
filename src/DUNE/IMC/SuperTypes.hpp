@@ -26,25 +26,75 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: bc9d825ba1981fbb15950278b9fa89ba                            *
+// IMC XML MD5: b756b37277f77273f0da757e06bff4be                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_SUPERTYPES_HPP_INCLUDED_
 #define DUNE_IMC_SUPERTYPES_HPP_INCLUDED_
 
+// ISO C++ 98 headers.
+#include <ostream>
+#include <string>
+#include <vector>
+
 // DUNE headers.
+#include <DUNE/Config.hpp>
 #include <DUNE/IMC/Message.hpp>
+#include <DUNE/IMC/InlineMessage.hpp>
+#include <DUNE/IMC/MessageList.hpp>
+#include <DUNE/IMC/Enumerations.hpp>
+#include <DUNE/IMC/Bitfields.hpp>
+#include <DUNE/IMC/JSON.hpp>
 
 namespace DUNE
 {
   namespace IMC
   {
-    //! Super type Maneuver.
+    //! Maneuver.
     class Maneuver: public Message
     {
+    public:
+      //! Plan Reference.
+      uint32_t plan_ref;
+      //! Maneuver ID.
+      std::string id;
+      //! Memento.
+      std::string memento;
+
+      Maneuver(void);
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 4;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(id) + IMC::getSerializationSize(memento);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
-    //! Super type Control Command.
+    //! Control Command.
     class ControlCommand: public Message
     {
     };

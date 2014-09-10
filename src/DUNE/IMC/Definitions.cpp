@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: bc9d825ba1981fbb15950278b9fa89ba                            *
+// IMC XML MD5: b756b37277f77273f0da757e06bff4be                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -70,12 +70,6 @@ namespace DUNE
       if (flags != other__.flags) return false;
       if (description != other__.description) return false;
       return true;
-    }
-
-    int
-    EntityState::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -122,39 +116,6 @@ namespace DUNE
       clear();
     }
 
-    void
-    QueryEntityState::clear(void)
-    {
-    }
-
-    int
-    QueryEntityState::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    QueryEntityState::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    QueryEntityState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    QueryEntityState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
     EntityInfo::EntityInfo(void)
     {
       m_header.mgid = 3;
@@ -181,12 +142,6 @@ namespace DUNE
       if (act_time != other__.act_time) return false;
       if (deact_time != other__.deact_time) return false;
       return true;
-    }
-
-    int
-    EntityInfo::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -267,12 +222,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    QueryEntityInfo::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     QueryEntityInfo::serializeFields(uint8_t* bfr__) const
     {
@@ -337,12 +286,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    EntityList::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     EntityList::serializeFields(uint8_t* bfr__) const
     {
@@ -395,12 +338,6 @@ namespace DUNE
       const IMC::CpuUsage& other__ = static_cast<const CpuUsage&>(msg__);
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    CpuUsage::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -467,12 +404,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    TransportBindings::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     TransportBindings::serializeFields(uint8_t* bfr__) const
     {
@@ -513,39 +444,6 @@ namespace DUNE
       clear();
     }
 
-    void
-    RestartSystem::clear(void)
-    {
-    }
-
-    int
-    RestartSystem::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    RestartSystem::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    RestartSystem::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    RestartSystem::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
     DevCalibrationControl::DevCalibrationControl(void)
     {
       m_header.mgid = 12;
@@ -564,12 +462,6 @@ namespace DUNE
       const IMC::DevCalibrationControl& other__ = static_cast<const DevCalibrationControl&>(msg__);
       if (op != other__.op) return false;
       return true;
-    }
-
-    int
-    DevCalibrationControl::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -626,12 +518,6 @@ namespace DUNE
       if (step != other__.step) return false;
       if (flags != other__.flags) return false;
       return true;
-    }
-
-    int
-    DevCalibrationState::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -698,12 +584,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    EntityActivationState::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     EntityActivationState::serializeFields(uint8_t* bfr__) const
     {
@@ -742,39 +622,6 @@ namespace DUNE
     {
       m_header.mgid = 15;
       clear();
-    }
-
-    void
-    QueryEntityActivationState::clear(void)
-    {
-    }
-
-    int
-    QueryEntityActivationState::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    QueryEntityActivationState::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    QueryEntityActivationState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    QueryEntityActivationState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
     }
 
     VehicleOperationalLimits::VehicleOperationalLimits(void)
@@ -829,12 +676,6 @@ namespace DUNE
       if (rpm_max != other__.rpm_max) return false;
       if (rpm_rate_max != other__.rpm_rate_max) return false;
       return true;
-    }
-
-    int
-    VehicleOperationalLimits::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -956,12 +797,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    MsgList::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     MsgList::serializeFields(uint8_t* bfr__) const
     {
@@ -1074,12 +909,6 @@ namespace DUNE
       if (svy != other__.svy) return false;
       if (svz != other__.svz) return false;
       return true;
-    }
-
-    int
-    SimulatedState::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -1202,12 +1031,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    LeakSimulation::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     LeakSimulation::serializeFields(uint8_t* bfr__) const
     {
@@ -1264,12 +1087,6 @@ namespace DUNE
       if (speed != other__.speed) return false;
       if (data != other__.data) return false;
       return true;
-    }
-
-    int
-    UASimulation::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -1334,12 +1151,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    DynamicsSimParam::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     DynamicsSimParam::serializeFields(uint8_t* bfr__) const
     {
@@ -1398,12 +1209,6 @@ namespace DUNE
       if (available != other__.available) return false;
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    StorageUsage::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -1475,12 +1280,6 @@ namespace DUNE
       if (snapshot != other__.snapshot) return false;
       if (message != other__.message) return false;
       return true;
-    }
-
-    int
-    CacheControl::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -1588,12 +1387,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    LoggingControl::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     LoggingControl::serializeFields(uint8_t* bfr__) const
     {
@@ -1652,12 +1445,6 @@ namespace DUNE
       if (context != other__.context) return false;
       if (text != other__.text) return false;
       return true;
-    }
-
-    int
-    LogBookEntry::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -1725,12 +1512,6 @@ namespace DUNE
       if (htime != other__.htime) return false;
       if (msg != other__.msg) return false;
       return true;
-    }
-
-    int
-    LogBookControl::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -1823,12 +1604,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    ReplayControl::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     ReplayControl::serializeFields(uint8_t* bfr__) const
     {
@@ -1887,12 +1662,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    ClockControl::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     ClockControl::serializeFields(uint8_t* bfr__) const
     {
@@ -1937,39 +1706,6 @@ namespace DUNE
       clear();
     }
 
-    void
-    Heartbeat::clear(void)
-    {
-    }
-
-    int
-    Heartbeat::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    Heartbeat::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    Heartbeat::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    Heartbeat::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
     Announce::Announce(void)
     {
       m_header.mgid = 151;
@@ -2000,12 +1736,6 @@ namespace DUNE
       if (height != other__.height) return false;
       if (services != other__.services) return false;
       return true;
-    }
-
-    int
-    Announce::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -2084,12 +1814,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    AnnounceService::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     AnnounceService::serializeFields(uint8_t* bfr__) const
     {
@@ -2142,12 +1866,6 @@ namespace DUNE
       const IMC::RSSI& other__ = static_cast<const RSSI&>(msg__);
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    RSSI::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -2212,12 +1930,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    VSWR::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     VSWR::serializeFields(uint8_t* bfr__) const
     {
@@ -2278,12 +1990,6 @@ namespace DUNE
       const IMC::LinkLevel& other__ = static_cast<const LinkLevel&>(msg__);
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    LinkLevel::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -2352,12 +2058,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    Sms::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     Sms::serializeFields(uint8_t* bfr__) const
     {
@@ -2420,12 +2120,6 @@ namespace DUNE
       if (timeout != other__.timeout) return false;
       if (data != other__.data) return false;
       return true;
-    }
-
-    int
-    SmsTx::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -2492,12 +2186,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    SmsRx::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     SmsRx::serializeFields(uint8_t* bfr__) const
     {
@@ -2554,12 +2242,6 @@ namespace DUNE
       if (state != other__.state) return false;
       if (error != other__.error) return false;
       return true;
-    }
-
-    int
-    SmsState::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -2622,12 +2304,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    TextMessage::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     TextMessage::serializeFields(uint8_t* bfr__) const
     {
@@ -2688,12 +2364,6 @@ namespace DUNE
       if (lon != other__.lon) return false;
       if (data != other__.data) return false;
       return true;
-    }
-
-    int
-    IridiumMsgRx::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -2768,12 +2438,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    IridiumMsgTx::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     IridiumMsgTx::serializeFields(uint8_t* bfr__) const
     {
@@ -2840,12 +2504,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    IridiumTxStatus::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     IridiumTxStatus::serializeFields(uint8_t* bfr__) const
     {
@@ -2906,12 +2564,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    GroupMembershipState::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     GroupMembershipState::serializeFields(uint8_t* bfr__) const
     {
@@ -2968,12 +2620,6 @@ namespace DUNE
       if (action != other__.action) return false;
       if (grouplist != other__.grouplist) return false;
       return true;
-    }
-
-    int
-    SystemGroup::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -3034,12 +2680,6 @@ namespace DUNE
       if (id != other__.id) return false;
       if (range != other__.range) return false;
       return true;
-    }
-
-    int
-    LblRange::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -3120,12 +2760,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    LblBeacon::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     LblBeacon::serializeFields(uint8_t* bfr__) const
     {
@@ -3201,12 +2835,6 @@ namespace DUNE
       if (op != other__.op) return false;
       if (beacons != other__.beacons) return false;
       return true;
-    }
-
-    int
-    LblConfig::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -3292,12 +2920,6 @@ namespace DUNE
       const IMC::AcousticMessage& other__ = static_cast<const AcousticMessage&>(msg__);
       if (message != other__.message) return false;
       return true;
-    }
-
-    int
-    AcousticMessage::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -3402,12 +3024,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    AcousticOperation::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     AcousticOperation::serializeFields(uint8_t* bfr__) const
     {
@@ -3501,39 +3117,6 @@ namespace DUNE
       clear();
     }
 
-    void
-    AcousticSystemsQuery::clear(void)
-    {
-    }
-
-    int
-    AcousticSystemsQuery::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    AcousticSystemsQuery::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    AcousticSystemsQuery::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    AcousticSystemsQuery::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
     AcousticSystems::AcousticSystems(void)
     {
       m_header.mgid = 213;
@@ -3552,12 +3135,6 @@ namespace DUNE
       const IMC::AcousticSystems& other__ = static_cast<const AcousticSystems&>(msg__);
       if (list != other__.list) return false;
       return true;
-    }
-
-    int
-    AcousticSystems::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -3608,12 +3185,6 @@ namespace DUNE
       const IMC::Rpm& other__ = static_cast<const Rpm&>(msg__);
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    Rpm::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -3678,12 +3249,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    Voltage::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     Voltage::serializeFields(uint8_t* bfr__) const
     {
@@ -3744,12 +3309,6 @@ namespace DUNE
       const IMC::Current& other__ = static_cast<const Current&>(msg__);
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    Current::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -3842,12 +3401,6 @@ namespace DUNE
       if (hacc != other__.hacc) return false;
       if (vacc != other__.vacc) return false;
       return true;
-    }
-
-    int
-    GpsFix::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -3968,12 +3521,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    EulerAngles::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     EulerAngles::serializeFields(uint8_t* bfr__) const
     {
@@ -4048,12 +3595,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    EulerAnglesDelta::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     EulerAnglesDelta::serializeFields(uint8_t* bfr__) const
     {
@@ -4126,12 +3667,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    AngularVelocity::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     AngularVelocity::serializeFields(uint8_t* bfr__) const
     {
@@ -4198,12 +3733,6 @@ namespace DUNE
       if (y != other__.y) return false;
       if (z != other__.z) return false;
       return true;
-    }
-
-    int
-    Acceleration::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -4274,12 +3803,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    MagneticField::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     MagneticField::serializeFields(uint8_t* bfr__) const
     {
@@ -4346,12 +3869,6 @@ namespace DUNE
       if (y != other__.y) return false;
       if (z != other__.z) return false;
       return true;
-    }
-
-    int
-    GroundVelocity::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -4422,12 +3939,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    WaterVelocity::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     WaterVelocity::serializeFields(uint8_t* bfr__) const
     {
@@ -4494,12 +4005,6 @@ namespace DUNE
       if (y != other__.y) return false;
       if (z != other__.z) return false;
       return true;
-    }
-
-    int
-    VelocityDelta::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -4574,12 +4079,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    DeviceState::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     DeviceState::serializeFields(uint8_t* bfr__) const
     {
@@ -4652,12 +4151,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    BeamConfig::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     BeamConfig::serializeFields(uint8_t* bfr__) const
     {
@@ -4718,12 +4211,6 @@ namespace DUNE
       if (beam_config != other__.beam_config) return false;
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    Distance::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -4840,12 +4327,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    Temperature::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     Temperature::serializeFields(uint8_t* bfr__) const
     {
@@ -4906,12 +4387,6 @@ namespace DUNE
       const IMC::Pressure& other__ = static_cast<const Pressure&>(msg__);
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    Pressure::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -4976,12 +4451,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    Depth::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     Depth::serializeFields(uint8_t* bfr__) const
     {
@@ -5042,12 +4511,6 @@ namespace DUNE
       const IMC::DepthOffset& other__ = static_cast<const DepthOffset&>(msg__);
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    DepthOffset::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -5112,12 +4575,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    SoundSpeed::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     SoundSpeed::serializeFields(uint8_t* bfr__) const
     {
@@ -5178,12 +4635,6 @@ namespace DUNE
       const IMC::WaterDensity& other__ = static_cast<const WaterDensity&>(msg__);
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    WaterDensity::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -5248,12 +4699,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    Conductivity::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     Conductivity::serializeFields(uint8_t* bfr__) const
     {
@@ -5314,12 +4759,6 @@ namespace DUNE
       const IMC::Salinity& other__ = static_cast<const Salinity&>(msg__);
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    Salinity::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -5388,12 +4827,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    WindSpeed::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     WindSpeed::serializeFields(uint8_t* bfr__) const
     {
@@ -5450,12 +4883,6 @@ namespace DUNE
       const IMC::RelativeHumidity& other__ = static_cast<const RelativeHumidity&>(msg__);
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    RelativeHumidity::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -5520,12 +4947,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    DevDataText::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     DevDataText::serializeFields(uint8_t* bfr__) const
     {
@@ -5574,12 +4995,6 @@ namespace DUNE
       const IMC::DevDataBinary& other__ = static_cast<const DevDataBinary&>(msg__);
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    DevDataBinary::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -5645,12 +5060,6 @@ namespace DUNE
       if (beam_config != other__.beam_config) return false;
       if (data != other__.data) return false;
       return true;
-    }
-
-    int
-    SonarData::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -5747,39 +5156,6 @@ namespace DUNE
       clear();
     }
 
-    void
-    Pulse::clear(void)
-    {
-    }
-
-    int
-    Pulse::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    Pulse::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    Pulse::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    Pulse::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
     PulseDetectionControl::PulseDetectionControl(void)
     {
       m_header.mgid = 278;
@@ -5798,12 +5174,6 @@ namespace DUNE
       const IMC::PulseDetectionControl& other__ = static_cast<const PulseDetectionControl&>(msg__);
       if (op != other__.op) return false;
       return true;
-    }
-
-    int
-    PulseDetectionControl::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -5858,12 +5228,6 @@ namespace DUNE
       if (confidence != other__.confidence) return false;
       if (opmodes != other__.opmodes) return false;
       return true;
-    }
-
-    int
-    FuelLevel::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -5962,12 +5326,6 @@ namespace DUNE
       if (sacc != other__.sacc) return false;
       if (cacc != other__.cacc) return false;
       return true;
-    }
-
-    int
-    GpsNavData::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -6078,12 +5436,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    ServoPosition::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     ServoPosition::serializeFields(uint8_t* bfr__) const
     {
@@ -6162,12 +5514,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    DataSanity::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     DataSanity::serializeFields(uint8_t* bfr__) const
     {
@@ -6220,12 +5566,6 @@ namespace DUNE
       if (zoom != other__.zoom) return false;
       if (action != other__.action) return false;
       return true;
-    }
-
-    int
-    CameraZoom::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -6298,12 +5638,6 @@ namespace DUNE
       if (id != other__.id) return false;
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    SetThrusterActuation::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -6386,12 +5720,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    SetServoPosition::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     SetServoPosition::serializeFields(uint8_t* bfr__) const
     {
@@ -6472,12 +5800,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    SetControlSurfaceDeflection::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     SetControlSurfaceDeflection::serializeFields(uint8_t* bfr__) const
     {
@@ -6546,12 +5868,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    RemoteActionsRequest::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     RemoteActionsRequest::serializeFields(uint8_t* bfr__) const
     {
@@ -6606,12 +5922,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    RemoteActions::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     RemoteActions::serializeFields(uint8_t* bfr__) const
     {
@@ -6662,12 +5972,6 @@ namespace DUNE
       if (button != other__.button) return false;
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    ButtonEvent::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -6738,12 +6042,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    LcdControl::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     LcdControl::serializeFields(uint8_t* bfr__) const
     {
@@ -6800,12 +6098,6 @@ namespace DUNE
       if (time_remain != other__.time_remain) return false;
       if (sched_time != other__.sched_time) return false;
       return true;
-    }
-
-    int
-    PowerOperation::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -6870,12 +6162,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    PowerChannelControl::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     PowerChannelControl::serializeFields(uint8_t* bfr__) const
     {
@@ -6920,39 +6206,6 @@ namespace DUNE
       clear();
     }
 
-    void
-    QueryPowerChannelState::clear(void)
-    {
-    }
-
-    int
-    QueryPowerChannelState::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    QueryPowerChannelState::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    QueryPowerChannelState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    QueryPowerChannelState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
     PowerChannelState::PowerChannelState(void)
     {
       m_header.mgid = 311;
@@ -6973,12 +6226,6 @@ namespace DUNE
       if (name != other__.name) return false;
       if (state != other__.state) return false;
       return true;
-    }
-
-    int
-    PowerChannelState::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -7035,12 +6282,6 @@ namespace DUNE
       if (name != other__.name) return false;
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    LedBrightness::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -7109,12 +6350,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    QueryLedBrightness::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     QueryLedBrightness::serializeFields(uint8_t* bfr__) const
     {
@@ -7165,12 +6400,6 @@ namespace DUNE
       if (name != other__.name) return false;
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    SetLedBrightness::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -7241,12 +6470,6 @@ namespace DUNE
       if (period != other__.period) return false;
       if (duty_cycle != other__.duty_cycle) return false;
       return true;
-    }
-
-    int
-    SetPWM::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -7321,12 +6544,6 @@ namespace DUNE
       if (period != other__.period) return false;
       if (duty_cycle != other__.duty_cycle) return false;
       return true;
-    }
-
-    int
-    PWM::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -7435,12 +6652,6 @@ namespace DUNE
       if (depth != other__.depth) return false;
       if (alt != other__.alt) return false;
       return true;
-    }
-
-    int
-    EstimatedState::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -7573,12 +6784,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    EstimatedStreamVelocity::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     EstimatedStreamVelocity::serializeFields(uint8_t* bfr__) const
     {
@@ -7635,12 +6840,6 @@ namespace DUNE
       const IMC::IndicatedSpeed& other__ = static_cast<const IndicatedSpeed&>(msg__);
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    IndicatedSpeed::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -7703,12 +6902,6 @@ namespace DUNE
       const IMC::TrueSpeed& other__ = static_cast<const TrueSpeed&>(msg__);
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    TrueSpeed::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -7797,12 +6990,6 @@ namespace DUNE
       if (bias_psi != other__.bias_psi) return false;
       if (bias_r != other__.bias_r) return false;
       return true;
-    }
-
-    int
-    NavigationUncertainty::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -7923,12 +7110,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    NavigationData::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     NavigationData::serializeFields(uint8_t* bfr__) const
     {
@@ -8013,12 +7194,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    GpsFixRejection::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     GpsFixRejection::serializeFields(uint8_t* bfr__) const
     {
@@ -8075,12 +7250,6 @@ namespace DUNE
       if (range != other__.range) return false;
       if (acceptance != other__.acceptance) return false;
       return true;
-    }
-
-    int
-    LblRangeAcceptance::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -8159,12 +7328,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    DvlRejection::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     DvlRejection::serializeFields(uint8_t* bfr__) const
     {
@@ -8225,39 +7388,6 @@ namespace DUNE
       clear();
     }
 
-    void
-    NavigationReset::clear(void)
-    {
-    }
-
-    int
-    NavigationReset::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    NavigationReset::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    NavigationReset::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    NavigationReset::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
     LblEstimate::LblEstimate(void)
     {
       m_header.mgid = 360;
@@ -8287,12 +7417,6 @@ namespace DUNE
       if (var_y != other__.var_y) return false;
       if (distance != other__.distance) return false;
       return true;
-    }
-
-    int
-    LblEstimate::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -8410,12 +7534,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    AlignmentState::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     AlignmentState::serializeFields(uint8_t* bfr__) const
     {
@@ -8468,12 +7586,6 @@ namespace DUNE
       if (y != other__.y) return false;
       if (z != other__.z) return false;
       return true;
-    }
-
-    int
-    GroupStreamVelocity::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -8532,12 +7644,6 @@ namespace DUNE
       const IMC::DesiredHeading& other__ = static_cast<const DesiredHeading&>(msg__);
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    DesiredHeading::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -8602,12 +7708,6 @@ namespace DUNE
       if (value != other__.value) return false;
       if (z_units != other__.z_units) return false;
       return true;
-    }
-
-    int
-    DesiredZ::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -8678,12 +7778,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    DesiredSpeed::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     DesiredSpeed::serializeFields(uint8_t* bfr__) const
     {
@@ -8750,12 +7844,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    DesiredRoll::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     DesiredRoll::serializeFields(uint8_t* bfr__) const
     {
@@ -8818,12 +7906,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    DesiredPitch::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     DesiredPitch::serializeFields(uint8_t* bfr__) const
     {
@@ -8884,12 +7966,6 @@ namespace DUNE
       const IMC::DesiredVerticalRate& other__ = static_cast<const DesiredVerticalRate&>(msg__);
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    DesiredVerticalRate::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -8976,12 +8052,6 @@ namespace DUNE
       if (lradius != other__.lradius) return false;
       if (flags != other__.flags) return false;
       return true;
-    }
-
-    int
-    DesiredPath::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -9094,12 +8164,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    DesiredControl::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     DesiredControl::serializeFields(uint8_t* bfr__) const
     {
@@ -9174,12 +8238,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    DesiredHeadingRate::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     DesiredHeadingRate::serializeFields(uint8_t* bfr__) const
     {
@@ -9252,12 +8310,6 @@ namespace DUNE
       if (r != other__.r) return false;
       if (flags != other__.flags) return false;
       return true;
-    }
-
-    int
-    DesiredVelocity::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -9368,12 +8420,6 @@ namespace DUNE
       if (course_error != other__.course_error) return false;
       if (eta != other__.eta) return false;
       return true;
-    }
-
-    int
-    PathControlState::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -9502,12 +8548,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    AllocatedControlTorques::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     AllocatedControlTorques::serializeFields(uint8_t* bfr__) const
     {
@@ -9572,12 +8612,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    ControlParcel::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     ControlParcel::serializeFields(uint8_t* bfr__) const
     {
@@ -9640,12 +8674,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    Brake::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     Brake::serializeFields(uint8_t* bfr__) const
     {
@@ -9685,6 +8713,7 @@ namespace DUNE
     void
     Goto::clear(void)
     {
+      Maneuver::clear();
       timeout = 0;
       lat = 0;
       lon = 0;
@@ -9701,6 +8730,7 @@ namespace DUNE
     bool
     Goto::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::Goto& other__ = static_cast<const Goto&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
@@ -9716,16 +8746,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    Goto::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     Goto::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(timeout, ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
@@ -9744,6 +8769,7 @@ namespace DUNE
     Goto::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(timeout, bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
@@ -9762,6 +8788,7 @@ namespace DUNE
     Goto::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
@@ -9779,6 +8806,7 @@ namespace DUNE
     void
     Goto::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "timeout", timeout, nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
@@ -9801,6 +8829,7 @@ namespace DUNE
     void
     PopUp::clear(void)
     {
+      Maneuver::clear();
       timeout = 0;
       lat = 0;
       lon = 0;
@@ -9817,6 +8846,7 @@ namespace DUNE
     bool
     PopUp::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::PopUp& other__ = static_cast<const PopUp&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
@@ -9832,16 +8862,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    PopUp::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     PopUp::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(timeout, ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
@@ -9860,6 +8885,7 @@ namespace DUNE
     PopUp::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(timeout, bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
@@ -9878,6 +8904,7 @@ namespace DUNE
     PopUp::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
@@ -9895,6 +8922,7 @@ namespace DUNE
     void
     PopUp::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "timeout", timeout, nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
@@ -9917,27 +8945,24 @@ namespace DUNE
     void
     Teleoperation::clear(void)
     {
+      Maneuver::clear();
       custom.clear();
     }
 
     bool
     Teleoperation::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::Teleoperation& other__ = static_cast<const Teleoperation&>(msg__);
       if (custom != other__.custom) return false;
       return true;
-    }
-
-    int
-    Teleoperation::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
     Teleoperation::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(custom, ptr__);
       return ptr__;
     }
@@ -9946,6 +8971,7 @@ namespace DUNE
     Teleoperation::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(custom, bfr__, size__);
       return bfr__ - start__;
     }
@@ -9954,6 +8980,7 @@ namespace DUNE
     Teleoperation::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
       return bfr__ - start__;
     }
@@ -9961,6 +8988,7 @@ namespace DUNE
     void
     Teleoperation::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "custom", custom, nindent__);
     }
 
@@ -9973,6 +9001,7 @@ namespace DUNE
     void
     Loiter::clear(void)
     {
+      Maneuver::clear();
       timeout = 0;
       lat = 0;
       lon = 0;
@@ -9992,6 +9021,7 @@ namespace DUNE
     bool
     Loiter::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::Loiter& other__ = static_cast<const Loiter&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
@@ -10010,16 +9040,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    Loiter::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     Loiter::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(timeout, ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
@@ -10041,6 +9066,7 @@ namespace DUNE
     Loiter::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(timeout, bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
@@ -10062,6 +9088,7 @@ namespace DUNE
     Loiter::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
@@ -10082,6 +9109,7 @@ namespace DUNE
     void
     Loiter::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "timeout", timeout, nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
@@ -10107,6 +9135,7 @@ namespace DUNE
     void
     IdleManeuver::clear(void)
     {
+      Maneuver::clear();
       duration = 0;
       custom.clear();
     }
@@ -10114,22 +9143,18 @@ namespace DUNE
     bool
     IdleManeuver::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::IdleManeuver& other__ = static_cast<const IdleManeuver&>(msg__);
       if (duration != other__.duration) return false;
       if (custom != other__.custom) return false;
       return true;
     }
 
-    int
-    IdleManeuver::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     IdleManeuver::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(duration, ptr__);
       ptr__ += IMC::serialize(custom, ptr__);
       return ptr__;
@@ -10139,6 +9164,7 @@ namespace DUNE
     IdleManeuver::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(duration, bfr__, size__);
       bfr__ += IMC::deserialize(custom, bfr__, size__);
       return bfr__ - start__;
@@ -10148,6 +9174,7 @@ namespace DUNE
     IdleManeuver::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(duration, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
       return bfr__ - start__;
@@ -10156,6 +9183,7 @@ namespace DUNE
     void
     IdleManeuver::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "duration", duration, nindent__);
       IMC::toJSON(os__, "custom", custom, nindent__);
     }
@@ -10170,6 +9198,7 @@ namespace DUNE
     void
     LowLevelControl::clear(void)
     {
+      Maneuver::clear();
       control.clear();
       duration = 0;
       custom.clear();
@@ -10178,6 +9207,7 @@ namespace DUNE
     bool
     LowLevelControl::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::LowLevelControl& other__ = static_cast<const LowLevelControl&>(msg__);
       if (control != other__.control) return false;
       if (duration != other__.duration) return false;
@@ -10185,16 +9215,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    LowLevelControl::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     LowLevelControl::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += control.serialize(ptr__);
       ptr__ += IMC::serialize(duration, ptr__);
       ptr__ += IMC::serialize(custom, ptr__);
@@ -10205,6 +9230,7 @@ namespace DUNE
     LowLevelControl::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += control.deserialize(bfr__, size__);
       bfr__ += IMC::deserialize(duration, bfr__, size__);
       bfr__ += IMC::deserialize(custom, bfr__, size__);
@@ -10215,6 +9241,7 @@ namespace DUNE
     LowLevelControl::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += control.reverseDeserialize(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(duration, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
@@ -10224,6 +9251,7 @@ namespace DUNE
     void
     LowLevelControl::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       control.toJSON(os__, "control", nindent__);
       IMC::toJSON(os__, "duration", duration, nindent__);
       IMC::toJSON(os__, "custom", custom, nindent__);
@@ -10283,6 +9311,7 @@ namespace DUNE
     void
     Rows::clear(void)
     {
+      Maneuver::clear();
       timeout = 0;
       lat = 0;
       lon = 0;
@@ -10304,6 +9333,7 @@ namespace DUNE
     bool
     Rows::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::Rows& other__ = static_cast<const Rows&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
@@ -10324,16 +9354,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    Rows::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     Rows::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(timeout, ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
@@ -10357,6 +9382,7 @@ namespace DUNE
     Rows::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(timeout, bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
@@ -10380,6 +9406,7 @@ namespace DUNE
     Rows::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
@@ -10402,6 +9429,7 @@ namespace DUNE
     void
     Rows::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "timeout", timeout, nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
@@ -10442,12 +9470,6 @@ namespace DUNE
       if (y != other__.y) return false;
       if (z != other__.z) return false;
       return true;
-    }
-
-    int
-    PathPoint::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -10498,6 +9520,7 @@ namespace DUNE
     void
     FollowPath::clear(void)
     {
+      Maneuver::clear();
       timeout = 0;
       lat = 0;
       lon = 0;
@@ -10512,6 +9535,7 @@ namespace DUNE
     bool
     FollowPath::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::FollowPath& other__ = static_cast<const FollowPath&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
@@ -10525,16 +9549,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    FollowPath::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     FollowPath::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(timeout, ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
@@ -10551,6 +9570,7 @@ namespace DUNE
     FollowPath::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(timeout, bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
@@ -10567,6 +9587,7 @@ namespace DUNE
     FollowPath::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
@@ -10582,6 +9603,7 @@ namespace DUNE
     void
     FollowPath::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "timeout", timeout, nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
@@ -10632,6 +9654,7 @@ namespace DUNE
     void
     YoYo::clear(void)
     {
+      Maneuver::clear();
       timeout = 0;
       lat = 0;
       lon = 0;
@@ -10647,6 +9670,7 @@ namespace DUNE
     bool
     YoYo::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::YoYo& other__ = static_cast<const YoYo&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
@@ -10661,16 +9685,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    YoYo::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     YoYo::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(timeout, ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
@@ -10688,6 +9707,7 @@ namespace DUNE
     YoYo::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(timeout, bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
@@ -10705,6 +9725,7 @@ namespace DUNE
     YoYo::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
@@ -10721,6 +9742,7 @@ namespace DUNE
     void
     YoYo::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "timeout", timeout, nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
@@ -10739,39 +9761,6 @@ namespace DUNE
       clear();
     }
 
-    void
-    TeleoperationDone::clear(void)
-    {
-    }
-
-    int
-    TeleoperationDone::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    TeleoperationDone::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    TeleoperationDone::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    TeleoperationDone::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
     StationKeeping::StationKeeping(void)
     {
       m_header.mgid = 461;
@@ -10781,6 +9770,7 @@ namespace DUNE
     void
     StationKeeping::clear(void)
     {
+      Maneuver::clear();
       lat = 0;
       lon = 0;
       z = 0;
@@ -10795,6 +9785,7 @@ namespace DUNE
     bool
     StationKeeping::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::StationKeeping& other__ = static_cast<const StationKeeping&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -10808,16 +9799,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    StationKeeping::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     StationKeeping::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
       ptr__ += IMC::serialize(z, ptr__);
@@ -10834,6 +9820,7 @@ namespace DUNE
     StationKeeping::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
       bfr__ += IMC::deserialize(z, bfr__, size__);
@@ -10850,6 +9837,7 @@ namespace DUNE
     StationKeeping::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(z, bfr__, size__);
@@ -10865,6 +9853,7 @@ namespace DUNE
     void
     StationKeeping::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
       IMC::toJSON(os__, "z", z, nindent__);
@@ -10885,6 +9874,7 @@ namespace DUNE
     void
     Elevator::clear(void)
     {
+      Maneuver::clear();
       timeout = 0;
       flags = 0;
       lat = 0;
@@ -10902,6 +9892,7 @@ namespace DUNE
     bool
     Elevator::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::Elevator& other__ = static_cast<const Elevator&>(msg__);
       if (timeout != other__.timeout) return false;
       if (flags != other__.flags) return false;
@@ -10918,16 +9909,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    Elevator::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     Elevator::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(timeout, ptr__);
       ptr__ += IMC::serialize(flags, ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
@@ -10947,6 +9933,7 @@ namespace DUNE
     Elevator::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(timeout, bfr__, size__);
       bfr__ += IMC::deserialize(flags, bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
@@ -10966,6 +9953,7 @@ namespace DUNE
     Elevator::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
       bfr__ += IMC::deserialize(flags, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
@@ -10984,6 +9972,7 @@ namespace DUNE
     void
     Elevator::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "timeout", timeout, nindent__);
       IMC::toJSON(os__, "flags", flags, nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
@@ -11022,12 +10011,6 @@ namespace DUNE
       if (z != other__.z) return false;
       if (t != other__.t) return false;
       return true;
-    }
-
-    int
-    TrajectoryPoint::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -11082,6 +10065,7 @@ namespace DUNE
     void
     FollowTrajectory::clear(void)
     {
+      Maneuver::clear();
       timeout = 0;
       lat = 0;
       lon = 0;
@@ -11096,6 +10080,7 @@ namespace DUNE
     bool
     FollowTrajectory::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::FollowTrajectory& other__ = static_cast<const FollowTrajectory&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
@@ -11109,16 +10094,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    FollowTrajectory::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     FollowTrajectory::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(timeout, ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
@@ -11135,6 +10115,7 @@ namespace DUNE
     FollowTrajectory::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(timeout, bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
@@ -11151,6 +10132,7 @@ namespace DUNE
     FollowTrajectory::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
@@ -11166,6 +10148,7 @@ namespace DUNE
     void
     FollowTrajectory::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "timeout", timeout, nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
@@ -11216,6 +10199,7 @@ namespace DUNE
     void
     CustomManeuver::clear(void)
     {
+      Maneuver::clear();
       timeout = 0;
       name.clear();
       custom.clear();
@@ -11224,6 +10208,7 @@ namespace DUNE
     bool
     CustomManeuver::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::CustomManeuver& other__ = static_cast<const CustomManeuver&>(msg__);
       if (timeout != other__.timeout) return false;
       if (name != other__.name) return false;
@@ -11231,16 +10216,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    CustomManeuver::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     CustomManeuver::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(timeout, ptr__);
       ptr__ += IMC::serialize(name, ptr__);
       ptr__ += IMC::serialize(custom, ptr__);
@@ -11251,6 +10231,7 @@ namespace DUNE
     CustomManeuver::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(timeout, bfr__, size__);
       bfr__ += IMC::deserialize(name, bfr__, size__);
       bfr__ += IMC::deserialize(custom, bfr__, size__);
@@ -11261,6 +10242,7 @@ namespace DUNE
     CustomManeuver::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
@@ -11270,6 +10252,7 @@ namespace DUNE
     void
     CustomManeuver::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "timeout", timeout, nindent__);
       IMC::toJSON(os__, "name", name, nindent__);
       IMC::toJSON(os__, "custom", custom, nindent__);
@@ -11299,12 +10282,6 @@ namespace DUNE
       if (off_y != other__.off_y) return false;
       if (off_z != other__.off_z) return false;
       return true;
-    }
-
-    int
-    VehicleFormationParticipant::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -11360,6 +10337,7 @@ namespace DUNE
     void
     VehicleFormation::clear(void)
     {
+      Maneuver::clear();
       lat = 0;
       lon = 0;
       z = 0;
@@ -11375,6 +10353,7 @@ namespace DUNE
     bool
     VehicleFormation::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::VehicleFormation& other__ = static_cast<const VehicleFormation&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -11389,16 +10368,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    VehicleFormation::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     VehicleFormation::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
       ptr__ += IMC::serialize(z, ptr__);
@@ -11416,6 +10390,7 @@ namespace DUNE
     VehicleFormation::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
       bfr__ += IMC::deserialize(z, bfr__, size__);
@@ -11433,6 +10408,7 @@ namespace DUNE
     VehicleFormation::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(z, bfr__, size__);
@@ -11449,6 +10425,7 @@ namespace DUNE
     void
     VehicleFormation::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
       IMC::toJSON(os__, "z", z, nindent__);
@@ -11507,39 +10484,6 @@ namespace DUNE
       clear();
     }
 
-    void
-    StopManeuver::clear(void)
-    {
-    }
-
-    int
-    StopManeuver::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    StopManeuver::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    StopManeuver::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    StopManeuver::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
     RegisterManeuver::RegisterManeuver(void)
     {
       m_header.mgid = 469;
@@ -11558,12 +10502,6 @@ namespace DUNE
       const IMC::RegisterManeuver& other__ = static_cast<const RegisterManeuver&>(msg__);
       if (mid != other__.mid) return false;
       return true;
-    }
-
-    int
-    RegisterManeuver::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -11618,12 +10556,6 @@ namespace DUNE
       if (eta != other__.eta) return false;
       if (info != other__.info) return false;
       return true;
-    }
-
-    int
-    ManeuverControlState::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -11698,12 +10630,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    FollowSystem::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     FollowSystem::serializeFields(uint8_t* bfr__) const
     {
@@ -11771,6 +10697,7 @@ namespace DUNE
     void
     CommsRelay::clear(void)
     {
+      Maneuver::clear();
       lat = 0;
       lon = 0;
       speed = 0;
@@ -11784,6 +10711,7 @@ namespace DUNE
     bool
     CommsRelay::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::CommsRelay& other__ = static_cast<const CommsRelay&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -11796,16 +10724,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    CommsRelay::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     CommsRelay::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
       ptr__ += IMC::serialize(speed, ptr__);
@@ -11821,6 +10744,7 @@ namespace DUNE
     CommsRelay::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
       bfr__ += IMC::deserialize(speed, bfr__, size__);
@@ -11836,6 +10760,7 @@ namespace DUNE
     CommsRelay::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(speed, bfr__, size__);
@@ -11850,6 +10775,7 @@ namespace DUNE
     void
     CommsRelay::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
       IMC::toJSON(os__, "speed", speed, nindent__);
@@ -11880,12 +10806,6 @@ namespace DUNE
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       return true;
-    }
-
-    int
-    PolygonVertex::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -11932,6 +10852,7 @@ namespace DUNE
     void
     CoverArea::clear(void)
     {
+      Maneuver::clear();
       lat = 0;
       lon = 0;
       z = 0;
@@ -11945,6 +10866,7 @@ namespace DUNE
     bool
     CoverArea::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::CoverArea& other__ = static_cast<const CoverArea&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -11957,16 +10879,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    CoverArea::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     CoverArea::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
       ptr__ += IMC::serialize(z, ptr__);
@@ -11982,6 +10899,7 @@ namespace DUNE
     CoverArea::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
       bfr__ += IMC::deserialize(z, bfr__, size__);
@@ -11997,6 +10915,7 @@ namespace DUNE
     CoverArea::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(z, bfr__, size__);
@@ -12011,6 +10930,7 @@ namespace DUNE
     void
     CoverArea::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
       IMC::toJSON(os__, "z", z, nindent__);
@@ -12060,6 +10980,7 @@ namespace DUNE
     void
     CompassCalibration::clear(void)
     {
+      Maneuver::clear();
       timeout = 0;
       lat = 0;
       lon = 0;
@@ -12078,6 +10999,7 @@ namespace DUNE
     bool
     CompassCalibration::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::CompassCalibration& other__ = static_cast<const CompassCalibration&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
@@ -12095,16 +11017,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    CompassCalibration::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     CompassCalibration::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(timeout, ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
@@ -12125,6 +11042,7 @@ namespace DUNE
     CompassCalibration::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(timeout, bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
@@ -12145,6 +11063,7 @@ namespace DUNE
     CompassCalibration::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
@@ -12164,6 +11083,7 @@ namespace DUNE
     void
     CompassCalibration::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "timeout", timeout, nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
@@ -12204,12 +11124,6 @@ namespace DUNE
       if (participants != other__.participants) return false;
       if (custom != other__.custom) return false;
       return true;
-    }
-
-    int
-    FormationParameters::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -12293,6 +11207,7 @@ namespace DUNE
     void
     FormationPlanExecution::clear(void)
     {
+      Maneuver::clear();
       group_name.clear();
       formation_name.clear();
       plan_id.clear();
@@ -12312,6 +11227,7 @@ namespace DUNE
     bool
     FormationPlanExecution::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::FormationPlanExecution& other__ = static_cast<const FormationPlanExecution&>(msg__);
       if (group_name != other__.group_name) return false;
       if (formation_name != other__.formation_name) return false;
@@ -12330,16 +11246,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    FormationPlanExecution::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     FormationPlanExecution::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(group_name, ptr__);
       ptr__ += IMC::serialize(formation_name, ptr__);
       ptr__ += IMC::serialize(plan_id, ptr__);
@@ -12361,6 +11272,7 @@ namespace DUNE
     FormationPlanExecution::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(group_name, bfr__, size__);
       bfr__ += IMC::deserialize(formation_name, bfr__, size__);
       bfr__ += IMC::deserialize(plan_id, bfr__, size__);
@@ -12382,6 +11294,7 @@ namespace DUNE
     FormationPlanExecution::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(group_name, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(formation_name, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(plan_id, bfr__, size__);
@@ -12402,6 +11315,7 @@ namespace DUNE
     void
     FormationPlanExecution::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "group_name", group_name, nindent__);
       IMC::toJSON(os__, "formation_name", formation_name, nindent__);
       IMC::toJSON(os__, "plan_id", plan_id, nindent__);
@@ -12427,6 +11341,7 @@ namespace DUNE
     void
     FollowReference::clear(void)
     {
+      Maneuver::clear();
       control_src = 0;
       control_ent = 0;
       timeout = 0;
@@ -12437,6 +11352,7 @@ namespace DUNE
     bool
     FollowReference::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::FollowReference& other__ = static_cast<const FollowReference&>(msg__);
       if (control_src != other__.control_src) return false;
       if (control_ent != other__.control_ent) return false;
@@ -12446,16 +11362,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    FollowReference::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     FollowReference::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(control_src, ptr__);
       ptr__ += IMC::serialize(control_ent, ptr__);
       ptr__ += IMC::serialize(timeout, ptr__);
@@ -12468,6 +11379,7 @@ namespace DUNE
     FollowReference::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(control_src, bfr__, size__);
       bfr__ += IMC::deserialize(control_ent, bfr__, size__);
       bfr__ += IMC::deserialize(timeout, bfr__, size__);
@@ -12480,6 +11392,7 @@ namespace DUNE
     FollowReference::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(control_src, bfr__, size__);
       bfr__ += IMC::deserialize(control_ent, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
@@ -12491,6 +11404,7 @@ namespace DUNE
     void
     FollowReference::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "control_src", control_src, nindent__);
       IMC::toJSON(os__, "control_ent", control_ent, nindent__);
       IMC::toJSON(os__, "timeout", timeout, nindent__);
@@ -12528,12 +11442,6 @@ namespace DUNE
       if (lon != other__.lon) return false;
       if (radius != other__.radius) return false;
       return true;
-    }
-
-    int
-    Reference::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -12683,12 +11591,6 @@ namespace DUNE
       if (state != other__.state) return false;
       if (proximity != other__.proximity) return false;
       return true;
-    }
-
-    int
-    FollowRefState::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -12842,12 +11744,6 @@ namespace DUNE
       if (virt_err_y != other__.virt_err_y) return false;
       if (virt_err_z != other__.virt_err_z) return false;
       return true;
-    }
-
-    int
-    RelativeState::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -13021,12 +11917,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    FormationMonitor::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     FormationMonitor::serializeFields(uint8_t* bfr__) const
     {
@@ -13168,6 +12058,7 @@ namespace DUNE
     void
     Dislodge::clear(void)
     {
+      Maneuver::clear();
       timeout = 0;
       rpm = 0;
       direction = 0;
@@ -13177,6 +12068,7 @@ namespace DUNE
     bool
     Dislodge::fieldsEqual(const Message& msg__) const
     {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::Dislodge& other__ = static_cast<const Dislodge&>(msg__);
       if (timeout != other__.timeout) return false;
       if (rpm != other__.rpm) return false;
@@ -13185,16 +12077,11 @@ namespace DUNE
       return true;
     }
 
-    int
-    Dislodge::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     Dislodge::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(timeout, ptr__);
       ptr__ += IMC::serialize(rpm, ptr__);
       ptr__ += IMC::serialize(direction, ptr__);
@@ -13206,6 +12093,7 @@ namespace DUNE
     Dislodge::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(timeout, bfr__, size__);
       bfr__ += IMC::deserialize(rpm, bfr__, size__);
       bfr__ += IMC::deserialize(direction, bfr__, size__);
@@ -13217,6 +12105,7 @@ namespace DUNE
     Dislodge::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(rpm, bfr__, size__);
       bfr__ += IMC::deserialize(direction, bfr__, size__);
@@ -13227,6 +12116,7 @@ namespace DUNE
     void
     Dislodge::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "timeout", timeout, nindent__);
       IMC::toJSON(os__, "rpm", rpm, nindent__);
       IMC::toJSON(os__, "direction", direction, nindent__);
@@ -13269,12 +12159,6 @@ namespace DUNE
       if (last_error != other__.last_error) return false;
       if (last_error_time != other__.last_error_time) return false;
       return true;
-    }
-
-    int
-    VehicleState::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -13372,12 +12256,6 @@ namespace DUNE
       if (calib_time != other__.calib_time) return false;
       if (info != other__.info) return false;
       return true;
-    }
-
-    int
-    VehicleCommand::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -13497,12 +12375,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    MonitorEntityState::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     MonitorEntityState::serializeFields(uint8_t* bfr__) const
     {
@@ -13569,12 +12441,6 @@ namespace DUNE
       if (last_error != other__.last_error) return false;
       if (last_error_time != other__.last_error_time) return false;
       return true;
-    }
-
-    int
-    EntityMonitoringState::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -13677,12 +12543,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    OperationalLimits::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     OperationalLimits::serializeFields(uint8_t* bfr__) const
     {
@@ -13763,39 +12623,6 @@ namespace DUNE
       clear();
     }
 
-    void
-    GetOperationalLimits::clear(void)
-    {
-    }
-
-    int
-    GetOperationalLimits::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    GetOperationalLimits::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    GetOperationalLimits::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    GetOperationalLimits::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
     Calibration::Calibration(void)
     {
       m_header.mgid = 506;
@@ -13814,12 +12641,6 @@ namespace DUNE
       const IMC::Calibration& other__ = static_cast<const Calibration&>(msg__);
       if (duration != other__.duration) return false;
       return true;
-    }
-
-    int
-    Calibration::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -13874,12 +12695,6 @@ namespace DUNE
       if (mask != other__.mask) return false;
       if (scope_ref != other__.scope_ref) return false;
       return true;
-    }
-
-    int
-    ControlLoops::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -13940,12 +12755,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    VehicleMedium::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     VehicleMedium::serializeFields(uint8_t* bfr__) const
     {
@@ -13996,12 +12805,6 @@ namespace DUNE
       if (value != other__.value) return false;
       if (type != other__.type) return false;
       return true;
-    }
-
-    int
-    Collision::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -14080,12 +12883,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    FormState::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     FormState::serializeFields(uint8_t* bfr__) const
     {
@@ -14158,12 +12955,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    AutopilotMode::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     AutopilotMode::serializeFields(uint8_t* bfr__) const
     {
@@ -14204,39 +12995,6 @@ namespace DUNE
       clear();
     }
 
-    void
-    Abort::clear(void)
-    {
-    }
-
-    int
-    Abort::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    Abort::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    Abort::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    Abort::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
     PlanVariable::PlanVariable(void)
     {
       m_header.mgid = 561;
@@ -14261,12 +13019,6 @@ namespace DUNE
       if (type != other__.type) return false;
       if (access != other__.access) return false;
       return true;
-    }
-
-    int
-    PlanVariable::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -14338,12 +13090,6 @@ namespace DUNE
       if (start_actions != other__.start_actions) return false;
       if (end_actions != other__.end_actions) return false;
       return true;
-    }
-
-    int
-    PlanManeuver::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -14480,12 +13226,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    PlanTransition::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     PlanTransition::serializeFields(uint8_t* bfr__) const
     {
@@ -14597,12 +13337,6 @@ namespace DUNE
       if (start_actions != other__.start_actions) return false;
       if (end_actions != other__.end_actions) return false;
       return true;
-    }
-
-    int
-    PlanSpecification::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -14760,12 +13494,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    EmergencyControl::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     EmergencyControl::serializeFields(uint8_t* bfr__) const
     {
@@ -14869,12 +13597,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    EmergencyControlState::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     EmergencyControlState::serializeFields(uint8_t* bfr__) const
     {
@@ -14942,12 +13664,6 @@ namespace DUNE
       if (arg != other__.arg) return false;
       if (info != other__.info) return false;
       return true;
-    }
-
-    int
-    PlanDB::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -15075,12 +13791,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    PlanDBInformation::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     PlanDBInformation::serializeFields(uint8_t* bfr__) const
     {
@@ -15162,12 +13872,6 @@ namespace DUNE
       if (md5 != other__.md5) return false;
       if (plans_info != other__.plans_info) return false;
       return true;
-    }
-
-    int
-    PlanDBState::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -15285,12 +13989,6 @@ namespace DUNE
       if (arg != other__.arg) return false;
       if (info != other__.info) return false;
       return true;
-    }
-
-    int
-    PlanControl::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -15426,12 +14124,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    PlanControlState::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     PlanControlState::serializeFields(uint8_t* bfr__) const
     {
@@ -15514,12 +14206,6 @@ namespace DUNE
       if (plan_id != other__.plan_id) return false;
       if (params != other__.params) return false;
       return true;
-    }
-
-    int
-    PlanGeneration::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -15620,12 +14306,6 @@ namespace DUNE
       if (svy != other__.svy) return false;
       if (svz != other__.svz) return false;
       return true;
-    }
-
-    int
-    LeaderState::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -15770,12 +14450,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    ReportedState::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     ReportedState::serializeFields(uint8_t* bfr__) const
     {
@@ -15870,12 +14544,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    RemoteSensorInfo::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     RemoteSensorInfo::serializeFields(uint8_t* bfr__) const
     {
@@ -15954,12 +14622,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    MapPoint::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     MapPoint::serializeFields(uint8_t* bfr__) const
     {
@@ -16027,12 +14689,6 @@ namespace DUNE
       if (rgb_blue != other__.rgb_blue) return false;
       if (feature != other__.feature) return false;
       return true;
-    }
-
-    int
-    MapFeature::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -16138,12 +14794,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    Map::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     Map::serializeFields(uint8_t* bfr__) const
     {
@@ -16231,12 +14881,6 @@ namespace DUNE
       if (id != other__.id) return false;
       if (arg != other__.arg) return false;
       return true;
-    }
-
-    int
-    CcuEvent::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -16345,12 +14989,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    VehicleLinks::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     VehicleLinks::serializeFields(uint8_t* bfr__) const
     {
@@ -16439,12 +15077,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    TrexObservation::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     TrexObservation::serializeFields(uint8_t* bfr__) const
     {
@@ -16505,12 +15137,6 @@ namespace DUNE
       if (goal_id != other__.goal_id) return false;
       if (goal_xml != other__.goal_xml) return false;
       return true;
-    }
-
-    int
-    TrexCommand::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -16575,12 +15201,6 @@ namespace DUNE
       if (min != other__.min) return false;
       if (max != other__.max) return false;
       return true;
-    }
-
-    int
-    TrexAttribute::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -16648,12 +15268,6 @@ namespace DUNE
       if (predicate != other__.predicate) return false;
       if (attributes != other__.attributes) return false;
       return true;
-    }
-
-    int
-    TrexToken::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -16747,12 +15361,6 @@ namespace DUNE
       if (goal_id != other__.goal_id) return false;
       if (token != other__.token) return false;
       return true;
-    }
-
-    int
-    TrexOperation::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -16861,12 +15469,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    TrexPlan::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     TrexPlan::serializeFields(uint8_t* bfr__) const
     {
@@ -16953,12 +15555,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    Event::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     Event::serializeFields(uint8_t* bfr__) const
     {
@@ -17013,12 +15609,6 @@ namespace DUNE
       if (frameid != other__.frameid) return false;
       if (data != other__.data) return false;
       return true;
-    }
-
-    int
-    CompressedImage::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -17079,12 +15669,6 @@ namespace DUNE
       if (reps != other__.reps) return false;
       if (tsize != other__.tsize) return false;
       return true;
-    }
-
-    int
-    ImageTxSettings::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -17155,12 +15739,6 @@ namespace DUNE
       if (speed != other__.speed) return false;
       if (psi != other__.psi) return false;
       return true;
-    }
-
-    int
-    RemoteState::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -17241,12 +15819,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    Target::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     Target::serializeFields(uint8_t* bfr__) const
     {
@@ -17323,12 +15895,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    EntityParameter::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     EntityParameter::serializeFields(uint8_t* bfr__) const
     {
@@ -17384,12 +15950,6 @@ namespace DUNE
       if (name != other__.name) return false;
       if (params != other__.params) return false;
       return true;
-    }
-
-    int
-    EntityParameters::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -17480,12 +16040,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    QueryEntityParameters::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     QueryEntityParameters::serializeFields(uint8_t* bfr__) const
     {
@@ -17545,12 +16099,6 @@ namespace DUNE
       if (name != other__.name) return false;
       if (params != other__.params) return false;
       return true;
-    }
-
-    int
-    SetEntityParameters::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -17637,12 +16185,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    SaveEntityParameters::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     SaveEntityParameters::serializeFields(uint8_t* bfr__) const
     {
@@ -17691,12 +16233,6 @@ namespace DUNE
       const IMC::CreateSession& other__ = static_cast<const CreateSession&>(msg__);
       if (timeout != other__.timeout) return false;
       return true;
-    }
-
-    int
-    CreateSession::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -17749,12 +16285,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    CloseSession::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     CloseSession::serializeFields(uint8_t* bfr__) const
     {
@@ -17805,12 +16335,6 @@ namespace DUNE
       if (sessid != other__.sessid) return false;
       if (messages != other__.messages) return false;
       return true;
-    }
-
-    int
-    SessionSubscription::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -17867,12 +16391,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    SessionKeepAlive::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     SessionKeepAlive::serializeFields(uint8_t* bfr__) const
     {
@@ -17923,12 +16441,6 @@ namespace DUNE
       if (sessid != other__.sessid) return false;
       if (status != other__.status) return false;
       return true;
-    }
-
-    int
-    SessionStatus::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -17985,12 +16497,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    PushEntityParameters::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     PushEntityParameters::serializeFields(uint8_t* bfr__) const
     {
@@ -18039,12 +16545,6 @@ namespace DUNE
       const IMC::PopEntityParameters& other__ = static_cast<const PopEntityParameters&>(msg__);
       if (name != other__.name) return false;
       return true;
-    }
-
-    int
-    PopEntityParameters::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -18097,12 +16597,6 @@ namespace DUNE
       if (type != other__.type) return false;
       if (error != other__.error) return false;
       return true;
-    }
-
-    int
-    IoEvent::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -18163,12 +16657,6 @@ namespace DUNE
       if (flags != other__.flags) return false;
       if (data != other__.data) return false;
       return true;
-    }
-
-    int
-    UamTxFrame::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -18239,12 +16727,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    UamRxFrame::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     UamRxFrame::serializeFields(uint8_t* bfr__) const
     {
@@ -18309,12 +16791,6 @@ namespace DUNE
       if (value != other__.value) return false;
       if (error != other__.error) return false;
       return true;
-    }
-
-    int
-    UamTxStatus::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -18389,12 +16865,6 @@ namespace DUNE
       if (sys != other__.sys) return false;
       if (value != other__.value) return false;
       return true;
-    }
-
-    int
-    UamRxRange::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -18477,12 +16947,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    FormCtrlParam::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     FormCtrlParam::serializeFields(uint8_t* bfr__) const
     {
@@ -18557,12 +17021,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    FormationEval::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     FormationEval::serializeFields(uint8_t* bfr__) const
     {
@@ -18625,12 +17083,6 @@ namespace DUNE
       if (num_frags != other__.num_frags) return false;
       if (data != other__.data) return false;
       return true;
-    }
-
-    int
-    MessagePart::validate(void) const
-    {
-      return false;
     }
 
     uint8_t*
@@ -18697,12 +17149,6 @@ namespace DUNE
       return true;
     }
 
-    int
-    NeptusBlob::validate(void) const
-    {
-      return false;
-    }
-
     uint8_t*
     NeptusBlob::serializeFields(uint8_t* bfr__) const
     {
@@ -18741,39 +17187,6 @@ namespace DUNE
     {
       m_header.mgid = 889;
       clear();
-    }
-
-    void
-    Aborted::clear(void)
-    {
-    }
-
-    int
-    Aborted::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    Aborted::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    Aborted::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    Aborted::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
     }
   }
 }

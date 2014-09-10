@@ -70,13 +70,28 @@ class Message:
     def declare(self):
         self._fd.append('IMC::%s %s;' % (self._abbrev, self._var))
 
+    def get_base_class_fields(self):
+        base = None
+        for group in self._root.findall('message-groups/message-group'):
+            if group.find("message-type[@abbrev='%s']" % self._abbrev) is not None:
+                base = group
+        if base is None:
+            return []
+
+        return base.findall('field')
+
     def fill_fields(self):
         for field in self._fields:
+            self.fill_field(field)
+
+    def fill_base_fields(self):
+        for field in self.get_base_class_fields():
             self.fill_field(field)
 
     def declare_and_fill(self):
         self.declare()
         self.fill_fields()
+        self.fill_base_fields()
 
     def marshall(self):
         self._fd.append('')
@@ -195,6 +210,7 @@ for abbrev in abbrevs:
         msg = Message(fd, 'msg', abbrev, root, test)
         msg.declare()
         msg.fill_header()
+        msg.fill_base_fields()
         msg.fill_fields()
         msg.marshall()
         fd.append('}\n')

@@ -82,177 +82,208 @@ def call_message_list_function(name, func, args):
     return name + '.' + func + '(' + args + ');\n'
 
 class Message:
-    def __init__(self, root, node, hpp, cpp, consts):
+    def __init__(self, root, node, consts):
         self._root = root
         self._node = node
         self._consts = consts
+        self._public = []
+        self._protected = []
+        self._abbrev = self._node.get('abbrev')
+        self._base = self.get_base_class()
 
-        public = []
-        protected = []
-
-        # getIdStatic()
+    def make_getIdStatic(self):
         f = Function('getIdStatic', 'uint16_t', static = True, inline = True)
-        f.body('return %(id)s;' % node.attrib)
-        public.append(f)
+        f.body('return %(id)s;' % self._node.attrib)
+        self._public.append(f)
 
-        # Constructor.
-        f = Function(node.get('abbrev'))
-        f.add_body('m_header.mgid = ' + node.get('id') + ';')
+    def make_AssignId(self):
+        return 'm_header.mgid = ' + self._node.get('id') + ';'
+
+    #fixme: base class
+    def make_constructor(self):
+        f = Function(self._abbrev)
+        assign = self.make_AssignId()
+        if len(assign) > 0:
+            f.add_body(assign)
         f.add_body('clear();')
-        for field in node.findall("field[@type='message']"):
+        for field in self._node.findall("field[@type='message']"):
             f.add_body(get_name(field) + '.setParent(this);')
-        for field in node.findall("field[@type='message-list']"):
+        for field in self._node.findall("field[@type='message-list']"):
             f.add_body(get_name(field) + '.setParent(this);')
-        public.append(f)
+        self._public.append(f)
 
-        # clone()
+    def make_clone(self):
         f = Function('clone', 'Message*', const = True, inline = True)
-        f.body('return new %(abbrev)s(*this);' % node.attrib)
-        public.append(f)
+        f.body('return new %(abbrev)s(*this);' % self._node.attrib)
+        self._public.append(f)
 
-        # clear()
+    def make_clear(self):
+        if not self.has_fields() and not self.base_class_has_fields():
+            return
+
         f = Function('clear', 'void')
-        f.body('\n'.join([get_clear(field) for field in node.findall('field')]))
-        public.append(f)
+        if self.base_class_has_fields():
+            f.add_body('%s::clear();' % self._base)
+        f.add_body('\n'.join([get_clear(field) for field in self._node.findall('field')]))
+        self._public.append(f)
 
-        # fieldsEqual()
-        if self.has_fields():
-            f = Function('fieldsEqual', 'bool', [Var('msg__', 'const Message&')], const = True)
-            f.add_body('const IMC::' + node.get('abbrev') + '& other__ = static_cast<const ' + node.get('abbrev') + '&>(msg__);')
-            f.add_body('\n'.join([get_not_equal(field) for field in node.findall('field')]))
-            f.add_body('return true;')
-            public.append(f)
+# fixme: base class
+    def make_fieldsEqual(self):
+        if not self.has_fields() and not self.base_class_has_fields():
+            return
 
-        # validate() / fixme
-        f = Function('validate', 'int', const = True)
-        f.body('return false;')
-        public.append(f);
+        f = Function('fieldsEqual', 'bool', [Var('msg__', 'const Message&')], const = True)
+        if self.base_class_has_fields():
+           f.add_body('if (!%s::fieldsEqual(msg__)) return false;' % self._base)
 
-        # serializeFields()
+        f.add_body('const IMC::' + self._abbrev + '& other__ = static_cast<const ' + self._abbrev + '&>(msg__);')
+        f.add_body('\n'.join([get_not_equal(field) for field in self._node.findall('field')]))
+        f.add_body('return true;')
+        self._public.append(f)
+
+    def make_serializeFields(self):
+        if not self.has_fields() and not self.base_class_has_fields():
+            return
+
         f = Function('serializeFields', 'uint8_t*', [Var('bfr__', 'uint8_t*')], const = True)
-        if self.has_fields():
-            f.add_body('uint8_t* ptr__ = bfr__;')
-            for field in node.findall('field'):
-                if field.get('type').startswith('message'):
-                    f.add_body('ptr__ += %s.serialize(ptr__);' % get_name(field))
-                else:
-                    f.add_body('ptr__ += IMC::serialize(%s, ptr__);' % get_name(field))
-            f.add_body('return ptr__;')
-        else:
-            f.add_body('return bfr__;')
-        public.append(f)
+        f.add_body('uint8_t* ptr__ = bfr__;')
 
-        # deserializeFields()
+        if self.base_class_has_fields():
+            f.add_body('ptr__ = %s::serializeFields(ptr__);' % self._base)
+
+        for field in self._node.findall('field'):
+            if field.get('type').startswith('message'):
+                f.add_body('ptr__ += %s.serialize(ptr__);' % get_name(field))
+            else:
+                f.add_body('ptr__ += IMC::serialize(%s, ptr__);' % get_name(field))
+
+        f.add_body('return ptr__;')
+        self._public.append(f)
+
+    def make_deserializeFields(self):
+        if not self.has_fields() and not self.base_class_has_fields():
+            return
+
         f = Function('deserializeFields', 'uint16_t', [Var('bfr__', 'const uint8_t*'), Var('size__', 'uint16_t')])
-        if self.has_fields():
-            f.add_body('const uint8_t* start__ = bfr__;')
-            for field in node.findall('field'):
-                if field.get('type').startswith('message'):
-                    f.add_body('bfr__ += %s.deserialize(bfr__, size__);' % get_name(field))
-                else:
-                    f.add_body('bfr__ += IMC::deserialize(%s, bfr__, size__);' % get_name(field))
-            f.add_body('return bfr__ - start__;')
-        else:
-            f.add_body('(void)bfr__;\n(void)size__;')
-            f.add_body('return 0;')
-        public.append(f)
+        f.add_body('const uint8_t* start__ = bfr__;')
 
-        # reverseDeserializeFields()
+        if self.base_class_has_fields():
+            f.add_body('bfr__ += %s::deserializeFields(bfr__, size__);' % self._base)
+
+        for field in self._node.findall('field'):
+            if field.get('type').startswith('message'):
+                f.add_body('bfr__ += %s.deserialize(bfr__, size__);' % get_name(field))
+            else:
+                f.add_body('bfr__ += IMC::deserialize(%s, bfr__, size__);' % get_name(field))
+        f.add_body('return bfr__ - start__;')
+
+        self._public.append(f)
+
+    def make_reverseDeserializeFields(self):
+        if not self.has_fields() and not self.base_class_has_fields():
+            return
+
         f = Function('reverseDeserializeFields', 'uint16_t', [Var('bfr__', 'const uint8_t*'), Var('size__', 'uint16_t')])
-        if self.has_fields():
-            f.add_body('const uint8_t* start__ = bfr__;')
-            for field in node.findall('field'):
-                if consts['sizes'][field.get('type')] == 1:
-                    f.add_body('bfr__ += IMC::deserialize({0}, bfr__, size__);'.format(get_name(field)))
-                elif field.get('type').startswith('message'):
-                    f.add_body('bfr__ += %s.reverseDeserialize(bfr__, size__);' % get_name(field))
-                else:
-                    f.add_body('bfr__ += IMC::reverseDeserialize(%s, bfr__, size__);' % get_name(field))
-            f.add_body('return bfr__ - start__;')
-        else:
-            f.add_body('(void)bfr__;\n(void)size__;')
-            f.add_body('return 0;')
-        public.append(f)
+        f.add_body('const uint8_t* start__ = bfr__;')
 
-        # getId()
+        if self.base_class_has_fields():
+            f.add_body('bfr__ += %s::reverseDeserializeFields(bfr__, size__);' % self._base)
+
+        for field in self._node.findall('field'):
+            if consts['sizes'][field.get('type')] == 1:
+                f.add_body('bfr__ += IMC::deserialize({0}, bfr__, size__);'.format(get_name(field)))
+            elif field.get('type').startswith('message'):
+                f.add_body('bfr__ += %s.reverseDeserialize(bfr__, size__);' % get_name(field))
+            else:
+                f.add_body('bfr__ += IMC::reverseDeserialize(%s, bfr__, size__);' % get_name(field))
+        f.add_body('return bfr__ - start__;')
+
+        self._public.append(f)
+
+    def make_getId(self):
         f = Function('getId', 'uint16_t', const = True, inline = True)
-        f.body('return %(abbrev)s::getIdStatic();' % node.attrib)
-        public.append(f)
+        f.body('return %(abbrev)s::getIdStatic();' % self._node.attrib)
+        self._public.append(f)
 
-        # getName()
+    def make_getName(self):
         f = Function('getName', 'const char*', const = True, inline = True)
-        f.body('return "%(abbrev)s";' % node.attrib)
-        public.append(f)
+        f.body('return "%(abbrev)s";' % self._node.attrib)
+        self._public.append(f)
 
-        # getFixedSerializationSize()
+    def make_getFixedSerializationSize(self):
+        if not self.has_fields() and not self.base_class_has_fields():
+            return
+
         f = Function('getFixedSerializationSize', 'unsigned', const = True, inline = True)
-        f.body('return ' + str(self.get_fixed_size()) + ';')
-        public.append(f)
+        size = str(self.get_fixed_size())
+        if self.base_class_has_fields():
+            size += ' + %s::getFixedSerializationSize()' % self._base
+        f.body('return ' + size + ';')
+        self._public.append(f)
 
-        # getVariableSerializationSize()
+    def make_getVariableSerializationSize(self):
+        if not self.has_fields() and not self.base_class_has_fields():
+            return
+
         var_size = str(self.get_variable_size())
         if var_size != '':
             f = Function('getVariableSerializationSize', 'unsigned', const = True, inline = True)
             f.body('return ' + var_size + ';')
-            public.append(f)
+            self._public.append(f)
 
-        subid = node.find("field/[@abbrev='id']")
-        if subid is not None and subid.get('type') in consts['fixed_types']:
-            # getSubId()
-            f = Function('getSubId', 'uint16_t', const = True)
-            f.body('return id;')
-            public.append(f)
-
-            # setSubId()
-            f = Function('setSubId', 'void', [Var('subid', 'uint16_t')])
-            f.body('id = ({0})subid;'.format(subid.get('type')))
-            public.append(f)
-
-        value = node.find("field/[@abbrev='value']")
-        if value is not None and value.get('type') in consts['fixed_types']:
-            # getValueFP()
-            f = Function('getValueFP', 'fp64_t', const = True)
-            f.body('return static_cast<fp64_t>(value);')
-            public.append(f)
-
-            # setValueFP()
-            f = Function('setValueFP', 'void', [Var('val', 'fp64_t')])
-            f.body('value = static_cast<{0}>(val);'.format(value.get('type')))
-            public.append(f)
-
-        # fieldsToJSON()
+    def make_fieldsToJSON(self):
         if self.has_fields():
             f = Function('fieldsToJSON', 'void', [Var('os__', 'std::ostream&'), Var('nindent__', 'unsigned')], const = True)
-            f.add_body(self.fields_to_json())
-            public.append(f)
+            lines = []
+            if self.base_class_has_fields():
+                lines.append('%s::fieldsToJSON(os__, nindent__);' % self._base)
 
-        # Nested functions.
+            for field in self._node.findall('field'):
+                if field.get('type').startswith('message'):
+                    lines.append('{0}.toJSON(os__, "{0}", nindent__);'.format(get_name(field)))
+                else:
+                    lines.append('IMC::toJSON(os__, "{0}", {0}, nindent__);'.format(get_name(field)))
+            f.add_body('\n'.join(lines))
+            self._public.append(f)
+
+    def make_getSetSubId(self):
+        subid = self._node.find("field/[@abbrev='id']")
+        if subid is not None and subid.get('type') in consts['fixed_types']:
+            f = Function('getSubId', 'uint16_t', const = True)
+            f.body('return id;')
+            self._public.append(f)
+
+            f = Function('setSubId', 'void', [Var('subid', 'uint16_t')])
+            f.body('id = ({0})subid;'.format(subid.get('type')))
+            self._public.append(f)
+
+    def make_getSetValueFP(self):
+        value = self._node.find("field/[@abbrev='value']")
+        if value is not None and value.get('type') in consts['fixed_types']:
+            f = Function('getValueFP', 'fp64_t', const = True)
+            f.body('return static_cast<fp64_t>(value);')
+            self._public.append(f)
+
+            f = Function('setValueFP', 'void', [Var('val', 'fp64_t')])
+            f.body('value = static_cast<{0}>(val);'.format(value.get('type')))
+            self._public.append(f)
+
+    def make_NestedFunctions(self):
         if self.count_nested() > 0:
             funcs = [('TimeStamp', 'double'), ('Source', 'uint16_t'),
                      ('SourceEntity', 'uint8_t'), ('Destination', 'uint16_t'),
                      ('DestinationEntity', 'uint8_t')]
             for func in funcs:
                 f = Function('set' + func[0] + 'Nested', 'void', [Var('value__', func[1])])
-                for field in node.findall("field[@type='message']"):
+                for field in self._node.findall("field[@type='message']"):
                     f.add_body(call_inline_message_function(get_name(field), 'set' + func[0], 'value__'))
-                for field in node.findall("field[@type='message-list']"):
+                for field in self._node.findall("field[@type='message-list']"):
                     f.add_body(call_message_list_function(get_name(field), 'set' + func[0], 'value__'))
-                protected.append(f)
+                self._protected.append(f)
 
-        # HPP.
-        base = []
-        for group in root.findall('message-groups/message-group'):
-            if group.find("message-type[@abbrev='%s']" % node.get('abbrev')) is not None:
-                base.append(group.get('abbrev'))
-        if len(base) == 0:
-            base.append('Message')
-        hpp.append(comment(node.get('name'), nl = ''))
-        hpp.append('class %s: public %s' % (node.get('abbrev'), ', '.join(base)));
-        hpp.append('{')
-        hpp.append('public:')
-
-        # Process inline enumerations.
-        iens = node.findall("field[@unit='Enumerated']")
+    # Process inline enumerations.
+    def make_Enumerated(self):
+        iens = self._node.findall("field[@unit='Enumerated']")
         for ien in iens:
             if ien.get('enum-def', None) is not None:
                 continue
@@ -260,10 +291,10 @@ class Message:
             for field in ien.findall('value'):
                 name = ien.get('prefix') + '_' + field.get('abbrev')
                 enum.add_field(EnumField(name, field.get('id'), field.get('name')))
-            hpp.append(enum)
+            self._public.append(enum)
 
-        # Process inline bitfields.
-        bfs = node.findall("field[@unit='Bitfield']")
+    def make_Bitfields(self):
+        bfs = self._node.findall("field[@unit='Bitfield']")
         for bf in bfs:
             if bf.get('bitfield-def', None) is not None:
                 continue
@@ -271,54 +302,84 @@ class Message:
             for field in bf.findall('value'):
                 name = bf.get('prefix') + '_' + field.get('abbrev')
                 enum.add_field(EnumField(name, field.get('id'), field.get('name')))
-            hpp.append(enum)
+            self._public.append(enum)
 
-        for f in node.findall('field'):
+    def make_FieldDecls(self):
+        fields = self._node.findall('field')
+        for f in fields:
             type = f.get('message-type')
             v = Var(get_name(f), get_cxx_type(f), desc = f.get('name'))
-            hpp.append(v.as_decl())
-        hpp.append('')
+            self._public.append(v.as_decl())
 
-        for function in public:
-            if function.is_inline():
-                hpp.append(function)
-            else:
-                hpp.append(function.decl())
+        if self.has_fields():
+            self._public.append('')
 
-        if len(protected) > 0:
-            hpp.append('protected:')
-            for function in protected:
-                if function.is_inline():
-                    hpp.append(function)
+    def base_class_has_fields(self):
+        fields = self._root.findall("message-groups/message-group[@abbrev='%s']/field" % self._base)
+        return len(fields) > 0
+
+    def get_base_class(self):
+        base = []
+        for group in self._root.findall('message-groups/message-group'):
+            if group.find("message-type[@abbrev='%s']" % self._abbrev) is not None:
+                base.append(group.get('abbrev'))
+        if len(base) == 0:
+            return 'Message'
+        if len(base) == 1:
+            return base[0]
+        raise "multiple inheritance not supported"
+
+    @staticmethod
+    def append_block(file, block, access):
+        if len(block) > 0:
+            hpp.append(access + ':')
+            for block in block:
+                if isinstance(block, Function):
+                    if block.is_inline():
+                        hpp.append(block)
+                    else:
+                        hpp.append(block.decl())
                 else:
-                    hpp.append(function.decl())
+                    hpp.append(block)
 
+    def generate(self, hpp, cpp):
+        self._public = []
+        self._protected = []
+
+        self.make_Enumerated()
+        self.make_Bitfields()
+        self.make_FieldDecls()
+        self.make_getIdStatic()
+        self.make_constructor()
+        self.make_getId()
+        self.make_getName()
+        self.make_clone()
+        self.make_clear()
+        self.make_fieldsEqual()
+        self.make_serializeFields()
+        self.make_deserializeFields()
+        self.make_reverseDeserializeFields()
+        self.make_getFixedSerializationSize()
+        self.make_getVariableSerializationSize()
+        self.make_getSetSubId()
+        self.make_getSetValueFP()
+        self.make_fieldsToJSON()
+        self.make_NestedFunctions()
+
+        # HPP.
+        hpp.append(comment(self._node.get('name'), nl = ''))
+        hpp.append('class %s: public %s' % (self._abbrev, self._base))
+        hpp.append('{')
+        self.append_block(hpp, self._public, 'public')
+        self.append_block(hpp, self._protected, 'protected')
         hpp.append('};\n')
 
         # CPP.
-        for function in public + protected:
-            if not function.is_inline():
-                function.set_class(node.get('abbrev'))
-                cpp.append(function)
-
-    def fields_to_json(self):
-        lines = []
-        for field in self._node.findall('field'):
-            if field.get('type').startswith('message'):
-                lines.append('{0}.toJSON(os__, "{0}", nindent__);'.format(get_name(field)))
-            else:
-                lines.append('IMC::toJSON(os__, "{0}", {0}, nindent__);'.format(get_name(field)))
-        return '\n'.join(lines)
-
-    def validate(field):
-        min_value = field.get('min', None)
-        cond = ''
-        if min_value is not None:
-            cond += '({0} < {1})'.format(get_name(field), min_value)
-
-        max_value = field.get('max', None)
-        if max_value is not None:
-            cond += '({0} > {1})'.format(get_name(field), max_value)
+        for block in self._public + self._protected:
+            if isinstance(block, Function):
+                if not block.is_inline():
+                    block.set_class(self._abbrev)
+                    cpp.append(block)
 
     def get_fixed_size(self):
         size = 0
@@ -328,6 +389,9 @@ class Message:
 
     def get_variable_size(self):
         size = []
+        if self.base_class_has_fields():
+            size.append('%s::getVariableSerializationSize()' % self._base)
+
         for field in self._node.findall('field'):
             type = field.get('type')
             abbrev = get_name(field)
@@ -351,6 +415,26 @@ class Message:
     def count_nested(self):
         return len(self._node.findall("field[@type='message']")) + \
                len(self._node.findall("field[@type='message-list']"))
+
+class MessageGroup(Message):
+    def make_constructor(self):
+        if self.has_fields():
+            Message.make_constructor(self)
+
+    def make_getIdStatic(self):
+        pass
+
+    def make_getId(self):
+        pass
+
+    def make_AssignId(self):
+        return ''
+
+    def make_getName(self):
+        pass
+
+    def make_clone(self):
+        pass
 
 # Parse command line arguments.
 import argparse
@@ -509,13 +593,22 @@ f.write()
 ################################################################################
 # SuperTypes.hpp                                                               #
 ################################################################################
-f = File('SuperTypes.hpp', dest_folder, md5 = xml_md5)
-f.add_dune_headers('IMC/Message.hpp')
-for group in root.findall("message-groups/message-group"):
-    f.append(comment('Super type %s' % group.get('name'), nl = ''))
-    f.append('class %s: public Message\n{' % group.get('abbrev'))
-    f.append('};\n')
-f.write()
+hpp = File('SuperTypes.hpp', dest_folder, md5 = xml_md5)
+hpp.add_isoc_headers('ostream', 'string', 'vector')
+hpp.add_dune_headers('Config.hpp', 'IMC/Message.hpp',
+                     'IMC/InlineMessage.hpp', 'IMC/MessageList.hpp',
+                     'IMC/Enumerations.hpp', 'IMC/Bitfields.hpp',
+                     'IMC/JSON.hpp')
+
+cpp = File('SuperTypes.cpp', dest_folder, md5 = xml_md5)
+cpp.add_dune_headers('IMC/SuperTypes.hpp')
+
+for group in root.findall('message-groups/message-group'):
+    msg_obj = MessageGroup(root, group, consts)
+    msg_obj.generate(hpp, cpp)
+
+hpp.write()
+cpp.write()
 
 ################################################################################
 # Definitions.hpp                                                              #
@@ -541,6 +634,8 @@ abbrevs = deps.get_list()
 
 for abbrev in abbrevs:
     msg = root.find("message[@abbrev='%s']" % abbrev)
-    Message(root, msg, hpp, cpp, consts)
+    msg_obj = Message(root, msg, consts)
+    msg_obj.generate(hpp, cpp)
+
 hpp.write()
 cpp.write()

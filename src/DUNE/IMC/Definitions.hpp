@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: bc9d825ba1981fbb15950278b9fa89ba                            *
+// IMC XML MD5: b756b37277f77273f0da757e06bff4be                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -92,6 +92,18 @@ namespace DUNE
 
       EntityState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return EntityState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "EntityState";
+      }
+
       Message*
       clone(void) const
       {
@@ -104,9 +116,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -115,18 +124,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return EntityState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "EntityState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -148,7 +145,6 @@ namespace DUNE
     class QueryEntityState: public Message
     {
     public:
-
       static uint16_t
       getIdStatic(void)
       {
@@ -156,27 +152,6 @@ namespace DUNE
       }
 
       QueryEntityState(void);
-
-      Message*
-      clone(void) const
-      {
-        return new QueryEntityState(*this);
-      }
-
-      void
-      clear(void);
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
 
       uint16_t
       getId(void) const
@@ -190,10 +165,10 @@ namespace DUNE
         return "QueryEntityState";
       }
 
-      unsigned
-      getFixedSerializationSize(void) const
+      Message*
+      clone(void) const
       {
-        return 0;
+        return new QueryEntityState(*this);
       }
     };
 
@@ -220,6 +195,18 @@ namespace DUNE
 
       EntityInfo(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return EntityInfo::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "EntityInfo";
+      }
+
       Message*
       clone(void) const
       {
@@ -232,9 +219,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -243,18 +227,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return EntityInfo::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "EntityInfo";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -293,6 +265,18 @@ namespace DUNE
 
       QueryEntityInfo(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return QueryEntityInfo::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "QueryEntityInfo";
+      }
+
       Message*
       clone(void) const
       {
@@ -305,9 +289,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -316,18 +297,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return QueryEntityInfo::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "QueryEntityInfo";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -371,6 +340,18 @@ namespace DUNE
 
       EntityList(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return EntityList::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "EntityList";
+      }
+
       Message*
       clone(void) const
       {
@@ -383,9 +364,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -394,18 +372,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return EntityList::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "EntityList";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -438,6 +404,18 @@ namespace DUNE
 
       CpuUsage(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return CpuUsage::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "CpuUsage";
+      }
+
       Message*
       clone(void) const
       {
@@ -450,9 +428,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -461,18 +436,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return CpuUsage::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "CpuUsage";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -507,6 +470,18 @@ namespace DUNE
 
       TransportBindings(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return TransportBindings::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TransportBindings";
+      }
+
       Message*
       clone(void) const
       {
@@ -519,9 +494,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -530,18 +502,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return TransportBindings::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "TransportBindings";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -563,7 +523,6 @@ namespace DUNE
     class RestartSystem: public Message
     {
     public:
-
       static uint16_t
       getIdStatic(void)
       {
@@ -571,27 +530,6 @@ namespace DUNE
       }
 
       RestartSystem(void);
-
-      Message*
-      clone(void) const
-      {
-        return new RestartSystem(*this);
-      }
-
-      void
-      clear(void);
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
 
       uint16_t
       getId(void) const
@@ -605,10 +543,10 @@ namespace DUNE
         return "RestartSystem";
       }
 
-      unsigned
-      getFixedSerializationSize(void) const
+      Message*
+      clone(void) const
       {
-        return 0;
+        return new RestartSystem(*this);
       }
     };
 
@@ -640,6 +578,18 @@ namespace DUNE
 
       DevCalibrationControl(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DevCalibrationControl::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DevCalibrationControl";
+      }
+
       Message*
       clone(void) const
       {
@@ -652,9 +602,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -663,18 +610,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DevCalibrationControl::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DevCalibrationControl";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -722,6 +657,18 @@ namespace DUNE
 
       DevCalibrationState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DevCalibrationState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DevCalibrationState";
+      }
+
       Message*
       clone(void) const
       {
@@ -734,9 +681,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -745,18 +689,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DevCalibrationState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DevCalibrationState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -812,6 +744,18 @@ namespace DUNE
 
       EntityActivationState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return EntityActivationState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "EntityActivationState";
+      }
+
       Message*
       clone(void) const
       {
@@ -824,9 +768,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -835,18 +776,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return EntityActivationState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "EntityActivationState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -868,7 +797,6 @@ namespace DUNE
     class QueryEntityActivationState: public Message
     {
     public:
-
       static uint16_t
       getIdStatic(void)
       {
@@ -876,27 +804,6 @@ namespace DUNE
       }
 
       QueryEntityActivationState(void);
-
-      Message*
-      clone(void) const
-      {
-        return new QueryEntityActivationState(*this);
-      }
-
-      void
-      clear(void);
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
 
       uint16_t
       getId(void) const
@@ -910,10 +817,10 @@ namespace DUNE
         return "QueryEntityActivationState";
       }
 
-      unsigned
-      getFixedSerializationSize(void) const
+      Message*
+      clone(void) const
       {
-        return 0;
+        return new QueryEntityActivationState(*this);
       }
     };
 
@@ -977,6 +884,18 @@ namespace DUNE
 
       VehicleOperationalLimits(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return VehicleOperationalLimits::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "VehicleOperationalLimits";
+      }
+
       Message*
       clone(void) const
       {
@@ -989,9 +908,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -1000,18 +916,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return VehicleOperationalLimits::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "VehicleOperationalLimits";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -1038,6 +942,18 @@ namespace DUNE
 
       MsgList(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return MsgList::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "MsgList";
+      }
+
       Message*
       clone(void) const
       {
@@ -1050,9 +966,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -1061,18 +974,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return MsgList::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "MsgList";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -1155,6 +1056,18 @@ namespace DUNE
 
       SimulatedState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SimulatedState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SimulatedState";
+      }
+
       Message*
       clone(void) const
       {
@@ -1167,9 +1080,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -1178,18 +1088,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SimulatedState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SimulatedState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -1227,6 +1125,18 @@ namespace DUNE
 
       LeakSimulation(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return LeakSimulation::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "LeakSimulation";
+      }
+
       Message*
       clone(void) const
       {
@@ -1239,9 +1149,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -1250,18 +1157,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return LeakSimulation::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "LeakSimulation";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -1309,6 +1204,18 @@ namespace DUNE
 
       UASimulation(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return UASimulation::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "UASimulation";
+      }
+
       Message*
       clone(void) const
       {
@@ -1321,9 +1228,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -1332,18 +1236,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return UASimulation::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "UASimulation";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -1391,6 +1283,18 @@ namespace DUNE
 
       DynamicsSimParam(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DynamicsSimParam::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DynamicsSimParam";
+      }
+
       Message*
       clone(void) const
       {
@@ -1403,9 +1307,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -1414,18 +1315,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DynamicsSimParam::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DynamicsSimParam";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -1454,6 +1343,18 @@ namespace DUNE
 
       StorageUsage(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return StorageUsage::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "StorageUsage";
+      }
+
       Message*
       clone(void) const
       {
@@ -1466,9 +1367,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -1477,18 +1375,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return StorageUsage::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "StorageUsage";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -1540,6 +1426,18 @@ namespace DUNE
 
       CacheControl(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return CacheControl::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "CacheControl";
+      }
+
       Message*
       clone(void) const
       {
@@ -1552,9 +1450,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -1563,18 +1458,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return CacheControl::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "CacheControl";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -1642,6 +1525,18 @@ namespace DUNE
 
       LoggingControl(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return LoggingControl::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "LoggingControl";
+      }
+
       Message*
       clone(void) const
       {
@@ -1654,9 +1549,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -1665,18 +1557,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return LoggingControl::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "LoggingControl";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -1730,6 +1610,18 @@ namespace DUNE
 
       LogBookEntry(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return LogBookEntry::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "LogBookEntry";
+      }
+
       Message*
       clone(void) const
       {
@@ -1742,9 +1634,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -1753,18 +1642,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return LogBookEntry::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "LogBookEntry";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -1814,6 +1691,18 @@ namespace DUNE
 
       LogBookControl(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return LogBookControl::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "LogBookControl";
+      }
+
       Message*
       clone(void) const
       {
@@ -1826,9 +1715,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -1837,18 +1723,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return LogBookControl::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "LogBookControl";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -1912,6 +1786,18 @@ namespace DUNE
 
       ReplayControl(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return ReplayControl::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ReplayControl";
+      }
+
       Message*
       clone(void) const
       {
@@ -1924,9 +1810,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -1935,18 +1818,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return ReplayControl::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "ReplayControl";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -2000,6 +1871,18 @@ namespace DUNE
 
       ClockControl(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return ClockControl::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ClockControl";
+      }
+
       Message*
       clone(void) const
       {
@@ -2012,9 +1895,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -2023,18 +1903,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return ClockControl::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "ClockControl";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -2050,7 +1918,6 @@ namespace DUNE
     class Heartbeat: public Message
     {
     public:
-
       static uint16_t
       getIdStatic(void)
       {
@@ -2058,27 +1925,6 @@ namespace DUNE
       }
 
       Heartbeat(void);
-
-      Message*
-      clone(void) const
-      {
-        return new Heartbeat(*this);
-      }
-
-      void
-      clear(void);
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
 
       uint16_t
       getId(void) const
@@ -2092,10 +1938,10 @@ namespace DUNE
         return "Heartbeat";
       }
 
-      unsigned
-      getFixedSerializationSize(void) const
+      Message*
+      clone(void) const
       {
-        return 0;
+        return new Heartbeat(*this);
       }
     };
 
@@ -2126,6 +1972,18 @@ namespace DUNE
 
       Announce(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Announce::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Announce";
+      }
+
       Message*
       clone(void) const
       {
@@ -2138,9 +1996,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -2149,18 +2004,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Announce::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Announce";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -2204,6 +2047,18 @@ namespace DUNE
 
       AnnounceService(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return AnnounceService::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AnnounceService";
+      }
+
       Message*
       clone(void) const
       {
@@ -2216,9 +2071,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -2227,18 +2079,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return AnnounceService::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "AnnounceService";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -2271,6 +2111,18 @@ namespace DUNE
 
       RSSI(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return RSSI::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "RSSI";
+      }
+
       Message*
       clone(void) const
       {
@@ -2283,9 +2135,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -2294,18 +2143,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return RSSI::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "RSSI";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -2338,6 +2175,18 @@ namespace DUNE
 
       VSWR(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return VSWR::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "VSWR";
+      }
+
       Message*
       clone(void) const
       {
@@ -2350,9 +2199,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -2361,18 +2207,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return VSWR::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "VSWR";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -2405,6 +2239,18 @@ namespace DUNE
 
       LinkLevel(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return LinkLevel::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "LinkLevel";
+      }
+
       Message*
       clone(void) const
       {
@@ -2417,9 +2263,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -2428,18 +2271,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return LinkLevel::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "LinkLevel";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -2476,6 +2307,18 @@ namespace DUNE
 
       Sms(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Sms::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Sms";
+      }
+
       Message*
       clone(void) const
       {
@@ -2488,9 +2331,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -2499,18 +2339,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Sms::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Sms";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -2549,6 +2377,18 @@ namespace DUNE
 
       SmsTx(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SmsTx::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SmsTx";
+      }
+
       Message*
       clone(void) const
       {
@@ -2561,9 +2401,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -2572,18 +2409,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SmsTx::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SmsTx";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -2618,6 +2443,18 @@ namespace DUNE
 
       SmsRx(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SmsRx::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SmsRx";
+      }
+
       Message*
       clone(void) const
       {
@@ -2630,9 +2467,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -2641,18 +2475,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SmsRx::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SmsRx";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -2708,6 +2530,18 @@ namespace DUNE
 
       SmsState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SmsState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SmsState";
+      }
+
       Message*
       clone(void) const
       {
@@ -2720,9 +2554,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -2731,18 +2562,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SmsState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SmsState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -2777,6 +2596,18 @@ namespace DUNE
 
       TextMessage(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return TextMessage::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TextMessage";
+      }
+
       Message*
       clone(void) const
       {
@@ -2789,9 +2620,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -2800,18 +2628,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return TextMessage::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "TextMessage";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -2852,6 +2668,18 @@ namespace DUNE
 
       IridiumMsgRx(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return IridiumMsgRx::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "IridiumMsgRx";
+      }
+
       Message*
       clone(void) const
       {
@@ -2864,9 +2692,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -2875,18 +2700,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return IridiumMsgRx::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "IridiumMsgRx";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -2925,6 +2738,18 @@ namespace DUNE
 
       IridiumMsgTx(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return IridiumMsgTx::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "IridiumMsgTx";
+      }
+
       Message*
       clone(void) const
       {
@@ -2937,9 +2762,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -2948,18 +2770,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return IridiumMsgTx::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "IridiumMsgTx";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -3011,6 +2821,18 @@ namespace DUNE
 
       IridiumTxStatus(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return IridiumTxStatus::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "IridiumTxStatus";
+      }
+
       Message*
       clone(void) const
       {
@@ -3023,9 +2845,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -3034,18 +2853,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return IridiumTxStatus::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "IridiumTxStatus";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -3080,6 +2887,18 @@ namespace DUNE
 
       GroupMembershipState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return GroupMembershipState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "GroupMembershipState";
+      }
+
       Message*
       clone(void) const
       {
@@ -3092,9 +2911,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -3103,18 +2919,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return GroupMembershipState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "GroupMembershipState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -3168,6 +2972,18 @@ namespace DUNE
 
       SystemGroup(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SystemGroup::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SystemGroup";
+      }
+
       Message*
       clone(void) const
       {
@@ -3180,9 +2996,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -3191,18 +3004,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SystemGroup::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SystemGroup";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -3237,6 +3038,18 @@ namespace DUNE
 
       LblRange(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return LblRange::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "LblRange";
+      }
+
       Message*
       clone(void) const
       {
@@ -3249,9 +3062,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -3260,18 +3070,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return LblRange::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "LblRange";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -3316,6 +3114,18 @@ namespace DUNE
 
       LblBeacon(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return LblBeacon::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "LblBeacon";
+      }
+
       Message*
       clone(void) const
       {
@@ -3328,9 +3138,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -3339,18 +3146,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return LblBeacon::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "LblBeacon";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -3396,6 +3191,18 @@ namespace DUNE
 
       LblConfig(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return LblConfig::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "LblConfig";
+      }
+
       Message*
       clone(void) const
       {
@@ -3408,9 +3215,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -3419,18 +3223,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return LblConfig::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "LblConfig";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -3479,6 +3271,18 @@ namespace DUNE
 
       AcousticMessage(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return AcousticMessage::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AcousticMessage";
+      }
+
       Message*
       clone(void) const
       {
@@ -3491,9 +3295,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -3502,18 +3303,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return AcousticMessage::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "AcousticMessage";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -3607,6 +3396,18 @@ namespace DUNE
 
       AcousticOperation(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return AcousticOperation::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AcousticOperation";
+      }
+
       Message*
       clone(void) const
       {
@@ -3619,9 +3420,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -3630,18 +3428,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return AcousticOperation::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "AcousticOperation";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -3679,7 +3465,6 @@ namespace DUNE
     class AcousticSystemsQuery: public Message
     {
     public:
-
       static uint16_t
       getIdStatic(void)
       {
@@ -3687,27 +3472,6 @@ namespace DUNE
       }
 
       AcousticSystemsQuery(void);
-
-      Message*
-      clone(void) const
-      {
-        return new AcousticSystemsQuery(*this);
-      }
-
-      void
-      clear(void);
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
 
       uint16_t
       getId(void) const
@@ -3721,10 +3485,10 @@ namespace DUNE
         return "AcousticSystemsQuery";
       }
 
-      unsigned
-      getFixedSerializationSize(void) const
+      Message*
+      clone(void) const
       {
-        return 0;
+        return new AcousticSystemsQuery(*this);
       }
     };
 
@@ -3743,6 +3507,18 @@ namespace DUNE
 
       AcousticSystems(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return AcousticSystems::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AcousticSystems";
+      }
+
       Message*
       clone(void) const
       {
@@ -3755,9 +3531,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -3766,18 +3539,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return AcousticSystems::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "AcousticSystems";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -3810,6 +3571,18 @@ namespace DUNE
 
       Rpm(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Rpm::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Rpm";
+      }
+
       Message*
       clone(void) const
       {
@@ -3822,9 +3595,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -3833,18 +3603,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Rpm::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Rpm";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -3877,6 +3635,18 @@ namespace DUNE
 
       Voltage(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Voltage::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Voltage";
+      }
+
       Message*
       clone(void) const
       {
@@ -3889,9 +3659,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -3900,18 +3667,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Voltage::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Voltage";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -3944,6 +3699,18 @@ namespace DUNE
 
       Current(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Current::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Current";
+      }
+
       Message*
       clone(void) const
       {
@@ -3956,9 +3723,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -3967,18 +3731,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Current::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Current";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -4079,6 +3831,18 @@ namespace DUNE
 
       GpsFix(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return GpsFix::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "GpsFix";
+      }
+
       Message*
       clone(void) const
       {
@@ -4091,9 +3855,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -4102,18 +3863,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return GpsFix::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "GpsFix";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -4148,6 +3897,18 @@ namespace DUNE
 
       EulerAngles(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return EulerAngles::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "EulerAngles";
+      }
+
       Message*
       clone(void) const
       {
@@ -4160,9 +3921,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -4171,18 +3929,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return EulerAngles::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "EulerAngles";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -4217,6 +3963,18 @@ namespace DUNE
 
       EulerAnglesDelta(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return EulerAnglesDelta::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "EulerAnglesDelta";
+      }
+
       Message*
       clone(void) const
       {
@@ -4229,9 +3987,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -4240,18 +3995,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return EulerAnglesDelta::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "EulerAnglesDelta";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -4284,6 +4027,18 @@ namespace DUNE
 
       AngularVelocity(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return AngularVelocity::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AngularVelocity";
+      }
+
       Message*
       clone(void) const
       {
@@ -4296,9 +4051,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -4307,18 +4059,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return AngularVelocity::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "AngularVelocity";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -4351,6 +4091,18 @@ namespace DUNE
 
       Acceleration(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Acceleration::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Acceleration";
+      }
+
       Message*
       clone(void) const
       {
@@ -4363,9 +4115,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -4374,18 +4123,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Acceleration::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Acceleration";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -4418,6 +4155,18 @@ namespace DUNE
 
       MagneticField(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return MagneticField::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "MagneticField";
+      }
+
       Message*
       clone(void) const
       {
@@ -4430,9 +4179,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -4441,18 +4187,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return MagneticField::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "MagneticField";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -4496,6 +4230,18 @@ namespace DUNE
 
       GroundVelocity(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return GroundVelocity::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "GroundVelocity";
+      }
+
       Message*
       clone(void) const
       {
@@ -4508,9 +4254,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -4519,18 +4262,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return GroundVelocity::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "GroundVelocity";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -4574,6 +4305,18 @@ namespace DUNE
 
       WaterVelocity(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return WaterVelocity::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "WaterVelocity";
+      }
+
       Message*
       clone(void) const
       {
@@ -4586,9 +4329,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -4597,18 +4337,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return WaterVelocity::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "WaterVelocity";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -4641,6 +4369,18 @@ namespace DUNE
 
       VelocityDelta(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return VelocityDelta::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "VelocityDelta";
+      }
+
       Message*
       clone(void) const
       {
@@ -4653,9 +4393,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -4664,18 +4401,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return VelocityDelta::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "VelocityDelta";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -4712,6 +4437,18 @@ namespace DUNE
 
       DeviceState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DeviceState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DeviceState";
+      }
+
       Message*
       clone(void) const
       {
@@ -4724,9 +4461,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -4735,18 +4469,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DeviceState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DeviceState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -4775,6 +4497,18 @@ namespace DUNE
 
       BeamConfig(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return BeamConfig::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "BeamConfig";
+      }
+
       Message*
       clone(void) const
       {
@@ -4787,9 +4521,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -4798,18 +4529,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return BeamConfig::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "BeamConfig";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -4851,6 +4570,18 @@ namespace DUNE
 
       Distance(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Distance::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Distance";
+      }
+
       Message*
       clone(void) const
       {
@@ -4863,9 +4594,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -4874,18 +4602,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Distance::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Distance";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -4940,6 +4656,18 @@ namespace DUNE
 
       Temperature(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Temperature::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Temperature";
+      }
+
       Message*
       clone(void) const
       {
@@ -4952,9 +4680,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -4963,18 +4688,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Temperature::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Temperature";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -5007,6 +4720,18 @@ namespace DUNE
 
       Pressure(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Pressure::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Pressure";
+      }
+
       Message*
       clone(void) const
       {
@@ -5019,9 +4744,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -5030,18 +4752,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Pressure::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Pressure";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -5074,6 +4784,18 @@ namespace DUNE
 
       Depth(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Depth::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Depth";
+      }
+
       Message*
       clone(void) const
       {
@@ -5086,9 +4808,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -5097,18 +4816,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Depth::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Depth";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -5141,6 +4848,18 @@ namespace DUNE
 
       DepthOffset(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DepthOffset::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DepthOffset";
+      }
+
       Message*
       clone(void) const
       {
@@ -5153,9 +4872,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -5164,18 +4880,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DepthOffset::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DepthOffset";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -5208,6 +4912,18 @@ namespace DUNE
 
       SoundSpeed(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SoundSpeed::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SoundSpeed";
+      }
+
       Message*
       clone(void) const
       {
@@ -5220,9 +4936,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -5231,18 +4944,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SoundSpeed::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SoundSpeed";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -5275,6 +4976,18 @@ namespace DUNE
 
       WaterDensity(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return WaterDensity::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "WaterDensity";
+      }
+
       Message*
       clone(void) const
       {
@@ -5287,9 +5000,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -5298,18 +5008,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return WaterDensity::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "WaterDensity";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -5342,6 +5040,18 @@ namespace DUNE
 
       Conductivity(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Conductivity::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Conductivity";
+      }
+
       Message*
       clone(void) const
       {
@@ -5354,9 +5064,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -5365,18 +5072,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Conductivity::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Conductivity";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -5409,6 +5104,18 @@ namespace DUNE
 
       Salinity(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Salinity::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Salinity";
+      }
+
       Message*
       clone(void) const
       {
@@ -5421,9 +5128,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -5432,18 +5136,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Salinity::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Salinity";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -5480,6 +5172,18 @@ namespace DUNE
 
       WindSpeed(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return WindSpeed::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "WindSpeed";
+      }
+
       Message*
       clone(void) const
       {
@@ -5492,9 +5196,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -5503,18 +5204,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return WindSpeed::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "WindSpeed";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -5541,6 +5230,18 @@ namespace DUNE
 
       RelativeHumidity(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return RelativeHumidity::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "RelativeHumidity";
+      }
+
       Message*
       clone(void) const
       {
@@ -5553,9 +5254,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -5564,18 +5262,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return RelativeHumidity::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "RelativeHumidity";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -5608,6 +5294,18 @@ namespace DUNE
 
       DevDataText(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DevDataText::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DevDataText";
+      }
+
       Message*
       clone(void) const
       {
@@ -5620,9 +5318,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -5631,18 +5326,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DevDataText::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DevDataText";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -5675,6 +5358,18 @@ namespace DUNE
 
       DevDataBinary(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DevDataBinary::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DevDataBinary";
+      }
+
       Message*
       clone(void) const
       {
@@ -5687,9 +5382,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -5698,18 +5390,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DevDataBinary::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DevDataBinary";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -5767,6 +5447,18 @@ namespace DUNE
 
       SonarData(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SonarData::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SonarData";
+      }
+
       Message*
       clone(void) const
       {
@@ -5779,9 +5471,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -5790,18 +5479,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SonarData::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SonarData";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -5839,7 +5516,6 @@ namespace DUNE
     class Pulse: public Message
     {
     public:
-
       static uint16_t
       getIdStatic(void)
       {
@@ -5847,27 +5523,6 @@ namespace DUNE
       }
 
       Pulse(void);
-
-      Message*
-      clone(void) const
-      {
-        return new Pulse(*this);
-      }
-
-      void
-      clear(void);
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
 
       uint16_t
       getId(void) const
@@ -5881,10 +5536,10 @@ namespace DUNE
         return "Pulse";
       }
 
-      unsigned
-      getFixedSerializationSize(void) const
+      Message*
+      clone(void) const
       {
-        return 0;
+        return new Pulse(*this);
       }
     };
 
@@ -5912,6 +5567,18 @@ namespace DUNE
 
       PulseDetectionControl(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PulseDetectionControl::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PulseDetectionControl";
+      }
+
       Message*
       clone(void) const
       {
@@ -5924,9 +5591,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -5935,18 +5599,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PulseDetectionControl::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PulseDetectionControl";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -5977,6 +5629,18 @@ namespace DUNE
 
       FuelLevel(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return FuelLevel::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FuelLevel";
+      }
+
       Message*
       clone(void) const
       {
@@ -5989,9 +5653,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -6000,18 +5661,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return FuelLevel::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "FuelLevel";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -6078,6 +5727,18 @@ namespace DUNE
 
       GpsNavData(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return GpsNavData::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "GpsNavData";
+      }
+
       Message*
       clone(void) const
       {
@@ -6090,9 +5751,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -6101,18 +5759,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return GpsNavData::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "GpsNavData";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -6141,6 +5787,18 @@ namespace DUNE
 
       ServoPosition(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return ServoPosition::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ServoPosition";
+      }
+
       Message*
       clone(void) const
       {
@@ -6153,9 +5811,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -6164,18 +5819,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return ServoPosition::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "ServoPosition";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -6223,6 +5866,18 @@ namespace DUNE
 
       DataSanity(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DataSanity::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DataSanity";
+      }
+
       Message*
       clone(void) const
       {
@@ -6235,9 +5890,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -6246,18 +5898,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DataSanity::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DataSanity";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -6301,6 +5941,18 @@ namespace DUNE
 
       CameraZoom(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return CameraZoom::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "CameraZoom";
+      }
+
       Message*
       clone(void) const
       {
@@ -6313,9 +5965,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -6324,18 +5973,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return CameraZoom::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "CameraZoom";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -6370,6 +6007,18 @@ namespace DUNE
 
       SetThrusterActuation(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SetThrusterActuation::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SetThrusterActuation";
+      }
+
       Message*
       clone(void) const
       {
@@ -6382,9 +6031,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -6393,18 +6039,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SetThrusterActuation::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SetThrusterActuation";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -6445,6 +6079,18 @@ namespace DUNE
 
       SetServoPosition(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SetServoPosition::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SetServoPosition";
+      }
+
       Message*
       clone(void) const
       {
@@ -6457,9 +6103,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -6468,18 +6111,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SetServoPosition::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SetServoPosition";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -6520,6 +6151,18 @@ namespace DUNE
 
       SetControlSurfaceDeflection(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SetControlSurfaceDeflection::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SetControlSurfaceDeflection";
+      }
+
       Message*
       clone(void) const
       {
@@ -6532,9 +6175,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -6543,18 +6183,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SetControlSurfaceDeflection::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SetControlSurfaceDeflection";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -6598,6 +6226,18 @@ namespace DUNE
 
       RemoteActionsRequest(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return RemoteActionsRequest::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "RemoteActionsRequest";
+      }
+
       Message*
       clone(void) const
       {
@@ -6610,9 +6250,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -6621,18 +6258,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return RemoteActionsRequest::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "RemoteActionsRequest";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -6665,6 +6290,18 @@ namespace DUNE
 
       RemoteActions(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return RemoteActions::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "RemoteActions";
+      }
+
       Message*
       clone(void) const
       {
@@ -6677,9 +6314,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -6688,18 +6322,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return RemoteActions::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "RemoteActions";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -6734,6 +6356,18 @@ namespace DUNE
 
       ButtonEvent(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return ButtonEvent::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ButtonEvent";
+      }
+
       Message*
       clone(void) const
       {
@@ -6746,9 +6380,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -6757,18 +6388,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return ButtonEvent::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "ButtonEvent";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -6818,6 +6437,18 @@ namespace DUNE
 
       LcdControl(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return LcdControl::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "LcdControl";
+      }
+
       Message*
       clone(void) const
       {
@@ -6830,9 +6461,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -6841,18 +6469,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return LcdControl::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "LcdControl";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -6908,6 +6524,18 @@ namespace DUNE
 
       PowerOperation(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PowerOperation::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PowerOperation";
+      }
+
       Message*
       clone(void) const
       {
@@ -6920,9 +6548,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -6931,18 +6556,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PowerOperation::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PowerOperation";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -6992,6 +6605,18 @@ namespace DUNE
 
       PowerChannelControl(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PowerChannelControl::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PowerChannelControl";
+      }
+
       Message*
       clone(void) const
       {
@@ -7004,9 +6629,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -7015,18 +6637,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PowerChannelControl::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PowerChannelControl";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -7048,7 +6658,6 @@ namespace DUNE
     class QueryPowerChannelState: public Message
     {
     public:
-
       static uint16_t
       getIdStatic(void)
       {
@@ -7056,27 +6665,6 @@ namespace DUNE
       }
 
       QueryPowerChannelState(void);
-
-      Message*
-      clone(void) const
-      {
-        return new QueryPowerChannelState(*this);
-      }
-
-      void
-      clear(void);
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
 
       uint16_t
       getId(void) const
@@ -7090,10 +6678,10 @@ namespace DUNE
         return "QueryPowerChannelState";
       }
 
-      unsigned
-      getFixedSerializationSize(void) const
+      Message*
+      clone(void) const
       {
-        return 0;
+        return new QueryPowerChannelState(*this);
       }
     };
 
@@ -7123,6 +6711,18 @@ namespace DUNE
 
       PowerChannelState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PowerChannelState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PowerChannelState";
+      }
+
       Message*
       clone(void) const
       {
@@ -7135,9 +6735,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -7146,18 +6743,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PowerChannelState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PowerChannelState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -7192,6 +6777,18 @@ namespace DUNE
 
       LedBrightness(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return LedBrightness::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "LedBrightness";
+      }
+
       Message*
       clone(void) const
       {
@@ -7204,9 +6801,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -7215,18 +6809,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return LedBrightness::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "LedBrightness";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -7265,6 +6847,18 @@ namespace DUNE
 
       QueryLedBrightness(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return QueryLedBrightness::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "QueryLedBrightness";
+      }
+
       Message*
       clone(void) const
       {
@@ -7277,9 +6871,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -7288,18 +6879,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return QueryLedBrightness::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "QueryLedBrightness";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -7334,6 +6913,18 @@ namespace DUNE
 
       SetLedBrightness(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SetLedBrightness::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SetLedBrightness";
+      }
+
       Message*
       clone(void) const
       {
@@ -7346,9 +6937,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -7357,18 +6945,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SetLedBrightness::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SetLedBrightness";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -7411,6 +6987,18 @@ namespace DUNE
 
       SetPWM(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SetPWM::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SetPWM";
+      }
+
       Message*
       clone(void) const
       {
@@ -7423,9 +7011,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -7434,18 +7019,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SetPWM::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SetPWM";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -7482,6 +7055,18 @@ namespace DUNE
 
       PWM(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PWM::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PWM";
+      }
+
       Message*
       clone(void) const
       {
@@ -7494,9 +7079,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -7505,18 +7087,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PWM::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PWM";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -7587,6 +7157,18 @@ namespace DUNE
 
       EstimatedState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return EstimatedState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "EstimatedState";
+      }
+
       Message*
       clone(void) const
       {
@@ -7599,9 +7181,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -7610,18 +7189,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return EstimatedState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "EstimatedState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -7652,6 +7219,18 @@ namespace DUNE
 
       EstimatedStreamVelocity(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return EstimatedStreamVelocity::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "EstimatedStreamVelocity";
+      }
+
       Message*
       clone(void) const
       {
@@ -7664,9 +7243,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -7675,18 +7251,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return EstimatedStreamVelocity::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "EstimatedStreamVelocity";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -7713,6 +7277,18 @@ namespace DUNE
 
       IndicatedSpeed(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return IndicatedSpeed::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "IndicatedSpeed";
+      }
+
       Message*
       clone(void) const
       {
@@ -7725,9 +7301,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -7736,18 +7309,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return IndicatedSpeed::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "IndicatedSpeed";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -7780,6 +7341,18 @@ namespace DUNE
 
       TrueSpeed(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return TrueSpeed::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TrueSpeed";
+      }
+
       Message*
       clone(void) const
       {
@@ -7792,9 +7365,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -7803,18 +7373,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return TrueSpeed::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "TrueSpeed";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -7873,6 +7431,18 @@ namespace DUNE
 
       NavigationUncertainty(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return NavigationUncertainty::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "NavigationUncertainty";
+      }
+
       Message*
       clone(void) const
       {
@@ -7885,9 +7455,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -7896,18 +7463,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return NavigationUncertainty::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "NavigationUncertainty";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -7950,6 +7505,18 @@ namespace DUNE
 
       NavigationData(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return NavigationData::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "NavigationData";
+      }
+
       Message*
       clone(void) const
       {
@@ -7962,9 +7529,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -7973,18 +7537,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return NavigationData::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "NavigationData";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -8028,6 +7580,18 @@ namespace DUNE
 
       GpsFixRejection(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return GpsFixRejection::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "GpsFixRejection";
+      }
+
       Message*
       clone(void) const
       {
@@ -8040,9 +7604,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -8051,18 +7612,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return GpsFixRejection::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "GpsFixRejection";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -8108,6 +7657,18 @@ namespace DUNE
 
       LblRangeAcceptance(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return LblRangeAcceptance::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "LblRangeAcceptance";
+      }
+
       Message*
       clone(void) const
       {
@@ -8120,9 +7681,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -8131,18 +7689,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return LblRangeAcceptance::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "LblRangeAcceptance";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -8203,6 +7749,18 @@ namespace DUNE
 
       DvlRejection(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DvlRejection::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DvlRejection";
+      }
+
       Message*
       clone(void) const
       {
@@ -8215,9 +7773,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -8226,18 +7781,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DvlRejection::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DvlRejection";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -8259,7 +7802,6 @@ namespace DUNE
     class NavigationReset: public Message
     {
     public:
-
       static uint16_t
       getIdStatic(void)
       {
@@ -8267,27 +7809,6 @@ namespace DUNE
       }
 
       NavigationReset(void);
-
-      Message*
-      clone(void) const
-      {
-        return new NavigationReset(*this);
-      }
-
-      void
-      clear(void);
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
 
       uint16_t
       getId(void) const
@@ -8301,10 +7822,10 @@ namespace DUNE
         return "NavigationReset";
       }
 
-      unsigned
-      getFixedSerializationSize(void) const
+      Message*
+      clone(void) const
       {
-        return 0;
+        return new NavigationReset(*this);
       }
     };
 
@@ -8333,6 +7854,18 @@ namespace DUNE
 
       LblEstimate(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return LblEstimate::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "LblEstimate";
+      }
+
       Message*
       clone(void) const
       {
@@ -8345,9 +7878,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -8356,18 +7886,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return LblEstimate::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "LblEstimate";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -8427,6 +7945,18 @@ namespace DUNE
 
       AlignmentState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return AlignmentState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AlignmentState";
+      }
+
       Message*
       clone(void) const
       {
@@ -8439,9 +7969,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -8450,18 +7977,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return AlignmentState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "AlignmentState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -8492,6 +8007,18 @@ namespace DUNE
 
       GroupStreamVelocity(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return GroupStreamVelocity::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "GroupStreamVelocity";
+      }
+
       Message*
       clone(void) const
       {
@@ -8504,9 +8031,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -8515,18 +8039,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return GroupStreamVelocity::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "GroupStreamVelocity";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -8553,6 +8065,18 @@ namespace DUNE
 
       DesiredHeading(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DesiredHeading::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DesiredHeading";
+      }
+
       Message*
       clone(void) const
       {
@@ -8565,9 +8089,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -8576,18 +8097,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DesiredHeading::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DesiredHeading";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -8622,6 +8131,18 @@ namespace DUNE
 
       DesiredZ(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DesiredZ::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DesiredZ";
+      }
+
       Message*
       clone(void) const
       {
@@ -8634,9 +8155,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -8645,18 +8163,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DesiredZ::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DesiredZ";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -8691,6 +8197,18 @@ namespace DUNE
 
       DesiredSpeed(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DesiredSpeed::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DesiredSpeed";
+      }
+
       Message*
       clone(void) const
       {
@@ -8703,9 +8221,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -8714,18 +8229,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DesiredSpeed::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DesiredSpeed";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -8758,6 +8261,18 @@ namespace DUNE
 
       DesiredRoll(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DesiredRoll::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DesiredRoll";
+      }
+
       Message*
       clone(void) const
       {
@@ -8770,9 +8285,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -8781,18 +8293,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DesiredRoll::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DesiredRoll";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -8825,6 +8325,18 @@ namespace DUNE
 
       DesiredPitch(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DesiredPitch::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DesiredPitch";
+      }
+
       Message*
       clone(void) const
       {
@@ -8837,9 +8349,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -8848,18 +8357,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DesiredPitch::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DesiredPitch";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -8892,6 +8389,18 @@ namespace DUNE
 
       DesiredVerticalRate(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DesiredVerticalRate::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DesiredVerticalRate";
+      }
+
       Message*
       clone(void) const
       {
@@ -8904,9 +8413,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -8915,18 +8421,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DesiredVerticalRate::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DesiredVerticalRate";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -9004,6 +8498,18 @@ namespace DUNE
 
       DesiredPath(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DesiredPath::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DesiredPath";
+      }
+
       Message*
       clone(void) const
       {
@@ -9016,9 +8522,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -9027,18 +8530,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DesiredPath::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DesiredPath";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -9094,6 +8585,18 @@ namespace DUNE
 
       DesiredControl(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DesiredControl::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DesiredControl";
+      }
+
       Message*
       clone(void) const
       {
@@ -9106,9 +8609,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -9117,18 +8617,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DesiredControl::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DesiredControl";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -9155,6 +8643,18 @@ namespace DUNE
 
       DesiredHeadingRate(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DesiredHeadingRate::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DesiredHeadingRate";
+      }
+
       Message*
       clone(void) const
       {
@@ -9167,9 +8667,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -9178,18 +8675,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DesiredHeadingRate::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DesiredHeadingRate";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -9251,6 +8736,18 @@ namespace DUNE
 
       DesiredVelocity(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return DesiredVelocity::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DesiredVelocity";
+      }
+
       Message*
       clone(void) const
       {
@@ -9263,9 +8760,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -9274,18 +8768,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return DesiredVelocity::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "DesiredVelocity";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -9363,6 +8845,18 @@ namespace DUNE
 
       PathControlState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PathControlState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PathControlState";
+      }
+
       Message*
       clone(void) const
       {
@@ -9375,9 +8869,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -9386,18 +8877,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PathControlState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PathControlState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -9428,6 +8907,18 @@ namespace DUNE
 
       AllocatedControlTorques(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return AllocatedControlTorques::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AllocatedControlTorques";
+      }
+
       Message*
       clone(void) const
       {
@@ -9440,9 +8931,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -9451,18 +8939,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return AllocatedControlTorques::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "AllocatedControlTorques";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -9495,6 +8971,18 @@ namespace DUNE
 
       ControlParcel(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return ControlParcel::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ControlParcel";
+      }
+
       Message*
       clone(void) const
       {
@@ -9507,9 +8995,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -9518,18 +9003,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return ControlParcel::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "ControlParcel";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -9565,6 +9038,18 @@ namespace DUNE
 
       Brake(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Brake::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Brake";
+      }
+
       Message*
       clone(void) const
       {
@@ -9577,9 +9062,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -9588,18 +9070,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Brake::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Brake";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -9646,30 +9116,6 @@ namespace DUNE
 
       Goto(void);
 
-      Message*
-      clone(void) const
-      {
-        return new Goto(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -9682,16 +9128,37 @@ namespace DUNE
         return "Goto";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new Goto(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 52;
+        return 52 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -9744,30 +9211,6 @@ namespace DUNE
 
       PopUp(void);
 
-      Message*
-      clone(void) const
-      {
-        return new PopUp(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -9780,16 +9223,37 @@ namespace DUNE
         return "PopUp";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new PopUp(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 35;
+        return 35 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -9811,30 +9275,6 @@ namespace DUNE
 
       Teleoperation(void);
 
-      Message*
-      clone(void) const
-      {
-        return new Teleoperation(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -9847,16 +9287,37 @@ namespace DUNE
         return "Teleoperation";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new Teleoperation(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -9932,30 +9393,6 @@ namespace DUNE
 
       Loiter(void);
 
-      Message*
-      clone(void) const
-      {
-        return new Loiter(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -9968,16 +9405,37 @@ namespace DUNE
         return "Loiter";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new Loiter(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 48;
+        return 48 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -10001,30 +9459,6 @@ namespace DUNE
 
       IdleManeuver(void);
 
-      Message*
-      clone(void) const
-      {
-        return new IdleManeuver(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -10037,16 +9471,37 @@ namespace DUNE
         return "IdleManeuver";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new IdleManeuver(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 2 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -10072,30 +9527,6 @@ namespace DUNE
 
       LowLevelControl(void);
 
-      Message*
-      clone(void) const
-      {
-        return new LowLevelControl(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -10108,16 +9539,37 @@ namespace DUNE
         return "LowLevelControl";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new LowLevelControl(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 2 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return control.getSerializationSize() + IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + control.getSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -10194,30 +9646,6 @@ namespace DUNE
 
       Rows(void);
 
-      Message*
-      clone(void) const
-      {
-        return new Rows(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -10230,16 +9658,37 @@ namespace DUNE
         return "Rows";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new Rows(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 59;
+        return 59 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -10265,6 +9714,18 @@ namespace DUNE
 
       PathPoint(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PathPoint::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PathPoint";
+      }
+
       Message*
       clone(void) const
       {
@@ -10277,9 +9738,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -10288,18 +9746,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PathPoint::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PathPoint";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -10342,30 +9788,6 @@ namespace DUNE
 
       FollowPath(void);
 
-      Message*
-      clone(void) const
-      {
-        return new FollowPath(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -10378,16 +9800,37 @@ namespace DUNE
         return "FollowPath";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new FollowPath(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 28;
+        return 28 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return points.getSerializationSize() + IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + points.getSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -10443,30 +9886,6 @@ namespace DUNE
 
       YoYo(void);
 
-      Message*
-      clone(void) const
-      {
-        return new YoYo(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -10479,16 +9898,37 @@ namespace DUNE
         return "YoYo";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new YoYo(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 36;
+        return 36 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -10499,7 +9939,6 @@ namespace DUNE
     class TeleoperationDone: public Message
     {
     public:
-
       static uint16_t
       getIdStatic(void)
       {
@@ -10507,27 +9946,6 @@ namespace DUNE
       }
 
       TeleoperationDone(void);
-
-      Message*
-      clone(void) const
-      {
-        return new TeleoperationDone(*this);
-      }
-
-      void
-      clear(void);
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
 
       uint16_t
       getId(void) const
@@ -10541,10 +9959,10 @@ namespace DUNE
         return "TeleoperationDone";
       }
 
-      unsigned
-      getFixedSerializationSize(void) const
+      Message*
+      clone(void) const
       {
-        return 0;
+        return new TeleoperationDone(*this);
       }
     };
 
@@ -10579,30 +9997,6 @@ namespace DUNE
 
       StationKeeping(void);
 
-      Message*
-      clone(void) const
-      {
-        return new StationKeeping(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -10615,16 +10009,37 @@ namespace DUNE
         return "StationKeeping";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new StationKeeping(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 32;
+        return 32 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -10675,30 +10090,6 @@ namespace DUNE
 
       Elevator(void);
 
-      Message*
-      clone(void) const
-      {
-        return new Elevator(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -10711,16 +10102,37 @@ namespace DUNE
         return "Elevator";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new Elevator(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 38;
+        return 38 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -10748,6 +10160,18 @@ namespace DUNE
 
       TrajectoryPoint(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return TrajectoryPoint::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TrajectoryPoint";
+      }
+
       Message*
       clone(void) const
       {
@@ -10760,9 +10184,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -10771,18 +10192,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return TrajectoryPoint::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "TrajectoryPoint";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -10825,30 +10234,6 @@ namespace DUNE
 
       FollowTrajectory(void);
 
-      Message*
-      clone(void) const
-      {
-        return new FollowTrajectory(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -10861,16 +10246,37 @@ namespace DUNE
         return "FollowTrajectory";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new FollowTrajectory(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 28;
+        return 28 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return points.getSerializationSize() + IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + points.getSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -10912,30 +10318,6 @@ namespace DUNE
 
       CustomManeuver(void);
 
-      Message*
-      clone(void) const
-      {
-        return new CustomManeuver(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -10948,16 +10330,37 @@ namespace DUNE
         return "CustomManeuver";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new CustomManeuver(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 2 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name) + IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + IMC::getSerializationSize(name) + IMC::getSerializationSize(custom);
       }
 
       void
@@ -10985,6 +10388,18 @@ namespace DUNE
 
       VehicleFormationParticipant(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return VehicleFormationParticipant::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "VehicleFormationParticipant";
+      }
+
       Message*
       clone(void) const
       {
@@ -10997,9 +10412,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -11008,18 +10420,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return VehicleFormationParticipant::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "VehicleFormationParticipant";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -11064,30 +10464,6 @@ namespace DUNE
 
       VehicleFormation(void);
 
-      Message*
-      clone(void) const
-      {
-        return new VehicleFormation(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -11100,16 +10476,37 @@ namespace DUNE
         return "VehicleFormation";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new VehicleFormation(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 34;
+        return 34 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return points.getSerializationSize() + participants.getSerializationSize() + IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + points.getSerializationSize() + participants.getSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -11136,7 +10533,6 @@ namespace DUNE
     class StopManeuver: public Message
     {
     public:
-
       static uint16_t
       getIdStatic(void)
       {
@@ -11144,27 +10540,6 @@ namespace DUNE
       }
 
       StopManeuver(void);
-
-      Message*
-      clone(void) const
-      {
-        return new StopManeuver(*this);
-      }
-
-      void
-      clear(void);
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
 
       uint16_t
       getId(void) const
@@ -11178,10 +10553,10 @@ namespace DUNE
         return "StopManeuver";
       }
 
-      unsigned
-      getFixedSerializationSize(void) const
+      Message*
+      clone(void) const
       {
-        return 0;
+        return new StopManeuver(*this);
       }
     };
 
@@ -11200,6 +10575,18 @@ namespace DUNE
 
       RegisterManeuver(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return RegisterManeuver::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "RegisterManeuver";
+      }
+
       Message*
       clone(void) const
       {
@@ -11212,9 +10599,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -11223,18 +10607,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return RegisterManeuver::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "RegisterManeuver";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -11278,6 +10650,18 @@ namespace DUNE
 
       ManeuverControlState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return ManeuverControlState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ManeuverControlState";
+      }
+
       Message*
       clone(void) const
       {
@@ -11290,9 +10674,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -11301,18 +10682,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return ManeuverControlState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "ManeuverControlState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -11359,6 +10728,18 @@ namespace DUNE
 
       FollowSystem(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return FollowSystem::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FollowSystem";
+      }
+
       Message*
       clone(void) const
       {
@@ -11371,9 +10752,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -11382,18 +10760,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return FollowSystem::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "FollowSystem";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -11434,30 +10800,6 @@ namespace DUNE
 
       CommsRelay(void);
 
-      Message*
-      clone(void) const
-      {
-        return new CommsRelay(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -11470,10 +10812,37 @@ namespace DUNE
         return "CommsRelay";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new CommsRelay(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 31;
+        return 31 + Maneuver::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Maneuver::getVariableSerializationSize();
       }
 
       void
@@ -11497,6 +10866,18 @@ namespace DUNE
 
       PolygonVertex(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PolygonVertex::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PolygonVertex";
+      }
+
       Message*
       clone(void) const
       {
@@ -11509,9 +10890,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -11520,18 +10898,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PolygonVertex::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PolygonVertex";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -11572,30 +10938,6 @@ namespace DUNE
 
       CoverArea(void);
 
-      Message*
-      clone(void) const
-      {
-        return new CoverArea(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -11608,16 +10950,37 @@ namespace DUNE
         return "CoverArea";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new CoverArea(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 26;
+        return 26 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return polygon.getSerializationSize() + IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + polygon.getSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -11692,30 +11055,6 @@ namespace DUNE
 
       CompassCalibration(void);
 
-      Message*
-      clone(void) const
-      {
-        return new CompassCalibration(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -11728,16 +11067,37 @@ namespace DUNE
         return "CompassCalibration";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new CompassCalibration(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 43;
+        return 43 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -11776,6 +11136,18 @@ namespace DUNE
 
       FormationParameters(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return FormationParameters::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FormationParameters";
+      }
+
       Message*
       clone(void) const
       {
@@ -11788,9 +11160,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -11799,18 +11168,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return FormationParameters::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "FormationParameters";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -11885,30 +11242,6 @@ namespace DUNE
 
       FormationPlanExecution(void);
 
-      Message*
-      clone(void) const
-      {
-        return new FormationPlanExecution(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -11921,16 +11254,37 @@ namespace DUNE
         return "FormationPlanExecution";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new FormationPlanExecution(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 30;
+        return 30 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(group_name) + IMC::getSerializationSize(formation_name) + IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(description) + IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + IMC::getSerializationSize(group_name) + IMC::getSerializationSize(formation_name) + IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(description) + IMC::getSerializationSize(custom);
       }
 
       void
@@ -11960,30 +11314,6 @@ namespace DUNE
 
       FollowReference(void);
 
-      Message*
-      clone(void) const
-      {
-        return new FollowReference(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -11996,10 +11326,37 @@ namespace DUNE
         return "FollowReference";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new FollowReference(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 15;
+        return 15 + Maneuver::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Maneuver::getVariableSerializationSize();
       }
 
       void
@@ -12046,6 +11403,18 @@ namespace DUNE
 
       Reference(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Reference::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Reference";
+      }
+
       Message*
       clone(void) const
       {
@@ -12058,9 +11427,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -12069,18 +11435,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Reference::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Reference";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -12165,6 +11519,18 @@ namespace DUNE
 
       FollowRefState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return FollowRefState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FollowRefState";
+      }
+
       Message*
       clone(void) const
       {
@@ -12177,9 +11543,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -12188,18 +11551,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return FollowRefState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "FollowRefState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -12290,6 +11641,18 @@ namespace DUNE
 
       RelativeState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return RelativeState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "RelativeState";
+      }
+
       Message*
       clone(void) const
       {
@@ -12302,9 +11665,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -12313,18 +11673,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return RelativeState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "RelativeState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -12393,6 +11741,18 @@ namespace DUNE
 
       FormationMonitor(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return FormationMonitor::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FormationMonitor";
+      }
+
       Message*
       clone(void) const
       {
@@ -12405,9 +11765,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -12416,18 +11773,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return FormationMonitor::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "FormationMonitor";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -12493,30 +11838,6 @@ namespace DUNE
 
       Dislodge(void);
 
-      Message*
-      clone(void) const
-      {
-        return new Dislodge(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
       uint16_t
       getId(void) const
       {
@@ -12529,16 +11850,37 @@ namespace DUNE
         return "Dislodge";
       }
 
+      Message*
+      clone(void) const
+      {
+        return new Dislodge(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 7;
+        return 7 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(custom);
+        return Maneuver::getVariableSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -12602,6 +11944,18 @@ namespace DUNE
 
       VehicleState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return VehicleState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "VehicleState";
+      }
+
       Message*
       clone(void) const
       {
@@ -12614,9 +11968,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -12625,18 +11976,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return VehicleState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "VehicleState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -12705,6 +12044,18 @@ namespace DUNE
 
       VehicleCommand(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return VehicleCommand::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "VehicleCommand";
+      }
+
       Message*
       clone(void) const
       {
@@ -12717,9 +12068,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -12728,18 +12076,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return VehicleCommand::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "VehicleCommand";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -12805,6 +12141,18 @@ namespace DUNE
 
       MonitorEntityState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return MonitorEntityState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "MonitorEntityState";
+      }
+
       Message*
       clone(void) const
       {
@@ -12817,9 +12165,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -12828,18 +12173,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return MonitorEntityState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "MonitorEntityState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -12886,6 +12219,18 @@ namespace DUNE
 
       EntityMonitoringState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return EntityMonitoringState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "EntityMonitoringState";
+      }
+
       Message*
       clone(void) const
       {
@@ -12898,9 +12243,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -12909,18 +12251,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return EntityMonitoringState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "EntityMonitoringState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -12975,6 +12305,18 @@ namespace DUNE
 
       OperationalLimits(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return OperationalLimits::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "OperationalLimits";
+      }
+
       Message*
       clone(void) const
       {
@@ -12987,9 +12329,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -12998,18 +12337,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return OperationalLimits::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "OperationalLimits";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -13025,7 +12352,6 @@ namespace DUNE
     class GetOperationalLimits: public Message
     {
     public:
-
       static uint16_t
       getIdStatic(void)
       {
@@ -13033,27 +12359,6 @@ namespace DUNE
       }
 
       GetOperationalLimits(void);
-
-      Message*
-      clone(void) const
-      {
-        return new GetOperationalLimits(*this);
-      }
-
-      void
-      clear(void);
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
 
       uint16_t
       getId(void) const
@@ -13067,10 +12372,10 @@ namespace DUNE
         return "GetOperationalLimits";
       }
 
-      unsigned
-      getFixedSerializationSize(void) const
+      Message*
+      clone(void) const
       {
-        return 0;
+        return new GetOperationalLimits(*this);
       }
     };
 
@@ -13089,6 +12394,18 @@ namespace DUNE
 
       Calibration(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Calibration::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Calibration";
+      }
+
       Message*
       clone(void) const
       {
@@ -13101,9 +12418,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -13112,18 +12426,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Calibration::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Calibration";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -13163,6 +12465,18 @@ namespace DUNE
 
       ControlLoops(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return ControlLoops::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ControlLoops";
+      }
+
       Message*
       clone(void) const
       {
@@ -13175,9 +12489,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -13186,18 +12497,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return ControlLoops::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "ControlLoops";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -13239,6 +12538,18 @@ namespace DUNE
 
       VehicleMedium(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return VehicleMedium::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "VehicleMedium";
+      }
+
       Message*
       clone(void) const
       {
@@ -13251,9 +12562,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -13262,18 +12570,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return VehicleMedium::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "VehicleMedium";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -13315,6 +12611,18 @@ namespace DUNE
 
       Collision(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Collision::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Collision";
+      }
+
       Message*
       clone(void) const
       {
@@ -13327,9 +12635,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -13338,18 +12643,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Collision::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Collision";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -13421,6 +12714,18 @@ namespace DUNE
 
       FormState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return FormState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FormState";
+      }
+
       Message*
       clone(void) const
       {
@@ -13433,9 +12738,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -13444,18 +12746,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return FormState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "FormState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -13495,6 +12785,18 @@ namespace DUNE
 
       AutopilotMode(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return AutopilotMode::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AutopilotMode";
+      }
+
       Message*
       clone(void) const
       {
@@ -13507,9 +12809,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -13518,18 +12817,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return AutopilotMode::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "AutopilotMode";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -13551,7 +12838,6 @@ namespace DUNE
     class Abort: public Message
     {
     public:
-
       static uint16_t
       getIdStatic(void)
       {
@@ -13559,27 +12845,6 @@ namespace DUNE
       }
 
       Abort(void);
-
-      Message*
-      clone(void) const
-      {
-        return new Abort(*this);
-      }
-
-      void
-      clear(void);
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
 
       uint16_t
       getId(void) const
@@ -13593,10 +12858,10 @@ namespace DUNE
         return "Abort";
       }
 
-      unsigned
-      getFixedSerializationSize(void) const
+      Message*
+      clone(void) const
       {
-        return 0;
+        return new Abort(*this);
       }
     };
 
@@ -13645,6 +12910,18 @@ namespace DUNE
 
       PlanVariable(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PlanVariable::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PlanVariable";
+      }
+
       Message*
       clone(void) const
       {
@@ -13657,9 +12934,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -13668,18 +12942,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PlanVariable::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PlanVariable";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -13718,6 +12980,18 @@ namespace DUNE
 
       PlanManeuver(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PlanManeuver::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PlanManeuver";
+      }
+
       Message*
       clone(void) const
       {
@@ -13730,9 +13004,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -13741,18 +13012,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PlanManeuver::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PlanManeuver";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -13807,6 +13066,18 @@ namespace DUNE
 
       PlanTransition(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PlanTransition::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PlanTransition";
+      }
+
       Message*
       clone(void) const
       {
@@ -13819,9 +13090,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -13830,18 +13098,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PlanTransition::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PlanTransition";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -13906,6 +13162,18 @@ namespace DUNE
 
       PlanSpecification(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PlanSpecification::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PlanSpecification";
+      }
+
       Message*
       clone(void) const
       {
@@ -13918,9 +13186,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -13929,18 +13194,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PlanSpecification::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PlanSpecification";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -14008,6 +13261,18 @@ namespace DUNE
 
       EmergencyControl(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return EmergencyControl::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "EmergencyControl";
+      }
+
       Message*
       clone(void) const
       {
@@ -14020,9 +13285,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -14031,18 +13293,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return EmergencyControl::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "EmergencyControl";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -14112,6 +13362,18 @@ namespace DUNE
 
       EmergencyControlState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return EmergencyControlState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "EmergencyControlState";
+      }
+
       Message*
       clone(void) const
       {
@@ -14124,9 +13386,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -14135,18 +13394,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return EmergencyControlState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "EmergencyControlState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -14223,6 +13470,18 @@ namespace DUNE
 
       PlanDB(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PlanDB::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PlanDB";
+      }
+
       Message*
       clone(void) const
       {
@@ -14235,9 +13494,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -14246,18 +13502,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PlanDB::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PlanDB";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -14316,6 +13560,18 @@ namespace DUNE
 
       PlanDBInformation(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PlanDBInformation::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PlanDBInformation";
+      }
+
       Message*
       clone(void) const
       {
@@ -14328,9 +13584,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -14339,18 +13592,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PlanDBInformation::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PlanDBInformation";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -14395,6 +13636,18 @@ namespace DUNE
 
       PlanDBState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PlanDBState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PlanDBState";
+      }
+
       Message*
       clone(void) const
       {
@@ -14407,9 +13660,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -14418,18 +13668,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PlanDBState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PlanDBState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -14525,6 +13763,18 @@ namespace DUNE
 
       PlanControl(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PlanControl::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PlanControl";
+      }
+
       Message*
       clone(void) const
       {
@@ -14537,9 +13787,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -14548,18 +13795,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PlanControl::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PlanControl";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -14646,6 +13881,18 @@ namespace DUNE
 
       PlanControlState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PlanControlState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PlanControlState";
+      }
+
       Message*
       clone(void) const
       {
@@ -14658,9 +13905,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -14669,18 +13913,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PlanControlState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PlanControlState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -14739,6 +13971,18 @@ namespace DUNE
 
       PlanGeneration(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PlanGeneration::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PlanGeneration";
+      }
+
       Message*
       clone(void) const
       {
@@ -14751,9 +13995,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -14762,18 +14003,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PlanGeneration::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PlanGeneration";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -14855,6 +14084,18 @@ namespace DUNE
 
       LeaderState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return LeaderState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "LeaderState";
+      }
+
       Message*
       clone(void) const
       {
@@ -14867,9 +14108,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -14878,18 +14116,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return LeaderState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "LeaderState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -14953,6 +14179,18 @@ namespace DUNE
 
       ReportedState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return ReportedState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ReportedState";
+      }
+
       Message*
       clone(void) const
       {
@@ -14965,9 +14203,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -14976,18 +14211,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return ReportedState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "ReportedState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -15032,6 +14255,18 @@ namespace DUNE
 
       RemoteSensorInfo(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return RemoteSensorInfo::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "RemoteSensorInfo";
+      }
+
       Message*
       clone(void) const
       {
@@ -15044,9 +14279,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -15055,18 +14287,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return RemoteSensorInfo::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "RemoteSensorInfo";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -15103,6 +14323,18 @@ namespace DUNE
 
       MapPoint(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return MapPoint::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "MapPoint";
+      }
+
       Message*
       clone(void) const
       {
@@ -15115,9 +14347,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -15126,18 +14355,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return MapPoint::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "MapPoint";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -15193,6 +14410,18 @@ namespace DUNE
 
       MapFeature(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return MapFeature::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "MapFeature";
+      }
+
       Message*
       clone(void) const
       {
@@ -15205,9 +14434,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -15216,18 +14442,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return MapFeature::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "MapFeature";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -15278,6 +14492,18 @@ namespace DUNE
 
       Map(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Map::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Map";
+      }
+
       Message*
       clone(void) const
       {
@@ -15290,9 +14516,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -15301,18 +14524,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Map::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Map";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -15388,6 +14599,18 @@ namespace DUNE
 
       CcuEvent(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return CcuEvent::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "CcuEvent";
+      }
+
       Message*
       clone(void) const
       {
@@ -15400,9 +14623,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -15411,18 +14631,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return CcuEvent::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "CcuEvent";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -15473,6 +14681,18 @@ namespace DUNE
 
       VehicleLinks(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return VehicleLinks::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "VehicleLinks";
+      }
+
       Message*
       clone(void) const
       {
@@ -15485,9 +14705,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -15496,18 +14713,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return VehicleLinks::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "VehicleLinks";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -15560,6 +14765,18 @@ namespace DUNE
 
       TrexObservation(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return TrexObservation::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TrexObservation";
+      }
+
       Message*
       clone(void) const
       {
@@ -15572,9 +14789,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -15583,18 +14797,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return TrexObservation::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "TrexObservation";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -15648,6 +14850,18 @@ namespace DUNE
 
       TrexCommand(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return TrexCommand::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TrexCommand";
+      }
+
       Message*
       clone(void) const
       {
@@ -15660,9 +14874,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -15671,18 +14882,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return TrexCommand::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "TrexCommand";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -15736,6 +14935,18 @@ namespace DUNE
 
       TrexAttribute(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return TrexAttribute::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TrexAttribute";
+      }
+
       Message*
       clone(void) const
       {
@@ -15748,9 +14959,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -15759,18 +14967,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return TrexAttribute::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "TrexAttribute";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -15807,6 +15003,18 @@ namespace DUNE
 
       TrexToken(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return TrexToken::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TrexToken";
+      }
+
       Message*
       clone(void) const
       {
@@ -15819,9 +15027,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -15830,18 +15035,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return TrexToken::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "TrexToken";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -15909,6 +15102,18 @@ namespace DUNE
 
       TrexOperation(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return TrexOperation::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TrexOperation";
+      }
+
       Message*
       clone(void) const
       {
@@ -15921,9 +15126,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -15932,18 +15134,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return TrexOperation::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "TrexOperation";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -15994,6 +15184,18 @@ namespace DUNE
 
       TrexPlan(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return TrexPlan::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TrexPlan";
+      }
+
       Message*
       clone(void) const
       {
@@ -16006,9 +15208,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -16017,18 +15216,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return TrexPlan::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "TrexPlan";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -16079,6 +15266,18 @@ namespace DUNE
 
       Event(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Event::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Event";
+      }
+
       Message*
       clone(void) const
       {
@@ -16091,9 +15290,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -16102,18 +15298,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Event::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Event";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -16148,6 +15332,18 @@ namespace DUNE
 
       CompressedImage(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return CompressedImage::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "CompressedImage";
+      }
+
       Message*
       clone(void) const
       {
@@ -16160,9 +15356,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -16171,18 +15364,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return CompressedImage::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "CompressedImage";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -16221,6 +15402,18 @@ namespace DUNE
 
       ImageTxSettings(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return ImageTxSettings::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ImageTxSettings";
+      }
+
       Message*
       clone(void) const
       {
@@ -16233,9 +15426,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -16244,18 +15434,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return ImageTxSettings::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "ImageTxSettings";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -16290,6 +15468,18 @@ namespace DUNE
 
       RemoteState(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return RemoteState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "RemoteState";
+      }
+
       Message*
       clone(void) const
       {
@@ -16302,9 +15492,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -16313,18 +15500,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return RemoteState::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "RemoteState";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -16363,6 +15538,18 @@ namespace DUNE
 
       Target(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return Target::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Target";
+      }
+
       Message*
       clone(void) const
       {
@@ -16375,9 +15562,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -16386,18 +15570,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return Target::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Target";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -16432,6 +15604,18 @@ namespace DUNE
 
       EntityParameter(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return EntityParameter::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "EntityParameter";
+      }
+
       Message*
       clone(void) const
       {
@@ -16444,9 +15628,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -16455,18 +15636,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return EntityParameter::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "EntityParameter";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -16501,6 +15670,18 @@ namespace DUNE
 
       EntityParameters(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return EntityParameters::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "EntityParameters";
+      }
+
       Message*
       clone(void) const
       {
@@ -16513,9 +15694,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -16524,18 +15702,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return EntityParameters::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "EntityParameters";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -16588,6 +15754,18 @@ namespace DUNE
 
       QueryEntityParameters(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return QueryEntityParameters::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "QueryEntityParameters";
+      }
+
       Message*
       clone(void) const
       {
@@ -16600,9 +15778,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -16611,18 +15786,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return QueryEntityParameters::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "QueryEntityParameters";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -16657,6 +15820,18 @@ namespace DUNE
 
       SetEntityParameters(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SetEntityParameters::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SetEntityParameters";
+      }
+
       Message*
       clone(void) const
       {
@@ -16669,9 +15844,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -16680,18 +15852,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SetEntityParameters::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SetEntityParameters";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -16740,6 +15900,18 @@ namespace DUNE
 
       SaveEntityParameters(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SaveEntityParameters::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SaveEntityParameters";
+      }
+
       Message*
       clone(void) const
       {
@@ -16752,9 +15924,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -16763,18 +15932,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SaveEntityParameters::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SaveEntityParameters";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -16807,6 +15964,18 @@ namespace DUNE
 
       CreateSession(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return CreateSession::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "CreateSession";
+      }
+
       Message*
       clone(void) const
       {
@@ -16819,9 +15988,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -16830,18 +15996,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return CreateSession::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "CreateSession";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -16868,6 +16022,18 @@ namespace DUNE
 
       CloseSession(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return CloseSession::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "CloseSession";
+      }
+
       Message*
       clone(void) const
       {
@@ -16880,9 +16046,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -16891,18 +16054,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return CloseSession::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "CloseSession";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -16931,6 +16082,18 @@ namespace DUNE
 
       SessionSubscription(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SessionSubscription::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SessionSubscription";
+      }
+
       Message*
       clone(void) const
       {
@@ -16943,9 +16106,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -16954,18 +16114,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SessionSubscription::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SessionSubscription";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -16998,6 +16146,18 @@ namespace DUNE
 
       SessionKeepAlive(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SessionKeepAlive::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SessionKeepAlive";
+      }
+
       Message*
       clone(void) const
       {
@@ -17010,9 +16170,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -17021,18 +16178,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SessionKeepAlive::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SessionKeepAlive";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -17070,6 +16215,18 @@ namespace DUNE
 
       SessionStatus(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return SessionStatus::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SessionStatus";
+      }
+
       Message*
       clone(void) const
       {
@@ -17082,9 +16239,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -17093,18 +16247,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return SessionStatus::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "SessionStatus";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -17131,6 +16273,18 @@ namespace DUNE
 
       PushEntityParameters(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PushEntityParameters::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PushEntityParameters";
+      }
+
       Message*
       clone(void) const
       {
@@ -17143,9 +16297,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -17154,18 +16305,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PushEntityParameters::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PushEntityParameters";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -17198,6 +16337,18 @@ namespace DUNE
 
       PopEntityParameters(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return PopEntityParameters::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PopEntityParameters";
+      }
+
       Message*
       clone(void) const
       {
@@ -17210,9 +16361,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -17221,18 +16369,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return PopEntityParameters::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "PopEntityParameters";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -17276,6 +16412,18 @@ namespace DUNE
 
       IoEvent(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return IoEvent::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "IoEvent";
+      }
+
       Message*
       clone(void) const
       {
@@ -17288,9 +16436,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -17299,18 +16444,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return IoEvent::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "IoEvent";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -17356,6 +16489,18 @@ namespace DUNE
 
       UamTxFrame(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return UamTxFrame::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "UamTxFrame";
+      }
+
       Message*
       clone(void) const
       {
@@ -17368,9 +16513,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -17379,18 +16521,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return UamTxFrame::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "UamTxFrame";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -17436,6 +16566,18 @@ namespace DUNE
 
       UamRxFrame(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return UamRxFrame::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "UamRxFrame";
+      }
+
       Message*
       clone(void) const
       {
@@ -17448,9 +16590,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -17459,18 +16598,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return UamRxFrame::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "UamRxFrame";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -17524,6 +16651,18 @@ namespace DUNE
 
       UamTxStatus(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return UamTxStatus::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "UamTxStatus";
+      }
+
       Message*
       clone(void) const
       {
@@ -17536,9 +16675,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -17547,18 +16683,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return UamTxStatus::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "UamTxStatus";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -17601,6 +16725,18 @@ namespace DUNE
 
       UamRxRange(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return UamRxRange::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "UamRxRange";
+      }
+
       Message*
       clone(void) const
       {
@@ -17613,9 +16749,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -17624,18 +16757,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return UamRxRange::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "UamRxRange";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -17695,6 +16816,18 @@ namespace DUNE
 
       FormCtrlParam(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return FormCtrlParam::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FormCtrlParam";
+      }
+
       Message*
       clone(void) const
       {
@@ -17707,9 +16840,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -17718,18 +16848,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return FormCtrlParam::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "FormCtrlParam";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -17760,6 +16878,18 @@ namespace DUNE
 
       FormationEval(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return FormationEval::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FormationEval";
+      }
+
       Message*
       clone(void) const
       {
@@ -17772,9 +16902,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -17783,18 +16910,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return FormationEval::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "FormationEval";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -17827,6 +16942,18 @@ namespace DUNE
 
       MessagePart(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return MessagePart::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "MessagePart";
+      }
+
       Message*
       clone(void) const
       {
@@ -17839,9 +16966,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -17850,18 +16974,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return MessagePart::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "MessagePart";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -17896,6 +17008,18 @@ namespace DUNE
 
       NeptusBlob(void);
 
+      uint16_t
+      getId(void) const
+      {
+        return NeptusBlob::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "NeptusBlob";
+      }
+
       Message*
       clone(void) const
       {
@@ -17908,9 +17032,6 @@ namespace DUNE
       bool
       fieldsEqual(const Message& msg__) const;
 
-      int
-      validate(void) const;
-
       uint8_t*
       serializeFields(uint8_t* bfr__) const;
 
@@ -17919,18 +17040,6 @@ namespace DUNE
 
       uint16_t
       reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return NeptusBlob::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "NeptusBlob";
-      }
 
       unsigned
       getFixedSerializationSize(void) const
@@ -17952,7 +17061,6 @@ namespace DUNE
     class Aborted: public Message
     {
     public:
-
       static uint16_t
       getIdStatic(void)
       {
@@ -17960,27 +17068,6 @@ namespace DUNE
       }
 
       Aborted(void);
-
-      Message*
-      clone(void) const
-      {
-        return new Aborted(*this);
-      }
-
-      void
-      clear(void);
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
 
       uint16_t
       getId(void) const
@@ -17994,10 +17081,10 @@ namespace DUNE
         return "Aborted";
       }
 
-      unsigned
-      getFixedSerializationSize(void) const
+      Message*
+      clone(void) const
       {
-        return 0;
+        return new Aborted(*this);
       }
     };
   }
