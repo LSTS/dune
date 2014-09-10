@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLANS_SPEEDCONVERSION_HPP_INCLUDED_
-#define DUNE_PLANS_SPEEDCONVERSION_HPP_INCLUDED_
+#ifndef DUNE_PLANS_SPEEDMODEL_HPP_INCLUDED_
+#define DUNE_PLANS_SPEEDMODEL_HPP_INCLUDED_
 
 //! ISO C++ headers.
 #include <vector>
@@ -34,64 +34,68 @@
 // DUNE headers.
 #include <DUNE/IMC.hpp>
 #include <DUNE/Math/General.hpp>
+#include <DUNE/Parsers/Config.hpp>
 
 namespace DUNE
 {
   namespace Plans
   {
     // Export DLL Symbol.
-    class DUNE_DLL_SYM SpeedConversion;
-
-    struct SpeedModel
-    {
-      //! Vector of values for each axis
-      std::vector<float> values[3];
-    };
+    class DUNE_DLL_SYM SpeedModel;
 
     //! Utility class to compute offline speed conversions.
     //! Consider ONLY positive speed.
     //! Negative values means failure to convert
-    class SpeedConversion
+    class SpeedModel
     {
     public:
+      //! Constructor
+      //! @param[in] config pointer to config parser
+      SpeedModel(Parsers::Config* config);
+
+      //! Constructor
+      //! @param[in] act values for the actuation
+      //! @param[in] rpm values for the rpms
+      //! @param[in] mps values for the meters per second
+      SpeedModel(const std::vector<float>& act,
+                 const std::vector<float>& rpm,
+                 const std::vector<float>& mps);
+
       //! Convert to meters per second
-      //! @param[in] sm struct with vector of values used for conversion
       //! @param[in] value speed value from which to convert
       //! @param[in] units speed units of the given value
       //! @return converted value to meters per second, negative if failed
-      static float
-      toMPS(const SpeedModel& sm, float value, uint8_t units);
+      float
+      toMPS(float value, uint8_t units) const;
 
       //! Convert to RPMs
-      //! @param[in] sm struct with vector of values used for conversion
       //! @param[in] value speed value from which to convert
       //! @param[in] units speed units of the given value
       //! @return converted value to RPMs, negative if failed
-      static float
-      toRPM(const SpeedModel& sm, float value, uint8_t units);
+      float
+      toRPM(float value, uint8_t units) const;
 
       //! Convert to Actuation
-      //! @param[in] sm struct with vector of values used for conversion
       //! @param[in] value speed value from which to convert
       //! @param[in] units speed units of the given value
       //! @return converted value to actuation, negative if failed
-      static float
-      toAct(const SpeedModel& sm, float value, uint8_t units);
+      float
+      toAct(float value, uint8_t units) const;
 
       //! Validate the speed model
-      //! @param[in] sm struct with vector of values used for conversion
-      static void
-      validate(const SpeedModel& sm);
+      void
+      validate(void) const;
 
     private:
       //! Convert from any unit to any other unit
-      //! @param[in] sm struct with vector of values used for conversion
       //! @param[in] value speed value from which to convert
       //! @param[in] from speed units of the given value
       //! @param[in] to speed units which to convert
-      static float
-      convert(const SpeedModel& sm, float value,
-              uint8_t from, uint8_t to);
+      float
+      convert(float value, uint8_t from, uint8_t to) const;
+
+      //! Vector of values for each axis
+      std::vector<float> m_models[3];
     };
   }
 }

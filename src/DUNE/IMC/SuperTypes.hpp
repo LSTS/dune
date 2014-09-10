@@ -26,6 +26,8 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
+// IMC XML MD5: bc9d825ba1981fbb15950278b9fa89ba                            *
+//***************************************************************************
 
 #ifndef DUNE_IMC_SUPERTYPES_HPP_INCLUDED_
 #define DUNE_IMC_SUPERTYPES_HPP_INCLUDED_
@@ -44,11 +46,6 @@ namespace DUNE
 
     //! Super type Control Command.
     class ControlCommand: public Message
-    {
-    };
-
-    //! Super type Payload.
-    class Payload: public Message
     {
     };
   }

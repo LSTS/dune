@@ -40,6 +40,8 @@
 #include <DUNE/Plans.hpp>
 #include <DUNE/IMC.hpp>
 #include "Calibration.hpp"
+#include "Timeline.hpp"
+#include "ComponentActiveTime.hpp"
 
 using namespace DUNE::IMC;
 using namespace DUNE::Plans;
@@ -59,14 +61,12 @@ namespace Plan
       //! @param[in] task pointer to task
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] nodes vector of sequential PlanManeuvers that describe the plan
-      //! @param[in] durations information regarding each maneuvers duration
-      //! @param[in] last_dur iterator to last maneuver with a valid duration
+      //! @param[in] tline plan timeline with maneuvers' and plan's ETAs
       //! @param[in] cinfo map of components info
       ActionSchedule(Tasks::Task* task,
                      const IMC::PlanSpecification* spec,
                      const std::vector<IMC::PlanManeuver*>& nodes,
-                     const Plans::Duration& durations,
-                     const Duration::ManeuverDuration::const_iterator last_dur,
+                     const Timeline& tline,
                      const std::map<std::string, IMC::EntityInfo>& cinfo);
 
       //! Alternative constructor for when plan is not sequential.
@@ -75,7 +75,8 @@ namespace Plan
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] nodes vector of sequential PlanManeuvers that describe the plan
       //! @param[in] cinfo map of components info
-      ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
+      ActionSchedule(Tasks::Task* task,
+                     const IMC::PlanSpecification* spec,
                      const std::vector<IMC::PlanManeuver*>& nodes,
                      const std::map<std::string, IMC::EntityInfo>& cinfo);
 
@@ -132,6 +133,15 @@ namespace Plan
       //! @return time left for calibration according to devices to activate
       float
       calibTimeLeft(void);
+
+      //! Fill the object component active time
+      //! @param[in] nodes vector of sequenced plan maneuvers
+      //! @param[in] timeline plan timeline with all ETAs
+      //! @param[in] cat component active time object to fill
+      void
+      fillComponentActiveTime(const std::vector<IMC::PlanManeuver*>& nodes,
+                              const Timeline& timeline,
+                              ComponentActiveTime& cat);
 
     private:
       //! Enumeration for type of timed action
@@ -314,7 +324,7 @@ namespace Plan
       //! Set of activation requests yet to be confirmed
       std::map<std::string, TimedAction> m_reqs;
       //! Expected plan duration disregarding calibration time
-      float m_plan_duration;
+      float m_execution_duration;
     };
   }
 }

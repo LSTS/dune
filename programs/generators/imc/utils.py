@@ -26,6 +26,7 @@
 # Author: Ricardo Martins                                                  #
 ############################################################################
 
+import hashlib
 import os.path
 
 # Sanitize the name of enumerations.
@@ -49,7 +50,7 @@ def comment(text, dox = True, nl = '\n'):
 
 # Extract copyright from this script and convert it to a format
 # suitable to be used in C++ files.
-def get_cxx_copyright():
+def get_cxx_copyright(xml_md5):
     fd = open(os.path.abspath(__file__).replace('.pyc', '.py'))
     result = []
     header = False
@@ -67,6 +68,8 @@ def get_cxx_copyright():
     result = ['//' + l for l in result]
     result = [l.replace('#', '*') for l in result]
     result.append('// Automatically generated.'.ljust(len(result[0]) - 1) + '*')
+    result.append(result[0])
+    result.append(('// IMC XML MD5: ' + xml_md5).ljust(len(result[0]) - 1) + '*')
     result.append(result[0])
     return '\n'.join(result) + '\n'
 
@@ -145,3 +148,24 @@ def abbrev_to_macro(abbrev, prefix = ''):
         return name
     else:
         return prefix + '_' + name[1:].upper()
+
+# Compute MD5 sum.
+def compute_md5(imc_xml):
+    m = hashlib.md5()
+    m.update(open(imc_xml, 'rb').read())
+    return m.hexdigest()
+
+def file_md5_matches(file_name, xml_md5):
+    cpp_md5 = ''
+    try:
+        fd = open(file_name, 'r')
+    except:
+        return False
+
+    for line in fd:
+        if line.strip().startswith('// IMC XML MD5:'):
+            parts = line.split(':')
+            cpp_md5 = parts[1].split()
+            cpp_md5 = cpp_md5[0]
+
+    return xml_md5 == cpp_md5

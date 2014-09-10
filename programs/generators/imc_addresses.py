@@ -26,19 +26,24 @@
 # Author: Ricardo Martins                                                  #
 ############################################################################
 
-import sys
 import os.path
 
-if len(sys.argv) != 3:
-    print('Usage: %s <IMC_Addresses.xml> <imc-addresses.ini>' % sys.argv[0])
-    sys.exit(1)
+# Parse command line arguments.
+import argparse
+parser = argparse.ArgumentParser(
+    description="Generate DUNE .ini file from IMC Addresses XML.")
+parser.add_argument('dest_file', metavar='DEST_FILE',
+                    help="destination file")
+parser.add_argument('-x', '--xml', metavar='IMC_ADDR_XML',
+                    help="IMC Addresses XML file")
+args = parser.parse_args()
 
 # Parse XML specification.
 import xml.etree.ElementTree as ET
-tree = ET.parse(sys.argv[1])
+tree = ET.parse(args.xml)
 root = tree.getroot()
 
-fd = open(sys.argv[2], 'w')
+fd = open(args.dest_file, 'w')
 
 # Insert licence.
 lfd = open(os.path.abspath(__file__).replace('.pyc', '.py'))
@@ -54,3 +59,5 @@ for line in lfd:
 fd.write('[IMC Addresses]\n')
 for addr in root.findall('address'):
     fd.write('%-20s = %s\n' % (addr.get('name'), addr.get('id')))
+
+print('* ' + args.dest_file)

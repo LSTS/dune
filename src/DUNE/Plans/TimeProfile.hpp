@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLANS_DURATION_HPP_INCLUDED_
-#define DUNE_PLANS_DURATION_HPP_INCLUDED_
+#ifndef DUNE_PLANS_TIMEPROFILE_HPP_INCLUDED_
+#define DUNE_PLANS_TIMEPROFILE_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/Coordinates.hpp>
@@ -35,7 +35,7 @@
 #include <DUNE/Math.hpp>
 #include <DUNE/Control.hpp>
 #include <DUNE/Memory.hpp>
-#include <DUNE/Plans/SpeedConversion.hpp>
+#include <DUNE/Plans/SpeedModel.hpp>
 
 namespace DUNE
 {
@@ -49,60 +49,125 @@ namespace DUNE
     static const float c_rated_pitch = 0.2617993877991494f;
 
     // Export DLL Symbol.
-    class DUNE_DLL_SYM Duration;
+    class DUNE_DLL_SYM TimeProfile;
 
-    //! Utility class to estimate a plan's duration.
-    class Duration
+    //! Utility class to estimate a plan's duration and speed profiles.
+    class TimeProfile
     {
     public:
-      //! Mapping between maneuver IDs and point durations
-      typedef std::map< std::string, std::vector<float> > ManeuverDuration;
+      struct SpeedProfile
+      {
+        SpeedProfile(float sp, uint8_t su, float t = 0.0):
+          speed(sp),
+          speed_units(su),
+          time(t)
+        { }
+
+        template <typename Type>
+        SpeedProfile(const Type* maneuver, float t = 0.0)
+        {
+          speed = maneuver->speed;
+          speed_units = maneuver->speed_units;
+          time = t;
+        }
+
+        ~SpeedProfile(void)
+        { }
+
+        void
+        setTime(float t)
+        {
+          time = t;
+        }
+
+        //! Speed value
+        float speed;
+        //! Speed units
+        uint8_t speed_units;
+        //! Time of the profile
+        float time;
+      };
+
+      struct Profile
+      {
+        //! Vector of Speed Profiles
+        std::vector<SpeedProfile> speeds;
+        //! Vector of Durations
+        std::vector<float> durations;
+      };
+
+      //! Mapping between maneuver IDs and their profiles
+      typedef std::map< std::string, Profile> ProfileMap;
+      //! Const iterator for this map
+      typedef ProfileMap::const_iterator const_iterator;
 
       //! Constructor
-      Duration(const SpeedModel* speed_model):
+      TimeProfile(const SpeedModel* speed_model):
         m_accum_dur(NULL),
-        m_speed_model(speed_model)
+        m_speed_model(speed_model),
+        m_speed_vec(NULL)
       { };
 
       //! Destructor
-      ~Duration(void)
+      ~TimeProfile(void)
       {
         Memory::clear(m_accum_dur);
+        Memory::clear(m_speed_vec);
       }
 
-      //! Parse plan duration from plan specification
+      //! Parse plan duration and speeds from vector of plan maneuver nodes
       //! @param[in] nodes vector of plan maneuver nodes
       //! @param[in] state current estimated state
-      //! @return iterator to last computed maneuver, returns end() if unable to compute
-      ManeuverDuration::const_iterator
+      void
       parse(const std::vector<IMC::PlanManeuver*>& nodes, const IMC::EstimatedState* state);
 
       //! Clear the vector
       inline void
       clear(void)
       {
-        m_durations.clear();
+        m_profiles.clear();
+        m_last_valid.clear();
+      }
+
+      //! First position of the vector
+      //! @return const iterator to begin()
+      inline const_iterator
+      begin(void) const
+      {
+        return m_profiles.begin();
       }
 
       //! Last position of the vector
-      inline ManeuverDuration::const_iterator
+      //! @return const iterator to end()
+      inline const_iterator
       end(void) const
       {
-        return m_durations.end();
+        return m_profiles.end();
       }
 
-      //! Size of the vector
+      //! Size of the map
+      //! @return size of the map
       inline size_t
       size(void) const
       {
-        return m_durations.size();
+        return m_profiles.size();
       }
 
-      //! Find function for the vector
-      inline ManeuverDuration::const_iterator
+      //! Find function for the map
+      //! @param[in] str map's key of object to find
+      //! @return const iterator to the map's object
+      inline const_iterator
       find(const std::string& str) const
       {
-        return m_durations.find(str);
+        return m_profiles.find(str);
+      }
+
+      //! ID of last maneuver with a valid duration
+      //! @return ID string of the maneuver
+      inline const std::string&
+      lastValid(void) const
+      {
+        return m_last_valid;
       }
 
     private:
@@ -271,7 +336,6 @@ namespace DUNE
           return false;
 
         m_accum_dur->addDuration(value);
-
         return true;
       };
 
@@ -289,6 +353,9 @@ namespace DUNE
 
         if (value < 0.0)
           return false;
+
+        // Update speed profile
+        m_speed_vec->push_back(SpeedProfile(0.0, 0, maneuver->duration));
 
         m_accum_dur->addDuration(value + maneuver->duration);
         return true;
@@ -308,6 +375,9 @@ namespace DUNE
 
         if (value < 0.0)
           return false;
+
+        // Update speed profile
+        m_speed_vec->push_back(SpeedProfile(maneuver, maneuver->duration));
 
         m_accum_dur->addDuration(value + maneuver->duration);
         return true;
@@ -363,16 +433,23 @@ namespace DUNE
         if (value < 0.0)
           return false;
 
+        // Update speed profile
+        m_speed_vec->push_back(SpeedProfile(maneuver, maneuver->duration));
+
         m_accum_dur->addDuration(value + maneuver->duration);
         return true;
       }
 
-      //! Vector of maneuver durations
-      ManeuverDuration m_durations;
+      //! Map of maneuvers to profiles
+      ProfileMap m_profiles;
       //! Vector of accumulated durations
       AccumulatedDurations* m_accum_dur;
       //! Pointer to model for speed conversion
       const Plans::SpeedModel* m_speed_model;
+      //! Pointer to vector of speed profiles
+      std::vector<SpeedProfile>* m_speed_vec;
+      //! ID of last maneuver with a valid duration
+      std::string m_last_valid;
     };
   }
 }

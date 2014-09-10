@@ -25,19 +25,88 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLANS_HPP_INCLUDED_
-#define DUNE_PLANS_HPP_INCLUDED_
+#ifndef DUNE_PLAN_ENGINE_GROUPSPEEDS_HPP_INCLUDED_
+#define DUNE_PLAN_ENGINE_GROUPSPEEDS_HPP_INCLUDED_
 
-namespace DUNE
+// ISO C++ 98 headers.
+#include <map>
+#include <cmath>
+
+namespace Plan
 {
-  //! %Plan routines and classes.
-  namespace Plans
-  { }
-}
+  namespace Engine
+  {
+    using DUNE_NAMESPACES;
 
-#include <DUNE/Plans/TimeProfile.hpp>
-#include <DUNE/Plans/Progress.hpp>
-#include <DUNE/Plans/SpeedModel.hpp>
-#include <DUNE/Plans/PowerModel.hpp>
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM GroupSpeed;
+
+    class GroupSpeed
+    {
+    public:
+      typedef std::pair<float, float> SpeedPair;
+      typedef std::map<float, float> GroupMap;
+      typedef GroupMap::iterator iterator;
+      typedef GroupMap::const_iterator const_iterator;
+
+      GroupSpeed(float tol):
+        m_tolerance(tol)
+      { }
+
+      void
+      add(float speed, float duration)
+      {
+        if (m_gmap.empty())
+        {
+          m_gmap.insert(SpeedPair(speed, duration));
+          return;
+        }
+
+        iterator first = m_gmap.lower_bound(speed - m_tolerance);
+        iterator last = m_gmap.upper_bound(speed + m_tolerance);
+
+        // If they are equal, the sequence is empty, and thus no entry was found.
+        // Return the end iterator to be consistent with std::find.
+        if (first == last)
+        {
+          m_gmap.insert(SpeedPair(speed, duration));
+          return;
+        }
+
+        iterator itr = first;
+        iterator closest = first;
+        float dist = std::fabs(first->first - speed);
+        for (; itr != last; ++itr)
+        {
+          if (std::fabs(itr->first - speed) < dist)
+          {
+            dist = std::fabs(itr->first - speed);
+            closest = itr;
+          }
+        }
+
+        closest->second += duration;
+      }
+
+      const_iterator
+      begin(void) const
+      {
+        return m_gmap.begin();
+      }
+
+      const_iterator
+      end(void) const
+      {
+        return m_gmap.end();
+      }
+
+    private:
+      //! Map of speed in rpms to duration
+      GroupMap m_gmap;
+      //! Tolerance
+      float m_tolerance;
+    };
+  }
+}
 
 #endif
