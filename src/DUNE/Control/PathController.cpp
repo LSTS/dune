@@ -284,8 +284,7 @@ namespace DUNE
     void
     PathController::onEntityReservation(void)
     {
-      if (m_btd.enabled)
-        m_btd.args.eid = reserveEntity("Bottom Track");
+      m_btd.args.eid = reserveEntity("Bottom Track");
     }
 
     void
