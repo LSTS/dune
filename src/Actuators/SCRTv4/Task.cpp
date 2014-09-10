@@ -90,8 +90,8 @@ namespace Actuators
       Arguments m_args;
       //! Servo position messages.
       IMC::ServoPosition m_servo_pos[c_servo_count];
-      //! Current messages.
-      IMC::Current m_servo_amp[c_servo_count];
+      //! Servo entities.
+      std::vector<PlainEntity> m_servo_ent;
       //! Serial port device.
       SerialPort* m_uart;
       Listener* m_listener;
@@ -129,10 +129,13 @@ namespace Actuators
       {
         for (unsigned i = 0; i < c_servo_count; ++i)
         {
+          // Note: other tasks still depend on positions comming from the same entity
           m_servo_pos[i].id = i;
 
           std::string elabel = String::str("%s - Servo %u", getEntityLabel(), i);
-          m_servo_amp[i].setSourceEntity(reserveEntity(elabel));
+          m_servo_ent.push_back(Entity(this));
+          m_servo_ent.back().setLabel(elabel);
+          reserveEntity(m_servo_ent.back());
         }
       }
 
@@ -217,6 +220,7 @@ namespace Actuators
       handleState(LUCL::Command::CommandPayload& cmd)
       {
         uint8_t* ptr = cmd.data;
+        IMC::Current a;
 
         for (unsigned i = 0; i < c_servo_count; ++i)
         {
@@ -224,8 +228,10 @@ namespace Actuators
           uint16_t current = (ptr[11] << 8) | ptr[10];
           ptr += 12;
 
-          m_servo_amp[i].value = current / 1000.0;
-          dispatch(m_servo_amp[i]);
+          a.value = current / 1000.0;
+          m_servo_ent[i].dispatch(a);
+
+          // Note: other tasks still depend on positions comming from the same entity
           m_servo_pos[i].value = Angles::radians(m_exc_min[i] + position) * m_args.servo_dirs[i];
           dispatch(m_servo_pos[i]);
         }
