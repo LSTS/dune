@@ -77,6 +77,7 @@ namespace DUNE
       setId(unsigned int id)
       {
         m_id = id;
+        m_ent_info.id = id;
       }
 
       void
