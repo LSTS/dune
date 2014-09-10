@@ -407,6 +407,7 @@ namespace DUNE
       //! number (entity id).
       //! @param[in] label entity name/label.
       //! @return entity id.
+      DUNE_DEPRECATED
       unsigned int
       reserveEntity(const std::string& label);
 
