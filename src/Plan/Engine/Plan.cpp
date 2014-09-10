@@ -60,7 +60,7 @@ namespace Plan
       catch (...)
       {
         Memory::clear(m_speed_model);
-        m_task->inf("SPEED MODEL INVALID");
+        m_task->inf("plan: speed model invalid");
       }
 
       try
@@ -71,7 +71,7 @@ namespace Plan
       catch (...)
       {
         Memory::clear(m_power_model);
-        m_task->inf("POWER MODEL INVALID");
+        m_task->inf("plan: power model invalid");
       }
 
       m_profiles = new Plans::TimeProfile(m_speed_model);
@@ -92,6 +92,7 @@ namespace Plan
     Plan::clear(void)
     {
       m_graph.clear();
+      m_curr_node = NULL;
       m_seq_nodes.clear();
       m_sequential = false;
       m_progress = -1.0;
@@ -100,6 +101,8 @@ namespace Plan
 
       if (m_profiles != NULL)
         m_profiles->clear();
+
+      m_cat.clear();
     }
 
     void
