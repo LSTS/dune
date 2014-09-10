@@ -54,7 +54,7 @@ text = b'<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(root, encoding 
 import tempfile
 tmp = tempfile.NamedTemporaryFile(delete = False)
 import gzip
-f_out = gzip.open(tmp.name, 'wb', compresslevel = 9)
+f_out = gzip.GzipFile(tmp.name, 'wb', compresslevel = 9, mtime = 0)
 f_out.write(text)
 f_out.close()
 
