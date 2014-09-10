@@ -62,6 +62,8 @@ namespace Plan
       float speriod;
       //! Duration of vehicle calibration process.
       uint16_t calibration_time;
+      //! True if calibration should be performed at all
+      bool do_calib;
       //! Abort when a payload fails to activate
       bool actfail_abort;
       //! Perform station keeping while calibrating
@@ -136,6 +138,10 @@ namespace Plan
         .defaultValue("10")
         .units(Units::Second)
         .description("Duration of vehicle calibration commands");
+
+        param("Perform Calibration", m_args.do_calib)
+        .defaultValue("true")
+        .description("True if calibration should be performed at all");
 
         param("Abort On Failed Activation", m_args.actfail_abort)
         .defaultValue("false")
@@ -823,7 +829,8 @@ namespace Plan
 
         dispatch(m_spec);
 
-        if (flags & IMC::PlanControl::FLG_CALIBRATE)
+        if ((flags & IMC::PlanControl::FLG_CALIBRATE) &&
+            m_args.do_calib)
         {
           if (!startCalibration())
             return stopped;
