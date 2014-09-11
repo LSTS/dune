@@ -50,86 +50,24 @@ namespace Plan
     //! value for not available or invalid
     static const std::string c_invalid = "N/A";
 
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM Statistics;
-
     class Statistics
     {
     public:
       //! Constructor
       //! @param[in] msg pointer to statistics message
       Statistics(IMC::PlanStatistics* msg):
-        ps(msg)
+        m_ps(msg)
       { }
 
       //! Fill in properties
       //! @param[in] prop properties of the plan
       void
-      fill(unsigned prop)
+      setProperties(unsigned prop)
       {
-        ps->properties = prop & IMC::PlanStatistics::PRP_ALL;
+        m_ps->properties = prop & IMC::PlanStatistics::PRP_ALL;
       }
 
-      //! Fill in durations
-      //! @param[in] nodes vector of sequenced PlanManeuver nodes
-      //! @param[in] tl Timeline of the plan
-      void
-      fill(const std::vector<IMC::PlanManeuver*>& nodes, const Timeline& tl)
-      {
-        if (tl.getPlanETA() < 0.0)
-        {
-          addTuple(ps->durations, DTR("Total"), c_invalid);
-          return;
-        }
-
-        addTuple(ps->durations, DTR("Total"), tl.getPlanETA());
-        addTuple(ps->durations, DTR("Execution"), tl.getExecutionDuration());
-        addTuple(ps->durations, DTR("Calibration"),
-                 tl.getPlanETA() - tl.getExecutionDuration());
-
-        std::vector<IMC::PlanManeuver*>::const_iterator itr;
-        itr = nodes.begin();
-
-        for (; itr != nodes.end(); ++itr)
-        {
-          std::string id = (*itr)->maneuver_id;
-          float start = tl.getManeuverStartETA(id);
-          float end = tl.getManeuverEndETA(id);
-          addTuple(ps->durations, DTR("Maneuver ") + id, start - end);
-        }
-      }
-
-      //! Fill in actions
-      //! @param[in] cat list of times that components are active
-      void
-      fill(const ComponentActiveTime& cat)
-      {
-        ComponentActiveTime::const_iterator itr;
-        itr = cat.begin();
-
-        for (; itr != cat.end(); ++itr)
-          addTuple(ps->actions, itr->first, itr->second);
-      }
-
-      //! Fill in fuel predictions
-      //! @param[in] fpred fuel prediction object
-      void
-      fill(const FuelPrediction& fpred)
-      {
-        if (fpred.getTotal() < 0.0)
-        {
-          addTuple(ps->fuel, DTR("Total"), c_invalid);
-          return;
-        }
-
-        addTuple(ps->fuel, DTR("Total"), fpred.getTotal(true), 2);
-        addTuple(ps->fuel, DTR("Hotel"), fpred.getHotel(true), 2);
-        addTuple(ps->fuel, DTR("Payload"), fpred.getPayload(true), 2);
-        addTuple(ps->fuel, DTR("Motion"), fpred.getMotion(true), 2);
-        addTuple(ps->fuel, DTR("IMU"), fpred.getIMU(true), 2);
-      }
-
-    private:
+    protected:
       //! Add tuple with a floating point value
       //! @param[in] name the name of the tuple
       //! @param[in] value the value of the tuple
@@ -159,7 +97,92 @@ namespace Plan
       }
 
       //! Pointer to message
-      IMC::PlanStatistics* ps;
+      IMC::PlanStatistics* m_ps;
+    };
+
+    //! Class for handling pre-computed statistics
+    class PreStatistics: public Statistics
+    {
+    public:
+      //! Constructor
+      //! @param[in] msg pointer to statistics message
+      PreStatistics(IMC::PlanStatistics* msg):
+        Statistics(msg)
+      {
+        m_ps->type = IMC::PlanStatistics::TP_PREPLAN;
+      }
+
+      //! Fill in durations
+      //! @param[in] nodes vector of sequenced PlanManeuver nodes
+      //! @param[in] tl Timeline of the plan
+      void
+      fill(const std::vector<IMC::PlanManeuver*>& nodes, const Timeline& tl)
+      {
+        if (tl.getPlanETA() < 0.0)
+        {
+          addTuple(m_ps->durations, DTR("Total"), c_invalid);
+          return;
+        }
+
+        addTuple(m_ps->durations, DTR("Total"), tl.getPlanETA());
+        addTuple(m_ps->durations, DTR("Execution"), tl.getExecutionDuration());
+        addTuple(m_ps->durations, DTR("Calibration"),
+                 tl.getPlanETA() - tl.getExecutionDuration());
+
+        std::vector<IMC::PlanManeuver*>::const_iterator itr;
+        itr = nodes.begin();
+
+        for (; itr != nodes.end(); ++itr)
+        {
+          std::string id = (*itr)->maneuver_id;
+          float start = tl.getManeuverStartETA(id);
+          float end = tl.getManeuverEndETA(id);
+          addTuple(m_ps->durations, DTR("Maneuver ") + id, start - end);
+        }
+      }
+
+      //! Fill in actions
+      //! @param[in] cat list of times that components are active
+      void
+      fill(const ComponentActiveTime& cat)
+      {
+        ComponentActiveTime::const_iterator itr;
+        itr = cat.begin();
+
+        for (; itr != cat.end(); ++itr)
+          addTuple(m_ps->actions, itr->first, itr->second);
+      }
+
+      //! Fill in fuel predictions
+      //! @param[in] fpred fuel prediction object
+      void
+      fill(const FuelPrediction& fpred)
+      {
+        if (fpred.getTotal() < 0.0)
+        {
+          addTuple(m_ps->fuel, DTR("Total"), c_invalid);
+          return;
+        }
+
+        addTuple(m_ps->fuel, DTR("Total"), fpred.getTotal(true), 2);
+        addTuple(m_ps->fuel, DTR("Hotel"), fpred.getHotel(true), 2);
+        addTuple(m_ps->fuel, DTR("Payload"), fpred.getPayload(true), 2);
+        addTuple(m_ps->fuel, DTR("Motion"), fpred.getMotion(true), 2);
+        addTuple(m_ps->fuel, DTR("IMU"), fpred.getIMU(true), 2);
+      }
+    };
+
+    //! Class for handling run time statistics
+    class RunTimeStatistics: public Statistics
+    {
+    public:
+      //! Constructor
+      //! @param[in] msg pointer to statistics message
+      RunTimeStatistics(IMC::PlanStatistics* msg):
+        Statistics(msg)
+      {
+        m_ps->type = IMC::PlanStatistics::TP_POSTPLAN;
+      }
     };
   }
 }
