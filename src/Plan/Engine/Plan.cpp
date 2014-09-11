@@ -424,8 +424,7 @@ namespace Plan
                          bool imu_enabled, const IMC::EstimatedState* state)
     {
       IMC::PlanStatistics ps;
-      ps.type = IMC::PlanStatistics::TP_PREPLAN;
-      Statistics stat(&ps);
+      PreStatistics pre_stat(&ps);
 
       if (m_compute_progress && plan_startup)
       {
@@ -449,10 +448,10 @@ namespace Plan
           m_sched->fillComponentActiveTime(m_seq_nodes, tline, m_cat);
 
           // Update duration statistics
-          stat.fill(m_seq_nodes, tline);
+          pre_stat.fill(m_seq_nodes, tline);
 
           // Update action statistics
-          stat.fill(m_cat);
+          pre_stat.fill(m_cat);
 
           // Estimate necessary calibration time
           float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
@@ -464,7 +463,7 @@ namespace Plan
             Memory::clear(m_fpred);
             m_fpred = new FuelPrediction(m_profiles, &m_cat, m_power_model,
                                          m_speed_model, imu_enabled, tline.getPlanETA());
-            stat.fill(*m_fpred);
+            pre_stat.fill(*m_fpred);
           }
         }
         else if (!isLinear())
@@ -479,7 +478,7 @@ namespace Plan
       if (!m_profiles->isDurationFinite())
         m_properties |= IMC::PlanStatistics::PRP_INFINITE;
 
-      stat.fill(m_properties);
+      pre_stat.setProperties(m_properties);
 
       m_task->dispatch(ps);
     }
