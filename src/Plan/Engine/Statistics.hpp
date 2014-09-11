@@ -137,7 +137,7 @@ namespace Plan
                unsigned precision = 1)
       {
         std::stringstream ss;
-        ss << std::setprecision(precision) << value;
+        ss << std::fixed << std::setprecision(precision) << value;
         addTuple(str, name, ss.str());
       }
 
