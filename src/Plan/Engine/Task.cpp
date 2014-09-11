@@ -786,8 +786,7 @@ namespace Plan
         }
         catch (std::runtime_error& e)
         {
-          err("%s", e.what());
-          throw std::runtime_error(Utils::String::str("%s", e.what()));
+          onFailure(DTR("failed loading from DB: %s"), e.what());
         }
 
         return true;
