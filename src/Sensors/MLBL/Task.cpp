@@ -110,42 +110,44 @@ namespace Sensors
     // Configuration parameters.
     struct Arguments
     {
-      // Serial port device.
+      //! Serial port device.
       std::string uart_dev;
-      // Serial port baud rate.
+      //! Serial port baud rate.
       unsigned uart_baud;
-      // Maximum time without ranges.
+      //! Maximum time without ranges.
       double range_tout;
-      // Report types.
+      //! Report types.
       std::string report;
-      // Delay before sending range reports.
+      //! Delay before sending range reports.
       double report_delay_bef;
-      // Delay after sending range reports.
+      //! Delay after sending range reports.
       double report_delay_aft;
-      // Delay before sending Mini-Packet.
+      //! Delay before sending Mini-Packet.
       double mpk_delay_bef;
-      // Delay after sending Mini-Packet.
+      //! Delay after sending Mini-Packet.
       double mpk_delay_aft;
-      // Maximum age of a good range (for reporting).
+      //! Maximum age of a good range (for reporting).
       double good_range_age;
-      // Time between range reports.
+      //! Time between range reports.
       double report_period;
-      // Ping Period.
+      //! Ping Period.
       double ping_period;
-      // Ping Timeout.
+      //! Ping Timeout.
       unsigned ping_tout;
-      // Length of transmit pings.
+      //! Length of transmit pings.
       unsigned tx_length;
-      // Length of receive pings.
+      //! Length of receive pings.
       unsigned rx_length;
-      // Sound speed on water.
+      //! Sound speed on water.
       double sound_speed_def;
       //! Entity label of sound speed provider.
       std::string sound_speed_elabel;
-      // Turn around time (ms).
+      //! Turn around time (ms).
       unsigned turn_around_time;
-      // Transmit only underwater.
+      //! Transmit only underwater.
       bool only_underwater;
+      //! Name of the section with modem addresses.
+      std::string addr_section;
     };
 
     struct Beacon
@@ -330,6 +332,10 @@ namespace Sensors
         .defaultValue("false")
         .description("Do not transmit when at water surface");
 
+        param("Address Section", m_args.addr_section)
+        .defaultValue("Micromodem Addresses")
+        .description("Name of the configuration section with modem addresses");
+
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
         m_states[STA_BOOT].description = DTR("initializing");
@@ -385,7 +391,7 @@ namespace Sensors
       {
         // Get modem address.
         std::string agent = getSystemName();
-        m_ctx.config.get("Micromodem Addresses", agent, "1024", m_addr);
+        m_ctx.config.get(m_args.addr_section, agent, "1024", m_addr);
         if (m_addr == 1024)
           throw std::runtime_error(String::str(DTR("modem address for agent '%s' is invalid"), agent.c_str()));
 
