@@ -152,7 +152,7 @@ namespace Actuators
       onUpdateParameters(void)
       {
         unsigned motor_count = m_args.motor_enames.size();
-        if (m_ents.size() != motor_count)
+        if (m_ents.size() != motor_count && m_ents.size() > 0)
           throw std::runtime_error("number of motors cannot change at runtime");
         m_wdogs.resize(motor_count);
 
