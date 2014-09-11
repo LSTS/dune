@@ -74,15 +74,10 @@ namespace Autonomy
       bool m_trex_connected;
       //! Stores if TREX is currently controlling the vehicle
       bool m_trex_control;
-      //! External TREX entity
-      PlainEntity m_ext_ent;
 
       Task(const std::string& name, Tasks::Context& ctx) :
-          DUNE::Tasks::Task(name, ctx),
-          m_last_heartbeat(Time::Clock::get()),
-          m_trex_connected(false),
-          m_trex_control(false),
-          m_ext_ent(this)
+          DUNE::Tasks::Task(name, ctx), m_last_heartbeat(Time::Clock::get()), m_trex_connected(
+              false), m_trex_control(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
@@ -118,8 +113,7 @@ namespace Autonomy
       void
       onEntityReservation(void)
       {
-        m_ext_ent.setLabel("TREX (External)");
-        reserveEntity(m_ext_ent);
+        reserveEntity("TREX (External)");
       }
 
       void
