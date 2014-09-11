@@ -233,11 +233,6 @@ namespace Plan
       void
       sequenceNodes(void);
 
-      //! Compute durations of each point in the plan
-      //! @param[in] pointer to estimated state message
-      void
-      computeDurations(const IMC::EstimatedState* state);
-
       //! Get maneuver from id
       //! @param[in] id name of the maneuver to load
       //! @return NULL if maneuver id is invalid
@@ -254,6 +249,13 @@ namespace Plan
       //! @param[out] tl plan timeline filled in
       void
       fillTimeline(Timeline& tl);
+
+      //! Test if plan is linear
+      inline bool
+      isLinear(void) const
+      {
+        return !(m_properties & IMC::PlanStatistics::PRP_NONLINEAR);
+      }
 
       //! Graph nodes (a maneuver and its outgoing transitions)
       struct Node
@@ -275,8 +277,6 @@ namespace Plan
       Node* m_curr_node;
       //! Last maneuver id
       std::string m_last_id;
-      //! True if plan is sequential
-      bool m_sequential;
       //! Whether or not to compute plan's progress
       bool m_compute_progress;
       //! Whether or not to compute fuel prediction
@@ -313,6 +313,8 @@ namespace Plan
       FuelPrediction* m_fpred;
       //! Pointer to task
       Tasks::Task* m_task;
+      //! Plan properties
+      unsigned m_properties;
     };
   }
 }

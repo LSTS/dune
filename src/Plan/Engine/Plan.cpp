@@ -27,6 +27,7 @@
 
 // Local headers.
 #include "Plan.hpp"
+#include "Statistics.hpp"
 
 namespace Plan
 {
@@ -37,7 +38,6 @@ namespace Plan
                uint16_t min_cal_time, Parsers::Config* cfg):
       m_spec(spec),
       m_curr_node(NULL),
-      m_sequential(false),
       m_compute_progress(compute_progress),
       m_predict_fuel(fpredict),
       m_progress(0.0),
@@ -50,7 +50,8 @@ namespace Plan
       m_min_cal_time(min_cal_time),
       m_config(cfg),
       m_fpred(NULL),
-      m_task(task)
+      m_task(task),
+      m_properties(0)
     {
       try
       {
@@ -60,7 +61,7 @@ namespace Plan
       catch (...)
       {
         Memory::clear(m_speed_model);
-        m_task->inf("plan: speed model invalid");
+        m_task->inf(DTR("plan: speed model invalid"));
       }
 
       try
@@ -71,7 +72,7 @@ namespace Plan
       catch (...)
       {
         Memory::clear(m_power_model);
-        m_task->inf("plan: power model invalid");
+        m_task->inf(DTR("plan: power model invalid"));
       }
 
       m_profiles = new Plans::TimeProfile(m_speed_model);
@@ -94,7 +95,6 @@ namespace Plan
       m_graph.clear();
       m_curr_node = NULL;
       m_seq_nodes.clear();
-      m_sequential = false;
       m_progress = -1.0;
       m_beyond_dur = false;
       m_started_maneuver = false;
@@ -103,6 +103,7 @@ namespace Plan
         m_profiles->clear();
 
       m_cat.clear();
+      m_properties = 0;
     }
 
     void
@@ -176,13 +177,17 @@ namespace Plan
       if (!start_maneuver_ok)
         throw ParseError(m_spec->start_man_id + DTR(": invalid start maneuver"));
 
+      IMC::PlanStatistics ps;
+      ps.type = IMC::PlanStatistics::TP_PREPLAN;
+      Statistics stat(&ps);
+
       if (m_compute_progress && plan_startup)
       {
         sequenceNodes();
 
-        if (m_sequential && state != NULL)
+        if (isLinear() && state != NULL)
         {
-          computeDurations(state);
+          m_profiles->parse(m_seq_nodes, state);
 
           Timeline tline;
           fillTimeline(tline);
@@ -194,7 +199,13 @@ namespace Plan
           // Update timeline with scheduled calibration time if any
           tline.setPlanETA(std::max(m_sched->getEarliestSchedule(), getExecutionDuration()));
 
+          // Update duration statistics
+          stat.fill(m_seq_nodes, tline);
+
           m_sched->fillComponentActiveTime(m_seq_nodes, tline, m_cat);
+
+          // Update action statistics
+          stat.fill(m_cat);
 
           // Estimate necessary calibration time
           float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
@@ -206,9 +217,10 @@ namespace Plan
             Memory::clear(m_fpred);
             m_fpred = new FuelPrediction(m_profiles, &m_cat, m_power_model,
                                          m_speed_model, imu_enabled, tline.getPlanETA());
+            stat.fill(*m_fpred);
           }
         }
-        else if (!m_sequential)
+        else if (!isLinear())
         {
           Memory::clear(m_sched);
           m_sched = new ActionSchedule(m_task, m_spec, m_seq_nodes, cinfo);
@@ -216,6 +228,11 @@ namespace Plan
           m_est_cal_time = m_min_cal_time;
         }
       }
+
+      if (!m_profiles->isDurationFinite())
+        m_properties |= IMC::PlanStatistics::PRP_INFINITE;
+
+      stat.fill(m_properties);
 
       m_last_id = m_spec->start_man_id;
 
@@ -243,12 +260,7 @@ namespace Plan
       {
         if (m_fpred != NULL)
         {
-          if (!m_fpred->isFuelValid())
-            m_task->inf(DTR("fuel prediction error is not valid"));
-          else
-            m_task->inf(DTR("fuel prediction error: %.1f (%.1f)"),
-                        m_fpred->getPredictionError(),
-                        m_fpred->getRelativeTotal());
+          // do something
         }
       }
     }
@@ -407,7 +419,7 @@ namespace Plan
     float
     Plan::getExecutionDuration(void) const
     {
-      if (!m_sequential || !m_profiles->size())
+      if (!isLinear() || !m_profiles->size())
         return -1.0;
 
       const std::string& str_last = m_profiles->lastValid();
@@ -469,20 +481,14 @@ namespace Plan
         // Check if plan is cyclical
         if (maneuverExists(itr->second.trans[0]->dest_man))
         {
-          m_sequential = false;
+          m_properties |= IMC::PlanStatistics::PRP_NONLINEAR;
+          m_properties |= IMC::PlanStatistics::PRP_INFINITE;
+          m_properties |= IMC::PlanStatistics::PRP_CYCLICAL;
           return;
         }
 
         itr = m_graph.find(itr->second.trans[0]->dest_man);
       }
-
-      m_sequential = true;
-    }
-
-    void
-    Plan::computeDurations(const IMC::EstimatedState* state)
-    {
-      m_profiles->parse(m_seq_nodes, state);
     }
 
     IMC::PlanManeuver*
@@ -507,8 +513,8 @@ namespace Plan
       if (!m_compute_progress)
         return -1.0;
 
-      // Compute only if sequential and durations exists
-      if (!m_sequential || !m_profiles->size())
+      // Compute only if linear and durations exists
+      if (!isLinear() || !m_profiles->size())
         return -1.0;
 
       // If calibration has not started yet, but will later
