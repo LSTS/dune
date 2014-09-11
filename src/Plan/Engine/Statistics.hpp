@@ -183,6 +183,17 @@ namespace Plan
       {
         m_ps->type = IMC::PlanStatistics::TP_POSTPLAN;
       }
+
+      //! Fill in with fuel info
+      //! @param[in] fpred fuel prediction object
+      void
+      fill(const FuelPrediction& fpred)
+      {
+        if (!fpred.isFuelValid())
+          return;
+
+        addTuple(m_ps->fuel, DTR("Prediction Error"), fpred.getPredictionError(), 2);
+      }
     };
   }
 }
