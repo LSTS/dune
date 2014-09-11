@@ -56,6 +56,8 @@ namespace Plan
     class Statistics
     {
     public:
+      //! Constructor
+      //! @param[in] msg pointer to statistics message
       Statistics(IMC::PlanStatistics* msg):
         ps(msg)
       { }
