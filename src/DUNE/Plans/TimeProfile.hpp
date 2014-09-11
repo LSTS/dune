@@ -106,7 +106,8 @@ namespace DUNE
         m_accum_dur(NULL),
         m_speed_model(speed_model),
         m_speed_vec(NULL),
-        m_valid_model(true)
+        m_valid_model(true),
+        m_finite_duration(false)
       {
         if (m_speed_model == NULL)
           m_valid_model = false;
@@ -172,6 +173,14 @@ namespace DUNE
       lastValid(void) const
       {
         return m_last_valid;
+      }
+
+      //! Has finite duration
+      //! @return true has finite duration, false otherwise
+      inline bool
+      isDurationFinite(void) const
+      {
+        return m_finite_duration;
       }
 
     private:
@@ -456,6 +465,8 @@ namespace DUNE
       std::string m_last_valid;
       //! Valid speed model
       bool m_valid_model;
+      //! Has finite duration
+      bool m_finite_duration;
     };
   }
 }
