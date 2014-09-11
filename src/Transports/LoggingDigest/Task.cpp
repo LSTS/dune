@@ -91,6 +91,7 @@ namespace Transports
         .defaultValue("");
 
         bind<IMC::LoggingControl>(this);
+        bind<IMC::EntityInfo>(this);
       }
 
       ~Task(void)
@@ -151,18 +152,20 @@ namespace Transports
         }
 
         // Log entities.
-        double ref_time = Clock::getSinceEpoch();
+        double time_ref = Clock::getSinceEpoch();
         std::vector<EntityDataBase::Entity*> devs;
         m_ctx.entities.contents(devs);
         for (unsigned int i = 0; i < devs.size(); ++i)
         {
-          IMC::EntityInfo info;
-          info.setTimeStamp(ref_time);
-          info.setSource(getSystemId());
-          info.id = devs[i]->id;
-          info.label = devs[i]->label;
-          info.component = devs[i]->task_name;
-          logMessage(&info);
+          IMC::QueryEntityInfo qinfo;
+          // Only query local entities
+          qinfo.setTimeStamp(time_ref);
+          qinfo.setDestination(getSystemId());
+          qinfo.setDestinationEntity(devs[i]->id);
+          // The id field is deprecated!
+          qinfo.id = devs[i]->id;
+          dispatch(qinfo, DF_KEEP_TIME);
+          logMessage(&qinfo);
         }
       }
 
@@ -196,6 +199,14 @@ namespace Transports
             stopLog();
             break;
         }
+      }
+
+       void
+       consume(const IMC::EntityInfo* msg)
+      {
+        // Only log messages we requested
+        if (msg->getDestinationEntity() == getEntityId())
+          logMessage(msg);
       }
 
       void
