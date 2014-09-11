@@ -62,6 +62,8 @@ namespace Plan
       float speriod;
       //! Duration of vehicle calibration process.
       uint16_t calibration_time;
+      //! True if calibration should be performed at all
+      bool do_calib;
       //! Abort when a payload fails to activate
       bool actfail_abort;
       //! Perform station keeping while calibrating
@@ -137,6 +139,10 @@ namespace Plan
         .units(Units::Second)
         .description("Duration of vehicle calibration commands");
 
+        param("Perform Calibration", m_args.do_calib)
+        .defaultValue("true")
+        .description("True if calibration should be performed at all");
+
         param("Abort On Failed Activation", m_args.actfail_abort)
         .defaultValue("false")
         .description("Abort when a payload fails to activate");
@@ -210,15 +216,8 @@ namespace Plan
       void
       onResourceAcquisition(void)
       {
-        try
-        {
-          m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict,
-                            this, m_args.calibration_time, &m_ctx.config);
-        }
-        catch (std::runtime_error& e)
-        {
-          err("%s", e.what());
-        }
+        m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict,
+                          this, m_args.calibration_time, &m_ctx.config);
       }
 
       void
@@ -787,8 +786,7 @@ namespace Plan
         }
         catch (std::runtime_error& e)
         {
-          err("%s", e.what());
-          throw std::runtime_error(Utils::String::str("%s", e.what()));
+          onFailure(DTR("failed loading from DB: %s"), e.what());
         }
 
         return true;
@@ -823,7 +821,8 @@ namespace Plan
 
         dispatch(m_spec);
 
-        if (flags & IMC::PlanControl::FLG_CALIBRATE)
+        if ((flags & IMC::PlanControl::FLG_CALIBRATE) &&
+            m_args.do_calib)
         {
           if (!startCalibration())
             return stopped;

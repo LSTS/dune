@@ -403,6 +403,12 @@ namespace DUNE
     TimeProfile::parse(const std::vector<IMC::PlanManeuver*>& nodes,
                        const IMC::EstimatedState* state)
     {
+      if (!m_valid_model)
+      {
+        m_last_valid.clear();
+        return;
+      }
+
       Position pos;
       extractPosition(state, pos);
 
