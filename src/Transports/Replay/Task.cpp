@@ -51,10 +51,13 @@ namespace Transports
 
     struct Task: public DUNE::Tasks::Task
     {
-      //! Task arguments.
       Arguments m_args;
-      //! Entities
-      std::vector<PlainEntity> m_ents;
+
+      typedef std::map<std::string, uint8_t> Name2Eid;
+      Name2Eid m_name2eid;
+
+      typedef std::map<uint8_t, std::string> Eid2Name;
+      Eid2Name m_eid2name;
 
       typedef std::map<uint8_t, uint8_t> Eid2Eid;
       Eid2Eid m_eid2eid;
@@ -134,10 +137,9 @@ namespace Transports
         for (unsigned int i = 0; i < m_args.ents.size(); ++i)
         {
           const std::string& ent = m_args.ents[i];
-          PlainEntity e(this);
-          e.setLabel(ent);
-          reserveEntity(e);
-          m_ents.push_back(e);
+          int eid = reserveEntity(ent);
+          m_name2eid[ent] = eid;
+          m_eid2name[eid] = ent;
         }
       }
 
@@ -317,7 +319,8 @@ namespace Transports
           m_ifs = 0;
         }
         m_eid2eid.clear();
-        m_ents.clear();
+        m_name2eid.clear();
+        m_eid2name.clear();
         m_tstats.clear();
         m_tgstats = Stats();
         m_parser.reset();
@@ -365,13 +368,13 @@ namespace Transports
           {
             // Update entity id map
             IMC::EntityInfo* ei = static_cast<IMC::EntityInfo*>(m);
-            std::vector<PlainEntity>::iterator itr = std::find(m_ents.begin(), m_ents.end(), ei->label);
+            Name2Eid::iterator itr = m_name2eid.find(ei->label);
 
-            if (itr != m_ents.end())
+            if (itr != m_name2eid.end())
             {
-              m_eid2eid[ei->id] = itr->getId();
+              m_eid2eid[ei->id] = itr->second;
 
-              trace("entity %s %d --> %d", ei->label.c_str(), (int)ei->id, (int)itr->getId());
+              trace("entity %s %d --> %d", ei->label.c_str(), (int)ei->id, (int)itr->second);
             }
           }
 
@@ -422,11 +425,8 @@ namespace Transports
               m_next_stats += c_stats_period;
             }
 
-            std::vector<PlainEntity>::iterator itr = std::find(m_ents.begin(), m_ents.end(), m->getSourceEntity());
-            if (itr != m_ents.end())
-            {
-              trace("%s %0.4f %s", m->getName(), (new_ts - m_start_time), itr->getLabel().c_str());
-            }
+            trace("%s %0.4f %s", m->getName(), (new_ts - m_start_time),
+                  m_eid2name[m->getSourceEntity()].c_str());
           }
 
           // Clean up
