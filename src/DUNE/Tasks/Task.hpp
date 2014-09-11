@@ -115,6 +115,12 @@ namespace DUNE
       virtual
       ~Task(void)
       {
+        while (!m_entities.empty())
+        {
+          delete m_entities.back();
+          m_entities.pop_back();
+        }
+
         delete m_recipient;
       }
 
@@ -356,6 +362,8 @@ namespace DUNE
     protected:
       //! Context.
       Context& m_ctx;
+      //! Owned entity list
+      std::vector<PlainEntity*> m_entities;
 
       //! Retrieve the main entity label of the task.
       //! @return main entity label.
@@ -407,7 +415,6 @@ namespace DUNE
       //! number (entity id).
       //! @param[in] label entity name/label.
       //! @return entity id.
-      DUNE_DEPRECATED
       unsigned int
       reserveEntity(const std::string& label);
 

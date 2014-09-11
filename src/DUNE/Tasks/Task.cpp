@@ -97,7 +97,13 @@ namespace DUNE
     unsigned int
     Task::reserveEntity(const std::string& label)
     {
-      return m_ctx.entities.reserve(label, getName());
+      PlainEntity* e = new PlainEntity(this);
+      e->setLabel(label);
+      e->setId(m_ctx.entities.reserve(label, getName()));
+      bind<IMC::QueryEntityInfo, PlainEntity>(e);
+
+      m_entities.push_back(e);
+      return e->getId();
     }
 
     void
