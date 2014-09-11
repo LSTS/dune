@@ -229,6 +229,24 @@ namespace Plan
       bool
       maneuverExists(const std::string id) const;
 
+      //! Build the graph that describes the plan
+      //! This represents the first and crucial part of the plan parse
+      //! @param[in] supported_maneuvers list of supported maneuvers
+      void
+      buildGraph(const std::set<uint16_t>* supported_maneuvers);
+
+      //! Perform secondary parsing procedures
+      //! That involve action scheduling, statistics, etc
+      //! Presumes buildGraph() did not fail
+      //! @param[in] plan_startup true if the plan is starting up
+      //! @param[in] cinfo map of components info
+      //! @param[in] imu_enabled true if imu enabled, false otherwise
+      //! @param[in] state pointer to EstimatedState message
+      void
+      secondaryParse(bool plan_startup,
+                     const std::map<std::string, IMC::EntityInfo>& cinfo,
+                     bool imu_enabled, const IMC::EstimatedState* state);
+
       //! Sequence plan nodes if possible
       void
       sequenceNodes(void);
