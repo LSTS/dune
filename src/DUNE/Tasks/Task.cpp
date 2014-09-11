@@ -309,6 +309,7 @@ namespace DUNE
     Task::requestDeactivation(void)
     {
       spew("request deactivation");
+      m_entity.requestDeactivation();
 
       if (m_entity.isDeactivating())
       {
