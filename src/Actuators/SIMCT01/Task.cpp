@@ -71,7 +71,7 @@ namespace Actuators
       //! Serial port handle.
       SerialPort* m_uart;
       //! Motor entities
-      std::vector<PlainEntity> m_ents;
+      std::vector<PlainEntity*> m_ents;
       //! Feedback timer.
       Counter<double> m_feedback_timer;
       //! Watchdogs.
@@ -134,6 +134,12 @@ namespace Actuators
       ~Task(void)
       {
         onResourceRelease();
+
+        while (!m_ents.empty())
+        {
+          delete m_ents.back();
+          m_ents.pop_back();
+        }
       }
 
       void
@@ -141,9 +147,9 @@ namespace Actuators
       {
         for (unsigned i = 0; i < m_args.motor_enames.size(); ++i)
         {
-          PlainEntity e(this);
-          e.setLabel(m_args.motor_enames[i]);
-          reserveEntity(e);
+          PlainEntity* e = new PlainEntity(this);
+          e->setLabel(m_args.motor_enames[i]);
+          reserveEntity(*e);
           m_ents.push_back(e);
         }
       }
@@ -318,7 +324,7 @@ namespace Actuators
         m_wdogs[index].reset();
         IMC::Current amps;
         amps.value = (double)value / 10.0;
-        m_ents[index].dispatch(amps);
+        m_ents[index]->dispatch(amps);
         return true;
       }
 
@@ -339,7 +345,7 @@ namespace Actuators
         m_wdogs[index].reset();
         IMC::Rpm rpms;
         rpms.value = (int16_t)Math::round(value / 5.0);
-        m_ents[index].dispatch(rpms);
+        m_ents[index]->dispatch(rpms);
         return true;
       }
 
