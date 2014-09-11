@@ -81,9 +81,7 @@ namespace Sensors
       // Water velocity message.
       IMC::WaterVelocity m_wvel;
       // Bottom ranges.
-      IMC::Distance m_brange;
-      // Beam Entities.
-      std::vector<PlainEntity> m_bentity;
+      IMC::Distance m_brange[4];
       // Sample count.
       unsigned m_samples;
       // Task arguments.
@@ -92,7 +90,6 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_bentity(4, PlainEntity(this)),
         m_samples(0)
       {
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -142,10 +139,13 @@ namespace Sensors
           ds.theta = Math::Angles::radians(m_args.orientation[1]);
           ds.psi = Math::Angles::radians(m_args.orientation[2]);
 
-          m_brange.location.clear();
-          m_brange.location.push_back(ds);
-          m_brange.beam_config.clear();
-          m_brange.beam_config.push_back(bc);
+          for (unsigned i = 0; i < 5; i++)
+          {
+            m_brange[i].location.clear();
+            m_brange[i].location.push_back(ds);
+            m_brange[i].beam_config.clear();
+            m_brange[i].beam_config.push_back(bc);
+          }
         }
       }
 
@@ -175,11 +175,10 @@ namespace Sensors
       void
       onEntityReservation(void)
       {
-        for (unsigned i = 0; i < 4; ++i)
-        {
-          m_bentity[i].setLabel("DVL Beam" + i);
-          reserveEntity(m_bentity[i]);
-        }
+        m_brange[0].setSourceEntity(reserveEntity("DVL Beam0"));
+        m_brange[1].setSourceEntity(reserveEntity("DVL Beam1"));
+        m_brange[2].setSourceEntity(reserveEntity("DVL Beam2"));
+        m_brange[3].setSourceEntity(reserveEntity("DVL Beam3"));
       }
 
       void
@@ -335,14 +334,14 @@ namespace Sensors
               m_wvel.z = -data->z_vel_wtr;
               dispatch(m_wvel);
 
-              m_brange.value = data->bm1_rng_btm;
-              m_bentity[0].dispatch(m_brange);
-              m_brange.value = data->bm2_rng_btm;
-              m_bentity[1].dispatch(m_brange);
-              m_brange.value = data->bm3_rng_btm;
-              m_bentity[2].dispatch(m_brange);
-              m_brange.value = data->bm4_rng_btm;
-              m_bentity[3].dispatch(m_brange);
+              m_brange[0].value = data->bm1_rng_btm;
+              m_brange[1].value = data->bm2_rng_btm;
+              m_brange[2].value = data->bm3_rng_btm;
+              m_brange[3].value = data->bm4_rng_btm;
+              dispatch(m_brange[0]);
+              dispatch(m_brange[1]);
+              dispatch(m_brange[2]);
+              dispatch(m_brange[3]);
               ++m_samples;
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             }
