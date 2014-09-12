@@ -35,6 +35,7 @@
 
 // DUNE headers
 #include <DUNE/IMC.hpp>
+#include <DUNE/Time.hpp>
 
 // Local headers
 #include "Timeline.hpp"
@@ -186,6 +187,13 @@ namespace Plan
         m_ps->type = IMC::PlanStatistics::TP_POSTPLAN;
       }
 
+      //! Clear the message
+      void
+      clear(void)
+      {
+        m_ps->clear();
+      }
+
       //! Fill in with fuel info
       //! @param[in] fpred fuel prediction object
       void
@@ -196,6 +204,54 @@ namespace Plan
 
         addTuple(m_ps->fuel, DTR("Prediction Error"), fpred.getPredictionError(), 2);
       }
+
+      //! Fill in calibration time
+      //! @param[in] time calibration total time
+      void
+      fillCalib(float time)
+      {
+        addTuple(m_ps->durations, DTR("Calibration"), time);
+      }
+
+      //! Flag the plan as started
+      void
+      planStarted(void)
+      {
+        m_plan_start = Time::Clock::get();
+      }
+
+      //! Flag the plan as stopped
+      void
+      planStopped(void)
+      {
+        double plan_duration = Time::Clock::get() - m_plan_start;
+        addTuple(m_ps->durations, DTR("Total"), (float)plan_duration);
+      }
+
+      //! Flag a maneuver as starting
+      //! @param[in] id name of the maneuver that is starting
+      void
+      maneuverStarted(const std::string& id)
+      {
+        m_man_id = id;
+        m_man_start = Time::Clock::get();
+      }
+
+      //! Flag a maneuver as stopped
+      void
+      maneuverStopped(void)
+      {
+        double maneuver_duration = Time::Clock::get() - m_man_start;
+        addTuple(m_ps->durations, DTR("Maneuver ") + m_man_id, (float)maneuver_duration);
+      }
+
+    private:
+      //! Time of the start of the plan
+      double m_plan_start;
+      //! Time of the start of the maneuver
+      double m_man_start;
+      //! Maneuver being timed
+      std::string m_man_id;
     };
   }
 }
