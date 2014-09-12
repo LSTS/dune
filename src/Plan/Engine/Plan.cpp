@@ -27,7 +27,6 @@
 
 // Local headers.
 #include "Plan.hpp"
-#include "Statistics.hpp"
 
 namespace Plan
 {
@@ -77,6 +76,7 @@ namespace Plan
 
       m_profiles = new Plans::TimeProfile(m_speed_model);
       m_calib = new Calibration();
+      m_rt_stat = new RunTimeStatistics(&m_post_stat);
     }
 
     Plan::~Plan(void)
@@ -87,6 +87,7 @@ namespace Plan
       Memory::clear(m_speed_model);
       Memory::clear(m_power_model);
       Memory::clear(m_fpred);
+      Memory::clear(m_rt_stat);
     }
 
     void
@@ -106,6 +107,9 @@ namespace Plan
 
       m_cat.clear();
       m_properties = 0;
+
+      if (m_rt_stat != NULL)
+        m_rt_stat->clear();
     }
 
     void
@@ -129,6 +133,8 @@ namespace Plan
     void
     Plan::planStarted(void)
     {
+      m_rt_stat->planStarted();
+
       if (m_sched == NULL)
         return;
 
@@ -144,12 +150,11 @@ namespace Plan
         m_sched->planStopped(m_affected_ents);
 
       if (m_predict_fuel)
-      {
         if (m_fpred != NULL)
-        {
-          // do something
-        }
-      }
+          m_rt_stat->fill(*m_fpred);
+
+      m_rt_stat->planStopped();
+      m_task->dispatch(m_post_stat);
     }
 
     void
@@ -162,6 +167,8 @@ namespace Plan
     Plan::maneuverStarted(const std::string& id)
     {
       m_started_maneuver = true;
+
+      m_rt_stat->maneuverStarted(id);
 
       if (m_sched == NULL)
         return;
@@ -177,6 +184,8 @@ namespace Plan
 
       if (m_curr_node == NULL)
         return;
+
+      m_rt_stat->maneuverStopped();
 
       const std::string& str_last = m_profiles->lastValid();
 
@@ -255,6 +264,9 @@ namespace Plan
       else if (vs->op_mode != IMC::VehicleState::VS_CALIBRATION && m_calib->inProgress())
       {
         m_calib->stop();
+
+        // Fill statistics
+        m_rt_stat->fillCalib(m_calib->getElapsedTime());
       }
       else if (m_calib->inProgress())
       {
@@ -267,6 +279,9 @@ namespace Plan
         {
           // If we're past the minimum calibration time
           m_calib->stop();
+
+          // Fill statistics
+          m_rt_stat->fillCalib(m_calib->getElapsedTime());
         }
       }
     }
@@ -425,6 +440,10 @@ namespace Plan
                          IMC::PlanStatistics& ps, bool imu_enabled,
                          const IMC::EstimatedState* state)
     {
+      // Post statistics
+      m_post_stat.plan_id = m_spec->plan_id;
+
+      // Pre statistics
       ps.plan_id = m_spec->plan_id;
       PreStatistics pre_stat(&ps);
 
@@ -481,8 +500,6 @@ namespace Plan
         m_properties |= IMC::PlanStatistics::PRP_INFINITE;
 
       pre_stat.setProperties(m_properties);
-
-      m_task->dispatch(ps);
     }
 
     void
