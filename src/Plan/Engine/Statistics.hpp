@@ -182,7 +182,9 @@ namespace Plan
       //! Constructor
       //! @param[in] msg pointer to statistics message
       RunTimeStatistics(IMC::PlanStatistics* msg):
-        Statistics(msg)
+        Statistics(msg),
+        m_plan_start(-1.0),
+        m_man_start(-1.0)
       {
         m_ps->type = IMC::PlanStatistics::TP_POSTPLAN;
       }
@@ -224,6 +226,9 @@ namespace Plan
       void
       planStopped(void)
       {
+        if (m_plan_start < 0.0)
+          return;
+
         double plan_duration = Time::Clock::get() - m_plan_start;
         addTuple(m_ps->durations, DTR("Total"), (float)plan_duration);
       }
@@ -241,6 +246,9 @@ namespace Plan
       void
       maneuverStopped(void)
       {
+        if (m_man_start < 0.0)
+          return;
+
         double maneuver_duration = Time::Clock::get() - m_man_start;
         addTuple(m_ps->durations, DTR("Maneuver ") + m_man_id, (float)maneuver_duration);
       }
