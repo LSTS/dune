@@ -75,9 +75,11 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        m_leaks.clear();
+        size_t new_sz = m_args.leak_ents.size();
+        if (m_leaks.size() > 0 && m_leaks.size() != new_sz)
+          throw std::runtime_error("attempted to change the number of reserved entities");
 
-        for (unsigned i = 0; i < m_args.leak_ents.size(); ++i)
+        for (unsigned i = 0; i < new_sz; ++i)
         {
           m_leaks.push_back(StatefulEntity(this));
           m_leaks.back().setLabel(m_args.leak_ents[i]);
