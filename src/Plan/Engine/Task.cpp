@@ -715,6 +715,7 @@ namespace Plan
         catch (Plan::ParseError& pe)
         {
           onFailure(pe.what());
+          m_plan->clear();
           return false;
         }
 
