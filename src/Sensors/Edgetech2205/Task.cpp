@@ -268,6 +268,10 @@ namespace Sensors
         setConfig();
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+        IMC::LoggingControl lc;
+        lc.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
+        dispatch(lc);
       }
 
       void
@@ -343,7 +347,7 @@ namespace Sensors
         switch (msg->op)
         {
           case IMC::LoggingControl::COP_STARTED:
-            closeLog();
+          case IMC::LoggingControl::COP_CURRENT_NAME:
             openLog(m_ctx.dir_log / msg->name / "Data.jsf");
             break;
 
@@ -572,7 +576,8 @@ namespace Sensors
       void
       writeToLog(const Packet* pkt)
       {
-        m_log_file.write((const char*)pkt->getData(), pkt->getSize());
+        if (m_log_file.is_open())
+          m_log_file.write((const char*)pkt->getData(), pkt->getSize());
       }
 
       void
@@ -587,6 +592,7 @@ namespace Sensors
             debug("removing empty log '%s'", m_log_path.c_str());
             m_log_path.remove();
           }
+          m_log_path = Path();
         }
       }
 
