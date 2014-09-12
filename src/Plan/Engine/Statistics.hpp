@@ -69,6 +69,7 @@ namespace Plan
 
     protected:
       //! Add tuple with a floating point value
+      //! @param[in] str string in which the tuple will be added
       //! @param[in] name the name of the tuple
       //! @param[in] value the value of the tuple
       //! @param[in] precision number of decimal places when printing
@@ -82,6 +83,7 @@ namespace Plan
       }
 
       //! Add tuple with a string value
+      //! @param[in] str string in which the tuple will be added
       //! @param[in] name the name of the tuple
       //! @param[in] value the value of the tuple
       void
