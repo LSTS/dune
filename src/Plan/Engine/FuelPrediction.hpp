@@ -135,7 +135,7 @@ namespace Plan
       }
 
       //! Get the total estimated fuel consumption
-      //! @param[in] display result in percentage of battery
+      //! @param[in] relative output result in percentage of battery
       //! @return estimated fuel consumed in Wh
       float
       getTotal(bool relative = false) const
@@ -154,7 +154,7 @@ namespace Plan
       }
 
       //! Get the hotel estimated fuel consumption
-      //! @param[in] display result in percentage of battery
+      //! @param[in] relative output result in percentage of battery
       //! @return estimated fuel consumed in Wh
       inline float
       getHotel(bool relative = false) const
@@ -163,7 +163,7 @@ namespace Plan
       }
 
       //! Get the payload estimated fuel consumption
-      //! @param[in] display result in percentage of battery
+      //! @param[in] relative output result in percentage of battery
       //! @return estimated fuel consumed in Wh
       inline float
       getPayload(bool relative = false) const
@@ -172,7 +172,7 @@ namespace Plan
       }
 
       //! Get the motion estimated fuel consumption
-      //! @param[in] display result in percentage of battery
+      //! @param[in] relative output result in percentage of battery
       //! @return estimated fuel consumed in Wh
       inline float
       getMotion(bool relative = false) const
@@ -181,7 +181,7 @@ namespace Plan
       }
 
       //! Get the estimated fuel consumption by the IMU
-      //! @param[in] display result in percentage of battery
+      //! @param[in] relative output result in percentage of battery
       //! @return estimated fuel consumed in Wh
       inline float
       getIMU(bool relative = false) const
@@ -191,6 +191,8 @@ namespace Plan
 
     private:
       //! Get a certain parcel
+      //! @param[in] parcel which parcel to output
+      //! @param[in] relative output result in percentage of battery
       //! @return -1.0 if invalid
       inline float
       getParcel(unsigned parcel, bool relative = false) const
