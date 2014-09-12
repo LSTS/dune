@@ -53,7 +53,7 @@ namespace Simulators
       //! Task arguments
       Arguments m_args;
       //! Leak set
-      std::vector<Entity> m_leaks;
+      std::vector<StatefulEntity> m_leaks;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx)
@@ -79,7 +79,7 @@ namespace Simulators
 
         for (unsigned i = 0; i < m_args.leak_ents.size(); ++i)
         {
-          m_leaks.push_back(Entity(this));
+          m_leaks.push_back(StatefulEntity(this));
           m_leaks.back().setLabel(m_args.leak_ents[i]);
           m_leaks.back().setState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           spew("added entity %s", m_args.leak_ents[i].c_str());
@@ -89,14 +89,14 @@ namespace Simulators
       void
       onEntityReservation(void)
       {
-        for (std::vector<Entity>::iterator itr = m_leaks.begin(); itr != m_leaks.end(); ++itr)
+        for (std::vector<StatefulEntity>::iterator itr = m_leaks.begin(); itr != m_leaks.end(); ++itr)
           reserveEntity(*itr);
       }
 
       void
       onReportEntityState(void)
       {
-        for (std::vector<Entity>::iterator itr = m_leaks.begin(); itr != m_leaks.end(); ++itr)
+        for (std::vector<StatefulEntity>::iterator itr = m_leaks.begin(); itr != m_leaks.end(); ++itr)
           itr->reportState();
       }
 
@@ -127,7 +127,7 @@ namespace Simulators
 
         for (unsigned int i = 0; i < v.size(); ++i)
         {
-          std::vector<Entity>::iterator itr = std::find(m_leaks.begin(), m_leaks.end(), v[i]);
+          std::vector<StatefulEntity>::iterator itr = std::find(m_leaks.begin(), m_leaks.end(), v[i]);
           if (itr == m_leaks.end())
             continue;
 
@@ -144,7 +144,7 @@ namespace Simulators
       {
         IMC::EntityState::StateEnum state = ok ? IMC::EntityState::ESTA_NORMAL : IMC::EntityState::ESTA_FAILURE;
 
-        for (std::vector<Entity>::iterator itr = m_leaks.begin(); itr != m_leaks.end(); ++itr)
+        for (std::vector<StatefulEntity>::iterator itr = m_leaks.begin(); itr != m_leaks.end(); ++itr)
         {
           itr->setState(state, ok ? DTR(Status::getString(Status::CODE_ACTIVE)) : DTR("leak detected"));
           debug("%s | %s", itr->getLabel().c_str(), (ok ? "ok" : "leak"));
