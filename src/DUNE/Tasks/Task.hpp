@@ -51,7 +51,7 @@
 #include <DUNE/Tasks/Context.hpp>
 #include <DUNE/Tasks/BasicParameterParser.hpp>
 #include <DUNE/Tasks/ParameterTable.hpp>
-#include <DUNE/Tasks/Entity.hpp>
+#include <DUNE/Tasks/StatefulEntity.hpp>
 
 #if defined(DUNE_SHARED)
 #  define DUNE_TASK_EXPORT(class, mangled)                              \
@@ -430,7 +430,7 @@ namespace DUNE
       //! @param[in,out] label entity name/label.
       //! @return Entity object.
       void
-      reserveEntity(Entity& entity);
+      reserveEntity(StatefulEntity& entity);
 
       //! Test if task is stopping.
       //! @return true if task is stopping, false otherwise.
@@ -729,7 +729,7 @@ namespace DUNE
       //! Task parameters.
       ParameterTable m_params;
       //! Main Entity
-      Entity m_entity;
+      StatefulEntity m_entity;
       //! Debug level (as a string).
       std::string m_debug_level_string;
       //! Debug level.

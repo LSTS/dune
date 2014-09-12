@@ -118,11 +118,11 @@ namespace DUNE
     }
 
     void
-    Task::reserveEntity(Entity& entity)
+    Task::reserveEntity(StatefulEntity& entity)
     {
       reserveEntity(static_cast<PlainEntity&>(entity));
-      bind<IMC::QueryEntityState, Entity>(&entity);
-      bind<IMC::QueryEntityActivationState, Entity>(&entity);
+      bind<IMC::QueryEntityState, StatefulEntity>(&entity);
+      bind<IMC::QueryEntityActivationState, StatefulEntity>(&entity);
     }
 
     void

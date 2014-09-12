@@ -29,7 +29,7 @@
 #include <stdexcept>
 
 // DUNE headers.
-#include <DUNE/Tasks/Entity.hpp>
+#include <DUNE/Tasks/StatefulEntity.hpp>
 #include <DUNE/Tasks/Task.hpp>
 
 namespace DUNE
@@ -37,7 +37,7 @@ namespace DUNE
   namespace Tasks
   {
     void
-    Entity::setState(IMC::EntityState::StateEnum state,
+    StatefulEntity::setState(IMC::EntityState::StateEnum state,
                            Status::Code code)
     {
       bool new_state = (state != m_entity_state.state);
@@ -52,7 +52,7 @@ namespace DUNE
     }
 
     void
-    Entity::setState(IMC::EntityState::StateEnum state,
+    StatefulEntity::setState(IMC::EntityState::StateEnum state,
                            const std::string& message)
     {
       bool new_state = (state != m_entity_state.state);
@@ -66,19 +66,19 @@ namespace DUNE
     }
 
     void
-    Entity::reportState(void)
+    StatefulEntity::reportState(void)
     {
       dispatch(m_entity_state);
     }
 
     void
-    Entity::reportActivationState(void)
+    StatefulEntity::reportActivationState(void)
     {
       dispatch(m_act_state);
     }
 
     void
-    Entity::requestActivation(void)
+    StatefulEntity::requestActivation(void)
     {
       if (m_act_state.state != IMC::EntityActivationState::EAS_INACTIVE)
       {
@@ -108,7 +108,7 @@ namespace DUNE
     }
 
     void
-    Entity::requestDeactivation(void)
+    StatefulEntity::requestDeactivation(void)
     {
       if (m_act_state.state != IMC::EntityActivationState::EAS_ACTIVE)
       {
@@ -138,7 +138,7 @@ namespace DUNE
     }
 
     void
-    Entity::failActivation(const std::string& reason)
+    StatefulEntity::failActivation(const std::string& reason)
     {
       m_act_state.state = IMC::EntityActivationState::EAS_ACT_FAIL;
       m_act_state.error = reason;
@@ -150,7 +150,7 @@ namespace DUNE
     }
 
     void
-    Entity::succeedActivation(void)
+    StatefulEntity::succeedActivation(void)
     {
       m_act_state.state = IMC::EntityActivationState::EAS_ACT_DONE;
       dispatch(m_act_state);
@@ -163,7 +163,7 @@ namespace DUNE
     }
 
     void
-    Entity::succeedDeactivation(void)
+    StatefulEntity::succeedDeactivation(void)
     {
       m_act_state.state = IMC::EntityActivationState::EAS_DEACT_DONE;
       dispatch(m_act_state);
@@ -176,7 +176,7 @@ namespace DUNE
     }
 
     void
-    Entity::failDeactivation(const std::string& reason)
+    StatefulEntity::failDeactivation(const std::string& reason)
     {
       m_act_state.state = IMC::EntityActivationState::EAS_DEACT_FAIL;
       m_act_state.error = reason;
@@ -188,14 +188,14 @@ namespace DUNE
     }
 
     void
-    Entity::consume(const IMC::QueryEntityState* msg)
+    StatefulEntity::consume(const IMC::QueryEntityState* msg)
     {
       (void)msg;
       reportState();
     }
 
     void
-    Entity::consume(const IMC::QueryEntityActivationState* msg)
+    StatefulEntity::consume(const IMC::QueryEntityActivationState* msg)
     {
       if (msg->getDestinationEntity() != getId())
         return;

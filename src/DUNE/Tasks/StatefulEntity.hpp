@@ -25,8 +25,8 @@
 // Author: Renato Caldas                                                    *
 //***************************************************************************
 
-#ifndef DUNE_TASKS_ENTITY_HPP_INCLUDED_
-#define DUNE_TASKS_ENTITY_HPP_INCLUDED_
+#ifndef DUNE_TASKS_STATEFUL_ENTITY_HPP_INCLUDED_
+#define DUNE_TASKS_STATEFUL_ENTITY_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <stdexcept>
@@ -40,10 +40,10 @@ namespace DUNE
   {
     class Task;
 
-    class Entity : public PlainEntity
+    class StatefulEntity : public PlainEntity
     {
     public:
-      Entity(Task* task):
+      StatefulEntity(Task* task):
         PlainEntity(task),
         m_entity_state_code(-1),
         m_next_act_state(NAS_SAME)
