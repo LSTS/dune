@@ -664,12 +664,18 @@ namespace Plan
           }
         }
 
-        if (!parsePlan(plan_startup))
+        IMC::PlanStatistics ps;
+
+        if (!parsePlan(plan_startup, ps))
         {
           changeMode(IMC::PlanControlState::PCS_READY,
                      DTR("plan validation failed: ") + m_reply.info);
           return false;
         }
+
+        // reply with statistics
+        m_reply.arg.set(ps);
+        m_reply.plan_id = m_spec.plan_id;
 
         m_pcs.plan_id = m_spec.plan_id;
 
@@ -734,14 +740,15 @@ namespace Plan
 
       //! Parse a given plan
       //! @param[in] plan_startup true if the plan is starting up
+      //! @param[out] ps reference to PlanStatistics message
       //! @return true if was able to parse the plan
       inline bool
-      parsePlan(bool plan_startup)
+      parsePlan(bool plan_startup, IMC::PlanStatistics& ps)
       {
         try
         {
-          m_plan->parse(&m_supported_maneuvers, plan_startup,
-                        m_cinfo, m_imu_enabled, &m_state);
+          m_plan->parse(&m_supported_maneuvers, plan_startup, m_cinfo,
+                        ps, m_imu_enabled, &m_state);
         }
         catch (Plan::ParseError& pe)
         {
