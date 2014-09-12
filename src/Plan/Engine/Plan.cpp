@@ -111,14 +111,15 @@ namespace Plan
     void
     Plan::parse(const std::set<uint16_t>* supported_maneuvers, bool plan_startup,
                 const std::map<std::string, IMC::EntityInfo>& cinfo,
-                bool imu_enabled, const IMC::EstimatedState* state)
+                IMC::PlanStatistics& ps, bool imu_enabled,
+                const IMC::EstimatedState* state)
     {
       clear();
 
       // Build Graph of maneuvers and transitions, if this fails, parse fails
       buildGraph(supported_maneuvers);
 
-      secondaryParse(plan_startup, cinfo, imu_enabled, state);
+      secondaryParse(plan_startup, cinfo, ps, imu_enabled, state);
 
       m_last_id = m_spec->start_man_id;
 
@@ -421,9 +422,10 @@ namespace Plan
     void
     Plan::secondaryParse(bool plan_startup,
                          const std::map<std::string, IMC::EntityInfo>& cinfo,
-                         bool imu_enabled, const IMC::EstimatedState* state)
+                         IMC::PlanStatistics& ps, bool imu_enabled,
+                         const IMC::EstimatedState* state)
     {
-      IMC::PlanStatistics ps;
+      ps.plan_id = m_spec->plan_id;
       PreStatistics pre_stat(&ps);
 
       if (m_compute_progress && plan_startup)
