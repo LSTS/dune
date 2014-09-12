@@ -594,6 +594,9 @@ namespace Plan
           case IMC::PlanControl::PC_STOP:
             stopPlan();
             break;
+          case IMC::PlanControl::PC_LOAD:
+            loadPlan(pc->plan_id, pc->arg.isNull() ? 0 : pc->arg.get(), false);
+            break;
           case IMC::PlanControl::PC_GET:
             getPlan();
             break;
@@ -641,10 +644,7 @@ namespace Plan
 
         m_pcs.plan_id = m_spec.plan_id;
 
-        if (plan_startup)
-          onSuccess(DTR("plan loaded"), false);
-        else
-          changeMode(IMC::PlanControlState::PCS_READY, DTR("plan loaded"));
+        onSuccess(DTR("plan loaded"), false);
 
         return true;
       }
