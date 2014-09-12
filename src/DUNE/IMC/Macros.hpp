@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: bc9d825ba1981fbb15950278b9fa89ba                            *
+// IMC XML MD5: 5b8a4390bc5e18a3cda0e31fc948ef33                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -404,6 +404,8 @@
 #define DUNE_IMC_PLANGENERATION 562
 //! LeaderState identification number.
 #define DUNE_IMC_LEADERSTATE 563
+//! PlanStatistics identification number.
+#define DUNE_IMC_PLANSTATISTICS 564
 //! ReportedState identification number.
 #define DUNE_IMC_REPORTEDSTATE 600
 //! RemoteSensorInfo identification number.

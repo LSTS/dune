@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: bc9d825ba1981fbb15950278b9fa89ba                            *
+// IMC XML MD5: 5b8a4390bc5e18a3cda0e31fc948ef33                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -15732,6 +15732,98 @@ namespace DUNE
       IMC::toJSON(os__, "svx", svx, nindent__);
       IMC::toJSON(os__, "svy", svy, nindent__);
       IMC::toJSON(os__, "svz", svz, nindent__);
+    }
+
+    PlanStatistics::PlanStatistics(void)
+    {
+      m_header.mgid = 564;
+      clear();
+    }
+
+    void
+    PlanStatistics::clear(void)
+    {
+      plan_id.clear();
+      type = 0;
+      properties = 0;
+      durations.clear();
+      distances.clear();
+      actions.clear();
+      fuel.clear();
+    }
+
+    bool
+    PlanStatistics::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::PlanStatistics& other__ = static_cast<const PlanStatistics&>(msg__);
+      if (plan_id != other__.plan_id) return false;
+      if (type != other__.type) return false;
+      if (properties != other__.properties) return false;
+      if (durations != other__.durations) return false;
+      if (distances != other__.distances) return false;
+      if (actions != other__.actions) return false;
+      if (fuel != other__.fuel) return false;
+      return true;
+    }
+
+    int
+    PlanStatistics::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    PlanStatistics::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(plan_id, ptr__);
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(properties, ptr__);
+      ptr__ += IMC::serialize(durations, ptr__);
+      ptr__ += IMC::serialize(distances, ptr__);
+      ptr__ += IMC::serialize(actions, ptr__);
+      ptr__ += IMC::serialize(fuel, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    PlanStatistics::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(plan_id, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(properties, bfr__, size__);
+      bfr__ += IMC::deserialize(durations, bfr__, size__);
+      bfr__ += IMC::deserialize(distances, bfr__, size__);
+      bfr__ += IMC::deserialize(actions, bfr__, size__);
+      bfr__ += IMC::deserialize(fuel, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    PlanStatistics::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(plan_id, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(properties, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(durations, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(distances, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(actions, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(fuel, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    PlanStatistics::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "plan_id", plan_id, nindent__);
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "properties", properties, nindent__);
+      IMC::toJSON(os__, "durations", durations, nindent__);
+      IMC::toJSON(os__, "distances", distances, nindent__);
+      IMC::toJSON(os__, "actions", actions, nindent__);
+      IMC::toJSON(os__, "fuel", fuel, nindent__);
     }
 
     ReportedState::ReportedState(void)

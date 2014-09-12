@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: bc9d825ba1981fbb15950278b9fa89ba                            *
+// IMC XML MD5: 5b8a4390bc5e18a3cda0e31fc948ef33                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -215,6 +215,7 @@ MESSAGE(560, PlanControlState)
 MESSAGE(561, PlanVariable)
 MESSAGE(562, PlanGeneration)
 MESSAGE(563, LeaderState)
+MESSAGE(564, PlanStatistics)
 MESSAGE(600, ReportedState)
 MESSAGE(601, RemoteSensorInfo)
 MESSAGE(602, Map)
