@@ -120,7 +120,7 @@ namespace Plan
       //! Check if prediction error can be computed
       //! @return true if prediction error is valid, false otherwise
       inline bool
-      isFuelValid(void)
+      isFuelValid(void) const
       {
         return (m_starting_fuel >= 0.0);
       }
@@ -129,7 +129,7 @@ namespace Plan
       //! Check if the fuel values are valid first!
       //! @return error in prediction in percentage
       inline float
-      getPredictionError(void)
+      getPredictionError(void) const
       {
         return getRelativeTotal() - (m_starting_fuel - m_current_fuel);
       }
