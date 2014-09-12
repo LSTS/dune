@@ -709,7 +709,7 @@ namespace Plan
       {
         try
         {
-          m_plan->parse(&m_supported_maneuvers, plan_startup, m_cinfo,
+          m_plan->parse(&m_supported_maneuvers, m_cinfo,
                         ps, m_imu_enabled, &m_state);
         }
         catch (Plan::ParseError& pe)
@@ -717,6 +717,10 @@ namespace Plan
           onFailure(pe.what());
           return false;
         }
+
+        // if a plan is not gonna start after this, clear plan object
+        if (!plan_startup)
+          m_plan->clear();
 
         return true;
       }
