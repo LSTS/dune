@@ -103,6 +103,10 @@
 
 //! Defined when using uClibc.
 #cmakedefine DUNE_CLIB_UC
+//! LLVM libc++
+#cmakedefine DUNE_CLIB_LIBCXX
+//! Android/Bionic.
+#cmakedefine DUNE_CLIB_BIONIC
 //! Defined when using the GNU C Library.
 #cmakedefine DUNE_CLIB_GNU
 //! Defined when using Newlib.
@@ -119,8 +123,6 @@
 #cmakedefine DUNE_CLIB_DINKUM
 //! Defined when using the BSD Library.
 #cmakedefine DUNE_CLIB_BSD
-//! Defined when using the LLVM libc++ Library.
-#cmakedefine DUNE_CLIB_LIBCPP
 //! Defined when using an unknown C Library.
 #cmakedefine DUNE_CLIB_UNKNOWN
 
