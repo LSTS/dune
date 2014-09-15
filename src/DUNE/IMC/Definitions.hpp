@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: b756b37277f77273f0da757e06bff4be                            *
+// IMC XML MD5: 6e3390642d3c9b705db29653656178d0                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -44,7 +44,6 @@
 #include <DUNE/IMC/MessageList.hpp>
 #include <DUNE/IMC/Enumerations.hpp>
 #include <DUNE/IMC/Bitfields.hpp>
-#include <DUNE/IMC/SuperTypes.hpp>
 #include <DUNE/IMC/JSON.hpp>
 
 namespace DUNE
@@ -128,13 +127,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 2 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(description);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(description);
       }
 
       void
@@ -170,6 +169,36 @@ namespace DUNE
       {
         return new QueryEntityState(*this);
       }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Entity Information.
@@ -231,13 +260,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 5 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(label) + IMC::getSerializationSize(component);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(label) + IMC::getSerializationSize(component);
       }
 
       uint16_t
@@ -301,7 +330,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       uint16_t
@@ -376,13 +411,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(list);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(list);
       }
 
       void
@@ -440,7 +475,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -506,13 +547,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 2 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(consumer);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(consumer);
       }
 
       void
@@ -548,6 +589,36 @@ namespace DUNE
       {
         return new RestartSystem(*this);
       }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Device Calibration Control.
@@ -614,7 +685,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -693,13 +770,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 3;
+        return 3 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(step);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(step);
       }
 
       void
@@ -780,13 +857,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(error);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(error);
       }
 
       void
@@ -822,6 +899,36 @@ namespace DUNE
       {
         return new QueryEntityActivationState(*this);
       }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Vehicle Operational Limits.
@@ -920,7 +1027,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 69;
+        return 69 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -978,13 +1091,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return msgs.getSerializationSize();
+        return Message::getVariableSerializationSize() + msgs.getSerializationSize();
       }
 
       void
@@ -1092,7 +1205,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 80;
+        return 80 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -1161,13 +1280,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(entities);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(entities);
       }
 
       void
@@ -1240,13 +1359,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 3;
+        return 3 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(data);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(data);
       }
 
       void
@@ -1319,7 +1438,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 9;
+        return 9 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -1379,7 +1504,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 5 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -1462,13 +1593,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(snapshot) + message.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(snapshot) + message.getSerializationSize();
       }
 
       void
@@ -1561,13 +1692,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(name);
       }
 
       void
@@ -1646,13 +1777,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 9;
+        return 9 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(context) + IMC::getSerializationSize(text);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(context) + IMC::getSerializationSize(text);
       }
 
       void
@@ -1727,13 +1858,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 9;
+        return 9 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return msg.getSerializationSize();
+        return Message::getVariableSerializationSize() + msg.getSerializationSize();
       }
 
       void
@@ -1822,13 +1953,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(file);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(file);
       }
 
       void
@@ -1907,7 +2038,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 10;
+        return 10 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -1943,6 +2080,36 @@ namespace DUNE
       {
         return new Heartbeat(*this);
       }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Announce.
@@ -2008,13 +2175,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 23;
+        return 23 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(sys_name) + IMC::getSerializationSize(services);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(sys_name) + IMC::getSerializationSize(services);
       }
 
       void
@@ -2083,13 +2250,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(service);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(service);
       }
 
       void
@@ -2147,7 +2314,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -2211,7 +2384,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -2275,7 +2454,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -2343,13 +2528,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 2 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(number) + IMC::getSerializationSize(contents);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(number) + IMC::getSerializationSize(contents);
       }
 
       void
@@ -2413,13 +2598,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 6;
+        return 6 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(destination) + IMC::getSerializationSize(data);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(destination) + IMC::getSerializationSize(data);
       }
 
       void
@@ -2479,13 +2664,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(source) + IMC::getSerializationSize(data);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(source) + IMC::getSerializationSize(data);
       }
 
       void
@@ -2566,13 +2751,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 5 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(error);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(error);
       }
 
       void
@@ -2632,13 +2817,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(origin) + IMC::getSerializationSize(text);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(origin) + IMC::getSerializationSize(text);
       }
 
       void
@@ -2704,13 +2889,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 24;
+        return 24 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(origin) + IMC::getSerializationSize(data);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(origin) + IMC::getSerializationSize(data);
       }
 
       void
@@ -2774,13 +2959,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(destination) + IMC::getSerializationSize(data);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(destination) + IMC::getSerializationSize(data);
       }
 
       void
@@ -2857,13 +3042,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 3;
+        return 3 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(text);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(text);
       }
 
       void
@@ -2923,13 +3108,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(group_name);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(group_name);
       }
 
       void
@@ -3008,13 +3193,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(groupname) + IMC::getSerializationSize(grouplist);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(groupname) + IMC::getSerializationSize(grouplist);
       }
 
       void
@@ -3074,7 +3259,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 5 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       uint16_t
@@ -3150,13 +3341,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 23;
+        return 23 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(beacon);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(beacon);
       }
 
       void
@@ -3227,13 +3418,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return beacons.getSerializationSize();
+        return Message::getVariableSerializationSize() + beacons.getSerializationSize();
       }
 
       void
@@ -3307,13 +3498,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return message.getSerializationSize();
+        return Message::getVariableSerializationSize() + message.getSerializationSize();
       }
 
       void
@@ -3432,13 +3623,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 5 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(system) + msg.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(system) + msg.getSerializationSize();
       }
 
       void
@@ -3490,6 +3681,36 @@ namespace DUNE
       {
         return new AcousticSystemsQuery(*this);
       }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Acoustic Systems.
@@ -3543,13 +3764,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(list);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(list);
       }
 
       void
@@ -3607,7 +3828,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 2 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -3671,7 +3898,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -3735,7 +3968,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -3867,7 +4106,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 56;
+        return 56 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -3933,7 +4178,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 40;
+        return 40 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -3999,7 +4250,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 36;
+        return 36 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -4063,7 +4320,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 32;
+        return 32 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -4127,7 +4390,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 32;
+        return 32 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -4191,7 +4460,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 32;
+        return 32 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -4266,7 +4541,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 25;
+        return 25 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -4341,7 +4622,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 25;
+        return 25 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -4405,7 +4692,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 32;
+        return 32 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -4473,7 +4766,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 24;
+        return 24 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -4533,7 +4832,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 8;
+        return 8 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -4606,13 +4911,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 5 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return location.getSerializationSize() + beam_config.getSerializationSize();
+        return Message::getVariableSerializationSize() + location.getSerializationSize() + beam_config.getSerializationSize();
       }
 
       fp64_t
@@ -4692,7 +4997,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -4756,7 +5067,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 8;
+        return 8 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -4820,7 +5137,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -4884,7 +5207,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -4948,7 +5277,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -5012,7 +5347,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -5076,7 +5417,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -5140,7 +5487,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -5208,7 +5561,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 12;
+        return 12 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -5266,7 +5625,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -5330,13 +5695,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(value);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(value);
       }
 
       void
@@ -5394,13 +5759,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(value);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(value);
       }
 
       void
@@ -5483,13 +5848,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 14;
+        return 14 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return beam_config.getSerializationSize() + IMC::getSerializationSize(data);
+        return Message::getVariableSerializationSize() + beam_config.getSerializationSize() + IMC::getSerializationSize(data);
       }
 
       void
@@ -5541,6 +5906,36 @@ namespace DUNE
       {
         return new Pulse(*this);
       }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Pulse Detection Control.
@@ -5603,7 +5998,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -5665,13 +6066,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 8;
+        return 8 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(opmodes);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(opmodes);
       }
 
       fp64_t
@@ -5763,7 +6164,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 68;
+        return 68 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -5823,7 +6230,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 5 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       uint16_t
@@ -5902,7 +6315,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -5977,7 +6396,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 3;
+        return 3 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       uint16_t
@@ -6043,7 +6468,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 5 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       uint16_t
@@ -6115,7 +6546,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 5 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       uint16_t
@@ -6187,7 +6624,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 5 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       uint16_t
@@ -6262,13 +6705,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(actions);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(actions);
       }
 
       void
@@ -6326,13 +6769,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(actions);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(actions);
       }
 
       void
@@ -6392,7 +6835,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 2 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -6473,13 +6922,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(text);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(text);
       }
 
       void
@@ -6560,7 +7009,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 13;
+        return 13 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -6641,13 +7096,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 9;
+        return 9 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(name);
       }
 
       void
@@ -6683,6 +7138,36 @@ namespace DUNE
       {
         return new QueryPowerChannelState(*this);
       }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Power Channel State.
@@ -6747,13 +7232,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(name);
       }
 
       void
@@ -6813,13 +7298,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(name);
       }
 
       fp64_t
@@ -6883,13 +7368,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(name);
       }
 
       void
@@ -6949,13 +7434,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(name);
       }
 
       fp64_t
@@ -7023,7 +7508,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 9;
+        return 9 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       uint16_t
@@ -7091,7 +7582,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 9;
+        return 9 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       uint16_t
@@ -7193,7 +7690,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 88;
+        return 88 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -7255,7 +7758,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 24;
+        return 24 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -7313,7 +7822,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 8;
+        return 8 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -7377,7 +7892,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 8;
+        return 8 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -7467,7 +7988,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 56;
+        return 56 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -7541,7 +8068,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 36;
+        return 36 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -7616,7 +8149,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 5 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -7693,7 +8232,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 6;
+        return 6 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       uint16_t
@@ -7785,7 +8330,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 10;
+        return 10 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -7827,6 +8378,36 @@ namespace DUNE
       {
         return new NavigationReset(*this);
       }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! LBL Beacon Position Estimate.
@@ -7890,13 +8471,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 20;
+        return 20 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return beacon.getSerializationSize();
+        return Message::getVariableSerializationSize() + beacon.getSerializationSize();
       }
 
       void
@@ -7981,7 +8562,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -8043,7 +8630,56 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 24;
+        return 24 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Control Command.
+    class ControlCommand: public Message
+    {
+    public:
+      ControlCommand(void);
+
+      const char*
+      getName(void) const
+      {
+        return "ControlCommand";
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -8101,7 +8737,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 8;
+        return 8 + ControlCommand::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return ControlCommand::getVariableSerializationSize();
       }
 
       fp64_t
@@ -8167,7 +8809,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 5 + ControlCommand::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return ControlCommand::getVariableSerializationSize();
       }
 
       fp64_t
@@ -8233,7 +8881,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 9;
+        return 9 + ControlCommand::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return ControlCommand::getVariableSerializationSize();
       }
 
       fp64_t
@@ -8297,7 +8951,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 8;
+        return 8 + ControlCommand::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return ControlCommand::getVariableSerializationSize();
       }
 
       fp64_t
@@ -8361,7 +9021,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 8;
+        return 8 + ControlCommand::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return ControlCommand::getVariableSerializationSize();
       }
 
       fp64_t
@@ -8425,7 +9091,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 8;
+        return 8 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -8534,7 +9206,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 56;
+        return 56 + ControlCommand::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return ControlCommand::getVariableSerializationSize();
       }
 
       void
@@ -8621,7 +9299,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 49;
+        return 49 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -8679,7 +9363,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 8;
+        return 8 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -8772,7 +9462,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 49;
+        return 49 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -8881,7 +9577,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 81;
+        return 81 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -8943,7 +9645,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 24;
+        return 24 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -9007,7 +9715,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 16;
+        return 16 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -9074,7 +9788,63 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Maneuver.
+    class Maneuver: public Message
+    {
+    public:
+      //! Plan Reference.
+      uint32_t plan_ref;
+      //! Maneuver ID.
+      std::string id;
+      //! Memento.
+      std::string memento;
+
+      Maneuver(void);
+
+      const char*
+      getName(void) const
+      {
+        return "Maneuver";
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(id) + IMC::getSerializationSize(memento);
       }
 
       void
@@ -9750,7 +10520,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 12;
+        return 12 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -9964,6 +10740,36 @@ namespace DUNE
       {
         return new TeleoperationDone(*this);
       }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Station Keeping.
@@ -10196,7 +11002,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 16;
+        return 16 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -10424,7 +11236,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 14;
+        return 14 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -10558,6 +11376,36 @@ namespace DUNE
       {
         return new StopManeuver(*this);
       }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Register Maneuver.
@@ -10611,7 +11459,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 2 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -10686,13 +11540,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 3;
+        return 3 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(info);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(info);
       }
 
       void
@@ -10764,7 +11618,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 22;
+        return 22 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -10902,7 +11762,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 16;
+        return 16 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -11172,13 +12038,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(formation_name) + participants.getSerializationSize() + IMC::getSerializationSize(custom);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(formation_name) + participants.getSerializationSize() + IMC::getSerializationSize(custom);
       }
 
       void
@@ -11439,13 +12305,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 21;
+        return 21 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return speed.getSerializationSize() + z.getSerializationSize();
+        return Message::getVariableSerializationSize() + speed.getSerializationSize() + z.getSerializationSize();
       }
 
       void
@@ -11555,13 +12421,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 5 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return reference.getSerializationSize();
+        return Message::getVariableSerializationSize() + reference.getSerializationSize();
       }
 
       void
@@ -11677,13 +12543,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 84;
+        return 84 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(s_id);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(s_id);
       }
 
       void
@@ -11777,13 +12643,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 72;
+        return 72 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return rel_state.getSerializationSize();
+        return Message::getVariableSerializationSize() + rel_state.getSerializationSize();
       }
 
       void
@@ -11980,13 +12846,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 27;
+        return 27 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(error_ents) + IMC::getSerializationSize(last_error);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(error_ents) + IMC::getSerializationSize(last_error);
       }
 
       void
@@ -12080,13 +12946,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 6;
+        return 6 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return maneuver.getSerializationSize() + IMC::getSerializationSize(info);
+        return Message::getVariableSerializationSize() + maneuver.getSerializationSize() + IMC::getSerializationSize(info);
       }
 
       void
@@ -12177,13 +13043,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(entities);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(entities);
       }
 
       void
@@ -12255,13 +13121,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 11;
+        return 11 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(mnames) + IMC::getSerializationSize(enames) + IMC::getSerializationSize(cnames) + IMC::getSerializationSize(last_error);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(mnames) + IMC::getSerializationSize(enames) + IMC::getSerializationSize(cnames) + IMC::getSerializationSize(last_error);
       }
 
       void
@@ -12341,7 +13207,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 53;
+        return 53 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -12377,6 +13249,36 @@ namespace DUNE
       {
         return new GetOperationalLimits(*this);
       }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Calibration.
@@ -12430,7 +13332,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 2 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -12501,7 +13409,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 9;
+        return 9 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -12574,7 +13488,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -12647,7 +13567,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 5 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       fp64_t
@@ -12750,7 +13676,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 15;
+        return 15 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -12821,13 +13753,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(mode);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(mode);
       }
 
       void
@@ -12863,6 +13795,36 @@ namespace DUNE
       {
         return new Abort(*this);
       }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Plan Variable.
@@ -12946,13 +13908,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 2 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name) + IMC::getSerializationSize(value);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(name) + IMC::getSerializationSize(value);
       }
 
       void
@@ -13016,13 +13978,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(maneuver_id) + data.getSerializationSize() + start_actions.getSerializationSize() + end_actions.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(maneuver_id) + data.getSerializationSize() + start_actions.getSerializationSize() + end_actions.getSerializationSize();
       }
 
       void
@@ -13102,13 +14064,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(source_man) + IMC::getSerializationSize(dest_man) + IMC::getSerializationSize(conditions) + actions.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(source_man) + IMC::getSerializationSize(dest_man) + IMC::getSerializationSize(conditions) + actions.getSerializationSize();
       }
 
       void
@@ -13198,13 +14160,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(description) + IMC::getSerializationSize(vnamespace) + variables.getSerializationSize() + IMC::getSerializationSize(start_man_id) + maneuvers.getSerializationSize() + transitions.getSerializationSize() + start_actions.getSerializationSize() + end_actions.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(description) + IMC::getSerializationSize(vnamespace) + variables.getSerializationSize() + IMC::getSerializationSize(start_man_id) + maneuvers.getSerializationSize() + transitions.getSerializationSize() + start_actions.getSerializationSize() + end_actions.getSerializationSize();
       }
 
       void
@@ -13297,13 +14259,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return plan.getSerializationSize();
+        return Message::getVariableSerializationSize() + plan.getSerializationSize();
       }
 
       void
@@ -13398,13 +14360,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 2 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(plan_id);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(plan_id);
       }
 
       void
@@ -13506,13 +14468,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(plan_id) + arg.getSerializationSize() + IMC::getSerializationSize(info);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(plan_id) + arg.getSerializationSize() + IMC::getSerializationSize(info);
       }
 
       void
@@ -13596,13 +14558,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 12;
+        return 12 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(change_sname) + IMC::getSerializationSize(md5);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(change_sname) + IMC::getSerializationSize(md5);
       }
 
       void
@@ -13672,13 +14634,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 16;
+        return 16 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(change_sname) + IMC::getSerializationSize(md5) + plans_info.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(change_sname) + IMC::getSerializationSize(md5) + plans_info.getSerializationSize();
       }
 
       void
@@ -13799,13 +14761,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 6;
+        return 6 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(plan_id) + arg.getSerializationSize() + IMC::getSerializationSize(info);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(plan_id) + arg.getSerializationSize() + IMC::getSerializationSize(info);
       }
 
       void
@@ -13917,13 +14879,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 16;
+        return 16 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(man_id);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(man_id);
       }
 
       void
@@ -14007,13 +14969,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 2 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(params);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(params);
       }
 
       void
@@ -14120,13 +15082,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 81;
+        return 81 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(group_name);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(group_name);
       }
 
       void
@@ -14215,13 +15177,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 57;
+        return 57 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(sid);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(sid);
       }
 
       void
@@ -14291,13 +15253,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 24;
+        return 24 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(id) + IMC::getSerializationSize(sensor_class) + IMC::getSerializationSize(data);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(id) + IMC::getSerializationSize(sensor_class) + IMC::getSerializationSize(data);
       }
 
       void
@@ -14359,7 +15321,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 20;
+        return 20 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -14446,13 +15414,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(id) + feature.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(id) + feature.getSerializationSize();
       }
 
       void
@@ -14528,13 +15496,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(id) + features.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(id) + features.getSerializationSize();
       }
 
       void
@@ -14635,13 +15603,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(id) + arg.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(id) + arg.getSerializationSize();
       }
 
       void
@@ -14717,13 +15685,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(localname) + links.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(localname) + links.getSerializationSize();
       }
 
       void
@@ -14801,13 +15769,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(timeline) + IMC::getSerializationSize(predicate) + IMC::getSerializationSize(attributes);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(timeline) + IMC::getSerializationSize(predicate) + IMC::getSerializationSize(attributes);
       }
 
       void
@@ -14886,13 +15854,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(goal_id) + IMC::getSerializationSize(goal_xml);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(goal_id) + IMC::getSerializationSize(goal_xml);
       }
 
       void
@@ -14971,13 +15939,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name) + IMC::getSerializationSize(min) + IMC::getSerializationSize(max);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(name) + IMC::getSerializationSize(min) + IMC::getSerializationSize(max);
       }
 
       void
@@ -15039,13 +16007,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(timeline) + IMC::getSerializationSize(predicate) + attributes.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(timeline) + IMC::getSerializationSize(predicate) + attributes.getSerializationSize();
       }
 
       void
@@ -15138,13 +16106,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(goal_id) + token.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(goal_id) + token.getSerializationSize();
       }
 
       void
@@ -15220,13 +16188,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(reactor) + tokens.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(reactor) + tokens.getSerializationSize();
       }
 
       void
@@ -15302,13 +16270,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(topic) + IMC::getSerializationSize(data);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(topic) + IMC::getSerializationSize(data);
       }
 
       void
@@ -15368,13 +16336,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(data);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(data);
       }
 
       void
@@ -15438,7 +16406,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -15504,7 +16478,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 17;
+        return 17 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -15574,13 +16554,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 29;
+        return 29 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(label);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(label);
       }
 
       void
@@ -15640,13 +16620,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name) + IMC::getSerializationSize(value);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(name) + IMC::getSerializationSize(value);
       }
 
       void
@@ -15706,13 +16686,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name) + params.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(name) + params.getSerializationSize();
       }
 
       void
@@ -15790,13 +16770,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name) + IMC::getSerializationSize(visibility) + IMC::getSerializationSize(scope);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(name) + IMC::getSerializationSize(visibility) + IMC::getSerializationSize(scope);
       }
 
       void
@@ -15856,13 +16836,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name) + params.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(name) + params.getSerializationSize();
       }
 
       void
@@ -15936,13 +16916,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(name);
       }
 
       void
@@ -16000,7 +16980,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -16058,7 +17044,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -16118,13 +17110,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(messages);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(messages);
       }
 
       void
@@ -16182,7 +17174,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -16251,7 +17249,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 5;
+        return 5 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -16309,13 +17313,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(name);
       }
 
       void
@@ -16373,13 +17377,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(name);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(name);
       }
 
       void
@@ -16448,13 +17452,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(error);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(error);
       }
 
       void
@@ -16525,13 +17529,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 3;
+        return 3 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(sys_dst) + IMC::getSerializationSize(data);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(sys_dst) + IMC::getSerializationSize(data);
       }
 
       void
@@ -16602,13 +17606,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 1;
+        return 1 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(sys_src) + IMC::getSerializationSize(sys_dst) + IMC::getSerializationSize(data);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(sys_src) + IMC::getSerializationSize(sys_dst) + IMC::getSerializationSize(data);
       }
 
       void
@@ -16687,13 +17691,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 3;
+        return 3 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(error);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(error);
       }
 
       fp64_t
@@ -16761,13 +17765,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 6;
+        return 6 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(sys);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(sys);
       }
 
       fp64_t
@@ -16852,7 +17856,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 21;
+        return 21 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -16914,7 +17924,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 12;
+        return 12 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
       }
 
       void
@@ -16978,13 +17994,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 3;
+        return 3 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(data);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(data);
       }
 
       void
@@ -17044,13 +18060,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 0 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(content_type) + IMC::getSerializationSize(content);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(content_type) + IMC::getSerializationSize(content);
       }
 
       void
@@ -17086,6 +18102,36 @@ namespace DUNE
       {
         return new Aborted(*this);
       }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
   }
 }
