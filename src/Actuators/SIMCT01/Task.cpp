@@ -149,7 +149,7 @@ namespace Actuators
         {
           PlainEntity* e = new PlainEntity(this);
           e->setLabel(m_args.motor_enames[i]);
-          reserveEntity(*e);
+          reserveEntityObject(*e);
           m_ents.push_back(e);
         }
       }

@@ -191,7 +191,7 @@ namespace Actuators
       {
         std::string label = String::str("%s %s", getEntityLabel(), c_vdc_mcu_suffix);
         m_mcu_ent.setLabel(label);
-        reserveEntity(m_mcu_ent);
+        reserveEntityObject(m_mcu_ent);
       }
 
       //! Update internal state with new parameter values.

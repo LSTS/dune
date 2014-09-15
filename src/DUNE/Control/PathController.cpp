@@ -288,7 +288,7 @@ namespace DUNE
     PathController::onEntityReservation(void)
     {
       m_bt_entity.setLabel("Bottom Track");
-      reserveEntity(m_bt_entity);
+      reserveEntityObject(m_bt_entity);
     }
 
     void

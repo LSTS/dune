@@ -92,7 +92,7 @@ namespace Simulators
       onEntityReservation(void)
       {
         for (std::vector<StatefulEntity>::iterator itr = m_leaks.begin(); itr != m_leaks.end(); ++itr)
-          reserveEntity(*itr);
+          reserveEntityObject(*itr);
       }
 
       void

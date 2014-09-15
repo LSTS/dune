@@ -245,11 +245,11 @@ namespace Actuators
       onEntityReservation(void)
       {
         m_motor_ent.setLabel(m_args.motor_elabel);
-        reserveEntity(m_motor_ent);
+        reserveEntityObject(m_motor_ent);
         m_bridge_ent.setLabel(m_args.bridge_elabel);
-        reserveEntity(m_bridge_ent);
+        reserveEntityObject(m_bridge_ent);
         m_mcu_ent.setLabel(m_args.mcu_elabel);
-        reserveEntity(m_mcu_ent);
+        reserveEntityObject(m_mcu_ent);
       }
 
       void
