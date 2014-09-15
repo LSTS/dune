@@ -35,6 +35,8 @@
 #include <DUNE/IMC/Constants.hpp>
 #include <DUNE/IMC/Definitions.hpp>
 #include <DUNE/IMC/Factory.hpp>
+#include <DUNE/Tasks/Recipient.hpp>
+#include <DUNE/Tasks/Consumer.hpp>
 
 namespace DUNE
 {
@@ -49,6 +51,15 @@ namespace DUNE
         m_owner(task),
         m_id(DUNE_IMC_CONST_UNK_EID)
       { }
+
+      virtual ~PlainEntity()
+      { }
+
+      virtual void
+      setBindings(Recipient* recipient)
+      {
+        bind<IMC::QueryEntityInfo, PlainEntity>(recipient, this);
+      }
 
       //! Retrieve the entity label.
       //! @return entity label.
@@ -131,6 +142,17 @@ namespace DUNE
       Task* m_owner;
       //! Entity information message.
       IMC::EntityInfo m_ent_info;
+
+      //! Bind a message to a consumer method.
+      //! @param recipient recipient object.
+      //! @param ent_obj consumer entity.
+      //! @param consumer consumer method.
+      template <typename M, typename E>
+      void
+      bind(Recipient* recipient, E* ent_obj, void (E::* consumer)(const M*) = &E::consume)
+      {
+        recipient->bind(M::getIdStatic(), new Consumer<E, M>(*ent_obj, consumer));
+      }
 
     private:
       //! Entity Id.

@@ -52,6 +52,14 @@ namespace DUNE
       }
 
       void
+      setBindings(Recipient* recipient)
+      {
+        PlainEntity::setBindings(recipient);
+        bind<IMC::QueryEntityState, StatefulEntity>(recipient, this);
+        bind<IMC::QueryEntityActivationState, StatefulEntity>(recipient, this);
+      }
+
+      void
       setState(IMC::EntityState::StateEnum state,
                      Status::Code code);
 

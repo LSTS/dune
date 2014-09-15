@@ -100,7 +100,7 @@ namespace DUNE
       PlainEntity* e = new PlainEntity(this);
       e->setLabel(label);
       e->setId(m_ctx.entities.reserve(label, getName()));
-      bind<IMC::QueryEntityInfo, PlainEntity>(e);
+      e->setBindings(m_recipient);
 
       m_entities.push_back(e);
       return e->getId();
