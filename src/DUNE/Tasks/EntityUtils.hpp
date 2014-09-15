@@ -22,33 +22,27 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Renato Caldas                                                    *
 //***************************************************************************
 
-#ifndef DUNE_TASKS_HPP_INCLUDED_
-#define DUNE_TASKS_HPP_INCLUDED_
+#ifndef DUNE_TASKS_ENTITY_UTILS_HPP_INCLUDED_
+#define DUNE_TASKS_ENTITY_UTILS_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <string>
 
 namespace DUNE
 {
-  //! %Task related routines and classes.
   namespace Tasks
-  { }
-}
+  {
+    class PlainEntity;
 
-#include <DUNE/Tasks/Factory.hpp>
-#include <DUNE/Tasks/Exceptions.hpp>
-#include <DUNE/Tasks/Consumer.hpp>
-#include <DUNE/Tasks/Periodic.hpp>
-#include <DUNE/Tasks/Profiles.hpp>
-#include <DUNE/Tasks/Task.hpp>
-#include <DUNE/Tasks/Context.hpp>
-#include <DUNE/Tasks/Manager.hpp>
-#include <DUNE/Tasks/AbstractConsumer.hpp>
-#include <DUNE/Tasks/Recipient.hpp>
-#include <DUNE/Tasks/AbstractCreator.hpp>
-#include <DUNE/Tasks/ParameterTable.hpp>
-#include <DUNE/Tasks/SimpleTransport.hpp>
-#include <DUNE/Tasks/RateLimiters.hpp>
-#include <DUNE/Tasks/EntityUtils.hpp>
+    //! Compare label of PlainEntity object against string.
+    //! param[in] e pointer to object whose label we wish to compare.
+    //! param[in] label label to be compared against.
+    bool
+    operator==(const PlainEntity* e, const std::string& label);
+  }
+}
 
 #endif
