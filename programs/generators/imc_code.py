@@ -557,7 +557,7 @@ hpp.add_isoc_headers('ostream', 'string', 'vector')
 hpp.add_dune_headers('Config.hpp', 'IMC/Message.hpp',
                      'IMC/InlineMessage.hpp', 'IMC/MessageList.hpp',
                      'IMC/Enumerations.hpp', 'IMC/Bitfields.hpp',
-                     'IMC/SuperTypes.hpp', 'IMC/JSON.hpp')
+                     'IMC/JSON.hpp')
 
 ################################################################################
 # Definitions.cpp                                                              #
