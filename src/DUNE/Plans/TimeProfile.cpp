@@ -508,6 +508,7 @@ namespace DUNE
       Memory::clear(m_speed_vec);
 
       m_last_valid = nodes.back()->maneuver_id;
+      m_finite_duration = true;
       return;
     }
   }

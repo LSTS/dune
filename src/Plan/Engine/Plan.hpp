@@ -39,6 +39,7 @@
 #include "ActionSchedule.hpp"
 #include "Timeline.hpp"
 #include "FuelPrediction.hpp"
+#include "Statistics.hpp"
 
 namespace Plan
 {
@@ -83,12 +84,14 @@ namespace Plan
       //! @param[in] supported_maneuvers list of supported maneuvers
       //! @param[in] plan_startup true if the plan is starting up
       //! @param[in] cinfo map of components info
+      //! @param[out] ps reference to PlanStatistics message
       //! @param[in] imu_enabled true if imu enabled, false otherwise
       //! @param[in] state pointer to EstimatedState message
       void
       parse(const std::set<uint16_t>* supported_maneuvers,
             bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
-            bool imu_enabled = false, const IMC::EstimatedState* state = NULL);
+            IMC::PlanStatistics& ps, bool imu_enabled = false,
+            const IMC::EstimatedState* state = NULL);
 
       //! Signal that the plan has started
       void
@@ -229,14 +232,29 @@ namespace Plan
       bool
       maneuverExists(const std::string id) const;
 
+      //! Build the graph that describes the plan
+      //! This represents the first and crucial part of the plan parse
+      //! @param[in] supported_maneuvers list of supported maneuvers
+      void
+      buildGraph(const std::set<uint16_t>* supported_maneuvers);
+
+      //! Perform secondary parsing procedures
+      //! That involve action scheduling, statistics, etc
+      //! Presumes buildGraph() did not fail
+      //! @param[in] plan_startup true if the plan is starting up
+      //! @param[in] cinfo map of components info
+      //! @param[out] ps reference to PlanStatistics message
+      //! @param[in] imu_enabled true if imu enabled, false otherwise
+      //! @param[in] state pointer to EstimatedState message
+      void
+      secondaryParse(bool plan_startup,
+                     const std::map<std::string, IMC::EntityInfo>& cinfo,
+                     IMC::PlanStatistics& ps, bool imu_enabled,
+                     const IMC::EstimatedState* state);
+
       //! Sequence plan nodes if possible
       void
       sequenceNodes(void);
-
-      //! Compute durations of each point in the plan
-      //! @param[in] pointer to estimated state message
-      void
-      computeDurations(const IMC::EstimatedState* state);
 
       //! Get maneuver from id
       //! @param[in] id name of the maneuver to load
@@ -254,6 +272,13 @@ namespace Plan
       //! @param[out] tl plan timeline filled in
       void
       fillTimeline(Timeline& tl);
+
+      //! Test if plan is linear
+      inline bool
+      isLinear(void) const
+      {
+        return !(m_properties & IMC::PlanStatistics::PRP_NONLINEAR);
+      }
 
       //! Graph nodes (a maneuver and its outgoing transitions)
       struct Node
@@ -275,8 +300,6 @@ namespace Plan
       Node* m_curr_node;
       //! Last maneuver id
       std::string m_last_id;
-      //! True if plan is sequential
-      bool m_sequential;
       //! Whether or not to compute plan's progress
       bool m_compute_progress;
       //! Whether or not to compute fuel prediction
@@ -313,6 +336,12 @@ namespace Plan
       FuelPrediction* m_fpred;
       //! Pointer to task
       Tasks::Task* m_task;
+      //! Plan properties
+      unsigned m_properties;
+      //! Post Plan Statistics message
+      IMC::PlanStatistics m_post_stat;
+      //! Pointer to Run Time Statistics
+      RunTimeStatistics* m_rt_stat;
     };
   }
 }

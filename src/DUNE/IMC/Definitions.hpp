@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: bc9d825ba1981fbb15950278b9fa89ba                            *
+// IMC XML MD5: 5b8a4390bc5e18a3cda0e31fc948ef33                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -14901,6 +14901,111 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(group_name);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Plan Statistics.
+    class PlanStatistics: public Message
+    {
+    public:
+      //! Type.
+      enum TypeEnum
+      {
+        //! Before Plan.
+        TP_PREPLAN = 0,
+        //! During Plan.
+        TP_INPLAN = 1,
+        //! After Plan.
+        TP_POSTPLAN = 2
+      };
+
+      //! Properties.
+      enum PropertiesBits
+      {
+        //! Basic Plan.
+        PRP_BASIC = 0x00,
+        //! Nonlinear.
+        PRP_NONLINEAR = 0x01,
+        //! Infinite.
+        PRP_INFINITE = 0x02,
+        //! Cyclical.
+        PRP_CYCLICAL = 0x04,
+        //! All.
+        PRP_ALL = 0x07
+      };
+
+      //! Plan Identifier.
+      std::string plan_id;
+      //! Type.
+      uint8_t type;
+      //! Properties.
+      uint8_t properties;
+      //! Durations.
+      std::string durations;
+      //! Distances.
+      std::string distances;
+      //! Actions.
+      std::string actions;
+      //! Fuel.
+      std::string fuel;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 564;
+      }
+
+      PlanStatistics(void);
+
+      Message*
+      clone(void) const
+      {
+        return new PlanStatistics(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return PlanStatistics::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PlanStatistics";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 2;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(durations) + IMC::getSerializationSize(distances) + IMC::getSerializationSize(actions) + IMC::getSerializationSize(fuel);
       }
 
       void
