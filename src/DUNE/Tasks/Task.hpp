@@ -418,19 +418,19 @@ namespace DUNE
       unsigned int
       reserveEntity(const std::string& label);
 
-      //! Associate a PlainEntity object with an automatically generated
+      //! Associate a generic Entity object with an automatically generated
       //! number (entity id).
-      //! @param[in,out] label entity name/label.
-      //! @return PlainEntity object.
+      //! @param[in,out] Entity object.
+      template <typename E>
       void
-      reserveEntity(PlainEntity& entity);
+      reserveEntityObject(E& entity)
+      {
+        if (entity.getLabel().empty())
+          throw std::runtime_error(DTR("entity label is not configured"));
 
-      //! Associate an Entity object with an automatically generated
-      //! number (entity id).
-      //! @param[in,out] label entity name/label.
-      //! @return Entity object.
-      void
-      reserveEntity(StatefulEntity& entity);
+        entity.setId(m_ctx.entities.reserve(entity.getLabel(), getName()));
+        entity.setBindings(m_recipient);
+      }
 
       //! Test if task is stopping.
       //! @return true if task is stopping, false otherwise.
