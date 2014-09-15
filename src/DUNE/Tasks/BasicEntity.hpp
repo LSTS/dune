@@ -44,21 +44,21 @@ namespace DUNE
   {
     class Task;
 
-    class PlainEntity
+    class BasicEntity
     {
     public:
-      PlainEntity(Task* task):
+      BasicEntity(Task* task):
         m_owner(task),
         m_id(DUNE_IMC_CONST_UNK_EID)
       { }
 
-      virtual ~PlainEntity()
+      virtual ~BasicEntity()
       { }
 
       virtual void
       setBindings(Recipient* recipient)
       {
-        bind<IMC::QueryEntityInfo, PlainEntity>(recipient, this);
+        bind<IMC::QueryEntityInfo, BasicEntity>(recipient, this);
       }
 
       //! Retrieve the entity label.

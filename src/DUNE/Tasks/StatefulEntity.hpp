@@ -31,7 +31,7 @@
 // ISO C++ 98 headers.
 #include <stdexcept>
 
-#include <DUNE/Tasks/PlainEntity.hpp>
+#include <DUNE/Tasks/BasicEntity.hpp>
 #include <DUNE/Status/Messages.hpp>
 
 namespace DUNE
@@ -40,11 +40,11 @@ namespace DUNE
   {
     class Task;
 
-    class StatefulEntity : public PlainEntity
+    class StatefulEntity : public BasicEntity
     {
     public:
       StatefulEntity(Task* task):
-        PlainEntity(task),
+        BasicEntity(task),
         m_entity_state_code(-1),
         m_next_act_state(NAS_SAME)
       {
@@ -55,7 +55,7 @@ namespace DUNE
       void
       setBindings(Recipient* recipient)
       {
-        PlainEntity::setBindings(recipient);
+        BasicEntity::setBindings(recipient);
         bind<IMC::QueryEntityState, StatefulEntity>(recipient, this);
         bind<IMC::QueryEntityActivationState, StatefulEntity>(recipient, this);
       }

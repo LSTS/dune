@@ -29,7 +29,7 @@
 #include <stdexcept>
 
 // DUNE headers.
-#include <DUNE/Tasks/PlainEntity.hpp>
+#include <DUNE/Tasks/BasicEntity.hpp>
 #include <DUNE/Tasks/Task.hpp>
 
 namespace DUNE
@@ -37,7 +37,7 @@ namespace DUNE
   namespace Tasks
   {
     void
-    PlainEntity::setLabel(const std::string& label)
+    BasicEntity::setLabel(const std::string& label)
     {
       // Throw exception to prevent relabeling after reservation
       if (m_id != DUNE_IMC_CONST_UNK_EID)
@@ -53,13 +53,13 @@ namespace DUNE
     }
 
     void
-    PlainEntity::reportInfo(void)
+    BasicEntity::reportInfo(void)
     {
       dispatch(m_ent_info);
     }
 
     void
-    PlainEntity::consume(const IMC::QueryEntityInfo* msg)
+    BasicEntity::consume(const IMC::QueryEntityInfo* msg)
     {
       if (msg->getDestinationEntity() == getId())
         dispatchReply(*msg, m_ent_info);
@@ -68,7 +68,7 @@ namespace DUNE
     }
 
     void
-    PlainEntity::dispatch(IMC::Message* msg, unsigned int flags)
+    BasicEntity::dispatch(IMC::Message* msg, unsigned int flags)
     {
       if ((flags && DF_KEEP_SRC_EID) == 0)
         msg->setSourceEntity(getId());

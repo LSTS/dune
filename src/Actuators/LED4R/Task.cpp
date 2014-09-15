@@ -119,7 +119,7 @@ namespace Actuators
       //! Voltage.
       IMC::Voltage m_voltage;
       //! MCU entity.
-      PlainEntity* m_mcu_ent;
+      BasicEntity* m_mcu_ent;
       //! Watchdog.
       Counter<double> m_wdog;
       //! Task arguments.
@@ -190,7 +190,7 @@ namespace Actuators
       onEntityReservation(void)
       {
         std::string label = String::str("%s %s", getEntityLabel(), c_vdc_mcu_suffix);
-        m_mcu_ent = reserveEntity<PlainEntity>(label);
+        m_mcu_ent = reserveEntity<BasicEntity>(label);
       }
 
       //! Update internal state with new parameter values.

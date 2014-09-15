@@ -35,13 +35,13 @@ namespace DUNE
 {
   namespace Tasks
   {
-    class PlainEntity;
+    class BasicEntity;
 
-    //! Compare label of PlainEntity object against string.
+    //! Compare label of BasicEntity object against string.
     //! param[in] e pointer to object whose label we wish to compare.
     //! param[in] label label to be compared against.
     bool
-    operator==(const PlainEntity* e, const std::string& label);
+    operator==(const BasicEntity* e, const std::string& label);
   }
 }
 

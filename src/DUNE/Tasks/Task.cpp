@@ -96,7 +96,7 @@ namespace DUNE
     unsigned int
     Task::reserveEntity(const std::string& label)
     {
-      PlainEntity* e = new PlainEntity(this);
+      BasicEntity* e = new BasicEntity(this);
       e->setLabel(label);
       e->setId(m_ctx.entities.reserve(label, getName()));
       e->setBindings(m_recipient);

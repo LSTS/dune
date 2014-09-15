@@ -27,14 +27,14 @@
 
 // DUNE headers.
 #include <DUNE/Tasks/EntityUtils.hpp>
-#include <DUNE/Tasks/PlainEntity.hpp>
+#include <DUNE/Tasks/BasicEntity.hpp>
 
 namespace DUNE
 {
   namespace Tasks
   {
     bool
-    operator==(const PlainEntity* e, const std::string& label)
+    operator==(const BasicEntity* e, const std::string& label)
     {
       return e->getLabel() == label;
     }
