@@ -49,6 +49,7 @@ namespace DUNE
         m_next_act_state(NAS_SAME)
       {
         m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
+        setState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
       }
 
       void

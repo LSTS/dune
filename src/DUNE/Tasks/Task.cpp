@@ -87,9 +87,6 @@ namespace DUNE
       m_entity = new StatefulEntity(this);
       m_entities.push_back(m_entity);
 
-      // Initialize main entity.
-      setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-
       bind<IMC::QueryEntityParameters>(this);
       bind<IMC::SetEntityParameters>(this);
       bind<IMC::PushEntityParameters>(this);
