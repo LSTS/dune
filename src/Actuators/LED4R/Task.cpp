@@ -119,7 +119,7 @@ namespace Actuators
       //! Voltage.
       IMC::Voltage m_voltage;
       //! MCU entity.
-      PlainEntity m_mcu_ent;
+      PlainEntity* m_mcu_ent;
       //! Watchdog.
       Counter<double> m_wdog;
       //! Task arguments.
@@ -132,7 +132,7 @@ namespace Actuators
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
         m_ctl(NULL),
-        m_mcu_ent(this)
+        m_mcu_ent(NULL)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -190,8 +190,7 @@ namespace Actuators
       onEntityReservation(void)
       {
         std::string label = String::str("%s %s", getEntityLabel(), c_vdc_mcu_suffix);
-        m_mcu_ent.setLabel(label);
-        reserveEntityObject(m_mcu_ent);
+        m_mcu_ent = reserveEntity<PlainEntity>(label);
       }
 
       //! Update internal state with new parameter values.
@@ -416,7 +415,7 @@ namespace Actuators
         frame.get(tmp_u16, 0);
         IMC::Voltage v;
         v.value = tmp_u16 / 1000.0;
-        m_mcu_ent.dispatch(v);
+        m_mcu_ent->dispatch(v);
 
         // Voltage.
         frame.get(tmp_u16, 2);

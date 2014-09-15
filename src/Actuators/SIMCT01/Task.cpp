@@ -134,24 +134,13 @@ namespace Actuators
       ~Task(void)
       {
         onResourceRelease();
-
-        while (!m_ents.empty())
-        {
-          delete m_ents.back();
-          m_ents.pop_back();
-        }
       }
 
       void
       onEntityReservation(void)
       {
         for (unsigned i = 0; i < m_args.motor_enames.size(); ++i)
-        {
-          PlainEntity* e = new PlainEntity(this);
-          e->setLabel(m_args.motor_enames[i]);
-          reserveEntityObject(*e);
-          m_ents.push_back(e);
-        }
+          m_ents.push_back(reserveEntity<PlainEntity>(m_args.motor_enames[i]));
       }
 
       void

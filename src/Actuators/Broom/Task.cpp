@@ -140,11 +140,11 @@ namespace Actuators
       //! RPMs message.
       IMC::Rpm m_rpms;
       //! Motor entity.
-      PlainEntity m_motor_ent;
+      PlainEntity* m_motor_ent;
       //! Bridge entity.
-      PlainEntity m_bridge_ent;
+      PlainEntity* m_bridge_ent;
       //! MCU entity.
-      PlainEntity m_mcu_ent;
+      PlainEntity* m_mcu_ent;
       //! Last state request.
       double m_last_state;
       //! Task arguments.
@@ -158,9 +158,9 @@ namespace Actuators
         Tasks::Periodic(name, ctx),
         m_actuation(0),
         m_ctl_mode(MODE_NONE),
-        m_motor_ent(this),
-        m_bridge_ent(this),
-        m_mcu_ent(this),
+        m_motor_ent(NULL),
+        m_bridge_ent(NULL),
+        m_mcu_ent(NULL),
         m_dev_errors(ERR_NONE),
         m_legacy(false)
       {
@@ -244,12 +244,9 @@ namespace Actuators
       void
       onEntityReservation(void)
       {
-        m_motor_ent.setLabel(m_args.motor_elabel);
-        reserveEntityObject(m_motor_ent);
-        m_bridge_ent.setLabel(m_args.bridge_elabel);
-        reserveEntityObject(m_bridge_ent);
-        m_mcu_ent.setLabel(m_args.mcu_elabel);
-        reserveEntityObject(m_mcu_ent);
+        m_motor_ent = reserveEntity<PlainEntity>(m_args.motor_elabel);
+        m_bridge_ent = reserveEntity<PlainEntity>(m_args.bridge_elabel);
+        m_mcu_ent = reserveEntity<PlainEntity>(m_args.mcu_elabel);
       }
 
       void
@@ -287,21 +284,21 @@ namespace Actuators
 
             t.setTimeStamp();
             t.value = (int8_t)data[1];
-            m_mcu_ent.dispatch(t, DF_KEEP_TIME);
+            m_mcu_ent->dispatch(t, DF_KEEP_TIME);
             t.value = (int8_t)data[2];
-            m_bridge_ent.dispatch(t, DF_KEEP_TIME);
+            m_bridge_ent->dispatch(t, DF_KEEP_TIME);
             t.value = (int8_t)data[3];
-            m_motor_ent.dispatch(t, DF_KEEP_TIME);
+            m_motor_ent->dispatch(t, DF_KEEP_TIME);
 
             v.setTimeStamp(t.getTimeStamp());
             v.value = ((uint8_t)data[4] * 0.025);
-            m_mcu_ent.dispatch(v, DF_KEEP_TIME);
+            m_mcu_ent->dispatch(v, DF_KEEP_TIME);
             v.value = ((uint8_t)data[5] * 0.25);
-            m_bridge_ent.dispatch(v, DF_KEEP_TIME);
+            m_bridge_ent->dispatch(v, DF_KEEP_TIME);
 
             cur.setTimeStamp(t.getTimeStamp());
             cur.value = (int16_t)(data[6] << 8 | data[7]) * 10.0 / 511.0;
-            m_bridge_ent.dispatch(cur, DF_KEEP_TIME);
+            m_bridge_ent->dispatch(cur, DF_KEEP_TIME);
 
             if (m_dev_errors)
             {
@@ -334,18 +331,18 @@ namespace Actuators
 
             v.setTimeStamp();
             v.value = (int16_t)(data[0] << 8 | data[1]) * 0.125;
-            m_motor_ent.dispatch(v, DF_KEEP_TIME);
+            m_motor_ent->dispatch(v, DF_KEEP_TIME);
 
             rpm.setTimeStamp(v.getTimeStamp());
             rpm.value = (m_args.inv_rotation ? -1 : 1) * (int16_t)(data[4] << 8 | data[5]) * 10 / m_args.pole_pairs;
-            m_motor_ent.dispatch(rpm, DF_KEEP_TIME);
+            m_motor_ent->dispatch(rpm, DF_KEEP_TIME);
 
             cur.setTimeStamp(v.getTimeStamp());
             if (m_legacy)
               cur.value = (int16_t)(data[2] << 8 | data[3]) * 10.0 / 511.0;
             else
               cur.value = (int16_t)(data[2] << 8 | data[3]) / 32.0;
-            m_motor_ent.dispatch(cur, DF_KEEP_TIME);
+            m_motor_ent->dispatch(cur, DF_KEEP_TIME);
 
             break;
         }

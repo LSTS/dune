@@ -59,7 +59,7 @@ namespace DUNE
 
     PathController::PathController(std::string name, Tasks::Context& ctx):
       Task(name, ctx),
-      m_bt_entity(this),
+      m_bt_entity(NULL),
       m_running_monitors(true),
       m_error(false),
       m_setup(true),
@@ -205,8 +205,6 @@ namespace DUNE
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
 
-      m_btd.args.entity = &m_bt_entity;
-
       bind<IMC::Brake>(this);
       bind<IMC::ControlLoops>(this);
       bind<IMC::DesiredPath>(this);
@@ -287,8 +285,8 @@ namespace DUNE
     void
     PathController::onEntityReservation(void)
     {
-      m_bt_entity.setLabel("Bottom Track");
-      reserveEntityObject(m_bt_entity);
+      m_bt_entity = reserveEntity<Tasks::PlainEntity>("Bottom Track");
+      m_btd.args.entity = m_bt_entity;
     }
 
     void
