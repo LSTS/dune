@@ -56,7 +56,7 @@ namespace DUNE
       m_ctx(ctx),
       m_recipient(0),
       m_name(n),
-      m_entity(this),
+      m_entity(NULL),
       m_debug_level(DEBUG_LEVEL_NONE),
       m_honours_active(false)
     {
@@ -84,6 +84,8 @@ namespace DUNE
       .values("None, Debug, Trace, Spew");
 
       m_recipient = new Recipient(this, ctx);
+      m_entity = new StatefulEntity(this);
+      m_entities.push_back(m_entity);
 
       // Initialize main entity.
       setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
@@ -109,7 +111,11 @@ namespace DUNE
     void
     Task::reserveEntities(void)
     {
-      reserveEntityObject(m_entity);
+      if (m_entity->getLabel().empty())
+        throw std::runtime_error(DTR("entity label is not configured"));
+
+      m_entity->setId(m_ctx.entities.reserve(m_entity->getLabel(), getName()));
+      m_entity->setBindings(m_recipient);
       onEntityReservation();
     }
 
@@ -122,7 +128,7 @@ namespace DUNE
     void
     Task::reportEntityState(void)
     {
-      m_entity.reportState();
+      m_entity->reportState();
       onReportEntityState();
     }
 
@@ -196,18 +202,12 @@ namespace DUNE
     void
     Task::updateParameters(bool act_deact)
     {
-      try
-      {
-        m_entity.setLabel(m_args.elabel);
-      }
-      catch(std::exception& e)
-      {
-        err(DTR("unable to set main entity label: %s"), e.what());
-        m_params.set(DTR_RT("Entity Label"), m_entity.getLabel());
-      }
-
-      m_entity.setActTimes(m_args.act_time, m_args.deact_time);
-      m_entity.reportInfo();
+      if (m_entity->getLabel().empty())
+        m_entity->setLabel(m_args.elabel);
+      if (m_args.elabel != m_entity->getLabel())
+        m_params.set(DTR_RT("Entity Label"), m_entity->getLabel());
+      m_entity->setActTimes(m_args.act_time, m_args.deact_time);
+      m_entity->reportInfo();
 
       if (m_debug_level_string == "Debug")
         m_debug_level = DEBUG_LEVEL_DEBUG;
@@ -241,7 +241,7 @@ namespace DUNE
           }
           else
           {
-            m_entity.reportActivationState();
+            m_entity->reportActivationState();
           }
         }
       }
@@ -253,9 +253,9 @@ namespace DUNE
     Task::requestActivation(void)
     {
       spew("request activation");
-      m_entity.requestActivation();
+      m_entity->requestActivation();
 
-      if (m_entity.isActivating())
+      if (m_entity->isActivating())
       {
         spew("calling on request activation");
         onRequestActivation();
@@ -265,7 +265,7 @@ namespace DUNE
     void
     Task::activate(void)
     {
-      if (m_entity.getActivationState() != IMC::EntityActivationState::EAS_ACT_IP)
+      if (m_entity->getActivationState() != IMC::EntityActivationState::EAS_ACT_IP)
         throw std::runtime_error(DTR("activation is not in progress"));
 
       spew("activate");
@@ -276,23 +276,23 @@ namespace DUNE
       spew("calling on activation");
       onActivation();
 
-      m_entity.succeedActivation();
+      m_entity->succeedActivation();
     }
 
     void
     Task::activationFailed(const std::string& reason)
     {
       spew("activation failed");
-      m_entity.failActivation(reason);
+      m_entity->failActivation(reason);
     }
 
     void
     Task::requestDeactivation(void)
     {
       spew("request deactivation");
-      m_entity.requestDeactivation();
+      m_entity->requestDeactivation();
 
-      if (m_entity.isDeactivating())
+      if (m_entity->isDeactivating())
       {
         spew("calling on request deactivation");
         onRequestDeactivation();
@@ -302,7 +302,7 @@ namespace DUNE
     void
     Task::deactivate(void)
     {
-      if (m_entity.getActivationState() != IMC::EntityActivationState::EAS_DEACT_IP)
+      if (m_entity->getActivationState() != IMC::EntityActivationState::EAS_DEACT_IP)
         throw std::runtime_error(DTR("deactivation is not in progress"));
 
       spew("deactivate");
@@ -313,14 +313,14 @@ namespace DUNE
       spew("calling on deactivation");
       onDeactivation();
 
-      m_entity.succeedDeactivation();
+      m_entity->succeedDeactivation();
     }
 
     void
     Task::deactivationFailed(const std::string& reason)
     {
       spew("deactivation failed");
-      m_entity.failDeactivation(reason);
+      m_entity->failDeactivation(reason);
     }
 
     void

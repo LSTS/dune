@@ -51,6 +51,7 @@
 #include <DUNE/Tasks/Context.hpp>
 #include <DUNE/Tasks/BasicParameterParser.hpp>
 #include <DUNE/Tasks/ParameterTable.hpp>
+#include <DUNE/Tasks/PlainEntity.hpp>
 #include <DUNE/Tasks/StatefulEntity.hpp>
 
 #if defined(DUNE_SHARED)
@@ -153,7 +154,7 @@ namespace DUNE
       unsigned int
       getEntityId(void) const
       {
-        return m_entity.getId();
+        return m_entity->getId();
       }
 
       //! Retrieve the entity id of a given entity label.
@@ -370,7 +371,7 @@ namespace DUNE
       const char*
       getEntityLabel(void) const
       {
-        return m_entity.getLabel().c_str();
+        return m_entity->getLabel().c_str();
       }
 
       //! Set the main entity label of the task.
@@ -378,7 +379,7 @@ namespace DUNE
       void
       setEntityLabel(const std::string& label)
       {
-        m_entity.setLabel(label);
+        m_entity->setLabel(label);
       }
 
       //! Set current entity state with an optional pre-defined
@@ -390,7 +391,7 @@ namespace DUNE
       setEntityState(IMC::EntityState::StateEnum state,
                      Status::Code code)
       {
-        m_entity.setState(state, code);
+        m_entity->setState(state, code);
       }
 
       //! Set current entity state with a custom description.
@@ -400,7 +401,7 @@ namespace DUNE
       setEntityState(IMC::EntityState::StateEnum state,
                      const std::string& description)
       {
-        m_entity.setState(state, description);
+        m_entity->setState(state, description);
       }
 
       //! Retrieve the current entity state.
@@ -408,7 +409,7 @@ namespace DUNE
       IMC::EntityState::StateEnum
       getEntityState(void) const
       {
-        return m_entity.getState();
+        return m_entity->getState();
       }
 
       //! Associate an entity label with an automatically generated
@@ -418,18 +419,21 @@ namespace DUNE
       unsigned int
       reserveEntity(const std::string& label);
 
-      //! Associate a generic Entity object with an automatically generated
-      //! number (entity id).
-      //! @param[in,out] Entity object.
+      //! Associate an entity label with an internally stored entity
+      //! object, and retrieve a pointer to the object.
+      //! @param[in] label entity name/label.
+      //! @return pointer to entity object.
       template <typename E>
-      void
-      reserveEntityObject(E& entity)
+      E*
+      reserveEntity(const std::string& label)
       {
-        if (entity.getLabel().empty())
-          throw std::runtime_error(DTR("entity label is not configured"));
+        E* entity = new E(this);
+        m_entities.push_back(static_cast<PlainEntity*>(entity));
 
-        entity.setId(m_ctx.entities.reserve(entity.getLabel(), getName()));
-        entity.setBindings(m_recipient);
+        entity->setLabel(label);
+        entity->setId(m_ctx.entities.reserve(label, getName()));
+        entity->setBindings(m_recipient);
+        return entity;
       }
 
       //! Test if task is stopping.
@@ -445,7 +449,7 @@ namespace DUNE
       bool
       isActive(void) const
       {
-        return m_entity.isActive();
+        return m_entity->isActive();
       }
 
       //! Test if task is activating.
@@ -453,7 +457,7 @@ namespace DUNE
       bool
       isActivating(void) const
       {
-        return m_entity.isActivating();
+        return m_entity->isActivating();
       }
 
       //! Test if task is deactivating.
@@ -461,7 +465,7 @@ namespace DUNE
       bool
       isDeactivating(void) const
       {
-        return m_entity.isDeactivating();
+        return m_entity->isDeactivating();
       }
 
       //! Wait for the receiving queue to contain at least one message
@@ -729,7 +733,7 @@ namespace DUNE
       //! Task parameters.
       ParameterTable m_params;
       //! Main Entity
-      StatefulEntity m_entity;
+      StatefulEntity* m_entity;
       //! Debug level (as a string).
       std::string m_debug_level_string;
       //! Debug level.
