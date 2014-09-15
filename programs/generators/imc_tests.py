@@ -70,28 +70,31 @@ class Message:
     def declare(self):
         self._fd.append('IMC::%s %s;' % (self._abbrev, self._var))
 
-    def get_base_class_fields(self):
-        base = None
-        for group in self._root.findall('message-groups/message-group'):
-            if group.find("message-type[@abbrev='%s']" % self._abbrev) is not None:
-                base = group
-        if base is None:
-            return []
+    # Retrieve the direct base message of a message.
+    @staticmethod
+    def get_message_base(xml_root, msg_abbrev):
+        return xml_root.find("message[@abbrev='%s']" % msg_abbrev).get('extends')
 
-        return base.findall('field')
+    # Retrieve all fields of a message.
+    @staticmethod
+    def get_message_fields(xml_root, msg_abbrev):
+        fields = []
+
+        # Fields from base class hierarchy.
+        base = Message.get_message_base(xml_root, msg_abbrev)
+        if base is not None:
+            fields = Message.get_message_fields(xml_root, base)
+
+        # Message fields.
+        return fields + [f for f in xml_root.findall("message[@abbrev='%s']/field" % msg_abbrev)]
 
     def fill_fields(self):
-        for field in self._fields:
-            self.fill_field(field)
-
-    def fill_base_fields(self):
-        for field in self.get_base_class_fields():
+        for field in Message.get_message_fields(self._root, self._abbrev):
             self.fill_field(field)
 
     def declare_and_fill(self):
         self.declare()
         self.fill_fields()
-        self.fill_base_fields()
 
     def marshall(self):
         self._fd.append('')
@@ -120,22 +123,32 @@ class Message:
         max_size = random.randrange(10, 255)
         return ', '.join([str(random.randrange(-128, 127)) for l in range(0, max_size)])
 
-    # Test if message type is a group.
-    def is_group(self, abbrev):
-        return self._root.find("message-groups/message-group[@abbrev='%s']" % abbrev) is not None
+    # Return true if message is abstract.
+    def message_is_abstract(self, abbrev):
+        msg = self._root.find("message[@abbrev='%s']" % abbrev)
+        return 'id' not in msg.attrib
+
+    def get_derived_messages(self, abbrev):
+        msgs = self._root.findall("message[@extends='%s']" % abbrev)
+        return [m.get('abbrev') for m in msgs]
 
     # Retrieve a list of message abbreviations matching a certain type.
-    def get_abbrevs(self, type = None):
+    def get_suitable_inline(self, type = None):
         if type is None:
-            return [m.get('abbrev') for m in self._root.findall('message')]
-        if self.is_group(type):
-            l = self._root.findall("message-groups/message-group[@abbrev='%s']/message-type" % type)
-            return [m.get('abbrev') for m in l]
-        return [type]
+            l = []
+            for m in self._root.findall('message'):
+                if not self.message_is_abstract(m.get('abbrev')):
+                    l.append(m.get('abbrev'))
+            return l
+
+        if not self.message_is_abstract(type):
+            return [type]
+
+        return self.get_derived_messages(type)
 
     # Choose a random message abbrev suitable for a given field.
     def rand_message(self, field):
-        types = self.get_abbrevs(field.get('message-type'))
+        types = self.get_suitable_inline(field.get('message-type'))
         return random.choice(types)
 
     def push_message(self, name, field):
@@ -205,12 +218,14 @@ fd.append('Test test("IMC Serialization/Deserialization");\n')
 
 abbrevs = [msg.get('abbrev') for msg in root.findall('message')]
 for abbrev in abbrevs:
+    if 'id' not in root.find("message[@abbrev='%s']" % abbrev).attrib:
+        continue
+
     for test in range(0, 3):
         fd.append('{')
         msg = Message(fd, 'msg', abbrev, root, test)
         msg.declare()
         msg.fill_header()
-        msg.fill_base_fields()
         msg.fill_fields()
         msg.marshall()
         fd.append('}\n')

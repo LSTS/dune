@@ -89,15 +89,23 @@ class Message:
         self._public = []
         self._protected = []
         self._abbrev = self._node.get('abbrev')
-        self._base = self.get_base_class()
+        self._base = 'Message'
+        if 'extends' in self._node.attrib:
+            self._base = self._node.attrib['extends']
+        self._has_id = 'id' in self._node.attrib
 
     def make_getIdStatic(self):
+        if not self._has_id:
+            return
+
         f = Function('getIdStatic', 'uint16_t', static = True, inline = True)
         f.body('return %(id)s;' % self._node.attrib)
         self._public.append(f)
 
     def make_AssignId(self):
-        return 'm_header.mgid = ' + self._node.get('id') + ';'
+        if self._has_id:
+            return 'm_header.mgid = ' + self._node.get('id') + ';'
+        return ''
 
     #fixme: base class
     def make_constructor(self):
@@ -113,43 +121,30 @@ class Message:
         self._public.append(f)
 
     def make_clone(self):
+        if not self._has_id:
+            return
         f = Function('clone', 'Message*', const = True, inline = True)
         f.body('return new %(abbrev)s(*this);' % self._node.attrib)
         self._public.append(f)
 
     def make_clear(self):
-        if not self.has_fields() and not self.base_class_has_fields():
-            return
-
         f = Function('clear', 'void')
-        if self.base_class_has_fields():
-            f.add_body('%s::clear();' % self._base)
+        f.add_body('%s::clear();' % self._base)
         f.add_body('\n'.join([get_clear(field) for field in self._node.findall('field')]))
         self._public.append(f)
 
-# fixme: base class
     def make_fieldsEqual(self):
-        if not self.has_fields() and not self.base_class_has_fields():
-            return
-
         f = Function('fieldsEqual', 'bool', [Var('msg__', 'const Message&')], const = True)
-        if self.base_class_has_fields():
-           f.add_body('if (!%s::fieldsEqual(msg__)) return false;' % self._base)
-
+        f.add_body('if (!%s::fieldsEqual(msg__)) return false;' % self._base)
         f.add_body('const IMC::' + self._abbrev + '& other__ = static_cast<const ' + self._abbrev + '&>(msg__);')
         f.add_body('\n'.join([get_not_equal(field) for field in self._node.findall('field')]))
         f.add_body('return true;')
         self._public.append(f)
 
     def make_serializeFields(self):
-        if not self.has_fields() and not self.base_class_has_fields():
-            return
-
         f = Function('serializeFields', 'uint8_t*', [Var('bfr__', 'uint8_t*')], const = True)
         f.add_body('uint8_t* ptr__ = bfr__;')
-
-        if self.base_class_has_fields():
-            f.add_body('ptr__ = %s::serializeFields(ptr__);' % self._base)
+        f.add_body('ptr__ = %s::serializeFields(ptr__);' % self._base)
 
         for field in self._node.findall('field'):
             if field.get('type').startswith('message'):
@@ -161,14 +156,9 @@ class Message:
         self._public.append(f)
 
     def make_deserializeFields(self):
-        if not self.has_fields() and not self.base_class_has_fields():
-            return
-
         f = Function('deserializeFields', 'uint16_t', [Var('bfr__', 'const uint8_t*'), Var('size__', 'uint16_t')])
         f.add_body('const uint8_t* start__ = bfr__;')
-
-        if self.base_class_has_fields():
-            f.add_body('bfr__ += %s::deserializeFields(bfr__, size__);' % self._base)
+        f.add_body('bfr__ += %s::deserializeFields(bfr__, size__);' % self._base)
 
         for field in self._node.findall('field'):
             if field.get('type').startswith('message'):
@@ -180,14 +170,9 @@ class Message:
         self._public.append(f)
 
     def make_reverseDeserializeFields(self):
-        if not self.has_fields() and not self.base_class_has_fields():
-            return
-
         f = Function('reverseDeserializeFields', 'uint16_t', [Var('bfr__', 'const uint8_t*'), Var('size__', 'uint16_t')])
         f.add_body('const uint8_t* start__ = bfr__;')
-
-        if self.base_class_has_fields():
-            f.add_body('bfr__ += %s::reverseDeserializeFields(bfr__, size__);' % self._base)
+        f.add_body('bfr__ += %s::reverseDeserializeFields(bfr__, size__);' % self._base)
 
         for field in self._node.findall('field'):
             if consts['sizes'][field.get('type')] == 1:
@@ -201,6 +186,9 @@ class Message:
         self._public.append(f)
 
     def make_getId(self):
+        if not self._has_id:
+            return
+
         f = Function('getId', 'uint16_t', const = True, inline = True)
         f.body('return %(abbrev)s::getIdStatic();' % self._node.attrib)
         self._public.append(f)
@@ -211,20 +199,13 @@ class Message:
         self._public.append(f)
 
     def make_getFixedSerializationSize(self):
-        if not self.has_fields() and not self.base_class_has_fields():
-            return
-
         f = Function('getFixedSerializationSize', 'unsigned', const = True, inline = True)
         size = str(self.get_fixed_size())
-        if self.base_class_has_fields():
-            size += ' + %s::getFixedSerializationSize()' % self._base
+        size += ' + %s::getFixedSerializationSize()' % self._base
         f.body('return ' + size + ';')
         self._public.append(f)
 
     def make_getVariableSerializationSize(self):
-        if not self.has_fields() and not self.base_class_has_fields():
-            return
-
         var_size = str(self.get_variable_size())
         if var_size != '':
             f = Function('getVariableSerializationSize', 'unsigned', const = True, inline = True)
@@ -232,19 +213,17 @@ class Message:
             self._public.append(f)
 
     def make_fieldsToJSON(self):
-        if self.has_fields():
-            f = Function('fieldsToJSON', 'void', [Var('os__', 'std::ostream&'), Var('nindent__', 'unsigned')], const = True)
-            lines = []
-            if self.base_class_has_fields():
-                lines.append('%s::fieldsToJSON(os__, nindent__);' % self._base)
+        f = Function('fieldsToJSON', 'void', [Var('os__', 'std::ostream&'), Var('nindent__', 'unsigned')], const = True)
+        lines = []
+        lines.append('%s::fieldsToJSON(os__, nindent__);' % self._base)
 
-            for field in self._node.findall('field'):
-                if field.get('type').startswith('message'):
-                    lines.append('{0}.toJSON(os__, "{0}", nindent__);'.format(get_name(field)))
-                else:
-                    lines.append('IMC::toJSON(os__, "{0}", {0}, nindent__);'.format(get_name(field)))
-            f.add_body('\n'.join(lines))
-            self._public.append(f)
+        for field in self._node.findall('field'):
+            if field.get('type').startswith('message'):
+                lines.append('{0}.toJSON(os__, "{0}", nindent__);'.format(get_name(field)))
+            else:
+                lines.append('IMC::toJSON(os__, "{0}", {0}, nindent__);'.format(get_name(field)))
+        f.add_body('\n'.join(lines))
+        self._public.append(f)
 
     def make_getSetSubId(self):
         subid = self._node.find("field/[@abbrev='id']")
@@ -274,7 +253,11 @@ class Message:
                      ('SourceEntity', 'uint8_t'), ('Destination', 'uint16_t'),
                      ('DestinationEntity', 'uint8_t')]
             for func in funcs:
-                f = Function('set' + func[0] + 'Nested', 'void', [Var('value__', func[1])])
+                func_name = 'set' + func[0] + 'Nested'
+                f = Function(func_name, 'void', [Var('value__', func[1])])
+                if self._base != 'Message':
+                    f.add_body('%s::%s(value__);' % (self._base, func_name))
+
                 for field in self._node.findall("field[@type='message']"):
                     f.add_body(call_inline_message_function(get_name(field), 'set' + func[0], 'value__'))
                 for field in self._node.findall("field[@type='message-list']"):
@@ -313,10 +296,6 @@ class Message:
 
         if self.has_fields():
             self._public.append('')
-
-    def base_class_has_fields(self):
-        fields = self._root.findall("message-groups/message-group[@abbrev='%s']/field" % self._base)
-        return len(fields) > 0
 
     def get_base_class(self):
         base = []
@@ -389,8 +368,7 @@ class Message:
 
     def get_variable_size(self):
         size = []
-        if self.base_class_has_fields():
-            size.append('%s::getVariableSerializationSize()' % self._base)
+        size.append('%s::getVariableSerializationSize()' % self._base)
 
         for field in self._node.findall('field'):
             type = field.get('type')
@@ -415,26 +393,6 @@ class Message:
     def count_nested(self):
         return len(self._node.findall("field[@type='message']")) + \
                len(self._node.findall("field[@type='message-list']"))
-
-class MessageGroup(Message):
-    def make_constructor(self):
-        if self.has_fields():
-            Message.make_constructor(self)
-
-    def make_getIdStatic(self):
-        pass
-
-    def make_getId(self):
-        pass
-
-    def make_AssignId(self):
-        return ''
-
-    def make_getName(self):
-        pass
-
-    def make_clone(self):
-        pass
 
 # Parse command line arguments.
 import argparse
@@ -586,29 +544,10 @@ f.write()
 ################################################################################
 f = File('Factory.def', dest_folder, ns = False, md5 = xml_md5)
 for msg in root.findall('message'):
-    f.append('MESSAGE(%(id)s, %(abbrev)s)' % msg.attrib)
+    if 'id' in msg.attrib:
+        f.append('MESSAGE(%(id)s, %(abbrev)s)' % msg.attrib)
 f.append('#undef MESSAGE')
 f.write()
-
-################################################################################
-# SuperTypes.hpp                                                               #
-################################################################################
-hpp = File('SuperTypes.hpp', dest_folder, md5 = xml_md5)
-hpp.add_isoc_headers('ostream', 'string', 'vector')
-hpp.add_dune_headers('Config.hpp', 'IMC/Message.hpp',
-                     'IMC/InlineMessage.hpp', 'IMC/MessageList.hpp',
-                     'IMC/Enumerations.hpp', 'IMC/Bitfields.hpp',
-                     'IMC/JSON.hpp')
-
-cpp = File('SuperTypes.cpp', dest_folder, md5 = xml_md5)
-cpp.add_dune_headers('IMC/SuperTypes.hpp')
-
-for group in root.findall('message-groups/message-group'):
-    msg_obj = MessageGroup(root, group, consts)
-    msg_obj.generate(hpp, cpp)
-
-hpp.write()
-cpp.write()
 
 ################################################################################
 # Definitions.hpp                                                              #
