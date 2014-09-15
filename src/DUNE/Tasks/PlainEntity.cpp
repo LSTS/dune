@@ -31,7 +31,6 @@
 // DUNE headers.
 #include <DUNE/Tasks/PlainEntity.hpp>
 #include <DUNE/Tasks/Task.hpp>
-#include <DUNE/Status/Messages.hpp>
 
 namespace DUNE
 {
