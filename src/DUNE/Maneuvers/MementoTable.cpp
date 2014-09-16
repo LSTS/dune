@@ -22,25 +22,55 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_MANEUVERS_HPP_INCLUDED_
-#define DUNE_MANEUVERS_HPP_INCLUDED_
+// ISO C++ 98 headers.
+#include <map>
+#include <sstream>
+
+// DUNE headers.
+#include <DUNE/Maneuvers/MementoTable.hpp>
+#include <DUNE/Utils/TupleList.hpp>
 
 namespace DUNE
 {
-  //! %Maneuver routines and classes.
   namespace Maneuvers
-  { }
+  {
+    void
+    MementoTable::fill(const std::string& str)
+    {
+      Utils::TupleList tl(str, "=", ",");
+
+      if (!tl.getMap().size())
+        throw std::runtime_error(DTR("no tuples found"));
+        
+      std::map<std::string, std::string>::const_iterator itr;
+      itr = tl.getMapReversed().begin();
+
+      for (; itr != tl.getMapReversed().end(); itr++)
+        ParameterTable::set(itr->first, itr->second);
+    }
+
+    void
+    MementoTable::writeTuples(std::string& str)
+    {
+      if (!ParameterTable::getParameterList().size())
+        return;
+
+      std::stringstream ss;
+
+      std::map<std::string, Tasks::Parameter*>::const_iterator itr;
+
+      for (itr = ParameterTable::begin(); itr != ParameterTable::end(); ++itr)
+      {
+        if (itr != ParameterTable::begin())
+          ss << ",";
+          
+        ss << itr->first << "=" << itr->second->value();
+      }
+
+      str = ss.str();
+    }
+  }
 }
-
-#include <DUNE/Maneuvers/Maneuver.hpp>
-#include <DUNE/Maneuvers/FollowTrajectory.hpp>
-#include <DUNE/Maneuvers/VehicleFormation.hpp>
-#include <DUNE/Maneuvers/RowsStages.hpp>
-#include <DUNE/Maneuvers/StationKeep.hpp>
-#include <DUNE/Maneuvers/Elevate.hpp>
-#include <DUNE/Maneuvers/MementoTable.hpp>
-
-#endif
