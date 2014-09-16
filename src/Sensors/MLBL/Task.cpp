@@ -58,10 +58,6 @@ namespace Sensors
     static const unsigned c_code_sys_restart = 0x01a6;
     //! Restart system ack code.
     static const unsigned c_code_sys_restart_ack = 0x01a7;
-    //! Modem base frequency.
-    static const unsigned c_base_frequency = 22000;
-    //! Channel to frequency.
-    static const unsigned c_chn_frequency = 1000;
     // Acoustic Report code.
     static const uint8_t c_code_report = 0x1;
     // Start plan code.
@@ -150,20 +146,15 @@ namespace Sensors
       std::string addr_section;
     };
 
+    //! Beacon
     struct Beacon
     {
       // Beacon name.
       std::string name;
-      // Ping command.
-      std::string ping_cmd;
       // Beacon id.
       unsigned id;
-      // Beacon receiving channel.
-      unsigned rx_channel;
       // Beacon receiving frequency.
       unsigned rx_frequency;
-      // Beacon transmission channel.
-      unsigned tx_channel;
       // Beacon transmission frequency.
       unsigned tx_frequency;
       // Last range.
@@ -176,14 +167,10 @@ namespace Sensors
       double lon;
       // Depth
       float depth;
-      // Delay
-      uint8_t delay;
 
       Beacon(void):
         id(0),
-        rx_channel(0),
         rx_frequency(0),
-        tx_channel(0),
         tx_frequency(0),
         range(0),
         range_time(0),
@@ -193,12 +180,31 @@ namespace Sensors
       { }
     };
 
+    //! Narrow band transponder.
+    struct Transponder
+    {
+      // Query frequency.
+      unsigned query_freq;
+      // Reply frequency.
+      unsigned reply_freq;
+
+      Transponder(unsigned q, unsigned r):
+        query_freq(q),
+        reply_freq(r)
+      { }
+    };
+
+    // Type definition for mapping addresses.
+    typedef std::map<std::string, Transponder> NarrowBandMap;
+
     struct Task: public DUNE::Tasks::Task
     {
       // Maximum buffer size.
       static const int c_bfr_size = 256;
       // Beacons.
       std::vector<Beacon> m_beacons;
+      // Map of narrow band transponders.
+      NarrowBandMap m_nbmap;
       // Serial port handle.
       SerialPort* m_uart;
       // Range.
@@ -354,6 +360,15 @@ namespace Sensors
 
 	m_stop_comms = true;
 
+        // Process narrow band transponders.
+        std::vector<std::string> txponders = ctx.config.options("Narrow Band Transponders");
+        for (unsigned i = 0; i < txponders.size(); ++i)
+        {
+          std::vector<unsigned> freqs;
+          ctx.config.get("Narrow Band Transponders", txponders[i], "", freqs);
+          m_nbmap.insert(std::make_pair(txponders[i], Transponder(freqs[0], freqs[1])));
+        }
+
         // Register handlers.
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
@@ -499,12 +514,6 @@ namespace Sensors
       onReportEntityState(void)
       {
         dispatch(m_states[m_state]);
-      }
-
-      unsigned
-      channelToFrequency(unsigned channel)
-      {
-        return channel * c_chn_frequency + c_base_frequency;
       }
 
       void
@@ -752,7 +761,6 @@ namespace Sensors
         }
       }
 
-
       void
       ping(void)
       {
@@ -844,21 +852,18 @@ namespace Sensors
             if (*itr == NULL)
               continue;
 
+            NarrowBandMap::iterator nb_itr = m_nbmap.find((*itr)->beacon);
+            if (nb_itr == m_nbmap.end())
+              return;
+
             Beacon beacon;
             beacon.id = i;
             beacon.name = (*itr)->beacon;
-            beacon.rx_channel = (*itr)->query_channel;
-            beacon.rx_frequency = channelToFrequency((*itr)->query_channel);
-            beacon.tx_channel = (*itr)->reply_channel;
-            beacon.tx_frequency = channelToFrequency((*itr)->reply_channel);
-            beacon.ping_cmd = String::str("$CCPNT,%u,%u,%u,%u,%u,0,0,0,1\r\n",
-                                          beacon.rx_frequency, m_args.tx_length,
-                                          m_args.rx_length, m_args.ping_tout,
-                                          beacon.tx_frequency);
+            beacon.rx_frequency = nb_itr->second.reply_freq;
+            beacon.tx_frequency = nb_itr->second.query_freq;
             beacon.lat = (*itr)->lat;
             beacon.lon = (*itr)->lon;
             beacon.depth = (*itr)->depth;
-            beacon.delay = (*itr)->transponder_delay;
 
             m_beacons.push_back(beacon);
           }
@@ -879,9 +884,6 @@ namespace Sensors
             beacon.lat = m_beacons[i].lat;
             beacon.lon = m_beacons[i].lon;
             beacon.depth = m_beacons[i].depth;
-            beacon.query_channel = m_beacons[i].rx_channel;
-            beacon.reply_channel = m_beacons[i].tx_channel;
-            beacon.transponder_delay = m_beacons[i].delay;
 
             cfg.beacons.push_back(beacon);
           }
