@@ -141,18 +141,6 @@ namespace DUNE
       void
       succeedDeactivation(void);
 
-      bool
-      operator==(std::string label)
-      {
-        return getLabel() == label;
-      }
-
-      bool
-      operator==(unsigned int id)
-      {
-        return getId() == id;
-      }
-
       //! Consume QueryEntityState messages andreply accordingly.
       //! @param[in] msg QueryEntityState message.
       void
