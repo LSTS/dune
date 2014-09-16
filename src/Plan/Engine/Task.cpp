@@ -1136,6 +1136,15 @@ namespace Plan
           m_vc_reply_deadline = -1;
 
           changeMode(IMC::PlanControlState::PCS_READY, DTR("vehicle reply timeout"));
+
+          // Popping all requests
+          while (m_requests.size())
+            m_requests.pop();
+
+          // Increment local request id to prevent old replies from being processed
+          ++m_vreq_ctr;
+
+          err(DTR("cleared all requests"));
         }
       }
 
