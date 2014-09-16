@@ -36,6 +36,8 @@ parser.add_argument('dest_file', metavar='DEST_FILE',
                     help="destination file")
 parser.add_argument('-x', '--xml', metavar='IMC_ADDR_XML',
                     help="IMC Addresses XML file")
+parser.add_argument('-f', '--force', action='store_true', required=False,
+                    help="Force creation of .ini file")
 args = parser.parse_args()
 
 # Parse XML specification.

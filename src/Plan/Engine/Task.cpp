@@ -594,6 +594,9 @@ namespace Plan
           case IMC::PlanControl::PC_STOP:
             stopPlan();
             break;
+          case IMC::PlanControl::PC_LOAD:
+            loadPlan(pc->plan_id, pc->arg.isNull() ? 0 : pc->arg.get(), false);
+            break;
           case IMC::PlanControl::PC_GET:
             getPlan();
             break;
@@ -618,50 +621,12 @@ namespace Plan
           return false;
         }
 
-        if (arg)
+        std::string info;
+        if (!parseArg(plan_id, arg, info))
         {
-          if (arg->getId() == DUNE_IMC_PLANSPECIFICATION)
-          {
-            const IMC::PlanSpecification* given_plan = static_cast<const IMC::PlanSpecification*>(arg);
-
-            m_spec = *given_plan;
-            m_spec.setSourceEntity(getEntityId());
-          }
-          else
-          {
-            // Quick plan
-            IMC::PlanManeuver spec_man;
-            const IMC::Maneuver* man = static_cast<const IMC::Maneuver*>(arg);
-
-            if (man)
-            {
-              spec_man.maneuver_id = arg->getName();
-              spec_man.data.set(*man);
-              m_spec.clear();
-              m_spec.maneuvers.setParent(&m_spec);
-              m_spec.plan_id = plan_id;
-              m_spec.start_man_id = arg->getName();
-              m_spec.maneuvers.push_back(spec_man);
-            }
-            else
-            {
-              changeMode(IMC::PlanControlState::PCS_READY,
-                         DTR("plan load failed: undefined maneuver or plan"));
-              return false;
-            }
-          }
-        }
-        else
-        {
-          // Search DB
-          m_spec.clear();
-
-          if (!lookForPlan(plan_id, m_spec))
-          {
-            changeMode(IMC::PlanControlState::PCS_READY,
-                       DTR("plan load failed: ") + m_reply.info);
-            return false;
-          }
+          changeMode(IMC::PlanControlState::PCS_READY,
+                     DTR("plan load failed: ") + info);
+          return false;
         }
 
         IMC::PlanStatistics ps;
@@ -669,7 +634,7 @@ namespace Plan
         if (!parsePlan(plan_startup, ps))
         {
           changeMode(IMC::PlanControlState::PCS_READY,
-                     DTR("plan validation failed: ") + m_reply.info);
+                     DTR("plan parse failed: ") + m_reply.info);
           return false;
         }
 
@@ -679,10 +644,7 @@ namespace Plan
 
         m_pcs.plan_id = m_spec.plan_id;
 
-        if (plan_startup)
-          onSuccess(DTR("plan loaded"), false);
-        else
-          changeMode(IMC::PlanControlState::PCS_READY, DTR("plan loaded"));
+        onSuccess(DTR("plan loaded"), false);
 
         return true;
       }
@@ -747,14 +709,19 @@ namespace Plan
       {
         try
         {
-          m_plan->parse(&m_supported_maneuvers, plan_startup, m_cinfo,
+          m_plan->parse(&m_supported_maneuvers, m_cinfo,
                         ps, m_imu_enabled, &m_state);
         }
         catch (Plan::ParseError& pe)
         {
           onFailure(pe.what());
+          m_plan->clear();
           return false;
         }
+
+        // if a plan is not gonna start after this, clear plan object
+        if (!plan_startup)
+          m_plan->clear();
 
         return true;
       }
@@ -794,6 +761,62 @@ namespace Plan
         catch (std::runtime_error& e)
         {
           onFailure(DTR("failed loading from DB: %s"), e.what());
+        }
+
+        return true;
+      }
+
+      //! Get the PlanSpecification from IMC::Message
+      //! @param[in] plan_id ID of the plan
+      //! @param[in] arg pointer to arg message
+      //! @param[out] info string with the error in case of failure
+      //! @return false if unable to get the spec
+      bool
+      parseArg(const std::string& plan_id, const IMC::Message* arg,
+               std::string& info)
+      {
+        if (arg)
+        {
+          if (arg->getId() == DUNE_IMC_PLANSPECIFICATION)
+          {
+            const IMC::PlanSpecification* given_plan = static_cast<const IMC::PlanSpecification*>(arg);
+
+            m_spec = *given_plan;
+            m_spec.setSourceEntity(getEntityId());
+          }
+          else
+          {
+            // Quick plan
+            IMC::PlanManeuver spec_man;
+            const IMC::Maneuver* man = static_cast<const IMC::Maneuver*>(arg);
+
+            if (man)
+            {
+              spec_man.maneuver_id = arg->getName();
+              spec_man.data.set(*man);
+              m_spec.clear();
+              m_spec.maneuvers.setParent(&m_spec);
+              m_spec.plan_id = plan_id;
+              m_spec.start_man_id = arg->getName();
+              m_spec.maneuvers.push_back(spec_man);
+            }
+            else
+            {
+              info = "undefined maneuver or plan";
+              return false;
+            }
+          }
+        }
+        else
+        {
+          // Search DB
+          m_spec.clear();
+
+          if (!lookForPlan(plan_id, m_spec))
+          {
+            info = m_reply.info;
+            return false;
+          }
         }
 
         return true;
