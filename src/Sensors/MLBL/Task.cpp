@@ -153,10 +153,10 @@ namespace Sensors
       std::string name;
       // Beacon id.
       unsigned id;
-      // Beacon receiving frequency.
-      unsigned rx_frequency;
-      // Beacon transmission frequency.
-      unsigned tx_frequency;
+      // Beacon query frequency.
+      unsigned query_frequency;
+      // Beacon reply frequency.
+      unsigned reply_frequency;
       // Last range.
       unsigned range;
       // Last range timestamp.
@@ -170,8 +170,8 @@ namespace Sensors
 
       Beacon(void):
         id(0),
-        rx_frequency(0),
-        tx_frequency(0),
+        query_frequency(0),
+        reply_frequency(0),
         range(0),
         range_time(0),
         lat(0),
@@ -768,13 +768,13 @@ namespace Sensors
         for (unsigned i = 0; i < Navigation::c_max_transponders; ++i)
         {
           if (i < m_beacons.size())
-            freqs.push_back(m_beacons[i].tx_frequency);
+            freqs.push_back(m_beacons[i].reply_frequency);
           else
             freqs.push_back(0);
         }
 
         std::string cmd = String::str("$CCPNT,%u,%u,%u,%u,%u,%u,%u,%u,1\r\n",
-                                      m_beacons[0].rx_frequency, m_args.tx_length,
+                                      m_beacons[0].query_frequency, m_args.tx_length,
                                       m_args.rx_length, m_args.ping_tout,
                                       freqs[0], freqs[1], freqs[2], freqs[3]);
 
@@ -859,8 +859,8 @@ namespace Sensors
             Beacon beacon;
             beacon.id = i;
             beacon.name = (*itr)->beacon;
-            beacon.rx_frequency = nb_itr->second.reply_freq;
-            beacon.tx_frequency = nb_itr->second.query_freq;
+            beacon.query_frequency = nb_itr->second.query_freq;
+            beacon.reply_frequency = nb_itr->second.reply_freq;
             beacon.lat = (*itr)->lat;
             beacon.lon = (*itr)->lon;
             beacon.depth = (*itr)->depth;
