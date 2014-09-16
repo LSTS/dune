@@ -111,6 +111,8 @@ namespace Plan
       unsigned m_eid_imu;
       //! IMU is enabled or not
       bool m_imu_enabled;
+      //! Queue of PlanControl messages
+      std::queue<IMC::PlanControl> m_requests;
       //! Task arguments.
       Arguments m_args;
 
@@ -388,7 +390,7 @@ namespace Plan
         bool error = vc->type == IMC::VehicleCommand::VC_FAILURE;
 
         // Ignore failure if it failed to stop calibration
-        if (vc->command == IMC::VehicleCommand::VC_STOP_CALIBRATION)
+        if (error && (vc->command == IMC::VehicleCommand::VC_STOP_CALIBRATION))
         {
           debug("%s", vc->info.c_str());
           error = false;
@@ -569,6 +571,27 @@ namespace Plan
         if (pc->type != IMC::PlanControl::PC_REQUEST)
           return;
 
+        if (pendingReply())
+        {
+          m_requests.push(*pc);
+          debug("saved request %u", pc->request_id);
+          return;
+        }
+        else if (m_requests.size())
+        {
+          m_requests.push(*pc);
+          processRequest(&m_requests.front());
+          m_requests.pop();
+        }
+        else
+        {
+          processRequest(pc);
+        }
+      }
+
+      void
+      processRequest(const IMC::PlanControl* pc)
+      {
         m_reply.setDestination(pc->getSource());
         m_reply.setDestinationEntity(pc->getSourceEntity());
         m_reply.request_id = pc->request_id;
@@ -761,6 +784,7 @@ namespace Plan
         catch (std::runtime_error& e)
         {
           onFailure(DTR("failed loading from DB: %s"), e.what());
+          return false;
         }
 
         return true;
@@ -1093,6 +1117,13 @@ namespace Plan
             m_last_vstate = now;
           }
 
+          // got requests to process
+          if (!pendingReply() && m_requests.size())
+          {
+            processRequest(&m_requests.front());
+            m_requests.pop();
+          }
+
           double delta = m_vc_reply_deadline < 0 ? 1 : m_vc_reply_deadline - now;
 
           if (delta > 0)
@@ -1105,6 +1136,15 @@ namespace Plan
           m_vc_reply_deadline = -1;
 
           changeMode(IMC::PlanControlState::PCS_READY, DTR("vehicle reply timeout"));
+
+          // Popping all requests
+          while (m_requests.size())
+            m_requests.pop();
+
+          // Increment local request id to prevent old replies from being processed
+          ++m_vreq_ctr;
+
+          err(DTR("cleared all requests"));
         }
       }
 
@@ -1122,7 +1162,6 @@ namespace Plan
         if (command == IMC::VehicleCommand::VC_START_CALIBRATION)
         {
           m_plan->calibrationStarted();
-          // one second of tolerance for the vehicle supervisor
           m_vc.calib_time = (uint16_t)m_plan->getEstimatedCalibrationTime();
         }
         else
