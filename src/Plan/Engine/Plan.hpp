@@ -82,14 +82,13 @@ namespace Plan
 
       //! Parse a given plan
       //! @param[in] supported_maneuvers list of supported maneuvers
-      //! @param[in] plan_startup true if the plan is starting up
       //! @param[in] cinfo map of components info
       //! @param[out] ps reference to PlanStatistics message
       //! @param[in] imu_enabled true if imu enabled, false otherwise
       //! @param[in] state pointer to EstimatedState message
       void
       parse(const std::set<uint16_t>* supported_maneuvers,
-            bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
+            const std::map<std::string, IMC::EntityInfo>& cinfo,
             IMC::PlanStatistics& ps, bool imu_enabled = false,
             const IMC::EstimatedState* state = NULL);
 
@@ -241,14 +240,12 @@ namespace Plan
       //! Perform secondary parsing procedures
       //! That involve action scheduling, statistics, etc
       //! Presumes buildGraph() did not fail
-      //! @param[in] plan_startup true if the plan is starting up
       //! @param[in] cinfo map of components info
       //! @param[out] ps reference to PlanStatistics message
       //! @param[in] imu_enabled true if imu enabled, false otherwise
       //! @param[in] state pointer to EstimatedState message
       void
-      secondaryParse(bool plan_startup,
-                     const std::map<std::string, IMC::EntityInfo>& cinfo,
+      secondaryParse(const std::map<std::string, IMC::EntityInfo>& cinfo,
                      IMC::PlanStatistics& ps, bool imu_enabled,
                      const IMC::EstimatedState* state);
 
