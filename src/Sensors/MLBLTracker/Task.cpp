@@ -86,13 +86,10 @@ namespace Sensors
       unsigned query_freq;
       // Reply frequency.
       unsigned reply_freq;
-      // Abort frequency.
-      unsigned abort_freq;
 
-      Transponder(unsigned q, unsigned r, unsigned a):
+      Transponder(unsigned q, unsigned r):
         query_freq(q),
-        reply_freq(r),
-        abort_freq(a)
+        reply_freq(r)
       { }
     };
 
@@ -238,9 +235,7 @@ namespace Sensors
         {
           std::vector<unsigned> freqs;
           ctx.config.get("Narrow Band Transponders", txponders[i], "", freqs);
-          if (freqs.size() == 2)
-            freqs.push_back(0);
-          m_nbmap.insert(std::make_pair(txponders[i], Transponder(freqs[0], freqs[1], freqs[2])));
+          m_nbmap.insert(std::make_pair(txponders[i], Transponder(freqs[0], freqs[1])));
         }
 
         // Register message handlers.
@@ -434,14 +429,9 @@ namespace Sensors
         NarrowBandMap::iterator nitr = m_nbmap.find(sys);
         if (nitr != m_nbmap.end())
         {
-          if (nitr->second.abort_freq == 0)
-          {
-            m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
-            dispatch(m_acop_out);
-            return;
-          }
-
-          abortNarrowBand(sys, nitr->second.abort_freq);
+          m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
+          dispatch(m_acop_out);
+          return;
         }
 
         MicroModemMap::iterator itr = m_ummap.find(sys);
@@ -456,28 +446,6 @@ namespace Sensors
         sendCommand(cmd);
         m_op = OP_ABORT;
         m_op_deadline = Clock::get() + m_args.tout_abort;
-      }
-
-      void
-      abortNarrowBand(const std::string& sys, unsigned freq)
-      {
-        m_acop_out.op = IMC::AcousticOperation::AOP_ABORT_IP;
-        m_acop_out.system = sys;
-        dispatch(m_acop_out);
-
-        char bfr[128];
-        for (unsigned i = 0; i < 10; ++i)
-        {
-          std::string cmd = String::str("$CCPNT,%u,%u,%u,100,23000,0,0,0,1\r\n", freq,
-                                        m_args.tx_length, m_args.rx_length);
-          sendCommand(cmd);
-          m_uart->read(bfr, sizeof(bfr));
-          Delay::wait(0.2);
-          m_uart->flushInput();
-        }
-
-        m_acop_out.op = IMC::AcousticOperation::AOP_ABORT_TIMEOUT;
-        dispatch(m_acop_out);
       }
 
       void
