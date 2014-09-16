@@ -111,6 +111,8 @@ namespace Plan
       unsigned m_eid_imu;
       //! IMU is enabled or not
       bool m_imu_enabled;
+      //! Queue of PlanControl messages
+      std::queue<IMC::PlanControl> m_requests;
       //! Task arguments.
       Arguments m_args;
 
@@ -569,6 +571,27 @@ namespace Plan
         if (pc->type != IMC::PlanControl::PC_REQUEST)
           return;
 
+        if (pendingReply())
+        {
+          m_requests.push(*pc);
+          debug("saved request %u", pc->request_id);
+          return;
+        }
+        else if (m_requests.size())
+        {
+          m_requests.push(*pc);
+          processRequest(&m_requests.front());
+          m_requests.pop();
+        }
+        else
+        {
+          processRequest(pc);
+        }
+      }
+
+      void
+      processRequest(const IMC::PlanControl* pc)
+      {
         m_reply.setDestination(pc->getSource());
         m_reply.setDestinationEntity(pc->getSourceEntity());
         m_reply.request_id = pc->request_id;
@@ -1092,6 +1115,13 @@ namespace Plan
           {
             changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("vehicle state timeout"));
             m_last_vstate = now;
+          }
+
+          // got requests to process
+          if (!pendingReply() && m_requests.size())
+          {
+            processRequest(&m_requests.front());
+            m_requests.pop();
           }
 
           double delta = m_vc_reply_deadline < 0 ? 1 : m_vc_reply_deadline - now;
