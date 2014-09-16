@@ -22,25 +22,65 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_MANEUVERS_HPP_INCLUDED_
-#define DUNE_MANEUVERS_HPP_INCLUDED_
+#ifndef DUNE_MANEUVER_MEMENTO_TABLE_HPP_INCLUDED_
+#define DUNE_MANEUVER_MEMENTO_TABLE_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <string>
+#include <map>
+#include <sstream>
+
+// DUNE headers.
+#include <DUNE/Tasks/ParameterTable.hpp>
+#include <DUNE/Tasks/BasicParameterParser.hpp>
 
 namespace DUNE
 {
-  //! %Maneuver routines and classes.
   namespace Maneuvers
-  { }
-}
+  {
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM MementoTable;
 
-#include <DUNE/Maneuvers/Maneuver.hpp>
-#include <DUNE/Maneuvers/FollowTrajectory.hpp>
-#include <DUNE/Maneuvers/VehicleFormation.hpp>
-#include <DUNE/Maneuvers/RowsStages.hpp>
-#include <DUNE/Maneuvers/StationKeep.hpp>
-#include <DUNE/Maneuvers/Elevate.hpp>
-#include <DUNE/Maneuvers/MementoTable.hpp>
+    //! Class to gather memento information for a maneuver
+    class MementoTable: public Tasks::ParameterTable
+    {
+    public:
+      //! Constructor
+      MementoTable(void)
+      { }
+
+      //! Destructor
+      ~MementoTable(void)
+      { };
+
+      //! Add a new pair name=value to the table
+      //! @param[in] name the string identifying the memento
+      //! @param[in] var the variable associated to the name
+      //! @return the corresponding added parameter
+      template <typename T>
+      Tasks::Parameter&
+      add(const std::string& name, T& var)
+      {
+        Tasks::BasicParameterParser<T>* parser;
+        parser = new Tasks::BasicParameterParser<T>(var);
+        return ParameterTable::add(name, &var, parser);
+      }
+
+      //! Fill the table values with a Tuple List
+      //! Parameters must have been previously added
+      //! @param[in] str tuple list in the comma separated format "name=value"
+      void
+      fill(const std::string& str);
+
+      //! Write the tuples to a string
+      //! @param[out] str string to which the parameters will be written
+      void
+      writeTuples(std::string& str);
+    };
+  }
+}
 
 #endif
