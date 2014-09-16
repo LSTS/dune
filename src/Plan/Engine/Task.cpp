@@ -388,7 +388,7 @@ namespace Plan
         bool error = vc->type == IMC::VehicleCommand::VC_FAILURE;
 
         // Ignore failure if it failed to stop calibration
-        if (vc->command == IMC::VehicleCommand::VC_STOP_CALIBRATION)
+        if (error && (vc->command == IMC::VehicleCommand::VC_STOP_CALIBRATION))
         {
           debug("%s", vc->info.c_str());
           error = false;
@@ -1123,7 +1123,6 @@ namespace Plan
         if (command == IMC::VehicleCommand::VC_START_CALIBRATION)
         {
           m_plan->calibrationStarted();
-          // one second of tolerance for the vehicle supervisor
           m_vc.calib_time = (uint16_t)m_plan->getEstimatedCalibrationTime();
         }
         else
