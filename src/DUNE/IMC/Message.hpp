@@ -70,14 +70,9 @@ namespace DUNE
 
       //! Reset message's fields.
       virtual void
-      clear(void) = 0;
-
-      //! Validate the message's contents.
-      //! @return negative value in case of a valid message or a
-      //! positive value indicating the position of the invalid
-      //! message field.
-      virtual int
-      validate(void) const = 0;
+      clear(void)
+      {
+      }
 
       //! Retrieve message's name.
       //! @return message's name.
@@ -270,21 +265,34 @@ namespace DUNE
       }
 
       virtual uint8_t*
-      serializeFields(uint8_t* bfr) const = 0;
+      serializeFields(uint8_t* bfr) const
+      {
+        return bfr;
+      }
 
       //! Deserialize message fields from a packet.
       //! @param bfr stream of bytes (packet)
       //! @param len length of the byte stream.
       //! @return number of bytes processed.
       virtual uint16_t
-      deserializeFields(const uint8_t* bfr, uint16_t len) = 0;
+      deserializeFields(const uint8_t* bfr, uint16_t len)
+      {
+        (void)bfr;
+        (void)len;
+        return 0;
+      }
 
       //! Deserialize message fields from a packet, swapping the byte order.
       //! @param bfr stream of bytes (packet)
       //! @param len length of the byte stream.
       //! @return number of bytes processed.
       virtual uint16_t
-      reverseDeserializeFields(const uint8_t* bfr, uint16_t len) = 0;
+      reverseDeserializeFields(const uint8_t* bfr, uint16_t len)
+      {
+        (void)bfr;
+        (void)len;
+        return 0;
+      }
 
       //! Output the message fields (excluding header) in JSON format.
       //! @param os output stream.

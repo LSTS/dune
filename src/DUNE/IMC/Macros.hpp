@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 5b8a4390bc5e18a3cda0e31fc948ef33                            *
+// IMC XML MD5: f4b4672f3960c6a8dd70e28172f32401                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -256,6 +256,8 @@
 #define DUNE_IMC_ALIGNMENTSTATE 361
 //! GroupStreamVelocity identification number.
 #define DUNE_IMC_GROUPSTREAMVELOCITY 362
+//! ControlCommand identification number.
+#define DUNE_IMC_CONTROLCOMMAND None
 //! DesiredHeading identification number.
 #define DUNE_IMC_DESIREDHEADING 400
 //! DesiredZ identification number.
@@ -284,6 +286,8 @@
 #define DUNE_IMC_CONTROLPARCEL 412
 //! Brake identification number.
 #define DUNE_IMC_BRAKE 413
+//! Maneuver identification number.
+#define DUNE_IMC_MANEUVER None
 //! Goto identification number.
 #define DUNE_IMC_GOTO 450
 //! PopUp identification number.
