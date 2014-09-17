@@ -33,6 +33,7 @@
 
 // Local headers
 #include "Constants.hpp"
+#include "MuxedManeuver.hpp"
 
 using DUNE_NAMESPACES;
 
@@ -40,35 +41,31 @@ namespace Maneuver
 {
   namespace Multiplexer
   {
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM PopUp;
+    //! Arguments
+    struct PopUpArgs
+    {
+      //! Minimum number of satelites to accept fix
+      unsigned min_sats;
+      //! Minimum distance between gps_fix position and the estimated state
+      float min_distance;
+      //! Radius for the elevator behavior
+      float elev_radius;
+      //! Maximum distance from station keeping radial circle
+      float max_sk_dist;
+    };
 
     //! PopUp maneuver
-    class PopUp
+    class PopUp: public MuxedManeuver<IMC::PopUp, PopUpArgs>
     {
     public:
-      //! Arguments
-      struct PopUpArgs
-      {
-        //! Minimum number of satelites to accept fix
-        unsigned min_sats;
-        //! Minimum distance between gps_fix position and the estimated state
-        float min_distance;
-        //! Radius for the elevator behavior
-        float elev_radius;
-        //! Maximum distance from station keeping radial circle
-        float max_sk_dist;
-      };
-
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args popup arguments
       PopUp(Maneuvers::Maneuver* task, PopUpArgs* args):
+        MuxedManeuver(task, args),
         m_skeep(NULL),
         m_elevate(NULL),
-        m_pstate(ST_INITIAL),
-        m_args(args),
-        m_task(task)
+        m_pstate(ST_INITIAL)
       { }
 
       //! Destructor
@@ -153,7 +150,7 @@ namespace Maneuver
       //! Start maneuver function
       //! @param[in] maneuver rows maneuver message
       void
-      start(const IMC::PopUp* maneuver)
+      onStart(const IMC::PopUp* maneuver)
       {
         m_maneuver = *maneuver;
 
@@ -411,10 +408,6 @@ namespace Maneuver
       Time::Counter<float> m_dur_timer;
       //! PopUp maneuver state
       PopUpState m_pstate;
-      //! Arguments
-      PopUpArgs* m_args;
-      //! Pointer to task
-      Maneuvers::Maneuver* m_task;
     };
   }
 }

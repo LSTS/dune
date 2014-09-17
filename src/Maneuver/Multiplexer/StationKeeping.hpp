@@ -31,33 +31,32 @@
 
 #include <DUNE/DUNE.hpp>
 
+// Local headers
+#include "MuxedManeuver.hpp"
+
 using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
   namespace Multiplexer
   {
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM StationKeeping;
+    struct StationKeepingArgs
+    {
+      //! Minimum radius to prevent incompatibility with path controller
+      double min_radius;
+    };
 
     //! StationKeeping maneuver
-    class StationKeeping
+    class StationKeeping: public MuxedManeuver<IMC::StationKeeping, StationKeepingArgs>
     {
     public:
-      struct StationKeepingArgs
-      {
-        //! Minimum radius to prevent incompatibility with path controller
-        double min_radius;
-      };
-
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args stationkeeping arguments
       StationKeeping(Maneuvers::Maneuver* task, StationKeepingArgs* args):
+        MuxedManeuver(task, args),
         m_skeep(NULL),
-        m_end_time(-1.0),
-        m_task(task),
-        m_args(args)
+        m_end_time(-1.0)
       { }
 
       ~StationKeeping(void)
@@ -68,7 +67,7 @@ namespace Maneuver
       //! Start maneuver function
       //! @param[in] maneuver stationkeeping maneuver message
       void
-      start(const IMC::StationKeeping* maneuver)
+      onStart(const IMC::StationKeeping* maneuver)
       {
         m_duration = maneuver->duration;
 
@@ -135,10 +134,6 @@ namespace Maneuver
       float m_duration;
       //! End time for the maneuver
       double m_end_time;
-      //! Pointer to task
-      Maneuvers::Maneuver* m_task;
-      //! Task arguments
-      StationKeepingArgs* m_args;
     };
   }
 }

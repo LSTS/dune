@@ -30,52 +30,51 @@
 
 #include <DUNE/DUNE.hpp>
 
+// Local headers
+#include "MuxedManeuver.hpp"
+
 using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
   namespace Multiplexer
   {
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM Dislodge;
+    struct DislodgeArgs
+    {
+      //! Number of bursts
+      unsigned bursts;
+      //! Number of total attempts
+      unsigned attempts;
+      //! Burst duration
+      float burst_time;
+      //! Interval between bursts
+      float interval_time;
+      //! Minimum distance to ground or object to stop burst
+      float min_distance;
+      //! Safe depth change to consider the maneuver was successful
+      float safe_gap;
+      //! Depth threshold to be considered surface
+      float depth_threshold;
+    };
 
     //! Dislodge maneuver
-    class Dislodge
+    class Dislodge: public MuxedManeuver<IMC::Dislodge, DislodgeArgs>
     {
     public:
-      struct DislodgeArgs
-      {
-        //! Number of bursts
-        unsigned bursts;
-        //! Number of total attempts
-        unsigned attempts;
-        //! Burst duration
-        float burst_time;
-        //! Interval between bursts
-        float interval_time;
-        //! Minimum distance to ground or object to stop burst
-        float min_distance;
-        //! Safe depth change to consider the maneuver was successful
-        float safe_gap;
-        //! Depth threshold to be considered surface
-        float depth_threshold;
-      };
-
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args pointer to Maneuver's arguments
       Dislodge(Maneuvers::Maneuver* task, DislodgeArgs* args):
+        MuxedManeuver(task, args),
         m_state(ST_START),
         m_got_depth(false),
-        m_bursting(false),
-        m_task(task),
-        m_args(args)
+        m_bursting(false)
       { }
 
       //! Start maneuver function
       //! @param[in] maneuver idle maneuver message
       void
-      start(const IMC::Dislodge* maneuver)
+      onStart(const IMC::Dislodge* maneuver)
       {
         m_task->setControl(IMC::CL_SPEED);
 
@@ -290,10 +289,6 @@ namespace Maneuver
       unsigned m_attempts;
       //! Timer for bursts and intervals
       Time::Counter<float> m_timer;
-      //! Pointer to task
-      Maneuvers::Maneuver* m_task;
-      //! Pointer to args
-      DislodgeArgs* m_args;
     };
   }
 }

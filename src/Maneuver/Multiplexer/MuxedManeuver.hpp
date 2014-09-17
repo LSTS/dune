@@ -23,16 +23,15 @@
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
-// Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-#ifndef MANEUVER_MULTIPLEXER_ROWS_HPP_INCLUDED_
-#define MANEUVER_MULTIPLEXER_ROWS_HPP_INCLUDED_
+#ifndef MANEUVER_MULTIPLEXER_MUXED_MANEUVER_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_MUXED_MANEUVER_HPP_INCLUDED_
 
 #include <DUNE/DUNE.hpp>
 
 // Local headers
-#include "MuxedManeuver.hpp"
+#include "AbstractMux.hpp"
 
 using DUNE_NAMESPACES;
 
@@ -40,94 +39,45 @@ namespace Maneuver
 {
   namespace Multiplexer
   {
-    //! Rows maneuver
-    class Rows: public MuxedManeuver<IMC::Rows, void>
+    //! Multiplexed maneuver
+    template <typename Msg, typename Arg>
+    class MuxedManeuver: public AbstractMux
     {
     public:
-      //! Default constructor.
+      //! Constructor
       //! @param[in] task pointer to Maneuver task
-      Rows(Maneuvers::Maneuver* task):
-        MuxedManeuver(task),
-        m_parser(NULL)
+      //! @param[in] args pointer to arguments
+      MuxedManeuver(Maneuvers::Maneuver* task, Arg* args):
+        AbstractMux(task),
+        m_args(args)
+      { }
+
+      //! Constructor
+      //! @param[in] task pointer to Maneuver task
+      MuxedManeuver(Maneuvers::Maneuver* task):
+        AbstractMux(task)
       { }
 
       //! Destructor
-      ~Rows(void)
-      {
-        Memory::clear(m_parser);
-      }
+      virtual
+      ~MuxedManeuver(void)
+      { }
 
       //! Start maneuver function
       //! @param[in] maneuver rows maneuver message
       void
-      onStart(const IMC::Rows* maneuver)
+      start(const IMC::Maneuver* maneuver)
       {
-        Memory::clear(m_parser);
-
-        m_parser = new Maneuvers::RowsStages(maneuver, m_task);
-
-        // Get it started
-        m_task->setControl(IMC::CL_PATH);
-        m_path.speed = maneuver->speed;
-        m_path.speed_units = maneuver->speed_units;
-        m_path.end_z = maneuver->z;
-        m_path.end_z_units = maneuver->z_units;
-
-        double lat;
-        double lon;
-
-        if (m_parser->getFirstPoint(&lat, &lon))
-        {
-          m_task->signalCompletion();
-          return;
-        }
-
-        sendPath(lat, lon);
+        onStart(static_cast<const Msg*>(maneuver));
       }
 
-      //! On PathControlState message
-      //! @param[in] pcs pointer to PathControlState message
-      void
-      onPathControlState(const IMC::PathControlState* pcs)
-      {
-        std::stringstream ss;
-        ss << "waypoint=" << m_parser->getIndex();
+      //! Maneuver start
+      virtual void
+      onStart(const Msg* maneuver) = 0;
 
-        m_task->signalProgress(pcs->eta, ss.str());
-
-        if (!(pcs->flags & IMC::PathControlState::FL_NEAR))
-          return;
-
-        double lat;
-        double lon;
-
-        if (m_parser->getNextPoint(&lat, &lon))
-        {
-          m_task->signalCompletion();
-          return;
-        }
-
-        sendPath(lat, lon);
-      }
-
-      //! Send new desired path
-      //! @param[in] lat latitude for new desired path
-      //! @param[in] lon longitude for new desired path
-      void
-      sendPath(double lat, double lon)
-      {
-        // Calculate WGS-84 coordinates and fill DesiredPath message
-        m_path.end_lat = lat;
-        m_path.end_lon = lon;
-        m_path.flags = 0;
-        m_task->dispatch(m_path);
-      }
-
-    private:
-      //! Rows stages parser
-      Maneuvers::RowsStages* m_parser;
-      //! Desired path message
-      IMC::DesiredPath m_path;
+    protected:
+      //! Pointer to arguments
+      Arg* m_args;
     };
   }
 }
