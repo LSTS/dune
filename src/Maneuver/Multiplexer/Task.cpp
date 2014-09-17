@@ -45,6 +45,7 @@
 #include "Elevator.hpp"
 #include "PopUp.hpp"
 #include "Dislodge.hpp"
+#include "MuxedManeuver.hpp"
 
 namespace Maneuver
 {
@@ -90,41 +91,21 @@ namespace Maneuver
       //! List of not supported maneuvers
       std::vector<std::string> unsupported;
       //! Loiter Arguments
-      Loiter::LoiterArgs loiter;
+      LoiterArgs loiter;
       //! StationKeeping Arguments
-      StationKeeping::StationKeepingArgs sk;
+      StationKeepingArgs sk;
       //! Yoyo Arguments
-      YoYo::YoYoArgs yoyo;
+      YoYoArgs yoyo;
       //! Elevator Arguments
-      Elevator::ElevatorArgs elevator;
+      ElevatorArgs elevator;
       //! PopUp Arguments
-      PopUp::PopUpArgs popup;
+      PopUpArgs popup;
       //! Dislodge Arguments
-      Dislodge::DislodgeArgs dislodge;
+      DislodgeArgs dislodge;
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
     {
-      //! Idle
-      Idle* m_idle;
-      //! Goto
-      Goto* m_goto;
-      //! Loiter
-      Loiter* m_loiter;
-      //! StationKeeping
-      StationKeeping* m_sk;
-      //! YoYo
-      YoYo* m_yoyo;
-      //! Rows
-      Rows* m_rows;
-      //! FollowPath
-      FollowPath* m_followpath;
-      //! Elevator
-      Elevator* m_elevator;
-      //! PopUp
-      PopUp* m_popup;
-      //! Dislodge
-      Dislodge* m_dislodge;
       //! Type of maneuver to perform
       ManeuverType m_type;
       //! Array of entity ids
@@ -134,21 +115,13 @@ namespace Maneuver
       //! Map of message id to maneuver type
       typedef std::map<uint32_t, uint8_t> MultiplexMap;
       MultiplexMap m_map;
+      //! Array of AbstractMuxes
+      AbstractMux* m_maneuvers[TYPE_TOTAL];
       //! Task arguments
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx),
-        m_idle(NULL),
-        m_goto(NULL),
-        m_loiter(NULL),
-        m_sk(NULL),
-        m_yoyo(NULL),
-        m_rows(NULL),
-        m_followpath(NULL),
-        m_elevator(NULL),
-        m_popup(NULL),
-        m_dislodge(NULL)
+        DUNE::Maneuvers::Maneuver(name, ctx)
       {
         for (unsigned i = 0; i < TYPE_TOTAL; i++)
         {
@@ -257,6 +230,9 @@ namespace Maneuver
 
         m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.dislodge.depth_threshold);
 
+        for (unsigned i = 0; i < TYPE_TOTAL; ++i)
+          m_maneuvers[i] = NULL;
+
         bind<IMC::EstimatedState>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::VehicleMedium>(this);
@@ -298,34 +274,42 @@ namespace Maneuver
         bindToManeuvers<Task>(this, m_supported);
       }
 
+      template <typename Type, typename Args>
+      AbstractMux*
+      create(Args* args)
+      {
+        Type* mux = new Type(static_cast<Maneuvers::Maneuver*>(this), args);
+        return static_cast<AbstractMux*>(mux);
+      }
+
+      template <typename Type>
+      AbstractMux*
+      create(void)
+      {
+        Type* mux = new Type(static_cast<Maneuvers::Maneuver*>(this));
+        return static_cast<AbstractMux*>(mux);
+      }
+
       void
       onResourceAcquisition(void)
       {
-        m_idle = new Idle(static_cast<Maneuvers::Maneuver*>(this));
-        m_goto = new Goto(static_cast<Maneuvers::Maneuver*>(this));
-        m_loiter = new Loiter(static_cast<Maneuvers::Maneuver*>(this), &m_args.loiter);
-        m_sk = new StationKeeping(static_cast<Maneuvers::Maneuver*>(this), &m_args.sk);
-        m_yoyo = new YoYo(static_cast<Maneuvers::Maneuver*>(this), &m_args.yoyo);
-        m_rows = new Rows(static_cast<Maneuvers::Maneuver*>(this));
-        m_followpath = new FollowPath(static_cast<Maneuvers::Maneuver*>(this));
-        m_elevator = new Elevator(static_cast<Maneuvers::Maneuver*>(this), &m_args.elevator);
-        m_popup = new PopUp(static_cast<Maneuvers::Maneuver*>(this), &m_args.popup);
-        m_dislodge = new Dislodge(static_cast<Maneuvers::Maneuver*>(this), &m_args.dislodge);
+        m_maneuvers[TYPE_IDLE] = create<Idle>();
+        m_maneuvers[TYPE_GOTO] = create<Goto>();
+        m_maneuvers[TYPE_LOITER] = create<Loiter>(&m_args.loiter);
+        m_maneuvers[TYPE_SKEEP] = create<StationKeeping>(&m_args.sk);
+        m_maneuvers[TYPE_YOYO] = create<YoYo>(&m_args.yoyo);
+        m_maneuvers[TYPE_ROWS] = create<Rows>();
+        m_maneuvers[TYPE_FOLLOWPATH] = create<FollowPath>();
+        m_maneuvers[TYPE_ELEVATOR] = create<Elevator>(&m_args.elevator);
+        m_maneuvers[TYPE_POPUP] = create<PopUp>(&m_args.popup);
+        m_maneuvers[TYPE_DISLODGE] = create<Dislodge>(&m_args.dislodge);
       }
 
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_idle);
-        Memory::clear(m_goto);
-        Memory::clear(m_loiter);
-        Memory::clear(m_sk);
-        Memory::clear(m_yoyo);
-        Memory::clear(m_rows);
-        Memory::clear(m_followpath);
-        Memory::clear(m_elevator);
-        Memory::clear(m_popup);
-        Memory::clear(m_dislodge);
+        for (unsigned i = 0; i < TYPE_TOTAL; ++i)
+          Memory::clear(m_maneuvers[i]);
       }
 
       void
@@ -362,145 +346,43 @@ namespace Maneuver
         m_type = (ManeuverType)itr->second;
         changeEntity();
 
-        switch (m_type)
+        if (m_type >= TYPE_TOTAL)
         {
-          case TYPE_IDLE:
-            m_idle->start(static_cast<const IMC::IdleManeuver*>(maneuver));
-            break;
-          case TYPE_GOTO:
-            m_goto->start(static_cast<const IMC::Goto*>(maneuver));
-            break;
-          case TYPE_LOITER:
-            m_loiter->start(static_cast<const IMC::Loiter*>(maneuver));
-            break;
-          case TYPE_SKEEP:
-            m_sk->start(static_cast<const IMC::StationKeeping*>(maneuver));
-            break;
-          case TYPE_YOYO:
-            m_yoyo->start(static_cast<const IMC::YoYo*>(maneuver));
-            break;
-          case TYPE_ROWS:
-            m_rows->start(static_cast<const IMC::Rows*>(maneuver));
-            break;
-          case TYPE_FOLLOWPATH:
-            m_followpath->start(static_cast<const IMC::FollowPath*>(maneuver));
-            break;
-          case TYPE_ELEVATOR:
-            m_elevator->start(static_cast<const IMC::Elevator*>(maneuver));
-            break;
-          case TYPE_POPUP:
-            m_popup->start(static_cast<const IMC::PopUp*>(maneuver));
-            break;
-          case TYPE_DISLODGE:
-            m_dislodge->start(static_cast<const IMC::Dislodge*>(maneuver));
-            break;
-          default:
-            break;
+          signalError(DTR("wrong maneuver type"));
+          return;
         }
+
+        m_maneuvers[m_type]->start(maneuver);
       }
 
       void
       consume(const IMC::EstimatedState* msg)
       {
-        switch (m_type)
-        {
-          case TYPE_SKEEP:
-            m_sk->onEstimatedState(msg);
-            break;
-          case TYPE_YOYO:
-            m_yoyo->onEstimatedState(msg);
-            break;
-          case TYPE_ELEVATOR:
-            m_elevator->onEstimatedState(msg);
-            break;
-          case TYPE_POPUP:
-            m_popup->onEstimatedState(msg);
-            break;
-          case TYPE_DISLODGE:
-            m_dislodge->onEstimatedState(msg);
-            break;
-          default:
-            break;
-        }
+        m_maneuvers[m_type]->onEstimatedState(msg);
       }
 
       void
       consume(const IMC::GpsFix* msg)
       {
-        switch (m_type)
-        {
-          case TYPE_POPUP:
-            m_popup->onGpsFix(msg);
-            break;
-          default:
-            break;
-        }
+        m_maneuvers[m_type]->onGpsFix(msg);
       }
 
       void
       consume(const IMC::VehicleMedium* msg)
       {
-        switch (m_type)
-        {
-          case TYPE_POPUP:
-            m_popup->onVehicleMedium(msg);
-            break;
-          default:
-            break;
-        }
+        m_maneuvers[m_type]->onVehicleMedium(msg);
       }
 
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {
-        switch (m_type)
-        {
-          case TYPE_GOTO:
-            m_goto->onPathControlState(pcs);
-            break;
-          case TYPE_LOITER:
-            m_loiter->onPathControlState(pcs);
-            break;
-          case TYPE_SKEEP:
-            m_sk->onPathControlState(pcs);
-            break;
-          case TYPE_YOYO:
-            m_yoyo->onPathControlState(pcs);
-            break;
-          case TYPE_ROWS:
-            m_rows->onPathControlState(pcs);
-            break;
-          case TYPE_FOLLOWPATH:
-            m_followpath->onPathControlState(pcs);
-            break;
-          case TYPE_ELEVATOR:
-            m_elevator->onPathControlState(pcs);
-            break;
-          case TYPE_POPUP:
-            m_popup->onPathControlState(pcs);
-            break;
-          default:
-            break;
-        }
+        m_maneuvers[m_type]->onPathControlState(pcs);
       }
 
       void
       onStateReport(void)
       {
-        switch (m_type)
-        {
-          case TYPE_IDLE:
-            m_idle->onStateReport();
-            break;
-          case TYPE_SKEEP:
-            m_sk->onStateReport();
-            break;
-          case TYPE_POPUP:
-            m_popup->onStateReport();
-            break;
-          default:
-            break;
-        }
+        m_maneuvers[m_type]->onStateReport();
       }
     };
   }
