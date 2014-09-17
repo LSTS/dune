@@ -54,7 +54,7 @@ namespace DUNE
 
       //! Destructor
       ~MementoTable(void)
-      { };
+      { }
 
       //! Add a new pair name=value to the table
       //! @param[in] name the string identifying the memento
