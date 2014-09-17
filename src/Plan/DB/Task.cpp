@@ -471,12 +471,9 @@ namespace Plan
           Database::Blob data;
           *m_get_plan_stmt >> data;
 
-          IMC::PlanSpecification* spec = new IMC::PlanSpecification;
-          spec->deserializeFields((const uint8_t*)&data[0], data.size());
-          m_reply.arg.set(spec);
-
-          if (m_args.trace)
-            spec->toText(std::cerr);
+          IMC::PlanSpecification spec;
+          spec.deserializeFields((const uint8_t*)&data[0], data.size());
+          m_reply.arg.set(&spec);
 
           onSuccess();
         }
