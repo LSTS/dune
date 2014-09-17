@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: f4b4672f3960c6a8dd70e28172f32401                            *
+// IMC XML MD5: fea3a402c4ef5e48fc13b4b5b9dcca6d                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -11554,7 +11554,7 @@ namespace DUNE
     };
 
     //! Follow System.
-    class FollowSystem: public Message
+    class FollowSystem: public Maneuver
     {
     public:
       //! System To Follow.
@@ -11618,13 +11618,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 22 + Message::getFixedSerializationSize();
+        return 22 + Maneuver::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return Message::getVariableSerializationSize();
+        return Maneuver::getVariableSerializationSize();
       }
 
       void

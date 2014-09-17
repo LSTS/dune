@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: f4b4672f3960c6a8dd70e28172f32401                            *
+// IMC XML MD5: fea3a402c4ef5e48fc13b4b5b9dcca6d                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -11930,7 +11930,7 @@ namespace DUNE
     void
     FollowSystem::clear(void)
     {
-      Message::clear();
+      Maneuver::clear();
       system = 0;
       duration = 0;
       speed = 0;
@@ -11944,7 +11944,7 @@ namespace DUNE
     bool
     FollowSystem::fieldsEqual(const Message& msg__) const
     {
-      if (!Message::fieldsEqual(msg__)) return false;
+      if (!Maneuver::fieldsEqual(msg__)) return false;
       const IMC::FollowSystem& other__ = static_cast<const FollowSystem&>(msg__);
       if (system != other__.system) return false;
       if (duration != other__.duration) return false;
@@ -11961,7 +11961,7 @@ namespace DUNE
     FollowSystem::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
-      ptr__ = Message::serializeFields(ptr__);
+      ptr__ = Maneuver::serializeFields(ptr__);
       ptr__ += IMC::serialize(system, ptr__);
       ptr__ += IMC::serialize(duration, ptr__);
       ptr__ += IMC::serialize(speed, ptr__);
@@ -11977,7 +11977,7 @@ namespace DUNE
     FollowSystem::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += Message::deserializeFields(bfr__, size__);
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(system, bfr__, size__);
       bfr__ += IMC::deserialize(duration, bfr__, size__);
       bfr__ += IMC::deserialize(speed, bfr__, size__);
@@ -11993,7 +11993,7 @@ namespace DUNE
     FollowSystem::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += Message::reverseDeserializeFields(bfr__, size__);
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(system, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(duration, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(speed, bfr__, size__);
@@ -12008,7 +12008,7 @@ namespace DUNE
     void
     FollowSystem::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
-      Message::fieldsToJSON(os__, nindent__);
+      Maneuver::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "system", system, nindent__);
       IMC::toJSON(os__, "duration", duration, nindent__);
       IMC::toJSON(os__, "speed", speed, nindent__);
