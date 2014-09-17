@@ -119,6 +119,18 @@ namespace DUNE
         m_reg_man.insert(M::getIdStatic());
       }
 
+      template <typename T>
+      void
+      bindToManeuvers(T* task_obj, const std::vector<uint32_t>& list)
+      {
+        void (Maneuver::* startfunc)(const IMC::Maneuver*) = &Maneuver::startManeuver<T, IMC::Maneuver>;
+
+        Task::bind<T, IMC::Maneuver>(task_obj, list, startfunc);
+
+        for (unsigned int i = 0; i < list.size(); ++i)
+          m_reg_man.insert(list[i]);
+      }
+
       template <typename M, typename T>
       void
       consumeIfActive(const M* msg)
