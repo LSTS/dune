@@ -69,6 +69,10 @@ namespace DUNE
         return ParameterTable::add(name, &var, parser);
       }
 
+      //! Set default values
+      void
+      setDefaults(void);
+
       //! Fill the table values with a Tuple List
       //! Parameters must have been previously added
       //! @param[in] str tuple list in the comma separated format "name=value"

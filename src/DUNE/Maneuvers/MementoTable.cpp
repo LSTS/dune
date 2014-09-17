@@ -38,6 +38,16 @@ namespace DUNE
   namespace Maneuvers
   {
     void
+    MementoTable::setDefaults(void)
+    {
+      std::map<std::string, Tasks::Parameter*>::const_iterator itr;
+      itr = ParameterTable::begin();
+
+      for (; itr != ParameterTable::end(); ++itr)
+        ParameterTable::set(itr->first, itr->second->defaultValue());
+    }
+
+    void
     MementoTable::fill(const std::string& str)
     {
       Utils::TupleList tl(str, "=", ",");
