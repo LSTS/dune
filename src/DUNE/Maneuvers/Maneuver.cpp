@@ -68,6 +68,16 @@ namespace DUNE
       onManeuverDeactivation();
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       debug("disabling");
+
+      // dispatch memento
+      Maneuvers::MementoTable* mt = getMementoTable(m_id);
+      if (mt == NULL)
+        return;
+
+      std::string str;
+      mt->writeTuples(str);
+      mt->setDefaults();
+      // dispatch
     }
 
     void

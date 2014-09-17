@@ -37,6 +37,7 @@
 #include <DUNE/Tasks.hpp>
 #include <DUNE/IMC.hpp>
 #include <DUNE/Time.hpp>
+#include <DUNE/Maneuvers/MementoTable.hpp>
 
 namespace DUNE
 {
@@ -44,6 +45,9 @@ namespace DUNE
   {
     // Export DLL Symbol.
     class DUNE_DLL_SYM Maneuver;
+
+    //! Mapping between maneuver IDs and MementoTables
+    typedef std::map<uint32_t, MementoTable> MementoMap;
 
     //! Base abstract class for maneuver tasks.
     class Maneuver: public Tasks::Task
@@ -107,6 +111,14 @@ namespace DUNE
 
         requestActivation();
 
+        // store current maneuver id
+        m_id = maneuver->getId();
+
+        // Fill memento table
+        MementoTable* mt = getMementoTable(m_id);
+        if (!maneuver->memento.empty() && mt != NULL)
+          mt->fill(maneuver->memento);
+
         static_cast<T*>(this)->consume(maneuver);
       }
 
@@ -116,7 +128,7 @@ namespace DUNE
       {
         void (Maneuver::* startfunc)(const M*) = &Maneuver::startManeuver<T, M>;
         Task::bind<M>(this, startfunc);
-        m_reg_man.insert(M::getIdStatic());
+        registerManeuver(M::getIdStatic());
       }
 
       template <typename T>
@@ -128,7 +140,7 @@ namespace DUNE
         Task::bind<T, IMC::Maneuver>(task_obj, list, startfunc);
 
         for (unsigned int i = 0; i < list.size(); ++i)
-          m_reg_man.insert(list[i]);
+          registerManeuver(list[i]);
       }
 
       template <typename M, typename T>
@@ -288,6 +300,23 @@ namespace DUNE
       void
       onMain(void);
 
+    protected:
+      //! Method to get pointer to a memento table
+      //! @param[in] id message id of the maneuver to which the table belongs
+      //! @return pointer to memento table
+      MementoTable*
+      getMementoTable(uint32_t id)
+      {
+        MementoMap::iterator itr = m_mems.find(id);
+        if (itr == m_mems.end())
+        {
+          signalError(DTR("memento table not found"));
+          return NULL;
+        }
+
+        return &itr->second;
+      }
+
     private:
       //! Update the scope reference
       //! @return new sequence number for the scope
@@ -299,10 +328,23 @@ namespace DUNE
       uint32_t
       changePathRef(void);
 
+      //! Register a maneuver
+      //! @param[in] id message id of the table's corresponding message
+      void
+      registerManeuver(uint32_t id)
+      {
+        m_reg_man.insert(id);
+        m_mems.insert(std::pair<uint32_t, MementoTable>(id, MementoTable()));
+      }
+
       //! Entity to use when dispatching message
       unsigned m_eid;
+      //! Currently active maneuver ID
+      uint32_t m_id;
       //! Set of registered maneuvers
       std::set<uint16_t> m_reg_man;
+      //! Vector of memento tables (one per registered maneuver)
+      MementoMap m_mems;
     };
   }
 }
