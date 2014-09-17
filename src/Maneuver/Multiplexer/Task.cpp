@@ -110,8 +110,6 @@ namespace Maneuver
       ManeuverType m_type;
       //! Array of entity ids
       unsigned m_ents[TYPE_TOTAL];
-      //! Vector of supported maneuver IDs
-      std::vector<uint32_t> m_supported;
       //! Map of message id to maneuver type
       typedef std::map<uint32_t, uint8_t> MultiplexMap;
       MultiplexMap m_map;
@@ -247,6 +245,8 @@ namespace Maneuver
         if (paramChanged(m_args.yoyo.u_course))
           m_args.yoyo.u_course = Angles::radians(m_args.yoyo.u_course);
 
+        std::vector<uint32_t> supported;
+
         if (paramChanged(m_args.unsupported))
         {
           // Deal with unsupported maneuvers
@@ -262,16 +262,18 @@ namespace Maneuver
             {
               uint32_t id = IMC::Factory::getIdFromAbbrev(c_names[i]);
               m_map.insert(std::pair<uint32_t, uint8_t>(id, i));
-              m_supported.push_back(id);
+              supported.push_back(id);
             }
           }
         }
+
+        bindToManeuvers<Task>(this, supported);
       }
 
       void
       onResourceInitialization(void)
       {
-        bindToManeuvers<Task>(this, m_supported);
+
       }
 
       template <typename Type, typename Msg, typename Args>
