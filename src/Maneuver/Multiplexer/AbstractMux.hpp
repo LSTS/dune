@@ -42,7 +42,6 @@ namespace Maneuver
     public:
       //! Constructor
       //! @param[in] task pointer to Maneuver task
-      //! @param[in] args pointer to arguments
       AbstractMux(Maneuvers::Maneuver* task):
         m_task(task)
       { }
