@@ -274,35 +274,37 @@ namespace Maneuver
         bindToManeuvers<Task>(this, m_supported);
       }
 
-      template <typename Type, typename Args>
+      template <typename Type, typename Msg, typename Args>
       AbstractMux*
       create(Args* args)
       {
-        Type* mux = new Type(static_cast<Maneuvers::Maneuver*>(this), args);
+        Type* mux = new Type(static_cast<Maneuvers::Maneuver*>(this),
+                             getMementoTable(Msg::getIdStatic()), args);
         return static_cast<AbstractMux*>(mux);
       }
 
-      template <typename Type>
+      template <typename Type, typename Msg>
       AbstractMux*
       create(void)
       {
-        Type* mux = new Type(static_cast<Maneuvers::Maneuver*>(this));
+        Type* mux = new Type(static_cast<Maneuvers::Maneuver*>(this),
+                             getMementoTable(Msg::getIdStatic()));
         return static_cast<AbstractMux*>(mux);
       }
 
       void
       onResourceAcquisition(void)
       {
-        m_maneuvers[TYPE_IDLE] = create<Idle>();
-        m_maneuvers[TYPE_GOTO] = create<Goto>();
-        m_maneuvers[TYPE_LOITER] = create<Loiter>(&m_args.loiter);
-        m_maneuvers[TYPE_SKEEP] = create<StationKeeping>(&m_args.sk);
-        m_maneuvers[TYPE_YOYO] = create<YoYo>(&m_args.yoyo);
-        m_maneuvers[TYPE_ROWS] = create<Rows>();
-        m_maneuvers[TYPE_FOLLOWPATH] = create<FollowPath>();
-        m_maneuvers[TYPE_ELEVATOR] = create<Elevator>(&m_args.elevator);
-        m_maneuvers[TYPE_POPUP] = create<PopUp>(&m_args.popup);
-        m_maneuvers[TYPE_DISLODGE] = create<Dislodge>(&m_args.dislodge);
+        m_maneuvers[TYPE_IDLE] = create<Idle, IMC::IdleManeuver>();
+        m_maneuvers[TYPE_GOTO] = create<Goto, IMC::Goto>();
+        m_maneuvers[TYPE_LOITER] = create<Loiter, IMC::Loiter>(&m_args.loiter);
+        m_maneuvers[TYPE_SKEEP] = create<StationKeeping, IMC::StationKeeping>(&m_args.sk);
+        m_maneuvers[TYPE_YOYO] = create<YoYo, IMC::YoYo>(&m_args.yoyo);
+        m_maneuvers[TYPE_ROWS] = create<Rows, IMC::Rows>();
+        m_maneuvers[TYPE_FOLLOWPATH] = create<FollowPath, IMC::FollowPath>();
+        m_maneuvers[TYPE_ELEVATOR] = create<Elevator, IMC::Elevator>(&m_args.elevator);
+        m_maneuvers[TYPE_POPUP] = create<PopUp, IMC::PopUp>(&m_args.popup);
+        m_maneuvers[TYPE_DISLODGE] = create<Dislodge, IMC::Dislodge>(&m_args.dislodge);
       }
 
       void
