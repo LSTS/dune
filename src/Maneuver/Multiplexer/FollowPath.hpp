@@ -31,23 +31,23 @@
 
 #include <DUNE/DUNE.hpp>
 
+// Local headers
+#include "MuxedManeuver.hpp"
+
 using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
   namespace Multiplexer
   {
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM FollowPath;
-
     //! FollowPath maneuver
-    class FollowPath
+    class FollowPath: public MuxedManeuver<IMC::FollowPath, void>
     {
     public:
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       FollowPath(Maneuvers::Maneuver* task):
-        m_task(task)
+        MuxedManeuver(task)
       { }
 
       //! Destructor
@@ -65,7 +65,7 @@ namespace Maneuver
       //! Start maneuver function
       //! @param[in] maneuver followpath maneuver message
       void
-      start(const IMC::FollowPath* maneuver)
+      onStart(const IMC::FollowPath* maneuver)
       {
         reset();
 
@@ -155,8 +155,6 @@ namespace Maneuver
       std::vector<Waypoint> m_wpts;
       //! Current waypoint.
       unsigned int m_curr;
-      //! Pointer to task
-      Maneuvers::Maneuver* m_task;
     };
   }
 }
