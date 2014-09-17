@@ -60,8 +60,9 @@ namespace Maneuver
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args elevator arguments
-      Elevator(Maneuvers::Maneuver* task, ElevatorArgs* args):
-        MuxedManeuver(task, args),
+      Elevator(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt,
+               ElevatorArgs* args):
+        MuxedManeuver(task, mt, args),
         m_elevate(NULL),
         m_vmon(NULL)
       { }

@@ -59,8 +59,9 @@ namespace Maneuver
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args yoyo arguments
-      YoYo(Maneuvers::Maneuver* task, YoYoArgs* args):
-        MuxedManeuver(task, args),
+      YoYo(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt,
+           YoYoArgs* args):
+        MuxedManeuver(task, mt, args),
         m_yoyo(NULL)
       { }
 

@@ -53,8 +53,9 @@ namespace Maneuver
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args loiter arguments
-      Loiter(Maneuvers::Maneuver* task, LoiterArgs* args):
-        MuxedManeuver(task, args)
+      Loiter(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt,
+             LoiterArgs* args):
+        MuxedManeuver(task, mt, args)
       { }
 
       //! Start maneuver function

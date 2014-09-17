@@ -61,8 +61,9 @@ namespace Maneuver
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args popup arguments
-      PopUp(Maneuvers::Maneuver* task, PopUpArgs* args):
-        MuxedManeuver(task, args),
+      PopUp(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt,
+            PopUpArgs* args):
+        MuxedManeuver(task, mt, args),
         m_skeep(NULL),
         m_elevate(NULL),
         m_pstate(ST_INITIAL)

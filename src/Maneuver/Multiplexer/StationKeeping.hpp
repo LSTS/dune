@@ -53,8 +53,9 @@ namespace Maneuver
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args stationkeeping arguments
-      StationKeeping(Maneuvers::Maneuver* task, StationKeepingArgs* args):
-        MuxedManeuver(task, args),
+      StationKeeping(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt,
+                     StationKeepingArgs* args):
+        MuxedManeuver(task, mt, args),
         m_skeep(NULL),
         m_end_time(-1.0)
       { }

@@ -46,8 +46,8 @@ namespace Maneuver
     public:
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
-      Idle(Maneuvers::Maneuver* task):
-        MuxedManeuver(task)
+      Idle(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt):
+        MuxedManeuver(task, mt)
       { }
 
       //! Start maneuver function

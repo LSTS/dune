@@ -46,8 +46,8 @@ namespace Maneuver
     public:
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
-      FollowPath(Maneuvers::Maneuver* task):
-        MuxedManeuver(task)
+      FollowPath(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt):
+        MuxedManeuver(task, mt)
       { }
 
       //! Destructor

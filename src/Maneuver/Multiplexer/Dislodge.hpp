@@ -64,8 +64,9 @@ namespace Maneuver
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args pointer to Maneuver's arguments
-      Dislodge(Maneuvers::Maneuver* task, DislodgeArgs* args):
-        MuxedManeuver(task, args),
+      Dislodge(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt,
+               DislodgeArgs* args):
+        MuxedManeuver(task, mt, args),
         m_state(ST_START),
         m_got_depth(false),
         m_bursting(false)
