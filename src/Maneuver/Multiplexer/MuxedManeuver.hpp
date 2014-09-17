@@ -47,15 +47,16 @@ namespace Maneuver
       //! Constructor
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args pointer to arguments
-      MuxedManeuver(Maneuvers::Maneuver* task, Arg* args):
-        AbstractMux(task),
+      MuxedManeuver(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt,
+                    Arg* args):
+        AbstractMux(task, mt),
         m_args(args)
       { }
 
       //! Constructor
       //! @param[in] task pointer to Maneuver task
-      MuxedManeuver(Maneuvers::Maneuver* task):
-        AbstractMux(task)
+      MuxedManeuver(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt):
+        AbstractMux(task, mt)
       { }
 
       //! Destructor
