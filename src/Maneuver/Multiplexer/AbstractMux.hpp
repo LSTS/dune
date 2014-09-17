@@ -28,7 +28,9 @@
 #ifndef MANEUVER_MULTIPLEXER_ABSTRACT_MUX_HPP_INCLUDED_
 #define MANEUVER_MULTIPLEXER_ABSTRACT_MUX_HPP_INCLUDED_
 
-#include <DUNE/DUNE.hpp>
+// DUNE headers
+#include <DUNE/Maneuvers.hpp>
+#include <DUNE/IMC.hpp>
 
 using DUNE_NAMESPACES;
 
@@ -42,8 +44,9 @@ namespace Maneuver
     public:
       //! Constructor
       //! @param[in] task pointer to Maneuver task
-      AbstractMux(Maneuvers::Maneuver* task):
-        m_task(task)
+      AbstractMux(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt):
+        m_task(task),
+        m_mt(mt)
       { }
 
       //! Destructor
@@ -91,6 +94,8 @@ namespace Maneuver
     protected:
       //! Pointer to task
       Maneuvers::Maneuver* m_task;
+      //! Pointer to memento table
+      Maneuvers::MementoTable* m_mt;
     };
   }
 }
