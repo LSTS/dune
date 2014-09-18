@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 5b8a4390bc5e18a3cda0e31fc948ef33                            *
+// IMC XML MD5: 4ab0411c6256574a5ac1785347d0a9f2                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -6198,6 +6198,210 @@ namespace DUNE
       IMC::toJSON(os__, "sane", sane, nindent__);
     }
 
+    RhodamineDye::RhodamineDye(void)
+    {
+      m_header.mgid = 285;
+      clear();
+    }
+
+    void
+    RhodamineDye::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    RhodamineDye::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::RhodamineDye& other__ = static_cast<const RhodamineDye&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    RhodamineDye::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    RhodamineDye::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    RhodamineDye::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    RhodamineDye::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    RhodamineDye::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    RhodamineDye::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    RhodamineDye::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    CrudeOil::CrudeOil(void)
+    {
+      m_header.mgid = 286;
+      clear();
+    }
+
+    void
+    CrudeOil::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    CrudeOil::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::CrudeOil& other__ = static_cast<const CrudeOil&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    CrudeOil::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    CrudeOil::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    CrudeOil::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    CrudeOil::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    CrudeOil::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    CrudeOil::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    CrudeOil::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    FineOil::FineOil(void)
+    {
+      m_header.mgid = 287;
+      clear();
+    }
+
+    void
+    FineOil::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    FineOil::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FineOil& other__ = static_cast<const FineOil&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    FineOil::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    FineOil::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FineOil::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FineOil::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    FineOil::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    FineOil::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    FineOil::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
+    }
+
     CameraZoom::CameraZoom(void)
     {
       m_header.mgid = 300;
@@ -8217,45 +8421,6 @@ namespace DUNE
       IMC::toJSON(os__, "reason", reason, nindent__);
       IMC::toJSON(os__, "value", value, nindent__);
       IMC::toJSON(os__, "timestep", timestep, nindent__);
-    }
-
-    NavigationReset::NavigationReset(void)
-    {
-      m_header.mgid = 359;
-      clear();
-    }
-
-    void
-    NavigationReset::clear(void)
-    {
-    }
-
-    int
-    NavigationReset::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    NavigationReset::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    NavigationReset::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    NavigationReset::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
     }
 
     LblEstimate::LblEstimate(void)
@@ -18866,6 +19031,228 @@ namespace DUNE
       (void)bfr__;
       (void)size__;
       return 0;
+    }
+
+    UsblAngles::UsblAngles(void)
+    {
+      m_header.mgid = 890;
+      clear();
+    }
+
+    void
+    UsblAngles::clear(void)
+    {
+      target = 0;
+      bearing = 0;
+      elevation = 0;
+    }
+
+    bool
+    UsblAngles::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::UsblAngles& other__ = static_cast<const UsblAngles&>(msg__);
+      if (target != other__.target) return false;
+      if (bearing != other__.bearing) return false;
+      if (elevation != other__.elevation) return false;
+      return true;
+    }
+
+    int
+    UsblAngles::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    UsblAngles::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(target, ptr__);
+      ptr__ += IMC::serialize(bearing, ptr__);
+      ptr__ += IMC::serialize(elevation, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    UsblAngles::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(target, bfr__, size__);
+      bfr__ += IMC::deserialize(bearing, bfr__, size__);
+      bfr__ += IMC::deserialize(elevation, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    UsblAngles::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(target, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(bearing, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(elevation, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    UsblAngles::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "target", target, nindent__);
+      IMC::toJSON(os__, "bearing", bearing, nindent__);
+      IMC::toJSON(os__, "elevation", elevation, nindent__);
+    }
+
+    UsblPosition::UsblPosition(void)
+    {
+      m_header.mgid = 891;
+      clear();
+    }
+
+    void
+    UsblPosition::clear(void)
+    {
+      target = 0;
+      x = 0;
+      y = 0;
+      z = 0;
+    }
+
+    bool
+    UsblPosition::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::UsblPosition& other__ = static_cast<const UsblPosition&>(msg__);
+      if (target != other__.target) return false;
+      if (x != other__.x) return false;
+      if (y != other__.y) return false;
+      if (z != other__.z) return false;
+      return true;
+    }
+
+    int
+    UsblPosition::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    UsblPosition::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(target, ptr__);
+      ptr__ += IMC::serialize(x, ptr__);
+      ptr__ += IMC::serialize(y, ptr__);
+      ptr__ += IMC::serialize(z, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    UsblPosition::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(target, bfr__, size__);
+      bfr__ += IMC::deserialize(x, bfr__, size__);
+      bfr__ += IMC::deserialize(y, bfr__, size__);
+      bfr__ += IMC::deserialize(z, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    UsblPosition::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(target, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(x, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(y, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(z, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    UsblPosition::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "target", target, nindent__);
+      IMC::toJSON(os__, "x", x, nindent__);
+      IMC::toJSON(os__, "y", y, nindent__);
+      IMC::toJSON(os__, "z", z, nindent__);
+    }
+
+    UsblFix::UsblFix(void)
+    {
+      m_header.mgid = 892;
+      clear();
+    }
+
+    void
+    UsblFix::clear(void)
+    {
+      target = 0;
+      lat = 0;
+      lon = 0;
+      z_units = 0;
+      z = 0;
+    }
+
+    bool
+    UsblFix::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::UsblFix& other__ = static_cast<const UsblFix&>(msg__);
+      if (target != other__.target) return false;
+      if (lat != other__.lat) return false;
+      if (lon != other__.lon) return false;
+      if (z_units != other__.z_units) return false;
+      if (z != other__.z) return false;
+      return true;
+    }
+
+    int
+    UsblFix::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    UsblFix::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(target, ptr__);
+      ptr__ += IMC::serialize(lat, ptr__);
+      ptr__ += IMC::serialize(lon, ptr__);
+      ptr__ += IMC::serialize(z_units, ptr__);
+      ptr__ += IMC::serialize(z, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    UsblFix::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(target, bfr__, size__);
+      bfr__ += IMC::deserialize(lat, bfr__, size__);
+      bfr__ += IMC::deserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      bfr__ += IMC::deserialize(z, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    UsblFix::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(target, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(z, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    UsblFix::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "target", target, nindent__);
+      IMC::toJSON(os__, "lat", lat, nindent__);
+      IMC::toJSON(os__, "lon", lon, nindent__);
+      IMC::toJSON(os__, "z_units", z_units, nindent__);
+      IMC::toJSON(os__, "z", z, nindent__);
     }
   }
 }

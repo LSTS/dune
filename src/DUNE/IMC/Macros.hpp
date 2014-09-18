@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 5b8a4390bc5e18a3cda0e31fc948ef33                            *
+// IMC XML MD5: 4ab0411c6256574a5ac1785347d0a9f2                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -196,6 +196,12 @@
 #define DUNE_IMC_BEAMCONFIG 283
 //! DataSanity identification number.
 #define DUNE_IMC_DATASANITY 284
+//! RhodamineDye identification number.
+#define DUNE_IMC_RHODAMINEDYE 285
+//! CrudeOil identification number.
+#define DUNE_IMC_CRUDEOIL 286
+//! FineOil identification number.
+#define DUNE_IMC_FINEOIL 287
 //! CameraZoom identification number.
 #define DUNE_IMC_CAMERAZOOM 300
 //! SetThrusterActuation identification number.
@@ -248,8 +254,6 @@
 #define DUNE_IMC_LBLRANGEACCEPTANCE 357
 //! DvlRejection identification number.
 #define DUNE_IMC_DVLREJECTION 358
-//! NavigationReset identification number.
-#define DUNE_IMC_NAVIGATIONRESET 359
 //! LblEstimate identification number.
 #define DUNE_IMC_LBLESTIMATE 360
 //! AlignmentState identification number.
@@ -486,5 +490,11 @@
 #define DUNE_IMC_NEPTUSBLOB 888
 //! Aborted identification number.
 #define DUNE_IMC_ABORTED 889
+//! UsblAngles identification number.
+#define DUNE_IMC_USBLANGLES 890
+//! UsblPosition identification number.
+#define DUNE_IMC_USBLPOSITION 891
+//! UsblFix identification number.
+#define DUNE_IMC_USBLFIX 892
 
 #endif
