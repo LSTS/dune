@@ -526,11 +526,13 @@ namespace Plan
         }
 
         // there are new error entities
-        if (edesc != m_last_event)
+        if (edesc != m_last_event && !pendingReply())
         {
           if (initMode())
           {
             onFailure(edesc);
+            // stop calibration if any is running
+            vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
             m_reply.plan_id = m_spec.plan_id;
           }
 

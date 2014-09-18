@@ -80,6 +80,9 @@ namespace Navigation
           DUNE::Tasks::Task(name, ctx),
           m_estate(NULL)
         {
+          paramActive(Tasks::Parameter::SCOPE_IDLE,
+                      Tasks::Parameter::VISIBILITY_USER);
+
           param("Slot Order", m_args.slot_order)
           .defaultValue("1")
           .values("1, 2")
