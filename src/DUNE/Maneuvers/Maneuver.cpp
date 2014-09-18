@@ -40,7 +40,8 @@ namespace DUNE
     static uint32_t s_path_ref;
 
     Maneuver::Maneuver(const std::string& name, Tasks::Context& ctx):
-      Tasks::Task(name, ctx)
+      Tasks::Task(name, ctx),
+      m_memento_enabled(true)
     {
       bind<IMC::StopManeuver>(this);
       bind<IMC::PathControlState>(this);
@@ -74,10 +75,10 @@ namespace DUNE
       if (mt == NULL)
         return;
 
-      std::string str;
-      mt->writeTuples(str);
+      // write tuples into memento message
+      mt->writeTuples(m_mto.memento);
+      // set default values
       mt->setDefaults();
-      // dispatch
     }
 
     void
@@ -143,7 +144,6 @@ namespace DUNE
       }
     }
 
-
     void
     Maneuver::consume(const IMC::StopManeuver* sm)
     {
@@ -158,6 +158,11 @@ namespace DUNE
         mcs.info = "stopped";
         mcs.eta = 0;
         dispatch(mcs);
+
+        // maneuver has been interrupted
+        // check if memento is enabled
+        if (m_memento_enabled)
+          dispatch(m_mto, Tasks::DF_KEEP_SRC_EID);
       }
     }
 

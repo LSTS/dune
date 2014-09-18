@@ -109,6 +109,8 @@ namespace DUNE
         debug("enabling");
         signalProgress(65535, "in progress");
 
+        m_memento_enabled = true;
+
         requestActivation();
 
         // store current maneuver id
@@ -120,6 +122,12 @@ namespace DUNE
           mt->fill(maneuver->memento);
 
         static_cast<T*>(this)->consume(maneuver);
+
+        // Fill memento info after consuming message
+        m_mto.clear();
+        m_mto.setSourceEntity(m_eid);
+        m_mto.plan_ref = maneuver->plan_ref;
+        m_mto.id = maneuver->id;
       }
 
       template <typename T, typename M>
@@ -297,6 +305,13 @@ namespace DUNE
         signalProgress("");
       }
 
+      //! Disable dispatching memento
+      inline void
+      disableMemento(void)
+      {
+        m_memento_enabled = false;
+      }
+
       void
       onMain(void);
 
@@ -345,6 +360,10 @@ namespace DUNE
       std::set<uint16_t> m_reg_man;
       //! Vector of memento tables (one per registered maneuver)
       MementoMap m_mems;
+      //! Memento is enabled or not
+      bool m_memento_enabled;
+      //! Memento message to send
+      IMC::Memento m_mto;
     };
   }
 }
