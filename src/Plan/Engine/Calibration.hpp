@@ -86,7 +86,7 @@ namespace Plan
       clear(void)
       {
         m_state = CS_NONE;
-        m_time(-1.0);
+        m_time =-1.0;
       }
 
       //! Start calibration
