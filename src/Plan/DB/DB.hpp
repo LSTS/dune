@@ -25,14 +25,12 @@
 // Author: Tiago Rodrigues                                                  *
 //***************************************************************************
 
-#ifndef Plan_DB_H
-#define Plan_DB_H
+#ifndef Plan_DB_HPP_INCLUDED_
+#define Plan_DB_HPP_INCLUDED_
 
 
 #include <DUNE/DUNE.hpp>
 #include "DB.hpp"
-
-using namespace std;
 
 namespace Plan
 {
@@ -42,7 +40,7 @@ namespace Plan
 
     template <typename plans, typename plansinfo, typename sysname>
     void
-    Parser(plans &plan, plansinfo &m_plan_info, sysname sname)
+    PlanInfoParser(plans &plan, plansinfo &m_plan_info, sysname sname)
     {
       m_plan_info.plan_size = plan->getPayloadSerializationSize();
       m_plan_info.plan_id = plan->plan_id;

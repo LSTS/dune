@@ -439,13 +439,13 @@ namespace Plan
         if(PlanMementoflag == 0)
         {
           plan_spec = static_cast<const IMC::PlanSpecification*>(arg);
-          Parser(plan_spec, m_plan_info, resolveSystemId(plan_spec->getSource()));
+          PlanInfoParser(plan_spec, m_plan_info, resolveSystemId(plan_spec->getSource()));
         }
 
         if(PlanMementoflag == 1)
         {
           plan_mem = static_cast<const IMC::PlanMemento*>(arg);
-          Parser(plan_mem, m_plan_info, resolveSystemId(plan_mem->getSource()));
+          PlanInfoParser(plan_mem, m_plan_info, resolveSystemId(plan_mem->getSource()));
         }
 
         Database::Blob plan_data(m_plan_info.plan_size);
