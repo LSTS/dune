@@ -439,37 +439,21 @@ namespace Plan
         if(PlanMementoflag == 0)
         {
           plan_spec = static_cast<const IMC::PlanSpecification*>(arg);
-          m_plan_info.plan_size = plan_spec->getPayloadSerializationSize();
-          m_plan_info.plan_id = plan_spec->plan_id;
-          m_plan_info.change_sid = plan_spec->getSource();
+          Parser(plan_spec, m_plan_info, resolveSystemId(plan_spec->getSource()));
         }
 
         if(PlanMementoflag == 1)
         {
           plan_mem = static_cast<const IMC::PlanMemento*>(arg);
-          m_plan_info.plan_size = plan_mem->getPayloadSerializationSize();
-          m_plan_info.plan_id = plan_mem->plan_id;
-          m_plan_info.change_sid = plan_mem->getSource();
+          Parser(plan_mem, m_plan_info, resolveSystemId(plan_mem->getSource()));
         }
-
-        m_plan_info.change_time = Clock::getSinceEpoch();
-        m_plan_info.change_sname = resolveSystemId(m_plan_info.change_sid);
 
         Database::Blob plan_data(m_plan_info.plan_size);
         if(PlanMementoflag == 0)
-        {
-          plan_spec->serializeFields((uint8_t*)&plan_data[0]);
+          DataParser(plan_spec, m_plan_info, plan_data);
 
-          m_plan_info.md5.resize(16);
-          MD5::compute((uint8_t*)&plan_data[0], m_plan_info.plan_size, (uint8_t*)&m_plan_info.md5[0]);
-        }
         if(PlanMementoflag == 1)
-        {
-          plan_mem->serializeFields((uint8_t*)&plan_data[0]);
-
-          m_plan_info.md5.resize(16);
-          MD5::compute((uint8_t*)&plan_data[0], m_plan_info.plan_size, (uint8_t*)&m_plan_info.md5[0]);
-        }
+          DataParser(plan_mem, m_plan_info, plan_data);
 
         m_db->beginTransaction();
 
@@ -498,7 +482,7 @@ namespace Plan
         m_db->commit();
 
         m_reply.arg.set(m_plan_info);
-        onSuccess(count ? DTR("OK Plan/Memento (updated)") : DTR("OK Plan/Memento (new entry)"));
+        onSuccess(count ? DTR("OK Plan (updated)") : DTR("OK Plan/Memento (new entry)"));
 
       }
 
