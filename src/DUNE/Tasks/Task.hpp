@@ -564,6 +564,19 @@ namespace DUNE
           bind(list[i], new Consumer<T, IMC::Message>(*task_obj, func));
       }
 
+      //! Bind multiple messages to a consumer method.
+      //! @param task_obj consumer object.
+      //! @param list list of message identifiers.
+      //! @param consumer consumer method.
+      template <typename T, typename M>
+      void
+      bind(T* task_obj, const std::vector<uint32_t>& list,
+           void (T::* consumer)(const M*) = &T::consume)
+      {
+        for (unsigned int i = 0; i < list.size(); ++i)
+          bind(list[i], new Consumer<T, M>(*task_obj, consumer));
+      }
+
       //! Bind multiple messages to a default consumer method.
       //! @param task_obj consumer task.
       //! @param list list of message abbreviations.

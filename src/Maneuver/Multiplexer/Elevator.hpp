@@ -40,34 +40,30 @@ namespace Maneuver
 {
   namespace Multiplexer
   {
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM Elevator;
+    //! Arguments
+    struct ElevatorArgs
+    {
+      //! Distance tolerance to start loitering near elevator's location
+      float radius_tolerance;
+      //! Negative values will disable vertical progress monitor
+      float vmonitor_speed;
+      //! Timeout when progress is below the specified value
+      float vmonitor_timeout;
+      //! Minimum radius to prevent incompatibility with path controller
+      float min_radius;
+    };
 
     //! Elevator maneuver
-    class Elevator
+    class Elevator: public MuxedManeuver<IMC::Elevator, ElevatorArgs>
     {
     public:
-      //! Arguments
-      struct ElevatorArgs
-      {
-        //! Distance tolerance to start loitering near elevator's location
-        float radius_tolerance;
-        //! Negative values will disable vertical progress monitor
-        float vmonitor_speed;
-        //! Timeout when progress is below the specified value
-        float vmonitor_timeout;
-        //! Minimum radius to prevent incompatibility with path controller
-        float min_radius;
-      };
-
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args elevator arguments
       Elevator(Maneuvers::Maneuver* task, ElevatorArgs* args):
+        MuxedManeuver(task, args),
         m_elevate(NULL),
-        m_vmon(NULL),
-        m_args(args),
-        m_task(task)
+        m_vmon(NULL)
       { }
 
       //! Destructor
@@ -80,7 +76,7 @@ namespace Maneuver
       //! Start maneuver function
       //! @param[in] maneuver rows maneuver message
       void
-      start(const IMC::Elevator* maneuver)
+      onStart(const IMC::Elevator* maneuver)
       {
         m_maneuver = *maneuver;
 
@@ -224,10 +220,6 @@ namespace Maneuver
       Maneuvers::Elevate* m_elevate;
       //! Vertical monitor
       VMonitor* m_vmon;
-      //! Arguments
-      ElevatorArgs* m_args;
-      //! Pointer to task
-      Maneuvers::Maneuver* m_task;
     };
   }
 }
