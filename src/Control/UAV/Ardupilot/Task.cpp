@@ -1951,7 +1951,6 @@ namespace Control
           {
             // As of AC 3.2, wp_dest is not updated in guided mode.
             // Calc distance between desired location and current location
-            float dx, dy, dz;
             Matrix destination = Matrix(3, 1, 0.0);
             Matrix current_pos = Matrix(3, 1, 0.0);
             current_pos(0) = m_estate.x;
