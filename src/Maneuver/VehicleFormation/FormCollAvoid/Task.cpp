@@ -2468,8 +2468,7 @@ namespace Maneuver
           double d_ss_bnd_layer = m_k_boundary * m_speed_cmd_leader;
           double d_deconfliction_dist = m_safe_dist + m_deconfliction_offset;
           double k_form_ref = (m_uav_n > 1)?m_k_leader*(m_uav_n-1):1.0;
-          double k_deconfl_vel = m_k_deconfliction*k_form_ref;
-          double k_deconfliction_dist = k_deconfl_vel/2;
+          double k_deconfliction_dist = m_k_deconfliction*k_form_ref;
           double k_long_dist1 = 1.5;
           double k_long_dist2 = 4;
           double k_long_dist3 = k_long_dist2-k_long_dist1;
@@ -2537,8 +2536,7 @@ namespace Maneuver
 
           double d_des_dist;
           double d_dist2confl;
-          double d_vel_gain;
-          double d_dist_gain;
+          double d_predicted_dist;
 
           double t_surf_x;
           double t_surf_y;
@@ -2843,22 +2841,28 @@ namespace Maneuver
             //debug("formationControl - 2.8");
             //! UAV-pair - Regulation of control importance
             d_des_dist = vd_inter_uav_des_pos.norm_2();
-            d_dist2confl = d_inter_uav_dist-d_deconfliction_dist;
-            d_vel_gain = 1 + (d_deriv_err_x*d_deriv_err_x/d_accel_max_proj_x -
-                d_dist2confl)/m_deconfliction_offset*k_deconfl_vel;
+            // Inter-UAV distance compensated for the current inter-UAV velocity
+            // Takes into account the vehicle acceleration limitations
+            d_predicted_dist = d_inter_uav_dist + std::min(0.0, d_deriv_err_x*std::abs(d_deriv_err_x)*
+                (1+m_acc_safety_marg)/d_accel_max_proj_x);
+            d_dist2confl = d_predicted_dist-d_deconfliction_dist;
             if (d_dist2confl < 0)
-              d_dist_gain = 1 + d_dist2confl/m_deconfliction_offset *
+              // Control weight increment if the predicted distance is shorter than the deconfliction distance
+              vd_weight_gain(ind_uav2+1) = 1 + d_dist2confl/m_deconfliction_offset *
               d_dist2confl/m_deconfliction_offset * k_deconfliction_dist;
-            else if (d_inter_uav_dist <= d_des_dist*k_long_dist1)
-              d_dist_gain = 1;
-            else if (d_inter_uav_dist < d_des_dist*k_long_dist2)
+            else if (d_predicted_dist <= d_des_dist*k_long_dist1)
+              vd_weight_gain(ind_uav2+1) = 1;
+            else if (d_predicted_dist < d_des_dist*k_long_dist2)
             {
-              t_dist_gain = (d_inter_uav_dist-d_des_dist*k_long_dist1)/(d_des_dist*k_long_dist3);
-              d_dist_gain = 1 - t_dist_gain*t_dist_gain;
+              // Control weight reduction if the predicted distance is larger than
+              // the desired distance by "k_long_dist1"
+              t_dist_gain = (d_predicted_dist-d_des_dist*k_long_dist1)/(d_des_dist*k_long_dist3);
+              vd_weight_gain(ind_uav2+1) = 1 - t_dist_gain*t_dist_gain;
             }
             else
-              d_dist_gain = 0;
-            vd_weight_gain(ind_uav2+1) = std::max(d_vel_gain, d_dist_gain);
+              // Control weight anulation if the predicted distance is larger than
+              // the desired distance multiplied by "k_long_dist2"
+              vd_weight_gain(ind_uav2+1) = 0;
 
             //debug("formationControl - 2.9");
             //! Sliding Surface parameters - Inter-UAV Y axis
