@@ -86,7 +86,13 @@ namespace Plan
       std::string db_path;
     };
 
-     struct Task: public DUNE::Tasks::Task
+    enum TotalTables
+    {
+      TT_LastChange = 2,
+      TT_Plans = 2
+    };
+
+    struct Task: public DUNE::Tasks::Task
     {
       // Task arguments
       Arguments m_args;
@@ -111,7 +117,7 @@ namespace Plan
         DUNE::Tasks::Task(name, ctx),
         m_db(NULL)
       {
-         param("DB Path", m_args.db_path)
+        param("DB Path", m_args.db_path)
         .defaultValue("")
         .description("Path to DB file");
 
@@ -145,7 +151,7 @@ namespace Plan
         m_db = new Database::Connection(db_file.c_str(), true);
 
         // Create tables and initialize associated statements
-        for (int i = 0; i<2; i++)
+        for (int i = 0; i<TT_Plans; i++)
         {
           m_db->execute(c_table_stmt[i]);
           m_insert_stmt[i] = new Database::Statement(c_insert_stmt[i], *m_db);
@@ -163,8 +169,8 @@ namespace Plan
           {
             double now = Clock::getSinceEpoch();
             *m_lastchange_initial_insert_stmt[i] << now
-                                                << getSystemId()
-                                                << getSystemName();
+                                                 << getSystemId()
+                                                 << getSystemName();
             m_lastchange_initial_insert_stmt[i]->execute();
           }
 
@@ -182,7 +188,7 @@ namespace Plan
         if (m_db == NULL)
           return;
 
-        for(int i = 0; i<2; i++)
+        for(int i = 0; i<TT_Plans; i++)
         {
           delete m_insert_stmt[i];
           delete m_delete_stmt[i];
@@ -346,15 +352,15 @@ namespace Plan
       }
 
       /*void
-      onChange(const IMC::PlanDB& req)
-      {
+        onChange(const IMC::PlanDB& req)
+        {
         uint16_t sid = req.getSource();
         onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid));
         }*/
 
       /*void
-      onChange(double time, uint16_t sid, const std::string& sname)
-      {
+        onChange(double time, uint16_t sid, const std::string& sname)
+        {
         // Update LastChange table information.
         int count = 0;
 
@@ -362,8 +368,8 @@ namespace Plan
         m_lastchange_update_stmt->execute(&count);
 
         if (count != 1)
-          throw std::runtime_error(DTR("database is corrupt"));
-          }*/
+        throw std::runtime_error(DTR("database is corrupt"));
+        }*/
 
       void
       setPlan(const IMC::PlanDB& req)
@@ -526,7 +532,7 @@ namespace Plan
           // If delete plan, also delete memento associated
           if(PlanMementoflag == 0)
           {
-            for(int i = 0; i<2; i++)
+            for(int i = 0; i<TT_Plans; i++)
             {
               // Check if there is a memento associated
               if(!m_get_stmt[i]->execute() && i == IMC::PlanDB::DBOT_MEMENTO)
@@ -543,7 +549,7 @@ namespace Plan
             m_delete_stmt[PlanMementoflag]->execute(&count);
           }
           //if (count)
-           //onChange(req);
+          //onChange(req);
         }
         catch (std::runtime_error& e)
         {
@@ -557,7 +563,7 @@ namespace Plan
         if (!count)
           onFailure(DTR("undefined plan"));
         else
-        onSuccess();
+          onSuccess();
       }
 
       void
@@ -654,8 +660,8 @@ namespace Plan
                                        >> m_plan_info.plan_size;
 
         m_reply.arg.set(m_plan_info);
-        for(int i = 0; i<2; i++)
-        m_query_stmt[i]->reset();
+        for(int i = 0; i<TT_Plans; i++)
+          m_query_stmt[i]->reset();
 
         onSuccess();
       }
@@ -668,7 +674,7 @@ namespace Plan
 
         try
         {
-          for(int i = 0; i<2; i++)
+          for(int i = 0; i<TT_Plans; i++)
           {
             m_delete_all_stmt[i]->execute();
           }
@@ -698,7 +704,7 @@ namespace Plan
 
         IMC::MessageList<PlanDBInformation>* plandbinfo = &state->plans_info;
 
-        for (int i = 0; i<2; i++)
+        for (int i = 0; i<TT_Plans; i++)
         {
           while(m_iterator_stmt[i]->execute())
           {
@@ -720,24 +726,24 @@ namespace Plan
             delete pinfo;
           }
         }
-        for(int i = 0; i<2; i++)
+        for(int i = 0; i<TT_Plans; i++)
           m_iterator_stmt[i]->reset();
 
         // Finalized MD5 digest
         state->md5.resize(16);
         md5sum.finalize((uint8_t*)&state->md5[0]);
 
-          /*m_lastchange_query_stmt->execute();
-          *m_lastchange_query_stmt >> state->change_time
-                                   >> state->change_sid
-                                   >> state->change_sname;
-          m_lastchange_query_stmt->reset();*/
+        /*m_lastchange_query_stmt->execute();
+         *m_lastchange_query_stmt >> state->change_time
+         >> state->change_sid
+         >> state->change_sname;
+         m_lastchange_query_stmt->reset();*/
 
         m_reply.arg.set(*state);
         onSuccess();
 
         delete state;
-        }
+      }
 
       void
       answer(uint8_t type, const char* desc)
@@ -781,7 +787,7 @@ namespace Plan
       onSuccess(const char* msg = DTR("OK"))
       {
         answer(IMC::PlanDB::DBT_SUCCESS, msg);
-        }
+      }
 
       void
       onMain(void)
