@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: fea3a402c4ef5e48fc13b4b5b9dcca6d                            *
+// IMC XML MD5: 429d4804a8915055fe12ce9d09cfa3b9                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -356,6 +356,8 @@
 #define DUNE_IMC_RELATIVESTATE 482
 //! Dislodge identification number.
 #define DUNE_IMC_DISLODGE 483
+//! Memento identification number.
+#define DUNE_IMC_MEMENTO 484
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.

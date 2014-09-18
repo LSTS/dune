@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: fea3a402c4ef5e48fc13b4b5b9dcca6d                            *
+// IMC XML MD5: 429d4804a8915055fe12ce9d09cfa3b9                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -189,6 +189,7 @@ MESSAGE(480, FollowRefState)
 MESSAGE(481, FormationMonitor)
 MESSAGE(482, RelativeState)
 MESSAGE(483, Dislodge)
+MESSAGE(484, Memento)
 MESSAGE(500, VehicleState)
 MESSAGE(501, VehicleCommand)
 MESSAGE(502, MonitorEntityState)

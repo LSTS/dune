@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: fea3a402c4ef5e48fc13b4b5b9dcca6d                            *
+// IMC XML MD5: 429d4804a8915055fe12ce9d09cfa3b9                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -13493,6 +13493,57 @@ namespace DUNE
       IMC::toJSON(os__, "rpm", rpm, nindent__);
       IMC::toJSON(os__, "direction", direction, nindent__);
       IMC::toJSON(os__, "custom", custom, nindent__);
+    }
+
+    Memento::Memento(void)
+    {
+      m_header.mgid = 484;
+      clear();
+    }
+
+    void
+    Memento::clear(void)
+    {
+      Maneuver::clear();
+    }
+
+    bool
+    Memento::fieldsEqual(const Message& msg__) const
+    {
+      if (!Maneuver::fieldsEqual(msg__)) return false;
+      const IMC::Memento& other__ = static_cast<const Memento&>(msg__);
+
+      return true;
+    }
+
+    uint8_t*
+    Memento::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ = Maneuver::serializeFields(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Memento::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::deserializeFields(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Memento::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += Maneuver::reverseDeserializeFields(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    Memento::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      Maneuver::fieldsToJSON(os__, nindent__);
     }
 
     VehicleState::VehicleState(void)

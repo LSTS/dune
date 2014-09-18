@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: fea3a402c4ef5e48fc13b4b5b9dcca6d                            *
+// IMC XML MD5: 429d4804a8915055fe12ce9d09cfa3b9                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -12747,6 +12747,67 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return Maneuver::getVariableSerializationSize() + IMC::getSerializationSize(custom);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Maneuver Memento.
+    class Memento: public Maneuver
+    {
+    public:
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 484;
+      }
+
+      Memento(void);
+
+      uint16_t
+      getId(void) const
+      {
+        return Memento::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Memento";
+      }
+
+      Message*
+      clone(void) const
+      {
+        return new Memento(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Maneuver::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Maneuver::getVariableSerializationSize();
       }
 
       void

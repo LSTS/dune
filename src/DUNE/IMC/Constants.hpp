@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: fea3a402c4ef5e48fc13b4b5b9dcca6d                            *
+// IMC XML MD5: 429d4804a8915055fe12ce9d09cfa3b9                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_CONSTANTS_HPP_INCLUDED_
@@ -35,9 +35,9 @@
 //! IMC version string.
 #define DUNE_IMC_CONST_VERSION "5.4.2"
 //! Git repository information.
-#define DUNE_IMC_CONST_GIT_INFO "2014-09-17 b710a7a  (HEAD, feature/maneuver_memento)"
+#define DUNE_IMC_CONST_GIT_INFO "2014-09-17 b710a7a  (HEAD, origin/feature/maneuver_memento, feature/maneuver_memento)"
 //! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "fea3a402c4ef5e48fc13b4b5b9dcca6d"
+#define DUNE_IMC_CONST_MD5 "429d4804a8915055fe12ce9d09cfa3b9"
 //! Synchronization number.
 #define DUNE_IMC_CONST_SYNC 0xFE54
 //! Reversed synchronization number.
