@@ -32,61 +32,33 @@
 #include <DUNE/DUNE.hpp>
 #include "DB.hpp"
 
+using namespace std;
+
 namespace Plan
 {
   namespace DB
   {
     using DUNE_NAMESPACES;
 
-    struct PlanInformation
+    template <typename plans, typename plansinfo, typename sysname>
+    void
+    Parser(plans &plan, plansinfo &m_plan_info, sysname sname)
     {
-      PlanInformation(float ps, char pid, int sid):
-        plan_size(ps),
-        plan_id(pid),
-        change_sid(sid)
-      { }
+      m_plan_info.plan_size = plan->getPayloadSerializationSize();
+      m_plan_info.plan_id = plan->plan_id;
+      m_plan_info.change_time = Clock::getSinceEpoch();
+      m_plan_info.change_sid = plan->getSource();
+      m_plan_info.change_sname = sname;
+    }
 
-      template <typename Type>
-      PlanInformation(const Type* plan)
-      {
-        plan_size = plan->getPayloadSerializationSize();
-        plan_id = plan->plan_id;
-        change_sid = plan->getSource();
-      }
-
-      ~PlanInformation(void)
-      { }
-
-      //! Plan size
-      float plan_size;
-      //! Plan Id
-      char plan_id;
-      //! System id
-      int change_sid;
-    };
-
-    /*class Base
-{
-public:
-  virtual void doSomething(int &i, IMC::PlanDBInformation &m_plan_info);
-};
-
-class A : public Base
-{
-  void doSomething(int &i, IMC::PlanDBInformation &m_plan_info) { std::cout << "Teste\n"<<m_plan_info.plan_id; i=20; }
-  };*/
-
-    /*
-std::vector<Base*> pointers;
-        int i = 0;
-        if(i == 0)
-          pointers.push_back(new A);
-
-        pointers[0]->doSomething(i, m_plan_info);
-        printf("i %d\n",i);
-        delete pointers[0];
-    */
-
+    template <typename plans, typename plansinfo, typename blobdata>
+    void
+    DataParser(plans &plan, plansinfo &m_plan_info, blobdata &plan_data)
+    {
+      plan->serializeFields((uint8_t*)&plan_data[0]);
+      m_plan_info.md5.resize(16);
+      MD5::compute((uint8_t*)&plan_data[0], m_plan_info.plan_size, (uint8_t*)&m_plan_info.md5[0]);
+    }
   }
 }
 #endif
