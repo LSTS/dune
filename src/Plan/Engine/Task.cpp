@@ -863,6 +863,8 @@ namespace Plan
 
                 IMC::Maneuver* ptr = static_cast<IMC::Maneuver*>((*itr)->data.get());
                 ptr->memento = pmem->memento;
+                war(DTR("resuming with memento: %s"),
+                    pmem->id.c_str());
                 return true;
               }
             }
