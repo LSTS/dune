@@ -106,6 +106,9 @@ namespace Plan
       if (m_profiles != NULL)
         m_profiles->clear();
 
+      if (m_calib != NULL)
+        m_calib->clear();
+
       m_cat.clear();
       m_properties = 0;
 
