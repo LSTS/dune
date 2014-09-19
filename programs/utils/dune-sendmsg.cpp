@@ -473,6 +473,24 @@ main(int argc, char** argv)
       tmsg->params = argv[7];
   }
 
+  if (strcmp(argv[3], "PlanMemento") == 0)
+  {
+    IMC::PlanControl* tmsg = new IMC::PlanControl;
+    tmsg->type = IMC::PlanControl::PC_REQUEST;
+    tmsg->op = IMC::PlanControl::PC_START;
+    tmsg->plan_id = argv[4];
+
+    IMC::PlanMemento pmem;
+    pmem.id = std::string(Time::Format::getTimeSafe(Clock::getSinceEpoch()) + "_" + argv[4]);
+    pmem.plan_id = argv[4];
+    pmem.maneuver_id = argv[5];
+    pmem.memento = argv[6];
+
+    tmsg->arg.set(pmem);
+
+    msg = tmsg;
+  }
+
   if (strcmp(argv[3], "PopEntityParameters") == 0)
   {
     IMC::PopEntityParameters* tmsg = new IMC::PopEntityParameters;
