@@ -113,6 +113,8 @@ namespace Plan
       bool m_imu_enabled;
       //! Queue of PlanControl messages
       std::queue<IMC::PlanControl> m_requests;
+      //! Plan reference for everytime we are about to start a new plan
+      uint32_t m_plan_ref;
       //! Task arguments.
       Arguments m_args;
 
@@ -121,7 +123,8 @@ namespace Plan
         m_plan(NULL),
         m_db(NULL),
         m_get_plan_stmt(NULL),
-        m_imu_enabled(false)
+        m_imu_enabled(false),
+        m_plan_ref(0)
       {
         param("Compute Progress", m_args.progress)
         .defaultValue("false")
@@ -877,6 +880,9 @@ namespace Plan
 
         dispatch(m_spec);
 
+        // Increment plan reference
+        ++m_plan_ref;
+
         if ((flags & IMC::PlanControl::FLG_CALIBRATE) &&
             m_args.do_calib)
         {
@@ -944,7 +950,15 @@ namespace Plan
           return;
         }
 
-        vehicleRequest(IMC::VehicleCommand::VC_EXEC_MANEUVER, pman->data.get());
+        IMC::Maneuver* man = pman->data.get();
+
+        if (man)
+        {
+          man = static_cast<IMC::Maneuver*>(pman->data.get());
+          man->plan_ref = m_plan_ref;
+        }
+
+        vehicleRequest(IMC::VehicleCommand::VC_EXEC_MANEUVER, man);
 
         changeMode(IMC::PlanControlState::PCS_EXECUTING,
                    pman->maneuver_id + DTR(": executing maneuver"),
