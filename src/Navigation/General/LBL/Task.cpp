@@ -314,22 +314,15 @@ namespace Navigation
             // Update estimate.
             m_estimate[msg->id]->beacon->lat = lat;
             m_estimate[msg->id]->beacon->lon = lon;
-            m_estimate[msg->id]->x = m_kal.getState(msg->id * 2);
-            m_estimate[msg->id]->y = m_kal.getState(msg->id * 2 + 1);
             m_estimate[msg->id]->var_x = m_kal.getCovariance(msg->id * 2);
             m_estimate[msg->id]->var_y = m_kal.getCovariance(msg->id * 2 + 1);
-            m_estimate[msg->id]->distance = Coordinates::WGS84::distance(lat, lon, 0.0, m_ranging.getLat(msg->id),
-                                                                         m_ranging.getLon(msg->id), 0.0);
+
             dispatch(m_estimate[msg->id]);
 
             spew("beacon %d WGS: %f | %f", msg->id, lat, lon);
             spew("beacon %d COV: %f | %f", msg->id,
                  std::sqrt(m_estimate[msg->id]->var_x),
                  std::sqrt(m_estimate[msg->id]->var_y));
-            spew("beacon %d NE: %f | %f :: distance: %f", msg->id,
-                 m_estimate[msg->id]->x, m_estimate[msg->id]->y,
-                 m_estimate[msg->id]->distance);
-
           }
           else
             spew("rejected range from %d", msg->id);
