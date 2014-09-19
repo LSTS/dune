@@ -544,6 +544,11 @@ namespace Plan
       else
       {
         m_curr_node = &itr->second;
+
+        // fill in maneuver id
+        IMC::Maneuver* ptr = static_cast<IMC::Maneuver*>(m_curr_node->pman->data.get());
+        ptr->id = m_curr_node->pman->maneuver_id;
+
         return m_curr_node->pman;
       }
     }
