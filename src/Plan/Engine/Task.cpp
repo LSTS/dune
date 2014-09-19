@@ -32,6 +32,7 @@
 // Local headers.
 #include "Plan.hpp"
 #include "Calibration.hpp"
+#include "MementoHandler.hpp"
 
 namespace Plan
 {
@@ -115,6 +116,8 @@ namespace Plan
       std::queue<IMC::PlanControl> m_requests;
       //! Plan reference for everytime we are about to start a new plan
       uint32_t m_plan_ref;
+      //! Object that will handle the memento messages
+      MementoHandler m_mh;
       //! Task arguments.
       Arguments m_args;
 
@@ -181,6 +184,7 @@ namespace Plan
         bind<IMC::EntityInfo>(this);
         bind<IMC::EntityActivationState>(this);
         bind<IMC::FuelLevel>(this);
+        bind<IMC::Memento>(this);
       }
 
       ~Task()
@@ -339,6 +343,16 @@ namespace Plan
           return;
 
         m_plan->onFuelLevel(msg);
+      }
+
+      void
+      consume(const IMC::Memento* msg)
+      {
+        IMC::PlanMemento pmem;
+        if (!m_mh.processMemento(msg, pmem))
+          return;
+
+        // Send PlanMemento to PlanDB
       }
 
       void
@@ -882,6 +896,8 @@ namespace Plan
 
         // Increment plan reference
         ++m_plan_ref;
+        // Add to memento handler
+        m_mh.add(m_plan_ref, m_spec);
 
         if ((flags & IMC::PlanControl::FLG_CALIBRATE) &&
             m_args.do_calib)
