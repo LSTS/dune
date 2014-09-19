@@ -162,7 +162,7 @@ namespace DUNE
         // maneuver has been interrupted
         // check if memento is enabled
         if (m_memento_enabled)
-          dispatch(m_mto, Tasks::DF_KEEP_SRC_EID);
+          Task::dispatch(m_mto, Tasks::DF_KEEP_SRC_EID);
       }
     }
 
