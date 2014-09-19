@@ -123,7 +123,7 @@ namespace DUNE
 
         static_cast<T*>(this)->consume(maneuver);
 
-        // Fill memento info after consuming message
+        // Fill memento info after consuming maneuver message
         m_mto.clear();
         m_mto.setSourceEntity(m_eid);
         m_mto.plan_ref = maneuver->plan_ref;
