@@ -426,10 +426,13 @@ namespace Plan
         {
           std::string str = DTR(": maneuver has no incoming transition"
                                 " and it's not the initial maneuver");
-          throw ParseError((*mitr)->maneuver_id + str);
+          m_task->debug("%s: %s", (*mitr)->maneuver_id.c_str(), str.c_str());
+        }
+        else
+        {
+          m_graph[(*mitr)->maneuver_id] = node;
         }
 
-        m_graph[(*mitr)->maneuver_id] = node;
         ++mitr;
       }
       while (mitr != m_spec->maneuvers.end());
