@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 429d4804a8915055fe12ce9d09cfa3b9                            *
+// IMC XML MD5: d7ca75a749b0543a5551e9bf5b0c8605                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -111,6 +111,9 @@ MESSAGE(281, ServoPosition)
 MESSAGE(282, DeviceState)
 MESSAGE(283, BeamConfig)
 MESSAGE(284, DataSanity)
+MESSAGE(285, RhodamineDye)
+MESSAGE(286, CrudeOil)
+MESSAGE(287, FineOil)
 MESSAGE(300, CameraZoom)
 MESSAGE(301, SetThrusterActuation)
 MESSAGE(302, SetServoPosition)
@@ -137,7 +140,6 @@ MESSAGE(355, NavigationData)
 MESSAGE(356, GpsFixRejection)
 MESSAGE(357, LblRangeAcceptance)
 MESSAGE(358, DvlRejection)
-MESSAGE(359, NavigationReset)
 MESSAGE(360, LblEstimate)
 MESSAGE(361, AlignmentState)
 MESSAGE(362, GroupStreamVelocity)
@@ -217,6 +219,7 @@ MESSAGE(561, PlanVariable)
 MESSAGE(562, PlanGeneration)
 MESSAGE(563, LeaderState)
 MESSAGE(564, PlanStatistics)
+MESSAGE(565, PlanMemento)
 MESSAGE(600, ReportedState)
 MESSAGE(601, RemoteSensorInfo)
 MESSAGE(602, Map)
@@ -257,4 +260,7 @@ MESSAGE(821, FormationEval)
 MESSAGE(877, MessagePart)
 MESSAGE(888, NeptusBlob)
 MESSAGE(889, Aborted)
+MESSAGE(890, UsblAngles)
+MESSAGE(891, UsblPosition)
+MESSAGE(892, UsblFix)
 #undef MESSAGE

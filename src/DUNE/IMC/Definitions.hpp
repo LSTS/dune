@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 429d4804a8915055fe12ce9d09cfa3b9                            *
+// IMC XML MD5: d7ca75a749b0543a5551e9bf5b0c8605                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -6328,6 +6328,216 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Rhodamine Dye.
+    class RhodamineDye: public Message
+    {
+    public:
+      //! Value.
+      fp32_t value;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 285;
+      }
+
+      RhodamineDye(void);
+
+      uint16_t
+      getId(void) const
+      {
+        return RhodamineDye::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "RhodamineDye";
+      }
+
+      Message*
+      clone(void) const
+      {
+        return new RhodamineDye(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Crude Oil.
+    class CrudeOil: public Message
+    {
+    public:
+      //! Value.
+      fp32_t value;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 286;
+      }
+
+      CrudeOil(void);
+
+      uint16_t
+      getId(void) const
+      {
+        return CrudeOil::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "CrudeOil";
+      }
+
+      Message*
+      clone(void) const
+      {
+        return new CrudeOil(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Fine Oil.
+    class FineOil: public Message
+    {
+    public:
+      //! Value.
+      fp32_t value;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 287;
+      }
+
+      FineOil(void);
+
+      uint16_t
+      getId(void) const
+      {
+        return FineOil::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FineOil";
+      }
+
+      Message*
+      clone(void) const
+      {
+        return new FineOil(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 4 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Camera Zoom.
     class CameraZoom: public Message
     {
@@ -8344,67 +8554,6 @@ namespace DUNE
 
       void
       setValueFP(fp64_t val);
-
-      void
-      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
-    };
-
-    //! Navigation Reset.
-    class NavigationReset: public Message
-    {
-    public:
-      static uint16_t
-      getIdStatic(void)
-      {
-        return 359;
-      }
-
-      NavigationReset(void);
-
-      uint16_t
-      getId(void) const
-      {
-        return NavigationReset::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "NavigationReset";
-      }
-
-      Message*
-      clone(void) const
-      {
-        return new NavigationReset(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      unsigned
-      getFixedSerializationSize(void) const
-      {
-        return 0 + Message::getFixedSerializationSize();
-      }
-
-      unsigned
-      getVariableSerializationSize(void) const
-      {
-        return Message::getVariableSerializationSize();
-      }
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
@@ -15258,6 +15407,76 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Plan Memento.
+    class PlanMemento: public Message
+    {
+    public:
+      //! ID.
+      std::string id;
+      //! Plan ID.
+      std::string plan_id;
+      //! Maneuver ID.
+      std::string maneuver_id;
+      //! Memento.
+      std::string memento;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 565;
+      }
+
+      PlanMemento(void);
+
+      uint16_t
+      getId(void) const
+      {
+        return PlanMemento::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PlanMemento";
+      }
+
+      Message*
+      clone(void) const
+      {
+        return new PlanMemento(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(id) + IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(maneuver_id) + IMC::getSerializationSize(memento);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Reported State.
     class ReportedState: public Message
     {
@@ -18285,6 +18504,216 @@ namespace DUNE
       getFixedSerializationSize(void) const
       {
         return 0 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! USBL Angles.
+    class UsblAngles: public Message
+    {
+    public:
+      //! Target.
+      uint16_t target;
+      //! Bearing.
+      fp32_t bearing;
+      //! Elevation.
+      fp32_t elevation;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 890;
+      }
+
+      UsblAngles(void);
+
+      uint16_t
+      getId(void) const
+      {
+        return UsblAngles::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "UsblAngles";
+      }
+
+      Message*
+      clone(void) const
+      {
+        return new UsblAngles(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 10 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! USBL Position.
+    class UsblPosition: public Message
+    {
+    public:
+      //! Target.
+      uint16_t target;
+      //! X.
+      fp32_t x;
+      //! Y.
+      fp32_t y;
+      //! Z.
+      fp32_t z;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 891;
+      }
+
+      UsblPosition(void);
+
+      uint16_t
+      getId(void) const
+      {
+        return UsblPosition::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "UsblPosition";
+      }
+
+      Message*
+      clone(void) const
+      {
+        return new UsblPosition(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 14 + Message::getFixedSerializationSize();
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return Message::getVariableSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! USBL Fix.
+    class UsblFix: public Message
+    {
+    public:
+      //! Target.
+      uint16_t target;
+      //! Latitude (WGS-84).
+      fp64_t lat;
+      //! Longitude (WGS-84).
+      fp64_t lon;
+      //! Z Units.
+      uint8_t z_units;
+      //! Z Reference.
+      fp32_t z;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 892;
+      }
+
+      UsblFix(void);
+
+      uint16_t
+      getId(void) const
+      {
+        return UsblFix::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "UsblFix";
+      }
+
+      Message*
+      clone(void) const
+      {
+        return new UsblFix(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 23 + Message::getFixedSerializationSize();
       }
 
       unsigned
