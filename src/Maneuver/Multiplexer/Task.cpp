@@ -270,12 +270,6 @@ namespace Maneuver
         bindToManeuvers<Task>(this, supported);
       }
 
-      void
-      onResourceInitialization(void)
-      {
-
-      }
-
       template <typename Type, typename Msg, typename Args>
       AbstractMux*
       create(Args* args)
@@ -326,8 +320,18 @@ namespace Maneuver
       }
 
       void
+      onManeuverActivation(void)
+      {
+        // cannot call multiplexed maneuvers since
+        // there is no way to know which maneuver will start
+      }
+
+      void
       onManeuverDeactivation(void)
       {
+        if (m_maneuvers[m_type] != NULL)
+          m_maneuvers[m_type]->onManeuverDeactivation();
+
         setEntityId(getEntityId());
       }
 
