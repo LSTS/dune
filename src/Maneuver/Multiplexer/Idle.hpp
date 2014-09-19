@@ -50,6 +50,13 @@ namespace Maneuver
         MuxedManeuver(task, mt)
       { }
 
+      //! Deactivate
+      void
+      onManeuverDeactivation(void)
+      {
+        m_task->disableMemento();
+      }
+
       //! Start maneuver function
       //! @param[in] maneuver idle maneuver message
       void
