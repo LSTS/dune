@@ -827,6 +827,49 @@ namespace Plan
             m_spec = *given_plan;
             m_spec.setSourceEntity(getEntityId());
           }
+          else if (arg->getId() == DUNE_IMC_PLANMEMENTO)
+          {
+            const IMC::PlanMemento* pmem = static_cast<const IMC::PlanMemento*>(arg);
+
+            // clear spec
+            m_spec.clear();
+
+            if (!lookForPlan(pmem->plan_id, m_spec))
+            {
+              info = m_reply.info;
+              return false;
+            }
+
+            m_spec.setSourceEntity(getEntityId());
+            m_spec.start_man_id = pmem->maneuver_id;
+
+            // Insert memento information
+            IMC::MessageList<IMC::PlanManeuver>::const_iterator itr;
+            itr = m_spec.maneuvers.begin();
+            for (; itr != m_spec.maneuvers.end(); ++itr)
+            {
+              if (*itr == NULL)
+              {
+                continue;
+              }
+
+              if ((*itr)->maneuver_id == pmem->maneuver_id)
+              {
+                if ((*itr)->data.isNull())
+                {
+                  info = (*itr)->maneuver_id + DTR("actual maneuver not specified");
+                  return false;
+                }
+
+                IMC::Maneuver* ptr = static_cast<IMC::Maneuver*>((*itr)->data.get());
+                ptr->memento = pmem->memento;
+                return true;
+              }
+            }
+
+            info = DTR("could not find resume maneuver: ") + pmem->maneuver_id;
+            return false;
+          }
           else
           {
             // Quick plan
@@ -845,7 +888,7 @@ namespace Plan
             }
             else
             {
-              info = "undefined maneuver or plan";
+              info = DTR("undefined maneuver or plan");
               return false;
             }
           }
