@@ -58,6 +58,11 @@ namespace Maneuver
       virtual void
       start(const IMC::Maneuver* maneuver) = 0;
 
+      //! On maneuver deactivation
+      virtual void
+      onManeuverDeactivation(void)
+      { }
+
       //! On PathControlState message
       virtual void
       onPathControlState(const IMC::PathControlState* pcs)
@@ -96,6 +101,12 @@ namespace Maneuver
       Maneuvers::Maneuver* m_task;
       //! Pointer to memento table
       Maneuvers::MementoTable* m_mt;
+
+    private:
+      //! On maneuver activation
+      void
+      onManeuverActivation(void)
+      { }
     };
   }
 }
