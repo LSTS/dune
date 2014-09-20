@@ -58,6 +58,8 @@ namespace Supervisors
         unsigned ascent_wsize;
         //! Minimum time with a low ascent rate before triggering assist
         float trigger_time;
+        //! Dislodge plan id
+        std::string plan_id;
       };
 
       enum AssistState
@@ -118,6 +120,10 @@ namespace Supervisors
           .units(Units::Second)
           .description("Amount of time, after meeting conditions, before triggering dislodging behavior");
 
+          param("Dislodge Plan Id", m_args.plan_id)
+          .defaultValue("dislodge")
+          .description("Dislodge plan id");
+
           bind<IMC::VehicleState>(this);
           bind<IMC::VehicleMedium>(this);
           bind<IMC::EstimatedState>(this);
@@ -176,7 +182,7 @@ namespace Supervisors
           if (msg->cmd != IMC::PlanGeneration::CMD_EXECUTE)
             return;
 
-          if (msg->plan_id != "dislodge")
+          if (msg->plan_id != m_args.plan_id)
             return;
 
           if (msg->op != IMC::PlanGeneration::OP_SUCCESS)
@@ -213,7 +219,7 @@ namespace Supervisors
           if (msg->type != IMC::PlanControl::PC_START)
             return;
 
-          if (msg->plan_id != "dislodge")
+          if (msg->plan_id != m_args.plan_id)
             return;
 
           if (msg->type == IMC::PlanControl::PC_SUCCESS)
@@ -240,7 +246,7 @@ namespace Supervisors
         inline void
         failedStartPlan(void)
         {
-          err(DTR("failed to start dislodge maneuver"));
+          err(DTR("failed to start %s plan"), m_args.plan_id.c_str());
         }
 
         //! Dispatch the dislodge plan
@@ -250,7 +256,7 @@ namespace Supervisors
           IMC::PlanGeneration pg;
           pg.op = IMC::PlanGeneration::OP_REQUEST;
           pg.cmd = IMC::PlanGeneration::CMD_EXECUTE;
-          pg.plan_id = "dislodge";
+          pg.plan_id = m_args.plan_id;
           pg.params = (Utils::String::str("rpm=%.1f", m_args.dislodge_rpm) +
                        "ignore_errors=true");
           dispatch(pg);
