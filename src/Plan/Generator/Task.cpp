@@ -515,6 +515,36 @@ namespace Plan
           return true;
         }
 
+        // This template makes the vehicle come to the surface and
+        // keep the motor running while loitering
+        // (useful when the buoyancy may have been compromised)
+        if (plan_id == "force_surface")
+        {
+          IMC::MessageList<IMC::Maneuver> maneuvers;
+
+          double lat, lon, depth;
+          getCurrentPosition(&lat, &lon, &depth);
+
+          IMC::Loiter* loiter = new IMC::Loiter();
+          loiter->lat = lat;
+          loiter->lon = lon;
+          loiter->z = 0.0f;
+          loiter->z_units = IMC::Z_DEPTH;
+          loiter->type = IMC::Loiter::LT_CIRCULAR;
+          loiter->direction = IMC::Loiter::LD_CCLOCKW;
+          loiter->duration = m_args.dive_time;
+          loiter->speed = m_args.speed_rpms;
+          loiter->speed_units = IMC::SUNITS_RPM;
+          loiter->radius = m_args.radius;
+          maneuvers.push_back(*loiter);
+
+          delete loiter;
+
+          sequentialPlan(plan_id, &maneuvers, result);
+
+          return true;
+        }
+
         // This template makes the vehicle survey the water column around a moving point
         if (plan_id == "yoyo")
         {
