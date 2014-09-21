@@ -57,7 +57,21 @@ namespace Maneuver
       Loiter(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt,
              LoiterArgs* args):
         MuxedManeuver(task, mt, args)
-      { }
+      {
+        mt->add("Time Left", m_mem.time_left)
+        .defaultValue("-1.0");
+      }
+
+      //! Deactivate
+      void
+      onManeuverDeactivation(void)
+      {
+        if (m_duration <= 0.0f)
+          m_task->disableMemento();
+
+        if (m_end_time > 0.0f)
+          m_mem.time_left = m_end_time - Clock::get();
+      }
 
       //! Start maneuver function
       //! @param[in] maneuver loiter maneuver message
@@ -90,8 +104,12 @@ namespace Maneuver
         path.speed_units = maneuver->speed_units;
         m_task->dispatch(path);
 
-        m_duration = maneuver->duration;
-        m_end_time = -1;
+        if (maneuver->duration > 0.0f && m_mem.time_left > 0.0f)
+          m_duration = std::min((float)maneuver->duration, m_mem.time_left);
+        else
+          m_duration = maneuver->duration;
+
+        m_end_time = -1.0;
       }
 
       //! On PathControlState message
@@ -101,13 +119,13 @@ namespace Maneuver
       {
         if (pcs->flags & IMC::PathControlState::FL_LOITERING)
         {
-          if (m_duration)
+          if (m_duration > 0.0f)
           {
             double now = Clock::get();
 
             if (m_end_time < 0)
             {
-              m_task->debug("will now loiter for %d seconds", m_duration);
+              m_task->debug("will now loiter for %1.f seconds", m_duration);
               m_end_time = now + m_duration;
             }
             else if (now >= m_end_time)
@@ -122,7 +140,7 @@ namespace Maneuver
         }
         else
         {
-          if (m_duration > 0)
+          if (m_duration > 0.0f)
             m_task->signalProgress(pcs->eta + m_duration);
           else
             m_task->signalProgress();
@@ -133,10 +151,18 @@ namespace Maneuver
       { }
 
     private:
+      struct Mementos
+      {
+        //! Time left keeping
+        float time_left;
+      };
+
       //! Loiter: End time
       double m_end_time;
       //! Loiter: Duration in seconds
-      uint16_t m_duration;
+      float m_duration;
+      //! Mementos
+      Mementos m_mem;
     };
   }
 }
