@@ -118,6 +118,9 @@ namespace DUNE
 
         // Fill memento table
         MementoTable* mt = getMementoTable(m_id);
+        // set default values first
+        mt->setDefaults();
+        // then fill
         if (!maneuver->memento.empty() && mt != NULL)
           mt->fill(maneuver->memento);
 
