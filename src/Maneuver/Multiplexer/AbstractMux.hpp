@@ -44,6 +44,7 @@ namespace Maneuver
     public:
       //! Constructor
       //! @param[in] task pointer to Maneuver task
+      //! @param[in] mt pointer to Memento table
       AbstractMux(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt):
         m_task(task),
         m_mt(mt)

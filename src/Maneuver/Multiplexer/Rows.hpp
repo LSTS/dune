@@ -46,6 +46,7 @@ namespace Maneuver
     public:
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
+      //! @param[in] mt pointer to Memento table
       Rows(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt):
         MuxedManeuver(task, mt),
         m_parser(NULL)

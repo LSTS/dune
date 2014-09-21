@@ -46,6 +46,7 @@ namespace Maneuver
     public:
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
+      //! @param[in] mt pointer to Memento table
       Goto(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt):
         MuxedManeuver(task, mt)
       { }

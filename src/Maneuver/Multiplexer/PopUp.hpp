@@ -60,6 +60,7 @@ namespace Maneuver
     public:
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
+      //! @param[in] mt pointer to Memento table
       //! @param[in] args popup arguments
       PopUp(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt,
             PopUpArgs* args):

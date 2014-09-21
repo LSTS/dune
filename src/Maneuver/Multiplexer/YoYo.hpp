@@ -58,6 +58,7 @@ namespace Maneuver
     public:
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
+      //! @param[in] mt pointer to Memento table
       //! @param[in] args yoyo arguments
       YoYo(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt,
            YoYoArgs* args):
