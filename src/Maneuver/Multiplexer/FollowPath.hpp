@@ -49,7 +49,10 @@ namespace Maneuver
       //! @param[in] mt pointer to Memento table
       FollowPath(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt):
         MuxedManeuver(task, mt)
-      { }
+      {
+        mt->add("Waypoint", m_mem.waypoint).
+        defaultValue("0");
+      }
 
       //! Destructor
       ~FollowPath(void)
@@ -93,6 +96,10 @@ namespace Maneuver
           m_task->signalCompletion();
           return;
         }
+
+        // Resume with memento
+        if (m_mem.waypoint > 0 && m_mem.waypoint < m_wpts.size())
+          m_curr = m_mem.waypoint;
 
         m_task->debug("starting path with %lu waypoints", (long unsigned int)m_wpts.size());
 
@@ -150,12 +157,20 @@ namespace Maneuver
         uint8_t z_units;
       };
 
+      struct Mementos
+      {
+        //! Waypoint index
+        unsigned waypoint;
+      };
+
       //! Desired path message.
       IMC::DesiredPath m_path;
       //! Vector of waypoints.
       std::vector<Waypoint> m_wpts;
       //! Current waypoint.
       unsigned int m_curr;
+      //! Mementos
+      Mementos m_mem;
     };
   }
 }
