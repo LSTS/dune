@@ -104,7 +104,7 @@ namespace Maneuver
 
         if (m_skeep->isInside() && (m_end_time < 0))
         {
-          if (m_mem.time_left < -1.0)
+          if (m_mem.time_left < 0.0f)
             m_end_time = Clock::get() + m_duration;
           else
             m_end_time = Clock::get() + m_mem.time_left;
