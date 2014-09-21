@@ -85,10 +85,13 @@ namespace Maneuver
       void
       onStart(const IMC::StationKeeping* maneuver)
       {
-        m_duration = maneuver->duration;
-
         Memory::clear(m_skeep);
         m_skeep = new Maneuvers::StationKeep(maneuver, m_task, m_args->min_radius);
+
+        if (maneuver->duration > 0.0f && m_mem.time_left > 0.0f)
+          m_duration = std::min((float)maneuver->duration, m_mem.time_left);
+        else
+          m_duration = maneuver->duration;
 
         if (m_duration > 0.0f)
           m_end_time = -1.0;
@@ -103,12 +106,7 @@ namespace Maneuver
           return;
 
         if (m_skeep->isInside() && (m_end_time < 0))
-        {
-          if (m_mem.time_left < 0.0f)
-            m_end_time = Clock::get() + m_duration;
-          else
-            m_end_time = Clock::get() + m_mem.time_left;
-        }
+          m_end_time = Clock::get() + m_duration;
 
         m_skeep->update(msg);
       }
@@ -130,7 +128,7 @@ namespace Maneuver
       void
       onStateReport(void)
       {
-        if (m_duration > 0 && m_end_time > 0)
+        if (m_duration > 0.0f && m_end_time > 0)
         {
           double time_left = m_end_time - Clock::get();
 
