@@ -58,11 +58,25 @@ namespace Maneuver
         MuxedManeuver(task, mt, args),
         m_skeep(NULL),
         m_end_time(-1.0)
-      { }
+      {
+        mt->add("Time Left", m_mem.time_left)
+        .defaultValue("-1.0");
+      }
 
       ~StationKeeping(void)
       {
         Memory::clear(m_skeep);
+      }
+
+      //! Deactivate
+      void
+      onManeuverDeactivation(void)
+      {
+        if (m_duration <= 0.0f)
+          m_task->disableMemento();
+
+        if (m_end_time > 0.0f)
+          m_mem.time_left = m_end_time - Clock::get();
       }
 
       //! Start maneuver function
@@ -75,7 +89,7 @@ namespace Maneuver
         Memory::clear(m_skeep);
         m_skeep = new Maneuvers::StationKeep(maneuver, m_task, m_args->min_radius);
 
-        if (m_duration > 0)
+        if (m_duration > 0.0f)
           m_end_time = -1.0;
       }
 
@@ -88,7 +102,12 @@ namespace Maneuver
           return;
 
         if (m_skeep->isInside() && (m_end_time < 0))
-          m_end_time = Clock::get() + m_duration;
+        {
+          if (m_mem.time_left < -1.0)
+            m_end_time = Clock::get() + m_duration;
+          else
+            m_end_time = Clock::get() + m_mem.time_left;
+        }
 
         m_skeep->update(msg);
       }
@@ -127,6 +146,12 @@ namespace Maneuver
       }
 
     private:
+      struct Mementos
+      {
+        //! Time left keeping
+        float time_left;
+      };
+
       //! Station Keeping behavior
       Maneuvers::StationKeep* m_skeep;
       //! PathControlState message
@@ -135,6 +160,8 @@ namespace Maneuver
       float m_duration;
       //! End time for the maneuver
       double m_end_time;
+      //! Mementos
+      Mementos m_mem;
     };
   }
 }
