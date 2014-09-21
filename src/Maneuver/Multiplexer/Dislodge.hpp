@@ -73,6 +73,13 @@ namespace Maneuver
         m_bursting(false)
       { }
 
+      //! Deactivate
+      void
+      onManeuverDeactivation(void)
+      {
+        m_task->disableMemento();
+      }
+
       //! Start maneuver function
       //! @param[in] maneuver idle maneuver message
       void
