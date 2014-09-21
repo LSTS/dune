@@ -50,7 +50,10 @@ namespace Maneuver
       Rows(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt):
         MuxedManeuver(task, mt),
         m_parser(NULL)
-      { }
+      {
+        mt->add("Waypoint", m_mem.waypoint).
+        defaultValue("0");
+      }
 
       //! Destructor
       ~Rows(void)
@@ -77,10 +80,29 @@ namespace Maneuver
         double lat;
         double lon;
 
-        if (m_parser->getFirstPoint(&lat, &lon))
+        // Check if we're resuming the maneuver
+        if (m_mem.waypoint <= 1)
         {
-          m_task->signalCompletion();
-          return;
+          if (m_parser->getFirstPoint(&lat, &lon))
+          {
+            m_task->signalCompletion();
+            return;
+          }
+        }
+        else
+        {
+          m_parser->getFirstPoint(&lat, &lon);
+          while (true)
+          {
+            if (m_parser->getNextPoint(&lat, &lon))
+            {
+              m_task->signalCompletion();
+              return;
+            }
+
+            if (m_parser->getIndex() >= m_mem.waypoint)
+              break;
+          }
         }
 
         sendPath(lat, lon);
@@ -125,10 +147,18 @@ namespace Maneuver
       }
 
     private:
+      struct Mementos
+      {
+        //! Waypoint index
+        unsigned waypoint;
+      };
+
       //! Rows stages parser
       Maneuvers::RowsStages* m_parser;
       //! Desired path message
       IMC::DesiredPath m_path;
+      //! Mementos
+      Mementos m_mem;
     };
   }
 }
