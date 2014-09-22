@@ -29,12 +29,12 @@
 #include <stdexcept>
 
 // DUNE headers.
-#include <DUNE/Tasks/BasicEntity.hpp>
+#include <DUNE/Entities/BasicEntity.hpp>
 #include <DUNE/Tasks/Task.hpp>
 
 namespace DUNE
 {
-  namespace Tasks
+  namespace Entities
   {
     void
     BasicEntity::setLabel(const std::string& label)
@@ -70,10 +70,10 @@ namespace DUNE
     void
     BasicEntity::dispatch(IMC::Message* msg, unsigned int flags)
     {
-      if ((flags && DF_KEEP_SRC_EID) == 0)
+      if ((flags && Tasks::DF_KEEP_SRC_EID) == 0)
         msg->setSourceEntity(getId());
 
-      m_owner->dispatch(msg, DF_KEEP_SRC_EID | flags);
+      m_owner->dispatch(msg, Tasks::DF_KEEP_SRC_EID | flags);
     }
 
   }

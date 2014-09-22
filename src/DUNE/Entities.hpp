@@ -25,24 +25,18 @@
 // Author: Renato Caldas                                                    *
 //***************************************************************************
 
-#ifndef DUNE_TASKS_ENTITY_UTILS_HPP_INCLUDED_
-#define DUNE_TASKS_ENTITY_UTILS_HPP_INCLUDED_
-
-// ISO C++ 98 headers.
-#include <string>
+#ifndef DUNE_ENTITIES_HPP_INCLUDED_
+#define DUNE_ENTITIES_HPP_INCLUDED_
 
 namespace DUNE
 {
-  namespace Tasks
-  {
-    class BasicEntity;
-
-    //! Compare label of BasicEntity object against string.
-    //! param[in] e pointer to object whose label we wish to compare.
-    //! param[in] label label to be compared against.
-    bool
-    operator==(const BasicEntity* e, const std::string& label);
-  }
+  //! %Task related routines and classes.
+  namespace Entities
+  { }
 }
+
+#include <DUNE/Entities/EntityUtils.hpp>
+#include <DUNE/Entities/BasicEntity.hpp>
+#include <DUNE/Entities/StatefulEntity.hpp>
 
 #endif

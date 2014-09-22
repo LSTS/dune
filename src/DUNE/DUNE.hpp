@@ -49,6 +49,7 @@
 #include <DUNE/Hardware.hpp>
 #include <DUNE/FileSystem.hpp>
 #include <DUNE/Tasks.hpp>
+#include <DUNE/Entities.hpp>
 #include <DUNE/Concurrency.hpp>
 #include <DUNE/Coordinates.hpp>
 #include <DUNE/Media.hpp>

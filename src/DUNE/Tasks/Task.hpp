@@ -51,8 +51,8 @@
 #include <DUNE/Tasks/Context.hpp>
 #include <DUNE/Tasks/BasicParameterParser.hpp>
 #include <DUNE/Tasks/ParameterTable.hpp>
-#include <DUNE/Tasks/BasicEntity.hpp>
-#include <DUNE/Tasks/StatefulEntity.hpp>
+#include <DUNE/Entities/BasicEntity.hpp>
+#include <DUNE/Entities/StatefulEntity.hpp>
 
 #if defined(DUNE_SHARED)
 #  define DUNE_TASK_EXPORT(class, mangled)                              \
@@ -364,7 +364,7 @@ namespace DUNE
       //! Context.
       Context& m_ctx;
       //! Owned entity list
-      std::vector<BasicEntity*> m_entities;
+      std::vector<Entities::BasicEntity*> m_entities;
 
       //! Retrieve the main entity label of the task.
       //! @return main entity label.
@@ -428,7 +428,7 @@ namespace DUNE
       reserveEntity(const std::string& label)
       {
         E* entity = new E(this);
-        m_entities.push_back(static_cast<BasicEntity*>(entity));
+        m_entities.push_back(static_cast<Entities::BasicEntity*>(entity));
 
         entity->setLabel(label);
         entity->setId(m_ctx.entities.reserve(label, getName()));
@@ -746,7 +746,7 @@ namespace DUNE
       //! Task parameters.
       ParameterTable m_params;
       //! Main Entity
-      StatefulEntity* m_entity;
+      Entities::StatefulEntity* m_entity;
       //! Debug level (as a string).
       std::string m_debug_level_string;
       //! Debug level.

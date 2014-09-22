@@ -1,3 +1,4 @@
+
 //***************************************************************************
 // Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
@@ -84,7 +85,7 @@ namespace DUNE
       .values("None, Debug, Trace, Spew");
 
       m_recipient = new Recipient(this, ctx);
-      m_entity = new StatefulEntity(this);
+      m_entity = new Entities::StatefulEntity(this);
       m_entities.push_back(m_entity);
 
       bind<IMC::QueryEntityParameters>(this);
@@ -96,7 +97,7 @@ namespace DUNE
     unsigned int
     Task::reserveEntity(const std::string& label)
     {
-      BasicEntity* e = new BasicEntity(this);
+      Entities::BasicEntity* e = new Entities::BasicEntity(this);
       e->setLabel(label);
       e->setId(m_ctx.entities.reserve(label, getName()));
       e->setBindings(m_recipient);

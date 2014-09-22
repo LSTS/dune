@@ -29,12 +29,12 @@
 #include <stdexcept>
 
 // DUNE headers.
-#include <DUNE/Tasks/StatefulEntity.hpp>
+#include <DUNE/Entities/StatefulEntity.hpp>
 #include <DUNE/Tasks/Task.hpp>
 
 namespace DUNE
 {
-  namespace Tasks
+  namespace Entities
   {
     void
     StatefulEntity::setState(IMC::EntityState::StateEnum state,
