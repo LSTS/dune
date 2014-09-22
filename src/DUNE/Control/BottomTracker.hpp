@@ -34,7 +34,7 @@
 // DUNE headers.
 #include <DUNE/IMC.hpp>
 #include <DUNE/Tasks/Task.hpp>
-#include <DUNE/Tasks/BasicEntity.hpp>
+#include <DUNE/Entities/BasicEntity.hpp>
 #include <DUNE/Math/MovingAverage.hpp>
 #include "SlopeData.hpp"
 
@@ -77,7 +77,7 @@ namespace DUNE
         //! Admissible altitude when doing depth control
         float adm_alt;
         //! Entity for bottom tracker
-        Tasks::BasicEntity* entity;
+        Entities::BasicEntity* entity;
       };
 
       //! Constructor.

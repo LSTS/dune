@@ -285,7 +285,7 @@ namespace DUNE
     void
     PathController::onEntityReservation(void)
     {
-      m_bt_entity = reserveEntity<Tasks::BasicEntity>("Bottom Track");
+      m_bt_entity = reserveEntity<Entities::BasicEntity>("Bottom Track");
       m_btd.args.entity = m_bt_entity;
     }
 

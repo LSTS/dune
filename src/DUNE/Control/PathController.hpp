@@ -393,7 +393,7 @@ namespace DUNE
         BottomTracker::Arguments args;
       } m_btd;
       //! Entity for the bottom tracker.
-      Tasks::BasicEntity* m_bt_entity;
+      Entities::BasicEntity* m_bt_entity;
 
       //! Running path monitors
       bool m_running_monitors;
