@@ -2780,6 +2780,26 @@ msgstr  "estado da base de dados"
 msgid   "database initialization"
 msgstr  "inicialização da base de dados"
 
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:82
+msgid   "set memento"
+msgstr  "definir memento"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:82
+msgid   "delete memento"
+msgstr  "apagar memento"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:83
+msgid   "get memento info"
+msgstr  "obter informação de memento"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:84
+msgid   "clear memento table"
+msgstr  "limpar tabela de mementos"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:84
+msgid   "memento table state"
+msgstr  "estado da tabela de mementos"
+
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:145
 #, c-format
 msgid   "database file: '%s'"
