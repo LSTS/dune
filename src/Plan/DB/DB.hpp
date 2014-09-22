@@ -40,7 +40,7 @@ namespace Plan
 
     template <typename plans, typename plansinfo, typename sysname>
     void
-    PlanInfoParser(plans &plan, plansinfo &m_plan_info, sysname sname)
+    PlanInfoParser(plans& plan, plansinfo& m_plan_info, sysname sname)
     {
       m_plan_info.plan_size = plan->getPayloadSerializationSize();
       m_plan_info.plan_id = plan->plan_id;
@@ -51,7 +51,7 @@ namespace Plan
 
     template <typename plans, typename plansinfo, typename blobdata>
     void
-    DataParser(plans &plan, plansinfo &m_plan_info, blobdata &plan_data)
+    DataParser(plans& plan, plansinfo& m_plan_info, blobdata& plan_data)
     {
       plan->serializeFields((uint8_t*)&plan_data[0]);
       m_plan_info.md5.resize(16);
