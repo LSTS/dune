@@ -71,7 +71,7 @@ namespace Actuators
       //! Serial port handle.
       SerialPort* m_uart;
       //! Motor entities
-      std::vector<BasicEntity*> m_ents;
+      std::vector<Entities::BasicEntity*> m_ents;
       //! Feedback timer.
       Counter<double> m_feedback_timer;
       //! Watchdogs.
@@ -140,7 +140,7 @@ namespace Actuators
       onEntityReservation(void)
       {
         for (unsigned i = 0; i < m_args.motor_enames.size(); ++i)
-          m_ents.push_back(reserveEntity<BasicEntity>(m_args.motor_enames[i]));
+          m_ents.push_back(reserveEntity<Entities::BasicEntity>(m_args.motor_enames[i]));
       }
 
       void

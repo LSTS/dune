@@ -140,11 +140,11 @@ namespace Actuators
       //! RPMs message.
       IMC::Rpm m_rpms;
       //! Motor entity.
-      BasicEntity* m_motor_ent;
+      Entities::BasicEntity* m_motor_ent;
       //! Bridge entity.
-      BasicEntity* m_bridge_ent;
+      Entities::BasicEntity* m_bridge_ent;
       //! MCU entity.
-      BasicEntity* m_mcu_ent;
+      Entities::BasicEntity* m_mcu_ent;
       //! Last state request.
       double m_last_state;
       //! Task arguments.
@@ -244,9 +244,9 @@ namespace Actuators
       void
       onEntityReservation(void)
       {
-        m_motor_ent = reserveEntity<BasicEntity>(m_args.motor_elabel);
-        m_bridge_ent = reserveEntity<BasicEntity>(m_args.bridge_elabel);
-        m_mcu_ent = reserveEntity<BasicEntity>(m_args.mcu_elabel);
+        m_motor_ent = reserveEntity<Entities::BasicEntity>(m_args.motor_elabel);
+        m_bridge_ent = reserveEntity<Entities::BasicEntity>(m_args.bridge_elabel);
+        m_mcu_ent = reserveEntity<Entities::BasicEntity>(m_args.mcu_elabel);
       }
 
       void

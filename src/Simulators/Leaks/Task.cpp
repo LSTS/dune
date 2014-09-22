@@ -53,7 +53,7 @@ namespace Simulators
       //! Task arguments
       Arguments m_args;
       //! Leak set
-      typedef std::vector<StatefulEntity*> LeakSet;
+      typedef std::vector<Entities::StatefulEntity*> LeakSet;
       LeakSet m_leaks;
 
       Task(const std::string& name, Tasks::Context& ctx):
@@ -85,7 +85,7 @@ namespace Simulators
       {
         for (unsigned i = 0; i < m_args.leak_ents.size(); ++i)
         {
-          m_leaks.push_back(reserveEntity<StatefulEntity>(m_args.leak_ents[i]));
+          m_leaks.push_back(reserveEntity<Entities::StatefulEntity>(m_args.leak_ents[i]));
           m_leaks.back()->setState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           spew("added entity %s", m_args.leak_ents[i].c_str());
         }
