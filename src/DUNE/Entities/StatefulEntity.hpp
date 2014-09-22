@@ -25,8 +25,8 @@
 // Author: Renato Caldas                                                    *
 //***************************************************************************
 
-#ifndef DUNE_TASKS_STATEFUL_ENTITY_HPP_INCLUDED_
-#define DUNE_TASKS_STATEFUL_ENTITY_HPP_INCLUDED_
+#ifndef DUNE_ENTITIES_STATEFUL_ENTITY_HPP_INCLUDED_
+#define DUNE_ENTITIES_STATEFUL_ENTITY_HPP_INCLUDED_
 
 // DUNE Headers.
 #include <DUNE/Entities/BasicEntity.hpp>
