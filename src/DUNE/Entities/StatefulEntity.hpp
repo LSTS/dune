@@ -28,9 +28,7 @@
 #ifndef DUNE_TASKS_STATEFUL_ENTITY_HPP_INCLUDED_
 #define DUNE_TASKS_STATEFUL_ENTITY_HPP_INCLUDED_
 
-// ISO C++ 98 headers.
-#include <stdexcept>
-
+// DUNE Headers.
 #include <DUNE/Entities/BasicEntity.hpp>
 #include <DUNE/Status/Messages.hpp>
 

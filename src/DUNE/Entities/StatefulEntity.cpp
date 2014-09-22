@@ -25,9 +25,6 @@
 // Author: Renato Caldas                                                    *
 //***************************************************************************
 
-// ISO C++ 98 headers.
-#include <stdexcept>
-
 // DUNE headers.
 #include <DUNE/Entities/StatefulEntity.hpp>
 #include <DUNE/Tasks/Task.hpp>

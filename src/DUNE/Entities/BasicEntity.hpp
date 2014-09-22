@@ -29,12 +29,11 @@
 #define DUNE_TASKS_PLAIN_ENTITY_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
-#include <stdexcept>
+#include <string>
 
 // DUNE Headers.
 #include <DUNE/IMC/Constants.hpp>
 #include <DUNE/IMC/Definitions.hpp>
-#include <DUNE/IMC/Factory.hpp>
 #include <DUNE/Tasks/Recipient.hpp>
 #include <DUNE/Tasks/Consumer.hpp>
 
