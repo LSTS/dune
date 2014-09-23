@@ -199,7 +199,7 @@ namespace DUNE
     if (msg->op != IMC::EntityList::OP_QUERY)
       return;
 
-    std::vector<DUNE::Tasks::EntityDataBase::Entity*> devs;
+    std::vector<DUNE::Entities::EntityDataBase::Entity*> devs;
     m_ctx.entities.contents(devs);
 
     if (devs.size() == 0)
