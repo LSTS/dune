@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: d7ca75a749b0543a5551e9bf5b0c8605                            *
+// IMC XML MD5: 41c2e87a93d3d410b922c728d4f438dc                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -14600,6 +14600,15 @@ namespace DUNE
         DBT_IN_PROGRESS = 3
       };
 
+      //! Operation Type.
+      enum OperationTypeEnum
+      {
+        //! Plan.
+        DBOT_PLAN = 0,
+        //! Memento.
+        DBOT_MEMENTO = 1
+      };
+
       //! Operation.
       enum OperationEnum
       {
@@ -14623,6 +14632,8 @@ namespace DUNE
 
       //! Type.
       uint8_t type;
+      //! Operation Type.
+      uint8_t ot;
       //! Operation.
       uint8_t op;
       //! Request ID.
@@ -14678,7 +14689,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4 + Message::getFixedSerializationSize();
+        return 5 + Message::getFixedSerializationSize();
       }
 
       unsigned
