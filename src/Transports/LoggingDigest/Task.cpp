@@ -153,7 +153,7 @@ namespace Transports
 
         // Log entities.
         double time_ref = Clock::getSinceEpoch();
-        std::vector<EntityDataBase::Entity*> devs;
+        std::vector<Entities::EntityDataBase::Entity*> devs;
         m_ctx.entities.contents(devs);
         for (unsigned int i = 0; i < devs.size(); ++i)
         {

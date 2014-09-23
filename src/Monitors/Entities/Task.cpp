@@ -146,7 +146,7 @@ namespace Monitors
           setupDefaults(m_args.defmon_hw);
 
         // Build entity state record
-        std::vector<Tasks::EntityDataBase::Entity*> ents;
+        std::vector<DUNE::Entities::EntityDataBase::Entity*> ents;
         m_ctx.entities.contents(ents);
 
         double now = Clock::get();

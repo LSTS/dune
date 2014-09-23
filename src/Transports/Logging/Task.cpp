@@ -253,7 +253,7 @@ namespace Transports
         dune_term.open(out_path.c_str());
 
         // Log entities.
-        std::vector<EntityDataBase::Entity*> devs;
+        std::vector<Entities::EntityDataBase::Entity*> devs;
         m_ctx.entities.contents(devs);
         for (unsigned int i = 0; i < devs.size(); ++i)
         {
