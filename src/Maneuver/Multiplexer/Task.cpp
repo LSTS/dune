@@ -271,6 +271,8 @@ namespace Maneuver
       void
       onResourceInitialization(void)
       {
+        Maneuver::onResourceInitialization();
+
         bindToManeuvers<Task>(this, m_supported);
       }
 
@@ -358,6 +360,9 @@ namespace Maneuver
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         m_maneuvers[m_type]->onEstimatedState(msg);
       }
 
