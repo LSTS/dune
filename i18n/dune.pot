@@ -2755,6 +2755,26 @@ msgstr  ""
 msgid   "database initialization"
 msgstr  ""
 
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:81
+msgid   "set memento"
+msgstr  ""
+
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:82
+msgid   "delete memento"
+msgstr  ""
+
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:82
+msgid   "get memento info"
+msgstr  ""
+
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:81
+msgid   "clear memento table"
+msgstr  ""
+
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:83
+msgid   "set memento"
+msgstr  ""
+
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:145
 #, c-format
 msgid   "database file: '%s'"
