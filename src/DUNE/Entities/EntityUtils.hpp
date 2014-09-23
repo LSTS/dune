@@ -22,71 +22,26 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Renato Caldas                                                    *
 //***************************************************************************
 
-#ifndef DUNE_TASKS_CONTEXT_HPP_INCLUDED_
-#define DUNE_TASKS_CONTEXT_HPP_INCLUDED_
+#ifndef DUNE_ENTITIES_ENTITY_UTILS_HPP_INCLUDED_
+#define DUNE_ENTITIES_ENTITY_UTILS_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
-#include <vector>
 #include <string>
-
-// DUNE headers.
-#include <DUNE/Parsers/Config.hpp>
-#include <DUNE/FileSystem/Path.hpp>
-#include <DUNE/Entities/EntityDataBase.hpp>
-#include <DUNE/Utils/ByteBuffer.hpp>
-#include <DUNE/Tasks/Profiles.hpp>
-#include <DUNE/IMC/Bus.hpp>
-#include <DUNE/IMC/AddressResolver.hpp>
 
 namespace DUNE
 {
-  namespace Tasks
+  namespace Entities
   {
-    // Export DLL Symbol.
-    struct DUNE_DLL_SYM Context;
+    class BasicEntity;
 
-    //! This structure serves the purpose of joining useful objects,
-    //! usually shared by a large number of classes (namely Tasks).
-    struct Context
-    {
-      Context(void);
-
-      //! Configuration directives.
-      Parsers::Config config;
-      //! Message bus.
-      IMC::Bus mbus;
-      //! IMC address resolver.
-      IMC::AddressResolver resolver;
-      //! Label data base.
-      Entities::EntityDataBase entities;
-      //! Execution profiles.
-      Profiles profiles;
-      //! DUNE's directory.
-      FileSystem::Path dir_app;
-      //! Path to configuration directory.
-      FileSystem::Path dir_cfg;
-      //! Path to user configuration directory.
-      FileSystem::Path dir_usr_cfg;
-      //! Path to HTTP server directory.
-      FileSystem::Path dir_www;
-      //! Path to log directory.
-      FileSystem::Path dir_log;
-      //! Path to libraries directory.
-      FileSystem::Path dir_lib;
-      //! Path to firmware directory.
-      FileSystem::Path dir_fmw;
-      //! Path to internationalization directory.
-      FileSystem::Path dir_i18n;
-      //! Path to database directory.
-      FileSystem::Path dir_db;
-      //! Path to scripts directory.
-      FileSystem::Path dir_scripts;
-      //! UID of this instance.
-      uint64_t uid;
-    };
+    //! Compare label of BasicEntity object against string.
+    //! param[in] e pointer to object whose label we wish to compare.
+    //! param[in] label label to be compared against.
+    bool
+    operator==(const BasicEntity* e, const std::string& label);
   }
 }
 

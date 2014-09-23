@@ -392,6 +392,8 @@ namespace DUNE
         //! Arguments for the bottom tracker
         BottomTracker::Arguments args;
       } m_btd;
+      //! Entity for the bottom tracker.
+      Entities::BasicEntity* m_bt_entity;
 
       //! Running path monitors
       bool m_running_monitors;

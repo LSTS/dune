@@ -70,10 +70,8 @@ namespace Actuators
     {
       //! Serial port handle.
       SerialPort* m_uart;
-      //! Current messages.
-      std::vector<IMC::Current> m_amps;
-      //! RPM messages.
-      std::vector<IMC::Rpm> m_rpms;
+      //! Motor entities
+      std::vector<Entities::BasicEntity*> m_ents;
       //! Feedback timer.
       Counter<double> m_feedback_timer;
       //! Watchdogs.
@@ -142,19 +140,15 @@ namespace Actuators
       onEntityReservation(void)
       {
         for (unsigned i = 0; i < m_args.motor_enames.size(); ++i)
-        {
-          unsigned eid = reserveEntity(m_args.motor_enames[i]);
-          m_amps[i].setSourceEntity(eid);
-          m_rpms[i].setSourceEntity(eid);
-        }
+          m_ents.push_back(reserveEntity<Entities::BasicEntity>(m_args.motor_enames[i]));
       }
 
       void
       onUpdateParameters(void)
       {
         unsigned motor_count = m_args.motor_enames.size();
-        m_amps.resize(motor_count);
-        m_rpms.resize(motor_count);
+        if (m_ents.size() != motor_count && m_ents.size() > 0)
+          throw std::runtime_error("number of motors cannot change at runtime");
         m_wdogs.resize(motor_count);
 
         if (m_args.addrs_log.size() != motor_count)
@@ -317,9 +311,9 @@ namespace Actuators
           return false;
 
         m_wdogs[index].reset();
-        m_amps[index].value = (double)value / 10.0;
-
-        dispatch(m_amps[index]);
+        IMC::Current amps;
+        amps.value = (double)value / 10.0;
+        m_ents[index]->dispatch(amps);
         return true;
       }
 
@@ -338,8 +332,9 @@ namespace Actuators
           return false;
 
         m_wdogs[index].reset();
-        m_rpms[index].value = (int16_t)Math::round(value / 5.0);
-        dispatch(m_rpms[index]);
+        IMC::Rpm rpms;
+        rpms.value = (int16_t)Math::round(value / 5.0);
+        m_ents[index]->dispatch(rpms);
         return true;
       }
 

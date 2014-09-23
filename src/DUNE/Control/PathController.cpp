@@ -59,6 +59,7 @@ namespace DUNE
 
     PathController::PathController(std::string name, Tasks::Context& ctx):
       Task(name, ctx),
+      m_bt_entity(NULL),
       m_running_monitors(true),
       m_error(false),
       m_setup(true),
@@ -284,7 +285,8 @@ namespace DUNE
     void
     PathController::onEntityReservation(void)
     {
-      m_btd.args.eid = reserveEntity("Bottom Track");
+      m_bt_entity = reserveEntity<Entities::BasicEntity>("Bottom Track");
+      m_btd.args.entity = m_bt_entity;
     }
 
     void
