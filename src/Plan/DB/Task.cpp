@@ -124,7 +124,6 @@ namespace Plan
         .defaultValue("")
         .description("Path to DB file");
 
-        bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::PowerOperation>(this);
       }
@@ -207,70 +206,6 @@ namespace Plan
         delete m_db;
 
         m_db = NULL;
-      }
-
-      void
-      consume(const IMC::PlanControl* pc)
-      {
-        // Handle case where modules do not interface with plan DB
-        // and specify plans through PlanControl alone
-        if (pc->type != IMC::PlanControl::PC_REQUEST)
-          return;
-
-        if (pc->op != IMC::PlanControl::PC_START && pc->op != IMC::PlanControl::PC_LOAD)
-          return;
-
-        if (pc->arg.isNull())
-          return;
-
-        const IMC::Message* m;
-        pc->arg.get(m);
-
-        if(m->getId() != DUNE_IMC_PLANSPECIFICATION && m->getId() != DUNE_IMC_PLANMEMENTO)
-          return;
-
-        const IMC::Message* arg = 0;
-        // flag = -1 - Plan Invalid
-        // flag = 0 - Plan specification parsed
-        // flag = 1 - Plan memento parsed
-        int PlanMementoflag = -1;
-
-        if(m->getId() == DUNE_IMC_PLANSPECIFICATION)
-        {
-          const IMC::PlanSpecification* ps;
-          pc->arg.get(ps);
-
-          if (ps->plan_id != pc->plan_id)
-            return;
-
-          PlanMementoflag = 0;
-          arg = static_cast<const IMC::Message*>(ps);
-
-          war(DTR("storing plan '%s' issued through a PlanControl request"), ps->plan_id.c_str());
-        }
-
-        if(m->getId() == DUNE_IMC_PLANMEMENTO)
-        {
-          const IMC::PlanMemento* pm;
-          pc->arg.get(pm);
-
-          if (pm->plan_id != pc->plan_id)
-            return;
-
-          PlanMementoflag = 1;
-          arg = static_cast<const IMC::Message*>(pm);
-
-          war("storing memento '%s' issued through a PlanControl request", pm->plan_id.c_str());
-        }
-
-        if(PlanMementoflag == -1)
-          return;
-
-        if(PlanMementoflag == 0)
-          storeInDB(arg,PlanMementoflag);
-
-        if(PlanMementoflag == 1)
-          storeInDB(arg,PlanMementoflag);
       }
 
       void
