@@ -49,17 +49,24 @@ namespace DUNE
     // Export DLL Symbol.
     class DUNE_DLL_SYM BasicEntity;
 
+    //! Basic Entity class, handling only QueryEntityInfo/EntityInfo messages,
+    //! and implementing the most basic Entity interface.
     class BasicEntity
     {
     public:
-      BasicEntity(Tasks::Task* task):
-        m_owner(task),
+      //! Constructor.
+      //! @param[in] owner pointer to the task containing the entity.
+      BasicEntity(Tasks::Task* owner):
+        m_owner(owner),
         m_id(DUNE_IMC_CONST_UNK_EID)
       { }
 
+      //! Destructor.
       virtual ~BasicEntity()
       { }
 
+      //! Set the IMC bindings using the provided recipient object.
+      //! @param[in] recipient pointer to the recipient object to use for binding to IMC messages.
       virtual void
       setBindings(Tasks::Recipient* recipient)
       {
@@ -96,21 +103,31 @@ namespace DUNE
         m_ent_info.id = id;
       }
 
+      //! Report the entity information by broadcasting an EntityInfo message.
       void
       reportInfo(void);
 
+
+      //! Compare label against a string.
+      //! @param[in] label string to be compared against.
+      //! @return true if the label and the string match, false otherwise.
       bool
-      operator==(std::string label)
+      operator==(const std::string label)
       {
         return getLabel() == label;
       }
 
+      //! Compare id against an unsigned integer.
+      //! @param[in] id integer to use for comparison.
+      //! @return true if the entity id and the integer match, false otherwise.
       bool
       operator==(unsigned int id)
       {
         return getId() == id;
       }
 
+      //! Process QueryEntityInfo message.
+      //! @param[in] msg pointer to QueryEntityInfo message.
       void
       consume(const IMC::QueryEntityInfo* msg);
 
