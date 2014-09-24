@@ -70,7 +70,7 @@ namespace DUNE
     void
     BasicEntity::dispatch(IMC::Message* msg, unsigned int flags)
     {
-      if ((flags && Tasks::DF_KEEP_SRC_EID) == 0)
+      if ((flags & Tasks::DF_KEEP_SRC_EID) == 0)
         msg->setSourceEntity(getId());
 
       m_owner->dispatch(msg, Tasks::DF_KEEP_SRC_EID | flags);
