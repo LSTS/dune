@@ -640,7 +640,7 @@ namespace DUNE
       //! - Bank
       commandBank(bank_cmd);
       //! - Airspeed
-      m_airspeed_cmd = airspeed_cmd;
+      commandAirspeed(airspeed_cmd);
       //! - Altitude
       commandAlt(altitude_cmd);
 
