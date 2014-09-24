@@ -30,7 +30,7 @@
 
 namespace DUNE
 {
-  //! %Task related routines and classes.
+  //! %Entity related routines and classes.
   namespace Entities
   { }
 }

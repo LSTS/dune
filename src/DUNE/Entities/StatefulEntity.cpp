@@ -22,6 +22,7 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
+// Author: Ricardo Martins                                                  *
 // Author: Renato Caldas                                                    *
 //***************************************************************************
 

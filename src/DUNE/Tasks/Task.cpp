@@ -1,4 +1,3 @@
-
 //***************************************************************************
 // Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
@@ -24,6 +23,7 @@
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Author: Renato Caldas                                                    *
 //***************************************************************************
 
 // ISO C++ 98 headers.

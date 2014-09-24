@@ -22,6 +22,7 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
+// Author: Ricardo Martins                                                  *
 // Author: Renato Caldas                                                    *
 //***************************************************************************
 
@@ -36,9 +37,16 @@ namespace DUNE
 {
   namespace Entities
   {
-    class StatefulEntity : public BasicEntity
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM BasicEntity;
+
+    //! Stateful Entity class, derived from BasicEntity, and also handling QueryEntityState/EntityState.
+    //! The class also implements an entity state and activation interface.
+    class StatefulEntity: public BasicEntity
     {
     public:
+      //! Constructor.
+      //! @param[in] task pointer to the task containing the entity.
       StatefulEntity(Tasks::Task* task):
         BasicEntity(task),
         m_entity_state_code(-1),
@@ -48,6 +56,8 @@ namespace DUNE
         setState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
       }
 
+      //! Set the IMC bindings using the provided recipient object.
+      //! @param[in] recipient pointer to the recipient object to use for binding to IMC messages.
       void
       setBindings(Tasks::Recipient* recipient)
       {
@@ -56,10 +66,16 @@ namespace DUNE
         bind<IMC::QueryEntityActivationState, StatefulEntity>(recipient, this);
       }
 
+      //! Set the entity state with a message constructed from a standard status code.
+      //! @param[in] state state to be set.
+      //! @param[in] code status code to be used for generating a status message.
       void
       setState(IMC::EntityState::StateEnum state,
                      Status::Code code);
 
+      //! Set the entity state with a user-provided message.
+      //! @param[in] state state to be set.
+      //! @param[in] message status message to use.
       void
       setState(IMC::EntityState::StateEnum state,
                      const std::string& message);
@@ -76,6 +92,9 @@ namespace DUNE
       void
       reportState(void);
 
+      //! Set the expected activation and deactivation times to be included in the EntityInfo message.
+      //! @param[in] act_time expected activation time.
+      //! @param[in] deact_time expected deactivation time.
       void
       setActTimes(uint16_t act_time, uint16_t deact_time)
       {
@@ -111,6 +130,8 @@ namespace DUNE
         return m_act_state.state == IMC::EntityActivationState::EAS_DEACT_IP;
       }
 
+      //! Get the current entity activation state.
+      //! @return current entity activation state.
       IMC::EntityActivationState::StateEnum
       getActivationState(void) const
       {
@@ -125,15 +146,21 @@ namespace DUNE
       void
       requestDeactivation(void);
 
+      //! Mark the activation as unsuccessful.
+      //! @param[in] reason message to the user explaining why the activation failed.
       void
       failActivation(const std::string& reason);
 
+      //! Mark the activation as successful.
       void
       succeedActivation(void);
 
+      //! Mark the deactivation as unsuccessful.
+      //! @param[in] reason message to the user explaining why the deactivation failed.
       void
       failDeactivation(const std::string& reason);
 
+      //! Mark the deactivation as successful.
       void
       succeedDeactivation(void);
 

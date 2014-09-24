@@ -31,16 +31,20 @@
 // ISO C++ 98 headers.
 #include <string>
 
+// DUNE Headers.
+#include <DUNE/Config.hpp>
+
 namespace DUNE
 {
   namespace Entities
   {
     class BasicEntity;
 
-    //! Compare label of BasicEntity object against string.
+    //! Compare label of BasicEntity object against a string.
     //! param[in] e pointer to object whose label we wish to compare.
-    //! param[in] label label to be compared against.
-    bool
+    //! param[in] label string to be compared against.
+    //! @return true if the label and the string match, false otherwise.
+    DUNE_DLL_SYM bool
     operator==(const BasicEntity* e, const std::string& label);
   }
 }
