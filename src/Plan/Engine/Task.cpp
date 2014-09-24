@@ -377,14 +377,10 @@ namespace Plan
       closeDB(void)
       {
         if (m_db == NULL)
-        {
           return;
-        }
 
         Memory::clear(m_get_plan_stmt);
-
-        delete m_db;
-        m_db = NULL;
+        Memory::clear(m_db);
 
         debug("database connection closed");
       }
