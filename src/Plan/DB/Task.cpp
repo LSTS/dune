@@ -301,7 +301,8 @@ namespace Plan
           war(DTR("unexpected message"));
           return;
         }
-        printf("teste %d | %d\n",IMC::PlanDB::DBT_REQUEST, req->op);
+
+        debug("teste %d | %d\n",IMC::PlanDB::DBT_REQUEST, req->op);
 
         // Setup fields to echo in reply message
         m_reply.setDestination(req->getSource());
