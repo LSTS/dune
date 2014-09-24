@@ -23,6 +23,7 @@
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Author: Renato Caldas                                                    *
 //***************************************************************************
 
 #ifndef DUNE_TASKS_TASK_HPP_INCLUDED_
