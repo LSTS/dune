@@ -51,7 +51,18 @@ namespace Plan
     const char* c_state_desc[] = {DTR_RT("BLOCKED"), DTR_RT("READY"),
                                   DTR_RT("INITIALIZING"), DTR_RT("EXECUTING")};
     //! DataBase statement
-    static const char* c_get_plan_stmt = "select data from Plan where plan_id=?";
+    static const char* c_get_stmt[] = {"select data from Plan where plan_id=?",
+                                          "select data from Memento where id=?"};
+
+    enum DBStatement
+    {
+      //! Plan
+      DB_PLAN = 0,
+      //! Memento
+      DB_MEMENTO,
+      //! Total number of db operations
+      DB_TOTAL
+    };
 
     struct Arguments
     {
@@ -98,7 +109,7 @@ namespace Plan
       //! Database related (for plan DB direct queries to avoid
       //! unnecessary interface with bus / PlanDB task directly)
       Database::Connection* m_db;
-      Database::Statement* m_get_plan_stmt;
+      Database::Statement* m_get_stmt[DB_TOTAL];
       //! Misc.
       IMC::LoggingControl m_lc;
       IMC::EstimatedState m_state;
@@ -125,7 +136,6 @@ namespace Plan
         DUNE::Tasks::Task(name, ctx),
         m_plan(NULL),
         m_db(NULL),
-        m_get_plan_stmt(NULL),
         m_imu_enabled(false),
         m_plan_ref(0)
       {
@@ -172,6 +182,9 @@ namespace Plan
         param("IMU Entity Label", m_args.label_imu)
         .defaultValue("IMU")
         .description("Entity label of the IMU for fuel prediction");
+
+        for (unsigned i = 0; i < DB_TOTAL; i++)
+          m_get_stmt[i] = NULL;
 
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
@@ -368,7 +381,9 @@ namespace Plan
         debug("database file: '%s'", db_file.c_str());
 
         m_db = new Database::Connection(db_file.c_str(), true);
-        m_get_plan_stmt = new Database::Statement(c_get_plan_stmt, *m_db);
+
+        for (unsigned i = 0; i < DB_TOTAL; i++)
+          m_get_stmt[i] = new Database::Statement(c_get_stmt[i], *m_db);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
@@ -379,7 +394,9 @@ namespace Plan
         if (m_db == NULL)
           return;
 
-        Memory::clear(m_get_plan_stmt);
+        for (unsigned i = 0; i < DB_TOTAL; i++)
+          Memory::clear(m_get_stmt[i]);
+
         Memory::clear(m_db);
 
         debug("database connection closed");
@@ -764,55 +781,80 @@ namespace Plan
         return true;
       }
 
-      //! Look for a plan in the database
-      //! @param[in] plan_id name of the plan
-      //! @param[in] ps plan specification message
+      //! Look for a plan or memento in the database
+      //! @param[in] id name of the plan
+      //! @param[in] op type of operation to perform in DB
+      //! @param[out] msg plan specification or plan memento message
+      //! @param[out] info error info string
       //! @return true if plan is found
       bool
-      lookForPlan(const std::string& plan_id, IMC::PlanSpecification& ps)
+      searchInDB(const std::string& id, unsigned op, IMC::Message& msg, std::string& info)
       {
-        if (plan_id.empty())
+        std::string obj_op = (op == DB_PLAN) ? "plan" : "memento";
+
+        if (id.empty())
         {
-          onFailure(DTR("undefined plan id"));
+          info = String::str(DTR("undefined %s id"), obj_op.c_str());
           return false;
         }
 
         try
         {
-          *m_get_plan_stmt << plan_id;
+          *m_get_stmt[op] << id;
 
-          if (!m_get_plan_stmt->execute())
+          if (!m_get_stmt[op]->execute())
           {
-            onFailure(DTR("undefined plan"));
-            m_get_plan_stmt->reset();
+            info = String::str(DTR("undefined %s"), obj_op.c_str());
+            m_get_stmt[op]->reset();
             return false;
           }
 
           Database::Blob data;
 
-          *m_get_plan_stmt >> data;
+          *m_get_stmt[op] >> data;
 
-          ps.deserializeFields((const uint8_t*)&data[0], data.size());
+          msg.deserializeFields((const uint8_t*)&data[0], data.size());
 
-          m_get_plan_stmt->reset();
+          m_get_stmt[op]->reset();
         }
         catch (std::runtime_error& e)
         {
-          onFailure(DTR("failed loading from DB: %s"), e.what());
+          info = DTR("failed loading from DB: %s"), e.what();
           return false;
         }
 
         return true;
       }
 
+      //! Look for a plan in the database
+      //! @param[in] id name of the plan
+      //! @param[out] spec plan specification message
+      //! @param[out] info error info string
+      //! @return true if plan is found
+      bool
+      searchInDB(const std::string& id, IMC::PlanSpecification& spec, std::string& info)
+      {
+        return searchInDB(id, DB_PLAN, spec, info);
+      }
+
+      //! Look for a memento in the database
+      //! @param[in] id name of the memento
+      //! @param[out] pmem plan memento message
+      //! @param[out] info error info string
+      //! @return true if memento is found
+      bool
+      searchInDB(const std::string& id, IMC::PlanMemento& pmem, std::string& info)
+      {
+        return searchInDB(id, DB_MEMENTO, pmem, info);
+      }
+
       //! Get the PlanSpecification from IMC::Message
-      //! @param[in] plan_id ID of the plan
+      //! @param[in] id ID of the plan or memento
       //! @param[in] arg pointer to arg message
       //! @param[out] info string with the error in case of failure
       //! @return false if unable to get the spec
       bool
-      parseArg(const std::string& plan_id, const IMC::Message* arg,
-               std::string& info)
+      parseArg(const std::string& id, const IMC::Message* arg, std::string& info)
       {
         if (arg)
         {
@@ -829,9 +871,11 @@ namespace Plan
 
             // clear spec
             m_spec.clear();
+            std::string db_info;
 
-            if (!lookForPlan(pmem->plan_id, m_spec))
+            if (!searchInDB(pmem->plan_id, m_spec, db_info))
             {
+              onFailure(db_info);
               info = m_reply.info;
               return false;
             }
@@ -880,7 +924,7 @@ namespace Plan
               spec_man.data.set(*man);
               m_spec.clear();
               m_spec.maneuvers.setParent(&m_spec);
-              m_spec.plan_id = plan_id;
+              m_spec.plan_id = id;
               m_spec.start_man_id = arg->getName();
               m_spec.maneuvers.push_back(spec_man);
             }
@@ -896,8 +940,16 @@ namespace Plan
           // Search DB
           m_spec.clear();
 
-          if (!lookForPlan(plan_id, m_spec))
+          std::string db_info;
+
+          if (!searchInDB(id, m_spec, db_info))
           {
+            // try to look for a memento with the same name in db
+            PlanMemento pmem;
+            if (searchInDB(id, pmem, db_info))
+              return parseArg(id, &pmem, info);
+
+            onFailure(db_info);
             info = m_reply.info;
             return false;
           }
