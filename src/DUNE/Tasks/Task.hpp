@@ -428,7 +428,7 @@ namespace DUNE
       E*
       reserveEntity(const std::string& label)
       {
-        E* entity = new E(this);
+        E* entity = new E(this, m_ctx);
         m_entities.push_back(static_cast<Entities::BasicEntity*>(entity));
 
         entity->setLabel(label);

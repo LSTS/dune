@@ -70,10 +70,16 @@ namespace DUNE
     void
     BasicEntity::dispatch(IMC::Message* msg, unsigned int flags)
     {
-      if ((flags & Tasks::DF_KEEP_SRC_EID) == 0)
-        msg->setSourceEntity(getId());
+      msg->setSource(m_ctx.resolver.id());
+      msg->setSourceEntity(getId());
 
-      m_owner->dispatch(msg, Tasks::DF_KEEP_SRC_EID | flags);
+      if ((flags & DF_KEEP_TIME) == 0)
+        msg->setTimeStamp();
+
+      if ((flags & DF_LOOP_BACK) == 0)
+        m_ctx.mbus.dispatch(msg, m_owner);
+      else
+        m_ctx.mbus.dispatch(msg);
     }
 
   }
