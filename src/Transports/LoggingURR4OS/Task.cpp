@@ -117,21 +117,20 @@ namespace Transports
         if (msg->op != IMC::LoggingControl::COP_STOPPED)
           return;
 
-        FileSystem::Path path(msg->name);
-
         std::stringstream cmd;
         cmd << m_args.prog << " "
             << "-s Cyclops7" << " "
             << "-d Rhodamine" << " "
-            << "-o " << path.dirname(true) << m_args.outfile << " "
-            << m_args.log_dir << "/" << msg->name << "/Data.lsf.gz";
+            << "-o " << msg->name << "/" << m_args.outfile << " "
+            << m_args.log_dir << "/" << msg->name << "/Data.lsf.gz"
+            << " 2>/dev/null";
 
         inf("running command %s", cmd.str().c_str());
 
         int rc = std::system(cmd.str().c_str());
 
         if (rc == 0)
-          inf("saved file: %s%s", path.dirname(true).c_str(), m_args.outfile.c_str());
+          inf("saved file: %s/%s", msg->name.c_str(), m_args.outfile.c_str());
         else
           err("failed to run the command");
       }
