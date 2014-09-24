@@ -37,6 +37,9 @@ namespace DUNE
 {
   namespace Entities
   {
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM BasicEntity;
+
     class StatefulEntity : public BasicEntity
     {
     public:
