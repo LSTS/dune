@@ -1,4 +1,3 @@
-
 //***************************************************************************
 // Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
