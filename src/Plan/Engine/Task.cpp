@@ -301,10 +301,23 @@ namespace Plan
       void
       consume(const IMC::PlanDB* pdb)
       {
-        if (pdb->op != IMC::PlanDB::DBOP_BOOT || pdb->type != IMC::PlanDB::DBT_SUCCESS)
-          return;
-
-        openDB();
+        if ((pdb->op == IMC::PlanDB::DBOP_BOOT) &&
+            pdb->type == IMC::PlanDB::DBT_SUCCESS)
+        {
+          openDB();
+        }
+        else if (pdb->op != IMC::PlanDB::DBT_REQUEST)
+        {
+          if ((pdb->getDestination() != getSystemId()) &&
+              (pdb->getDestinationEntity() != getEntityId()))
+          {
+            if ((pdb->type == IMC::PlanDB::DBT_SUCCESS) ||
+                (pdb->type == IMC::PlanDB::DBT_IN_PROGRESS))
+              inf(DTR("successful request to PlanDB: %s"), pdb->plan_id.c_str());
+            else
+              err(DTR("got error on request to: %s"), pdb->plan_id.c_str());
+          }
+        }
       }
 
       void
@@ -848,6 +861,23 @@ namespace Plan
         return searchInDB(id, DB_MEMENTO, pmem, info);
       }
 
+      //! Send plan or memento to DB
+      //! @param[in] dtype data type to store
+      //! @param[in] id string id of the data type
+      //! @param[in] msg pointer to message
+      void
+      sendToDB(unsigned dtype, const std::string& id, const IMC::Message* msg)
+      {
+        IMC::PlanDB plandb;
+        plandb.type = IMC::PlanDB::DBT_REQUEST;
+        plandb.ot = dtype;
+        plandb.op = IMC::PlanDB::DBOP_SET;
+        plandb.request_id = 0;
+        plandb.plan_id = id;
+        plandb.arg.set(*msg);
+        dispatch(plandb);
+      }
+
       //! Get the PlanSpecification from IMC::Message
       //! @param[in] id ID of the plan or memento
       //! @param[in] arg pointer to arg message
@@ -864,6 +894,8 @@ namespace Plan
 
             m_spec = *given_plan;
             m_spec.setSourceEntity(getEntityId());
+
+            sendToDB(IMC::PlanDB::DBOT_PLAN, m_spec.plan_id, &m_spec);
           }
           else if (arg->getId() == DUNE_IMC_PLANMEMENTO)
           {
@@ -905,6 +937,8 @@ namespace Plan
                 ptr->memento = pmem->memento;
                 war(DTR("resuming with memento: %s"),
                     pmem->id.c_str());
+
+                sendToDB(IMC::PlanDB::DBOT_MEMENTO, pmem->id, pmem);
                 return true;
               }
             }
@@ -927,6 +961,8 @@ namespace Plan
               m_spec.plan_id = id;
               m_spec.start_man_id = arg->getName();
               m_spec.maneuvers.push_back(spec_man);
+
+              sendToDB(IMC::PlanDB::DBOT_PLAN, m_spec.plan_id, &m_spec);
             }
             else
             {
