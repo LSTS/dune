@@ -194,7 +194,7 @@ namespace DUNE
       .description("Admissible altitude when doing depth control");
 
       param("EstimatedState Filter", m_state_src)
-      .defaultValue("")
+      .defaultValue("self:")
       .description("List of <System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass EstimatedState messages.");
 
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
@@ -325,17 +325,26 @@ namespace DUNE
             }
             else
             {
-              try
+              if (systems[j].compare("self") == 0)
               {
-                m_state_filtered_sys[i_src] = resolveSystemName(systems[j]);
+                m_state_filtered_sys[i_src] = getSystemId();
                 debug("State filtering - System '%s' with ID: %d",
-                    systems[j].c_str(), resolveSystemName(systems[j]));
+                    resolveSystemId(m_state_filtered_sys[i_src]), m_state_filtered_sys[i_src]);
               }
-              catch (...)
+              else
               {
-                war("State filtering - No system found with designation '%s'!", systems[j].c_str());
-                i_sys_n--;
-                j--;
+                try
+                {
+                  m_state_filtered_sys[i_src] = resolveSystemName(systems[j]);
+                  debug("State filtering - System '%s' with ID: %d",
+                      resolveSystemId(m_state_filtered_sys[i_src]), m_state_filtered_sys[i_src]);
+                }
+                catch (...)
+                {
+                  war("State filtering - No system found with designation '%s'!", systems[j].c_str());
+                  i_sys_n--;
+                  j--;
+                }
               }
             }
             // Resolve entities.
@@ -350,7 +359,7 @@ namespace DUNE
               {
                 m_state_filtered_ent[i_src] = resolveEntity(entities[k]);
                 debug("State filtering - Entity '%s' with ID: %d",
-                    entities[k].c_str(), resolveEntity(entities[k]));
+                    resolveEntity(m_state_filtered_ent[i_src]).c_str(), m_state_filtered_ent[i_src]);
               }
               catch (...)
               {
