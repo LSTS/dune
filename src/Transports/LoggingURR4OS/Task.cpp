@@ -47,8 +47,6 @@ namespace Transports
       std::string prog;
       //! Output file name
       std::string outfile;
-      //! Log directory
-      std::string log_dir;
     };
 
     struct Task: public Tasks::Task
@@ -64,9 +62,6 @@ namespace Transports
 
         param("Output File Name", m_args.outfile)
         .defaultValue("Bio.csv");
-
-        param("Log Directory", m_args.log_dir)
-        .defaultValue("");
 
         bind<IMC::LoggingControl>(this);
       }
@@ -117,14 +112,13 @@ namespace Transports
         if (msg->op != IMC::LoggingControl::COP_STOPPED)
           return;
 
-        std::string ofname = (Time::Format::getTimeSafe(msg->getTimeStamp())
-                              + '_' + m_args.outfile);
+        std::string ofname = m_args.outfile;
 
         std::stringstream cmd;
         cmd << m_args.prog << " "
             << "-s Cyclops7" << " "
             << "-d Rhodamine" << " "
-            << "-o " << "\"" << m_ctx.dir_log / msg->name / ofname << "\" "
+            << "-o " << "\"" << m_ctx.dir_log / msg->name / m_args.outfile << "\" "
             << "\"" << m_ctx.dir_log / msg->name << "/Data.lsf.gz\""
             << " 2>/dev/null";
 
@@ -133,7 +127,7 @@ namespace Transports
         int rc = std::system(cmd.str().c_str());
 
         if (rc == 0)
-          inf("saved file: %s/%s", msg->name.c_str(), ofname.c_str());
+          inf("saved file: %s/%s", msg->name.c_str(), m_args.outfile.c_str());
         else
           err("failed to run the command");
       }
