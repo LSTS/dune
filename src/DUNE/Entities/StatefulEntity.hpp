@@ -42,7 +42,7 @@ namespace DUNE
 
     //! Stateful Entity class, derived from BasicEntity, and also handling QueryEntityState/EntityState.
     //! The class also implements an entity state and activation interface.
-    class StatefulEntity : public BasicEntity
+    class StatefulEntity: public BasicEntity
     {
     public:
       //! Constructor.
