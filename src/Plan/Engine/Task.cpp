@@ -878,6 +878,105 @@ namespace Plan
         dispatch(plandb);
       }
 
+      //! Handle plan specification argument
+      //! @param[in] arg pointer to arg message
+      //! @param[out] info string with the error in case of failure
+      //! @return false if unable to get the spec
+      bool
+      handleArgSpecification(const IMC::Message* arg, std::string& info)
+      {
+        (void)info;
+
+        const IMC::PlanSpecification* given_plan;
+        given_plan = static_cast<const IMC::PlanSpecification*>(arg);
+
+        m_spec = *given_plan;
+        m_spec.setSourceEntity(getEntityId());
+
+        sendToDB(IMC::PlanDB::DBOT_PLAN, m_spec.plan_id, &m_spec);
+
+        return true;
+      }
+
+      //! Handle plan memento argument
+      //! @param[in] arg pointer to arg message
+      //! @param[out] info string with the error in case of failure
+      //! @return false if unable to get the memento
+      bool
+      handleArgMemento(const IMC::Message* arg, std::string& info)
+      {
+        const IMC::PlanMemento* pmem = static_cast<const IMC::PlanMemento*>(arg);
+
+        // clear spec
+        m_spec.clear();
+
+        if (!searchInDB(pmem->plan_id, m_spec, info))
+        {
+          onFailure(info);
+          return false;
+        }
+
+        m_spec.setSourceEntity(getEntityId());
+        m_spec.start_man_id = pmem->maneuver_id;
+
+        // Insert memento information
+        IMC::MessageList<IMC::PlanManeuver>::const_iterator itr;
+        itr = m_spec.maneuvers.begin();
+        for (; itr != m_spec.maneuvers.end(); ++itr)
+        {
+          if (*itr == NULL)
+          {
+            continue;
+          }
+
+          if ((*itr)->maneuver_id == pmem->maneuver_id)
+          {
+            if ((*itr)->data.isNull())
+            {
+              info = (*itr)->maneuver_id + DTR("actual maneuver not specified");
+              return false;
+            }
+
+            IMC::Maneuver* ptr = static_cast<IMC::Maneuver*>((*itr)->data.get());
+            ptr->memento = pmem->memento;
+            war(DTR("resuming with memento: %s"), pmem->id.c_str());
+
+            sendToDB(IMC::PlanDB::DBOT_MEMENTO, pmem->id, pmem);
+            return true;
+          }
+        }
+
+        info = DTR("could not find resume maneuver: ") + pmem->maneuver_id;
+        return false;
+      }
+
+      //! Handle quick plan
+      bool
+      handleQuickPlan(const std::string& id, const IMC::Message* arg, std::string& info)
+      {
+        // Quick plan
+        IMC::PlanManeuver spec_man;
+        const IMC::Maneuver* man = static_cast<const IMC::Maneuver*>(arg);
+
+        if (!man)
+        {
+          info = DTR("undefined maneuver or plan");
+          return false;
+        }
+
+        spec_man.maneuver_id = arg->getName();
+        spec_man.data.set(*man);
+        m_spec.clear();
+        m_spec.maneuvers.setParent(&m_spec);
+        m_spec.plan_id = id;
+        m_spec.start_man_id = arg->getName();
+        m_spec.maneuvers.push_back(spec_man);
+
+        sendToDB(IMC::PlanDB::DBOT_PLAN, m_spec.plan_id, &m_spec);
+
+        return true;
+      }
+
       //! Get the PlanSpecification from IMC::Message
       //! @param[in] id ID of the plan or memento
       //! @param[in] arg pointer to arg message
@@ -889,85 +988,11 @@ namespace Plan
         if (arg)
         {
           if (arg->getId() == DUNE_IMC_PLANSPECIFICATION)
-          {
-            const IMC::PlanSpecification* given_plan = static_cast<const IMC::PlanSpecification*>(arg);
-
-            m_spec = *given_plan;
-            m_spec.setSourceEntity(getEntityId());
-
-            sendToDB(IMC::PlanDB::DBOT_PLAN, m_spec.plan_id, &m_spec);
-          }
+            return handleArgSpecification(arg, info);
           else if (arg->getId() == DUNE_IMC_PLANMEMENTO)
-          {
-            const IMC::PlanMemento* pmem = static_cast<const IMC::PlanMemento*>(arg);
-
-            // clear spec
-            m_spec.clear();
-
-            if (!searchInDB(pmem->plan_id, m_spec, info))
-            {
-              onFailure(info);
-              return false;
-            }
-
-            m_spec.setSourceEntity(getEntityId());
-            m_spec.start_man_id = pmem->maneuver_id;
-
-            // Insert memento information
-            IMC::MessageList<IMC::PlanManeuver>::const_iterator itr;
-            itr = m_spec.maneuvers.begin();
-            for (; itr != m_spec.maneuvers.end(); ++itr)
-            {
-              if (*itr == NULL)
-              {
-                continue;
-              }
-
-              if ((*itr)->maneuver_id == pmem->maneuver_id)
-              {
-                if ((*itr)->data.isNull())
-                {
-                  info = (*itr)->maneuver_id + DTR("actual maneuver not specified");
-                  return false;
-                }
-
-                IMC::Maneuver* ptr = static_cast<IMC::Maneuver*>((*itr)->data.get());
-                ptr->memento = pmem->memento;
-                war(DTR("resuming with memento: %s"),
-                    pmem->id.c_str());
-
-                sendToDB(IMC::PlanDB::DBOT_MEMENTO, pmem->id, pmem);
-                return true;
-              }
-            }
-
-            info = DTR("could not find resume maneuver: ") + pmem->maneuver_id;
-            return false;
-          }
-          else
-          {
-            // Quick plan
-            IMC::PlanManeuver spec_man;
-            const IMC::Maneuver* man = static_cast<const IMC::Maneuver*>(arg);
-
-            if (man)
-            {
-              spec_man.maneuver_id = arg->getName();
-              spec_man.data.set(*man);
-              m_spec.clear();
-              m_spec.maneuvers.setParent(&m_spec);
-              m_spec.plan_id = id;
-              m_spec.start_man_id = arg->getName();
-              m_spec.maneuvers.push_back(spec_man);
-
-              sendToDB(IMC::PlanDB::DBOT_PLAN, m_spec.plan_id, &m_spec);
-            }
-            else
-            {
-              info = DTR("undefined maneuver or plan");
-              return false;
-            }
-          }
+            return handleArgMemento(arg, info);
+          else // has to be maneuver
+            return handleQuickPlan(id, arg, info);
         }
         else
         {
