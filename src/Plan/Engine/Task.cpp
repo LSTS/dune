@@ -903,12 +903,10 @@ namespace Plan
 
             // clear spec
             m_spec.clear();
-            std::string db_info;
 
-            if (!searchInDB(pmem->plan_id, m_spec, db_info))
+            if (!searchInDB(pmem->plan_id, m_spec, info))
             {
-              onFailure(db_info);
-              info = m_reply.info;
+              onFailure(info);
               return false;
             }
 
@@ -976,17 +974,14 @@ namespace Plan
           // Search DB
           m_spec.clear();
 
-          std::string db_info;
-
-          if (!searchInDB(id, m_spec, db_info))
+          if (!searchInDB(id, m_spec, info))
           {
             // try to look for a memento with the same name in db
             PlanMemento pmem;
-            if (searchInDB(id, pmem, db_info))
+            if (searchInDB(id, pmem, info))
               return parseArg(id, &pmem, info);
 
-            onFailure(db_info);
-            info = m_reply.info;
+            onFailure(info);
             return false;
           }
         }
