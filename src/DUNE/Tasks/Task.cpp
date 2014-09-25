@@ -85,7 +85,7 @@ namespace DUNE
       .values("None, Debug, Trace, Spew");
 
       m_recipient = new Recipient(this, ctx);
-      m_entity = new Entities::StatefulEntity(this);
+      m_entity = new Entities::StatefulEntity(this, m_ctx);
       m_entities.push_back(m_entity);
 
       bind<IMC::QueryEntityParameters>(this);
@@ -97,7 +97,7 @@ namespace DUNE
     unsigned int
     Task::reserveEntity(const std::string& label)
     {
-      Entities::BasicEntity* e = new Entities::BasicEntity(this);
+      Entities::BasicEntity* e = new Entities::BasicEntity(this, m_ctx);
       e->setLabel(label);
       e->setId(m_ctx.entities.reserve(label, getName()));
       e->setBindings(m_recipient);

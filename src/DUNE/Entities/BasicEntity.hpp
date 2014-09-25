@@ -36,18 +36,24 @@
 #include <DUNE/IMC/Definitions.hpp>
 #include <DUNE/Tasks/Recipient.hpp>
 #include <DUNE/Tasks/Consumer.hpp>
+#include <DUNE/Tasks/Context.hpp>
+#include <DUNE/Tasks/AbstractTask.hpp>
 
 namespace DUNE
 {
-  namespace Tasks
-  {
-    class Task;
-  }
-
   namespace Entities
   {
     // Export DLL Symbol.
     class DUNE_DLL_SYM BasicEntity;
+
+    enum DispatchFlags
+    {
+      //! Do not update timestamp.
+      DF_KEEP_TIME = (1 << 0),
+      //! Allow message to be delivered to the task that is
+      //! dispatching it.
+      DF_LOOP_BACK = (1 << 2)
+    };
 
     //! Basic Entity class, handling only QueryEntityInfo/EntityInfo messages,
     //! and implementing the most basic Entity interface.
@@ -56,8 +62,9 @@ namespace DUNE
     public:
       //! Constructor.
       //! @param[in] owner pointer to the task containing the entity.
-      BasicEntity(Tasks::Task* owner):
+      BasicEntity(Tasks::AbstractTask* owner, Tasks::Context& context):
         m_owner(owner),
+        m_ctx(context),
         m_id(DUNE_IMC_CONST_UNK_EID)
       { }
 
@@ -161,7 +168,9 @@ namespace DUNE
 
     protected:
       //! Owner task.
-      Tasks::Task* m_owner;
+      Tasks::AbstractTask* m_owner;
+      //! Context
+      Tasks::Context& m_ctx;
       //! Entity information message.
       IMC::EntityInfo m_ent_info;
 

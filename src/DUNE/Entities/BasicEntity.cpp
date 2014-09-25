@@ -30,7 +30,6 @@
 
 // DUNE headers.
 #include <DUNE/Entities/BasicEntity.hpp>
-#include <DUNE/Tasks/Task.hpp>
 
 namespace DUNE
 {
@@ -42,7 +41,7 @@ namespace DUNE
       // Throw exception to prevent relabeling after reservation
       if (m_id != DUNE_IMC_CONST_UNK_EID)
       {
-        std::string prevlabel = m_owner->resolveEntity(m_id);
+        std::string prevlabel = m_ctx.entities.resolve(m_id);
         if (prevlabel != label)
           throw std::runtime_error(DTR("entity label already set: ") + prevlabel + " -> " + label);
       }
@@ -70,10 +69,16 @@ namespace DUNE
     void
     BasicEntity::dispatch(IMC::Message* msg, unsigned int flags)
     {
-      if ((flags & Tasks::DF_KEEP_SRC_EID) == 0)
-        msg->setSourceEntity(getId());
+      msg->setSource(m_ctx.resolver.id());
+      msg->setSourceEntity(getId());
 
-      m_owner->dispatch(msg, Tasks::DF_KEEP_SRC_EID | flags);
+      if ((flags & DF_KEEP_TIME) == 0)
+        msg->setTimeStamp();
+
+      if ((flags & DF_LOOP_BACK) == 0)
+        m_ctx.mbus.dispatch(msg, m_owner);
+      else
+        m_ctx.mbus.dispatch(msg);
     }
 
   }
