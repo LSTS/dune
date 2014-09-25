@@ -25,21 +25,82 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_MONITORS_HPP_INCLUDED_
-#define DUNE_MONITORS_HPP_INCLUDED_
+#ifndef DUNE_MONITORS_VERTICAL_MONITOR_HPP_INCLUDED_
+#define DUNE_MONITORS_VERTICAL_MONITOR_HPP_INCLUDED_
+
+// DUNE headers.
+#include <DUNE/IMC/Definitions.hpp>
 
 namespace DUNE
 {
-  //! %Monitors routines and classes.
   namespace Monitors
-  { }
-}
+  {
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM VerticalMonitor;
 
-#include <DUNE/Monitors/DelayedTrigger.hpp>
-#include <DUNE/Monitors/MediumHandler.hpp>
-#include <DUNE/Monitors/MotorCurrentMonitor.hpp>
-#include <DUNE/Monitors/ServoCurrentMonitor.hpp>
-#include <DUNE/Monitors/ServoPositionMonitor.hpp>
-#include <DUNE/Monitors/VerticalMonitor.hpp>
+    //! Number of samples for vertical monitor moving average in elevator
+    static const unsigned c_vsamples = 10;
+
+    //! %VerticalMonitor monitors the vehicle's progress in the z direction
+    //! @author Pedro Calado.
+    class VerticalMonitor
+    {
+    public:
+      //! Constructor.
+      //! @param[in] timeout amount of time before triggering condition as met
+      //! @param[in] min_speed minimum speed for triggering condition
+      VerticalMonitor(float timeout, float min_speed):
+        m_min_speed(min_speed),
+        m_slow_progress(false),
+        m_mave(NULL)
+      {
+        m_timer.setTop(timeout);
+        m_mave = new MovingAverage<float>(c_vsamples);
+      }
+
+      ~VerticalMonitor(void)
+      {
+        Memory::clear(m_mave);
+      }
+
+      //! Test if progress is slow
+      //! @param[in] z_speed current vz speed
+      //! @return true if progress is slow
+      bool
+      isProgressSlow(float z_speed)
+      {
+        if (m_min_speed > m_mave->update(z_speed))
+        {
+          if (m_slow_progress)
+          {
+            return m_timer.overflow();
+          }
+          else
+          {
+            m_slow_progress = true;
+            m_timer.reset();
+            return true;
+          }
+        }
+        else
+        {
+          m_slow_progress = false;
+        }
+
+        return false;
+      }
+
+    private:
+      //! Timer counter for timeout
+      Time::Counter<float> m_timer;
+      //! Minimum speed
+      float m_min_speed;
+      //! Progress below minimum
+      bool m_slow_progress;
+      //! Moving average for progress samples
+      MovingAverage<float>* m_mave;
+    };
+  }
+}
 
 #endif
