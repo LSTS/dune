@@ -79,7 +79,6 @@ namespace DUNE
           {
             m_slow_progress = true;
             m_timer.reset();
-            return true;
           }
         }
         else
