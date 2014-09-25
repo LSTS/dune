@@ -65,7 +65,6 @@ namespace DUNE
       m_setup(true),
       m_braking(false),
       m_jump_monitors(false),
-      m_filter_entity(0),
       m_aloops(0),
       m_btrack(NULL),
       m_scope_ref(0)
@@ -194,13 +193,9 @@ namespace DUNE
       .units(Units::Meter)
       .description("Admissible altitude when doing depth control");
 
-      param("Filter EstimatedState", m_filter)
-      .defaultValue("false")
-      .description("Enable or disable EstimateState filtering by entity");
-
-      param("Filter Entity", m_filter_entity_name)
-      .defaultValue("Autopilot")
-      .description("Only accepts EstimatedState from this entity");
+      param("EstimatedState Filter", m_state_src)
+      .defaultValue("self:")
+      .description("List of <System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass EstimatedState messages.");
 
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
@@ -285,22 +280,96 @@ namespace DUNE
     void
     PathController::onEntityReservation(void)
     {
-      m_bt_entity = reserveEntity<Entities::BasicEntity>("Bottom Track");
+      m_bt_entity = reserveEntity<DUNE::Entities::BasicEntity>("Bottom Track");
       m_btd.args.entity = m_bt_entity;
     }
 
     void
     PathController::onEntityResolution(void)
     {
-      if (!m_filter)
-        return;
-
-      try
+      //==========================================
+      //! Process the systems and entities allowed to pass the SimulatedState
+      //==========================================
+      uint32_t i_src;
+      m_state_filtered_sys.clear();
+      m_state_filtered_ent.clear();
+      for (unsigned int i = 0; i < m_state_src.size(); ++i)
       {
-        m_filter_entity = resolveEntity(m_filter_entity_name);
-      }
-      catch (std::runtime_error& e) {
-        signalError(e.what());
+        std::vector<std::string> parts;
+        Utils::String::split(m_state_src[i], ":", parts);
+        if (parts.size() < 1)
+          continue;
+
+        // Split systems and entities.
+        std::vector<std::string> systems;
+        Utils::String::split(parts[0], "+", systems);
+        std::vector<std::string> entities;
+        Utils::String::split(parts[1], "+", entities);
+
+        m_state_filtered_ent.resize(systems.size()*entities.size());
+        m_state_filtered_sys.resize(systems.size()*entities.size());
+        unsigned int i_sys_n = systems.size();
+        unsigned int i_ent_n = entities.size();
+        // Resolve systems id.
+        for (unsigned j = 0; j < i_sys_n; j++)
+        {
+          // Resolve entities id.
+          for (unsigned k = 0; k < i_ent_n; k++)
+          {
+            i_src = (j+1)*(k+1)-1;
+            // Resolve systems.
+            if (systems[j].empty())
+            {
+              m_state_filtered_sys[i_src] = UINT_MAX;
+              debug("State filtering - Filter source system undefined");
+            }
+            else
+            {
+              if (systems[j].compare("self") == 0)
+              {
+                m_state_filtered_sys[i_src] = getSystemId();
+                debug("State filtering - System '%s' with ID: %d",
+                    resolveSystemId(m_state_filtered_sys[i_src]), m_state_filtered_sys[i_src]);
+              }
+              else
+              {
+                try
+                {
+                  m_state_filtered_sys[i_src] = resolveSystemName(systems[j]);
+                  debug("State filtering - System '%s' with ID: %d",
+                      resolveSystemId(m_state_filtered_sys[i_src]), m_state_filtered_sys[i_src]);
+                }
+                catch (...)
+                {
+                  war("State filtering - No system found with designation '%s'!", systems[j].c_str());
+                  i_sys_n--;
+                  j--;
+                }
+              }
+            }
+            // Resolve entities.
+            if (entities[j].empty())
+            {
+              m_state_filtered_ent[i_src] = UINT_MAX;
+              debug("State filtering - Filter entity system undefined");
+            }
+            else
+            {
+              try
+              {
+                m_state_filtered_ent[i_src] = resolveEntity(entities[k]);
+                debug("State filtering - Entity '%s' with ID: %d",
+                    resolveEntity(m_state_filtered_ent[i_src]).c_str(), m_state_filtered_ent[i_src]);
+              }
+              catch (...)
+              {
+                war("State filtering - No entity found with designation '%s'!", entities[k].c_str());
+                i_ent_n--;
+                k--;
+              }
+            }
+          }
+        }
       }
     }
 
@@ -570,11 +639,28 @@ namespace DUNE
     void
     PathController::consume(const IMC::EstimatedState* es)
     {
-      if (es->getSource() != getSystemId())
+      // Filter SimulatedState by systems and entities.
+      bool matched = true;
+      if (m_state_filtered_sys.size() > 0)
+      {
+        matched = false;
+        std::vector<uint32_t>::iterator itr_sys = m_state_filtered_sys.begin();
+        std::vector<uint32_t>::iterator itr_ent = m_state_filtered_ent.begin();
+        for (; itr_sys != m_state_filtered_sys.end(); ++itr_sys)
+        {
+          if ((*itr_sys == es->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
+              (*itr_ent == es->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
+            matched = true;
+          ++itr_ent;
+        }
+      }
+      // This system and entity are not listed to be passed.
+      if (!matched)
+      {
+        trace("EstimatedState rejected (from system '%s' and entity '%s')",
+            resolveSystemId(es->getSource()), resolveEntity(es->getSourceEntity()).c_str());
         return;
-
-      if (m_filter && m_filter_entity != es->getSourceEntity())
-        return;
+      }
 
       if (m_btd.enabled)
       {
