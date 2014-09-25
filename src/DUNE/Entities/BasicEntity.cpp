@@ -30,7 +30,6 @@
 
 // DUNE headers.
 #include <DUNE/Entities/BasicEntity.hpp>
-#include <DUNE/Tasks/Task.hpp>
 
 namespace DUNE
 {

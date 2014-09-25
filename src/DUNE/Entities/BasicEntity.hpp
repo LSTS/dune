@@ -37,14 +37,10 @@
 #include <DUNE/Tasks/Recipient.hpp>
 #include <DUNE/Tasks/Consumer.hpp>
 #include <DUNE/Tasks/Context.hpp>
+#include <DUNE/Tasks/AbstractTask.hpp>
 
 namespace DUNE
 {
-  namespace Tasks
-  {
-    class Task;
-  }
-
   namespace Entities
   {
     // Export DLL Symbol.
@@ -66,7 +62,7 @@ namespace DUNE
     public:
       //! Constructor.
       //! @param[in] owner pointer to the task containing the entity.
-      BasicEntity(Tasks::Task* owner, Tasks::Context& context):
+      BasicEntity(Tasks::AbstractTask* owner, Tasks::Context& context):
         m_owner(owner),
         m_ctx(context),
         m_id(DUNE_IMC_CONST_UNK_EID)
@@ -172,7 +168,7 @@ namespace DUNE
 
     protected:
       //! Owner task.
-      Tasks::Task* m_owner;
+      Tasks::AbstractTask* m_owner;
       //! Context
       Tasks::Context& m_ctx;
       //! Entity information message.
