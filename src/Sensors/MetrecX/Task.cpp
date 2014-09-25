@@ -33,7 +33,7 @@ namespace Sensors
 {
   //! Device driver for the AML OEM MetrecX
   //!
-
+  //!
   //! Metrec•X is an externally-powered, multi-parameter
   //! instrument that allows you to change the
   //! instrument’s sensor load, in the field and on-demand.
@@ -84,7 +84,48 @@ namespace Sensors
       float value;
     };
 
-    static const char* templates[] = {"SV.X","C.X","P.X","T.X","Tu.X"};
+    enum MaxTotals
+    {
+      MT_DIG = 5,
+      MT_ANALOG = 4,
+      MT_CALCULATION_CHANNEL = 3,
+      MT_SHIFT = 1,
+      MT_MAX = MT_DIG + MT_ANALOG + MT_CALCULATION_CHANNEL
+    };
+
+    //! Template to detect digital sensors
+    static const char* c_dig_templates[] = {"SV.X",
+                                            "C.X",
+                                            "P.X",
+                                            "T.X",
+                                            "Tu.X"};
+
+    //! Template for analog sensors
+    static const char* c_analog_templates[] = {"Temperature",
+                                               "Pressure"};
+
+    //! Template for calculation channels
+    static const char* c_calculation_channel_templates[] = {"SV",
+                                                            "Salinity",
+                                                            "Density"};
+
+    //! Labels for Entity reservation for digital sensors
+    static const char* c_dig_entities[] = {"Water Quality Sensor dig 1",
+                                           "Water Quality Sensor dig 2",
+                                           "Water Quality Sensor dig 3",
+                                           "Water Quality Sensor dig 4",
+                                           "Water Quality Sensor dig 5"};
+
+    //! Labels for Entity reservation for analog sensors
+    static const char* c_analog_entities[] = {"Water Quality Sensor analog 1",
+                                              "Water Quality Sensor analog 2",
+                                              "Water Quality Sensor analog 3",
+                                              "Water Quality Sensor analog 4"};
+
+    //! Labels for Entity reservation for calculation channels
+    static const char* c_calculation_channel_entities[] = {"Water Quality calculation channel 1",
+                                                           "Water Quality calculation channel 2",
+                                                           "Water Quality calculation channel 3"};
 
     struct Task: public DUNE::Tasks::Task
     {
@@ -93,20 +134,26 @@ namespace Sensors
       //! Task arguments
       Arguments m_args;
       //! Sensor structure
-      Sensor m_sconfig[12];
+      Sensor m_sconfig[MT_MAX];
       //! Task Watchdog
       Counter<double> m_wdog;
       //! Function ConfigDetect Watchdog
       Counter<double> m_wdogdetect;
-      //! Array of booleans to check which digital
-      //! sensors are connected
       // DigSensorflags [] = {SV.X flag, C.X flag, P.X flag, T.X flag, Tu.X flag};
-      bool DigSensorflags[5];
-      //! Array of booleans to check if the
-      //! Density, Salinity or Sound Velocity
+      bool dig_sensor_flags[MT_DIG];
       //! calculation channels can be turned on
-      // CalculationChannels [] =  {Salinity & Density flag, SV flag};
-      bool CalculationChannels[2];
+      //! CalculationChannels [] =  {Salinity & Density flag, SV flag};
+      bool calculation_channels[MT_CALCULATION_CHANNEL];
+      //! Array for Entity ids of Analog Sensors
+      //! 4 is the maximum number of analog
+      //! sensors allowed
+      int analog_ids[MT_ANALOG];
+      //! Array for Entity ids of Digital Sensors
+      //! Only 5 digital sensors are allowed
+      int dig_ids[MT_DIG];
+      //! Array for Entity ids of calculation
+      //! channels
+      int calculation_channel_ids[MT_CALCULATION_CHANNEL];
       //! dBar to m coefficient
       float dbar2m_coef;
       //! Temperature message.
@@ -150,14 +197,21 @@ namespace Sensors
         param("Analog Channels Label", m_args.label)
         .description("Analog Channels Label indicating sensor type");
 
-        DigSensorflags[0] = false;
-        DigSensorflags[1] = false;
-        DigSensorflags[2] = false;
-        DigSensorflags[3] = false;
-        DigSensorflags[4] = false;
+        for (int i = 0; i < MT_DIG; i++)
+        {
+          dig_sensor_flags[i] = false;
 
-        CalculationChannels[0] = false;
-        CalculationChannels[1] = false;
+          dig_ids[i] = -1;
+
+          if (i < MT_ANALOG)
+            analog_ids[i] = -1;
+
+          if (i < MT_CALCULATION_CHANNEL)
+          {
+            calculation_channel_ids[i] = -1;
+            calculation_channels[i] = false;
+          }
+        }
 
         dbar2m_coef = 1.019716;
       }
@@ -172,6 +226,41 @@ namespace Sensors
       void
       onEntityReservation(void)
       {
+        for (int i = 0; i < MT_DIG;  i++)
+        {
+          try
+          {
+            dig_ids[i] = reserveEntity(c_dig_entities[i]);
+          }
+          catch (...)
+          {
+            dig_ids[i] = -10;
+          }
+        }
+
+        for (int j = 0; j < MT_ANALOG;  j++)
+        {
+          try
+          {
+            analog_ids[j] = reserveEntity(c_analog_entities[j]);
+          }
+          catch (...)
+          {
+            analog_ids[j] = -10;
+          }
+        }
+
+        for (int i = 0; i < MT_CALCULATION_CHANNEL;  i++)
+        {
+          try
+          {
+            calculation_channel_ids[i] = reserveEntity(c_calculation_channel_entities[i]);
+          }
+          catch (...)
+          {
+            calculation_channel_ids[i] = -10;
+          }
+        }
       }
 
       //! Resolve entity names.
@@ -198,24 +287,24 @@ namespace Sensors
       }
 
       void
-      getDigName(char bfr[], int &i, int &k)
+      getDigName(char bfr[], int& i, int& k)
       {
-        for(int j = 0; j < 5; j++)
+        for (int j = 0; j < MT_DIG; j++)
         {
-          if(strstr( bfr, templates[j]) != NULL)
+          if (strstr( bfr, c_dig_templates[j]) != NULL)
           {
-            DigSensorflags[j] = true;
-            strcpy(m_sconfig[i].name, templates[j]);
+            dig_sensor_flags[j] = true;
+            strcpy(m_sconfig[i].name, c_dig_templates[j]);
             m_sconfig[i].channel = bfr[0] - '0';
             i++;
           }
         }
-        if(strstr( bfr, "empty") != NULL)
-            k++;
-       }
+        if (strstr( bfr, "empty") != NULL)
+          k++;
+      }
 
       void
-      SensorConfigDetect(int &i, int &k)
+      sensorConfigDetect(int& i, int& k)
       {
         char bfr[255];
         int j;
@@ -224,7 +313,7 @@ namespace Sensors
         j = 0;
 
         m_wdogdetect.setTop(10);
-        while(0 != std::strcmp( bfr, "Detection complete\r\n"))
+        while (0 != std::strcmp( bfr, "Detection complete\r\n"))
         {
           // To task don't stuck here
           if (m_wdogdetect.overflow())
@@ -233,33 +322,31 @@ namespace Sensors
             throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
           }
 
-          if(!Poll::poll(*m_uart, 1.0))
+          if (!Poll::poll(*m_uart, 1.0))
             continue;
 
           // Check sensor configuration
           m_uart->readString(bfr, sizeof(bfr));
 
           // Avoid to send garbage to functions
-          if(0 != strcmp(bfr, "Detecting Sensors\r\n") && 0 != strcmp(bfr, "Detection complete\r\n"))
+          if (0 != strcmp(bfr, "Detecting Sensors\r\n") && 0 != strcmp(bfr, "Detection complete\r\n"))
           {
             // Function to detect analog sensors configuration
             //if(( i + k) >= 5)
             //getAnalogState(bfr, flag);
-            // There is at least one analog channel active if flag>0
-            // Possibility for future analog auto-configuration (talk Mode)
 
             // Function to detect digital sensors configuration
-            if((i+k)<5)
+            if ((i+k) < 5)
               getDigName(bfr, i, k);
           }
         }
         m_wdogdetect.reset();
 
         // Passing Sensor names to the structure
-        for(j = 0; j < (int)m_args.label.size(); j++ )
+        for (j = 0; j < (int)m_args.label.size(); j++)
         {
           strcpy(m_sconfig[i+j].name, m_args.label[j].c_str());
-          m_sconfig[i+j].channel = j + 6;
+          m_sconfig[i+j].channel = j + MT_DIG + MT_SHIFT;//6;
         }
 
         // Indicating total number of analog and digital channels
@@ -268,15 +355,15 @@ namespace Sensors
 
         // Check which digital sensores are active and set flags to turn
         // on the Density, Salinity or Sound Velocity calculation
-        if( (DigSensorflags[0] || DigSensorflags[1]) && DigSensorflags[2] && DigSensorflags[3])
-          CalculationChannels[0] = true;
-       else
-         CalculationChannels[0] = false;
+        if ((dig_sensor_flags[0] || dig_sensor_flags[1]) && dig_sensor_flags[2] && dig_sensor_flags[3])
+          calculation_channels[0] = true;
+        else
+          calculation_channels[0] = false;
 
-       if(DigSensorflags[1]  && DigSensorflags[2] && DigSensorflags[3])
-         CalculationChannels[1] = true;
-       else
-         CalculationChannels[1] = false;
+        if (dig_sensor_flags[1] && dig_sensor_flags[2] && dig_sensor_flags[3])
+          calculation_channels[1] = true;
+        else
+          calculation_channels[1] = false;
       }
 
       bool
@@ -288,13 +375,13 @@ namespace Sensors
 
         if (Poll::poll(*m_uart, 1.0))
         {
-          m_uart->readString(bfr, sizeof(bfr));debug("Check reply - %s\n",bfr);
+          m_uart->readString(bfr, sizeof(bfr));
           if (std::strcmp(bfr, reply) == 0)
             return true;
         }
 
         return false;
-        }
+      }
 
       void
       onResourceInitialization(void)
@@ -312,53 +399,53 @@ namespace Sensors
         if (!sendCommand("\r", "\r\n"))
           throw RestartNeeded(DTR("failed to enter command mode"), 5);
 
-        if(!sendCommand("DETECT\r",">DETECT\r\n"))
+        if (!sendCommand("DETECT\r", ">DETECT\r\n"))
           throw RestartNeeded(DTR("failed to detect sensor configuration"), 5);
         else
-          SensorConfigDetect(i, k);
+          sensorConfigDetect(i, k);
 
-        if(CalculationChannels[0])
+        if (calculation_channels[0])
         {
-          if(!sendCommand("SET SCAN DENSITY\r",">SET SCAN DENSITY\r\n"))
-             throw RestartNeeded(DTR("failed to set density calculation"), 5);
+          if (!sendCommand("SET SCAN DENSITY\r", ">SET SCAN DENSITY\r\n"))
+            throw RestartNeeded(DTR("failed to set density calculation"), 5);
 
-          strcpy(m_sconfig[i].name,"Density");
+          strcpy(m_sconfig[i].name, "Density");
           m_sconfig[i].channel = i + k + 1;
 
-          if(!sendCommand("SET SCAN SALINITY\r",">SET SCAN SALINITY\r\n"))
-             throw RestartNeeded(DTR("failed to set salinity calculation"), 5);
+          if (!sendCommand("SET SCAN SALINITY\r", ">SET SCAN SALINITY\r\n"))
+            throw RestartNeeded(DTR("failed to set salinity calculation"), 5);
 
-          strcpy(m_sconfig[i + 1].name,"Salinity");
+          strcpy(m_sconfig[i + 1].name, "Salinity");
           m_sconfig[i + 1].channel = i + k + 2;
         }
-        else if(!CalculationChannels[0])
+        else if (!calculation_channels[0])
         {
-          if(!sendCommand("SET SCAN NODENSITY\r",">SET SCAN NODENSITY\r\n"))
-             throw RestartNeeded(DTR("failed to disable density calculation"), 5);
+          if (!sendCommand("SET SCAN NODENSITY\r", ">SET SCAN NODENSITY\r\n"))
+            throw RestartNeeded(DTR("failed to disable density calculation"), 5);
 
-          if(!sendCommand("SET SCAN NOSALINITY\r",">SET SCAN NOSALINITY\r\n"))
-             throw RestartNeeded(DTR("failed to disable salinity calculation"), 5);
+          if (!sendCommand("SET SCAN NOSALINITY\r", ">SET SCAN NOSALINITY\r\n"))
+            throw RestartNeeded(DTR("failed to disable salinity calculation"), 5);
         }
 
-        if(CalculationChannels[1])
+        if(calculation_channels[1])
         {
-          if(!sendCommand("SET SCAN SV\r",">SET SCAN SV\r\n"))
-             throw RestartNeeded(DTR("failed to set sv calculation"), 5);
+          if(!sendCommand("SET SCAN SV\r", ">SET SCAN SV\r\n"))
+            throw RestartNeeded(DTR("failed to set sv calculation"), 5);
 
           strcpy(m_sconfig[i + 2].name,"SV");
           m_sconfig[i + 2].channel = i + k + 3;
         }
-        else if(!CalculationChannels[1])
+        else if (!calculation_channels[1])
         {
-          if(!sendCommand("SET SCAN NOSV\r",">SET SCAN NOSV\r\n"))
-             throw RestartNeeded(DTR("failed to disable sv calculation"), 5);
+          if (!sendCommand("SET SCAN NOSV\r", ">SET SCAN NOSV\r\n"))
+            throw RestartNeeded(DTR("failed to disable sv calculation"), 5);
         }
 
         if (!sendCommand("SET S 1 s\r", ">SET S 1 s\r\n"))
           throw RestartNeeded(DTR("failed to set sampling rate"), 5);
 
         if (!sendCommand("MONITOR\r", ">MONITOR\r\n"))
-        throw RestartNeeded(DTR("failed to enter monitor mode"), 5);
+          throw RestartNeeded(DTR("failed to enter monitor mode"), 5);
 
         m_wdog.setTop(m_args.input_timeout);
       }
@@ -387,51 +474,98 @@ namespace Sensors
             continue;
 
           size_t rv = m_uart->readString(bfr, sizeof(bfr));
-          debug("DBG: %s",bfr);
           ptr = bfr;
           n_data = 0;
           n = 0;
           // Extract reveived values to structure
-          while( 1 == sscanf(ptr,"%f%n",&m_sconfig[n_data].value,&n) )
+          while ( 1 == sscanf(ptr, "%f%n", &m_sconfig[n_data].value,&n) )
           {
             n_data++;
             ptr +=n;
           }
 
           // Dispatch of received values
-          for(i = 0; i<n_data; i++)
+          for (i = 0; i < n_data; i++)
           {
-            if(0 == strcmp(m_sconfig[i].name,templates[0]) || 0 == strcmp(m_sconfig[i].name,"SV"))
+            // Sound Velocity
+            if (0 == strcmp(m_sconfig[i].name, c_dig_templates[0]) || 0 == strcmp(m_sconfig[i].name, c_calculation_channel_templates[0]))
+            {
               m_sspeed.value = m_sconfig[i].value;
 
-            if(0 == strcmp(m_sconfig[i].name,templates[1]))
-              m_conduct.value = m_sconfig[i].value;
+              if (m_sconfig[i].channel <= MT_DIG)
+                m_sspeed.setSourceEntity(dig_ids[ m_sconfig[i].channel - MT_SHIFT ]);
 
-            if(0 == strcmp(m_sconfig[i].name,templates[3]) || 0 == strcmp(m_sconfig[i].name,"Temperature"))
+              if (m_sconfig[i].channel > (MT_DIG + (int)m_args.label.size()))
+                m_sspeed.setSourceEntity(calculation_channel_ids[ m_sconfig[i].channel - MT_DIG - MT_SHIFT - (int)m_args.label.size() ]);
+
+              dispatch(m_sspeed);
+            }
+
+            // Conductivity
+            if (0 == strcmp(m_sconfig[i].name, c_dig_templates[1]))
+            {
+              m_conduct.value = m_sconfig[i].value;
+              m_conduct.setSourceEntity(dig_ids[ m_sconfig[i].channel - MT_SHIFT ]);
+              dispatch(m_conduct);
+            }
+
+            // Temperature
+            if (0 == strcmp(m_sconfig[i].name, c_dig_templates[3]) || 0 == strcmp(m_sconfig[i].name, c_analog_templates[0]))
+            {
               m_temp.value = m_sconfig[i].value;
 
-            if(0 == strcmp(m_sconfig[i].name,templates[2]) || 0 == strcmp(m_sconfig[i].name,"Pressure"))
+              if (m_sconfig[i].channel <= MT_DIG)
+                m_temp.setSourceEntity(dig_ids[ m_sconfig[i].channel - MT_SHIFT ]);
+
+              if (m_sconfig[i].channel > MT_DIG)
+                m_temp.setSourceEntity(analog_ids[ m_sconfig[i].channel - MT_DIG - MT_SHIFT]);
+
+              dispatch(m_temp);
+            }
+
+            // Pressure
+            if (0 == strcmp(m_sconfig[i].name, c_dig_templates[2]) || 0 == strcmp(m_sconfig[i].name, c_analog_templates[1]))
+            {
               m_press.value = m_sconfig[i].value;
 
-            if(0 == strcmp(m_sconfig[i].name,templates[2]) || 0 == strcmp(m_sconfig[i].name,"Pressure"))
+              if (m_sconfig[i].channel <= MT_DIG)
+                m_press.setSourceEntity(dig_ids[ m_sconfig[i].channel - MT_SHIFT ]);
+
+              if (m_sconfig[i].channel > MT_DIG)
+                m_press.setSourceEntity(analog_ids[ m_sconfig[i].channel - MT_DIG -  MT_SHIFT ]);
+
+              dispatch(m_press);
+            }
+
+            // Pressure/Depth
+            if (0 == strcmp(m_sconfig[i].name, c_dig_templates[2]) || 0 == strcmp(m_sconfig[i].name, c_analog_templates[1]))
+            {
               m_depth.value = m_sconfig[i].value * dbar2m_coef;
 
-            if(0 == strcmp(m_sconfig[i].name, "Salinity"))
+              if (m_sconfig[i].channel <= MT_DIG )
+                m_depth.setSourceEntity(dig_ids[ m_sconfig[i].channel - MT_SHIFT ]);
+
+              if (m_sconfig[i].channel > MT_DIG)
+                m_depth.setSourceEntity(analog_ids[ m_sconfig[i].channel - MT_DIG - MT_SHIFT ]);
+
+              dispatch(m_depth);
+            }
+
+            // Salinity
+            if (0 == strcmp(m_sconfig[i].name, c_calculation_channel_templates[1]))
+            {
               m_sal.value = m_sconfig[i].value;
-
-            if(0 == strcmp(m_sconfig[i].name, "Density"))
+              m_sal.setSourceEntity(calculation_channel_ids[ m_sconfig[i].channel - MT_DIG - MT_SHIFT - (int)m_args.label.size() ]);
+              dispatch(m_sal);
+            }
+            // Water Density
+            if (0 == strcmp(m_sconfig[i].name, c_calculation_channel_templates[2]))
+            {
+              m_wdens.setSourceEntity(calculation_channel_ids[m_sconfig[i].channel - MT_DIG - MT_SHIFT - (int)m_args.label.size()]);
               m_wdens.value = m_sconfig[i].value;
-
-            std::cout<<"Name - "<<m_sconfig[i].name<<" | "<<"Channel - "<<m_sconfig[i].channel<<" | "<<"Value - "<<m_sconfig[i].value<<std::endl;
+              dispatch(m_wdens);
+            }
           }
-
-          // Dispatch
-          dispatch(m_sspeed);
-          dispatch(m_conduct);
-          dispatch(m_temp);
-          dispatch(m_press);
-          dispatch(m_sal);
-          dispatch(m_wdens);
 
           if (rv == 0)
             throw RestartNeeded(DTR("I/O error"), 5);
