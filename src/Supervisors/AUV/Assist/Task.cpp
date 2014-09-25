@@ -37,7 +37,7 @@ namespace Supervisors
       using DUNE_NAMESPACES;
 
       //! Timeout for the vertical monitor
-      static const float c_vertical_timeout = 15.0;
+      static const float c_vertical_timeout = 20.0;
       //! Plan generation command timeout
       static const float c_gen_timeout = 3.0;
       //! Stabilization time before testing ascent rate
