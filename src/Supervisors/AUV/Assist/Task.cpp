@@ -28,9 +28,6 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// Local headers.
-#include "AscentRate.hpp"
-
 namespace Supervisors
 {
   namespace AUV
@@ -39,8 +36,8 @@ namespace Supervisors
     {
       using DUNE_NAMESPACES;
 
-      //! Time between depth updates
-      static const float c_depth_period = 1.0;
+      //! Timeout for the vertical monitor
+      static const float c_vertical_timeout = 15.0;
       //! Plan generation command timeout
       static const float c_gen_timeout = 3.0;
       //! Stabilization time before testing ascent rate
@@ -78,6 +75,8 @@ namespace Supervisors
 
       struct Task: public DUNE::Tasks::Periodic
       {
+        //! Vertical speed (z)
+        float m_vz;
         //! Current depth
         float m_depth;
         //! Current Medium
@@ -85,7 +84,7 @@ namespace Supervisors
         //! Current vehicle state
         uint8_t m_vstate;
         //! Rate of ascent
-        AscentRate* m_ar;
+        VerticalMonitor* m_vmon;
         //! Task's state
         AssistState m_astate;
         //! Timer for triggering the dislodge
@@ -97,7 +96,7 @@ namespace Supervisors
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Periodic(name, ctx),
-          m_ar(NULL),
+          m_vmon(NULL),
           m_astate(ST_IDLE),
           m_dtimer(c_stab_time),
           m_finish_depth(-1.0)
@@ -134,13 +133,13 @@ namespace Supervisors
         void
         onResourceAcquisition(void)
         {
-          m_ar = new AscentRate(m_args.ascent_wsize, c_depth_period);
+          m_vmon = new VerticalMonitor(c_vertical_timeout, m_args.min_ascent_rate);
         }
 
         void
         onResourceRelease(void)
         {
-          Memory::clear(m_ar);
+          Memory::clear(m_vmon);
         }
 
         void
@@ -165,7 +164,7 @@ namespace Supervisors
         void
         consume(const IMC::EstimatedState* msg)
         {
-          m_ar->update(msg->vz);
+          m_vz = msg->vz;
           m_depth = msg->depth;
 
           // reset finish depth if the vehicle comes to the surface
@@ -288,7 +287,7 @@ namespace Supervisors
         bool
         ascentCondition(void)
         {
-          return (m_ar->mean() < m_args.min_ascent_rate);
+          return m_vmon->isProgressSlow(m_vz);
         }
 
         //! Set the state machine's current state
