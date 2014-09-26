@@ -104,7 +104,7 @@ namespace DUNE
         IMC::DesiredPath dp = m_path;
         dp.end_z = 0.0f;
         dp.end_z_units = IMC::Z_DEPTH;
-        m_task->dispatch(m_path);
+        m_task->dispatch(dp);
       }
       else
       {
