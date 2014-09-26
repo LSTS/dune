@@ -75,8 +75,8 @@ namespace Navigation
       {
         //! Maximum expected currents (m/s).
         float max_current;
-        //! Initial RPM to Speed multiplicative factor.
-        fp32_t initial_rpm_to_speed;
+        //! Initial Revolutions to speed factor.
+        fp32_t ini_rev_fac;
       };
 
       struct Task: public DUNE::Navigation::BasicNavigation
@@ -112,11 +112,11 @@ namespace Navigation
           .size(3)
           .description("Kalman Filter State Covariance initial values");
 
-          param("RPM to Speed multiplicative factor", m_args.initial_rpm_to_speed)
+          param("Revolutions to speed factor", m_args.ini_rev_fac)
           .defaultValue("1.2e-3")
           .minimumValue("0.8e-3")
           .maximumValue("2.0e-3")
-          .description("Kalman Filter initial RPM to Speed multiplicative factor state value");
+          .description("Kalman Filter initial revolutions to speed multiplicative factor state value");
 
           // Extended Kalman Filter initialization.
           m_kal.reset(NUM_STATE, NUM_OUT);
@@ -163,7 +163,7 @@ namespace Navigation
           BasicNavigation::setup();
 
           // Initialize state and covariance EKF matrices.
-          m_kal.setState(STATE_K, m_args.initial_rpm_to_speed);
+          m_kal.setState(STATE_K, m_args.ini_rev_fac);
           m_kal.setCovariance(STATE_X, m_state_cov[0]);
           m_kal.setCovariance(STATE_Y, m_state_cov[0]);
           m_kal.setCovariance(STATE_K, m_state_cov[1]);
