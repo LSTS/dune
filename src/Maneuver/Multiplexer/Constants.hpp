@@ -32,8 +32,6 @@ namespace Maneuver
 {
   namespace Multiplexer
   {
-    //! Number of samples for vertical monitor moving average in elevator
-    static const unsigned c_vsamples = 10;
     //! Minimum radius for the elevators
     static const float c_min_elev_radius = 10.0f;
     //! Stabilization time for the dislodge maneuver

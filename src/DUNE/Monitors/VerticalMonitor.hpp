@@ -25,65 +25,81 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef SUPERVISORS_AUV_ASSIST_ASCENTRATE_HPP_INCLUDED_
-#define SUPERVISORS_AUV_ASSIST_ASCENTRATE_HPP_INCLUDED_
+#ifndef DUNE_MONITORS_VERTICAL_MONITOR_HPP_INCLUDED_
+#define DUNE_MONITORS_VERTICAL_MONITOR_HPP_INCLUDED_
 
 // DUNE headers.
-#include <DUNE/Math.hpp>
-#include <DUNE/Time.hpp>
+#include <DUNE/IMC/Definitions.hpp>
 
-namespace Supervisors
+namespace DUNE
 {
-  namespace AUV
+  namespace Monitors
   {
-    namespace Assist
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM VerticalMonitor;
+
+    //! Number of samples for vertical monitor moving average in elevator
+    static const unsigned c_vsamples = 10;
+
+    //! %VerticalMonitor monitors the vehicle's progress in the z direction
+    //! @author Pedro Calado.
+    class VerticalMonitor
     {
-      using DUNE_NAMESPACES;
-
-      class AscentRate
+    public:
+      //! Constructor.
+      //! @param[in] timeout amount of time before triggering condition as met
+      //! @param[in] min_speed minimum speed for triggering condition
+      VerticalMonitor(float timeout, float min_speed):
+        m_min_speed(min_speed),
+        m_slow_progress(false),
+        m_mave(NULL)
       {
-      public:
-        //! Constructor
-        //! @param[in] window_size number of samples in the moving average
-        //! @param[in] period interval of time between samples
-        AscentRate(unsigned window_size, float period):
-          m_timer(period)
+        m_timer.setTop(timeout);
+        m_mave = new MovingAverage<float>(c_vsamples);
+      }
+
+      ~VerticalMonitor(void)
+      {
+        Memory::clear(m_mave);
+      }
+
+      //! Test if progress is slow
+      //! @param[in] z_speed current vz speed
+      //! @return true if progress is slow
+      bool
+      isProgressSlow(float z_speed)
+      {
+        if (m_min_speed > m_mave->update(z_speed))
         {
-          m_avg = new Math::MovingAverage<float>(window_size);
+          if (m_slow_progress)
+          {
+            return m_timer.overflow();
+          }
+          else
+          {
+            m_slow_progress = true;
+            m_timer.reset();
+          }
+        }
+        else
+        {
+          m_slow_progress = false;
         }
 
-        ~AscentRate(void)
-        {
-          delete m_avg;
-        }
+        return false;
+      }
 
-        //! Update the ascent rate computation
-        //! @param[in] vz speed in the z axis from EstimatedState message
-        //! @return newly computed value for the ascent rate
-        float
-        update(float vz)
-        {
-          if (!m_timer.overflow())
-            return mean();
-
-          return m_avg->update(vz);
-        }
-
-        //! Output the mean ascent rate
-        //! @return most recently computed value for the ascent rate
-        float
-        mean(void) const
-        {
-          return m_avg->mean();
-        }
-
-      private:
-        //! Moving average for the ascent rate
-        Math::MovingAverage<float>* m_avg;
-        //! Counter for the time between updates
-        Time::Counter<float> m_timer;
-      };
-    }
+    private:
+      //! Timer counter for timeout
+      Time::Counter<float> m_timer;
+      //! Minimum speed
+      float m_min_speed;
+      //! Progress below minimum
+      bool m_slow_progress;
+      //! Moving average for progress samples
+      MovingAverage<float>* m_mave;
+    };
   }
 }
+
 #endif
