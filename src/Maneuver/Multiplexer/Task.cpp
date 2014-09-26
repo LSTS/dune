@@ -271,6 +271,8 @@ namespace Maneuver
       void
       onResourceInitialization(void)
       {
+        Maneuver::onResourceInitialization();
+
         bindToManeuvers<Task>(this, m_supported);
       }
 

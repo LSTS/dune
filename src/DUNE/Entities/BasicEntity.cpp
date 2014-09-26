@@ -22,72 +22,64 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Renato Caldas                                                    *
 //***************************************************************************
 
-#ifndef DUNE_TASKS_CONTEXT_HPP_INCLUDED_
-#define DUNE_TASKS_CONTEXT_HPP_INCLUDED_
-
 // ISO C++ 98 headers.
-#include <vector>
-#include <string>
+#include <stdexcept>
 
 // DUNE headers.
-#include <DUNE/Parsers/Config.hpp>
-#include <DUNE/FileSystem/Path.hpp>
-#include <DUNE/Entities/EntityDataBase.hpp>
-#include <DUNE/Utils/ByteBuffer.hpp>
-#include <DUNE/Tasks/Profiles.hpp>
-#include <DUNE/IMC/Bus.hpp>
-#include <DUNE/IMC/AddressResolver.hpp>
+#include <DUNE/Entities/BasicEntity.hpp>
 
 namespace DUNE
 {
-  namespace Tasks
+  namespace Entities
   {
-    // Export DLL Symbol.
-    struct DUNE_DLL_SYM Context;
-
-    //! This structure serves the purpose of joining useful objects,
-    //! usually shared by a large number of classes (namely Tasks).
-    struct Context
+    void
+    BasicEntity::setLabel(const std::string& label)
     {
-      Context(void);
+      // Throw exception to prevent relabeling after reservation
+      if (m_id != DUNE_IMC_CONST_UNK_EID)
+      {
+        std::string prevlabel = m_ctx.entities.resolve(m_id);
+        if (prevlabel != label)
+          throw std::runtime_error(DTR("entity label already set: ") + prevlabel + " -> " + label);
+      }
 
-      //! Configuration directives.
-      Parsers::Config config;
-      //! Message bus.
-      IMC::Bus mbus;
-      //! IMC address resolver.
-      IMC::AddressResolver resolver;
-      //! Label data base.
-      Entities::EntityDataBase entities;
-      //! Execution profiles.
-      Profiles profiles;
-      //! DUNE's directory.
-      FileSystem::Path dir_app;
-      //! Path to configuration directory.
-      FileSystem::Path dir_cfg;
-      //! Path to user configuration directory.
-      FileSystem::Path dir_usr_cfg;
-      //! Path to HTTP server directory.
-      FileSystem::Path dir_www;
-      //! Path to log directory.
-      FileSystem::Path dir_log;
-      //! Path to libraries directory.
-      FileSystem::Path dir_lib;
-      //! Path to firmware directory.
-      FileSystem::Path dir_fmw;
-      //! Path to internationalization directory.
-      FileSystem::Path dir_i18n;
-      //! Path to database directory.
-      FileSystem::Path dir_db;
-      //! Path to scripts directory.
-      FileSystem::Path dir_scripts;
-      //! UID of this instance.
-      uint64_t uid;
-    };
+      m_label = label;
+      m_ent_info.label = label;
+      m_ent_info.component = m_owner->getName();
+    }
+
+    void
+    BasicEntity::reportInfo(void)
+    {
+      dispatch(m_ent_info);
+    }
+
+    void
+    BasicEntity::consume(const IMC::QueryEntityInfo* msg)
+    {
+      if (msg->getDestinationEntity() == getId())
+        dispatchReply(*msg, m_ent_info);
+      else if (msg->getDestinationEntity() == DUNE_IMC_CONST_UNK_EID)
+        dispatch(m_ent_info);
+    }
+
+    void
+    BasicEntity::dispatch(IMC::Message* msg, unsigned int flags)
+    {
+      msg->setSource(m_ctx.resolver.id());
+      msg->setSourceEntity(getId());
+
+      if ((flags & DF_KEEP_TIME) == 0)
+        msg->setTimeStamp();
+
+      if ((flags & DF_LOOP_BACK) == 0)
+        m_ctx.mbus.dispatch(msg, m_owner);
+      else
+        m_ctx.mbus.dispatch(msg);
+    }
+
   }
 }
-
-#endif

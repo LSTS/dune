@@ -200,6 +200,8 @@ namespace Maneuver
           default:
             break;
         }
+
+        m_state = state;
       }
 
       //! Burst direction

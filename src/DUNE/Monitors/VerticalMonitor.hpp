@@ -22,70 +22,82 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_TASKS_CONTEXT_HPP_INCLUDED_
-#define DUNE_TASKS_CONTEXT_HPP_INCLUDED_
-
-// ISO C++ 98 headers.
-#include <vector>
-#include <string>
+#ifndef DUNE_MONITORS_VERTICAL_MONITOR_HPP_INCLUDED_
+#define DUNE_MONITORS_VERTICAL_MONITOR_HPP_INCLUDED_
 
 // DUNE headers.
-#include <DUNE/Parsers/Config.hpp>
-#include <DUNE/FileSystem/Path.hpp>
-#include <DUNE/Entities/EntityDataBase.hpp>
-#include <DUNE/Utils/ByteBuffer.hpp>
-#include <DUNE/Tasks/Profiles.hpp>
-#include <DUNE/IMC/Bus.hpp>
-#include <DUNE/IMC/AddressResolver.hpp>
+#include <DUNE/IMC/Definitions.hpp>
 
 namespace DUNE
 {
-  namespace Tasks
+  namespace Monitors
   {
     // Export DLL Symbol.
-    struct DUNE_DLL_SYM Context;
+    class DUNE_DLL_SYM VerticalMonitor;
 
-    //! This structure serves the purpose of joining useful objects,
-    //! usually shared by a large number of classes (namely Tasks).
-    struct Context
+    //! Number of samples for vertical monitor moving average in elevator
+    static const unsigned c_vsamples = 10;
+
+    //! %VerticalMonitor monitors the vehicle's progress in the z direction
+    //! @author Pedro Calado.
+    class VerticalMonitor
     {
-      Context(void);
+    public:
+      //! Constructor.
+      //! @param[in] timeout amount of time before triggering condition as met
+      //! @param[in] min_speed minimum speed for triggering condition
+      VerticalMonitor(float timeout, float min_speed):
+        m_min_speed(min_speed),
+        m_slow_progress(false),
+        m_mave(NULL)
+      {
+        m_timer.setTop(timeout);
+        m_mave = new MovingAverage<float>(c_vsamples);
+      }
 
-      //! Configuration directives.
-      Parsers::Config config;
-      //! Message bus.
-      IMC::Bus mbus;
-      //! IMC address resolver.
-      IMC::AddressResolver resolver;
-      //! Label data base.
-      Entities::EntityDataBase entities;
-      //! Execution profiles.
-      Profiles profiles;
-      //! DUNE's directory.
-      FileSystem::Path dir_app;
-      //! Path to configuration directory.
-      FileSystem::Path dir_cfg;
-      //! Path to user configuration directory.
-      FileSystem::Path dir_usr_cfg;
-      //! Path to HTTP server directory.
-      FileSystem::Path dir_www;
-      //! Path to log directory.
-      FileSystem::Path dir_log;
-      //! Path to libraries directory.
-      FileSystem::Path dir_lib;
-      //! Path to firmware directory.
-      FileSystem::Path dir_fmw;
-      //! Path to internationalization directory.
-      FileSystem::Path dir_i18n;
-      //! Path to database directory.
-      FileSystem::Path dir_db;
-      //! Path to scripts directory.
-      FileSystem::Path dir_scripts;
-      //! UID of this instance.
-      uint64_t uid;
+      ~VerticalMonitor(void)
+      {
+        Memory::clear(m_mave);
+      }
+
+      //! Test if progress is slow
+      //! @param[in] z_speed current vz speed
+      //! @return true if progress is slow
+      bool
+      isProgressSlow(float z_speed)
+      {
+        if (m_min_speed > m_mave->update(z_speed))
+        {
+          if (m_slow_progress)
+          {
+            return m_timer.overflow();
+          }
+          else
+          {
+            m_slow_progress = true;
+            m_timer.reset();
+          }
+        }
+        else
+        {
+          m_slow_progress = false;
+        }
+
+        return false;
+      }
+
+    private:
+      //! Timer counter for timeout
+      Time::Counter<float> m_timer;
+      //! Minimum speed
+      float m_min_speed;
+      //! Progress below minimum
+      bool m_slow_progress;
+      //! Moving average for progress samples
+      MovingAverage<float>* m_mave;
     };
   }
 }

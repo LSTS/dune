@@ -86,7 +86,7 @@ namespace Maneuver
         if (m_args->vmonitor_speed > 0.0)
         {
           Memory::clear(m_vmon);
-          m_vmon = new VMonitor(m_args->vmonitor_timeout, m_depth);
+          m_vmon = new VerticalMonitor(m_args->vmonitor_timeout, m_args->vmonitor_speed);
         }
       }
 
@@ -95,6 +95,7 @@ namespace Maneuver
       void
       onEstimatedState(const IMC::EstimatedState* msg)
       {
+        m_vz = msg->vz;
         m_depth = msg->depth;
         m_altitude = msg->alt;
         m_pitch = msg->theta;
@@ -145,69 +146,19 @@ namespace Maneuver
       {
         // compute vertical rate
         // (multiply by minus direction for absolute value)
-        float vrate = - m_elevate->getElevatorDirection() * (m_depth - m_vmon->last_depth) / (Clock::get() - m_vmon->last_time);
+        float vrate = - m_elevate->getElevatorDirection() * m_vz;
 
-        if ((m_args->vmonitor_speed > vrate) ||
-            (m_args->vmonitor_speed > m_vmon->mave->update(vrate)))
-        {
-          if (m_vmon->slow_progress)
-          {
-            if (m_vmon->timer.overflow())
-              m_task->signalError(DTR("vertical progress is too slow"));
-          }
-          else
-          {
-            m_vmon->slow_progress = true;
-            m_vmon->timer.reset();
-          }
-
-          m_task->trace("progress is slow: %.2f", vrate);
-        }
-        else
-        {
-          m_vmon->slow_progress = false;
-          m_task->trace("progress ok: %.2f", vrate);
-        }
-
-        m_vmon->last_time = Clock::get();
-        m_vmon->last_depth = m_depth;
+        if (m_vmon->isProgressSlow(vrate))
+          m_task->signalError(DTR("vertical progress is too slow"));
       }
 
     private:
-      //! Vertical monitor data
-      struct VMonitor
-      {
-        //! Timer counter for timeout
-        Time::Counter<float> timer;
-        //! Last value of depth
-        float last_depth;
-        //! Last time checked
-        double last_time;
-        //! Progress below minimum
-        bool slow_progress;
-        //! Moving average for progress samples
-        MovingAverage<float>* mave;
-
-        VMonitor(float timeout, float depth):
-          last_depth(depth),
-          last_time(Clock::get()),
-          slow_progress(false),
-          mave(NULL)
-        {
-          timer.setTop(timeout);
-          mave = new MovingAverage<float>(c_vsamples);
-        };
-
-        ~VMonitor(void)
-        {
-          Memory::clear(mave);
-        }
-      };
-
       //! Desired path message
       IMC::DesiredPath m_path;
       //! Elevator Maneuver message
       IMC::Elevator m_maneuver;
+      //! Current speed in z
+      float m_vz;
       //! Current depth
       float m_depth;
       //! Current altitude
@@ -219,7 +170,7 @@ namespace Maneuver
       //! Elevator mechanism
       Maneuvers::Elevate* m_elevate;
       //! Vertical monitor
-      VMonitor* m_vmon;
+      VerticalMonitor* m_vmon;
     };
   }
 }

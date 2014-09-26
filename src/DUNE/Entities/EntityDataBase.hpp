@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_TASKS_ENTITY_DATA_BASE_HPP_INCLUDED_
-#define DUNE_TASKS_ENTITY_DATA_BASE_HPP_INCLUDED_
+#ifndef DUNE_ENTITIES_ENTITY_DATA_BASE_HPP_INCLUDED_
+#define DUNE_ENTITIES_ENTITY_DATA_BASE_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <stdexcept>
@@ -38,7 +38,7 @@
 
 namespace DUNE
 {
-  namespace Tasks
+  namespace Entities
   {
     class EntityDataBase
     {
@@ -46,16 +46,12 @@ namespace DUNE
       //! Data base entry.
       struct Entity
       {
-        // Label.
+        // Entity label.
         std::string label;
-        // Label.
+        // Name of the task owning the entity.
         std::string task_name;
-        // Id.
+        // Numeric entity id.
         unsigned int id;
-        // Activation time.
-        uint16_t act_time;
-        // Deactivation time.
-        uint16_t deact_time;
       };
 
       struct InvalidLabel: public std::runtime_error
@@ -90,11 +86,13 @@ namespace DUNE
         { }
       };
 
+      //! Constructor.
       EntityDataBase(void):
         m_next_id(0)
       {
       }
 
+      //! Destructor.
       ~EntityDataBase(void)
       {
         Concurrency::ScopedMutex l(m_lock);
@@ -104,6 +102,9 @@ namespace DUNE
           delete itr->second;
       }
 
+      //! Determine if an entity identified by a given label exists in the database.
+      //! @param[in] name entity label to use.
+      //! @return true if an entity with the provided label exists in the database, false otherwise.
       bool
       labelExists(const std::string& name)
       {
@@ -112,6 +113,9 @@ namespace DUNE
         return (itr != m_by_label.end());
       }
 
+      //! Determine if an entity identified by a given numeric id exists in the database.
+      //! @param[in] id numeric id to use.
+      //! @return true if an entity with the provided id exists in the database, false otherwise.
       bool
       idExists(unsigned int id)
       {
@@ -120,9 +124,12 @@ namespace DUNE
         return (itr != m_by_id.end());
       }
 
+      //! Add an entity to the database, identified by a unique label, and retrieve the reserved numerical id.
+      //! @param[in] label the desired entity label.
+      //! @param[in] task_name the name of the task owning the entity.
+      //! @return reserved numerical id.
       unsigned int
-      reserve(const std::string& label, const std::string& task_name,
-              uint16_t act_time, uint16_t deact_time)
+      reserve(const std::string& label, const std::string& task_name)
       {
         if (label.size() == 0)
           throw InvalidLabel();
@@ -138,14 +145,15 @@ namespace DUNE
         entry->label = label;
         entry->id = id;
         entry->task_name = task_name;
-        entry->act_time = act_time;
-        entry->deact_time = deact_time;
         m_by_id[id] = entry;
         m_by_label[label] = entry;
 
         return id;
       }
 
+      //! Get the numeric id for the entity identified by the given label
+      //! The NonexistentLabel exception is thrown if there is no matching entity in the database.
+      //! @return numerical entity id.
       unsigned int
       resolve(const std::string& label)
       {
@@ -159,6 +167,9 @@ namespace DUNE
         return itr->second->id;
       }
 
+      //! Get the task name for the entity identified by the given label
+      //! The NonexistentLabel exception is thrown if there is no matching entity in the database.
+      //! @return task name.
       std::string
       resolveTaskName(const std::string& label)
       {
@@ -172,6 +183,9 @@ namespace DUNE
         return itr->second->task_name;
       }
 
+      //! Get the label for the entity identified by the given numeric id.
+      //! The InvalidId exception is thrown if there is no matching entity in the database.
+      //! @return entity label.
       const std::string&
       resolve(unsigned int id)
       {
@@ -185,6 +199,8 @@ namespace DUNE
         return itr->second->label;
       }
 
+      //! Fill a vector with pointers to the existing Entity records.
+      //! @param[out] devs vector to be filled.
       void
       contents(std::vector<Entity*>& devs)
       {
@@ -194,6 +210,8 @@ namespace DUNE
           devs.push_back(itr->second);
       }
 
+      //! Produce a map between the existing numeric entity ids and the entity labels.
+      //! @return the produced map.
       std::map<unsigned, std::string>
       entries(void)
       {
@@ -208,10 +226,14 @@ namespace DUNE
       }
 
     private:
+      //! Mutex for accessing the database.
       Concurrency::Mutex m_lock;
+      //! Next vacant numeric id.
       unsigned int m_next_id;
+      //! Mapping between numeric id's and Entity records.
       typedef std::map<unsigned, Entity*> EntitiesById;
       EntitiesById m_by_id;
+      //! Mapping between labels and Entity records.
       typedef std::map<std::string, Entity*> EntitiesByLabel;
       EntitiesByLabel m_by_label;
     };
