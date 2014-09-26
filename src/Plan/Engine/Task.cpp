@@ -870,7 +870,7 @@ namespace Plan
       {
         IMC::PlanDB plandb;
         plandb.type = IMC::PlanDB::DBT_REQUEST;
-        plandb.ot = dtype;
+        plandb.dt = dtype;
         plandb.op = IMC::PlanDB::DBOP_SET;
         plandb.request_id = 0;
         plandb.plan_id = id;
@@ -893,7 +893,7 @@ namespace Plan
         m_spec = *given_plan;
         m_spec.setSourceEntity(getEntityId());
 
-        sendToDB(IMC::PlanDB::DBOT_PLAN, m_spec.plan_id, &m_spec);
+        sendToDB(IMC::PlanDB::DBDT_PLAN, m_spec.plan_id, &m_spec);
 
         return true;
       }
@@ -941,7 +941,7 @@ namespace Plan
             ptr->memento = pmem->memento;
             war(DTR("resuming with memento: %s"), pmem->id.c_str());
 
-            sendToDB(IMC::PlanDB::DBOT_MEMENTO, pmem->id, pmem);
+            sendToDB(IMC::PlanDB::DBDT_MEMENTO, pmem->id, pmem);
             return true;
           }
         }
@@ -972,7 +972,7 @@ namespace Plan
         m_spec.start_man_id = arg->getName();
         m_spec.maneuvers.push_back(spec_man);
 
-        sendToDB(IMC::PlanDB::DBOT_PLAN, m_spec.plan_id, &m_spec);
+        sendToDB(IMC::PlanDB::DBDT_PLAN, m_spec.plan_id, &m_spec);
 
         return true;
       }
