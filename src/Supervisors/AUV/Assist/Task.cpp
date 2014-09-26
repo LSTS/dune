@@ -287,7 +287,7 @@ namespace Supervisors
         bool
         ascentCondition(void)
         {
-          return m_vmon->isProgressSlow(m_vz);
+          return m_vmon->isProgressSlow(-m_vz);
         }
 
         //! Set the state machine's current state
