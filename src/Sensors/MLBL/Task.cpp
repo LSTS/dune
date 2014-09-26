@@ -295,8 +295,6 @@ namespace Sensors
       SerialPort* m_uart;
       //! Entity states.
       IMC::EntityState m_states[STA_MAX];
-      //! Commands to/from modem.
-      IMC::DevDataText m_cmds;
       //! Internal buffer.
       char m_bfr[c_bfr_size];
       //! Task arguments.
@@ -795,10 +793,10 @@ namespace Sensors
             {
               lrange.id = m_lbl(i).id;
               lrange.range = range;
-              dispatch(lrange, DF_KEEP_TIME);
+              dispatch(lrange);
 
               // Update beacon statistics.
-              m_lbl(i).range = (unsigned)lrange.range;
+              m_lbl(i).range = (unsigned)range;
               m_lbl(i).range_time = Clock::get();
               return;
             }
@@ -828,8 +826,9 @@ namespace Sensors
           if (m_state != STA_NO_BEACONS)
             m_state = isActive() ? STA_ACTIVE : STA_IDLE;
 
-          m_cmds.value.assign(sanitize(m_bfr));
-          dispatch(m_cmds);
+          IMC::DevDataText text;
+          text.value.assign(sanitize(m_bfr));
+          dispatch(text);
 
           try
           {
@@ -949,7 +948,6 @@ namespace Sensors
         sendCommand(cmd);
 
         processInput(m_args.ping_tout);
-        // How to process feedback.
       }
 
       void
@@ -1239,8 +1237,9 @@ namespace Sensors
       logCommand(const std::string& cmd)
       {
         // Log sent message.
-        m_cmds.value.assign(sanitize(cmd));
-        dispatch(m_cmds);
+        IMC::DevDataText text;
+        text.value.assign(sanitize(cmd));
+        dispatch(text);
       }
 
       void
