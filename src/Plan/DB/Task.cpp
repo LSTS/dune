@@ -242,7 +242,7 @@ namespace Plan
         // Setup fields to echo in reply message
         m_reply.setDestination(req->getSource());
         m_reply.setDestinationEntity(req->getSourceEntity());
-        m_reply.ot = req->ot;
+        m_reply.dt = req->dt;
         m_reply.op = req->op;
         m_reply.request_id = req->request_id;
         m_reply.plan_id = req->plan_id;
@@ -363,7 +363,7 @@ namespace Plan
 
         if(PlanMementoflag == -1)
           return;
-        PlanMementoflag = 1;
+
         inProgress();
         if(PlanMementoflag == 0)
           storeInDB(arg,PlanMementoflag);
@@ -408,7 +408,7 @@ namespace Plan
 
           *m_insert_stmt[PlanMementoflag] << m_plan_info.plan_id
                                           << m_plan_info.change_time
-                                          << m_plan_info.change_sid
+                                         << m_plan_info.change_sid
                                           << m_plan_info.change_sname
                                           << m_plan_info.md5
                                           << plan_data;
@@ -436,10 +436,10 @@ namespace Plan
       void
       checkOperationType(const IMC::PlanDB& req, int& PlanMementoflag)
       {
-        if(req.ot == IMC::PlanDB::DBOT_PLAN)
+        if(req.dt == IMC::PlanDB::DBDT_PLAN)
           PlanMementoflag = 0;
 
-        if(req.ot == IMC::PlanDB::DBOT_MEMENTO)
+        if(req.dt == IMC::PlanDB::DBDT_MEMENTO)
           PlanMementoflag = 1;
       }
 
