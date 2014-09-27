@@ -260,7 +260,6 @@ namespace Transports
         switch (msg->op)
         {
           case IMC::LoggingControl::COP_STARTED:
-          case IMC::LoggingControl::COP_CURRENT_NAME:
             {
               std::string date = Time::Format::getTimeSafe(msg->getTimeStamp());
               std::string filename = Utils::String::str(date + "_" + "Bio.csv");
