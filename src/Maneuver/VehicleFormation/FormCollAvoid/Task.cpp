@@ -34,7 +34,6 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 #include <DUNE/Simulation/UAV.hpp>
-using DUNE::Simulation::UAVSimulation;
 
 #define vel_lim 0.5
 
@@ -44,6 +43,7 @@ namespace Maneuver
   {
     namespace FormCollAvoid
     {
+      using DUNE::Simulation::UAVSimulation;
       using DUNE_NAMESPACES;
 
       //! Vector for System Mapping.
@@ -1399,7 +1399,7 @@ namespace Maneuver
           }
 
           //! Check that the command is a real value
-          if (isnan(msg->value) != 0)
+          if (Math::isNaN(msg->value))
           {
             war("DesiredRoll rejected - Commanded value is not a number!");
             return;
@@ -1450,7 +1450,7 @@ namespace Maneuver
           }
 
           //! Check that the command is a real value
-          if (isnan(msg->value) != 0)
+          if (Math::isNaN(msg->value))
           {
             war("DesiredSpeed rejected - Commanded value is not a number!");
             return;
@@ -1508,7 +1508,7 @@ namespace Maneuver
           }
 
           //! Check that the command is a real value
-          if (isnan(msg->value) != 0)
+          if (Math::isNaN(msg->value))
           {
             war("DesiredZ rejected - Commanded value is not a number!");
             return;
@@ -1598,7 +1598,7 @@ namespace Maneuver
             spew("Own control computation");
             formationControl(m_vehicle_state, m_vehicle_accel, m_uav_ind,
                 m_timestep_ctrl, &vd_cmd, m_debug, m_form_monitor);
-            if (isnan(vd_cmd(0)) == 0 || isnan(vd_cmd(1)) == 0 || isnan(vd_cmd(2)) == 0)
+            if (Math::isNaN(vd_cmd(0)) || Math::isNaN(vd_cmd(1)) || Math::isNaN(vd_cmd(2)))
             {
               m_uav_ctrl.set(0, 2, m_uav_ind, m_uav_ind, vd_cmd.get(0, 2, 0, 0));
 
@@ -1861,7 +1861,7 @@ namespace Maneuver
             spew("Cooperating vehicle simulated control computation");
             formationControl(m_vehicle_state, m_vehicle_accel, ind_uav, m_timestep_ctrl,
                 &vd_cmd, false, m_form_monitor);
-            if (isnan(vd_cmd(0)) == 0 || isnan(vd_cmd(1)) == 0 || isnan(vd_cmd(2)) == 0)
+            if (Math::isNaN(vd_cmd(0)) || Math::isNaN(vd_cmd(1)) || Math::isNaN(vd_cmd(2)))
             {
               m_uav_ctrl.set(0, 2, ind_uav, ind_uav, vd_cmd.get(0, 2, 0, 0));
 
@@ -2339,7 +2339,7 @@ namespace Maneuver
                 formationControl(m_vehicle_state, m_vehicle_accel, ind_uav, m_timestep_ctrl,
                     &vd_cmd, false, m_form_monitor);
                 //spew("Periodic update 3.4.2.2");
-                if (isnan(vd_cmd(0)) == 0 || isnan(vd_cmd(1)) == 0 || isnan(vd_cmd(2)) == 0)
+                if (Math::isNaN(vd_cmd(0)) || Math::isNaN(vd_cmd(1)) || Math::isNaN(vd_cmd(2)))
                 {
                   m_uav_ctrl.set(0, 2, ind_uav, ind_uav, vd_cmd.get(0, 2, 0, 0));
 
@@ -3064,8 +3064,8 @@ namespace Maneuver
           vt_virt_err_uav(0, ind_uav_lead) -= d_c1 * d_c2 * d_deriv_err_x/((d_err_x - d_c2)*(d_err_x - d_c2));
           vt_virt_err_uav(1, ind_uav_lead) -= d_c3 * d_c4 * d_deriv_err_y/((d_err_y - d_c4)*(d_err_y - d_c4));
 
-          if (isnan(vt_virt_err_uav(0, ind_uav_lead)) != 0 || isnan(vt_virt_err_uav(1, ind_uav_lead)) != 0
-              || isnan(vd_surf_uav(0, ind_uav_lead)) != 0 || isnan(vd_surf_uav(1, ind_uav_lead)) != 0)
+          if (Math::isNaN(vt_virt_err_uav(0, ind_uav_lead)) || Math::isNaN(vt_virt_err_uav(1, ind_uav_lead))
+              || Math::isNaN(vd_surf_uav(0, ind_uav_lead)) || Math::isNaN(vd_surf_uav(1, ind_uav_lead)))
           {
             war("-------------------------------------------------------");
             war("Maximum acceleration projected in x = %1.2f", d_accel_max_proj_x);
@@ -3081,25 +3081,25 @@ namespace Maneuver
             war("Error in y = %1.2f", d_err_y);
             war("Error derivative in x = %1.2f", d_deriv_err_x);
             war("Error derivative in y = %1.2f", d_deriv_err_y);
-            if (isnan(vd_inter_uav_des_acc(0, ind_uav_lead)) != 0)
+            if (Math::isNaN(vd_inter_uav_des_acc(0, ind_uav_lead)))
               war("Leader-UAV desired acceleration is not a number in x!");
-            if (isnan(vd_inter_uav_des_acc(1, ind_uav_lead)) != 0)
+            if (Math::isNaN(vd_inter_uav_des_acc(1, ind_uav_lead)))
               war("Leader-UAV desired acceleration is not a number in y!");
-            if (isnan(md_vehicle_accel(0, ind_uav_lead)) != 0)
+            if (Math::isNaN(md_vehicle_accel(0, ind_uav_lead)))
               war("Leader current acceleration is not a number in x!");
-            if (isnan(md_vehicle_accel(1, ind_uav_lead)) != 0)
+            if (Math::isNaN(md_vehicle_accel(1, ind_uav_lead)))
               war("Leader current acceleration is not a number in y!");
-            if (isnan(d_deriv_err_x) != 0)
+            if (Math::isNaN(d_deriv_err_x))
               war("Leader error derivative is not a number in x!");
-            if (isnan(d_deriv_err_y) != 0)
+            if (Math::isNaN(d_deriv_err_y))
               war("Leader error derivative is not a number in y!");
-            if (isnan(vt_virt_err_uav(0, ind_uav_lead)) != 0)
+            if (Math::isNaN(vt_virt_err_uav(0, ind_uav_lead)))
               war("Leader virtual error is not a number in x!");
-            if (isnan(vt_virt_err_uav(1, ind_uav_lead)) != 0)
+            if (Math::isNaN(vt_virt_err_uav(1, ind_uav_lead)))
               war("Leader virtual error is not a number in y!");
-            if (isnan(vd_surf_uav(0, ind_uav_lead)) != 0)
+            if (Math::isNaN(vd_surf_uav(0, ind_uav_lead)))
               war("Leader convergence command is not a number in x!");
-            if (isnan(vd_surf_uav(1, ind_uav_lead)) != 0)
+            if (Math::isNaN(vd_surf_uav(1, ind_uav_lead)))
               war("Leader cConvergence command is not a number in y!");
           }
           //! Tracking output
@@ -3263,24 +3263,24 @@ namespace Maneuver
           //     (m_uav_n-1+k_form_ref);
           Matrix vd_accel = vt_virt_err - vd_surf_conv - vd_surf_unkn;
           Matrix vd_ctrl = md_rot_ground2yaw*vd_accel;
-          if (isnan(vd_accel(0)) != 0 || isnan(vd_accel(1)) != 0)
+          if (Math::isNaN(vd_accel(0)) || Math::isNaN(vd_accel(1)))
           {
             war("-------------------------------------------------------");
-            if (isnan(vd_accel(0)) != 0)
+            if (Math::isNaN(vd_accel(0)))
               war("Desired acceleration command is not a number in x!");
-            if (isnan(vd_accel(1)) != 0)
+            if (Math::isNaN(vd_accel(1)))
               war("Desired acceleration command is not a number in y!");
-            if (isnan(vt_virt_err(0)) != 0)
+            if (Math::isNaN(vt_virt_err(0)))
               war("Total virtual error is not a number in x!");
-            if (isnan(vt_virt_err(1)) != 0)
+            if (Math::isNaN(vt_virt_err(1)))
               war("Total virtual error is not a number in y!");
-            if (isnan(vd_surf_conv(0)) != 0)
+            if (Math::isNaN(vd_surf_conv(0)))
               war("Convergence command is not a number in x!");
-            if (isnan(vd_surf_conv(1)) != 0)
+            if (Math::isNaN(vd_surf_conv(1)))
               war("Convergence command is not a number in y!");
-            if (isnan(vd_surf_unkn(0)) != 0)
+            if (Math::isNaN(vd_surf_unkn(0)))
               war("Unknown perturbation command is not a number in x!");
-            if (isnan(vd_surf_unkn(1)) != 0)
+            if (Math::isNaN(vd_surf_unkn(1)))
               war("Unknown perturbation command is not a number in y!");
           }
 
@@ -3292,12 +3292,12 @@ namespace Maneuver
           //debug("formationControl - 5.2");
 
           //! Check that the command is a real value
-          if (isnan((*vd_cmd)(0)) != 0 || isnan((*vd_cmd)(1)) != 0)
+          if (Math::isNaN((*vd_cmd)(0)) || Math::isNaN((*vd_cmd)(1)))
           {
             war("-------------------------------------------------------");
-            if (isnan((*vd_cmd)(0)) != 0)
+            if (Math::isNaN((*vd_cmd)(0)))
               war("Formation bank command is not a number!");
-            if (isnan((*vd_cmd)(1)) != 0)
+            if (Math::isNaN((*vd_cmd)(1)))
               war("Formation speed command is not a number!");
             war("Heading value: %1.2f deg - cos = %1.2f - sin = %1.2f",
                 Angles::degrees(md_uav_state(8, ind_uav+1)), d_cos_heading, d_sin_heading);

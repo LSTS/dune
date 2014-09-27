@@ -37,12 +37,11 @@
 #include <algorithm>
 
 // DUNE headers.
-//#include <DUNE/Utils/String.hpp>
 #include <DUNE/DUNE.hpp>
 #include <DUNE/Simulation/UAV.hpp>
 #include <DUNE/Math/Matrix.hpp>
 #include <DUNE/Math/Angles.hpp>
-//#include <DUNE/Math/General.hpp>
+#include <DUNE/Math/General.hpp>
 
 namespace DUNE
 {
@@ -1258,7 +1257,7 @@ namespace DUNE
     void
     UAVSimulation::commandBank(const double& bank_cmd)
     {
-      if (isnan(bank_cmd) == 0) // Check that the command is a real value
+      if (Math::isNaN(bank_cmd)) // Check that the command is a real value
         m_bank_cmd = bank_cmd;
       else
         std::printf("UAV Simulation - Bank command rejected - Commanded value is not a number!\n");
@@ -1267,7 +1266,7 @@ namespace DUNE
     void
     UAVSimulation::commandAirspeed(const double& airspeed_cmd)
     {
-      if (isnan(airspeed_cmd) == 0) // Check that the command is a real value
+      if (Math::isNaN(airspeed_cmd)) // Check that the command is a real value
       {
         m_airspeed_cmd = airspeed_cmd;
         m_airspeed_cmd_ini = true;
@@ -1279,7 +1278,7 @@ namespace DUNE
     void
     UAVSimulation::commandAlt(const double& altitude_cmd)
     {
-      if (isnan(altitude_cmd) == 0) // Check that the command is a real value
+      if (Math::isNaN(altitude_cmd)) // Check that the command is a real value
       {
         //! Altitude command
         m_altitude_cmd = altitude_cmd;
@@ -1299,7 +1298,7 @@ namespace DUNE
     void
     UAVSimulation::commandFPA(const double& fpa_cmd)
     {
-      if (isnan(fpa_cmd) == 0) // Check that the command is a real value
+      if (Math::isNaN(fpa_cmd)) // Check that the command is a real value
       {
         //! Flight path angle command
         m_fpa_cmd = fpa_cmd;
@@ -1317,7 +1316,7 @@ namespace DUNE
     void
     UAVSimulation::commandPitch(const double& pitch_cmd)
     {
-      if (isnan(pitch_cmd) == 0) // Check that the command is a real value
+      if (Math::isNaN(pitch_cmd)) // Check that the command is a real value
       {
         //! Flight path angle command
         m_pitch_cmd = pitch_cmd;

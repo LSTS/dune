@@ -654,7 +654,7 @@ namespace Simulators
         }
 
         //! Check that the command is a real value
-        if (isnan(msg->value) != 0)
+        if (Math::isNaN(msg->value))
         {
           war("Bank command rejected - Commanded value is not a number!");
           return;
@@ -707,7 +707,7 @@ namespace Simulators
         }
 
         //! Check that the command is a real value
-        if (isnan(msg->value) != 0)
+        if (Math::isNaN(msg->value))
         {
           war("Speed command rejected - Commanded value is not a number!");
           return;
@@ -760,7 +760,7 @@ namespace Simulators
         }
 
         //! Check that the command is a real value
-        if (isnan(msg->value) != 0)
+        if (Math::isNaN(msg->value))
         {
           war("Altitude command rejected - Commanded value is not a number!");
           return;
@@ -820,7 +820,7 @@ namespace Simulators
         }
 
         //! Check that the command is a real value
-        if (isnan(msg->value) != 0)
+        if (Math::isNaN(msg->value))
         {
           war("Pitch command rejected - Commanded value is not a number!");
           return;
@@ -872,7 +872,7 @@ namespace Simulators
         }
 
         //! Check that the command is a real value
-        if (isnan(msg->value) != 0)
+        if (Math::isNaN(msg->value))
         {
           war("Servo command rejected - Commanded value is not a number!");
           return;
@@ -922,7 +922,7 @@ namespace Simulators
         }
 
         //! Check that the command is a real value
-        if (isnan(msg->value) != 0)
+        if (Math::isNaN(msg->value))
         {
           war("Thruster command rejected - Commanded value is not a number!");
           return;
