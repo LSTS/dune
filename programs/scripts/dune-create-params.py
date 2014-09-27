@@ -96,8 +96,9 @@ for i18n in sint:
         os.environ['LC_ALL'] = lang
         os.environ['LANG'] = lang
         os.environ['LANGUAGE'] = lang
+        sys.stderr.write('\n* Processing %s:\n\n' % ini)
+        sys.stderr.flush()
         subprocess.check_call(['./dune', '-c', ini, '-p', 'Hardware', '-X', dst_dir])
-
 
 xmls = glob.glob(os.path.join(dst_dir, '*.xml'))
 for xml in xmls:
