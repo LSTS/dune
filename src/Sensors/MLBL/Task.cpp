@@ -134,8 +134,10 @@ namespace Sensors
       double report_period;
       //! Ping Period.
       double ping_period;
-      //! Ping Timeout.
-      unsigned ping_tout;
+      //! Transponder Ping Timeout.
+      unsigned ping_tout_nb;
+      //! Micromodem Ping Timeout.
+      unsigned ping_tout_mm;
       //! Length of transmit pings.
       unsigned tx_length;
       //! Length of receive pings.
@@ -323,6 +325,8 @@ namespace Sensors
       float m_fuel_level;
       //! Last fuel level confidence.
       float m_fuel_conf;
+      //! Pinger.
+      Time::Counter<float> m_pinger;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -362,9 +366,14 @@ namespace Sensors
         .defaultValue("3")
         .minimumValue("0");
 
-        param("Ping Timeout", m_args.ping_tout)
-        .units(Units::Millisecond)
-        .defaultValue("1000")
+        param("Transponder Ping Timeout", m_args.ping_tout_nb)
+        .units(Units::Second)
+        .defaultValue("2")
+        .minimumValue("0");
+
+        param("Micromodem Ping Timeout", m_args.ping_tout_mm)
+        .units(Units::Second)
+        .defaultValue("5")
         .minimumValue("0");
 
         param("Ping Periodicity", m_args.ping_period)
@@ -440,7 +449,7 @@ namespace Sensors
         m_states[STA_ERR_SRC].state = IMC::EntityState::ESTA_ERROR;
         m_states[STA_ERR_SRC].description = DTR("failed to set modem address");
 
-	m_stop_comms = true;
+        m_stop_comms = true;
 
         // Process narrow band transponders.
         std::vector<std::string> txponders = ctx.config.options("Narrow Band Transponders");
@@ -451,22 +460,11 @@ namespace Sensors
           m_nbmap.insert(std::make_pair(txponders[i], Transponder(freqs[0], freqs[1])));
         }
 
-        // Process micro-modem addresses.
-        std::vector<std::string> addrs = ctx.config.options(m_args.addr_section);
-        for (unsigned i = 0; i < addrs.size(); ++i)
-        {
-          unsigned mid = 0;
-          ctx.config.get(m_args.addr_section, addrs[i], "0", mid);
-          m_smap[addrs[i]] = mid;
-          m_amap[mid] = addrs[i];
-        }
-
         // Register handlers.
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::LblConfig>(this);
         bind<IMC::PlanControlState>(this);
-        bind<IMC::QueryEntityState>(this);
         bind<IMC::SoundSpeed>(this);
         bind<IMC::VehicleMedium>(this);
       }
@@ -491,11 +489,22 @@ namespace Sensors
       {
         m_sound_speed = m_args.sound_speed_def;
         m_report_timer.setTop(m_args.report_period);
+        m_pinger.setTop(m_args.ping_period);
       }
 
       void
       onResourceInitialization(void)
       {
+        // Process micro-modem addresses.
+        std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
+        for (unsigned i = 0; i < addrs.size(); ++i)
+        {
+          unsigned mid = 0;
+          m_ctx.config.get(m_args.addr_section, addrs[i], "0", mid);
+          m_smap[addrs[i]] = mid;
+          m_amap[mid] = addrs[i];
+        }
+
         // Get modem address.
         std::string agent = getSystemName();
         m_ctx.config.get(m_args.addr_section, agent, "1024", m_addr);
@@ -585,7 +594,8 @@ namespace Sensors
       setAndSendState(EntityStates state)
       {
         m_state = state;
-        dispatch(m_states[m_state]);
+        setEntityState((IMC::EntityState::StateEnum)m_states[m_state].state,
+                       m_states[m_state].description);
       }
 
       void
@@ -600,12 +610,6 @@ namespace Sensors
           inf(DTR("dynamic sound speed corrections are disabled"));
           m_sound_speed = m_args.sound_speed_def;
         }
-      }
-
-      void
-      onReportEntityState(void)
-      {
-        dispatch(m_states[m_state]);
       }
 
       void
@@ -946,8 +950,7 @@ namespace Sensors
 
         std::string cmd = String::str("$CCMPC,%u,%u\r\n", m_addr, itr->second);
         sendCommand(cmd);
-
-        processInput(m_args.ping_tout);
+        processInput(m_args.ping_tout_mm);
       }
 
       void
@@ -983,12 +986,11 @@ namespace Sensors
           freqs.push_back(0);
 
         std::string cmd = String::str("$CCPNT,%u,%u,%u,%u,%u,%u,%u,%u,1\r\n",
-                                      query, m_args.tx_length, m_args.rx_length, m_args.ping_tout,
+                                      query, m_args.tx_length, m_args.rx_length, m_args.ping_tout_nb * 1000,
                                       freqs[0], freqs[1], freqs[2], freqs[3]);
 
         sendCommand(cmd);
-
-        processInput(m_args.ping_tout);
+        processInput(m_args.ping_tout_nb);
         if (consumeResult(RS_PNG_ACKD) && consumeResult(RS_PNG_TIME))
           m_state = STA_ACTIVE;
         else
@@ -1097,13 +1099,6 @@ namespace Sensors
       }
 
       void
-      consume(const IMC::QueryEntityState* msg)
-      {
-        (void)msg;
-        onReportEntityState();
-      }
-
-      void
       consume(const IMC::SoundSpeed* msg)
       {
         if ((int)msg->getSourceEntity() != m_sound_speed_eid)
@@ -1138,7 +1133,7 @@ namespace Sensors
         }
 
         if (msg->medium == IMC::VehicleMedium::VM_GROUND)
-	  m_stop_comms = true;
+          m_stop_comms = true;
         else
           m_stop_comms = false;
       }
@@ -1270,10 +1265,15 @@ namespace Sensors
             continue;
           }
 
-          if (isActive() && !m_stop_comms)
+          if (isActive() && !m_stop_comms &&  m_pinger.overflow())
+          {
+            m_pinger.reset();
             ping();
+          }
           else
+          {
             processInput();
+          }
 
           if (Clock::get() >= (m_last_input + c_input_tout))
             m_state = STA_ERR_COM;
