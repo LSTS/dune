@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 41c2e87a93d3d410b922c728d4f438dc                            *
+// IMC XML MD5: 039d5331842e120ccba019e00d9e3b75                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -14600,13 +14600,13 @@ namespace DUNE
         DBT_IN_PROGRESS = 3
       };
 
-      //! Operation Type.
-      enum OperationTypeEnum
+      //! Data Type.
+      enum DataTypeEnum
       {
         //! Plan.
-        DBOT_PLAN = 0,
+        DBDT_PLAN = 0,
         //! Memento.
-        DBOT_MEMENTO = 1
+        DBDT_MEMENTO = 1
       };
 
       //! Operation.
@@ -14632,8 +14632,8 @@ namespace DUNE
 
       //! Type.
       uint8_t type;
-      //! Operation Type.
-      uint8_t ot;
+      //! Data Type.
+      uint8_t dt;
       //! Operation.
       uint8_t op;
       //! Request ID.

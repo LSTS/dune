@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 41c2e87a93d3d410b922c728d4f438dc                            *
+// IMC XML MD5: 039d5331842e120ccba019e00d9e3b75                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -15415,7 +15415,7 @@ namespace DUNE
     {
       Message::clear();
       type = 0;
-      ot = 0;
+      dt = 0;
       op = 0;
       request_id = 0;
       plan_id.clear();
@@ -15429,7 +15429,7 @@ namespace DUNE
       if (!Message::fieldsEqual(msg__)) return false;
       const IMC::PlanDB& other__ = static_cast<const PlanDB&>(msg__);
       if (type != other__.type) return false;
-      if (ot != other__.ot) return false;
+      if (dt != other__.dt) return false;
       if (op != other__.op) return false;
       if (request_id != other__.request_id) return false;
       if (plan_id != other__.plan_id) return false;
@@ -15444,7 +15444,7 @@ namespace DUNE
       uint8_t* ptr__ = bfr__;
       ptr__ = Message::serializeFields(ptr__);
       ptr__ += IMC::serialize(type, ptr__);
-      ptr__ += IMC::serialize(ot, ptr__);
+      ptr__ += IMC::serialize(dt, ptr__);
       ptr__ += IMC::serialize(op, ptr__);
       ptr__ += IMC::serialize(request_id, ptr__);
       ptr__ += IMC::serialize(plan_id, ptr__);
@@ -15459,7 +15459,7 @@ namespace DUNE
       const uint8_t* start__ = bfr__;
       bfr__ += Message::deserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(type, bfr__, size__);
-      bfr__ += IMC::deserialize(ot, bfr__, size__);
+      bfr__ += IMC::deserialize(dt, bfr__, size__);
       bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::deserialize(request_id, bfr__, size__);
       bfr__ += IMC::deserialize(plan_id, bfr__, size__);
@@ -15474,7 +15474,7 @@ namespace DUNE
       const uint8_t* start__ = bfr__;
       bfr__ += Message::reverseDeserializeFields(bfr__, size__);
       bfr__ += IMC::deserialize(type, bfr__, size__);
-      bfr__ += IMC::deserialize(ot, bfr__, size__);
+      bfr__ += IMC::deserialize(dt, bfr__, size__);
       bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(request_id, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(plan_id, bfr__, size__);
@@ -15488,7 +15488,7 @@ namespace DUNE
     {
       Message::fieldsToJSON(os__, nindent__);
       IMC::toJSON(os__, "type", type, nindent__);
-      IMC::toJSON(os__, "ot", ot, nindent__);
+      IMC::toJSON(os__, "dt", dt, nindent__);
       IMC::toJSON(os__, "op", op, nindent__);
       IMC::toJSON(os__, "request_id", request_id, nindent__);
       IMC::toJSON(os__, "plan_id", plan_id, nindent__);
