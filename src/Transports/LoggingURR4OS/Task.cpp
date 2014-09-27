@@ -106,7 +106,7 @@ namespace Transports
         param("Sensor Type", m_args.md.type)
         .defaultValue("Rhodamine");
 
-        param("Log raw data", m_args.log_raw)
+        param("Log Raw Data", m_args.log_raw)
         .defaultValue("true");
 
         param("Temperature Label", m_args.temp_label)
