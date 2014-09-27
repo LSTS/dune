@@ -32,48 +32,69 @@
 #include <DUNE/DUNE.hpp>
 #include "DB.hpp"
 
+#define TABLE_COLUMNS                                   \
+  "plan_id varchar2 primary key,change_time"            \
+  " real not null, change_sid integer not null,"        \
+  "change_sname varchar2 not null, md5 blob not"        \
+  " null, data blob not null"                           \
+
+#define LAST_CHANGE_TABLE
+
+#define TABLE_STATEMENT(type)                                   \
+  "create table if not exists " type " ( " TABLE_COLUMNS " )"
+
+#define INSERT_STATEMENT(type) "insert into " type " values(?,?,?,?,?,?)"
+#define DELETE_STATEMENT(type, field) "delete from " type " where " field "=?"
+#define ITERATOR_STATEMENT(type, field) "select " field ", change_time, change_sid," \
+  " change_sname, md5, length(data) from " type " order by " field
+#define QUERY_STATEMENT(type, field) "select change_time, change_sid, change_sname, " \
+  "md5, length(data) from " type " where " field "=?"
+#define GET_STATEMENT(type, field) "select data from " type " where " field "=?"
+#define DELETE_ALL_STATEMENT(type) "delete from " type
+#define LCHANGE_TABLE(name) "create table if not exists " name " ( change_time " \
+  "real not null, change_sid integer not null, change_sname varchar2 not null )"
+#define LCHANGE_INSERT(name) "insert into " name " values(?,?,?)"
+#define LCHANGE_UPDATE(name) "update " name " set change_time=?, change_sid=?, change_sname=?"
+#define LCHANGE_QUERY(name) "select change_time, change_sid, change_sname from " name
+
 namespace Plan
 {
   namespace DB
   {
     using DUNE_NAMESPACES;
 
-    static const char* c_table_stmt[] = {"create table if not exists Plan ( plan_id varchar2 primary key,change_time real not null, change_sid integer not null,"
-                                         "change_sname varchar2 not null, md5 blob not null, data blob not null )" ,
-                                         "create table if not exists Memento ( plan_id varchar2 primary key, change_time real not null, change_sid integer not null,"
-                                         " change_sname varchar2 not null, md5 blob not null, data blob not null )"};
+    static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan"),
+                                          TABLE_STATEMENT("Memento") };
 
-    static const char* c_insert_stmt[] = { "insert into Plan values(?,?,?,?,?,?)",
-                                           "insert into Memento values(?,?,?,?,?,?)"};
+    static const char* c_insert_stmt[] = { INSERT_STATEMENT("Plan"),
+                                           INSERT_STATEMENT("Memento") };
 
-    static const char* c_delete_stmt[] = {"delete from Plan where plan_id=?",
-                                          "delete from Memento where plan_id=?"};
+    static const char* c_delete_stmt[] = { DELETE_STATEMENT("Plan", "plan_id"),
+                                           DELETE_STATEMENT("Memento", "id") };
 
-    static const char* c_iterator_stmt[] = {"select plan_id, change_time, change_sid, change_sname, md5, length(data) from Plan order by plan_id",
-                                            "select plan_id, change_time, change_sid, change_sname, md5, length(data) from Memento order by plan_id"};
+    static const char* c_iterator_stmt[] = { ITERATOR_STATEMENT("Plan", "plan_id"),
+                                             ITERATOR_STATEMENT("Memento", "id") };
 
-    static const char* c_query_stmt[] ={"select change_time, change_sid, change_sname, md5, length(data) from Plan where plan_id=?",
-                                        "select change_time, change_sid, change_sname, md5, length(data) from Memento where plan_id=?"};
+    static const char* c_query_stmt[] = { QUERY_STATEMENT("Plan", "plan_id"),
+                                          QUERY_STATEMENT("Memento", "id") };
 
-    static const char* c_get_stmt[] = {"select data from Plan where plan_id=?",
-                                       "select data from Memento where plan_id=?"};
+    static const char* c_get_stmt[] = { GET_STATEMENT("Plan", "plan_id"),
+                                        GET_STATEMENT("Memento", "id") };
 
-    static const char* c_delete_all_stmt[] = {"delete from Plan",
-                                              "delete from Memento"};
+    static const char* c_delete_all_stmt[] = { DELETE_ALL_STATEMENT("Plan"),
+                                               DELETE_ALL_STATEMENT("Memento") };
 
-    static const char* c_lastchange_table_stmt[] = { "create table if not exists LastChange ( change_time real not null, change_sid integer not null,"
-                                                     "change_sname varchar2 not null )",
-                                                     "create table if not exists LastChange_Memento ( change_time real not null, change_sid integer not null,"
-                                                     " change_sname varchar2 not null )"};
+    static const char* c_lastchange_table_stmt[] = { LCHANGE_TABLE("LastChange"),
+                                                     LCHANGE_TABLE("LastChange_Memento") };
 
-    static const char* c_lastchange_initial_insert_stmt[] = {"insert into LastChange values(?,?,?)",
-                                                             "insert into LastChange_Memento values(?,?,?)"};
+    static const char* c_lastchange_initial_insert_stmt[] = { LCHANGE_INSERT("LastChange"),
+                                                              LCHANGE_INSERT("LastChangeMemento") };
 
-    static const char* c_lastchange_update_stmt[] = {"update LastChange set change_time=?, change_sid=?, change_sname=?",
-                                                     "update LastChange_Memento set change_time=?, change_sid=?, change_sname=?"};
+    static const char* c_lastchange_update_stmt[] = {LCHANGE_UPDATE("LastChange"),
+                                                     LCHANGE_UPDATE("LastChange_Memento") };
 
-    static const char* c_lastchange_query_stmt[] = {"select change_time, change_sid, change_sname from LastChange",
-                                                    "select change_time, change_sid, change_sname from LastChange_Memento"};
+    static const char* c_lastchange_query_stmt[] = { LCHANGE_QUERY("LastChange"),
+                                                     LCHANGE_QUERY("LastChange_Memento") };
 
     static const char* c_op_desc[] = {DTR_RT("set plan"), DTR_RT("delete plan"),
                                       DTR_RT("get plan"), DTR_RT("get plan info"),
@@ -408,7 +429,7 @@ namespace Plan
 
           *m_insert_stmt[PlanMementoflag] << m_plan_info.plan_id
                                           << m_plan_info.change_time
-                                         << m_plan_info.change_sid
+                                          << m_plan_info.change_sid
                                           << m_plan_info.change_sname
                                           << m_plan_info.md5
                                           << plan_data;
