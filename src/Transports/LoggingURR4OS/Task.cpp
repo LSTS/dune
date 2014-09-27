@@ -261,7 +261,11 @@ namespace Transports
         {
           case IMC::LoggingControl::COP_STARTED:
           case IMC::LoggingControl::COP_CURRENT_NAME:
-            openLog(m_ctx.dir_log / msg->name / "Bio.csv");
+            {
+              std::string date = Time::Format::getTimeSafe(msg->getTimeStamp());
+              std::string filename = Utils::String::str(date + "_" + "Bio.csv");
+              openLog(m_ctx.dir_log / msg->name / filename);
+            }
             break;
 
           case IMC::LoggingControl::COP_STOPPED:
