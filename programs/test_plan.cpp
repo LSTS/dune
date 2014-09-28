@@ -198,11 +198,23 @@ main(int argc, char** argv)
 
   if (do_parse)
   {
-    PlanSpecification mission_spec;
-    PlanConfigParser::parse(config, mission_spec);
-    mission_spec.toText(std::cerr);
-    cmd.arg.set(mission_spec);
-    cmd.plan_id = mission_spec.plan_id;
+    IMC::Message* msg;
+    msg = PlanConfigParser::parse(config);
+
+    if (msg->getId() == DUNE_IMC_PLANSPECIFICATION)
+    {
+      IMC::PlanSpecification mission_spec;
+      mission_spec.toText(std::cerr);
+      cmd.arg.set(mission_spec);
+      cmd.plan_id = mission_spec.plan_id;
+    }
+    else if (msg->getId() == DUNE_IMC_PLANMEMENTO)
+    {
+      IMC::PlanMemento pmem;
+      pmem.toText(std::cerr);
+      cmd.arg.set(pmem);
+      cmd.plan_id = pmem.id;
+    }
 
     OperationalLimits op;
     std::vector<std::string> sections = config.sections();
@@ -219,6 +231,7 @@ main(int argc, char** argv)
       }
     }
 
+    delete msg;
   }
   else
   {
