@@ -46,7 +46,7 @@ namespace DUNE
     //! Utility class to parse simple plans from DUNE's .ini format.
     class PlanConfigParser
     {
-    public:
+    private:
       //! Parse a Goto maneuver specification from plan definition file.
       //! @param[in] parser configuration parser handle.
       //! @param[in] section section that contains the maneuver specification.
@@ -124,12 +124,6 @@ namespace DUNE
       //! @param[out] maneuver output maneuver specification.
       static void
       parse(Parsers::Config& parser, std::string section, IMC::CompassCalibration& maneuver);
-
-      //! Parse plan parameters (utility text format).
-      //! @param[in] parser configuration parser handle.
-      //! @param[out] plan plan parameters.
-      static void
-      parse(Parsers::Config& parser, IMC::PlanSpecification& plan);
 
       //! Parse actions from a set vector of sections
       //! @param[in] cfg Config object to use
@@ -262,6 +256,25 @@ namespace DUNE
       {
         parseZUnits(parser, section, man.z_units, label);
       }
+
+      //! Parse a plan specification
+      //! @param[in] cfg Config object to use
+      //! @param[out] plan reference to PlanSpecification message
+      static void
+      parse(Parsers::Config& cfg, IMC::PlanSpecification& plan);
+
+      //! Parse a plan specification
+      //! @param[in] cfg Config object to use
+      //! @param[out] pmem reference to PlanMemento message
+      static void
+      parse(Parsers::Config& cfg, IMC::PlanMemento& pmem);
+
+    public:
+      //! Parse plan parameters (utility text format).
+      //! @param[in] parser configuration parser handle.
+      //! @param[out] msg pointer to message.
+      static IMC::Message*
+      parse(Parsers::Config& parser);
     };
   }
 }

@@ -347,6 +347,46 @@ namespace DUNE
     }
 
     void
+    PlanConfigParser::parse(Parsers::Config& cfg, IMC::PlanMemento& pmem)
+    {
+      std::string sec = "Memento Configuration";
+
+      cfg.get(sec, "ID", "", pmem.id);
+      cfg.get(sec, "Plan ID", "", pmem.plan_id);
+      cfg.get(sec, "Maneuver ID", "", pmem.maneuver_id);
+      cfg.get(sec, "Memento", "", pmem.memento);
+    }
+
+    IMC::Message*
+    PlanConfigParser::parse(Parsers::Config& cfg)
+    {
+      IMC::Message* msg;
+      std::string id;
+
+      cfg.get("Plan Configuration", "Plan ID", "", id);
+
+      if (!id.empty())
+      {
+        IMC::PlanSpecification* spec = new IMC::PlanSpecification();
+        msg = static_cast<IMC::Message*>(spec);
+        parse(cfg, *spec);
+      }
+      else
+      {
+        cfg.get("Memento Configuration", "ID", "", id);
+
+        if (id.empty())
+          throw std::runtime_error(DTR("could not find Memento nor Plan"));
+
+        IMC::PlanMemento* pmem = new IMC::PlanMemento();
+        msg = static_cast<IMC::Message*>(pmem);
+        parse(cfg, *pmem);
+      }
+
+      return msg;
+    }
+
+    void
     PlanConfigParser::parseActions(Parsers::Config& cfg,
                                    const std::vector<std::string>& sections,
                                    IMC::MessageList<IMC::Message>& actions)
