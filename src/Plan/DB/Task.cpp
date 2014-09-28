@@ -38,11 +38,8 @@
   "change_sname varchar2 not null, md5 blob not"        \
   " null, data blob not null"                           \
 
-#define LAST_CHANGE_TABLE
-
 #define TABLE_STATEMENT(type)                                   \
   "create table if not exists " type " ( " TABLE_COLUMNS " )"
-
 #define INSERT_STATEMENT(type) "insert into " type " values(?,?,?,?,?,?)"
 #define DELETE_STATEMENT(type, field) "delete from " type " where " field "=?"
 #define ITERATOR_STATEMENT(type, field) "select " field ", change_time, change_sid," \
@@ -90,8 +87,8 @@ namespace Plan
     static const char* c_lastchange_initial_insert_stmt[] = { LCHANGE_INSERT("LastChange"),
                                                               LCHANGE_INSERT("LastChangeMemento") };
 
-    static const char* c_lastchange_update_stmt[] = {LCHANGE_UPDATE("LastChange"),
-                                                     LCHANGE_UPDATE("LastChange_Memento") };
+    static const char* c_lastchange_update_stmt[] = { LCHANGE_UPDATE("LastChange"),
+                                                      LCHANGE_UPDATE("LastChange_Memento") };
 
     static const char* c_lastchange_query_stmt[] = { LCHANGE_QUERY("LastChange"),
                                                      LCHANGE_QUERY("LastChange_Memento") };
@@ -153,7 +150,6 @@ namespace Plan
       void
       onResourceAcquisition(void)
       {
-
         if (m_db != NULL)
           return;
 
@@ -174,7 +170,7 @@ namespace Plan
         m_db = new Database::Connection(db_file.c_str(), true);
 
         // Create tables and initialize associated statements
-        for (int i = 0; i<TT_Plans; i++)
+        for (int i = 0; i < TT_Plans; i++)
         {
           m_db->execute(c_table_stmt[i]);
           m_insert_stmt[i] = new Database::Statement(c_insert_stmt[i], *m_db);
@@ -211,7 +207,7 @@ namespace Plan
         if (m_db == NULL)
           return;
 
-        for(int i = 0; i<TT_Plans; i++)
+        for(int i = 0; i < TT_Plans; i++)
         {
           delete m_insert_stmt[i];
           delete m_delete_stmt[i];
@@ -337,7 +333,7 @@ namespace Plan
           return;
         }
 
-        if(req.arg.isNull())
+        if (req.arg.isNull())
           return;
 
         const IMC::Message* m;
@@ -490,7 +486,7 @@ namespace Plan
         int PlanMementoflag = -1;
         checkOperationType(req,PlanMementoflag);
 
-        if(PlanMementoflag == -1)
+        if (PlanMementoflag == -1)
         {
           inf("undefined operation type");
           return;
@@ -504,29 +500,31 @@ namespace Plan
         try
         {
           // If delete plan, also delete memento associated (if exists)
-          if(PlanMementoflag == 0 && checkAssociatedMemento(req))
+          if (PlanMementoflag == 0 && checkAssociatedMemento(req))
           {
-            for(int i = 0; i<TT_Plans; i++)
+            for (int i = 0; i < TT_Plans; i++)
             {
               *m_delete_stmt[i] << req.plan_id;
               m_delete_stmt[i]->execute(&count);
-              if(count>0)
+              if (count>0)
                 onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), i);
             }
           }
-          else if(PlanMementoflag == 0 && !checkAssociatedMemento(req))
+          else if (PlanMementoflag == 0 && !checkAssociatedMemento(req))
           {
             *m_delete_stmt[PlanMementoflag] << req.plan_id;
             m_delete_stmt[PlanMementoflag]->execute(&count);
-            if(count>0)
+
+            if (count > 0)
               onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), PlanMementoflag);
           }
           // If delete memento, only delete memento
-          if(PlanMementoflag == 1)
+          if (PlanMementoflag == 1)
           {
             *m_delete_stmt[PlanMementoflag] << req.plan_id;
             m_delete_stmt[PlanMementoflag]->execute(&count);
-            if(count>0)
+
+            if (count > 0)
               onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), PlanMementoflag);
           }
         }
@@ -560,7 +558,7 @@ namespace Plan
         int PlanMementoflag = -1;
         checkOperationType(req,PlanMementoflag);
 
-        if(PlanMementoflag == -1)
+        if (PlanMementoflag == -1)
         {
           inf("undefined operation type");
           return;
@@ -582,12 +580,12 @@ namespace Plan
 
           IMC::PlanSpecification* spec = new IMC::PlanSpecification;
           IMC::PlanMemento* mem = new IMC::PlanMemento;
-          if(PlanMementoflag == 0)
+          if (PlanMementoflag == 0)
           {
             spec->deserializeFields((const uint8_t*)&data[0], data.size());
             m_reply.arg.set(spec);
           }
-          if(PlanMementoflag == 1)
+          if (PlanMementoflag == 1)
           {
             mem->deserializeFields((const uint8_t*)&data[0], data.size());
             m_reply.arg.set(mem);
@@ -597,6 +595,7 @@ namespace Plan
           delete spec;
           delete mem;
         }
+
         m_get_stmt[PlanMementoflag]->reset();
       }
 
@@ -615,7 +614,7 @@ namespace Plan
         int PlanMementoflag = -1;
         checkOperationType(req,PlanMementoflag);
 
-        if(PlanMementoflag == -1)
+        if (PlanMementoflag == -1)
         {
           inf("undefined operation type");
           return;
@@ -658,7 +657,7 @@ namespace Plan
         int PlanMementoflag = -1;
         checkOperationType(req,PlanMementoflag);
 
-        if(PlanMementoflag == -1)
+        if (PlanMementoflag == -1)
         {
           inf("undefined operation type");
           return;
@@ -670,18 +669,19 @@ namespace Plan
         {
           if(checkAssociatedMemento(req))
           {
-            for(int i = 0; i<TT_Plans; i++)
+            for (int i = 0; i < TT_Plans; i++)
             {
               m_delete_all_stmt[i]->execute(&count);
-              if(count>0)
+
+              if (count > 0)
                 onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), i);
             }
           }
-          else if(!checkAssociatedMemento(req))
+          else if (!checkAssociatedMemento(req))
           {
             int plan_table = 0;
             m_delete_all_stmt[plan_table]->execute(&count);
-            if(count>0)
+            if (count > 0)
               onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), plan_table);
           }
         }
@@ -706,12 +706,11 @@ namespace Plan
         int PlanMementoflag = -1;
         checkOperationType(req,PlanMementoflag);
 
-        if(PlanMementoflag == -1)
+        if (PlanMementoflag == -1)
         {
           inf("undefined operation type");
           return;
         }
-
 
         (void)req;
         IMC::PlanDBState* state = new IMC::PlanDBState;
@@ -742,6 +741,7 @@ namespace Plan
 
           delete pinfo;
         }
+
         m_iterator_stmt[PlanMementoflag]->reset();
 
         // Finalized MD5 digest
