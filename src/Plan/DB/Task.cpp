@@ -32,14 +32,20 @@
 #include <DUNE/DUNE.hpp>
 #include "DB.hpp"
 
-#define TABLE_COLUMNS                                   \
-  "plan_id varchar2 primary key,change_time"            \
-  " real not null, change_sid integer not null,"        \
-  "change_sname varchar2 not null, md5 blob not"        \
-  " null, data blob not null"                           \
+#define TABLE_PLAN                                          \
+  "plan_id varchar2 primary key, change_time"               \
+  " real not null, change_sid integer not null,"            \
+  " change_sname varchar2 not null,"                        \
+  " md5 blob not null, data blob not null"                  \
 
-#define TABLE_STATEMENT(type)                                   \
-  "create table if not exists " type " ( " TABLE_COLUMNS " )"
+#define TABLE_MEMENTO                                       \
+  "id varchar2 primary key, change_time"                    \
+  " real not null, change_sid integer not null,"            \
+  " change_sname varchar2 not null,"                        \
+  " md5 blob not null, data blob not null"                  \
+
+#define TABLE_STATEMENT(type, table)					\
+  "create table if not exists " type " ( " table " )"
 #define INSERT_STATEMENT(type) "insert into " type " values(?,?,?,?,?,?)"
 #define DELETE_STATEMENT(type, field) "delete from " type " where " field "=?"
 #define ITERATOR_STATEMENT(type, field) "select " field ", change_time, change_sid," \
@@ -60,8 +66,8 @@ namespace Plan
   {
     using DUNE_NAMESPACES;
 
-    static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan"),
-                                          TABLE_STATEMENT("Memento") };
+    static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
+                                          TABLE_STATEMENT("Memento", TABLE_MEMENTO) };
 
     static const char* c_insert_stmt[] = { INSERT_STATEMENT("Plan"),
                                            INSERT_STATEMENT("Memento") };
@@ -85,7 +91,7 @@ namespace Plan
                                                      LCHANGE_TABLE("LastChange_Memento") };
 
     static const char* c_lastchange_initial_insert_stmt[] = { LCHANGE_INSERT("LastChange"),
-                                                              LCHANGE_INSERT("LastChangeMemento") };
+                                                              LCHANGE_INSERT("LastChange_Memento") };
 
     static const char* c_lastchange_update_stmt[] = { LCHANGE_UPDATE("LastChange"),
                                                       LCHANGE_UPDATE("LastChange_Memento") };
@@ -152,7 +158,7 @@ namespace Plan
       {
         if (m_db != NULL)
           return;
-
+	std::cout<<"TESTE"<<c_table_stmt[0]<<std::endl;
         m_reply.clear();
         m_reply.op = IMC::PlanDB::DBOP_BOOT;
         m_reply.setDestination(getSystemId());
