@@ -47,7 +47,7 @@ namespace Maneuver
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       Idle(Maneuvers::Maneuver* task):
-        MuxedManeuver(task)
+        MuxedManeuver<IMC::IdleManeuver, void>(task)
       { }
 
       //! Start maneuver function

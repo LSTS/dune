@@ -47,7 +47,7 @@ namespace Maneuver
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       Goto(Maneuvers::Maneuver* task):
-        MuxedManeuver(task)
+        MuxedManeuver<IMC::Goto, void>(task)
       { }
 
       //! Start maneuver function

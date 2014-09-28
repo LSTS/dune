@@ -65,7 +65,7 @@ namespace Maneuver
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args pointer to Maneuver's arguments
       Dislodge(Maneuvers::Maneuver* task, DislodgeArgs* args):
-        MuxedManeuver(task, args),
+        MuxedManeuver<IMC::Dislodge, DislodgeArgs>(task, args),
         m_state(ST_START),
         m_got_depth(false),
         m_bursting(false)

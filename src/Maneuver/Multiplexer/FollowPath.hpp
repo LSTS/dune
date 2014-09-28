@@ -47,7 +47,7 @@ namespace Maneuver
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       FollowPath(Maneuvers::Maneuver* task):
-        MuxedManeuver(task)
+        MuxedManeuver<IMC::FollowPath, void>(task)
       { }
 
       //! Destructor

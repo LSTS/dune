@@ -47,7 +47,7 @@ namespace Maneuver
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       Rows(Maneuvers::Maneuver* task):
-        MuxedManeuver(task),
+        MuxedManeuver<IMC::Rows, void>(task),
         m_parser(NULL)
       { }
 

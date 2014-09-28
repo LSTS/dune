@@ -60,7 +60,7 @@ namespace Maneuver
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args yoyo arguments
       YoYo(Maneuvers::Maneuver* task, YoYoArgs* args):
-        MuxedManeuver(task, args),
+        MuxedManeuver<IMC::YoYo, YoYoArgs>(task, args),
         m_yoyo(NULL)
       { }
 

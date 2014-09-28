@@ -54,7 +54,7 @@ namespace Maneuver
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args stationkeeping arguments
       StationKeeping(Maneuvers::Maneuver* task, StationKeepingArgs* args):
-        MuxedManeuver(task, args),
+        MuxedManeuver<IMC::StationKeeping, StationKeepingArgs>(task, args),
         m_skeep(NULL),
         m_end_time(-1.0)
       { }
