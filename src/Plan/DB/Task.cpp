@@ -158,7 +158,7 @@ namespace Plan
       {
         if (m_db != NULL)
           return;
-	std::cout<<"TESTE"<<c_table_stmt[0]<<std::endl;
+
         m_reply.clear();
         m_reply.op = IMC::PlanDB::DBOP_BOOT;
         m_reply.setDestination(getSystemId());
