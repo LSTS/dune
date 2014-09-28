@@ -47,39 +47,34 @@ namespace DUNE
     class PlanConfigParser
     {
     public:
-#ifdef DUNE_IMC_GOTO
       //! Parse a Goto maneuver specification from plan definition file.
       //! @param[in] parser configuration parser handle.
       //! @param[in] section section that contains the maneuver specification.
       //! @param[out] maneuver output maneuver specification.
       static void
       parse(Parsers::Config& parser, std::string section, IMC::Goto& maneuver);
-#endif
-#ifdef DUNE_IMC_STATIONKEEPING
+
       //! Parse a StationKeeping maneuver specification from plan definition file.
       //! @param[in] parser configuration parser handle.
       //! @param[in] section section that contains the maneuver specification.
       //! @param[out] maneuver output maneuver specification.
       static void
       parse(Parsers::Config& parser, std::string section, IMC::StationKeeping& maneuver);
-#endif
-#ifdef DUNE_IMC_LOITER
+
       //! Parse a Loiter maneuver specification from plan definition file.
       //! @param[in] parser configuration parser handle.
       //! @param[in] section section that contains the maneuver specification.
       //! @param[out] maneuver output maneuver specification.
       static void
       parse(Parsers::Config& parser, std::string section, IMC::Loiter& maneuver);
-#endif
-#ifdef DUNE_IMC_POPUP
+
       //! Parse a Popup maneuver specification from plan definition file.
       //! @param[in] parser configuration parser handle.
       //! @param[in] section section that contains the maneuver specification.
       //! @param[out] maneuver output maneuver specification.
       static void
       parse(Parsers::Config& parser, std::string section, IMC::PopUp& maneuver);
-#endif
-#ifdef DUNE_IMC_TELEOPERATION
+
       //! Parse a Teleoperation maneuver specification from plan
       //! definition file.
       //! @param[in] parser configuration parser handle.
@@ -87,77 +82,48 @@ namespace DUNE
       //! @param[out] maneuver output maneuver specification.
       static void
       parse(Parsers::Config& parser, std::string section, IMC::Teleoperation& maneuver);
-#endif
-#ifdef DUNE_IMC_IDLEMANEUVER
+
       //! Parse an Idle Maneuver specification.
       //! @param[in] parser configuration parser handle.
       //! @param[in] section  section that contains the maneuver specification.
       //! @param[out] maneuver output maneuver.
       static void
       parse(Parsers::Config& parser, std::string section, IMC::IdleManeuver& maneuver);
-#endif
-#ifdef DUNE_IMC_FOLLOWPATH
+
       //! Parse a FollowPath specification.
       //! @param[in] parser configuration parser handle.
       //! @param[in] section  section that contains the maneuver specification.
       //! @param[out] maneuver output maneuver.
       static void
       parse(Parsers::Config& parser, std::string section, IMC::FollowPath& maneuver);
-#endif
 
-#ifdef DUNE_IMC_ROWS
       //! Parse a Rows maneuver specification.
       //! @param[in] parser configuration parser handle.
       //! @param[in] section  section that contains the maneuver specification.
       //! @param[out] maneuver output maneuver.
       static void
       parse(Parsers::Config& parser, std::string section, IMC::Rows& maneuver);
-#endif
 
-#ifdef DUNE_IMC_LBLBEACONSETUP
-      //! Parse a LBL Beacon setup entry.
-      //! @param[in] parser configuration parser handle.
-      //! @param[in] section section that contains the beacon setup.
-      //! @param[out] lbl_bs output LBL beacon setup.
-      static void
-      parse(Parsers::Config& parser, std::string section, IMC::LblBeaconSetup& lbl_bs);
-#endif
-
-#ifdef DUNE_IMC_YOYO
       //! Parse a Yoyo maneuver specification.
       //! @param[in] parser configuration parser handle
       //! @param[in] section section that contais the maneuver specification
       //! @param[out] maneuver output maneuver.
       static void
       parse(Parsers::Config& parser, std::string section, IMC::YoYo& maneuver);
-#endif
 
-#ifdef DUNE_IMC_ELEVATOR
       //! Parse an Elevator maneuver specification.
       //! @param[in] parser configuration parser handle.
       //! @param[in] section section that contains the maneuver specification.
       //! @param[out] maneuver output maneuver.
       static void
       parse(Parsers::Config& parser, std::string section, IMC::Elevator& maneuver);
-#endif
 
-#ifdef DUNE_IMC_DUBIN
-      //! Parse a Dubin maneuver specification from plan definition file.
-      //! @param[in] parser configuration parser handle.
-      //! @param[in] section section that contains the maneuver specification.
-      //! @param[out] maneuver output maneuver specification.
-      static void
-      parse(Parsers::Config& parser, std::string section, IMC::Dubin& maneuver);
-#endif
-
-#ifdef DUNE_IMC_COMPASSCALIBRATION
       //! Parse a CompassCalibration maneuver specification from plan definition file.
       //! @param[in] parser configuration parser handle.
       //! @param[in] section section that contains the maneuver specification.
       //! @param[out] maneuver output maneuver specification.
       static void
       parse(Parsers::Config& parser, std::string section, IMC::CompassCalibration& maneuver);
-#endif
 
       //! Parse plan parameters (utility text format).
       //! @param[in] parser configuration parser handle.
