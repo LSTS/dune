@@ -828,7 +828,12 @@ namespace Sensors
           m_last_input = Clock::get();
 
           if (m_state != STA_NO_BEACONS)
-            m_state = isActive() ? STA_ACTIVE : STA_IDLE;
+          {
+            if (isActive())
+              setAndSendState(STA_ACTIVE);
+            else
+              setAndSendState(STA_IDLE);
+          }
 
           IMC::DevDataText text;
           text.value.assign(sanitize(m_bfr));
@@ -992,7 +997,7 @@ namespace Sensors
         sendCommand(cmd);
         processInput(m_args.ping_tout_nb);
         if (consumeResult(RS_PNG_ACKD) && consumeResult(RS_PNG_TIME))
-          m_state = STA_ACTIVE;
+          setAndSendState(STA_ACTIVE);
         else
           war(DTR("failed to ping beacons, modem seems busy"));
       }
@@ -1087,7 +1092,12 @@ namespace Sensors
           }
 
           if (m_state != STA_ERR_COM && m_state != STA_ERR_SRC && m_state != STA_ERR_STP)
-            m_state = isActive() ? STA_ACTIVE : STA_IDLE;
+          {
+            if (isActive())
+              setAndSendState(STA_ACTIVE);
+            else
+              setAndSendState(STA_IDLE);
+          }
         }
 
         if (msg->op == IMC::LblConfig::OP_GET_CFG)
@@ -1276,7 +1286,7 @@ namespace Sensors
           }
 
           if (Clock::get() >= (m_last_input + c_input_tout))
-            m_state = STA_ERR_COM;
+            setAndSendState(STA_ERR_COM);
         }
       }
     };
