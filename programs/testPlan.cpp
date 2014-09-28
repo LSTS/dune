@@ -132,6 +132,7 @@ main(int argc, char** argv)
   if (start_point)
   {
     GpsFix origin;
+    origin.type = IMC::GpsFix::GFT_MANUAL_INPUT;
     origin.lat = Angles::radians(41.185781);
     origin.lon = Angles::radians(-8.70606486);
     origin.height = 0;
