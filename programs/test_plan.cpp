@@ -83,7 +83,12 @@ int
 main(int argc, char** argv)
 {
   --argc; ++argv;
-  bool lbl = false, start_point = false, calibrate = true, just_load = false, do_parse = true;
+  bool lbl = false;
+  bool start_point = false;
+  bool calibrate = true;
+  bool just_load = false;
+  bool do_parse = true;
+  bool ignore_errors = false;
 
   for (; *argv && **argv == '-'; ++argv, --argc)
   {
@@ -109,6 +114,9 @@ main(int argc, char** argv)
         break;
       case 's':
         start_point = true;
+        break;
+      case 'i':
+        ignore_errors = true;
         break;
       default:
         std::cerr << "Invalid option: '-" << opt << "'\n";
@@ -177,10 +185,15 @@ main(int argc, char** argv)
   PlanControl cmd;
   cmd.type = PlanControl::PC_REQUEST;
   cmd.op = just_load ? PlanControl::PC_LOAD : PlanControl::PC_START;
+
+  cmd.flags = 0;
+
   if (calibrate)
-    cmd.flags = PlanControl::FLG_CALIBRATE;
-  else
-    cmd.flags = 0;
+    cmd.flags |= PlanControl::FLG_CALIBRATE;
+
+  if (ignore_errors)
+    cmd.flags |= PlanControl::FLG_IGNORE_ERRORS;
+
   cmd.request_id = 0;
 
   if (do_parse)
