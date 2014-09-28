@@ -104,16 +104,10 @@ namespace DUNE
         *bytes_read = 0;
 
       if (wlen > c_max_data_len)
-      {
-        printf("i2c_transfer: wlen too big: %d, max is %d\n", wlen, c_max_data_len);
         return -1;
-      }
 
       if (rlen > c_max_data_len)
-      {
-        printf("i2c_transfer: rlen too big: %d, max is %d\n", rlen, c_max_data_len);
         return -1;
-      }
 
       // Whether we're doing a read or a write, we always send
       // the command.
@@ -163,11 +157,7 @@ namespace DUNE
       {
         if (rblock)
         {
-          if (rbuf[0] > rlen)
-          {
-            printf("i2c_transfer: length is too big: %d max: %d\n", rbuf[0], rlen);
-          }
-          else
+          if (rbuf[0] <= rlen)
           {
             rlen = rbuf[0];
           }
