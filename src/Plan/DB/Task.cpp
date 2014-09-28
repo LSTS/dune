@@ -152,7 +152,6 @@ namespace Plan
         bind<IMC::PowerOperation>(this);
       }
 
-
       void
       onResourceAcquisition(void)
       {
