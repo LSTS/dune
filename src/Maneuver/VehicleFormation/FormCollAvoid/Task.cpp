@@ -1598,7 +1598,7 @@ namespace Maneuver
             spew("Own control computation");
             formationControl(m_vehicle_state, m_vehicle_accel, m_uav_ind,
                 m_timestep_ctrl, &vd_cmd, m_debug, m_form_monitor);
-            if (Math::isNaN(vd_cmd(0)) || Math::isNaN(vd_cmd(1)) || Math::isNaN(vd_cmd(2)))
+            if (!(Math::isNaN(vd_cmd(0)) || Math::isNaN(vd_cmd(1)) || Math::isNaN(vd_cmd(2))))
             {
               m_uav_ctrl.set(0, 2, m_uav_ind, m_uav_ind, vd_cmd.get(0, 2, 0, 0));
 
@@ -1861,7 +1861,7 @@ namespace Maneuver
             spew("Cooperating vehicle simulated control computation");
             formationControl(m_vehicle_state, m_vehicle_accel, ind_uav, m_timestep_ctrl,
                 &vd_cmd, false, m_form_monitor);
-            if (Math::isNaN(vd_cmd(0)) || Math::isNaN(vd_cmd(1)) || Math::isNaN(vd_cmd(2)))
+            if (!(Math::isNaN(vd_cmd(0)) || Math::isNaN(vd_cmd(1)) || Math::isNaN(vd_cmd(2))))
             {
               m_uav_ctrl.set(0, 2, ind_uav, ind_uav, vd_cmd.get(0, 2, 0, 0));
 
@@ -2339,7 +2339,7 @@ namespace Maneuver
                 formationControl(m_vehicle_state, m_vehicle_accel, ind_uav, m_timestep_ctrl,
                     &vd_cmd, false, m_form_monitor);
                 //spew("Periodic update 3.4.2.2");
-                if (Math::isNaN(vd_cmd(0)) || Math::isNaN(vd_cmd(1)) || Math::isNaN(vd_cmd(2)))
+                if (!(Math::isNaN(vd_cmd(0)) || Math::isNaN(vd_cmd(1)) || Math::isNaN(vd_cmd(2))))
                 {
                   m_uav_ctrl.set(0, 2, ind_uav, ind_uav, vd_cmd.get(0, 2, 0, 0));
 
