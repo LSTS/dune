@@ -1257,7 +1257,7 @@ namespace DUNE
     void
     UAVSimulation::commandBank(const double& bank_cmd)
     {
-      if (Math::isNaN(bank_cmd)) // Check that the command is a real value
+      if (!Math::isNaN(bank_cmd)) // Check that the command is a real value
         m_bank_cmd = bank_cmd;
       else
         std::printf("UAV Simulation - Bank command rejected - Commanded value is not a number!\n");
@@ -1266,7 +1266,7 @@ namespace DUNE
     void
     UAVSimulation::commandAirspeed(const double& airspeed_cmd)
     {
-      if (Math::isNaN(airspeed_cmd)) // Check that the command is a real value
+      if (!Math::isNaN(airspeed_cmd)) // Check that the command is a real value
       {
         m_airspeed_cmd = airspeed_cmd;
         m_airspeed_cmd_ini = true;
@@ -1278,7 +1278,7 @@ namespace DUNE
     void
     UAVSimulation::commandAlt(const double& altitude_cmd)
     {
-      if (Math::isNaN(altitude_cmd)) // Check that the command is a real value
+      if (!Math::isNaN(altitude_cmd)) // Check that the command is a real value
       {
         //! Altitude command
         m_altitude_cmd = altitude_cmd;
@@ -1298,7 +1298,7 @@ namespace DUNE
     void
     UAVSimulation::commandFPA(const double& fpa_cmd)
     {
-      if (Math::isNaN(fpa_cmd)) // Check that the command is a real value
+      if (!Math::isNaN(fpa_cmd)) // Check that the command is a real value
       {
         //! Flight path angle command
         m_fpa_cmd = fpa_cmd;
@@ -1316,7 +1316,7 @@ namespace DUNE
     void
     UAVSimulation::commandPitch(const double& pitch_cmd)
     {
-      if (Math::isNaN(pitch_cmd)) // Check that the command is a real value
+      if (!Math::isNaN(pitch_cmd)) // Check that the command is a real value
       {
         //! Flight path angle command
         m_pitch_cmd = pitch_cmd;
