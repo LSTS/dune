@@ -1257,28 +1257,30 @@ namespace DUNE
     void
     UAVSimulation::commandBank(const double& bank_cmd)
     {
-      if (!Math::isNaN(bank_cmd)) // Check that the command is a real value
-        m_bank_cmd = bank_cmd;
-      else
+      if (Math::isNaN(bank_cmd)) // Check if the command is a real value
         std::printf("UAV Simulation - Bank command rejected - Commanded value is not a number!\n");
+      else
+        m_bank_cmd = bank_cmd;
     }
 
     void
     UAVSimulation::commandAirspeed(const double& airspeed_cmd)
     {
-      if (!Math::isNaN(airspeed_cmd)) // Check that the command is a real value
+      if (Math::isNaN(airspeed_cmd)) // Check if the command is a real value
+        std::printf("UAV Simulation - Speed command rejected - Commanded value is not a number!\n");
+      else
       {
         m_airspeed_cmd = airspeed_cmd;
         m_airspeed_cmd_ini = true;
       }
-      else
-        std::printf("UAV Simulation - Speed command rejected - Commanded value is not a number!\n");
     }
 
     void
     UAVSimulation::commandAlt(const double& altitude_cmd)
     {
-      if (!Math::isNaN(altitude_cmd)) // Check that the command is a real value
+      if (Math::isNaN(altitude_cmd)) // Check if the command is a real value
+        std::printf("UAV Simulation - Altitude command rejected - Commanded value is not a number!\n");
+      else
       {
         //! Altitude command
         m_altitude_cmd = altitude_cmd;
@@ -1291,14 +1293,14 @@ namespace DUNE
         //! Disallow pitch reference
         m_pitch_cmd_ini = false;
       }
-      else
-        std::printf("UAV Simulation - Altitude command rejected - Commanded value is not a number!\n");
     }
 
     void
     UAVSimulation::commandFPA(const double& fpa_cmd)
     {
-      if (!Math::isNaN(fpa_cmd)) // Check that the command is a real value
+      if (Math::isNaN(fpa_cmd)) // Check if the command is a real value
+        std::printf("UAV Simulation - Flight path angle command rejected - Commanded value is not a number!\n");
+      else
       {
         //! Flight path angle command
         m_fpa_cmd = fpa_cmd;
@@ -1309,15 +1311,15 @@ namespace DUNE
         //! Disallow pitch reference
         m_pitch_cmd_ini = false;
       }
-      else
-        std::printf("UAV Simulation - Flight path angle command rejected - Commanded value is not a number!\n");
     }
 
     void
     UAVSimulation::commandPitch(const double& pitch_cmd)
     {
-      if (!Math::isNaN(pitch_cmd)) // Check that the command is a real value
-      {
+      if (Math::isNaN(pitch_cmd)) // Check if the command is a real value
+       std::printf("UAV Simulation - Pitch command rejected - Commanded value is not a number!\n");
+      else
+       {
         //! Flight path angle command
         m_pitch_cmd = pitch_cmd;
         //! Disallow altitude reference
@@ -1327,8 +1329,6 @@ namespace DUNE
         //! Pitch command initialization flags
         m_pitch_cmd_ini = true;
       }
-      else
-        std::printf("UAV Simulation - Pitch command rejected - Commanded value is not a number!\n");
     }
   }
 }
