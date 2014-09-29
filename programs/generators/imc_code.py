@@ -136,8 +136,9 @@ class Message:
     def make_fieldsEqual(self):
         f = Function('fieldsEqual', 'bool', [Var('msg__', 'const Message&')], const = True)
         f.add_body('if (!%s::fieldsEqual(msg__)) return false;' % self._base)
-        f.add_body('const IMC::' + self._abbrev + '& other__ = static_cast<const ' + self._abbrev + '&>(msg__);')
-        f.add_body('\n'.join([get_not_equal(field) for field in self._node.findall('field')]))
+        if self.has_fields():
+            f.add_body('const IMC::' + self._abbrev + '& other__ = static_cast<const ' + self._abbrev + '&>(msg__);')
+            f.add_body('\n'.join([get_not_equal(field) for field in self._node.findall('field')]))
         f.add_body('return true;')
         self._public.append(f)
 
