@@ -62,6 +62,7 @@ namespace DUNE
     public:
       //! Constructor.
       //! @param[in] owner pointer to the task containing the entity.
+      //! @param[in] context entity context.
       BasicEntity(Tasks::AbstractTask* owner, Tasks::Context& context):
         m_owner(owner),
         m_ctx(context),

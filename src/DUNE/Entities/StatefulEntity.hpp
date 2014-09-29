@@ -46,9 +46,10 @@ namespace DUNE
     {
     public:
       //! Constructor.
-      //! @param[in] task pointer to the task containing the entity.
-      StatefulEntity(Tasks::AbstractTask* task, Tasks::Context& context):
-        BasicEntity(task, context),
+      //! @param[in] owner pointer to the task containing the entity.
+      //! @param[in] context entity context.
+      StatefulEntity(Tasks::AbstractTask* owner, Tasks::Context& context):
+        BasicEntity(owner, context),
         m_entity_state_code(-1),
         m_next_act_state(NAS_SAME)
       {
