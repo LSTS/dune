@@ -720,7 +720,7 @@ namespace Vision
         {
           if (isActive())
           {
-            consumeMessages();
+            waitForMessages(1.0);
             if (!isActive())
               continue;
           }
