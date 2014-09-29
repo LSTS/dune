@@ -25,8 +25,8 @@
 // Author: Tiago Rodrigues                                                  *
 //***************************************************************************
 
-#ifndef Plan_DB_HPP_INCLUDED_
-#define Plan_DB_HPP_INCLUDED_
+#ifndef PLAN_DB_HPP_INCLUDED_
+#define PLAN_DB_HPP_INCLUDED_
 
 
 #include <DUNE/DUNE.hpp>
@@ -38,24 +38,24 @@ namespace Plan
   {
     using DUNE_NAMESPACES;
 
-    template <typename plans, typename plansinfo, typename sysname>
+    template <typename object, typename object_info, typename sysname>
     void
-    PlanInfoParser(plans& plan, plansinfo& m_plan_info, sysname sname)
+    PlanInfoParser(object& ob, object_info& m_object_info, sysname sname)
     {
-      m_plan_info.plan_size = plan->getPayloadSerializationSize();
-      m_plan_info.plan_id = plan->plan_id;
-      m_plan_info.change_time = Clock::getSinceEpoch();
-      m_plan_info.change_sid = plan->getSource();
-      m_plan_info.change_sname = sname;
+      m_object_info.object_size = ob->getPayloadSerializationSize();
+      m_object_info.object_id = ob->plan_id;
+      m_object_info.change_time = Clock::getSinceEpoch();
+      m_object_info.change_sid = ob->getSource();
+      m_object_info.change_sname = sname;
     }
 
-    template <typename plans, typename plansinfo, typename blobdata>
+    template <typename object, typename object_info, typename blobdata>
     void
-    DataParser(plans& plan, plansinfo& m_plan_info, blobdata& plan_data)
+    DataParser(object& ob, object_info& m_object_info, blobdata& object_data)
     {
-      plan->serializeFields((uint8_t*)&plan_data[0]);
-      m_plan_info.md5.resize(16);
-      MD5::compute((uint8_t*)&plan_data[0], m_plan_info.plan_size, (uint8_t*)&m_plan_info.md5[0]);
+      ob->serializeFields((uint8_t*)&object_data[0]);
+      m_object_info.md5.resize(16);
+      MD5::compute((uint8_t*)&object_data[0], m_object_info.object_size, (uint8_t*)&m_object_info.md5[0]);
     }
   }
 }

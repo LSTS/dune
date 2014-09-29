@@ -134,7 +134,7 @@ namespace Plan
       // In progress reply message.
       IMC::PlanDB m_reply;
       // In progress reply message.
-      IMC::PlanDBInformation m_plan_info;
+      IMC::PlanDBInformation m_object_info;
       // Statements
       Database::Statement* m_insert_stmt[DT_TOTAL];
       Database::Statement* m_delete_stmt[DT_TOTAL];
@@ -271,7 +271,7 @@ namespace Plan
         m_reply.dt = req->dt;
         m_reply.op = req->op;
         m_reply.request_id = req->request_id;
-        m_reply.plan_id = req->plan_id;
+        m_reply.object_id = req->object_id;
 
         if (!m_db)
         {
@@ -297,11 +297,11 @@ namespace Plan
               getPlanInfo(*req);
               break;
             case IMC::PlanDB::DBOP_CLEAR:
-              m_reply.plan_id.clear();
+              m_reply.object_id.clear();
               clearDatabase(*req);
               break;
             case IMC::PlanDB::DBOP_GET_STATE:
-              m_reply.plan_id.clear();
+              m_reply.object_id.clear();
               getDatabaseState(*req);
               break;
             default:
@@ -333,27 +333,27 @@ namespace Plan
           throw std::runtime_error(DTR("database is corrupt"));
       }
 
-     int
-     checkOperationType(const IMC::PlanDB& req)
-     {
-       switch (req.dt)
-       {
-         case IMC::PlanDB::DBDT_PLAN:
-           return DT_PLAN;
-         break;
-         case IMC::PlanDB::DBDT_MEMENTO:
-           return DT_MEMENTO;
-           break;
-         default:
-           return -1;
-           break;
-       }
-     }
+      int
+      checkOperationType(const IMC::PlanDB& req)
+      {
+        switch (req.dt)
+        {
+          case IMC::PlanDB::DBDT_PLAN:
+            return DT_PLAN;
+            break;
+          case IMC::PlanDB::DBDT_MEMENTO:
+            return DT_MEMENTO;
+            break;
+          default:
+            return -1;
+            break;
+        }
+      }
 
       bool
       checkAssociatedMemento(const IMC::PlanDB& req)
       {
-        *m_get_stmt[DT_MEMENTO] << req.plan_id;
+        *m_get_stmt[DT_MEMENTO] << req.object_id;
 
         bool found = m_get_stmt[DT_MEMENTO]->execute();
 
@@ -363,7 +363,7 @@ namespace Plan
       void
       setPlan(const IMC::PlanDB& req)
       {
-        if (req.plan_id.empty())
+        if (req.object_id.empty())
         {
           onFailure(DTR("undefined plan id"));
           return;
@@ -388,7 +388,7 @@ namespace Plan
           const IMC::PlanSpecification* ps;
           req.arg.get(ps);
 
-          if (ps->plan_id != req.plan_id)
+          if (ps->plan_id != req.object_id)
           {
             onFailure(DTR("plan id mismatch"));
             return;
@@ -399,10 +399,10 @@ namespace Plan
 
         if (m->getId() == DUNE_IMC_PLANMEMENTO)
         {
-          const IMC::PlanSpecification* pm;
+          const IMC::PlanMemento* pm;
           req.arg.get(pm);
 
-          if (pm->plan_id != req.plan_id)
+          if (pm->id != req.object_id)
           {
             onFailure(DTR("plan id mismatch"));
             return;
@@ -418,19 +418,19 @@ namespace Plan
       {
         const IMC::PlanSpecification* plan_spec = 0;
         const IMC::PlanMemento* plan_mem = 0;
-        Database::Blob plan_data(m_plan_info.plan_size);
+        Database::Blob plan_data(m_object_info.object_size);
 
         switch( data_type )
         {
           case DT_PLAN:
             plan_spec = static_cast<const IMC::PlanSpecification*>(arg);
-            PlanInfoParser(plan_spec, m_plan_info, resolveSystemId(plan_spec->getSource()));
-            DataParser(plan_spec, m_plan_info, plan_data);
+            PlanInfoParser(plan_spec, m_object_info, resolveSystemId(plan_spec->getSource()));
+            DataParser(plan_spec, m_object_info, plan_data);
             break;
           case DT_MEMENTO:
             plan_mem = static_cast<const IMC::PlanMemento*>(arg);
-            PlanInfoParser(plan_mem, m_plan_info, resolveSystemId(plan_mem->getSource()));
-            DataParser(plan_mem, m_plan_info, plan_data);
+            PlanInfoParser(plan_mem, m_object_info, resolveSystemId(plan_mem->getSource()));
+            DataParser(plan_mem, m_object_info, plan_data);
             break;
           default:
             break;
@@ -441,19 +441,19 @@ namespace Plan
         int count = 0;
         try
         {
-          *m_delete_stmt[data_type] << m_plan_info.plan_id;
+          *m_delete_stmt[data_type] << m_object_info.object_id;
           m_delete_stmt[data_type]->execute(&count);
           m_delete_stmt[data_type]->reset();
 
-          *m_insert_stmt[data_type] << m_plan_info.plan_id
-                                    << m_plan_info.change_time
-                                    << m_plan_info.change_sid
-                                    << m_plan_info.change_sname
-                                    << m_plan_info.md5
+          *m_insert_stmt[data_type] << m_object_info.object_id
+                                    << m_object_info.change_time
+                                    << m_object_info.change_sid
+                                    << m_object_info.change_sname
+                                    << m_object_info.md5
                                     << plan_data;
           m_insert_stmt[data_type]->execute();
           m_insert_stmt[data_type]->reset();
-          onChange(m_plan_info.change_time, m_plan_info.change_sid, m_plan_info.change_sname, data_type);
+          onChange(m_object_info.change_time, m_object_info.change_sid, m_object_info.change_sname, data_type);
         }
         catch (std::runtime_error& e)
         {
@@ -463,7 +463,7 @@ namespace Plan
 
         m_db->commit();
 
-        m_reply.arg.set(m_plan_info);
+        m_reply.arg.set(m_object_info);
         switch( data_type )
         {
           case DT_PLAN:
@@ -481,7 +481,7 @@ namespace Plan
       void
       deletePlan(const IMC::PlanDB& req)
       {
-        if (req.plan_id.empty())
+        if (req.object_id.empty())
         {
           onFailure(DTR("undefined plan id"));
           return;
@@ -507,7 +507,7 @@ namespace Plan
           {
             for (int i = 0; i < DT_TOTAL; i++)
             {
-              *m_delete_stmt[i] << req.plan_id;
+              *m_delete_stmt[i] << req.object_id;
               m_delete_stmt[i]->execute(&count);
               if (count>0)
                 onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), i);
@@ -515,7 +515,7 @@ namespace Plan
           }
           else if (data_type == 0 && !checkAssociatedMemento(req))
           {
-            *m_delete_stmt[DT_PLAN] << req.plan_id;
+            *m_delete_stmt[DT_PLAN] << req.object_id;
             m_delete_stmt[DT_PLAN]->execute(&count);
 
             if (count > 0)
@@ -524,7 +524,7 @@ namespace Plan
           // If delete memento, only delete memento
           if (data_type == 1)
           {
-            *m_delete_stmt[DT_MEMENTO] << req.plan_id;
+            *m_delete_stmt[DT_MEMENTO] << req.object_id;
             m_delete_stmt[DT_MEMENTO]->execute(&count);
 
             if (count > 0)
@@ -549,7 +549,7 @@ namespace Plan
       void
       getPlan(const IMC::PlanDB& req)
       {
-        if (req.plan_id.empty())
+        if (req.object_id.empty())
         {
           onFailure(DTR("undefined plan id"));
           return;
@@ -563,7 +563,7 @@ namespace Plan
           return;
         }
 
-        *m_get_stmt[data_type] << req.plan_id;
+        *m_get_stmt[data_type] << req.object_id;
 
         bool found = m_get_stmt[data_type]->execute();
 
@@ -603,7 +603,7 @@ namespace Plan
       void
       getPlanInfo(const IMC::PlanDB& req)
       {
-        if (req.plan_id.empty())
+        if (req.object_id.empty())
         {
           onFailure(DTR("undefined plan id"));
           return;
@@ -617,7 +617,7 @@ namespace Plan
           return;
         }
 
-        *m_query_stmt[data_type] << req.plan_id;
+        *m_query_stmt[data_type] << req.object_id;
 
         bool found = m_query_stmt[data_type]->execute();
 
@@ -627,13 +627,13 @@ namespace Plan
           return;
         }
 
-        m_plan_info.plan_id = req.plan_id;
-        *m_query_stmt[data_type] >> m_plan_info.change_time
-                                 >> m_plan_info.change_sid
-                                 >> m_plan_info.change_sname
-                                 >> m_plan_info.md5
-                                 >> m_plan_info.plan_size;
-        m_reply.arg.set(m_plan_info);
+        m_object_info.object_id = req.object_id;
+        *m_query_stmt[data_type] >> m_object_info.change_time
+                                 >> m_object_info.change_sid
+                                 >> m_object_info.change_sname
+                                 >> m_object_info.md5
+                                 >> m_object_info.object_size;
+        m_reply.arg.set(m_object_info);
 
         for(int i = 0; i < DT_TOTAL; i++)
           m_query_stmt[i]->reset();
@@ -701,27 +701,27 @@ namespace Plan
         (void)req;
         IMC::PlanDBState* state = new IMC::PlanDBState;
 
-        state->plan_size = 0;
-        state->plan_count = 0;
+        state->object_size = 0;
+        state->object_count = 0;
 
         MD5 md5sum;
 
-        IMC::MessageList<PlanDBInformation>* plandbinfo = &state->plans_info;
+        IMC::MessageList<PlanDBInformation>* plandbinfo = &state->object_info;
 
         while (m_iterator_stmt[data_type]->execute())
         {
           IMC::PlanDBInformation* pinfo = new IMC::PlanDBInformation;
 
-          *m_iterator_stmt[data_type] >> pinfo->plan_id
+          *m_iterator_stmt[data_type] >> pinfo->object_id
                                       >> pinfo->change_time
                                       >> pinfo->change_sid
                                       >> pinfo->change_sname
                                       >> pinfo->md5
-                                      >> pinfo->plan_size;
+                                      >> pinfo->object_size;
 
-          md5sum.update((const uint8_t*)&pinfo->md5[0], 16); // the MD5 of all MD5s ordered by plan_id
-          state->plan_size += pinfo->plan_size;
-          state->plan_count++;
+          md5sum.update((const uint8_t*)&pinfo->md5[0], 16); // the MD5 of all MD5s ordered by id
+          state->object_size += pinfo->object_size;
+          state->object_count++;
 
           plandbinfo->push_back(*pinfo);
 
@@ -761,10 +761,10 @@ namespace Plan
             {
               if (type == IMC::PlanDB::DBT_FAILURE)
                 err("%s (%s) -- %s", DTR(c_op_desc[m_reply.op]),
-                    m_reply.plan_id.c_str(), desc);
+                    m_reply.object_id.c_str(), desc);
               else
                 debug("%s (%s) -- %s", DTR(c_op_desc[m_reply.op]),
-                      m_reply.plan_id.c_str(), desc);
+                      m_reply.object_id.c_str(), desc);
             }
         }
       }
@@ -784,10 +784,10 @@ namespace Plan
             {
               if (type == IMC::PlanDB::DBT_SUCCESS && data_type == 0)
                 inf("%s (%s) -- %s", DTR(c_op_desc[m_reply.op]),
-                    m_reply.plan_id.c_str(), desc);
+                    m_reply.object_id.c_str(), desc);
               else if (type == IMC::PlanDB::DBT_SUCCESS && data_type == 1)
                 inf("%s (%s) -- %s", DTR(c_op_desc[m_reply.op + 7]),
-                    m_reply.plan_id.c_str(), desc);
+                    m_reply.object_id.c_str(), desc);
             }
         }
       }
