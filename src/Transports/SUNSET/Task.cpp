@@ -358,11 +358,11 @@ namespace Transports
           return;
 
         const IMC::PlanDBState* db_state = static_cast<const IMC::PlanDBState*>(msg->arg.get());
-        IMC::MessageList<IMC::PlanDBInformation>::const_iterator itr = db_state->plans_info.begin();
+        IMC::MessageList<IMC::PlanDBInformation>::const_iterator itr = db_state->object_info.begin();
 
         m_plan_list.clear();
-        for (; itr != db_state->plans_info.end(); ++itr)
-          m_plan_list.push_back((*itr)->plan_id);
+        for (; itr != db_state->object_info.end(); ++itr)
+          m_plan_list.push_back((*itr)->object_id);
       }
 
       void
