@@ -311,6 +311,7 @@ namespace Vision
 
         m_slave_entities = new EntityActivationMaster(this);
         updateSlaveEntities();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
