@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 039d5331842e120ccba019e00d9e3b75                            *
+// IMC XML MD5: a01668b6b58c5a2c92f4dfb2ebf02024                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -14638,8 +14638,8 @@ namespace DUNE
       uint8_t op;
       //! Request ID.
       uint16_t request_id;
-      //! Plan ID.
-      std::string plan_id;
+      //! Object ID.
+      std::string object_id;
       //! Argument.
       InlineMessage<Message> arg;
       //! Complementary Information.
@@ -14695,7 +14695,7 @@ namespace DUNE
       unsigned
       getVariableSerializationSize(void) const
       {
-        return Message::getVariableSerializationSize() + IMC::getSerializationSize(plan_id) + arg.getSerializationSize() + IMC::getSerializationSize(info);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(object_id) + arg.getSerializationSize() + IMC::getSerializationSize(info);
       }
 
       void
@@ -14722,10 +14722,10 @@ namespace DUNE
     class PlanDBInformation: public Message
     {
     public:
-      //! Plan ID.
-      std::string plan_id;
-      //! Plan Size.
-      uint16_t plan_size;
+      //! Object ID.
+      std::string object_id;
+      //! Object Size.
+      uint16_t object_size;
       //! Last Changed -- Time.
       fp64_t change_time;
       //! Last Change -- Source Address.
@@ -14785,7 +14785,7 @@ namespace DUNE
       unsigned
       getVariableSerializationSize(void) const
       {
-        return Message::getVariableSerializationSize() + IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(change_sname) + IMC::getSerializationSize(md5);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(object_id) + IMC::getSerializationSize(change_sname) + IMC::getSerializationSize(md5);
       }
 
       void
@@ -14796,10 +14796,10 @@ namespace DUNE
     class PlanDBState: public Message
     {
     public:
-      //! Plan -- Count.
-      uint16_t plan_count;
-      //! Plan -- Size of all plans.
-      uint32_t plan_size;
+      //! Object -- Count.
+      uint16_t object_count;
+      //! Object -- Size of all objects.
+      uint32_t object_size;
       //! Last Change -- Time.
       fp64_t change_time;
       //! Last Change -- Source Address.
@@ -14808,8 +14808,8 @@ namespace DUNE
       std::string change_sname;
       //! MD5.
       std::vector<char> md5;
-      //! Plan info.
-      MessageList<PlanDBInformation> plans_info;
+      //! Object info.
+      MessageList<PlanDBInformation> object_info;
 
       static uint16_t
       getIdStatic(void)
@@ -14861,7 +14861,7 @@ namespace DUNE
       unsigned
       getVariableSerializationSize(void) const
       {
-        return Message::getVariableSerializationSize() + IMC::getSerializationSize(change_sname) + IMC::getSerializationSize(md5) + plans_info.getSerializationSize();
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(change_sname) + IMC::getSerializationSize(md5) + object_info.getSerializationSize();
       }
 
       void

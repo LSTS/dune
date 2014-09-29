@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 039d5331842e120ccba019e00d9e3b75                            *
+// IMC XML MD5: a01668b6b58c5a2c92f4dfb2ebf02024                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -132,8 +132,6 @@ namespace DUNE
     QueryEntityState::fieldsEqual(const Message& msg__) const
     {
       if (!Message::fieldsEqual(msg__)) return false;
-      const IMC::QueryEntityState& other__ = static_cast<const QueryEntityState&>(msg__);
-
       return true;
     }
 
@@ -535,8 +533,6 @@ namespace DUNE
     RestartSystem::fieldsEqual(const Message& msg__) const
     {
       if (!Message::fieldsEqual(msg__)) return false;
-      const IMC::RestartSystem& other__ = static_cast<const RestartSystem&>(msg__);
-
       return true;
     }
 
@@ -778,8 +774,6 @@ namespace DUNE
     QueryEntityActivationState::fieldsEqual(const Message& msg__) const
     {
       if (!Message::fieldsEqual(msg__)) return false;
-      const IMC::QueryEntityActivationState& other__ = static_cast<const QueryEntityActivationState&>(msg__);
-
       return true;
     }
 
@@ -1983,8 +1977,6 @@ namespace DUNE
     Heartbeat::fieldsEqual(const Message& msg__) const
     {
       if (!Message::fieldsEqual(msg__)) return false;
-      const IMC::Heartbeat& other__ = static_cast<const Heartbeat&>(msg__);
-
       return true;
     }
 
@@ -3559,8 +3551,6 @@ namespace DUNE
     AcousticSystemsQuery::fieldsEqual(const Message& msg__) const
     {
       if (!Message::fieldsEqual(msg__)) return false;
-      const IMC::AcousticSystemsQuery& other__ = static_cast<const AcousticSystemsQuery&>(msg__);
-
       return true;
     }
 
@@ -5817,8 +5807,6 @@ namespace DUNE
     Pulse::fieldsEqual(const Message& msg__) const
     {
       if (!Message::fieldsEqual(msg__)) return false;
-      const IMC::Pulse& other__ = static_cast<const Pulse&>(msg__);
-
       return true;
     }
 
@@ -7206,8 +7194,6 @@ namespace DUNE
     QueryPowerChannelState::fieldsEqual(const Message& msg__) const
     {
       if (!Message::fieldsEqual(msg__)) return false;
-      const IMC::QueryPowerChannelState& other__ = static_cast<const QueryPowerChannelState&>(msg__);
-
       return true;
     }
 
@@ -8778,8 +8764,6 @@ namespace DUNE
     ControlCommand::fieldsEqual(const Message& msg__) const
     {
       if (!Message::fieldsEqual(msg__)) return false;
-      const IMC::ControlCommand& other__ = static_cast<const ControlCommand&>(msg__);
-
       return true;
     }
 
@@ -11125,8 +11109,6 @@ namespace DUNE
     TeleoperationDone::fieldsEqual(const Message& msg__) const
     {
       if (!Message::fieldsEqual(msg__)) return false;
-      const IMC::TeleoperationDone& other__ = static_cast<const TeleoperationDone&>(msg__);
-
       return true;
     }
 
@@ -11915,8 +11897,6 @@ namespace DUNE
     StopManeuver::fieldsEqual(const Message& msg__) const
     {
       if (!Message::fieldsEqual(msg__)) return false;
-      const IMC::StopManeuver& other__ = static_cast<const StopManeuver&>(msg__);
-
       return true;
     }
 
@@ -13664,8 +13644,6 @@ namespace DUNE
     Memento::fieldsEqual(const Message& msg__) const
     {
       if (!Maneuver::fieldsEqual(msg__)) return false;
-      const IMC::Memento& other__ = static_cast<const Memento&>(msg__);
-
       return true;
     }
 
@@ -14239,8 +14217,6 @@ namespace DUNE
     GetOperationalLimits::fieldsEqual(const Message& msg__) const
     {
       if (!Message::fieldsEqual(msg__)) return false;
-      const IMC::GetOperationalLimits& other__ = static_cast<const GetOperationalLimits&>(msg__);
-
       return true;
     }
 
@@ -14692,8 +14668,6 @@ namespace DUNE
     Abort::fieldsEqual(const Message& msg__) const
     {
       if (!Message::fieldsEqual(msg__)) return false;
-      const IMC::Abort& other__ = static_cast<const Abort&>(msg__);
-
       return true;
     }
 
@@ -15418,7 +15392,7 @@ namespace DUNE
       dt = 0;
       op = 0;
       request_id = 0;
-      plan_id.clear();
+      object_id.clear();
       arg.clear();
       info.clear();
     }
@@ -15432,7 +15406,7 @@ namespace DUNE
       if (dt != other__.dt) return false;
       if (op != other__.op) return false;
       if (request_id != other__.request_id) return false;
-      if (plan_id != other__.plan_id) return false;
+      if (object_id != other__.object_id) return false;
       if (arg != other__.arg) return false;
       if (info != other__.info) return false;
       return true;
@@ -15447,7 +15421,7 @@ namespace DUNE
       ptr__ += IMC::serialize(dt, ptr__);
       ptr__ += IMC::serialize(op, ptr__);
       ptr__ += IMC::serialize(request_id, ptr__);
-      ptr__ += IMC::serialize(plan_id, ptr__);
+      ptr__ += IMC::serialize(object_id, ptr__);
       ptr__ += arg.serialize(ptr__);
       ptr__ += IMC::serialize(info, ptr__);
       return ptr__;
@@ -15462,7 +15436,7 @@ namespace DUNE
       bfr__ += IMC::deserialize(dt, bfr__, size__);
       bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::deserialize(request_id, bfr__, size__);
-      bfr__ += IMC::deserialize(plan_id, bfr__, size__);
+      bfr__ += IMC::deserialize(object_id, bfr__, size__);
       bfr__ += arg.deserialize(bfr__, size__);
       bfr__ += IMC::deserialize(info, bfr__, size__);
       return bfr__ - start__;
@@ -15477,7 +15451,7 @@ namespace DUNE
       bfr__ += IMC::deserialize(dt, bfr__, size__);
       bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(request_id, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(plan_id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(object_id, bfr__, size__);
       bfr__ += arg.reverseDeserialize(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(info, bfr__, size__);
       return bfr__ - start__;
@@ -15491,7 +15465,7 @@ namespace DUNE
       IMC::toJSON(os__, "dt", dt, nindent__);
       IMC::toJSON(os__, "op", op, nindent__);
       IMC::toJSON(os__, "request_id", request_id, nindent__);
-      IMC::toJSON(os__, "plan_id", plan_id, nindent__);
+      IMC::toJSON(os__, "object_id", object_id, nindent__);
       arg.toJSON(os__, "arg", nindent__);
       IMC::toJSON(os__, "info", info, nindent__);
     }
@@ -15551,8 +15525,8 @@ namespace DUNE
     PlanDBInformation::clear(void)
     {
       Message::clear();
-      plan_id.clear();
-      plan_size = 0;
+      object_id.clear();
+      object_size = 0;
       change_time = 0;
       change_sid = 0;
       change_sname.clear();
@@ -15564,8 +15538,8 @@ namespace DUNE
     {
       if (!Message::fieldsEqual(msg__)) return false;
       const IMC::PlanDBInformation& other__ = static_cast<const PlanDBInformation&>(msg__);
-      if (plan_id != other__.plan_id) return false;
-      if (plan_size != other__.plan_size) return false;
+      if (object_id != other__.object_id) return false;
+      if (object_size != other__.object_size) return false;
       if (change_time != other__.change_time) return false;
       if (change_sid != other__.change_sid) return false;
       if (change_sname != other__.change_sname) return false;
@@ -15578,8 +15552,8 @@ namespace DUNE
     {
       uint8_t* ptr__ = bfr__;
       ptr__ = Message::serializeFields(ptr__);
-      ptr__ += IMC::serialize(plan_id, ptr__);
-      ptr__ += IMC::serialize(plan_size, ptr__);
+      ptr__ += IMC::serialize(object_id, ptr__);
+      ptr__ += IMC::serialize(object_size, ptr__);
       ptr__ += IMC::serialize(change_time, ptr__);
       ptr__ += IMC::serialize(change_sid, ptr__);
       ptr__ += IMC::serialize(change_sname, ptr__);
@@ -15592,8 +15566,8 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += Message::deserializeFields(bfr__, size__);
-      bfr__ += IMC::deserialize(plan_id, bfr__, size__);
-      bfr__ += IMC::deserialize(plan_size, bfr__, size__);
+      bfr__ += IMC::deserialize(object_id, bfr__, size__);
+      bfr__ += IMC::deserialize(object_size, bfr__, size__);
       bfr__ += IMC::deserialize(change_time, bfr__, size__);
       bfr__ += IMC::deserialize(change_sid, bfr__, size__);
       bfr__ += IMC::deserialize(change_sname, bfr__, size__);
@@ -15606,8 +15580,8 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += Message::reverseDeserializeFields(bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(plan_id, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(plan_size, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(object_id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(object_size, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(change_time, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(change_sid, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(change_sname, bfr__, size__);
@@ -15619,8 +15593,8 @@ namespace DUNE
     PlanDBInformation::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       Message::fieldsToJSON(os__, nindent__);
-      IMC::toJSON(os__, "plan_id", plan_id, nindent__);
-      IMC::toJSON(os__, "plan_size", plan_size, nindent__);
+      IMC::toJSON(os__, "object_id", object_id, nindent__);
+      IMC::toJSON(os__, "object_size", object_size, nindent__);
       IMC::toJSON(os__, "change_time", change_time, nindent__);
       IMC::toJSON(os__, "change_sid", change_sid, nindent__);
       IMC::toJSON(os__, "change_sname", change_sname, nindent__);
@@ -15631,20 +15605,20 @@ namespace DUNE
     {
       m_header.mgid = 557;
       clear();
-      plans_info.setParent(this);
+      object_info.setParent(this);
     }
 
     void
     PlanDBState::clear(void)
     {
       Message::clear();
-      plan_count = 0;
-      plan_size = 0;
+      object_count = 0;
+      object_size = 0;
       change_time = 0;
       change_sid = 0;
       change_sname.clear();
       md5.clear();
-      plans_info.clear();
+      object_info.clear();
     }
 
     bool
@@ -15652,13 +15626,13 @@ namespace DUNE
     {
       if (!Message::fieldsEqual(msg__)) return false;
       const IMC::PlanDBState& other__ = static_cast<const PlanDBState&>(msg__);
-      if (plan_count != other__.plan_count) return false;
-      if (plan_size != other__.plan_size) return false;
+      if (object_count != other__.object_count) return false;
+      if (object_size != other__.object_size) return false;
       if (change_time != other__.change_time) return false;
       if (change_sid != other__.change_sid) return false;
       if (change_sname != other__.change_sname) return false;
       if (md5 != other__.md5) return false;
-      if (plans_info != other__.plans_info) return false;
+      if (object_info != other__.object_info) return false;
       return true;
     }
 
@@ -15667,13 +15641,13 @@ namespace DUNE
     {
       uint8_t* ptr__ = bfr__;
       ptr__ = Message::serializeFields(ptr__);
-      ptr__ += IMC::serialize(plan_count, ptr__);
-      ptr__ += IMC::serialize(plan_size, ptr__);
+      ptr__ += IMC::serialize(object_count, ptr__);
+      ptr__ += IMC::serialize(object_size, ptr__);
       ptr__ += IMC::serialize(change_time, ptr__);
       ptr__ += IMC::serialize(change_sid, ptr__);
       ptr__ += IMC::serialize(change_sname, ptr__);
       ptr__ += IMC::serialize(md5, ptr__);
-      ptr__ += plans_info.serialize(ptr__);
+      ptr__ += object_info.serialize(ptr__);
       return ptr__;
     }
 
@@ -15682,13 +15656,13 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += Message::deserializeFields(bfr__, size__);
-      bfr__ += IMC::deserialize(plan_count, bfr__, size__);
-      bfr__ += IMC::deserialize(plan_size, bfr__, size__);
+      bfr__ += IMC::deserialize(object_count, bfr__, size__);
+      bfr__ += IMC::deserialize(object_size, bfr__, size__);
       bfr__ += IMC::deserialize(change_time, bfr__, size__);
       bfr__ += IMC::deserialize(change_sid, bfr__, size__);
       bfr__ += IMC::deserialize(change_sname, bfr__, size__);
       bfr__ += IMC::deserialize(md5, bfr__, size__);
-      bfr__ += plans_info.deserialize(bfr__, size__);
+      bfr__ += object_info.deserialize(bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -15697,13 +15671,13 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += Message::reverseDeserializeFields(bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(plan_count, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(plan_size, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(object_count, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(object_size, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(change_time, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(change_sid, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(change_sname, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(md5, bfr__, size__);
-      bfr__ += plans_info.reverseDeserialize(bfr__, size__);
+      bfr__ += object_info.reverseDeserialize(bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -15711,43 +15685,43 @@ namespace DUNE
     PlanDBState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       Message::fieldsToJSON(os__, nindent__);
-      IMC::toJSON(os__, "plan_count", plan_count, nindent__);
-      IMC::toJSON(os__, "plan_size", plan_size, nindent__);
+      IMC::toJSON(os__, "object_count", object_count, nindent__);
+      IMC::toJSON(os__, "object_size", object_size, nindent__);
       IMC::toJSON(os__, "change_time", change_time, nindent__);
       IMC::toJSON(os__, "change_sid", change_sid, nindent__);
       IMC::toJSON(os__, "change_sname", change_sname, nindent__);
       IMC::toJSON(os__, "md5", md5, nindent__);
-      plans_info.toJSON(os__, "plans_info", nindent__);
+      object_info.toJSON(os__, "object_info", nindent__);
     }
 
     void
     PlanDBState::setTimeStampNested(double value__)
     {
-      plans_info.setTimeStamp(value__);
+      object_info.setTimeStamp(value__);
     }
 
     void
     PlanDBState::setSourceNested(uint16_t value__)
     {
-      plans_info.setSource(value__);
+      object_info.setSource(value__);
     }
 
     void
     PlanDBState::setSourceEntityNested(uint8_t value__)
     {
-      plans_info.setSourceEntity(value__);
+      object_info.setSourceEntity(value__);
     }
 
     void
     PlanDBState::setDestinationNested(uint16_t value__)
     {
-      plans_info.setDestination(value__);
+      object_info.setDestination(value__);
     }
 
     void
     PlanDBState::setDestinationEntityNested(uint8_t value__)
     {
-      plans_info.setDestinationEntity(value__);
+      object_info.setDestinationEntity(value__);
     }
 
     PlanControl::PlanControl(void)
@@ -19415,8 +19389,6 @@ namespace DUNE
     Aborted::fieldsEqual(const Message& msg__) const
     {
       if (!Message::fieldsEqual(msg__)) return false;
-      const IMC::Aborted& other__ = static_cast<const Aborted&>(msg__);
-
       return true;
     }
 
