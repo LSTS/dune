@@ -221,7 +221,7 @@ namespace Supervisors
         {
           if ((msg->type == IMC::PlanDB::DBT_REQUEST) &&
               (msg->op == IMC::PlanDB::DBOP_SET) &&
-              (msg->plan_id.compare(m_args.plan_name) == 0))
+              (msg->object_id.compare(m_args.plan_name) == 0))
           {
             getPlanSpec(&msg->arg);
           }
