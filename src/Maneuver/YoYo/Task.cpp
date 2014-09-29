@@ -154,6 +154,7 @@ namespace Maneuver
         // basic init.
         m_on_course = false;
         m_course_recovered = false;
+        m_dispatched = false;
 
         // initialize yoyo motion controller
         Memory::clear(m_yoyo);
