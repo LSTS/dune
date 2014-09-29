@@ -313,9 +313,9 @@ namespace Plan
           {
             if ((pdb->type == IMC::PlanDB::DBT_SUCCESS) ||
                 (pdb->type == IMC::PlanDB::DBT_IN_PROGRESS))
-              inf(DTR("successful request to PlanDB: %s"), pdb->plan_id.c_str());
+              inf(DTR("successful request to PlanDB: %s"), pdb->object_id.c_str());
             else
-              err(DTR("got error on request to: %s"), pdb->plan_id.c_str());
+              err(DTR("got error on request to: %s"), pdb->object_id.c_str());
           }
         }
       }
@@ -873,7 +873,7 @@ namespace Plan
         plandb.dt = dtype;
         plandb.op = IMC::PlanDB::DBOP_SET;
         plandb.request_id = 0;
-        plandb.plan_id = id;
+        plandb.object_id = id;
         plandb.arg.set(*msg);
         dispatch(plandb);
       }
