@@ -32,29 +32,29 @@
 #include <DUNE/DUNE.hpp>
 #include "DB.hpp"
 
-#define TABLE_PLAN                                          \
-  "plan_id varchar2 primary key, change_time"               \
-  " real not null, change_sid integer not null,"            \
-  " change_sname varchar2 not null,"                        \
-  " md5 blob not null, data blob not null"                  \
+#define TABLE_PLAN                                      \
+  "plan_id varchar2 primary key, change_time"           \
+  " real not null, change_sid integer not null,"        \
+  " change_sname varchar2 not null,"                    \
+  " md5 blob not null, data blob not null"              \
 
-#define TABLE_MEMENTO                                       \
-  "id varchar2 primary key, change_time"                    \
-  " real not null, change_sid integer not null,"            \
-  " change_sname varchar2 not null,"                        \
-  " md5 blob not null, data blob not null"                  \
+#define TABLE_MEMENTO                                   \
+  "id varchar2 primary key, change_time"                \
+  " real not null, change_sid integer not null,"        \
+  " change_sname varchar2 not null,"                    \
+  " md5 blob not null, data blob not null"              \
 
-#define TABLE_STATEMENT(type, table)                                                          \
+#define TABLE_STATEMENT(type, table)                    \
   "create table if not exists " type " ( " table " )"
 #define INSERT_STATEMENT(type) "insert into " type " values(?,?,?,?,?,?)"
 #define DELETE_STATEMENT(type, field) "delete from " type " where " field "=?"
-#define ITERATOR_STATEMENT(type, field) "select " field ", change_time, change_sid,"          \
+#define ITERATOR_STATEMENT(type, field) "select " field ", change_time, change_sid," \
   " change_sname, md5, length(data) from " type " order by " field
-#define QUERY_STATEMENT(type, field) "select change_time, change_sid, change_sname, "         \
+#define QUERY_STATEMENT(type, field) "select change_time, change_sid, change_sname, " \
   "md5, length(data) from " type " where " field "=?"
 #define GET_STATEMENT(type, field) "select data from " type " where " field "=?"
 #define DELETE_ALL_STATEMENT(type) "delete from " type
-#define LCHANGE_TABLE(name) "create table if not exists " name " ( change_time "              \
+#define LCHANGE_TABLE(name) "create table if not exists " name " ( change_time " \
   "real not null, change_sid integer not null, change_sname varchar2 not null )"
 #define LCHANGE_INSERT(name) "insert into " name " values(?,?,?)"
 #define LCHANGE_UPDATE(name) "update " name " set change_time=?, change_sid=?, change_sname=?"
@@ -345,7 +345,7 @@ namespace Plan
             return DT_MEMENTO;
             break;
           default:
-            return -1;
+            return DT_NONE;
             break;
         }
       }
@@ -489,7 +489,7 @@ namespace Plan
 
         int data_type = checkOperationType(req);
 
-        if (data_type == -1)
+        if (data_type == DT_NONE)
         {
           inf("undefined operation type");
           return;
@@ -503,7 +503,7 @@ namespace Plan
         try
         {
           // If delete plan, also delete memento associated (if exists)
-          if (data_type == 0 && checkAssociatedMemento(req))
+          if (data_type == DT_PLAN && checkAssociatedMemento(req))
           {
             for (int i = 0; i < DT_TOTAL; i++)
             {
@@ -513,7 +513,7 @@ namespace Plan
                 onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), i);
             }
           }
-          else if (data_type == 0 && !checkAssociatedMemento(req))
+          else if (data_type == DT_PLAN && !checkAssociatedMemento(req))
           {
             *m_delete_stmt[DT_PLAN] << req.object_id;
             m_delete_stmt[DT_PLAN]->execute(&count);
@@ -522,7 +522,7 @@ namespace Plan
               onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), data_type);
           }
           // If delete memento, only delete memento
-          if (data_type == 1)
+          if (data_type == DT_MEMENTO)
           {
             *m_delete_stmt[DT_MEMENTO] << req.object_id;
             m_delete_stmt[DT_MEMENTO]->execute(&count);
@@ -557,7 +557,7 @@ namespace Plan
 
         int data_type = checkOperationType(req);
 
-        if (data_type == -1)
+        if (data_type == DT_NONE)
         {
           inf("undefined operation type");
           return;
@@ -611,7 +611,7 @@ namespace Plan
 
         int data_type = checkOperationType(req);
 
-        if (data_type == -1)
+        if (data_type == DT_NONE)
         {
           inf("undefined operation type");
           return;
@@ -649,7 +649,7 @@ namespace Plan
 
         int data_type = checkOperationType(req);
 
-        if (data_type == -1)
+        if (data_type == DT_NONE)
         {
           inf("undefined operation type");
           return;
@@ -692,7 +692,7 @@ namespace Plan
       {
         int data_type = checkOperationType(req);
 
-        if (data_type == -1)
+        if (data_type == DT_NONE)
         {
           inf("undefined operation type");
           return;
@@ -782,12 +782,15 @@ namespace Plan
           case IMC::PlanDB::DBOP_DEL:
           case IMC::PlanDB::DBOP_CLEAR:
             {
-              if (type == IMC::PlanDB::DBT_SUCCESS && data_type == 0)
-                inf("%s (%s) -- %s", DTR(c_op_desc[m_reply.op]),
-                    m_reply.object_id.c_str(), desc);
-              else if (type == IMC::PlanDB::DBT_SUCCESS && data_type == 1)
-                inf("%s (%s) -- %s", DTR(c_op_desc[m_reply.op + 7]),
-                    m_reply.object_id.c_str(), desc);
+              if (type == IMC::PlanDB::DBT_SUCCESS)
+              {
+                if (data_type == DT_PLAN)
+                  inf("%s (%s) -- %s", DTR(c_op_desc[m_reply.op]),
+                      m_reply.object_id.c_str(), desc);
+                else if (data_type == DT_MEMENTO)
+                  inf("%s (%s) -- %s", DTR(c_op_desc[m_reply.op + 7]),
+                      m_reply.object_id.c_str(), desc);
+              }
             }
         }
       }
