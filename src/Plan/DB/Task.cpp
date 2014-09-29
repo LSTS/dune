@@ -44,17 +44,17 @@
   " change_sname varchar2 not null,"                        \
   " md5 blob not null, data blob not null"                  \
 
-#define TABLE_STATEMENT(type, table)					\
+#define TABLE_STATEMENT(type, table)                                                          \
   "create table if not exists " type " ( " table " )"
 #define INSERT_STATEMENT(type) "insert into " type " values(?,?,?,?,?,?)"
 #define DELETE_STATEMENT(type, field) "delete from " type " where " field "=?"
-#define ITERATOR_STATEMENT(type, field) "select " field ", change_time, change_sid," \
+#define ITERATOR_STATEMENT(type, field) "select " field ", change_time, change_sid,"          \
   " change_sname, md5, length(data) from " type " order by " field
-#define QUERY_STATEMENT(type, field) "select change_time, change_sid, change_sname, " \
+#define QUERY_STATEMENT(type, field) "select change_time, change_sid, change_sname, "         \
   "md5, length(data) from " type " where " field "=?"
 #define GET_STATEMENT(type, field) "select data from " type " where " field "=?"
 #define DELETE_ALL_STATEMENT(type) "delete from " type
-#define LCHANGE_TABLE(name) "create table if not exists " name " ( change_time " \
+#define LCHANGE_TABLE(name) "create table if not exists " name " ( change_time "              \
   "real not null, change_sid integer not null, change_sname varchar2 not null )"
 #define LCHANGE_INSERT(name) "insert into " name " values(?,?,?)"
 #define LCHANGE_UPDATE(name) "update " name " set change_time=?, change_sid=?, change_sname=?"
@@ -113,10 +113,16 @@ namespace Plan
       std::string db_path;
     };
 
-    enum TotalTables
+    enum DataType
     {
-      TT_LastChange = 2,
-      TT_Plans = 2
+      //! Invalid data type
+      DT_NONE = -1,
+      //! Plan data type
+      DT_PLAN = 0,
+      //! Memento data type
+      DT_MEMENTO = 1,
+      //! Total tables
+      DT_TOTAL = 2
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -130,15 +136,15 @@ namespace Plan
       // In progress reply message.
       IMC::PlanDBInformation m_plan_info;
       // Statements
-      Database::Statement* m_insert_stmt[2];
-      Database::Statement* m_delete_stmt[2];
-      Database::Statement* m_iterator_stmt[2];
-      Database::Statement* m_query_stmt[2];
-      Database::Statement* m_get_stmt[2];
-      Database::Statement* m_delete_all_stmt[2];
-      Database::Statement* m_lastchange_initial_insert_stmt[2];
-      Database::Statement* m_lastchange_update_stmt[2];
-      Database::Statement* m_lastchange_query_stmt[2];
+      Database::Statement* m_insert_stmt[DT_TOTAL];
+      Database::Statement* m_delete_stmt[DT_TOTAL];
+      Database::Statement* m_iterator_stmt[DT_TOTAL];
+      Database::Statement* m_query_stmt[DT_TOTAL];
+      Database::Statement* m_get_stmt[DT_TOTAL];
+      Database::Statement* m_delete_all_stmt[DT_TOTAL];
+      Database::Statement* m_lastchange_initial_insert_stmt[DT_TOTAL];
+      Database::Statement* m_lastchange_update_stmt[DT_TOTAL];
+      Database::Statement* m_lastchange_query_stmt[DT_TOTAL];
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -175,7 +181,7 @@ namespace Plan
         m_db = new Database::Connection(db_file.c_str(), true);
 
         // Create tables and initialize associated statements
-        for (int i = 0; i < TT_Plans; i++)
+        for (int i = 0; i < DT_TOTAL; i++)
         {
           m_db->execute(c_table_stmt[i]);
           m_insert_stmt[i] = new Database::Statement(c_insert_stmt[i], *m_db);
@@ -212,7 +218,7 @@ namespace Plan
         if (m_db == NULL)
           return;
 
-        for(int i = 0; i < TT_Plans; i++)
+        for (int i = 0; i < DT_TOTAL; i++)
         {
           delete m_insert_stmt[i];
           delete m_delete_stmt[i];
@@ -258,8 +264,6 @@ namespace Plan
           war(DTR("unexpected message"));
           return;
         }
-
-        debug("teste %d | %d\n",IMC::PlanDB::DBT_REQUEST, req->op);
 
         // Setup fields to echo in reply message
         m_reply.setDestination(req->getSource());
@@ -314,19 +318,46 @@ namespace Plan
       }
 
       void
-      onChange(double time, uint16_t sid, const std::string& sname, int& PlanMementoflag)
+      onChange(double time, uint16_t sid, const std::string& sname, int& index)
       {
         // Update LastChange table information.
         int count = 0;
 
-        *m_lastchange_update_stmt[PlanMementoflag] << time
-                                                   << sid
-                                                   << sname;
-        m_lastchange_update_stmt[PlanMementoflag]->execute(&count);
-        m_lastchange_update_stmt[PlanMementoflag]->reset();
+        *m_lastchange_update_stmt[index] << time
+                                         << sid
+                                         << sname;
+        m_lastchange_update_stmt[index]->execute(&count);
+        m_lastchange_update_stmt[index]->reset();
 
         if (count == 0)
           throw std::runtime_error(DTR("database is corrupt"));
+      }
+
+     int
+     checkOperationType(const IMC::PlanDB& req)
+     {
+       switch (req.dt)
+       {
+         case IMC::PlanDB::DBDT_PLAN:
+           return DT_PLAN;
+         break;
+         case IMC::PlanDB::DBDT_MEMENTO:
+           return DT_MEMENTO;
+           break;
+         default:
+           return -1;
+           break;
+       }
+     }
+
+      bool
+      checkAssociatedMemento(const IMC::PlanDB& req)
+      {
+        *m_get_stmt[DT_MEMENTO] << req.plan_id;
+
+        bool found = m_get_stmt[DT_MEMENTO]->execute();
+
+        return found;
       }
 
       void
@@ -345,18 +376,14 @@ namespace Plan
         req.arg.get(m);
 
         const IMC::Message* arg = 0;
-        // flag = -1 - Plan Invalid
-        // flag = 0 - Plan specification parsed
-        // flag = 1 - Plan memento parsed
-        int PlanMementoflag = -1;
 
-        if (m->getId() != DUNE_IMC_PLANSPECIFICATION)
+        if (m->getId() != DUNE_IMC_PLANSPECIFICATION && m->getId() != DUNE_IMC_PLANMEMENTO)
         {
           onFailure(DTR("no plan specification given"));
           return;
         }
 
-        if(m->getId() == DUNE_IMC_PLANSPECIFICATION)
+        if (m->getId() == DUNE_IMC_PLANSPECIFICATION)
         {
           const IMC::PlanSpecification* ps;
           req.arg.get(ps);
@@ -366,10 +393,11 @@ namespace Plan
             onFailure(DTR("plan id mismatch"));
             return;
           }
-          PlanMementoflag = 0;
           arg = static_cast<const IMC::Message*>(ps);
+          storeInDB(arg, DT_PLAN );
         }
-        if(m->getId() == DUNE_IMC_PLANMEMENTO)
+
+        if (m->getId() == DUNE_IMC_PLANMEMENTO)
         {
           const IMC::PlanSpecification* pm;
           req.arg.get(pm);
@@ -379,64 +407,53 @@ namespace Plan
             onFailure(DTR("plan id mismatch"));
             return;
           }
-          PlanMementoflag = 1;
           arg = static_cast<const IMC::Message*>(pm);
+          storeInDB(arg, DT_MEMENTO);
         }
 
-        if(PlanMementoflag == -1)
-          return;
-
-        inProgress();
-        if(PlanMementoflag == 0)
-          storeInDB(arg,PlanMementoflag);
-
-        if(PlanMementoflag == 1)
-          storeInDB(arg,PlanMementoflag);
       }
 
       void
-      storeInDB(const IMC::Message* arg, int& PlanMementoflag)
+      storeInDB(const IMC::Message* arg, int data_type)
       {
         const IMC::PlanSpecification* plan_spec = 0;
         const IMC::PlanMemento* plan_mem = 0;
-
-        if(PlanMementoflag == 0)
-        {
-          plan_spec = static_cast<const IMC::PlanSpecification*>(arg);
-          PlanInfoParser(plan_spec, m_plan_info, resolveSystemId(plan_spec->getSource()));
-        }
-
-        if(PlanMementoflag == 1)
-        {
-          plan_mem = static_cast<const IMC::PlanMemento*>(arg);
-          PlanInfoParser(plan_mem, m_plan_info, resolveSystemId(plan_mem->getSource()));
-        }
-
         Database::Blob plan_data(m_plan_info.plan_size);
-        if(PlanMementoflag == 0)
-          DataParser(plan_spec, m_plan_info, plan_data);
 
-        if(PlanMementoflag == 1)
-          DataParser(plan_mem, m_plan_info, plan_data);
+        switch( data_type )
+        {
+          case DT_PLAN:
+            plan_spec = static_cast<const IMC::PlanSpecification*>(arg);
+            PlanInfoParser(plan_spec, m_plan_info, resolveSystemId(plan_spec->getSource()));
+            DataParser(plan_spec, m_plan_info, plan_data);
+            break;
+          case DT_MEMENTO:
+            plan_mem = static_cast<const IMC::PlanMemento*>(arg);
+            PlanInfoParser(plan_mem, m_plan_info, resolveSystemId(plan_mem->getSource()));
+            DataParser(plan_mem, m_plan_info, plan_data);
+            break;
+          default:
+            break;
+        }
 
         m_db->beginTransaction();
 
         int count = 0;
         try
         {
-          *m_delete_stmt[PlanMementoflag] << m_plan_info.plan_id;
-          m_delete_stmt[PlanMementoflag]->execute(&count);
-          m_delete_stmt[PlanMementoflag]->reset();
+          *m_delete_stmt[data_type] << m_plan_info.plan_id;
+          m_delete_stmt[data_type]->execute(&count);
+          m_delete_stmt[data_type]->reset();
 
-          *m_insert_stmt[PlanMementoflag] << m_plan_info.plan_id
-                                          << m_plan_info.change_time
-                                          << m_plan_info.change_sid
-                                          << m_plan_info.change_sname
-                                          << m_plan_info.md5
-                                          << plan_data;
-          m_insert_stmt[PlanMementoflag]->execute();
-          m_insert_stmt[PlanMementoflag]->reset();
-          onChange(m_plan_info.change_time, m_plan_info.change_sid, m_plan_info.change_sname, PlanMementoflag);
+          *m_insert_stmt[data_type] << m_plan_info.plan_id
+                                    << m_plan_info.change_time
+                                    << m_plan_info.change_sid
+                                    << m_plan_info.change_sname
+                                    << m_plan_info.md5
+                                    << plan_data;
+          m_insert_stmt[data_type]->execute();
+          m_insert_stmt[data_type]->reset();
+          onChange(m_plan_info.change_time, m_plan_info.change_sid, m_plan_info.change_sname, data_type);
         }
         catch (std::runtime_error& e)
         {
@@ -447,33 +464,18 @@ namespace Plan
         m_db->commit();
 
         m_reply.arg.set(m_plan_info);
-        if(PlanMementoflag == 0)
-          onSuccess(count ? DTR("OK Plan (updated)") : DTR("OK Plan (new entry)"), PlanMementoflag);
+        switch( data_type )
+        {
+          case DT_PLAN:
+            onSuccess(count ? DTR("OK Plan (updated)") : DTR("OK Plan (new entry)"), data_type);
+            break;
+          case DT_MEMENTO:
+            onSuccess(count ? DTR("OK Memento (updated)") : DTR("OK Memento (new entry)"), data_type);
+            break;
+          default:
+            break;
+        }
 
-        if(PlanMementoflag == 1)
-          onSuccess(count ? DTR("OK Memento (updated)") : DTR("OK Memento (new entry)"), PlanMementoflag);
-
-      }
-
-      void
-      checkOperationType(const IMC::PlanDB& req, int& PlanMementoflag)
-      {
-        if(req.dt == IMC::PlanDB::DBDT_PLAN)
-          PlanMementoflag = 0;
-
-        if(req.dt == IMC::PlanDB::DBDT_MEMENTO)
-          PlanMementoflag = 1;
-      }
-
-      bool
-      checkAssociatedMemento(const IMC::PlanDB& req)
-      {
-        int memento_table = 1;
-        *m_get_stmt[memento_table] << req.plan_id;
-
-        bool found = m_get_stmt[memento_table]->execute();
-
-        return found;
       }
 
       void
@@ -485,13 +487,9 @@ namespace Plan
           return;
         }
 
-        // flag = -1 - Plan Invalid
-        // flag = 0 - Plan specification parsed
-        // flag = 1 - Plan memento parsed
-        int PlanMementoflag = -1;
-        checkOperationType(req,PlanMementoflag);
+        int data_type = checkOperationType(req);
 
-        if (PlanMementoflag == -1)
+        if (data_type == -1)
         {
           inf("undefined operation type");
           return;
@@ -505,9 +503,9 @@ namespace Plan
         try
         {
           // If delete plan, also delete memento associated (if exists)
-          if (PlanMementoflag == 0 && checkAssociatedMemento(req))
+          if (data_type == 0 && checkAssociatedMemento(req))
           {
-            for (int i = 0; i < TT_Plans; i++)
+            for (int i = 0; i < DT_TOTAL; i++)
             {
               *m_delete_stmt[i] << req.plan_id;
               m_delete_stmt[i]->execute(&count);
@@ -515,22 +513,22 @@ namespace Plan
                 onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), i);
             }
           }
-          else if (PlanMementoflag == 0 && !checkAssociatedMemento(req))
+          else if (data_type == 0 && !checkAssociatedMemento(req))
           {
-            *m_delete_stmt[PlanMementoflag] << req.plan_id;
-            m_delete_stmt[PlanMementoflag]->execute(&count);
+            *m_delete_stmt[DT_PLAN] << req.plan_id;
+            m_delete_stmt[DT_PLAN]->execute(&count);
 
             if (count > 0)
-              onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), PlanMementoflag);
+              onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), data_type);
           }
           // If delete memento, only delete memento
-          if (PlanMementoflag == 1)
+          if (data_type == 1)
           {
-            *m_delete_stmt[PlanMementoflag] << req.plan_id;
-            m_delete_stmt[PlanMementoflag]->execute(&count);
+            *m_delete_stmt[DT_MEMENTO] << req.plan_id;
+            m_delete_stmt[DT_MEMENTO]->execute(&count);
 
             if (count > 0)
-              onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), PlanMementoflag);
+              onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), data_type);
           }
         }
         catch (std::runtime_error& e)
@@ -545,7 +543,7 @@ namespace Plan
         if (!count)
           onFailure(DTR("undefined plan"));
         else
-          onSuccess(DTR("OK"), PlanMementoflag);
+          onSuccess(DTR("OK"), data_type);
       }
 
       void
@@ -557,22 +555,17 @@ namespace Plan
           return;
         }
 
-        // flag = -1 - Plan Invalid
-        // flag = 0 - Plan specification parsed
-        // flag = 1 - Plan memento parsed
-        int PlanMementoflag = -1;
-        checkOperationType(req,PlanMementoflag);
+        int data_type = checkOperationType(req);
 
-        if (PlanMementoflag == -1)
+        if (data_type == -1)
         {
           inf("undefined operation type");
           return;
         }
 
-        *m_get_stmt[PlanMementoflag] << req.plan_id;
+        *m_get_stmt[data_type] << req.plan_id;
 
-        bool found = m_get_stmt[PlanMementoflag]->execute();
-
+        bool found = m_get_stmt[data_type]->execute();
 
         if (!found)
         {
@@ -581,27 +574,30 @@ namespace Plan
         else
         {
           Database::Blob data;
-          *m_get_stmt[PlanMementoflag] >> data;
+          *m_get_stmt[data_type] >> data;
 
           IMC::PlanSpecification* spec = new IMC::PlanSpecification;
           IMC::PlanMemento* mem = new IMC::PlanMemento;
-          if (PlanMementoflag == 0)
+          switch (data_type)
           {
-            spec->deserializeFields((const uint8_t*)&data[0], data.size());
-            m_reply.arg.set(spec);
-          }
-          if (PlanMementoflag == 1)
-          {
-            mem->deserializeFields((const uint8_t*)&data[0], data.size());
-            m_reply.arg.set(mem);
+            case DT_PLAN:
+              spec->deserializeFields((const uint8_t*)&data[0], data.size());
+              m_reply.arg.set(spec);
+              break;
+            case DT_MEMENTO:
+              mem->deserializeFields((const uint8_t*)&data[0], data.size());
+              m_reply.arg.set(mem);
+              break;
+            default:
+              break;
           }
 
-          onSuccess(DTR("OK"), PlanMementoflag);
+          onSuccess(DTR("OK"), data_type);
           delete spec;
           delete mem;
         }
 
-        m_get_stmt[PlanMementoflag]->reset();
+        m_get_stmt[data_type]->reset();
       }
 
       void
@@ -613,21 +609,17 @@ namespace Plan
           return;
         }
 
-        // flag = -1 - Plan Invalid
-        // flag = 0 - Plan specification parsed
-        // flag = 1 - Plan memento parsed
-        int PlanMementoflag = -1;
-        checkOperationType(req,PlanMementoflag);
+        int data_type = checkOperationType(req);
 
-        if (PlanMementoflag == -1)
+        if (data_type == -1)
         {
           inf("undefined operation type");
           return;
         }
 
-        *m_query_stmt[PlanMementoflag] << req.plan_id;
+        *m_query_stmt[data_type] << req.plan_id;
 
-        bool found = m_query_stmt[PlanMementoflag]->execute();
+        bool found = m_query_stmt[data_type]->execute();
 
         if (!found)
         {
@@ -636,18 +628,17 @@ namespace Plan
         }
 
         m_plan_info.plan_id = req.plan_id;
-        *m_query_stmt[PlanMementoflag] >> m_plan_info.change_time
-                                       >> m_plan_info.change_sid
-                                       >> m_plan_info.change_sname
-                                       >> m_plan_info.md5
-                                       >> m_plan_info.plan_size;
-
+        *m_query_stmt[data_type] >> m_plan_info.change_time
+                                 >> m_plan_info.change_sid
+                                 >> m_plan_info.change_sname
+                                 >> m_plan_info.md5
+                                 >> m_plan_info.plan_size;
         m_reply.arg.set(m_plan_info);
 
-        for(int i = 0; i<TT_Plans; i++)
+        for(int i = 0; i < DT_TOTAL; i++)
           m_query_stmt[i]->reset();
 
-        onSuccess(DTR("OK"), PlanMementoflag);
+        onSuccess(DTR("OK"), data_type);
       }
 
       void
@@ -656,13 +647,9 @@ namespace Plan
         inProgress();
         m_db->beginTransaction();
 
-        // flag = -1 - Plan Invalid
-        // flag = 0 - Plan specification parsed
-        // flag = 1 - Plan memento parsed
-        int PlanMementoflag = -1;
-        checkOperationType(req,PlanMementoflag);
+        int data_type = checkOperationType(req);
 
-        if (PlanMementoflag == -1)
+        if (data_type == -1)
         {
           inf("undefined operation type");
           return;
@@ -672,9 +659,9 @@ namespace Plan
         uint16_t sid = req.getSource();
         try
         {
-          if(checkAssociatedMemento(req))
+          if (checkAssociatedMemento(req))
           {
-            for (int i = 0; i < TT_Plans; i++)
+            for (int i = 0; i < DT_TOTAL; i++)
             {
               m_delete_all_stmt[i]->execute(&count);
 
@@ -684,10 +671,9 @@ namespace Plan
           }
           else if (!checkAssociatedMemento(req))
           {
-            int plan_table = 0;
-            m_delete_all_stmt[plan_table]->execute(&count);
+            m_delete_all_stmt[DT_PLAN]->execute(&count);
             if (count > 0)
-              onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), plan_table);
+              onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), data_type);
           }
         }
         catch (std::runtime_error& e)
@@ -698,20 +684,15 @@ namespace Plan
         }
 
         m_db->commit();
-        onSuccess(DTR("OK"), PlanMementoflag);
+        onSuccess(DTR("OK"), data_type);
       }
 
       void
       getDatabaseState(const IMC::PlanDB& req)
       {
+        int data_type = checkOperationType(req);
 
-        // flag = -1 - Plan Invalid
-        // flag = 0 - Plan specification parsed
-        // flag = 1 - Plan memento parsed
-        int PlanMementoflag = -1;
-        checkOperationType(req,PlanMementoflag);
-
-        if (PlanMementoflag == -1)
+        if (data_type == -1)
         {
           inf("undefined operation type");
           return;
@@ -727,16 +708,16 @@ namespace Plan
 
         IMC::MessageList<PlanDBInformation>* plandbinfo = &state->plans_info;
 
-        while (m_iterator_stmt[PlanMementoflag]->execute())
+        while (m_iterator_stmt[data_type]->execute())
         {
           IMC::PlanDBInformation* pinfo = new IMC::PlanDBInformation;
 
-          *m_iterator_stmt[PlanMementoflag] >> pinfo->plan_id
-                                            >> pinfo->change_time
-                                            >> pinfo->change_sid
-                                            >> pinfo->change_sname
-                                            >> pinfo->md5
-                                            >> pinfo->plan_size;
+          *m_iterator_stmt[data_type] >> pinfo->plan_id
+                                      >> pinfo->change_time
+                                      >> pinfo->change_sid
+                                      >> pinfo->change_sname
+                                      >> pinfo->md5
+                                      >> pinfo->plan_size;
 
           md5sum.update((const uint8_t*)&pinfo->md5[0], 16); // the MD5 of all MD5s ordered by plan_id
           state->plan_size += pinfo->plan_size;
@@ -747,20 +728,20 @@ namespace Plan
           delete pinfo;
         }
 
-        m_iterator_stmt[PlanMementoflag]->reset();
+        m_iterator_stmt[data_type]->reset();
 
         // Finalized MD5 digest
         state->md5.resize(16);
         md5sum.finalize((uint8_t*)&state->md5[0]);
 
-        m_lastchange_query_stmt[PlanMementoflag]->execute();
-        *m_lastchange_query_stmt[PlanMementoflag] >> state->change_time
-                                                  >> state->change_sid
-                                                  >> state->change_sname;
-        m_lastchange_query_stmt[PlanMementoflag]->reset();
+        m_lastchange_query_stmt[data_type]->execute();
+        *m_lastchange_query_stmt[data_type] >> state->change_time
+                                            >> state->change_sid
+                                            >> state->change_sname;
+        m_lastchange_query_stmt[data_type]->reset();
 
         m_reply.arg.set(*state);
-        onSuccess(DTR("OK"), PlanMementoflag);
+        onSuccess(DTR("OK"), data_type);
 
         delete state;
       }
@@ -789,7 +770,7 @@ namespace Plan
       }
 
       void
-      answer(uint8_t type, const char* desc, int& PlanMementoflag)
+      answer(uint8_t type, const char* desc, int& data_type)
       {
         m_reply.type = type;
         m_reply.info = desc;
@@ -801,10 +782,10 @@ namespace Plan
           case IMC::PlanDB::DBOP_DEL:
           case IMC::PlanDB::DBOP_CLEAR:
             {
-              if (type == IMC::PlanDB::DBT_SUCCESS && PlanMementoflag == 0)
+              if (type == IMC::PlanDB::DBT_SUCCESS && data_type == 0)
                 inf("%s (%s) -- %s", DTR(c_op_desc[m_reply.op]),
                     m_reply.plan_id.c_str(), desc);
-              else if (type == IMC::PlanDB::DBT_SUCCESS && PlanMementoflag == 1)
+              else if (type == IMC::PlanDB::DBT_SUCCESS && data_type == 1)
                 inf("%s (%s) -- %s", DTR(c_op_desc[m_reply.op + 7]),
                     m_reply.plan_id.c_str(), desc);
             }
@@ -830,9 +811,9 @@ namespace Plan
       }
 
       void
-      onSuccess(const char* msg, int& PlanMementoflag )
+      onSuccess(const char* msg, int& data_type )
       {
-        answer(IMC::PlanDB::DBT_SUCCESS, msg, PlanMementoflag);
+        answer(IMC::PlanDB::DBT_SUCCESS, msg, data_type);
       }
 
       void
