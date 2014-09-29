@@ -215,7 +215,7 @@ namespace Plan
           IMC::PlanDB pdb;
           pdb.op = IMC::PlanDB::DBOP_SET;
           pdb.type = IMC::PlanDB::DBT_REQUEST;
-          pdb.plan_id = spec.plan_id;
+          pdb.object_id = spec.plan_id;
           pdb.arg.set(spec);
           pdb.request_id = 0;
 
