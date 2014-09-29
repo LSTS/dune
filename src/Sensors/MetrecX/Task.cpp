@@ -427,9 +427,9 @@ namespace Sensors
             throw RestartNeeded(DTR("failed to disable salinity calculation"), 5);
         }
 
-        if(calculation_channels[1])
+        if (calculation_channels[1])
         {
-          if(!sendCommand("SET SCAN SV\r", ">SET SCAN SV\r\n"))
+          if (!sendCommand("SET SCAN SV\r", ">SET SCAN SV\r\n"))
             throw RestartNeeded(DTR("failed to set sv calculation"), 5);
 
           strcpy(m_sconfig[i + 2].name,"SV");
