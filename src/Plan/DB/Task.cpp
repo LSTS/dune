@@ -682,7 +682,7 @@ namespace Plan
               m_delete_all_stmt[DT_MEMENTO]->execute(&count);
 
               if (count > 0)
-                onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_PLAN);
+                onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);
               count = 0;
 
               break;
@@ -691,7 +691,7 @@ namespace Plan
               m_delete_all_stmt[DT_MEMENTO]->execute(&count);
 
               if (count > 0)
-               onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_PLAN);
+               onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);
 
               count = 0;
               break;
