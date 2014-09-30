@@ -80,7 +80,7 @@ namespace DUNE
     {
       if (m_act_state.state != IMC::EntityActivationState::EAS_INACTIVE)
       {
-        m_owner->spew("task is not inactive");
+        m_owner->spew("entity is not inactive");
 
         if ((m_act_state.state == IMC::EntityActivationState::EAS_DEACT_IP)
             || (m_act_state.state == IMC::EntityActivationState::EAS_DEACT_DONE)
@@ -110,7 +110,7 @@ namespace DUNE
     {
       if (m_act_state.state != IMC::EntityActivationState::EAS_ACTIVE)
       {
-        m_owner->spew("task is not active");
+        m_owner->spew("entity is not active");
 
         if ((m_act_state.state == IMC::EntityActivationState::EAS_DEACT_FAIL)
             || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_IP)
