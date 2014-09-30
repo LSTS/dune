@@ -209,6 +209,13 @@ main(int argc, char** argv)
     pdb.dt = IMC::PlanDB::DBDT_PLAN;
     pdb.op = IMC::PlanDB::DBOP_GET_STATE;
     sendMsg(pdb, sock, dest, port);
+
+    IMC::PlanDB pdb_mem;
+    pdb_mem.type = IMC::PlanDB::DBT_REQUEST;
+    pdb_mem.dt = IMC::PlanDB::DBDT_MEMENTO;
+    pdb_mem.op = IMC::PlanDB::DBOP_GET_STATE;
+    sendMsg(pdb_mem, sock, dest, port);
+
     return 0;
   }
 
