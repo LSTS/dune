@@ -736,21 +736,18 @@ namespace Vision
 
           if (m_args.camera_cfg && m_cfg_dirty)
           {
+            if (getEntityState() != IMC::EntityState::ESTA_BOOT)
+              setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+
             try
             {
               setProperties();
               m_cfg_dirty = false;
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-              inf(DTR("successfully configured camera"));
+              inf("successfully configured camera");
             }
             catch (std::runtime_error& e)
             {
-              if (getEntityState() != IMC::EntityState::ESTA_FAULT)
-              {
-                setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_COM_ERROR);
-                err("%s", e.what());
-              }
-              waitForMessages(0.2);
               continue;
             }
           }
