@@ -28,9 +28,7 @@
 #ifndef PLAN_DB_HPP_INCLUDED_
 #define PLAN_DB_HPP_INCLUDED_
 
-
 #include <DUNE/DUNE.hpp>
-#include "DB.hpp"
 
 namespace Plan
 {
