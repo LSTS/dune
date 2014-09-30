@@ -418,18 +418,28 @@ namespace Plan
       {
         const IMC::PlanSpecification* plan_spec = 0;
         const IMC::PlanMemento* plan_mem = 0;
-        Database::Blob plan_data(m_object_info.object_size);
 
-        switch( data_type )
+        switch(data_type)
         {
           case DT_PLAN:
             plan_spec = static_cast<const IMC::PlanSpecification*>(arg);
             PlanInfoParser(plan_spec, m_object_info, resolveSystemId(plan_spec->getSource()));
-            DataParser(plan_spec, m_object_info, plan_data);
             break;
           case DT_MEMENTO:
             plan_mem = static_cast<const IMC::PlanMemento*>(arg);
             PlanInfoParser(plan_mem, m_object_info, resolveSystemId(plan_mem->getSource()));
+            break;
+          default:
+            break;
+        }
+
+        Database::Blob plan_data(m_object_info.object_size);
+        switch(data_type)
+        {
+          case DT_PLAN:
+            DataParser(plan_spec, m_object_info, plan_data);
+            break;
+          case DT_MEMENTO:
             DataParser(plan_mem, m_object_info, plan_data);
             break;
           default:
@@ -464,7 +474,7 @@ namespace Plan
         m_db->commit();
 
         m_reply.arg.set(m_object_info);
-        switch( data_type )
+        switch(data_type)
         {
           case DT_PLAN:
             onSuccess(count ? DTR("OK Plan (updated)") : DTR("OK Plan (new entry)"), data_type);
