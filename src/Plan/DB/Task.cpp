@@ -73,7 +73,8 @@ namespace Plan
                                            INSERT_STATEMENT("Memento") };
 
     static const char* c_delete_stmt[] = { DELETE_STATEMENT("Plan", "plan_id"),
-                                           DELETE_STATEMENT("Memento", "id") };
+                                           DELETE_STATEMENT("Memento", "id"),
+                                           DELETE_STATEMENT("MEMENTO", "plan_id") };
 
     static const char* c_iterator_stmt[] = { ITERATOR_STATEMENT("Plan", "plan_id"),
                                              ITERATOR_STATEMENT("Memento", "id") };
@@ -82,7 +83,8 @@ namespace Plan
                                           QUERY_STATEMENT("Memento", "id") };
 
     static const char* c_get_stmt[] = { GET_STATEMENT("Plan", "plan_id"),
-                                        GET_STATEMENT("Memento", "id") };
+                                        GET_STATEMENT("Memento", "id"),
+                                        GET_STATEMENT("Memento", "plan_id") };
 
     static const char* c_delete_all_stmt[] = { DELETE_ALL_STATEMENT("Plan"),
                                                DELETE_ALL_STATEMENT("Memento") };
@@ -121,8 +123,12 @@ namespace Plan
       DT_PLAN = 0,
       //! Memento data type
       DT_MEMENTO = 1,
+      //! Associated Memento
+      DT_ASSOC_MEMENTO = 2,
       //! Total tables
-      DT_TOTAL = 2
+      DT_TOTAL = 2,
+      //! Maximum Querys
+      DT_MAX_QUERYS = 3
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -137,10 +143,10 @@ namespace Plan
       IMC::PlanDBInformation m_object_info;
       // Statements
       Database::Statement* m_insert_stmt[DT_TOTAL];
-      Database::Statement* m_delete_stmt[DT_TOTAL];
+      Database::Statement* m_delete_stmt[DT_MAX_QUERYS];
       Database::Statement* m_iterator_stmt[DT_TOTAL];
       Database::Statement* m_query_stmt[DT_TOTAL];
-      Database::Statement* m_get_stmt[DT_TOTAL];
+      Database::Statement* m_get_stmt[DT_MAX_QUERYS];
       Database::Statement* m_delete_all_stmt[DT_TOTAL];
       Database::Statement* m_lastchange_initial_insert_stmt[DT_TOTAL];
       Database::Statement* m_lastchange_update_stmt[DT_TOTAL];
@@ -318,7 +324,7 @@ namespace Plan
       }
 
       void
-      onChange(double time, uint16_t sid, const std::string& sname, int& index)
+      onChange(double time, uint16_t sid, const std::string& sname, int index)
       {
         // Update LastChange table information.
         int count = 0;
@@ -348,16 +354,6 @@ namespace Plan
             return DT_NONE;
             break;
         }
-      }
-
-      bool
-      checkAssociatedMemento(const IMC::PlanDB& req)
-      {
-        *m_get_stmt[DT_MEMENTO] << req.object_id;
-
-        bool found = m_get_stmt[DT_MEMENTO]->execute();
-
-        return found;
       }
 
       void
@@ -394,7 +390,7 @@ namespace Plan
             return;
           }
           arg = static_cast<const IMC::Message*>(ps);
-          storeInDB(arg, DT_PLAN );
+          storeInDB(arg, DT_PLAN);
         }
 
         if (m->getId() == DUNE_IMC_PLANMEMENTO)
@@ -513,23 +509,26 @@ namespace Plan
         try
         {
           // If delete plan, also delete memento associated (if exists)
-          if (data_type == DT_PLAN && checkAssociatedMemento(req))
+          if (data_type == DT_PLAN)
           {
-            for (int i = 0; i < DT_TOTAL; i++)
-            {
-              *m_delete_stmt[i] << req.object_id;
-              m_delete_stmt[i]->execute(&count);
-              if (count>0)
-                onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), i);
-            }
-          }
-          else if (data_type == DT_PLAN && !checkAssociatedMemento(req))
-          {
+            // Delete Plan
             *m_delete_stmt[DT_PLAN] << req.object_id;
             m_delete_stmt[DT_PLAN]->execute(&count);
+            if (count > 0)
+              onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_PLAN);
+
+            count = 0;
+
+            // Delete associated Mementos if exists
+            *m_get_stmt[DT_ASSOC_MEMENTO] << req.object_id;
+            *m_delete_stmt[DT_ASSOC_MEMENTO] << req.object_id;
+            while (m_get_stmt[DT_ASSOC_MEMENTO]->execute())
+              m_delete_stmt[DT_ASSOC_MEMENTO]->execute(&count);
 
             if (count > 0)
-              onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), data_type);
+              onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);
+
+              count = 0;
           }
           // If delete memento, only delete memento
           if (data_type == DT_MEMENTO)
@@ -538,7 +537,7 @@ namespace Plan
             m_delete_stmt[DT_MEMENTO]->execute(&count);
 
             if (count > 0)
-              onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), data_type);
+              onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);
           }
         }
         catch (std::runtime_error& e)
@@ -665,25 +664,39 @@ namespace Plan
           return;
         }
 
-        int count;
+        int count = 0;
         uint16_t sid = req.getSource();
         try
         {
-          if (checkAssociatedMemento(req))
+
+          switch(data_type)
           {
-            for (int i = 0; i < DT_TOTAL; i++)
-            {
-              m_delete_all_stmt[i]->execute(&count);
+            // If delete plan database, also delete memento database
+            case DT_PLAN:
+              m_delete_all_stmt[DT_PLAN]->execute(&count);
 
               if (count > 0)
-                onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), i);
-            }
-          }
-          else if (!checkAssociatedMemento(req))
-          {
-            m_delete_all_stmt[DT_PLAN]->execute(&count);
-            if (count > 0)
-              onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), data_type);
+                onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_PLAN);
+              count = 0;
+
+              m_delete_all_stmt[DT_MEMENTO]->execute(&count);
+
+              if (count > 0)
+                onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_PLAN);
+              count = 0;
+
+              break;
+            // If delete memento database, only delete memento database
+            case DT_MEMENTO:
+              m_delete_all_stmt[DT_MEMENTO]->execute(&count);
+
+              if (count > 0)
+               onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_PLAN);
+
+              count = 0;
+              break;
+            default:
+              break;
           }
         }
         catch (std::runtime_error& e)
