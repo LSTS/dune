@@ -204,6 +204,7 @@ main(int argc, char** argv)
     if (msg->getId() == DUNE_IMC_PLANSPECIFICATION)
     {
       IMC::PlanSpecification mission_spec;
+      mission_spec = *static_cast<IMC::PlanSpecification*>(msg);
       mission_spec.toText(std::cerr);
       cmd.arg.set(mission_spec);
       cmd.plan_id = mission_spec.plan_id;
@@ -211,6 +212,7 @@ main(int argc, char** argv)
     else if (msg->getId() == DUNE_IMC_PLANMEMENTO)
     {
       IMC::PlanMemento pmem;
+      pmem = *static_cast<IMC::PlanMemento*>(msg);
       pmem.toText(std::cerr);
       cmd.arg.set(pmem);
       cmd.plan_id = pmem.id;
