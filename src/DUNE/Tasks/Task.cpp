@@ -92,6 +92,7 @@ namespace DUNE
       bind<IMC::SetEntityParameters>(this);
       bind<IMC::PushEntityParameters>(this);
       bind<IMC::PopEntityParameters>(this);
+      bind<IMC::QueryEntityState>(this);
     }
 
     unsigned int
@@ -127,6 +128,14 @@ namespace DUNE
     Task::reportEntityState(void)
     {
       m_entity->reportState();
+      onReportEntityState();
+    }
+
+    void
+    Task::consume(const IMC::QueryEntityState* msg)
+    {
+      (void)msg;
+      // Make sure onReportEntityState() is called for tasks that report entity states manually.
       onReportEntityState();
     }
 

@@ -784,6 +784,11 @@ namespace DUNE
         m_recipient->bind(message_id, consumer);
       }
 
+      //! Consume QueryEntityState messages and reply accordingly.
+      //! @param[in] msg QueryEntityState message.
+      void
+      consume(const IMC::QueryEntityState* msg);
+
       void
       consume(const IMC::QueryEntityParameters* msg);
 
