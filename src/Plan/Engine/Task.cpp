@@ -308,8 +308,8 @@ namespace Plan
         }
         else if (pdb->op != IMC::PlanDB::DBT_REQUEST)
         {
-          if ((pdb->getDestination() != getSystemId()) &&
-              (pdb->getDestinationEntity() != getEntityId()))
+          if ((pdb->getDestination() == getSystemId()) &&
+              (pdb->getDestinationEntity() == getEntityId()))
           {
             if ((pdb->type == IMC::PlanDB::DBT_SUCCESS) ||
                 (pdb->type == IMC::PlanDB::DBT_IN_PROGRESS))
