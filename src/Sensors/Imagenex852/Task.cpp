@@ -314,12 +314,20 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
-        m_uart = new SerialPort(m_args.uart_dev,
-                                c_uart_baud,
-                                SerialPort::SP_PARITY_NONE,
-                                SerialPort::SP_STOPBITS_1,
-                                SerialPort::SP_DATABITS_8,
-                                true);
+        try
+        {
+          m_uart = new SerialPort(m_args.uart_dev,
+                                  c_uart_baud,
+                                  SerialPort::SP_PARITY_NONE,
+                                  SerialPort::SP_STOPBITS_1,
+                                  SerialPort::SP_DATABITS_8,
+                                  true);
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
+
         m_wdog.setTop(2.0);
 
         if (m_args.pattern_filter)
