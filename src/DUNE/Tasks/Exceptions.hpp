@@ -52,8 +52,7 @@ namespace DUNE
       //! Constructor.
       //! @param[in] msg message.
       //! @param[in] delay amount of seconds to wait before restarting
-      //! @param[in] error true if an error should be emitted, false otherwise.
-      //! the task.
+      //! @param[in] silent true if an error should be emitted, false otherwise.
       RestartNeeded(const std::string& msg, unsigned delay, bool error = true):
         m_msg(msg),
         m_delay(delay),
