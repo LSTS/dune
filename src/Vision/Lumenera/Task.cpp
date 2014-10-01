@@ -410,7 +410,8 @@ namespace Vision
         m_file_count = 0;
         m_volume_count = 0;
 
-        changeVolume();
+        if (m_args.camera_capt)
+          changeVolume();
 
         setStrobePower(true);
 
