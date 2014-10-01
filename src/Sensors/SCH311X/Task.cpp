@@ -98,7 +98,7 @@ namespace Sensors
         for (unsigned i = 0; i < c_max_temps; ++i)
         {
           if (!m_paths[i].isFile())
-            throw std::runtime_error(String::str(DTR("file '%s' doesn't exist"), m_paths[i].c_str()));
+            throw RestartNeeded(String::str(DTR("file '%s' doesn't exist"), m_paths[i].c_str()), 30);
         }
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
