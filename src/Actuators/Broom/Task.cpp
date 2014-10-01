@@ -252,9 +252,16 @@ namespace Actuators
       void
       onResourceAcquisition(void)
       {
-        m_proto.setUART(m_args.uart_dev);
-        m_proto.open();
-        m_proto.requestVersion();
+        try
+        {
+          m_proto.setUART(m_args.uart_dev);
+          m_proto.open();
+          m_proto.requestVersion();
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
       }
 
       void
