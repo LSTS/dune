@@ -35,7 +35,7 @@
 //! IMC version string.
 #define DUNE_IMC_CONST_VERSION "5.4.3"
 //! Git repository information.
-#define DUNE_IMC_CONST_GIT_INFO "2014-09-29 9a33934  (HEAD, origin/feature/maneuver_memento, feature/maneuver_memento)"
+#define DUNE_IMC_CONST_GIT_INFO "2014-10-02 3959487  (HEAD, feature/maneuver_memento)"
 //! MD5 sum of XML specification file.
 #define DUNE_IMC_CONST_MD5 "a01668b6b58c5a2c92f4dfb2ebf02024"
 //! Synchronization number.
