@@ -700,7 +700,7 @@ namespace Maneuver
             // Model initialization
             debug("Formation leader model initialization");
             // - State  and control parameters initialization
-            m_model = new DUNE::Simulation::UAVSimulation(
+            m_model = new DUNE::Simulation::UAVSimulation(*this,
                 m_position, m_velocity, m_args.c_bank, m_args.c_speed);
             // - Commands initialization
             m_model->command(0, m_speed_cmd_leader, -m_alt_cmd_leader);
@@ -813,7 +813,7 @@ namespace Maneuver
                 continue;
 
               //! - State  and control parameters initialization
-              model = new DUNE::Simulation::UAVSimulation(
+              model = new DUNE::Simulation::UAVSimulation(*this,
                   m_formation_pos.get(0, 2, ind_uav, ind_uav).vertCat(m_position.get(3, 5, 0, 0)),
                   m_velocity, m_args.c_bank, m_args.c_speed);
               //! - Simulation type
