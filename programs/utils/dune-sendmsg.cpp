@@ -94,6 +94,9 @@ main(int argc, char** argv)
   if (strcmp(argv[3], "Abort") == 0)
   {
     msg = new IMC::Abort;
+
+    if (argc == 5)
+      msg->setDestination(atoi(argv[4]));
   }
 
   if (strcmp(argv[3], "AcousticMessage") == 0)
