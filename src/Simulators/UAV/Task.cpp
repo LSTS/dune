@@ -151,12 +151,12 @@ namespace Simulators
         .defaultValue("")
         .description("Emulated system id.");
 
-        param("Stream Speed North", m_args.wx)
+        param("Stream Speed to North", m_args.wx)
         .units(Units::MeterPerSecond)
         .defaultValue("0.0")
         .description("Wind speed towards the North in the NED frame");
 
-        param("Stream Speed East", m_args.wy)
+        param("Stream Speed to East", m_args.wy)
         .units(Units::MeterPerSecond)
         .defaultValue("0.0")
         .description("Wind speed towards the East in the NED frame");
