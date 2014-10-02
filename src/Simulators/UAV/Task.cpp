@@ -621,52 +621,16 @@ namespace Simulators
       {
         spew("Consuming DesiredRoll");
 
-        // Filter command by systems and entities.
-        bool matched = true;
-        if (m_filtered_sys[0].size() > 0)
-        {
-          matched = false;
-          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[0].begin();
-          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[0].begin();
-          for (; itr_sys != m_filtered_sys[0].end(); ++itr_sys)
-          {
-            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
-              matched = true;
-            ++itr_ent;
-          }
-        }
-        // This system and entity are not listed to be passed.
-        if (!matched)
-        {
-          trace("Bank command rejected.");
-          trace("DesiredRoll received from system '%s' and entity '%s'.",
-              resolveSystemId(msg->getSource()),
-              resolveEntity(msg->getSourceEntity()).c_str());
+        // Check if the command source is valid, if the simulator is active,
+        // and if the commanded value is a real value
+        bool b_source_id = false;
+        if (!commandFilter(msg, &b_source_id))
           return;
-        }
-
-        //! Check if system is active
-        if (!isActive())
-        {
-          trace("Bank command rejected - Simulation not active - Missing GPS-Fix!");
-          return;
-        }
-
-        //! Check that the command is a real value
-        if (Math::isNaN(msg->value))
-        {
-          war("Bank command rejected - Commanded value is not a number!");
-          return;
-        }
 
         m_model->commandBank(msg->value);
 
         // ========= Debug ===========
-        spew("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
-        spew("DesiredRoll received from system '%s' and entity '%s'.",
-            resolveSystemId(msg->getSource()),
-            resolveEntity(msg->getSourceEntity()).c_str());
+        commandPrintOut(msg, &(msg->value), &b_source_id);
       }
 
       void
@@ -674,52 +638,16 @@ namespace Simulators
       {
         spew("Consuming DesiredSpeed");
 
-        // Filter command by systems and entities.
-        bool matched = true;
-        if (m_filtered_sys[1].size() > 0)
-        {
-          matched = false;
-          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[1].begin();
-          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[1].begin();
-          for (; itr_sys != m_filtered_sys[1].end(); ++itr_sys)
-          {
-            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
-              matched = true;
-            ++itr_ent;
-          }
-        }
-        // This system and entity are not listed to be passed.
-        if (!matched)
-        {
-          trace("Speed command rejected.");
-          trace("DesiredSpeed received from system '%s' and entity '%s'.",
-              resolveSystemId(msg->getSource()),
-              resolveEntity(msg->getSourceEntity()).c_str());
+        // Check if the command source is valid, if the simulator is active,
+        // and if the commanded value is a real value
+        bool b_source_id = false;
+        if (!commandFilter(msg, &b_source_id))
           return;
-        }
-
-        //! Check if system is active
-        if (!isActive())
-        {
-          trace("Speed command rejected - Simulation not active - Missing GPS-Fix!");
-          return;
-        }
-
-        //! Check that the command is a real value
-        if (Math::isNaN(msg->value))
-        {
-          war("Speed command rejected - Commanded value is not a number!");
-          return;
-        }
 
         m_model->commandAirspeed(msg->value);
 
         // ========= Debug ===========
-        spew("Speed command received (%1.2fm/s)", msg->value);
-        spew("DesiredSpeed received from system '%s' and entity '%s'.",
-            resolveSystemId(msg->getSource()),
-            resolveEntity(msg->getSourceEntity()).c_str());
+        commandPrintOut(msg, &(msg->value), &b_source_id);
       }
 
       void
@@ -727,44 +655,11 @@ namespace Simulators
       {
         spew("Consuming DesiredZ");
 
-        // Filter command by systems and entities.
-        bool matched = true;
-        if (m_filtered_sys[2].size() > 0)
-        {
-          matched = false;
-          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[2].begin();
-          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[2].begin();
-          for (; itr_sys != m_filtered_sys[2].end(); ++itr_sys)
-          {
-            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
-              matched = true;
-            ++itr_ent;
-          }
-        }
-        // This system and entity are not listed to be passed.
-        if (!matched)
-        {
-          trace("Altitude command rejected.");
-          trace("DesiredZ received from system '%s' and entity '%s'.",
-              resolveSystemId(msg->getSource()),
-              resolveEntity(msg->getSourceEntity()).c_str());
+        // Check if the command source is valid, if the simulator is active,
+        // and if the commanded value is a real value
+        bool b_source_id = false;
+        if (!commandFilter(msg, &b_source_id))
           return;
-        }
-
-        //! Check if system is active
-        if (!isActive())
-        {
-          trace("Altitude command rejected - Simulation not active - Missing GPS-Fix!");
-          return;
-        }
-
-        //! Check that the command is a real value
-        if (Math::isNaN(msg->value))
-        {
-          war("Altitude command rejected - Commanded value is not a number!");
-          return;
-        }
 
         double alt_cmd;
         if (msg->z_units == IMC::Z_HEIGHT)
@@ -776,127 +671,103 @@ namespace Simulators
         m_model->commandAlt(alt_cmd);
 
         // ========= Debug ===========
-        spew("Altitude command received (%1.2fm)", alt_cmd);
-        spew("DesiredZ received from system '%s' and entity '%s'.",
-            resolveSystemId(msg->getSource()),
-            resolveEntity(msg->getSourceEntity()).c_str());
+        commandPrintOut(msg, &(alt_cmd), &b_source_id);
       }
 
       void
       consume(const IMC::DesiredPitch* msg)
       {
-        //spew("Consuming DesiredPitch");
+        spew("Consuming DesiredPitch");
 
-        // Filter command by systems and entities.
-        bool matched = true;
-        if (m_filtered_sys[3].size() > 0)
-        {
-          matched = false;
-          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[3].begin();
-          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[3].begin();
-          for (; itr_sys != m_filtered_sys[3].end(); ++itr_sys)
-          {
-            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
-              matched = true;
-            ++itr_ent;
-          }
-        }
-        // This system and entity are not listed to be passed.
-        if (!matched)
-        {
-          trace("Pitch command rejected.");
-          trace("DesiredPitch received from system '%s' and entity '%s'.",
-              resolveSystemId(msg->getSource()),
-              resolveEntity(msg->getSourceEntity()).c_str());
+        // Check if the command source is valid, if the simulator is active,
+        // and if the commanded value is a real value
+        bool b_source_id = false;
+        if (!commandFilter(msg, &b_source_id))
           return;
-        }
-
-        //! Check if system is active
-        if (!isActive())
-        {
-          trace("Pitch command rejected - Simulation not active - Missing GPS-Fix!");
-          return;
-        }
-
-        //! Check that the command is a real value
-        if (Math::isNaN(msg->value))
-        {
-          war("Pitch command rejected - Commanded value is not a number!");
-          return;
-        }
 
         m_model->commandFPA(msg->value);
 
         // ========= Debug ===========
-        spew("Pitch command received (%1.2fm)", msg->value);
-        spew("DesiredPitch received from system '%s' and entity '%s'.",
-            resolveSystemId(msg->getSource()),
-            resolveEntity(msg->getSourceEntity()).c_str());
+        commandPrintOut(msg, &(msg->value), &b_source_id);
       }
 
-       /*
+      /*
       void
       consume(const IMC::SetServoPosition* msg)
       {
-        // Filter command by systems and entities.
-        bool matched = true;
-        if (m_filtered_sys[4].size() > 0)
-        {
-          matched = false;
-          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[4].begin();
-          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[4].begin();
-          for (; itr_sys != m_filtered_sys[4].end(); ++itr_sys)
-          {
-            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
-              matched = true;
-            ++itr_ent;
-          }
-        }
-        // This system and entity are not listed to be passed.
-        if (!matched)
-        {
-          trace("Servo command rejected.");
-          trace("SetServoPosition received from system '%s' and entity '%s'.",
-              resolveSystemId(msg->getSource()),
-              resolveEntity(msg->getSourceEntity()).c_str());
-          return;
-        }
+        spew("Consuming SetServoPosition");
 
-        //! Check if system is active
-        if (!isActive())
-        {
-          trace("Servo command rejected - Simulation not active - Missing GPS-Fix!");
+        // Check if the command source is valid, if the simulator is active,
+        // and if the commanded value is a real value
+        bool b_source_id = false;
+        if (!commandFilter(msg, &b_source_id))
           return;
-        }
-
-        //! Check that the command is a real value
-        if (Math::isNaN(msg->value))
-        {
-          war("Servo command rejected - Commanded value is not a number!");
-          return;
-        }
 
         m_servo_pos(msg->id) = msg->value;
+
         // ========= Debug ===========
-        spew("Servo command received (%1.2fm)", msg->value);
-        spew("SetServoPosition received from system '%s' and entity '%s'.",
-            resolveSystemId(msg->getSource()),
-            resolveEntity(msg->getSourceEntity()).c_str());
+        commandPrintOut(msg, &(msg->value), &b_source_id);
       }
 
       void
       consume(const IMC::SetThrusterActuation* msg)
       {
+        spew("Consuming SetThrusterActuation");
+
+        // Check if the command source is valid, if the simulator is active,
+        // and if the commanded value is a real value
+        bool b_source_id = false;
+        if (!commandFilter(msg, &b_source_id))
+          return;
+
+        m_thruster_act = msg->value;
+
+        // ========= Debug ===========
+        commandPrintOut(msg, &(msg->value), &b_source_id);
+      }
+      */
+
+      bool
+      commandFilter(const IMC::Message* msg, bool* b_source_id)
+      {
+        bool pass_command = true;
+        const char* c_system_id;
+        const char* c_entity_id;
+
+        try
+        {
+          c_system_id = resolveSystemId(msg->getSource());
+          c_entity_id = resolveEntity(msg->getSourceEntity()).c_str();
+          *b_source_id = true;
+        }
+        catch (...)
+        {
+          war("Unresolved system or entity ID!");
+        }
+
+        uint32_t i_cmd;
+        const char* c_msg_name = msg->getName();
+        if (strcmp(c_msg_name, "DesiredRoll") == 0)
+          i_cmd = 0;
+        else if (strcmp(c_msg_name, "DesiredSpeed") == 0)
+          i_cmd = 1;
+        else if (strcmp(c_msg_name, "DesiredZ") == 0)
+          i_cmd = 2;
+        else if (strcmp(c_msg_name, "DesiredPitch") == 0)
+          i_cmd = 3;
+        else if (strcmp(c_msg_name, "SetServoPosition") == 0)
+          i_cmd = 4;
+        else if (strcmp(c_msg_name, "SetThrusterActuation") == 0)
+          i_cmd = 5;
+
         // Filter command by systems and entities.
         bool matched = true;
-        if (m_filtered_sys[5].size() > 0)
+        if (m_filtered_sys[i_cmd].size() > 0)
         {
           matched = false;
-          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[5].begin();
-          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[5].begin();
-          for (; itr_sys != m_filtered_sys[5].end(); ++itr_sys)
+          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[i_cmd].begin();
+          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[i_cmd].begin();
+          for (; itr_sys != m_filtered_sys[i_cmd].end(); ++itr_sys)
           {
             if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
                 (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
@@ -907,35 +778,73 @@ namespace Simulators
         // This system and entity are not listed to be passed.
         if (!matched)
         {
-          trace("Thruster command rejected.");
-          trace("SetThrusterActuation received from system '%s' and entity '%s'.",
-              resolveSystemId(msg->getSource()),
-              resolveEntity(msg->getSourceEntity()).c_str());
-          return;
+          trace("%s rejected.", c_msg_name);
+          if (*b_source_id)
+            trace("%s received from system '%s' and entity '%s'.", c_msg_name,
+                  c_system_id, c_entity_id);
+          else
+            trace("%s received from unidentified system and/or entity.", c_msg_name);
+          pass_command = false;
         }
 
         //! Check if system is active
         if (!isActive())
         {
-          trace("Thruster command rejected - Simulation not active - Missing GPS-Fix!");
-          return;
+          trace("%s rejected - Simulation not active - Missing GPS-Fix!", c_msg_name);
+          pass_command = false;
         }
 
         //! Check that the command is a real value
-        if (Math::isNaN(msg->value))
+        if (Math::isNaN(msg->getValueFP()))
         {
-          war("Thruster command rejected - Commanded value is not a number!");
-          return;
+          war("%s rejected - Commanded value is not a number!", c_msg_name);
+          pass_command = false;
         }
 
-        m_thruster_act = msg->value;
-        // ========= Debug ===========
-        spew("Thruster command received (%1.2fm)", msg->value);
-        spew("SetThrusterActuation received from system '%s' and entity '%s'.",
-            resolveSystemId(msg->getSource()),
-            resolveEntity(msg->getSourceEntity()).c_str());
+        return pass_command;
       }
-      */
+
+      void
+      commandPrintOut(const IMC::Message* msg, const double* d_msg_value, bool* b_source_id)
+      {
+        // Get the print out message name and unit type, and define if the command is an angle
+        const char* c_msg_name = msg->getName();
+        std::string c_units = "";
+        bool b_cmd_angle = false;
+        if (strcmp(c_msg_name, "DesiredRoll") == 0)
+        {
+          b_cmd_angle = true;
+        }
+        else if (strcmp(c_msg_name, "DesiredSpeed") == 0)
+        {
+          c_units = "m/s";
+        }
+        else if (strcmp(c_msg_name, "DesiredZ") == 0)
+        {
+          c_units = "m";
+        }
+        else if (strcmp(c_msg_name, "DesiredPitch") == 0)
+        {
+          b_cmd_angle = true;
+        }
+        /*
+        else if (strcmp(c_msg_name, "SetServoPosition") == 0)
+        else if (strcmp(c_msg_name, "SetThrusterActuation") == 0)
+        */
+
+        // Print out the command value and source information
+        if (b_cmd_angle)
+          spew("%s received (%1.2fº)", c_msg_name, DUNE::Math::Angles::degrees(*d_msg_value));
+        else
+          spew("%s received (%1.2f%s)", c_msg_name, *d_msg_value, c_units.c_str());
+        if (*b_source_id)
+          spew("%s received from system '%s' and entity '%s'.", c_msg_name,
+               resolveSystemId(msg->getSource()), resolveEntity(msg->getSourceEntity()).c_str());
+        else
+          spew("%s received from unidentified system and/or entity.", c_msg_name);
+
+        return;
+      }
 
       Matrix
       matrixRotRbody2gnd(float roll, float pitch)
