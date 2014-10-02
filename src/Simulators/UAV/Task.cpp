@@ -355,7 +355,7 @@ namespace Simulators
         {
           //! 4 DOF (bank) model initialization
           //! - State  and control parameters initialization
-          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity);
+          m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity);
           //! - Commands initialization
           m_model->command(m_position(3), m_args.init_speed, -m_position(2));
           //! - Limits definition
@@ -368,7 +368,7 @@ namespace Simulators
         {
           //! 4 DOF (altitude) model initialization
           //! - State  and control parameters initialization
-          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_alt);
+          m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity, m_args.c_alt);
           //! - Commands initialization
           m_model->command(m_position(3), m_args.init_speed, -m_position(2));
           //! - Limits definition
@@ -379,7 +379,7 @@ namespace Simulators
         {
           //! 4 DOF (bank) model initialization
           //! - State  and control parameters initialization
-          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
+          m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity, m_args.c_bank, m_args.c_speed);
           //! - Commands initialization
           m_model->command(m_position(3), m_args.init_speed, -m_position(2));
           //! - Limits definition
@@ -392,7 +392,7 @@ namespace Simulators
         {
           //! 5 DOF model initialization
           //! - State  and control parameters initialization
-          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed, m_args.c_alt);
+          m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity, m_args.c_bank, m_args.c_speed, m_args.c_alt);
           //! - Commands initialization
           m_model->command(m_position(3), m_args.init_speed, -m_position(2));
           //! - Limits definition
