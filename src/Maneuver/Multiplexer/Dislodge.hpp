@@ -67,7 +67,7 @@ namespace Maneuver
       //! @param[in] args pointer to Maneuver's arguments
       Dislodge(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt,
                DislodgeArgs* args):
-        MuxedManeuver(task, mt, args),
+        MuxedManeuver<IMC::Dislodge, DislodgeArgs>(task, mt, args),
         m_state(ST_START),
         m_got_depth(false),
         m_bursting(false)
@@ -209,6 +209,8 @@ namespace Maneuver
           default:
             break;
         }
+
+        m_state = state;
       }
 
       //! Burst direction

@@ -22,68 +22,31 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Pedro Calado                                                     *
+// Author: Renato Caldas                                                    *
 //***************************************************************************
 
-#ifndef SUPERVISORS_AUV_ASSIST_ASCENTRATE_HPP_INCLUDED_
-#define SUPERVISORS_AUV_ASSIST_ASCENTRATE_HPP_INCLUDED_
+#ifndef DUNE_ENTITIES_ENTITY_UTILS_HPP_INCLUDED_
+#define DUNE_ENTITIES_ENTITY_UTILS_HPP_INCLUDED_
 
-// DUNE headers.
-#include <DUNE/Math.hpp>
-#include <DUNE/Time.hpp>
+// ISO C++ 98 headers.
+#include <string>
 
-namespace Supervisors
+// DUNE Headers.
+#include <DUNE/Config.hpp>
+
+namespace DUNE
 {
-  namespace AUV
+  namespace Entities
   {
-    namespace Assist
-    {
-      using DUNE_NAMESPACES;
+    class BasicEntity;
 
-      class AscentRate
-      {
-      public:
-        //! Constructor
-        //! @param[in] window_size number of samples in the moving average
-        //! @param[in] period interval of time between samples
-        AscentRate(unsigned window_size, float period):
-          m_timer(period)
-        {
-          m_avg = new Math::MovingAverage<float>(window_size);
-        }
-
-        ~AscentRate(void)
-        {
-          delete m_avg;
-        }
-
-        //! Update the ascent rate computation
-        //! @param[in] vz speed in the z axis from EstimatedState message
-        //! @return newly computed value for the ascent rate
-        float
-        update(float vz)
-        {
-          if (!m_timer.overflow())
-            return mean();
-
-          return m_avg->update(vz);
-        }
-
-        //! Output the mean ascent rate
-        //! @return most recently computed value for the ascent rate
-        float
-        mean(void) const
-        {
-          return m_avg->mean();
-        }
-
-      private:
-        //! Moving average for the ascent rate
-        Math::MovingAverage<float>* m_avg;
-        //! Counter for the time between updates
-        Time::Counter<float> m_timer;
-      };
-    }
+    //! Compare label of BasicEntity object against a string.
+    //! param[in] e pointer to object whose label we wish to compare.
+    //! param[in] label string to be compared against.
+    //! @return true if the label and the string match, false otherwise.
+    DUNE_DLL_SYM bool
+    operator==(const BasicEntity* e, const std::string& label);
   }
 }
+
 #endif

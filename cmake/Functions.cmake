@@ -728,4 +728,22 @@ macro(dune_probe_functions)
     "syslog.h"
     DUNE_SYS_HAS_SYSLOG)
 
+  dune_test_function(isnan
+    "int"
+    "double"
+    "math.h"
+    DUNE_SYS_HAS_ISNAN_POSIX)
+
+  dune_test_function(std::isnan
+    "int"
+    "double"
+    "cmath"
+    DUNE_SYS_HAS_ISNAN_CXX)
+
+  dune_test_function(_isnan
+    "int"
+    "double"
+    "float.h"
+    DUNE_SYS_HAS__ISNAN)
+
 endmacro(dune_probe_functions)

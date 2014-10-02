@@ -87,6 +87,7 @@ namespace Simulators
       // Initial state
       double init_lat;
       double init_lon;
+      double init_hei;
       double init_alt;
       double init_speed;
       double init_roll;
@@ -162,6 +163,7 @@ namespace Simulators
 
         param("Simulation type", m_args.sim_type)
         .defaultValue("4DOF_bank")
+        .values("3DOF, 4DOF_alt, 4DOF_bank, 5DOF")
         .description("Simulation type (DOF)");
 
         param("Bank Time Constant", m_args.c_bank)
@@ -252,16 +254,20 @@ namespace Simulators
         .defaultValue("Simulated GPS")
         .description("Entity label of simulated 'GpsFix' messages");
 
-        param("Initial Latitude", m_args.init_lat)
-        .defaultValue("39.09")
-        .description("Initial state latitude");
+        param("Reference Ground Height", m_args.init_hei)
+        .defaultValue("47.3")
+        .description("Home reference ground height");
 
-        param("Initial Longitude", m_args.init_lon)
+        param("Initial Reference Latitude", m_args.init_lat)
+        .defaultValue("39.09")
+        .description("Initial home reference latitude");
+
+        param("Initial Reference Longitude", m_args.init_lon)
         .defaultValue("-8.964")
-        .description("Initial state longitude");
+        .description("Initial home reference longitude");
 
         param("Initial Altitude", m_args.init_alt)
-        .defaultValue("147.3")
+        .defaultValue("100")
         .description("Initial state WGS-84 geoid altitude");
 
         param("Initial Speed", m_args.init_speed)
@@ -320,10 +326,10 @@ namespace Simulators
         IMC::GpsFix init_fix;
         init_fix.lat = DUNE::Math::Angles::radians(m_args.init_lat);
         init_fix.lon = DUNE::Math::Angles::radians(m_args.init_lon);
-        init_fix.height = m_args.init_alt;
+        init_fix.height = m_args.init_hei;
         m_sstate.lat = init_fix.lat;
         m_sstate.lon = init_fix.lon;
-        m_sstate.height = m_args.init_alt;
+        m_sstate.height = m_args.init_hei;
         dispatch(init_fix);
         requestActivation();
       }
@@ -336,7 +342,7 @@ namespace Simulators
         //! Model state initialization
         debug("Model initialization");
         //! - Altitude initialization
-        m_position(2) = m_args.init_alt;
+        m_position(2) = -m_args.init_alt;
         //! - Bank initialization
         m_position(3) = DUNE::Math::Angles::radians(m_args.init_roll);
         //! - Heading initialization
@@ -499,12 +505,13 @@ namespace Simulators
             i_src_ini = m_filtered_sys[i_cmd].size();
             m_filtered_ent[i_cmd].resize(i_src_ini+systems.size()*entities.size());
             m_filtered_sys[i_cmd].resize(i_src_ini+systems.size()*entities.size());
-
+            unsigned int i_sys_n = systems.size();
+            unsigned int i_ent_n = entities.size();
             // Resolve systems id.
-            for (unsigned j = 0; j < systems.size(); j++)
+            for (unsigned j = 0; j < i_sys_n; j++)
             {
               // Resolve entities id.
-              for (unsigned k = 0; k < entities.size(); k++)
+              for (unsigned k = 0; k < i_ent_n; k++)
               {
                 i_src = (j+1)*(k+1)-1;
                 // Resolve systems.
@@ -523,8 +530,9 @@ namespace Simulators
                   }
                   catch (...)
                   {
-                    debug("Commands filtering - No system found with designation '%s'.", parts[1].c_str());
-                    m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
+                    war("Commands filtering - No system found with designation '%s'!", systems[j].c_str());
+                    i_sys_n--;
+                    j--;
                   }
                 }
                 // Resolve entities.
@@ -543,8 +551,9 @@ namespace Simulators
                   }
                   catch (...)
                   {
-                    debug("Commands filtering - No entity found with designation '%s'.", parts[2].c_str());
-                    m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
+                    war("Commands filtering - No entity found with designation '%s'!", entities[k].c_str());
+                    i_ent_n--;
+                    k--;
                   }
                 }
               }
@@ -610,6 +619,8 @@ namespace Simulators
       void
       consume(const IMC::DesiredRoll* msg)
       {
+        spew("Consuming DesiredRoll");
+
         // Filter command by systems and entities.
         bool matched = true;
         if (m_filtered_sys[0].size() > 0)
@@ -638,9 +649,14 @@ namespace Simulators
         //! Check if system is active
         if (!isActive())
         {
-          trace("Bank command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
+          trace("Bank command rejected - Simulation not active - Missing GPS-Fix!");
+          return;
+        }
+
+        //! Check that the command is a real value
+        if (Math::isNaN(msg->value))
+        {
+          war("Bank command rejected - Commanded value is not a number!");
           return;
         }
 
@@ -656,7 +672,7 @@ namespace Simulators
       void
       consume(const IMC::DesiredSpeed* msg)
       {
-        //spew("Consuming DesiredSpeed");
+        spew("Consuming DesiredSpeed");
 
         // Filter command by systems and entities.
         bool matched = true;
@@ -686,9 +702,14 @@ namespace Simulators
         //! Check if system is active
         if (!isActive())
         {
-          trace("Speed command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
+          trace("Speed command rejected - Simulation not active - Missing GPS-Fix!");
+          return;
+        }
+
+        //! Check that the command is a real value
+        if (Math::isNaN(msg->value))
+        {
+          war("Speed command rejected - Commanded value is not a number!");
           return;
         }
 
@@ -704,7 +725,7 @@ namespace Simulators
       void
       consume(const IMC::DesiredZ* msg)
       {
-        //spew("Consuming DesiredZ");
+        spew("Consuming DesiredZ");
 
         // Filter command by systems and entities.
         bool matched = true;
@@ -734,19 +755,24 @@ namespace Simulators
         //! Check if system is active
         if (!isActive())
         {
-          trace("Altitude command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
+          trace("Altitude command rejected - Simulation not active - Missing GPS-Fix!");
+          return;
+        }
+
+        //! Check that the command is a real value
+        if (Math::isNaN(msg->value))
+        {
+          war("Altitude command rejected - Commanded value is not a number!");
           return;
         }
 
         double alt_cmd;
         if (msg->z_units == IMC::Z_HEIGHT)
-          alt_cmd = msg->value;
+          alt_cmd = msg->value-m_sstate.height;
         else if (msg->z_units == IMC::Z_DEPTH)
           alt_cmd = -msg->value;
         else
-          alt_cmd = msg->value+m_sstate.height;
+          alt_cmd = msg->value;
         m_model->commandAlt(alt_cmd);
 
         // ========= Debug ===========
@@ -789,9 +815,14 @@ namespace Simulators
         //! Check if system is active
         if (!isActive())
         {
-          trace("Pitch command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
+          trace("Pitch command rejected - Simulation not active - Missing GPS-Fix!");
+          return;
+        }
+
+        //! Check that the command is a real value
+        if (Math::isNaN(msg->value))
+        {
+          war("Pitch command rejected - Commanded value is not a number!");
           return;
         }
 
@@ -799,6 +830,9 @@ namespace Simulators
 
         // ========= Debug ===========
         spew("Pitch command received (%1.2fm)", msg->value);
+        spew("DesiredPitch received from system '%s' and entity '%s'.",
+            resolveSystemId(msg->getSource()),
+            resolveEntity(msg->getSourceEntity()).c_str());
       }
 
        /*
@@ -832,11 +866,24 @@ namespace Simulators
 
         //! Check if system is active
         if (!isActive())
+        {
+          trace("Servo command rejected - Simulation not active - Missing GPS-Fix!");
           return;
+        }
+
+        //! Check that the command is a real value
+        if (Math::isNaN(msg->value))
+        {
+          war("Servo command rejected - Commanded value is not a number!");
+          return;
+        }
 
         m_servo_pos(msg->id) = msg->value;
         // ========= Debug ===========
         spew("Servo command received (%1.2fm)", msg->value);
+        spew("SetServoPosition received from system '%s' and entity '%s'.",
+            resolveSystemId(msg->getSource()),
+            resolveEntity(msg->getSourceEntity()).c_str());
       }
 
       void
@@ -869,11 +916,24 @@ namespace Simulators
 
         //! Check if system is active
         if (!isActive())
+        {
+          trace("Thruster command rejected - Simulation not active - Missing GPS-Fix!");
           return;
+        }
+
+        //! Check that the command is a real value
+        if (Math::isNaN(msg->value))
+        {
+          war("Thruster command rejected - Commanded value is not a number!");
+          return;
+        }
 
         m_thruster_act = msg->value;
         // ========= Debug ===========
         spew("Thruster command received (%1.2fm)", msg->value);
+        spew("SetThrusterActuation received from system '%s' and entity '%s'.",
+            resolveSystemId(msg->getSource()),
+            resolveEntity(msg->getSourceEntity()).c_str());
       }
       */
 

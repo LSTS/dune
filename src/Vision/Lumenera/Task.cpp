@@ -311,6 +311,7 @@ namespace Vision
 
         m_slave_entities = new EntityActivationMaster(this);
         updateSlaveEntities();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -409,7 +410,8 @@ namespace Vision
         m_file_count = 0;
         m_volume_count = 0;
 
-        changeVolume();
+        if (m_args.camera_capt)
+          changeVolume();
 
         setStrobePower(true);
 
@@ -719,7 +721,7 @@ namespace Vision
         {
           if (isActive())
           {
-            consumeMessages();
+            waitForMessages(1.0);
             if (!isActive())
               continue;
           }
@@ -735,21 +737,18 @@ namespace Vision
 
           if (m_args.camera_cfg && m_cfg_dirty)
           {
+            if (getEntityState() != IMC::EntityState::ESTA_BOOT)
+              setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+
             try
             {
               setProperties();
               m_cfg_dirty = false;
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-              inf(DTR("successfully configured camera"));
+              inf("successfully configured camera");
             }
             catch (std::runtime_error& e)
             {
-              if (getEntityState() != IMC::EntityState::ESTA_FAULT)
-              {
-                setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_COM_ERROR);
-                err("%s", e.what());
-              }
-              waitForMessages(0.2);
               continue;
             }
           }

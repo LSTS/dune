@@ -48,7 +48,7 @@ namespace Maneuver
       //! @param[in] task pointer to Maneuver task
       //! @param[in] mt pointer to Memento table
       FollowPath(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt):
-        MuxedManeuver(task, mt)
+        MuxedManeuver<IMC::FollowPath, void>(task, mt)
       {
         mt->add("Waypoint", m_mem.waypoint).
         defaultValue("0");

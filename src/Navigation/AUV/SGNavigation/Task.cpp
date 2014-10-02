@@ -60,7 +60,7 @@ namespace Navigation
         STATE_R_BIAS = 6,
         //! Heading Angle Bias (rad).
         STATE_PSI_BIAS = 7,
-        //! RPM to Speed multiplicative factor.
+        //! Revolutions to speed factor.
         STATE_K = 8,
         //! Number of States.
         NUM_STATE = 9
@@ -148,8 +148,10 @@ namespace Navigation
         std::string elabel_imu;
         //! Number of samples to average forward speed.
         unsigned avg_speed_samples;
-        //! Initial RPM to Speed multiplicative factor.
-        float initial_rpm_to_speed;
+        //! Revolutions to speed factor.
+        float ini_rev_fac;
+        //! Maximum Allowed Variation for revolutions to speed estimation.
+        float max_rev_fac;
         //! Heading bias uncertainty alignment threshold.
         double alignment_index;
         //! Increment Euler Angles Delta (true) or integrate yaw rate (false).
@@ -208,11 +210,17 @@ namespace Navigation
           .maximumValue("20")
           .description("Number of moving average samples to smooth forward speed");
 
-          param("RPM to Speed multiplicative factor", m_args.initial_rpm_to_speed)
+          param("Revolutions to speed factor", m_args.ini_rev_fac)
           .defaultValue("1.2e-3")
           .minimumValue("0.8e-3")
           .maximumValue("2.0e-3")
-          .description("Kalman Filter initial RPM to Speed multiplicative factor state value");
+          .description("Kalman Filter initial revolutions to speed multiplicative factor state value");
+
+          param("Revolutions to speed variation", m_args.max_rev_fac)
+          .defaultValue("6e-4")
+          .minimumValue("4e-4")
+          .maximumValue("8e-4")
+          .description("Kalman Filter revolutions to speed maximum allowed variation");
 
           param("Update Heading with Euler Increments", m_args.increment_euler_delta)
           .defaultValue("false")
@@ -391,7 +399,7 @@ namespace Navigation
         {
           BasicNavigation::setup();
 
-          m_kal.setState(STATE_K, m_args.initial_rpm_to_speed);
+          m_kal.setState(STATE_K, m_args.ini_rev_fac);
 
           // Initial position covariances (GPS and LBL)
           m_kal.setCovariance(STATE_X, m_state_cov[SC_POSITION]);
@@ -582,6 +590,13 @@ namespace Navigation
 
           // Extended Kalman Filter update with no threshold defined.
           m_kal.update(0.0);
+
+          // Limit revolutions to speed factor.
+          float k_lim = trimValue(m_kal.getState(STATE_K),
+                                  m_args.ini_rev_fac - m_args.max_rev_fac,
+                                  m_args.ini_rev_fac + m_args.max_rev_fac);
+
+          m_kal.setState(STATE_K, k_lim);
 
           // Check alignment threshold index.
           if (m_dead_reckoning)

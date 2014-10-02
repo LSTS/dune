@@ -84,9 +84,17 @@ namespace Sensors
       onResourceAcquisition(void)
       {
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-        m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-        m_uart->setCanonicalInput(true);
-        m_uart->flush();
+
+        try
+        {
+          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          m_uart->setCanonicalInput(true);
+          m_uart->flush();
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
       }
 
       void

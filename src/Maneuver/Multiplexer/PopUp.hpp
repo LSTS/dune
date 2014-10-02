@@ -64,7 +64,7 @@ namespace Maneuver
       //! @param[in] args popup arguments
       PopUp(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt,
             PopUpArgs* args):
-        MuxedManeuver(task, mt, args),
+        MuxedManeuver<IMC::PopUp, PopUpArgs>(task, mt, args),
         m_skeep(NULL),
         m_elevate(NULL),
         m_pstate(ST_INITIAL)

@@ -93,8 +93,9 @@ namespace DUNE
 
       //! Start moving to the maneuver's point
       //! @param[in] range distance to the point
+      //! @param[in] at_surface true for traveling at the surface
       void
-      startMoving(double range);
+      startMoving(double range, bool at_surface);
 
       //! Stop moving
       //! @param[in] range distance to the point

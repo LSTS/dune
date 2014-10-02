@@ -28,9 +28,6 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// Local headers.
-#include "AscentRate.hpp"
-
 namespace Supervisors
 {
   namespace AUV
@@ -39,8 +36,8 @@ namespace Supervisors
     {
       using DUNE_NAMESPACES;
 
-      //! Time between depth updates
-      static const float c_depth_period = 1.0;
+      //! Timeout for the vertical monitor
+      static const float c_vertical_timeout = 20.0;
       //! Plan generation command timeout
       static const float c_gen_timeout = 3.0;
       //! Stabilization time before testing ascent rate
@@ -58,6 +55,8 @@ namespace Supervisors
         unsigned ascent_wsize;
         //! Minimum time with a low ascent rate before triggering assist
         float trigger_time;
+        //! Dislodge plan id
+        std::string plan_id;
       };
 
       enum AssistState
@@ -76,6 +75,8 @@ namespace Supervisors
 
       struct Task: public DUNE::Tasks::Periodic
       {
+        //! Vertical speed (z)
+        float m_vz;
         //! Current depth
         float m_depth;
         //! Current Medium
@@ -83,7 +84,7 @@ namespace Supervisors
         //! Current vehicle state
         uint8_t m_vstate;
         //! Rate of ascent
-        AscentRate* m_ar;
+        VerticalMonitor* m_vmon;
         //! Task's state
         AssistState m_astate;
         //! Timer for triggering the dislodge
@@ -95,7 +96,7 @@ namespace Supervisors
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Periodic(name, ctx),
-          m_ar(NULL),
+          m_vmon(NULL),
           m_astate(ST_IDLE),
           m_dtimer(c_stab_time),
           m_finish_depth(-1.0)
@@ -118,6 +119,10 @@ namespace Supervisors
           .units(Units::Second)
           .description("Amount of time, after meeting conditions, before triggering dislodging behavior");
 
+          param("Dislodge Plan Id", m_args.plan_id)
+          .defaultValue("dislodge")
+          .description("Dislodge plan id");
+
           bind<IMC::VehicleState>(this);
           bind<IMC::VehicleMedium>(this);
           bind<IMC::EstimatedState>(this);
@@ -128,13 +133,13 @@ namespace Supervisors
         void
         onResourceAcquisition(void)
         {
-          m_ar = new AscentRate(m_args.ascent_wsize, c_depth_period);
+          m_vmon = new VerticalMonitor(c_vertical_timeout, m_args.min_ascent_rate);
         }
 
         void
         onResourceRelease(void)
         {
-          Memory::clear(m_ar);
+          Memory::clear(m_vmon);
         }
 
         void
@@ -159,7 +164,7 @@ namespace Supervisors
         void
         consume(const IMC::EstimatedState* msg)
         {
-          m_ar->update(msg->vz);
+          m_vz = msg->vz;
           m_depth = msg->depth;
 
           // reset finish depth if the vehicle comes to the surface
@@ -176,7 +181,7 @@ namespace Supervisors
           if (msg->cmd != IMC::PlanGeneration::CMD_EXECUTE)
             return;
 
-          if (msg->plan_id != "dislodge")
+          if (msg->plan_id != m_args.plan_id)
             return;
 
           if (msg->op != IMC::PlanGeneration::OP_SUCCESS)
@@ -213,7 +218,7 @@ namespace Supervisors
           if (msg->type != IMC::PlanControl::PC_START)
             return;
 
-          if (msg->plan_id != "dislodge")
+          if (msg->plan_id != m_args.plan_id)
             return;
 
           if (msg->type == IMC::PlanControl::PC_SUCCESS)
@@ -240,7 +245,7 @@ namespace Supervisors
         inline void
         failedStartPlan(void)
         {
-          err(DTR("failed to start dislodge maneuver"));
+          err(DTR("failed to start %s plan"), m_args.plan_id.c_str());
         }
 
         //! Dispatch the dislodge plan
@@ -250,9 +255,9 @@ namespace Supervisors
           IMC::PlanGeneration pg;
           pg.op = IMC::PlanGeneration::OP_REQUEST;
           pg.cmd = IMC::PlanGeneration::CMD_EXECUTE;
-          pg.plan_id = "dislodge";
-          pg.params = (Utils::String::str("rpm=%.1f", m_args.dislodge_rpm) +
-                       "ignore_errors=true");
+          pg.plan_id = m_args.plan_id;
+          pg.params = (Utils::String::str("rpm=%.1f,", m_args.dislodge_rpm) +
+                       "ignore_errors=true,calibrate=false");
           dispatch(pg);
         }
 
@@ -282,7 +287,7 @@ namespace Supervisors
         bool
         ascentCondition(void)
         {
-          return (m_ar->mean() < m_args.min_ascent_rate);
+          return m_vmon->isProgressSlow(-m_vz);
         }
 
         //! Set the state machine's current state

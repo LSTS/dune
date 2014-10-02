@@ -56,7 +56,7 @@ namespace Maneuver
       //! @param[in] args stationkeeping arguments
       StationKeeping(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt,
                      StationKeepingArgs* args):
-        MuxedManeuver(task, mt, args),
+        MuxedManeuver<IMC::StationKeeping, StationKeepingArgs>(task, mt, args),
         m_skeep(NULL),
         m_end_time(-1.0)
       {

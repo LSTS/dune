@@ -59,12 +59,12 @@ namespace DUNE
 
     PathController::PathController(std::string name, Tasks::Context& ctx):
       Task(name, ctx),
+      m_bt_entity(NULL),
       m_running_monitors(true),
       m_error(false),
       m_setup(true),
       m_braking(false),
       m_jump_monitors(false),
-      m_filter_entity(0),
       m_aloops(0),
       m_btrack(NULL),
       m_scope_ref(0)
@@ -193,14 +193,6 @@ namespace DUNE
       .units(Units::Meter)
       .description("Admissible altitude when doing depth control");
 
-      param("Filter EstimatedState", m_filter)
-      .defaultValue("false")
-      .description("Enable or disable EstimateState filtering by entity");
-
-      param("Filter Entity", m_filter_entity_name)
-      .defaultValue("Autopilot")
-      .description("Only accepts EstimatedState from this entity");
-
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
 
@@ -284,22 +276,13 @@ namespace DUNE
     void
     PathController::onEntityReservation(void)
     {
-      m_btd.args.eid = reserveEntity("Bottom Track");
+      m_bt_entity = reserveEntity<DUNE::Entities::BasicEntity>("Bottom Track");
+      m_btd.args.entity = m_bt_entity;
     }
 
     void
     PathController::onEntityResolution(void)
     {
-      if (!m_filter)
-        return;
-
-      try
-      {
-        m_filter_entity = resolveEntity(m_filter_entity_name);
-      }
-      catch (std::runtime_error& e) {
-        signalError(e.what());
-      }
     }
 
     void
@@ -568,10 +551,8 @@ namespace DUNE
     void
     PathController::consume(const IMC::EstimatedState* es)
     {
+      // Allow only EstimatedState from the same vehicle.
       if (es->getSource() != getSystemId())
-        return;
-
-      if (m_filter && m_filter_entity != es->getSourceEntity())
         return;
 
       if (m_btd.enabled)

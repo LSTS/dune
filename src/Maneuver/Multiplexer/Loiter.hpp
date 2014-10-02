@@ -56,7 +56,7 @@ namespace Maneuver
       //! @param[in] args loiter arguments
       Loiter(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt,
              LoiterArgs* args):
-        MuxedManeuver(task, mt, args)
+        MuxedManeuver<IMC::Loiter, LoiterArgs>(task, mt, args)
       {
         mt->add("Time Left", m_mem.time_left)
         .defaultValue("-1.0");

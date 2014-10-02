@@ -308,7 +308,7 @@ namespace Power
           {
             eid = resolveEntity(m_args.adc_elabels[i]);
           }
-          catch (Tasks::EntityDataBase::NonexistentLabel& e)
+          catch (Entities::EntityDataBase::NonexistentLabel& e)
           {
             (void)e;
             eid = reserveEntity(m_args.adc_elabels[i]);
@@ -330,8 +330,16 @@ namespace Power
       void
       onResourceAcquisition(void)
       {
-        m_proto.setUART(m_args.uart_dev);
-        m_proto.open();
+        try
+        {
+          m_proto.setUART(m_args.uart_dev);
+          m_proto.open();
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
+
         m_wdog.setTop(m_args.wdog_tout);
       }
 

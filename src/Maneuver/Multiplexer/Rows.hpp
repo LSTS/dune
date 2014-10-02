@@ -48,7 +48,7 @@ namespace Maneuver
       //! @param[in] task pointer to Maneuver task
       //! @param[in] mt pointer to Memento table
       Rows(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt):
-        MuxedManeuver(task, mt),
+        MuxedManeuver<IMC::Rows, void>(task, mt),
         m_parser(NULL)
       {
         mt->add("Waypoint", m_mem.waypoint).

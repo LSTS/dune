@@ -382,10 +382,18 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
-        m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-        m_uart->setCanonicalInput(true);
-        m_uart->flush();
         setAndSendState(STA_BOOT);
+
+        try
+        {
+          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          m_uart->setCanonicalInput(true);
+          m_uart->flush();
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
       }
 
       void

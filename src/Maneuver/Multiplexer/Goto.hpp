@@ -48,7 +48,7 @@ namespace Maneuver
       //! @param[in] task pointer to Maneuver task
       //! @param[in] mt pointer to Memento table
       Goto(Maneuvers::Maneuver* task, Maneuvers::MementoTable* mt):
-        MuxedManeuver(task, mt)
+        MuxedManeuver<IMC::Goto, void>(task, mt)
       { }
 
       //! Start maneuver function

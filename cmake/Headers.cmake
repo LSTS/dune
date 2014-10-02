@@ -87,6 +87,7 @@ macro(dune_probe_headers)
   message(STATUS "******************************************")
 
   dune_test_header(cmath)
+  dune_test_header(math.h)
   dune_test_header(cstdlib)
   dune_test_header(cstring)
   dune_test_header(string.h)
@@ -145,6 +146,7 @@ macro(dune_probe_headers)
   dune_test_header(semaphore.h)
   dune_test_header(libintl.h)
   dune_test_header(syslog.h)
+  dune_test_header(float.h)
 
   # A few systems/libraries have non self contained headers (notably
   # OpenBSD and RTEMS), to overcome this we perform the following

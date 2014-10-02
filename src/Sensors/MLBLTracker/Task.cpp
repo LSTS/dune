@@ -116,6 +116,8 @@ namespace Sensors
       unsigned tx_length;
       // Length of receive pings.
       unsigned rx_length;
+      //! Name of the section with modem addresses.
+      std::string addr_section;
     };
 
     // Type definition for mapping addresses.
@@ -213,21 +215,9 @@ namespace Sensors
         param("GPIO - Transducer Detection", m_args.gpio_txd)
         .defaultValue("-1");
 
-        // Process micro-modem addresses.
-        std::string agent = getSystemName();
-        std::vector<std::string> addrs = ctx.config.options("Micromodem Addresses");
-        for (unsigned i = 0; i < addrs.size(); ++i)
-        {
-          unsigned iid = resolveSystemName(addrs[i]);
-          unsigned mid = 0;
-          ctx.config.get("Micromodem Addresses", addrs[i], "0", mid);
-          m_mimap[mid] = iid;
-          m_immap[iid] = mid;
-          m_ummap[addrs[i]] = mid;
-
-          if (addrs[i] == agent)
-            m_address = mid;
-        }
+        param("Address Section", m_args.addr_section)
+        .defaultValue("Micromodem Addresses")
+        .description("Name of the configuration section with modem addresses");
 
         // Process narrow band transponders.
         std::vector<std::string> txponders = ctx.config.options("Narrow Band Transponders");
@@ -252,6 +242,25 @@ namespace Sensors
       {
         if ((m_gpio_txd != NULL) && paramChanged(m_args.gpio_txd) )
           throw RestartNeeded(DTR("restarting to change transducer detection GPIO"), 1);
+
+        // Process micro-modem addresses.
+        m_mimap.clear();
+        m_immap.clear();
+        m_ummap.clear();
+        std::string agent = getSystemName();
+        std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
+        for (unsigned i = 0; i < addrs.size(); ++i)
+        {
+          unsigned iid = resolveSystemName(addrs[i]);
+          unsigned mid = 0;
+          m_ctx.config.get(m_args.addr_section, addrs[i], "0", mid);
+          m_mimap[mid] = iid;
+          m_immap[iid] = mid;
+          m_ummap[addrs[i]] = mid;
+
+          if (addrs[i] == agent)
+            m_address = mid;
+        }
 
         // Input timeout.
         m_last_stn.setTop(m_args.tout_input);

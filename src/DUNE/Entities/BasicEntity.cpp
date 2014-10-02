@@ -22,65 +22,64 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
-//***************************************************************************
-// Utility program to extract U-Blox proprietary messages from LSF logs.    *
+// Author: Renato Caldas                                                    *
 //***************************************************************************
 
 // ISO C++ 98 headers.
-#include <iostream>
-#include <fstream>
-#include <iomanip>
+#include <stdexcept>
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
-using DUNE_NAMESPACES;
+#include <DUNE/Entities/BasicEntity.hpp>
 
-const static uint8_t c_ubx_sync0 = 0xb5;
-const static uint8_t c_ubx_sync1 = 0x62;
-
-int
-main(int argc, char** argv)
+namespace DUNE
 {
-  if (argc != 3)
+  namespace Entities
   {
-    std::cerr << "Usage: " << argv[0] << "FILE.lsf[.gz]" << "FILE.ubx" << std::endl;
-    return 1;
-  }
-
-  std::istream* is = 0;
-  Compression::Methods method = Compression::Factory::detect(argv[1]);
-  if (method == METHOD_UNKNOWN)
-    is = new std::ifstream(argv[1], std::ios::binary);
-  else
-    is = new Compression::FileInput(argv[1], method);
-
-  std::ofstream ofs(argv[2], std::ios::binary);
-
-  DUNE::IMC::Message* msg = 0;
-
-  try
-  {
-    while ((msg = DUNE::IMC::Packet::deserialize(*is)) != 0)
+    void
+    BasicEntity::setLabel(const std::string& label)
     {
-      if (msg->getId() == DUNE_IMC_DEVDATABINARY)
+      // Throw exception to prevent relabeling after reservation
+      if (m_id != DUNE_IMC_CONST_UNK_EID)
       {
-        DUNE::IMC::DevDataBinary* ddb = (DUNE::IMC::DevDataBinary*)msg;
-
-        if (ddb->value.size() < 2)
-          continue;
-
-        if ((uint8_t)ddb->value[0] == c_ubx_sync0 && (uint8_t)ddb->value[1] == c_ubx_sync1)
-          ofs.write(&ddb->value[0], ddb->value.size());
+        std::string prevlabel = m_ctx.entities.resolve(m_id);
+        if (prevlabel != label)
+          throw std::runtime_error(DTR("entity label already set: ") + prevlabel + " -> " + label);
       }
+
+      m_label = label;
+      m_ent_info.label = label;
+      m_ent_info.component = m_owner->getName();
     }
-  }
-  catch (std::runtime_error& e)
-  {
-    std::cerr << "ERROR: " << e.what() << std::endl;
-  }
 
-  delete is;
+    void
+    BasicEntity::reportInfo(void)
+    {
+      dispatch(m_ent_info);
+    }
 
-  return 0;
+    void
+    BasicEntity::consume(const IMC::QueryEntityInfo* msg)
+    {
+      if (msg->getDestinationEntity() == getId())
+        dispatchReply(*msg, m_ent_info);
+      else if (msg->getDestinationEntity() == DUNE_IMC_CONST_UNK_EID)
+        dispatch(m_ent_info);
+    }
+
+    void
+    BasicEntity::dispatch(IMC::Message* msg, unsigned int flags)
+    {
+      msg->setSource(m_ctx.resolver.id());
+      msg->setSourceEntity(getId());
+
+      if ((flags & DF_KEEP_TIME) == 0)
+        msg->setTimeStamp();
+
+      if ((flags & DF_LOOP_BACK) == 0)
+        m_ctx.mbus.dispatch(msg, m_owner);
+      else
+        m_ctx.mbus.dispatch(msg);
+    }
+
+  }
 }
