@@ -587,7 +587,8 @@ namespace Maneuver
             debug("Formation leader model initialization");
             // - State  and control parameters initialization
             m_velocity(0) = m_speed_cmd_leader;
-            m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
+            m_model = new DUNE::Simulation::UAVSimulation(*this,
+                m_position, m_velocity, m_args.c_bank, m_args.c_speed);
             // - Commands initialization
             m_model->command(0, m_speed_cmd_leader, -m_alt_cmd_leader);
           }
