@@ -200,9 +200,18 @@ namespace DUNE
       pos.z = maneuver->z;
       pos.z_units = maneuver->z_units;
 
-      IMC::MessageList<IMC::PathPoint>::const_iterator itr = maneuver->points.begin();
+      // Handle Memento
+      Utils::TupleList tl(maneuver->memento);
+      unsigned waypoint;
+      waypoint = tl.get("Waypoint", (unsigned)0);
 
-      if (!maneuver->points.size())
+      if (maneuver->points.size() <= waypoint)
+        return false;
+
+      IMC::MessageList<IMC::PathPoint>::const_iterator itr = maneuver->points.begin();
+      itr += waypoint;
+
+      if (maneuver->points.end() - itr == 0)
       {
         // Update speed profile
         m_speed_vec->push_back(SpeedProfile(0.0, 0));
@@ -247,6 +256,11 @@ namespace DUNE
       if (speed == 0.0)
         return false;
 
+      // Handle Memento
+      Utils::TupleList tl(maneuver->memento);
+      unsigned waypoint;
+      waypoint = tl.get("Waypoint", (unsigned)0);
+
       Maneuvers::RowsStages rstages = Maneuvers::RowsStages(maneuver, NULL);
 
       Position pos;
@@ -256,7 +270,11 @@ namespace DUNE
       rstages.getFirstPoint(&pos.lat, &pos.lon);
 
       float distance = distance3D(pos, last_pos);
-      m_accum_dur->addDuration(distance / speed);
+
+      if (!waypoint)
+        m_accum_dur->addDuration(distance / speed);
+      else
+        --waypoint;
 
       last_pos = pos;
 
@@ -270,10 +288,17 @@ namespace DUNE
         float travelled = compensate(*itr, speed);
         float duration = travelled / speed;
 
-        // Update speed profile
-        m_speed_vec->push_back(SpeedProfile(maneuver, duration));
-
-        m_accum_dur->addDuration(duration);
+        if (!waypoint)
+        {
+          // Update speed profile
+          m_speed_vec->push_back(SpeedProfile(maneuver, duration));
+          // Update durations
+          m_accum_dur->addDuration(duration);
+        }
+        else
+        {
+          --waypoint;
+        }
       }
 
       return true;
