@@ -339,6 +339,9 @@ namespace Vision
         if (!isDeactivating() && (msg->getDestination() != getSystemId()))
           return;
 
+        if (m_args.camera_capt)
+          return;
+
         if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
         {
           m_log_dir = m_ctx.dir_log / msg->name / "Photos";
