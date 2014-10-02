@@ -154,12 +154,12 @@ namespace Simulators
         param("Stream Speed North", m_args.wx)
         .units(Units::MeterPerSecond)
         .defaultValue("0.0")
-        .description("Wind speed along the North in the NED frame");
+        .description("Wind speed towards the North in the NED frame");
 
         param("Stream Speed East", m_args.wy)
         .units(Units::MeterPerSecond)
         .defaultValue("0.0")
-        .description("Wind speed along the East in the NED frame");
+        .description("Wind speed towards the East in the NED frame");
 
         param("Simulation type", m_args.sim_type)
         .defaultValue("4DOF_bank")
