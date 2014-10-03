@@ -336,10 +336,10 @@ namespace Vision
       void
       consume(const IMC::LoggingControl* msg)
       {
-        if (!isDeactivating() && (msg->getDestination() != getSystemId()))
+        if (!m_args.camera_capt)
           return;
 
-        if (m_args.camera_capt)
+        if (!isDeactivating() && (msg->getDestination() != getSystemId()))
           return;
 
         if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
