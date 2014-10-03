@@ -50,8 +50,10 @@ namespace Supervisors
     class Command
     {
     public:
-      Command(void):
-        m_pid(-1)
+      Command(const Path& script, const std::string& arg):
+        m_pid(-1),
+        m_script(script),
+        m_arg(arg)
       {
       }
 
@@ -71,25 +73,27 @@ namespace Supervisors
           close(STDIN_FILENO);
           close(STDOUT_FILENO);
           close(STDERR_FILENO);
-          execl("/bin/sh", "/bin/sh", "/sbin/mobile-internet", "start", NULL);
+          execl("/bin/sh", "/bin/sh", m_script.c_str(), m_arg.c_str(), NULL);
         }
       }
 
       bool
-      started(void)
+      ended(int& status)
       {
-        return m_pid != -1;
+        return waitpid(m_pid, &status, WNOHANG) > 0;
       }
 
-      bool
-      ended(void)
+      void
+      wait(void)
       {
         int status = 0;
-        return waitpid(m_pid, &status, WNOHANG) > 0;
+        waitpid(m_pid, &status, 0);
       }
 
     private:
       pid_t m_pid;
+      Path m_script;
+      std::string m_arg;
     };
   }
 }
