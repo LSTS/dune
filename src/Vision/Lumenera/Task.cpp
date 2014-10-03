@@ -360,16 +360,15 @@ namespace Vision
 
         m_slave_entities->activate();
         m_act_timer.setTop(getActivationTime());
-
-        IMC::LoggingControl log_ctl;
-        log_ctl.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
-        dispatch(log_ctl);
       }
 
       void
       checkActivationProgress(void)
       {
         trace("checking activation");
+
+        if (getEntityState() != IMC::EntityState::ESTA_BOOT)
+          setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
 
         if (m_act_timer.overflow() && m_act_timer.getTop() != 0)
         {
@@ -378,10 +377,21 @@ namespace Vision
           return;
         }
 
-        if (!m_slave_entities->checkActivation() || !m_log_dir_updated)
+        // Check if the dependencies are met
+        if (!m_slave_entities->checkActivation())
+        {
+          trace("activation waiting for slaves");
+          return;
+        }
+
+        // Check if we should configure the camera and still haven't
+        if (m_args.camera_cfg && !checkConfiguration())
           return;
 
-        m_cfg_dirty = true;
+        // Check if we should prepare for capture and still haven't
+        if (m_args.camera_capt && !(checkCaptureOk() && checkLogdirOk()))
+          return;
+
         activate();
         debug("activation took %0.2f s", getActivationTime() - m_act_timer.getRemaining());
       }
@@ -419,6 +429,7 @@ namespace Vision
         setStrobePower(true);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        inf("activated");
       }
 
       void
@@ -677,7 +688,6 @@ namespace Vision
         {
           debug("enabling continuous automatic whitebalance");
           setProperty("whitebalance", "continuous");
-
         }
         else
         {
@@ -716,17 +726,100 @@ namespace Vision
       }
 
       void
-      onMain(void)
+      captureAndSave(void)
       {
         ByteBuffer dst;
+        try
+        {
+          captureFrame(dst);
+          if (dst.getSize() == 0)
+            spew("destination size is zero");
+        }
+        catch (std::runtime_error& e)
+        {
+          debug("frame capture failed: %s", e.what());
+          stopVideo();
+        }
 
+        if (m_file_count++ == m_args.volume_size)
+        {
+          m_file_count = 0;
+          changeVolume();
+        }
+
+        // Save file.
+        double timestamp = Clock::getSinceEpoch();
+        Path file = m_volume / String::str("%0.4f.jpg", timestamp);
+        std::ofstream jpg(file.c_str(), std::ios::binary);
+        jpg.write(dst.getBufferSigned(), dst.getSize());
+      }
+
+      bool
+      checkConfiguration(void)
+      {
+        if (!m_cfg_dirty)
+          return true;
+
+        try
+        {
+          setProperties();
+          m_cfg_dirty = false;
+          inf("successfully configured camera");
+          return true;
+        }
+        catch (...)
+        { }
+        return false;
+      }
+
+      bool
+      checkCaptureOk(void)
+      {
+        if (m_http != NULL)
+          return true;
+
+        try
+        {
+          startVideo();
+          return true;
+        }
+        catch (std::runtime_error& e)
+        {
+          if (getEntityState() != IMC::EntityState::ESTA_FAULT)
+          {
+            setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_COM_ERROR);
+            err("%s", e.what());
+          }
+          stopVideo();
+        }
+        return false;
+      }
+
+      bool
+      checkLogdirOk(void)
+      {
+        if (m_log_dir_updated)
+          return true;
+
+        IMC::LoggingControl log_ctl;
+        log_ctl.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
+        dispatch(log_ctl);
+
+        return false;
+      }
+
+      void
+      onMain(void)
+      {
         while (!stopping())
         {
           if (isActive())
           {
             waitForMessages(1.0);
-            if (!isActive())
-              continue;
+            if (m_args.camera_cfg)
+              checkConfiguration();
+            if (m_args.camera_capt && checkCaptureOk())
+              captureAndSave();
           }
           else
           {
@@ -735,74 +828,10 @@ namespace Vision
               checkActivationProgress();
             else if (isDeactivating())
               checkDeactivationProgress();
-            continue;
           }
-
-          if (m_args.camera_cfg && m_cfg_dirty)
-          {
-            if (getEntityState() != IMC::EntityState::ESTA_BOOT)
-              setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-
-            try
-            {
-              setProperties();
-              m_cfg_dirty = false;
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-              inf("successfully configured camera");
-            }
-            catch (std::runtime_error& e)
-            {
-              continue;
-            }
-          }
-
-          if (!m_args.camera_capt)
-            continue;
-
-          if (m_http == NULL)
-          {
-            try
-            {
-              startVideo();
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-            }
-            catch (std::runtime_error& e)
-            {
-              if (getEntityState() != IMC::EntityState::ESTA_FAULT)
-              {
-                setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_COM_ERROR);
-                err("%s", e.what());
-              }
-              stopVideo();
-            }
-            continue;
-          }
-
-          try
-          {
-            captureFrame(dst);
-            if (dst.getSize() == 0)
-              spew("destination size is zero");
-          }
-          catch (std::runtime_error& e)
-          {
-            debug("frame capture failed: %s", e.what());
-            stopVideo();
-          }
-
-          if (m_file_count++ == m_args.volume_size)
-          {
-            m_file_count = 0;
-            changeVolume();
-          }
-
-          // Save file.
-          double timestamp = Clock::getSinceEpoch();
-          Path file = m_volume / String::str("%0.4f.jpg", timestamp);
-          std::ofstream jpg(file.c_str(), std::ios::binary);
-          jpg.write(dst.getBufferSigned(), dst.getSize());
         }
       }
+
     };
   }
 }
