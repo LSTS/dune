@@ -372,8 +372,11 @@ namespace Vision
 
         if (m_act_timer.overflow() && m_act_timer.getTop() != 0)
         {
-          activationFailed(DTR("failed to activate required entities"));
+          const char* reason = DTR("failed to activate required entities");
+
+          activationFailed(reason);
           m_slave_entities->deactivate();
+          setEntityState(IMC::EntityState::ESTA_FAULT, reason);
           return;
         }
 
