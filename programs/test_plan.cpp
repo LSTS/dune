@@ -56,6 +56,8 @@ usage(void)
             << " -p: do not parse plan (assumed it's been stored before)"
             << std::endl
             << " -s: send GpsFix (APDL)"
+            << " -d: request DataBase state"
+            << std::endl
             << std::endl
             << std::endl;
 }
@@ -89,6 +91,7 @@ main(int argc, char** argv)
   bool just_load = false;
   bool do_parse = true;
   bool ignore_errors = false;
+  bool request_db_state = false;
 
   for (; *argv && **argv == '-'; ++argv, --argc)
   {
@@ -117,6 +120,9 @@ main(int argc, char** argv)
         break;
       case 'i':
         ignore_errors = true;
+        break;
+      case 'd':
+        request_db_state = true;
         break;
       default:
         std::cerr << "Invalid option: '-" << opt << "'\n";
@@ -196,6 +202,23 @@ main(int argc, char** argv)
 
   cmd.request_id = 0;
 
+  if (request_db_state)
+  {
+    IMC::PlanDB pdb;
+    pdb.type = IMC::PlanDB::DBT_REQUEST;
+    pdb.dt = IMC::PlanDB::DBDT_PLAN;
+    pdb.op = IMC::PlanDB::DBOP_GET_STATE;
+    sendMsg(pdb, sock, dest, port);
+
+    IMC::PlanDB pdb_mem;
+    pdb_mem.type = IMC::PlanDB::DBT_REQUEST;
+    pdb_mem.dt = IMC::PlanDB::DBDT_MEMENTO;
+    pdb_mem.op = IMC::PlanDB::DBOP_GET_STATE;
+    sendMsg(pdb_mem, sock, dest, port);
+
+    return 0;
+  }
+
   if (do_parse)
   {
     IMC::Message* msg;
@@ -204,6 +227,7 @@ main(int argc, char** argv)
     if (msg->getId() == DUNE_IMC_PLANSPECIFICATION)
     {
       IMC::PlanSpecification mission_spec;
+      mission_spec = *static_cast<IMC::PlanSpecification*>(msg);
       mission_spec.toText(std::cerr);
       cmd.arg.set(mission_spec);
       cmd.plan_id = mission_spec.plan_id;
@@ -211,6 +235,7 @@ main(int argc, char** argv)
     else if (msg->getId() == DUNE_IMC_PLANMEMENTO)
     {
       IMC::PlanMemento pmem;
+      pmem = *static_cast<IMC::PlanMemento*>(msg);
       pmem.toText(std::cerr);
       cmd.arg.set(pmem);
       cmd.plan_id = pmem.id;

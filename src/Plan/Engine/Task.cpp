@@ -308,8 +308,8 @@ namespace Plan
         }
         else if (pdb->op != IMC::PlanDB::DBT_REQUEST)
         {
-          if ((pdb->getDestination() != getSystemId()) &&
-              (pdb->getDestinationEntity() != getEntityId()))
+          if ((pdb->getDestination() == getSystemId()) &&
+              (pdb->getDestinationEntity() == getEntityId()))
           {
             if ((pdb->type == IMC::PlanDB::DBT_SUCCESS) ||
                 (pdb->type == IMC::PlanDB::DBT_IN_PROGRESS))
@@ -378,7 +378,14 @@ namespace Plan
         if (!m_mh.processMemento(msg, pmem))
           return;
 
-        // Send PlanMemento to PlanDB
+        // send PlanMemento to PlanDB
+        IMC::PlanDB pdb;
+        pdb.type = IMC::PlanDB::DBT_REQUEST;
+        pdb.dt = IMC::PlanDB::DBDT_MEMENTO;
+        pdb.op = IMC::PlanDB::DBOP_SET;
+        pdb.object_id = pmem.id;
+        pdb.arg.set(pmem);
+        dispatch(pdb);
       }
 
       void

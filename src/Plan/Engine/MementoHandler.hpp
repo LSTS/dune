@@ -105,6 +105,12 @@ namespace Plan
           return false;
         }
 
+        // if resume maneuver is the first and memento field is empty
+        // return right away
+        if ((msg->id == m_queue.front().spec.start_man_id) &&
+            msg->memento.empty())
+          return false;
+
         pmem.plan_id = m_queue.front().spec.plan_id;
         pmem.id = Time::Format::getTimeSafe(Clock::getSinceEpoch()) + "_" + pmem.plan_id;
         pmem.maneuver_id = msg->id;
