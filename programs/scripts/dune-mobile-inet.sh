@@ -197,24 +197,6 @@ ppp_stop()
     return 0
 }
 
-ppp_watch()
-{
-    ip="$(ppp_get_ip)"
-    log info "ppp: external IP is $ip"
-
-    dyndns_update "$ip"
-
-    while [ 1 ]; do
-        ip="$(ppp_get_ip)"
-        if [ -z "$ip" ]; then
-            log err "ppp: connection lost"
-            return 1
-        fi
-
-        sleep 1
-    done
-}
-
 nat_start()
 {
     if [ -z "$NAT_ENABLE" ]; then
@@ -273,8 +255,6 @@ start()
         log err "failed to establish a connection"
         exit 1
     fi
-
-    ppp_watch
 }
 
 stop()
