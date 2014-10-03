@@ -38,7 +38,7 @@
 // Local headers.
 #include "Command.hpp"
 
-namespace Supervisors
+namespace Transports
 {
   namespace MobileInternet
   {

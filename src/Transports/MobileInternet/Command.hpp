@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef SUPERVISORS_MOBILE_INTERNET_COMMAND_HPP_INCLUDED_
-#define SUPERVISORS_MOBILE_INTERNET_COMMAND_HPP_INCLUDED_
+#ifndef TRANSPORTS_MOBILE_INTERNET_COMMAND_HPP_INCLUDED_
+#define TRANSPORTS_MOBILE_INTERNET_COMMAND_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <cstdlib>
@@ -41,7 +41,7 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-namespace Supervisors
+namespace Transports
 {
   namespace MobileInternet
   {
