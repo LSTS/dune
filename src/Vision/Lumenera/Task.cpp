@@ -384,7 +384,7 @@ namespace Vision
 
           activationFailed(reason);
           m_slave_entities->deactivate();
-          setEntityState(IMC::EntityState::ESTA_FAULT, reason);
+          setEntityState(IMC::EntityState::ESTA_ACTIVE, Status::CODE_IDLE);
           return;
         }
 
