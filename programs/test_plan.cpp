@@ -58,6 +58,8 @@ usage(void)
             << " -s: send GpsFix (APDL)"
             << " -d: request DataBase state"
             << std::endl
+            << " -D: delete plan"
+            << std::endl
             << std::endl
             << std::endl;
 }
@@ -92,6 +94,7 @@ main(int argc, char** argv)
   bool do_parse = true;
   bool ignore_errors = false;
   bool request_db_state = false;
+  bool delete_plan = false;
 
   for (; *argv && **argv == '-'; ++argv, --argc)
   {
@@ -123,6 +126,9 @@ main(int argc, char** argv)
         break;
       case 'd':
         request_db_state = true;
+        break;
+      case 'D':
+        delete_plan = true;
         break;
       default:
         std::cerr << "Invalid option: '-" << opt << "'\n";
@@ -215,6 +221,18 @@ main(int argc, char** argv)
     pdb_mem.dt = IMC::PlanDB::DBDT_MEMENTO;
     pdb_mem.op = IMC::PlanDB::DBOP_GET_STATE;
     sendMsg(pdb_mem, sock, dest, port);
+
+    return 0;
+  }
+
+  if (delete_plan)
+  {
+    IMC::PlanDB pdb_del;
+    pdb_del.type = IMC::PlanDB::DBT_REQUEST;
+    pdb_del.dt = IMC::PlanDB::DBDT_PLAN;
+    pdb_del.op = IMC::PlanDB::DBOP_DEL;
+    pdb_del.object_id = "test_plan";
+    sendMsg(pdb_del, sock, dest, port);
 
     return 0;
   }
