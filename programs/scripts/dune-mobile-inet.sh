@@ -161,7 +161,7 @@ ppp_start()
         hide-password \
         persist \
         holdoff 10 \
-        maxfail 1 \
+        maxfail 10 \
         updetach \
         connect "/usr/sbin/chat -E -v -t15 $CHAT_SCRIPT" > /var/run/ppp.log 2>&1
 
