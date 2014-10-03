@@ -73,8 +73,7 @@ namespace Plan
                                            INSERT_STATEMENT("Memento") };
 
     static const char* c_delete_stmt[] = { DELETE_STATEMENT("Plan", "plan_id"),
-                                           DELETE_STATEMENT("Memento", "id"),
-                                           DELETE_STATEMENT("MEMENTO", "plan_id") };
+                                           DELETE_STATEMENT("Memento", "id")};
 
     static const char* c_iterator_stmt[] = { ITERATOR_STATEMENT("Plan", "plan_id"),
                                              ITERATOR_STATEMENT("Memento", "id") };
@@ -83,11 +82,13 @@ namespace Plan
                                           QUERY_STATEMENT("Memento", "id") };
 
     static const char* c_get_stmt[] = { GET_STATEMENT("Plan", "plan_id"),
-                                        GET_STATEMENT("Memento", "id"),
-                                        GET_STATEMENT("Memento", "plan_id") };
+                                        GET_STATEMENT("Memento", "id")};
 
     static const char* c_delete_all_stmt[] = { DELETE_ALL_STATEMENT("Plan"),
                                                DELETE_ALL_STATEMENT("Memento") };
+
+    static const char* c_cross_operations_stmt[] = { GET_STATEMENT("Memento", "plan_id"),
+                                                     DELETE_STATEMENT("Memento", "plan_id")};
 
     static const char* c_lastchange_table_stmt[] = { LCHANGE_TABLE("LastChange"),
                                                      LCHANGE_TABLE("LastChange_Memento") };
@@ -125,12 +126,18 @@ namespace Plan
       DT_PLAN = 0,
       //! Memento data type
       DT_MEMENTO = 1,
-      //! Associated Memento
-      DT_ASSOC_MEMENTO = 2,
       //! Total tables
-      DT_TOTAL = 2,
-      //! Maximum Querys
-      DT_MAX_QUERYS = 3
+      DT_TOTAL = 2
+    };
+
+    enum CrossOperations
+    {
+      //! Get Memento from plan_id
+      CO_GET = 0,
+      //! Delete Memento from plan_id
+      CO_DELETE = 1,
+      //! Total Cross Operations
+      CO_TOTAL = 2
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -145,11 +152,12 @@ namespace Plan
       IMC::PlanDBInformation m_object_info;
       // Statements
       Database::Statement* m_insert_stmt[DT_TOTAL];
-      Database::Statement* m_delete_stmt[DT_MAX_QUERYS];
+      Database::Statement* m_delete_stmt[DT_TOTAL];
       Database::Statement* m_iterator_stmt[DT_TOTAL];
       Database::Statement* m_query_stmt[DT_TOTAL];
-      Database::Statement* m_get_stmt[DT_MAX_QUERYS];
+      Database::Statement* m_get_stmt[DT_TOTAL];
       Database::Statement* m_delete_all_stmt[DT_TOTAL];
+      Database::Statement* m_cross_operations_stmt[CO_TOTAL];
       Database::Statement* m_lastchange_initial_insert_stmt[DT_TOTAL];
       Database::Statement* m_lastchange_update_stmt[DT_TOTAL];
       Database::Statement* m_lastchange_query_stmt[DT_TOTAL];
@@ -200,6 +208,7 @@ namespace Plan
             m_query_stmt[i] = new Database::Statement(c_query_stmt[i], *m_db);
             m_get_stmt[i] = new Database::Statement(c_get_stmt[i], *m_db);
             m_delete_all_stmt[i] = new Database::Statement(c_delete_all_stmt[i], *m_db);
+            m_cross_operations_stmt[i] = new Database::Statement(c_cross_operations_stmt[i], *m_db);
 
             m_db->execute(c_lastchange_table_stmt[i]);
             m_lastchange_initial_insert_stmt[i] = new Database::Statement(c_lastchange_initial_insert_stmt[i], *m_db);
@@ -242,6 +251,7 @@ namespace Plan
           delete m_query_stmt[i];
           delete m_get_stmt[i];
           delete m_delete_all_stmt[i];
+          delete m_cross_operations_stmt[i];
           delete m_lastchange_initial_insert_stmt[i];
           delete m_lastchange_update_stmt[i];
           delete m_lastchange_query_stmt[i];
@@ -539,10 +549,11 @@ namespace Plan
             count = 0;
 
             // Delete associated Mementos if exists
-            *m_get_stmt[DT_ASSOC_MEMENTO] << req.object_id;
-            *m_delete_stmt[DT_ASSOC_MEMENTO] << req.object_id;
-            while (m_get_stmt[DT_ASSOC_MEMENTO]->execute())
-              m_delete_stmt[DT_ASSOC_MEMENTO]->execute(&count);
+            *m_cross_operations_stmt[CO_GET] << req.object_id;
+            *m_cross_operations_stmt[CO_DELETE] << req.object_id;
+
+            while (m_cross_operations_stmt[CO_GET]->execute())
+              m_cross_operations_stmt[CO_DELETE]->execute(&count);
 
             if (count > 0)
               onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);
@@ -827,7 +838,7 @@ namespace Plan
               if (type == IMC::PlanDB::DBT_FAILURE && m_reply.dt == IMC::PlanDB::DBDT_PLAN)
                 err("%s (%s) -- %s", DTR(c_op_plan_desc[m_reply.op]),
                     m_reply.object_id.c_str(), desc);
-              else if (type == IMC::PlanDB::DBT_SUCCESS && m_reply.dt == IMC::PlanDB::DBDT_MEMENTO)
+              else if (type == IMC::PlanDB::DBT_FAILURE && m_reply.dt == IMC::PlanDB::DBDT_MEMENTO)
                 err("%s (%s) -- %s", DTR(c_op_memento_desc[m_reply.op]),
                     m_reply.object_id.c_str(), desc);
 
