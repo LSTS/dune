@@ -42,11 +42,12 @@
   "id varchar2 primary key, change_time"                \
   " real not null, change_sid integer not null,"        \
   " change_sname varchar2 not null,"                    \
-  " md5 blob not null, data blob not null"              \
+  " md5 blob not null, data blob not null,"             \
+  " plan_id varchar2 not null"                          \
 
 #define TABLE_STATEMENT(type, table)                    \
   "create table if not exists " type " ( " table " )"
-#define INSERT_STATEMENT(type) "insert into " type " values(?,?,?,?,?,?)"
+#define INSERT_STATEMENT(type, variables) "insert into " type " values( " variables " )"
 #define DELETE_STATEMENT(type, field) "delete from " type " where " field "=?"
 #define ITERATOR_STATEMENT(type, field) "select " field ", change_time, change_sid," \
   " change_sname, md5, length(data) from " type " order by " field
@@ -66,11 +67,11 @@ namespace Plan
   {
     using DUNE_NAMESPACES;
 
-    static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
+static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
                                           TABLE_STATEMENT("Memento", TABLE_MEMENTO) };
 
-    static const char* c_insert_stmt[] = { INSERT_STATEMENT("Plan"),
-                                           INSERT_STATEMENT("Memento") };
+    static const char* c_insert_stmt[] = { INSERT_STATEMENT("Plan", "?,?,?,?,?,?"),
+                                           INSERT_STATEMENT("Memento", "?,?,?,?,?,?,?") };
 
     static const char* c_delete_stmt[] = { DELETE_STATEMENT("Plan", "plan_id"),
                                            DELETE_STATEMENT("Memento", "id")};
@@ -87,8 +88,8 @@ namespace Plan
     static const char* c_delete_all_stmt[] = { DELETE_ALL_STATEMENT("Plan"),
                                                DELETE_ALL_STATEMENT("Memento") };
 
-    static const char* c_cross_operations_stmt[] = { GET_STATEMENT("Memento", "plan_id"),
-                                                     DELETE_STATEMENT("Memento", "plan_id")};
+    /*static const char* c_cross_operations_stmt[] = { GET_STATEMENT("Memento", "plan_id"),
+                                                     DELETE_STATEMENT("Memento", "plan_id")};*/
 
     static const char* c_lastchange_table_stmt[] = { LCHANGE_TABLE("LastChange"),
                                                      LCHANGE_TABLE("LastChange_Memento") };
@@ -157,7 +158,7 @@ namespace Plan
       Database::Statement* m_query_stmt[DT_TOTAL];
       Database::Statement* m_get_stmt[DT_TOTAL];
       Database::Statement* m_delete_all_stmt[DT_TOTAL];
-      Database::Statement* m_cross_operations_stmt[CO_TOTAL];
+      //Database::Statement* m_cross_operations_stmt[CO_TOTAL];
       Database::Statement* m_lastchange_initial_insert_stmt[DT_TOTAL];
       Database::Statement* m_lastchange_update_stmt[DT_TOTAL];
       Database::Statement* m_lastchange_query_stmt[DT_TOTAL];
@@ -208,7 +209,7 @@ namespace Plan
             m_query_stmt[i] = new Database::Statement(c_query_stmt[i], *m_db);
             m_get_stmt[i] = new Database::Statement(c_get_stmt[i], *m_db);
             m_delete_all_stmt[i] = new Database::Statement(c_delete_all_stmt[i], *m_db);
-            m_cross_operations_stmt[i] = new Database::Statement(c_cross_operations_stmt[i], *m_db);
+            //m_cross_operations_stmt[i] = new Database::Statement(c_cross_operations_stmt[i], *m_db);
 
             m_db->execute(c_lastchange_table_stmt[i]);
             m_lastchange_initial_insert_stmt[i] = new Database::Statement(c_lastchange_initial_insert_stmt[i], *m_db);
@@ -225,6 +226,7 @@ namespace Plan
 
             m_lastchange_query_stmt[i]->reset();
           }
+
         }
         catch (std::runtime_error& e)
         {
@@ -251,7 +253,7 @@ namespace Plan
           delete m_query_stmt[i];
           delete m_get_stmt[i];
           delete m_delete_all_stmt[i];
-          delete m_cross_operations_stmt[i];
+          //delete m_cross_operations_stmt[i];
           delete m_lastchange_initial_insert_stmt[i];
           delete m_lastchange_update_stmt[i];
           delete m_lastchange_query_stmt[i];
@@ -486,6 +488,9 @@ namespace Plan
                                     << m_object_info.change_sname
                                     << m_object_info.md5
                                     << plan_data;
+          if (data_type == DT_MEMENTO)
+            *m_insert_stmt[data_type] << plan_mem->plan_id;
+
           m_insert_stmt[data_type]->execute();
           m_insert_stmt[data_type]->reset();
           onChange(m_object_info.change_time, m_object_info.change_sid, m_object_info.change_sname, data_type);
@@ -510,7 +515,6 @@ namespace Plan
           default:
             break;
         }
-
       }
 
       void
@@ -546,19 +550,16 @@ namespace Plan
             if (count > 0)
               onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_PLAN);
 
-            count = 0;
-
             // Delete associated Mementos if exists
-            *m_cross_operations_stmt[CO_GET] << req.object_id;
+            /*            *m_cross_operations_stmt[CO_GET] << req.object_id;
             *m_cross_operations_stmt[CO_DELETE] << req.object_id;
 
             while (m_cross_operations_stmt[CO_GET]->execute())
-              m_cross_operations_stmt[CO_DELETE]->execute(&count);
+            m_cross_operations_stmt[CO_DELETE]->execute(&count);
 
             if (count > 0)
-              onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);
+            onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);*/
 
-              count = 0;
           }
           // If delete memento, only delete memento
           if (data_type == DT_MEMENTO)
