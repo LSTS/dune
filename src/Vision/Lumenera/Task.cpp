@@ -372,7 +372,15 @@ namespace Vision
 
         if (m_act_timer.overflow() && m_act_timer.getTop() != 0)
         {
-          const char* reason = DTR("failed to activate required entities");
+          const char* reason;
+          if (!m_slave_entities->checkActivation())
+            reason = DTR("failed to activate required entities");
+          else if (m_args.camera_cfg && !checkConfiguration())
+            reason = DTR("failed to configure camera");
+          else if (m_args.camera_capt && !(checkCaptureOk() && checkLogdirOk()))
+            reason = DTR("failed to start video streamming");
+          else
+            reason = DTR("activation timed out for unknown reason");
 
           activationFailed(reason);
           m_slave_entities->deactivate();
