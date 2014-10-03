@@ -38,7 +38,7 @@
 // Local headers.
 #include "Command.hpp"
 
-namespace Supervisors
+namespace Transports
 {
   namespace MobileInternet
   {
@@ -62,42 +62,77 @@ namespace Supervisors
     {
       //! Task arguments.
       Arguments m_args;
-      //! Command.
-      Command m_cmd;
+      //! Start command.
+      Command* m_cmd_start;
+      //! Stop command.
+      Command* m_cmd_stop;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx)
+        Tasks::Task(name, ctx),
+        m_cmd_start(NULL),
+        m_cmd_stop(NULL)
       {
         // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("GSM - User", m_args.gsm_user)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("vodafone")
         .description("GSM/GPRS username");
 
         param("GSM - Password", m_args.gsm_pass)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("vodafone")
         .description("GSM/GPRS password");
 
         param("GSM - APN", m_args.gsm_apn)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("internet.vodafone.pt")
         .description("GSM/GPRS Access Point Name (APN)");
 
         param("GSM - Pin", m_args.gsm_pin)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("")
         .description("GSM/GPRS pin.");
 
         param("GSM - Mode", m_args.gsm_mode)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("AT\\^SYSCFG=2,2,3fffffff,0,1")
         .description("GSM/GPRS mode.");
+
+        Path script = m_ctx.dir_scripts / "dune-mobile-inet.sh";
+        m_cmd_start = new Command(script.c_str(), "start");
+        m_cmd_stop = new Command(script.c_str(), "stop");
       }
 
       ~Task(void)
       {
-        m_cmd.stop();
+        m_cmd_start->stop();
+        delete m_cmd_start;
+
+        m_cmd_stop->start();
+        m_cmd_stop->wait();
+        m_cmd_stop->stop();
+        delete m_cmd_stop;
       }
 
       void
-      connect(void)
+      onResourceAcquisition(void)
       {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
+      onRequestActivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_INIT);
+
         std::string pin("AT");
         if (m_args.gsm_pin.size() == 4)
         {
@@ -111,20 +146,61 @@ namespace Supervisors
         Environment::set("GSM_PIN", pin);
         Environment::set("GSM_MODE", m_args.gsm_mode);
 
-        m_cmd.start();
+        m_cmd_start->start();
+      }
+
+      void
+      checkActivation(void)
+      {
+        int status = 0;
+        if (!m_cmd_start->ended(status))
+          return;
+
+        if (status == 0)
+          activate();
+        else
+          activationFailed(String::str("error code is %d", status));
+      }
+
+      void
+      onActivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      onRequestDeactivation(void)
+      {
+        m_cmd_stop->start();
+      }
+
+      void
+      checkDeactivation(void)
+      {
+        int status = 0;
+
+        if (!m_cmd_stop->ended(status))
+          return;
+
+        deactivate();
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
       onMain(void)
       {
-        connect();
-
         while (!stopping())
         {
           waitForMessages(1.0);
-
-          if (m_cmd.ended())
-            m_cmd.start();
+          if (isActivating())
+            checkActivation();
+          else if (isDeactivating())
+            checkDeactivation();
         }
       }
     };

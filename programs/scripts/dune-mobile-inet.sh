@@ -161,7 +161,7 @@ ppp_start()
         hide-password \
         persist \
         holdoff 10 \
-        maxfail 1 \
+        maxfail 10 \
         updetach \
         connect "/usr/sbin/chat -E -v -t15 $CHAT_SCRIPT" > /var/run/ppp.log 2>&1
 
@@ -195,24 +195,6 @@ ppp_stop()
 
     log info "ppp: stopped"
     return 0
-}
-
-ppp_watch()
-{
-    ip="$(ppp_get_ip)"
-    log info "ppp: external IP is $ip"
-
-    dyndns_update "$ip"
-
-    while [ 1 ]; do
-        ip="$(ppp_get_ip)"
-        if [ -z "$ip" ]; then
-            log err "ppp: connection lost"
-            return 1
-        fi
-
-        sleep 1
-    done
 }
 
 nat_start()
@@ -273,8 +255,6 @@ start()
         log err "failed to establish a connection"
         exit 1
     fi
-
-    ppp_watch
 }
 
 stop()
