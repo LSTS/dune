@@ -128,6 +128,12 @@ namespace DUNE
         }
       }
 
+      inline std::string
+      uncast(void)
+      {
+        return uncastLexical(m_var);
+      }
+
     private:
       T& m_var;
       T m_copy;
@@ -206,6 +212,12 @@ namespace DUNE
         }
       }
 
+      inline std::string
+      uncast(void)
+      {
+        return uncastLexical(m_var);
+      }
+
     private:
       std::vector<T>& m_var;
       std::vector<T> m_copy;
@@ -248,6 +260,12 @@ namespace DUNE
 
         m_var = m_copy;
         return true;
+      }
+
+      std::string
+      uncast(void)
+      {
+        return uncastLexical(m_var);
       }
 
     private:

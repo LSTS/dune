@@ -54,6 +54,9 @@ namespace DUNE
       virtual bool
       commit(void) = 0;
 
+      virtual std::string
+      uncast(void) = 0;
+
       virtual void
       minimumSize(unsigned value)
       {
