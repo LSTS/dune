@@ -47,93 +47,22 @@ namespace DUNE
 {
   namespace Simulation
   {
-    UAVSimulation::UAVSimulation(void):
+    UAVSimulation::UAVSimulation(Tasks::Task& task):
+        m_task(task),
         //! Simulation type
         m_sim_type("3DOF")
     {
       resetModel();
     }
 
-    UAVSimulation::UAVSimulation(const UAVSimulation& model)
+    UAVSimulation::UAVSimulation(const UAVSimulation& model):
+        m_task(model.m_task)
     {
-      //! modelation type
-      m_sim_type = model.m_sim_type;
-
-      //! Environment parameters
-      //! Wind state vector
-      m_wind = model.m_wind;
-      //! - Gravity acceleration
-      m_g = model.m_g;
-
-      //! Time step control
-      m_timestep_lim = 1.0;
-
-      //! Vehicle position
-      m_position = model.m_position;
-      //! Vehicle velocity vector
-      m_velocity = model.m_velocity;
-      //! Vehicle velocity vector relative to the wind, in the ground reference frame
-      m_uav2wind_gnd_frm = model.m_uav2wind_gnd_frm;
-
-      //! Vehicle model parameters
-      //! - Bank time constant
-      m_bank_time_cst = model.m_bank_time_cst;
-      m_bank_time_cst_f = model.m_bank_time_cst_f;
-      //! - Airspeed time constant
-      m_speed_time_cst = model.m_speed_time_cst;
-      m_speed_time_cst_f = model.m_speed_time_cst_f;
-      //! - Altitude time constant
-      m_alt_time_cst = model.m_alt_time_cst;
-      m_alt_time_cst_f = model.m_alt_time_cst_f;
-      //! Vehicle operation limits and respective initialization flags
-      //! - Bank rate
-      m_bank_rate_lim = model.m_bank_rate_lim;
-      m_bank_rate_lim_f = model.m_bank_rate_lim_f;
-      //! - Longitudinal acceleration
-      m_lon_accel_lim = model.m_lon_accel_lim;
-      m_lon_accel_lim_f = model.m_lon_accel_lim_f;
-      //! - Vertical slope
-      m_vert_slope_lim = model.m_vert_slope_lim;
-      m_vert_slope_lim_f = model.m_vert_slope_lim_f;
-
-      //! Control commands
-      //! - Bank
-      m_bank_cmd = model.m_bank_cmd;
-      //! - Airspeed
-      m_airspeed_cmd = model.m_airspeed_cmd;
-      //! - Altitude
-      m_altitude_cmd = model.m_altitude_cmd;
-      //! - Flight path angle
-      m_fpa_cmd = model.m_fpa_cmd;
-      //! - Pitch
-      m_pitch_cmd = model.m_pitch_cmd;
-      //! Control commands initialization flags
-      //! - Airspeed
-      m_airspeed_cmd_ini = model.m_airspeed_cmd_ini;
-      //! - Altitude
-      m_altitude_cmd_ini = model.m_altitude_cmd_ini;
-      //! - Flight path angle
-      m_fpa_cmd_ini = model.m_fpa_cmd_ini;
-      //! - Pitch
-      m_pitch_cmd_ini = model.m_pitch_cmd_ini;
-
-      //! Simulation variables
-      m_airspeed = model.m_airspeed;
-      m_ang_attack = model.m_ang_attack;
-      m_sideslip = model.m_sideslip;
-      m_cos_yaw = model.m_cos_yaw;
-      m_sin_yaw = model.m_sin_yaw;
-      m_cos_pitch = model.m_cos_pitch;
-      m_sin_pitch = model.m_sin_pitch;
-      m_cos_roll = model.m_cos_roll;
-      m_sin_roll = model.m_sin_roll;
-      m_cos_course = model.m_cos_course;
-      m_sin_course = model.m_sin_course;
-      m_cos_fl_path_ang = model.m_cos_fl_path_ang;
-      m_sin_fl_path_ang = model.m_sin_fl_path_ang;
+      *this = model;
     }
 
-    UAVSimulation::UAVSimulation(const double& alt_time_cst):
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const double& alt_time_cst):
+        m_task(task),
         //! Simulation type
         m_sim_type("4DOF_alt")
     {
@@ -145,7 +74,8 @@ namespace DUNE
       m_alt_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(const double& bank_time_cst, const double& speed_time_cst):
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const double& bank_time_cst, const double& speed_time_cst):
+        m_task(task),
         //! Simulation type
         m_sim_type("4DOF_bank")
     {
@@ -160,7 +90,8 @@ namespace DUNE
       m_speed_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst):
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst):
+        m_task(task),
         //! Simulation type
         m_sim_type("5DOF")
     {
@@ -178,7 +109,8 @@ namespace DUNE
       m_alt_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& vel):
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel):
+        m_task(task),
         //! Simulation type
         m_sim_type("3DOF")
     {
@@ -188,7 +120,8 @@ namespace DUNE
       setVelocity(vel);
     }
 
-    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& vel, const double& alt_time_cst):
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel, const double& alt_time_cst):
+        m_task(task),
         //! Simulation type
         m_sim_type("4DOF_alt")
     {
@@ -203,7 +136,8 @@ namespace DUNE
       m_alt_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst):
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst):
+        m_task(task),
         //! Simulation type
         m_sim_type("4DOF_bank")
     {
@@ -221,8 +155,9 @@ namespace DUNE
       m_speed_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& vel,
-        const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst) :
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel,
+        const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst):
+        m_task(task),
         //! Simulation type
         m_sim_type("5DOF")
     {
@@ -243,8 +178,9 @@ namespace DUNE
       m_alt_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst,
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst,
         const double& airspeed_cmd, const double& bank_cmd):
+        m_task(task),
         //! Simulation type
         m_sim_type("4DOF_bank")
     {
@@ -268,7 +204,8 @@ namespace DUNE
       commandAirspeed(airspeed_cmd);
     }
 
-    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel):
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel):
+        m_task(task),
         //! Simulation type
         m_sim_type("3DOF")
     {
@@ -281,8 +218,9 @@ namespace DUNE
       setVelocity(vel);
     }
 
-    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
         const double& alt_time_cst):
+        m_task(task),
         //! Simulation type
         m_sim_type("4DOF_alt")
     {
@@ -300,8 +238,9 @@ namespace DUNE
       m_alt_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
         const double& bank_time_cst, const double& speed_time_cst):
+        m_task(task),
         //! Simulation type
         m_sim_type("4DOF_bank")
     {
@@ -322,8 +261,9 @@ namespace DUNE
       m_speed_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
-        const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst) :
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
+        const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst):
+        m_task(task),
         //! Simulation type
         m_sim_type("5DOF")
     {
@@ -347,9 +287,10 @@ namespace DUNE
       m_alt_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
         const double& bank_time_cst, const double& speed_time_cst,
         const double& airspeed_cmd, const double& bank_cmd):
+          m_task(task),
           //! Simulation type
           m_sim_type("4DOF_bank")
     {
@@ -376,9 +317,10 @@ namespace DUNE
       commandAirspeed(airspeed_cmd);
     }
 
-    UAVSimulation::UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
         const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst,
         const double& altitude_cmd, const double& airspeed_cmd, const double& bank_cmd):
+          m_task(task),
           //! Simulation type
           m_sim_type("5DOF")
     {
@@ -575,8 +517,8 @@ namespace DUNE
       //! - Airspeed
       if (!m_airspeed_cmd_ini)
       {
-        throw Error("Airspeed command missing! The state was not updated.");
-        //inf("No model parameters defined! The state was not updated.");
+        //throw Error("Airspeed command missing! The state was not updated.");
+        m_task.war("Airspeed command missing! The state was not updated.");
         return *this;
       }
 
@@ -594,14 +536,16 @@ namespace DUNE
         if (m_altitude_cmd_ini || m_fpa_cmd_ini)
           update5DOF(d_timestep);
         else
-          throw Error("Altitude command missing! The state was not updated.");
+          //throw Error("Altitude command missing! The state was not updated.");
+          m_task.war("Altitude command missing! The state was not updated.");
       }
       else if (m_sim_type.compare("4DOF_alt") == 0)
       {
         if (m_altitude_cmd_ini || m_fpa_cmd_ini)
           update4DOF_Alt(d_timestep);
         else
-          throw Error("Altitude command missing! The state was not updated.");
+          //throw Error("Altitude command missing! The state was not updated.");
+          m_task.war("Altitude command missing! The state was not updated.");
       }
       else if (m_sim_type.compare("3DOF") == 0)
         update3DOF(d_timestep);
@@ -852,8 +796,8 @@ namespace DUNE
       //! - Model control time constants
       if (!m_alt_time_cst_f)
       {
-        throw Error("Model parameter missing (Altitude time constant)! The state was not updated.");
-        //inf("No model parameters defined! The state was not updated.");
+        //throw Error("Model parameter missing (Altitude time constant)! The state was not updated.");
+        m_task.war("Model parameter missing (Altitude time constant)! The state was not updated.");
         return;
       }
 
@@ -935,8 +879,8 @@ namespace DUNE
       //! - Model control time constants
       if (!m_bank_time_cst_f)// && !m_speed_time_cst_f)
       {
-        throw Error("No model parameters defined! The state was not updated.");
-        //inf("No model parameters defined! The state was not updated.");
+        //throw Error("No model parameters defined! The state was not updated.");
+        m_task.war("No model parameters defined! The state was not updated.");
         return;
       }
 
@@ -1006,14 +950,14 @@ namespace DUNE
       //! - Model control time constants
       if (!m_bank_time_cst_f && !m_speed_time_cst_f && !m_alt_time_cst_f)
       {
-        throw Error("No model parameters defined! The state was not updated.");
-        //inf("No model parameters defined! The state was not updated.");
+        //throw Error("No model parameters defined! The state was not updated.");
+        m_task.war("No model parameters defined! The state was not updated.");
         return;
       }
       else if (!m_alt_time_cst_f)
       {
-        throw Error("Model parameter missing (Altitude time constant)! The state was not updated.");
-        //inf("No model parameters defined! The state was not updated.");
+        //throw Error("Model parameter missing (Altitude time constant)! The state was not updated.");
+        m_task.war("Model parameter missing (Altitude time constant)! The state was not updated.");
         return;
       }
 
@@ -1087,7 +1031,8 @@ namespace DUNE
     {
       int i_pos_size = pos.rows();
       if (i_pos_size < 2 && i_pos_size > 6)
-        throw Error("Invalid position vector dimension. Vector size must be between 2 and 6.");
+        //throw Error("Invalid position vector dimension. Vector size must be between 2 and 6.");
+        m_task.war("Invalid position vector dimension. Vector size must be between 2 and 6.");
 
       // Vehicle position
       m_position.set(0, i_pos_size-1, 0, 0, pos);
@@ -1108,7 +1053,8 @@ namespace DUNE
     {
       int i_vel_size = vel.rows();
       if (i_vel_size < 2 && i_vel_size > 6)
-        throw Error("Invalid velocity vector dimension. Vector size must be between 2 and 6.");
+        //throw Error("Invalid velocity vector dimension. Vector size must be between 2 and 6.");
+        m_task.war("Invalid velocity vector dimension. Vector size must be between 2 and 6.");
 
       //! Vehicle velocity vector, relative to the ground, in the ground reference frame
       m_velocity.set(0, i_vel_size-1, 0, 0, vel);
@@ -1258,7 +1204,7 @@ namespace DUNE
     UAVSimulation::commandBank(const double& bank_cmd)
     {
       if (Math::isNaN(bank_cmd)) // Check if the command is a real value
-        std::printf("UAV Simulation - Bank command rejected - Commanded value is not a number!\n");
+        m_task.war("UAV Simulation - Bank command rejected - Commanded value is not a number!\n");
       else
         m_bank_cmd = bank_cmd;
     }
@@ -1267,7 +1213,7 @@ namespace DUNE
     UAVSimulation::commandAirspeed(const double& airspeed_cmd)
     {
       if (Math::isNaN(airspeed_cmd)) // Check if the command is a real value
-        std::printf("UAV Simulation - Speed command rejected - Commanded value is not a number!\n");
+        m_task.war("UAV Simulation - Speed command rejected - Commanded value is not a number!\n");
       else
       {
         m_airspeed_cmd = airspeed_cmd;
@@ -1279,7 +1225,7 @@ namespace DUNE
     UAVSimulation::commandAlt(const double& altitude_cmd)
     {
       if (Math::isNaN(altitude_cmd)) // Check if the command is a real value
-        std::printf("UAV Simulation - Altitude command rejected - Commanded value is not a number!\n");
+        m_task.war("UAV Simulation - Altitude command rejected - Commanded value is not a number!\n");
       else
       {
         //! Altitude command
@@ -1299,7 +1245,7 @@ namespace DUNE
     UAVSimulation::commandFPA(const double& fpa_cmd)
     {
       if (Math::isNaN(fpa_cmd)) // Check if the command is a real value
-        std::printf("UAV Simulation - Flight path angle command rejected - Commanded value is not a number!\n");
+        m_task.war("UAV Simulation - Flight path angle command rejected - Commanded value is not a number!\n");
       else
       {
         //! Flight path angle command
@@ -1317,7 +1263,7 @@ namespace DUNE
     UAVSimulation::commandPitch(const double& pitch_cmd)
     {
       if (Math::isNaN(pitch_cmd)) // Check if the command is a real value
-       std::printf("UAV Simulation - Pitch command rejected - Commanded value is not a number!\n");
+        m_task.war("UAV Simulation - Pitch command rejected - Commanded value is not a number!\n");
       else
        {
         //! Flight path angle command

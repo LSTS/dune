@@ -289,7 +289,7 @@ namespace DUNE
     void
     Task::activationFailed(const std::string& reason)
     {
-      spew("activation failed");
+      spew("activation failed: %s", reason.c_str());
       m_entity->failActivation(reason);
     }
 
