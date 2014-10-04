@@ -322,9 +322,9 @@ namespace DUNE
     return os.str();
   }
 
-  template <>
+  template <typename T>
   inline std::string
-  uncastLexical(std::vector<std::string>& var)
+  uncastLexical(std::vector<T>& var)
   {
     std::ostringstream os;
 
