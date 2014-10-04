@@ -173,7 +173,7 @@ namespace Sensors
         .description("Auto pulse selection mode");
 
         param("Power Channel - Sidescan", m_args.pwr_ss)
-        .defaultValue("Sidescan")
+        .defaultValue("Private (Sidescan)")
         .description("Name of sidescan's power channel");
 
         m_bfr.resize(c_buffer_size);
