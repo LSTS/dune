@@ -126,7 +126,7 @@ namespace Transports
         param("Power Channel", m_args.power_channel)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
-        .defaultValue("HSDPA")
+        .defaultValue("")
         .description("Power channel name");
 
         param("GSM - User", m_args.gsm_user)
