@@ -29,14 +29,10 @@
 #include <memory>
 #include <cstring>
 #include <algorithm>
-#include <cerrno>
 #include <cstdlib>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-
-// Local headers.
-#include "Command.hpp"
 
 namespace Transports
 {
@@ -44,6 +40,40 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    //! Finite state machine states.
+    enum StateMachineStates
+    {
+      //! Waiting for activation.
+      SM_IDLE,
+      //! Start activation sequence.
+      SM_ACT_BEGIN,
+      //! Turn modem power on.
+      SM_ACT_POWER_ON,
+      //! Wait for power to be turned on.
+      SM_ACT_POWER_WAIT,
+      //! Wait for serial port device to become available.
+      SM_ACT_MODEM_WAIT,
+      //! Start PPP session.
+      SM_ACT_CONNECT,
+      //! Activation sequence is complete.
+      SM_ACT_DONE,
+      //! Task is active but a connection was not yet established.
+      SM_ACT_DISCONNECTED,
+      //! Task is active and connected to the Internet.
+      SM_ACT_CONNECTED,
+      //! Start deactivation sequence.
+      SM_DEACT_BEGIN,
+      //! Disconnect from the Internet.
+      SM_DEACT_DISCONNECT,
+      //! Switch power off.
+      SM_DEACT_POWER_OFF,
+      //! Wait for power to be turned off.
+      SM_DEACT_POWER_WAIT,
+      //! Deactivation sequence is complete.
+      SM_DEACT_DONE
+    };
+
+    //! Task arguments.
     struct Arguments
     {
       //! GSM username.
@@ -56,6 +86,12 @@ namespace Transports
       std::string gsm_pin;
       //! GSM mode.
       std::string gsm_mode;
+      //! PPP interface.
+      std::string ppp_interface;
+      //! UART device.
+      std::string uart_dev;
+      //! Power channel name.
+      std::string power_channel;
     };
 
     struct Task: public Tasks::Task
@@ -63,42 +99,59 @@ namespace Transports
       //! Task arguments.
       Arguments m_args;
       //! Start command.
-      Command* m_cmd_start;
+      std::string m_command_connect;
       //! Stop command.
-      Command* m_cmd_stop;
+      std::string m_command_disconnect;
+      //! True if modem is powered on.
+      bool m_powered;
+      //! Current state machine state.
+      StateMachineStates m_sm_state;
+      //! Interface IPv4 address.
+      Address m_address;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_cmd_start(NULL),
-        m_cmd_stop(NULL)
+        m_powered(false),
+        m_sm_state(SM_IDLE)
       {
-        // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
+
+        param("Serial Port - Device", m_args.uart_dev)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("/dev/ttyUSB0")
+        .description("Serial port device");
+
+        param("Power Channel", m_args.power_channel)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("HSDPA")
+        .description("Power channel name");
 
         param("GSM - User", m_args.gsm_user)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("vodafone")
-        .description("GSM/GPRS username");
+        .description(DTR("GSM/GPRS username"));
 
         param("GSM - Password", m_args.gsm_pass)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("vodafone")
-        .description("GSM/GPRS password");
+        .description(DTR("GSM/GPRS password"));
 
         param("GSM - APN", m_args.gsm_apn)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("internet.vodafone.pt")
-        .description("GSM/GPRS Access Point Name (APN)");
+        .description(DTR("GSM/GPRS Access Point Name (APN)"));
 
         param("GSM - Pin", m_args.gsm_pin)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("")
-        .description("GSM/GPRS pin.");
+        .description(DTR("GSM/GPRS pin."));
 
         param("GSM - Mode", m_args.gsm_mode)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
@@ -106,20 +159,38 @@ namespace Transports
         .defaultValue("AT\\^SYSCFG=2,2,3fffffff,0,1")
         .description("GSM/GPRS mode.");
 
+        param("PPP - Interface", m_args.ppp_interface)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("ppp0")
+        .description("PPP Interface");
+
         Path script = m_ctx.dir_scripts / "dune-mobile-inet.sh";
-        m_cmd_start = new Command(script.c_str(), "start");
-        m_cmd_stop = new Command(script.c_str(), "stop");
+        m_command_connect = String::str("/bin/sh %s start > /dev/null 2>&1", script.c_str());
+        m_command_disconnect = String::str("/bin/sh %s stop > /dev/null 2>&1", script.c_str());
+
+        bind<IMC::PowerChannelState>(this);
       }
 
       ~Task(void)
       {
-        m_cmd_start->stop();
-        delete m_cmd_start;
+        disconnect();
+      }
 
-        m_cmd_stop->start();
-        m_cmd_stop->wait();
-        m_cmd_stop->stop();
-        delete m_cmd_stop;
+      void
+      onUpdateParameters(void)
+      {
+        if (m_args.power_channel.empty())
+          m_powered = true;
+      }
+
+      void
+      consume(const IMC::PowerChannelState* msg)
+      {
+        if (msg->name != m_args.power_channel)
+          return;
+
+        m_powered = (msg->state == IMC::PowerChannelState::PCS_ON);
       }
 
       void
@@ -131,8 +202,57 @@ namespace Transports
       void
       onRequestActivation(void)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_INIT);
+        m_sm_state = SM_ACT_BEGIN;
+        updateStateMachine();
+      }
 
+      void
+      onRequestDeactivation(void)
+      {
+        m_sm_state = SM_DEACT_BEGIN;
+        updateStateMachine();
+      }
+
+      void
+      controlPower(IMC::PowerChannelControl::OperationEnum op)
+      {
+        if (m_args.power_channel.empty())
+          return;
+
+        IMC::PowerChannelControl pcc;
+        pcc.op = op;
+        pcc.name = m_args.power_channel;
+        dispatch(pcc);
+      }
+
+      //! Turn power channel on.
+      void
+      turnPowerOn(void)
+      {
+        debug("switching power on");
+        controlPower(IMC::PowerChannelControl::PCC_OP_TURN_ON);
+      }
+
+      //! Turn power channel off.
+      void
+      turnPowerOff(void)
+      {
+        debug("switching power off");
+        controlPower(IMC::PowerChannelControl::PCC_OP_TURN_OFF);
+      }
+
+      //! Test if power channel is on.
+      //! @return true if power channel is on, false otherwise.
+      bool
+      isPowered(void)
+      {
+        return m_powered;
+      }
+
+      void
+      connect(void)
+      {
+        debug("connecting");
         std::string pin("AT");
         if (m_args.gsm_pin.size() == 4)
         {
@@ -146,49 +266,137 @@ namespace Transports
         Environment::set("GSM_PIN", pin);
         Environment::set("GSM_MODE", m_args.gsm_mode);
 
-        m_cmd_start->start();
+        std::system(m_command_connect.c_str());
       }
 
       void
-      checkActivation(void)
+      disconnect(void)
       {
-        int status = 0;
-        if (!m_cmd_start->ended(status))
-          return;
+        debug("disconnecting");
+        std::system(m_command_disconnect.c_str());
+      }
 
-        if (status == 0)
-          activate();
-        else
-          activationFailed(String::str("error code is %d", status));
+      bool
+      isConnected(Address* address = NULL)
+      {
+        std::vector<Interface> interfaces = Interface::get();
+        for (size_t i = 0; i < interfaces.size(); ++i)
+        {
+          if (interfaces[i].name() == m_args.ppp_interface)
+          {
+            if (address != NULL)
+              *address = interfaces[i].address();
+            return true;
+          }
+        }
+
+        return false;
       }
 
       void
-      onActivation(void)
+      updateStateMachine(void)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-      }
+        switch (m_sm_state)
+        {
+          case SM_IDLE:
+            break;
 
-      void
-      onRequestDeactivation(void)
-      {
-        m_cmd_stop->start();
-      }
+          case SM_ACT_BEGIN:
+            debug("starting activation sequence");
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
+            m_sm_state = SM_ACT_POWER_ON;
+            // Fall through.
 
-      void
-      checkDeactivation(void)
-      {
-        int status = 0;
+          case SM_ACT_POWER_ON:
+            turnPowerOn();
+            m_sm_state = SM_ACT_POWER_WAIT;
+            // Fall through.
 
-        if (!m_cmd_stop->ended(status))
-          return;
+          case SM_ACT_POWER_WAIT:
+            if (isPowered())
+            {
+              debug("power is on");
+              debug("waiting for modem");
+              m_sm_state = SM_ACT_MODEM_WAIT;
+            }
+            else
+            {
+              break;
+            }
 
-        deactivate();
-      }
+          case SM_ACT_MODEM_WAIT:
+            if (Path(m_args.uart_dev).isDevice())
+            {
+              debug("UART detected");
+              m_sm_state = SM_ACT_CONNECT;
+            }
+            else
+            {
+              break;
+            }
 
-      void
-      onDeactivation(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+          case SM_ACT_CONNECT:
+            connect();
+            m_sm_state = SM_ACT_DONE;
+            // Fall through.
+
+          case SM_ACT_DONE:
+            debug("activation complete");
+            activate();
+            m_sm_state = SM_ACT_DISCONNECTED;
+            // Fall through
+
+          case SM_ACT_DISCONNECTED:
+            if (isConnected(&m_address))
+            {
+              debug("connected: %s", m_address.c_str());
+              setEntityState(IMC::EntityState::ESTA_NORMAL,
+                             String::str(DTR("connected to the Internet with public address '%s'"), m_address.c_str()));
+              m_sm_state = SM_ACT_CONNECTED;
+            }
+            break;
+
+          case SM_ACT_CONNECTED:
+            if (!isConnected())
+            {
+              debug("disconnected");
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CONNECTING);
+              m_sm_state = SM_ACT_DISCONNECTED;
+            }
+            break;
+
+          case SM_DEACT_BEGIN:
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_DEACTIVATING);
+            m_sm_state = SM_DEACT_DISCONNECT;
+            // Fall through.
+
+          case SM_DEACT_DISCONNECT:
+            disconnect();
+            m_sm_state = SM_DEACT_POWER_OFF;
+            break;
+
+          case SM_DEACT_POWER_OFF:
+            turnPowerOff();
+            m_sm_state = SM_DEACT_POWER_WAIT;
+            // Fall through.
+
+          case SM_DEACT_POWER_WAIT:
+            if (!isPowered())
+            {
+              debug("device is no longer powered");
+              m_sm_state = SM_DEACT_DONE;
+            }
+            else
+            {
+              break;
+            }
+
+          case SM_DEACT_DONE:
+            debug("deactivation complete");
+            deactivate();
+            m_sm_state = SM_IDLE;
+            break;
+        }
       }
 
       void
@@ -197,10 +405,7 @@ namespace Transports
         while (!stopping())
         {
           waitForMessages(1.0);
-          if (isActivating())
-            checkActivation();
-          else if (isDeactivating())
-            checkDeactivation();
+          updateStateMachine();
         }
       }
     };
