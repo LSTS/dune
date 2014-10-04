@@ -41,7 +41,6 @@ namespace Plan
     PlanInfoParser(object& ob, object_info& m_object_info, sysname sname)
     {
       m_object_info.object_size = ob->getPayloadSerializationSize();
-      m_object_info.object_id = ob->plan_id;
       m_object_info.change_time = Clock::getSinceEpoch();
       m_object_info.change_sid = ob->getSource();
       m_object_info.change_sname = sname;
