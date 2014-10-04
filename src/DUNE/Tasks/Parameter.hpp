@@ -263,6 +263,12 @@ namespace DUNE
         m_changed = enabled;
       }
 
+      AbstractParameterParser*
+      getReader(void)
+      {
+        return m_reader;
+      }
+
       Visibility
       getVisibility(void) const
       {
