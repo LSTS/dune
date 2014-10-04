@@ -35,11 +35,13 @@ namespace DUNE
 {
   namespace Status
   {
-    static const char* c_status_messages[29] =
+    static const char* c_status_messages[33] =
     {
       DTR_RT("initializing"),
       DTR_RT("idle"),
       DTR_RT("active"),
+      DTR_RT("activating"),
+      DTR_RT("deactivating"),
       DTR_RT("input/output error"),
       DTR_RT("internal error"),
       DTR_RT("CPU usage is too high"),
@@ -65,7 +67,9 @@ namespace DUNE
       DTR_RT("active but without bottom lock"),
       DTR_RT("no medium data: user must control device"),
       DTR_RT("active (no medium data: need user input)"),
-      DTR_RT("idle (no medium data: need user input)")
+      DTR_RT("idle (no medium data: need user input)"),
+      DTR_RT("connecting"),
+      DTR_RT("connected")
     };
 
     const char*
