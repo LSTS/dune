@@ -79,6 +79,10 @@ namespace DUNE
       void
       fill(const std::string& str);
 
+      //! Uncast all parameter values to it's strings
+      void
+      uncastAll(void);
+
       //! Write the tuples to a string
       //! @param[out] str string to which the parameters will be written
       void

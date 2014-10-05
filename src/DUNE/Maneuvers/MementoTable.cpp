@@ -63,6 +63,16 @@ namespace DUNE
     }
 
     void
+    MementoTable::uncastAll(void)
+    {
+      std::map<std::string, Tasks::Parameter*>::const_iterator itr;
+      itr = ParameterTable::begin();
+
+      for (; itr != ParameterTable::end(); ++itr)
+        ParameterTable::set(itr->first, itr->second->getReader()->uncast());
+    }
+
+    void
     MementoTable::writeTuples(std::string& str)
     {
       if (!ParameterTable::getParameterList().size())
