@@ -26,6 +26,8 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
+// IMC XML MD5: unknown                                                     *
+//***************************************************************************
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
@@ -35,7 +37,7 @@ namespace DUNE
 {
   namespace Status
   {
-    static const char* c_status_messages[29] =
+    static const char* c_status_messages[30] =
     {
       DTR_RT("initializing"),
       DTR_RT("idle"),
@@ -65,7 +67,8 @@ namespace DUNE
       DTR_RT("active but without bottom lock"),
       DTR_RT("no medium data: user must control device"),
       DTR_RT("active (no medium data: need user input)"),
-      DTR_RT("idle (no medium data: need user input)")
+      DTR_RT("idle (no medium data: need user input)"),
+      DTR_RT("database error")
     };
 
     const char*

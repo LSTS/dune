@@ -26,6 +26,8 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
+// IMC XML MD5: unknown                                                     *
+//***************************************************************************
 
 #ifndef DUNE_STATUS_CODES_HPP_INCLUDED_
 #define DUNE_STATUS_CODES_HPP_INCLUDED_
@@ -97,7 +99,9 @@ namespace DUNE
       //! Active (no medium data: need user input).
       CODE_NO_MEDIUM_ACTIVE = 27,
       //! Idle (no medium data: need user input).
-      CODE_NO_MEDIUM_IDLE = 28
+      CODE_NO_MEDIUM_IDLE = 28,
+      //! Database error.
+      CODE_DB_ERROR = 29
     };
   }
 }
