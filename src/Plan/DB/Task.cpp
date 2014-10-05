@@ -67,7 +67,7 @@ namespace Plan
   {
     using DUNE_NAMESPACES;
 
-static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
+    static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
                                           TABLE_STATEMENT("Memento", TABLE_MEMENTO) };
 
     static const char* c_insert_stmt[] = { INSERT_STATEMENT("Plan", "?,?,?,?,?,?"),
@@ -89,7 +89,7 @@ static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
                                                DELETE_ALL_STATEMENT("Memento") };
 
     /*static const char* c_cross_operations_stmt[] = { GET_STATEMENT("Memento", "plan_id"),
-                                                     DELETE_STATEMENT("Memento", "plan_id")};*/
+      DELETE_STATEMENT("Memento", "plan_id")};*/
 
     static const char* c_lastchange_table_stmt[] = { LCHANGE_TABLE("LastChange"),
                                                      LCHANGE_TABLE("LastChange_Memento") };
@@ -195,9 +195,9 @@ static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
 
         inf(DTR("database file: '%s'"), db_file.c_str());
 
-       try
-       {
-         m_db = new Database::Connection(db_file.c_str(), true);
+        try
+        {
+          m_db = new Database::Connection(db_file.c_str(), true);
 
           // Create tables and initialize associated statements
           for (int i = 0; i < DT_TOTAL; i++)
@@ -552,13 +552,13 @@ static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
 
             // Delete associated Mementos if exists
             /*            *m_cross_operations_stmt[CO_GET] << req.object_id;
-            *m_cross_operations_stmt[CO_DELETE] << req.object_id;
+             *m_cross_operations_stmt[CO_DELETE] << req.object_id;
 
-            while (m_cross_operations_stmt[CO_GET]->execute())
-            m_cross_operations_stmt[CO_DELETE]->execute(&count);
+             while (m_cross_operations_stmt[CO_GET]->execute())
+             m_cross_operations_stmt[CO_DELETE]->execute(&count);
 
-            if (count > 0)
-            onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);*/
+             if (count > 0)
+             onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);*/
 
           }
           // If delete memento, only delete memento
@@ -732,12 +732,12 @@ static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
               count = 0;
 
               break;
-            // If delete memento database, only delete memento database
+              // If delete memento database, only delete memento database
             case DT_MEMENTO:
               m_delete_all_stmt[DT_MEMENTO]->execute(&count);
 
               if (count > 0)
-               onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);
+                onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);
 
               count = 0;
               break;
@@ -767,7 +767,6 @@ static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
           return;
         }
 
-        (void)req;
         IMC::PlanDBState* state = new IMC::PlanDBState;
 
         state->object_size = 0;
