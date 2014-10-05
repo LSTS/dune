@@ -304,7 +304,15 @@ namespace Plan
         if ((pdb->op == IMC::PlanDB::DBOP_BOOT) &&
             pdb->type == IMC::PlanDB::DBT_SUCCESS)
         {
-          openDB();
+          try
+          {
+            openDB();
+          }
+          catch (std::runtime_error& e)
+          {
+            err("failed to open DB: %s", e.what());
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_DB_ERROR);
+          }
         }
         else if (pdb->op != IMC::PlanDB::DBT_REQUEST)
         {
