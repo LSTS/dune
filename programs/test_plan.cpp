@@ -61,6 +61,10 @@ usage(void)
             << std::endl
             << " -D: delete plan"
             << std::endl
+            << " -G: get plan"
+            << std::endl
+            << " -C: get plan"
+            << std::endl
             << std::endl
             << std::endl;
 }
@@ -96,11 +100,13 @@ main(int argc, char** argv)
   bool ignore_errors = false;
   bool request_db_state = false;
   bool delete_plan = false;
+  bool get_plan = false;
+  bool clear_db = false;
 
   for (; *argv && **argv == '-'; ++argv, --argc)
   {
     // @todo Use DUNE's OptionParser, too lazy to do it now.
-    char opt = argv[0][1];
+    char opt = argv[0][1];std::cout<<argv[0][1]<<opt<<std::endl;
     switch (opt)
     {
       case 'a':
@@ -130,6 +136,12 @@ main(int argc, char** argv)
         break;
       case 'D':
         delete_plan = true;
+        break;
+      case 'G':
+        get_plan = true;
+        break;
+      case 'C':
+        clear_db = true;
         break;
       default:
         std::cerr << "Invalid option: '-" << opt << "'\n";
@@ -222,6 +234,29 @@ main(int argc, char** argv)
     pdb_mem.dt = IMC::PlanDB::DBDT_MEMENTO;
     pdb_mem.op = IMC::PlanDB::DBOP_GET_STATE;
     sendMsg(pdb_mem, sock, dest, port);
+
+    return 0;
+  }
+
+  if (get_plan)
+  {
+    IMC::PlanDB pdb_get;
+    pdb_get.type = IMC::PlanDB::DBT_REQUEST;
+    pdb_get.dt = IMC::PlanDB::DBDT_PLAN;
+    pdb_get.op = IMC::PlanDB::DBOP_GET;
+    pdb_get.object_id = "test_plan";
+    sendMsg(pdb_get, sock, dest, port);
+
+    return 0;
+  }
+
+  if (clear_db)
+  {
+    IMC::PlanDB pdb_clear;
+    pdb_clear.type = IMC::PlanDB::DBT_REQUEST;
+    pdb_clear.dt = IMC::PlanDB::DBDT_PLAN;
+    pdb_clear.op = IMC::PlanDB::DBOP_CLEAR;
+    sendMsg(pdb_clear, sock, dest, port);
 
     return 0;
   }
