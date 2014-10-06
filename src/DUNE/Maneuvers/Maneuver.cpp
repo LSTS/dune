@@ -73,8 +73,6 @@ namespace DUNE
       // dispatch memento
       Maneuvers::MementoTable* mt = getMementoTable(m_id);
 
-      inf("id is %u", m_id);
-
       if (mt == NULL)
         return;
 
@@ -82,8 +80,6 @@ namespace DUNE
       mt->uncastAll();
       // write tuples into memento message
       mt->writeTuples(m_mto.memento);
-
-      inf("mem: %s", m_mto.memento.c_str());
 
       // set default values
       mt->setDefaults();
