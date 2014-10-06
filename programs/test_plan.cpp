@@ -106,7 +106,7 @@ main(int argc, char** argv)
   for (; *argv && **argv == '-'; ++argv, --argc)
   {
     // @todo Use DUNE's OptionParser, too lazy to do it now.
-    char opt = argv[0][1];std::cout<<argv[0][1]<<opt<<std::endl;
+    char opt = argv[0][1];
     switch (opt)
     {
       case 'a':
