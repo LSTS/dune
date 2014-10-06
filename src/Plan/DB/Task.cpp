@@ -105,13 +105,13 @@ namespace Plan
 
     static const char* c_op_plan_desc[] = {DTR_RT("set plan"), DTR_RT("delete plan"),
                                            DTR_RT("get plan"), DTR_RT("get plan info"),
-                                           DTR_RT("clear plan tables"), DTR_RT("database state"),
-                                           DTR_RT("database initialization") };
+                                           DTR_RT("clear plan tables"), DTR_RT("plan table state"),
+                                           DTR_RT("plan table state detailed"), DTR_RT("database initialization") };
 
     static const char* c_op_memento_desc[] = {DTR_RT("set memento"), DTR_RT("delete memento"),
                                               DTR_RT("get memento"), DTR_RT("get memento info"),
                                               DTR_RT("clear memento table"), DTR_RT("memento table state"),
-                                              DTR_RT("database initialization") };
+                                              DTR_RT("memento table state detailed") };
 
     struct Arguments
     {
@@ -800,7 +800,7 @@ namespace Plan
                                         >> pinfo->change_sname
                                         >> pinfo->md5
                                         >> pinfo->object_size;
-
+ 
             md5sum.update((const uint8_t*)&pinfo->md5[0], 16); // the MD5 of all MD5s ordered by id
             state->object_size += pinfo->object_size;
             state->object_count++;
@@ -868,6 +868,14 @@ namespace Plan
               else if (m_reply.dt == IMC::PlanDB::DBDT_MEMENTO)
                 debug("%s (%s) -- %s", DTR(c_op_memento_desc[m_reply.op]),
                       m_reply.object_id.c_str(), desc);
+            }
+          case IMC::PlanDB::DBOP_BOOT:
+            {
+              if (type == IMC::PlanDB::DBT_FAILURE)
+                 err("%s -- %s", DTR(c_op_plan_desc[m_reply.op]), desc);
+
+              if (type == IMC::PlanDB::DBT_SUCCESS)
+                inf("%s -- %s", DTR(c_op_plan_desc[m_reply.op]), desc);
             }
         }
       }
