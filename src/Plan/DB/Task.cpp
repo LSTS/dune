@@ -432,7 +432,7 @@ namespace Plan
 
           if (pm->id != req.object_id)
           {
-            onFailure(DTR("plan id mismatch"));
+            onFailure(DTR("memento id mismatch"));
             return;
           }
           arg = static_cast<const IMC::Message*>(pm);
@@ -525,7 +525,7 @@ namespace Plan
       {
         if (req.object_id.empty())
         {
-          onFailure(DTR("undefined plan id"));
+          onFailure(DTR("undefined object id"));
           return;
         }
 
@@ -593,7 +593,7 @@ namespace Plan
         m_db->commit();
 
         if (!flag)
-          onFailure(DTR("undefined plan"));
+          onFailure(DTR("undefined object id"));
         else
           onSuccess(DTR("OK"));
       }
@@ -603,7 +603,7 @@ namespace Plan
       {
         if (req.object_id.empty())
         {
-          onFailure(DTR("undefined plan id"));
+          onFailure(DTR("undefined object id"));
           return;
         }
 
@@ -622,7 +622,7 @@ namespace Plan
 
           if (!found)
           {
-            onFailure(DTR("undefined plan"));
+            onFailure(DTR("undefined object id"));
           }
           else
           {
@@ -665,7 +665,7 @@ namespace Plan
       {
         if (req.object_id.empty())
         {
-          onFailure(DTR("undefined plan id"));
+          onFailure(DTR("undefined object id"));
           return;
         }
 
