@@ -67,7 +67,7 @@ namespace Plan
   {
     using DUNE_NAMESPACES;
 
-    static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
+static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
                                           TABLE_STATEMENT("Memento", TABLE_MEMENTO) };
 
     static const char* c_insert_stmt[] = { INSERT_STATEMENT("Plan", "?,?,?,?,?,?"),
@@ -88,8 +88,8 @@ namespace Plan
     static const char* c_delete_all_stmt[] = { DELETE_ALL_STATEMENT("Plan"),
                                                DELETE_ALL_STATEMENT("Memento") };
 
-    /*static const char* c_cross_operations_stmt[] = { GET_STATEMENT("Memento", "plan_id"),
-      DELETE_STATEMENT("Memento", "plan_id")};*/
+    static const char* c_cross_operations_stmt[] = { GET_STATEMENT("Memento", "plan_id"),
+                                                     DELETE_STATEMENT("Memento", "plan_id")};
 
     static const char* c_lastchange_table_stmt[] = { LCHANGE_TABLE("LastChange"),
                                                      LCHANGE_TABLE("LastChange_Memento") };
@@ -158,7 +158,7 @@ namespace Plan
       Database::Statement* m_query_stmt[DT_TOTAL];
       Database::Statement* m_get_stmt[DT_TOTAL];
       Database::Statement* m_delete_all_stmt[DT_TOTAL];
-      //Database::Statement* m_cross_operations_stmt[CO_TOTAL];
+      Database::Statement* m_cross_operations_stmt[CO_TOTAL];
       Database::Statement* m_lastchange_initial_insert_stmt[DT_TOTAL];
       Database::Statement* m_lastchange_update_stmt[DT_TOTAL];
       Database::Statement* m_lastchange_query_stmt[DT_TOTAL];
@@ -195,9 +195,9 @@ namespace Plan
 
         inf(DTR("database file: '%s'"), db_file.c_str());
 
-        try
-        {
-          m_db = new Database::Connection(db_file.c_str(), true);
+       try
+       {
+         m_db = new Database::Connection(db_file.c_str(), true);
 
           // Create tables and initialize associated statements
           for (int i = 0; i < DT_TOTAL; i++)
@@ -209,7 +209,6 @@ namespace Plan
             m_query_stmt[i] = new Database::Statement(c_query_stmt[i], *m_db);
             m_get_stmt[i] = new Database::Statement(c_get_stmt[i], *m_db);
             m_delete_all_stmt[i] = new Database::Statement(c_delete_all_stmt[i], *m_db);
-            //m_cross_operations_stmt[i] = new Database::Statement(c_cross_operations_stmt[i], *m_db);
 
             m_db->execute(c_lastchange_table_stmt[i]);
             m_lastchange_initial_insert_stmt[i] = new Database::Statement(c_lastchange_initial_insert_stmt[i], *m_db);
@@ -226,6 +225,10 @@ namespace Plan
 
             m_lastchange_query_stmt[i]->reset();
           }
+
+          // Initilialize statements for cross operations
+          for (int i = 0; i < CO_TOTAL; i++)
+            m_cross_operations_stmt[i] = new Database::Statement(c_cross_operations_stmt[i], *m_db);
 
         }
         catch (std::runtime_error& e)
@@ -253,7 +256,7 @@ namespace Plan
           delete m_query_stmt[i];
           delete m_get_stmt[i];
           delete m_delete_all_stmt[i];
-          //delete m_cross_operations_stmt[i];
+          delete m_cross_operations_stmt[i];
           delete m_lastchange_initial_insert_stmt[i];
           delete m_lastchange_update_stmt[i];
           delete m_lastchange_query_stmt[i];
@@ -538,6 +541,7 @@ namespace Plan
         m_db->beginTransaction();
 
         int count = 0;
+        int flag = 0;
         uint16_t sid = req.getSource();
         try
         {
@@ -547,18 +551,23 @@ namespace Plan
             // Delete Plan
             *m_delete_stmt[DT_PLAN] << req.object_id;
             m_delete_stmt[DT_PLAN]->execute(&count);
+
             if (count > 0)
+            {
               onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_PLAN);
+              flag = 1;
+              count = 0;
+            }
 
             // Delete associated Mementos if exists
-            /*            *m_cross_operations_stmt[CO_GET] << req.object_id;
-             *m_cross_operations_stmt[CO_DELETE] << req.object_id;
+            *m_cross_operations_stmt[CO_GET] << req.object_id;
+            *m_cross_operations_stmt[CO_DELETE] << req.object_id;
 
-             while (m_cross_operations_stmt[CO_GET]->execute())
-             m_cross_operations_stmt[CO_DELETE]->execute(&count);
+            while (m_cross_operations_stmt[CO_GET]->execute())
+            m_cross_operations_stmt[CO_DELETE]->execute(&count);
 
-             if (count > 0)
-             onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);*/
+            if (count > 0)
+              onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);
 
           }
           // If delete memento, only delete memento
@@ -568,7 +577,10 @@ namespace Plan
             m_delete_stmt[DT_MEMENTO]->execute(&count);
 
             if (count > 0)
+            {
               onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);
+              flag = 1;
+            }
           }
         }
         catch (std::runtime_error& e)
@@ -580,7 +592,7 @@ namespace Plan
 
         m_db->commit();
 
-        if (!count)
+        if (!flag)
           onFailure(DTR("undefined plan"));
         else
           onSuccess(DTR("OK"));
@@ -732,12 +744,12 @@ namespace Plan
               count = 0;
 
               break;
-              // If delete memento database, only delete memento database
+            // If delete memento database, only delete memento database
             case DT_MEMENTO:
               m_delete_all_stmt[DT_MEMENTO]->execute(&count);
 
               if (count > 0)
-                onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);
+               onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);
 
               count = 0;
               break;
@@ -767,6 +779,7 @@ namespace Plan
           return;
         }
 
+        (void)req;
         IMC::PlanDBState* state = new IMC::PlanDBState;
 
         state->object_size = 0;
@@ -787,7 +800,7 @@ namespace Plan
                                         >> pinfo->change_sname
                                         >> pinfo->md5
                                         >> pinfo->object_size;
-
+ 
             md5sum.update((const uint8_t*)&pinfo->md5[0], 16); // the MD5 of all MD5s ordered by id
             state->object_size += pinfo->object_size;
             state->object_count++;
@@ -852,7 +865,7 @@ namespace Plan
               else if (m_reply.dt == IMC::PlanDB::DBDT_PLAN)
                 debug("%s (%s) -- %s", DTR(c_op_plan_desc[m_reply.op]),
                       m_reply.object_id.c_str(), desc);
-              else if (m_reply.dt == IMC::PlanDB::DBDT_PLAN)
+              else if (m_reply.dt == IMC::PlanDB::DBDT_MEMENTO)
                 debug("%s (%s) -- %s", DTR(c_op_memento_desc[m_reply.op]),
                       m_reply.object_id.c_str(), desc);
             }
