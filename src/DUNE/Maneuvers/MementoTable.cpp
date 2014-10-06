@@ -41,10 +41,10 @@ namespace DUNE
     MementoTable::setDefaults(void)
     {
       std::map<std::string, Tasks::Parameter*>::const_iterator itr;
-      itr = ParameterTable::begin();
+      itr = m_table.begin();
 
-      for (; itr != ParameterTable::end(); ++itr)
-        ParameterTable::set(itr->first, itr->second->defaultValue());
+      for (; itr != m_table.end(); ++itr)
+        m_table.set(itr->first, itr->second->defaultValue());
     }
 
     void
@@ -54,37 +54,39 @@ namespace DUNE
 
       if (!tl.getMap().size())
         throw std::runtime_error(DTR("no tuples found"));
-        
-      std::map<std::string, std::string>::const_iterator itr;
-      itr = tl.getMapReversed().begin();
 
-      for (; itr != tl.getMapReversed().end(); itr++)
-        ParameterTable::set(itr->first, itr->second);
+      std::cerr << tl << std::endl;
+
+      std::map<std::string, std::string> tmap = tl.getMapReversed();
+      std::map<std::string, std::string>::const_iterator itr;
+
+      for (itr = tmap.begin(); itr != tmap.end(); ++itr)
+        m_table.set(itr->first, itr->second);
     }
 
     void
     MementoTable::uncastAll(void)
     {
       std::map<std::string, Tasks::Parameter*>::const_iterator itr;
-      itr = ParameterTable::begin();
+      itr = m_table.begin();
 
-      for (; itr != ParameterTable::end(); ++itr)
-        ParameterTable::set(itr->first, itr->second->getReader()->uncast());
+      for (; itr != m_table.end(); ++itr)
+        m_table.set(itr->first, itr->second->getReader()->uncast());
     }
 
     void
     MementoTable::writeTuples(std::string& str)
     {
-      if (!ParameterTable::getParameterList().size())
+      if (!m_table.getParameterList().size())
         return;
 
       std::stringstream ss;
 
       std::map<std::string, Tasks::Parameter*>::const_iterator itr;
 
-      for (itr = ParameterTable::begin(); itr != ParameterTable::end(); ++itr)
+      for (itr = m_table.begin(); itr != m_table.end(); ++itr)
       {
-        if (itr != ParameterTable::begin())
+        if (itr != m_table.begin())
           ss << ",";
           
         ss << itr->first << "=" << itr->second->value();

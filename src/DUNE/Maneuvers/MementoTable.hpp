@@ -45,15 +45,11 @@ namespace DUNE
     class DUNE_DLL_SYM MementoTable;
 
     //! Class to gather memento information for a maneuver
-    class MementoTable: public Tasks::ParameterTable
+    class MementoTable
     {
     public:
       //! Constructor
       MementoTable(void)
-      { }
-
-      //! Destructor
-      ~MementoTable(void)
       { }
 
       //! Add a new pair name=value to the table
@@ -66,7 +62,7 @@ namespace DUNE
       {
         Tasks::BasicParameterParser<T>* parser;
         parser = new Tasks::BasicParameterParser<T>(var);
-        return ParameterTable::add(name, &var, parser);
+        return m_table.add(name, &var, parser);
       }
 
       //! Set default values
@@ -87,6 +83,10 @@ namespace DUNE
       //! @param[out] str string to which the parameters will be written
       void
       writeTuples(std::string& str);
+
+    private:
+      //! Parameter table
+      Tasks::ParameterTable m_table;
     };
   }
 }
