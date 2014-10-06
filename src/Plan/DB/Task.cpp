@@ -847,7 +847,6 @@ namespace Plan
           case IMC::PlanDB::DBOP_SET:
           case IMC::PlanDB::DBOP_DEL:
           case IMC::PlanDB::DBOP_CLEAR:
-            {
               if (type == IMC::PlanDB::DBT_FAILURE && m_reply.dt == IMC::PlanDB::DBDT_PLAN)
                 err("%s (%s) -- %s", DTR(c_op_plan_desc[m_reply.op]),
                     m_reply.object_id.c_str(), desc);
@@ -867,16 +866,16 @@ namespace Plan
                       m_reply.object_id.c_str(), desc);
               else if (m_reply.dt == IMC::PlanDB::DBDT_MEMENTO)
                 debug("%s (%s) -- %s", DTR(c_op_memento_desc[m_reply.op]),
-                      m_reply.object_id.c_str(), desc);
-            }
+                m_reply.object_id.c_str(), desc);
+              break;
+
           case IMC::PlanDB::DBOP_BOOT:
-            {
               if (type == IMC::PlanDB::DBT_FAILURE)
                  err("%s -- %s", DTR(c_op_plan_desc[m_reply.op]), desc);
 
               if (type == IMC::PlanDB::DBT_SUCCESS)
                 inf("%s -- %s", DTR(c_op_plan_desc[m_reply.op]), desc);
-            }
+              break;
         }
       }
 
