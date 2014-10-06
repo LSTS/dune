@@ -56,6 +56,7 @@ usage(void)
             << " -p: do not parse plan (assumed it's been stored before)"
             << std::endl
             << " -s: send GpsFix (APDL)"
+            << std::endl
             << " -d: request DataBase state"
             << std::endl
             << " -D: delete plan"
