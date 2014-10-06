@@ -61,6 +61,19 @@ namespace Maneuver
         Memory::clear(m_parser);
       }
 
+      //! Deactivate
+      void
+      onManeuverDeactivation(void)
+      {
+        if (m_parser != NULL)
+          m_mem.waypoint = m_parser->getIndex();
+
+        if (!m_mem.waypoint)
+          m_task->disableMemento();
+        else
+          --m_mem.waypoint;
+      }
+
       //! Start maneuver function
       //! @param[in] maneuver rows maneuver message
       void
@@ -91,6 +104,8 @@ namespace Maneuver
         }
         else
         {
+          m_task->inf("resuming from waypoint %u", m_mem.waypoint);
+
           m_parser->getFirstPoint(&lat, &lon);
           while (true)
           {
