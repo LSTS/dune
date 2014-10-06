@@ -67,7 +67,7 @@ namespace Plan
   {
     using DUNE_NAMESPACES;
 
-static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
+    static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
                                           TABLE_STATEMENT("Memento", TABLE_MEMENTO) };
 
     static const char* c_insert_stmt[] = { INSERT_STATEMENT("Plan", "?,?,?,?,?,?"),
@@ -195,9 +195,9 @@ static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
 
         inf(DTR("database file: '%s'"), db_file.c_str());
 
-       try
-       {
-         m_db = new Database::Connection(db_file.c_str(), true);
+        try
+        {
+          m_db = new Database::Connection(db_file.c_str(), true);
 
           // Create tables and initialize associated statements
           for (int i = 0; i < DT_TOTAL; i++)
@@ -447,7 +447,7 @@ static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
         const IMC::PlanSpecification* plan_spec = 0;
         const IMC::PlanMemento* plan_mem = 0;
 
-        switch(data_type)
+        switch (data_type)
         {
           case DT_PLAN:
             plan_spec = static_cast<const IMC::PlanSpecification*>(arg);
@@ -464,7 +464,7 @@ static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
         }
 
         Database::Blob plan_data(m_object_info.object_size);
-        switch(data_type)
+        switch (data_type)
         {
           case DT_PLAN:
             DataParser(plan_spec, m_object_info, plan_data);
@@ -507,7 +507,7 @@ static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
         m_db->commit();
 
         m_reply.arg.set(m_object_info);
-        switch(data_type)
+        switch (data_type)
         {
           case DT_PLAN:
             onSuccess(count ? DTR("OK Plan (updated)") : DTR("OK Plan (new entry)"));
@@ -564,7 +564,7 @@ static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
             *m_cross_operations_stmt[CO_DELETE] << req.object_id;
 
             while (m_cross_operations_stmt[CO_GET]->execute())
-            m_cross_operations_stmt[CO_DELETE]->execute(&count);
+              m_cross_operations_stmt[CO_DELETE]->execute(&count);
 
             if (count > 0)
               onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);
@@ -727,7 +727,7 @@ static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
         uint16_t sid = req.getSource();
         try
         {
-          switch(data_type)
+          switch (data_type)
           {
             // If delete plan database, also delete memento database
             case DT_PLAN:
@@ -744,12 +744,12 @@ static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
               count = 0;
 
               break;
-            // If delete memento database, only delete memento database
+              // If delete memento database, only delete memento database
             case DT_MEMENTO:
               m_delete_all_stmt[DT_MEMENTO]->execute(&count);
 
               if (count > 0)
-               onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);
+                onChange(Clock::getSinceEpoch(), sid, resolveSystemId(sid), DT_MEMENTO);
 
               count = 0;
               break;
@@ -800,7 +800,7 @@ static const char* c_table_stmt[] = { TABLE_STATEMENT("Plan", TABLE_PLAN),
                                         >> pinfo->change_sname
                                         >> pinfo->md5
                                         >> pinfo->object_size;
- 
+
             md5sum.update((const uint8_t*)&pinfo->md5[0], 16); // the MD5 of all MD5s ordered by id
             state->object_size += pinfo->object_size;
             state->object_count++;
