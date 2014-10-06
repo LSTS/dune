@@ -55,8 +55,6 @@ namespace DUNE
       if (!tl.getMap().size())
         throw std::runtime_error(DTR("no tuples found"));
 
-      std::cerr << tl << std::endl;
-
       std::map<std::string, std::string> tmap = tl.getMapReversed();
       std::map<std::string, std::string>::const_iterator itr;
 

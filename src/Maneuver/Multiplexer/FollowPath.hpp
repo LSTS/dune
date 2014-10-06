@@ -58,6 +58,16 @@ namespace Maneuver
       ~FollowPath(void)
       { }
 
+      //! Deactivate
+      void
+      onManeuverDeactivation(void)
+      {
+        m_mem.waypoint = m_curr;
+
+        if (!m_mem.waypoint)
+          m_task->disableMemento();
+      }
+
       //! Reset function
       void
       reset(void)
@@ -99,7 +109,10 @@ namespace Maneuver
 
         // Resume with memento
         if (m_mem.waypoint > 0 && m_mem.waypoint < m_wpts.size())
+        {
+          m_task->inf("resuming from waypoint %u", m_mem.waypoint);
           m_curr = m_mem.waypoint;
+        }
 
         m_task->debug("starting path with %lu waypoints", (long unsigned int)m_wpts.size());
 
