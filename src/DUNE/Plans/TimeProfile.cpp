@@ -272,9 +272,14 @@ namespace DUNE
       float distance = distance3D(pos, last_pos);
 
       if (!waypoint)
+      {
         m_accum_dur->addDuration(distance / speed);
+      }
       else
+      {
+        m_accum_dur->addDuration(0.0f);
         --waypoint;
+      }
 
       last_pos = pos;
 
@@ -297,6 +302,7 @@ namespace DUNE
         }
         else
         {
+          m_accum_dur->addDuration(0.0f);
           --waypoint;
         }
       }
