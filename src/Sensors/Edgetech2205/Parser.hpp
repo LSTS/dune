@@ -77,7 +77,8 @@ namespace Sensors
             break;
 
           case ST_VERSION:
-            m_state = (byte <= c_version) ? ST_SESSION : ST_MARKER0;
+            m_pkt.setProtocolVersion(byte);
+            m_state = ST_SESSION;
             break;
 
           case ST_SESSION:

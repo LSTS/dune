@@ -67,6 +67,22 @@ namespace Sensors
         m_data[HDR_IDX_VERSION] = c_version;
       }
 
+      //! Set protocol version.
+      //! @param[in] version protocol version.
+      void
+      setProtocolVersion(uint8_t version)
+      {
+        m_version = version;
+      }
+
+      //! Retrieve protocol version.
+      //! @return protocol version.
+      uint8_t
+      getProtocolVersion(void) const
+      {
+        return m_version;
+      }
+
       //! Set message type.
       //! @param[in] type message type.
       void
@@ -257,6 +273,8 @@ namespace Sensors
       static const unsigned c_max_size = 256 * 1024;
       //! Message data.
       std::vector<uint8_t> m_data;
+      //! Protocol version.
+      uint8_t m_version;
     };
   }
 }

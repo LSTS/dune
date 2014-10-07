@@ -143,7 +143,7 @@ namespace Sensors
     //! Second byte of the start of header marker.
     static const uint8_t c_marker1 = 0x16;
     //! Protocol version.
-    static const uint8_t c_version = 11;
+    static const uint8_t c_version = 13;
     //! Offset of the first sidescan channel.
     static const unsigned c_subsys_ss_offset = SUBSYS_SSL;
   }
