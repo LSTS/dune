@@ -311,6 +311,14 @@ namespace Plan
             if (m_args.actfail_abort)
             {
               onFailure(error);
+
+              // stop calibration if any is running
+              if (initMode() && !pendingReply())
+              {
+                vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
+                m_reply.plan_id = m_spec.plan_id;
+              }
+
               changeMode(IMC::PlanControlState::PCS_READY, error, false);
             }
             else
