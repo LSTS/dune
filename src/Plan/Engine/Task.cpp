@@ -242,7 +242,7 @@ namespace Plan
       {
         m_mcs = *msg;
 
-        if (msg->state & IMC::ManeuverControlState::MCS_DONE)
+        if (msg->state == IMC::ManeuverControlState::MCS_DONE)
           m_plan->maneuverDone();
       }
 
