@@ -724,7 +724,8 @@ namespace Vision
         else
         {
           debug("disabling strobe output");
-          setProperty("output_select", "off");
+          // the output on/off logic is inverted
+          setProperty("output_select", "on");
         }
       }
 
