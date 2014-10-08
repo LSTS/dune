@@ -194,6 +194,7 @@ namespace Plan
       clear(void)
       {
         m_ps->clear();
+        m_ps->type = IMC::PlanStatistics::TP_POSTPLAN;
       }
 
       //! Fill in with fuel info
