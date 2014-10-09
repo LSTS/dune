@@ -477,7 +477,7 @@ namespace Sensors
       bool
       setHardIron(void)
       {
-        inf(DTR("new hard-iron calibration parameters: %f | %f"), m_args.hard_iron[0], m_args.hard_iron[1]);
+        inf(DTR("new hard-iron calibration parameters: %f, %f, 0.0"), m_args.hard_iron[0], m_args.hard_iron[1]);
         m_uart->setMinimumRead(CMD_WRITE_EEPROM_SIZE);
 
         for (unsigned i = 0; i <= c_num_addr / c_number_axis; i++)
