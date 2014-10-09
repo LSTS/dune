@@ -60,6 +60,8 @@ namespace Plan
       int speed_rpms;
       //! Maximum RPMs for urgent maneuvering
       float max_rpms;
+      //! Plans to be generated at boot (example: dislodge:rpm=1200.0)
+      std::vector<std::string> generate_at_boot;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -98,6 +100,10 @@ namespace Plan
         param("RPM Speed", m_args.speed_rpms)
         .description("Speed in RPMs to be used in the generated maneuvers")
         .defaultValue("1000");
+
+        param("Generate At Boot", m_args.generate_at_boot)
+        .description("Set of commands for plans to generate at boot")
+        .defaultValue("");
 
         m_ctx.config.get("General", "Maximum Underwater RPMs", "1700.0", m_args.max_rpms);
 
@@ -252,6 +258,29 @@ namespace Plan
       void
       onMain(void)
       {
+        // Generate plans at boot
+        if (!m_args.generate_at_boot.empty())
+        {
+          IMC::PlanGeneration pg;
+          pg.cmd = IMC::PlanGeneration::CMD_GENERATE;
+          pg.op = IMC::PlanGeneration::OP_REQUEST;
+
+          for (unsigned i = 0; i < m_args.generate_at_boot.size(); i++)
+          {
+            std::vector<std::string> lst;
+            Utils::String::split(m_args.generate_at_boot[i], ":", lst);
+
+            if (lst.size())
+            {
+              pg.plan_id = lst[0];
+              if (lst.size() >= 2)
+                pg.params = lst[1];
+
+              dispatch(pg, DF_LOOP_BACK);
+            }
+          }
+        }
+
         while (!stopping())
         {
           waitForMessages(1.0);
