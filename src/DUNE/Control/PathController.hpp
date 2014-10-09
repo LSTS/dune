@@ -277,6 +277,16 @@ namespace DUNE
         configureControlLoops(IMC::ControlLoops::CL_DISABLE, mask);
       }
 
+      //! Handler for EstimatedState source id filter.
+      //! This is called when an EstimatedState is received.
+      //! By default it only passes EstimatedState messages from the system itself.
+      virtual bool
+      sourceFilter(const IMC::EstimatedState* es)
+      {
+        // Allow only EstimatedState from the same vehicle.
+        return es->getSource() != getSystemId();
+      }
+
       //! Task method.
       void
       onMain(void);
