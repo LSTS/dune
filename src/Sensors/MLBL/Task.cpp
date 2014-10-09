@@ -1056,11 +1056,18 @@ namespace Sensors
         std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n", m_addr, 0);
         sendCommand(cyc);
 
+        IMC::UamTxStatus tx_status;
+        tx_status.value = IMC::UamTxStatus::UTS_IP;
+        dispatch(tx_status);
+
         for (int i = 0; i < 7; ++i)
         {
           consumeMessages();
           Delay::wait(1.0);
         }
+
+        tx_status.value = IMC::UamTxStatus::UTS_DONE;
+        dispatch(tx_status);
       }
 
       void
