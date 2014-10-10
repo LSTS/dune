@@ -578,12 +578,12 @@ namespace Monitors
 
         if (bad_est_diff < prox_interval)
         {
-          bad_conf += (conf_gap) * (1 - bad_est_diff)  / (prox_interval);
+          bad_conf += (conf_gap) * (1 - bad_est_diff / prox_interval);
         }
 
         if (good_est_diff < prox_interval)
         {
-          good_conf += (conf_gap) * (1 - good_est_diff) / (prox_interval);
+          good_conf += (conf_gap) * (1 - good_est_diff / prox_interval);
         }
       }
 
