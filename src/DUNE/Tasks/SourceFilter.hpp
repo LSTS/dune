@@ -54,7 +54,7 @@ namespace DUNE
       //! @param[in] task - filter parent task.
       //! @param[in] source - desired sources system and entity names.
       //! @param[in] msg_name - filtered message name.
-      SourceFilter(Tasks::Task& task, const std::vector<std::string>* source, const std::string msg_name);
+      SourceFilter(Tasks::Task& task, const std::vector<std::string>& source, const std::string msg_name);
 
       /*
       //! Construct a task input filter object.
@@ -82,7 +82,7 @@ namespace DUNE
       //! Define the desired message source systems and entities.
       //! @param[in] source - desired sources system and entity names.
       void
-      defineFilter(const std::vector<std::string>* source);
+      defineFilter(const std::vector<std::string>& source);
 
       //! List of systems and entities allowed to pass a message.
       typedef std::vector<uint32_t> Systems;
