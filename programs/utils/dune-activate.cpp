@@ -32,6 +32,7 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+using namespace std;
 using DUNE_NAMESPACES;
 
 int
@@ -39,7 +40,7 @@ main(int argc, char** argv)
 {
   if (argc < 4)
   {
-    std::fprintf(stderr, "Usage: %s <destination host> <destination port> <entity> <true|false>\n", argv[0]);
+    fprintf(stderr, "Usage: %s <destination host> <destination port> <entity> <true|false>\n", argv[0]);
     return 1;
   }
 
