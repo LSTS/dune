@@ -53,7 +53,7 @@ namespace DUNE
     */
 
 
-    SourceFilter::SourceFilter(Tasks::Task& task, const std::vector<std::string>* src,
+    SourceFilter::SourceFilter(Tasks::Task& task, const std::vector<std::string>& src,
         const std::string msg_name):
       m_task(task),
       m_msg_name(msg_name)
@@ -97,7 +97,7 @@ namespace DUNE
     }
 
     void
-    SourceFilter::defineFilter(const std::vector<std::string>* src)
+    SourceFilter::defineFilter(const std::vector<std::string>& src)
     {
       //==========================================
       //! Process the systems and entities allowed to pass the message
@@ -105,10 +105,10 @@ namespace DUNE
       uint32_t i_src;
       m_filtered_sys.clear();
       m_filtered_ent.clear();
-      for (unsigned int i = 0; i < src->size(); ++i)
+      for (unsigned int i = 0; i < src.size(); ++i)
       {
         std::vector<std::string> parts;
-        Utils::String::split((*src)[i], ":", parts);
+        Utils::String::split(src[i], ":", parts);
         if (parts.size() < 1)
           continue;
 
