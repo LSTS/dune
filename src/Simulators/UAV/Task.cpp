@@ -731,13 +731,13 @@ namespace Simulators
       commandFilter(const IMC::Message* msg, bool* b_source_id)
       {
         bool pass_command = true;
-        const char* c_system_id;
-        const char* c_entity_id;
+        const char* system_id = NULL;
+        const char* entity_id = NULL;
 
         try
         {
-          c_system_id = resolveSystemId(msg->getSource());
-          c_entity_id = resolveEntity(msg->getSourceEntity()).c_str();
+          system_id = resolveSystemId(msg->getSource());
+          entity_id = resolveEntity(msg->getSourceEntity()).c_str();
           *b_source_id = true;
         }
         catch (...)
@@ -781,7 +781,7 @@ namespace Simulators
           trace("%s rejected.", c_msg_name);
           if (*b_source_id)
             trace("%s received from system '%s' and entity '%s'.", c_msg_name,
-                  c_system_id, c_entity_id);
+                  system_id, entity_id);
           else
             trace("%s received from unidentified system and/or entity.", c_msg_name);
           pass_command = false;
