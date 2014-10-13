@@ -30,6 +30,7 @@
 #include <string>
 #include <cmath>
 #include <vector>
+#include <limits.h>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -462,11 +463,18 @@ namespace Simulators
         uint32_t i_cmd_final;
         uint32_t i_src;
         uint32_t i_src_ini;
+        std::vector<std::string> parts;
+        std::vector<std::string> systems;
+        std::vector<std::string> entities;
+        unsigned int i_sys_n;
+        unsigned int i_ent_n;
+        uint32_t sys_tmp;
+
         m_filtered_sys.clear();
         m_filtered_ent.clear();
         for (unsigned int i = 0; i < m_args.cmd_src.size(); ++i)
         {
-          std::vector<std::string> parts;
+          parts.clear();
           String::split(m_args.cmd_src[i], ":", parts);
           if (parts.size() < 1)
             continue;
@@ -487,10 +495,12 @@ namespace Simulators
             i_cmd = 6;
 
           // Split systems and entities.
-          std::vector<std::string> systems;
+          systems.clear();
+          entities.clear();
           String::split(parts[1], "+", systems);
-          std::vector<std::string> entities;
           String::split(parts[2], "+", entities);
+          i_sys_n = systems.size();
+          i_ent_n = entities.size();
 
           // Assign filtered systems and entities to the selected commands
           if (i_cmd == 6)
@@ -503,40 +513,66 @@ namespace Simulators
           for (; i_cmd <= i_cmd_final; i_cmd++)
           {
             i_src_ini = m_filtered_sys[i_cmd].size();
-            m_filtered_ent[i_cmd].resize(i_src_ini+systems.size()*entities.size());
-            m_filtered_sys[i_cmd].resize(i_src_ini+systems.size()*entities.size());
-            unsigned int i_sys_n = systems.size();
-            unsigned int i_ent_n = entities.size();
-            // Resolve systems id.
+            m_filtered_ent[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
+            m_filtered_sys[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
             for (unsigned j = 0; j < i_sys_n; j++)
             {
-              // Resolve entities id.
-              for (unsigned k = 0; k < i_ent_n; k++)
+              spew("Commands filtering - System '%s' (%u/%u).",
+                   systems[j].c_str(), j+1, i_sys_n);
+
+              // Resolve systems id.
+              if (systems[j].empty())
               {
-                i_src = (j+1)*(k+1)-1;
-                // Resolve systems.
-                if (systems[j].empty())
+                sys_tmp = UINT_MAX;
+                debug("Commands filtering - Filter source system undefined");
+              }
+              else if (systems[j].compare("self") == 0)
+              {
+                sys_tmp = getSystemId();
+                debug("Commands filtering - System '%s' with ID: %u",
+                    resolveSystemId(sys_tmp), sys_tmp);
+              }
+              else
+              {
+                try
                 {
-                  m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                  debug("Commands filtering - Filter source system undefined");
-                }
-                else
-                {
-                  try
-                  {
-                    m_filtered_sys[i_cmd][i_src_ini+i_src] = resolveSystemName(systems[j]);
-                    debug("Commands filtering - System '%s' with ID: %d",
-                        systems[j].c_str(), resolveSystemName(systems[j]));
-                  }
-                  catch (...)
+                  sys_tmp = resolveSystemName(systems[j]);
+                  if (sys_tmp != USHRT_MAX)
+                    debug("Commands filtering - System '%s' with ID: %u",
+                          resolveSystemId(sys_tmp), sys_tmp);
+                  else
                   {
                     war("Commands filtering - No system found with designation '%s'!", systems[j].c_str());
+                    for (unsigned j_tmp = j; j_tmp+1 < i_ent_n; j_tmp++)
+                      systems[j_tmp] = systems[j_tmp + 1];
                     i_sys_n--;
                     j--;
+                    continue;
                   }
                 }
-                // Resolve entities.
-                if (entities[j].empty())
+                catch (...)
+                {
+                  war("Commands filtering - No system found with designation '%s'!", systems[j].c_str());
+                  for (unsigned j_tmp = j; j_tmp+1 < i_sys_n; j_tmp++)
+                    systems[j_tmp] = systems[j_tmp + 1];
+                  i_sys_n--;
+                  j--;
+                  continue;
+                }
+              }
+
+              for (unsigned k = 0; k < i_ent_n; k++)
+              {
+                spew("Commands filtering - Entity '%s' (%u/%u).",
+                     entities[k].c_str(), k+1, i_ent_n);
+
+                i_src = j*i_ent_n + k;
+
+                // Assign system id
+                m_filtered_sys[i_cmd][i_src_ini+i_src] = sys_tmp;
+
+                // Resolve entities id.
+                if (entities[k].empty())
                 {
                   m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
                   debug("Commands filtering - Filter entity system undefined");
@@ -546,19 +582,37 @@ namespace Simulators
                   try
                   {
                     m_filtered_ent[i_cmd][i_src_ini+i_src] = resolveEntity(entities[k]);
-                    debug("Commands filtering - Entity '%s' with ID: %d",
-                        entities[k].c_str(), resolveEntity(entities[k]));
+                    debug("Commands filtering - Entity '%s' with ID: %u",
+                        resolveEntity(m_filtered_ent[i_cmd][i_src_ini+i_src]).c_str(),
+                        m_filtered_ent[i_cmd][i_src_ini+i_src]);
                   }
                   catch (...)
                   {
                     war("Commands filtering - No entity found with designation '%s'!", entities[k].c_str());
+                    for (unsigned k_tmp = k; k_tmp+1 < i_ent_n; k_tmp++)
+                      entities[k_tmp] = entities[k_tmp + 1];
                     i_ent_n--;
                     k--;
                   }
                 }
+
+                spew("Commands filtering state - System %u of %u : Entity %u of %u.",
+                    j+1, i_sys_n, k+1, i_ent_n);
               }
             }
+            m_filtered_ent[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
+            m_filtered_sys[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
           }
+          if (parts[0].empty())
+            spew("Commands filter sets:");
+          else
+            spew("%s filter sets:", parts[0].c_str());
+
+          i_cmd--;
+          for (unsigned i_flt = i_src_ini; i_flt < i_src_ini + i_sys_n*i_ent_n; i_flt++)
+            spew("    System %s : Entity %s.",
+                 resolveSystemId(m_filtered_sys[i_cmd][i_flt]),
+                 resolveEntity(m_filtered_ent[i_cmd][i_flt]).c_str());
         }
       }
 
