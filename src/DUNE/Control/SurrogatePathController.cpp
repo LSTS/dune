@@ -62,7 +62,8 @@ namespace DUNE
     SurrogatePathController::sourceFilter(const IMC::EstimatedState* es)
     {
       // Allow only EstimatedState from the same vehicle.
-      return m_stateFilter->match(es);
+      // 'True' if the message is NOT allowed to pass.
+      return !m_stateFilter->match(es);
     }
   }
 }
