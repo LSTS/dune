@@ -132,13 +132,13 @@ namespace Transports
         param("GSM - User", m_args.gsm_user)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
-        .defaultValue("vodafone")
+        .defaultValue("")
         .description(DTR("GSM/GPRS username"));
 
         param("GSM - Password", m_args.gsm_pass)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
-        .defaultValue("vodafone")
+        .defaultValue("")
         .description(DTR("GSM/GPRS password"));
 
         param("GSM - APN", m_args.gsm_apn)
