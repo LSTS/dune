@@ -66,7 +66,7 @@ namespace DUNE
 
       //! Verification of the message source system and entity.
       //! @param[in] msg - input message.
-      //! @param[out] match - 'True' if the message source is allowed to pass it.
+      //! @param[out] match - 'True' if the message is allowed to pass.
       bool
       match(const IMC::Message* msg);
 
@@ -92,14 +92,14 @@ namespace DUNE
       //! @param[in] msg - input message.
       //! @param[in] filtered_sys - list of systems allowed to pass a message.
       //! @param[in] filtered_ent - list of entities allowed to pass a message.
-      //! @param[out] match - 'True' if the message source is allowed to pass it.
+      //! @param[out] match - 'True' if the message is allowed to pass.
       bool
       matchMessage(const IMC::Message* msg,
           Systems& filtered_sys, Entities& filtered_ent);
 
       //! Verification of a command message source system and entity.
       //! @param[in] msg - input message.
-      //! @param[out] match - 'True' if the message source is allowed to pass it.
+      //! @param[out] match - 'True' if the message is allowed to pass.
       bool
       matchCommand(const IMC::Message* msg);
 
