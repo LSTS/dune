@@ -63,14 +63,14 @@ namespace Control
         bool use_controller;
       };
 
-      struct Task: public DUNE::Control::PathController
+      struct Task: public DUNE::Control::SurrogatePathController
       {
         Arguments m_args;
         IMC::DesiredRoll m_bank;
         double m_airspeed;
 
         Task(const std::string& name, Tasks::Context& ctx):
-          DUNE::Control::PathController(name, ctx),
+          DUNE::Control::SurrogatePathController(name, ctx),
           m_airspeed(0.0)
         {
           param("Look Ahead Gain", m_args.la_gain)
