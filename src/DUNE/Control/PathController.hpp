@@ -280,6 +280,8 @@ namespace DUNE
       //! Handler for EstimatedState source id filter.
       //! This is called when an EstimatedState is received.
       //! By default it only passes EstimatedState messages from the system itself.
+      //! @param[in] es - EstimatedState message.
+      //! @param[out] block - 'True' if the message is NOT allowed to pass.
       virtual bool
       sourceFilter(const IMC::EstimatedState* es)
       {
