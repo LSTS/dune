@@ -393,6 +393,7 @@ namespace Transports
 
           case SM_DEACT_DONE:
             debug("deactivation complete");
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
             deactivate();
             m_sm_state = SM_IDLE;
             break;
