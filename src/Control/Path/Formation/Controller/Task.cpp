@@ -348,10 +348,8 @@ namespace Control
           FormMonitor* m_form_monitor;
           //std::vector<RelState*> m_rel_state;
 
-          //! List of systems allowed to define a command.
-          std::map<uint32_t, Systems> m_filtered_sys;
-          //! List of entities allowed to define a command.
-          std::map<uint32_t, Entities> m_filtered_ent;
+          //! Commands filter
+          DUNE::Tasks::SourceFilter* m_cmd_flt;
           // System alias id
           uint32_t m_alias_id;
           // Leader system id
@@ -425,6 +423,7 @@ namespace Control
             m_timestep_leader(0.0),
             m_debug(false),
             m_form_monitor(NULL),
+            m_cmd_flt(NULL),
             m_alias_id(UINT_MAX),
             m_leader_id(UINT_MAX)
           {
@@ -934,111 +933,8 @@ namespace Control
             // Initialize the PlanControl message plan id
             m_current_plan.plan_id = "";
 
-            //==========================================
             // Process the systems and entities allowed to define a command
-            //==========================================
-            uint32_t i_cmd;
-            uint32_t i_cmd_final;
-            uint32_t i_src;
-            uint32_t i_src_ini;
-            m_filtered_sys.clear();
-            m_filtered_ent.clear();
-            for (unsigned int i = 0; i < m_args.cmd_src.size(); ++i)
-            {
-              std::vector<std::string> parts;
-              String::split(m_args.cmd_src[i], ":", parts);
-              if (parts.size() < 1)
-                continue;
-
-              if (parts[0].compare("DesiredRoll") == 0)
-                i_cmd = 0;
-              else if (parts[0].compare("DesiredSpeed") == 0)
-                i_cmd = 1;
-              else if (parts[0].compare("DesiredZ") == 0)
-                i_cmd = 2;
-              else if (parts[0].compare("DesiredPitch") == 0)
-                i_cmd = 3;
-              else
-                i_cmd = 4;
-
-              // Split systems and entities.
-              std::vector<std::string> systems;
-              String::split(parts[1], "+", systems);
-              std::vector<std::string> entities;
-              String::split(parts[2], "+", entities);
-              if (systems.size() == 0)
-                systems.resize(1);
-              if (entities.size() == 0)
-                entities.resize(1);
-
-              // Assign filtered systems and entities to the selected commands
-              if (i_cmd == 4)
-              {
-                i_cmd = 0;
-                i_cmd_final = 3;
-              }
-              else
-                i_cmd_final = i_cmd;
-              for (; i_cmd <= i_cmd_final; i_cmd++)
-              {
-                i_src_ini = m_filtered_sys[i_cmd].size();
-                m_filtered_sys[i_cmd].resize(i_src_ini+systems.size()*entities.size());
-                m_filtered_ent[i_cmd].resize(i_src_ini+systems.size()*entities.size());
-                unsigned int i_sys_n = systems.size();
-                unsigned int i_ent_n = entities.size();
-                // Resolve systems id.
-                for (unsigned j = 0; j < i_sys_n; j++)
-                {
-                  // Resolve entities id.
-                  for (unsigned k = 0; k < i_ent_n; k++)
-                  {
-                    i_src = (j+1)*(k+1)-1;
-                    // Resolve systems.
-                    if (systems[j].empty())
-                    {
-                      m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                      debug("Commands filtering - Filter source system undefined");
-                    }
-                    else
-                    {
-                      try
-                      {
-                        m_filtered_sys[i_cmd][i_src_ini+i_src] = resolveSystemName(systems[j]);
-                        debug("Commands filtering - System '%s' with ID: %d",
-                            systems[j].c_str(), resolveSystemName(systems[j]));
-                      }
-                      catch (...)
-                      {
-                        war("Commands filtering - No system found with designation '%s'!", systems[j].c_str());
-                        i_sys_n--;
-                        j--;
-                      }
-                    }
-                    // Resolve entities.
-                    if (entities[j].empty())
-                    {
-                      m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                      debug("Commands filtering - Filter entity system undefined");
-                    }
-                    else
-                    {
-                      try
-                      {
-                        m_filtered_ent[i_cmd][i_src_ini+i_src] = resolveEntity(entities[k]);
-                        debug("Commands filtering - Entity '%s' with ID: %d",
-                            entities[k].c_str(), resolveEntity(entities[k]));
-                      }
-                      catch (...)
-                      {
-                        war("Commands filtering - No entity found with designation '%s'!", entities[k].c_str());
-                        i_ent_n--;
-                        k--;
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            m_cmd_flt = new Tasks::SourceFilter(*this, m_args.cmd_src);
           }
 
           void
@@ -1376,29 +1272,9 @@ namespace Control
               return;
             }
 
-            // Filter command by systems and entities.
-            bool matched = true;
-            if (m_filtered_sys[0].size() > 0)
-            {
-              matched = false;
-              std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[0].begin();
-              std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[0].begin();
-              for (; itr_sys != m_filtered_sys[0].end(); ++itr_sys)
-              {
-                if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
-                    (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
-                  matched = true;
-                ++itr_ent;
-              }
-            }
-            // This system and entity are not listed to be passed.
-            if (!matched)
-            {
-              trace("DesiredRoll rejected (from system '%s' and entity '%s')",
-                    resolveSystemId(msg->getSource()),
-                    resolveEntity(msg->getSourceEntity()).c_str());
+            // Filter command by systems and entities
+            if (!m_cmd_flt->match(msg))
               return;
-            }
 
             //! Check that the command is a real value
             if (Math::isNaN(msg->value))
@@ -1427,29 +1303,9 @@ namespace Control
               return;
             }
 
-            // Filter command by systems and entities.
-            bool matched = true;
-            if (m_filtered_sys[1].size() > 0)
-            {
-              matched = false;
-              std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[1].begin();
-              std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[1].begin();
-              for (; itr_sys != m_filtered_sys[1].end(); ++itr_sys)
-              {
-                if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
-                    (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
-                  matched = true;
-                ++itr_ent;
-              }
-            }
-            // This system and entity are not listed to be passed.
-            if (!matched)
-            {
-              trace("DesiredSpeed rejected (from system '%s' and entity '%s')",
-                    resolveSystemId(msg->getSource()),
-                    resolveEntity(msg->getSourceEntity()).c_str());
+            // Filter command by systems and entities
+            if (!m_cmd_flt->match(msg))
               return;
-            }
 
             //! Check that the command is a real value
             if (Math::isNaN(msg->value))
@@ -1485,29 +1341,9 @@ namespace Control
               return;
             }
 
-            // Filter command by systems and entities.
-            bool matched = true;
-            if (m_filtered_sys[2].size() > 0)
-            {
-              matched = false;
-              std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[2].begin();
-              std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[2].begin();
-              for (; itr_sys != m_filtered_sys[2].end(); ++itr_sys)
-              {
-                if ((*itr_sys == msg->getSource() || *itr_sys == UINT_MAX) &&
-                    (*itr_ent == msg->getSourceEntity() || *itr_ent == UINT_MAX))
-                  matched = true;
-                ++itr_ent;
-              }
-            }
-            // This system and entity are not listed to be passed.
-            if (!matched)
-            {
-              trace("DesiredZ rejected (from system '%s' and entity '%s')",
-                    resolveSystemId(msg->getSource()),
-                    resolveEntity(msg->getSourceEntity()).c_str());
+            // Filter command by systems and entities
+            if (!m_cmd_flt->match(msg))
               return;
-            }
 
             //! Check that the command is a real value
             if (Math::isNaN(msg->value))
