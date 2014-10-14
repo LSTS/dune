@@ -121,11 +121,9 @@ namespace Simulators
       //! Wind velocity vector
       Matrix m_wind;
       //! Gps simulator entity id.
-//      unsigned m_gps_eid;
-      //! List of systems allowed to define a command.
-      std::map<uint32_t, Systems> m_filtered_sys;
-      //! List of entities allowed to define a command.
-      std::map<uint32_t, Entities> m_filtered_ent;
+      //unsigned m_gps_eid;
+      //! Commands filter
+      DUNE::Tasks::SourceFilter* m_cmd_flt;
       // System alias id
       uint32_t m_alias_id;
 
@@ -141,6 +139,7 @@ namespace Simulators
         m_position(6, 1, 0.0),
         m_velocity(6, 1, 0.0),
         m_wind(3, 1, 0.0),
+        m_cmd_flt(NULL),
         m_alias_id(UINT_MAX)
       {
         // Definition of configuration parameters.
@@ -459,161 +458,7 @@ namespace Simulators
       onEntityResolution(void)
       {
         //! Process the systems and entities allowed to define a command.
-        uint32_t i_cmd;
-        uint32_t i_cmd_final;
-        uint32_t i_src;
-        uint32_t i_src_ini = UINT_MAX;
-        std::vector<std::string> parts;
-        std::vector<std::string> systems;
-        std::vector<std::string> entities;
-        unsigned int i_sys_n;
-        unsigned int i_ent_n;
-        uint32_t sys_tmp;
-
-        m_filtered_sys.clear();
-        m_filtered_ent.clear();
-        for (unsigned int i = 0; i < m_args.cmd_src.size(); ++i)
-        {
-          parts.clear();
-          String::split(m_args.cmd_src[i], ":", parts);
-          if (parts.size() < 1)
-            continue;
-
-          if (parts[0].compare("DesiredRoll") == 0)
-            i_cmd = 0;
-          else if (parts[0].compare("DesiredSpeed") == 0)
-            i_cmd = 1;
-          else if (parts[0].compare("DesiredZ") == 0)
-            i_cmd = 2;
-          else if (parts[0].compare("DesiredPitch") == 0)
-            i_cmd = 3;
-          else if (parts[0].compare("SetServoPosition") == 0)
-            i_cmd = 4;
-          else if (parts[0].compare("SetThrusterActuation") == 0)
-            i_cmd = 5;
-          else
-            i_cmd = 6;
-
-          // Split systems and entities.
-          systems.clear();
-          entities.clear();
-          String::split(parts[1], "+", systems);
-          String::split(parts[2], "+", entities);
-          i_sys_n = systems.size();
-          i_ent_n = entities.size();
-
-          // Assign filtered systems and entities to the selected commands
-          if (i_cmd == 6)
-          {
-            i_cmd = 0;
-            i_cmd_final = 5;
-          }
-          else
-            i_cmd_final = i_cmd;
-          for (; i_cmd <= i_cmd_final; i_cmd++)
-          {
-            i_src_ini = m_filtered_sys[i_cmd].size();
-            m_filtered_ent[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
-            m_filtered_sys[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
-            for (unsigned j = 0; j < i_sys_n; j++)
-            {
-              spew("Commands filtering - System '%s' (%u/%u).",
-                   systems[j].c_str(), j+1, i_sys_n);
-
-              // Resolve systems id.
-              if (systems[j].empty())
-              {
-                sys_tmp = UINT_MAX;
-                debug("Commands filtering - Filter source system undefined");
-              }
-              else if (systems[j].compare("self") == 0)
-              {
-                sys_tmp = getSystemId();
-                debug("Commands filtering - System '%s' with ID: %u",
-                    resolveSystemId(sys_tmp), sys_tmp);
-              }
-              else
-              {
-                try
-                {
-                  sys_tmp = resolveSystemName(systems[j]);
-                  if (sys_tmp != USHRT_MAX)
-                    debug("Commands filtering - System '%s' with ID: %u",
-                          resolveSystemId(sys_tmp), sys_tmp);
-                  else
-                  {
-                    war("Commands filtering - No system found with designation '%s'!", systems[j].c_str());
-                    for (unsigned j_tmp = j; j_tmp+1 < i_ent_n; j_tmp++)
-                      systems[j_tmp] = systems[j_tmp + 1];
-                    i_sys_n--;
-                    j--;
-                    continue;
-                  }
-                }
-                catch (...)
-                {
-                  war("Commands filtering - No system found with designation '%s'!", systems[j].c_str());
-                  for (unsigned j_tmp = j; j_tmp+1 < i_sys_n; j_tmp++)
-                    systems[j_tmp] = systems[j_tmp + 1];
-                  i_sys_n--;
-                  j--;
-                  continue;
-                }
-              }
-
-              for (unsigned k = 0; k < i_ent_n; k++)
-              {
-                spew("Commands filtering - Entity '%s' (%u/%u).",
-                     entities[k].c_str(), k+1, i_ent_n);
-
-                i_src = j*i_ent_n + k;
-
-                // Assign system id
-                m_filtered_sys[i_cmd][i_src_ini+i_src] = sys_tmp;
-
-                // Resolve entities id.
-                if (entities[k].empty())
-                {
-                  m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                  debug("Commands filtering - Filter entity system undefined");
-                }
-                else
-                {
-                  try
-                  {
-                    m_filtered_ent[i_cmd][i_src_ini+i_src] = resolveEntity(entities[k]);
-                    debug("Commands filtering - Entity '%s' with ID: %u",
-                        resolveEntity(m_filtered_ent[i_cmd][i_src_ini+i_src]).c_str(),
-                        m_filtered_ent[i_cmd][i_src_ini+i_src]);
-                  }
-                  catch (...)
-                  {
-                    war("Commands filtering - No entity found with designation '%s'!", entities[k].c_str());
-                    for (unsigned k_tmp = k; k_tmp+1 < i_ent_n; k_tmp++)
-                      entities[k_tmp] = entities[k_tmp + 1];
-                    i_ent_n--;
-                    k--;
-                  }
-                }
-
-                spew("Commands filtering state - System %u of %u : Entity %u of %u.",
-                    j+1, i_sys_n, k+1, i_ent_n);
-              }
-            }
-            m_filtered_ent[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
-            m_filtered_sys[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
-          }
-          if (parts[0].empty())
-            spew("Commands filter sets:");
-          else
-            spew("%s filter sets:", parts[0].c_str());
-
-          i_cmd--;
-          for (unsigned i_flt = i_src_ini; i_flt < i_src_ini + i_sys_n*i_ent_n; i_flt++)
-            spew("    System %s : Entity %s.",
-                 resolveSystemId(m_filtered_sys[i_cmd][i_flt]),
-                 resolveEntity(m_filtered_ent[i_cmd][i_flt]).c_str());
-        }
+        m_cmd_flt = new Tasks::SourceFilter(*this, m_args.cmd_src);
       }
 
       void
@@ -677,14 +522,13 @@ namespace Simulators
 
         // Check if the command source is valid, if the simulator is active,
         // and if the commanded value is a real value
-        bool b_source_id = false;
-        if (!commandFilter(msg, &b_source_id))
+        if (!commandFilter(msg))
           return;
 
         m_model->commandBank(msg->value);
 
         // ========= Debug ===========
-        commandPrintOut(msg, &(msg->value), &b_source_id);
+        commandPrintOut(msg, &(msg->value));
       }
 
       void
@@ -694,14 +538,13 @@ namespace Simulators
 
         // Check if the command source is valid, if the simulator is active,
         // and if the commanded value is a real value
-        bool b_source_id = false;
-        if (!commandFilter(msg, &b_source_id))
+        if (!commandFilter(msg))
           return;
 
         m_model->commandAirspeed(msg->value);
 
         // ========= Debug ===========
-        commandPrintOut(msg, &(msg->value), &b_source_id);
+        commandPrintOut(msg, &(msg->value));
       }
 
       void
@@ -711,8 +554,7 @@ namespace Simulators
 
         // Check if the command source is valid, if the simulator is active,
         // and if the commanded value is a real value
-        bool b_source_id = false;
-        if (!commandFilter(msg, &b_source_id))
+        if (!commandFilter(msg))
           return;
 
         double alt_cmd;
@@ -725,7 +567,7 @@ namespace Simulators
         m_model->commandAlt(alt_cmd);
 
         // ========= Debug ===========
-        commandPrintOut(msg, &(alt_cmd), &b_source_id);
+        commandPrintOut(msg, &(alt_cmd));
       }
 
       void
@@ -735,14 +577,13 @@ namespace Simulators
 
         // Check if the command source is valid, if the simulator is active,
         // and if the commanded value is a real value
-        bool b_source_id = false;
-        if (!commandFilter(msg, &b_source_id))
+        if (!commandFilter(msg))
           return;
 
         m_model->commandFPA(msg->value);
 
         // ========= Debug ===========
-        commandPrintOut(msg, &(msg->value), &b_source_id);
+        commandPrintOut(msg, &(msg->value));
       }
 
       /*
@@ -753,14 +594,13 @@ namespace Simulators
 
         // Check if the command source is valid, if the simulator is active,
         // and if the commanded value is a real value
-        bool b_source_id = false;
-        if (!commandFilter(msg, &b_source_id))
+        if (!commandFilter(msg))
           return;
 
         m_servo_pos(msg->id) = msg->value;
 
         // ========= Debug ===========
-        commandPrintOut(msg, &(msg->value), &b_source_id);
+        commandPrintOut(msg, &(msg->value));
       }
 
       void
@@ -770,88 +610,33 @@ namespace Simulators
 
         // Check if the command source is valid, if the simulator is active,
         // and if the commanded value is a real value
-        bool b_source_id = false;
-        if (!commandFilter(msg, &b_source_id))
+        if (!commandFilter(msg))
           return;
 
         m_thruster_act = msg->value;
 
         // ========= Debug ===========
-        commandPrintOut(msg, &(msg->value), &b_source_id);
+        commandPrintOut(msg, &(msg->value));
       }
       */
 
       bool
-      commandFilter(const IMC::Message* msg, bool* b_source_id)
+      commandFilter(const IMC::Message* msg)
       {
-        bool pass_command = true;
-        const char* system_id = NULL;
-        const char* entity_id = NULL;
-
-        try
-        {
-          system_id = resolveSystemId(msg->getSource());
-          entity_id = resolveEntity(msg->getSourceEntity()).c_str();
-          *b_source_id = true;
-        }
-        catch (...)
-        {
-          war("Unresolved system or entity ID!");
-        }
-
-        uint32_t i_cmd;
-        const char* c_msg_name = msg->getName();
-        if (strcmp(c_msg_name, "DesiredRoll") == 0)
-          i_cmd = 0;
-        else if (strcmp(c_msg_name, "DesiredSpeed") == 0)
-          i_cmd = 1;
-        else if (strcmp(c_msg_name, "DesiredZ") == 0)
-          i_cmd = 2;
-        else if (strcmp(c_msg_name, "DesiredPitch") == 0)
-          i_cmd = 3;
-        else if (strcmp(c_msg_name, "SetServoPosition") == 0)
-          i_cmd = 4;
-        else if (strcmp(c_msg_name, "SetThrusterActuation") == 0)
-          i_cmd = 5;
-
         // Filter command by systems and entities.
-        bool matched = true;
-        if (m_filtered_sys[i_cmd].size() > 0)
-        {
-          matched = false;
-          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[i_cmd].begin();
-          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[i_cmd].begin();
-          for (; itr_sys != m_filtered_sys[i_cmd].end(); ++itr_sys)
-          {
-            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
-              matched = true;
-            ++itr_ent;
-          }
-        }
-        // This system and entity are not listed to be passed.
-        if (!matched)
-        {
-          trace("%s rejected.", c_msg_name);
-          if (*b_source_id)
-            trace("%s received from system '%s' and entity '%s'.", c_msg_name,
-                  system_id, entity_id);
-          else
-            trace("%s received from unidentified system and/or entity.", c_msg_name);
-          pass_command = false;
-        }
+        bool pass_command = m_cmd_flt->match(msg);
 
         //! Check if system is active
         if (!isActive())
         {
-          trace("%s rejected - Simulation not active - Missing GPS-Fix!", c_msg_name);
+          trace("%s rejected - Simulation not active - Missing GPS-Fix!", msg->getName());
           pass_command = false;
         }
 
         //! Check that the command is a real value
         if (Math::isNaN(msg->getValueFP()))
         {
-          war("%s rejected - Commanded value is not a number!", c_msg_name);
+          war("%s rejected - Commanded value is not a number!", msg->getName());
           pass_command = false;
         }
 
@@ -859,43 +644,54 @@ namespace Simulators
       }
 
       void
-      commandPrintOut(const IMC::Message* msg, const double* d_msg_value, bool* b_source_id)
+      commandPrintOut(const IMC::Message* msg, const double* d_msg_value)
       {
         // Get the print out message name and unit type, and define if the command is an angle
-        const char* c_msg_name = msg->getName();
+        const char* msg_name = msg->getName();
         std::string c_units = "";
         bool b_cmd_angle = false;
-        if (strcmp(c_msg_name, "DesiredRoll") == 0)
+        if (strcmp(msg_name, "DesiredRoll") == 0)
         {
           b_cmd_angle = true;
         }
-        else if (strcmp(c_msg_name, "DesiredSpeed") == 0)
+        else if (strcmp(msg_name, "DesiredSpeed") == 0)
         {
           c_units = "m/s";
         }
-        else if (strcmp(c_msg_name, "DesiredZ") == 0)
+        else if (strcmp(msg_name, "DesiredZ") == 0)
         {
           c_units = "m";
         }
-        else if (strcmp(c_msg_name, "DesiredPitch") == 0)
+        else if (strcmp(msg_name, "DesiredPitch") == 0)
         {
           b_cmd_angle = true;
         }
         /*
-        else if (strcmp(c_msg_name, "SetServoPosition") == 0)
-        else if (strcmp(c_msg_name, "SetThrusterActuation") == 0)
+        else if (strcmp(msg_name, "SetServoPosition") == 0)
+        else if (strcmp(msg_name, "SetThrusterActuation") == 0)
         */
 
         // Print out the command value and source information
-        if (b_cmd_angle)
-          spew("%s received (%1.2fº)", c_msg_name, DUNE::Math::Angles::degrees(*d_msg_value));
-        else
-          spew("%s received (%1.2f%s)", c_msg_name, *d_msg_value, c_units.c_str());
-        if (*b_source_id)
-          spew("%s received from system '%s' and entity '%s'.", c_msg_name,
-               resolveSystemId(msg->getSource()), resolveEntity(msg->getSourceEntity()).c_str());
-        else
-          spew("%s received from unidentified system and/or entity.", c_msg_name);
+        try
+        {
+          const char* system_name = resolveSystemId(msg->getSource());
+          const char* entity_name = resolveEntity(msg->getSourceEntity()).c_str();
+          if (b_cmd_angle)
+            spew("%s received (%1.2fº) from system '%s' and entity '%s'.", msg_name,
+                 DUNE::Math::Angles::degrees(*d_msg_value), system_name, entity_name);
+          else
+            spew("%s received (%1.2f%s) from system '%s' and entity '%s'.", msg_name,
+                 *d_msg_value, c_units.c_str(), system_name, entity_name);
+        }
+        catch (...)
+        {
+          if (b_cmd_angle)
+            war("%s received (%1.2fº) from an unresolved system and/or entity.", msg_name,
+                 DUNE::Math::Angles::degrees(*d_msg_value));
+          else
+            war("%s received (%1.2f%s) from an unresolved system and/or entity.", msg_name,
+                 *d_msg_value, c_units.c_str());
+        }
 
         return;
       }
