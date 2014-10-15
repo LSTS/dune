@@ -266,14 +266,16 @@ namespace Transports
         Environment::set("GSM_PIN", pin);
         Environment::set("GSM_MODE", m_args.gsm_mode);
 
-        std::system(m_command_connect.c_str());
+        if (std::system(m_command_connect.c_str()) == -1)
+          err(DTR("failed to execute connect command"));
       }
 
       void
       disconnect(void)
       {
         debug("disconnecting");
-        std::system(m_command_disconnect.c_str());
+        if (std::system(m_command_disconnect.c_str()) == -1)
+          err(DTR("failed to execute disconnect command"));
       }
 
       bool
