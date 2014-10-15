@@ -25,7 +25,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: DUNE\n"
         "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-        "POT-Creation-Date: 2014-09-08 11:57+0100\n"
+        "POT-Creation-Date: 2014-10-15 15:09+0100\n"
         "PO-Revision-Date: 2014-08-10 23:54-0000\n"
         "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
         "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -86,6 +86,26 @@ msgstr  "ligação terminada"
 msgid   "connection timeout"
 msgstr  "atingido tempo limite da ligação"
 
+#: /home/jb/workspace/dune/trunk/src/DUNE/Entities/EntityDataBase.hpp:60
+msgid   "invalid entity label: "
+msgstr  "etiqueta de entidade inválida: "
+
+#: /home/jb/workspace/dune/trunk/src/DUNE/Entities/EntityDataBase.hpp:64
+msgid   "entity labels cannot be empty"
+msgstr  "etiqueta de entidades não podem ser vazias"
+
+#: /home/jb/workspace/dune/trunk/src/DUNE/Entities/EntityDataBase.hpp:71
+msgid   "nonexistent entity label: "
+msgstr  "etiqueta de entidade inexistente: "
+
+#: /home/jb/workspace/dune/trunk/src/DUNE/Entities/EntityDataBase.hpp:78
+msgid   "invalid entity id: "
+msgstr  "identificação de identidade inválida: "
+
+#: /home/jb/workspace/dune/trunk/src/DUNE/Entities/EntityDataBase.hpp:85
+msgid   "an unique id was already reserved for entity label: "
+msgstr  "já tinha sido reservado um id único para a etiqueta de entidade: "
+
 #: /home/jb/workspace/dune/trunk/src/DUNE/Monitors/MotorCurrentMonitor.hpp:52
 msgid   "motor monitor error: "
 msgstr  "erro no monitor do motor: "
@@ -93,26 +113,6 @@ msgstr  "erro no monitor do motor: "
 #: /home/jb/workspace/dune/trunk/src/DUNE/Monitors/MotorCurrentMonitor.hpp:97
 msgid   "number of linear points is not even"
 msgstr  "número de pontos não é par"
-
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/EntityDataBase.hpp:64
-msgid   "invalid entity label: "
-msgstr  "etiqueta de entidade inválida: "
-
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/EntityDataBase.hpp:68
-msgid   "entity labels cannot be empty"
-msgstr  "etiqueta de entidades não podem ser vazias"
-
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/EntityDataBase.hpp:75
-msgid   "nonexistent entity label: "
-msgstr  "etiqueta de entidade inexistente: "
-
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/EntityDataBase.hpp:82
-msgid   "invalid entity id: "
-msgstr  "identificação de identidade inválida: "
-
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/EntityDataBase.hpp:89
-msgid   "an unique id was already reserved for entity label: "
-msgstr  "já tinha sido reservado um id único para a etiqueta de entidade: "
 
 #: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/BasicParameterParser.hpp:75
 #: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/BasicParameterParser.hpp:168
@@ -143,12 +143,12 @@ msgstr  "número insuficiente de elementos"
 msgid   "too many elements"
 msgstr  "demasiados elementos"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Exceptions.hpp:101
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Exceptions.hpp:100
 #, c-format
 msgid   "invalid task name '%s'"
 msgstr  "nome de tarefa inválido '%s'"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Exceptions.hpp:114
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Exceptions.hpp:113
 #, c-format
 msgid   "invalid value '%s' for parameter '%s': '%s'"
 msgstr  "valor inválido '%s' para parâmetro  '%s': '%s'"
@@ -180,7 +180,7 @@ msgstr  "verificação inválida: devia ser %02X%02X, mas foi recebido %02X%02X"
 msgid   "invalid format: %s"
 msgstr  "formato inválido: %s"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Math/General.hpp:204
+#: /home/jb/workspace/dune/trunk/src/DUNE/Math/General.hpp:214
 msgid   "piecewise linear interpolation needs equally sized vectors"
 msgstr  "interpolação linear por partes precisa de vetores de tamanho igual"
 
@@ -312,28 +312,75 @@ msgstr  "tamanho SBD inválido %u"
 msgid   "invalid SBD write %s"
 msgstr  "escrita de SBD inválida %s"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/PopUp.hpp:267
+#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/PopUp.hpp:264
 msgid   "relocated station keeping"
 msgstr  "posição estacionária relocalizada"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Elevator.hpp:160
+#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Elevator.hpp:152
 msgid   "vertical progress is too slow"
 msgstr  "progresso na vertical é demasiado lento"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Dislodge.hpp:199
+#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Dislodge.hpp:198
 msgid   "dislodge failed"
 msgstr  "libertação falhou"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Dislodge.hpp:265
+#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Dislodge.hpp:266
 msgid   "trying again to dislodge"
 msgstr  "a tentar libertar novamente"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Loiter.hpp:72
+#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Loiter.hpp:71
 #: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/Elevate.cpp:53
-#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:47
+#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:50
 #, c-format
 msgid   "forcing minimum radius of %.1f"
 msgstr  "a forçar raio mínimo de %.1f"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:61
+msgid   "parse error: "
+msgstr  "erro ao processar: "
+
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:126
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:130
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:168
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:172
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:236
+msgid   "Total"
+msgstr  "Total"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:131
+msgid   "Execution"
+msgstr  "Execução"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:132
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:218
+msgid   "Calibration"
+msgstr  "Calibração"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:145
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:256
+msgid   "Maneuver "
+msgstr  "Manobra "
+
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:173
+msgid   "Hotel"
+msgstr  "Hotel"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:174
+msgid   "Payload"
+msgstr  "Payload"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:175
+msgid   "Motion"
+msgstr  "Movimento"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:176
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:52
+msgid   "IMU"
+msgstr  "IMU"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:210
+msgid   "Prediction Error"
+msgstr  "Erro de Previsão"
 
 #: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/HTTPClient.hpp:122
 #: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/HTTPClient.hpp:178
@@ -370,7 +417,7 @@ msgstr  "dispositivo não está no meio apropriado"
 msgid   "calibrating: system must remain static"
 msgstr  "em calibração: o sistema deve permanecer estático"
 
-#: /home/jb/workspace/dune/trunk/src/Navigation/AUV/CLRanger/Task.cpp:296
+#: /home/jb/workspace/dune/trunk/src/Navigation/AUV/CLRanger/Task.cpp:302
 msgid   "destination is not in the LBL configuration"
 msgstr  "destino não está na configuração LBL"
 
@@ -470,6 +517,10 @@ msgstr  "impossível obter porta associada"
 msgid   "setting up socket"
 msgstr  "a definir socket"
 
+#: /home/jb/workspace/dune/trunk/src/DUNE/Entities/BasicEntity.cpp:46
+msgid   "entity label already set: "
+msgstr  "etiqueta de entidades já definidas"
+
 #: /home/jb/workspace/dune/trunk/src/DUNE/Time/Clock.cpp:123
 msgid   "failed to set time"
 msgstr  "falha ao definir tempo"
@@ -484,95 +535,96 @@ msgstr  "a sair: %s"
 msgid   "incoming: %s"
 msgstr  "a chegar: %s"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:71
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:69
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:215
 msgid   "Entity Label"
 msgstr  "Nome da Entidade"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:73
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:71
 msgid   "Main entity label"
 msgstr  "Nome principal da entidade"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:75
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:73
 msgid   "Execution Priority"
 msgstr  "Prioridade de Execução"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:77
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:75
 msgid   "Execution priority"
 msgstr  "Prioridade de execução"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:79
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:77
 msgid   "Activation Time"
 msgstr  "Tempo de Ativação"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:82
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:80
 msgid   "Deactivation Time"
 msgstr  "Tempo de Desativação"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:85
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:83
 msgid   "Debug Level"
 msgstr  "Nível de Depuração"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:113
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:114
 msgid   "entity label is not configured"
 msgstr  "etiqueta da entidade não foi configurado"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:208
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:189
 msgid   "Active - Scope"
 msgstr  "Ativa - Escopo"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:212
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:193
 msgid   "Scoped of the 'Active' parameter"
 msgstr  "Escopo do parâmetro 'Ativa'"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:215
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:196
 msgid   "Active - Visibility"
 msgstr  "Ativa - Visibilidade"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:219
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:200
 msgid   "Visibility of the 'Active' parameter"
 msgstr  "Visibilidade do parâmetro 'Ativa'"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:221
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:202
 msgid   "Active"
 msgstr  "Ativa"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:225
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:206
 msgid   "True to activate task, false otherwise"
 msgstr  "Verdadeiro para ativar tarefa, falso caso contrário"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:316
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:276
 msgid   "activation is not in progress"
 msgstr  "ativação não está em progresso"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:388
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:314
 msgid   "deactivation is not in progress"
 msgstr  "desativação não está em progresso"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:458
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:371
 msgid   "restarting"
 msgstr  "a reiniciar"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:459
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:372
 #, c-format
 msgid   "restarting in %u seconds due to error: %s"
 msgstr  "a reiniciar em %u segundos devido a erro: %s"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:476
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:389
 #, c-format
 msgid   "failed to update parameters: %s"
 msgstr  "falha ao atualizar parâmetros: %s"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:484
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:397
 #, c-format
 msgid   "task died with uncaught exception: %s: restarting"
 msgstr  "a tarefa morreu com uma exceção não apanhada: %s, a reiniciar"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:571
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:459
 #, c-format
 msgid   "updating entity parameters: %s: '%s'"
 msgstr  "a atualizar parâmetros de entidade: %s: '%s'"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:770
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:658
 #, c-format
 msgid   "invalid parameter '%s'"
 msgstr  "parâmetro inválido '%s'"
@@ -671,17 +723,17 @@ msgstr  "não foi recebido valor de altitude válido, a manobra não irá prosse
 msgid   "water column is not deep enough"
 msgstr  "coluna de água não é suficientemente profunda"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:96
+#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:99
 #, c-format
 msgid   "outside safe region (distance: %.1f m)"
 msgstr  "fora região segura (distância: %.1f m)"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:105
+#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:119
 #, c-format
 msgid   "inside safe region (distance: %.1f m)"
 msgstr  "dentro região segura (distância: %.1f m)"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:137
+#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:153
 msgid   "invalid station keeping state"
 msgstr  "informação de posição estacionária inválida"
 
@@ -713,7 +765,7 @@ msgstr  "espaço de dados excedido"
 #: /home/jb/workspace/dune/trunk/src/DUNE/Hardware/LUCL/Protocol.cpp:56
 #: /home/jb/workspace/dune/trunk/src/DUNE/Hardware/IntelHEX.cpp:107
 #: /home/jb/workspace/dune/trunk/src/DUNE/Hardware/UCTK/Errors.cpp:42
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:63
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:65
 msgid   "invalid checksum"
 msgstr  "verificação inválido"
 
@@ -790,120 +842,136 @@ msgstr  "falha ao obter informação da \"flash\""
 
 #: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:40
 #: /home/jb/workspace/dune/trunk/src/Sensors/OS4000/Task.cpp:147
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:335
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:983
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:438
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1084
 msgid   "initializing"
 msgstr  "a iniciar"
 
 #: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:41
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:339
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:442
 msgid   "idle"
 msgstr  "em espera"
 
 #: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:42
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:341
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:444
 msgid   "active"
 msgstr  "ativo"
 
 #: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:43
+msgid   "activating"
+msgstr  "a ativar"
+
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:44
+msgid   "deactivating"
+msgstr  "a desativar"
+
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:45
 msgid   "input/output error"
 msgstr  "erro de entrada/saída"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:44
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:46
 msgid   "internal error"
 msgstr  "erro interno"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:45
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:47
 msgid   "CPU usage is too high"
 msgstr  "utilização do CPU é demasiado elevada"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:46
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:48
 msgid   "fuel is running low"
 msgstr  "nível de energia baixo"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:47
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:49
 msgid   "fuel level estimation is not reliable"
 msgstr  "estimativa de nível de energia não é confiável"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:48
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:50
 msgid   "fuel reserve"
 msgstr  "reserva de energia"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:49
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:51
 msgid   "calibrating"
 msgstr  "a calibrar"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:50
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:52
 msgid   "calibrated"
 msgstr  "calibrado"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:51
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:53
 msgid   "not aligned"
 msgstr  "não alinhado"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:52
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:54
 msgid   "aligning"
 msgstr  "a alinhar"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:53
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:55
 msgid   "aligned"
 msgstr  "alinhado"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:54
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:56
 msgid   "powering down"
 msgstr  "a desligar"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:55
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:57
 msgid   "communication error"
 msgstr  "erro de comunicação"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:56
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:58
 msgid   "synchronized"
 msgstr  "sincronizado"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:57
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:59
 msgid   "synchronizing"
 msgstr  "a sincronizar"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:58
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:60
 msgid   "not synchronized"
 msgstr  "não sincronizado"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:59
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:61
 msgid   "waiting for GPS fix"
 msgstr  "à espera de posição GPS"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:60
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:62
 msgid   "waiting for configuration of LBL beacons"
 msgstr  "à espera da configuração de transdutores LBL"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:61
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:63
 msgid   "waiting for solution to converge"
 msgstr  "à espera que a solução convirja"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:62
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:64
 msgid   "missing data"
 msgstr  "dados em falta"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:64
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:66
 msgid   "invalid version"
 msgstr  "versão inválida"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:65
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:67
 msgid   "active but without bottom lock"
 msgstr  "ativo mas sem \"bottom lock\""
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:66
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:68
 msgid   "no medium data: user must control device"
 msgstr  "sem dados do meio: utilizador deve controlar dispositivo"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:67
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:69
 msgid   "active (no medium data: need user input)"
 msgstr  "ativo (sem dados do meio: controlo do utilizador"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:68
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:70
 msgid   "idle (no medium data: need user input)"
 msgstr  "em espera (sem dados do meio: controlo do utilizador"
+
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:71
+msgid   "connecting"
+msgstr  "a conectar"
+
+#: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:72
+msgid   "connected"
+msgstr  "conectado"
 
 #: /home/jb/workspace/dune/trunk/src/DUNE/Daemon.cpp:58
 msgid   "Pure Hardware"
@@ -970,37 +1038,37 @@ msgstr  "perfil de execução: %s"
 msgid   "clean shutdown"
 msgstr  "encerramento limpo"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:320
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:275
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:302
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:266
 msgid   "not active"
 msgstr  "inativo"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:463
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:445
 msgid   "keep loitering"
 msgstr  "manter loiter"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:505
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:487
 #, c-format
 msgid   "path (lat/lon): %0.5f %0.5f to %0.5f %0.5f"
 msgstr  "caminho (lat/lon): %0.5f %0.5f para %0.5f %0.5f"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:678
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:658
 msgid   "expected new path control reference"
 msgstr  "esperada nova referência de path control"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:735
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:715
 msgid   "now loitering"
 msgstr  "a fazer loiter"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:874
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:854
 msgid   "along-track divergence error"
 msgstr  "erro por divergência ao longo do caminho"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:907
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:887
 msgid   "cross-track divergence error"
 msgstr  "erro por divergência perpendicular ao caminho"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:988
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:968
 msgid   "waiting for position estimate from navigation"
 msgstr  "à espera de uma estimativa da posição pela navegação"
 
@@ -1028,19 +1096,19 @@ msgstr  "Desvio"
 msgid   "BottomTrack"
 msgstr  "SeguirFundo"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:348
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:345
 msgid   "depth is reaching unacceptable values, forcing depth control"
 msgstr  "demasiado profundo, a forçar controlo em profundidade"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:526
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:523
 msgid   "unable to avoid obstacle"
 msgstr  "incapaz de evitar obstáculo"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:586
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:582
 msgid   "Started braking"
 msgstr  "Início de travagem"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:588
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:584
 msgid   "Stopped braking"
 msgstr  "Fim de travagem"
 
@@ -1243,15 +1311,15 @@ msgstr  "falha ao desabilitar gatilho de baixa latencia"
 msgid   "unexpected response"
 msgstr  "resposta inesperada"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:258
+#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:261
 msgid   "failed to wake device"
 msgstr  "falha ao ligar dispositivo"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:274
+#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:277
 msgid   "unable to read prompt"
 msgstr  "incapaz de ler o \"prompt\""
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:288
+#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:291
 #: /home/jb/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:617
 msgid   "failed to start data sampling"
 msgstr  "falha ao começar amostragem de dados"
@@ -1330,19 +1398,19 @@ msgstr  "falha ao ler EEPROM#230"
 msgid   "unexpected byte"
 msgstr  "\"byte\" não esperado"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:123
+#: /home/jb/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:131
 msgid   "failed to enter command mode"
 msgstr  "falha ao entrar em modo de comando"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:126
+#: /home/jb/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:134
 msgid   "failed to set sampling rate"
 msgstr  "falha ao configurar taxa de amostragem"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:129
+#: /home/jb/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:137
 msgid   "failed to enter monitor mode"
 msgstr  "falha ao entrar em modo de monitorização"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:155
+#: /home/jb/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:163
 #: /home/jb/workspace/dune/trunk/src/Sensors/MiniSVS/Task.cpp:127
 #: /home/jb/workspace/dune/trunk/src/Sensors/AIS/Task.cpp:211
 msgid   "I/O error"
@@ -1388,93 +1456,94 @@ msgstr  "frase GPROT é inválida"
 msgid   "invalid PSATHPR sentence"
 msgstr  "frase PSATHPR é inválida"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:285
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:384
 msgid   "Acoustic Feedback"
 msgstr  "Feedback Acústico"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:286
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:385
 msgid   "None, Ranges, Full"
 msgstr  "Nenhum, Distâncias, Completo"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:291
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:390
 #: /home/jb/workspace/dune/trunk/src/Transports/UAN/Task.cpp:111
 msgid   "Reports Periodicity"
 msgstr  "Periodicidade de Relatórios"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:337
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:440
 msgid   "waiting beacons configuration"
 msgstr  "à espera da configuração de transdutores"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:343
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:446
 msgid   "serial port communication error, modem not responding"
 msgstr  "erro comunicação de porta série, modem não responde"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:345
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:448
 msgid   "failed to configure modem, possible serial port communication error"
 msgstr  "falhou configuração de modem, possível erro de comunicação porta série"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:347
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:450
 msgid   "failed to set modem address"
 msgstr  "falhou ao definir endereço modem"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:390
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:520
 #, c-format
 msgid   "modem address for agent '%s' is invalid"
 msgstr  "endereço modem para agente '%s' é inválido"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:487
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:618
 #: /home/jb/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:607
 msgid   "dynamic sound speed corrections are disabled"
 msgstr  "correção dinâmica de velocidade do som está desativada"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:568
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:687
 msgid   "received system restart request"
 msgstr  "recebido pedido para reiniciar sistema"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:574
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:693
 msgid   "restart request acknowledged"
 msgstr  "reconhecido o pedido de reinicialização"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:576
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:695
 msgid   "failed to acknowledge restart request"
 msgstr  "falhou reconhecimento ao pedido para reiniciar"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:583
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:702
 msgid   "acoustic abort detected"
 msgstr  "detetado aborte acústico"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:593
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:712
 msgid   "abort acknowledged"
 msgstr  "aborte recebido"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:595
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:714
 msgid   "failed to acknowledge abort"
 msgstr  "falhou ao reconhecer aborte"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:625
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:760
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:819
 #, c-format
 msgid   "discarded invalid range %0.2f"
 msgstr  "descartado range inválido %0.2f"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:729
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:925
 #: /home/jb/workspace/dune/trunk/src/Transports/UAN/Task.cpp:500
 msgid   "start plan detected"
 msgstr  "detetado arranque de plano"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:735
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:931
 msgid   "plan acknowledged"
 msgstr  "plano reconhecido"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:737
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:933
 msgid   "failed to acknowledge plan start"
 msgstr  "falha ao reconhecer aborte"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:773
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:1010
 msgid   "failed to ping beacons, modem seems busy"
 msgstr  "falha ao pingar transdutores, o modem parece ocupado"
 
 #: /home/jb/workspace/dune/trunk/src/Sensors/Imagenex881A/Task.cpp:340
-#: /home/jb/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:283
+#: /home/jb/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:287
 msgid   "restarting to change UART device"
 msgstr  "a reiniciar para mudar dispositivo UART"
 
@@ -1528,9 +1597,9 @@ msgstr  "o dispositivo está a usar \"firmware\" instável"
 #: /home/jb/workspace/dune/trunk/src/Actuators/SCRT/Task.cpp:457
 #: /home/jb/workspace/dune/trunk/src/Actuators/MCD4R/Task.cpp:335
 #: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:229
-#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:363
+#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:361
 #: /home/jb/workspace/dune/trunk/src/Power/MCBv2/Task.cpp:634
-#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:497
+#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:505
 #: /home/jb/workspace/dune/trunk/src/Power/PSIMAR/Task.cpp:86
 #: /home/jb/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:310
 #, c-format
@@ -1542,7 +1611,7 @@ msgid   "failed to configure output frequency"
 msgstr  "falha ao configurar frequência de saída"
 
 #: /home/jb/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:294
-#: /home/jb/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:383
+#: /home/jb/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:391
 msgid   "failed to set hard-iron correction factors"
 msgstr  "falha ao definir fatores de correção \"hard-iron\""
 
@@ -1551,7 +1620,7 @@ msgstr  "falha ao definir fatores de correção \"hard-iron\""
 msgid   "parse error: %s"
 msgstr  "processamento do erro: %s"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:253
+#: /home/jb/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:256
 #: /home/jb/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:208
 msgid   "Use Device at Surface"
 msgstr  "Usar Dispositivo à Superfície"
@@ -1618,51 +1687,51 @@ msgstr  "incapaz de entrar em modo de leitura"
 msgid   "depth offset is %0.2f m"
 msgstr  "compensação de profundidade de %0.2f m"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:389
+#: /home/jb/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:397
 msgid   "resetting device"
 msgstr  "a restabelecer dispositivo"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:408
+#: /home/jb/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:416
 msgid   "failed to read magnetic calibration parameters from device"
 msgstr  "falha ao ler parâmetros da calibração magnética do dispositivo"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:427
+#: /home/jb/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:435
 msgid   "different calibration parameters"
 msgstr  "valores de calibração diferentes"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:472
+#: /home/jb/workspace/dune/trunk/src/Sensors/Microstrain3DMGX3/Task.cpp:480
 #, c-format
-msgid   "new hard-iron calibration parameters: %f | %f"
-msgstr  "novos parâmetros de calibração \"hard-iron\": %f | %f"
+msgid   "new hard-iron calibration parameters: %f, %f, 0.0"
+msgstr  "novos parâmetros de calibração \"hard-iron\": %f, %f, 0.0"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:259
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:244
 msgid   "restarting to change transducer detection GPIO"
 msgstr  "a reiniciar para mudar o GPIO de deteção de transdutor"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:278
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:282
 #, c-format
 msgid   "unable to use GPIO %d for transducer detection"
 msgstr  "incapaz de utilizar o GPIO %d para deteção de transdutor"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:329
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:333
 msgid   "transducer not connected"
 msgstr  "transdutor não está ligado"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:403
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:407
 #, c-format
 msgid   "unable to send plan %s"
 msgstr  "incapaz de enviar plano %s"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:624
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:602
 msgid   "plan started"
 msgstr  "plano iniciado"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:643
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:736
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:621
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:714
 msgid   "range to"
 msgstr  "distância para"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:755
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:733
 #, c-format
 msgid   "plan progress is %f"
 msgstr  "progresso do plano é %f"
@@ -1880,8 +1949,8 @@ msgstr  "a enviar SMS %s | %u"
 msgid   "unknown location"
 msgstr  "localização desconhecida"
 
-#: /home/jb/workspace/dune/trunk/src/Monitors/Medium/Task.cpp:192
-#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:562
+#: /home/jb/workspace/dune/trunk/src/Monitors/Medium/Task.cpp:212
+#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:570
 msgid   "water"
 msgstr  "água"
 
@@ -1928,15 +1997,15 @@ msgstr  "altitude mínima"
 msgid   "Operational Area"
 msgstr  "Área Operacional"
 
-#: /home/jb/workspace/dune/trunk/src/Monitors/FuelLevel/Task.cpp:210
+#: /home/jb/workspace/dune/trunk/src/Monitors/FuelLevel/Task.cpp:206
 msgid   "invalid model"
 msgstr  "modelo inválido"
 
-#: /home/jb/workspace/dune/trunk/src/Monitors/FuelLevel/Task.cpp:217
+#: /home/jb/workspace/dune/trunk/src/Monitors/FuelLevel/Task.cpp:213
 msgid   "operation mode list labels and values have different sizes"
 msgstr  "lista de modos de operação e de valores têm tamanhos diferentes"
 
-#: /home/jb/workspace/dune/trunk/src/Monitors/FuelLevel/Task.cpp:225
+#: /home/jb/workspace/dune/trunk/src/Monitors/FuelLevel/Task.cpp:221
 msgid   "invalid opmode value (zero)"
 msgstr  "modo de operação inválido (zero)"
 
@@ -1946,20 +2015,20 @@ msgid   "servo number out of bounds: %u"
 msgstr  "número de servo fora dos limites: %u"
 
 #: /home/jb/workspace/dune/trunk/src/Actuators/SCRT/Task.cpp:368
-#: /home/jb/workspace/dune/trunk/src/Simulators/Leaks/Task.cpp:125
-#: /home/jb/workspace/dune/trunk/src/Simulators/Leaks/Task.cpp:140
-#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:572
+#: /home/jb/workspace/dune/trunk/src/Simulators/Leaks/Task.cpp:132
+#: /home/jb/workspace/dune/trunk/src/Simulators/Leaks/Task.cpp:147
+#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:580
 msgid   "leak detected"
 msgstr  "fuga detetada"
 
 #: /home/jb/workspace/dune/trunk/src/Actuators/SCRT/Task.cpp:375
-#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:579
+#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:587
 msgid   "no leak"
 msgstr  "sem fugas"
 
 #: /home/jb/workspace/dune/trunk/src/Actuators/SCRT/Task.cpp:488
 #: /home/jb/workspace/dune/trunk/src/Actuators/SCRTv4/Task.cpp:277
-#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:483
+#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:481
 #, c-format
 msgid   "device reported: %s"
 msgstr  "dispositivo reportado: %s"
@@ -1972,35 +2041,35 @@ msgstr  "valor inválido para 'Motor Id'"
 msgid   "invalid value for 'Thruster Id'"
 msgstr  "valor inválido para 'Thruster Id'"
 
-#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:152
+#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:153
 msgid   "LED - Patterns"
 msgstr  "LED - Padrões"
 
-#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:157
+#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:158
 msgid   "List of LED patterns"
 msgstr  "Lista de padrões de LEDs"
 
-#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:159
+#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:160
 msgid   "LED - Patterns Pulse Width"
 msgstr  "LED - Largura de Pulso dos Padrões"
 
-#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:165
+#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:166
 msgid   "Pulse width for LED patterns"
 msgstr  "Largura do pulso dos padrões de LEDs"
 
-#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:167
+#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:168
 msgid   "LED - External Driver"
 msgstr  "Controlador de LEDs"
 
-#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:171
+#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:172
 msgid   "Enable external LED driver"
 msgstr  "falha ao configurar controlador externo de LEDs"
 
-#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:173
+#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:174
 msgid   "LED - External Trigger"
 msgstr  "LED - Gatilho Externo"
 
-#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:177
+#: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:178
 msgid   "Enable external LED trigger"
 msgstr  "falha ao configurar controlador externo de LEDs"
 
@@ -2053,24 +2122,24 @@ msgstr  "temperatura da ponte"
 msgid   "motor temperature"
 msgstr  "temperatura do motor"
 
-#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:243
+#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:236
 msgid   "Motor control mode must be one of 'none', 'voltage', 'current', 'rpm'"
 msgstr  "Controlo de motor tem de ser feito através de 'none', 'voltage', 'current', 'rpm'"
 
-#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:317
+#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:315
 #, c-format
 msgid   "device error: %s"
 msgstr  "erro do dispositivo: %s"
 
-#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:323
+#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:321
 msgid   "power is not good"
 msgstr  "fonte de energia não está sã"
 
-#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:327
+#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:325
 msgid   "device init error, requesting reset"
 msgstr  "erro ao iniciar dispositivo, pedido reset"
 
-#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:337
+#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:335
 msgid   "CMD_ACTUATE Data size doesn't match!"
 msgstr  "CMD_ACTUATE Incompatibilidade tamanho Data"
 
@@ -2175,6 +2244,35 @@ msgstr  "Permitir Relatórios"
 msgid   "got abort request"
 msgstr  "recebido pedido abort"
 
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:136
+msgid   "GSM/GPRS username"
+msgstr  "Nome de Utilizador GSM/GPRS"
+
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:142
+msgid   "GSM/GPRS password"
+msgstr  "Password GSM/GPRS"
+
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:148
+msgid   "GSM/GPRS Access Point Name (APN)"
+msgstr  "Nome do Ponto de Acesso (APN) GSM/GPRS"
+
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:154
+msgid   "GSM/GPRS pin."
+msgstr  "Pin GSM/GPRS."
+
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:270
+msgid   "failed to execute connect command"
+msgstr  "falha ao executar comando de conexão"
+
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:278
+msgid   "failed to execute disconnect command"
+msgstr  "falha ao executar comando de desconexão"
+
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:356
+#, c-format
+msgid   "connected to the Internet with public address '%s'"
+msgstr  "ligado à Internet com o endereço público '%s'"
+
 #: /home/jb/workspace/dune/trunk/src/Transports/SerialOverTCP/Task.cpp:158
 msgid   "accepting connection request"
 msgstr  "a aceitar pedido de ligação"
@@ -2204,8 +2302,8 @@ msgstr  "descartada SMS expirada para o destinatário '%s'"
 msgid   "failed to poll status: %s"
 msgstr  "falha ao verificar estado: %s"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/LoggingDigest/Task.cpp:189
-#: /home/jb/workspace/dune/trunk/src/Transports/Logging/Task.cpp:404
+#: /home/jb/workspace/dune/trunk/src/Transports/LoggingDigest/Task.cpp:190
+#: /home/jb/workspace/dune/trunk/src/Transports/Logging/Task.cpp:411
 #, c-format
 msgid   "failed to start log, check available storage: %s"
 msgstr  "falha ao começar registo, verifique espaço disponível: %s'"
@@ -2229,17 +2327,17 @@ msgstr  "tamanho de mensagem SBD inválido %u"
 msgid   "transmission failed: %s"
 msgstr  "transmissão falhada: %s"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Logging/Task.cpp:188
+#: /home/jb/workspace/dune/trunk/src/Transports/Logging/Task.cpp:187
 #, c-format
 msgid   "failed to remove cache snapshot: %s"
 msgstr  "falhou a remover o snapshots da cache: %s"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Logging/Task.cpp:310
+#: /home/jb/workspace/dune/trunk/src/Transports/Logging/Task.cpp:317
 #, c-format
 msgid   "log stopped '%s'"
 msgstr  "registo parado '%s'"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Logging/Task.cpp:355
+#: /home/jb/workspace/dune/trunk/src/Transports/Logging/Task.cpp:362
 #, c-format
 msgid   "log started '%s'"
 msgstr  "registo iniciado '%s'"
@@ -2363,41 +2461,41 @@ msgstr  "Nome do alvo é %s, com ID %d"
 msgid   "received euler angles"
 msgstr  "a receber ângulos de euler"
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:423
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:454
 msgid   "Ardupilot interface initialized"
 msgstr  "Interface Ardupilot inicializada"
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:428
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:459
 msgid   "Connection failed, retrying..."
 msgstr  "Ligação falhou, a tentar novamente..."
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:544
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:575
 msgid   "ArduPilot is in Manual mode, saving control loops."
 msgstr  "ArduPilot em modo manual, a gravar malhas de controlo."
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:704
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:251
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:735
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:253
 msgid   "speed control is NOT active"
 msgstr  "controlo de velocidade NÃO está ativo"
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:733
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:764
 msgid   "ArduPilot is in Manual mode, saving desired path."
 msgstr  "ArduPilot em modo manual, a salvar caminho desejado."
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:739
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:370
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:770
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:372
 msgid   "path control is NOT active"
 msgstr  "controlo de caminho NÃO está ativo"
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:746
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:778
 msgid   "ArduPilot in Auto mode but still in ground, performing takeoff first."
 msgstr  "ArduPilot em modo automático mas em Terra, a fazer takeoff primeiro"
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1170
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1400
 msgid   "Connection lost, retrying..."
 msgstr  "Ligação perdida, a tentar novamente..."
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1593
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1823
 msgid   "Controlling an unknown vehicle type."
 msgstr  "A controlar um tipo de veículo desconhecido."
 
@@ -2446,9 +2544,10 @@ msgstr  "a desativar"
 msgid   "starting lost comms plan"
 msgstr  "iniciar plano perda comunicações: "
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/AUV/Assist/Task.cpp:243
-msgid   "failed to start dislodge maneuver"
-msgstr  "falhou o arranque da manobra de libertação"
+#: /home/jb/workspace/dune/trunk/src/Supervisors/AUV/Assist/Task.cpp:248
+#, c-format
+msgid   "failed to start %s plan"
+msgstr  "falha ao arrancar plano %s"
 
 #: /home/jb/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:46
 msgid   "SERVICE"
@@ -2527,8 +2626,8 @@ msgid   " maneuver started"
 msgstr  " manobra começada"
 
 #: /home/jb/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:596
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:637
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:905
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:611
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1006
 msgid   "OK"
 msgstr  "OK"
 
@@ -2554,7 +2653,7 @@ msgstr  "falha lançada no servo #%d"
 msgid   "servo #%d is no longer in fault"
 msgstr  "servo #%d voltou ao estado normal"
 
-#: /home/jb/workspace/dune/trunk/src/Simulators/UAV/Task.cpp:417
+#: /home/jb/workspace/dune/trunk/src/Simulators/UAV/Task.cpp:424
 #, c-format
 msgid   "UAV simulation type: %s"
 msgstr  "Tipo de simulação UAV: %s"
@@ -2688,10 +2787,18 @@ msgstr  "velocidade pedida é acima da máxima velocidade permitida"
 msgid   "time difference between %d and %d is less than or equal to zero"
 msgstr  "diferença temporal entre %d e %d é menor ou igual a zero"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/VehicleFormation/Coordinator/Task.cpp:747
+#: /home/jb/workspace/dune/trunk/src/Maneuver/VehicleFormation/Coordinator/Task.cpp:1076
 #, c-format
 msgid   "Plan specification request failed with uncaught exception: %s"
 msgstr  "pedido de especificação de plano falhou com excepção não capturada: %s"
+
+#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Task.cpp:344
+msgid   "unsupported maneuver"
+msgstr  "manobra não suportada"
+
+#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Task.cpp:353
+msgid   "wrong maneuver type"
+msgstr  "tipo de manobra errado"
 
 #: /home/jb/workspace/dune/trunk/src/Maneuver/FollowSystem/Task.cpp:301
 msgid   "timeout to receive new remote info was exceeded."
@@ -2703,7 +2810,7 @@ msgid   "forcing minimum of %.1f"
 msgstr  "a forçar mínimo de %.1f"
 
 #: /home/jb/workspace/dune/trunk/src/Power/MCBv2/Task.cpp:584
-#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:532
+#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:540
 #: /home/jb/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:455
 msgid   "device reported"
 msgstr  "o dispositivo reportou"
@@ -2712,15 +2819,15 @@ msgstr  "o dispositivo reportou"
 msgid   "updating firmware"
 msgstr  "a atualizar firmware"
 
-#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:388
+#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:396
 msgid   "failed to update EEPROM"
 msgstr  "erro ao atualizar a EEPROM"
 
-#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:457
+#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:465
 msgid   "power down sequence aborted"
 msgstr  "sequencia de desligar interrompida"
 
-#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:562
+#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:570
 msgid   "air"
 msgstr  "ar"
 
@@ -2738,16 +2845,16 @@ msgstr  "modo de strobe configurado para: %s"
 msgid   "Camera"
 msgstr  "Câmara"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Generator/Task.cpp:207
+#: /home/jb/workspace/dune/trunk/src/Plan/Generator/Task.cpp:213
 #, c-format
 msgid   "Unable to generate plan using template %s"
 msgstr  "Incapaz de gerar plano usando modelo %s"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Generator/Task.cpp:229
+#: /home/jb/workspace/dune/trunk/src/Plan/Generator/Task.cpp:235
 msgid   "Plan generated automatically"
 msgstr  "Plano gerado automaticamente"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Generator/Task.cpp:362
+#: /home/jb/workspace/dune/trunk/src/Plan/Generator/Task.cpp:391
 #, c-format
 msgid   "generating plan from '%s' template..."
 msgstr  "a gerar plano a partir do modelo '%s'..."
@@ -2780,60 +2887,60 @@ msgstr  "estado da base de dados"
 msgid   "database initialization"
 msgstr  "inicialização da base de dados"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:145
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:139
 #, c-format
 msgid   "database file: '%s'"
 msgstr  "ficheiro de base de dados: '%s'"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:175
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:169
 msgid   "initialization complete"
 msgstr  "inicialização completa"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:229
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:223
 #, c-format
 msgid   "storing plan '%s' issued through a PlanControl request"
 msgstr  "a guardar plano '%s' pedido através do PlanControl"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:259
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:253
 msgid   "unexpected message"
 msgstr  "mensagem não esperada"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:305
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:296
 msgid   "unsupported operation"
 msgstr  "operação não suportada"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:337
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:325
 msgid   "database is corrupt"
 msgstr  "base de dados corrompida"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:345
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:421
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:456
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:491
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:727
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:333
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:406
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:441
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:473
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:771
 msgid   "undefined plan id"
 msgstr  "plan ID indefinido"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:353
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:341
 msgid   "no plan specification given"
 msgstr  "especificação de plano não recebida"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:359
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:347
 msgid   "plan id mismatch"
 msgstr  "incompatibilidade plan id"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:413
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:398
 msgid   "OK (updated)"
 msgstr  "OK (atualizado)"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:413
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:398
 msgid   "OK (new entry)"
 msgstr  "OK (nova entrada)"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:446
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:467
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:501
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:737
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:431
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:452
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:483
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:781
 msgid   "undefined plan"
 msgstr  "plano indefinido"
 
@@ -2869,188 +2976,208 @@ msgstr  "INICIALIZAÇÃO"
 msgid   "EXECUTING"
 msgstr  "EXECUÇÃO"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:190
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:209
 msgid   "restarting to relaunch plan parser"
 msgstr  "a reiniciar para relançar o analisador de planos"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:289
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:308
 #, c-format
 msgid   "failed to activate %s: %s"
 msgstr  "falha ao ativar %s: %s"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:428
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:472
 msgid   "vehicle ready"
 msgstr  "veículo pronto"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:462
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:506
 msgid   "plan completed"
 msgstr  "plano completado"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:483
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:527
 msgid   "vehicle errors: "
 msgstr  "erros veículo: "
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:516
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:562
 msgid   "vehicle in CALIBRATION mode"
 msgstr  "veículo em modo de calibração"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:529
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:575
 msgid   "vehicle in EXTERNAL mode"
 msgstr  "veículo em modo EXTERNO"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:544
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:611
 #, c-format
 msgid   "request -- %s (%s)"
 msgstr  "pedido -- %s (%s)"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:550
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:617
 msgid   "engine not ready: entity state not normal"
 msgstr  "motor não está pronto: estado de entidade não normal"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:567
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:637
 msgid   "plan control operation not supported"
 msgstr  "operação de controlo de plano não suportada"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:583
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:653
 msgid   "cannot load plan now"
 msgstr  "incapaz de carregador plano agora"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:615
-msgid   "plan load failed: undefined maneuver or plan"
-msgstr  "carregamento de plano falhado: manobra ou plano não definidos"
-
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:628
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:661
 msgid   "plan load failed: "
 msgstr  "plano falhou ao carregar: "
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:636
-msgid   "plan validation failed: "
-msgstr  "a validaçao do plano falhou: "
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:670
+msgid   "plan parse failed: "
+msgstr  "falha ao processar plano: "
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:643
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:645
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:680
 msgid   "plan loaded"
 msgstr  "plano carregado"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:656
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:691
 msgid   "no plan is running"
 msgstr  "nenhum plano a correr"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:680
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:715
 msgid   "plan stopped"
 msgstr  "plano parado"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:693
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:728
 msgid   "no plan is running, request ignored"
 msgstr  "nenhum plano a correr, pedido ignorado"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:770
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:796
+#, c-format
+msgid   "failed loading from DB: %s"
+msgstr  "falha ao carregar da base de dados: %s"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:870
 msgid   "plan initializing: "
 msgstr  "plano a iniciar: "
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:819
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:920
 msgid   "cannot initialize plan in BLOCKED state"
 msgstr  "incapaz de iniciar plano em modo BLOQUEADO"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:850
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:951
 msgid   ": invalid maneuver ID"
 msgstr  ": maneuver ID inválido"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:857
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:958
 msgid   ": executing maneuver"
 msgstr  ": a executar manobra"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:876
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:977
 #, c-format
 msgid   "reply -- %s (%s) -- %s"
 msgstr  "resposta -- %s (%s) -- %s"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:932
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1033
 #, c-format
 msgid   "now in %s state"
 msgstr  "agora no estado %s"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1025
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1126
 msgid   "vehicle state timeout"
 msgstr  "excedido tempo limite do estado do veículo"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1040
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1148
 msgid   "vehicle reply timeout"
 msgstr  "excedido tempo limite da resposta do veículo"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Plan.cpp:85
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1157
+msgid   "cleared all requests"
+msgstr  "todos os pedidos limpos"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Plan.cpp:63
+msgid   "plan: speed model invalid"
+msgstr  "plano: modelo de velocidades inválido"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Plan.cpp:74
+msgid   "plan: power model invalid"
+msgstr  "plano: modelo de consumos inválido"
+
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Plan.cpp:381
 msgid   ": no maneuvers"
 msgstr  ": sem manobras"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Plan.cpp:103
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Plan.cpp:396
 msgid   ": actual maneuver not specified"
 msgstr  ": manobra atual não especificada"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Plan.cpp:111
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Plan.cpp:401
 msgid   ": maneuver is not supported"
 msgstr  ": manobra não suportada"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Plan.cpp:141
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Plan.cpp:429
 msgid   ": maneuver has no incoming transition and it's not the initial maneuver"
 msgstr  ": a manobra não sucede a nenhuma transição e não é a manobra inicial"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Plan.cpp:154
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Plan.cpp:440
 msgid   ": invalid start maneuver"
 msgstr  ": manobra de início inválida"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/ActionSchedule.cpp:267
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/ActionSchedule.cpp:247
 #, c-format
 msgid   "schedule: %s active on time, +%.1f seconds"
 msgstr  "ações: %s ativo atempadamente, +%.1f segundos"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/ActionSchedule.cpp:270
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/ActionSchedule.cpp:250
 #, c-format
 msgid   "schedule: %s activation missed deadline, %.1f seconds"
 msgstr  "ações: %s ativação atrasada, %.1f segundos"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/ActionSchedule.cpp:353
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/ActionSchedule.cpp:471
 #, c-format
 msgid   "schedule: entity label %s not found"
 msgstr  "ações: etiqueta de entidade %s não encontrada"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/ActionSchedule.cpp:621
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/ActionSchedule.cpp:739
 #, c-format
 msgid   "scheduled for: %.1f"
 msgstr  "definido para: %.1f"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/ActionSchedule.cpp:625
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/ActionSchedule.cpp:743
 #, c-format
 msgid   "END %s ---"
 msgstr  "FIM %s ---"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:372
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:399
 msgid   "failed to activate required entities"
 msgstr  "falha ao ativar as entidades necessárias"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:400
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:401
+msgid   "failed to configure camera"
+msgstr  "falha ao configurar câmara"
+
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:403
+msgid   "failed to start video streamming"
+msgstr  "falha ao iniciar \"stream\" vídeo"
+
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:405
+msgid   "activation timed out for unknown reason"
+msgstr  "ativação excedeu tempo limite por razão desconhecida"
+
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:447
 msgid   "failed to deactivate required entities"
 msgstr  "falha ao desativar as entidades necessárias"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:423
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:472
 msgid   "stopped video stream"
 msgstr  "\"stream\" vídeo parado"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:489
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:538
 msgid   "failed to start video stream"
 msgstr  "falha ao iniciar \"stream\" vídeo"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:506
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:558
 msgid   "started video stream"
 msgstr  "\"stream\" vídeo iniciado"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:585
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:626
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:640
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:681
 msgid   "failed to set property"
 msgstr  "falha ao configurar propriedade"
-
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:743
-msgid   "successfully configured camera"
-msgstr  "câmara configurada com sucesso"
 
 #: /home/jb/workspace/dune/trunk/src/Vision/DFK51BG02H/Task.cpp:454
 msgid   "keep alive failed"
@@ -3169,70 +3296,70 @@ msgstr  "placa de hardware - SN %0u FN %u rev %u config %u %u-%02u-%02u"
 msgid   "camera %d -- id: %u HFOV: [%0.2f, %0.2f]"
 msgstr  "câmara %d -- id: %u HFOV: [%0.2f, %0.2f]"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:142
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:144
 #, c-format
 msgid   "creating a TCP connection | %s %u"
 msgstr  "a criar uma ligação TCP | %s %u"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:144
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:146
 msgid   "Piccolo interface initialized"
 msgstr  "interface Piccolo inicializada"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:166
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:168
 #, c-format
 msgid   "%s - deactivating"
 msgstr  "%s - a desativar"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:168
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:170
 #, c-format
 msgid   "%s - activating"
 msgstr  "%s - a ativar"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:181
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:183
 msgid   "tracker is NOT enabled"
 msgstr  "tracker NÃO está habilitado"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:188
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:190
 msgid   "speed control"
 msgstr  "controlo de velocidade"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:189
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:191
 msgid   "altitude control"
 msgstr  "controlo de altitude"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:190
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:192
 msgid   "bank control"
 msgstr  "Controlo de Pranchamento"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:191
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:193
 msgid   "heading control"
 msgstr  "controlo de orientação"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:192
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:194
 msgid   "vertical rate control"
 msgstr  "controlo de taxa vertical"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:193
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:195
 msgid   "path control"
 msgstr  "controlo de caminho"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:272
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:274
 msgid   "altitude control is NOT active"
 msgstr  "controlo de altitude NÃO está ativo"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:278
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:280
 msgid   "Not a valid height reference"
 msgstr  "Referência de altitude WGS não válida"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:299
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:301
 msgid   "bank control is NOT active"
 msgstr  "controlo de bank NÃO está ativo"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:320
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:322
 msgid   "heading control is NOT active"
 msgstr  "controlo de orientação NÃO está ativo"
 
-#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:346
+#: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:348
 msgid   "vertical rate control is NOT active"
 msgstr  "controlo de taxa vertical NÃO está ativo"
 
@@ -3393,352 +3520,376 @@ msgid   "Formation Control"
 msgstr  "Controlo de Formação"
 
 #: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:41
+msgid   "Formation Coordinator"
+msgstr  "Coordenador de Formação"
+
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:42
+msgid   "Formation Link"
+msgstr  "Link de Formação"
+
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:43
 msgid   "Frame Grabber"
 msgstr  "Capturador de Tramas"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:42
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:44
 msgid   "Fuel"
 msgstr  "Energia"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:43
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:45
 msgid   "GPS"
 msgstr  "GPS"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:44
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:46
 msgid   "GSM"
 msgstr  "GSM"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:45
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:47
 msgid   "Gimbal"
 msgstr  "Gimbal"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:46
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:48
 msgid   "HTTP Server"
 msgstr  "Servidor HTTP"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:47
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:49
 msgid   "Heave Motor"
 msgstr  "Motor de Elevação"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:48
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:50
 msgid   "Height Control"
 msgstr  "Controlo de Altitude"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:49
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:51
 msgid   "Horizontal Plane Control"
 msgstr  "Controlo no Plano Horizontal"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:50
-msgid   "IMU"
-msgstr  "IMU"
-
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:51
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:53
 msgid   "IMU Power Supply"
 msgstr  "Fonte de Energia do IMU"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:52
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:54
 msgid   "INOV TCP"
 msgstr  "INOV TCP"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:53
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:55
 msgid   "INOV Target"
 msgstr  "INOV Target"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:54
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:56
 msgid   "Idle Maneuver"
 msgstr  "Manobra de Espera"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:55
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:57
 msgid   "Iridium Modem"
 msgstr  "Modem Iridium"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:56
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:58
 msgid   "Iridium Transport"
 msgstr  "Transporte Iridium"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:57
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:59
 msgid   "LBL"
 msgstr  "LBL"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:58
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:60
 msgid   "LBL Estimator"
 msgstr  "Estimador LBL"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:59
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:61
 msgid   "LCD"
 msgstr  "LCD"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:60
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:62
 msgid   "LED Driver"
 msgstr  "Controlador de LEDs"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:61
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:63
 msgid   "LEDs"
 msgstr  "LEDs"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:62
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:64
 msgid   "Leak Simulator"
 msgstr  "Simulador de Fugas"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:63
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:65
 msgid   "Log Book"
 msgstr  "Diário de Bordo"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:64
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:66
 msgid   "Logger"
 msgstr  "Registador"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:65
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:67
 msgid   "Lost Comms"
 msgstr  "Perda de Comunicação"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:66
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:68
 msgid   "Lost Comms Monitor"
 msgstr  "Monitor de Perda de Comunicação"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:67
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:69
 msgid   "MCD4R"
 msgstr  "MCD4R"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:68
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:70
 msgid   "Mainboard"
 msgstr  "Placa Principal"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:69
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:71
 msgid   "Medium"
 msgstr  "Meio"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:70
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:72
 msgid   "Message Fragments"
 msgstr  "Fragmentos de Mensagens"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:71
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:73
+msgid   "Mobile Internet"
+msgstr  "Internet Móvel"
+
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:74
 msgid   "Motor"
 msgstr  "Motor"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:72
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:75
 msgid   "Motor Controller"
 msgstr  "Controlador de Motor"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:73
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:76
 msgid   "Multibeam"
 msgstr  "Sonar Multifeixe"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:74
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:77
 msgid   "Multicopter simple simulation"
 msgstr  "Simulação multicopter simples"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:75
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:78
 msgid   "Multiplexer Maneuver"
 msgstr  "Manobra Multiplexer"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:76
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:79
 msgid   "Navigation"
 msgstr  "Navegação"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:77
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:80
 msgid   "Noptilus"
 msgstr  "Noptilus"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:78
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:81
 msgid   "Operational Limits"
 msgstr  "Limites de Operação"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:79
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:82
 msgid   "PTUD48"
 msgstr  "PTUD48"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:80
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:83
 msgid   "Panel"
 msgstr  "Painel"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:81
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:84
 msgid   "Panel Buttons"
 msgstr  "Botões do Painel"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:82
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:85
 msgid   "Path Control"
 msgstr  "Controlo de Caminho"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:83
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:86
 msgid   "Path Control Leader"
 msgstr  "Líder de Controlo de Caminho"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:84
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:87
 msgid   "Pencil Beam"
 msgstr  "Feixe de Distância"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:85
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:88
 msgid   "Photo Trigger"
 msgstr  "Gatilho da Câmara"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:86
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:89
 msgid   "Piccolo Communications"
 msgstr  "Comunicações Piccolo"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:87
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:90
 msgid   "Plan Database"
 msgstr  "Base de Dados de Planos"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:88
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:91
 msgid   "Plan Engine"
 msgstr  "Motor de Planos"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:89
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:92
 msgid   "Plan Generator"
 msgstr  "Gerador de Planos"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:90
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:93
 msgid   "Port Bow Motor"
 msgstr  "Motor de Proa a Bombordo"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:91
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:94
 msgid   "Port Stern Motor"
 msgstr  "Motor de Popa a Bombordo"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:92
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:95
 msgid   "Power Source"
 msgstr  "Fornecedor de Energia"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:93
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:96
 msgid   "Power Supervisor"
 msgstr  "Supervisor de Energia"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:94
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:97
 msgid   "Power Supply"
 msgstr  "Fonte de Energia"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:95
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:98
 msgid   "Ranger"
 msgstr  "Medidor de Distâncias"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:96
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:99
 msgid   "RcViaArdupilot"
 msgstr  "Piloto Automático"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:97
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:100
 msgid   "Remote Control"
 msgstr  "Controlo Remoto"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:98
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:101
 msgid   "Remote Operation"
 msgstr  "Operação Remota"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:99
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:102
 msgid   "Service Announcer"
 msgstr  "Serviço de Anúncio"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:100
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:103
 msgid   "Service Discovery"
 msgstr  "Descoberta de Serviços"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:101
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:104
 msgid   "Servo Controller"
 msgstr  "Controlador de Servos"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:102
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:105
 msgid   "Servo Monitor"
 msgstr  "Monitor de Servos"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:103
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:106
 msgid   "Servos"
 msgstr  "Servos"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:104
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:107
 msgid   "Sidescan"
 msgstr  "Sonar de Varrimento Lateral"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:105
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:108
 msgid   "Simulation Engine"
 msgstr  "Motor de Simulação"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:106
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:109
 msgid   "Sitl Layer"
 msgstr  "Camada SITL (Software-in-the-Loop)"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:107
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:110
 msgid   "Slave CPU"
 msgstr  "CPU Escravo"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:108
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:111
 msgid   "Sound Speed Sensor"
 msgstr  "Sensor de Velocidade do Som"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:109
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:112
 msgid   "Speed Control"
 msgstr  "Controlo de Velocidade"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:110
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:113
 msgid   "Starboard Bow Motor"
 msgstr  "Motor de Proa a Estibordo"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:111
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:114
 msgid   "Starboard Stern Motor"
 msgstr  "Motor de Popa a Estibordo"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:112
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:115
 msgid   "TCP Server"
 msgstr  "Servidor TCP"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:113
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:116
 msgid   "TCP to Camera CPU"
 msgstr  "TCP para Computador da Câmara"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:114
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:117
 msgid   "TCP to Master"
 msgstr  "TCP para o Mestre"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:115
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:118
 msgid   "TCP to Slave CPU"
 msgstr  "TCP para CPU Escravo"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:116
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:119
 msgid   "TREX"
 msgstr  "TREX"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:117
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:120
 msgid   "Teleoperation Maneuver"
 msgstr  "Manobra de Teleoperação"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:118
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:121
 msgid   "Text Message Parser"
 msgstr  "Processador de Mensagens de Texto"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:119
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:122
 msgid   "Thermal Zone"
 msgstr  "Zona Térmica"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:120
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:123
 msgid   "UAN"
 msgstr  "UAN"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:121
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:124
 msgid   "UAV Simulator"
 msgstr  "Simulador de AUV"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:122
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:125
 msgid   "UDP"
 msgstr  "UDP"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:123
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:126
+msgid   "UDP to Auxiliary"
+msgstr  "UDP para Auxiliar"
+
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:127
 msgid   "UDP to TREX"
 msgstr  "UDP para TREX"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:124
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:128
 msgid   "USBL"
 msgstr  "USBL"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:125
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:129
 msgid   "Underwater Acoustics Simulator"
 msgstr  "Simulador de Comunicação Acústica Subaquática"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:126
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:130
 msgid   "Vehicle Supervisor"
 msgstr  "Supervisor de Veículo"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:127
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:131
 msgid   "Visualizer"
 msgstr  "Visualizador"
+
+#~ msgid        "failed to start dislodge maneuver"
+#~ msgstr       "falhou o arranque da manobra de libertação"
+
+#~ msgid        "plan load failed: undefined maneuver or plan"
+#~ msgstr       "carregamento de plano falhado: manobra ou plano não definidos"
+
+#~ msgid        "plan validation failed: "
+#~ msgstr       "a validaçao do plano falhou: "
+
+#~ msgid        "successfully configured camera"
+#~ msgstr       "câmara configurada com sucesso"
 
 #~ msgid        "AIM104MultiIO"
 #~ msgstr       "AIM104MultiIO"
@@ -3802,9 +3953,6 @@ msgstr  "Visualizador"
 
 #~ msgid        "Station Keeping Maneuver"
 #~ msgstr       "Manobra de Posição Estacionária"
-
-#~ msgid        "Formation Plan"
-#~ msgstr       "Plano em Formação"
 
 #~ msgid        "Flight plan to be executed by the vehicles formation"
 #~ msgstr       "Plano de Vôo a ser executado pelos veículos em formação"
