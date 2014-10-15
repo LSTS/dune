@@ -550,6 +550,8 @@ namespace Sensors
         if (!Poll::poll(*m_sock_dat, 1.0))
           return false;
 
+        consumeMessages();
+
         size_t rv = m_sock_dat->read(&m_bfr[0], m_bfr.size());
         for (size_t i = 0; i < rv; ++i)
         {
