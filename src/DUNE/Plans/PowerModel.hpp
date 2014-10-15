@@ -162,7 +162,7 @@ namespace DUNE
       inline float
       toWh(float power, float duration) const
       {
-        return power * duration / 3600.0;
+        return (float)(power * duration / 3600.0);
       }
 
       //! Conversion values for power (Watt)
