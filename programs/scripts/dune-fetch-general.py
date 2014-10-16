@@ -72,7 +72,11 @@ def write_values(option_list, values_list, copy, equal_pos):
 
 def editIni(vname, option_list, values_list):
     # Open ini file
-    fo = open(sys.argv[1] + vname + ".ini", "r")
+    try:
+        fo = open(sys.argv[1] + vname + ".ini", "r")
+    except:
+        print("File " + sys.argv[1] + vname + ".ini not found.")
+        return
 
     copy = open(sys.argv[1] + vname + "_copy.ini", "w")
 
