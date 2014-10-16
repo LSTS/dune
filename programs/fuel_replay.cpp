@@ -165,6 +165,7 @@ readArgs(char* file, Arguments& args)
 
   cfg.get(sec, "Acceptable Temperature", "15.0", args.filter_args.acceptable_temperature);
   cfg.get(sec, "Minimum Update Confidence", "95.0", args.filter_args.min_update_conf);
+  cfg.get(sec, "Update Estimate Anytime", "true", args.filter_args.update_anytime);
 
   cfg.get(sec, "OP Mode Labels", "", args.op_labels);
   cfg.get(sec, "OP Mode Values", "", args.op_values);
