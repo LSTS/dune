@@ -244,7 +244,7 @@ namespace Sensors
 
       template <typename T>
       void
-      get(T& value, unsigned index)
+      get(T& value, unsigned index) const
       {
         ByteCopy::fromLE(value, getMessageData() + index);
       }
