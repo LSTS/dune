@@ -61,9 +61,9 @@ namespace DUNE
     BasicEntity::consume(const IMC::QueryEntityInfo* msg)
     {
       if (msg->getDestinationEntity() == getId())
-        dispatchReply(*msg, m_ent_info);
+        dispatchReply(*msg, m_ent_info, DF_LOOP_BACK);
       else if (msg->getDestinationEntity() == DUNE_IMC_CONST_UNK_EID)
-        dispatch(m_ent_info);
+        dispatch(m_ent_info, DF_LOOP_BACK);
     }
 
     void
