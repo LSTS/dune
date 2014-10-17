@@ -552,6 +552,9 @@ namespace Sensors
 
         consumeMessages();
 
+        if (m_sock_dat == NULL)
+          return false;
+
         size_t rv = m_sock_dat->read(&m_bfr[0], m_bfr.size());
         for (size_t i = 0; i < rv; ++i)
         {
@@ -611,7 +614,8 @@ namespace Sensors
 
             try
             {
-              m_time_diff = m_cmd->estimateTimeDifference();
+              if (m_cmd != NULL)
+                m_time_diff = m_cmd->estimateTimeDifference();
             }
             catch (...)
             { }
