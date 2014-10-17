@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: a01668b6b58c5a2c92f4dfb2ebf02024                            *
+// IMC XML MD5: 5b5c5af1e3ff987b5a799ccc51cc51ea                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -15531,6 +15531,7 @@ namespace DUNE
       change_sid = 0;
       change_sname.clear();
       md5.clear();
+      complementary_information.clear();
     }
 
     bool
@@ -15544,6 +15545,7 @@ namespace DUNE
       if (change_sid != other__.change_sid) return false;
       if (change_sname != other__.change_sname) return false;
       if (md5 != other__.md5) return false;
+      if (complementary_information != other__.complementary_information) return false;
       return true;
     }
 
@@ -15558,6 +15560,7 @@ namespace DUNE
       ptr__ += IMC::serialize(change_sid, ptr__);
       ptr__ += IMC::serialize(change_sname, ptr__);
       ptr__ += IMC::serialize(md5, ptr__);
+      ptr__ += IMC::serialize(complementary_information, ptr__);
       return ptr__;
     }
 
@@ -15572,6 +15575,7 @@ namespace DUNE
       bfr__ += IMC::deserialize(change_sid, bfr__, size__);
       bfr__ += IMC::deserialize(change_sname, bfr__, size__);
       bfr__ += IMC::deserialize(md5, bfr__, size__);
+      bfr__ += IMC::deserialize(complementary_information, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -15586,6 +15590,7 @@ namespace DUNE
       bfr__ += IMC::reverseDeserialize(change_sid, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(change_sname, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(md5, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(complementary_information, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -15599,6 +15604,7 @@ namespace DUNE
       IMC::toJSON(os__, "change_sid", change_sid, nindent__);
       IMC::toJSON(os__, "change_sname", change_sname, nindent__);
       IMC::toJSON(os__, "md5", md5, nindent__);
+      IMC::toJSON(os__, "complementary_information", complementary_information, nindent__);
     }
 
     PlanDBState::PlanDBState(void)
