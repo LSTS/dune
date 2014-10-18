@@ -156,7 +156,16 @@ namespace Simulators
       consume(const IMC::SimulatedState* msg)
       {
         if (!isActive())
+        {
+          requestActivation();
+          double lat, lon;
+          float hae;
+          Coordinates::toWGS84(*msg, lat, lon, hae);
+          m_origin.lat = lat;
+          m_origin.lon = lon;
+          m_origin.height = hae;
           return;
+        }
 
         if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
         {
