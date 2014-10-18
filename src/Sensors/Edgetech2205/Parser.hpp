@@ -69,6 +69,7 @@ namespace Sensors
             {
               m_state = ST_MARKER1;
               m_index = 0;
+              m_pkt.setTimeStamp(Clock::getSinceEpoch());
             }
             break;
 
