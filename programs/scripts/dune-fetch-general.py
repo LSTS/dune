@@ -193,7 +193,7 @@ for v in range(len(profile_cols)):
 # Get all values for these options
     if (v < len(profile_cols) - 1):
         values_list = getsubgrid(profile_cols[v], start_row,
-                                 profile_cols[v + 1] - 1, start_row + len(options),
+                                 profile_cols[v + 1], start_row + len(options),
                                  all_values);
     else:
         values_list = getsubgrid(profile_cols[v], start_row,
