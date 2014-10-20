@@ -61,6 +61,17 @@ namespace Power
       PKT_ID_SET_LED        = 3
     };
 
+    //! LED channel.
+    struct LED
+    {
+      //! LED name.
+      std::string name;
+      //! LED id.
+      unsigned id;
+      //! LED brightness.
+      IMC::LedBrightness brightness;
+    };
+
     //! Task arguments.
     struct Arguments
     {
@@ -68,8 +79,6 @@ namespace Power
       std::vector<std::string> led_names;
       //! Serial port device.
       std::string uart_dev;
-      //! ADC voltage reference.
-      double adc_ref;
       //! ADC Messages.
       std::string adc_messages[c_adcs_count];
       //! ADC entity labels.
@@ -84,6 +93,10 @@ namespace Power
 
     struct Task: public DUNE::Tasks::Task
     {
+      //! Map of LEDs by name.
+      std::map<std::string, LED*> m_led_by_name;
+      //! Map of LEDs by id.
+      std::map<unsigned, LED*> m_led_by_id;
       //! ADC messages.
       IMC::Message* m_adcs[c_adcs_count];
       //! Power channels.
@@ -112,13 +125,11 @@ namespace Power
         .defaultValue("")
         .description("Serial port device used to communicate with the sensor");
 
-#if 0
         param("LED - Names", m_args.led_names)
         .defaultValue("")
         .size(c_led_count)
-        .description("List of LED names");
-#endif
-        
+        .description("List of LED names"); 
+
         for (unsigned i = 0; i < c_adcs_count; ++i)
         {
           std::string option = String::str("ADC Channel %u - Message", i);
@@ -144,13 +155,28 @@ namespace Power
         }
         
         bind<IMC::QueryPowerChannelState>(this);
+        bind<IMC::QueryLedBrightness>(this);
         bind<IMC::PowerChannelControl>(this);
         bind<IMC::SetLedBrightness>(this);
+
+        std::memset(m_adcs, 0, sizeof(m_adcs));
       }
 
       ~Task(void)
       {
+        onResourceRelease();
+        clearLEDs();
+        clearADCs();
+      }
 
+      void
+      clearADCs()
+      {
+        for (unsigned i = 0; i < c_adcs_count; ++i)
+        {
+          if (m_adcs[i] != NULL)
+            Memory::clear(m_adcs[i]);
+        }
       }
 
       //! Update internal state with new parameter values.
@@ -185,6 +211,40 @@ namespace Power
             channel->state.state = IMC::PowerChannelState::PCS_OFF;
           m_channels.add(i, channel);
         }
+    
+        clearLEDs();
+        for (unsigned i = 0; i < m_args.led_names.size(); ++i)
+        {
+          LED* led = new LED;
+          led->id = i;
+          led->name = m_args.led_names[i];
+          led->brightness.name = led->name;
+          led->brightness.value = 0;
+          m_led_by_name[led->name] = led;
+          m_led_by_id[led->id] = led;
+        }
+      }
+
+      //! Reserve entities.
+      void
+      onEntityReservation(void)
+      {
+        for (unsigned i = 0; i < c_adcs_count; ++i)
+        {
+          unsigned eid = 0;
+
+          try
+          {
+            eid = resolveEntity(m_args.adc_elabels[i]);
+          }
+          catch (Entities::EntityDataBase::NonexistentLabel& e)
+          {
+            (void)e;
+            eid = reserveEntity(m_args.adc_elabels[i]);
+          }
+
+          m_adcs[i]->setSourceEntity(eid);
+        }
       }
 
       //! Acquire resources.
@@ -212,6 +272,12 @@ namespace Power
       void
       onResourceInitialization(void)
       {
+        turnOffLEDs();
+
+        std::map<unsigned, PowerChannel*>::const_iterator itr = m_channels.begin();
+        for ( ; itr != m_channels.end(); ++itr)
+          setPowerChannel(itr->second->id, itr->second->state.state);
+
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -221,11 +287,19 @@ namespace Power
       {
         if (m_ctl != NULL)
         {
+          turnOffLEDs();
           delete m_ctl;
           m_ctl = NULL;
         }
 
         Memory::clear(m_uart);
+      }
+
+      void
+      turnOffLEDs(void)
+      {
+        for (uint8_t i = 0; i < c_led_count; ++i)
+          setBrightness(i, 0);
       }
 
       void
@@ -250,7 +324,21 @@ namespace Power
       void
       consume(const IMC::SetLedBrightness* msg)
       {
-        (void)msg;
+        std::map<std::string, LED*>::iterator itr = m_led_by_name.find(msg->name);
+        if (itr == m_led_by_name.end())
+          return;
+
+        setBrightness(itr->second->id, msg->value);
+      }
+
+      void
+      consume(const IMC::QueryLedBrightness* msg)
+      {
+        std::map<std::string, LED*>::iterator itr = m_led_by_name.find(msg->name);
+        if (itr == m_led_by_name.end())
+          return;
+
+        dispatchReply(*msg, itr->second->brightness);
       }
 
       void
@@ -258,6 +346,17 @@ namespace Power
       {
         (void)msg;
         dispatchPowerChannelStates();
+      }
+
+      void
+      clearLEDs(void)
+      {
+        std::map<std::string, LED*>::iterator itr = m_led_by_name.begin();
+        for (; itr != m_led_by_name.end(); ++itr)
+          delete itr->second;
+        
+        m_led_by_name.clear();
+        m_led_by_id.clear();
       }
 
       bool
@@ -302,16 +401,13 @@ namespace Power
           return false;
         }
 
-        for (size_t i = 0; i < c_adcs_count; ++i)
+        for (unsigned i = 0; i < c_adcs_count; ++i)
         {
           uint16_t value = 0;
           frame.get(value, i * 2);
           if (m_adcs[i] != NULL)
           {
-            debug("%u: %u", i, value);
-            float tmp = m_args.adc_factors[i][0] * ((value / 4096.0) * m_args.adc_ref) + m_args.adc_factors[i][1];
-
-
+            float tmp = m_args.adc_factors[i][0] * (value / 4096.0) + m_args.adc_factors[i][1];
             m_adcs[i]->setValueFP(tmp);
             dispatch(m_adcs[i]);
           }
@@ -326,26 +422,13 @@ namespace Power
           unsigned id = itr->second->id;
           itr->second->state.state = (power_state & (1 << id)) ? IMC::PowerChannelState::PCS_ON : IMC::PowerChannelState::PCS_OFF;
         }
+
+        // LED states.
+        uint8_t led_states = 0;
+        frame.get(led_states, 24);
+        for (unsigned i = 0; i < c_led_count; ++i)
+          m_led_by_id[i]->brightness.value = (led_states & (1 << i)) != 0;
         
-#if 0
-        // MCU Voltage.
-        uint16_t tmp_u16 = 0;
-        frame.get(tmp_u16, 0);
-        IMC::Voltage v;
-        v.value = tmp_u16 / 1000.0;
-        m_mcu_ent->dispatch(v);
-
-        // Voltage.
-        frame.get(tmp_u16, 2);
-        m_voltage.value = tmp_u16 / 1000.0;
-        dispatch(m_voltage);
-
-        // Current.
-        frame.get(tmp_u16, 4);
-        m_current.value = tmp_u16 / 1000.0;
-        dispatch(m_current);
-#endif
-
         return true;
       }
 
@@ -357,10 +440,12 @@ namespace Power
         for (; itr != m_channels.end(); ++itr)
         {
           if (itr->second->state.name.substr(0, 3) != "N/C")
+          {
             dispatch(itr->second->state);
+          }
         }
       }
-      
+
       //! Main loop.
       void
       onMain(void)
