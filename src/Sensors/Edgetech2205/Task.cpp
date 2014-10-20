@@ -42,6 +42,44 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
+    //! Subsystem data written to each ping.
+    struct SubsystemData
+    {
+      //! Ping number.
+      uint32_t ping_number;
+      //! Seconds since Unix Epoch.
+      uint32_t time_epoch;
+      //! Milliseconds today.
+      uint32_t time_msec_today;
+      //! Brokendown time.
+      Time::BrokenDown time_bdt;
+      //! Navigation data validity.
+      uint16_t validity;
+      //! Latitude.
+      int32_t latitude;
+      //! Latitude in radian.
+      double latitude_rad;
+      //! Longitude.
+      int32_t longitude;
+      //! Longitude in radian;
+      double longitude_rad;
+      //! Course.
+      int16_t course;
+      //! Speed.
+      int16_t speed;
+      //! Heading.
+      uint16_t heading;
+      //! Roll.
+      int16_t roll;
+      //! Pitch.
+      int16_t pitch;
+      //! Altitude.
+      int32_t altitude;
+      //! Depth.
+      int32_t depth;
+    };
+
+    //! Task arguments.
     struct Arguments
     {
       //! IPv4 address.
@@ -96,6 +134,8 @@ namespace Sensors
       Counter<double> m_countdown;
       //! Power channel state.
       IMC::PowerChannelState m_pwr_state;
+      //! Subsystem specific data.
+      SubsystemData m_subsys_data[c_channel_count];
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -420,116 +460,119 @@ namespace Sensors
           m_cmd->setPing(subsys, 1);
       }
 
-      static void
-      convertPositionToJSF(const IMC::EstimatedState& estate, int32_t& lat, int32_t& lon)
-      {
-        double wgs84_lat = 0;
-        double wgs84_lon = 0;
-        Coordinates::toWGS84(estate, wgs84_lat, wgs84_lon);
-        lat = static_cast<int32_t>(wgs84_lat * 34377467.707849);
-        lon = static_cast<int32_t>(wgs84_lon * 34377467.707849);
-      }
-
-      static void
-      convertTimeToJSF(int64_t msec, uint32_t& sec, uint32_t& msec_today)
-      {
-        sec = msec / 1000;
-        BrokenDown bdt(sec);
-        msec_today = msec % 1000;
-        msec_today += ((bdt.hour * 3600) + (bdt.minutes * 60) + bdt.seconds) * 1000;
-      }
-
-      static void
-      convertTimeFromJSF(int64_t& msec, uint32_t sec, uint32_t msec_today)
-      {
-        BrokenDown bdt(sec);
-        uint32_t msec_aligned = ((bdt.hour * 3600) + (bdt.minutes * 60) + bdt.seconds) * 1000;
-        msec = sec;
-        msec *= 1000;
-        msec += msec_today - msec_aligned;
-      }
-
       void
       handleSonarData(Packet* pkt)
       {
-        // Adjust time stamp.
-        uint32_t sec_epoch = 0;
-        uint32_t msec_today = 0;
-        int64_t msec = 0;
-        pkt->get(sec_epoch, SDATA_IDX_TIME);
-        pkt->get(msec_today, SDATA_IDX_MILLISECOND_TODAY);
-        convertTimeFromJSF(msec, sec_epoch, msec_today);
-        msec -= m_time_diff;
-        convertTimeToJSF(msec, sec_epoch, msec_today);
-        pkt->set(sec_epoch, SDATA_IDX_TIME);
-        pkt->set(msec_today, SDATA_IDX_MILLISECOND_TODAY);
+        if (pkt->getSubsystemNumber() < SUBSYS_SSL || pkt->getSubsystemNumber() < SUBSYS_SSH)
+          return;
 
-        // CPU and MMEA date/time for backward compatibility.
-        Time::BrokenDown bdt(sec_epoch);
+        SubsystemData* data = m_subsys_data + (pkt->getSubsystemNumber() - SUBSYS_SSL);
+
+        uint32_t ping_number = 0;
+        pkt->get(ping_number, SDATA_IDX_PING_NUMBER);
+        if (ping_number != data->ping_number)
+        {
+          data->ping_number = ping_number;
+          updateSubsystemData(data, pkt);
+        }
+
+        writeSubsystemData(data, pkt);
+      }
+
+      void
+      writeSubsystemData(SubsystemData* data, Packet* pkt)
+      {
+        pkt->set(data->time_epoch, SDATA_IDX_TIME);
+        pkt->set(data->time_msec_today, SDATA_IDX_MILLISECOND_TODAY);
         pkt->set<int16_t>(3, SDATA_IDX_CPU_TIME_BASIS);
-        pkt->set<int16_t>(bdt.year, SDATA_IDX_CPU_YEAR);
-        pkt->set<int16_t>(bdt.day_year, SDATA_IDX_CPU_DAY);
-        pkt->set<int16_t>(bdt.hour, SDATA_IDX_CPU_HOUR);
-        pkt->set<int16_t>(bdt.hour, SDATA_IDX_NMEA_HOUR);
-        pkt->set<int16_t>(bdt.minutes, SDATA_IDX_CPU_MINUTES);
-        pkt->set<int16_t>(bdt.minutes, SDATA_IDX_NMEA_MINUTES);
-        pkt->set<int16_t>(bdt.seconds, SDATA_IDX_CPU_SECONDS);
-        pkt->set<int16_t>(bdt.seconds, SDATA_IDX_NMEA_SECONDS);
+        pkt->set<int16_t>(data->time_bdt.year, SDATA_IDX_CPU_YEAR);
+        pkt->set<int16_t>(data->time_bdt.day_year, SDATA_IDX_CPU_DAY);
+        pkt->set<int16_t>(data->time_bdt.hour, SDATA_IDX_CPU_HOUR);
+        pkt->set<int16_t>(data->time_bdt.hour, SDATA_IDX_NMEA_HOUR);
+        pkt->set<int16_t>(data->time_bdt.minutes, SDATA_IDX_CPU_MINUTES);
+        pkt->set<int16_t>(data->time_bdt.minutes, SDATA_IDX_NMEA_MINUTES);
+        pkt->set<int16_t>(data->time_bdt.seconds, SDATA_IDX_CPU_SECONDS);
+        pkt->set<int16_t>(data->time_bdt.seconds, SDATA_IDX_NMEA_SECONDS);
+        pkt->set<uint16_t>(2, SDATA_IDX_COORDINATE_UNITS);
+        pkt->set(data->longitude, SDATA_IDX_LONGITUDE);
+        pkt->set(data->latitude, SDATA_IDX_LATITUDE);
+        pkt->set(data->course, SDATA_IDX_COURSE);
+        pkt->set(data->speed, SDATA_IDX_SPEED);
+        pkt->set(data->heading, SDATA_IDX_HEADING);
+        pkt->set(data->roll, SDATA_IDX_ROLL);
+        pkt->set(data->pitch, SDATA_IDX_PITCH);
+        pkt->set(data->altitude, SDATA_IDX_ALTITUDE);
+        pkt->set(data->depth, SDATA_IDX_DEPTH);
+        pkt->set(data->validity, SDATA_IDX_VALIDITY);
 
-        // Navigation data.
-        uint16_t validity = 0;
-        int32_t s32 = 0;
-        int16_t s16 = 0;
-        uint16_t u16 = 0;
+        // User annotation string to save position with increased
+        // resolution.
+        std::memcpy(pkt->getMessageData()
+                    + SDATA_IDX_ANNOTATION_STRING,
+                    &data->latitude_rad,
+                    sizeof(data->latitude_rad));
+
+        std::memcpy(pkt->getMessageData()
+                    + SDATA_IDX_ANNOTATION_STRING
+                    + sizeof(data->latitude_rad),
+                    &data->longitude_rad,
+                    sizeof(data->longitude_rad));
+      }
+
+      void
+      updateSubsystemData(SubsystemData* data, Packet* pkt)
+      {
+        data->validity = 0;
+
+        // Seconds since Unix Epoch.
+        time_t pkt_time_int = pkt->getTimeStamp();
+        data->time_epoch = pkt_time_int;
+
+        // Broken down time.
+        data->time_bdt.convert(pkt_time_int);
+
+        // Milliseconds today.
+        data->time_msec_today = ((data->time_bdt.hour * 3600)
+                                 + (data->time_bdt.minutes * 60)
+                                 + data->time_bdt.seconds) * 1000;
+        data->time_msec_today += (pkt->getTimeStamp() - pkt_time_int) * 1000;
 
         // Position.
-        int32_t lat = 0;
-        int32_t lon = 0;
-        convertPositionToJSF(m_estate, lat, lon);
-        pkt->set<uint16_t>(2, SDATA_IDX_COORDINATE_UNITS);
-        pkt->set(lon, SDATA_IDX_LONGITUDE);
-        pkt->set(lat, SDATA_IDX_LATITUDE);
-        validity |= (1 << 0);
+        Coordinates::toWGS84(m_estate, data->latitude_rad, data->longitude_rad);
+        data->latitude = static_cast<int32_t>(data->latitude_rad * 34377467.707849);
+        data->longitude = static_cast<int32_t>(data->longitude_rad * 34377467.707849);
+        data->validity |= (1 << 0);
 
         // Course.
-        s16 = static_cast<int16_t>(Angles::degrees(std::atan2(m_estate.vy, m_estate.vx)));
-        pkt->set(s16, SDATA_IDX_COURSE);
-        validity |= (1 << 1);
+        data->course = Angles::degrees(std::atan2(m_estate.vy, m_estate.vx));
+        data->validity |= (1 << 1);
 
-        // Speed (knots * 10).
-        double speed = Math::norm(m_estate.vx, m_estate.vy) * 19.438612860586;
-        s16 = static_cast<int16_t>(speed);
-        pkt->set(s16, SDATA_IDX_SPEED);
-        validity |= (1 << 2);
+        // Speed.
+        data->speed = Math::norm(m_estate.vx, m_estate.vy) * DUNE::Units::c_ms_to_knot * 10;
+        data->validity |= (1 << 2);
 
         // Heading.
         double heading = Angles::degrees(m_estate.psi);
         if (heading < 0)
           heading = 360.0 + heading;
-        u16 = static_cast<uint16_t>(heading * 100);
-        pkt->set(u16, SDATA_IDX_HEADING);
-        validity |= (1 << 3);
+        data->heading = heading * 100;
+        data->validity |= (1 << 3);
 
         // Roll.
-        s16 = static_cast<int16_t>((Angles::degrees(m_estate.phi) * 32768) / 180);
-        pkt->set(s16, SDATA_IDX_ROLL);
+        data->roll = (Angles::degrees(m_estate.phi) * 32768) / 180;
+        data->validity |= (1 << 4);
 
         // Pitch.
-        s16 = static_cast<int16_t>((Angles::degrees(m_estate.theta) * 32768) / 180);
-        pkt->set(s16, SDATA_IDX_PITCH);
-        validity |= (1 << 5);
+        data->pitch = (Angles::degrees(m_estate.theta) * 32768) / 180;
+        data->validity |= (1 << 5);
 
         // Altitude.
-        s32 = static_cast<int32_t>(m_estate.alt * 1000);
-        pkt->set(s32, SDATA_IDX_ALTITUDE);
-        validity |= (1 << 6);
+        data->altitude = m_estate.alt * 1000;
+        data->validity |= (1 << 6);
 
         // Depth.
-        s32 = static_cast<int32_t>(m_estate.depth * 1000);
-        pkt->set(s32, SDATA_IDX_DEPTH);
-        validity |= (1 << 9);
-
-        pkt->set(validity, SDATA_IDX_VALIDITY);
+        data->depth = m_estate.depth * 1000;
+        data->validity |= (1 << 9);
       }
 
       void
