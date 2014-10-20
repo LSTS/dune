@@ -170,7 +170,7 @@ namespace Navigation
             IMC::LblConfig cfg(m_lbl_config);
             cfg.op = IMC::LblConfig::OP_CUR_CFG;
             cfg.setSource(getSystemId());
-            dispatch(cfg);
+            dispatchReply(*msg, cfg);
           }
         }
 
