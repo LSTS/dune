@@ -462,7 +462,7 @@ namespace Vision
         setStrobePower(true);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        inf("activated");
+        inf(DTR("activated"));
       }
 
       void
@@ -485,7 +485,7 @@ namespace Vision
       {
         if (msg->getSourceEntity() == DUNE_IMC_CONST_UNK_EID)
         {
-          err("invalid entity");
+          err(DTR("invalid entity"));
           return;
         }
         m_slave_entities->onEntityActivationState(msg);
@@ -804,7 +804,7 @@ namespace Vision
         {
           setProperties();
           m_cfg_dirty = false;
-          inf("successfully configured camera");
+          inf(DTR("successfully configured camera"));
           return true;
         }
         catch (...)
