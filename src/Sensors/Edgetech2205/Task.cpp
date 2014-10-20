@@ -611,14 +611,6 @@ namespace Sensors
           if (isActive() && (m_sock_dat != NULL))
           {
             readData();
-
-            try
-            {
-              if (m_cmd != NULL)
-                m_time_diff = m_cmd->estimateTimeDifference();
-            }
-            catch (...)
-            { }
           }
           else
           {

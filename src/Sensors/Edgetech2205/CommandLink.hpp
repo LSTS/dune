@@ -43,8 +43,7 @@ namespace Sensors
     class CommandLink
     {
     public:
-      CommandLink(const Address& addr, unsigned port):
-        m_avg_time_diff(0)
+      CommandLink(const Address& addr, unsigned port)
       {
         m_sock.setNoDelay(true);
         setSocketTimeout(1.0);
@@ -61,38 +60,6 @@ namespace Sensors
       {
         m_sock.setSendTimeout(value);
         m_sock.setReceiveTimeout(value);
-      }
-
-      int64_t
-      getTimeDifference(void)
-      {
-        m_pkt.setMessageType(MSG_ID_SYSTEM_TIME);
-        m_pkt.setSubsystemNumber(0);
-        m_pkt.setChannel(0);
-        m_pkt.setCommandType(COMMAND_TYPE_GET);
-        m_pkt.setMessageSize(0);
-
-        int64_t send_time = Clock::getSinceEpochMsec();
-        sendPacket(m_pkt);
-
-        const Packet* reply = read(MSG_ID_SYSTEM_TIME, COMMAND_TYPE_REPLY, 0, 0, 1.0);
-        if (reply == NULL)
-          throw std::runtime_error(DTR("failed to get time"));
-
-        int64_t recv_time = Clock::getSinceEpochMsec();
-        int64_t rtt = static_cast<int64_t>((recv_time - send_time) / 2.0);
-
-        const uint8_t* data = reply->getMessageData();
-        uint32_t sec = 0;
-        ByteCopy::fromLE(sec, data);
-        uint32_t msec = 0;
-        ByteCopy::fromLE(msec, data + 4);
-
-        int64_t remote_time = sec;
-        remote_time *= 1000;
-        remote_time += msec;
-
-        return (remote_time - (send_time + rtt));
       }
 
       void
@@ -219,17 +186,6 @@ namespace Sensors
         sendPacket(m_pkt);
       }
 
-      int64_t
-      estimateTimeDifference(void)
-      {
-        int64_t delta = 0;
-
-        for (unsigned i = 0; i < c_time_diff_sample_count; ++i)
-          delta += getTimeDifference();
-
-        return delta / c_time_diff_sample_count;
-      }
-
     private:
       //! Maximum packet size.
       static const unsigned c_max_size = 4096;
@@ -245,8 +201,6 @@ namespace Sensors
       Packet m_pkt;
       //! Read buffer.
       std::vector<uint8_t> m_bfr;
-      //! Average time difference between CPU and sidescan.
-      int64_t m_avg_time_diff;
 
       void
       sendPacket(const Packet& pkt)
