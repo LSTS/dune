@@ -164,7 +164,11 @@ namespace Simulators
           m_origin.lat = lat;
           m_origin.lon = lon;
           m_origin.height = hae;
-          return;
+          m_origin.type = IMC::GpsFix::GFT_MANUAL_INPUT;
+          m_origin.validity = 0xffff;
+
+          // Dispatching local origin.
+          dispatch(m_origin);
         }
 
         if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
