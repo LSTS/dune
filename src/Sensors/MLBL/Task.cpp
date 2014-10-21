@@ -1003,7 +1003,7 @@ namespace Sensors
                                       freqs[0], freqs[1], freqs[2], freqs[3]);
 
         sendCommand(cmd);
-        processInput(m_args.ping_tout_nb);
+        processInput(m_args.ping_tout_nb + 1);
         if (consumeResult(RS_PNG_ACKD) && consumeResult(RS_PNG_TIME))
           setAndSendState(STA_ACTIVE);
         else
