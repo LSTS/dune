@@ -62,8 +62,6 @@ namespace Simulators
       double wx;
       //! Stream speed East parameter (m/s).
       double wy;
-      //! Initial position (degrees)
-      std::vector<double> position;
       //! Initial heading (degrees).
       double yaw;
     };
@@ -98,11 +96,6 @@ namespace Simulators
         .units(Units::MeterPerSecond)
         .defaultValue("0.0")
         .description("Water current speed along the East in the NED frame");
-
-        param("Initial Position", m_args.position)
-        .units(Units::Degree)
-        .size(2)
-        .description("Initial position of the vehicle");
 
         param("Initial Heading", m_args.yaw)
         .units(Units::Degree)
@@ -156,7 +149,18 @@ namespace Simulators
         if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
           return;
 
-        start(msg->lat, msg->lon, msg->height);
+        // We assume vehicle starts at sea surface.
+        m_vehicle->setPosition(0, 0, 0);
+        m_vehicle->setOrientation(0, 0, m_args.yaw);
+
+        // Define vehicle origin.
+        m_sstate.lat = msg->lat;
+        m_sstate.lon = msg->lon;
+        m_sstate.height = msg->height;
+
+        m_start_time = Clock::get();
+
+        requestActivation();
 
         // Save message to cache.
         IMC::CacheControl cop;
@@ -179,34 +183,11 @@ namespace Simulators
         m_vehicle->updateEngine(msg->id, msg->value);
       }
 
-      //! Start the simulation with a specific position.
-      void
-      start(double lat, double lon, double hae)
-      {
-        // We assume vehicle starts at sea surface.
-        m_vehicle->setPosition(0, 0, 0);
-        m_vehicle->setOrientation(0, 0, m_args.yaw);
-
-        // Define vehicle origin.
-        m_sstate.lat = lat;
-        m_sstate.lon = lon;
-        m_sstate.height = hae;
-
-        m_start_time = Clock::get();
-
-        requestActivation();
-      }
-
       void
       task(void)
       {
         if (!isActive())
-        {
-          start(Math::Angles::radians(m_args.position[0]),
-                Math::Angles::radians(m_args.position[1]), 0);
-
           return;
-        }
 
         m_world->takeStep();
 
