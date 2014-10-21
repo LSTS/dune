@@ -237,7 +237,7 @@ namespace Simulators
           if (hasLBLConfig())
             cfg.beacons = m_lbl_cfg->beacons;
 
-          dispatch(cfg);
+          dispatchReply(*msg, cfg);
         }
       }
 
