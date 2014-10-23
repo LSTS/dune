@@ -36,7 +36,7 @@ namespace DUNE
 }
 
 #include <DUNE/Control/PathController.hpp>
-#include <DUNE/Control/SurrogatePathController.hpp>
+#include <DUNE/Control/ProxyPathController.hpp>
 #include <DUNE/Control/BasicRemoteOperation.hpp>
 #include <DUNE/Control/BasicAutopilot.hpp>
 #include <DUNE/Control/BasicUAVAutopilot.hpp>
