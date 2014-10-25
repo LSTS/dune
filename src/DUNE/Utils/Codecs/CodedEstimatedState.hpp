@@ -92,9 +92,9 @@ namespace DUNE
 
           estate->lat = coded.lat;
           estate->lon = coded.lon;
-          estate->alt = coded.alt / 100.0;
-          estate->depth = coded.depth / 100.0;
-          estate->psi = coded.yaw / 100.0;
+          estate->alt = (fp32_t)(coded.alt / 100.0);
+          estate->depth = (fp32_t)(coded.depth / 100.0);
+          estate->psi = (fp32_t)(coded.yaw / 100.0);
 
           return estate;
         }

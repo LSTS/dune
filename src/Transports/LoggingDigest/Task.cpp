@@ -164,7 +164,7 @@ namespace Transports
           qinfo.setDestinationEntity(devs[i]->id);
           // The id field is deprecated!
           qinfo.id = devs[i]->id;
-          dispatch(qinfo, DF_KEEP_TIME);
+          dispatch(qinfo, DF_KEEP_TIME | DF_LOOP_BACK);
           logMessage(&qinfo);
         }
       }

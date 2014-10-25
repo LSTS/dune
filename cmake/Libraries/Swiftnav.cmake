@@ -22,19 +22,16 @@
 # language governing permissions and limitations at                        #
 # https://www.lsts.pt/dune/licence.                                        #
 ############################################################################
-# Author: Ricardo Martins                                                  #
+# Author: Kristian Klausen                                                 #
 ############################################################################
 
-[Sensors.Edgetech2205]
-Enabled                  = Hardware
-Entity Label             = Sidescan
-IPv4 Address             = 10.0.10.84
-TCP Port - Command       = 1700
-TCP Port - Data          = 1701
-High-Frequency Channels  = Both
-High-Frequency Range     = 50
-Low-Frequency Channels   = None
-Low-Frequency Range      = 50
-Power Channel - Sidescan = Private (Sidescan)
-Activation Time          = 120
-Deactivation Time        = 20
+dune_test_lib(swiftnav sbp_state_init)
+dune_test_header("libswiftnav/sbp.h")
+
+if(DUNE_SYS_HAS_LIB_SWIFTNAV AND DUNE_SYS_HAS_LIBSWIFTNAV_SBP_H)
+  set(DUNE_SYS_HAS_SWIFTNAV 1 CACHE INTERNAL "Swiftnav library")
+  set(DUNE_USING_SWIFTNAV 1 CACHE INTERNAL "Swiftnav library")
+else( DUNE_SYS_HAS_LIB_SWIFTNAV AND DUNE_SYS_HAS_LIBSWIFTNAV_SBP_H)
+  set(DUNE_SYS_HAS_SWIFTNAV 0 CACHE INTERNAL "Swiftnav library")
+  set(DUNE_USING_SWIFTNAV 0 CACHE INTERNAL "Swiftnav library")
+endif( DUNE_SYS_HAS_LIB_SWIFTNAV AND DUNE_SYS_HAS_LIBSWIFTNAV_SBP_H)

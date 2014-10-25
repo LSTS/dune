@@ -50,7 +50,7 @@ def comment(text, dox = True, nl = '\n'):
 
 # Extract copyright from this script and convert it to a format
 # suitable to be used in C++ files.
-def get_cxx_copyright(xml_md5):
+def get_cxx_copyright(xml_md5, skip_md5 = False):
     fd = open(os.path.abspath(__file__).replace('.pyc', '.py'))
     result = []
     header = False
@@ -69,8 +69,9 @@ def get_cxx_copyright(xml_md5):
     result = [l.replace('#', '*') for l in result]
     result.append('// Automatically generated.'.ljust(len(result[0]) - 1) + '*')
     result.append(result[0])
-    result.append(('// IMC XML MD5: ' + xml_md5).ljust(len(result[0]) - 1) + '*')
-    result.append(result[0])
+    if not skip_md5:
+        result.append(('// IMC XML MD5: ' + xml_md5).ljust(len(result[0]) - 1) + '*')
+        result.append(result[0])
     return '\n'.join(result) + '\n'
 
 # Cleanup and indent source file.

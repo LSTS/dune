@@ -316,12 +316,24 @@ main(int argc, char** argv)
   {
     IMC::GpsFix* tmsg = new IMC::GpsFix;
     msg = tmsg;
-    tmsg->type = IMC::GpsFix::GFT_MANUAL_INPUT;
-    tmsg->lat = Angles::radians(atof(argv[4]));
-    tmsg->lon = Angles::radians(atof(argv[5]));
-    tmsg->height = atof(argv[6]);
+    tmsg->type = IMC::GpsFix::GFT_DIFFERENTIAL;
     tmsg->satellites = 10;
     tmsg->validity = 0xFFFF;
+
+    if (argc >= 5)
+    {
+      tmsg->lat = Angles::radians(atof(argv[4]));
+      tmsg->lon = Angles::radians(atof(argv[5]));
+    }
+    else
+    {
+      // Leixões harbor location.
+      tmsg->lat = 0.718803520085;
+      tmsg->lon = -0.151951035032;
+    }
+
+    if (argc >= 7)
+      tmsg->height = atof(argv[6]);
   }
 
   if (strcmp(argv[3], "Heartbeat") == 0)

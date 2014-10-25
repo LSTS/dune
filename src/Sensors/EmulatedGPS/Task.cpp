@@ -40,9 +40,6 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
-    static const double c_ms_to_kmh = 3.6;
-    static const double c_ms_to_knots = 1.94384449;
-
     struct Arguments
     {
       // Serial port device.
@@ -125,7 +122,7 @@ namespace Sensors
             << ((lat_deg >= 0) ? "N" : "S")
             << String::str("%03d%02.5f", std::abs(lon_deg), std::fabs(lon_min))
             << ((lon_deg >= 0) ? "E" : "W")
-            << vel * c_ms_to_knots // speed in knots.
+            << vel * DUNE::Units::c_ms_to_knot
             << 0 // azimuth.
             << String::str("%02u%02u%02u", bdt.day, bdt.month, bdt.year - 2000)
             << ""
@@ -152,8 +149,8 @@ namespace Sensors
         stn << String::str("%03.1f,T,%03.1f,M,%03.1f,N,%03.1f,K",
                            course,
                            course,
-                           vel * c_ms_to_knots,
-                           vel * c_ms_to_kmh);
+                           vel * DUNE::Units::c_ms_to_knot,
+                           vel * DUNE::Units::c_ms_to_kmh);
         (void)bdt;
         return stn.sentence();
       }

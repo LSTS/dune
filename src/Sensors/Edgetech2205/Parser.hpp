@@ -69,6 +69,7 @@ namespace Sensors
             {
               m_state = ST_MARKER1;
               m_index = 0;
+              m_pkt.setTimeStamp(Clock::getSinceEpoch());
             }
             break;
 
@@ -77,7 +78,8 @@ namespace Sensors
             break;
 
           case ST_VERSION:
-            m_state = (byte <= c_version) ? ST_SESSION : ST_MARKER0;
+            m_pkt.setProtocolVersion(byte);
+            m_state = ST_SESSION;
             break;
 
           case ST_SESSION:

@@ -124,6 +124,8 @@ namespace Monitors
         float acceptable_temperature;
         //! Minimum confidence for recomputing update
         float min_update_conf;
+        //! Update estimate even if maneuvering
+        bool update_anytime;
       };
 
       FuelFilter(Arguments* args, unsigned eids[BatteryData::BM_TOTAL],
@@ -292,13 +294,27 @@ namespace Monitors
           return true;
         }
 
+        bool stable_current;
+        bool usable_state;
+        if (m_args->update_anytime)
+        {
+          float diff = std::fabs(m_bdata->getCurrent() - m_args->models[MDL_PES].current);
+          stable_current = diff < c_stable_current;
+
+          usable_state = true;
+        }
+        else
+        {
+          stable_current = (m_bdata->getCurrent() < c_stable_current);
+          usable_state = !m_is_maneuvering && m_sane_timer.overflow();
+        }
+
         // Check if we should refresh the initial estimate
         // if Temperature is reliable
-        // if we have low electric currents
-        // if vehicle is not maneuvering atm
+        // if we have stable electric currents
+        // if vehicle is not maneuvering atm or update anytime
         if ((m_bdata->getTemperature() > m_args->acceptable_temperature) &&
-            (m_bdata->getCurrent() < c_stable_current) &&
-            !m_is_maneuvering && m_sane_timer.overflow())
+            stable_current && usable_state)
         {
           bool refresh = false;
 
@@ -578,12 +594,12 @@ namespace Monitors
 
         if (bad_est_diff < prox_interval)
         {
-          bad_conf += (conf_gap) * (1 - bad_est_diff)  / (prox_interval);
+          bad_conf += (conf_gap) * (1 - bad_est_diff / prox_interval);
         }
 
         if (good_est_diff < prox_interval)
         {
-          good_conf += (conf_gap) * (1 - good_est_diff) / (prox_interval);
+          good_conf += (conf_gap) * (1 - good_est_diff / prox_interval);
         }
       }
 

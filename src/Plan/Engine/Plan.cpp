@@ -111,9 +111,6 @@ namespace Plan
 
       m_cat.clear();
       m_properties = 0;
-
-      if (m_rt_stat != NULL)
-        m_rt_stat->clear();
     }
 
     void
@@ -137,6 +134,11 @@ namespace Plan
     void
     Plan::planStarted(void)
     {
+      // Post statistics
+      if (m_rt_stat != NULL)
+        m_rt_stat->clear();
+
+      m_post_stat.plan_id = m_spec->plan_id;
       m_rt_stat->planStarted();
 
       if (m_sched == NULL)
@@ -446,9 +448,6 @@ namespace Plan
                          IMC::PlanStatistics& ps, bool imu_enabled,
                          const IMC::EstimatedState* state)
     {
-      // Post statistics
-      m_post_stat.plan_id = m_spec->plan_id;
-
       // Pre statistics
       ps.plan_id = m_spec->plan_id;
       PreStatistics pre_stat(&ps);

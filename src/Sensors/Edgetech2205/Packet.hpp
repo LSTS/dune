@@ -59,12 +59,29 @@ namespace Sensors
         HDR_IDX_MSG_SIZE = 12
       };
 
-      Packet(void)
+      Packet(void):
+        m_time_stamp(0)
       {
         m_data.resize(c_max_size, 0);
         m_data[HDR_IDX_MARKER] = c_marker0;
         m_data[HDR_IDX_MARKER + 1] = c_marker1;
         m_data[HDR_IDX_VERSION] = c_version;
+      }
+
+      //! Set protocol version.
+      //! @param[in] version protocol version.
+      void
+      setProtocolVersion(uint8_t version)
+      {
+        m_version = version;
+      }
+
+      //! Retrieve protocol version.
+      //! @return protocol version.
+      uint8_t
+      getProtocolVersion(void) const
+      {
+        return m_version;
       }
 
       //! Set message type.
@@ -228,7 +245,7 @@ namespace Sensors
 
       template <typename T>
       void
-      get(T& value, unsigned index)
+      get(T& value, unsigned index) const
       {
         ByteCopy::fromLE(value, getMessageData() + index);
       }
@@ -250,6 +267,22 @@ namespace Sensors
         std::fprintf(stderr, "\n");
       }
 
+      //! Get packet's time of reception.
+      //! @return seconds since Unix Epoch.
+      double
+      getTimeStamp(void) const
+      {
+        return m_time_stamp;
+      }
+
+      //! Set packet's time of reception.
+      //! @param[in] time_stamp seconds since Unix Epoch.
+      void
+      setTimeStamp(double time_stamp)
+      {
+        m_time_stamp = time_stamp;
+      }
+
     private:
       //! Size of the header.
       static const unsigned c_header_size = 16;
@@ -257,6 +290,10 @@ namespace Sensors
       static const unsigned c_max_size = 256 * 1024;
       //! Message data.
       std::vector<uint8_t> m_data;
+      //! Protocol version.
+      uint8_t m_version;
+      //! Reception timestamp.
+      double m_time_stamp;
     };
   }
 }

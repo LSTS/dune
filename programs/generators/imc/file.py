@@ -31,7 +31,7 @@ import os.path
 from imc import utils
 
 class File:
-    def __init__(self, name, folder, ns = True, stdout = False, md5 = None):
+    def __init__(self, name, folder, ns = True, stdout = False, md5 = None, skip_md5 = False):
         self.path = os.path.join(folder, name)
         self.path_file = os.path.split(self.path)[1]
         self.path_ext = os.path.splitext(self.path)[1]
@@ -41,6 +41,7 @@ class File:
         self.text = ''
         self._ns = ns
         self._stdout = stdout
+        self._skip_md5 = skip_md5
         if md5 is None:
             self.md5 = 'unknown'
         else:
@@ -57,7 +58,7 @@ class File:
 
     def write(self):
         print('* ' + self.path)
-        text = utils.get_cxx_copyright(self.md5) + '\n'
+        text = utils.get_cxx_copyright(self.md5, self._skip_md5) + '\n'
         if self.path_ext == '.hpp':
             if type(self._ns) is list:
                 prefix = ('_'.join(self._ns)).upper()

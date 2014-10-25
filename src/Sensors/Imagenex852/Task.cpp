@@ -150,6 +150,8 @@ namespace Sensors
       PatternFilter* m_pfilt;
       //! Medium handler.
       Monitors::MediumHandler m_hand;
+      //! Underwater acoustic modem transmission in progress.
+      bool m_uam_tx_ip;
 
       //! %Task constructor.
       Task(const std::string& name, Tasks::Context& ctx):
@@ -157,7 +159,8 @@ namespace Sensors
         m_uart(NULL),
         m_sound_speed(c_sound_speed),
         m_parser(m_profile.data),
-        m_pfilt(NULL)
+        m_pfilt(NULL),
+        m_uam_tx_ip(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_IDLE,
@@ -266,6 +269,7 @@ namespace Sensors
 
         bind<IMC::SoundSpeed>(this);
         bind<IMC::VehicleMedium>(this);
+        bind<IMC::UamTxStatus>(this);
       }
 
       //! Update parameters.
@@ -379,6 +383,12 @@ namespace Sensors
       }
 
       void
+      consume(const IMC::UamTxStatus* msg)
+      {
+        m_uam_tx_ip = (msg->value == IMC::UamTxStatus::UTS_IP);
+      }
+
+      void
       consume(const IMC::SoundSpeed* msg)
       {
         if (msg->value < 0.0)
@@ -473,7 +483,9 @@ namespace Sensors
             if (m_args.sspeed_dyn)
               m_dist.value = (m_dist.value * m_sound_speed) / c_sound_speed;
 
-            dispatch(m_dist);
+            // UAM is transmitting, data are probably garbled.
+            if (!m_uam_tx_ip)
+              dispatch(m_dist);
 
             if (m_parser.getDataPointsCount() > 0)
             {

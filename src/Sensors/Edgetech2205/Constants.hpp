@@ -108,13 +108,16 @@ namespace Sensors
     enum SonarDataIndices
     {
       SDATA_IDX_TIME = 0,
+      SDATA_IDX_PING_NUMBER = 8,
       SDATA_IDX_MSB = 16,
       SDATA_IDX_VALIDITY = 30,
       SDATA_IDX_DATA_FORMAT = 34,
       SDATA_IDX_LONGITUDE = 80,
       SDATA_IDX_LATITUDE = 84,
       SDATA_IDX_COORDINATE_UNITS = 88,
+      SDATA_IDX_ANNOTATION_STRING = 90,
       SDATA_IDX_DATA_SAMPLES  = 114,
+      SDATA_IDX_SAMPLING_INTERVAL  = 116,
       SDATA_IDX_PULSE_START_FREQ = 126,
       SDATA_IDX_PULSE_END_FREQ = 128,
       SDATA_IDX_DEPTH = 136,
@@ -143,7 +146,7 @@ namespace Sensors
     //! Second byte of the start of header marker.
     static const uint8_t c_marker1 = 0x16;
     //! Protocol version.
-    static const uint8_t c_version = 11;
+    static const uint8_t c_version = 13;
     //! Offset of the first sidescan channel.
     static const unsigned c_subsys_ss_offset = SUBSYS_SSL;
   }

@@ -173,7 +173,7 @@ namespace Sensors
         .description("Auto pulse selection mode");
 
         param("Power Channel - Sidescan", m_args.pwr_ss)
-        .defaultValue("Sidescan")
+        .defaultValue("Private (Sidescan)")
         .description("Name of sidescan's power channel");
 
         m_bfr.resize(c_buffer_size);
@@ -550,6 +550,11 @@ namespace Sensors
         if (!Poll::poll(*m_sock_dat, 1.0))
           return false;
 
+        consumeMessages();
+
+        if (m_sock_dat == NULL)
+          return false;
+
         size_t rv = m_sock_dat->read(&m_bfr[0], m_bfr.size());
         for (size_t i = 0; i < rv; ++i)
         {
@@ -609,7 +614,8 @@ namespace Sensors
 
             try
             {
-              m_time_diff = m_cmd->estimateTimeDifference();
+              if (m_cmd != NULL)
+                m_time_diff = m_cmd->estimateTimeDifference();
             }
             catch (...)
             { }

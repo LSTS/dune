@@ -85,6 +85,8 @@ namespace Vision
       unsigned volume_size;
       //! Power GPIO.
       int pwr_gpio;
+      //! LED GPIO.
+      int led_gpio;
       //! Whether to configure the camera.
       bool camera_cfg;
       //! Whether to capture from the camera.
@@ -116,6 +118,8 @@ namespace Vision
       double m_timestamp;
       //! Power GPIO.
       Hardware::GPIO* m_pwr_gpio;
+      //! LEDs GPIO.
+      Hardware::GPIO* m_led_gpio;
       //! Config is dirty.
       bool m_cfg_dirty;
       //! Slave entities
@@ -133,6 +137,7 @@ namespace Vision
         m_volume_count(0),
         m_file_count(0),
         m_pwr_gpio(NULL),
+        m_led_gpio(NULL),
         m_cfg_dirty(false),
         m_slave_entities(NULL),
         m_log_dir_updated(false)
@@ -144,6 +149,10 @@ namespace Vision
         param("Power GPIO", m_args.pwr_gpio)
         .defaultValue("-1")
         .description("GPIO that controls power to the camera");
+
+        param("LED GPIO", m_args.led_gpio)
+        .defaultValue("-1")
+        .description("GPIO that controls power to the LEDs");
 
         param("Camera IPv4 Address", m_args.address)
         .defaultValue("10.0.10.82")
@@ -309,6 +318,13 @@ namespace Vision
           m_pwr_gpio->setValue(0);
         }
 
+        if (m_args.led_gpio > 0)
+        {
+          m_led_gpio = new Hardware::GPIO(m_args.led_gpio);
+          m_led_gpio->setDirection(Hardware::GPIO::GPIO_DIR_OUTPUT);
+          m_led_gpio->setValue(0);
+        }
+
         m_slave_entities = new EntityActivationMaster(this);
         updateSlaveEntities();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
@@ -324,6 +340,12 @@ namespace Vision
         {
           delete m_pwr_gpio;
           m_pwr_gpio = NULL;
+        }
+
+        if (m_led_gpio != NULL)
+        {
+          delete m_led_gpio;
+          m_led_gpio = NULL;
         }
 
         if (m_slave_entities != NULL)
@@ -440,7 +462,7 @@ namespace Vision
         setStrobePower(true);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        inf("activated");
+        inf(DTR("activated"));
       }
 
       void
@@ -463,7 +485,7 @@ namespace Vision
       {
         if (msg->getSourceEntity() == DUNE_IMC_CONST_UNK_EID)
         {
-          err("invalid entity");
+          err(DTR("invalid entity"));
           return;
         }
         m_slave_entities->onEntityActivationState(msg);
@@ -530,6 +552,9 @@ namespace Vision
           }
         }
 
+        if (m_led_gpio != NULL)
+          m_led_gpio->setValue(1);
+
         inf(DTR("started video stream"));
       }
 
@@ -542,6 +567,9 @@ namespace Vision
         debug("stopping video stream");
         delete m_http;
         m_http = NULL;
+
+        if (m_led_gpio != NULL)
+          m_led_gpio->setValue(0);
       }
 
       void
@@ -724,7 +752,8 @@ namespace Vision
         else
         {
           debug("disabling strobe output");
-          setProperty("output_select", "off");
+          // the output on/off logic is inverted
+          setProperty("output_select", "on");
         }
       }
 
@@ -775,7 +804,7 @@ namespace Vision
         {
           setProperties();
           m_cfg_dirty = false;
-          inf("successfully configured camera");
+          inf(DTR("successfully configured camera"));
           return true;
         }
         catch (...)

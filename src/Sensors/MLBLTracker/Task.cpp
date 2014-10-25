@@ -103,7 +103,7 @@ namespace Sensors
       // Sound speed on water.
       double sspeed;
       // Narrow band ping timeout.
-      double tout_nbping;
+      unsigned tout_nbping;
       // Micro-Modem ping timeout.
       double tout_mmping;
       // Abort timeout.
@@ -513,8 +513,9 @@ namespace Sensors
         unsigned query = itr->second.query_freq;
         unsigned reply = itr->second.reply_freq;
 
-        std::string cmd = String::str("$CCPNT,%u,%u,%u,1000,%u,0,0,0,1\r\n", query,
-                                      m_args.tx_length, m_args.rx_length, reply);
+        std::string cmd = String::str("$CCPNT,%u,%u,%u,%u,%u,0,0,0,1\r\n", query,
+                                      m_args.tx_length, m_args.rx_length,
+                                      m_args.tout_nbping * 1000, reply);
         sendCommand(cmd);
         m_op = OP_PING_NB;
         m_op_deadline = Clock::get() + m_args.tout_nbping;

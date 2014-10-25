@@ -140,7 +140,9 @@ namespace Plan
           std::string id = (*itr)->maneuver_id;
           float start = tl.getManeuverStartETA(id);
           float end = tl.getManeuverEndETA(id);
-          addTuple(m_ps->durations, DTR("Maneuver ") + id, start - end);
+          float diff = end >= 0.0f ? start - end : -1.0f;
+
+          addTuple(m_ps->durations, DTR("Maneuver ") + id, diff);
         }
       }
 
@@ -194,6 +196,7 @@ namespace Plan
       clear(void)
       {
         m_ps->clear();
+        m_ps->type = IMC::PlanStatistics::TP_POSTPLAN;
       }
 
       //! Fill in with fuel info
