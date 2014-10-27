@@ -482,7 +482,6 @@ namespace Plan
           // Estimate necessary calibration time
           float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
           m_est_cal_time = (uint16_t)std::max(0.0f, diff);
-          m_est_cal_time = (uint16_t)std::max(m_min_cal_time, m_est_cal_time);
 
           if (m_predict_fuel)
           {
