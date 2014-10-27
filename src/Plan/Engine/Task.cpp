@@ -33,6 +33,7 @@
 #include "Plan.hpp"
 #include "Calibration.hpp"
 #include "MementoHandler.hpp"
+#include "DataBaseInteraction.hpp"
 
 namespace Plan
 {
@@ -50,19 +51,6 @@ namespace Plan
     //! Plan state descriptions
     const char* c_state_desc[] = {DTR_RT("BLOCKED"), DTR_RT("READY"),
                                   DTR_RT("INITIALIZING"), DTR_RT("EXECUTING")};
-    //! DataBase statement
-    static const char* c_get_stmt[] = {"select data from Plan where plan_id=?",
-                                       "select data from Memento where id=?"};
-
-    enum DBStatement
-    {
-      //! Plan
-      DB_PLAN = 0,
-      //! Memento
-      DB_MEMENTO,
-      //! Total number of db operations
-      DB_TOTAL
-    };
 
     enum EngineState
     {
@@ -126,10 +114,8 @@ namespace Plan
       IMC::PlanSpecification m_spec;
       //! List of supported maneuvers.
       std::set<uint16_t> m_supported_maneuvers;
-      //! Database related (for plan DB direct queries to avoid
-      //! unnecessary interface with bus / PlanDB task directly)
-      Database::Connection* m_db;
-      Database::Statement* m_get_stmt[DB_TOTAL];
+      //! Database interaction
+      DataBaseInteraction* m_db;
       //! Misc.
       IMC::LoggingControl m_lc;
       IMC::EstimatedState m_state;
@@ -155,7 +141,6 @@ namespace Plan
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_plan(NULL),
-        m_db(NULL),
         m_imu_enabled(false),
         m_plan_ref(0)
       {
@@ -203,9 +188,6 @@ namespace Plan
         .defaultValue("IMU")
         .description("Entity label of the IMU for fuel prediction");
 
-        for (unsigned i = 0; i < DB_TOTAL; i++)
-          m_get_stmt[i] = NULL;
-
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::EstimatedState>(this);
@@ -218,11 +200,6 @@ namespace Plan
         bind<IMC::EntityActivationState>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::Memento>(this);
-      }
-
-      ~Task()
-      {
-        closeDB();
       }
 
       void
@@ -253,6 +230,7 @@ namespace Plan
       onResourceRelease(void)
       {
         Memory::clear(m_plan);
+        Memory::clear(m_db);
       }
 
       void
@@ -260,12 +238,15 @@ namespace Plan
       {
         m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict,
                           this, m_args.calibration_time, &m_ctx.config);
+
+        m_db = new DataBaseInteraction(this, m_ctx.dir_db / "Plan.db");
       }
 
       void
       onResourceInitialization(void)
       {
         m_report_timer.setTop(m_args.speriod);
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
       }
 
       void
@@ -295,11 +276,14 @@ namespace Plan
         switch (po->op)
         {
           case IMC::PowerOperation::POP_PWR_DOWN_IP:
-            closeDB();
+            m_db->close();
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_POWER_DOWN);
             break;
           case IMC::PowerOperation::POP_PWR_DOWN_ABORTED:
-            openDB();
+            if (m_db->open())
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            else
+              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_DB_ERROR);
             break;
           default:
             break;
@@ -321,31 +305,13 @@ namespace Plan
       void
       consume(const IMC::PlanDB* pdb)
       {
-        if ((pdb->op == IMC::PlanDB::DBOP_BOOT) &&
-            pdb->type == IMC::PlanDB::DBT_SUCCESS)
+        if (!m_db->onPlanDB(pdb))
         {
-          try
-          {
-            openDB();
-          }
-          catch (std::runtime_error& e)
-          {
-            err("failed to open DB: %s", e.what());
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_DB_ERROR);
-          }
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_DB_ERROR);
+          return;
         }
-        else if (pdb->op != IMC::PlanDB::DBT_REQUEST)
-        {
-          if ((pdb->getDestination() == getSystemId()) &&
-              (pdb->getDestinationEntity() == getEntityId()))
-          {
-            if ((pdb->type == IMC::PlanDB::DBT_SUCCESS) ||
-                (pdb->type == IMC::PlanDB::DBT_IN_PROGRESS))
-              inf(DTR("successful request to PlanDB: %s"), pdb->object_id.c_str());
-            else
-              err(DTR("got error on request to: %s"), pdb->object_id.c_str());
-          }
-        }
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
@@ -415,47 +381,7 @@ namespace Plan
           return;
 
         // send PlanMemento to PlanDB
-        IMC::PlanDB pdb;
-        pdb.type = IMC::PlanDB::DBT_REQUEST;
-        pdb.dt = IMC::PlanDB::DBDT_MEMENTO;
-        pdb.op = IMC::PlanDB::DBOP_SET;
-        pdb.object_id = pmem.id;
-        pdb.arg.set(pmem);
-        dispatch(pdb);
-      }
-
-      void
-      openDB(void)
-      {
-        if (m_db != NULL)
-          return;
-
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-
-        Path db_file = m_ctx.dir_db / "Plan.db";
-
-        debug("database file: '%s'", db_file.c_str());
-
-        m_db = new Database::Connection(db_file.c_str(), true);
-
-        for (unsigned i = 0; i < DB_TOTAL; i++)
-          m_get_stmt[i] = new Database::Statement(c_get_stmt[i], *m_db);
-
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-      }
-
-      void
-      closeDB(void)
-      {
-        if (m_db == NULL)
-          return;
-
-        for (unsigned i = 0; i < DB_TOTAL; i++)
-          Memory::clear(m_get_stmt[i]);
-
-        Memory::clear(m_db);
-
-        debug("database connection closed");
+        m_db->sendToDB(IMC::PlanDB::DBDT_MEMENTO, msg->id, msg);
       }
 
       void
@@ -837,90 +763,6 @@ namespace Plan
         return true;
       }
 
-      //! Look for a plan or memento in the database
-      //! @param[in] id name of the plan
-      //! @param[in] op type of operation to perform in DB
-      //! @param[out] msg plan specification or plan memento message
-      //! @param[out] info error info string
-      //! @return true if plan is found
-      bool
-      searchInDB(const std::string& id, unsigned op, IMC::Message& msg, std::string& info)
-      {
-        std::string obj_op = (op == DB_PLAN) ? "plan" : "memento";
-
-        if (id.empty())
-        {
-          info = String::str(DTR("undefined %s id"), obj_op.c_str());
-          return false;
-        }
-
-        try
-        {
-          *m_get_stmt[op] << id;
-
-          if (!m_get_stmt[op]->execute())
-          {
-            info = String::str(DTR("undefined %s"), obj_op.c_str());
-            m_get_stmt[op]->reset();
-            return false;
-          }
-
-          Database::Blob data;
-
-          *m_get_stmt[op] >> data;
-
-          msg.deserializeFields((const uint8_t*)&data[0], data.size());
-
-          m_get_stmt[op]->reset();
-        }
-        catch (std::runtime_error& e)
-        {
-          info = DTR("failed loading from DB: %s"), e.what();
-          return false;
-        }
-
-        return true;
-      }
-
-      //! Look for a plan in the database
-      //! @param[in] id name of the plan
-      //! @param[out] spec plan specification message
-      //! @param[out] info error info string
-      //! @return true if plan is found
-      bool
-      searchInDB(const std::string& id, IMC::PlanSpecification& spec, std::string& info)
-      {
-        return searchInDB(id, DB_PLAN, spec, info);
-      }
-
-      //! Look for a memento in the database
-      //! @param[in] id name of the memento
-      //! @param[out] pmem plan memento message
-      //! @param[out] info error info string
-      //! @return true if memento is found
-      bool
-      searchInDB(const std::string& id, IMC::PlanMemento& pmem, std::string& info)
-      {
-        return searchInDB(id, DB_MEMENTO, pmem, info);
-      }
-
-      //! Send plan or memento to DB
-      //! @param[in] dtype data type to store
-      //! @param[in] id string id of the data type
-      //! @param[in] msg pointer to message
-      void
-      sendToDB(unsigned dtype, const std::string& id, const IMC::Message* msg)
-      {
-        IMC::PlanDB plandb;
-        plandb.type = IMC::PlanDB::DBT_REQUEST;
-        plandb.dt = dtype;
-        plandb.op = IMC::PlanDB::DBOP_SET;
-        plandb.request_id = 0;
-        plandb.object_id = id;
-        plandb.arg.set(*msg);
-        dispatch(plandb);
-      }
-
       //! Handle plan specification argument
       //! @param[in] arg pointer to arg message
       //! @param[out] info string with the error in case of failure
@@ -936,7 +778,7 @@ namespace Plan
         m_spec = *given_plan;
         m_spec.setSourceEntity(getEntityId());
 
-        sendToDB(IMC::PlanDB::DBDT_PLAN, m_spec.plan_id, &m_spec);
+        m_db->sendToDB(IMC::PlanDB::DBDT_PLAN, m_spec.plan_id, &m_spec);
 
         return true;
       }
@@ -953,7 +795,7 @@ namespace Plan
         // clear spec
         m_spec.clear();
 
-        if (!searchInDB(pmem->plan_id, m_spec, info))
+        if (!m_db->searchInDB(pmem->plan_id, m_spec, info))
         {
           onFailure(info);
           return false;
@@ -984,7 +826,7 @@ namespace Plan
             ptr->memento = pmem->memento;
             war(DTR("resuming with memento: %s"), pmem->id.c_str());
 
-            sendToDB(IMC::PlanDB::DBDT_MEMENTO, pmem->id, pmem);
+            m_db->sendToDB(IMC::PlanDB::DBDT_MEMENTO, pmem->id, pmem);
             return true;
           }
         }
@@ -1015,7 +857,7 @@ namespace Plan
         m_spec.start_man_id = arg->getName();
         m_spec.maneuvers.push_back(spec_man);
 
-        sendToDB(IMC::PlanDB::DBDT_PLAN, m_spec.plan_id, &m_spec);
+        m_db->sendToDB(IMC::PlanDB::DBDT_PLAN, m_spec.plan_id, &m_spec);
 
         return true;
       }
@@ -1042,11 +884,11 @@ namespace Plan
           // Search DB
           m_spec.clear();
 
-          if (!searchInDB(id, m_spec, info))
+          if (!m_db->searchInDB(id, m_spec, info))
           {
             // try to look for a memento with the same name in db
             PlanMemento pmem;
-            if (searchInDB(id, pmem, info))
+            if (m_db->searchInDB(id, pmem, info))
               return parseArg(id, &pmem, info);
 
             onFailure(info);
