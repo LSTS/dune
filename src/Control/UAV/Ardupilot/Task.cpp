@@ -48,37 +48,42 @@ namespace Control
       using DUNE_NAMESPACES;
 
       //! APM Type specifier
-      enum APM_Vehicle {
+      enum APM_Vehicle
+      {
         //! Unset or unknown vehicle type
-        VEHICLE_UNKNOWN = 0,
+        VEHICLE_UNKNOWN,
         //! Fixed wing types
         VEHICLE_FIXEDWING,
         //! Copter types (quad, hexa, etc)
         VEHICLE_COPTER
       };
 
-      //! List of arducopter modes
-      enum APM_copterModes {
-        CP_MODE_STABILIZE=0,                     // hold level position
-        CP_MODE_ACRO=1,                          // rate control
-        CP_MODE_ALT_HOLD=2,                      // AUTO control
-        CP_MODE_AUTO=3,                          // AUTO control
-        CP_MODE_GUIDED=4,                        // AUTO control
-        CP_MODE_LOITER=5,                        // Hold a single location
-        CP_MODE_RTL=6,                           // AUTO control
-        CP_MODE_CIRCLE=7,                        // AUTO control
-        CP_MODE_POSITION=8,                      // AUTO control
-        CP_MODE_LAND=9,                          // AUTO control
-        CP_MODE_OF_LOITER=10,                    // Hold a single location using optical flow sensor
-        CP_MODE_DRIFT=11,                        // DRIFT mode (Note: 12 is no longer used)
-        CP_MODE_DUNE=12,
-        CP_MODE_SPORT=13                       // earth frame rate control
+      //! List of Arducopter Modes
+      enum APM_copterModes
+      {
+        CP_MODE_STABILIZE = 0,                     // hold level position
+        CP_MODE_ACRO = 1,                          // rate control
+        CP_MODE_ALT_HOLD = 2,                      // AUTO control
+        CP_MODE_AUTO = 3,                          // AUTO control
+        CP_MODE_GUIDED = 4,                        // AUTO control
+        CP_MODE_LOITER = 5,                        // Hold a single location
+        CP_MODE_RTL = 6,                           // AUTO control
+        CP_MODE_CIRCLE = 7,                        // AUTO control
+        CP_MODE_POSITION = 8,                      // AUTO control
+        CP_MODE_LAND = 9,                          // AUTO control
+        CP_MODE_OF_LOITER = 10,                    // Hold a single location using optical flow sensor
+        CP_MODE_DRIFT = 11,                        // DRIFT mode (Note: 12 is no longer used)
+        CP_MODE_DUNE = 12,
+        CP_MODE_SPORT = 13                         // earth frame rate control
       };
 
       //! List of ArduPlane modes
-      enum APM_planeModes {
-        PL_MODE_AUTO=10,
-        PL_MODE_GUIDED=15
+      enum APM_planeModes
+      {
+        PL_MODE_FBWB = 6,
+        PL_MODE_AUTO = 10,
+        PL_MODE_LOITER = 12,
+        PL_MODE_GUIDED = 15
       };
 
       struct RadioChannel
@@ -108,10 +113,6 @@ namespace Control
         uint8_t trate;
         //! Default Altitude
         float alt;
-        //! Default Speed
-        float speed;
-        //! GPS is uBlox
-        bool ublox;
         //! LoiterHere (default) radius
         float lradius;
         //! Loitering tolerance
@@ -173,9 +174,7 @@ namespace Control
         fp64_t ref_lat, ref_lon;
         fp32_t ref_hei;
         //! TCP socket
-        TCPSocket* m_TCP_sock;
-        Address m_TCP_addr;
-        uint16_t m_TCP_port;
+        Network::TCPSocket* m_TCP_sock;
         //! System ID
         uint8_t m_sysid;
         //! Last received position
@@ -217,7 +216,6 @@ namespace Control
           ref_lon(0.0),
           ref_hei(0.0),
           m_TCP_sock(NULL),
-          m_TCP_port(0),
           m_sysid(1),
           m_lat(0.0),
           m_lon(0.0),
@@ -271,15 +269,6 @@ namespace Control
           .defaultValue("200.0")
           .units(Units::Meter)
           .description("Altitude to be used if desired Z has no units");
-
-          param("Default speed", m_args.speed)
-          .defaultValue("18.0")
-          .units(Units::MeterPerSecond)
-          .description("Speed to be used if desired speed is not specified");
-
-          param("uBlox GPS", m_args.ublox)
-          .defaultValue("false")
-          .description("The installed GPS is uBlox");
 
           param("Default loiter radius", m_args.lradius)
           .defaultValue("-150.0")
@@ -429,8 +418,6 @@ namespace Control
         void
         onResourceAcquisition(void)
         {
-          m_TCP_addr = m_args.TCP_addr;
-          m_TCP_port = m_args.TCP_port;
           openConnection();
         }
 
@@ -449,7 +436,7 @@ namespace Control
           try
           {
             m_TCP_sock = new TCPSocket;
-            m_TCP_sock->connect(m_TCP_addr, m_TCP_port);
+            m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
             setupRate(m_args.trate);
             inf(DTR("Ardupilot interface initialized"));
           }
@@ -1401,7 +1388,7 @@ namespace Control
               Memory::clear(m_TCP_sock);
 
               m_TCP_sock = new Network::TCPSocket;
-              m_TCP_sock->connect(m_TCP_addr, m_TCP_port);
+              m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
               return 0;
             }
           }
@@ -1421,7 +1408,6 @@ namespace Control
             counter++;
 
             int n = receiveData(m_buf, sizeof(m_buf));
-
             if (n < 0)
             {
               debug("Receive error");
@@ -1429,7 +1415,6 @@ namespace Control
             }
 
             now = Clock::get();
-
 
             for (int i = 0; i < n; i++)
             {
@@ -1893,7 +1878,7 @@ namespace Control
                   receive(&cl);
                 }
                 break;
-              case 10:
+              case PL_MODE_AUTO:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
                 mode.mode = "AUTO";
                 trace("AUTO");
@@ -1909,21 +1894,21 @@ namespace Control
                 if (m_service)
                   loiterHere();
                 break;
-              case 12:
+              case PL_MODE_LOITER:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
                 mode.mode = "LOITER";
                 trace("LOITER");
                 m_external = false;
                 m_critical = false;
                 break;
-              case 6:
+              case PL_MODE_FBWB:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
                 mode.mode = "FBWB";
                 trace("FBWB");
                 m_external = false;
                 m_critical = false;
                 break;
-              case 15:
+              case PL_MODE_GUIDED:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
                 mode.mode = "GUIDED";
                 trace("GUIDED");
@@ -2072,7 +2057,6 @@ namespace Control
 
           IMC::IndicatedSpeed ias;
           IMC::TrueSpeed gs;
-
 
           ias.value = (fp64_t)vfr_hud.airspeed;
           gs.value = (fp64_t)vfr_hud.groundspeed;
