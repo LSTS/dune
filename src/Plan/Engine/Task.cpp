@@ -64,6 +64,26 @@ namespace Plan
       DB_TOTAL
     };
 
+    enum EngineState
+    {
+      //! Starts in boot as long as vehicle is in boot
+      ST_BOOT = 0,
+      //! Becomes ready to await commands
+      ST_READY,
+      //! Stopping a plan
+      ST_STOPPING,
+      //! Starting activation
+      ST_START_ACTIV,
+      //! Activating
+      ST_ACTIVATING,
+      //! Starting execution
+      ST_START_EXEC,
+      //! Executing
+      ST_EXECUTING,
+      //! Blocked
+      ST_BLOCKED
+    };
+
     struct Arguments
     {
       //! Whether or not to compute plan's progress
@@ -331,50 +351,50 @@ namespace Plan
       void
       consume(const IMC::EntityActivationState* msg)
       {
-        if (m_plan != NULL)
-        {
-          std::string id;
-
-          try
-          {
-            id = resolveEntity(msg->getSourceEntity());
-          }
-          catch (...)
-          {
-            return;
-          }
-
-          if (!m_plan->onEntityActivationState(id, msg))
-          {
-            std::string error = String::str(DTR("failed to activate %s: %s"),
-                                            id.c_str(), msg->error.c_str());
-
-            if (m_args.actfail_abort)
-            {
-              onFailure(error);
-
-              // stop calibration if any is running
-              if (initMode() && !pendingReply())
-              {
-                vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
-                m_reply.plan_id = m_spec.plan_id;
-              }
-
-              changeMode(IMC::PlanControlState::PCS_READY, error, false);
-            }
-            else
-            {
-              err("%s", error.c_str());
-            }
-          }
-        }
-
         if (msg->getSourceEntity() == m_eid_imu)
         {
           if (msg->state == IMC::EntityActivationState::EAS_ACTIVE)
             m_imu_enabled = true;
           else
             m_imu_enabled = false;
+        }
+
+        if (m_plan == NULL)
+          return;
+
+        std::string id;
+
+        try
+        {
+          id = resolveEntity(msg->getSourceEntity());
+        }
+        catch (...)
+        {
+          return;
+        }
+
+        if (!m_plan->onEntityActivationState(id, msg))
+        {
+          std::string error = String::str(DTR("failed to activate %s: %s"),
+                                          id.c_str(), msg->error.c_str());
+
+          if (m_args.actfail_abort)
+          {
+            onFailure(error);
+
+            // stop calibration if any is running
+            if (initMode() && !pendingReply())
+            {
+              vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
+              m_reply.plan_id = m_spec.plan_id;
+            }
+
+            changeMode(IMC::PlanControlState::PCS_READY, error, false);
+          }
+          else
+          {
+            err("%s", error.c_str());
+          }
         }
       }
 
