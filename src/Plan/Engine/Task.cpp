@@ -52,7 +52,7 @@ namespace Plan
                                   DTR_RT("INITIALIZING"), DTR_RT("EXECUTING")};
     //! DataBase statement
     static const char* c_get_stmt[] = {"select data from Plan where plan_id=?",
-                                          "select data from Memento where id=?"};
+                                       "select data from Memento where id=?"};
 
     enum DBStatement
     {
