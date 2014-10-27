@@ -56,7 +56,7 @@ typedef enum MAV_AUTOPILOT
 	MAV_AUTOPILOT_AUTOQUAD=14, /* AutoQuad -- http://autoquad.org | */
 	MAV_AUTOPILOT_ARMAZILA=15, /* Armazila -- http://armazila.com | */
 	MAV_AUTOPILOT_AEROB=16, /* Aerob -- http://aerob.ru | */
-	MAV_AUTOPILOT_ENUM_END=17, /*  | */
+	MAV_AUTOPILOT_ENUM_END=17 /*  | */
 } MAV_AUTOPILOT;
 #endif
 
@@ -86,7 +86,7 @@ typedef enum MAV_TYPE
 	MAV_TYPE_ONBOARD_CONTROLLER=18, /* Onboard companion controller | */
 	MAV_TYPE_VTOL_DUOROTOR=19, /* Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter. | */
 	MAV_TYPE_VTOL_QUADROTOR=20, /* Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter. | */
-	MAV_TYPE_ENUM_END=21, /*  | */
+	MAV_TYPE_ENUM_END=21 /*  | */
 } MAV_TYPE;
 #endif
 
@@ -103,7 +103,7 @@ typedef enum MAV_MODE_FLAG
 	MAV_MODE_FLAG_HIL_ENABLED=32, /* 0b00100000 hardware in the loop simulation. All motors / actuators are blocked, but internal software is full operational. | */
 	MAV_MODE_FLAG_MANUAL_INPUT_ENABLED=64, /* 0b01000000 remote control input is enabled. | */
 	MAV_MODE_FLAG_SAFETY_ARMED=128, /* 0b10000000 MAV safety set to armed. Motors are enabled / running / can start. Ready to fly. | */
-	MAV_MODE_FLAG_ENUM_END=129, /*  | */
+	MAV_MODE_FLAG_ENUM_END=129 /*  | */
 } MAV_MODE_FLAG;
 #endif
 
@@ -120,7 +120,7 @@ typedef enum MAV_MODE_FLAG_DECODE_POSITION
 	MAV_MODE_FLAG_DECODE_POSITION_HIL=32, /* Third bit:  00100000 | */
 	MAV_MODE_FLAG_DECODE_POSITION_MANUAL=64, /* Second bit: 01000000 | */
 	MAV_MODE_FLAG_DECODE_POSITION_SAFETY=128, /* First bit:  10000000 | */
-	MAV_MODE_FLAG_DECODE_POSITION_ENUM_END=129, /*  | */
+	MAV_MODE_FLAG_DECODE_POSITION_ENUM_END=129 /*  | */
 } MAV_MODE_FLAG_DECODE_POSITION;
 #endif
 
@@ -133,7 +133,7 @@ typedef enum MAV_GOTO
 	MAV_GOTO_DO_CONTINUE=1, /* Continue with the next item in mission execution. | */
 	MAV_GOTO_HOLD_AT_CURRENT_POSITION=2, /* Hold at the current position of the system | */
 	MAV_GOTO_HOLD_AT_SPECIFIED_POSITION=3, /* Hold at the position specified in the parameters of the DO_HOLD action | */
-	MAV_GOTO_ENUM_END=4, /*  | */
+	MAV_GOTO_ENUM_END=4 /*  | */
 } MAV_GOTO;
 #endif
 
@@ -154,7 +154,7 @@ typedef enum MAV_MODE
 	MAV_MODE_STABILIZE_ARMED=208, /* System is allowed to be active, under assisted RC control. | */
 	MAV_MODE_GUIDED_ARMED=216, /* System is allowed to be active, under autonomous control, manual setpoint | */
 	MAV_MODE_AUTO_ARMED=220, /* System is allowed to be active, under autonomous control and navigation (the trajectory is decided onboard and not pre-programmed by MISSIONs) | */
-	MAV_MODE_ENUM_END=221, /*  | */
+	MAV_MODE_ENUM_END=221 /*  | */
 } MAV_MODE;
 #endif
 
@@ -171,7 +171,7 @@ typedef enum MAV_STATE
 	MAV_STATE_CRITICAL=5, /* System is in a non-normal flight mode. It can however still navigate. | */
 	MAV_STATE_EMERGENCY=6, /* System is in a non-normal flight mode. It lost control over parts or over the whole airframe. It is in mayday and going down. | */
 	MAV_STATE_POWEROFF=7, /* System just initialized its power-down sequence, will shut down now. | */
-	MAV_STATE_ENUM_END=8, /*  | */
+	MAV_STATE_ENUM_END=8 /*  | */
 } MAV_STATE;
 #endif
 
@@ -206,7 +206,7 @@ typedef enum MAV_COMPONENT
 	MAV_COMP_ID_UDP_BRIDGE=240, /*  | */
 	MAV_COMP_ID_UART_BRIDGE=241, /*  | */
 	MAV_COMP_ID_SYSTEM_CONTROL=250, /*  | */
-	MAV_COMPONENT_ENUM_END=251, /*  | */
+	MAV_COMPONENT_ENUM_END=251 /*  | */
 } MAV_COMPONENT;
 #endif
 
@@ -238,7 +238,7 @@ typedef enum MAV_SYS_STATUS_SENSOR
 	MAV_SYS_STATUS_GEOFENCE=1048576, /* 0x100000 geofence | */
 	MAV_SYS_STATUS_AHRS=2097152, /* 0x200000 AHRS subsystem health | */
 	MAV_SYS_STATUS_TERRAIN=4194304, /* 0x400000 Terrain subsystem health | */
-	MAV_SYS_STATUS_SENSOR_ENUM_END=4194305, /*  | */
+	MAV_SYS_STATUS_SENSOR_ENUM_END=4194305 /*  | */
 } MAV_SYS_STATUS_SENSOR;
 #endif
 
@@ -256,7 +256,7 @@ typedef enum MAV_FRAME
 	MAV_FRAME_BODY_NED=8, /* Setpoint in body NED frame. This makes sense if all position control is externalized - e.g. useful to command 2 m/s^2 acceleration to the right. | */
 	MAV_FRAME_BODY_OFFSET_NED=9, /* Offset in body NED frame. This makes sense if adding setpoints to the current flight path, to avoid an obstacle - e.g. useful to command 2 m/s^2 acceleration to the east. | */
 	MAV_FRAME_GLOBAL_TERRAIN_ALT=10, /* Global coordinate frame with above terrain level altitude. WGS84 coordinate system, relative altitude over terrain with respect to the waypoint coordinate. First value / x: latitude in degrees, second value / y: longitude in degrees, third value / z: positive altitude in meters with 0 being at ground level in terrain model. | */
-	MAV_FRAME_ENUM_END=11, /*  | */
+	MAV_FRAME_ENUM_END=11 /*  | */
 } MAV_FRAME;
 #endif
 
@@ -271,7 +271,7 @@ typedef enum MAVLINK_DATA_STREAM_TYPE
 	MAVLINK_DATA_STREAM_IMG_RAW32U=4, /*  | */
 	MAVLINK_DATA_STREAM_IMG_PGM=5, /*  | */
 	MAVLINK_DATA_STREAM_IMG_PNG=6, /*  | */
-	MAVLINK_DATA_STREAM_TYPE_ENUM_END=7, /*  | */
+	MAVLINK_DATA_STREAM_TYPE_ENUM_END=7 /*  | */
 } MAVLINK_DATA_STREAM_TYPE;
 #endif
 
@@ -284,7 +284,7 @@ typedef enum FENCE_ACTION
 	FENCE_ACTION_GUIDED=1, /* Switched to guided mode to return point (fence point 0) | */
 	FENCE_ACTION_REPORT=2, /* Report fence breach, but don't take action | */
 	FENCE_ACTION_GUIDED_THR_PASS=3, /* Switched to guided mode to return point (fence point 0) with manual throttle control | */
-	FENCE_ACTION_ENUM_END=4, /*  | */
+	FENCE_ACTION_ENUM_END=4 /*  | */
 } FENCE_ACTION;
 #endif
 
@@ -297,7 +297,7 @@ typedef enum FENCE_BREACH
 	FENCE_BREACH_MINALT=1, /* Breached minimum altitude | */
 	FENCE_BREACH_MAXALT=2, /* Breached maximum altitude | */
 	FENCE_BREACH_BOUNDARY=3, /* Breached fence boundary | */
-	FENCE_BREACH_ENUM_END=4, /*  | */
+	FENCE_BREACH_ENUM_END=4 /*  | */
 } FENCE_BREACH;
 #endif
 
@@ -311,7 +311,7 @@ typedef enum MAV_MOUNT_MODE
 	MAV_MOUNT_MODE_MAVLINK_TARGETING=2, /* Load neutral position and start MAVLink Roll,Pitch,Yaw control with stabilization | */
 	MAV_MOUNT_MODE_RC_TARGETING=3, /* Load neutral position and start RC Roll,Pitch,Yaw control with stabilization | */
 	MAV_MOUNT_MODE_GPS_POINT=4, /* Load neutral position and start to point to Lat,Lon,Alt | */
-	MAV_MOUNT_MODE_ENUM_END=5, /*  | */
+	MAV_MOUNT_MODE_ENUM_END=5 /*  | */
 } MAV_MOUNT_MODE;
 #endif
 
@@ -331,7 +331,7 @@ typedef enum MAV_DATA_STREAM
 	MAV_DATA_STREAM_EXTRA1=10, /* Dependent on the autopilot | */
 	MAV_DATA_STREAM_EXTRA2=11, /* Dependent on the autopilot | */
 	MAV_DATA_STREAM_EXTRA3=12, /* Dependent on the autopilot | */
-	MAV_DATA_STREAM_ENUM_END=13, /*  | */
+	MAV_DATA_STREAM_ENUM_END=13 /*  | */
 } MAV_DATA_STREAM;
 #endif
 
@@ -347,7 +347,7 @@ typedef enum MAV_ROI
 	MAV_ROI_WPINDEX=2, /* Point toward given MISSION. | */
 	MAV_ROI_LOCATION=3, /* Point toward fixed location. | */
 	MAV_ROI_TARGET=4, /* Point toward of given id. | */
-	MAV_ROI_ENUM_END=5, /*  | */
+	MAV_ROI_ENUM_END=5 /*  | */
 } MAV_ROI;
 #endif
 
@@ -365,7 +365,7 @@ typedef enum MAV_CMD_ACK
 	MAV_CMD_ACK_ERR_X_LAT_OUT_OF_RANGE=7, /* The X or latitude value is out of range. | */
 	MAV_CMD_ACK_ERR_Y_LON_OUT_OF_RANGE=8, /* The Y or longitude value is out of range. | */
 	MAV_CMD_ACK_ERR_Z_ALT_OUT_OF_RANGE=9, /* The Z or altitude value is out of range. | */
-	MAV_CMD_ACK_ENUM_END=10, /*  | */
+	MAV_CMD_ACK_ENUM_END=10 /*  | */
 } MAV_CMD_ACK;
 #endif
 
@@ -384,7 +384,7 @@ typedef enum MAV_PARAM_TYPE
 	MAV_PARAM_TYPE_INT64=8, /* 64-bit signed integer | */
 	MAV_PARAM_TYPE_REAL32=9, /* 32-bit floating-point | */
 	MAV_PARAM_TYPE_REAL64=10, /* 64-bit floating-point | */
-	MAV_PARAM_TYPE_ENUM_END=11, /*  | */
+	MAV_PARAM_TYPE_ENUM_END=11 /*  | */
 } MAV_PARAM_TYPE;
 #endif
 
@@ -398,7 +398,7 @@ typedef enum MAV_RESULT
 	MAV_RESULT_DENIED=2, /* Command PERMANENTLY DENIED | */
 	MAV_RESULT_UNSUPPORTED=3, /* Command UNKNOWN/UNSUPPORTED | */
 	MAV_RESULT_FAILED=4, /* Command executed, but failed | */
-	MAV_RESULT_ENUM_END=5, /*  | */
+	MAV_RESULT_ENUM_END=5 /*  | */
 } MAV_RESULT;
 #endif
 
@@ -422,7 +422,7 @@ typedef enum MAV_MISSION_RESULT
 	MAV_MISSION_INVALID_PARAM7=12, /* param7 has an invalid value | */
 	MAV_MISSION_INVALID_SEQUENCE=13, /* received waypoint out of sequence | */
 	MAV_MISSION_DENIED=14, /* not accepting any mission commands from this communication partner | */
-	MAV_MISSION_RESULT_ENUM_END=15, /*  | */
+	MAV_MISSION_RESULT_ENUM_END=15 /*  | */
 } MAV_MISSION_RESULT;
 #endif
 
@@ -439,7 +439,7 @@ typedef enum MAV_SEVERITY
 	MAV_SEVERITY_NOTICE=5, /* An unusual event has occured, though not an error condition. This should be investigated for the root cause. | */
 	MAV_SEVERITY_INFO=6, /* Normal operational messages. Useful for logging. No action is required for these messages. | */
 	MAV_SEVERITY_DEBUG=7, /* Useful non-operational messages that can assist in debugging. These should not occur during normal operation. | */
-	MAV_SEVERITY_ENUM_END=8, /*  | */
+	MAV_SEVERITY_ENUM_END=8 /*  | */
 } MAV_SEVERITY;
 #endif
 
@@ -454,7 +454,7 @@ typedef enum MAV_POWER_STATUS
 	MAV_POWER_STATUS_PERIPH_OVERCURRENT=8, /* peripheral supply is in over-current state | */
 	MAV_POWER_STATUS_PERIPH_HIPOWER_OVERCURRENT=16, /* hi-power peripheral supply is in over-current state | */
 	MAV_POWER_STATUS_CHANGED=32, /* Power status has changed since boot | */
-	MAV_POWER_STATUS_ENUM_END=33, /*  | */
+	MAV_POWER_STATUS_ENUM_END=33 /*  | */
 } MAV_POWER_STATUS;
 #endif
 
@@ -467,7 +467,7 @@ typedef enum SERIAL_CONTROL_DEV
 	SERIAL_CONTROL_DEV_TELEM2=1, /* Second telemetry port | */
 	SERIAL_CONTROL_DEV_GPS1=2, /* First GPS port | */
 	SERIAL_CONTROL_DEV_GPS2=3, /* Second GPS port | */
-	SERIAL_CONTROL_DEV_ENUM_END=4, /*  | */
+	SERIAL_CONTROL_DEV_ENUM_END=4 /*  | */
 } SERIAL_CONTROL_DEV;
 #endif
 
@@ -481,7 +481,7 @@ typedef enum SERIAL_CONTROL_FLAG
 	SERIAL_CONTROL_FLAG_EXCLUSIVE=4, /* Set if access to the serial port should be removed from whatever driver is currently using it, giving exclusive access to the SERIAL_CONTROL protocol. The port can be handed back by sending a request without this flag set | */
 	SERIAL_CONTROL_FLAG_BLOCKING=8, /* Block on writes to the serial port | */
 	SERIAL_CONTROL_FLAG_MULTI=16, /* Send multiple replies until port is drained | */
-	SERIAL_CONTROL_FLAG_ENUM_END=17, /*  | */
+	SERIAL_CONTROL_FLAG_ENUM_END=17 /*  | */
 } SERIAL_CONTROL_FLAG;
 #endif
 
@@ -492,7 +492,7 @@ typedef enum MAV_DISTANCE_SENSOR
 {
 	MAV_DISTANCE_SENSOR_LASER=0, /* Laser altimeter, e.g. LightWare SF02/F or PulsedLight units | */
 	MAV_DISTANCE_SENSOR_ULTRASOUND=1, /* Ultrasound altimeter, e.g. MaxBotix units | */
-	MAV_DISTANCE_SENSOR_ENUM_END=2, /*  | */
+	MAV_DISTANCE_SENSOR_ENUM_END=2 /*  | */
 } MAV_DISTANCE_SENSOR;
 #endif
 
@@ -511,7 +511,7 @@ typedef enum MAV_PROTOCOL_CAPABILITY
 	MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_LOCAL_NED=128, /* Autopilot supports commanding position and velocity targets in local NED frame. | */
 	MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT=256, /* Autopilot supports commanding position and velocity targets in global scaled integers. | */
 	MAV_PROTOCOL_CAPABILITY_TERRAIN=512, /* Autopilot supports terrain protocol / data handling. | */
-	MAV_PROTOCOL_CAPABILITY_ENUM_END=513, /*  | */
+	MAV_PROTOCOL_CAPABILITY_ENUM_END=513 /*  | */
 } MAV_PROTOCOL_CAPABILITY;
 #endif
 
@@ -525,7 +525,7 @@ typedef enum MAV_ESTIMATOR_TYPE
 	MAV_ESTIMATOR_TYPE_VIO=3, /* Visual-inertial estimate. | */
 	MAV_ESTIMATOR_TYPE_GPS=4, /* Plain GPS estimate. | */
 	MAV_ESTIMATOR_TYPE_GPS_INS=5, /* Estimator integrating GPS and inertial sensing. | */
-	MAV_ESTIMATOR_TYPE_ENUM_END=6, /*  | */
+	MAV_ESTIMATOR_TYPE_ENUM_END=6 /*  | */
 } MAV_ESTIMATOR_TYPE;
 #endif
 
@@ -539,7 +539,7 @@ typedef enum MAV_BATTERY_TYPE
 	MAV_BATTERY_TYPE_LIFE=2, /* Lithium ferrite battery | */
 	MAV_BATTERY_TYPE_LION=3, /* Lithium-ION battery | */
 	MAV_BATTERY_TYPE_NIMH=4, /* Nickel metal hydride battery | */
-	MAV_BATTERY_TYPE_ENUM_END=5, /*  | */
+	MAV_BATTERY_TYPE_ENUM_END=5 /*  | */
 } MAV_BATTERY_TYPE;
 #endif
 
@@ -553,7 +553,7 @@ typedef enum MAV_BATTERY_FUNCTION
 	MAV_BATTERY_FUNCTION_PROPULSION=2, /* Battery for the propulsion system | */
 	MAV_BATTERY_FUNCTION_AVIONICS=3, /* Avionics battery | */
 	MAV_BATTERY_TYPE_PAYLOAD=4, /* Payload battery | */
-	MAV_BATTERY_FUNCTION_ENUM_END=5, /*  | */
+	MAV_BATTERY_FUNCTION_ENUM_END=5 /*  | */
 } MAV_BATTERY_FUNCTION;
 #endif
 
