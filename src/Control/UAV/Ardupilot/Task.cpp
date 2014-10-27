@@ -47,7 +47,7 @@ namespace Control
     {
       using DUNE_NAMESPACES;
 
-      //! APM Type specifier
+      //! APM Type specifier.
       enum APM_Vehicle
       {
         //! Unset or unknown vehicle type
@@ -58,7 +58,7 @@ namespace Control
         VEHICLE_COPTER
       };
 
-      //! List of Arducopter Modes
+      //! List of Arducopter Modes.
       enum APM_copterModes
       {
         CP_MODE_STABILIZE = 0,                     // hold level position
@@ -77,7 +77,7 @@ namespace Control
         CP_MODE_SPORT = 13                         // earth frame rate control
       };
 
-      //! List of ArduPlane modes
+      //! List of ArduPlane modes.
       enum APM_planeModes
       {
         PL_MODE_FBWB = 6,
@@ -86,6 +86,7 @@ namespace Control
         PL_MODE_GUIDED = 15
       };
 
+      //! Radio Channel structure.
       struct RadioChannel
       {
         //! PWM range
@@ -138,9 +139,10 @@ namespace Control
       {
         //! Task arguments.
         Arguments m_args;
-        //! Arduino packet handling
+        //! Type definition for Arduino packet handler.
         typedef void (Task::* PktHandler)(const mavlink_message_t* msg);
         typedef std::map<int, PktHandler> PktHandlerMap;
+        //! Arduino packet handling
         PktHandlerMap m_mlh;
         double m_last_pkt_time;
         uint8_t m_buf[512];
@@ -158,12 +160,6 @@ namespace Control
         IMC::GpsFix m_fix;
         //! Wind message
         IMC::EstimatedStreamVelocity m_stream;
-        //! IMU messages
-        IMC::AngularVelocity m_ang_vel;
-        IMC::Acceleration m_accel;
-        IMC::MagneticField m_mag_field;
-        //! Servo PWM message
-        IMC::SetServoPosition m_servo;
         //! Path Control State
         IMC::PathControlState m_pcs;
         //! DesiredPath message
