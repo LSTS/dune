@@ -115,7 +115,7 @@ namespace Supervisors
         void
         consume(const IMC::PlanControlState* msg)
         {
-          m_in_mission = (msg->state & IMC::PlanControlState::PCS_EXECUTING) != 0;
+          m_in_mission = (msg->state == IMC::PlanControlState::PCS_EXECUTING);
           m_in_lc = (std::strcmp(msg->plan_id.c_str(), m_args.plan.c_str()) == 0);
         }
 
