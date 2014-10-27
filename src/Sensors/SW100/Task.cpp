@@ -156,7 +156,7 @@ namespace Sensors
       bool
       ableToCalibrate(void)
       {
-        return (m_at_surface && m_maneuvering);
+        return (m_at_surface && !m_maneuvering);
       }
 
       void
