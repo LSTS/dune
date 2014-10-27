@@ -60,15 +60,13 @@ namespace Supervisors
     {
       //! Relevant entities when performing a safe plan.
       std::vector<std::string> safe_ents;
-      //! Allow external control
-      bool ext_control;
       //! Timeout for starting or stopping a maneuver
       double handle_timeout;
     };
 
     struct Task: public DUNE::Tasks::Periodic
     {
-      //! Timer to wait for calibration and maneuver requests.
+      //! Timer to wait for maneuver requests.
       float m_switch_time;
       //! Currently performing a safe plan.
       bool m_in_safe_plan;
@@ -94,8 +92,6 @@ namespace Supervisors
       Time::Counter<float> m_loops_timer;
       //! Maneuver handler
       ManeuverSupervisor* m_man_sup;
-      //! A timeout for calibration state
-      float m_calib_timeout;
       //! Task arguments.
       Arguments m_args;
 
@@ -109,10 +105,6 @@ namespace Supervisors
         param("Safe Entities", m_args.safe_ents)
         .defaultValue("")
         .description("Relevant entities when performing a safe plan");
-
-        param("Allows External Control", m_args.ext_control)
-        .defaultValue("true")
-        .description("Allow for the vehicle to be externally controlled");
 
         param("Maneuver Handling Timeout", m_args.handle_timeout)
         .defaultValue("1.0")
@@ -216,7 +208,7 @@ namespace Supervisors
           }
         }
 
-        if (maneuverMode() || (calibrationMode() && maneuver))
+        if (maneuverMode())
         {
           // original entity ID is the Plan.Engine's
           maneuver->setSourceEntity(getEntityId());
@@ -258,10 +250,7 @@ namespace Supervisors
             break;
           case IMC::VehicleState::VS_ERROR:
           case IMC::VehicleState::VS_BOOT:
-            if (nonOverridableLoops())
-              changeMode(IMC::VehicleState::VS_EXTERNAL);
-            else
-              reset();  // try to disable the control loops
+            reset();  // try to disable the control loops
             break;
           default:
             break; // ignore
@@ -272,10 +261,6 @@ namespace Supervisors
       onDisabledControlLoops(void)
       {
         debug("no control loops are enabled now");
-
-        if (externalMode())
-          changeMode(IMC::VehicleState::VS_SERVICE);
-
         // ignore otherwise
       }
 
@@ -370,10 +355,10 @@ namespace Supervisors
           return;
         }
 
-        // External/maneuver mode
-        if (externalMode() || maneuverMode())
+        // Maneuver mode
+        if (maneuverMode())
         {
-          if (entityError() && !nonOverridableLoops() && !teleoperationOn())
+          if (entityError() && !teleoperationOn())
           {
             reset();
             changeMode(IMC::VehicleState::VS_ERROR);
@@ -382,7 +367,7 @@ namespace Supervisors
         }
 
         // Otherwise (SERVICE, MANEUVER modes)
-        if (entityError() && !calibrationMode())
+        if (entityError())
         {
           reset();
           changeMode(IMC::VehicleState::VS_ERROR);
@@ -478,64 +463,6 @@ namespace Supervisors
       }
 
       void
-      startCalibration(const IMC::VehicleCommand* msg)
-      {
-        if (externalMode())
-        {
-          requestFailed(msg, DTR("cannot calibrate: vehicle is in external mode"));
-          return;
-        }
-
-        if (maneuverMode())
-          reset();
-
-        const IMC::Message* m = 0;
-
-        if (!msg->maneuver.isNull())
-        {
-          m = msg->maneuver.get();
-
-          m_man_sup->addStop();
-          IMC::Message* clone = m->clone();
-          changeMode(IMC::VehicleState::VS_CALIBRATION, clone);
-          delete clone;
-
-          inf(DTR("performing maneuver %s while calibrating"), m->getName());
-        }
-        else
-        {
-          changeMode(IMC::VehicleState::VS_CALIBRATION);
-        }
-
-        requestOK(msg, String::str(DTR("calibrating vehicle for %u seconds"),
-                                   msg->calib_time));
-
-        IMC::Calibration calib;
-        calib.duration = msg->calib_time;
-        dispatch(calib);
-
-        // Make the timeout 1.5 times larger than the requested time
-        // And do not consider calibration times longer than 15 seconds
-        m_calib_timeout = 1.5 * std::max((uint16_t)15, msg->calib_time);
-        m_switch_time = Clock::get();
-      }
-
-      void
-      stopCalibration(const IMC::VehicleCommand* msg)
-      {
-        if (!calibrationMode())
-        {
-          requestOK(msg, DTR("cannot stop calibration: vehicle is not calibrating"));
-          return;
-        }
-
-        requestOK(msg, DTR("stopped calibration"));
-
-        debug("calibration over");
-        changeMode(IMC::VehicleState::VS_SERVICE);
-      }
-
-      void
       startManeuver(const IMC::VehicleCommand* msg)
       {
         const IMC::Message* m = 0;
@@ -551,12 +478,6 @@ namespace Supervisors
 
         std::string mtype = m->getName();
 
-        if (externalMode())
-        {
-          requestFailed(msg, mtype + DTR(" maneuver cannot be started in current mode"));
-          return;
-        }
-
         m_man_sup->addStop();
         IMC::Message* clone = m->clone();
         changeMode(IMC::VehicleState::VS_MANEUVER, clone);
@@ -571,9 +492,7 @@ namespace Supervisors
         if (!errorMode() && !bootMode())
         {
           reset();
-
-          if (!externalMode() || !nonOverridableLoops())
-            changeMode(abort ? IMC::VehicleState::VS_ERROR : IMC::VehicleState::VS_SERVICE);
+          changeMode(abort ? IMC::VehicleState::VS_ERROR : IMC::VehicleState::VS_SERVICE);
         }
       }
 
@@ -595,11 +514,7 @@ namespace Supervisors
             stopManeuver();
             requestOK(cmd, DTR("OK"));
             break;
-          case IMC::VehicleCommand::VC_START_CALIBRATION:
-            startCalibration(cmd);
-            break;
-          case IMC::VehicleCommand::VC_STOP_CALIBRATION:
-            stopCalibration(cmd);
+          default:
             break;
         }
       }
@@ -620,12 +535,9 @@ namespace Supervisors
         dispatch(m_vs);
 
         if (serviceMode() && m_vs.control_loops && m_loops_timer.overflow())
-          changeMode(IMC::VehicleState::VS_EXTERNAL);
-
-        if (!m_args.ext_control && externalMode())
         {
-          err(DTR("this vehicle does not allow for external control, disabling loops"));
-          disableLoops();
+          reset();
+          return;
         }
 
         m_man_sup->update();
@@ -640,11 +552,6 @@ namespace Supervisors
         if (maneuverMode() && (delta > c_man_timeout))
         {
           inf(DTR("maneuver request timeout"));
-          timedout = true;
-        }
-        else if (calibrationMode() && (delta > m_calib_timeout))
-        {
-          inf(DTR("calibration timed out"));
           timedout = true;
         }
 
@@ -701,18 +608,6 @@ namespace Supervisors
       }
 
       inline bool
-      externalMode(void) const
-      {
-        return modeIs(IMC::VehicleState::VS_EXTERNAL);
-      }
-
-      inline bool
-      calibrationMode(void) const
-      {
-        return modeIs(IMC::VehicleState::VS_CALIBRATION);
-      }
-
-      inline bool
       bootMode(void) const
       {
         return modeIs(IMC::VehicleState::VS_BOOT);
@@ -734,12 +629,6 @@ namespace Supervisors
       maneuverIs(uint16_t id) const
       {
         return m_vs.maneuver_type == id;
-      }
-
-      inline bool
-      nonOverridableLoops(void) const
-      {
-        return (m_vs.control_loops & (IMC::CL_TELEOPERATION | IMC::CL_NO_OVERRIDE)) != 0;
       }
     };
   }
