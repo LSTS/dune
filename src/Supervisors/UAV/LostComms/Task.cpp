@@ -124,7 +124,6 @@ namespace Supervisors
         {
           m_tout_heartbeat.reset();
           m_tout_mission.reset();
-          war("resetting timers");
         }
 
         void
@@ -138,7 +137,6 @@ namespace Supervisors
 
           dispatch(p_control);
           resetTimers();
-          war("start lost comms");
         }
 
         void
