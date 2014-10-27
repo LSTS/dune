@@ -54,7 +54,7 @@ namespace Plan
 
     enum EngineState
     {
-      //! Starts in boot as long as vehicle is in boot
+      //! Starts in boot waiting for DB
       ST_BOOT = 0,
       //! Becomes ready to await commands
       ST_READY,
@@ -135,6 +135,10 @@ namespace Plan
       uint32_t m_plan_ref;
       //! Object that will handle the memento messages
       MementoHandler m_mh;
+      //! State of the state machine
+      EngineState m_sm;
+      //! Next state for the machine
+      EngineState m_next_sm;
       //! Task arguments.
       Arguments m_args;
 
@@ -142,7 +146,9 @@ namespace Plan
         DUNE::Tasks::Task(name, ctx),
         m_plan(NULL),
         m_imu_enabled(false),
-        m_plan_ref(0)
+        m_plan_ref(0),
+        m_sm(ST_BOOT),
+        m_next_sm(ST_BOOT)
       {
         param("Compute Progress", m_args.progress)
         .defaultValue("false")
@@ -390,12 +396,12 @@ namespace Plan
         if (vc->type == IMC::VehicleCommand::VC_REQUEST)
           return;
 
+        if (!pendingReply())
+          return;
+
         if ((vc->getDestination() != getSystemId()) ||
             (vc->getDestinationEntity() != getEntityId()) ||
             (m_vreq_ctr != vc->request_id))
-          return;
-
-        if (!pendingReply())
           return;
 
         m_vc_reply_deadline = -1;
@@ -429,18 +435,12 @@ namespace Plan
           case IMC::VehicleState::VS_SERVICE:
             onVehicleService(vs);
             break;
-          case IMC::VehicleState::VS_CALIBRATION:
-            onVehicleCalibration(vs);
-            break;
           case IMC::VehicleState::VS_ERROR:
           case IMC::VehicleState::VS_BOOT:
             onVehicleError(vs);
             break;
           case IMC::VehicleState::VS_MANEUVER:
             onVehicleManeuver(vs);
-            break;
-          case IMC::VehicleState::VS_EXTERNAL:
-            onVehicleExternalControl(vs);
             break;
         }
 
@@ -550,33 +550,6 @@ namespace Plan
 
           changeMode(IMC::PlanControlState::PCS_BLOCKED, edesc, false);
         }
-      }
-
-      void
-      onVehicleCalibration(const IMC::VehicleState* vs)
-      {
-        (void)vs;
-
-        if (initMode())
-          return;
-
-        if (!blockedMode())
-        {
-          changeMode(IMC::PlanControlState::PCS_BLOCKED,
-                     DTR("vehicle in CALIBRATION mode"), false);
-        }
-      }
-
-      void
-      onVehicleExternalControl(const IMC::VehicleState* vs)
-      {
-        (void)vs;
-
-        if (blockedMode())
-          return;
-
-        changeMode(IMC::PlanControlState::PCS_BLOCKED,
-                   DTR("vehicle in EXTERNAL mode"), false);
       }
 
       void
@@ -972,6 +945,7 @@ namespace Plan
         IMC::Message* m = 0;
 
         IMC::StationKeeping sk;
+        IMC::IdleManeuver idle;
 
         if (m_args.sk_calib)
         {
@@ -983,8 +957,13 @@ namespace Plan
           sk.speed = m_args.sk_rpm;
           m = static_cast<IMC::Message*>(&sk);
         }
+        else
+        {
+          idle.duration = 0; // TODO USE MAX VALUE HERE
+          m = static_cast<IMC::Message*>(&idle);
+        }
 
-        vehicleRequest(IMC::VehicleCommand::VC_START_CALIBRATION, m);
+        vehicleRequest(IMC::VehicleCommand::VC_EXEC_MANEUVER, m);
         return true;
       }
 
