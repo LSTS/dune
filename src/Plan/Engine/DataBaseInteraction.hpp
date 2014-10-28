@@ -58,7 +58,8 @@ namespace Plan
       //! Constructor
       DataBaseInteraction(DUNE::Tasks::Task* task, const Path& db_file):
         m_task(task),
-        m_db_file(db_file)
+        m_db_file(db_file),
+        m_error(false)
       {
         for (unsigned i = 0; i < DB_TOTAL; i++)
           m_get_stmt[i] = NULL;
@@ -101,22 +102,23 @@ namespace Plan
         catch (std::runtime_error& e)
         {
           m_task->err("failed to open DB: %s", e.what());
+          m_error = true;
           return false;
         }
 
+        m_error = false;
         return true;
       }
 
       //! Consuming PlanDB
       //! @param[in] pdb pointer to PlanDB message
-      //! @return false if something is wrong with the DB, true otherwise
-      bool
+      void
       onPlanDB(const IMC::PlanDB* pdb)
       {
         if ((pdb->op == IMC::PlanDB::DBOP_BOOT) &&
             pdb->type == IMC::PlanDB::DBT_SUCCESS)
         {
-          return open();
+          open();
         }
         else if (pdb->op != IMC::PlanDB::DBT_REQUEST)
         {
@@ -130,8 +132,6 @@ namespace Plan
               m_task->err(DTR("got error on request to: %s"), pdb->object_id.c_str());
           }
         }
-
-        return true;
       }
 
       //! Send plan or memento to DB
@@ -177,6 +177,22 @@ namespace Plan
       searchInDB(const std::string& id, IMC::PlanMemento& pmem, std::string& info)
       {
         return searchInDB(id, DB_MEMENTO, pmem, info);
+      }
+
+      //! Check if DB is open
+      //! @return true if open
+      bool
+      isOpen(void)
+      {
+        return (m_conn != NULL);
+      }
+
+      //! Check if DB is in error
+      //! @return true if in error
+      bool
+      inError(void)
+      {
+        return m_error;
       }
       
     private:
@@ -249,6 +265,8 @@ namespace Plan
       DUNE::Tasks::Task* m_task;
       //! Path to db file
       Path m_db_file;
+      //! True if in error
+      bool m_error;
     };
   }
 }
