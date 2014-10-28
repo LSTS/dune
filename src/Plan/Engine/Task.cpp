@@ -145,6 +145,8 @@ namespace Plan
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_plan(NULL),
+        m_db(NULL),
+        m_ccu(NULL),
         m_imu_enabled(false),
         m_plan_ref(0),
         m_sm(ST_BOOT),
@@ -236,6 +238,7 @@ namespace Plan
                           this, m_args.calibration_time, &m_ctx.config);
 
         m_db = new DataBaseInteraction(this, m_ctx.dir_db / "Plan.db");
+        m_ccu = new CCUInteraction(this);
       }
 
       void
@@ -541,7 +544,7 @@ namespace Plan
       void
       consume(const IMC::PlanControl* pc)
       {
-        m_ccu.onPlanControl(pc);
+        m_ccu->onPlanControl(pc);
 
         updateCCURequests();
       }
@@ -553,12 +556,12 @@ namespace Plan
         if (pendingReply())
           return;
 
-        IMC::PlanControl* req = m_ccu.getRequest();
+        const IMC::PlanControl* req = m_ccu->getRequest();
 
         if (req != NULL)
         {
           if (processRequest(req))
-            m_ccu.processedRequest();
+            m_ccu->processedRequest();
         }
       }
 
@@ -953,7 +956,7 @@ namespace Plan
         m_pcs.plan_progress = -1.0;
         m_pcs.plan_eta = 0;
 
-        m_ccu.answer(IMC::PlanControl::PC_FAILURE, errmsg, print);
+        m_ccu->answer(IMC::PlanControl::PC_FAILURE, errmsg, print);
       }
 
       //! Answer to the reply with a success message
@@ -965,7 +968,7 @@ namespace Plan
         m_pcs.plan_progress = -1.0;
         m_pcs.plan_eta = 0;
 
-        m_ccu.answer(IMC::PlanControl::PC_SUCCESS, msg, print);
+        m_ccu->answer(IMC::PlanControl::PC_SUCCESS, msg, print);
       }
 
       //! Dispatch PlanControlState
@@ -1071,13 +1074,12 @@ namespace Plan
           err(DTR("vehicle reply timeout"));
 
           // Popping all requests
-          while (m_requests.size())
-            m_requests.pop();
+          m_ccu->clear();
 
           // Increment local request id to prevent old replies from being processed
           ++m_vreq_ctr;
 
-          err(DTR("cleared all requests"));
+          war(DTR("cleared all requests"));
         }
       }
 
