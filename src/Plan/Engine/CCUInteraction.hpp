@@ -74,7 +74,7 @@ namespace Plan
         if (!m_requests.size())
           return NULL;
 
-        return &m_requests.front()->plan_control;
+        return &m_requests.front().plan_control;
       }
 
       void
@@ -91,7 +91,7 @@ namespace Plan
           m_task->war("did not reply to a request: %u", m_toreply.plan_control.request_id);
 
         // save reply to be processed
-        m_toreply = *m_requests.front();
+        m_toreply = m_requests.front();
         m_toreply.state = RS_PROC;
         // pop from queue
         m_requests.pop();
@@ -105,7 +105,7 @@ namespace Plan
       answer(uint8_t type, const std::string& desc, bool print = true)
       {
         const IMC::PlanControl* pc = &m_toreply.plan_control;
-        
+
         IMC::PlanControl reply;
         reply.type = type;
         reply.info = desc;
@@ -115,13 +115,13 @@ namespace Plan
         reply.op = pc->op;
         reply.plan_id = pc->plan_id;
 
-        m_task->dispatch(m_reply);
+        m_task->dispatch(reply);
 
         if (print)
         {
           std::string str = Utils::String::str(DTR("reply -- %s (%s) -- %s"),
-                                               DTR(c_op_desc[m_reply.op]),
-                                               m_reply.plan_id.c_str(),
+                                               DTR(c_op_desc[reply.op]),
+                                               reply.plan_id.c_str(),
                                                desc.c_str());
 
           if (type == IMC::PlanControl::PC_FAILURE)
@@ -131,6 +131,16 @@ namespace Plan
         }
 
         m_toreply.state = RS_REPLIED;
+      }
+
+      //! Pop all the requests in the queue
+      void
+      clear(void)
+      {
+        while (m_requests.size())
+          m_requests.pop();
+
+        m_toreply.state = RS_NONE;
       }
 
     private:
