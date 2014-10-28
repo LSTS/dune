@@ -34,6 +34,7 @@
 #include "Calibration.hpp"
 #include "MementoHandler.hpp"
 #include "DataBaseInteraction.hpp"
+#include "CCUInteraction.hpp"
 
 namespace Plan
 {
@@ -45,9 +46,6 @@ namespace Plan
     const double c_vc_reply_timeout = 2.5;
     //! Timeout for the vehicle state
     const double c_vs_timeout = 2.5;
-    //! Plan Command operation descriptions
-    const char* c_op_desc[] = {DTR_RT("Start Plan"), DTR_RT("Stop Plan"),
-                               DTR_RT("Load Plan"), DTR_RT("Get Plan")};
     //! Plan state descriptions
     const char* c_state_desc[] = {DTR_RT("NONE"), DTR_RT("BOOT"), DTR_RT("READY"),
                                   DTR_RT("STOPPING"), DTR_RT("START_ACTIV"),
@@ -107,8 +105,6 @@ namespace Plan
       //! Plan control interface
       IMC::PlanControlState m_pcs;
       IMC::PlanControl m_reply;
-      //! Last event description
-      std::string m_last_event;
       //! Vehicle interface
       uint16_t m_vreq_ctr;
       double m_vc_reply_deadline;
@@ -120,6 +116,8 @@ namespace Plan
       std::set<uint16_t> m_supported_maneuvers;
       //! Database interaction
       DataBaseInteraction* m_db;
+      //! CCU interaction
+      CCUInteraction* m_ccu;
       //! Misc.
       IMC::LoggingControl m_lc;
       IMC::EstimatedState m_state;
@@ -133,8 +131,6 @@ namespace Plan
       unsigned m_eid_imu;
       //! IMU is enabled or not
       bool m_imu_enabled;
-      //! Queue of PlanControl messages
-      std::queue<IMC::PlanControl> m_requests;
       //! Plan reference for everytime we are about to start a new plan
       uint32_t m_plan_ref;
       //! Object that will handle the memento messages
@@ -264,7 +260,25 @@ namespace Plan
         m_mcs = *msg;
 
         if (msg->state == IMC::ManeuverControlState::MCS_DONE)
+        {
           m_plan->maneuverDone();
+
+          if (m_plan->isDone())
+          {
+            m_reply.plan_id = m_spec.plan_id;
+            std::string comp = DTR("plan completed");
+            m_pcs.last_outcome = IMC::PlanControlState::LPO_SUCCESS;
+            onSuccess(comp, false);
+            setState(ST_STOPPING, ST_READY);
+          }
+          else
+          {
+            IMC::PlanManeuver* pman = m_plan->loadNextManeuver();
+            startManeuver(pman);
+          }
+        }
+
+        m_pcs.man_eta = msg->eta;
       }
 
       void
@@ -280,10 +294,7 @@ namespace Plan
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_POWER_DOWN);
             break;
           case IMC::PowerOperation::POP_PWR_DOWN_ABORTED:
-            if (m_db->open())
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-            else
-              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_DB_ERROR);
+            m_db->open();
             break;
           default:
             break;
@@ -305,13 +316,7 @@ namespace Plan
       void
       consume(const IMC::PlanDB* pdb)
       {
-        if (!m_db->onPlanDB(pdb))
-        {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_DB_ERROR);
-          return;
-        }
-
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_db->onPlanDB(pdb);
       }
 
       void
@@ -406,13 +411,13 @@ namespace Plan
             case ST_START_ACTIV:
             case ST_START_EXEC:
               onFailure(vc->info);
+              setState(ST_READY);
               break;
             default:
               err("not pending reply");
               return;
           }
 
-          setState(ST_READY);
           err("%s", vc->info.c_str());
           return;
         }
@@ -455,9 +460,6 @@ namespace Plan
           case IMC::VehicleState::VS_BOOT:
             onVehicleError(vs);
             break;
-          case IMC::VehicleState::VS_MANEUVER:
-            onVehicleManeuver(vs);
-            break;
         }
 
         // update calibration status
@@ -491,9 +493,6 @@ namespace Plan
       {
         switch (m_sm)
         {
-          case ST_BLOCKED:
-            setState(ST_READY);
-            break;
           case ST_ACTIVATING:
           case ST_EXECUTING:
             err("%s", vs->last_error.c_str());
@@ -503,34 +502,6 @@ namespace Plan
             break;
           default:
             break;
-        }
-      }
-
-      void
-      onVehicleManeuver(const IMC::VehicleState* vs)
-      {
-        if (m_sm != ST_EXECUTING)
-          return;
-
-        if (vs->flags & IMC::VehicleState::VFLG_MANEUVER_DONE)
-        {
-          if (m_plan->isDone())
-          {
-            m_reply.plan_id = m_spec.plan_id;
-            std::string comp = DTR("plan completed");
-            m_pcs.last_outcome = IMC::PlanControlState::LPO_SUCCESS;
-            onSuccess(comp, false);
-            setState(ST_STOPPING, ST_READY);
-          }
-          else
-          {
-            IMC::PlanManeuver* pman = m_plan->loadNextManeuver();
-            startManeuver(pman);
-          }
-        }
-        else
-        {
-          m_pcs.man_eta = vs->maneuver_eta;
         }
       }
 
@@ -570,24 +541,24 @@ namespace Plan
       void
       consume(const IMC::PlanControl* pc)
       {
-        if (pc->type != IMC::PlanControl::PC_REQUEST)
+        m_ccu.onPlanControl(pc);
+
+        updateCCURequests();
+      }
+
+      //! Update CCU requests
+      void
+      updateCCURequests(void)
+      {
+        if (pendingReply())
           return;
 
-        if (pendingReply())
+        IMC::PlanControl* req = m_ccu.getRequest();
+
+        if (req != NULL)
         {
-          m_requests.push(*pc);
-          debug("saved request %u", pc->request_id);
-          return;
-        }
-        else if (m_requests.size())
-        {
-          m_requests.push(*pc);
-          processRequest(&m_requests.front());
-          m_requests.pop();
-        }
-        else
-        {
-          processRequest(pc);
+          if (processRequest(req))
+            m_ccu.processedRequest();
         }
       }
 
@@ -597,15 +568,9 @@ namespace Plan
       bool
       processRequest(const IMC::PlanControl* pc)
       {
-        m_reply.setDestination(pc->getSource());
-        m_reply.setDestinationEntity(pc->getSourceEntity());
-        m_reply.request_id = pc->request_id;
-        m_reply.op = pc->op;
-        m_reply.plan_id = pc->plan_id;
-
         inf(DTR("request -- %s (%s)"),
-            DTR(c_op_desc[m_reply.op]),
-            m_reply.plan_id.c_str());
+            DTR(c_op_desc[pc->op]),
+            pc->plan_id.c_str());
 
         switch (m_sm)
         {
@@ -978,31 +943,6 @@ namespace Plan
         setState(ST_START_EXEC);
       }
 
-      //! Answer to the plan control request
-      //! @param[in] type type of reply (same field as plan control message)
-      //! @param[in] desc description for the answer
-      //! @param[in] print true if output should be printed out
-      void
-      answer(uint8_t type, const std::string& desc, bool print = true)
-      {
-        m_reply.type = type;
-        m_reply.info = desc;
-        dispatch(m_reply);
-
-        if (print)
-        {
-          std::string str = Utils::String::str(DTR("reply -- %s (%s) -- %s"),
-                                               DTR(c_op_desc[m_reply.op]),
-                                               m_reply.plan_id.c_str(),
-                                               desc.c_str());
-
-          if (type == IMC::PlanControl::PC_FAILURE)
-            err("%s", str.c_str());
-          else
-            inf("%s", str.c_str());
-        }
-      }
-
       //! Answer to the reply with a failure message
       //! @param[in] errmsg text error message to send
       //! @param[in] print true if the message should be printed to output
@@ -1013,7 +953,7 @@ namespace Plan
         m_pcs.plan_progress = -1.0;
         m_pcs.plan_eta = 0;
 
-        answer(IMC::PlanControl::PC_FAILURE, errmsg, print);
+        m_ccu.answer(IMC::PlanControl::PC_FAILURE, errmsg, print);
       }
 
       //! Answer to the reply with a success message
@@ -1025,7 +965,7 @@ namespace Plan
         m_pcs.plan_progress = -1.0;
         m_pcs.plan_eta = 0;
 
-        answer(IMC::PlanControl::PC_SUCCESS, msg, print);
+        m_ccu.answer(IMC::PlanControl::PC_SUCCESS, msg, print);
       }
 
       //! Dispatch PlanControlState
@@ -1059,7 +999,6 @@ namespace Plan
         m_pcs.man_type = 0xFFFF;
         m_pcs.plan_progress = -1.0;
         m_pcs.last_outcome = IMC::PlanControlState::LPO_NONE;
-        m_last_event = DTR("initializing");
         dispatch(m_pcs);
 
         m_vreq_ctr = 0;
@@ -1106,19 +1045,18 @@ namespace Plan
 
           double now = Clock::get();
 
+          bool timedout = false;
+
           if ((getEntityState() == IMC::EntityState::ESTA_NORMAL) &&
               (now - m_last_vstate >= c_vs_timeout))
           {
-            setState(ST_BLOCKED);
-            m_last_vstate = now;
+            timedout = true;
           }
 
           // got requests to process
-          if (!pendingReply() && m_requests.size())
-          {
-            processRequest(&m_requests.front());
-            m_requests.pop();
-          }
+          updateCCURequests();
+
+          runStateMachine(timedout);
 
           double delta = m_vc_reply_deadline < 0 ? 1 : m_vc_reply_deadline - now;
 
@@ -1130,8 +1068,6 @@ namespace Plan
 
           // handle reply timeout
           m_vc_reply_deadline = -1;
-
-          setState(ST_READY);
           err(DTR("vehicle reply timeout"));
 
           // Popping all requests
@@ -1146,8 +1082,51 @@ namespace Plan
       }
 
       void
+      runStateMachine(bool timedout)
+      {
+        switch (m_sm)
+        {
+          case ST_BLOCKED:
+            if (m_db->isOpen() && !timedout)
+            {
+              setState(ST_READY);
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            }
+            break;
+          case ST_READY:
+            if (timedout)
+            {
+              setState(ST_BLOCKED);
+              setEntityState(IMC::EntityState::ESTA_ERROR, DTR("vehicle state timeout"));
+            }
+
+            if (m_db->inError())
+            {
+              setState(ST_BLOCKED);
+              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_DB_ERROR);
+            }
+            break;
+          case ST_BOOT:
+            if (m_db->isOpen() && !timedout)
+            {
+              setState(ST_READY);
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            }
+            break;
+          default:
+            break;
+        }
+      }
+
+      void
       setState(EngineState target_sm, EngineState next_sm = ST_NONE)
       {
+        if (target_sm == m_sm)
+        {
+          m_next_sm = next_sm;
+          return;
+        }
+
         switch (target_sm)
         {
           case ST_STOPPING:
@@ -1156,14 +1135,14 @@ namespace Plan
             m_reply.plan_id = m_spec.plan_id;
             m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
             break;
-          case ST_BLOCKED:
-            setEntityState(IMC::EntityState::ESTA_ERROR, DTR("vehicle state timeout"));
+          case ST_READY:
+            war(DTR("engine is ready"));
             break;
           default:
             break;
         }
 
-        war("switching from %s to %s, next is %s", 
+        war("switching from %s to %s, next is %s",
             c_state_desc[m_sm], c_state_desc[target_sm], c_state_desc[next_sm]);
 
         m_sm = target_sm;
