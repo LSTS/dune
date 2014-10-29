@@ -1146,6 +1146,8 @@ namespace Plan
       void
       updatePCS(void)
       {
+        unsigned temp = m_pcs.state;
+
         switch (m_sm)
         {
           case ST_NONE:
@@ -1168,6 +1170,9 @@ namespace Plan
             // keep previous state
             break;
         }
+
+        if (temp != m_pcs.state)
+          dispatch(m_pcs);
       }
 
       void
