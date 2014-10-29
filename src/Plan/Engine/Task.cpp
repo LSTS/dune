@@ -108,7 +108,6 @@ namespace Plan
       Plan* m_plan;
       //! Plan control interface
       IMC::PlanControlState m_pcs;
-      IMC::PlanControl m_reply;
       //! Vehicle interface
       uint16_t m_vreq_ctr;
       double m_vc_reply_deadline;
@@ -272,7 +271,6 @@ namespace Plan
 
           if (m_plan->isDone())
           {
-            m_reply.plan_id = m_spec.plan_id;
             std::string comp = DTR("plan completed");
             m_pcs.last_outcome = IMC::PlanControlState::LPO_SUCCESS;
             onSuccess(comp, false);
@@ -358,7 +356,6 @@ namespace Plan
 
           if (m_args.actfail_abort)
           {
-            m_reply.plan_id = m_spec.plan_id;
             onFailure(error);
 
             // stop activation if any is running
@@ -485,7 +482,6 @@ namespace Plan
           else if (m_plan->hasCalibrationFailed())
           {
             onFailure(m_plan->getCalibrationInfo());
-            m_reply.plan_id = m_spec.plan_id;
             setState(ST_STOPPING, ST_READY);
             err("%s", m_plan->getCalibrationInfo().c_str());
           }
@@ -500,7 +496,6 @@ namespace Plan
           case ST_ACTIVATING:
           case ST_EXECUTING:
             err("%s", vs->last_error.c_str());
-            m_reply.plan_id = m_spec.plan_id;
             onFailure(vs->last_error);
             setState(ST_STOPPING, ST_READY);
             break;
@@ -519,7 +514,6 @@ namespace Plan
         {
           case ST_ACTIVATING:
           case ST_EXECUTING:
-            m_reply.plan_id = m_spec.plan_id;
             onFailure(edesc);
             setState(ST_STOPPING, ST_READY);
             break;
@@ -635,12 +629,9 @@ namespace Plan
           return false;
 
         // reply with statistics
-        m_reply.arg.set(ps);
-        m_reply.plan_id = m_spec.plan_id;
+        onSuccess(DTR("plan loaded"), false, &ps);
 
         m_pcs.plan_id = m_spec.plan_id;
-
-        onSuccess(DTR("plan loaded"), false);
 
         return true;
       }
@@ -653,9 +644,7 @@ namespace Plan
         {
           case ST_ACTIVATING:
           case ST_EXECUTING:
-            m_reply.arg.set(m_spec);
-            m_reply.plan_id = m_spec.plan_id;
-            onSuccess();
+            onSuccess(&m_spec);
             break;
           default:
             onFailure(DTR("no plan is running"));
@@ -675,7 +664,6 @@ namespace Plan
             setState(ST_STOPPING, next);
             break;
           default:
-            m_reply.plan_id = "";
             onFailure(DTR("no plan is running, request ignored"));
             break;
         }
@@ -969,12 +957,25 @@ namespace Plan
       //! @param[in] msg text message to send
       //! @param[in] print true if the message should be printed to output
       void
-      onSuccess(const std::string& msg = DTR("OK"), bool print = true)
+      onSuccess(const std::string& msg = DTR("OK"), bool print = true,
+                const IMC::Message* arg = NULL)
       {
         m_pcs.plan_progress = -1.0;
         m_pcs.plan_eta = 0;
 
-        m_ccu->answer(IMC::PlanControl::PC_SUCCESS, msg, print);
+        m_ccu->answer(IMC::PlanControl::PC_SUCCESS, msg, print, arg);
+      }
+
+      //! Answer to the reply with a success message
+      //! @param[in] msg text message to send
+      //! @param[in] print true if the message should be printed to output
+      void
+      onSuccess(const IMC::Message* arg)
+      {
+        m_pcs.plan_progress = -1.0;
+        m_pcs.plan_eta = 0;
+
+        m_ccu->answer(IMC::PlanControl::PC_SUCCESS, DTR("OK"), true, arg);
       }
 
       //! Dispatch PlanControlState
@@ -1140,7 +1141,6 @@ namespace Plan
           case ST_STOPPING:
             // stop maneuvering
             vehicleRequest(IMC::VehicleCommand::VC_STOP_MANEUVER);
-            m_reply.plan_id = m_spec.plan_id;
             m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
             break;
           case ST_READY:
