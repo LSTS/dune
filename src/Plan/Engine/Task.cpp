@@ -415,7 +415,9 @@ namespace Plan
             case ST_START_ACTIV:
             case ST_START_EXEC:
               onFailure(vc->info);
-              setState(ST_READY);
+              setState(ST_STOPPING, ST_READY);
+              break;
+            case ST_STOPPING:
               break;
             default:
               err("not pending reply");
@@ -431,6 +433,12 @@ namespace Plan
           case ST_STOPPING:
             m_plan->planStopped();
             changeLog("");
+
+            m_pcs.man_id.clear();
+            m_pcs.man_type = 0xFFFF;
+            m_pcs.plan_progress = -1.0;
+            m_pcs.plan_eta = 0;
+
             setState(m_next_sm);
             break;
           case ST_START_ACTIV:
@@ -630,8 +638,6 @@ namespace Plan
 
         // reply with statistics
         onSuccess(DTR("plan loaded"), false, &ps);
-
-        m_pcs.plan_id = m_spec.plan_id;
 
         return true;
       }
@@ -932,6 +938,9 @@ namespace Plan
         {
           man = static_cast<IMC::Maneuver*>(pman->data.get());
           man->plan_ref = m_plan_ref;
+
+          m_pcs.man_id = man->id;
+          m_pcs.man_type = man->getId();
         }
 
         vehicleRequest(IMC::VehicleCommand::VC_EXEC_MANEUVER, man);
@@ -947,8 +956,6 @@ namespace Plan
       onFailure(const std::string& errmsg, bool print = true)
       {
         m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
-        m_pcs.plan_progress = -1.0;
-        m_pcs.plan_eta = 0;
 
         m_ccu->answer(IMC::PlanControl::PC_FAILURE, errmsg, print);
       }
@@ -960,9 +967,6 @@ namespace Plan
       onSuccess(const std::string& msg = DTR("OK"), bool print = true,
                 const IMC::Message* arg = NULL)
       {
-        m_pcs.plan_progress = -1.0;
-        m_pcs.plan_eta = 0;
-
         m_ccu->answer(IMC::PlanControl::PC_SUCCESS, msg, print, arg);
       }
 
@@ -972,31 +976,7 @@ namespace Plan
       void
       onSuccess(const IMC::Message* arg)
       {
-        m_pcs.plan_progress = -1.0;
-        m_pcs.plan_eta = 0;
-
         m_ccu->answer(IMC::PlanControl::PC_SUCCESS, DTR("OK"), true, arg);
-      }
-
-      //! Dispatch PlanControlState
-      //! @param[in] maneuver pointer to maneuver message
-      void
-      dispatchPCS(const IMC::Message* maneuver)
-      {
-        if (maneuver)
-        {
-          const IMC::Maneuver* m = static_cast<const IMC::Maneuver*>(maneuver);
-          m_pcs.man_id = m->id;
-          m_pcs.man_type = maneuver->getId();
-        }
-        else
-        {
-          m_pcs.man_id.clear();
-          m_pcs.man_type = 0xFFFF;
-        }
-
-        m_pcs.setTimeStamp(Clock::getSinceEpoch());
-        dispatch(m_pcs, DF_KEEP_TIME);
       }
 
       //! Set task's initial state
@@ -1008,6 +988,7 @@ namespace Plan
         m_pcs.man_id.clear();
         m_pcs.man_type = 0xFFFF;
         m_pcs.plan_progress = -1.0;
+        m_pcs.plan_eta = 0;
         m_pcs.last_outcome = IMC::PlanControlState::LPO_NONE;
         dispatch(m_pcs);
 
@@ -1141,10 +1122,13 @@ namespace Plan
           case ST_STOPPING:
             // stop maneuvering
             vehicleRequest(IMC::VehicleCommand::VC_STOP_MANEUVER);
-            m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
             break;
           case ST_READY:
             war(DTR("engine is ready"));
+            break;
+          case ST_ACTIVATING:
+          case ST_EXECUTING:
+            m_pcs.plan_id = m_spec.plan_id;
             break;
           default:
             break;
@@ -1155,6 +1139,35 @@ namespace Plan
 
         m_sm = target_sm;
         m_next_sm = next_sm;
+
+        updatePCS();
+      }
+
+      void
+      updatePCS(void)
+      {
+        switch (m_sm)
+        {
+          case ST_NONE:
+          case ST_BOOT:
+          case ST_BLOCKED:
+            m_pcs.state = IMC::PlanControlState::PCS_BLOCKED;
+            break;
+          case ST_READY:
+            m_pcs.state = IMC::PlanControlState::PCS_BLOCKED;
+            break;
+          case ST_ACTIVATING:
+          case ST_START_ACTIV:
+            m_pcs.state = IMC::PlanControlState::PCS_INITIALIZING;
+            break;
+          case ST_START_EXEC:
+          case ST_EXECUTING:
+            m_pcs.state = IMC::PlanControlState::PCS_EXECUTING;
+            break;
+          case ST_STOPPING:
+            // keep previous state
+            break;
+        }
       }
 
       void
