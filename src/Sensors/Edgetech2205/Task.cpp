@@ -35,6 +35,7 @@
 // Local headers.
 #include "Parser.hpp"
 #include "CommandLink.hpp"
+#include "SubsystemData.hpp"
 
 namespace Sensors
 {
@@ -42,6 +43,38 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
+    //! Finite state machine states.
+    enum StateMachineStates
+    {
+      //! Waiting for activation.
+      SM_IDLE,
+      //! Start activation sequence.
+      SM_ACT_BEGIN,
+      //! Turn power on.
+      SM_ACT_POWER_ON,
+      //! Wait for power to be turned on.
+      SM_ACT_POWER_WAIT,
+      //! Wait for device to become available.
+      SM_ACT_SS_WAIT,
+      //! Synchronize time.
+      SM_ACT_SS_SYNC,
+      //! Activation sequence is complete.
+      SM_ACT_DONE,
+      //! Sampling.
+      SM_ACT_SAMPLE,
+      //! Start deactivation sequence.
+      SM_DEACT_BEGIN,
+      //! Disconnect from the Internet.
+      SM_DEACT_DISCONNECT,
+      //! Switch power off.
+      SM_DEACT_POWER_OFF,
+      //! Wait for power to be turned off.
+      SM_DEACT_POWER_WAIT,
+      //! Deactivation sequence is complete.
+      SM_DEACT_DONE
+    };
+
+    //! Task arguments.
     struct Arguments
     {
       //! IPv4 address.
@@ -59,11 +92,21 @@ namespace Sensors
       //! Range of the low-frequency subsystem.
       unsigned range_lf;
       //! Name of sidescan's power channel.
-      std::string pwr_ss;
+      std::string power_channel;
       //! Pulse auto selection mode.
       unsigned autosel_mode;
       //! Trigger divisor.
       unsigned trg_div;
+      //! Number of initial samples to ignore.
+      unsigned ignored_sample_count;
+      //! Time delta estimation periodicity.
+      double time_delta_periodicity;
+      //! Maximum allowable latency for time synchronization.
+      unsigned time_delta_max_latency;
+      //! Initial time delta estimation timeout.
+      double time_delta_init_tout;
+      //! Number of samples for initial time delta estimatiom.
+      unsigned time_delta_init_samples;
     };
 
     struct Task: public Tasks::Task
@@ -82,27 +125,25 @@ namespace Sensors
       std::ofstream m_log_file;
       //! Log filename
       Path m_log_path;
-      //! Time difference.
-      int64_t m_time_diff;
-      //! Estimated state.
-      IMC::EstimatedState m_estate;
-      //! Power channel state.
-      IMC::PowerChannelControl m_pwr_ss;
+      //! Watchdog timer.
+      Counter<double> m_wdog;
+      //! Timer for time delta estimation.
+      Counter<double> m_time_delta_timer;
+      //! Subsystem specific data.
+      SubsystemData m_subsys_data[c_subsys_count];
+      //! Current state machine state.
+      StateMachineStates m_sm_state;
+      //! True if device is powered on.
+      bool m_powered;
       //! Configuration parameters.
       Arguments m_args;
-      //! True if first shot.
-      bool m_first_shot;
-      //! Activation/deactivation timer.
-      Counter<double> m_countdown;
-      //! Power channel state.
-      IMC::PowerChannelState m_pwr_state;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_sock_dat(NULL),
         m_cmd(NULL),
-        m_time_diff(0),
-        m_first_shot(true)
+        m_sm_state(SM_IDLE),
+        m_powered(false)
       {
         // Define configuration parameters.
         setParamSectionEditor("Edgetech2205");
@@ -172,13 +213,35 @@ namespace Sensors
         .maximumValue("4")
         .description("Auto pulse selection mode");
 
-        param("Power Channel - Sidescan", m_args.pwr_ss)
+        param("Power Channel - Sidescan", m_args.power_channel)
         .defaultValue("Private (Sidescan)")
         .description("Name of sidescan's power channel");
 
-        m_bfr.resize(c_buffer_size);
+        param("Number of Discarded Initial Samples", m_args.ignored_sample_count)
+        .defaultValue("15")
+        .description("Number of initial samples to ignore");
 
-        m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+        param("Time Delta - Estimation Periodicity", m_args.time_delta_periodicity)
+        .units(Units::Second)
+        .defaultValue("5")
+        .description("Periodicity with which the time difference between"
+                     " the sidescan CPU and the local CPU is performed");
+
+        param("Time Delta - Maximum Allowable Latency", m_args.time_delta_max_latency)
+        .units(Units::Millisecond)
+        .defaultValue("2")
+        .description("Maximum allowable latency for time synchronization");
+
+        param("Time Delta - Initial Estimate Timeout", m_args.time_delta_init_tout)
+        .units(Units::Second)
+        .defaultValue("10")
+        .description("Timeout for initial time delta estimation");
+
+        param("Time Delta - Initial Estimate Samples", m_args.time_delta_init_samples)
+        .defaultValue("10")
+        .description("Number of valid samples for initial time delta estimation");
+
+        m_bfr.resize(c_buffer_size);
 
         bind<IMC::EstimatedState>(this);
         bind<IMC::LoggingControl>(this);
@@ -188,7 +251,8 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        m_pwr_ss.name = m_args.pwr_ss;
+        if (m_args.power_channel.empty())
+          m_powered = true;
 
         if (isActive())
         {
@@ -208,42 +272,33 @@ namespace Sensors
       void
       onResourceRelease(void)
       {
-        requestDeactivation();
         closeLog();
       }
 
       void
       onResourceInitialization(void)
       {
-        requestDeactivation();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
       onRequestActivation(void)
       {
-        m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
-        dispatch(m_pwr_ss);
-        m_countdown.setTop(getActivationTime());
+        debug("starting activation sequence");
+        m_sm_state = SM_ACT_BEGIN;
+        updateStateMachine();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
       }
 
-      void
-      checkActivationProgress(void)
+      bool
+      connect(void)
       {
-        if (m_countdown.overflow())
-        {
-          activationFailed(DTR("failed to contact device"));
-          m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
-          dispatch(m_pwr_ss);
-          return;
-        }
-
         Counter<double> timer(1.0);
         try
         {
-          m_cmd = new CommandLink(m_args.addr, m_args.port_cmd);
-          debug("activation took %0.2f s", m_countdown.getElapsed());
-          activate();
+          m_cmd = new CommandLink(this, m_args.addr, m_args.port_cmd);
+          debug("connected to sidescan");
+          return true;
         }
         catch (...)
         {
@@ -251,11 +306,53 @@ namespace Sensors
           if (delay > 0.0)
             Delay::wait(delay);
         }
+
+        return false;
+      }
+
+      void
+      failActivation(const std::string& message)
+      {
+        activationFailed(message);
+        controlPower(IMC::PowerChannelControl::PCC_OP_TURN_OFF);
+      }
+
+      void
+      onRequestDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_DEACTIVATING);
+        m_sm_state = SM_DEACT_BEGIN;
+        updateStateMachine();
+      }
+
+      void
+      disconnect(void)
+      {
+        setDataActive(SUBSYS_SSL, "None");
+        setPing(SUBSYS_SSL, "None");
+        setDataActive(SUBSYS_SSH, "None");
+        setPing(SUBSYS_SSH, "None");
+        m_cmd->shutdown();
+        Memory::clear(m_cmd);
+        Memory::clear(m_sock_dat);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        debug("deactivation complete");
       }
 
       void
       onActivation(void)
       {
+        debug("activation took %0.2f s", m_wdog.getElapsed());
+
+        for (size_t i = 0; i < c_subsys_count; ++i)
+          m_subsys_data[i].clear();
+
+        debug("creating data socket");
         m_sock_dat = new TCPSocket;
         m_sock_dat->setNoDelay(true);
         m_sock_dat->setReceiveTimeout(5);
@@ -267,66 +364,26 @@ namespace Sensors
 
         setConfig();
 
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
+        debug("requesting current log path");
         IMC::LoggingControl lc;
         lc.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
         dispatch(lc);
-      }
 
-      void
-      onRequestDeactivation(void)
-      {
-        closeLog();
-
-        setDataActive(SUBSYS_SSL, "None");
-        setPing(SUBSYS_SSL, "None");
-        setDataActive(SUBSYS_SSH, "None");
-        setPing(SUBSYS_SSH, "None");
-        m_cmd->shutdown();
-        Memory::clear(m_cmd);
-        Memory::clear(m_sock_dat);
-
-        debug("deactivation time is %u s", getDeactivationTime());
-        m_countdown.setTop(getDeactivationTime());
-        m_first_shot = true;
-      }
-
-      void
-      checkDeactivationProgress(void)
-      {
-        if (m_countdown.overflow())
-        {
-          if (m_pwr_state.state == IMC::PowerChannelState::PCS_ON)
-          {
-            if (m_pwr_ss.op == IMC::PowerChannelControl::PCC_OP_TURN_ON)
-            {
-              debug("power channels is on, turning off");
-              m_pwr_ss.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
-              dispatch(m_pwr_ss);
-            }
-          }
-          else if (m_pwr_state.state == IMC::PowerChannelState::PCS_OFF)
-          {
-            debug("power channels is off, deactivating");
-            deactivate();
-          }
-        }
-      }
-
-      void
-      onDeactivation(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
       consume(const IMC::PowerChannelState* msg)
       {
-        if (msg->name != m_args.pwr_ss)
+        if (msg->name != m_args.power_channel)
           return;
 
-        m_pwr_state = *msg;
+        bool old_state = m_powered;
+        m_powered = (msg->state == IMC::PowerChannelState::PCS_ON);
+        if (!old_state && m_powered)
+          debug("device is powered");
+        else if (old_state && !m_powered)
+          debug("device is no longer powered");
       }
 
       void
@@ -335,7 +392,14 @@ namespace Sensors
         if (msg->getSource() != getSystemId())
           return;
 
-        m_estate = *msg;
+        if (!isActive())
+          return;
+
+        for (size_t i = 0; i < c_subsys_count; ++i)
+        {
+          if (m_subsys_data[i].active)
+            m_subsys_data[i].estates.push_back(*msg);
+        }
       }
 
       void
@@ -415,121 +479,191 @@ namespace Sensors
       setPing(SubsystemId subsys, const std::string& channels)
       {
         if (channels == "None")
+        {
           m_cmd->setPing(subsys, 0);
+        }
         else
+        {
           m_cmd->setPing(subsys, 1);
+          m_subsys_data[getSubsysIndex(subsys)].active = true;
+        }
       }
 
-      static void
-      convertPositionToJSF(const IMC::EstimatedState& estate, int32_t& lat, int32_t& lon)
+      int
+      getSubsysIndex(int subsys)
       {
-        double wgs84_lat = 0;
-        double wgs84_lon = 0;
-        Coordinates::toWGS84(estate, wgs84_lat, wgs84_lon);
-        lat = static_cast<int32_t>(wgs84_lat * 34377467.707849);
-        lon = static_cast<int32_t>(wgs84_lon * 34377467.707849);
-      }
+        switch (subsys)
+        {
+          case SUBSYS_SSL:
+            return 0;
 
-      static void
-      convertTimeToJSF(int64_t msec, uint32_t& sec, uint32_t& msec_today)
-      {
-        sec = msec / 1000;
-        BrokenDown bdt(sec);
-        msec_today = msec % 1000;
-        msec_today += ((bdt.hour * 3600) + (bdt.minutes * 60) + bdt.seconds) * 1000;
-      }
+          case SUBSYS_SSH:
+            return 1;
 
-      static void
-      convertTimeFromJSF(int64_t& msec, uint32_t sec, uint32_t msec_today)
-      {
-        BrokenDown bdt(sec);
-        uint32_t msec_aligned = ((bdt.hour * 3600) + (bdt.minutes * 60) + bdt.seconds) * 1000;
-        msec = sec;
-        msec *= 1000;
-        msec += msec_today - msec_aligned;
+          default:
+            return -1;
+        }
       }
 
       void
       handleSonarData(Packet* pkt)
       {
-        // Adjust time stamp.
-        uint32_t sec_epoch = 0;
-        uint32_t msec_today = 0;
-        int64_t msec = 0;
-        pkt->get(sec_epoch, SDATA_IDX_TIME);
-        pkt->get(msec_today, SDATA_IDX_MILLISECOND_TODAY);
-        convertTimeFromJSF(msec, sec_epoch, msec_today);
-        msec -= m_time_diff;
-        convertTimeToJSF(msec, sec_epoch, msec_today);
-        pkt->set(sec_epoch, SDATA_IDX_TIME);
-        pkt->set(msec_today, SDATA_IDX_MILLISECOND_TODAY);
+        int subsys_idx = getSubsysIndex(pkt->getSubsystemNumber());
+        if (subsys_idx < 0)
+          return;
 
-        // CPU and MMEA date/time for backward compatibility.
-        Time::BrokenDown bdt(sec_epoch);
+        SubsystemData* data = m_subsys_data + subsys_idx;
+
+        uint32_t ping_number = 0;
+        pkt->get(ping_number, SDATA_IDX_PING_NUMBER);
+        if (ping_number != data->ping_number)
+        {
+          data->ping_number = ping_number;
+          ++data->ping_count;
+          updateSubsystemData(data, pkt);
+        }
+
+        writeSubsystemData(data, pkt);
+        if (data->ping_count > m_args.ignored_sample_count)
+        {
+          writeLog(pkt);
+        }
+        else
+        {
+          IMC::DevDataText text;
+          text.value = String::str("discarded initial sample %u:%u",
+                                   pkt->getSubsystemNumber(), data->ping_count);
+          dispatch(text);
+        }
+      }
+
+      void
+      writeSubsystemData(SubsystemData* data, Packet* pkt)
+      {
+        pkt->set(data->time_epoch, SDATA_IDX_TIME);
+        pkt->set(data->time_msec_today, SDATA_IDX_MILLISECOND_TODAY);
         pkt->set<int16_t>(3, SDATA_IDX_CPU_TIME_BASIS);
-        pkt->set<int16_t>(bdt.year, SDATA_IDX_CPU_YEAR);
-        pkt->set<int16_t>(bdt.day_year, SDATA_IDX_CPU_DAY);
-        pkt->set<int16_t>(bdt.hour, SDATA_IDX_CPU_HOUR);
-        pkt->set<int16_t>(bdt.hour, SDATA_IDX_NMEA_HOUR);
-        pkt->set<int16_t>(bdt.minutes, SDATA_IDX_CPU_MINUTES);
-        pkt->set<int16_t>(bdt.minutes, SDATA_IDX_NMEA_MINUTES);
-        pkt->set<int16_t>(bdt.seconds, SDATA_IDX_CPU_SECONDS);
-        pkt->set<int16_t>(bdt.seconds, SDATA_IDX_NMEA_SECONDS);
+        pkt->set<int16_t>(data->time_bdt.year, SDATA_IDX_CPU_YEAR);
+        pkt->set<int16_t>(data->time_bdt.day_year, SDATA_IDX_CPU_DAY);
+        pkt->set<int16_t>(data->time_bdt.hour, SDATA_IDX_CPU_HOUR);
+        pkt->set<int16_t>(data->time_bdt.hour, SDATA_IDX_NMEA_HOUR);
+        pkt->set<int16_t>(data->time_bdt.minutes, SDATA_IDX_CPU_MINUTES);
+        pkt->set<int16_t>(data->time_bdt.minutes, SDATA_IDX_NMEA_MINUTES);
+        pkt->set<int16_t>(data->time_bdt.seconds, SDATA_IDX_CPU_SECONDS);
+        pkt->set<int16_t>(data->time_bdt.seconds, SDATA_IDX_NMEA_SECONDS);
+        pkt->set<uint16_t>(2, SDATA_IDX_COORDINATE_UNITS);
+        pkt->set(data->longitude, SDATA_IDX_LONGITUDE);
+        pkt->set(data->latitude, SDATA_IDX_LATITUDE);
+        pkt->set(data->course, SDATA_IDX_COURSE);
+        pkt->set(data->speed, SDATA_IDX_SPEED);
+        pkt->set(data->heading, SDATA_IDX_HEADING);
+        pkt->set(data->roll, SDATA_IDX_ROLL);
+        pkt->set(data->pitch, SDATA_IDX_PITCH);
+        pkt->set(data->altitude, SDATA_IDX_ALTITUDE);
+        pkt->set(data->depth, SDATA_IDX_DEPTH);
+        pkt->set(data->validity, SDATA_IDX_VALIDITY);
 
-        // Navigation data.
-        uint16_t validity = 0;
-        int32_t s32 = 0;
-        int16_t s16 = 0;
-        uint16_t u16 = 0;
+        // User annotation string to save position with increased
+        // resolution.
+        std::memcpy(pkt->getMessageData()
+                    + SDATA_IDX_ANNOTATION_STRING,
+                    &data->latitude_rad,
+                    sizeof(data->latitude_rad));
+
+        std::memcpy(pkt->getMessageData()
+                    + SDATA_IDX_ANNOTATION_STRING
+                    + sizeof(data->latitude_rad),
+                    &data->longitude_rad,
+                    sizeof(data->longitude_rad));
+      }
+
+      void
+      updateSubsystemData(SubsystemData* data, Packet* pkt)
+      {
+        data->validity = 0;
+
+        // Adjust sidescan time.
+        uint32_t ss_sec = 0;
+        pkt->get(ss_sec, SDATA_IDX_TIME);
+
+        uint32_t ss_msec = 0;
+        pkt->get(ss_msec, SDATA_IDX_MILLISECOND_TODAY);
+
+        int64_t ss_time = ss_sec;
+        ss_time *= 1000;
+        ss_time += ss_msec % 1000;
+        ss_time += m_cmd->getEstimatedTimeDelta();
+
+        // Compute broken down time.
+        time_t time_sec = ss_time / 1000;
+        data->time_epoch = time_sec;
+        data->time_bdt.convert(time_sec);
+
+        // Compute milliseconds today.
+        uint32_t old_msec_today = data->time_msec_today;
+        data->time_msec_today = ((data->time_bdt.hour * 3600)
+                                 + (data->time_bdt.minutes * 60)
+                                 + data->time_bdt.seconds) * 1000;
+        data->time_msec_today += ss_time % 1000;
+
+        // Find closest estimated state.
+        int64_t estate_delta = 0;
+        const IMC::EstimatedState* estate = data->estates.find(ss_time, estate_delta);
+
+        // Trace.
+        int64_t msec_cpu_old = data->msec_cpu;
+        data->msec_cpu = pkt->getTimeStamp();
+        IMC::DevDataText text;
+        text.value = String::str("%u, %u, %u, %lld, %lld, %u, %u, %llu",
+                                 data->ping_count,
+                                 data->ping_number,
+                                 pkt->getSubsystemNumber(),
+                                 estate_delta,
+                                 data->msec_cpu - msec_cpu_old,
+                                 data->time_msec_today - old_msec_today,
+                                 (estate == NULL) ? 0 : 1,
+                                 m_cmd->getEstimatedTimeDelta());
+        dispatch(text);
+
+        if (estate == NULL)
+          return;
 
         // Position.
-        int32_t lat = 0;
-        int32_t lon = 0;
-        convertPositionToJSF(m_estate, lat, lon);
-        pkt->set<uint16_t>(2, SDATA_IDX_COORDINATE_UNITS);
-        pkt->set(lon, SDATA_IDX_LONGITUDE);
-        pkt->set(lat, SDATA_IDX_LATITUDE);
-        validity |= (1 << 0);
+        Coordinates::toWGS84(*estate, data->latitude_rad, data->longitude_rad);
+        data->latitude = static_cast<int32_t>(data->latitude_rad * 34377467.707849);
+        data->longitude = static_cast<int32_t>(data->longitude_rad * 34377467.707849);
+        data->validity |= (1 << 0);
 
         // Course.
-        s16 = static_cast<int16_t>(Angles::degrees(std::atan2(m_estate.vy, m_estate.vx)));
-        pkt->set(s16, SDATA_IDX_COURSE);
-        validity |= (1 << 1);
+        data->course = Angles::degrees(std::atan2(estate->vy, estate->vx));
+        data->validity |= (1 << 1);
 
-        // Speed (knots * 10).
-        double speed = Math::norm(m_estate.vx, m_estate.vy) * 19.438612860586;
-        s16 = static_cast<int16_t>(speed);
-        pkt->set(s16, SDATA_IDX_SPEED);
-        validity |= (1 << 2);
+        // Speed.
+        data->speed = Math::norm(estate->vx, estate->vy) * DUNE::Units::c_ms_to_knot * 10;
+        data->validity |= (1 << 2);
 
         // Heading.
-        double heading = Angles::degrees(m_estate.psi);
+        double heading = Angles::degrees(estate->psi);
         if (heading < 0)
           heading = 360.0 + heading;
-        u16 = static_cast<uint16_t>(heading * 100);
-        pkt->set(u16, SDATA_IDX_HEADING);
-        validity |= (1 << 3);
+        data->heading = heading * 100;
+        data->validity |= (1 << 3);
 
         // Roll.
-        s16 = static_cast<int16_t>((Angles::degrees(m_estate.phi) * 32768) / 180);
-        pkt->set(s16, SDATA_IDX_ROLL);
+        data->roll = (Angles::degrees(estate->phi) * 32768) / 180;
+        data->validity |= (1 << 4);
 
         // Pitch.
-        s16 = static_cast<int16_t>((Angles::degrees(m_estate.theta) * 32768) / 180);
-        pkt->set(s16, SDATA_IDX_PITCH);
-        validity |= (1 << 5);
+        data->pitch = (Angles::degrees(estate->theta) * 32768) / 180;
+        data->validity |= (1 << 5);
 
         // Altitude.
-        s32 = static_cast<int32_t>(m_estate.alt * 1000);
-        pkt->set(s32, SDATA_IDX_ALTITUDE);
-        validity |= (1 << 6);
+        data->altitude = estate->alt * 1000;
+        data->validity |= (1 << 6);
 
         // Depth.
-        s32 = static_cast<int32_t>(m_estate.depth * 1000);
-        pkt->set(s32, SDATA_IDX_DEPTH);
-        validity |= (1 << 9);
-
-        pkt->set(validity, SDATA_IDX_VALIDITY);
+        data->depth = estate->depth * 1000;
+        data->validity |= (1 << 9);
       }
 
       void
@@ -537,11 +671,6 @@ namespace Sensors
       {
         if (pkt->getMessageType() == MSG_ID_SONAR_DATA)
           handleSonarData(pkt);
-
-        if (!m_first_shot)
-          writeToLog(pkt);
-        else
-          m_first_shot = false;
       }
 
       bool
@@ -566,20 +695,51 @@ namespace Sensors
       }
 
       void
+      estimateTimeDelta(Counter<double>& reference_timer)
+      {
+        double remaining = reference_timer.getRemaining();
+        if (remaining > m_args.time_delta_init_tout)
+          remaining = m_args.time_delta_init_tout;
+
+        Counter<double> timer(remaining);
+        unsigned delta_ok = 0;
+
+        while (!timer.overflow())
+        {
+          double wait = timer.getRemaining();
+          waitForMessages((wait < 1.0) ? wait : 1.0);
+
+          int64_t diff = m_cmd->estimateTimeDelta(m_args.time_delta_max_latency);
+          if (diff < 2)
+            ++delta_ok;
+          else
+            delta_ok = 0;
+
+          if (delta_ok >= m_args.time_delta_init_samples)
+          {
+            debug("time is synchronized");
+            return;
+          }
+        }
+
+        debug("time is not synchronized");
+      }
+
+      void
       openLog(const Path& path)
       {
-        if (path == m_log_path)
+        if (!isActive() || (path == m_log_path))
           return;
 
         closeLog();
 
         m_log_path = path;
         m_log_file.open(m_log_path.c_str(), std::ofstream::app | std::ios::binary);
-        debug("opening %s", m_log_path.c_str());
+        debug("opened: %s", m_log_path.c_str());
       }
 
       void
-      writeToLog(const Packet* pkt)
+      writeLog(const Packet* pkt)
       {
         if (m_log_file.is_open())
           m_log_file.write((const char*)pkt->getData(), pkt->getSize());
@@ -588,16 +748,147 @@ namespace Sensors
       void
       closeLog(void)
       {
-        if (m_log_file.is_open())
+        if (!m_log_file.is_open())
+          return;
+
+        m_log_file.close();
+        debug("closed: %s", m_log_path.c_str());
+        m_log_path = Path();
+      }
+
+      void
+      controlPower(IMC::PowerChannelControl::OperationEnum op)
+      {
+        if (m_args.power_channel.empty())
+          return;
+
+        IMC::PowerChannelControl pcc;
+        pcc.op = op;
+        pcc.name = m_args.power_channel;
+        dispatch(pcc);
+      }
+
+      void
+      turnPowerOn(void)
+      {
+        trace("turning power on");
+        controlPower(IMC::PowerChannelControl::PCC_OP_TURN_ON);
+      }
+
+      void
+      turnPowerOff(void)
+      {
+        trace("turning power off");
+        controlPower(IMC::PowerChannelControl::PCC_OP_TURN_OFF);
+      }
+
+      //! Test if power channel is on.
+      //! @return true if power channel is on, false otherwise.
+      bool
+      isPowered(void)
+      {
+        return m_powered;
+      }
+
+      void
+      updateStateMachine(void)
+      {
+        switch (m_sm_state)
         {
-          m_log_file.close();
-          int64_t size = m_log_path.size();
-          if (size == 0)
-          {
-            debug("removing empty log '%s'", m_log_path.c_str());
-            m_log_path.remove();
-          }
-          m_log_path = Path();
+          // Wait for activation.
+          case SM_IDLE:
+            break;
+
+            // Begin activation sequence.
+          case SM_ACT_BEGIN:
+            m_wdog.setTop(getActivationTime());
+            m_sm_state = SM_ACT_POWER_ON;
+
+            // Turn power on.
+          case SM_ACT_POWER_ON:
+            turnPowerOn();
+            m_sm_state = SM_ACT_POWER_WAIT;
+
+            // Wait for power to be on.
+          case SM_ACT_POWER_WAIT:
+            if (m_wdog.overflow())
+            {
+              failActivation(DTR("failed to turn power on"));
+              m_sm_state = SM_IDLE;
+              break;
+            }
+            else if (!isPowered())
+            {
+              break;
+            }
+            m_sm_state = SM_ACT_SS_WAIT;
+
+            // Connect to sidescan.
+          case SM_ACT_SS_WAIT:
+            if (m_wdog.overflow())
+            {
+              failActivation(DTR("failed to connect to device"));
+              m_sm_state = SM_IDLE;
+              break;
+            }
+            else if (!connect())
+            {
+              break;
+            }
+
+            m_sm_state = SM_ACT_SS_SYNC;
+
+            // Synchronize time.
+          case SM_ACT_SS_SYNC:
+            estimateTimeDelta(m_wdog);
+            m_sm_state = SM_ACT_DONE;
+
+            // Activation procedure is complete.
+          case SM_ACT_DONE:
+            activate();
+            m_time_delta_timer.setTop(5.0);
+            m_sm_state = SM_ACT_SAMPLE;
+
+            // Read samples and continuously estimate time difference.
+          case SM_ACT_SAMPLE:
+            if (m_time_delta_timer.overflow())
+            {
+              m_time_delta_timer.reset();
+              m_cmd->estimateTimeDelta(m_args.time_delta_max_latency);
+            }
+
+            readData();
+            break;
+
+            // Start deactivation procedure.
+          case SM_DEACT_BEGIN:
+            closeLog();
+            m_wdog.setTop(getDeactivationTime());
+            m_sm_state = SM_DEACT_DISCONNECT;
+
+            // Disconnect and shutdown sidescan.
+          case SM_DEACT_DISCONNECT:
+            disconnect();
+            m_sm_state = SM_DEACT_POWER_OFF;
+
+            // Turn power off.
+          case SM_DEACT_POWER_OFF:
+            if (!m_wdog.overflow())
+              break;
+            turnPowerOff();
+            m_sm_state = SM_DEACT_POWER_WAIT;
+
+            // Wait for power to be turned off.
+          case SM_DEACT_POWER_WAIT:
+            if (isPowered())
+              break;
+            m_sm_state = SM_DEACT_DONE;
+
+            // Deactivation is complete.
+          case SM_DEACT_DONE:
+            deactivate();
+            m_sm_state = SM_IDLE;
+            break;
         }
       }
 
@@ -606,27 +897,18 @@ namespace Sensors
       {
         while (!stopping())
         {
-          consumeMessages();
-
-          if (isActive() && (m_sock_dat != NULL))
-          {
-            readData();
-
-            try
-            {
-              if (m_cmd != NULL)
-                m_time_diff = m_cmd->estimateTimeDifference();
-            }
-            catch (...)
-            { }
-          }
+          if (isActive())
+            consumeMessages();
           else
-          {
             waitForMessages(1.0);
-            if (isActivating())
-              checkActivationProgress();
-            else if (isDeactivating())
-              checkDeactivationProgress();
+
+          try
+          {
+            updateStateMachine();
+          }
+          catch (std::runtime_error& e)
+          {
+            throw RestartNeeded(e.what(), 5);
           }
         }
       }
