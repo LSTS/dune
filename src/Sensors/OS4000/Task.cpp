@@ -222,7 +222,8 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        m_wdog.setTop(m_args.data_tout);
+        if (paramChanged(m_args.data_tout))
+          m_wdog.setTop(m_args.data_tout);
       }
 
       //! Read a string from the serial port,

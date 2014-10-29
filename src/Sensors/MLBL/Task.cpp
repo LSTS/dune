@@ -503,8 +503,12 @@ namespace Sensors
       onUpdateParameters(void)
       {
         m_sound_speed = m_args.sound_speed_def;
-        m_report_timer.setTop(m_args.report_period);
-        m_pinger.setTop(m_args.ping_period);
+
+        if (paramChanged(m_args.report_period))
+          m_report_timer.setTop(m_args.report_period);
+
+        if (paramChanged(m_args.ping_period))
+          m_pinger.setTop(m_args.ping_period);
       }
 
       void

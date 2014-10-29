@@ -196,9 +196,14 @@ namespace Monitors
       onResourceInitialization(void)
       {
         // Initialize timers.
-        m_init.setTop(m_args.init_time);
-        m_water_status.setTop(m_args.water_timeout);
-        m_gps_status.setTop(m_args.gps_timeout);
+        if (paramChanged(m_args.init_time))
+          m_init.setTop(m_args.init_time);
+
+        if (paramChanged(m_args.water_timeout))
+          m_water_status.setTop(m_args.water_timeout);
+
+        if (paramChanged(m_args.gps_timeout))
+          m_gps_status.setTop(m_args.gps_timeout);
       }
 
       void

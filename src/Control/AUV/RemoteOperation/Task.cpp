@@ -154,7 +154,9 @@ namespace Control
           }
 
           m_args.max_thrust = Math::trimValue(m_args.max_thrust, 0.0, 1.0);
-          m_last_estate.setTop(m_args.estate_tout);
+
+          if (paramChanged(m_args.estate_tout))
+            m_last_estate.setTop(m_args.estate_tout);
         }
 
         void

@@ -182,8 +182,11 @@ namespace Navigation
         void
         onUpdateParameters(void)
         {
-          m_delay.setTop(m_args.delay);
-          m_wdog.setTop(m_args.wdog);
+          if (paramChanged(m_args.delay))
+            m_delay.setTop(m_args.delay);
+
+          if (paramChanged(m_args.wdog))
+            m_wdog.setTop(m_args.wdog);
         }
 
         void

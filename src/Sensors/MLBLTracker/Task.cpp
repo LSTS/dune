@@ -263,7 +263,8 @@ namespace Sensors
         }
 
         // Input timeout.
-        m_last_stn.setTop(m_args.tout_input);
+        if (paramChanged(m_args.tout_input))
+          m_last_stn.setTop(m_args.tout_input);
       }
 
       void

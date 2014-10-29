@@ -95,8 +95,11 @@ namespace Supervisors
         void
         onUpdateParameters(void)
         {
-          m_tout_heartbeat.setTop(m_args.tout_heartbeat);
-          m_tout_mission.setTop(m_args.tout_mission);
+          if (paramChanged(m_args.tout_heartbeat))
+            m_tout_heartbeat.setTop(m_args.tout_heartbeat);
+
+          if (paramChanged(m_args.tout_mission))
+            m_tout_mission.setTop(m_args.tout_mission);
         }
 
         void

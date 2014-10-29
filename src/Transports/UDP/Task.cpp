@@ -196,7 +196,8 @@ namespace Transports
       void
       onUpdateParameters(void)
       {
-        m_contacts_refresh_counter.setTop(m_args.contact_refresh_per);
+        if (paramChanged(m_args.contact_refresh_per))
+          m_contacts_refresh_counter.setTop(m_args.contact_refresh_per);
 
         // Initialize set of static destinations.
         m_static_dsts.clear();

@@ -162,7 +162,8 @@ namespace Navigation
         void
         onUpdateParameters(void)
         {
-          m_time_without_gps.setTop(m_args.gps_timeout);
+          if (paramChanged(m_args.gps_timeout))
+            m_time_without_gps.setTop(m_args.gps_timeout);
         }
 
         void

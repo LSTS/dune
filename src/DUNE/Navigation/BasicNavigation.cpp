@@ -252,13 +252,26 @@ namespace DUNE
     BasicNavigation::onUpdateParameters(void)
     {
       // Initialize timers.
-      m_time_without_gps.setTop(m_without_gps_timeout);
-      m_time_without_dvl.setTop(m_without_dvl_timeout);
-      m_time_without_alt.setTop(m_without_alt_timeout);
-      m_time_without_main_depth.setTop(m_without_main_depth_timeout);
-      m_time_without_depth.setTop(m_without_depth_timeout);
-      m_time_without_euler.setTop(m_without_euler_timeout);
-      m_dvl_sanity_timer.setTop(m_dvl_sanity_timeout);
+      if (paramChanged(m_without_gps_timeout))
+        m_time_without_gps.setTop(m_without_gps_timeout);
+
+      if (paramChanged(m_without_dvl_timeout))
+        m_time_without_dvl.setTop(m_without_dvl_timeout);
+
+      if (paramChanged(m_without_alt_timeout))
+        m_time_without_alt.setTop(m_without_alt_timeout);
+
+      if (paramChanged(m_without_main_depth_timeout))
+        m_time_without_main_depth.setTop(m_without_main_depth_timeout);
+
+      if (paramChanged(m_without_depth_timeout))
+        m_time_without_depth.setTop(m_without_depth_timeout);
+
+      if (paramChanged(m_without_euler_timeout))
+        m_time_without_euler.setTop(m_without_euler_timeout);
+
+      if (paramChanged(m_dvl_sanity_timeout))
+        m_dvl_sanity_timer.setTop(m_dvl_sanity_timeout);
 
       // Distance DVL to vehicle Center of Gravity is 0 in Simulation.
       if (m_ctx.profiles.isSelected("Simulation"))
