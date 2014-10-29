@@ -135,9 +135,11 @@ namespace Sensors
       //! Ping Period.
       double ping_period;
       //! Transponder Ping Timeout.
-      unsigned ping_tout_nb;
+      double ping_tout_nb;
+      //! Transponder Ping Wait Time.
+      double ping_wait_nb;
       //! Micromodem Ping Timeout.
-      unsigned ping_tout_mm;
+      double ping_tout_mm;
       //! Length of transmit pings.
       unsigned tx_length;
       //! Length of receive pings.
@@ -369,6 +371,11 @@ namespace Sensors
         param("Transponder Ping Timeout", m_args.ping_tout_nb)
         .units(Units::Second)
         .defaultValue("2")
+        .minimumValue("0");
+
+        param("Transponder Ping Wait Time", m_args.ping_wait_nb)
+        .units(Units::Second)
+        .defaultValue("0.5")
         .minimumValue("0");
 
         param("Micromodem Ping Timeout", m_args.ping_tout_mm)
@@ -1003,7 +1010,7 @@ namespace Sensors
                                       freqs[0], freqs[1], freqs[2], freqs[3]);
 
         sendCommand(cmd);
-        processInput(m_args.ping_tout_nb + 1);
+        processInput(m_args.ping_tout_nb + m_args.ping_wait_nb);
         if (consumeResult(RS_PNG_ACKD) && consumeResult(RS_PNG_TIME))
           setAndSendState(STA_ACTIVE);
         else
