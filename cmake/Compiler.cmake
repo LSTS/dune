@@ -123,7 +123,7 @@ macro(dune_probe_cxx)
         set(DUNE_C_FLAGS "${DUNE_C_FLAGS} -fdiagnostics-show-option")
       endif(has_fdiagnostic_show_option)
 
-      if(NOT RTTI)
+      if(NO_RTTI)
         check_cxx_compiler_flag(-fno-rtti has_fno_rtti)
         if(has_fno_rtti)
           set(DUNE_CXX_FLAGS "${DUNE_CXX_FLAGS} -fno-rtti")
