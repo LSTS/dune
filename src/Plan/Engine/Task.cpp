@@ -55,6 +55,8 @@ namespace Plan
                                   DTR_RT("STOPPING"), DTR_RT("START_ACTIV"),
                                   DTR_RT("ACTIVATING"), DTR_RT("START_EXEC"),
                                   DTR_RT("EXECUTING"), DTR_RT("BLOCKED")};
+    //! Message to print when no plan is running
+    const char* c_no_plan_running = DTR("no plan is running, request ignored");
 
     enum EngineState
     {
@@ -238,7 +240,7 @@ namespace Plan
       onResourceAcquisition(void)
       {
         m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict,
-                          this, m_args.calibration_time, &m_ctx.config);
+                          this, &m_ctx.config);
 
         m_db = new DataBaseInteraction(this, m_ctx.dir_db / "Plan.db");
         m_ccu = new CCUInteraction(this);
@@ -458,7 +460,7 @@ namespace Plan
       void
       consume(const IMC::VehicleState* vs)
       {
-        if (getEntityState() == IMC::EntityState::ESTA_BOOT)
+        if (m_sm == ST_BOOT)
           return;
 
         m_last_vstate = Clock::get();
@@ -472,27 +474,6 @@ namespace Plan
           case IMC::VehicleState::VS_BOOT:
             onVehicleError(vs);
             break;
-        }
-
-        // update calibration status
-        if (m_plan == NULL)
-          return;
-
-        if (m_sm == ST_ACTIVATING)
-        {
-          m_plan->updateCalibration(vs);
-
-          if (m_plan->isCalibrationDone())
-          {
-            IMC::PlanManeuver* pman = m_plan->loadStartManeuver();
-            startManeuver(pman);
-          }
-          else if (m_plan->hasCalibrationFailed())
-          {
-            onFailure(m_plan->getCalibrationInfo());
-            setState(ST_STOPPING, ST_READY);
-            err("%s", m_plan->getCalibrationInfo().c_str());
-          }
         }
       }
 
@@ -653,7 +634,7 @@ namespace Plan
             onSuccess(&m_spec);
             break;
           default:
-            onFailure(DTR("no plan is running"));
+            onFailure(c_no_plan_running);
             break;
         }
       }
@@ -670,7 +651,7 @@ namespace Plan
             setState(ST_STOPPING, next);
             break;
           default:
-            onFailure(DTR("no plan is running, request ignored"));
+            onFailure(c_no_plan_running);
             break;
         }
       }
@@ -971,8 +952,7 @@ namespace Plan
       }
 
       //! Answer to the reply with a success message
-      //! @param[in] msg text message to send
-      //! @param[in] print true if the message should be printed to output
+      //! @param[in] arg pointer to message to set in arg
       void
       onSuccess(const IMC::Message* arg)
       {
@@ -1101,6 +1081,25 @@ namespace Plan
             {
               setState(ST_READY);
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            }
+            break;
+          case ST_ACTIVATING:
+            // update activation status
+            if (m_plan == NULL)
+              return;
+
+            m_plan->updateCalibration();
+
+            if (m_plan->isCalibrationDone())
+            {
+              IMC::PlanManeuver* pman = m_plan->loadStartManeuver();
+              startManeuver(pman);
+            }
+            else if (m_plan->hasCalibrationFailed())
+            {
+              onFailure(m_plan->getCalibrationInfo());
+              setState(ST_STOPPING, ST_READY);
+              err("%s", m_plan->getCalibrationInfo().c_str());
             }
             break;
           default:
