@@ -43,7 +43,7 @@ namespace Plan
     // Export DLL Symbol.
     class DUNE_DLL_SYM Calibration;
 
-    //! Plan Specification parser
+    //! Calibration state class
     class Calibration
     {
     public:
