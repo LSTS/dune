@@ -46,6 +46,10 @@ namespace Plan
     const double c_vc_reply_timeout = 2.5;
     //! Timeout for the vehicle state
     const double c_vs_timeout = 2.5;
+    //! Activation maneuver time factor
+    const float c_activ_factor = 1.5f;
+    //! Minimum activation maneuver time
+    const float c_activ_min = 15.0f;
     //! Plan state descriptions
     const char* c_state_desc[] = {DTR_RT("NONE"), DTR_RT("BOOT"), DTR_RT("READY"),
                                   DTR_RT("STOPPING"), DTR_RT("START_ACTIV"),
@@ -475,11 +479,8 @@ namespace Plan
 
           if (m_plan->isCalibrationDone())
           {
-            if (vs->op_mode == IMC::VehicleState::VS_CALIBRATION)
-            {
-              IMC::PlanManeuver* pman = m_plan->loadStartManeuver();
-              startManeuver(pman);
-            }
+            IMC::PlanManeuver* pman = m_plan->loadStartManeuver();
+            startManeuver(pman);
           }
           else if (m_plan->hasCalibrationFailed())
           {
@@ -875,10 +876,10 @@ namespace Plan
         // Add to memento handler
         m_mh.add(m_plan_ref, m_spec);
 
-        m_vc.calib_time = (uint16_t)m_plan->getEstimatedCalibrationTime();
-        if (m_vc.calib_time)
+        float activ_time = (uint16_t)m_plan->getEstimatedCalibrationTime();
+        if (activ_time)
         {
-          startCalibration();
+          startActivation(activ_time);
         }
         else
         {
@@ -889,14 +890,18 @@ namespace Plan
         return true;
       }
 
-      //! Send a request to start calibration procedures
+      //! Send a request to start activation procedures
+      //! @param[in] activ_time
       void
-      startCalibration(void)
+      startActivation(float activ_time)
       {
         IMC::Message* m = 0;
 
         IMC::StationKeeping sk;
         IMC::IdleManeuver idle;
+
+        float maneuver_time = activ_time * c_activ_factor;
+        maneuver_time = std::max(maneuver_time, c_activ_min);
 
         if (m_args.sk_calib)
         {
@@ -906,11 +911,12 @@ namespace Plan
           sk.radius = m_args.sk_radius;
           sk.speed_units = IMC::SUNITS_RPM;
           sk.speed = m_args.sk_rpm;
+          sk.duration = maneuver_time;
           m = static_cast<IMC::Message*>(&sk);
         }
         else
         {
-          idle.duration = 0; // TODO USE MAX VALUE HERE
+          idle.duration = maneuver_time;
           m = static_cast<IMC::Message*>(&idle);
         }
 
