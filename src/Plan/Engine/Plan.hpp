@@ -67,11 +67,9 @@ namespace Plan
       //! @param[in] compute_progress true if progress should be computed
       //! @param[in] fpredict true if fuel prediction should be computed
       //! @param[in] task pointer to task
-      //! @param[in] min_cal_time minimum calibration time in s.
       //! @param[in] cfg pointer to config object
       Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-           bool fpredict, Tasks::Task* task,
-           uint16_t min_cal_time, Parsers::Config* cfg);
+           bool fpredict, Tasks::Task* task, Parsers::Config* cfg);
 
       //! Destructor
       ~Plan(void);
@@ -173,7 +171,7 @@ namespace Plan
 
       //! Update calibration process
       void
-      updateCalibration(const IMC::VehicleState* vs);
+      updateCalibration(void);
 
       //! Pass EntityActivationState to scheduler
       //! @param[in] id entity label
@@ -319,8 +317,6 @@ namespace Plan
       bool m_started_maneuver;
       //! Calibration object pointer
       Calibration* m_calib;
-      //! Minimum calibration time
-      uint16_t m_min_cal_time;
       //! Component active time for fuel estimation
       ComponentActiveTime m_cat;
       //! Pointer to speed model for speed conversions

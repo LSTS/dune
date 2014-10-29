@@ -33,8 +33,7 @@ namespace Plan
   namespace Engine
   {
     Plan::Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-               bool fpredict, Tasks::Task* task,
-               uint16_t min_cal_time, Parsers::Config* cfg):
+               bool fpredict, Tasks::Task* task, Parsers::Config* cfg):
       m_spec(spec),
       m_curr_node(NULL),
       m_compute_progress(compute_progress),
@@ -46,7 +45,6 @@ namespace Plan
       m_sched(NULL),
       m_started_maneuver(false),
       m_calib(NULL),
-      m_min_cal_time(min_cal_time),
       m_config(cfg),
       m_fpred(NULL),
       m_task(task),
@@ -101,7 +99,7 @@ namespace Plan
       m_progress = -1.0;
       m_beyond_dur = false;
       m_started_maneuver = false;
-      m_est_cal_time = m_min_cal_time;
+      m_est_cal_time = 0;
 
       if (m_profiles != NULL)
         m_profiles->clear();
@@ -261,18 +259,11 @@ namespace Plan
     }
 
     void
-    Plan::updateCalibration(const IMC::VehicleState* vs)
+    Plan::updateCalibration(void)
     {
-      if (vs->op_mode == IMC::VehicleState::VS_CALIBRATION && m_calib->notStarted())
+      if (m_calib->notStarted())
       {
         m_calib->start();
-      }
-      else if (vs->op_mode != IMC::VehicleState::VS_CALIBRATION && m_calib->inProgress())
-      {
-        m_calib->stop();
-
-        // Fill statistics
-        m_rt_stat->fillCalib(m_calib->getElapsedTime());
       }
       else if (m_calib->inProgress())
       {
@@ -281,9 +272,8 @@ namespace Plan
         {
           m_calib->forceRemainingTime(scheduledTimeLeft());
         }
-        else if (m_calib->getElapsedTime() >= m_min_cal_time)
+        else
         {
-          // If we're past the minimum calibration time
           m_calib->stop();
 
           // Fill statistics
@@ -496,7 +486,7 @@ namespace Plan
           Memory::clear(m_sched);
           m_sched = new ActionSchedule(m_task, m_spec, m_seq_nodes, cinfo);
 
-          m_est_cal_time = m_min_cal_time;
+          m_est_cal_time = 0;
         }
       }
 
