@@ -102,7 +102,8 @@ namespace Plan
       //! @param[in] desc description for the answer
       //! @param[in] print true if output should be printed out
       void
-      answer(uint8_t type, const std::string& desc, bool print = true)
+      answer(uint8_t type, const std::string& desc, bool print = true,
+             const IMC::Message* arg = NULL)
       {
         const IMC::PlanControl* pc = &m_toreply.plan_control;
 
@@ -114,6 +115,9 @@ namespace Plan
         reply.request_id = pc->request_id;
         reply.op = pc->op;
         reply.plan_id = pc->plan_id;
+
+        if (arg != NULL)
+          reply.arg.set(*arg);
 
         m_task->dispatch(reply);
 
