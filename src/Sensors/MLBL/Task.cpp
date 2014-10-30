@@ -1009,8 +1009,9 @@ namespace Sensors
         while (freqs.size() < 4)
           freqs.push_back(0);
 
+        unsigned ping_time = static_cast<unsigned>(m_args.ping_tout_nb * 1000);
         std::string cmd = String::str("$CCPNT,%u,%u,%u,%u,%u,%u,%u,%u,1\r\n",
-                                      query, m_args.tx_length, m_args.rx_length, m_args.ping_tout_nb * 1000,
+                                      query, m_args.tx_length, m_args.rx_length, ping_time,
                                       freqs[0], freqs[1], freqs[2], freqs[3]);
 
         sendCommand(cmd);
@@ -1298,7 +1299,7 @@ namespace Sensors
           if (m_lbl.empty())
           {
             waitForMessages(1.0);
-            processInput();
+            processInput(1.0);
             continue;
           }
 
@@ -1309,7 +1310,7 @@ namespace Sensors
           }
           else
           {
-            processInput();
+            processInput(1.0);
           }
 
           if (Clock::get() >= (m_last_input + c_input_tout))
