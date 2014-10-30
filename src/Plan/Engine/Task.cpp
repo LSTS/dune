@@ -59,6 +59,8 @@ namespace Plan
                                   DTR_RT("INITIALIZING"), DTR_RT("EXECUTING")};
     //! Message to print when no plan is running
     const char* c_no_plan_running = DTR("no plan is running, request ignored");
+    //! Message to print when plan is loaded
+    const char* c_plan_loaded = DTR("plan loaded");
 
     enum EngineState
     {
@@ -606,12 +608,10 @@ namespace Plan
           return false;
 
         // reply with statistics
-        std::string loaded = DTR("plan loaded");
-
         if (plan_startup)
-          onProgress(loaded, false, &ps);
+          onProgress(c_plan_loaded, false, &ps);
         else
-          onSuccess(loaded, true, &ps);
+          onSuccess(c_plan_loaded, true, &ps);
 
         return true;
       }
