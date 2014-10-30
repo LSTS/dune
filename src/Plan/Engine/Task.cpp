@@ -49,11 +49,14 @@ namespace Plan
     const float c_activ_factor = 1.5f;
     //! Minimum activation maneuver time
     const float c_activ_min = 15.0f;
-    //! Plan state descriptions
+    //! Plan engine state descriptions
     const char* c_state_desc[] = {DTR_RT("NONE"), DTR_RT("BOOT"), DTR_RT("READY"),
                                   DTR_RT("STOPPING"), DTR_RT("START_ACTIV"),
                                   DTR_RT("ACTIVATING"), DTR_RT("START_EXEC"),
                                   DTR_RT("EXECUTING"), DTR_RT("BLOCKED")};
+    //! Plan control state description
+    const char* c_pcs_desc[] = {DTR_RT("BLOCKED"), DTR_RT("READY"),
+                                  DTR_RT("INITIALIZING"), DTR_RT("EXECUTING")};
     //! Message to print when no plan is running
     const char* c_no_plan_running = DTR("no plan is running, request ignored");
 
@@ -270,7 +273,7 @@ namespace Plan
           {
             std::string comp = DTR("plan completed");
             m_pcs.last_outcome = IMC::PlanControlState::LPO_SUCCESS;
-            onSuccess(comp, false);
+            onSuccess(comp, true);
             setState(ST_STOPPING, ST_READY);
           }
           else
@@ -440,11 +443,13 @@ namespace Plan
             break;
           case ST_START_ACTIV:
             setState(ST_ACTIVATING);
-            onSuccess(vc->info);
             break;
           case ST_START_EXEC:
             setState(ST_EXECUTING);
-            onSuccess(vc->info);
+            onProgress(vc->info);
+
+            if (m_plan != NULL)
+              war(DTR("executing maneuver: %s"), m_plan->getManeuverId().c_str());
             break;
           default:
             debug("should not be pending reply");
@@ -504,20 +509,6 @@ namespace Plan
           default:
             break;
         }
-
-        // there are new error entities
-        // if (edesc != m_last_event && !pendingReply())
-        // {
-        //   if (initMode())
-        //   {
-        //     onFailure(edesc);
-        //     // stop calibration if any is running
-        //     vehicleRequest(IMC::VehicleCommand::VC_STOP_CALIBRATION);
-        //     m_reply.plan_id = m_spec.plan_id;
-        //   }
-
-        //   changeMode(IMC::PlanControlState::PCS_BLOCKED, edesc, false);
-        // }
       }
 
       void
@@ -557,10 +548,11 @@ namespace Plan
         switch (m_sm)
         {
           case ST_BOOT:
-            onFailure(DTR("engine not ready, saved request"));
+            onFailure(DTR("engine not %s, saved request"),
+                      c_pcs_desc[IMC::PlanControlState::PCS_READY]);
             return false;
           case ST_BLOCKED:
-            onFailure(DTR("engine is bocked"));
+            onFailure("%s", c_pcs_desc[m_pcs.state]);
             return true;
           default:
             break;
@@ -613,7 +605,12 @@ namespace Plan
           return false;
 
         // reply with statistics
-        onSuccess(DTR("plan loaded"), false, &ps);
+        std::string loaded = DTR("plan loaded");
+
+        if (plan_startup)
+          onProgress(loaded, false, &ps);
+        else
+          onSuccess(loaded, true, &ps);
 
         return true;
       }
@@ -924,6 +921,17 @@ namespace Plan
         setState(ST_START_EXEC);
       }
 
+      //! Generic answer function
+      //! @param[in] msg text message to send
+      //! @param[in] print true if the message should be printed to output
+      //! @param[in] arg pointer to argument IMC message
+      inline void
+      genericAnswer(IMC::PlanControl::TypeEnum type, const std::string& msg,
+                    bool print = true, const IMC::Message* arg = NULL)
+      {
+        m_ccu->answer(type, msg, print, arg);
+      }
+
       //! Answer to the reply with a failure message
       //! @param[in] errmsg text error message to send
       //! @param[in] print true if the message should be printed to output
@@ -932,32 +940,42 @@ namespace Plan
       {
         m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
 
-        m_ccu->answer(IMC::PlanControl::PC_FAILURE, errmsg, print);
+        genericAnswer(IMC::PlanControl::PC_FAILURE, errmsg, print);
       }
 
       //! Answer to the reply with a success message
       //! @param[in] msg text message to send
       //! @param[in] print true if the message should be printed to output
-      void
+      //! @param[in] arg pointer to argument IMC message
+      inline void
       onSuccess(const std::string& msg = DTR("OK"), bool print = true,
                 const IMC::Message* arg = NULL)
       {
-        m_ccu->answer(IMC::PlanControl::PC_SUCCESS, msg, print, arg);
+        genericAnswer(IMC::PlanControl::PC_SUCCESS, msg, print, arg);
       }
 
       //! Answer to the reply with a success message
       //! @param[in] arg pointer to message to set in arg
-      void
+      inline void
       onSuccess(const IMC::Message* arg)
       {
-        m_ccu->answer(IMC::PlanControl::PC_SUCCESS, DTR("OK"), true, arg);
+        genericAnswer(IMC::PlanControl::PC_SUCCESS, DTR("OK"), true, arg);
+      }
+
+      //! Answer to the reply with an in progress message
+      //! @param[in] arg pointer to message to set in arg
+      inline void
+      onProgress(const std::string& msg = DTR("OK"), bool print = false,
+                 const IMC::Message* arg = NULL)
+      {
+        m_ccu->answer(IMC::PlanControl::PC_IN_PROGRESS, msg, print, arg);
       }
 
       //! Set task's initial state
       void
       setInitialState(void)
       {
-        m_pcs.state = IMC::PlanControlState::PCS_READY;
+        m_pcs.state = IMC::PlanControlState::PCS_BLOCKED;
         m_pcs.plan_id.clear();
         m_pcs.man_id.clear();
         m_pcs.man_type = 0xFFFF;
@@ -1117,7 +1135,6 @@ namespace Plan
             vehicleRequest(IMC::VehicleCommand::VC_STOP_MANEUVER);
             break;
           case ST_READY:
-            war(DTR("engine is ready"));
             break;
           case ST_ACTIVATING:
           case ST_EXECUTING:
@@ -1149,7 +1166,7 @@ namespace Plan
             m_pcs.state = IMC::PlanControlState::PCS_BLOCKED;
             break;
           case ST_READY:
-            m_pcs.state = IMC::PlanControlState::PCS_BLOCKED;
+            m_pcs.state = IMC::PlanControlState::PCS_READY;
             break;
           case ST_ACTIVATING:
           case ST_START_ACTIV:
@@ -1165,7 +1182,10 @@ namespace Plan
         }
 
         if (temp != m_pcs.state)
+        {
+          war(DTR("engine is %s"), c_pcs_desc[m_pcs.state]);
           dispatch(m_pcs);
+        }
       }
 
       void

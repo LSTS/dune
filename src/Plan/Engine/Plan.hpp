@@ -192,6 +192,21 @@ namespace Plan
       float
       getETA(void) const;
 
+      //! Get current maneuver name
+      inline const std::string
+      getManeuverId(void)
+      {
+        std::string man_id = "Unknown";
+
+        if (m_curr_node == NULL)
+          return man_id;
+
+        if (m_curr_node->pman == NULL)
+          return man_id;
+
+        return m_curr_node->pman->maneuver_id;
+      }
+
     private:
       //! Get duration of the execution phase of the plan
       //! (total of maneuver accumulated duration)
