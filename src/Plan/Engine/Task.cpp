@@ -232,6 +232,7 @@ namespace Plan
       {
         Memory::clear(m_plan);
         Memory::clear(m_db);
+        Memory::clear(m_ccu);
       }
 
       void
@@ -823,7 +824,7 @@ namespace Plan
       {
         if (m_sm != ST_READY)
         {
-          setState(ST_STOPPING, ST_START_EXEC);
+          setState(ST_STOPPING, ST_READY);
           return false;
         }
 

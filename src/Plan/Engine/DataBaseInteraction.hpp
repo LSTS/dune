@@ -58,6 +58,7 @@ namespace Plan
       //! Constructor
       DataBaseInteraction(DUNE::Tasks::Task* task, const Path& db_file):
         m_task(task),
+        m_conn(NULL),
         m_db_file(db_file),
         m_error(false)
       {
@@ -74,11 +75,11 @@ namespace Plan
       void
       close(void)
       {
-        if (m_conn == NULL)
-          return;
-
         for (unsigned i = 0; i < DB_TOTAL; i++)
           Memory::clear(m_get_stmt[i]);
+
+        if (m_conn == NULL)
+          return;
 
         Memory::clear(m_conn);
 
@@ -257,12 +258,12 @@ namespace Plan
         return true;
       }
 
+      //! Pointer to task
+      DUNE::Tasks::Task* m_task;
       //! Database connection
       Database::Connection* m_conn;
       //! Database statement
       Database::Statement* m_get_stmt[DB_TOTAL];
-      //! Pointer to task
-      DUNE::Tasks::Task* m_task;
       //! Path to db file
       Path m_db_file;
       //! True if in error
