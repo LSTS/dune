@@ -272,36 +272,14 @@ namespace Plan
       return true;
     }
 
-    bool
-    ActionSchedule::waitingForDevice(void)
-    {
-      // if there are any requests hanging, then we're waiting
-      if (!m_reqs.empty())
-        return true;
-
-      std::map<std::string, TimedStack>::const_iterator next;
-      next = nextSchedule();
-
-      if (next != m_timed.end())
-      {
-        if (next->second.top().sched_time >= m_execution_duration)
-          return true;
-      }
-
-      return false;
-    }
-
     float
-    ActionSchedule::calibTimeLeft(void)
+    ActionSchedule::nextScheduledTime(void)
     {
-      if (!m_reqs.empty())
-        return -1.0;
-
       std::map<std::string, TimedStack>::const_iterator next;
       next = nextSchedule();
 
       if (next != m_timed.end())
-        return next->second.top().sched_time - m_execution_duration;
+        return next->second.top().sched_time;
 
       return -1.0;
     }

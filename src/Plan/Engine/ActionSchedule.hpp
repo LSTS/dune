@@ -124,15 +124,18 @@ namespace Plan
       bool
       onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg);
 
-      //! Check if we are still waiting for a device in calibration process
-      //! @return true if we are still waiting
-      bool
-      waitingForDevice(void);
+      //! Check if there are any activation requests hanging
+      //! @return true if there are
+      inline bool
+      hangingRequests(void)
+      {
+        return !m_reqs.empty();
+      }
 
-      //! Compute a shorter time for calibration
-      //! @return time left for calibration according to devices to activate
+      //! Next scheduled time for activation
+      //! @return scheduled time for next activation
       float
-      calibTimeLeft(void);
+      nextScheduledTime(void);
 
       //! Fill the object component active time
       //! @param[in] nodes vector of sequenced plan maneuvers
