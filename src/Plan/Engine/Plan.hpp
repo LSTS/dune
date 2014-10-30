@@ -213,16 +213,6 @@ namespace Plan
         return getExecutionDuration() / getTotalDuration() * 100.0;
       }
 
-      //! Check if scheduler is waiting for a device
-      //! @return true if waiting for device
-      bool
-      waitingForDevice(void);
-
-      //! Returns activation time left according to scheduler
-      //! @return activation time left or -1 if no scheduler is active
-      float
-      scheduledTimeLeft(void) const;
-
       //! Check if a maneuver exists in the sequential nodes
       //! @param[in] id string id of the maneuver
       //! @return true if it already exists in the seq nodes vector

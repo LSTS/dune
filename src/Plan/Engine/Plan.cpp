@@ -268,12 +268,29 @@ namespace Plan
       }
       else if (m_calib->inProgress())
       {
-        // check if some activation time can be skipped
-        if (waitingForDevice())
+        bool stop = false;
+
+        if (m_sched == NULL)
         {
-          m_calib->forceRemainingTime(scheduledTimeLeft());
+          stop = true;
+        }
+        else if (m_sched->hangingRequests())
+        {
+          if (m_calib->overflow())
+            stop = true;
+        }
+        else if (m_sched->nextScheduledTime() >= getExecutionDuration())
+        {
+          float forced_time = m_sched->nextScheduledTime() - getExecutionDuration();
+          m_calib->forceRemainingTime(forced_time);
+          m_sched->updateSchedule(forced_time + getExecutionDuration());
         }
         else
+        {
+          stop = true;
+        }
+
+        if (stop)
         {
           m_calib->stop();
 
@@ -331,24 +348,6 @@ namespace Plan
         return -1.0;
 
       return itr->second.durations.back();
-    }
-
-    bool
-    Plan::waitingForDevice(void)
-    {
-      if (m_sched != NULL)
-        return m_sched->waitingForDevice();
-
-      return false;
-    }
-
-    float
-    Plan::scheduledTimeLeft(void) const
-    {
-      if (m_sched != NULL)
-        return m_sched->calibTimeLeft();
-
-      return -1.0;
     }
 
     bool
