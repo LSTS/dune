@@ -42,16 +42,13 @@ namespace Plan
 {
   namespace Engine
   {
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM DataBaseInteraction;
-
     //! DataBase statement
     static const char* c_get_stmt[] = {"select data from Plan where plan_id=?",
                                        "select data from Memento where id=?"};
     //! No connection to DB message
     static const char* c_no_conn = DTR("no database connection");
     
-    //! Class to gather each maneuver's ETA
+    //! Class to handle Database interactions
     class DataBaseInteraction
     {
     public:
