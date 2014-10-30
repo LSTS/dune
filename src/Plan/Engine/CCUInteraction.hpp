@@ -69,12 +69,15 @@ namespace Plan
       }
 
       const IMC::PlanControl*
-      getRequest(void) const
+      getRequest(void)
       {
         if (!m_requests.size())
           return NULL;
 
-        return &m_requests.front().plan_control;
+        m_toreply = m_requests.front();
+        m_toreply.state = RS_UNPROC; 
+
+        return &m_toreply.plan_control;
       }
 
       void
@@ -87,12 +90,12 @@ namespace Plan
         }
 
         // Check if there is a request that had no reply
-        if ((m_toreply.state != RS_NONE) && (m_toreply.state != RS_REPLIED))
+        if (m_toreply.state != RS_REPLIED)
           m_task->war("did not reply to a request: %u", m_toreply.plan_control.request_id);
 
-        // save reply to be processed
-        m_toreply = m_requests.front();
+        // flag reply as processed
         m_toreply.state = RS_PROC;
+
         // pop from queue
         m_requests.pop();
       }
@@ -154,10 +157,10 @@ namespace Plan
         RS_NONE = 0,
         //! Unprocessed
         RS_UNPROC,
-        //! Processed but not replied
-        RS_PROC,
-        //! Replied
-        RS_REPLIED
+        //! Replied not necessarily fully processed
+        RS_REPLIED,
+        //! Processed
+        RS_PROC
       };
 
       struct Request
