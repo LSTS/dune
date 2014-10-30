@@ -88,10 +88,6 @@ namespace Plan
       bool fpredict;
       //! State report period
       float speriod;
-      //! Duration of vehicle calibration process.
-      uint16_t calibration_time;
-      //! True if calibration should be performed at all
-      bool do_calib;
       //! Abort when a payload fails to activate
       bool actfail_abort;
       //! Perform station keeping while calibrating
@@ -825,7 +821,6 @@ namespace Plan
       //! Start a given plan
       //! @param[in] plan_id name of the plan to execute
       //! @param[in] spec plan specification message if any
-      //! @param[in] flags plan control flags
       //! @return false if must stop maneuvering first
       bool
       startPlan(const std::string& plan_id, const IMC::Message* spec)
@@ -866,7 +861,7 @@ namespace Plan
       }
 
       //! Send a request to start activation procedures
-      //! @param[in] activ_time
+      //! @param[in] activ_time time needed for activation
       void
       startActivation(float activ_time)
       {
@@ -981,7 +976,7 @@ namespace Plan
       void
       reportProgress(void)
       {
-        // Must be executing or calibrating to be able to compute progress
+        // Must be executing or activating to be able to compute progress
         if (m_plan == NULL)
           return;
 
