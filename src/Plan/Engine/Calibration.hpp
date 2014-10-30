@@ -153,6 +153,14 @@ namespace Plan
         return m_time - m_timer.getRemaining();
       }
 
+      //! Check if timer has overflown
+      //! @return true if has overflown
+      inline bool
+      overflow(void)
+      {
+        return m_timer.overflow();
+      }
+
       //! Check if calibration is in progress
       //! @return true if in progress
       bool
