@@ -35,7 +35,9 @@
 
 // DUNE headers.
 #include <DUNE/Plans.hpp>
-#include "Calibration.hpp"
+
+// Local headers
+#include "Activation.hpp"
 #include "ActionSchedule.hpp"
 #include "Timeline.hpp"
 #include "FuelPrediction.hpp"
@@ -144,7 +146,7 @@ namespace Plan
       inline const std::string
       getActivationInfo(void) const
       {
-        return m_calib->getInfo();
+        return m_activation->getInfo();
       }
 
       //! Is activation done
@@ -152,7 +154,7 @@ namespace Plan
       inline bool
       isActivationDone(void) const
       {
-        return m_calib->isDone();
+        return m_activation->isDone();
       }
 
       //! Has activation failed
@@ -160,7 +162,7 @@ namespace Plan
       inline bool
       hasActivationFailed(void) const
       {
-        return m_calib->hasFailed();
+        return m_activation->hasFailed();
       }
 
       //! Get current plan progress
@@ -306,7 +308,7 @@ namespace Plan
       //! Signal that a maneuver has started
       bool m_started_maneuver;
       //! Activation object pointer
-      Calibration* m_calib;
+      Activation* m_activation;
       //! Component active time for fuel estimation
       ComponentActiveTime m_cat;
       //! Pointer to speed model for speed conversions

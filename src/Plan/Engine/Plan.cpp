@@ -44,7 +44,7 @@ namespace Plan
       m_beyond_dur(false),
       m_sched(NULL),
       m_started_maneuver(false),
-      m_calib(NULL),
+      m_activation(NULL),
       m_config(cfg),
       m_fpred(NULL),
       m_task(task),
@@ -73,7 +73,7 @@ namespace Plan
       }
 
       m_profiles = new Plans::TimeProfile(m_speed_model);
-      m_calib = new Calibration();
+      m_activation = new Activation();
       m_rt_stat = new RunTimeStatistics(&m_post_stat);
     }
 
@@ -81,7 +81,7 @@ namespace Plan
     {
       Memory::clear(m_profiles);
       Memory::clear(m_sched);
-      Memory::clear(m_calib);
+      Memory::clear(m_activation);
       Memory::clear(m_speed_model);
       Memory::clear(m_power_model);
       Memory::clear(m_fpred);
@@ -102,8 +102,8 @@ namespace Plan
       if (m_profiles != NULL)
         m_profiles->clear();
 
-      if (m_calib != NULL)
-        m_calib->clear();
+      if (m_activation != NULL)
+        m_activation->clear();
 
       m_cat.clear();
       m_properties = 0;
@@ -162,7 +162,7 @@ namespace Plan
     void
     Plan::activationStarted(void)
     {
-      m_calib->setTime(m_est_act_time);
+      m_activation->setTime(m_est_act_time);
 
       if (m_sched != NULL)
         m_sched->updateSchedule(getTotalDuration());
@@ -262,11 +262,11 @@ namespace Plan
     void
     Plan::updateActivation(void)
     {
-      if (m_calib->notStarted())
+      if (m_activation->notStarted())
       {
-        m_calib->start();
+        m_activation->start();
       }
-      else if (m_calib->inProgress())
+      else if (m_activation->inProgress())
       {
         bool stop = false;
 
@@ -276,13 +276,13 @@ namespace Plan
         }
         else if (m_sched->hangingRequests())
         {
-          if (m_calib->overflow())
+          if (m_activation->overflow())
             stop = true;
         }
         else if (m_sched->nextScheduledTime() >= getExecutionDuration())
         {
           float forced_time = m_sched->nextScheduledTime() - getExecutionDuration();
-          m_calib->forceRemainingTime(forced_time);
+          m_activation->forceRemainingTime(forced_time);
           m_sched->updateSchedule(forced_time + getExecutionDuration());
         }
         else
@@ -292,10 +292,10 @@ namespace Plan
 
         if (stop)
         {
-          m_calib->stop();
+          m_activation->stop();
 
           // Fill statistics
-          m_rt_stat->fillCalib(m_calib->getElapsedTime());
+          m_rt_stat->fillActivation(m_activation->getElapsedTime());
         }
       }
     }
@@ -555,16 +555,16 @@ namespace Plan
         return -1.0;
 
       // If activation has not started yet, but will later
-      if (m_calib->notStarted())
+      if (m_activation->notStarted())
         return -1.0;
 
       float total_duration = getTotalDuration();
       float exec_duration = getExecutionDuration();
 
       // Check if its activating
-      if (m_calib->inProgress())
+      if (m_activation->inProgress())
       {
-        float time_left = m_calib->getRemaining() + exec_duration;
+        float time_left = m_activation->getRemaining() + exec_duration;
         m_progress = 100.0 * trimValue(1.0 - time_left / total_duration, 0.0, 1.0);
         return m_progress;
       }

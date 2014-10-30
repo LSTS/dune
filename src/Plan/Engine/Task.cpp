@@ -31,7 +31,6 @@
 
 // Local headers.
 #include "Plan.hpp"
-#include "Calibration.hpp"
 #include "MementoHandler.hpp"
 #include "DataBaseInteraction.hpp"
 #include "CCUInteraction.hpp"

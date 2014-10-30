@@ -37,21 +37,17 @@
 #include <utility>
 
 // DUNE headers.
-#include <DUNE/Plans.hpp>
-#include <DUNE/IMC.hpp>
-#include "Calibration.hpp"
+#include <DUNE/DUNE.hpp>
+
+// Local headers
 #include "Timeline.hpp"
 #include "ComponentActiveTime.hpp"
-
-using namespace DUNE::IMC;
-using namespace DUNE::Plans;
 
 namespace Plan
 {
   namespace Engine
   {
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM ActionSchedule;
+    using DUNE_NAMESPACES;
 
     //! Scheduler for plan and maneuver actions
     class ActionSchedule
@@ -326,7 +322,7 @@ namespace Plan
       float m_time_left;
       //! Set of activation requests yet to be confirmed
       std::map<std::string, TimedAction> m_reqs;
-      //! Expected plan duration disregarding calibration time
+      //! Expected plan duration disregarding activation time
       float m_execution_duration;
     };
   }

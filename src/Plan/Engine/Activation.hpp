@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLAN_ENGINE_CALIBRATION_HPP_INCLUDED_
-#define DUNE_PLAN_ENGINE_CALIBRATION_HPP_INCLUDED_
+#ifndef DUNE_PLAN_ENGINE_ACTIVATION_HPP_INCLUDED_
+#define DUNE_PLAN_ENGINE_ACTIVATION_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>
@@ -40,89 +40,86 @@ namespace Plan
   {
     using DUNE_NAMESPACES;
 
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM Calibration;
-
-    //! Calibration state class
-    class Calibration
+    //! Activation state class
+    class Activation
     {
     public:
-      //! Calibration state
-      enum CalibrationState
+      //! Activation state
+      enum ActivationState
       {
-        //! Not available as in, no need for calibration
-        CS_NONE,
+        //! Not available as in, no need for activation
+        AS_NONE,
         //! Must be done but has not started yet
-        CS_NOT_STARTED,
+        AS_NOT_STARTED,
         //! In progress
-        CS_IN_PROGRESS,
-        //! Calibration done
-        CS_DONE,
-        //! Calibration failed
-        CS_FAILED
+        AS_IN_PROGRESS,
+        //! Activation done
+        AS_DONE,
+        //! Activation failed
+        AS_FAILED
       };
 
       //! Default constructor.
-      Calibration(void)
+      Activation(void)
       {
         clear();
       }
 
-      //! Set the calibration time
-      //! @param[in] time time to set in calibration
+      //! Set the activation time
+      //! @param[in] time time to set in activation
       void
       setTime(float time)
       {
         m_time = time;
 
         if (m_time > 0)
-          m_state = CS_NOT_STARTED;
+          m_state = AS_NOT_STARTED;
         else
-          m_state = CS_NONE;
+          m_state = AS_NONE;
       }
 
-      //! Clear calibration
+      //! Clear activation
       void
       clear(void)
       {
-        m_state = CS_NONE;
+        m_state = AS_NONE;
         m_time = -1.0;
       }
 
-      //! Start calibration
+      //! Start activation
       void
       start(void)
       {
         if (m_time >= 0.0)
         {
-          m_state = CS_IN_PROGRESS;
+          m_state = AS_IN_PROGRESS;
           m_timer.setTop(m_time);
         }
         else
         {
-          m_state = CS_NONE;
+          m_state = AS_NONE;
         }
       }
 
-      //! Stop calibration
+      //! Stop activation
       void
       stop(void)
       {
-        m_state = CS_DONE;
+        m_state = AS_DONE;
       }
 
       //! Flag as failed
-      //! @param[in] info reason for failed calibration
+      //! @param[in] info reason for failed activation
       void
       setFailed(const std::string& info)
       {
         m_info = info;
-        m_state = CS_FAILED;
+        m_state = AS_FAILED;
       }
 
-      //! Set new remaining time for calibration
-      //! Calibration time cannot increase
-      //! @param[in] time new calibration time
+      //! Set new remaining time for activation
+      //! Activation time cannot increase
+      //! @param[in] time new activation time
       void
       forceRemainingTime(float time)
       {
@@ -137,7 +134,7 @@ namespace Plan
         m_time = new_top + elapsed;
       }
 
-      //! Get remaining time in calibration
+      //! Get remaining time in activation
       //! @return remaining time
       float
       getRemaining(void) const
@@ -145,8 +142,8 @@ namespace Plan
         return m_timer.getRemaining();
       }
 
-      //! Get elapsed calibration time
-      //! @return elapsed calibration time
+      //! Get elapsed activation time
+      //! @return elapsed activation time
       float
       getElapsedTime(void) const
       {
@@ -161,36 +158,36 @@ namespace Plan
         return m_timer.overflow();
       }
 
-      //! Check if calibration is in progress
+      //! Check if activation is in progress
       //! @return true if in progress
       bool
       inProgress(void) const
       {
-        return CS_IN_PROGRESS == m_state;
+        return AS_IN_PROGRESS == m_state;
       }
 
-      //! Check if calibration has not yet started
+      //! Check if activation has not yet started
       //! @return true if it has not yet started
       bool
       notStarted(void) const
       {
-        return CS_NOT_STARTED == m_state;
+        return AS_NOT_STARTED == m_state;
       }
 
-      //! Calibration is done
-      //! @return true if calibration is done
+      //! Activation is done
+      //! @return true if activation is done
       bool
       isDone(void) const
       {
-        return CS_DONE == m_state;
+        return AS_DONE == m_state;
       }
 
-      //! Calibration has failed
-      //! @return true if calibration has failed
+      //! Activation has failed
+      //! @return true if activation has failed
       bool
       hasFailed(void) const
       {
-        return CS_FAILED == m_state;
+        return AS_FAILED == m_state;
       }
 
       //! Get error message
@@ -202,13 +199,13 @@ namespace Plan
       }
 
     private:
-      //! Current plan's calibration time if any
+      //! Current plan's activation time if any
       float m_time;
-      //! Calibration state
-      CalibrationState m_state;
-      //! Timer to estimate time left in calibration
+      //! Activation state
+      ActivationState m_state;
+      //! Timer to estimate time left in activation
       Time::Counter<float> m_timer;
-      //! Information regarding the calibration state
+      //! Information regarding the activation state
       std::string m_info;
     };
   }

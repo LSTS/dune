@@ -129,7 +129,7 @@ namespace Plan
 
         addTuple(m_ps->durations, DTR("Total"), tl.getPlanETA());
         addTuple(m_ps->durations, DTR("Execution"), tl.getExecutionDuration());
-        addTuple(m_ps->durations, DTR("Calibration"),
+        addTuple(m_ps->durations, DTR("Activation"),
                  tl.getPlanETA() - tl.getExecutionDuration());
 
         std::vector<IMC::PlanManeuver*>::const_iterator itr;
@@ -210,12 +210,12 @@ namespace Plan
         addTuple(m_ps->fuel, DTR("Prediction Error"), fpred.getPredictionError(), 2);
       }
 
-      //! Fill in calibration time
-      //! @param[in] time calibration total time
+      //! Fill in activation time
+      //! @param[in] time activation total time
       void
-      fillCalib(float time)
+      fillActivation(float time)
       {
-        addTuple(m_ps->durations, DTR("Calibration"), time);
+        addTuple(m_ps->durations, DTR("Activation"), time);
       }
 
       //! Flag the plan as started
