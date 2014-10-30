@@ -32,6 +32,9 @@ namespace Plan
 {
   namespace Engine
   {
+    //! Time interval to consider a good time for activating
+    static const float c_act_gap = 1.0f;
+
     ActionSchedule::ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
                                    const std::vector<IMC::PlanManeuver*>& nodes,
                                    const Timeline& tline,
@@ -125,7 +128,7 @@ namespace Plan
         TimedStack* q = &next->second;
 
         // Check if the time is right
-        if (q->top().sched_time < time_left)
+        if (q->top().sched_time < time_left - c_act_gap)
           break;
 
         dispatchActions(q->top().list);
