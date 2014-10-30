@@ -56,7 +56,7 @@ namespace Plan
                                   DTR_RT("EXECUTING"), DTR_RT("BLOCKED")};
     //! Plan control state description
     const char* c_pcs_desc[] = {DTR_RT("BLOCKED"), DTR_RT("READY"),
-                                  DTR_RT("INITIALIZING"), DTR_RT("EXECUTING")};
+                                DTR_RT("INITIALIZING"), DTR_RT("EXECUTING")};
     //! Message to print when no plan is running
     const char* c_no_plan_running = DTR("no plan is running, request ignored");
     //! Message to print when plan is loaded
