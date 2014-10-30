@@ -180,6 +180,17 @@ namespace Sensors
         sendPacket(m_pkt);
       }
 
+      void
+      dispatchDebugData(const std::string& text)
+      {
+        if (m_parent->getDebugLevel() < DEBUG_LEVEL_DEBUG)
+          return;
+
+        IMC::DevDataText msg;
+        msg.value = text;
+        m_parent->dispatch(msg);
+      }
+
       //! Estimate time difference between local CPU and sidescan CPU.
       //! @return time difference from previous estimate.
       int64_t
@@ -217,11 +228,9 @@ namespace Sensors
         int64_t latency = (reply->getTimeStamp() - local_time) / 2;
         if (latency > max_latency)
         {
-          IMC::DevDataText text;
-          text.value = String::str("latency = %lld, exceeds %u",
-                                   latency,
-                                   max_latency);
-          m_parent->dispatch(text);
+          dispatchDebugData(String::str("latency = %lld, exceeds %u",
+                                        latency,
+                                        max_latency));
           return std::numeric_limits<long int>::max();
         }
 
@@ -230,11 +239,9 @@ namespace Sensors
         {
           m_time_delta = time_delta;
 
-          IMC::DevDataText text;
-          text.value = String::str("latency = %lld, initial delta = %lld",
-                                   latency,
-                                   m_time_delta);
-          m_parent->dispatch(text);
+          dispatchDebugData(String::str("latency = %lld, initial delta = %lld",
+                                        latency,
+                                        m_time_delta));
           return std::numeric_limits<long int>::max();
         }
 
@@ -245,12 +252,10 @@ namespace Sensors
         m_time_delta += time_delta;
         m_time_delta /= 2;
 
-        DevDataText text;
-        text.value = String::str("latency = %lld, delta = %lld : %lld",
-                                 latency,
-                                 delta_diff,
-                                 m_time_delta);
-        m_parent->dispatch(text);
+        dispatchDebugData(String::str("latency = %lld, delta = %lld : %lld",
+                                      latency,
+                                      delta_diff,
+                                      m_time_delta));
 
         return delta_diff;
       }

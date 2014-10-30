@@ -25,8 +25,12 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef SENSORS_EDGETECH_2205_ESTIMATED_STATE_ENTRY_HPP_INCLUDED_
-#define SENSORS_EDGETECH_2205_ESTIMATED_STATE_ENTRY_HPP_INCLUDED_
+#ifndef SENSORS_EDGETECH_2205_LOG_HPP_INCLUDED_
+#define SENSORS_EDGETECH_2205_LOG_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <queue>
+#include <fstream>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -37,33 +41,96 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
-    class EstimatedStateEntry
+    class Log: public Concurrency::Thread
     {
     public:
-      EstimatedStateEntry(const IMC::EstimatedState& state):
-        m_state(state)
+      Log(Tasks::Task* parent, const Path& path, size_t buffer_count = 10):
+        m_parent(parent)
       {
-        m_time = state.getTimeStamp();
-        int millisecond = (state.getTimeStamp() - m_time) * 1000;
-        m_time *= 1000;
-        m_time += millisecond;
+        for (size_t i = 0; i < buffer_count; ++i)
+          m_clean.push(new Packet());
+
+        m_stream.open(path.c_str(), std::ofstream::app | std::ios::binary);
+        m_path = path;
       }
 
-      const IMC::EstimatedState*
-      getEstimatedState(void) const
+      ~Log(void)
       {
-        return &m_state;
+        processDirtyQueue();
+        m_stream.close();
+        clearCleanQueue();
       }
 
-      int64_t
-      getTime(void) const
+      Path
+      getPath(void)
       {
-        return m_time;
+        return m_path;
+      }
+
+      void
+      put(Packet* packet)
+      {
+        m_dirty.push(packet);
+      }
+
+      Packet*
+      get(void)
+      {
+        Packet* packet = m_clean.pop();
+        if (packet == NULL)
+          packet = new Packet();
+
+        return packet;
       }
 
     private:
-      IMC::EstimatedState m_state;
-      int64_t m_time;
+      //! Parent task.
+      Tasks::Task* m_parent;
+      //! Dirty packet queue.
+      Concurrency::TSQueue<Packet*> m_dirty;
+      //! Clean packet queue.
+      Concurrency::TSQueue<Packet*> m_clean;
+      //! Log path.
+      Path m_path;
+      //! Log output stream.
+      std::ofstream m_stream;
+
+      void
+      processDirtyQueue(void)
+      {
+        while (!m_dirty.empty())
+        {
+          Packet* packet = m_dirty.pop();
+          if (packet != NULL)
+          {
+            m_stream.write((const char*)packet->getData(), packet->getSize());
+            m_clean.push(packet);
+          }
+        }
+      }
+
+      void
+      clearCleanQueue(void)
+      {
+        while (!m_clean.empty())
+        {
+          Packet* packet = m_clean.pop();
+          if (packet != NULL)
+            delete packet;
+        }
+      }
+
+      void
+      run(void)
+      {
+        while (isRunning())
+        {
+          if (m_dirty.waitForItems(1.0))
+          {
+            processDirtyQueue();
+          }
+        }
+      }
     };
   }
 }

@@ -36,6 +36,7 @@
 #include "Parser.hpp"
 #include "CommandLink.hpp"
 #include "SubsystemData.hpp"
+#include "Log.hpp"
 
 namespace Sensors
 {
@@ -58,6 +59,10 @@ namespace Sensors
       SM_ACT_SS_WAIT,
       //! Synchronize time.
       SM_ACT_SS_SYNC,
+      //! Request log file.
+      SM_ACT_LOG_REQUEST,
+      //! Wait for log file.
+      SM_ACT_LOG_WAIT,
       //! Activation sequence is complete.
       SM_ACT_DONE,
       //! Sampling.
@@ -122,9 +127,7 @@ namespace Sensors
       //! Command link.
       CommandLink* m_cmd;
       //! Log file.
-      std::ofstream m_log_file;
-      //! Log filename
-      Path m_log_path;
+      Log* m_log;
       //! Watchdog timer.
       Counter<double> m_wdog;
       //! Timer for time delta estimation.
@@ -135,6 +138,8 @@ namespace Sensors
       StateMachineStates m_sm_state;
       //! True if device is powered on.
       bool m_powered;
+      //! Current packet being parsed.
+      Packet* m_packet;
       //! Configuration parameters.
       Arguments m_args;
 
@@ -142,8 +147,10 @@ namespace Sensors
         Tasks::Task(name, ctx),
         m_sock_dat(NULL),
         m_cmd(NULL),
+        m_log(NULL),
         m_sm_state(SM_IDLE),
-        m_powered(false)
+        m_powered(false),
+        m_packet(NULL)
       {
         // Define configuration parameters.
         setParamSectionEditor("Edgetech2205");
@@ -364,12 +371,16 @@ namespace Sensors
 
         setConfig();
 
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      requestLogName(void)
+      {
         debug("requesting current log path");
         IMC::LoggingControl lc;
         lc.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
         dispatch(lc);
-
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
@@ -506,71 +517,80 @@ namespace Sensors
       }
 
       void
-      handleSonarData(Packet* pkt)
+      dispatchDebugData(const std::string& text)
       {
-        int subsys_idx = getSubsysIndex(pkt->getSubsystemNumber());
+        if (getDebugLevel() < DEBUG_LEVEL_DEBUG)
+          return;
+
+        IMC::DevDataText msg;
+        msg.value = text;
+        dispatch(msg);
+      }
+
+      void
+      handleSonarData(void)
+      {
+        int subsys_idx = getSubsysIndex(m_packet->getSubsystemNumber());
         if (subsys_idx < 0)
           return;
 
         SubsystemData* data = m_subsys_data + subsys_idx;
 
         uint32_t ping_number = 0;
-        pkt->get(ping_number, SDATA_IDX_PING_NUMBER);
+        m_packet->get(ping_number, SDATA_IDX_PING_NUMBER);
         if (ping_number != data->ping_number)
         {
           data->ping_number = ping_number;
           ++data->ping_count;
-          updateSubsystemData(data, pkt);
+          updateSubsystemData(data);
         }
 
-        writeSubsystemData(data, pkt);
+        writeSubsystemData(data);
         if (data->ping_count > m_args.ignored_sample_count)
         {
-          writeLog(pkt);
+          logPacket();
         }
         else
         {
-          IMC::DevDataText text;
-          text.value = String::str("discarded initial sample %u:%u",
-                                   pkt->getSubsystemNumber(), data->ping_count);
-          dispatch(text);
+          dispatchDebugData(String::str("discarded initial sample %u:%u",
+                                        m_packet->getSubsystemNumber(), data->ping_count));
         }
       }
 
       void
-      writeSubsystemData(SubsystemData* data, Packet* pkt)
+      writeSubsystemData(SubsystemData* data)
       {
-        pkt->set(data->time_epoch, SDATA_IDX_TIME);
-        pkt->set(data->time_msec_today, SDATA_IDX_MILLISECOND_TODAY);
-        pkt->set<int16_t>(3, SDATA_IDX_CPU_TIME_BASIS);
-        pkt->set<int16_t>(data->time_bdt.year, SDATA_IDX_CPU_YEAR);
-        pkt->set<int16_t>(data->time_bdt.day_year, SDATA_IDX_CPU_DAY);
-        pkt->set<int16_t>(data->time_bdt.hour, SDATA_IDX_CPU_HOUR);
-        pkt->set<int16_t>(data->time_bdt.hour, SDATA_IDX_NMEA_HOUR);
-        pkt->set<int16_t>(data->time_bdt.minutes, SDATA_IDX_CPU_MINUTES);
-        pkt->set<int16_t>(data->time_bdt.minutes, SDATA_IDX_NMEA_MINUTES);
-        pkt->set<int16_t>(data->time_bdt.seconds, SDATA_IDX_CPU_SECONDS);
-        pkt->set<int16_t>(data->time_bdt.seconds, SDATA_IDX_NMEA_SECONDS);
-        pkt->set<uint16_t>(2, SDATA_IDX_COORDINATE_UNITS);
-        pkt->set(data->longitude, SDATA_IDX_LONGITUDE);
-        pkt->set(data->latitude, SDATA_IDX_LATITUDE);
-        pkt->set(data->course, SDATA_IDX_COURSE);
-        pkt->set(data->speed, SDATA_IDX_SPEED);
-        pkt->set(data->heading, SDATA_IDX_HEADING);
-        pkt->set(data->roll, SDATA_IDX_ROLL);
-        pkt->set(data->pitch, SDATA_IDX_PITCH);
-        pkt->set(data->altitude, SDATA_IDX_ALTITUDE);
-        pkt->set(data->depth, SDATA_IDX_DEPTH);
-        pkt->set(data->validity, SDATA_IDX_VALIDITY);
+        m_packet->set(data->time_epoch, SDATA_IDX_TIME);
+        m_packet->set(data->time_msec_today, SDATA_IDX_MILLISECOND_TODAY);
+        m_packet->set<int16_t>(3, SDATA_IDX_CPU_TIME_BASIS);
+        m_packet->set<int16_t>(data->time_bdt.year, SDATA_IDX_CPU_YEAR);
+        m_packet->set<int16_t>(data->time_bdt.day_year, SDATA_IDX_CPU_DAY);
+        m_packet->set<int16_t>(data->time_bdt.hour, SDATA_IDX_CPU_HOUR);
+        m_packet->set<int16_t>(data->time_bdt.hour, SDATA_IDX_NMEA_HOUR);
+        m_packet->set<int16_t>(data->time_bdt.minutes, SDATA_IDX_CPU_MINUTES);
+        m_packet->set<int16_t>(data->time_bdt.minutes, SDATA_IDX_NMEA_MINUTES);
+        m_packet->set<int16_t>(data->time_bdt.seconds, SDATA_IDX_CPU_SECONDS);
+        m_packet->set<int16_t>(data->time_bdt.seconds, SDATA_IDX_NMEA_SECONDS);
+        m_packet->set<uint16_t>(2, SDATA_IDX_COORDINATE_UNITS);
+        m_packet->set(data->longitude, SDATA_IDX_LONGITUDE);
+        m_packet->set(data->latitude, SDATA_IDX_LATITUDE);
+        m_packet->set(data->course, SDATA_IDX_COURSE);
+        m_packet->set(data->speed, SDATA_IDX_SPEED);
+        m_packet->set(data->heading, SDATA_IDX_HEADING);
+        m_packet->set(data->roll, SDATA_IDX_ROLL);
+        m_packet->set(data->pitch, SDATA_IDX_PITCH);
+        m_packet->set(data->altitude, SDATA_IDX_ALTITUDE);
+        m_packet->set(data->depth, SDATA_IDX_DEPTH);
+        m_packet->set(data->validity, SDATA_IDX_VALIDITY);
 
         // User annotation string to save position with increased
         // resolution.
-        std::memcpy(pkt->getMessageData()
+        std::memcpy(m_packet->getMessageData()
                     + SDATA_IDX_ANNOTATION_STRING,
                     &data->latitude_rad,
                     sizeof(data->latitude_rad));
 
-        std::memcpy(pkt->getMessageData()
+        std::memcpy(m_packet->getMessageData()
                     + SDATA_IDX_ANNOTATION_STRING
                     + sizeof(data->latitude_rad),
                     &data->longitude_rad,
@@ -578,16 +598,16 @@ namespace Sensors
       }
 
       void
-      updateSubsystemData(SubsystemData* data, Packet* pkt)
+      updateSubsystemData(SubsystemData* data)
       {
         data->validity = 0;
 
         // Adjust sidescan time.
         uint32_t ss_sec = 0;
-        pkt->get(ss_sec, SDATA_IDX_TIME);
+        m_packet->get(ss_sec, SDATA_IDX_TIME);
 
         uint32_t ss_msec = 0;
-        pkt->get(ss_msec, SDATA_IDX_MILLISECOND_TODAY);
+        m_packet->get(ss_msec, SDATA_IDX_MILLISECOND_TODAY);
 
         int64_t ss_time = ss_sec;
         ss_time *= 1000;
@@ -611,20 +631,24 @@ namespace Sensors
         const IMC::EstimatedState* estate = data->estates.find(ss_time, estate_delta);
 
         // Trace.
-        int64_t msec_cpu_old = data->msec_cpu;
-        data->msec_cpu = pkt->getTimeStamp();
-        IMC::DevDataText text;
-        text.value = String::str("%u, %u, %u, %lld, %lld, %u, %u, %llu",
-                                 data->ping_count,
-                                 data->ping_number,
-                                 pkt->getSubsystemNumber(),
-                                 estate_delta,
-                                 data->msec_cpu - msec_cpu_old,
-                                 data->time_msec_today - old_msec_today,
-                                 (estate == NULL) ? 0 : 1,
-                                 m_cmd->getEstimatedTimeDelta());
-        dispatch(text);
+        int msec_delta = 0;
+        if (data->time_msec_today > old_msec_today)
+          msec_delta = data->time_msec_today - old_msec_today;
+        else
+          msec_delta = -(old_msec_today - data->time_msec_today);
 
+        int64_t msec_cpu_old = data->msec_cpu;
+        data->msec_cpu = m_packet->getTimeStamp();
+
+        dispatchDebugData(String::str("%u, %u, %u, %lld, %lld, %d, %u, %llu",
+                                      data->ping_count,
+                                      data->ping_number,
+                                      m_packet->getSubsystemNumber(),
+                                      estate_delta,
+                                      data->msec_cpu - msec_cpu_old,
+                                      msec_delta,
+                                      (estate == NULL) ? 0 : 1,
+                                      m_cmd->getEstimatedTimeDelta()));
         if (estate == NULL)
           return;
 
@@ -667,10 +691,10 @@ namespace Sensors
       }
 
       void
-      handle(Packet* pkt)
+      handlePacket(void)
       {
-        if (pkt->getMessageType() == MSG_ID_SONAR_DATA)
-          handleSonarData(pkt);
+        if (m_packet->getMessageType() == MSG_ID_SONAR_DATA)
+          handleSonarData();
       }
 
       bool
@@ -687,8 +711,10 @@ namespace Sensors
         size_t rv = m_sock_dat->read(&m_bfr[0], m_bfr.size());
         for (size_t i = 0; i < rv; ++i)
         {
-          if (m_parser.parse(m_bfr[i]))
-            handle(m_parser.getPacket());
+          if (m_parser.parse(m_bfr[i], m_packet))
+          {
+            handlePacket();
+          }
         }
 
         return true;
@@ -728,32 +754,44 @@ namespace Sensors
       void
       openLog(const Path& path)
       {
-        if (!isActive() || (path == m_log_path))
+        if (!isActive() && !isActivating())
           return;
+
+        if (m_log != NULL)
+        {
+          if (m_log->getPath() == path)
+            return;
+        }
 
         closeLog();
 
-        m_log_path = path;
-        m_log_file.open(m_log_path.c_str(), std::ofstream::app | std::ios::binary);
-        debug("opened: %s", m_log_path.c_str());
+        m_log = new Log(this, path);
+        m_log->start();
+        m_packet = m_log->get();
+        debug("opened: %s", path.c_str());
       }
 
       void
-      writeLog(const Packet* pkt)
+      logPacket(void)
       {
-        if (m_log_file.is_open())
-          m_log_file.write((const char*)pkt->getData(), pkt->getSize());
+        if (m_log != NULL)
+        {
+          m_log->put(m_packet);
+          m_packet = m_log->get();
+        }
       }
 
       void
       closeLog(void)
       {
-        if (!m_log_file.is_open())
+        if (m_log == NULL)
           return;
 
-        m_log_file.close();
-        debug("closed: %s", m_log_path.c_str());
-        m_log_path = Path();
+        m_log->stopAndJoin();
+        debug("closed: %s", m_log->getPath().c_str());
+
+        Memory::clear(m_packet);
+        Memory::clear(m_log);
       }
 
       void
@@ -841,6 +879,17 @@ namespace Sensors
             // Synchronize time.
           case SM_ACT_SS_SYNC:
             estimateTimeDelta(m_wdog);
+            m_sm_state = SM_ACT_LOG_REQUEST;
+
+            // Request log name.
+          case SM_ACT_LOG_REQUEST:
+            requestLogName();
+            m_sm_state = SM_ACT_LOG_WAIT;
+
+            // Wait for log name.
+          case SM_ACT_LOG_WAIT:
+            if (m_log == NULL)
+              break;
             m_sm_state = SM_ACT_DONE;
 
             // Activation procedure is complete.
