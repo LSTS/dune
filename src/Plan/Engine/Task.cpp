@@ -34,6 +34,7 @@
 #include "MementoHandler.hpp"
 #include "DataBaseInteraction.hpp"
 #include "CCUInteraction.hpp"
+#include "VehicleInteraction.hpp"
 
 namespace Plan
 {
@@ -110,11 +111,6 @@ namespace Plan
       Plan* m_plan;
       //! Plan control interface
       IMC::PlanControlState m_pcs;
-      //! Vehicle interface
-      uint16_t m_vreq_ctr;
-      double m_vc_reply_deadline;
-      double m_last_vstate;
-      IMC::VehicleCommand m_vc;
       //! PlanSpecification message
       IMC::PlanSpecification m_spec;
       //! List of supported maneuvers.
@@ -123,6 +119,8 @@ namespace Plan
       DataBaseInteraction* m_db;
       //! CCU interaction
       CCUInteraction* m_ccu;
+      //! Vehicle interaction
+      VehicleInteraction* m_vein;
       //! Misc.
       IMC::LoggingControl m_lc;
       IMC::EstimatedState m_state;
@@ -152,6 +150,7 @@ namespace Plan
         m_plan(NULL),
         m_db(NULL),
         m_ccu(NULL),
+        m_vein(NULL),
         m_imu_enabled(false),
         m_plan_ref(0),
         m_sm(ST_BOOT),
@@ -235,6 +234,7 @@ namespace Plan
         Memory::clear(m_plan);
         Memory::clear(m_db);
         Memory::clear(m_ccu);
+        Memory::clear(m_vein);
       }
 
       void
@@ -245,6 +245,7 @@ namespace Plan
 
         m_db = new DataBaseInteraction(this, m_ctx.dir_db / "Plan.db");
         m_ccu = new CCUInteraction(this);
+        m_vein = new VehicleInteraction(this, c_vc_reply_timeout, c_vs_timeout);
       }
 
       void
@@ -397,37 +398,26 @@ namespace Plan
       void
       consume(const IMC::VehicleCommand* vc)
       {
-        if (vc->type == IMC::VehicleCommand::VC_REQUEST)
+        if (!m_vein->parseReply(vc))
           return;
 
-        if (!pendingReply())
-          return;
-
-        if ((vc->getDestination() != getSystemId()) ||
-            (vc->getDestinationEntity() != getEntityId()) ||
-            (m_vreq_ctr != vc->request_id))
-          return;
-
-        m_vc_reply_deadline = -1;
-        bool error = vc->type == IMC::VehicleCommand::VC_FAILURE;
-
-        if (error)
+        if (m_vein->replyError())
         {
           switch (m_sm)
           {
             case ST_START_ACTIV:
             case ST_START_EXEC:
-              onFailure(vc->info);
+              onFailure(m_vein->info());
               setState(ST_STOPPING, ST_READY);
               break;
             case ST_STOPPING:
               break;
             default:
-              err("not pending reply");
+              debug("not pending reply");
               return;
           }
 
-          err("%s", vc->info.c_str());
+          err("%s", m_vein->info().c_str());
           return;
         }
 
@@ -449,7 +439,7 @@ namespace Plan
             break;
           case ST_START_EXEC:
             setState(ST_EXECUTING);
-            onProgress(vc->info);
+            onProgress(m_vein->info());
 
             if (m_plan != NULL)
               war(DTR("executing maneuver: %s"), m_plan->getManeuverId().c_str());
@@ -466,7 +456,7 @@ namespace Plan
         if (m_sm == ST_BOOT)
           return;
 
-        m_last_vstate = Clock::get();
+        m_vein->onVehicleState(vs);
 
         switch (vs->op_mode)
         {
@@ -526,7 +516,7 @@ namespace Plan
       void
       updateCCURequests(void)
       {
-        if (pendingReply())
+        if (m_vein->pendingReply())
           return;
 
         const IMC::PlanControl* req = m_ccu->getRequest();
@@ -889,7 +879,7 @@ namespace Plan
 
         m_plan->activationStarted();
 
-        vehicleRequest(IMC::VehicleCommand::VC_EXEC_MANEUVER, m);
+        m_vein->request(IMC::VehicleCommand::VC_EXEC_MANEUVER, m);
         setState(ST_START_ACTIV);
         return;
       }
@@ -916,7 +906,7 @@ namespace Plan
           m_pcs.man_type = man->getId();
         }
 
-        vehicleRequest(IMC::VehicleCommand::VC_EXEC_MANEUVER, man);
+        m_vein->request(IMC::VehicleCommand::VC_EXEC_MANEUVER, man);
         m_plan->maneuverStarted(pman->maneuver_id);
 
         setState(ST_START_EXEC);
@@ -984,10 +974,6 @@ namespace Plan
         m_pcs.plan_eta = 0;
         m_pcs.last_outcome = IMC::PlanControlState::LPO_NONE;
         dispatch(m_pcs);
-
-        m_vreq_ctr = 0;
-        m_vc_reply_deadline = -1;
-        m_last_vstate = Clock::get();
       }
 
       //! Report progress
@@ -1027,57 +1013,30 @@ namespace Plan
             m_report_timer.reset();
           }
 
-          double now = Clock::get();
-
-          bool timedout = false;
-
-          if ((getEntityState() == IMC::EntityState::ESTA_NORMAL) &&
-              (now - m_last_vstate >= c_vs_timeout))
-          {
-            timedout = true;
-          }
-
           // got requests to process
           updateCCURequests();
 
-          runStateMachine(timedout);
+          runStateMachine();
 
-          double delta = m_vc_reply_deadline < 0 ? 1 : m_vc_reply_deadline - now;
-
-          if (delta > 0)
-          {
-            waitForMessages(std::min(1.0, delta));
-            continue;
-          }
-
-          // handle reply timeout
-          m_vc_reply_deadline = -1;
-          err(DTR("vehicle reply timeout"));
-
-          // Popping all requests
-          m_ccu->clear();
-
-          // Increment local request id to prevent old replies from being processed
-          ++m_vreq_ctr;
-
-          war(DTR("cleared all requests"));
+          waitForMessages(1.0);
+          continue;
         }
       }
 
       void
-      runStateMachine(bool timedout)
+      runStateMachine(void)
       {
         switch (m_sm)
         {
           case ST_BLOCKED:
-            if (m_db->isOpen() && !timedout)
+            if (m_db->isOpen() && !m_vein->stateTimeout())
             {
               setState(ST_READY);
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             }
             break;
           case ST_READY:
-            if (timedout)
+            if (m_vein->stateTimeout())
             {
               setState(ST_BLOCKED);
               setEntityState(IMC::EntityState::ESTA_ERROR, DTR("vehicle state timeout"));
@@ -1090,7 +1049,7 @@ namespace Plan
             }
             break;
           case ST_BOOT:
-            if (m_db->isOpen() && !timedout)
+            if (m_db->isOpen() && !m_vein->stateTimeout())
             {
               setState(ST_READY);
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -1115,6 +1074,21 @@ namespace Plan
               err("%s", m_plan->getActivationInfo().c_str());
             }
             break;
+          case ST_START_ACTIV:
+          case ST_START_EXEC:
+            if (m_vein->replyTimeout())
+            {
+              // handle reply timeout
+              m_vein->clearReply();
+
+              err(DTR("vehicle reply timeout"));
+
+              // Popping all requests
+              m_ccu->clear();
+
+              war(DTR("cleared all requests"));
+            }
+            break;
           default:
             break;
         }
@@ -1133,7 +1107,7 @@ namespace Plan
         {
           case ST_STOPPING:
             // stop maneuvering
-            vehicleRequest(IMC::VehicleCommand::VC_STOP_MANEUVER);
+            m_vein->request(IMC::VehicleCommand::VC_STOP_MANEUVER);
             break;
           case ST_READY:
             break;
@@ -1187,30 +1161,6 @@ namespace Plan
           war(DTR("engine is %s"), c_pcs_desc[m_pcs.state]);
           dispatch(m_pcs);
         }
-      }
-
-      void
-      vehicleRequest(IMC::VehicleCommand::CommandEnum command,
-                     const IMC::Message* arg = 0)
-      {
-        m_vc.type = IMC::VehicleCommand::VC_REQUEST;
-        m_vc.request_id = ++m_vreq_ctr;
-        m_vc.command = command;
-
-        if (arg)
-          m_vc.maneuver.set(*static_cast<const IMC::Maneuver*>(arg));
-
-        dispatch(m_vc);
-
-        if (arg)
-          m_vc.maneuver.clear();
-        m_vc_reply_deadline = Clock::get() + c_vc_reply_timeout;
-      }
-
-      inline bool
-      pendingReply(void)
-      {
-        return m_vc_reply_deadline >= 0;
       }
 
       void
