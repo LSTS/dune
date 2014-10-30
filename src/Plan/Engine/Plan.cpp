@@ -39,7 +39,7 @@ namespace Plan
       m_compute_progress(compute_progress),
       m_predict_fuel(fpredict),
       m_progress(0.0),
-      m_est_cal_time(0),
+      m_est_act_time(0),
       m_profiles(NULL),
       m_beyond_dur(false),
       m_sched(NULL),
@@ -91,15 +91,13 @@ namespace Plan
     void
     Plan::clear(void)
     {
-      // Do not clear m_spec
-
       m_graph.clear();
       m_curr_node = NULL;
       m_seq_nodes.clear();
       m_progress = -1.0;
       m_beyond_dur = false;
       m_started_maneuver = false;
-      m_est_cal_time = 0;
+      m_est_act_time = 0;
 
       if (m_profiles != NULL)
         m_profiles->clear();
@@ -162,9 +160,12 @@ namespace Plan
     }
 
     void
-    Plan::calibrationStarted(void)
+    Plan::activationStarted(void)
     {
-      m_calib->setTime(m_est_cal_time);
+      m_calib->setTime(m_est_act_time);
+
+      if (m_sched != NULL)
+        m_sched->updateSchedule(getTotalDuration());
     }
 
     void
@@ -206,9 +207,9 @@ namespace Plan
     }
 
     uint16_t
-    Plan::getEstimatedCalibrationTime(void) const
+    Plan::getEstimatedActivationTime(void) const
     {
-      return m_est_cal_time;
+      return m_est_act_time;
     }
 
     bool
@@ -259,7 +260,7 @@ namespace Plan
     }
 
     void
-    Plan::updateCalibration(void)
+    Plan::updateActivation(void)
     {
       if (m_calib->notStarted())
       {
@@ -267,7 +268,7 @@ namespace Plan
       }
       else if (m_calib->inProgress())
       {
-        // check if some calibration time can be skipped
+        // check if some activation time can be skipped
         if (waitingForDevice())
         {
           m_calib->forceRemainingTime(scheduledTimeLeft());
@@ -457,7 +458,7 @@ namespace Plan
           m_sched = new ActionSchedule(m_task, m_spec, m_seq_nodes,
                                        tline, cinfo);
 
-          // Update timeline with scheduled calibration time if any
+          // Update timeline with scheduled activation time if any
           tline.setPlanETA(std::max(m_sched->getEarliestSchedule(), getExecutionDuration()));
 
           // Fill component active time with action scheduler
@@ -469,9 +470,9 @@ namespace Plan
           // Update action statistics
           pre_stat.fill(m_cat);
 
-          // Estimate necessary calibration time
+          // Estimate necessary activation time
           float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
-          m_est_cal_time = (uint16_t)std::max(0.0f, diff);
+          m_est_act_time = (uint16_t)std::max(0.0f, diff);
 
           if (m_predict_fuel)
           {
@@ -486,7 +487,7 @@ namespace Plan
           Memory::clear(m_sched);
           m_sched = new ActionSchedule(m_task, m_spec, m_seq_nodes, cinfo);
 
-          m_est_cal_time = 0;
+          m_est_act_time = 0;
         }
       }
 
@@ -554,14 +555,14 @@ namespace Plan
       if (!isLinear() || !m_profiles->size())
         return -1.0;
 
-      // If calibration has not started yet, but will later
+      // If activation has not started yet, but will later
       if (m_calib->notStarted())
         return -1.0;
 
       float total_duration = getTotalDuration();
       float exec_duration = getExecutionDuration();
 
-      // Check if its calibrating
+      // Check if its activating
       if (m_calib->inProgress())
       {
         float time_left = m_calib->getRemaining() + exec_duration;

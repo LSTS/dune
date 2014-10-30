@@ -90,8 +90,8 @@ namespace Plan
       float speriod;
       //! Abort when a payload fails to activate
       bool actfail_abort;
-      //! Perform station keeping while calibrating
-      bool sk_calib;
+      //! Perform station keeping while activating
+      bool sk_activ;
       //! Radius for the station keeping
       float sk_radius;
       //! Speed in RPM for the station keeping
@@ -170,9 +170,9 @@ namespace Plan
         .defaultValue("false")
         .description("Abort when a payload fails to activate");
 
-        param("StationKeeping While Calibrating", m_args.sk_calib)
+        param("StationKeeping While Activating", m_args.sk_activ)
         .defaultValue("false")
-        .description("Perform station keeping while calibrating");
+        .description("Perform station keeping while activating");
 
         param("StationKeeping Speed in RPM", m_args.sk_rpm)
         .defaultValue("1600")
@@ -846,7 +846,7 @@ namespace Plan
         // Add to memento handler
         m_mh.add(m_plan_ref, m_spec);
 
-        float activ_time = (uint16_t)m_plan->getEstimatedCalibrationTime();
+        float activ_time = (uint16_t)m_plan->getEstimatedActivationTime();
         if (activ_time)
         {
           startActivation(activ_time);
@@ -873,7 +873,7 @@ namespace Plan
         float maneuver_time = activ_time * c_activ_factor;
         maneuver_time = std::max(maneuver_time, c_activ_min);
 
-        if (m_args.sk_calib)
+        if (m_args.sk_activ)
         {
           Coordinates::toWGS84(m_state, sk.lat, sk.lon);
           sk.z_units = IMC::Z_DEPTH;
@@ -890,7 +890,7 @@ namespace Plan
           m = static_cast<IMC::Message*>(&idle);
         }
 
-        m_plan->calibrationStarted();
+        m_plan->activationStarted();
 
         vehicleRequest(IMC::VehicleCommand::VC_EXEC_MANEUVER, m);
         setState(ST_START_ACTIV);
@@ -1083,18 +1083,18 @@ namespace Plan
             if (m_plan == NULL)
               return;
 
-            m_plan->updateCalibration();
+            m_plan->updateActivation();
 
-            if (m_plan->isCalibrationDone())
+            if (m_plan->isActivationDone())
             {
               IMC::PlanManeuver* pman = m_plan->loadStartManeuver();
               startManeuver(pman);
             }
-            else if (m_plan->hasCalibrationFailed())
+            else if (m_plan->hasActivationFailed())
             {
-              onFailure(m_plan->getCalibrationInfo());
+              onFailure(m_plan->getActivationInfo());
               setState(ST_STOPPING, ST_READY);
-              err("%s", m_plan->getCalibrationInfo().c_str());
+              err("%s", m_plan->getActivationInfo().c_str());
             }
             break;
           default:

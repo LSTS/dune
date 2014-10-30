@@ -98,9 +98,9 @@ namespace Plan
       void
       planStopped(void);
 
-      //! Signal that calibration has started
+      //! Signal that activation has started
       void
-      calibrationStarted(void);
+      activationStarted(void);
 
       //! Signal that a maneuver has started
       //! @param[in] id name of the started maneuver
@@ -111,10 +111,10 @@ namespace Plan
       void
       maneuverDone(void);
 
-      //! Get necessary calibration time
-      //! @return necessary calibration time
+      //! Get necessary activation time
+      //! @return necessary activation time
       uint16_t
-      getEstimatedCalibrationTime(void) const;
+      getEstimatedActivationTime(void) const;
 
       //! Check if plan has been completed
       //! @return true if plan is done
@@ -139,26 +139,26 @@ namespace Plan
         return m_last_id;
       }
 
-      //! Get calibration info string
-      //! @return calibration info string
+      //! Get activation info string
+      //! @return activation info string
       inline const std::string
-      getCalibrationInfo(void) const
+      getActivationInfo(void) const
       {
         return m_calib->getInfo();
       }
 
-      //! Is calibration done
+      //! Is activation done
       //! @return true if so, false otherwise
       inline bool
-      isCalibrationDone(void) const
+      isActivationDone(void) const
       {
         return m_calib->isDone();
       }
 
-      //! Has calibration failed
+      //! Has activation failed
       //! @return true if so, false otherwise
       inline bool
-      hasCalibrationFailed(void) const
+      hasActivationFailed(void) const
       {
         return m_calib->hasFailed();
       }
@@ -169,9 +169,9 @@ namespace Plan
       float
       updateProgress(const IMC::ManeuverControlState* mcs);
 
-      //! Update calibration process
+      //! Update activation process
       void
-      updateCalibration(void);
+      updateActivation(void);
 
       //! Pass EntityActivationState to scheduler
       //! @param[in] id entity label
@@ -202,7 +202,7 @@ namespace Plan
       inline float
       getTotalDuration(void) const
       {
-        return getExecutionDuration() + getEstimatedCalibrationTime();
+        return getExecutionDuration() + getEstimatedActivationTime();
       }
 
       //! Get execution percentage
@@ -218,8 +218,8 @@ namespace Plan
       bool
       waitingForDevice(void);
 
-      //! Returns calibration time left according to scheduler
-      //! @return calibration time left or -1 if no scheduler is active
+      //! Returns activation time left according to scheduler
+      //! @return activation time left or -1 if no scheduler is active
       float
       scheduledTimeLeft(void) const;
 
@@ -301,8 +301,8 @@ namespace Plan
       bool m_predict_fuel;
       //! Current progress if any
       float m_progress;
-      //! Estimated required calibration time
-      uint16_t m_est_cal_time;
+      //! Estimated required activation phase time
+      uint16_t m_est_act_time;
       //! Vector of message pointers to cycle through (sequential) plan
       std::vector<IMC::PlanManeuver*> m_seq_nodes;
       //! Pointer to maneuver durations
@@ -315,7 +315,7 @@ namespace Plan
       std::vector<std::string> m_affected_ents;
       //! Signal that a maneuver has started
       bool m_started_maneuver;
-      //! Calibration object pointer
+      //! Activation object pointer
       Calibration* m_calib;
       //! Component active time for fuel estimation
       ComponentActiveTime m_cat;
