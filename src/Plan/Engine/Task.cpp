@@ -913,6 +913,7 @@ namespace Plan
       }
 
       //! Generic answer function
+      //! @param[in] type type of reply (same field as plan control message)
       //! @param[in] msg text message to send
       //! @param[in] print true if the message should be printed to output
       //! @param[in] arg pointer to argument IMC message
@@ -955,6 +956,8 @@ namespace Plan
 
       //! Answer to the reply with an in progress message
       //! @param[in] arg pointer to message to set in arg
+      //! @param[in] msg text message to send
+      //! @param[in] print true if the message should be printed to output
       inline void
       onProgress(const std::string& msg = DTR("OK"), bool print = false,
                  const IMC::Message* arg = NULL)
