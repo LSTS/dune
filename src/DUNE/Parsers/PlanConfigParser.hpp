@@ -271,10 +271,9 @@ namespace DUNE
 
     public:
       //! Parse plan parameters (utility text format).
-      //! @param[in] parser configuration parser handle.
-      //! @param[out] msg pointer to message.
+      //! @param[in,out] cfg configuration parser handle.
       static IMC::Message*
-      parse(Parsers::Config& parser);
+      parse(Parsers::Config& cfg);
     };
   }
 }
