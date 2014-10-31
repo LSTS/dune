@@ -56,9 +56,8 @@ namespace Plan
         m_task(task)
       { }
 
-      ~CCUInteraction(void)
-      { }
-
+      //! Function to run on PlanControl message
+      //! @param[in] pc pointer to PlanControl message
       void
       onPlanControl(const IMC::PlanControl* pc)
       {
@@ -68,6 +67,8 @@ namespace Plan
         pushRequest(pc);
       }
 
+      //! Get most recent request
+      //! @return pointer to PlanControl message
       const IMC::PlanControl*
       getRequest(void)
       {
@@ -80,6 +81,7 @@ namespace Plan
         return &m_toreply.plan_control;
       }
 
+      //! Mark the most recent request as processed
       void
       processedRequest(void)
       {
@@ -104,6 +106,7 @@ namespace Plan
       //! @param[in] type type of reply (same field as plan control message)
       //! @param[in] desc description for the answer
       //! @param[in] print true if output should be printed out
+      //! @param[in] arg pointer to argument IMC message
       void
       answer(uint8_t type, const std::string& desc, bool print = true,
              const IMC::Message* arg = NULL)
