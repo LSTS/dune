@@ -110,6 +110,12 @@ namespace DUNE
           return reference;
         }
 
+        uint8_t
+        getPayloadSize(uint8_t size)
+        {
+          return getSize() * size + 1;
+        }
+
       private:
         //! Get payload size.
         //! @return size of payload.
@@ -121,9 +127,9 @@ namespace DUNE
         }
 
         //! WGS84 latitude.
-        double lat;
+        fp64_t lat;
         //! WGS84 longitude.
-        double lon;
+        fp64_t lon;
         //! Destination address;
         uint8_t dst;
         //! Altitude.
