@@ -38,21 +38,27 @@ namespace Plan
   {
     using DUNE_NAMESPACES;
 
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM GroupSpeed;
-
+    //! Class to group the maneuver speeds together
     class GroupSpeed
     {
     public:
+      //! Pair of speed and duration
       typedef std::pair<float, float> SpeedPair;
+      //! A map of speeds to durations
       typedef std::map<float, float> GroupMap;
+      //! Iterator
       typedef GroupMap::iterator iterator;
+      //! Const iterator
       typedef GroupMap::const_iterator const_iterator;
 
+      //! Constructor
       GroupSpeed(float tol):
         m_tolerance(tol)
       { }
 
+      //! Add a speed and duration to map
+      //! @param[in] speed speed to insert
+      //! @param[in] duration time active for the desired speed
       void
       add(float speed, float duration)
       {
@@ -88,12 +94,16 @@ namespace Plan
         closest->second += duration;
       }
 
+      //! Iterator to begin
+      //! @return const iterator to first value
       const_iterator
       begin(void) const
       {
         return m_gmap.begin();
       }
 
+      //! Iterator to end
+      //! @return const iterator to end()
       const_iterator
       end(void) const
       {
