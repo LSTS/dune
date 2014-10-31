@@ -1,4 +1,3 @@
-
 //***************************************************************************
 // Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
@@ -42,16 +41,6 @@ namespace DUNE
 {
   namespace Tasks
   {
-    /*
-    SourceFilter::SourceFilter(void)
-    {
-      m_task = Tasks::Task();
-      m_msg_name = "";
-      m_filtered_sys.clear();
-      m_filtered_ent.clear();
-    }
-    */
-
     SourceFilter::SourceFilter(Tasks::Task& task, const std::vector<std::string>& src):
       m_task(task),
       m_msg_name("")
@@ -71,15 +60,6 @@ namespace DUNE
       m_msg_name(msg_name)
     {
       defineSystemEntityFilter(src, m_filtered_sys, m_filtered_ent);
-    }
-
-    SourceFilter::~SourceFilter(void)
-    {
-      m_filtered_sys.clear();
-      m_filtered_ent.clear();
-      m_cmd_filtered_sys.clear();
-      m_cmd_filtered_ent.clear();
-      m_msg_name.clear();
     }
 
     bool
@@ -102,9 +82,7 @@ namespace DUNE
     SourceFilter::defineSystemEntityFilter(const std::vector<std::string>& src,
         Systems& filtered_sys, Entities& filtered_ent)
     {
-      //==========================================
-      //! Process the systems and entities allowed to pass the message
-      //==========================================
+      // Process the systems and entities allowed to pass the message
       uint32_t i_src;
       uint32_t i_src_ini;
       std::vector<std::string> parts;
@@ -142,12 +120,12 @@ namespace DUNE
         }
 
         i_src_ini = filtered_sys.size();
-        filtered_ent.resize(i_src_ini + i_sys_n*i_ent_n);
-        filtered_sys.resize(i_src_ini + i_sys_n*i_ent_n);
+        filtered_ent.resize(i_src_ini + i_sys_n * i_ent_n);
+        filtered_sys.resize(i_src_ini + i_sys_n * i_ent_n);
         for (unsigned j = 0; j < i_sys_n; j++)
         {
           m_task.spew("%s filtering - System '%s' (%u/%u).", m_msg_name.c_str(),
-               systems[j].c_str(), j+1, i_sys_n);
+               systems[j].c_str(), j + 1, i_sys_n);
 
           // Resolve system id.
           if (systems[j].empty())
@@ -173,7 +151,7 @@ namespace DUNE
               {
                 m_task.war("%s filtering - No system found with designation '%s'!",
                            m_msg_name.c_str(), systems[j].c_str());
-                for (unsigned j_tmp = j; j_tmp+1 < i_sys_n; j_tmp++)
+                for (unsigned j_tmp = j; j_tmp + 1 < i_sys_n; j_tmp++)
                   systems[j_tmp] = systems[j_tmp + 1];
                 i_sys_n--;
                 j--;
@@ -184,7 +162,7 @@ namespace DUNE
             {
               m_task.war("%s filtering - No system found with designation '%s'!",
                          m_msg_name.c_str(), systems[j].c_str());
-              for (unsigned j_tmp = j; j_tmp+1 < i_sys_n; j_tmp++)
+              for (unsigned j_tmp = j; j_tmp + 1 < i_sys_n; j_tmp++)
                 systems[j_tmp] = systems[j_tmp + 1];
               i_sys_n--;
               j--;
@@ -195,9 +173,9 @@ namespace DUNE
           for (unsigned k = 0; k < i_ent_n; k++)
           {
             m_task.spew("%s filtering - Entity '%s' (%u/%u).", m_msg_name.c_str(),
-                        entities[k].c_str(), k+1, i_ent_n);
+                        entities[k].c_str(), k + 1, i_ent_n);
 
-            i_src = j*i_ent_n + k;
+            i_src = j * i_ent_n + k;
 
             // Assign system id
             filtered_sys[i_src_ini + i_src] = sys_tmp;
@@ -221,7 +199,7 @@ namespace DUNE
               {
                 m_task.war("%s filtering - No entity found with designation '%s'!",
                            m_msg_name.c_str(), entities[k].c_str());
-                for (unsigned k_tmp = k; k_tmp+1 < i_ent_n; k_tmp++)
+                for (unsigned k_tmp = k; k_tmp + 1 < i_ent_n; k_tmp++)
                   entities[k_tmp] = entities[k_tmp + 1];
                 i_ent_n--;
                 k--;
@@ -229,11 +207,11 @@ namespace DUNE
             }
 
             m_task.spew("%s filtering state - System %u of %u : Entity %u of %u.",
-                        m_msg_name.c_str(), j+1, i_sys_n, k+1, i_ent_n);
+                        m_msg_name.c_str(), j + 1, i_sys_n, k + 1, i_ent_n);
           }
         }
-        filtered_ent.resize(i_src_ini + i_sys_n*i_ent_n);
-        filtered_sys.resize(i_src_ini + i_sys_n*i_ent_n);
+        filtered_ent.resize(i_src_ini + i_sys_n * i_ent_n);
+        filtered_sys.resize(i_src_ini + i_sys_n * i_ent_n);
       }
       m_task.spew("%s filter sets:", m_msg_name.c_str());
       for (unsigned i = 0; i < filtered_sys.size(); i++)
@@ -257,7 +235,7 @@ namespace DUNE
     void
     SourceFilter::defineCommandSystemEntityFilter(const std::vector<std::string>& src)
     {
-      //! Process the systems and entities allowed to define a command.
+      // Process the systems and entities allowed to define a command.
       uint32_t i_cmd;
       uint32_t i_cmd_final;
       bool cmd_defined;
