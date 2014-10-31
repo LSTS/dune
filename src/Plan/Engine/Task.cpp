@@ -22,8 +22,8 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
+// Author: Pedro Calado (redesign and maintenance)                          *
 // Author: Eduardo Marques                                                  *
-// Author: Paulo Dias (plan actions addition)                               *
 //***************************************************************************
 
 // DUNE headers.
