@@ -440,7 +440,9 @@ namespace Sensors
       void
       consume(const IMC::LoggingControl* msg)
       {
-        if (msg->getSource() != getSystemId())
+        if ((msg->getSource() != getSystemId())
+            || (msg->getDestination() != getSystemId())
+            || (msg->getDestinationEntity() != getEntityId()))
           return;
 
         switch (msg->op)
