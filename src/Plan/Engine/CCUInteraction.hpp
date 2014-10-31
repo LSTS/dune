@@ -54,7 +54,9 @@ namespace Plan
       //! Constructor
       CCUInteraction(DUNE::Tasks::Task* task):
         m_task(task)
-      { }
+      {
+        m_toreply.state = RS_NONE;
+      }
 
       //! Function to run on PlanControl message
       //! @param[in] pc pointer to PlanControl message
@@ -75,28 +77,45 @@ namespace Plan
         if (!m_requests.size())
           return NULL;
 
-        m_toreply = m_requests.front();
-        m_toreply.state = RS_UNPROC; 
+        m_requests.front().state = RS_PROC; 
 
-        return &m_toreply.plan_control;
+        return &m_requests.front().plan_control;
       }
 
-      //! Mark the most recent request as processed
+      //! Void most recent request
       void
-      processedRequest(void)
+      voidRequest(void)
       {
         if (!m_requests.size())
+        {
+          m_task->debug("queue is empty");
+          return;
+        }
+
+        m_requests.front().state = RS_NONE;
+      }
+
+      //! Hold request to answer later
+      void
+      holdRequest(void)
+      {
+        bool failed = false;
+
+        if (!m_requests.size())
+          failed = true;
+        else if (m_requests.front().state == RS_NONE)
+          failed = true;
+
+        if (failed)
         {
           m_task->war("no request was being processed");
           return;
         }
 
-        // Check if there is a request that had no reply
-        if (m_toreply.state != RS_REPLIED)
-          m_task->war("did not reply to a request: %u", m_toreply.plan_control.request_id);
+        if (m_toreply.state == RS_PROC)
+          m_task->err("request %u not replied", m_toreply.plan_control.request_id);
 
-        // flag reply as processed
-        m_toreply.state = RS_PROC;
+        m_toreply = m_requests.front();
 
         // pop from queue
         m_requests.pop();
@@ -108,11 +127,57 @@ namespace Plan
       //! @param[in] print true if output should be printed out
       //! @param[in] arg pointer to argument IMC message
       void
-      answer(uint8_t type, const std::string& desc, bool print = true,
-             const IMC::Message* arg = NULL)
+      answer(uint8_t type, const std::string& desc, bool print,
+             const IMC::Message* arg)
       {
-        const IMC::PlanControl* pc = &m_toreply.plan_control;
+        bool answer_held_req = false;
+        bool no_req = false;
 
+        if (m_requests.size())
+        {
+          if (m_requests.front().state != RS_NONE)
+            answer_held_req = false;
+          else
+            answer_held_req = true;
+        }
+        else
+        {
+          answer_held_req = true;
+        }
+
+        if (answer_held_req && (m_toreply.state == RS_NONE))
+          no_req = true;
+
+        if (no_req)
+        {
+          m_task->err("no request to answer");
+          return;
+        }
+
+        IMC::PlanControl* pc;
+        if (answer_held_req)
+          pc = &m_toreply.plan_control;
+        else
+          pc = &m_requests.front().plan_control;
+
+        answer(type, desc, print, arg, pc);
+
+        if (answer_held_req)
+          m_toreply.state = RS_REPLIED;
+        else
+          m_requests.pop();
+      }
+      
+      //! Answer to the plan control request
+      //! @param[in] type type of reply (same field as plan control message)
+      //! @param[in] desc description for the answer
+      //! @param[in] print true if output should be printed out
+      //! @param[in] arg pointer to argument IMC message
+      //! @param[in] pc pointer to PlanControl message
+      void
+      answer(uint8_t type, const std::string& desc, bool print,
+             const IMC::Message* arg, IMC::PlanControl* pc)
+      {
         IMC::PlanControl reply;
         reply.type = type;
         reply.info = desc;
@@ -139,8 +204,6 @@ namespace Plan
           else
             m_task->inf("%s", str.c_str());
         }
-
-        m_toreply.state = RS_REPLIED;
       }
 
       //! Pop all the requests in the queue
@@ -158,12 +221,10 @@ namespace Plan
       {
         //! None or invalid state
         RS_NONE = 0,
-        //! Unprocessed
-        RS_UNPROC,
-        //! Replied not necessarily fully processed
-        RS_REPLIED,
-        //! Processed
-        RS_PROC
+        //! Being processed
+        RS_PROC,
+        //! Replied
+        RS_REPLIED
       };
 
       struct Request
@@ -178,7 +239,7 @@ namespace Plan
       pushRequest(const IMC::PlanControl* pc)
       {
         Request req;
-        req.state = RS_UNPROC;
+        req.state = RS_NONE;
         req.plan_control = *pc;
         m_requests.push(req);
         m_task->debug("saved request %u", pc->request_id);

@@ -532,16 +532,12 @@ namespace Plan
         const IMC::PlanControl* req = m_ccu->getRequest();
 
         if (req != NULL)
-        {
-          if (processRequest(req))
-            m_ccu->processedRequest();
-        }
+          processRequest(req);
       }
 
       //! Process plancontrol requests
       //! @param[in] pc pointer to plancontrol message
-      //! @return false if request wasn't processed
-      bool
+      void
       processRequest(const IMC::PlanControl* pc)
       {
         inf(DTR("request -- %s (%s)"),
@@ -551,12 +547,12 @@ namespace Plan
         switch (m_sm)
         {
           case ST_BOOT:
-            onFailure(DTR("engine not %s, saved request"),
-                      c_pcs_desc[IMC::PlanControlState::PCS_READY]);
-            return false;
+            debug("engine not %s, saved request", c_pcs_desc[IMC::PlanControlState::PCS_READY]);
+            m_ccu->voidRequest();
+            return;
           case ST_BLOCKED:
             onFailure("%s", c_pcs_desc[m_pcs.state]);
-            return true;
+            return;
           default:
             break;
         }
@@ -564,22 +560,30 @@ namespace Plan
         switch (pc->op)
         {
           case IMC::PlanControl::PC_START:
-            if (!startPlan(pc->plan_id, pc->arg.isNull() ? 0 : pc->arg.get()))
-              return false;
-            else
-              return true;
+            if (m_sm != ST_READY)
+            {
+              m_ccu->voidRequest();
+              onFailure(DTR("starting a new plan"));
+              setState(ST_STOPPING, ST_READY);
+              return;
+            }
+
+            m_ccu->holdRequest();
+
+            startPlan(pc->plan_id, pc->arg.isNull() ? 0 : pc->arg.get());
+            return;
           case IMC::PlanControl::PC_STOP:
             stopPlan(ST_READY);
-            return true;
+            return;
           case IMC::PlanControl::PC_LOAD:
             loadPlan(pc->plan_id, pc->arg.isNull() ? 0 : pc->arg.get(), false);
-            return true;
+            return;
           case IMC::PlanControl::PC_GET:
             getPlan();
-            return true;
+            return;
           default:
             onFailure(DTR("plan control operation not supported"));
-            return true;
+            return;
         }
       }
 
@@ -818,18 +822,12 @@ namespace Plan
       //! Start a given plan
       //! @param[in] plan_id name of the plan to execute
       //! @param[in] spec plan specification message if any
-      //! @return false if must stop maneuvering first
+      //! @return false if failed to start plan
       bool
       startPlan(const std::string& plan_id, const IMC::Message* spec)
       {
-        if (m_sm != ST_READY)
-        {
-          setState(ST_STOPPING, ST_READY);
-          return false;
-        }
-
         if (!loadPlan(plan_id, spec, true))
-          return true;
+          return false;
 
         changeLog(plan_id);
 
@@ -851,7 +849,9 @@ namespace Plan
         else
         {
           IMC::PlanManeuver* pman = m_plan->loadStartManeuver();
-          startManeuver(pman);
+
+          if (!startManeuver(pman))
+            return false;
         }
 
         return true;
@@ -896,13 +896,14 @@ namespace Plan
 
       //! Start a maneuver by name
       //! @param[in] pman pointer to plan maneuver message
-      void
+      //! @return false if failed to parse maneuver
+      bool
       startManeuver(IMC::PlanManeuver* pman)
       {
         if (pman == NULL)
         {
           onFailure(m_plan->getCurrentId() + DTR(": invalid maneuver ID"));
-          return;
+          return false;
         }
 
         IMC::Maneuver* man = pman->data.get();
@@ -920,6 +921,8 @@ namespace Plan
         m_plan->maneuverStarted(pman->maneuver_id);
 
         setState(ST_START_EXEC);
+
+        return true;
       }
 
       //! Generic answer function
