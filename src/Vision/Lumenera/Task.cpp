@@ -304,38 +304,27 @@ namespace Vision
       void
       onUpdateParameters(void)
       {
-        try
-        {
-          if (m_args.camera_cfg)
-          {
-            if (paramChanged(m_args.fps))
-              updateFps();
-
-            if (paramChanged(m_args.gamma))
-              updateGamma();
-
-            if (paramChanged(m_args.median_filter))
-              updateMedianFilter();
-
-            if (paramChanged(m_args.strobe))
-              updateStrobe();
-
-            if (checkExposure())
-              updateExposure();
-
-            if (checkGain())
-              updateGain();
-
-            if (checkWhiteBalance())
-              updateWhiteBalance();
-          }
-        }
-        catch (...)
-        {
-          m_cfg_dirty = true;
-        }
-
         updateSlaveEntities();
+
+        if (isActive())
+        {
+          m_cfg_dirty = checkParameters();
+          return;
+        }
+
+        m_cfg_dirty = true;
+      }
+
+      bool
+      checkParameters(void)
+      {
+        return (paramChanged(m_args.fps) ||
+                paramChanged(m_args.gamma) ||
+                paramChanged(m_args.median_filter) ||
+                paramChanged(m_args.strobe) ||
+                checkExposure() ||
+                checkGain() ||
+                checkWhiteBalance());
       }
 
       void
