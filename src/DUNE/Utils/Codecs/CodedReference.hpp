@@ -54,7 +54,7 @@ namespace DUNE
         {
           CodedReference coded;
 
-          if (coded.getSize() + 1 < (frame->data.size() - idx * coded.getSize()))
+          if (coded.getSize() + 1 > (frame->data.size() - idx * coded.getSize()))
             throw std::runtime_error("invalid size");
 
           uint8_t* ptr = (uint8_t*)&frame->data[0];
@@ -84,7 +84,8 @@ namespace DUNE
         {
           IMC::Reference* reference = new IMC::Reference;
           CodedReference coded;
-          if (coded.getSize() + 1 < (frame->data.size() - idx * coded.getSize()))
+
+          if (coded.getSize() + 1 > (frame->data.size() - idx * coded.getSize()))
             throw std::runtime_error("invalid size");
 
           uint8_t* ptr = (uint8_t*)&frame->data[idx * coded.getSize() + 1];
@@ -105,8 +106,6 @@ namespace DUNE
           dz.value = (fp32_t)(coded.z / 5);
           dz.z_units = coded.z_ref;
           reference->z.set(dz);
-
-          (void)idx;
 
           return reference;
         }
