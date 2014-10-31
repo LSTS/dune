@@ -86,6 +86,8 @@ namespace Plan
         return true;
       }
 
+      //! Function to run on VehicleState message
+      //! @param[in] vs pointer to VehicleState message
       void
       onVehicleState(const IMC::VehicleState* vs)
       {
@@ -93,6 +95,9 @@ namespace Plan
         m_last_vstate = Clock::get();
       }
 
+      //! Issue a vehicle request
+      //! @param[in] command type of request to issue
+      //! @param[in] arg pointer to message to attach
       void
       request(IMC::VehicleCommand::CommandEnum command,
               const IMC::Message* arg = NULL)
@@ -113,6 +118,7 @@ namespace Plan
         m_info = "";
       }
 
+      //! Clear reply
       void
       clearReply(void)
       {
@@ -121,30 +127,40 @@ namespace Plan
         ++m_req_id;
       }
 
+      //! Check if we have a VehicleState timeout
+      //! @return true if timed out
       inline bool
       stateTimeout(void)
       {
         return (Clock::get() - m_last_vstate >= m_state_timeout);
       }
 
+      //! Information string from reply
+      //! @return information string
       inline const std::string
       info(void) const
       {
         return m_info;
       }
 
+      //! Check if we have a VehicleCommand reply timeout
+      //! @return true if timed out
       inline bool
       replyTimeout(void)
       {
         return (Clock::get() > m_reply_deadline);
       }
 
+      //! Check if there was an error in the reply
+      //! @return true if there was an error
       inline bool
       replyError(void) const
       {
         return m_reply_error;
       }
 
+      //! Check if there is a reply pending
+      //! @return true if a reply is pending
       inline bool
       pendingReply(void) const
       {
