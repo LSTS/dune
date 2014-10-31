@@ -261,19 +261,43 @@ namespace Sensors
         if (m_args.power_channel.empty())
           m_powered = true;
 
-        if (isActive())
-        {
-          setConfig();
+        if (!isActive())
+          return;
 
-          if (paramChanged(m_args.addr))
-            throw RestartNeeded(DTR("restarting to change IPv4 address"), 1);
+        if (paramChanged(m_args.addr))
+          throw RestartNeeded(DTR("restarting to change IPv4 address"), 1);
 
-          if (paramChanged(m_args.port_cmd))
-            throw RestartNeeded(DTR("restarting to change TCP command port"), 1);
+        if (paramChanged(m_args.port_cmd))
+          throw RestartNeeded(DTR("restarting to change TCP command port"), 1);
 
-          if (paramChanged(m_args.port_dat))
-            throw RestartNeeded(DTR("restarting to change TCP data port"), 1);
-        }
+        if (paramChanged(m_args.port_dat))
+          throw RestartNeeded(DTR("restarting to change TCP data port"), 1);
+
+        bool channel_hf_changed = paramChanged(m_args.channels_hf);
+        if (channel_hf_changed)
+          setDataActive(SUBSYS_SSH, m_args.channels_hf);
+
+        bool channel_lf_changed = paramChanged(m_args.channels_lf);
+        if (channel_lf_changed)
+          setDataActive(SUBSYS_SSL, m_args.channels_lf);
+
+        if (paramChanged(m_args.range_hf))
+          m_cmd->setPingRange(SUBSYS_SSH, m_args.range_hf);
+
+        if (paramChanged(m_args.range_lf))
+          m_cmd->setPingRange(SUBSYS_SSL, m_args.range_lf);
+
+        if (paramChanged(m_args.autosel_mode))
+          setPingAutoSelectMode();
+
+        if (channel_hf_changed || channel_lf_changed)
+          setTriggerCoupling();
+
+        if (channel_hf_changed)
+          setPing(SUBSYS_SSH, m_args.channels_hf);
+
+        if (channel_lf_changed)
+          setPing(SUBSYS_SSL, m_args.channels_lf);
       }
 
       void
@@ -369,7 +393,7 @@ namespace Sensors
         m_cmd->setPingTrigger(SUBSYS_SSH, TRIG_MODE_INTERNAL);
         m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_INTERNAL);
 
-        setConfig();
+        initConfig();
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
@@ -433,20 +457,15 @@ namespace Sensors
       }
 
       void
-      setConfig(void)
+      setPingAutoSelectMode(void)
       {
-        if (m_cmd == NULL)
-          return;
-
-        setDataActive(SUBSYS_SSH, m_args.channels_hf);
-        setDataActive(SUBSYS_SSL, m_args.channels_lf);
-
-        m_cmd->setPingRange(SUBSYS_SSH, m_args.range_hf);
-        m_cmd->setPingRange(SUBSYS_SSL, m_args.range_lf);
-
         m_cmd->setPingAutoselectMode(SUBSYS_SSH, m_args.autosel_mode);
         m_cmd->setPingAutoselectMode(SUBSYS_SSL, m_args.autosel_mode);
+      }
 
+      void
+      setTriggerCoupling(void)
+      {
         if ((m_args.channels_lf != "None") && (m_args.channels_hf != "None"))
         {
           m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_COUPLED);
@@ -456,6 +475,20 @@ namespace Sensors
         {
           m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_INTERNAL);
         }
+      }
+
+      //! Initialize sidescan configuration.
+      void
+      initConfig(void)
+      {
+        setDataActive(SUBSYS_SSH, m_args.channels_hf);
+        setDataActive(SUBSYS_SSL, m_args.channels_lf);
+
+        m_cmd->setPingRange(SUBSYS_SSH, m_args.range_hf);
+        m_cmd->setPingRange(SUBSYS_SSL, m_args.range_lf);
+
+        setPingAutoSelectMode();
+        setTriggerCoupling();
 
         setPing(SUBSYS_SSH, m_args.channels_hf);
         setPing(SUBSYS_SSL, m_args.channels_lf);
@@ -489,14 +522,17 @@ namespace Sensors
       void
       setPing(SubsystemId subsys, const std::string& channels)
       {
+        int idx = getSubsysIndex(subsys);
+
         if (channels == "None")
         {
           m_cmd->setPing(subsys, 0);
+          m_subsys_data[idx].active = false;
         }
         else
         {
           m_cmd->setPing(subsys, 1);
-          m_subsys_data[getSubsysIndex(subsys)].active = true;
+          m_subsys_data[idx].active = true;
         }
       }
 
