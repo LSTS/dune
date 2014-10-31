@@ -25,10 +25,11 @@
 // Author: Ricardo Bencatel                                                 *
 //***************************************************************************
 
-#ifndef DUNE_CONTROL_SURROGATE_PATH_CONTROLLER_HPP_INCLUDED_
-#define DUNE_CONTROL_SURROGATE_PATH_CONTROLLER_HPP_INCLUDED_
+#ifndef DUNE_CONTROL_Proxy_PATH_CONTROLLER_HPP_INCLUDED_
+#define DUNE_CONTROL_Proxy_PATH_CONTROLLER_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
+#include <vector>
 #include <string>
 
 // DUNE headers.
@@ -40,17 +41,17 @@ namespace DUNE
   namespace Control
   {
     // Export DLL Symbol.
-    class DUNE_DLL_SYM SurrogatePathController;
+    class DUNE_DLL_SYM ProxyPathController;
 
-    class SurrogatePathController: public DUNE::Control::PathController
+    class ProxyPathController: public DUNE::Control::PathController
     {
     public:
       //! Constructor.
-      SurrogatePathController(std::string name, Tasks::Context& ctx);
+      ProxyPathController(std::string name, Tasks::Context& ctx);
 
       //! Destructor.
       virtual
-      ~SurrogatePathController(void);
+      ~ProxyPathController(void);
 
       //! Entity reservation callback.
       void
@@ -59,15 +60,15 @@ namespace DUNE
       //! Handler for EstimatedState source id filter.
       //! This is called when an EstimatedState is received.
       //! By default it only passes EstimatedState messages from the system itself.
-      //! @param[in] es - EstimatedState message.
-      //! @param[out] block - 'True' if the message is NOT allowed to pass.
+      //! @param[in] es EstimatedState message.
+      //! @return true if the message is NOT allowed to pass.
       virtual bool
       sourceFilter(const IMC::EstimatedState* es);
 
     private:
+      // EstimatedState filter
       DUNE::Tasks::SourceFilter* m_stateFilter;
-
-      // EstimatedState filtering
+      // EstimatedState filter input
       std::vector<std::string> m_state_src;
     };
   }
