@@ -110,9 +110,9 @@ namespace DUNE
         }
 
         //! WGS84 latitude.
-        double lat;
+        fp64_t lat;
         //! WGS84 longitude.
-        double lon;
+        fp64_t lon;
         //! System depth.
         int16_t depth;
         //! Altitude.
