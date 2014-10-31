@@ -63,14 +63,14 @@ namespace Control
         bool use_controller;
       };
 
-      struct Task: public DUNE::Control::SurrogatePathController
+      struct Task: public DUNE::Control::ProxyPathController
       {
         Arguments m_args;
         IMC::DesiredRoll m_bank;
         double m_airspeed;
 
         Task(const std::string& name, Tasks::Context& ctx):
-          DUNE::Control::SurrogatePathController(name, ctx),
+          DUNE::Control::ProxyPathController(name, ctx),
           m_airspeed(0.0)
         {
           param("Look Ahead Gain", m_args.la_gain)
@@ -141,7 +141,7 @@ namespace Control
             return;
           }
 
-          if (std::fabs(ts.track_vel.y) <= -ts.track_vel.x)
+          if (std::fabs(ts.track_vel.y) <= - ts.track_vel.x)
           {
             //! Command maximum bank angle if the aircraft is going on the
             //! opposite direction to the target waypoint
@@ -151,7 +151,7 @@ namespace Control
             }
             else
             {
-              m_bank.value = -m_args.max_bank;
+              m_bank.value = - m_args.max_bank;
             }
           }
           else
@@ -159,11 +159,11 @@ namespace Control
             //! Look-ahead distance computation
             double xla = m_args.la_gain * m_airspeed * m_airspeed;
             //! Desired turn-rate
-            double desired_tr = -m_args.tr_gain * (xla * ts.track_vel.y + ts.track_pos.y * ts.track_vel.x);
+            double desired_tr = - m_args.tr_gain * (xla * ts.track_vel.y + ts.track_pos.y * ts.track_vel.x);
 
             //! Output - Bank angle command, constrained
             m_bank.value = trimValue(std::atan(desired_tr * m_airspeed / Math::c_gravity),
-                                     -m_args.max_bank, m_args.max_bank);
+                                     - m_args.max_bank, m_args.max_bank);
           }
 
           // Send to bus
