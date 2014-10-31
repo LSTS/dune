@@ -30,7 +30,7 @@
 #include <string>
 #include <cmath>
 #include <vector>
-#include <limits.h>
+#include <climits>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -118,7 +118,7 @@ namespace Simulators
       //unsigned m_gps_eid;
       //! Commands filter
       DUNE::Tasks::SourceFilter* m_cmd_flt;
-      // System alias id
+      //! System alias id
       uint32_t m_alias_id;
 
       Task(const std::string& name, Tasks::Context& ctx):
@@ -419,7 +419,7 @@ namespace Simulators
         m_model->m_wind(0) = m_args.wx;
         m_model->m_wind(1) = m_args.wy;
 
-        //! Start the simulation time
+        // Start the simulation time
         m_start_time = Clock::get();
         m_last_update = Clock::get();
 
