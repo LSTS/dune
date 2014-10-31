@@ -44,6 +44,9 @@ namespace Plan
     {
     public:
       //! Constructor
+      //! @param[in] task pointer to task
+      //! @param[in] reply_timeout timeout for the vehicle command replies
+      //! @param[in] state_timeout timeout for the vehicle state messages
       VehicleInteraction(DUNE::Tasks::Task* task,
                          double reply_timeout,
                          double state_timeout):
@@ -56,9 +59,6 @@ namespace Plan
         m_reply_deadline = -1;
         m_last_vstate = Clock::get();
       }
-
-      ~VehicleInteraction(void)
-      { }
 
       //! Parse vehicle command reply
       //! @param[in] vc pointer to VehicleCommand message
