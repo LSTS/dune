@@ -44,7 +44,6 @@ namespace Simulators
 
     //! Vector for System Mapping.
     typedef std::vector<uint32_t> Systems;
-
     //! Vector for Entity Mapping.
     typedef std::vector<uint32_t> Entities;
 
@@ -304,7 +303,7 @@ namespace Simulators
           m_model->m_wind(1) = m_args.wy;
         }
 
-        //! Set source system alias
+        // Set source system alias
         if (!m_args.src_alias.empty())
         {
           // Resolve systems.
@@ -321,7 +320,7 @@ namespace Simulators
         else
           m_alias_id = UINT_MAX;
 
-        //! GPS position initialization
+        // GPS position initialization
         debug("GPS-Fix initialization");
         IMC::GpsFix init_fix;
         init_fix.lat = DUNE::Math::Angles::radians(m_args.init_lat);
@@ -339,26 +338,26 @@ namespace Simulators
       {
         // Control and state initialization
 
-        //! Model state initialization
+        // Model state initialization
         debug("Model initialization");
-        //! - Altitude initialization
-        m_position(2) = -m_args.init_alt;
-        //! - Bank initialization
+        // - Altitude initialization
+        m_position(2) = - m_args.init_alt;
+        // - Bank initialization
         m_position(3) = DUNE::Math::Angles::radians(m_args.init_roll);
-        //! - Heading initialization
+        // - Heading initialization
         m_position(5) = DUNE::Math::Angles::radians(m_args.init_yaw);
-        //! - Velocity vector initialization
-        m_velocity(0) = m_args.init_speed*std::cos(m_position(5));
-        m_velocity(1) = m_args.init_speed*std::sin(m_position(5));
+        // - Velocity vector initialization
+        m_velocity(0) = m_args.init_speed * std::cos(m_position(5));
+        m_velocity(1) = m_args.init_speed * std::sin(m_position(5));
 
         if (m_args.sim_type == "3DOF")
         {
-          //! 4 DOF (bank) model initialization
-          //! - State  and control parameters initialization
+          // 4 DOF (bank) model initialization
+          // - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity);
-          //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed, -m_position(2));
-          //! - Limits definition
+          // - Commands initialization
+          m_model->command(m_position(3), m_args.init_speed, - m_position(2));
+          // - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
           if (m_args.l_accel_x > 0)
@@ -366,23 +365,23 @@ namespace Simulators
         }
         else if (m_args.sim_type == "4DOF_alt")
         {
-          //! 4 DOF (altitude) model initialization
-          //! - State  and control parameters initialization
+          // 4 DOF (altitude) model initialization
+          // - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity, m_args.c_alt);
-          //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed, -m_position(2));
-          //! - Limits definition
+          // - Commands initialization
+          m_model->command(m_position(3), m_args.init_speed, - m_position(2));
+          // - Limits definition
           if (m_args.l_vert_slope > 0)
             m_model->setVertSlopeLim(m_args.l_vert_slope);
         }
         else if (m_args.sim_type == "4DOF_bank")
         {
-          //! 4 DOF (bank) model initialization
-          //! - State  and control parameters initialization
+          // 4 DOF (bank) model initialization
+          // - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity, m_args.c_bank, m_args.c_speed);
-          //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed, -m_position(2));
-          //! - Limits definition
+          // - Commands initialization
+          m_model->command(m_position(3), m_args.init_speed, - m_position(2));
+          // - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
           if (m_args.l_accel_x > 0)
@@ -390,12 +389,12 @@ namespace Simulators
         }
         else if (m_args.sim_type == "5DOF")
         {
-          //! 5 DOF model initialization
-          //! - State  and control parameters initialization
+          // 5 DOF model initialization
+          // - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity, m_args.c_bank, m_args.c_speed, m_args.c_alt);
-          //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed, -m_position(2));
-          //! - Limits definition
+          // - Commands initialization
+          m_model->command(m_position(3), m_args.init_speed, - m_position(2));
+          // - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
           if (m_args.l_accel_x > 0)
@@ -418,7 +417,7 @@ namespace Simulators
           par.rud_lift = m_args.rud_lift;
         }
         */
-        //! - Simulation type
+        // - Simulation type
         m_model->m_sim_type = m_args.sim_type;
         inf(DTR("UAV simulation type: %s"), m_args.sim_type.c_str());
         // Application of the wind vector
@@ -457,7 +456,7 @@ namespace Simulators
       void
       onEntityResolution(void)
       {
-        //! Process the systems and entities allowed to define a command.
+        // Process the systems and entities allowed to define a command.
         m_cmd_flt = new Tasks::SourceFilter(*this, m_args.cmd_src);
       }
 
@@ -478,14 +477,14 @@ namespace Simulators
           return;
         }
 
-        //! Check if system is active and activate it if not
+        // Check if system is active and activate it if not
         if (!isActive())
           requestActivation();
 
         /*
-         * if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
-         * return;
-         */
+        if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
+          return;
+        */
         debug("Consuming GPS-Fix");
 
         // Defining origin.
@@ -493,7 +492,7 @@ namespace Simulators
         m_sstate.lon = msg->lon;
         m_sstate.height = msg->height;
 
-        //! - State initialization
+        // - State initialization
         m_position(0) = 0.0;
         m_position(1) = 0.0;
         // Assuming vehicle starts at ground surface.
@@ -561,7 +560,7 @@ namespace Simulators
         if (msg->z_units == IMC::Z_HEIGHT)
           alt_cmd = msg->value-m_sstate.height;
         else if (msg->z_units == IMC::Z_DEPTH)
-          alt_cmd = -msg->value;
+          alt_cmd = - msg->value;
         else
           alt_cmd = msg->value;
         m_model->commandAlt(alt_cmd);
@@ -626,14 +625,14 @@ namespace Simulators
         // Filter command by systems and entities.
         bool pass_command = m_cmd_flt->match(msg);
 
-        //! Check if system is active
+        // Check if system is active
         if (!isActive())
         {
           trace("%s rejected - Simulation not active - Missing GPS-Fix!", msg->getName());
           pass_command = false;
         }
 
-        //! Check that the command is a real value
+        // Check that the command is a real value
         if (Math::isNaN(msg->getValueFP()))
         {
           war("%s rejected - Commanded value is not a number!", msg->getName());
@@ -701,7 +700,7 @@ namespace Simulators
       {
         // Rotations rotation matrix
         double tmp_j2[9] = {1, std::sin(roll) * std::tan(pitch),  std::cos(roll) * std::tan(pitch),
-                            0,                   std::cos(roll),                   -std::sin(roll),
+                            0,                   std::cos(roll),                  - std::sin(roll),
                             0, std::sin(roll) / std::cos(pitch),  std::cos(roll) / std::cos(pitch)};
 
         return Matrix(tmp_j2, 3, 3);
@@ -711,9 +710,9 @@ namespace Simulators
       matrixRotRgnd2body(float roll, float pitch)
       {
         // Rotations rotation matrix
-        double tmp_j2[9] = {1,               0,               -std::sin(pitch),
-                            0,  std::cos(roll), std::cos(pitch)*std::sin(roll),
-                            0, -std::sin(roll), std::cos(pitch)*std::cos(roll)};
+        double tmp_j2[9] = {1,                0,                - std::sin(pitch),
+                            0,   std::cos(roll), std::cos(pitch) * std::sin(roll),
+                            0, - std::sin(roll), std::cos(pitch) * std::cos(roll)};
 
         return Matrix(tmp_j2, 3, 3);
       }
@@ -735,18 +734,18 @@ namespace Simulators
       void
       task(void)
       {
-        //! Handle IMC messages from bus
+        // Handle IMC messages from bus
         consumeMessages();
 
-        //! Check if system is active
+        // Check if system is active
         if (!isActive())
           return;
 
-        //! Declaration
+        // Declaration
         double d_time;
         double d_timestep;
 
-        //! Compute the time step
+        // Compute the time step
         d_time  = Clock::get();
         d_timestep = d_time - m_last_update;
         m_last_update = d_time;
@@ -783,7 +782,7 @@ namespace Simulators
         }
         */
         //==========================================================================
-        //! Dynamics
+        // Dynamics
         //==========================================================================
 
         m_model->update(d_timestep);
@@ -822,46 +821,46 @@ namespace Simulators
         }
         */
         //==========================================================================
-        //! Output
+        // Output
         //==========================================================================
 
-        //! Fill position.
+        // Fill position.
         m_sstate.x = m_position(0);
         m_sstate.y = m_position(1);
         m_sstate.z = m_position(2);
 
-        //! Fill attitude.
+        // Fill attitude.
         m_sstate.phi = m_position(3);
         m_sstate.theta = m_position(4);
         m_sstate.psi = m_position(5);
 
-        //! Rotation matrix
+        // Rotation matrix
         double euler_ang[3] = {m_position(3), m_position(4), m_position(5)};
         Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
-        //! UAV velocity rotation to the body frame
+        // UAV velocity rotation to the body frame
         Matrix vd_body_vel = transpose(md_rot_body2gnd) * m_velocity.get(0, 2, 0, 0);
-        //! Fill body-frame linear velocity, relative to the ground.
+        // Fill body-frame linear velocity, relative to the ground.
         m_sstate.u = vd_body_vel(0);
         m_sstate.v = vd_body_vel(1);
         m_sstate.w = vd_body_vel(2);
 
-        //! UAV body-frame rotation rates
+        // UAV body-frame rotation rates
         // vd_UAVRotRates = UAVRotRatTrans_1_00(vd_State);
 
-        //! Fill angular velocity.
+        // Fill angular velocity.
         m_sstate.p = m_velocity(3);
         m_sstate.q = m_velocity(4);
         m_sstate.r = m_velocity(5);
 
-        //! Fill stream velocity.
+        // Fill stream velocity.
         m_sstate.svx = m_model->m_wind(0);
         m_sstate.svy = m_model->m_wind(1);
         m_sstate.svz = m_model->m_wind(2);
 
-        //! Set the destination ID as the system own ID
+        // Set the destination ID as the system own ID
         m_sstate.setDestination(getSystemId());
 
-        //! Set source system alias
+        // Set source system alias
         if (m_alias_id != (unsigned int)UINT_MAX)
           m_sstate.setSource(m_alias_id);
 
