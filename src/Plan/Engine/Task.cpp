@@ -42,10 +42,6 @@ namespace Plan
   {
     using DUNE_NAMESPACES;
 
-    //! Timeout for the vehicle command reply.
-    const double c_vc_reply_timeout = 2.5;
-    //! Timeout for the vehicle state
-    const double c_vs_timeout = 2.5;
     //! Activation maneuver time factor
     const float c_activ_factor = 1.5f;
     //! Minimum activation maneuver time
@@ -103,6 +99,10 @@ namespace Plan
       float sk_rpm;
       //! Entity label of the IMU
       std::string label_imu;
+      //! Timeout for vehicle state
+      double vs_timeout;
+      //! Timeout for vehicle command
+      double vc_timeout;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -191,6 +191,16 @@ namespace Plan
         .defaultValue("IMU")
         .description("Entity label of the IMU for fuel prediction");
 
+        param("Vehicle State Timeout", m_args.vs_timeout)
+        .defaultValue("2.5")
+        .units(Units::Second)
+        .description("Timeout for vehicle state");
+
+        param("Vehicle Command Timeout", m_args.vc_timeout)
+        .defaultValue("2.5")
+        .units(Units::Second)
+        .description("Timeout for vehicle command");
+
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::EstimatedState>(this);
@@ -245,7 +255,7 @@ namespace Plan
 
         m_db = new DataBaseInteraction(this, m_ctx.dir_db / "Plan.db");
         m_ccu = new CCUInteraction(this);
-        m_vein = new VehicleInteraction(this, c_vc_reply_timeout, c_vs_timeout);
+        m_vein = new VehicleInteraction(this, m_args.vc_timeout, m_args.vs_timeout);
       }
 
       void
