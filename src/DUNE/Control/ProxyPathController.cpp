@@ -25,10 +25,8 @@
 // Author: Ricardo Bencatel                                                 *
 //***************************************************************************
 
-// ISO C++ 98 headers.
-
 // DUNE headers.
-#include <DUNE/Control/SurrogatePathController.hpp>
+#include <DUNE/Control/ProxyPathController.hpp>
 
 using namespace DUNE::Tasks;
 using namespace DUNE::IMC;
@@ -37,7 +35,7 @@ namespace DUNE
 {
   namespace Control
   {
-    SurrogatePathController::SurrogatePathController(std::string name, Tasks::Context& ctx):
+    ProxyPathController::ProxyPathController(std::string name, Tasks::Context& ctx):
       DUNE::Control::PathController(name, ctx),
       m_stateFilter(NULL)
     {
@@ -46,20 +44,20 @@ namespace DUNE
       .description("List of <System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass EstimatedState messages.");
     }
 
-    SurrogatePathController::~SurrogatePathController(void)
+    ProxyPathController::~ProxyPathController(void)
     { }
 
     void
-    SurrogatePathController::onEntityResolution(void)
+    ProxyPathController::onEntityResolution(void)
     {
       PathController::onEntityResolution();
 
-      //! Process the systems and entities allowed to pass the EstimatedState
+      // Process the systems and entities allowed to pass the EstimatedState
       m_stateFilter = new SourceFilter(*this, m_state_src, "EstimatedState");
     }
 
     bool
-    SurrogatePathController::sourceFilter(const IMC::EstimatedState* es)
+    ProxyPathController::sourceFilter(const IMC::EstimatedState* es)
     {
       // Allow only EstimatedState from the same vehicle.
       // 'True' if the message is NOT allowed to pass.
