@@ -234,6 +234,8 @@ namespace Plan
         }
       }
 
+      //! Push a request into the queue
+      //! @param[in] pc pointer to PlanControl message
       inline void
       pushRequest(const IMC::PlanControl* pc)
       {
