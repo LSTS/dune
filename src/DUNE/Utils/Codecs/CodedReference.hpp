@@ -49,16 +49,16 @@ namespace DUNE
         //! @param[out] frame UamTxFrame pointer.
         //! @param[in] id System ID.
         //! @return true if message successfully decoded, false otherwise.
-        void
+        static void
         encodeById(const IMC::Reference* msg, IMC::UamTxFrame* frame, uint8_t id)
         {
           uint8_t size = (frame->data.size() - 1) / getSize();
           for (uint8_t i = 0; i < size; i++)
           {
             // Found placement, replace older Reference.
-            if (frame->data[id * getSize() + 1] == id)
+            if (frame->data[i * getSize() + 1] == id)
             {
-              encode(msg, frame, id);
+              encode(msg, frame, i);
               return;
             }
           }
@@ -66,9 +66,9 @@ namespace DUNE
           for (uint8_t i = 0; i < size; i++)
           {
             // Empty message.
-            if (frame->data[id * getSize() + 1] == 0)
+            if (frame->data[i * getSize() + 1] == 0)
             {
-              encode(msg, frame, id);
+              encode(msg, frame, i);
               return;
             }
           }
@@ -88,16 +88,25 @@ namespace DUNE
           uint8_t size = (frame->data.size() - 1) / getSize();
           for (uint8_t i = 0; i < size; i++)
           {
-            if (frame->data[id * getSize() + 1] == id)
+            if (frame->data[i * getSize() + 1] == id)
             {
-              IMC::Message* m = decode(frame, id);
-              msg = static_cast<IMC::Reference*>(m);
+              IMC::Message* m = decode(frame, i);
+              IMC::Reference* r = static_cast<IMC::Reference*>(m);
+              *msg = *r;
               return true;
             }
           }
 
           (void)msg;
           return false;
+        }
+
+        //! Get payload size by number of Reference messages
+        //! @return size of payload.
+        static size_t
+        getPayloadSize(uint8_t num)
+        {
+          return getSize() * num + 1;
         }
 
       private:
@@ -122,8 +131,17 @@ namespace DUNE
           coded.dst = static_cast<uint8_t>(msg->getDestination());
           coded.lat = msg->lat;
           coded.lon = msg->lon;
-          coded.z = static_cast<uint8_t>(msg->z->value * 5);
-          coded.z_ref = msg->z->z_units;
+
+          if (!msg->z.isNull())
+          {
+            coded.z = static_cast<uint8_t>(msg->z->value * 5);
+            coded.z_ref = msg->z->z_units;
+          }
+          else
+          {
+            coded.z = 0;
+            coded.z_ref = IMC::Z_DEPTH;
+          }
 
           ptr += IMC::serialize(coded.dst, ptr);
           ptr += IMC::serialize(coded.lat, ptr);
@@ -141,7 +159,6 @@ namespace DUNE
         {
           IMC::Reference* reference = new IMC::Reference;
           CodedReference coded;
-
           if (coded.getSize() + 1 > (frame->data.size() - idx * coded.getSize()))
             throw std::runtime_error("invalid size");
 
