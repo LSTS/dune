@@ -568,9 +568,13 @@ namespace Plan
               return;
             }
 
-            m_ccu->holdRequest();
+            {
+              const IMC::PlanControl* hreq = m_ccu->holdRequest();
+              if (hreq == NULL)
+                return;
 
-            startPlan(pc->plan_id, pc->arg.isNull() ? 0 : pc->arg.get());
+              startPlan(hreq->plan_id, hreq->arg.isNull() ? 0 : hreq->arg.get());
+            }
             return;
           case IMC::PlanControl::PC_STOP:
             stopPlan(ST_READY);
