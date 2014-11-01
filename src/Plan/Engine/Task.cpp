@@ -35,6 +35,7 @@
 #include "DataBaseInteraction.hpp"
 #include "CCUInteraction.hpp"
 #include "VehicleInteraction.hpp"
+#include "ErrorHandler.hpp"
 
 namespace Plan
 {
@@ -142,6 +143,8 @@ namespace Plan
       EngineState m_sm;
       //! Next state for the machine
       EngineState m_next_sm;
+      //! Error handler object
+      ErrorHandler m_errors;
       //! Task arguments.
       Arguments m_args;
 
@@ -365,23 +368,10 @@ namespace Plan
 
         if (!m_plan->onEntityActivationState(id, msg))
         {
-          std::string error = String::str(DTR("failed to activate %s: %s"),
-                                          id.c_str(), msg->error.c_str());
-
           if (m_args.actfail_abort)
-          {
-            onPlanFailure(error);
-
-            // stop activation if any is running
-            if (m_sm == ST_ACTIVATING)
-            {
-              setState(ST_STOPPING, ST_READY);
-            }
-          }
+            m_errors.pushActivationError(id, msg->error);
           else
-          {
-            err("%s", error.c_str());
-          }
+            err("%s", msg->error.c_str());
         }
       }
 
@@ -468,46 +458,13 @@ namespace Plan
 
         m_vein->onVehicleState(vs);
 
-        switch (vs->op_mode)
-        {
-          case IMC::VehicleState::VS_SERVICE:
-            onVehicleService(vs);
-            break;
-          case IMC::VehicleState::VS_ERROR:
-          case IMC::VehicleState::VS_BOOT:
-            onVehicleError(vs);
-            break;
-        }
-      }
-
-      void
-      onVehicleService(const IMC::VehicleState* vs)
-      {
         switch (m_sm)
         {
+          case ST_START_ACTIV:
           case ST_ACTIVATING:
+          case ST_START_EXEC:
           case ST_EXECUTING:
-            err("%s", vs->last_error.c_str());
-            onPlanFailure(vs->last_error);
-            setState(ST_STOPPING, ST_READY);
-            break;
-          default:
-            break;
-        }
-      }
-
-      void
-      onVehicleError(const IMC::VehicleState* vs)
-      {
-        std::string err_ents = DTR("vehicle errors: ") + vs->error_ents;
-        std::string edesc = vs->last_error_time < 0 ? err_ents : vs->last_error;
-
-        switch (m_sm)
-        {
-          case ST_ACTIVATING:
-          case ST_EXECUTING:
-            onPlanFailure(edesc);
-            setState(ST_STOPPING, ST_READY);
+            m_errors.pushVehicleError(vs);
             break;
           default:
             break;
@@ -980,11 +937,36 @@ namespace Plan
           // got requests to process
           updateCCURequests();
 
+          // handle errors if any
+          handleErrors();
+
           runStateMachine();
 
           waitForMessages(1.0);
           continue;
         }
+      }
+
+      void
+      handleErrors(void)
+      {
+        if (m_errors.isEmpty())
+          return;
+
+        switch (m_sm)
+        {
+          case ST_START_ACTIV:
+          case ST_ACTIVATING:
+          case ST_START_EXEC:
+          case ST_EXECUTING:
+            onPlanFailure(m_errors.getOldest());
+            setState(ST_STOPPING, ST_READY);
+            break;
+          default:
+            break;
+        }
+
+        m_errors.clear();
       }
 
       void
