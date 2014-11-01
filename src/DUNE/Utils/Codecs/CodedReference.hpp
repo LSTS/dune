@@ -44,6 +44,63 @@ namespace DUNE
         //! Code to identify Reference.
         static const uint8_t c_id = 0xdb;
 
+        //! Encode a Reference message to a UamTxFrame by System ID.
+        //! @param[in] msg Reference pointer.
+        //! @param[out] frame UamTxFrame pointer.
+        //! @param[in] id System ID.
+        //! @return true if message successfully decoded, false otherwise.
+        void
+        encodeById(const IMC::Reference* msg, IMC::UamTxFrame* frame, uint8_t id)
+        {
+          uint8_t size = (frame->data.size() - 1) / getSize();
+          for (uint8_t i = 0; i < size; i++)
+          {
+            // Found placement, replace older Reference.
+            if (frame->data[id * getSize() + 1] == id)
+            {
+              encode(msg, frame, id);
+              return;
+            }
+          }
+
+          for (uint8_t i = 0; i < size; i++)
+          {
+            // Empty message.
+            if (frame->data[id * getSize() + 1] == 0)
+            {
+              encode(msg, frame, id);
+              return;
+            }
+          }
+
+          (void)msg;
+          return;
+        }
+
+        //! Decode an UamRxFrame by System ID to retrieve a Reference message.
+        //! @param[in] frame UamRxFrame pointer.
+        //! @param[out] msg Reference pointer.
+        //! @param[in] id System ID.
+        //! @return true if message successfully decoded, false otherwise.
+        static bool
+        decodeById(const IMC::UamRxFrame* frame, IMC::Reference* msg, uint8_t id)
+        {
+          uint8_t size = (frame->data.size() - 1) / getSize();
+          for (uint8_t i = 0; i < size; i++)
+          {
+            if (frame->data[id * getSize() + 1] == id)
+            {
+              IMC::Message* m = decode(frame, id);
+              msg = static_cast<IMC::Reference*>(m);
+              return true;
+            }
+          }
+
+          (void)msg;
+          return false;
+        }
+
+      private:
         //! Encode a Reference message into a UamTxFrame message
         //! pointer.
         //! @param[in] msg Reference pointer.
@@ -110,16 +167,9 @@ namespace DUNE
           return reference;
         }
 
-        uint8_t
-        getPayloadSize(uint8_t size)
-        {
-          return getSize() * size + 1;
-        }
-
-      private:
         //! Get payload size.
         //! @return size of payload.
-        size_t
+        static size_t
         getSize(void)
         {
           return sizeof(lat) + sizeof(lon) + sizeof(dst)
