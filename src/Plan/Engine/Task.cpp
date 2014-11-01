@@ -370,7 +370,7 @@ namespace Plan
 
           if (m_args.actfail_abort)
           {
-            onFailure(error);
+            onPlanFailure(error);
 
             // stop activation if any is running
             if (m_sm == ST_ACTIVATING)
@@ -417,7 +417,7 @@ namespace Plan
           {
             case ST_START_ACTIV:
             case ST_START_EXEC:
-              onFailure(m_vein->info());
+              onPlanFailure(m_vein->info());
               setState(ST_STOPPING, ST_READY);
               break;
             case ST_STOPPING:
@@ -488,7 +488,7 @@ namespace Plan
           case ST_ACTIVATING:
           case ST_EXECUTING:
             err("%s", vs->last_error.c_str());
-            onFailure(vs->last_error);
+            onPlanFailure(vs->last_error);
             setState(ST_STOPPING, ST_READY);
             break;
           default:
@@ -506,7 +506,7 @@ namespace Plan
         {
           case ST_ACTIVATING:
           case ST_EXECUTING:
-            onFailure(edesc);
+            onPlanFailure(edesc);
             setState(ST_STOPPING, ST_READY);
             break;
           default:
@@ -926,64 +926,6 @@ namespace Plan
         return true;
       }
 
-      //! Generic answer function
-      //! @param[in] type type of reply (same field as plan control message)
-      //! @param[in] msg text message to send
-      //! @param[in] print true if the message should be printed to output
-      //! @param[in] arg pointer to argument IMC message
-      inline void
-      genericAnswer(IMC::PlanControl::TypeEnum type, const std::string& msg,
-                    bool print = true, const IMC::Message* arg = NULL)
-      {
-        m_ccu->answer(type, msg, print, arg);
-      }
-
-      //! Answer to the reply with a failure message
-      //! @param[in] errmsg text error message to send
-      inline void
-      onFailure(const std::string& errmsg)
-      {
-        genericAnswer(IMC::PlanControl::PC_FAILURE, errmsg, true);
-      }
-
-      //! Answer to the reply with a failure message
-      //! @param[in] errmsg text error message to send
-      inline void
-      onPlanFailure(const std::string& errmsg)
-      {
-        m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
-        onFailure(errmsg);
-      }
-
-      //! Answer to the reply with a success message
-      //! @param[in] msg text message to send
-      //! @param[in] print true if the message should be printed to output
-      //! @param[in] arg pointer to argument IMC message
-      inline void
-      onSuccess(const std::string& msg = DTR("OK"), bool print = true,
-                const IMC::Message* arg = NULL)
-      {
-        genericAnswer(IMC::PlanControl::PC_SUCCESS, msg, print, arg);
-      }
-
-      //! Answer to the reply with a success message
-      //! @param[in] arg pointer to message to set in arg
-      inline void
-      onSuccess(const IMC::Message* arg)
-      {
-        onSuccess(DTR("OK"), true, arg);
-      }
-
-      //! Answer to the reply with an in progress message
-      //! @param[in] arg pointer to message to set in arg
-      //! @param[in] msg text message to send
-      inline void
-      onProgress(const std::string& msg = DTR("OK"),
-                 const IMC::Message* arg = NULL)
-      {
-        genericAnswer(IMC::PlanControl::PC_IN_PROGRESS, msg, false, arg);
-      }
-
       //! Set task's initial state
       void
       setInitialState(void)
@@ -1091,7 +1033,7 @@ namespace Plan
             }
             else if (m_plan->hasActivationFailed())
             {
-              onFailure(m_plan->getActivationInfo());
+              onPlanFailure(m_plan->getActivationInfo());
               setState(ST_STOPPING, ST_READY);
               err("%s", m_plan->getActivationInfo().c_str());
             }
@@ -1183,6 +1125,65 @@ namespace Plan
           war(DTR("engine is %s"), c_pcs_desc[m_pcs.state]);
           dispatch(m_pcs);
         }
+      }
+
+      //! Generic answer function
+      //! @param[in] type type of reply (same field as plan control message)
+      //! @param[in] msg text message to send
+      //! @param[in] print true if the message should be printed to output
+      //! @param[in] arg pointer to argument IMC message
+      inline void
+      genericAnswer(IMC::PlanControl::TypeEnum type, const std::string& msg,
+                    bool print = true, const IMC::Message* arg = NULL)
+      {
+        m_ccu->answer(type, msg, print, arg);
+      }
+
+      //! Answer to the reply with a failure message
+      //! @param[in] errmsg text error message to send
+      inline void
+      onFailure(const std::string& errmsg)
+      {
+        genericAnswer(IMC::PlanControl::PC_FAILURE, errmsg, true);
+      }
+
+      //! Answer to the reply with a failure message
+      //! To be used when the execution or starting of a plan fails
+      //! @param[in] errmsg text error message to send
+      inline void
+      onPlanFailure(const std::string& errmsg)
+      {
+        m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
+        onFailure(errmsg);
+      }
+
+      //! Answer to the reply with a success message
+      //! @param[in] msg text message to send
+      //! @param[in] print true if the message should be printed to output
+      //! @param[in] arg pointer to argument IMC message
+      inline void
+      onSuccess(const std::string& msg = DTR("OK"), bool print = true,
+                const IMC::Message* arg = NULL)
+      {
+        genericAnswer(IMC::PlanControl::PC_SUCCESS, msg, print, arg);
+      }
+
+      //! Answer to the reply with a success message
+      //! @param[in] arg pointer to message to set in arg
+      inline void
+      onSuccess(const IMC::Message* arg)
+      {
+        onSuccess(DTR("OK"), true, arg);
+      }
+
+      //! Answer to the reply with an in progress message
+      //! @param[in] arg pointer to message to set in arg
+      //! @param[in] msg text message to send
+      inline void
+      onProgress(const std::string& msg = DTR("OK"),
+                 const IMC::Message* arg = NULL)
+      {
+        genericAnswer(IMC::PlanControl::PC_IN_PROGRESS, msg, false, arg);
       }
 
       void
