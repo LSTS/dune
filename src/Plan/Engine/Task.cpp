@@ -402,7 +402,7 @@ namespace Plan
           return;
 
         // send PlanMemento to PlanDB
-        m_db->sendToDB(IMC::PlanDB::DBDT_MEMENTO, msg->id, msg);
+        m_db->sendToDB(IMC::PlanDB::DBDT_MEMENTO, pmem.id, &pmem);
       }
 
       void
