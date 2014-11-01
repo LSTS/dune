@@ -540,18 +540,17 @@ namespace Plan
       void
       processRequest(const IMC::PlanControl* pc)
       {
-        inf(DTR("request -- %s (%s)"),
-            DTR(c_op_desc[pc->op]),
-            pc->plan_id.c_str());
+        inf(DTR("request -- %s (%s)"), c_op_desc[pc->op], pc->plan_id.c_str());
 
         switch (m_sm)
         {
           case ST_BOOT:
-            debug("engine not %s, saved request", c_pcs_desc[IMC::PlanControlState::PCS_READY]);
+            debug("engine not %s, saved request",
+                  c_pcs_desc[IMC::PlanControlState::PCS_READY]);
             m_ccu->voidRequest();
             return;
           case ST_BLOCKED:
-            onFailure("%s", c_pcs_desc[m_pcs.state]);
+            onFailure(String::str(DTR("engine is %s"), c_pcs_desc[m_pcs.state]));
             return;
           default:
             break;
@@ -568,13 +567,11 @@ namespace Plan
               return;
             }
 
-            {
-              const IMC::PlanControl* hreq = m_ccu->holdRequest();
-              if (hreq == NULL)
-                return;
+            pc = m_ccu->holdRequest();
+            if (pc == NULL)
+              return;
 
-              startPlan(hreq->plan_id, hreq->arg.isNull() ? 0 : hreq->arg.get());
-            }
+            startPlan(pc->plan_id, pc->arg.isNull() ? 0 : pc->arg.get());
             return;
           case IMC::PlanControl::PC_STOP:
             stopPlan(ST_READY);
@@ -617,7 +614,7 @@ namespace Plan
 
         // reply with statistics
         if (plan_startup)
-          onProgress(c_plan_loaded, false, &ps);
+          onProgress(c_plan_loaded, &ps);
         else
           onSuccess(c_plan_loaded, true, &ps);
 
@@ -943,13 +940,12 @@ namespace Plan
 
       //! Answer to the reply with a failure message
       //! @param[in] errmsg text error message to send
-      //! @param[in] print true if the message should be printed to output
-      void
-      onFailure(const std::string& errmsg, bool print = true)
+      inline void
+      onFailure(const std::string& errmsg)
       {
         m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
 
-        genericAnswer(IMC::PlanControl::PC_FAILURE, errmsg, print);
+        genericAnswer(IMC::PlanControl::PC_FAILURE, errmsg, true);
       }
 
       //! Answer to the reply with a success message
@@ -968,18 +964,17 @@ namespace Plan
       inline void
       onSuccess(const IMC::Message* arg)
       {
-        genericAnswer(IMC::PlanControl::PC_SUCCESS, DTR("OK"), true, arg);
+        onSuccess(DTR("OK"), true, arg);
       }
 
       //! Answer to the reply with an in progress message
       //! @param[in] arg pointer to message to set in arg
       //! @param[in] msg text message to send
-      //! @param[in] print true if the message should be printed to output
       inline void
-      onProgress(const std::string& msg = DTR("OK"), bool print = false,
+      onProgress(const std::string& msg = DTR("OK"),
                  const IMC::Message* arg = NULL)
       {
-        m_ccu->answer(IMC::PlanControl::PC_IN_PROGRESS, msg, print, arg);
+        genericAnswer(IMC::PlanControl::PC_IN_PROGRESS, msg, false, arg);
       }
 
       //! Set task's initial state
