@@ -1069,7 +1069,7 @@ namespace Plan
             }
             break;
           case ST_BOOT:
-            if (m_db->isOpen() && !m_vein->stateTimeout())
+            if (m_db->isOpen())
             {
               setState(ST_READY);
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
