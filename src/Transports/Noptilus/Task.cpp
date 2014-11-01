@@ -34,6 +34,11 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    //! Broadcast channel
+    static const std::string c_broadcast = "broadcast";
+    //! Maximum number of References per cycle
+    static const uint8_t c_max_ref = 3;
+
     struct Arguments
     {
       //! Number of TDMA slots.
@@ -53,7 +58,7 @@ namespace Transports
       //! Last received estimated state.
       IMC::EstimatedState* m_estate;
       //! Map of pending transmissions.
-      std::map<std::string, IMC::UamTxFrame*> m_txs;
+      std::map<std::string, IMC::Reference*> m_txs;
       //! Destination of last transmission.
       std::string m_tx_last;
       //! TDMA slots
@@ -127,23 +132,23 @@ namespace Transports
         try
         {
           const IMC::Message* m = msg->msg.get();
-          uint8_t bfr[64] = {0};
-          uint16_t rv = IMC::Packet::serialize(m, bfr, sizeof(bfr));
 
-          IMC::UamTxFrame* frame = new IMC::UamTxFrame;
-          frame->setDestination(getSystemId());
-          frame->sys_dst = msg->system;
-          frame->data.assign((char*)&bfr[0], (char*)&bfr[rv]);
+          if (m->getId() == DUNE_IMC_REFERENCE)
+          {
+            const IMC::Reference* r = static_cast<const IMC::Reference*>(m);
+            IMC::Reference* ref = new IMC::Reference(*r);
+            ref->setDestination(resolveSystemName(msg->system));
 
-          std::map<std::string, IMC::UamTxFrame*>::iterator itr = m_txs.find(frame->sys_dst);
-          if (itr != m_txs.end())
-          {
-            delete itr->second;
-            itr->second = frame;
-          }
-          else
-          {
-            m_txs[frame->sys_dst] = frame;
+            std::map<std::string, IMC::Reference*>::iterator itr = m_txs.find(msg->system);
+            if (itr != m_txs.end())
+            {
+              delete itr->second;
+              itr->second = ref;
+            }
+            else
+            {
+              m_txs[msg->system] = ref;
+            }
           }
         }
         catch (...)
@@ -155,7 +160,7 @@ namespace Transports
       void
       consume(const IMC::UamRxFrame* msg)
       {
-        if (msg->sys_dst != getSystemName())
+        if (msg->sys_dst != getSystemName() && msg->sys_dst != c_broadcast)
           return;
 
         if (msg->data.size() < 1)
@@ -168,6 +173,10 @@ namespace Transports
         {
           case Utils::Codecs::CodedEstimatedState::c_id:
             rmsg = Utils::Codecs::CodedEstimatedState::decode(msg);
+            break;
+
+          case Utils::Codecs::CodedReference::c_id:
+            Utils::Codecs::CodedReference::decodeById(msg, rmsg, getSystemId());
             break;
 
           default:
@@ -206,7 +215,7 @@ namespace Transports
       void
       clearPending(void)
       {
-        std::map<std::string, IMC::UamTxFrame*>::iterator itr = m_txs.begin();
+        std::map<std::string, IMC::Reference*>::iterator itr = m_txs.begin();
         for (; itr != m_txs.end(); ++itr)
           delete itr->second;
         m_txs.clear();
@@ -215,25 +224,19 @@ namespace Transports
       void
       transmitPending(void)
       {
-        std::map<std::string, IMC::UamTxFrame*>::iterator itr = m_txs.begin();
+        std::map<std::string, IMC::Reference*>::iterator itr = m_txs.begin();
 
-        if (m_txs.size() == 1)
+        if (m_txs.size() <= c_max_ref)
         {
-          m_tx_last = itr->first;
-          dispatch(itr->second);
-        }
-        else
-        {
-          // Try to balance transmissions.
+          UamTxFrame* tx = new UamTxFrame;
+          tx->setDestination(getSystemId());
+          tx->sys_dst = c_broadcast;
+          tx->data.resize(Utils::Codecs::CodedReference::getPayloadSize(m_txs.size()));
+
           for (; itr != m_txs.end(); ++itr)
-          {
-            if (itr->first != m_tx_last)
-            {
-              m_tx_last = itr->first;
-              dispatch(itr->second);
-              break;
-            }
-          }
+            Utils::Codecs::CodedReference::encodeById(itr->second, tx, itr->second->getDestination());
+
+          dispatch(itr->second);
         }
 
         clearPending();
