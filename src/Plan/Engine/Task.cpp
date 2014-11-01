@@ -562,7 +562,7 @@ namespace Plan
             if (m_sm != ST_READY)
             {
               m_ccu->voidRequest();
-              onFailure(DTR("starting a new plan"));
+              onPlanFailure(DTR("starting a new plan"));
               setState(ST_STOPPING, ST_READY);
               return;
             }
@@ -668,7 +668,7 @@ namespace Plan
         }
         catch (Plan::ParseError& pe)
         {
-          onFailure(pe.what());
+          onPlanFailure(pe.what());
           m_plan->clear();
           return false;
         }
@@ -714,7 +714,7 @@ namespace Plan
 
         if (!m_db->searchInDB(pmem->plan_id, m_spec, info))
         {
-          onFailure(info);
+          onPlanFailure(info);
           return false;
         }
 
@@ -812,7 +812,7 @@ namespace Plan
             if (m_db->searchInDB(id, pmem, info))
               return parseArg(id, &pmem, info);
 
-            onFailure(info);
+            onPlanFailure(info);
             return false;
           }
         }
@@ -903,7 +903,7 @@ namespace Plan
       {
         if (pman == NULL)
         {
-          onFailure(m_plan->getCurrentId() + DTR(": invalid maneuver ID"));
+          onPlanFailure(m_plan->getCurrentId() + DTR(": invalid maneuver ID"));
           return false;
         }
 
@@ -943,9 +943,16 @@ namespace Plan
       inline void
       onFailure(const std::string& errmsg)
       {
-        m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
-
         genericAnswer(IMC::PlanControl::PC_FAILURE, errmsg, true);
+      }
+
+      //! Answer to the reply with a failure message
+      //! @param[in] errmsg text error message to send
+      inline void
+      onPlanFailure(const std::string& errmsg)
+      {
+        m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
+        onFailure(errmsg);
       }
 
       //! Answer to the reply with a success message
