@@ -77,7 +77,7 @@ namespace Plan
         if (!m_requests.size())
           return NULL;
 
-        m_requests.front().state = RS_PROC; 
+        m_requests.front().state = RS_PROC;
 
         return &m_requests.front().plan_control;
       }
@@ -134,7 +134,6 @@ namespace Plan
              const IMC::Message* arg)
       {
         bool answer_held_req = false;
-        bool no_req = false;
 
         if (m_requests.size())
         {
@@ -149,9 +148,6 @@ namespace Plan
         }
 
         if (answer_held_req && (m_toreply.state == RS_NONE))
-          no_req = true;
-
-        if (no_req)
         {
           m_task->err("no request to answer");
           return;
@@ -163,50 +159,12 @@ namespace Plan
         else
           pc = &m_requests.front().plan_control;
 
-        answer(type, desc, print, arg, pc);
+        dispatchAnswer(type, desc, print, arg, pc);
 
         if (answer_held_req)
           m_toreply.state = RS_REPLIED;
         else
           m_requests.pop();
-      }
-      
-      //! Answer to the plan control request
-      //! @param[in] type type of reply (same field as plan control message)
-      //! @param[in] desc description for the answer
-      //! @param[in] print true if output should be printed out
-      //! @param[in] arg pointer to argument IMC message
-      //! @param[in] pc pointer to PlanControl message
-      void
-      answer(uint8_t type, const std::string& desc, bool print,
-             const IMC::Message* arg, IMC::PlanControl* pc)
-      {
-        IMC::PlanControl reply;
-        reply.type = type;
-        reply.info = desc;
-        reply.setDestination(pc->getSource());
-        reply.setDestinationEntity(pc->getSourceEntity());
-        reply.request_id = pc->request_id;
-        reply.op = pc->op;
-        reply.plan_id = pc->plan_id;
-
-        if (arg != NULL)
-          reply.arg.set(*arg);
-
-        m_task->dispatch(reply);
-
-        if (print)
-        {
-          std::string str = Utils::String::str(DTR("reply -- %s (%s) -- %s"),
-                                               DTR(c_op_desc[reply.op]),
-                                               reply.plan_id.c_str(),
-                                               desc.c_str());
-
-          if (type == IMC::PlanControl::PC_FAILURE)
-            m_task->err("%s", str.c_str());
-          else
-            m_task->inf("%s", str.c_str());
-        }
       }
 
       //! Pop all the requests in the queue
@@ -237,6 +195,44 @@ namespace Plan
         //! PlanControl request
         IMC::PlanControl plan_control;
       };
+
+      //! Answer to the plan control request
+      //! @param[in] type type of reply (same field as plan control message)
+      //! @param[in] desc description for the answer
+      //! @param[in] print true if output should be printed out
+      //! @param[in] arg pointer to argument IMC message
+      //! @param[in] pc pointer to PlanControl message
+      void
+      dispatchAnswer(uint8_t type, const std::string& desc, bool print,
+                     const IMC::Message* arg, IMC::PlanControl* pc)
+      {
+        IMC::PlanControl reply;
+        reply.type = type;
+        reply.info = desc;
+        reply.setDestination(pc->getSource());
+        reply.setDestinationEntity(pc->getSourceEntity());
+        reply.request_id = pc->request_id;
+        reply.op = pc->op;
+        reply.plan_id = pc->plan_id;
+
+        if (arg != NULL)
+          reply.arg.set(*arg);
+
+        m_task->dispatch(reply);
+
+        if (print)
+        {
+          std::string str = Utils::String::str(DTR("reply -- %s (%s) -- %s"),
+                                               DTR(c_op_desc[reply.op]),
+                                               reply.plan_id.c_str(),
+                                               desc.c_str());
+
+          if (type == IMC::PlanControl::PC_FAILURE)
+            m_task->err("%s", str.c_str());
+          else
+            m_task->inf("%s", str.c_str());
+        }
+      }
 
       inline void
       pushRequest(const IMC::PlanControl* pc)
