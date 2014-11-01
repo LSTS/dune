@@ -54,7 +54,9 @@ namespace DUNE
         encode(const IMC::EstimatedState* msg, IMC::UamTxFrame* frame)
         {
           CodedEstimatedState coded;
-          frame->data.resize(coded.getSize());
+          if (frame->data.size() < coded.getSize())
+            throw std::runtime_error("invalid size");
+
           uint8_t* ptr = (uint8_t*)&frame->data[0];
 
           coded.depth = static_cast<int16_t>(msg->depth * 100.0);
@@ -78,7 +80,7 @@ namespace DUNE
         {
           IMC::EstimatedState* estate = new IMC::EstimatedState;
           CodedEstimatedState coded;
-          if (frame->data.size() != coded.getSize())
+          if (frame->data.size() < coded.getSize())
             throw std::runtime_error("invalid size");
 
           uint8_t* ptr = (uint8_t*)&frame->data[1];
