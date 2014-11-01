@@ -1040,6 +1040,7 @@ namespace Plan
             break;
           case ST_START_ACTIV:
           case ST_START_EXEC:
+          case ST_STOPPING:
             if (m_vein->replyTimeout())
             {
               // handle reply timeout
@@ -1053,7 +1054,9 @@ namespace Plan
               war(DTR("cleared all requests"));
             }
             break;
-          default:
+          case ST_EXECUTING:
+            break;
+          case ST_NONE:
             break;
         }
       }
