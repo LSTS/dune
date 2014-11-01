@@ -96,7 +96,8 @@ namespace Plan
       }
 
       //! Hold request to answer later
-      void
+      //! @return pointer to PlanControl message of held request
+      const IMC::PlanControl*
       holdRequest(void)
       {
         bool failed = false;
@@ -109,7 +110,7 @@ namespace Plan
         if (failed)
         {
           m_task->war("no request was being processed");
-          return;
+          return NULL;
         }
 
         if (m_toreply.state == RS_PROC)
@@ -119,6 +120,8 @@ namespace Plan
 
         // pop from queue
         m_requests.pop();
+
+        return &m_toreply.plan_control;
       }
 
       //! Answer to the plan control request
