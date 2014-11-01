@@ -1031,12 +1031,6 @@ namespace Plan
               IMC::PlanManeuver* pman = m_plan->loadStartManeuver();
               startManeuver(pman);
             }
-            else if (m_plan->hasActivationFailed())
-            {
-              onPlanFailure(m_plan->getActivationInfo());
-              setState(ST_STOPPING, ST_READY);
-              err("%s", m_plan->getActivationInfo().c_str());
-            }
             break;
           case ST_START_ACTIV:
           case ST_START_EXEC:

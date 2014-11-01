@@ -141,28 +141,12 @@ namespace Plan
         return m_last_id;
       }
 
-      //! Get activation info string
-      //! @return activation info string
-      inline const std::string
-      getActivationInfo(void) const
-      {
-        return m_activation->getInfo();
-      }
-
       //! Is activation done
       //! @return true if so, false otherwise
       inline bool
       isActivationDone(void) const
       {
         return m_activation->isDone();
-      }
-
-      //! Has activation failed
-      //! @return true if so, false otherwise
-      inline bool
-      hasActivationFailed(void) const
-      {
-        return m_activation->hasFailed();
       }
 
       //! Get current plan progress

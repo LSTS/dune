@@ -54,9 +54,7 @@ namespace Plan
         //! In progress
         AS_IN_PROGRESS,
         //! Activation done
-        AS_DONE,
-        //! Activation failed
-        AS_FAILED
+        AS_DONE
       };
 
       //! Default constructor.
@@ -106,15 +104,6 @@ namespace Plan
       stop(void)
       {
         m_state = AS_DONE;
-      }
-
-      //! Flag as failed
-      //! @param[in] info reason for failed activation
-      void
-      setFailed(const std::string& info)
-      {
-        m_info = info;
-        m_state = AS_FAILED;
       }
 
       //! Set new remaining time for activation
@@ -182,22 +171,6 @@ namespace Plan
         return AS_DONE == m_state;
       }
 
-      //! Activation has failed
-      //! @return true if activation has failed
-      bool
-      hasFailed(void) const
-      {
-        return AS_FAILED == m_state;
-      }
-
-      //! Get error message
-      //! @return error string message
-      const std::string&
-      getInfo(void) const
-      {
-        return m_info;
-      }
-
     private:
       //! Current plan's activation time if any
       float m_time;
@@ -205,8 +178,6 @@ namespace Plan
       ActivationState m_state;
       //! Timer to estimate time left in activation
       Time::Counter<float> m_timer;
-      //! Information regarding the activation state
-      std::string m_info;
     };
   }
 }
