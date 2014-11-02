@@ -34,10 +34,14 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
-    //! Broadcast channel
+    //! Broadcast channel.
     static const std::string c_broadcast = "broadcast";
-    //! Maximum number of References per cycle
+    //! Maximum number of References per cycle.
     static const uint8_t c_max_ref = 3;
+    //! Number of DVL beams.
+    static const uint8_t c_dvl_beams = 4;
+    //! Value multiplier
+    static const float c_mult = 100.0;
 
     struct Arguments
     {
@@ -57,6 +61,12 @@ namespace Transports
     {
       //! Last received estimated state.
       IMC::EstimatedState* m_estate;
+      //! Last received navigation uncertainty.
+      IMC::NavigationUncertainty* m_uncertainty;
+      //! DVL beam value.
+      int16_t m_beams[c_dvl_beams];
+      //! DVL beam entity id.
+      unsigned m_dvl_eid[c_dvl_beams];
       //! Map of pending transmissions.
       std::map<std::string, IMC::Reference*> m_txs;
       //! Destination of last transmission.
@@ -71,7 +81,8 @@ namespace Transports
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_estate(NULL)
+        m_estate(NULL),
+        m_uncertainty(NULL)
       {
         param("Slot Count", m_args.slot_count)
         .description("Number of TDMA slots");
@@ -90,10 +101,14 @@ namespace Transports
         .defaultValue("true")
         .description("True to transmit estimated state");
 
-        bind<IMC::EstimatedState>(this);
-        bind<IMC::UamRxFrame>(this);
+        resetBeamsValue();
+
         bind<IMC::AcousticOperation>(this);
+        bind<IMC::Distance>(this);
+        bind<IMC::EstimatedState>(this);
         bind<IMC::GpsFix>(this);
+        bind<IMC::NavigationUncertainty>(this);
+        bind<IMC::UamRxFrame>(this);
       }
 
       ~Task(void)
@@ -109,6 +124,23 @@ namespace Transports
       }
 
       void
+      onEntityResolution(void)
+      {
+        for (uint8_t i = 0; i < c_dvl_beams; ++i)
+        {
+          std::string option = String::str("DVL Beam %u", i);
+          try
+          {
+            m_dvl_eid[i] = resolveEntity(option);
+          }
+          catch (...)
+          {
+            m_dvl_eid[i] = UINT_MAX;
+          }
+        }
+      }
+
+      void
       consume(const IMC::EstimatedState* msg)
       {
         if (msg->getSource() != getSystemId())
@@ -118,6 +150,34 @@ namespace Transports
           *m_estate = *msg;
         else
           m_estate = new IMC::EstimatedState(*msg);
+      }
+
+      void
+      consume(const IMC::NavigationUncertainty* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (m_uncertainty)
+          *m_uncertainty = *msg;
+        else
+          m_uncertainty = new IMC::NavigationUncertainty(*msg);
+      }
+
+      void
+      consume(const IMC::Distance* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        for (uint8_t i = 0; i < c_dvl_beams; ++i)
+        {
+          if (msg->getSourceEntity() == m_dvl_eid[i])
+          {
+            if (msg->validity == IMC::Distance::DV_VALID)
+              m_beams[i] = static_cast<int16_t>(msg->value * c_mult);
+          }
+        }
       }
 
       void
@@ -169,10 +229,39 @@ namespace Transports
         uint8_t id = msg->data[0];
 
         IMC::Message* rmsg = NULL;
+        uint8_t* ptr = NULL;
+        IMC::Distance distance;
+        IMC::NavigationUncertainty unc;
+        uint16_t src = resolveSystemName(msg->sys_src);
+        uint16_t length;
+
         switch (id)
         {
           case Utils::Codecs::CodedEstimatedState::c_id:
             rmsg = Utils::Codecs::CodedEstimatedState::decode(msg);
+
+            // Decode the rest of the frame.
+            ptr = (uint8_t*)&msg->data[Utils::Codecs::CodedEstimatedState::getSize()];
+
+            distance.setSource(src);
+            unc.setSource(src);
+
+            int16_t tdist;
+            length = msg->data.size() - Utils::Codecs::CodedEstimatedState::getSize();
+            for (uint8_t i = 0; i < c_dvl_beams; ++i)
+            {
+              ptr += IMC::deserialize(tdist, ptr, length);
+              distance.value = static_cast<float>(tdist / c_mult);
+
+              if (distance.value > 0)
+                distance.validity = IMC::Distance::DV_VALID;
+
+              dispatch(distance);
+            }
+
+            ptr += IMC::deserialize(unc.x, ptr, length);
+            ptr += IMC::deserialize(unc.y, ptr, length);
+            dispatch(unc);
             break;
 
           case Utils::Codecs::CodedReference::c_id:
@@ -194,8 +283,8 @@ namespace Transports
 
         if (rmsg != NULL)
         {
-          uint16_t src = resolveSystemName(msg->sys_src);
-          rmsg->setSource(src);
+          uint16_t sr = resolveSystemName(msg->sys_src);
+          rmsg->setSource(sr);
           dispatch(*rmsg);
         }
       }
@@ -248,11 +337,32 @@ namespace Transports
         if (m_estate == NULL)
           return;
 
+        if (m_uncertainty == NULL)
+          return;
+
         IMC::UamTxFrame frame;
         frame.setDestination(getSystemId());
         frame.sys_dst = m_args.dst;
+        frame.data.resize(Utils::Codecs::CodedEstimatedState::getSize() + c_dvl_beams * sizeof(int16_t) + 2 * sizeof(float));
         Utils::Codecs::CodedEstimatedState::encode(m_estate, &frame);
+
+        // Add distance values.
+        uint8_t* ptr = (uint8_t*)&frame.data[Utils::Codecs::CodedEstimatedState::getSize()];
+        for (uint8_t i = 0; i < 4; ++i)
+          ptr += IMC::serialize(m_beams[i], ptr);
+        resetBeamsValue();
+
+        // Add uncertainty.
+        ptr += IMC::serialize(m_uncertainty->x, ptr);
+        ptr += IMC::serialize(m_uncertainty->y, ptr);
         dispatch(frame);
+      }
+
+      void
+      resetBeamsValue(void)
+      {
+        for (uint8_t i = 0; i < c_dvl_beams; i++)
+          m_beams[i] = -1 * c_mult;
       }
 
       //! Main loop.
