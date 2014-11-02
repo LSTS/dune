@@ -79,6 +79,165 @@ namespace DUNE
     }
 
     void
+    SourceFilter::listMessages(std::vector<std::string>& msg, std::set<uint32_t>& msg_id)
+    {
+      // Process the filtered messages
+      uint32_t msg_tmp;
+      unsigned int i_msg_n = msg.size();
+      if (i_msg_n == 0)
+      {
+        msg_id.insert(UINT_MAX);
+        m_task.debug("Undefined filtered message.");
+        return;
+      }
+
+      for (unsigned i = 0; i < i_msg_n; i++)
+      {
+        m_task.spew("%s filtering - Message %u/%u.", msg[i].c_str(), i + 1, i_msg_n);
+
+        // Resolve message id.
+        try
+        {
+          msg_tmp = IMC::Factory::getIdFromAbbrev(msg[i]);
+          msg_id.insert(msg_tmp);
+          if (msg_tmp != UINT16_MAX)
+            m_task.debug("%s filtering - Message with ID: %u",
+                         m_task.resolveSystemId(msg_tmp), msg_tmp);
+          else
+          {
+            m_task.war("Filtering - No message found with designation '%s'!", msg[i].c_str());
+            for (unsigned i_tmp = i; i_tmp + 1 < i_msg_n; i_tmp++)
+              msg[i_tmp] = msg[i_tmp + 1];
+            i_msg_n--;
+            i--;
+            continue;
+          }
+        }
+        catch (...)
+        {
+          m_task.war("Filtering - No message found with designation '%s'!", msg[i].c_str());
+          for (unsigned i_tmp = i; i_tmp + 1 < i_msg_n; i_tmp++)
+            msg[i_tmp] = msg[i_tmp + 1];
+          i_msg_n--;
+          i--;
+          continue;
+        }
+      }
+    }
+
+    void
+    SourceFilter::listSystems(std::vector<std::string>& systems,
+        std::set<uint32_t>& sys_id)
+    {
+      // Process the systems allowed to pass the message
+      uint32_t sys_tmp;
+      unsigned int i_sys_n = systems.size();
+      if (i_sys_n == 0)
+      {
+        sys_id.insert(UINT_MAX);
+        m_task.debug("%s filtering - Filter source system undefined", m_msg_name.c_str());
+        return;
+      }
+
+      for (unsigned i = 0; i < i_sys_n; i++)
+      {
+        m_task.spew("%s filtering - System '%s' (%u/%u).", m_msg_name.c_str(),
+                    systems[i].c_str(), i + 1, i_sys_n);
+
+        // Resolve system id.
+        if (systems[i].compare("self") == 0)
+        {
+          sys_tmp = m_task.getSystemId();
+          sys_id.insert(sys_tmp);
+          m_task.debug("%s filtering - System '%s' with ID: %u", m_msg_name.c_str(),
+                       m_task.resolveSystemId(sys_tmp), sys_tmp);
+        }
+        else
+        {
+          try
+          {
+            sys_tmp = m_task.resolveSystemName(systems[i]);
+            sys_id.insert(sys_tmp);
+            if (sys_tmp != UINT16_MAX)
+              m_task.debug("%s filtering - System '%s' with ID: %u", m_msg_name.c_str(),
+                           m_task.resolveSystemId(sys_tmp), sys_tmp);
+            else
+            {
+              m_task.war("%s filtering - No system found with designation '%s'!",
+                         m_msg_name.c_str(), systems[i].c_str());
+              for (unsigned i_tmp = i; i_tmp + 1 < i_sys_n; i_tmp++)
+                systems[i_tmp] = systems[i_tmp + 1];
+              i_sys_n--;
+              i--;
+              continue;
+            }
+          }
+          catch (...)
+          {
+            m_task.war("%s filtering - No system found with designation '%s'!",
+                       m_msg_name.c_str(), systems[i].c_str());
+            for (unsigned i_tmp = i; i_tmp + 1 < i_sys_n; i_tmp++)
+              systems[i_tmp] = systems[i_tmp + 1];
+            i_sys_n--;
+            i--;
+            continue;
+          }
+        }
+      }
+    }
+
+    void
+    SourceFilter::listEntities(std::vector<std::string>& entities,
+        std::set<uint32_t>& ent_id)
+    {
+      // Process the entities allowed to pass the message
+      uint32_t ent_tmp;
+      unsigned int i_ent_n = entities.size();
+      if (i_ent_n == 0)
+      {
+        ent_id.insert(UINT_MAX);
+        m_task.debug("%s filtering - Filter source entity undefined", m_msg_name.c_str());
+        return;
+      }
+
+      for (unsigned int i = 0; i < i_ent_n; i++)
+      {
+        m_task.spew("%s filtering - Entity '%s' (%u/%u).", m_msg_name.c_str(),
+                    entities[i].c_str(), i + 1, i_ent_n);
+
+        // Resolve entity id.
+        try
+        {
+          ent_tmp = m_task.resolveEntity(entities[i]);
+          ent_id.insert(ent_tmp);
+          m_task.debug("%s filtering - Entity '%s' with ID: %u", m_msg_name.c_str(),
+                       m_task.resolveEntity(ent_tmp).c_str(), ent_tmp);
+        }
+        catch (...)
+        {
+          m_task.war("%s filtering - No entity found with designation '%s'!",
+                     m_msg_name.c_str(), entities[i].c_str());
+          for (unsigned i_tmp = i; i_tmp + 1 < i_ent_n; i_tmp++)
+            entities[i_tmp] = entities[i_tmp + 1];
+          i_ent_n--;
+          i--;
+          }
+      }
+    }
+
+    void
+    SourceFilter::defineSystemFilter(const std::vector<std::string>& src, Systems& filtered_sys)
+    {
+
+    }
+
+    void
+    SourceFilter::defineEntityFilter(const std::vector<std::string>& src, Entities& filtered_ent)
+    {
+
+    }
+
+    void
     SourceFilter::defineSystemEntityFilter(const std::vector<std::string>& src,
         Systems& filtered_sys, Entities& filtered_ent)
     {
