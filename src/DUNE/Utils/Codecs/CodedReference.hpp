@@ -79,11 +79,10 @@ namespace DUNE
 
         //! Decode an UamRxFrame by System ID to retrieve a Reference message.
         //! @param[in] frame UamRxFrame pointer.
-        //! @param[out] msg Message pointer.
         //! @param[in] id System ID.
-        //! @return true if message successfully decoded, false otherwise.
-        static bool
-        decodeById(const IMC::UamRxFrame* frame, IMC::Message* msg, uint8_t id)
+        //! @return IMC message.
+        static IMC::Message*
+        decodeById(const IMC::UamRxFrame* frame, uint8_t id)
         {
           uint8_t size = (frame->data.size() - 1) / getSize();
           for (uint8_t i = 0; i < size; i++)
@@ -91,13 +90,11 @@ namespace DUNE
             if (frame->data[i * getSize() + 1] == id)
             {
               IMC::Message* m = decode(frame, i);
-              *msg = *m;
-              return true;
+              return m;
             }
           }
 
-          (void)msg;
-          return false;
+          return NULL;
         }
 
         //! Get payload size by number of Reference messages
