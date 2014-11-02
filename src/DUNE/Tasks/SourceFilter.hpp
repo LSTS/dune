@@ -72,6 +72,36 @@ namespace DUNE
       typedef std::vector<uint32_t> Systems;
       typedef std::vector<uint32_t> Entities;
 
+      //! Define a set of filtered messages.
+      //! @param[in] messages filtered messages' names.
+      //! @param[in] msg_ids set of filtered message ids.
+      void
+      listMessages(std::vector<std::string>& messages, std::set<uint32_t>& msg_ids);
+
+      //! Define the desired message source systems.
+      //! @param[in] systems sources system names.
+      //! @param[in] sys_ids set of system ids allowed to pass a message.
+      void
+      listSystems(std::vector<std::string>& systems, std::set<uint32_t>& sys_ids);
+
+      //! Define the desired message source entities.
+      //! @param[in] entities sources entity names.
+      //! @param[in] ent_ids set of entity ids allowed to pass a message.
+      void
+      listEntities(std::vector<std::string>& entities, std::set<uint32_t>& ent_ids);
+
+      //! Define filter by systems.
+      //! @param[in] source desired sources system and entity names.
+      //! @param[in] filtered_sys list of systems allowed to pass a message.
+      void
+      defineSystemFilter(const std::vector<std::string>& source, Systems& filtered_sys);
+
+      //! Define filter by entities.
+      //! @param[in] source desired sources system and entity names.
+      //! @param[in] filtered_ent list of entities allowed to pass a message.
+      void
+      defineEntityFilter(const std::vector<std::string>& source, Entities& filtered_ent);
+
       //! Define the desired message source systems and entities.
       //! @param[in] source desired sources system and entity names.
       //! @param[in] filtered_sys list of systems allowed to pass a message.
