@@ -84,6 +84,9 @@ namespace Transports
         m_estate(NULL),
         m_uncertainty(NULL)
       {
+        paramActive(Tasks::Parameter::SCOPE_IDLE,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER);
+
         param("Slot Count", m_args.slot_count)
         .description("Number of TDMA slots");
 
@@ -102,6 +105,7 @@ namespace Transports
         .description("True to transmit estimated state");
 
         resetBeamsValue();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
 
         bind<IMC::AcousticOperation>(this);
         bind<IMC::Distance>(this);
@@ -138,6 +142,18 @@ namespace Transports
             m_dvl_eid[i] = UINT_MAX;
           }
         }
+      }
+
+      void
+      onActivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -220,6 +236,9 @@ namespace Transports
       void
       consume(const IMC::UamRxFrame* msg)
       {
+        if (!isActive())
+          return;
+
         if (msg->sys_dst != getSystemName() && msg->sys_dst != c_broadcast)
           return;
 
@@ -292,6 +311,9 @@ namespace Transports
       void
       consume(const IMC::GpsFix* msg)
       {
+        if (!isActive())
+          return;
+
         if (m_tdma.check(msg->utc_time))
         {
           if (m_args.tx_estate)
