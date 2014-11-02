@@ -176,7 +176,7 @@ namespace Transports
             break;
 
           case Utils::Codecs::CodedReference::c_id:
-            Utils::Codecs::CodedReference::decodeById(msg, rmsg, getSystemId());
+            rmsg = Utils::Codecs::CodedReference::decodeById(msg, getSystemId());
             break;
 
           default:
@@ -236,7 +236,7 @@ namespace Transports
           for (; itr != m_txs.end(); ++itr)
             Utils::Codecs::CodedReference::encodeById(itr->second, tx, itr->second->getDestination());
 
-          dispatch(itr->second);
+          dispatch(*tx);
         }
 
         clearPending();
