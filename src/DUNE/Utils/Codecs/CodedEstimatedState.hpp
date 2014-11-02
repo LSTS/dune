@@ -101,16 +101,16 @@ namespace DUNE
           return estate;
         }
 
-      private:
         //! Get payload size.
         //! @return size of payload.
-        size_t
+        static size_t
         getSize(void)
         {
           return sizeof(c_id) + sizeof(lat) + sizeof(lon) + sizeof(depth)
           + sizeof(alt) + sizeof(yaw);
         }
 
+      private:
         //! WGS84 latitude.
         fp64_t lat;
         //! WGS84 longitude.
