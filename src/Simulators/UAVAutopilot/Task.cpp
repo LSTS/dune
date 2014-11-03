@@ -37,11 +37,6 @@ namespace Simulators
   {
     using DUNE_NAMESPACES;
 
-    //! Vector for System Mapping.
-    typedef std::vector<uint32_t> Systems;
-    //! Vector for Entity Mapping.
-    typedef std::vector<uint32_t> Entities;
-
     struct Arguments
     {
       // SimulatedState filter
