@@ -51,9 +51,6 @@ namespace Control
         //! Vector for System Mapping.
         typedef std::vector<uint32_t> Systems;
 
-        //! Vector for Entity Mapping.
-        typedef std::vector<uint32_t> Entities;
-
         struct Arguments
         {
           //! Command source
@@ -233,13 +230,9 @@ namespace Control
             //                      Tasks::Parameter::VISIBILITY_DEVELOPER);
 
             param("Commands source", m_args.cmd_src)
-              .defaultValue("")
-              .description("List of <Command>:<System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass a specific command.");
+            .defaultValue("")
+            .description("List of <Command message>+<Command message>:<System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass a command.");
 
-            //          param("Message source", m_args.msg_src)
-            //          .defaultValue("")
-            //          .description("List of <Message>:<System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass a specific message.");
-            //
             param("Source Alias", m_args.src_alias)
             .defaultValue("")
             .description("Emulated system id.");
