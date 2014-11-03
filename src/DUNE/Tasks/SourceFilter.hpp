@@ -47,19 +47,63 @@ namespace DUNE
     class SourceFilter
     {
     public:
-      //! Construct a task command input filter object.
+      //! Construct a task command input filter by systems and entities for specific messages.
       //! @param[in] task filter parent task.
       //! @param[in] source desired command sources system and entity names.
       SourceFilter(Tasks::Task& task, const std::vector<std::string>& source);
 
-      //! Construct a task input filter object.
+      //! Construct a task input filter by systems or entities for specific messages.
+      //! @param[in] task filter parent task.
+      //! @param[in] only_systems flag that selects filtering by systems or entities
+      //! @param[in] source desired sources system and entity names.
+      SourceFilter(Tasks::Task& task, const bool only_systems, const std::vector<std::string>& source);
+
+      //! Construct a task input filter by systems and entities for a general message.
       //! @param[in] task filter parent task.
       //! @param[in] source desired sources system and entity names.
       //! @param[in] msg_name filtered message name.
       SourceFilter(Tasks::Task& task, const std::vector<std::string>& source, const std::string msg_name);
 
+      //! Construct a task input filter by systems or entities for a general message.
+      //! @param[in] task filter parent task.
+      //! @param[in] only_systems flag that selects filtering by systems or entities
+      //! @param[in] source desired sources system and entity names.
+      //! @param[in] msg_name filtered message name.
+      SourceFilter(Tasks::Task& task, const bool only_systems, const std::vector<std::string>& source,
+              const std::string msg_name);
+
       //! Destructor.
       ~SourceFilter(void){ }
+
+      //! Define filter by systems.
+      //! @param[in] source desired sources system and entity names.
+      void
+      defineSystemFilter(const std::vector<std::string>& source);
+
+      //! Define filter by entities.
+      //! @param[in] source desired sources system and entity names.
+      void
+      defineEntityFilter(const std::vector<std::string>& source);
+
+      //! Define the desired message source systems and entities.
+      //! @param[in] source desired sources system and entity names.
+      void
+      defineSystemEntityFilter(const std::vector<std::string>& source);
+
+      //! Define the desired source systems and entities for several messages.
+      //! @param[in] source desired sources system and entity names.
+      void
+      defineMessageSystemFilter(const std::vector<std::string>& source);
+
+      //! Define the desired source systems and entities for several messages.
+      //! @param[in] source desired sources system and entity names.
+      void
+      defineMessageEntityFilter(const std::vector<std::string>& source);
+
+      //! Define the desired source systems and entities for several messages.
+      //! @param[in] source desired sources system and entity names.
+      void
+      defineMessageSystemEntityFilter(const std::vector<std::string>& source);
 
       //! Verification of the message source system and entity.
       //! @param[in] msg input message.
@@ -68,67 +112,59 @@ namespace DUNE
       match(const IMC::Message* msg);
 
     private:
-      //! Define the types Systems and Entities for the respective ids
-      typedef std::vector<uint32_t> Systems;
-      typedef std::vector<uint32_t> Entities;
-
       //! Define a set of filtered messages.
       //! @param[in] messages filtered messages' names.
-      //! @param[in] msg_ids set of filtered message ids.
-      void
-      listMessages(std::vector<std::string>& messages, std::set<uint32_t>& msg_ids);
+      //! @return set of filtered message ids.
+      std::set<uint32_t>*
+      listMessages(std::vector<std::string>& messages);
 
       //! Define the desired message source systems.
       //! @param[in] systems sources system names.
-      //! @param[in] sys_ids set of system ids allowed to pass a message.
-      void
-      listSystems(std::vector<std::string>& systems, std::set<uint32_t>& sys_ids);
+      //! @return set of system ids allowed to pass a message.
+      std::set<uint32_t>*
+      listSystems(std::vector<std::string>& systems);
 
       //! Define the desired message source entities.
       //! @param[in] entities sources entity names.
-      //! @param[in] ent_ids set of entity ids allowed to pass a message.
-      void
-      listEntities(std::vector<std::string>& entities, std::set<uint32_t>& ent_ids);
+      //! @return set of entity ids allowed to pass a message.
+      std::set<uint32_t>*
+      listEntities(std::vector<std::string>& entities);
 
-      //! Define filter by systems.
-      //! @param[in] source desired sources system and entity names.
-      //! @param[in] filtered_sys list of systems allowed to pass a message.
-      void
-      defineSystemFilter(const std::vector<std::string>& source, Systems& filtered_sys);
+      //! Verification of a general message source system.
+      //! @param[in] msg input message.
+      //! @return true if the message is allowed to pass.
+      bool
+      matchSystem(const IMC::Message* msg);
 
-      //! Define filter by entities.
-      //! @param[in] source desired sources system and entity names.
-      //! @param[in] filtered_ent list of entities allowed to pass a message.
-      void
-      defineEntityFilter(const std::vector<std::string>& source, Entities& filtered_ent);
-
-      //! Define the desired message source systems and entities.
-      //! @param[in] source desired sources system and entity names.
-      //! @param[in] filtered_sys list of systems allowed to pass a message.
-      //! @param[in] filtered_ent list of entities allowed to pass a message.
-      void
-      defineSystemEntityFilter(const std::vector<std::string>& source,
-          Systems& filtered_sys, Entities& filtered_ent);
-
-      //! Define the desired message source systems and entities.
-      //! @param[in] source desired sources system and entity names.
-      void
-      defineCommandSystemEntityFilter(const std::vector<std::string>& source);
+      //! Verification of a general message source entity.
+      //! @param[in] msg input message.
+      //! @return true if the message is allowed to pass.
+      bool
+      matchEntity(const IMC::Message* msg);
 
       //! Verification of a general message source system and entity.
       //! @param[in] msg input message.
-      //! @param[in] filtered_sys list of systems allowed to pass a message.
-      //! @param[in] filtered_ent list of entities allowed to pass a message.
       //! @return true if the message is allowed to pass.
       bool
-      matchMessage(const IMC::Message* msg,
-          Systems& filtered_sys, Entities& filtered_ent);
+      matchSystemEntity(const IMC::Message* msg);
 
-      //! Verification of a command message source system and entity.
+      //! Verification of a specific message source system.
       //! @param[in] msg input message.
       //! @return true if the message is allowed to pass.
       bool
-      matchCommand(const IMC::Message* msg);
+      matchMessageSystem(const IMC::Message* msg);
+
+      //! Verification of a specific message source entity.
+      //! @param[in] msg input message.
+      //! @return true if the message is allowed to pass.
+      bool
+      matchMessageEntity(const IMC::Message* msg);
+
+      //! Verification of a specific message source system and entity.
+      //! @param[in] msg input message.
+      //! @return true if the message is allowed to pass.
+      bool
+      matchMessageSystemEntity(const IMC::Message* msg);
 
       //! Message rejection print-out.
       //! @param[in] msg input message.
@@ -137,18 +173,19 @@ namespace DUNE
 
       // Parent task.
       Tasks::Task& m_task;
-      //! List of systems and entities allowed to pass a message.
+      //! List of filtered messages and systems and entities allowed to pass them.
+      typedef std::vector<std::set<uint32_t>*> Messages;
+      typedef std::vector<std::set<uint32_t>*> Systems;
+      typedef std::vector<std::set<uint32_t>*> Entities;
+      Messages m_filtered_msg;
       Systems m_filtered_sys;
       Entities m_filtered_ent;
-      //! List of systems and entities allowed to define a command.
-      std::map<uint32_t, Systems> m_cmd_filtered_sys;
-      std::map<uint32_t, Entities> m_cmd_filtered_ent;
       // Filtered message name
       std::string m_msg_name;
-      // Flag for command messages filter
-      bool m_type_cmd;
-      // Command message names
-      std::vector<std::string> m_cmds;
+      // Flags for filter type
+      bool m_filt_msg;
+      bool m_filt_sys;
+      bool m_filt_ent;
     };
   }
 }
