@@ -104,11 +104,11 @@ namespace Control
 
           param("DesiredZ Filter", m_args.cmd_src)
           .defaultValue("")
-          .description("List of <System>+<System> that define the source systems and entities allowed to command DesiredZ.");
+          .description("List of <System>+<System> that define the source systems allowed to command DesiredZ.");
 
           param("EstimatedState Filter", m_args.state_src)
           .defaultValue("self")
-          .description("List of <System>+<System> that define the source systems and entities allowed to pass EstimatedState messages.");
+          .description("List of <System>+<System> that define the source systems allowed to pass EstimatedState messages.");
 
           bind<IMC::IndicatedSpeed>(this);
           bind<IMC::DesiredZ>(this);
