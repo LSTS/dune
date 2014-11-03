@@ -44,11 +44,6 @@ namespace Control
     {
       using DUNE_NAMESPACES;
 
-      //! Vector for System Mapping.
-      typedef std::vector<uint32_t> Systems;
-      //! Vector for Entity Mapping.
-      typedef std::vector<uint32_t> Entities;
-
       struct Arguments
       {
 //        double tau_ss;
@@ -109,11 +104,11 @@ namespace Control
 
           param("DesiredZ Filter", m_args.cmd_src)
           .defaultValue("")
-          .description("List of <System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass DesiredZ.");
+          .description("List of <System>+<System> that define the source systems and entities allowed to command DesiredZ.");
 
           param("EstimatedState Filter", m_args.state_src)
-          .defaultValue("")
-          .description("List of <System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass EstimatedState messages.");
+          .defaultValue("self")
+          .description("List of <System>+<System> that define the source systems and entities allowed to pass EstimatedState messages.");
 
           bind<IMC::IndicatedSpeed>(this);
           bind<IMC::DesiredZ>(this);
@@ -165,10 +160,10 @@ namespace Control
         {
           spew("Entity resolution.");
 
-          // Process the systems and entities allowed to define DesiredZ
-          m_cmd_flt = new Tasks::SourceFilter(*this, m_args.cmd_src, "DesiredZ");
-          //! Process the systems and entities allowed to pass the EstimatedState
-          m_state_flt = new Tasks::SourceFilter(*this, m_args.state_src, "EstimatedState");
+          // Process the systems allowed to define DesiredZ
+          m_cmd_flt = new Tasks::SourceFilter(*this, true, m_args.cmd_src, "DesiredZ");
+          // Process the systems allowed to pass the EstimatedState
+          m_state_flt = new Tasks::SourceFilter(*this, true, m_args.state_src, "EstimatedState");
         }
 
         void
