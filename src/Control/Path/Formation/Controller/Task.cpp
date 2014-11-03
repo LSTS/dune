@@ -50,8 +50,6 @@ namespace Control
 
         //! Vector for System Mapping.
         typedef std::vector<uint32_t> Systems;
-        //! Vector for Entity Mapping.
-        typedef std::vector<uint32_t> Entities;
 
         struct Arguments
         {
@@ -432,7 +430,7 @@ namespace Control
 
             param("Commands source", m_args.cmd_src)
                   .defaultValue("")
-                  .description("List of <Command>:<System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass a specific command.");
+                  .description("List of <Command messages>+<Command messages>:<System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass a command.");
 
             param("Source Alias", m_args.src_alias)
             .defaultValue("")
