@@ -337,6 +337,9 @@ namespace Transports
       {
         std::map<std::string, IMC::Reference*>::iterator itr = m_txs.begin();
 
+        if (m_txs.size() < 1)
+          return;
+
         if (m_txs.size() <= c_max_ref)
         {
           UamTxFrame* tx = new UamTxFrame;
