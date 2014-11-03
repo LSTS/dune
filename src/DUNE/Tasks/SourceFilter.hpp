@@ -166,10 +166,23 @@ namespace DUNE
       bool
       matchMessageSystemEntity(const IMC::Message* msg);
 
+      //! Filter definition description for user information.
+      void
+      filterDefinition(void);
+
+      //! Filter definition warnings print-out.
+      void
+      printDefinitionWarnings(void);
+
       //! Message rejection print-out.
       //! @param[in] msg input message.
       void
       printRejected(const IMC::Message* msg);
+
+      //! Warnings for user information.
+      //! @return warnings.
+      std::vector<std::string>
+      warnings(void);
 
       // Parent task.
       Tasks::Task& m_task;
@@ -186,6 +199,8 @@ namespace DUNE
       bool m_filt_msg;
       bool m_filt_sys;
       bool m_filt_ent;
+      // User information outputs
+      std::vector<std::string> m_warnings;
     };
   }
 }
