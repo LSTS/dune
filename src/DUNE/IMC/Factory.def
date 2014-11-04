@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4ab0411c6256574a5ac1785347d0a9f2                            *
+// IMC XML MD5: 88fa637c71567a04502471478a6ad405                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -183,8 +183,7 @@ MESSAGE(472, CommsRelay)
 MESSAGE(473, CoverArea)
 MESSAGE(474, PolygonVertex)
 MESSAGE(475, CompassCalibration)
-MESSAGE(476, FormationParameters)
-MESSAGE(477, FormationPlanExecution)
+MESSAGE(476, Formation)
 MESSAGE(478, FollowReference)
 MESSAGE(479, Reference)
 MESSAGE(480, FollowRefState)
@@ -201,7 +200,7 @@ MESSAGE(506, Calibration)
 MESSAGE(507, ControlLoops)
 MESSAGE(508, VehicleMedium)
 MESSAGE(509, Collision)
-MESSAGE(510, FormState)
+MESSAGE(510, FormationState)
 MESSAGE(511, AutopilotMode)
 MESSAGE(550, Abort)
 MESSAGE(551, PlanSpecification)
@@ -253,8 +252,8 @@ MESSAGE(814, UamTxFrame)
 MESSAGE(815, UamRxFrame)
 MESSAGE(816, UamTxStatus)
 MESSAGE(817, UamRxRange)
-MESSAGE(820, FormCtrlParam)
-MESSAGE(821, FormationEval)
+MESSAGE(820, FormationControlParams)
+MESSAGE(821, FormationEvaluation)
 MESSAGE(877, MessagePart)
 MESSAGE(888, NeptusBlob)
 MESSAGE(889, Aborted)
