@@ -35,6 +35,7 @@
 #include <map>
 #include <set>
 #include <utility>
+#include <sstream>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -141,6 +142,10 @@ namespace Plan
       fillComponentActiveTime(const std::vector<IMC::PlanManeuver*>& nodes,
                               const Timeline& timeline,
                               ComponentActiveTime& cat);
+
+      //! Signal that some entities where not found
+      void
+      signalUnknownEntities(void);
 
     private:
       //! Enumeration for type of timed action
@@ -324,6 +329,8 @@ namespace Plan
       std::map<std::string, TimedAction> m_reqs;
       //! Expected plan duration disregarding activation time
       float m_execution_duration;
+      //! Entity labels that were not found
+      std::set<std::string> m_unknown_entities;
     };
   }
 }

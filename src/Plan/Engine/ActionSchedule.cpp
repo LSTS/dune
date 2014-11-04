@@ -77,6 +77,8 @@ namespace Plan
         m_earliest = 0.0;
       else
         m_earliest = next->second.top().sched_time;
+
+      signalUnknownEntities();
     }
 
     ActionSchedule::ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
@@ -107,6 +109,8 @@ namespace Plan
       parseEndActions(spec->end_actions, &m_plan_actions, 0.0);
 
       m_earliest = 0.0;
+
+      signalUnknownEntities();
     }
 
     void
@@ -422,6 +426,27 @@ namespace Plan
       }
     }
 
+    void
+    ActionSchedule::signalUnknownEntities(void)
+    {
+      if (m_unknown_entities.empty())
+        return;
+
+      if (!m_unknown_entities.empty())
+      {
+        std::set<std::string>::const_iterator nf = m_unknown_entities.begin();
+
+        std::stringstream ss;
+        ss << DTR("schedule: could not find entity labels: ") << *nf;
+
+        ++nf;
+        for (; nf != m_unknown_entities.end(); ++nf)
+          ss << ", " << *nf;
+
+        m_task->war("%s", ss.str().c_str());
+      }
+    }
+
     // Private
 
     void
@@ -436,6 +461,8 @@ namespace Plan
 
       IMC::SetEntityParameters* sep;
 
+      std::set<std::string> not_found;
+
       for (; itr != actions.end(); ++itr)
       {
         // if it's not SetEntityParameters we ignore
@@ -449,7 +476,7 @@ namespace Plan
         test = m_cinfo->find(sep->name);
         if (test == m_cinfo->end())
         {
-          m_task->war(DTR("schedule: entity label %s not found"), sep->name.c_str());
+          m_unknown_entities.insert(sep->name);
           continue;
         }
 
