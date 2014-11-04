@@ -127,6 +127,7 @@ namespace DUNE
           coded.dst = static_cast<uint8_t>(msg->getDestination());
           coded.lat = msg->lat;
           coded.lon = msg->lon;
+          coded.radius = (uint8_t)msg->radius;
 
           if (!msg->z.isNull())
           {
@@ -144,6 +145,7 @@ namespace DUNE
           ptr += IMC::serialize(coded.lon, ptr);
           ptr += IMC::serialize(coded.z, ptr);
           ptr += IMC::serialize(coded.z_ref, ptr);
+          ptr += IMC::serialize(coded.radius, ptr);
         }
 
         //! Decode an UamRxFrame to retrieve a Reference message
@@ -166,11 +168,13 @@ namespace DUNE
           ptr += IMC::deserialize(coded.lon, ptr, length);
           ptr += IMC::deserialize(coded.z, ptr, length);
           ptr += IMC::deserialize(coded.z_ref, ptr, length);
+          ptr += IMC::deserialize(coded.radius, ptr, length);
 
           reference->setDestination(coded.dst);
           reference->lat = coded.lat;
           reference->lon = coded.lon;
-          reference->flags = IMC::Reference::FLAG_LOCATION | IMC::Reference::FLAG_Z;
+          reference->flags = IMC::Reference::FLAG_LOCATION | IMC::Reference::FLAG_Z | IMC::Reference::FLAG_RADIUS;
+          reference->radius = (fp32_t)coded.radius;
 
           IMC::DesiredZ dz;
           dz.value = (fp32_t)(coded.z / 5);
@@ -186,7 +190,7 @@ namespace DUNE
         getSize(void)
         {
           return sizeof(lat) + sizeof(lon) + sizeof(dst)
-          + sizeof(z) + sizeof(z_ref);
+          + sizeof(z) + sizeof(z_ref) + sizeof(radius);
         }
 
         //! WGS84 latitude.
@@ -199,6 +203,8 @@ namespace DUNE
         uint8_t z;
         //! System heading.
         uint8_t z_ref;
+        //! Desired Radius.
+        uint8_t radius;
       };
     }
   }
