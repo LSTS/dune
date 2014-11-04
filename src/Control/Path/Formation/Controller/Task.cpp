@@ -2222,7 +2222,7 @@ namespace Control
             // Temporary prediction variables initialization
             Matrix vd_pos(6, 1, 0.0);
             Matrix vd_vel(6, 1, 0.0);
-            UAVSimulation model;
+            UAVSimulation model = UAVSimulation(*this);
             double mt_vehicle_accel[3] = {0, 0, 0};
             double d_cos_psi;
             double d_sin_psi;
