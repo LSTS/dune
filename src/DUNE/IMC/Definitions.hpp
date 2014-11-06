@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 88fa637c71567a04502471478a6ad405                            *
+// IMC XML MD5: 47c721d8f40a3e28d20d84cc3d09de7f                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -11893,7 +11893,7 @@ namespace DUNE
     };
 
     //! Formation.
-    class Formation: public Maneuver
+    class Formation: public Message
     {
     public:
       //! Type.
@@ -17975,14 +17975,18 @@ namespace DUNE
     class FormationEvaluation: public Message
     {
     public:
-      //! Mean position error.
+      //! Mean Position Error.
       fp32_t err_mean;
-      //! Absolute minimum distance.
+      //! Absolute Minimum Distance.
       fp32_t dist_min_abs;
-      //! Mean minimum distance.
+      //! Mean Minimum Distance.
       fp32_t dist_min_mean;
+      //! Mean Roll Rate.
+      fp32_t roll_rate_mean;
       //! Evaluation Time.
       fp32_t time;
+      //! Formation Control Parameters.
+      InlineMessage<FormationControlParams> formationcontrolparams;
 
       static uint16_t
       getIdStatic(void)
@@ -18031,11 +18035,33 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 16;
+        return 20;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return formationcontrolparams.getSerializationSize();
       }
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
     };
 
     //! Message Fragment.

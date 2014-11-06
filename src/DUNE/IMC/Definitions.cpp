@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 88fa637c71567a04502471478a6ad405                            *
+// IMC XML MD5: 47c721d8f40a3e28d20d84cc3d09de7f                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -18798,6 +18798,7 @@ namespace DUNE
     {
       m_header.mgid = 821;
       clear();
+      formationcontrolparams.setParent(this);
     }
 
     void
@@ -18806,7 +18807,9 @@ namespace DUNE
       err_mean = 0;
       dist_min_abs = 0;
       dist_min_mean = 0;
+      roll_rate_mean = 0;
       time = 0;
+      formationcontrolparams.clear();
     }
 
     bool
@@ -18816,7 +18819,9 @@ namespace DUNE
       if (err_mean != other__.err_mean) return false;
       if (dist_min_abs != other__.dist_min_abs) return false;
       if (dist_min_mean != other__.dist_min_mean) return false;
+      if (roll_rate_mean != other__.roll_rate_mean) return false;
       if (time != other__.time) return false;
+      if (formationcontrolparams != other__.formationcontrolparams) return false;
       return true;
     }
 
@@ -18833,7 +18838,9 @@ namespace DUNE
       ptr__ += IMC::serialize(err_mean, ptr__);
       ptr__ += IMC::serialize(dist_min_abs, ptr__);
       ptr__ += IMC::serialize(dist_min_mean, ptr__);
+      ptr__ += IMC::serialize(roll_rate_mean, ptr__);
       ptr__ += IMC::serialize(time, ptr__);
+      ptr__ += formationcontrolparams.serialize(ptr__);
       return ptr__;
     }
 
@@ -18844,7 +18851,9 @@ namespace DUNE
       bfr__ += IMC::deserialize(err_mean, bfr__, size__);
       bfr__ += IMC::deserialize(dist_min_abs, bfr__, size__);
       bfr__ += IMC::deserialize(dist_min_mean, bfr__, size__);
+      bfr__ += IMC::deserialize(roll_rate_mean, bfr__, size__);
       bfr__ += IMC::deserialize(time, bfr__, size__);
+      bfr__ += formationcontrolparams.deserialize(bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -18855,7 +18864,9 @@ namespace DUNE
       bfr__ += IMC::reverseDeserialize(err_mean, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(dist_min_abs, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(dist_min_mean, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(roll_rate_mean, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(time, bfr__, size__);
+      bfr__ += formationcontrolparams.reverseDeserialize(bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -18865,7 +18876,54 @@ namespace DUNE
       IMC::toJSON(os__, "err_mean", err_mean, nindent__);
       IMC::toJSON(os__, "dist_min_abs", dist_min_abs, nindent__);
       IMC::toJSON(os__, "dist_min_mean", dist_min_mean, nindent__);
+      IMC::toJSON(os__, "roll_rate_mean", roll_rate_mean, nindent__);
       IMC::toJSON(os__, "time", time, nindent__);
+      formationcontrolparams.toJSON(os__, "formationcontrolparams", nindent__);
+    }
+
+    void
+    FormationEvaluation::setTimeStampNested(double value__)
+    {
+      if (!formationcontrolparams.isNull())
+      {
+        formationcontrolparams.get()->setTimeStamp(value__);
+      }
+    }
+
+    void
+    FormationEvaluation::setSourceNested(uint16_t value__)
+    {
+      if (!formationcontrolparams.isNull())
+      {
+        formationcontrolparams.get()->setSource(value__);
+      }
+    }
+
+    void
+    FormationEvaluation::setSourceEntityNested(uint8_t value__)
+    {
+      if (!formationcontrolparams.isNull())
+      {
+        formationcontrolparams.get()->setSourceEntity(value__);
+      }
+    }
+
+    void
+    FormationEvaluation::setDestinationNested(uint16_t value__)
+    {
+      if (!formationcontrolparams.isNull())
+      {
+        formationcontrolparams.get()->setDestination(value__);
+      }
+    }
+
+    void
+    FormationEvaluation::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!formationcontrolparams.isNull())
+      {
+        formationcontrolparams.get()->setDestinationEntity(value__);
+      }
     }
 
     MessagePart::MessagePart(void)
