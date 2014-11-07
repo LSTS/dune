@@ -309,6 +309,7 @@ namespace Control
           double m_dist_min_abs;
           double m_dist_min_mean;
           double m_err_mean;
+          double m_roll_rate_mean;
           double m_mean_time;
           double m_mean_time_start;
           bool m_mean_first;
@@ -402,6 +403,7 @@ namespace Control
             m_dist_min_abs(0.0),
             m_dist_min_mean(0.0),
             m_err_mean(0.0),
+            m_roll_rate_mean(0.0),
             m_mean_time(0.0),
             m_mean_time_start(0.0),
             m_mean_first(true),
@@ -3238,12 +3240,15 @@ namespace Control
             m_formation_eval.dist_min_abs = m_dist_min_abs;
             m_formation_eval.dist_min_mean = m_dist_min_mean;
             m_formation_eval.err_mean = m_err_mean;
+            m_formation_eval.roll_rate_mean = m_roll_rate_mean;
             m_formation_eval.time = m_mean_time;
+            m_formation_eval.controlparams.set(m_formation_ctrl_params);
             dispatchAlias(&m_formation_eval);
             // Reset
             m_dist_min_abs = 0.0;
             m_dist_min_mean = 0.0;
             m_err_mean = 0.0;
+            m_roll_rate_mean = 0.0;
             m_mean_time = 0.0;
           }
 
