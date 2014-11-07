@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 47c721d8f40a3e28d20d84cc3d09de7f                            *
+// IMC XML MD5: bf33f0824f5dd93373a54696629f9d88                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -17986,7 +17986,7 @@ namespace DUNE
       //! Evaluation Time.
       fp32_t time;
       //! Formation Control Parameters.
-      InlineMessage<FormationControlParams> formationcontrolparams;
+      InlineMessage<FormationControlParams> controlparams;
 
       static uint16_t
       getIdStatic(void)
@@ -18041,7 +18041,7 @@ namespace DUNE
       unsigned
       getVariableSerializationSize(void) const
       {
-        return formationcontrolparams.getSerializationSize();
+        return controlparams.getSerializationSize();
       }
 
       void
