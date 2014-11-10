@@ -53,6 +53,21 @@ namespace DUNE
       void
       setGains(const std::vector<float>& gains);
 
+      //! Set proportional gain
+      //! @param[in] gain proportional gain p
+      void
+      setProportionalGain(float gain);
+
+      //! Set integral gain
+      //! @param[in] gain integral gain i
+      void
+      setIntegralGain(float gain);
+
+      //! Set derivative gain
+      //! @param[in] gain derivative gain p
+      void
+      setDerivativeGain(float gain);
+
       //! Set output upper and lower limit
       //! @param[in] lower lower limit
       //! @param[in] upper upper limit
