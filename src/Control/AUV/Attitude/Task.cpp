@@ -75,14 +75,18 @@ namespace Control
         LP_MAX_LOOPS
       };
 
-      struct RollSpeedCompensation
+      struct RollCompensation
       {
+        //! Perform roll compensation by using offset in reference
+        bool use_offset;
+        //! Roll offset value if set
+        float offset_angle;
         //! Perform roll speed compensation by changing proportional gain
-        bool enabled;
+        bool use_speed;
         //! Lower and upper speed bounds when doing roll speed compensation
         std::vector<float> speed_bounds;
         //! Roll's minimum proportional gain in speed compensation
-        float min_gain;
+        float speed_gain;
       };
 
       struct Arguments
@@ -107,10 +111,6 @@ namespace Control
         bool force_pitch;
         //! Pitch value when forced at surface
         float surface_pitch;
-        //! Enable or disable roll offset
-        bool use_roll_offset;
-        //! Roll offset value if set
-        float roll_offset;
         //! Maximum heading rate reference for heading controller
         float max_hrate;
         //! Heading rate in open loop
@@ -126,7 +126,7 @@ namespace Control
         //! Depth threshold to be considered surface
         float depth_threshold;
         //! Roll speed compensation
-        RollSpeedCompensation rsc;
+        RollCompensation rc;
       };
 
       struct Task: public DUNE::Control::BasicAutopilot
@@ -204,15 +204,6 @@ namespace Control
           .units(Units::Degree)
           .description("Angle at which to force pitch at the surface");
 
-          param("Use Fixed Roll Offset", m_args.use_roll_offset)
-          .defaultValue("false")
-          .description("Use a fixed roll offset to compensate for steady state error");
-
-          param("Roll Offset", m_args.roll_offset)
-          .defaultValue("0.0")
-          .units(Units::Degree)
-          .description("Roll reference offset value");
-
           param("Heading Rate Open Loop", m_args.hrate_oloop)
           .defaultValue("false")
           .description("Dispatch heading rate commands directly to servos");
@@ -265,16 +256,25 @@ namespace Control
           .defaultValue("10")
           .description("Limit of a fixed number of incoming samples per second");
 
-          param("Roll Speed Compensation", m_args.rsc.enabled)
+          param("Roll Compensation -- Use Offset", m_args.rc.use_offset)
+          .defaultValue("false")
+          .description("Use a fixed roll offset to compensate for steady state error");
+
+          param("Roll Compensation -- Offset Angle", m_args.rc.offset_angle)
+          .defaultValue("0.0")
+          .units(Units::Degree)
+          .description("Roll reference offset value");
+
+          param("Roll Compensation -- Use Speed", m_args.rc.use_speed)
           .defaultValue("false")
           .description("Perform roll speed compensation by changing proportional gain");
 
-          param("Roll Speed Bounds", m_args.rsc.speed_bounds)
+          param("Roll Compensation -- Speed Bounds", m_args.rc.speed_bounds)
           .defaultValue("")
           .size(2)
           .description("Lower and upper speed bounds when doing roll speed compensation");
 
-          param("Roll Compensation Gain", m_args.rsc.min_gain)
+          param("Roll Compensation -- Speed Gain", m_args.rc.speed_gain)
           .defaultValue("0.0")
           .description("Roll's minimum proportional gain in speed compensation");
 
@@ -344,8 +344,8 @@ namespace Control
             m_args.surface_pitch = Angles::radians(m_args.surface_pitch);
 
           // Roll offset conversion
-          if (paramChanged(m_args.roll_offset))
-            m_args.roll_offset = Angles::radians(m_args.roll_offset);
+          if (paramChanged(m_args.rc.offset_angle))
+            m_args.rc.offset_angle = Angles::radians(m_args.rc.offset_angle);
 
           // Heading rate control parameters
           if (paramChanged(m_args.max_fin_rot))
@@ -565,30 +565,30 @@ namespace Control
         {
           float ref = 0.0;
 
-          if (m_args.use_roll_offset)
-            ref = m_args.roll_offset;
+          if (m_args.rc.use_offset)
+            ref = m_args.rc.offset_angle;
 
-          if (m_args.rsc.enabled)
+          if (m_args.rc.use_speed)
           {
             float initial_gain = m_args.gains[LP_ROLL][0];
+            float new_gain = initial_gain;
 
-            if (msg->u > m_args.rsc.speed_bounds[1])
+            if (msg->u > m_args.rc.speed_bounds[1])
             {
-              m_pid[LP_ROLL].setProportionalGain(m_args.rsc.min_gain);
+              new_gain = m_args.rc.speed_gain;
             }
-            else if (msg->u > m_args.rsc.speed_bounds[0])
+            else if (msg->u > m_args.rc.speed_bounds[0])
             {
-              Math::LinIntParam<float> lip(initial_gain, m_args.rsc.min_gain,
-                                           m_args.rsc.speed_bounds[0], m_args.rsc.speed_bounds[1],
+              Math::LinIntParam<float> lip(initial_gain, m_args.rc.speed_gain,
+                                           m_args.rc.speed_bounds[0], m_args.rc.speed_bounds[1],
                                            msg->u);
 
               float sc_gain = Math::linearInterpolation(lip);
-              m_pid[LP_ROLL].setProportionalGain(sc_gain);
+              new_gain = sc_gain;
             }
-            else
-            {
-              m_pid[LP_ROLL].setProportionalGain(initial_gain);
-            }
+
+            m_pid[LP_ROLL].setProportionalGain(new_gain);
+            m_parcels[LP_ROLL].a = new_gain;
           }
 
           float cmd;
