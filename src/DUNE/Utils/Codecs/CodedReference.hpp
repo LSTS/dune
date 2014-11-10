@@ -189,8 +189,8 @@ namespace DUNE
         static size_t
         getSize(void)
         {
-          return sizeof(lat) + sizeof(lon) + sizeof(dst)
-          + sizeof(z) + sizeof(z_ref) + sizeof(radius);
+          // Size of lat, lon, dst, z, z_ref and radius.
+          return 2 * sizeof(fp64_t) + 4 * sizeof(uint8_t);
         }
 
         //! WGS84 latitude.
