@@ -75,6 +75,16 @@ namespace Control
         LP_MAX_LOOPS
       };
 
+      struct RollSpeedCompensation
+      {
+        //! Perform roll speed compensation by changing proportional gain
+        bool enabled;
+        //! Lower and upper speed bounds when doing roll speed compensation
+        std::vector<float> speed_bounds;
+        //! Roll's minimum proportional gain in speed compensation
+        float min_gain;
+      };
+
       struct Arguments
       {
         //! PID controller gains
@@ -115,6 +125,8 @@ namespace Control
         float min_dvl_depth;
         //! Depth threshold to be considered surface
         float depth_threshold;
+        //! Roll speed compensation
+        RollSpeedCompensation rsc;
       };
 
       struct Task: public DUNE::Control::BasicAutopilot
@@ -252,6 +264,19 @@ namespace Control
           param("Coarse Altitude -- Sample Limit", m_ca_args.sample_limit)
           .defaultValue("10")
           .description("Limit of a fixed number of incoming samples per second");
+
+          param("Roll Speed Compensation", m_args.rsc.enabled)
+          .defaultValue("false")
+          .description("Perform roll speed compensation by changing proportional gain");
+
+          param("Roll Speed Bounds", m_args.rsc.speed_bounds)
+          .defaultValue("")
+          .size(2)
+          .description("Lower and upper speed bounds when doing roll speed compensation");
+
+          param("Roll Compensation Gain", m_args.rsc.min_gain)
+          .defaultValue("0.0")
+          .description("Roll's minimum proportional gain in speed compensation");
 
           m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_threshold);
         }
@@ -542,6 +567,29 @@ namespace Control
 
           if (m_args.use_roll_offset)
             ref = m_args.roll_offset;
+
+          if (m_args.rsc.enabled)
+          {
+            float initial_gain = m_args.gains[LP_ROLL][0];
+
+            if (msg->u > m_args.rsc.speed_bounds[1])
+            {
+              m_pid[LP_ROLL].setProportionalGain(m_args.rsc.min_gain);
+            }
+            else if (msg->u > m_args.rsc.speed_bounds[0])
+            {
+              Math::LinIntParam<float> lip(initial_gain, m_args.rsc.min_gain,
+                                           m_args.rsc.speed_bounds[0], m_args.rsc.speed_bounds[1],
+                                           msg->u);
+
+              float sc_gain = Math::linearInterpolation(lip);
+              m_pid[LP_ROLL].setProportionalGain(sc_gain);
+            }
+            else
+            {
+              m_pid[LP_ROLL].setProportionalGain(initial_gain);
+            }
+          }
 
           float cmd;
 
