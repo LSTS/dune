@@ -77,6 +77,8 @@ namespace Maneuver
       uint16_t m_duration;
       //! In calibrating phase
       bool m_calibrating;
+      //! Already calibrated
+      bool m_calibrated;
       //! True if a pitch message has been dispatched already
       bool m_dispatched;
       //! AHRS entity id.
@@ -96,6 +98,7 @@ namespace Maneuver
         DUNE::Maneuvers::Maneuver(name, ctx),
         m_yoyo(NULL),
         m_calibrating(false),
+        m_calibrated(false),
         m_yoyo_ing(false)
       {
         param("Maximum Pitch Variation", m_args.variation)
@@ -163,6 +166,11 @@ namespace Maneuver
       void
       onManeuverDeactivation(void)
       {
+        // Already calibrated.
+        if (m_calibrated)
+          return;
+
+        // Number of turns.
         unsigned turns = (unsigned)std::floor(std::fabs(m_accum_psi / c_two_pi));
 
         // Check if we have sufficient data.
@@ -219,6 +227,7 @@ namespace Maneuver
 
         m_end_time = -1;
         m_calibrating = false;
+        m_calibrated = false;
         m_yoyo_ing = false;
         m_dispatched = false;
 
@@ -379,8 +388,12 @@ namespace Maneuver
         m_mfield.y = params(1);
         m_mfield.z = params(2);
 
+        // Dispatch magnetic data.
         if (send_magnetic)
+        {
+          m_calibrated = true;
           dispatch(m_mfield);
+        }
       }
 
       //! Yoyo motion update
