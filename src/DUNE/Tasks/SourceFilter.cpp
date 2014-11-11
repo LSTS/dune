@@ -42,43 +42,61 @@ namespace DUNE
   namespace Tasks
   {
     SourceFilter::SourceFilter(Tasks::Task& task, const std::vector<std::string>& src):
-      m_task(task),
-      m_msg_name("")
+          m_task(task),
+          m_msg_name("")
     {
       defineMessageSystemEntityFilter(src);
+      filterDefinition();
       printDefinitionWarnings();
     }
 
     SourceFilter::SourceFilter(Tasks::Task& task, const bool system, const std::vector<std::string>& src):
-      m_task(task),
-      m_msg_name("")
+          m_task(task),
+          m_msg_name("")
     {
       if (system)
         defineMessageSystemFilter(src);
       else
         defineMessageEntityFilter(src);
+      filterDefinition();
       printDefinitionWarnings();
     }
 
     SourceFilter::SourceFilter(Tasks::Task& task, const std::vector<std::string>& src,
         const std::string msg_name):
-      m_task(task),
-      m_msg_name(msg_name)
+          m_task(task),
+          m_msg_name(msg_name)
     {
       defineSystemEntityFilter(src);
+      filterDefinition();
       printDefinitionWarnings();
     }
 
     SourceFilter::SourceFilter(Tasks::Task& task, const bool system, const std::vector<std::string>& src,
         const std::string msg_name):
-      m_task(task),
-      m_msg_name(msg_name)
+          m_task(task),
+          m_msg_name(msg_name)
     {
       if (system)
         defineSystemFilter(src);
       else
         defineEntityFilter(src);
+      filterDefinition();
       printDefinitionWarnings();
+    }
+
+    SourceFilter::~SourceFilter(void)
+    {
+      deleteList(m_filtered_msg);
+      deleteList(m_filtered_sys);
+      deleteList(m_filtered_ent);
+    }
+
+    void
+    SourceFilter::deleteList(std::vector<std::set<uint32_t>*>& list)
+    {
+      for (std::vector<std::set<uint32_t>*>::iterator itr = list.begin(); itr != list.end(); itr++)
+        delete *itr;
     }
 
     bool
@@ -86,20 +104,30 @@ namespace DUNE
     {
       bool matched;
       if (m_filt_msg)
+      {
         if (m_filt_sys)
+        {
           if (m_filt_ent)
             matched = matchMessageSystemEntity(msg);
           else
             matched = matchMessageSystem(msg);
+        }
         else
+        {
           matched = matchMessageEntity(msg);
+        }
+      }
       else if (m_filt_sys)
+      {
         if (m_filt_ent)
           matched = matchSystemEntity(msg);
         else
           matched = matchSystem(msg);
+      }
       else
+      {
         matched = matchEntity(msg);
+      }
 
       // These system and entity are not listed to be passed.
       if (!matched)
@@ -157,14 +185,18 @@ namespace DUNE
       for (unsigned i = 0; i < i_sys_n; i++)
       {
         if (systems[i].compare("self") == 0)
+        {
           sys_ids->insert(m_task.getSystemId());
+        }
         else
         {
           try
           {
             sys_tmp = m_task.resolveSystemName(systems[i]);
             if (sys_tmp != UINT16_MAX)
+            {
               sys_ids->insert(sys_tmp);
+            }
             else
             {
               m_warnings.push_back(m_msg_name + " filtering - No system found with designation '" + systems[i] + "'!");
@@ -215,7 +247,7 @@ namespace DUNE
             entities[i_tmp] = entities[i_tmp + 1];
           i_ent_n--;
           i--;
-          }
+        }
       }
       return ent_ids;
     }
@@ -266,7 +298,9 @@ namespace DUNE
         parts.clear();
         Utils::String::split(src[i], ":", parts);
         if (parts.size() < 1)
+        {
           continue;
+        }
         else if (parts.size() < 2)
         {
           m_warnings.push_back("Only 1 field provided! Fields for both systems and entities are required.");
@@ -294,7 +328,9 @@ namespace DUNE
         parts.clear();
         Utils::String::split(src[i], ":", parts);
         if (parts.size() < 1)
+        {
           continue;
+        }
         else if (parts.size() < 2)
         {
           m_warnings.push_back("Only 1 field provided! Fields for both messages and systems are required.");
@@ -326,7 +362,9 @@ namespace DUNE
         parts.clear();
         Utils::String::split(src[i], ":", parts);
         if (parts.size() < 1)
+        {
           continue;
+        }
         else if (parts.size() < 2)
         {
           m_warnings.push_back("Only 1 field provided! Fields for both messages and entities are required.");
@@ -359,7 +397,9 @@ namespace DUNE
         parts.clear();
         Utils::String::split(src[i], ":", parts);
         if (parts.size() < 1)
+        {
           continue;
+        }
         else if (parts.size() < 3)
         {
           m_warnings.push_back("Not enough fields provided! Fields for messages, systems and entities are required.");
@@ -394,9 +434,11 @@ namespace DUNE
         matched = false;
         for (Systems::iterator itr_sys = m_filtered_sys.begin();
             itr_sys != m_filtered_sys.end(); itr_sys++)
+        {
           if (((*itr_sys)->find(msg->getSource()) != (*itr_sys)->end() ||
               (*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end()))
             matched = true;
+        }
       }
       return matched;
     }
@@ -413,9 +455,11 @@ namespace DUNE
         matched = false;
         for (Entities::iterator itr_ent = m_filtered_ent.begin();
             itr_ent != m_filtered_ent.end(); itr_ent++)
+        {
           if (((*itr_ent)->find(msg->getSourceEntity()) != (*itr_ent)->end() ||
               (*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end()))
             matched = true;
+        }
       }
       return matched;
     }
@@ -471,15 +515,20 @@ namespace DUNE
           itr_msg++;
         }
       }
+
       if (matched)
+      {
         return true;
+      }
       else if (!msg_match)
       {
         m_warnings.push_back("No filter rules defined for message " + std::string(msg->getName()) + "!");
         return true;
       }
       else
+      {
         return false;
+      }
     }
 
     bool
@@ -508,15 +557,20 @@ namespace DUNE
           itr_msg++;
         }
       }
+
       if (matched)
+      {
         return true;
+      }
       else if (!msg_match)
       {
         m_warnings.push_back("No filter rules defined for message " + std::string(msg->getName()) + "!");
         return true;
       }
       else
+      {
         return false;
+      }
     }
 
     bool
@@ -549,15 +603,20 @@ namespace DUNE
           itr_ent++;
         }
       }
+
       if (matched)
+      {
         return true;
+      }
       else if (!msg_match)
       {
         m_warnings.push_back("No filter rules defined for message " + std::string(msg->getName()) + "!");
         return true;
       }
       else
+      {
         return false;
+      }
     }
 
     void
@@ -566,167 +625,279 @@ namespace DUNE
       std::vector<std::string> filt_def;
 
       if (m_filt_msg)
+      {
         if (m_filt_sys)
+        {
           if (m_filt_ent)
-          {
-            // Debug output for messages, systems, and entities filter
-            Messages::iterator itr_msg = m_filtered_msg.begin();
-            Entities::iterator itr_ent = m_filtered_ent.begin();
-            for (Systems::iterator itr_sys = m_filtered_sys.begin(); itr_sys != m_filtered_sys.end(); itr_sys++)
-            {
-              if ((*itr_msg)->find((unsigned int)UINT_MAX) != (*itr_msg)->end())
-                filt_def.push_back("Filter for ANY message, sets:");
-              else
-              {
-                filt_def.push_back("Filter for:");
-                for (std::set<uint32_t>::iterator itr_msg_indiv = (*itr_msg)->begin();
-                    itr_msg_indiv != (*itr_msg)->end(); itr_msg_indiv++)
-                  filt_def.push_back("  Message " + IMC::Factory::getAbbrevFromId(*itr_msg_indiv));
-                filt_def.push_back("-------------- sets:");
-              }
-              if ((*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end())
-              {
-                if ((*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
-                  filt_def.push_back("     System: ANY - Entity: ANY.");
-                else
-                  for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
-                      itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
-                    filt_def.push_back("     System: ANY - Entity: '" +
-                                         m_task.resolveEntity(*itr_ent_indiv) + "'.");
-              }
-              else if ((*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
-                for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
-                    itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
-                  filt_def.push_back("     System: '" + std::string(m_task.resolveSystemId(*itr_sys_indiv)) +
-                              "' - Entity: ANY.");
-              else
-                for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
-                    itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
-                  for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
-                      itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
-                    filt_def.push_back("     System: '" +
-                                         std::string(m_task.resolveSystemId(*itr_sys_indiv)) +
-                                         "' - Entity: '" + m_task.resolveEntity(*itr_ent_indiv) + "'.");
-              itr_msg++;
-              itr_ent++;
-            }
-          }
+            filt_def = generateInfoMessageSystemEntity();
           else
-          {
-            // Debug output for messages and systems filter
-            Messages::iterator itr_msg = m_filtered_msg.begin();
-            for (Systems::iterator itr_sys = m_filtered_sys.begin(); itr_sys != m_filtered_sys.end(); itr_sys++)
-            {
-              if ((*itr_msg)->find((unsigned int)UINT_MAX) != (*itr_msg)->end())
-                filt_def.push_back("Filter for ANY message, sets:");
-              else
-              {
-                filt_def.push_back("Filter for:");
-                for (std::set<uint32_t>::iterator itr_msg_indiv = (*itr_msg)->begin();
-                    itr_msg_indiv != (*itr_msg)->end(); itr_msg_indiv++)
-                  filt_def.push_back("  Message " + IMC::Factory::getAbbrevFromId(*itr_msg_indiv));
-                filt_def.push_back("-------------- sets:");
-              }
-              if ((*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end())
-                filt_def.push_back("     System: ANY.");
-              else
-                for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
-                    itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
-                  filt_def.push_back("     System: '" + std::string(m_task.resolveSystemId(*itr_sys_indiv)) + "'.");
-              itr_msg++;
-            }
-          }
+            filt_def = generateInfoMessageSystem();
+        }
         else
         {
-          // Debug output for messages and entities filter
-          Messages::iterator itr_msg = m_filtered_msg.begin();
-          for (Entities::iterator itr_ent = m_filtered_ent.begin(); itr_ent != m_filtered_ent.end(); itr_ent++)
-          {
-            if ((*itr_msg)->find((unsigned int)UINT_MAX) != (*itr_msg)->end())
-              filt_def.push_back("Filter for ANY message, sets:");
-            else
-            {
-              filt_def.push_back("Filter for:");
-              for (std::set<uint32_t>::iterator itr_msg_indiv = (*itr_msg)->begin();
-                  itr_msg_indiv != (*itr_msg)->end(); itr_msg_indiv++)
-                filt_def.push_back("  Message " + IMC::Factory::getAbbrevFromId(*itr_msg_indiv));
-              filt_def.push_back("-------------- sets:");
-            }
-            if ((*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
-              filt_def.push_back("     Entity: ANY.");
-            else
-              for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
-                  itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
-                filt_def.push_back("     Entity: '" + m_task.resolveEntity(*itr_ent_indiv) + "'.");
-            itr_msg++;
-          }
+          filt_def = generateInfoMessageEntity();
         }
+      }
       else if (m_filt_sys)
+      {
         if (m_filt_ent)
-        {
-          // Debug output for systems and entities filter
-          filt_def.push_back(m_msg_name + " filter sets:");
-          Entities::iterator itr_ent = m_filtered_ent.begin();
-          for (Systems::iterator itr_sys = m_filtered_sys.begin(); itr_sys != m_filtered_sys.end(); itr_sys++)
-          {
-            if ((*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end())
-            {
-              if ((*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
-                filt_def.push_back("     System: ANY - Entity: ANY.");
-              else
-                for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
-                    itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
-                  filt_def.push_back("     System: ANY - Entity: '" +
-                                       m_task.resolveEntity(*itr_ent_indiv) + "'.");
-            }
-            else if ((*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
-              for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
-                  itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
-                filt_def.push_back("     System: '" +
-                                     std::string(m_task.resolveSystemId(*itr_sys_indiv)) + "' - Entity: ANY.");
-            else
-              for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
-                  itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
-                for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
-                    itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
-                  filt_def.push_back("     System: '" +
-                                       std::string(m_task.resolveSystemId(*itr_sys_indiv)) + "' - Entity: '" +
-                                       m_task.resolveEntity(*itr_ent_indiv) + "'.");
-            itr_ent++;
-          }
-        }
+          filt_def = generateInfoSystemEntity();
         else
-        {
-          // Debug output for systems filter
-          filt_def.push_back(m_msg_name + " filter sets:");
-          for (Systems::iterator itr_sys = m_filtered_sys.begin(); itr_sys != m_filtered_sys.end(); itr_sys++)
-          {
-            if ((*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end())
-              filt_def.push_back("     System: ANY.");
-            else
-              for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
-                  itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
-                filt_def.push_back("     System: '" + std::string(m_task.resolveSystemId(*itr_sys_indiv)) + "'.");
-          }
-        }
+          filt_def = generateInfoSystem();
+      }
       else
       {
-        // Debug output for entities filter
-        filt_def.push_back(m_msg_name + " filter sets:");
-        for (Entities::iterator itr_ent = m_filtered_ent.begin(); itr_ent != m_filtered_ent.end(); itr_ent++)
-        {
-          if ((*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
-            filt_def.push_back("     Entity: ANY.");
-          else
-            for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
-                itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
-              filt_def.push_back("     Entity: '" + m_task.resolveEntity(*itr_ent_indiv) + "'.");
-        }
+        filt_def = generateInfoEntity();
       }
 
       // Print the filter definitions
       for (std::vector<std::string>::iterator itr_def = filt_def.begin(); itr_def != filt_def.end(); itr_def++)
         m_task.spew("%s", itr_def->c_str());
+    }
+
+    std::vector<std::string>
+    SourceFilter::generateInfoSystem(void)
+    {
+      std::vector<std::string> filt_def;
+
+      // Debug output for systems filter
+      filt_def.push_back(m_msg_name + " filter sets:");
+      for (Systems::iterator itr_sys = m_filtered_sys.begin(); itr_sys != m_filtered_sys.end(); itr_sys++)
+      {
+        if ((*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end())
+        {
+          filt_def.push_back("     System: ANY.");
+        }
+        else
+        {
+          for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
+              itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
+            filt_def.push_back("     System: '" + std::string(m_task.resolveSystemId(*itr_sys_indiv)) + "'.");
+        }
+      }
+
+      return filt_def;
+    }
+
+    std::vector<std::string>
+    SourceFilter::generateInfoEntity(void)
+    {
+      std::vector<std::string> filt_def;
+
+      // Debug output for entities filter
+      filt_def.push_back(m_msg_name + " filter sets:");
+      for (Entities::iterator itr_ent = m_filtered_ent.begin(); itr_ent != m_filtered_ent.end(); itr_ent++)
+      {
+        if ((*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
+        {
+          filt_def.push_back("     Entity: ANY.");
+        }
+        else
+        {
+          for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
+              itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
+            filt_def.push_back("     Entity: '" + m_task.resolveEntity(*itr_ent_indiv) + "'.");
+        }
+      }
+
+      return filt_def;
+    }
+
+    std::vector<std::string>
+    SourceFilter::generateInfoSystemEntity(void)
+    {
+      std::vector<std::string> filt_def;
+
+      // Debug output for systems and entities filter
+      filt_def.push_back(m_msg_name + " filter sets:");
+      Entities::iterator itr_ent = m_filtered_ent.begin();
+      for (Systems::iterator itr_sys = m_filtered_sys.begin(); itr_sys != m_filtered_sys.end(); itr_sys++)
+      {
+        if ((*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end())
+        {
+          if ((*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
+          {
+            filt_def.push_back("     System: ANY - Entity: ANY.");
+          }
+          else
+          {
+            for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
+                itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
+            {
+              filt_def.push_back("     System: ANY - Entity: '" +
+                                 m_task.resolveEntity(*itr_ent_indiv) + "'.");
+            }
+          }
+        }
+        else if ((*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
+        {
+          for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
+              itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
+          {
+            filt_def.push_back("     System: '" +
+                               std::string(m_task.resolveSystemId(*itr_sys_indiv)) + "' - Entity: ANY.");
+          }
+        }
+        else
+        {
+          for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
+              itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
+          {
+            for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
+                itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
+            {
+              filt_def.push_back("     System: '" +
+                                 std::string(m_task.resolveSystemId(*itr_sys_indiv)) + "' - Entity: '" +
+                                 m_task.resolveEntity(*itr_ent_indiv) + "'.");
+            }
+          }
+        }
+        itr_ent++;
+      }
+
+      return filt_def;
+    }
+
+    std::vector<std::string>
+    SourceFilter::generateInfoMessageSystem(void)
+    {
+      std::vector<std::string> filt_def;
+
+      // Debug output for messages and systems filter
+      Messages::iterator itr_msg = m_filtered_msg.begin();
+      for (Systems::iterator itr_sys = m_filtered_sys.begin(); itr_sys != m_filtered_sys.end(); itr_sys++)
+      {
+        if ((*itr_msg)->find((unsigned int)UINT_MAX) != (*itr_msg)->end())
+          filt_def.push_back("Filter for ANY message, sets:");
+        else
+        {
+          filt_def.push_back("Filter for:");
+          for (std::set<uint32_t>::iterator itr_msg_indiv = (*itr_msg)->begin();
+              itr_msg_indiv != (*itr_msg)->end(); itr_msg_indiv++)
+            filt_def.push_back("  Message " + IMC::Factory::getAbbrevFromId(*itr_msg_indiv));
+          filt_def.push_back("-------------- sets:");
+        }
+
+        if ((*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end())
+        {
+          filt_def.push_back("     System: ANY.");
+        }
+        else
+        {
+          for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
+              itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
+            filt_def.push_back("     System: '" + std::string(m_task.resolveSystemId(*itr_sys_indiv)) + "'.");
+        }
+        itr_msg++;
+      }
+
+      return filt_def;
+    }
+
+    std::vector<std::string>
+    SourceFilter::generateInfoMessageEntity(void)
+    {
+      std::vector<std::string> filt_def;
+
+      // Debug output for messages and entities filter
+      Messages::iterator itr_msg = m_filtered_msg.begin();
+      for (Entities::iterator itr_ent = m_filtered_ent.begin(); itr_ent != m_filtered_ent.end(); itr_ent++)
+      {
+        if ((*itr_msg)->find((unsigned int)UINT_MAX) != (*itr_msg)->end())
+        {
+          filt_def.push_back("Filter for ANY message, sets:");
+        }
+        else
+        {
+          filt_def.push_back("Filter for:");
+          for (std::set<uint32_t>::iterator itr_msg_indiv = (*itr_msg)->begin();
+              itr_msg_indiv != (*itr_msg)->end(); itr_msg_indiv++)
+            filt_def.push_back("  Message " + IMC::Factory::getAbbrevFromId(*itr_msg_indiv));
+          filt_def.push_back("-------------- sets:");
+        }
+
+        if ((*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
+        {
+          filt_def.push_back("     Entity: ANY.");
+        }
+        else
+        {
+          for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
+              itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
+            filt_def.push_back("     Entity: '" + m_task.resolveEntity(*itr_ent_indiv) + "'.");
+        }
+        itr_msg++;
+      }
+
+      return filt_def;
+    }
+
+    std::vector<std::string>
+    SourceFilter::generateInfoMessageSystemEntity(void)
+    {
+      std::vector<std::string> filt_def;
+
+      // Debug output for messages, systems, and entities filter
+      Messages::iterator itr_msg = m_filtered_msg.begin();
+      Entities::iterator itr_ent = m_filtered_ent.begin();
+      for (Systems::iterator itr_sys = m_filtered_sys.begin(); itr_sys != m_filtered_sys.end(); itr_sys++)
+      {
+        if ((*itr_msg)->find((unsigned int)UINT_MAX) != (*itr_msg)->end())
+        {
+          filt_def.push_back("Filter for ANY message, sets:");
+        }
+        else
+        {
+          filt_def.push_back("Filter for:");
+          for (std::set<uint32_t>::iterator itr_msg_indiv = (*itr_msg)->begin();
+              itr_msg_indiv != (*itr_msg)->end(); itr_msg_indiv++)
+            filt_def.push_back("  Message " + IMC::Factory::getAbbrevFromId(*itr_msg_indiv));
+          filt_def.push_back("-------------- sets:");
+        }
+        if ((*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end())
+        {
+          if ((*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
+          {
+            filt_def.push_back("     System: ANY - Entity: ANY.");
+          }
+          else
+          {
+            for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
+                itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
+            {
+              filt_def.push_back("     System: ANY - Entity: '" +
+                                 m_task.resolveEntity(*itr_ent_indiv) + "'.");
+            }
+          }
+        }
+        else if ((*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
+        {
+          for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
+              itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
+          {
+            filt_def.push_back("     System: '" + std::string(m_task.resolveSystemId(*itr_sys_indiv)) +
+                               "' - Entity: ANY.");
+          }
+        }
+        else
+        {
+          for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
+              itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
+          {
+            for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
+                itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
+            {
+              filt_def.push_back("     System: '" +
+                                 std::string(m_task.resolveSystemId(*itr_sys_indiv)) +
+                                 "' - Entity: '" + m_task.resolveEntity(*itr_ent_indiv) + "'.");
+            }
+          }
+        }
+        itr_msg++;
+        itr_ent++;
+      }
+
+      return filt_def;
     }
 
     void

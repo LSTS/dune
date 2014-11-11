@@ -70,10 +70,10 @@ namespace DUNE
       //! @param[in] source desired sources system and entity names.
       //! @param[in] msg_name filtered message name.
       SourceFilter(Tasks::Task& task, const bool only_systems, const std::vector<std::string>& source,
-              const std::string msg_name);
+          const std::string msg_name);
 
       //! Destructor.
-      ~SourceFilter(void){ }
+      ~SourceFilter(void);
 
       //! Define filter by systems.
       //! @param[in] source desired sources system and entity names.
@@ -130,6 +130,11 @@ namespace DUNE
       std::set<uint32_t>*
       listEntities(std::vector<std::string>& entities);
 
+      //! Delete a set of filter ids.
+      //! @param[in/out] list filtered message, system, or entity ids.
+      void
+      deleteList(std::vector<std::set<uint32_t>*>& list);
+
       //! Verification of a general message source system.
       //! @param[in] msg input message.
       //! @return true if the message is allowed to pass.
@@ -169,6 +174,36 @@ namespace DUNE
       //! Filter definition description for user information.
       void
       filterDefinition(void);
+
+      //! Generate user information for a systems filter description
+      //! return user information with the filter description.
+      std::vector<std::string>
+      generateInfoSystem(void);
+
+      //! Show a entities filter description for user information
+      //! return user information with the filter description.
+      std::vector<std::string>
+      generateInfoEntity(void);
+
+      //! Show a systems and entities filter description for user information
+      //! return user information with the filter description.
+      std::vector<std::string>
+      generateInfoSystemEntity(void);
+
+      //! Show a messages and systems filter description for user information
+      //! return user information with the filter description.
+      std::vector<std::string>
+      generateInfoMessageSystem(void);
+
+      //! Show a messages and entities filter description for user information
+      //! return user information with the filter description.
+      std::vector<std::string>
+      generateInfoMessageEntity(void);
+
+      //! Show a messages, systems, and entities filter description for user information
+      //! return user information with the filter description.
+      std::vector<std::string>
+      generateInfoMessageSystemEntity(void);
 
       //! Filter definition warnings print-out.
       void
