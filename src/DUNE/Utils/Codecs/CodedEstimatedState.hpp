@@ -85,7 +85,7 @@ namespace DUNE
 
           uint8_t* ptr = (uint8_t*)&frame->data[1];
 
-          uint16_t length = frame->data.size() - 1;
+          uint16_t length = (uint16_t)frame->data.size() - 1;
           ptr += IMC::deserialize(coded.lat, ptr, length);
           ptr += IMC::deserialize(coded.lon, ptr, length);
           ptr += IMC::deserialize(coded.alt, ptr, length);
@@ -106,8 +106,8 @@ namespace DUNE
         static size_t
         getSize(void)
         {
-          return sizeof(c_id) + sizeof(lat) + sizeof(lon) + sizeof(depth)
-          + sizeof(alt) + sizeof(yaw);
+          // Size of lat, lon, depth, alt and yaw.
+          return sizeof(c_id) + 2 * sizeof(fp64_t) + 3 * sizeof(int16_t);
         }
 
       private:

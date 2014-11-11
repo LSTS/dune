@@ -52,8 +52,8 @@ namespace DUNE
         static void
         encodeById(const IMC::Reference* msg, IMC::UamTxFrame* frame, uint8_t id)
         {
-          uint8_t size = (frame->data.size() - 1) / getSize();
-          for (uint8_t i = 0; i < size; i++)
+          size_t size = (frame->data.size() - 1) / getSize();
+          for (size_t i = 0; i < size; i++)
           {
             // Found placement, replace older Reference.
             if (frame->data[i * getSize() + 1] == id)
@@ -63,7 +63,7 @@ namespace DUNE
             }
           }
 
-          for (uint8_t i = 0; i < size; i++)
+          for (size_t i = 0; i < size; i++)
           {
             // Empty message.
             if (frame->data[i * getSize() + 1] == 0)
@@ -84,8 +84,8 @@ namespace DUNE
         static IMC::Message*
         decodeById(const IMC::UamRxFrame* frame, uint8_t id)
         {
-          uint8_t size = (frame->data.size() - 1) / getSize();
-          for (uint8_t i = 0; i < size; i++)
+          size_t size = (frame->data.size() - 1) / getSize();
+          for (size_t i = 0; i < size; i++)
           {
             if (frame->data[i * getSize() + 1] == id)
             {
@@ -162,7 +162,7 @@ namespace DUNE
 
           uint8_t* ptr = (uint8_t*)&frame->data[idx * coded.getSize() + 1];
 
-          uint16_t length = coded.getSize();
+          uint16_t length = (uint16_t)coded.getSize();
           ptr += IMC::deserialize(coded.dst, ptr, length);
           ptr += IMC::deserialize(coded.lat, ptr, length);
           ptr += IMC::deserialize(coded.lon, ptr, length);
@@ -189,8 +189,8 @@ namespace DUNE
         static size_t
         getSize(void)
         {
-          return sizeof(lat) + sizeof(lon) + sizeof(dst)
-          + sizeof(z) + sizeof(z_ref) + sizeof(radius);
+          // Size of lat, lon, dst, z, z_ref and radius.
+          return 2 * sizeof(fp64_t) + 4 * sizeof(uint8_t);
         }
 
         //! WGS84 latitude.
