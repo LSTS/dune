@@ -166,6 +166,10 @@ namespace Maneuver
       void
       onManeuverDeactivation(void)
       {
+        // Do not calibrate.
+        if (!m_args.compass_calib)
+          return;
+
         // Already calibrated.
         if (m_calibrated)
           return;
