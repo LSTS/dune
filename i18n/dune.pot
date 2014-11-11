@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DUNE 2.6.x\n"
 "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-"POT-Creation-Date: 2014-10-31 10:26+0000\n"
+"POT-Creation-Date: 2014-11-11 14:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2255,31 +2255,39 @@ msgstr ""
 msgid "got abort request"
 msgstr ""
 
-#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:136
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:140
 msgid "GSM/GPRS username"
 msgstr ""
 
-#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:142
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:146
 msgid "GSM/GPRS password"
 msgstr ""
 
-#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:148
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:152
 msgid "GSM/GPRS Access Point Name (APN)"
 msgstr ""
 
-#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:154
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:158
 msgid "GSM/GPRS pin."
 msgstr ""
 
-#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:270
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:276
 msgid "failed to execute connect command"
 msgstr ""
 
-#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:278
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:284
 msgid "failed to execute disconnect command"
 msgstr ""
 
-#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:356
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:308
+msgid "failed to start NAT"
+msgstr ""
+
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:315
+msgid "failed to stop NAT"
+msgstr ""
+
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:377
 #, c-format
 msgid "connected to the Internet with public address '%s'"
 msgstr ""
@@ -2417,11 +2425,11 @@ msgstr ""
 msgid "stopped replay"
 msgstr ""
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:151
+#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:232
 msgid "messages doesn't fit in one frame"
 msgstr ""
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:180
+#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:297
 #, c-format
 msgid "deserialization error: %s"
 msgstr ""
@@ -2820,7 +2828,16 @@ msgstr ""
 msgid "timeout to receive new remote info was exceeded."
 msgstr ""
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:166
+#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:167
+msgid "insufficient data for calibration"
+msgstr ""
+
+#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:172
+#, c-format
+msgid "%s entity not calibrated. Calibration values with %d turns: %f, %f, 0.0"
+msgstr ""
+
+#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:184
 #, c-format
 msgid "forcing minimum of %.1f"
 msgstr ""

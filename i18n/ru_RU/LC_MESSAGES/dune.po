@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DUNE\n"
 "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-"POT-Creation-Date: 2014-10-31 10:25+0000\n"
+"POT-Creation-Date: 2014-11-11 14:03+0000\n"
 "PO-Revision-Date: 2013-08-03 13:42-0000\n"
 "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
 "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -2642,37 +2642,47 @@ msgstr "Включить Отчеты"
 msgid "got abort request"
 msgstr "получил прервать запрос"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:136
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:140
 #, fuzzy
 msgid "GSM/GPRS username"
 msgstr "GSM / GPRS имя пользователя"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:142
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:146
 #, fuzzy
 msgid "GSM/GPRS password"
 msgstr "GSM / GPRS пароль"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:148
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:152
 #, fuzzy
 msgid "GSM/GPRS Access Point Name (APN)"
 msgstr "Имя GSM / GPRS Точка доступа (APN)"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:154
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:158
 #, fuzzy
 msgid "GSM/GPRS pin."
 msgstr "GSM / GPRS контактный."
 
-#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:270
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:276
 #, fuzzy
 msgid "failed to execute connect command"
 msgstr "не удалось выполнить команду на соединение"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:278
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:284
 #, fuzzy
 msgid "failed to execute disconnect command"
 msgstr "не удалось выполнить команду отключения"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:356
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:308
+#, fuzzy
+msgid "failed to start NAT"
+msgstr "Не удалось запустить NAT"
+
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:315
+#, fuzzy
+msgid "failed to stop NAT"
+msgstr "удалось остановить NAT"
+
+#: /home/jb/workspace/dune/trunk/src/Transports/MobileInternet/Task.cpp:377
 #, fuzzy, c-format
 msgid "connected to the Internet with public address '%s'"
 msgstr "подключен к Интернету с оповещения '%s'"
@@ -2825,12 +2835,12 @@ msgstr "начал переигровка"
 msgid "stopped replay"
 msgstr "остановился Повтор"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:151
+#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:232
 #, fuzzy
 msgid "messages doesn't fit in one frame"
 msgstr "Сообщения не подходит в одном кадре"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:180
+#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:297
 #, fuzzy, c-format
 msgid "deserialization error: %s"
 msgstr "Ошибка десериализации: %s"
@@ -3289,7 +3299,17 @@ msgstr "неправильный тип маневр"
 msgid "timeout to receive new remote info was exceeded."
 msgstr "был превышен таймаут, чтобы получить новый удаленный информацию."
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:166
+#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:167
+#, fuzzy
+msgid "insufficient data for calibration"
+msgstr "недостаточно данных для калибровки"
+
+#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:172
+#, fuzzy, c-format
+msgid "%s entity not calibrated. Calibration values with %d turns: %f, %f, 0.0"
+msgstr "%s лицо не откалиброван. Значения калибровки с %d получается: %f, %f, 0.0"
+
+#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:184
 #, fuzzy, c-format
 msgid "forcing minimum of %.1f"
 msgstr "заставляя минимум %.1f"
