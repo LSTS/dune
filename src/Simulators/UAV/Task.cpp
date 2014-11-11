@@ -451,8 +451,12 @@ namespace Simulators
       void
       onEntityResolution(void)
       {
+        spew("onEntityResolution - start");
+
         // Process the systems and entities allowed to define a command.
         m_cmd_flt = new Tasks::SourceFilter(*this, m_args.cmd_src);
+
+        spew("onEntityResolution - end");
       }
 
       void
