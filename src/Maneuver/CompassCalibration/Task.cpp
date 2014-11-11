@@ -38,6 +38,8 @@ namespace Maneuver
     static const float c_min_radius = 5.0f;
     //! Minimum admissible amplitude to check yoyoing motion
     static const float c_min_amplitude = 0.5f;
+    //! Minimum number of turns for admissible solution.
+    static const unsigned c_min_turns = 3;
 
     struct Arguments
     {
@@ -131,8 +133,10 @@ namespace Maneuver
           m_args.variation = Angles::radians(m_args.variation);
 
         if (paramChanged(m_args.compass_calib))
+        {
           if (!isActive())
             m_ccal.clear();
+        }
       }
 
       void
@@ -154,6 +158,24 @@ namespace Maneuver
         }
 
         m_mfield.setDestinationEntity(m_ahrs_eid);
+      }
+
+      void
+      onManeuverDeactivation(void)
+      {
+        unsigned turns = (unsigned)std::floor(std::fabs(m_accum_psi / c_two_pi));
+
+        // Check if we have sufficient data.
+        if (!m_calibrating || turns < c_min_turns)
+        {
+          err(DTR("insufficient data for calibration"));
+        }
+        else
+        {
+          calibrate(false);
+          err(DTR("%s entity not calibrated. Calibration values with %d turns: %f, %f, 0.0"),
+              m_args.label_ahrs.c_str(), turns, m_mfield.x, m_mfield.y);
+        }
       }
 
       void
@@ -244,18 +266,22 @@ namespace Maneuver
       consume(const IMC::EulerAngles* msg)
       {
         // Update Direct Cosine Matrix.
-        if (m_args.compass_calib)
+        if (m_args.compass_calib && m_calibrating)
+        {
           if (msg->getSourceEntity() == m_ahrs_eid)
             m_ccal.updateDCM(*msg);
+        }
       }
 
       void
       consume(const IMC::MagneticField* msg)
       {
         // Update stabilized magnetic field.
-        if (m_args.compass_calib)
+        if (m_args.compass_calib && m_calibrating)
+        {
           if (msg->getSourceEntity() == m_ahrs_eid)
             m_ccal.updateField(*msg);
+        }
       }
 
       void
@@ -304,7 +330,7 @@ namespace Maneuver
             }
             else if (now >= m_end_time)
             {
-              calibrate();
+              calibrate(true);
 
               signalCompletion();
               return;
@@ -323,7 +349,7 @@ namespace Maneuver
           {
             debug("described %.1f turns for calibration", m_args.turns);
 
-            calibrate();
+            calibrate(true);
 
             signalCompletion();
             return;
@@ -339,8 +365,9 @@ namespace Maneuver
       }
 
       //! Run compass calibration.
+      //! @param[in] send_magnetic Send magnetic field parameters.
       void
-      calibrate(void)
+      calibrate(bool send_magnetic)
       {
         if (!m_args.compass_calib)
           return;
@@ -351,7 +378,9 @@ namespace Maneuver
         m_mfield.x = params(0);
         m_mfield.y = params(1);
         m_mfield.z = params(2);
-        dispatch(m_mfield);
+
+        if (send_magnetic)
+          dispatch(m_mfield);
       }
 
       //! Yoyo motion update
