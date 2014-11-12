@@ -32,81 +32,30 @@
 #include <string>
 
 // Local headers.
-#include <DUNE/Database.hpp>
 #include <DUNE/Utils.hpp>
 #include <DUNE/IMC.hpp>
 #include <DUNE/Tasks.hpp>
-#include <DUNE/FileSystem.hpp>
+#include <DUNE/Time.hpp>
 
 namespace Plan
 {
   namespace Engine
   {
-    //! DataBase statement
-    static const char* c_get_stmt[] = {"select data from Plan where plan_id=?",
-                                       "select data from Memento where id=?"};
-    //! No connection to DB message
-    static const char* c_no_conn = DTR("no database connection");
-    
     //! Class to handle Database interactions
     class DataBaseInteraction
     {
     public:
       //! Constructor
-      DataBaseInteraction(DUNE::Tasks::Task* task, const Path& db_file):
+      DataBaseInteraction(DUNE::Tasks::Task* task, double timeout):
         m_task(task),
-        m_conn(NULL),
-        m_db_file(db_file),
-        m_error(false)
-      {
-        for (unsigned i = 0; i < DB_TOTAL; i++)
-          m_get_stmt[i] = NULL;
-      }
+        m_booted(false),
+        m_id(0),
+        m_timeout(timeout),
+        m_fetch_type(IMC::PlanDB::DBDT_PLAN)
+      { }
 
       ~DataBaseInteraction(void)
-      {
-        close();
-      }
-
-      //! Close database
-      void
-      close(void)
-      {
-        for (unsigned i = 0; i < DB_TOTAL; i++)
-          Memory::clear(m_get_stmt[i]);
-
-        if (m_conn == NULL)
-          return;
-
-        Memory::clear(m_conn);
-
-        m_task->debug("database connection closed");
-      }
-
-      //! Open database
-      //! @return true if database opened successfully, false otherwise
-      bool
-      open(void)
-      {
-        try
-        {
-          m_task->debug("database file: '%s'", m_db_file.c_str());
-
-          m_conn = new Database::Connection(m_db_file.c_str(), true);
-
-          for (unsigned i = 0; i < DB_TOTAL; i++)
-            m_get_stmt[i] = new Database::Statement(c_get_stmt[i], *m_conn);
-        }
-        catch (std::runtime_error& e)
-        {
-          m_task->err("failed to open DB: %s", e.what());
-          m_error = true;
-          return false;
-        }
-
-        m_error = false;
-        return true;
-      }
+      { }
 
       //! Consuming PlanDB
       //! @param[in] pdb pointer to PlanDB message
@@ -114,22 +63,128 @@ namespace Plan
       onPlanDB(const IMC::PlanDB* pdb)
       {
         if ((pdb->op == IMC::PlanDB::DBOP_BOOT) &&
-            pdb->type == IMC::PlanDB::DBT_SUCCESS)
+            (pdb->type == IMC::PlanDB::DBT_SUCCESS))
         {
-          open();
+          m_booted = true;
+          return;
         }
-        else if (pdb->op != IMC::PlanDB::DBT_REQUEST)
+
+        if (pdb->op == IMC::PlanDB::DBT_REQUEST)
+          return;
+
+        if ((pdb->getDestination() != m_task->getSystemId()) ||
+            (pdb->getDestinationEntity() != m_task->getEntityId()))
+          return;
+
+        if (pdb->op == IMC::PlanDB::DBOP_GET)
         {
-          if ((pdb->getDestination() == m_task->getSystemId()) &&
-              (pdb->getDestinationEntity() == m_task->getEntityId()))
+          handleGetReply(pdb);
+          return;
+        }
+
+        // other requests just print error or success
+        if ((pdb->type == IMC::PlanDB::DBT_SUCCESS) ||
+            (pdb->type == IMC::PlanDB::DBT_IN_PROGRESS))
+          m_task->inf(DTR("successful request to PlanDB: %s"), pdb->object_id.c_str());
+        else
+          m_task->err(DTR("got error on request to: %s"), pdb->object_id.c_str());
+      }
+
+      //! Check if the plan or memento must be fetched from DB
+      //! @param[in] object_id name of the plan or memento
+      //! @param[in] arg pointer to argument in plancontrol message
+      //! @return true if it must be fetched
+      bool
+      mustFetchFromDB(const IMC::PlanControl* pc)
+      {
+        bool fetch = false;
+
+        if (pc->arg.isNull())
+        {
+          m_fetch_type = IMC::PlanDB::DBDT_PLAN;
+          fetch = true;
+        }
+        else if (pc->arg.get()->getId() == DUNE_IMC_PLANMEMENTO)
+        {
+          m_fetch_type = IMC::PlanDB::DBDT_MEMENTO;
+          fetch = true;
+        }
+
+        if (fetch)
+        {
+          m_db->getFromDB(m_fetch_type, object_id);
+          m_pc = *pc;
+        }
+
+        return fetch;
+      }
+
+      //! Update DatabaseInteraction
+      //! @return false if nothing new to report
+      bool
+      checkReplies(void)
+      {
+        switch (m_req_get.state)
+        {
+          case RS_SENT:
+            if (Time::Clock::get() - m_req_get.time > m_timeout)
+            {
+              m_req_get.state = RS_TIMEOUT;
+              return checkReplies();
+            }
+
+            return false;
+          case RS_TIMEOUT:
+          case RS_REPLIED:
+            return true;
+          case RS_NONE:
+          default:
+            return false;
+        }
+      }
+
+      //! Check if the reply means a failed request
+      //! @param[out] info message string for error, if any
+      //! @return true if failed, false otherwise
+      bool
+      requestFailed(std::string& info)
+      {
+        if (m_db->requestTimeout())
+        {
+          info = DTR("database request timed out");
+          return true;
+        }
+        else
+        {
+          IMC::PlanDB* req = m_db->getReply();
+
+          if (req->pdb->type == IMC::PlanDB::DBT_FAILURE)
           {
-            if ((pdb->type == IMC::PlanDB::DBT_SUCCESS) ||
-                (pdb->type == IMC::PlanDB::DBT_IN_PROGRESS))
-              m_task->inf(DTR("successful request to PlanDB: %s"), pdb->object_id.c_str());
-            else
-              m_task->err(DTR("got error on request to: %s"), pdb->object_id.c_str());
+            info = DTR("database error: ") + req->info;
+            return true;
+          }
+          else if (req->arg.isNull())
+          {
+            info = DTR("database error: empty argument");
+            return true;
           }
         }
+
+        return false;
+      }
+
+      //! Check if a reply timed out
+      //! @return true if it has timed out
+      bool
+      requestTimeout(void)
+      {
+        if (m_req_get.state == RS_TIMEOUT)
+        {
+          m_req_get.state = RS_NONE;
+          return true;
+        }
+
+        return false;
       }
 
       //! Send plan or memento to DB
@@ -139,132 +194,110 @@ namespace Plan
       void
       sendToDB(unsigned dtype, const std::string& id, const IMC::Message* msg)
       {
-        if (m_conn == NULL)
-        {
-          m_task->err("%s", c_no_conn);
-          return;
-        }
-
         IMC::PlanDB plandb;
         plandb.type = IMC::PlanDB::DBT_REQUEST;
         plandb.dt = dtype;
         plandb.op = IMC::PlanDB::DBOP_SET;
-        plandb.request_id = 0;
+        plandb.request_id = ++m_id;
         plandb.object_id = id;
         plandb.arg.set(*msg);
         m_task->dispatch(plandb);
       }
 
-      //! Look for a plan in the database
+      //! Get a plan or memento from the database
+      //! @param[in] dtype data type to get from DB
       //! @param[in] id name of the plan
-      //! @param[out] spec plan specification message
-      //! @param[out] info error info string
       //! @return true if plan is found
-      bool
-      searchInDB(const std::string& id, IMC::PlanSpecification& spec, std::string& info)
+      void
+      getFromDB(unsigned dtype, const std::string& id)
       {
-        return searchInDB(id, DB_PLAN, spec, info);
+        IMC::PlanDB plandb;
+        plandb.type = IMC::PlanDB::DBT_REQUEST;
+        plandb.dt = dtype;
+        plandb.op = IMC::PlanDB::DBOP_GET;
+        plandb.request_id = ++m_id;
+        plandb.object_id = id;
+        m_task->dispatch(plandb);
+
+        m_req_get.state = RS_SENT;
+        m_req_get.id = plandb.request_id;
+        m_req_get.time = Time::Clock::get();
       }
 
-      //! Look for a memento in the database
-      //! @param[in] id name of the memento
-      //! @param[out] pmem plan memento message
-      //! @param[out] info error info string
-      //! @return true if memento is found
-      bool
-      searchInDB(const std::string& id, IMC::PlanMemento& pmem, std::string& info)
+      //! Read GET request reply
+      const IMC::PlanDB*
+      getReply(void)
       {
-        return searchInDB(id, DB_MEMENTO, pmem, info);
+        m_req_get.state = RS_NONE;
+        return &m_req_get.pdb;
       }
 
-      //! Check if DB is open
-      //! @return true if open
+      //! Check if data is ready
       bool
-      isOpen(void)
+      dataIsReady(IMC::PlanSpecification& spec, IMC::PlanMemento& pmem)
       {
-        return (m_conn != NULL);
+
       }
 
-      //! Check if DB is in error
-      //! @return true if in error
-      bool
-      inError(void)
-      {
-        return m_error;
-      }
-      
     private:
-      enum DBStatement
+      enum RequestState
       {
-        //! Plan
-        DB_PLAN = 0,
-        //! Memento
-        DB_MEMENTO,
-        //! Total number of db operations
-        DB_TOTAL
+        //! None
+        RS_NONE = 0,
+        //! Sent to db
+        RS_SENT,
+        //! Has been replied to
+        RS_REPLIED,
+        //! Reply timeout
+        RS_TIMEOUT
       };
 
-      //! Look for a plan or memento in the database
-      //! @param[in] id name of the plan
-      //! @param[in] op type of operation to perform in DB
-      //! @param[out] msg plan specification or plan memento message
-      //! @param[out] info error info string
-      //! @return true if plan is found
-      bool
-      searchInDB(const std::string& id, unsigned op, IMC::Message& msg, std::string& info)
+      struct Request
       {
-        if (m_conn == NULL)
+        //! State of the request
+        RequestState state;
+        //! Request id
+        uint16_t id;
+        //! Request time
+        double time;
+        //! PlanDB message
+        IMC::PlanDB pdb;
+
+        Request(void):
+          state(RS_NONE)
+        { }
+      };
+
+      void
+      handleGetReply(const IMC::PlanDB* pdb)
+      {
+        if (pdb->request_id != m_req_get.id)
+          return;
+
+        if (m_req_get.state != RS_NONE)
         {
-          info = c_no_conn;
-          return false;
+          m_task->debug("not waiting for reply");
+          return;
         }
 
-        std::string obj_op = (op == DB_PLAN) ? "plan" : "memento";
-
-        if (id.empty())
-        {
-          info = String::str(DTR("undefined %s id"), obj_op.c_str());
-          return false;
-        }
-
-        try
-        {
-          *m_get_stmt[op] << id;
-
-          if (!m_get_stmt[op]->execute())
-          {
-            info = String::str(DTR("undefined %s"), obj_op.c_str());
-            m_get_stmt[op]->reset();
-            return false;
-          }
-
-          Database::Blob data;
-
-          *m_get_stmt[op] >> data;
-
-          msg.deserializeFields((const uint8_t*)&data[0], data.size());
-
-          m_get_stmt[op]->reset();
-        }
-        catch (std::runtime_error& e)
-        {
-          info = DTR("failed loading from DB: %s"), e.what();
-          return false;
-        }
-
-        return true;
+        m_req_get.pdb = *pdb;
+        m_req_get.state = RS_REPLIED;
       }
 
       //! Pointer to task
       DUNE::Tasks::Task* m_task;
-      //! Database connection
-      Database::Connection* m_conn;
-      //! Database statement
-      Database::Statement* m_get_stmt[DB_TOTAL];
-      //! Path to db file
-      Path m_db_file;
-      //! True if in error
-      bool m_error;
+      //! Request of type GET from the DB
+      Request m_req_get;
+      //! DB has booted
+      bool m_booted;
+      //! Request id
+      unsigned m_id;
+      //! Request timeout
+      double m_timeout;
+      //! Type of fetch being done
+      IMC::PlanDB::DataTypeEnum m_fetch_type;
+      //! Current request being handled
+      IMC::PlanControl m_pc;
     };
   }
 }

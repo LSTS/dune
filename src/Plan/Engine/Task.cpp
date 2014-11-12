@@ -49,9 +49,10 @@ namespace Plan
     const float c_activ_min = 15.0f;
     //! Plan engine state descriptions
     const char* c_state_desc[] = {DTR_RT("NONE"), DTR_RT("BOOT"), DTR_RT("READY"),
-                                  DTR_RT("STOPPING"), DTR_RT("START_ACTIV"),
-                                  DTR_RT("ACTIVATING"), DTR_RT("START_EXEC"),
-                                  DTR_RT("EXECUTING"), DTR_RT("BLOCKED")};
+                                  DTR_RT("STOPPING"), DTR_RT("START_DBFETCH"),
+                                  DTR_RT("START_ACTIV"), DTR_RT("ACTIVATING"),
+                                  DTR_RT("START_EXEC"), DTR_RT("EXECUTING"),
+                                  DTR_RT("BLOCKED")};
     //! Plan control state description
     const char* c_pcs_desc[] = {DTR_RT("BLOCKED"), DTR_RT("READY"),
                                 DTR_RT("INITIALIZING"), DTR_RT("EXECUTING")};
@@ -70,6 +71,8 @@ namespace Plan
       ST_READY,
       //! Stopping a plan
       ST_STOPPING,
+      //! Fetching plan or memento from DB
+      ST_START_DBFETCH,
       //! Starting activation
       ST_START_ACTIV,
       //! Activating
@@ -104,6 +107,8 @@ namespace Plan
       double vs_timeout;
       //! Timeout for vehicle command
       double vc_timeout;
+      //! Timeout for PlanDB request
+      double db_timeout;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -204,11 +209,15 @@ namespace Plan
         .units(Units::Second)
         .description("Timeout for vehicle command");
 
+        param("DB Request Timeout", m_args.db_timeout)
+        .defaultValue("2.5")
+        .units(Units::Second)
+        .description("Timeout for PlanDB request");
+
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::ManeuverControlState>(this);
-        bind<IMC::PowerOperation>(this);
         bind<IMC::RegisterManeuver>(this);
         bind<IMC::VehicleCommand>(this);
         bind<IMC::VehicleState>(this);
@@ -256,7 +265,7 @@ namespace Plan
         m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict,
                           this, &m_ctx.config);
 
-        m_db = new DataBaseInteraction(this, m_ctx.dir_db / "Plan.db");
+        m_db = new DataBaseInteraction(this, m_args.db_timeout);
         m_ccu = new CCUInteraction(this);
         m_vein = new VehicleInteraction(this, m_args.vc_timeout, m_args.vs_timeout);
       }
@@ -304,26 +313,6 @@ namespace Plan
       }
 
       void
-      consume(const IMC::PowerOperation* po)
-      {
-        if (po->getDestination() != getSystemId())
-          return;
-
-        switch (po->op)
-        {
-          case IMC::PowerOperation::POP_PWR_DOWN_IP:
-            m_db->close();
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_POWER_DOWN);
-            break;
-          case IMC::PowerOperation::POP_PWR_DOWN_ABORTED:
-            m_db->open();
-            break;
-          default:
-            break;
-        }
-      }
-
-      void
       consume(const IMC::RegisterManeuver* msg)
       {
         m_supported_maneuvers.insert(msg->mid);
@@ -339,6 +328,8 @@ namespace Plan
       consume(const IMC::PlanDB* pdb)
       {
         m_db->onPlanDB(pdb);
+
+        updateDBRequests();
       }
 
       void
@@ -479,6 +470,52 @@ namespace Plan
         updateCCURequests();
       }
 
+      void
+      updateDBRequests(void)
+      {
+        if (!m_db->checkReplies())
+          return;
+
+        if (m_sm != ST_START_DBFETCH)
+        {
+          debug("not expecting reply");
+          m_db->getReply();
+          return;
+        }
+
+        std::string db_error_string;
+        if (m_db->requestFailed(db_error_string))
+        {
+          if (m_ccu->currentOperation() == IMC::PlanControl::PC_START)
+          {
+            onPlanFailure(db_error_string);
+            setState(ST_STOPPING);
+          }
+          else
+          {
+            onFailure(db_error_string);
+            setState(ST_READY);
+          }
+
+          return;
+        }
+
+        IMC::PlanDB* req = m_db->getReply();
+        IMC::PlanSpecification spec;
+        IMC::PlanMemento pmem;
+
+        if (m_ccu->currentOperation() == IMC::PlanControl::PC_LOAD)
+        {
+          loadPlan(req->object_id, req->arg.get(), false);
+          return;
+        }
+        else if (m_ccu->currentOperation() == IMC::PlanControl::PC_START)
+        {
+          startPlan(req->object_id, req->arg.get());
+          return;
+        }
+      }
+
       //! Update CCU requests
       void
       updateCCURequests(void)
@@ -490,6 +527,65 @@ namespace Plan
 
         if (req != NULL)
           processRequest(req);
+      }
+
+      //! Will the request be processed right away
+      //! @param[in] pc pointer to plancontrol message
+      bool
+      willProcessNow(const IMC::PlanControl* pc)
+      {
+        bool load_start = false;
+
+        switch (pc->op)
+        {
+          case IMC::PlanControl::PC_START:
+            if (m_sm != ST_READY)
+            {
+              m_ccu->voidRequest();
+              onPlanFailure(DTR("starting a new plan"));
+              setState(ST_STOPPING, ST_READY);
+              return false;
+            }
+
+            pc = m_ccu->holdRequest();
+            if (pc == NULL)
+              return false;
+
+            load_start = true;
+            break;
+          case IMC::PlanControl::PC_LOAD:
+            if (m_sm != ST_READY)
+            {
+              onFailure(DTR("cannot load plan now"));
+              return false;
+            }
+
+            load_start = true;
+            break;
+          default:
+            break;
+        }
+
+        if (load_start)
+        {
+          if (m_db->mustFetchFromDB(pc))
+          {
+            setState(ST_START_DBFETCH);
+            return false;
+          }
+
+          if (pc->arg.get()->getId() != DUNE_IMC_PLANSPECIFICATION)
+          {
+            std::string info;
+            if (!handleQuickPlan(pc->plan_id, pc->arg.get(), info))
+            {
+              onFailure(info);
+              return false;
+            }
+          }
+        }
+
+        return true;
       }
 
       //! Process plancontrol requests
@@ -513,31 +609,24 @@ namespace Plan
             break;
         }
 
+        if (!willProcessNow(pc))
+          return;
+
         switch (pc->op)
         {
           case IMC::PlanControl::PC_START:
-            if (m_sm != ST_READY)
-            {
-              m_ccu->voidRequest();
-              onPlanFailure(DTR("starting a new plan"));
-              setState(ST_STOPPING, ST_READY);
-              return;
-            }
-
-            pc = m_ccu->holdRequest();
-            if (pc == NULL)
-              return;
-
-            startPlan(pc->plan_id, pc->arg.isNull() ? 0 : pc->arg.get());
-            return;
-          case IMC::PlanControl::PC_STOP:
-            stopPlan(ST_READY);
+            if (startPlan(NULL))
+              m_db->sendToDB(IMC::PlanDB::DBDT_PLAN, pc->plan_id, &m_spec);
             return;
           case IMC::PlanControl::PC_LOAD:
-            loadPlan(pc->plan_id, pc->arg.isNull() ? 0 : pc->arg.get(), false);
+            if (loadPlan(NULL, false))
+              m_db->sendToDB(IMC::PlanDB::DBDT_PLAN, pc->plan_id, &m_spec);
             return;
           case IMC::PlanControl::PC_GET:
             getPlan();
+            return;
+          case IMC::PlanControl::PC_STOP:
+            stopPlan(ST_READY);
             return;
           default:
             onFailure(DTR("plan control operation not supported"));
@@ -546,23 +635,13 @@ namespace Plan
       }
 
       //! Load a plan into the vehicle
-      //! @param[in] plan_id name of the plan
-      //! @param[in] arg argument which may either be a maneuver or a plan specification
+      //! @param[in] memento pointer to plan memento
       //! @param[in] plan_startup true if a plan will start right after
-      //! @return true if plan is successfully loaded
+      //! @return true if plan can be loaded right away
       bool
-      loadPlan(const std::string& plan_id, const IMC::Message* arg,
-               bool plan_startup = false)
+      loadPlan(const IMC::PlanMemento* pmem, bool plan_startup = false)
       {
-        if (m_sm != ST_READY)
-        {
-          onFailure(DTR("cannot load plan now"));
-          return false;
-        }
-
-        std::string info;
-        if (!parseArg(plan_id, arg, info))
-          return false;
+        m_spec = *spec;
 
         IMC::PlanStatistics ps;
 
@@ -639,13 +718,10 @@ namespace Plan
 
       //! Handle plan specification argument
       //! @param[in] arg pointer to arg message
-      //! @param[out] info string with the error in case of failure
       //! @return false if unable to get the spec
       bool
-      handleArgSpecification(const IMC::Message* arg, std::string& info)
+      handleArgSpecification(const IMC::Message* arg)
       {
-        (void)info;
-
         const IMC::PlanSpecification* given_plan;
         given_plan = static_cast<const IMC::PlanSpecification*>(arg);
 
@@ -740,51 +816,14 @@ namespace Plan
         return true;
       }
 
-      //! Get the PlanSpecification from IMC::Message
-      //! @param[in] id ID of the plan or memento
-      //! @param[in] arg pointer to arg message
-      //! @param[out] info string with the error message, if any
-      //! @return false if unable to get the spec
-      bool
-      parseArg(const std::string& id, const IMC::Message* arg, std::string& info)
-      {
-        if (arg)
-        {
-          if (arg->getId() == DUNE_IMC_PLANSPECIFICATION)
-            return handleArgSpecification(arg, info);
-          else if (arg->getId() == DUNE_IMC_PLANMEMENTO)
-            return handleArgMemento(arg, info);
-          else // has to be maneuver
-            return handleQuickPlan(id, arg, info);
-        }
-        else
-        {
-          // Search DB
-          m_spec.clear();
-
-          if (!m_db->searchInDB(id, m_spec, info))
-          {
-            // try to look for a memento with the same name in db
-            PlanMemento pmem;
-            if (m_db->searchInDB(id, pmem, info))
-              return parseArg(id, &pmem, info);
-
-            onPlanFailure(info);
-            return false;
-          }
-        }
-
-        return true;
-      }
-
       //! Start a given plan
       //! @param[in] plan_id name of the plan to execute
       //! @param[in] spec plan specification message if any
       //! @return false if failed to start plan
       bool
-      startPlan(const std::string& plan_id, const IMC::Message* spec)
+      startPlan(const IMC::PlanMemento* pmem)
       {
-        if (!loadPlan(plan_id, spec, true))
+        if (!loadPlan(pmem, true))
           return false;
 
         changeLog(plan_id);
@@ -1029,6 +1068,9 @@ namespace Plan
 
               war(DTR("cleared all requests"));
             }
+            break;
+          case ST_START_DBFETCH:
+            updateDBRequests();
             break;
           case ST_EXECUTING:
             break;
