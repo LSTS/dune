@@ -364,6 +364,7 @@ namespace Navigation
           // Cooperative AUV is the next system to ping.
           if (sys_name == m_args.dst && m_estate != NULL)
           {
+            frame.data.resize(Utils::Codecs::CodedEstimatedState::getSize());
             frame.sys_dst = m_args.dst;
             Utils::Codecs::CodedEstimatedState::encode(m_estate, &frame);
           }
