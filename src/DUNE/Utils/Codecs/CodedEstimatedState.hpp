@@ -55,7 +55,7 @@ namespace DUNE
         {
           CodedEstimatedState coded;
           if (frame->data.size() < coded.getSize())
-            throw std::runtime_error("invalid size");
+            frame->data.resize(coded.getSize());
 
           uint8_t* ptr = (uint8_t*)&frame->data[0];
 
