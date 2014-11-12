@@ -124,6 +124,19 @@ namespace Plan
         return &m_toreply.plan_control;
       }
 
+      //! Current operation in progress
+      //! @return plan control operation, or -1 if error
+      int
+      currentOperation(void) const
+      {
+        bool held_req = heldRequestActive();
+
+        if (held_req && (m_toreply.state == RS_NONE))
+          return -1;
+
+        return m_toreply.plan_control.op;
+      }
+
       //! Answer to the plan control request
       //! @param[in] type type of reply (same field as plan control message)
       //! @param[in] desc description for the answer
@@ -133,19 +146,7 @@ namespace Plan
       answer(uint8_t type, const std::string& desc, bool print,
              const IMC::Message* arg)
       {
-        bool answer_held_req = false;
-
-        if (m_requests.size())
-        {
-          if (m_requests.front().state != RS_NONE)
-            answer_held_req = false;
-          else
-            answer_held_req = true;
-        }
-        else
-        {
-          answer_held_req = true;
-        }
+        bool answer_held_req = heldRequestActive();
 
         if (answer_held_req && (m_toreply.state == RS_NONE))
         {
@@ -195,6 +196,24 @@ namespace Plan
         //! PlanControl request
         IMC::PlanControl plan_control;
       };
+
+      //! Check if the held request is the active one
+      //! @return return true if active
+      bool
+      heldRequestActive(void) const
+      {
+        if (m_requests.size())
+        {
+          if (m_requests.front().state != RS_NONE)
+            return false;
+          else
+            return true;
+        }
+        else
+        {
+          return true;
+        }
+      }
 
       //! Answer to the plan control request
       //! @param[in] type type of reply (same field as plan control message)
