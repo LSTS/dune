@@ -111,10 +111,7 @@ namespace Plan
         }
 
         if (fetch)
-        {
           m_db->getFromDB(m_fetch_type, object_id);
-          m_pc = *pc;
-        }
 
         return fetch;
       }
@@ -167,6 +164,25 @@ namespace Plan
           {
             info = DTR("database error: empty argument");
             return true;
+          }
+          else if ((req->dt == IMC::PlanDB::DBDT_MEMENTO) &&
+                   (m_fetch_type != IMC::PlanDB::DBDT_MEMENTO))
+          {
+            info = DTR("database error: unmatched argument");
+            return true;
+          }
+          else
+          {
+            IMC::Message* msg = req->arg.get();
+
+            if (((req->dt == IMC::PlanDB::DBDT_PLAN) &&
+                 (msg->getId() != DUNE_IMC_PLANSPECIFICATION)) ||
+                ((req->dt == IMC::PlanDB::DBDT_MEMENTO) &&
+                 (msg->getId() != DUNE_IMC_PLANMEMENTO)))
+            {
+              info = DTR("database error: invalid argument");
+              return true;
+            }
           }
         }
 
@@ -234,9 +250,40 @@ namespace Plan
 
       //! Check if data is ready
       bool
-      dataIsReady(IMC::PlanSpecification& spec, IMC::PlanMemento& pmem)
+      dataIsReady(void)
       {
+        IMC::PlanDB* req = getReply();
 
+        if (req->dt == IMC::PlanDB::DBDT_MEMENTO)
+        {
+          m_pmem = *static_cast<IMC::PlanMemento*>(req->arg.get());
+          getFromDB(IMC::PlanDB::DBDT_PLAN, m_pmem.plan_id);
+          return false;
+        }
+        else if (req->dt == IMC::PlanDB::DBDT_PLAN)
+        {
+          m_spec = *static_cast<IMC::PlanSpecification*>(req->arg.get());
+          return true;
+        }
+
+        return false;
+      }
+
+      //! Get a pointer to plan specification
+      const IMC::PlanSpecification*
+      getPlanSpecification(void)
+      {
+        return &m_spec;
+      }
+
+      //! Get a pointer to plan memento if valid
+      const IMC::PlanMemento*
+      getPlanMemento(void)
+      {
+        if (m_fetch_type == IMC::PlanDB::DBDT_MEMENTO)
+          return &m_pmem;
+        else
+          return NULL;
       }
 
     private:
@@ -296,8 +343,10 @@ namespace Plan
       double m_timeout;
       //! Type of fetch being done
       IMC::PlanDB::DataTypeEnum m_fetch_type;
-      //! Current request being handled
-      IMC::PlanControl m_pc;
+      //! Received plan specification
+      IMC::PlanSpecification m_spec;
+      //! Received plan memento
+      IMC::PlanMemento m_pmem;
     };
   }
 }

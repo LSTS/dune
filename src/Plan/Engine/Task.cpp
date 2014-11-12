@@ -500,18 +500,20 @@ namespace Plan
           return;
         }
 
-        IMC::PlanDB* req = m_db->getReply();
-        IMC::PlanSpecification spec;
-        IMC::PlanMemento pmem;
+        if (!m_db->dataIsReady())
+          return;
 
+        IMC::PlanSpecification* spec = m_db->getPlanSpecification();
+        IMC::PlanMemento* pmem = m_db->getPlanMemento();
+        
         if (m_ccu->currentOperation() == IMC::PlanControl::PC_LOAD)
         {
-          loadPlan(req->object_id, req->arg.get(), false);
+          loadPlan(spec, pmem, false);
           return;
         }
         else if (m_ccu->currentOperation() == IMC::PlanControl::PC_START)
         {
-          startPlan(req->object_id, req->arg.get());
+          startPlan(spec, pmem);
           return;
         }
       }
@@ -582,7 +584,13 @@ namespace Plan
               onFailure(info);
               return false;
             }
+            else
+            {
+              return true;
+            }
           }
+
+          m_spec = *static_cast<IMC::PlanSpecification*>(pc->arg.get());
         }
 
         return true;
@@ -641,8 +649,6 @@ namespace Plan
       bool
       loadPlan(const IMC::PlanMemento* pmem, bool plan_startup = false)
       {
-        m_spec = *spec;
-
         IMC::PlanStatistics ps;
 
         if (!parsePlan(plan_startup, ps))
@@ -818,7 +824,7 @@ namespace Plan
 
       //! Start a given plan
       //! @param[in] plan_id name of the plan to execute
-      //! @param[in] spec plan specification message if any
+      //! @param[in] pmem plan memento message if any
       //! @return false if failed to start plan
       bool
       startPlan(const IMC::PlanMemento* pmem)
