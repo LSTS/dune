@@ -622,7 +622,8 @@ namespace Plan
 
           if (!found)
           {
-            onFailure(DTR("undefined object id"));
+            std::string desc = DTR("unable to find object: ") + req.object_id;
+            onFailure(desc.c_str());
           }
           else
           {

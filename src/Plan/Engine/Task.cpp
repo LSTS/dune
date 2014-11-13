@@ -487,16 +487,11 @@ namespace Plan
         if (m_db->requestFailed(db_error_string))
         {
           if (m_ccu->currentOperation() == IMC::PlanControl::PC_START)
-          {
             onPlanFailure(db_error_string);
-            setState(ST_STOPPING);
-          }
           else
-          {
             onFailure(db_error_string);
-            setState(ST_READY);
-          }
 
+          setState(ST_READY);
           return;
         }
 
