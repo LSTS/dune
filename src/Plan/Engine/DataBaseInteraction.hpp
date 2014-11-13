@@ -90,6 +90,14 @@ namespace Plan
           m_task->err(DTR("got error on request to: %s"), pdb->object_id.c_str());
       }
 
+      //! PlanDB has booted
+      //! @return true if it has booted, false otherwise
+      bool
+      hasBooted(void)
+      {
+        return m_booted;
+      }
+
       //! Check if the plan or memento must be fetched from DB
       //! @param[in] object_id name of the plan or memento
       //! @param[in] arg pointer to argument in plancontrol message
@@ -111,7 +119,7 @@ namespace Plan
         }
 
         if (fetch)
-          m_db->getFromDB(m_fetch_type, object_id);
+          getFromDB(m_fetch_type, pc->plan_id);
 
         return fetch;
       }
@@ -146,16 +154,16 @@ namespace Plan
       bool
       requestFailed(std::string& info)
       {
-        if (m_db->requestTimeout())
+        if (requestTimeout())
         {
           info = DTR("database request timed out");
           return true;
         }
         else
         {
-          IMC::PlanDB* req = m_db->getReply();
+          const IMC::PlanDB* req = getReply();
 
-          if (req->pdb->type == IMC::PlanDB::DBT_FAILURE)
+          if (req->type == IMC::PlanDB::DBT_FAILURE)
           {
             info = DTR("database error: ") + req->info;
             return true;
@@ -173,7 +181,7 @@ namespace Plan
           }
           else
           {
-            IMC::Message* msg = req->arg.get();
+            const IMC::Message* msg = req->arg.get();
 
             if (((req->dt == IMC::PlanDB::DBDT_PLAN) &&
                  (msg->getId() != DUNE_IMC_PLANSPECIFICATION)) ||
@@ -184,20 +192,6 @@ namespace Plan
               return true;
             }
           }
-        }
-
-        return false;
-      }
-
-      //! Check if a reply timed out
-      //! @return true if it has timed out
-      bool
-      requestTimeout(void)
-      {
-        if (m_req_get.state == RS_TIMEOUT)
-        {
-          m_req_get.state = RS_NONE;
-          return true;
         }
 
         return false;
@@ -252,17 +246,17 @@ namespace Plan
       bool
       dataIsReady(void)
       {
-        IMC::PlanDB* req = getReply();
+        const IMC::PlanDB* req = getReply();
 
         if (req->dt == IMC::PlanDB::DBDT_MEMENTO)
         {
-          m_pmem = *static_cast<IMC::PlanMemento*>(req->arg.get());
+          m_pmem = *static_cast<const IMC::PlanMemento*>(req->arg.get());
           getFromDB(IMC::PlanDB::DBDT_PLAN, m_pmem.plan_id);
           return false;
         }
         else if (req->dt == IMC::PlanDB::DBDT_PLAN)
         {
-          m_spec = *static_cast<IMC::PlanSpecification*>(req->arg.get());
+          m_spec = *static_cast<const IMC::PlanSpecification*>(req->arg.get());
           return true;
         }
 
@@ -314,6 +308,20 @@ namespace Plan
           state(RS_NONE)
         { }
       };
+
+      //! Check if a reply timed out
+      //! @return true if it has timed out
+      bool
+      requestTimeout(void)
+      {
+        if (m_req_get.state == RS_TIMEOUT)
+        {
+          m_req_get.state = RS_NONE;
+          return true;
+        }
+
+        return false;
+      }
 
       void
       handleGetReply(const IMC::PlanDB* pdb)

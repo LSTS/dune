@@ -503,17 +503,19 @@ namespace Plan
         if (!m_db->dataIsReady())
           return;
 
-        IMC::PlanSpecification* spec = m_db->getPlanSpecification();
-        IMC::PlanMemento* pmem = m_db->getPlanMemento();
-        
+        const IMC::PlanSpecification* spec = m_db->getPlanSpecification();
+        const IMC::PlanMemento* pmem = m_db->getPlanMemento();
+
         if (m_ccu->currentOperation() == IMC::PlanControl::PC_LOAD)
         {
-          loadPlan(spec, pmem, false);
+          m_spec = *spec;
+          loadPlan(pmem, false);
           return;
         }
         else if (m_ccu->currentOperation() == IMC::PlanControl::PC_START)
         {
-          startPlan(spec, pmem);
+          m_spec = *spec;
+          startPlan(pmem);
           return;
         }
       }
@@ -590,7 +592,7 @@ namespace Plan
             }
           }
 
-          m_spec = *static_cast<IMC::PlanSpecification*>(pc->arg.get());
+          m_spec = *static_cast<const IMC::PlanSpecification*>(pc->arg.get());
         }
 
         return true;
@@ -624,11 +626,11 @@ namespace Plan
         {
           case IMC::PlanControl::PC_START:
             if (startPlan(NULL))
-              m_db->sendToDB(IMC::PlanDB::DBDT_PLAN, pc->plan_id, &m_spec);
+              m_db->sendToDB(IMC::PlanDB::DBDT_PLAN, m_spec.plan_id, &m_spec);
             return;
           case IMC::PlanControl::PC_LOAD:
             if (loadPlan(NULL, false))
-              m_db->sendToDB(IMC::PlanDB::DBDT_PLAN, pc->plan_id, &m_spec);
+              m_db->sendToDB(IMC::PlanDB::DBDT_PLAN, m_spec.plan_id, &m_spec);
             return;
           case IMC::PlanControl::PC_GET:
             getPlan();
@@ -649,6 +651,18 @@ namespace Plan
       bool
       loadPlan(const IMC::PlanMemento* pmem, bool plan_startup = false)
       {
+        if (pmem != NULL)
+        {
+          std::string info;
+          if (handleMemento(pmem, info))
+          {
+            if (plan_startup)
+              onPlanFailure(info);
+            else
+              onFailure(info);
+          }
+        }
+
         IMC::PlanStatistics ps;
 
         if (!parsePlan(plan_startup, ps))
@@ -722,41 +736,13 @@ namespace Plan
         return true;
       }
 
-      //! Handle plan specification argument
-      //! @param[in] arg pointer to arg message
-      //! @return false if unable to get the spec
-      bool
-      handleArgSpecification(const IMC::Message* arg)
-      {
-        const IMC::PlanSpecification* given_plan;
-        given_plan = static_cast<const IMC::PlanSpecification*>(arg);
-
-        m_spec = *given_plan;
-        m_spec.setSourceEntity(getEntityId());
-
-        m_db->sendToDB(IMC::PlanDB::DBDT_PLAN, m_spec.plan_id, &m_spec);
-
-        return true;
-      }
-
       //! Handle plan memento argument
       //! @param[in] arg pointer to arg message
       //! @param[out] info string with the error in case of failure
       //! @return false if unable to get the memento
       bool
-      handleArgMemento(const IMC::Message* arg, std::string& info)
+      handleMemento(const IMC::PlanMemento* pmem, std::string& info)
       {
-        const IMC::PlanMemento* pmem = static_cast<const IMC::PlanMemento*>(arg);
-
-        // clear spec
-        m_spec.clear();
-
-        if (!m_db->searchInDB(pmem->plan_id, m_spec, info))
-        {
-          onPlanFailure(info);
-          return false;
-        }
-
         m_spec.setSourceEntity(getEntityId());
         m_spec.start_man_id = pmem->maneuver_id;
 
@@ -782,7 +768,6 @@ namespace Plan
             ptr->memento = pmem->memento;
             war(DTR("resuming with memento: %s"), pmem->id.c_str());
 
-            m_db->sendToDB(IMC::PlanDB::DBDT_MEMENTO, pmem->id, pmem);
             return true;
           }
         }
@@ -817,8 +802,6 @@ namespace Plan
         m_spec.start_man_id = arg->getName();
         m_spec.maneuvers.push_back(spec_man);
 
-        m_db->sendToDB(IMC::PlanDB::DBDT_PLAN, m_spec.plan_id, &m_spec);
-
         return true;
       }
 
@@ -832,7 +815,10 @@ namespace Plan
         if (!loadPlan(pmem, true))
           return false;
 
-        changeLog(plan_id);
+        if (pmem == NULL)
+          changeLog(m_spec.plan_id);
+        else
+          changeLog(pmem->id);
 
         // Flag the plan as starting
         m_plan->planStarted();
@@ -1020,7 +1006,7 @@ namespace Plan
         switch (m_sm)
         {
           case ST_BLOCKED:
-            if (m_db->isOpen() && !m_vein->stateTimeout())
+            if (m_db->hasBooted() && !m_vein->stateTimeout())
             {
               setState(ST_READY);
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -1032,15 +1018,9 @@ namespace Plan
               setState(ST_BLOCKED);
               setEntityState(IMC::EntityState::ESTA_ERROR, DTR("vehicle state timeout"));
             }
-
-            if (m_db->inError())
-            {
-              setState(ST_BLOCKED);
-              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_DB_ERROR);
-            }
             break;
           case ST_BOOT:
-            if (m_db->isOpen())
+            if (m_db->hasBooted())
             {
               setState(ST_READY);
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -1136,6 +1116,7 @@ namespace Plan
             break;
           case ST_ACTIVATING:
           case ST_START_ACTIV:
+          case ST_START_DBFETCH:
             m_pcs.state = IMC::PlanControlState::PCS_INITIALIZING;
             break;
           case ST_START_EXEC:
