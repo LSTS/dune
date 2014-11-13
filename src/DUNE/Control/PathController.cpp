@@ -196,6 +196,8 @@ namespace DUNE
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
 
+      m_ctx.config.get("General", "Time Of Arrival Factor", "5.0", m_time_factor);
+
       bind<IMC::Brake>(this);
       bind<IMC::ControlLoops>(this);
       bind<IMC::DesiredPath>(this);
@@ -735,12 +737,12 @@ namespace DUNE
         float erry = std::abs(m_ts.track_pos.y);
         float s = std::max((double)m_eta_min_speed, m_ts.speed);
 
-        if (errx <= erry && erry < c_erry_factor * c_time_factor * s)
+        if (errx <= erry && erry < c_erry_factor * m_time_factor * s)
           m_ts.eta = errx / s;
         else
           m_ts.eta = Math::norm(errx, erry) / s;
 
-        m_ts.eta = std::min(65535.0, m_ts.eta - c_time_factor);
+        m_ts.eta = std::min(65535.0, m_ts.eta - m_time_factor);
 
         bool was_nearby = m_ts.nearby;
 

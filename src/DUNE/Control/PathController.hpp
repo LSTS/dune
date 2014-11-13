@@ -43,8 +43,6 @@ namespace DUNE
 {
   namespace Control
   {
-    //! Estimated time of arrival factor
-    static const float c_time_factor = 5.0f;
     //! Factor for path error in y direction to prevent too large cross track offsets
     static const float c_erry_factor = 1.75f;
 
@@ -427,6 +425,8 @@ namespace DUNE
       float m_eta_min_speed;
       //! Active loops
       uint32_t m_aloops;
+      //! Time of arrival factor
+      float m_time_factor;
 
       //! Current tracking state
       TrackingState m_ts;
