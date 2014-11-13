@@ -115,6 +115,7 @@ namespace Plan
         {
           m_fetch_type = IMC::PlanDB::DBDT_MEMENTO;
           fetch = true;
+          m_pmem = *static_cast<const IMC::PlanMemento*>(req->arg.get());
         }
 
         if (fetch)
@@ -158,38 +159,38 @@ namespace Plan
           info = DTR("database request timed out");
           return true;
         }
+
+        const IMC::PlanDB* req = getReply();
+
+        if (req->type == IMC::PlanDB::DBT_FAILURE)
+        {
+          info = DTR("database error: ") + req->info;
+          return true;
+        }
+        else if (req->arg.isNull())
+        {
+          info = DTR("database error: empty argument");
+          return true;
+        }
+        else if (((req->dt == IMC::PlanDB::DBDT_MEMENTO) &&
+                  (m_req_get.pdb.dt != IMC::PlanDB::DBDT_MEMENTO)) ||
+                 ((req->dt == IMC::PlanDB::DBDT_PLAN) &&
+                  (m_req_get.pdb.dt != IMC::PlanDB::DBDT_PLAN)))
+        {
+          info = DTR("database error: unmatched argument");
+          return true;
+        }
         else
         {
-          const IMC::PlanDB* req = getReply();
+          const IMC::Message* msg = req->arg.get();
 
-          if (req->type == IMC::PlanDB::DBT_FAILURE)
+          if (((req->dt == IMC::PlanDB::DBDT_PLAN) &&
+               (msg->getId() != DUNE_IMC_PLANSPECIFICATION)) ||
+              ((req->dt == IMC::PlanDB::DBDT_MEMENTO) &&
+               (msg->getId() != DUNE_IMC_PLANMEMENTO)))
           {
-            info = DTR("database error: ") + req->info;
+            info = DTR("database error: invalid argument");
             return true;
-          }
-          else if (req->arg.isNull())
-          {
-            info = DTR("database error: empty argument");
-            return true;
-          }
-          else if ((req->dt == IMC::PlanDB::DBDT_MEMENTO) &&
-                   (m_fetch_type != IMC::PlanDB::DBDT_MEMENTO))
-          {
-            info = DTR("database error: unmatched argument");
-            return true;
-          }
-          else
-          {
-            const IMC::Message* msg = req->arg.get();
-
-            if (((req->dt == IMC::PlanDB::DBDT_PLAN) &&
-                 (msg->getId() != DUNE_IMC_PLANSPECIFICATION)) ||
-                ((req->dt == IMC::PlanDB::DBDT_MEMENTO) &&
-                 (msg->getId() != DUNE_IMC_PLANMEMENTO)))
-            {
-              info = DTR("database error: invalid argument");
-              return true;
-            }
           }
         }
 
@@ -216,7 +217,6 @@ namespace Plan
       //! Get a plan or memento from the database
       //! @param[in] dtype data type to get from DB
       //! @param[in] id name of the plan
-      //! @return true if plan is found
       void
       getFromDB(unsigned dtype, const std::string& id)
       {
@@ -234,6 +234,7 @@ namespace Plan
       }
 
       //! Read GET request reply
+      //! @return pointer to PlanDB message
       const IMC::PlanDB*
       getReply(void)
       {
@@ -242,6 +243,7 @@ namespace Plan
       }
 
       //! Check if data is ready
+      //! @return true if data is ready, false otherwise
       bool
       dataIsReady(void)
       {
@@ -263,6 +265,7 @@ namespace Plan
       }
 
       //! Get a pointer to plan specification
+      //! @return pointer to PlanSpecification message
       const IMC::PlanSpecification*
       getPlanSpecification(void)
       {
@@ -270,6 +273,7 @@ namespace Plan
       }
 
       //! Get a pointer to plan memento if valid
+      //! @return pointer to PlanMemento message
       const IMC::PlanMemento*
       getPlanMemento(void)
       {
@@ -322,6 +326,8 @@ namespace Plan
         return false;
       }
 
+      //! Handle the reply of type GET
+      //! @param[in] pdb pointer to PlanDB message
       void
       handleGetReply(const IMC::PlanDB* pdb)
       {
