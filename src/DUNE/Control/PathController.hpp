@@ -427,6 +427,8 @@ namespace DUNE
       float m_eta_min_speed;
       //! Active loops
       uint32_t m_aloops;
+      //! Timeout for new incoming path reference
+      double m_new_ref_timeout;
 
       //! Current tracking state
       TrackingState m_ts;

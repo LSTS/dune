@@ -44,8 +44,6 @@ namespace DUNE
 {
   namespace Control
   {
-    //! Timeout for new incoming path reference
-    static const double c_new_ref_timeout = 5;
     //! Loiter size factor to compute if inside the circle
     static const double c_lsize_factor = 0.75;
     //! Distance tolerance to loiter's center
@@ -136,6 +134,13 @@ namespace DUNE
       .minimumValue("0.1")
       .units(Units::MeterPerSecond)
       .description("ETA minimum admissible speed");
+
+      param("New Reference Timeout", m_new_ref_timeout)
+      .defaultValue("5")
+      .minimumValue("3")
+      .maximumValue("10")
+      .units(Units::Second)
+      .description("Timeout for new incoming path reference");
 
       param("Bottom Track -- Enabled", m_btd.enabled)
       .defaultValue("false")
@@ -653,7 +658,7 @@ namespace DUNE
       m_ts.delta = now - m_ts.now;
       m_ts.now = now;
 
-      if (m_ts.nearby && m_ts.now - m_ts.end_time >= c_new_ref_timeout)
+      if (m_ts.nearby && m_ts.now - m_ts.end_time >= m_new_ref_timeout)
       {
         signalError(DTR("expected new path control reference"));
         return;
