@@ -326,9 +326,12 @@ namespace Plan
       handleGetReply(const IMC::PlanDB* pdb)
       {
         if (pdb->request_id != m_req_get.id)
+        {
+          m_task->debug("invalid id");
           return;
+        }
 
-        if (m_req_get.state != RS_NONE)
+        if (m_req_get.state != RS_SENT)
         {
           m_task->debug("not waiting for reply");
           return;
