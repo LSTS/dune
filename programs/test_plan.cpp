@@ -63,7 +63,7 @@ usage(void)
             << std::endl
             << " -G: get plan"
             << std::endl
-            << " -C: get plan"
+            << " -C: clear database"
             << std::endl
             << std::endl
             << std::endl;
