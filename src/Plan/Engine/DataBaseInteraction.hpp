@@ -99,8 +99,7 @@ namespace Plan
       }
 
       //! Check if the plan or memento must be fetched from DB
-      //! @param[in] object_id name of the plan or memento
-      //! @param[in] arg pointer to argument in plancontrol message
+      //! @param[in] pc pointer to plancontrol message
       //! @return true if it must be fetched
       bool
       mustFetchFromDB(const IMC::PlanControl* pc)
