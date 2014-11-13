@@ -530,6 +530,7 @@ namespace Plan
 
       //! Will the request be processed right away
       //! @param[in] pc pointer to plancontrol message
+      //! @return true if PlanControl message argument may be processed straight away
       bool
       willProcessNow(const IMC::PlanControl* pc)
       {
