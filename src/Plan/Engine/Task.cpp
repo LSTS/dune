@@ -1016,7 +1016,9 @@ namespace Plan
             if (m_vein->stateTimeout())
             {
               setState(ST_BLOCKED);
-              setEntityState(IMC::EntityState::ESTA_ERROR, DTR("vehicle state timeout"));
+              std::string desc = DTR("vehicle state timeout");
+              setEntityState(IMC::EntityState::ESTA_ERROR, desc);
+              err("%s", desc.c_str());
             }
             break;
           case ST_BOOT:
