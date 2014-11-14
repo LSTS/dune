@@ -51,7 +51,7 @@ namespace Plan
         m_booted(false),
         m_id(0),
         m_timeout(timeout),
-        m_fetch_type(IMC::PlanDB::DBDT_PLAN)
+        m_valid_mem(false)
       { }
 
       ~DataBaseInteraction(void)
@@ -104,24 +104,24 @@ namespace Plan
       bool
       mustFetchFromDB(const IMC::PlanControl* pc)
       {
-        bool fetch = false;
+        int fetch_type = -1;
 
         if (pc->arg.isNull())
         {
-          m_fetch_type = IMC::PlanDB::DBDT_PLAN;
-          fetch = true;
+          fetch_type = IMC::PlanDB::DBDT_PLAN;
         }
         else if (pc->arg.get()->getId() == DUNE_IMC_PLANMEMENTO)
         {
-          m_fetch_type = IMC::PlanDB::DBDT_MEMENTO;
-          fetch = true;
-          m_pmem = *static_cast<const IMC::PlanMemento*>(req->arg.get());
+          // For now, fetch type is always plan, until PlanControl message changes
+          fetch_type = IMC::PlanDB::DBDT_PLAN;
+          m_pmem = *static_cast<const IMC::PlanMemento*>(pc->arg.get());
+          m_valid_mem = true;
         }
 
-        if (fetch)
-          getFromDB(m_fetch_type, pc->plan_id);
+        if (fetch_type >= 0)
+          getFromDB(fetch_type, pc->plan_id);
 
-        return fetch;
+        return (fetch_type >= 0);
       }
 
       //! Update DatabaseInteraction
@@ -142,7 +142,6 @@ namespace Plan
           case RS_TIMEOUT:
           case RS_REPLIED:
             return true;
-          case RS_NONE:
           default:
             return false;
         }
@@ -252,6 +251,7 @@ namespace Plan
         if (req->dt == IMC::PlanDB::DBDT_MEMENTO)
         {
           m_pmem = *static_cast<const IMC::PlanMemento*>(req->arg.get());
+          m_valid_mem = true;
           getFromDB(IMC::PlanDB::DBDT_PLAN, m_pmem.plan_id);
           return false;
         }
@@ -277,7 +277,7 @@ namespace Plan
       const IMC::PlanMemento*
       getPlanMemento(void)
       {
-        if (m_fetch_type == IMC::PlanDB::DBDT_MEMENTO)
+        if (m_valid_mem)
           return &m_pmem;
         else
           return NULL;
@@ -357,8 +357,8 @@ namespace Plan
       unsigned m_id;
       //! Request timeout
       double m_timeout;
-      //! Type of fetch being done
-      IMC::PlanDB::DataTypeEnum m_fetch_type;
+      //! True if memento is valid
+      bool m_valid_mem;
       //! Received plan specification
       IMC::PlanSpecification m_spec;
       //! Received plan memento
