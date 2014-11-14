@@ -57,6 +57,8 @@ usage(void)
             << std::endl
             << " -s: send GpsFix (APDL)"
             << std::endl
+            << " -i: set ignore errors bit"
+            << std::endl
             << " -d: request DataBase state"
             << std::endl
             << " -D: delete plan"
