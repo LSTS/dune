@@ -250,10 +250,18 @@ namespace DUNE
       }
 
       // Deserialize message fields.
-      if (hdr.sync == DUNE_IMC_CONST_SYNC_REV)
-        msg->reverseDeserializeFields(bfr + DUNE_IMC_CONST_HEADER_SIZE, hdr.size);
-      else
-        msg->deserializeFields(bfr + DUNE_IMC_CONST_HEADER_SIZE, hdr.size);
+      try
+      {
+        if (hdr.sync == DUNE_IMC_CONST_SYNC_REV)
+          msg->reverseDeserializeFields(bfr + DUNE_IMC_CONST_HEADER_SIZE, hdr.size);
+        else
+          msg->deserializeFields(bfr + DUNE_IMC_CONST_HEADER_SIZE, hdr.size);
+      }
+      catch (...)
+      {
+        delete msg;
+        throw;
+      }
 
       msg->setTimeStamp(hdr.timestamp);
       msg->setSource(hdr.src);
