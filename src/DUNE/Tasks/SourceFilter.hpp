@@ -36,6 +36,7 @@
 // DUNE headers.
 #include <DUNE/Tasks.hpp>
 #include <DUNE/IMC.hpp>
+#include <DUNE/Memory.hpp>
 
 namespace DUNE
 {
