@@ -501,17 +501,18 @@ namespace Plan
         const IMC::PlanSpecification* spec = m_db->getPlanSpecification();
         const IMC::PlanMemento* pmem = m_db->getPlanMemento();
 
-        if (m_ccu->currentOperation() == IMC::PlanControl::PC_LOAD)
+        switch (m_ccu->currentOperation())
         {
-          m_spec = *spec;
-          loadPlan(pmem, false);
-          return;
-        }
-        else if (m_ccu->currentOperation() == IMC::PlanControl::PC_START)
-        {
-          m_spec = *spec;
-          startPlan(pmem);
-          return;
+          case IMC::PlanControl::PC_LOAD:
+            m_spec = *spec;
+            loadPlan(pmem, false);
+            return;
+          case IMC::PlanControl::PC_START:
+            m_spec = *spec;
+            startPlan(pmem);
+            return;
+          default:
+            break;
         }
       }
 
