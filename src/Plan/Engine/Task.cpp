@@ -506,6 +506,7 @@ namespace Plan
           case IMC::PlanControl::PC_LOAD:
             m_spec = *spec;
             loadPlan(pmem, false);
+            setState(ST_READY);
             return;
           case IMC::PlanControl::PC_START:
             m_spec = *spec;
@@ -520,8 +521,16 @@ namespace Plan
       void
       updateCCURequests(void)
       {
-        if (m_vein->pendingReply())
-          return;
+        switch (m_sm)
+        {
+          case ST_START_DBFETCH:
+          case ST_START_ACTIV:
+          case ST_START_EXEC:
+          case ST_STOPPING:
+            return;
+          default:
+            break;
+        }
 
         const IMC::PlanControl* req = m_ccu->getRequest();
 
@@ -536,11 +545,12 @@ namespace Plan
       willProcessNow(const IMC::PlanControl* pc)
       {
         bool load_start = false;
+        bool ready_or_fetch = (m_sm == ST_READY) || (m_sm == ST_START_DBFETCH);
 
         switch (pc->op)
         {
           case IMC::PlanControl::PC_START:
-            if (m_sm != ST_READY)
+            if (!ready_or_fetch)
             {
               m_ccu->voidRequest();
               onPlanFailure(DTR("starting a new plan"));
@@ -555,7 +565,7 @@ namespace Plan
             load_start = true;
             break;
           case IMC::PlanControl::PC_LOAD:
-            if (m_sm != ST_READY)
+            if (!ready_or_fetch)
             {
               onFailure(DTR("cannot load plan now"));
               return false;
