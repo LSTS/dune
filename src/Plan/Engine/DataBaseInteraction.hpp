@@ -105,21 +105,25 @@ namespace Plan
       mustFetchFromDB(const IMC::PlanControl* pc)
       {
         int fetch_type = -1;
+        std::string object_id = "";
 
         if (pc->arg.isNull())
         {
+          object_id = pc->plan_id;
           fetch_type = IMC::PlanDB::DBDT_PLAN;
+          m_valid_mem = false;
         }
         else if (pc->arg.get()->getId() == DUNE_IMC_PLANMEMENTO)
         {
           // For now, fetch type is always plan, until PlanControl message changes
-          fetch_type = IMC::PlanDB::DBDT_PLAN;
           m_pmem = *static_cast<const IMC::PlanMemento*>(pc->arg.get());
+          object_id = m_pmem.plan_id;
+          fetch_type = IMC::PlanDB::DBDT_PLAN;
           m_valid_mem = true;
         }
 
         if (fetch_type >= 0)
-          getFromDB(fetch_type, pc->plan_id);
+          getFromDB(fetch_type, object_id);
 
         return (fetch_type >= 0);
       }
