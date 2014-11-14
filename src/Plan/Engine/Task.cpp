@@ -72,7 +72,7 @@ namespace Plan
       //! Stopping a plan
       ST_STOPPING,
       //! Fetching plan or memento from DB
-      ST_START_DBFETCH,
+      ST_DBFETCH,
       //! Starting activation
       ST_START_ACTIV,
       //! Activating
@@ -451,9 +451,7 @@ namespace Plan
 
         switch (m_sm)
         {
-          case ST_START_ACTIV:
           case ST_ACTIVATING:
-          case ST_START_EXEC:
           case ST_EXECUTING:
             m_errors.pushVehicleError(vs);
             break;
@@ -476,7 +474,7 @@ namespace Plan
         if (!m_db->checkReplies())
           return;
 
-        if (m_sm != ST_START_DBFETCH)
+        if (m_sm != ST_DBFETCH)
         {
           debug("not expecting reply");
           m_db->getReply();
@@ -523,7 +521,7 @@ namespace Plan
       {
         switch (m_sm)
         {
-          case ST_START_DBFETCH:
+          case ST_DBFETCH:
           case ST_START_ACTIV:
           case ST_START_EXEC:
           case ST_STOPPING:
@@ -545,7 +543,7 @@ namespace Plan
       willProcessNow(const IMC::PlanControl* pc)
       {
         bool load_start = false;
-        bool ready_or_fetch = (m_sm == ST_READY) || (m_sm == ST_START_DBFETCH);
+        bool ready_or_fetch = (m_sm == ST_READY) || (m_sm == ST_DBFETCH);
 
         switch (pc->op)
         {
@@ -581,7 +579,7 @@ namespace Plan
         {
           if (m_db->mustFetchFromDB(pc))
           {
-            setState(ST_START_DBFETCH);
+            setState(ST_DBFETCH);
             return false;
           }
 
@@ -993,9 +991,7 @@ namespace Plan
 
         switch (m_sm)
         {
-          case ST_START_ACTIV:
           case ST_ACTIVATING:
-          case ST_START_EXEC:
           case ST_EXECUTING:
             onPlanFailure(m_errors.getOldest());
             setState(ST_STOPPING, ST_READY);
@@ -1064,7 +1060,7 @@ namespace Plan
               war(DTR("cleared all requests"));
             }
             break;
-          case ST_START_DBFETCH:
+          case ST_DBFETCH:
             updateDBRequests();
             break;
           case ST_EXECUTING:
@@ -1125,7 +1121,7 @@ namespace Plan
             break;
           case ST_ACTIVATING:
           case ST_START_ACTIV:
-          case ST_START_DBFETCH:
+          case ST_DBFETCH:
             m_pcs.state = IMC::PlanControlState::PCS_INITIALIZING;
             break;
           case ST_START_EXEC:
