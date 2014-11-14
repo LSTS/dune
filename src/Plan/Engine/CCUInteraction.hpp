@@ -134,7 +134,13 @@ namespace Plan
         if (held_req && (m_toreply.state == RS_NONE))
           return -1;
 
-        return m_toreply.plan_control.op;
+        if (!held_req && !m_requests.size())
+          return -1;
+
+        if (held_req)
+          return m_toreply.plan_control.op;
+        else
+          return m_requests.front().plan_control.op;
       }
 
       //! Answer to the plan control request
