@@ -86,6 +86,7 @@ dune_option(JS "Enable support for SpiderMonkey javascript engine")
 dune_option(XENETH "Enable support for the Xeneth SDK")
 dune_option(BLUEVIEW "Enable support for the BlueView SDK")
 dune_option(OPENCV "Enable support for OpenCV")
+dune_option(NO_RTTI "Disable support for RTTI")
 
 # Internationalization.
 include(${PROJECT_SOURCE_DIR}/cmake/I18N.cmake)

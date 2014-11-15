@@ -22,30 +22,84 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Filipe Ferreira                                                  *
+//***************************************************************************
+//                                                                          *
 //***************************************************************************
 
-#ifndef DUNE_UTILS_HPP_INCLUDED_
-#define DUNE_UTILS_HPP_INCLUDED_
+// ISO C++ 98 headers.
+#include <iostream>
+#include <fstream>
+#include <cstring>
+#include <cstdlib>
+#include <iomanip>
 
-namespace DUNE
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
+
+using DUNE_NAMESPACES;
+
+int
+main(int32_t argc, char** argv)
 {
-  //! General purpose types and routines
-  namespace Utils
-  { }
-}
+  if (argc <= 1)
+  {
+    std::cerr << "Usage: " << argv[0] << " <path_to_log/Data.lsf[.gz]>"
+              << std::endl;
+    return 1;
+  }
 
-#include <DUNE/Utils/ByteBuffer.hpp>
-#include <DUNE/Utils/ByteCopy.hpp>
-#include <DUNE/Utils/CircularBuffer.hpp>
-#include <DUNE/Utils/Exceptions.hpp>
-#include <DUNE/Utils/NMEAParser.hpp>
-#include <DUNE/Utils/OptionParser.hpp>
-#include <DUNE/Utils/RawFifo.hpp>
-#include <DUNE/Utils/StateMachine.hpp>
-#include <DUNE/Utils/String.hpp>
-#include <DUNE/Utils/TupleList.hpp>
-#include <DUNE/Utils/Utils.hpp>
-#include <DUNE/Utils/XML.hpp>
-#include <DUNE/Utils/Codecs.hpp>
-#endif
+  std::istream* is = 0;
+  Compression::Methods method = Compression::Factory::detect(argv[1]);
+  if (method == METHOD_UNKNOWN)
+    is = new std::ifstream(argv[1], std::ios::binary);
+  else
+    is = new Compression::FileInput(argv[1], method);
+
+  IMC::Message* msg = NULL;
+
+  unsigned phototrigger_eid = 0;
+
+  std::ofstream logfile;
+  logfile.open("gps.txt", std::ofstream::app);
+
+  try
+  {
+    while ((msg = IMC::Packet::deserialize(*is)) != 0)
+    {
+      if (msg->getId() == DUNE_IMC_LOGBOOKENTRY)
+      {
+        IMC::LogBookEntry* lbe = static_cast<IMC::LogBookEntry*>(msg);
+
+        if (lbe->getSourceEntity() != phototrigger_eid)
+          continue;
+	
+	double lat;
+	double lon;
+	double height;
+
+        std::sscanf(lbe->text.c_str(), "%lf,%lf,%lf", &lat, &lon, &height);
+
+	logfile << std::setprecision(10) << Angles::degrees(lat) << "," << Angles::degrees(lon) << "," << height << std::endl;
+      }
+     
+      else if (msg->getId() == DUNE_IMC_ENTITYINFO)
+      {
+        IMC::EntityInfo* ei = static_cast<IMC::EntityInfo*>(msg);
+
+        if (!std::strcmp(ei->label.c_str(), "Photo Trigger"))
+          phototrigger_eid = ei->id;
+      }
+
+      delete msg;
+    }
+
+    logfile.close();
+  }
+  catch (std::runtime_error& e)
+  {
+    std::cerr << "ERROR: " << e.what() << std::endl;
+  }
+
+  return 0;
+}

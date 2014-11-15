@@ -51,8 +51,6 @@ namespace Sensors
     //! Subsystem identifiers.
     enum SubsystemId
     {
-      //! Sub-bottom.
-      SUBSYS_SB = 0,
       //! Low-frequency sidescan.
       SUBSYS_SSL = 20,
       //! High-frequency sidescan.
@@ -141,6 +139,10 @@ namespace Sensors
       SDATA_IDX_TRACE_DATA = 240
     };
 
+    //! Channel count.
+    static const size_t c_channel_count = 2;
+    //! Subsystem count.
+    static const size_t c_subsys_count = 2;
     //! First byte of the start of header marker.
     static const uint8_t c_marker0 = 0x01;
     //! Second byte of the start of header marker.

@@ -175,8 +175,12 @@ namespace Monitors
       void
       onUpdateParameters(void)
       {
-        m_twindow.setTop(m_args.t_error);
-        m_treport.setTop(1 / m_args.frequency);
+        if (paramChanged(m_args.t_error))
+          m_twindow.setTop(m_args.t_error);
+
+        if (paramChanged(m_args.frequency))
+          m_treport.setTop(1 / m_args.frequency);
+
         m_args.max_x = std::abs(m_args.max_x);
         m_args.max_z = std::abs(m_args.max_z);
       }

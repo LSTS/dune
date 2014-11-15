@@ -77,7 +77,8 @@ namespace Navigation
         void
         onUpdateParameters(void)
         {
-          m_timer.setTop(m_args.ping_period);
+          if (paramChanged(m_args.ping_period))
+            m_timer.setTop(m_args.ping_period);
         }
 
         //! Initialize resources.

@@ -134,7 +134,8 @@ namespace Transports
       void
       onUpdateParameters(void)
       {
-        m_rep_timer.setTop(m_args.report_period);
+        if (paramChanged(m_args.report_period))
+          m_rep_timer.setTop(m_args.report_period);
       }
 
       //! Initialize resources.

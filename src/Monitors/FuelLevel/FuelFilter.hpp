@@ -58,11 +58,13 @@ namespace Monitors
     //! Maximum confidence value
     static const float c_top_conf = 100.0f;
     //! Electric current stable value to consider an estimate refresh
-    static const float c_stable_current = 1.0;
+    static const float c_stable_current = 1.0f;
     //! Minimum time to wait before redoing estimate
-    static const float c_redo_time = 600.0;
+    static const float c_redo_time = 600.0f;
     //! Time to consider stabilization after maneuvering
-    static const float c_sane_time = 10.0;
+    static const float c_sane_time = 10.0f;
+    //! Maximum time delta in seconds between measures
+    static const float c_max_delta = 3.0f;
 
     //! Fuel Filter for Fuel Level
     class FuelFilter
@@ -179,7 +181,7 @@ namespace Monitors
             m_last_time = msg->getTimeStamp();
 
             // Check if we have a valid time delta.
-            if (delta < 0)
+            if (delta < 0 || delta > c_max_delta)
               return;
 
             // integrate energy consumed even if there is no estimate yet
@@ -358,6 +360,8 @@ namespace Monitors
       {
         // fill value with estimated percentage of battery
         fl.value = (m_initial_estimate - m_energy_consumed) / m_args->full_capacity * 100.0;
+        fl.value = std::max(0.0f, fl.value);
+        fl.value = std::min(100.0f, fl.value);
         fl.confidence = computeConfidence();
 
         std::stringstream ss;

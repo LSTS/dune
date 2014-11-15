@@ -25,27 +25,84 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_UTILS_HPP_INCLUDED_
-#define DUNE_UTILS_HPP_INCLUDED_
+#ifndef SENSORS_EDGETECH_2205_SUBSYSTEM_DATA_HPP_INCLUDED_
+#define SENSORS_EDGETECH_2205_SUBSYSTEM_DATA_HPP_INCLUDED_
 
-namespace DUNE
+// ISO C++ 98 headers.
+#include <vector>
+
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
+
+// Local headers.
+#include "EstimatedStateList.hpp"
+
+namespace Sensors
 {
-  //! General purpose types and routines
-  namespace Utils
-  { }
+  namespace Edgetech2205
+  {
+    using DUNE_NAMESPACES;
+
+    //! Subsystem specific data used to rewrite the header of each ping.
+    struct SubsystemData
+    {
+      //! Ping count.
+      unsigned ping_count;
+      //! Ping number.
+      uint32_t ping_number;
+      //! Seconds since Unix Epoch from local CPU.
+      int64_t msec_cpu;
+      //! Seconds since Unix Epoch from sidescan CPU.
+      uint32_t time_epoch;
+      //! Milliseconds today.
+      uint32_t time_msec_today;
+      //! Brokendown time.
+      Time::BrokenDown time_bdt;
+      //! Navigation data validity.
+      uint16_t validity;
+      //! Latitude.
+      int32_t latitude;
+      //! Latitude in radian.
+      double latitude_rad;
+      //! Longitude.
+      int32_t longitude;
+      //! Longitude in radian;
+      double longitude_rad;
+      //! Course.
+      int16_t course;
+      //! Speed.
+      int16_t speed;
+      //! Heading.
+      uint16_t heading;
+      //! Roll.
+      int16_t roll;
+      //! Pitch.
+      int16_t pitch;
+      //! Altitude.
+      int32_t altitude;
+      //! Depth.
+      int32_t depth;
+      //! Estimated state list.
+      EstimatedStateList estates;
+      //! True if subsystem is active.
+      bool active;
+
+      SubsystemData(void)
+      {
+        clear();
+      }
+
+      void
+      clear(void)
+      {
+        estates.clear();
+        msec_cpu = 0;
+        ping_count = 0;
+        ping_number = 0;
+        active = false;
+      }
+    };
+  }
 }
 
-#include <DUNE/Utils/ByteBuffer.hpp>
-#include <DUNE/Utils/ByteCopy.hpp>
-#include <DUNE/Utils/CircularBuffer.hpp>
-#include <DUNE/Utils/Exceptions.hpp>
-#include <DUNE/Utils/NMEAParser.hpp>
-#include <DUNE/Utils/OptionParser.hpp>
-#include <DUNE/Utils/RawFifo.hpp>
-#include <DUNE/Utils/StateMachine.hpp>
-#include <DUNE/Utils/String.hpp>
-#include <DUNE/Utils/TupleList.hpp>
-#include <DUNE/Utils/Utils.hpp>
-#include <DUNE/Utils/XML.hpp>
-#include <DUNE/Utils/Codecs.hpp>
 #endif

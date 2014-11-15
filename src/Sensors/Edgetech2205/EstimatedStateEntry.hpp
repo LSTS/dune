@@ -25,27 +25,47 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_UTILS_HPP_INCLUDED_
-#define DUNE_UTILS_HPP_INCLUDED_
+#ifndef SENSORS_EDGETECH_2205_ESTIMATED_STATE_ENTRY_HPP_INCLUDED_
+#define SENSORS_EDGETECH_2205_ESTIMATED_STATE_ENTRY_HPP_INCLUDED_
 
-namespace DUNE
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
+
+namespace Sensors
 {
-  //! General purpose types and routines
-  namespace Utils
-  { }
+  namespace Edgetech2205
+  {
+    using DUNE_NAMESPACES;
+
+    class EstimatedStateEntry
+    {
+    public:
+      EstimatedStateEntry(const IMC::EstimatedState& state):
+        m_state(state)
+      {
+        m_time = state.getTimeStamp();
+        int millisecond = (state.getTimeStamp() - m_time) * 1000;
+        m_time *= 1000;
+        m_time += millisecond;
+      }
+
+      const IMC::EstimatedState*
+      getEstimatedState(void) const
+      {
+        return &m_state;
+      }
+
+      int64_t
+      getTime(void) const
+      {
+        return m_time;
+      }
+
+    private:
+      IMC::EstimatedState m_state;
+      int64_t m_time;
+    };
+  }
 }
 
-#include <DUNE/Utils/ByteBuffer.hpp>
-#include <DUNE/Utils/ByteCopy.hpp>
-#include <DUNE/Utils/CircularBuffer.hpp>
-#include <DUNE/Utils/Exceptions.hpp>
-#include <DUNE/Utils/NMEAParser.hpp>
-#include <DUNE/Utils/OptionParser.hpp>
-#include <DUNE/Utils/RawFifo.hpp>
-#include <DUNE/Utils/StateMachine.hpp>
-#include <DUNE/Utils/String.hpp>
-#include <DUNE/Utils/TupleList.hpp>
-#include <DUNE/Utils/Utils.hpp>
-#include <DUNE/Utils/XML.hpp>
-#include <DUNE/Utils/Codecs.hpp>
 #endif

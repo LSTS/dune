@@ -56,11 +56,18 @@ namespace Sensors
         return &m_pkt;
       }
 
-      //! Parse one byte of data.
-      //! @param[in] byte data byte.
-      //! @return true if a message was parsed, falsed otherwise.
       bool
       parse(uint8_t byte)
+      {
+        return parse(byte, &m_pkt);
+      }
+
+      //! Parse one byte of data.
+      //! @param[in] byte data byte.
+      //! @param[in] pkt destination packet.
+      //! @return true if a message was parsed, falsed otherwise.
+      bool
+      parse(uint8_t byte, Packet* pkt)
       {
         switch (m_state)
         {
@@ -69,7 +76,7 @@ namespace Sensors
             {
               m_state = ST_MARKER1;
               m_index = 0;
-              m_pkt.setTimeStamp(Clock::getSinceEpoch());
+              pkt->setTimeStamp(Clock::getSinceEpochMsec());
             }
             break;
 
@@ -78,7 +85,7 @@ namespace Sensors
             break;
 
           case ST_VERSION:
-            m_pkt.setProtocolVersion(byte);
+            pkt->setProtocolVersion(byte);
             m_state = ST_SESSION;
             break;
 
@@ -87,7 +94,7 @@ namespace Sensors
             break;
 
           case ST_MSG_TYPE:
-            m_pkt.setHeaderByte(Packet::HDR_IDX_MSG_TYPE + m_index, byte);
+            pkt->setHeaderByte(Packet::HDR_IDX_MSG_TYPE + m_index, byte);
             if (++m_index == 2)
             {
               m_index = 0;
@@ -96,17 +103,17 @@ namespace Sensors
             break;
 
           case ST_CMD_TYPE:
-            m_pkt.setCommandType(byte);
+            pkt->setCommandType(byte);
             m_state = ST_SSYS_NR;
             break;
 
           case ST_SSYS_NR:
-            m_pkt.setSubsystemNumber(byte);
+            pkt->setSubsystemNumber(byte);
             m_state = ST_CHANNEL;
             break;
 
           case ST_CHANNEL:
-            m_pkt.setChannel(byte);
+            pkt->setChannel(byte);
             m_state = ST_SEQUENCE;
             break;
 
@@ -123,23 +130,23 @@ namespace Sensors
             break;
 
           case ST_MSG_SIZE:
-            m_pkt.setHeaderByte(Packet::HDR_IDX_MSG_SIZE + m_index, byte);
+            pkt->setHeaderByte(Packet::HDR_IDX_MSG_SIZE + m_index, byte);
             if (++m_index == 4)
             {
               m_index = 0;
-              m_msg_size = m_pkt.getMessageSize();
+              m_msg_size = pkt->getMessageSize();
               if (m_msg_size == 0)
               {
                 m_state = ST_MARKER0;
                 return true;
               }
 
-              m_state = (m_msg_size <= m_pkt.getMaximumMessageSize()) ? ST_MSG_DATA : ST_MARKER0;
+              m_state = (m_msg_size <= pkt->getMaximumMessageSize()) ? ST_MSG_DATA : ST_MARKER0;
             }
             break;
 
           case ST_MSG_DATA:
-            m_pkt.setDataByte(m_index, byte);
+            pkt->setDataByte(m_index, byte);
             if (++m_index == m_msg_size)
             {
               m_state = ST_MARKER0;

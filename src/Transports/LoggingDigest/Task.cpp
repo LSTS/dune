@@ -116,8 +116,12 @@ namespace Transports
       void
       onUpdateParameters(void)
       {
-        m_sample_timer.setTop(m_args.sample_interval);
-        m_flush_timer.setTop(m_args.flush_interval);
+        if (paramChanged(m_args.sample_interval))
+          m_sample_timer.setTop(m_args.sample_interval);
+
+        if (paramChanged(m_args.flush_interval))
+          m_flush_timer.setTop(m_args.flush_interval);
+
         bind(this, m_args.messages);
       }
 

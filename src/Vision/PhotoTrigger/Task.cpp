@@ -90,7 +90,7 @@ namespace Vision
         .description("Trigger by using overlap value and distance to previous shot");
 
         param("Trigger Frequency", m_args.freq)
-        .defaultValue("0.25")
+        .defaultValue("0.4")
         .units(Units::Hertz)
         .maximumValue("1.0")
         .description("Frequency of photo shots");
@@ -157,8 +157,9 @@ namespace Vision
         std::ostringstream ss;
         ss << m_lat << ", " << m_lon << ", " << m_hei;
         log_entry.text = ss.str();
-        Delay::wait(0.1);
+        Delay::wait(0.2);
         pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+        dispatch(log_entry);
         dispatch(pcc);
       }
 
@@ -166,7 +167,7 @@ namespace Vision
       sendPulse(void)
       {
         trigger();
-        Delay::wait(m_period - 0.1);
+        Delay::wait(m_period - 0.2);
       }
 
       //! Main loop.

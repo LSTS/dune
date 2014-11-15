@@ -203,9 +203,7 @@ namespace Sensors
       setDataByte(unsigned index, uint8_t byte)
       {
         if ((c_header_size + index) >= c_max_size)
-        {
-          std::cerr << "too much: " << c_header_size + index << std::endl;
-        }
+          throw std::runtime_error("buffer overrun");
 
         m_data[c_header_size + index] = byte;
       }
@@ -268,17 +266,17 @@ namespace Sensors
       }
 
       //! Get packet's time of reception.
-      //! @return seconds since Unix Epoch.
-      double
+      //! @return milliseconds since Unix Epoch.
+      uint64_t
       getTimeStamp(void) const
       {
         return m_time_stamp;
       }
 
       //! Set packet's time of reception.
-      //! @param[in] time_stamp seconds since Unix Epoch.
+      //! @param[in] time_stamp milliseconds since Unix Epoch.
       void
-      setTimeStamp(double time_stamp)
+      setTimeStamp(uint64_t time_stamp)
       {
         m_time_stamp = time_stamp;
       }
@@ -293,7 +291,7 @@ namespace Sensors
       //! Protocol version.
       uint8_t m_version;
       //! Reception timestamp.
-      double m_time_stamp;
+      uint64_t m_time_stamp;
     };
   }
 }

@@ -25,13 +25,13 @@
 # Author: Kristian Klausen                                                 #
 ############################################################################
 
-dune_test_lib(swiftnav sbp_state_init)
+dune_test_lib(swiftnav-static sbp_state_init)
 dune_test_header("libswiftnav/sbp.h")
 
-if(DUNE_SYS_HAS_LIB_SWIFTNAV AND DUNE_SYS_HAS_LIBSWIFTNAV_SBP_H)
+if(DUNE_SYS_HAS_LIB_SWIFTNAV_STATIC AND DUNE_SYS_HAS_LIBSWIFTNAV_SBP_H)
   set(DUNE_SYS_HAS_SWIFTNAV 1 CACHE INTERNAL "Swiftnav library")
   set(DUNE_USING_SWIFTNAV 1 CACHE INTERNAL "Swiftnav library")
-else( DUNE_SYS_HAS_LIB_SWIFTNAV AND DUNE_SYS_HAS_LIBSWIFTNAV_SBP_H)
+else( DUNE_SYS_HAS_LIB_SWIFTNAV_STATIC AND DUNE_SYS_HAS_LIBSWIFTNAV_SBP_H)
   set(DUNE_SYS_HAS_SWIFTNAV 0 CACHE INTERNAL "Swiftnav library")
   set(DUNE_USING_SWIFTNAV 0 CACHE INTERNAL "Swiftnav library")
-endif( DUNE_SYS_HAS_LIB_SWIFTNAV AND DUNE_SYS_HAS_LIBSWIFTNAV_SBP_H)
+endif( DUNE_SYS_HAS_LIB_SWIFTNAV_STATIC AND DUNE_SYS_HAS_LIBSWIFTNAV_SBP_H)

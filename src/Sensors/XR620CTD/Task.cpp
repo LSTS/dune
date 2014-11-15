@@ -161,7 +161,8 @@ namespace Sensors
       onUpdateParameters(void)
       {
         // Initialize timer.
-        m_sspeed_timer.setTop(1 / m_args.output_freq);
+        if (paramChanged(m_args.output_freq))
+          m_sspeed_timer.setTop(1 / m_args.output_freq);
       }
 
       //! Release allocated resources.

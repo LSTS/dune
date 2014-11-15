@@ -42,10 +42,6 @@ if [ -z "$GSM_MODE" ]; then
     GSM_MODE='AT\^SYSCFG=2,2,3fffffff,0,1'
 fi
 
-if [ -n "$NAT_ENABLE" ]; then
-    NAT_ENABLE='true'
-fi
-
 if [ -z "$GSM_PIN" ]; then
     GSM_PIN='AT'
 fi
@@ -172,10 +168,6 @@ ppp_stop()
 
 nat_start()
 {
-    if [ -z "$NAT_ENABLE" ]; then
-        return 0
-    fi
-
     log info "nat: enabling IP forwarding"
     echo '1' > /proc/sys/net/ipv4/ip_forward
     echo '1' > /proc/sys/net/ipv4/ip_dynaddr
@@ -201,10 +193,6 @@ nat_start()
 
 nat_stop()
 {
-    if [ -z "$NAT_ENABLE" ]; then
-        return 0
-    fi
-
     log info "nat: disabling IP forwarding"
     echo '0' > /proc/sys/net/ipv4/ip_forward
     echo '0' > /proc/sys/net/ipv4/ip_dynaddr
@@ -223,7 +211,7 @@ nat_stop()
 
 start()
 {
-    ppp_start && nat_start
+    ppp_start
     if [ $? -ne 0 ]; then
         log err "failed to establish a connection"
         exit 1
@@ -232,7 +220,7 @@ start()
 
 stop()
 {
-    nat_stop && ppp_stop
+    ppp_stop
     if [ $? -eq 0 ]; then
         log info "stopped"
     else
@@ -246,6 +234,12 @@ case "$1" in
         ;;
     stop)
         stop
+        ;;
+    nat_start)
+        nat_start
+        ;;
+    nat_stop)
+        nat_stop
         ;;
     *)
         echo "Usage: $0 <start|stop>"
