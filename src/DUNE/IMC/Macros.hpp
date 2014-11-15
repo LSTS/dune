@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: bf33f0824f5dd93373a54696629f9d88                            *
+// IMC XML MD5: 73b91babb844cbd885fecbb79bb415cd                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -340,8 +340,10 @@
 #define DUNE_IMC_POLYGONVERTEX 474
 //! CompassCalibration identification number.
 #define DUNE_IMC_COMPASSCALIBRATION 475
-//! Formation identification number.
-#define DUNE_IMC_FORMATION 476
+//! FormationParameters identification number.
+#define DUNE_IMC_FORMATIONPARAMETERS 476
+//! FormationPlanExecution identification number.
+#define DUNE_IMC_FORMATIONPLANEXECUTION 477
 //! FollowReference identification number.
 #define DUNE_IMC_FOLLOWREFERENCE 478
 //! Reference identification number.
@@ -354,6 +356,8 @@
 #define DUNE_IMC_RELATIVESTATE 482
 //! Dislodge identification number.
 #define DUNE_IMC_DISLODGE 483
+//! Formation identification number.
+#define DUNE_IMC_FORMATION 484
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.
@@ -374,10 +378,12 @@
 #define DUNE_IMC_VEHICLEMEDIUM 508
 //! Collision identification number.
 #define DUNE_IMC_COLLISION 509
-//! FormationState identification number.
-#define DUNE_IMC_FORMATIONSTATE 510
+//! FormState identification number.
+#define DUNE_IMC_FORMSTATE 510
 //! AutopilotMode identification number.
 #define DUNE_IMC_AUTOPILOTMODE 511
+//! FormationState identification number.
+#define DUNE_IMC_FORMATIONSTATE 512
 //! Abort identification number.
 #define DUNE_IMC_ABORT 550
 //! PlanSpecification identification number.
@@ -478,10 +484,14 @@
 #define DUNE_IMC_UAMTXSTATUS 816
 //! UamRxRange identification number.
 #define DUNE_IMC_UAMRXRANGE 817
+//! FormCtrlParam identification number.
+#define DUNE_IMC_FORMCTRLPARAM 820
+//! FormationEval identification number.
+#define DUNE_IMC_FORMATIONEVAL 821
 //! FormationControlParams identification number.
-#define DUNE_IMC_FORMATIONCONTROLPARAMS 820
+#define DUNE_IMC_FORMATIONCONTROLPARAMS 822
 //! FormationEvaluation identification number.
-#define DUNE_IMC_FORMATIONEVALUATION 821
+#define DUNE_IMC_FORMATIONEVALUATION 823
 //! MessagePart identification number.
 #define DUNE_IMC_MESSAGEPART 877
 //! NeptusBlob identification number.
