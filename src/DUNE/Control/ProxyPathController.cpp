@@ -28,24 +28,27 @@
 // DUNE headers.
 #include <DUNE/Control/ProxyPathController.hpp>
 
-using namespace DUNE::Tasks;
-using namespace DUNE::IMC;
-
 namespace DUNE
 {
   namespace Control
   {
-    ProxyPathController::ProxyPathController(std::string name, Tasks::Context& ctx):
-      DUNE::Control::PathController(name, ctx),
-      m_stateFilter(NULL)
+    using namespace Tasks;
+    using namespace IMC;
+
+    ProxyPathController::ProxyPathController(const std::string& name, Tasks::Context& ctx):
+      Control::PathController(name, ctx),
+      m_state_filter(NULL)
     {
       param("EstimatedState Filter", m_state_src)
       .defaultValue("self")
-      .description("List of <System>+<System> that define the source systems allowed to pass EstimatedState messages.");
+      .description("List of <System>+<System> that defines the source"
+                   " systems allowed to pass EstimatedState messages");
     }
 
     ProxyPathController::~ProxyPathController(void)
-    { }
+    {
+      Memory::clear(m_state_filter);
+    }
 
     void
     ProxyPathController::onEntityResolution(void)
@@ -53,7 +56,7 @@ namespace DUNE
       PathController::onEntityResolution();
 
       // Process the systems allowed to pass the EstimatedState
-      m_stateFilter = new SourceFilter(*this, true, m_state_src, "EstimatedState");
+      m_state_filter = new SourceFilter(*this, true, m_state_src, "EstimatedState");
     }
 
     bool
@@ -61,7 +64,7 @@ namespace DUNE
     {
       // Allow only EstimatedState from the same vehicle.
       // 'True' if the message is NOT allowed to pass.
-      return !m_stateFilter->match(es);
+      return !m_state_filter->match(es);
     }
   }
 }
