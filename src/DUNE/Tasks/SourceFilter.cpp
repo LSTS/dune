@@ -433,10 +433,10 @@ namespace DUNE
       {
         matched = false;
         for (Systems::iterator itr_sys = m_filtered_sys.begin();
-          itr_sys != m_filtered_sys.end(); itr_sys++)
+             itr_sys != m_filtered_sys.end(); itr_sys++)
         {
-          if (((*itr_sys)->find(msg->getSource()) != (*itr_sys)->end() ||
-            (*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end()))
+          if ((*itr_sys)->find(msg->getSource()) != (*itr_sys)->end() ||
+              (*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end())
             matched = true;
         }
       }
@@ -454,10 +454,10 @@ namespace DUNE
       {
         matched = false;
         for (Entities::iterator itr_ent = m_filtered_ent.begin();
-          itr_ent != m_filtered_ent.end(); itr_ent++)
+             itr_ent != m_filtered_ent.end(); itr_ent++)
         {
-          if (((*itr_ent)->find(msg->getSourceEntity()) != (*itr_ent)->end() ||
-            (*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end()))
+          if ((*itr_ent)->find(msg->getSourceEntity()) != (*itr_ent)->end() ||
+              (*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
             matched = true;
         }
       }
@@ -476,12 +476,12 @@ namespace DUNE
         matched = false;
         Entities::iterator itr_ent = m_filtered_ent.begin();
         for (Systems::iterator itr_sys = m_filtered_sys.begin();
-          itr_sys != m_filtered_sys.end(); itr_sys++)
+             itr_sys != m_filtered_sys.end(); itr_sys++)
         {
           if (((*itr_sys)->find(msg->getSource()) != (*itr_sys)->end() ||
-            (*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end()) &&
-            ((*itr_ent)->find(msg->getSourceEntity()) != (*itr_ent)->end() ||
-            (*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end()))
+               (*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end()) &&
+              ((*itr_ent)->find(msg->getSourceEntity()) != (*itr_ent)->end() ||
+               (*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end()))
             matched = true;
           itr_ent++;
         }
@@ -502,14 +502,14 @@ namespace DUNE
         matched = false;
         Messages::iterator itr_msg = m_filtered_msg.begin();
         for (Systems::iterator itr_sys = m_filtered_sys.begin();
-          itr_sys != m_filtered_sys.end(); itr_sys++)
+             itr_sys != m_filtered_sys.end(); itr_sys++)
         {
           if ((*itr_msg)->find(msg->getId()) != (*itr_msg)->end() ||
-            (*itr_msg)->find((unsigned int)UINT_MAX) != (*itr_msg)->end())
+              (*itr_msg)->find((unsigned int)UINT_MAX) != (*itr_msg)->end())
           {
             msg_match = true;
-            if (((*itr_sys)->find(msg->getSource()) != (*itr_sys)->end() ||
-              (*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end()))
+            if ((*itr_sys)->find(msg->getSource()) != (*itr_sys)->end() ||
+                (*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end())
               matched = true;
           }
           itr_msg++;
@@ -544,14 +544,14 @@ namespace DUNE
         matched = false;
         Messages::iterator itr_msg = m_filtered_msg.begin();
         for (Entities::iterator itr_ent = m_filtered_ent.begin();
-          itr_ent != m_filtered_ent.end(); itr_ent++)
+             itr_ent != m_filtered_ent.end(); itr_ent++)
         {
           if ((*itr_msg)->find(msg->getId()) != (*itr_msg)->end() ||
-            (*itr_msg)->find((unsigned int)UINT_MAX) != (*itr_msg)->end())
+              (*itr_msg)->find((unsigned int)UINT_MAX) != (*itr_msg)->end())
           {
             msg_match = true;
-            if (((*itr_ent)->find(msg->getSourceEntity()) != (*itr_ent)->end() ||
-              (*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end()))
+            if ((*itr_ent)->find(msg->getSourceEntity()) != (*itr_ent)->end() ||
+                (*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
               matched = true;
           }
           itr_msg++;
@@ -587,16 +587,16 @@ namespace DUNE
         Messages::iterator itr_msg = m_filtered_msg.begin();
         Entities::iterator itr_ent = m_filtered_ent.begin();
         for (Systems::iterator itr_sys = m_filtered_sys.begin();
-          itr_sys != m_filtered_sys.end(); itr_sys++)
+             itr_sys != m_filtered_sys.end(); itr_sys++)
         {
           if ((*itr_msg)->find(msg->getId()) != (*itr_msg)->end() ||
-            (*itr_msg)->find((unsigned int)UINT_MAX) != (*itr_msg)->end())
+              (*itr_msg)->find((unsigned int)UINT_MAX) != (*itr_msg)->end())
           {
             msg_match = true;
             if (((*itr_sys)->find(msg->getSource()) != (*itr_sys)->end() ||
-              (*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end()) &&
-              ((*itr_ent)->find(msg->getSourceEntity()) != (*itr_ent)->end() ||
-              (*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end()))
+                 (*itr_sys)->find((unsigned int)UINT_MAX) != (*itr_sys)->end()) &&
+                ((*itr_ent)->find(msg->getSourceEntity()) != (*itr_ent)->end() ||
+                 (*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end()))
               matched = true;
           }
           itr_msg++;
@@ -671,7 +671,7 @@ namespace DUNE
         else
         {
           for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
-            itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
+               itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
             filt_def.push_back("     System: '" + std::string(m_task.resolveSystemId(*itr_sys_indiv)) + "'.");
         }
       }
@@ -695,7 +695,7 @@ namespace DUNE
         else
         {
           for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
-            itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
+               itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
             filt_def.push_back("     Entity: '" + m_task.resolveEntity(*itr_ent_indiv) + "'.");
         }
       }
@@ -722,17 +722,14 @@ namespace DUNE
           else
           {
             for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
-              itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
-            {
-              filt_def.push_back("     System: ANY - Entity: '" +
-                                 m_task.resolveEntity(*itr_ent_indiv) + "'.");
-            }
+                 itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
+              filt_def.push_back("     System: ANY - Entity: '" + m_task.resolveEntity(*itr_ent_indiv) + "'.");
           }
         }
         else if ((*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
         {
           for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
-            itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
+               itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
           {
             filt_def.push_back("     System: '" +
                                std::string(m_task.resolveSystemId(*itr_sys_indiv)) + "' - Entity: ANY.");
@@ -741,10 +738,10 @@ namespace DUNE
         else
         {
           for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
-            itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
+               itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
           {
             for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
-              itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
+                 itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
             {
               filt_def.push_back("     System: '" +
                                  std::string(m_task.resolveSystemId(*itr_sys_indiv)) + "' - Entity: '" +
@@ -768,12 +765,14 @@ namespace DUNE
       for (Systems::iterator itr_sys = m_filtered_sys.begin(); itr_sys != m_filtered_sys.end(); itr_sys++)
       {
         if ((*itr_msg)->find((unsigned int)UINT_MAX) != (*itr_msg)->end())
+		{
           filt_def.push_back("Filter for ANY message, sets:");
+		}
         else
         {
           filt_def.push_back("Filter for:");
           for (std::set<uint32_t>::iterator itr_msg_indiv = (*itr_msg)->begin();
-            itr_msg_indiv != (*itr_msg)->end(); itr_msg_indiv++)
+               itr_msg_indiv != (*itr_msg)->end(); itr_msg_indiv++)
             filt_def.push_back("  Message " + IMC::Factory::getAbbrevFromId(*itr_msg_indiv));
           filt_def.push_back("-------------- sets:");
         }
@@ -785,7 +784,7 @@ namespace DUNE
         else
         {
           for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
-            itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
+               itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
             filt_def.push_back("     System: '" + std::string(m_task.resolveSystemId(*itr_sys_indiv)) + "'.");
         }
         itr_msg++;
@@ -811,7 +810,7 @@ namespace DUNE
         {
           filt_def.push_back("Filter for:");
           for (std::set<uint32_t>::iterator itr_msg_indiv = (*itr_msg)->begin();
-            itr_msg_indiv != (*itr_msg)->end(); itr_msg_indiv++)
+               itr_msg_indiv != (*itr_msg)->end(); itr_msg_indiv++)
             filt_def.push_back("  Message " + IMC::Factory::getAbbrevFromId(*itr_msg_indiv));
           filt_def.push_back("-------------- sets:");
         }
@@ -823,7 +822,7 @@ namespace DUNE
         else
         {
           for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
-            itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
+               itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
             filt_def.push_back("     Entity: '" + m_task.resolveEntity(*itr_ent_indiv) + "'.");
         }
         itr_msg++;
@@ -850,7 +849,7 @@ namespace DUNE
         {
           filt_def.push_back("Filter for:");
           for (std::set<uint32_t>::iterator itr_msg_indiv = (*itr_msg)->begin();
-            itr_msg_indiv != (*itr_msg)->end(); itr_msg_indiv++)
+               itr_msg_indiv != (*itr_msg)->end(); itr_msg_indiv++)
             filt_def.push_back("  Message " + IMC::Factory::getAbbrevFromId(*itr_msg_indiv));
           filt_def.push_back("-------------- sets:");
         }
@@ -863,7 +862,7 @@ namespace DUNE
           else
           {
             for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
-              itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
+                 itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
             {
               filt_def.push_back("     System: ANY - Entity: '" +
                                  m_task.resolveEntity(*itr_ent_indiv) + "'.");
@@ -873,7 +872,7 @@ namespace DUNE
         else if ((*itr_ent)->find((unsigned int)UINT_MAX) != (*itr_ent)->end())
         {
           for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
-            itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
+               itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
           {
             filt_def.push_back("     System: '" + std::string(m_task.resolveSystemId(*itr_sys_indiv)) +
                                "' - Entity: ANY.");
@@ -882,10 +881,10 @@ namespace DUNE
         else
         {
           for (std::set<uint32_t>::iterator itr_sys_indiv = (*itr_sys)->begin();
-            itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
+               itr_sys_indiv != (*itr_sys)->end(); itr_sys_indiv++)
           {
             for (std::set<uint32_t>::iterator itr_ent_indiv = (*itr_ent)->begin();
-              itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
+                 itr_ent_indiv != (*itr_ent)->end(); itr_ent_indiv++)
             {
               filt_def.push_back("     System: '" +
                                  std::string(m_task.resolveSystemId(*itr_sys_indiv)) +
