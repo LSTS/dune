@@ -73,16 +73,16 @@ main(int32_t argc, char** argv)
 
         if (lbe->getSourceEntity() != phototrigger_eid)
           continue;
-	
-	double lat;
-	double lon;
-	double height;
+
+        double lat;
+        double lon;
+        double height;
 
         std::sscanf(lbe->text.c_str(), "%lf,%lf,%lf", &lat, &lon, &height);
 
-	logfile << std::setprecision(10) << Angles::degrees(lat) << "," << Angles::degrees(lon) << "," << height << std::endl;
+        logfile << std::setprecision(10) << Angles::degrees(lat) << "," << Angles::degrees(lon) << "," << height << std::endl;
       }
-     
+
       else if (msg->getId() == DUNE_IMC_ENTITYINFO)
       {
         IMC::EntityInfo* ei = static_cast<IMC::EntityInfo*>(msg);
