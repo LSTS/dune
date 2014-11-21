@@ -39,7 +39,7 @@ namespace Navigation
   namespace AUV
   {
     //! Second Generation Navigation
-    namespace SGNavigation
+    namespace Navigation
     {
       //! Navigation states.
       enum StateIndexes
