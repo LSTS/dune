@@ -211,7 +211,7 @@ main(int32_t argc, char** argv)
         delete msg;
 
         // ignore idles
-        // either has the string _idle or has only 
+        // either has the string _idle or has only
         if (got_name &&
             (log_name.find("_idle") != std::string::npos ||
              log_name.size() == 15))

@@ -44,7 +44,7 @@ namespace DUNE
 #elif defined(DUNE_OS_WINDOWS)
     typedef HANDLE NativeHandle;
 #endif
-    
+
     class Handle
     {
     public:
@@ -52,7 +52,7 @@ namespace DUNE
       virtual
       ~Handle(void)
       { }
-      
+
       //! Write binary data to I/O handle.
       //! @param[in] data data buffer.
       //! @param[in] length number of bytes to write.

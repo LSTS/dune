@@ -84,12 +84,12 @@ namespace DUNE
     class ImcIridiumMessage : public IridiumMessage
     {
     public:
-    	ImcIridiumMessage();
-    	ImcIridiumMessage(DUNE::IMC::Message * msg);
-    	int serialize(uint8_t * buffer);
-    	int deserialize(uint8_t* data, uint16_t len);
-    	~ImcIridiumMessage();
-    	DUNE::IMC::Message * msg;
+      ImcIridiumMessage();
+      ImcIridiumMessage(DUNE::IMC::Message * msg);
+      int serialize(uint8_t * buffer);
+      int deserialize(uint8_t* data, uint16_t len);
+      ~ImcIridiumMessage();
+      DUNE::IMC::Message * msg;
     };
 
     //! Extension to the IMC protocol used to report a set of device positions
@@ -107,11 +107,11 @@ namespace DUNE
     class ExtendedDeviceUpdate : public IridiumMessage
     {
     public:
-    	std::vector<DevicePosition> positions;
-    	int serialize(uint8_t * buffer);
-    	int deserialize(uint8_t* data, uint16_t len);
-    	ExtendedDeviceUpdate();
-    	~ExtendedDeviceUpdate(){};
+      std::vector<DevicePosition> positions;
+      int serialize(uint8_t * buffer);
+      int deserialize(uint8_t* data, uint16_t len);
+      ExtendedDeviceUpdate();
+      ~ExtendedDeviceUpdate(){};
     };
 
     //! Extension to the IMC protocol used request reception of device position updates
