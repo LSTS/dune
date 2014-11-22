@@ -385,6 +385,7 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_VFR_HUD] = &Task::handleHUDPacket;
           m_mlh[MAVLINK_MSG_ID_SYSTEM_TIME] = &Task::handleSystemTimePacket;
           m_mlh[MAVLINK_MSG_ID_MISSION_REQUEST] = &Task::handleMissionRequestPacket;
+          m_mlh[MAVLINK_MSG_ID_SCALED_IMU] = &Task::handleImuRaw;
 
 
           // Setup processing of IMC messages
@@ -1576,6 +1577,36 @@ namespace Control
           m_estate.p = att.rollspeed;
           m_estate.q = att.pitchspeed;
           m_estate.r = att.yawspeed;
+        }
+
+        void
+        handleImuRaw(const mavlink_message_t* msg)
+        {
+          mavlink_scaled_imu_t raw;
+          mavlink_msg_scaled_imu_decode(msg, &raw);
+
+          double tstamp = Clock::getSinceEpoch();
+
+          IMC::Acceleration acce;
+          acce.x = raw.xacc * 1000;
+          acce.y = raw.yacc * 1000;
+          acce.z = raw.zacc * 1000;
+          acce.setTimeStamp(tstamp);
+          dispatch(acce);
+
+          IMC::AngularVelocity avel;
+          avel.x = raw.xgyro * 1000;
+          avel.y = raw.ygyro * 1000;
+          avel.z = raw.zgyro * 1000;
+          avel.setTimeStamp(tstamp);
+          dispatch(avel);
+
+          IMC::MagneticField magn;
+          magn.x = raw.xmag * 1000;
+          magn.y = raw.ymag * 1000;
+          magn.z = raw.zmag * 1000;
+          magn.setTimeStamp(tstamp);
+          dispatch(magn);
         }
 
         void
