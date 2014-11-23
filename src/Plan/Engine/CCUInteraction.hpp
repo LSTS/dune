@@ -52,6 +52,7 @@ namespace Plan
     {
     public:
       //! Constructor
+      //! @param[in] task pointer to task
       CCUInteraction(DUNE::Tasks::Task* task):
         m_task(task)
       {

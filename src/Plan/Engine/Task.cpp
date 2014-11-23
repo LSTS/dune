@@ -49,7 +49,7 @@ namespace Plan
     const float c_activ_min = 15.0f;
     //! Plan engine state descriptions
     const char* c_state_desc[] = {DTR_RT("NONE"), DTR_RT("BOOT"), DTR_RT("READY"),
-                                  DTR_RT("STOPPING"), DTR_RT("START_DBFETCH"),
+                                  DTR_RT("STOPPING"), DTR_RT("DBFETCH"),
                                   DTR_RT("START_ACTIV"), DTR_RT("ACTIVATING"),
                                   DTR_RT("START_EXEC"), DTR_RT("EXECUTING"),
                                   DTR_RT("BLOCKED")};
@@ -127,8 +127,7 @@ namespace Plan
       CCUInteraction* m_ccu;
       //! Vehicle interaction
       VehicleInteraction* m_vein;
-      //! Misc.
-      IMC::LoggingControl m_lc;
+      //! EstimatedState message
       IMC::EstimatedState m_state;
       //! ManeuverControlState message
       IMC::ManeuverControlState m_mcs;
@@ -1204,9 +1203,10 @@ namespace Plan
       void
       changeLog(const std::string& name)
       {
-        m_lc.op = IMC::LoggingControl::COP_REQUEST_START;
-        m_lc.name = name;
-        dispatch(m_lc);
+        IMC::LoggingControl lc;
+        lc.op = IMC::LoggingControl::COP_REQUEST_START;
+        lc.name = name;
+        dispatch(lc);
       }
     };
   }
