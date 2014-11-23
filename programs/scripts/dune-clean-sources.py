@@ -35,15 +35,17 @@ import os.path
 def clean_whitespace(file):
     ifd = open(file, 'r')
     ofd = open(file + '.bak', 'w')
+    mode = os.stat(file).st_mode
     for line in ifd:
         line = line.rstrip().replace('\t', '  ')
         ofd.write(line + '\n')
     ifd.close()
     ofd.close()
     os.rename(file + '.bak', file)
+    os.chmod(file, mode)
 
 EXCLUDE = [
-    '.git', 'vendor', 'etc/xml/IMC.xml'
+    '.git', 'vendor'
 ]
 
 INCLUDE_EXT = [
