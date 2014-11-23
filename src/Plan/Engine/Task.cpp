@@ -649,7 +649,7 @@ namespace Plan
       }
 
       //! Load a plan into the vehicle
-      //! @param[in] memento pointer to plan memento
+      //! @param[in] pmem pointer to PlanMemento message
       //! @param[in] plan_startup true if a plan will start right after
       //! @return true if plan can be loaded right away
       bool
@@ -743,7 +743,7 @@ namespace Plan
       }
 
       //! Handle plan memento argument
-      //! @param[in] arg pointer to arg message
+      //! @param[in] pmem pointer to PlanMemento message
       //! @param[out] info string with the error in case of failure
       //! @return false if unable to get the memento
       bool
@@ -812,7 +812,6 @@ namespace Plan
       }
 
       //! Start a given plan
-      //! @param[in] plan_id name of the plan to execute
       //! @param[in] pmem plan memento message if any
       //! @return false if failed to start plan
       bool
