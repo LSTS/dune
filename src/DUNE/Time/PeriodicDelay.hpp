@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_SYSTEM_PERIODIC_DELAY_HPP_INCLUDED_
-#define DUNE_SYSTEM_PERIODIC_DELAY_HPP_INCLUDED_
+#ifndef DUNE_TIME_PERIODIC_DELAY_HPP_INCLUDED_
+#define DUNE_TIME_PERIODIC_DELAY_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/Config.hpp>

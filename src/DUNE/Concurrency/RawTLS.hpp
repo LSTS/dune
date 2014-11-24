@@ -25,8 +25,8 @@
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
 
-#ifndef DUNE_CONCURRENCY_RAWTLS_HPP_INCLUDED_
-#define DUNE_CONCURRENCY_RAWTLS_HPP_INCLUDED_
+#ifndef DUNE_CONCURRENCY_RAW_TLS_HPP_INCLUDED_
+#define DUNE_CONCURRENCY_RAW_TLS_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <cstddef>

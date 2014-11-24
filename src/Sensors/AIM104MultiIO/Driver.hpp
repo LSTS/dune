@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_SENSORS_AIM104_MULTI_IO_HPP_INCLUDED_
-#define DUNE_SENSORS_AIM104_MULTI_IO_HPP_INCLUDED_
+#ifndef SENSORS_AIM104_MULTI_IO_DRIVER_HPP_INCLUDED_
+#define SENSORS_AIM104_MULTI_IO_DRIVER_HPP_INCLUDED_
 
 // ISO C++ 98 headers
 #include <string>

@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef MANEUVER_MULTIPLEXER_POPUP_HPP_INCLUDED_
-#define MANEUVER_MULTIPLEXER_POPUP_HPP_INCLUDED_
+#ifndef MANEUVER_MULTIPLEXER_POP_UP_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_POP_UP_HPP_INCLUDED_
 
 // DUNE headers
 #include <DUNE/DUNE.hpp>

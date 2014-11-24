@@ -25,8 +25,8 @@
 // Author: Renato Caldas                                                    *
 //***************************************************************************
 
-#ifndef VISION_LUMENERA_HTTPCLIENT_HPP_INCLUDED_
-#define VISION_LUMENERA_HTTPCLIENT_HPP_INCLUDED_
+#ifndef VISION_LUMENERA_HTTP_CLIENT_HPP_INCLUDED_
+#define VISION_LUMENERA_HTTP_CLIENT_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <cstring>

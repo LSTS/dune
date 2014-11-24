@@ -25,9 +25,8 @@
 // Author: Jose Pinto                                                       *
 //***************************************************************************
 
-
-#ifndef IRIDIUMMESSAGEDEFINITIONS_HPP_
-#define IRIDIUMMESSAGEDEFINITIONS_HPP_
+#ifndef DUNE_IMC_IRIDIUM_MESSAGE_DEFINITIONS_HPP_INCLUDED_
+#define DUNE_IMC_IRIDIUM_MESSAGE_DEFINITIONS_HPP_INCLUDED_
 
 # include <DUNE/Config.hpp>
 # include <DUNE/IMC/Serialization.hpp>
