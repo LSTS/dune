@@ -32,6 +32,7 @@ import sys
 import shutil
 import os.path
 import subprocess
+import argparse
 
 # Camel case exceptions.
 CAMEL = {
@@ -109,7 +110,15 @@ def file_clean_whitespace(file):
     ifd = open(file, 'r')
     ofd = open(file + '.bak', 'w')
     mode = os.stat(file).st_mode
+    previous_empty = False
     for line in ifd:
+        if len(line.strip()) == 0:
+            if previous_empty:
+                continue
+            previous_empty = True
+        else:
+            previous_empty = False
+
         line = line.rstrip().replace('\t', '  ')
         ofd.write(line + '\n')
     ifd.close()
@@ -184,13 +193,28 @@ wrk_dir = os.path.dirname(script)
 top_dir = os.path.abspath(os.path.join(wrk_dir, '..', '..'))
 src_dir = os.path.abspath(os.path.join(top_dir, 'src'))
 
-headers = get_header_list(src_dir)
-for header in headers:
-    while True:
-        if file_check_guard(src_dir, header):
-            break
-        else:
-            subprocess.call(['emacs', header])
+parser = argparse.ArgumentParser()
+parser.add_argument('--clean-whitespace', action='store_true',
+                    help='Clean whitespaces')
+parser.add_argument('--check-headers', action='store_true',
+                    help='Check if headers are self-contained')
+parser.add_argument('--check-guards', action='store_true',
+                    help='Check header guards')
+parser.add_argument('--all', action='store_true',
+                    help='Perform all checks')
+args = parser.parse_args()
 
-clean_whitespace(top_dir)
-check_headers(top_dir)
+if args.check_guards or args.all:
+    headers = get_header_list(src_dir)
+    for header in headers:
+        while True:
+            if file_check_guard(src_dir, header):
+                break
+            else:
+                subprocess.call(['emacs', header])
+
+if args.clean_whitespace or args.all:
+    clean_whitespace(top_dir)
+
+if args.check_headers or args.all:
+    check_headers(top_dir)
