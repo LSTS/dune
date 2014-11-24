@@ -109,7 +109,6 @@ namespace DUNE
         return std::sqrt(x1 * x1 + y1 * y1 + z1 * z1);
       }
 
-
       //! Compute North-East-Down displacement between two WGS-84
       //! coordinates.
       //!

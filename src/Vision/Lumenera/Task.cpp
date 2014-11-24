@@ -516,7 +516,6 @@ namespace Vision
         m_slave_entities->onEntityInfo(msg);
       }
 
-
       void
       setStrobePower(bool value)
       {

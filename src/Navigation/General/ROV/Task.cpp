@@ -52,7 +52,6 @@ namespace Navigation
         NUM_STATE = 4
       };
 
-
       //! Navigation Output states.
       enum OutputIndexes
       {

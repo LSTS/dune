@@ -54,13 +54,10 @@ main(int argc, char** argv)
   map[key0] = "Lixo1";
   map[key1] = "Lixo2";
 
-
   std::cerr << map.size() << std::endl;
 
   // sched.setSchedule("Temperature", 0, 1, 1.0);
   // sched.setSchedule("Temperature", 0, 2, 0.2);
-
-
 
   // while (true)
   // {

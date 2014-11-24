@@ -386,7 +386,6 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_SYSTEM_TIME] = &Task::handleSystemTimePacket;
           m_mlh[MAVLINK_MSG_ID_MISSION_REQUEST] = &Task::handleMissionRequestPacket;
 
-
           // Setup processing of IMC messages
           bind<DesiredPath>(this);
           bind<DesiredRoll>(this);
@@ -1163,7 +1162,6 @@ namespace Control
 
           uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
-
 
           sendCommandPacket(MAV_CMD_NAV_LOITER_UNLIM);
 

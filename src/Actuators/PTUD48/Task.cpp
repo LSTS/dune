@@ -294,7 +294,6 @@ namespace Actuators
         // Send tilt rate command.
         //createCommand("ts", tilt_rate_pos);
 
-
         // Send halt command.
         //if (tuples.get("Halt", 0)) sendCommand("h ");
       }

@@ -62,7 +62,6 @@ class Changelog:
                                       universal_newlines = True)
         return out.split('\n')
 
-
     def _process_commit(self, lines):
         if len(lines) == 0:
             return

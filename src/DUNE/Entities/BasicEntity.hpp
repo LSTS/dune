@@ -115,7 +115,6 @@ namespace DUNE
       void
       reportInfo(void);
 
-
       //! Compare label against a string.
       //! @param[in] label string to be compared against.
       //! @return true if the label and the string match, false otherwise.

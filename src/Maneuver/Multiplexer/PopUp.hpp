@@ -327,7 +327,6 @@ namespace Maneuver
         computeETA();
       }
 
-
       //! Compute ETA
       inline void
       computeETA(void)
