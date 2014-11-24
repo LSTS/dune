@@ -334,7 +334,6 @@ class Function:
                name + '(' + self._args_str + ')' + self._const_str +'\n' \
                '{\n'+ self._body + '\n}\n'
 
-
 import os.path
 
 class File:

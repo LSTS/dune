@@ -446,7 +446,6 @@ namespace Plan
 
         bool found = m_get_plan_stmt->execute();
 
-
         if (!found)
         {
           onFailure(DTR("undefined plan"));

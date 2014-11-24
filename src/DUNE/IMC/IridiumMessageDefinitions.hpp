@@ -78,7 +78,6 @@ namespace DUNE
       virtual ~IridiumMessage() {}
     };
 
-
     //! An Iridium message that encapsulates an IMC message
     class ImcIridiumMessage : public IridiumMessage
     {

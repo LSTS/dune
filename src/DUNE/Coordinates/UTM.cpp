@@ -87,7 +87,6 @@ namespace DUNE
         if(!in_north_hem)
                 north -= 10000000.0;
 
-
         tmd = north / c_k0;
 
         sr = c_wgs84_a * (1.0 - eSquared);

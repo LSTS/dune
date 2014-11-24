@@ -197,7 +197,6 @@ namespace Sensors
             break;
         }
 
-
         if (m_driver->read())
         {
           m_wdog.reset();

@@ -6,7 +6,6 @@
 \begin{document}
 \pagestyle{empty}
 
-
 % Define block styles
 \tikzstyle{decision} = [diamond, draw, fill=white,
 text width=8em, text badly centered, node distance=2.5cm, inner sep=0pt, font=\footnotesize, aspect=3]
@@ -19,7 +18,6 @@ minimum height=2em, font=\footnotesize]
 \tikzstyle{branch}=[fill,shape=circle,minimum size=3pt,inner sep=0pt]
 \tikzstyle{branch2}=[minimum size=0pt,inner sep=0pt]
 
-
 \begin{tikzpicture}[node distance = 2cm, auto]
   % Place nodes
   \node [block] (idle) {Idle};
@@ -30,7 +28,6 @@ minimum height=2em, font=\footnotesize]
   \node [block, below of=test_etp, node distance=2cm] (throwerror) {Throw Error and Reset Timer2};
   \node [decision, right of=test_error, node distance=3.5cm] (test_pet) {$error < MCET$};
   \node [block, below of=test_pet, node distance=2cm] (reset_timer) {Reset Timer1};
-
 
 % connection nodes
   \node [branch2, right of=reset_timer] (righttimer) {};

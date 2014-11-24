@@ -234,7 +234,6 @@ namespace DUNE
       virtual void
       step(const IMC::EstimatedState& state, const TrackingState& ts) = 0;
 
-
       //! Default implementation for loiter control,
       //! that can be  overriden for a controller specific implementation.
       //! @param state navigation state

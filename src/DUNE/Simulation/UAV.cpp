@@ -1005,7 +1005,6 @@ namespace DUNE
         //! The vertical speed should not exceed the airspeed, even if there is no specified vertical slope limit
         m_velocity(2) = DUNE::Math::trimValue(m_velocity(2), -m_airspeed, m_airspeed);
 
-
       //! - Computing flight path angle
       m_sin_pitch = -m_velocity(2)/m_airspeed;
       m_cos_pitch = std::sqrt(1 - m_sin_pitch*m_sin_pitch);

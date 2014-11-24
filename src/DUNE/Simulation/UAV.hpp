@@ -254,7 +254,6 @@ namespace DUNE
       UAVSimulation
       update(const double& timestep, const double& bank_cmd);
 
-
       //! This method updates the simulated state with the defined time step and controls.
       //! @param[in] timestep - time step for the update
       //! @param[in] bank_cmd - applied bank command
