@@ -60,7 +60,6 @@ INCLUDE_EXT = [
     '.txt', '.xml', '.xsl'
 ]
 
-
 def camel_to_underscore(text):
     '''Convert camel case text to underscore separated text.'''
     if text in CAMEL:
