@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef SUPERVISOR_VEHICLE_REQUEST_HPP_INCLUDED_
-#define SUPERVISOR_VEHICLE_REQUEST_HPP_INCLUDED_
+#ifndef SUPERVISORS_VEHICLE_REQUEST_HPP_INCLUDED_
+#define SUPERVISORS_VEHICLE_REQUEST_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>

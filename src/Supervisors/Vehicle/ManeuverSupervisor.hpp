@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef SUPERVISOR_VEHICLE_MANEUVERSUPERVISOR_HPP_INCLUDED_
-#define SUPERVISOR_VEHICLE_MANEUVERSUPERVISOR_HPP_INCLUDED_
+#ifndef SUPERVISORS_VEHICLE_MANEUVER_SUPERVISOR_HPP_INCLUDED_
+#define SUPERVISORS_VEHICLE_MANEUVER_SUPERVISOR_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <queue>
