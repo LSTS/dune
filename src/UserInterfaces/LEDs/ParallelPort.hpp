@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_USER_INTERFACES_LEDS_PARALLEL_PORT_HPP_INCLUDED_
-#define DUNE_USER_INTERFACES_LEDS_PARALLEL_PORT_HPP_INCLUDED_
+#ifndef USER_INTERFACES_LEDS_PARALLEL_PORT_HPP_INCLUDED_
+#define USER_INTERFACES_LEDS_PARALLEL_PORT_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
