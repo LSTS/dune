@@ -32,12 +32,7 @@
 #include <string>
 
 // DUNE headers.
-#include <DUNE/IMC.hpp>
-#include <DUNE/Parsers.hpp>
-#include <DUNE/Memory.hpp>
-#include <DUNE/Plans/TimeProfile.hpp>
-#include <DUNE/Plans/PowerModel.hpp>
-#include <DUNE/Plans/SpeedModel.hpp>
+#include <DUNE/DUNE.hpp>
 
 // Local headers.
 #include "ComponentActiveTime.hpp"

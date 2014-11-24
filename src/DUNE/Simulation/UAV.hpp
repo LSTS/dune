@@ -36,6 +36,7 @@
 
 // DUNE headers.
 #include <DUNE/Math/Matrix.hpp>
+#include <DUNE/Tasks/Task.hpp>
 
 namespace DUNE
 {

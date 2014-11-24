@@ -33,6 +33,9 @@
 #include <map>
 #include <cmath>
 
+// DUNE headers.
+#include <DUNE/Config.hpp>
+
 namespace Plan
 {
   namespace Engine
