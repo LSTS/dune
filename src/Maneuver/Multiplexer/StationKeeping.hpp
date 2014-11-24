@@ -26,8 +26,8 @@
 // Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-#ifndef MANEUVER_MULTIPLEXER_STATIONKEEPING_HPP_INCLUDED_
-#define MANEUVER_MULTIPLEXER_STATIONKEEPING_HPP_INCLUDED_
+#ifndef MANEUVER_MULTIPLEXER_STATION_KEEPING_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_STATION_KEEPING_HPP_INCLUDED_
 
 #include <DUNE/DUNE.hpp>
 
