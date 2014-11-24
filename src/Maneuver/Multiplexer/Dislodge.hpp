@@ -28,17 +28,19 @@
 #ifndef MANEUVER_MULTIPLEXER_DISLODGE_HPP_INCLUDED_
 #define MANEUVER_MULTIPLEXER_DISLODGE_HPP_INCLUDED_
 
+// DUNE headers.
 #include <DUNE/DUNE.hpp>
 
 // Local headers
+#include "Constants.hpp"
 #include "MuxedManeuver.hpp"
-
-using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
   namespace Multiplexer
   {
+    using DUNE_NAMESPACES;
+
     struct DislodgeArgs
     {
       //! Number of bursts

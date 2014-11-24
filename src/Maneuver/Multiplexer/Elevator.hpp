@@ -33,13 +33,14 @@
 
 // Local headers.
 #include "Constants.hpp"
-
-using DUNE_NAMESPACES;
+#include "MuxedManeuver.hpp"
 
 namespace Maneuver
 {
   namespace Multiplexer
   {
+    using DUNE_NAMESPACES;
+
     //! Arguments
     struct ElevatorArgs
     {

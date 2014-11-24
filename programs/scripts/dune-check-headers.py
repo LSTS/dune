@@ -72,24 +72,16 @@ cxx = ['g++', '-Wall', '-Wextra', '-Werror',
        '-o', '/dev/null'
        ]
 
-work_queue = queue.Queue()
-
-def worker():
+n = 1
+for hdr in headers:
     while True:
-        hdr = work_queue.get()
-        print(hdr)
-        subprocess.call(cxx + [hdr])
-        work_queue.task_done()
-
-for i in range(0, 4):
-    t = threading.Thread(target = worker)
-    t.daemon = True
-    t.start()
-
-for header in headers:
-    work_queue.put_nowait(header)
-
-work_queue.join()
+        print('[%u/%u] %s' % (n, len(headers), hdr))
+        try:
+            subprocess.check_call(cxx + [hdr])
+            break
+        except:
+            subprocess.check_call(['emacs', hdr])
+    n = n + 1
 
 # Remove CMake files.
 if os.path.isdir(bld_dir):
