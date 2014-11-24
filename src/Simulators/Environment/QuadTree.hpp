@@ -25,8 +25,8 @@
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
 
-#ifndef SIMULATORS_ECHOSOUNDER_QUADTREE_HPP_INCLUDED_
-#define SIMULATORS_ECHOSOUNDER_QUADTREE_HPP_INCLUDED_
+#ifndef SIMULATORS_ENVIRONMENT_QUAD_TREE_HPP_INCLUDED_
+#define SIMULATORS_ENVIRONMENT_QUAD_TREE_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <iomanip>
