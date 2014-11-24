@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef MONITORS_FUELLEVEL_BATTERY_DATA_HPP_INCLUDED_
-#define MONITORS_FUELLEVEL_BATTERY_DATA_HPP_INCLUDED_
+#ifndef MONITORS_FUEL_LEVEL_BATTERY_DATA_HPP_INCLUDED_
+#define MONITORS_FUEL_LEVEL_BATTERY_DATA_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <cstring>
