@@ -25,8 +25,8 @@
 // Author: Renato Caldas                                                    *
 //***************************************************************************
 
-#ifndef DUNE_ENTITIES_PLAIN_ENTITY_HPP_INCLUDED_
-#define DUNE_ENTITIES_PLAIN_ENTITY_HPP_INCLUDED_
+#ifndef DUNE_ENTITIES_BASIC_ENTITY_HPP_INCLUDED_
+#define DUNE_ENTITIES_BASIC_ENTITY_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>
