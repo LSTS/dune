@@ -25,8 +25,8 @@
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
 
-#ifndef DUNE_MATH_RANDOM_TSGENERATOR_HPP_INCLUDED_
-#define DUNE_MATH_RANDOM_TSGENERATOR_HPP_INCLUDED_
+#ifndef DUNE_MATH_RANDOM_TS_GENERATOR_HPP_INCLUDED_
+#define DUNE_MATH_RANDOM_TS_GENERATOR_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/Math/Random/Generator.hpp>
