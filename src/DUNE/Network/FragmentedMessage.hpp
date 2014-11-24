@@ -25,8 +25,8 @@
 // Author: Jose Pinto                                                       *
 //***************************************************************************
 
-#ifndef DUNE_NETWORK_FRAGMENTEDMESSAGE_HPP_INCLUDED_
-#define DUNE_NETWORK_FRAGMENTEDMESSAGE_HPP_INCLUDED_
+#ifndef DUNE_NETWORK_FRAGMENTED_MESSAGE_HPP_INCLUDED_
+#define DUNE_NETWORK_FRAGMENTED_MESSAGE_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/IMC.hpp>
