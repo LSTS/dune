@@ -33,6 +33,7 @@
 
 // Local headers.
 #include "Link.hpp"
+#include "SSC/Commands.hpp"
 
 namespace Transports
 {

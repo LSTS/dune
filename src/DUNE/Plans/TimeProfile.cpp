@@ -93,7 +93,10 @@ namespace DUNE
     inline float
     TimeProfile::compensate(float distance, float speed)
     {
-      return std::max(0.0f, distance - Control::c_time_factor * speed);
+      if (m_speed_model == NULL)
+        return distance;
+      else
+        return std::max(0.0f, distance - m_speed_model->getTimeFactor() * speed);
     }
 
     float

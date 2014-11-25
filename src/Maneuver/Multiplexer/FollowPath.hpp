@@ -26,8 +26,8 @@
 // Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-#ifndef MANEUVER_MULTIPLEXER_FOLLOWPATH_HPP_INCLUDED_
-#define MANEUVER_MULTIPLEXER_FOLLOWPATH_HPP_INCLUDED_
+#ifndef MANEUVER_MULTIPLEXER_FOLLOW_PATH_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_FOLLOW_PATH_HPP_INCLUDED_
 
 #include <DUNE/DUNE.hpp>
 

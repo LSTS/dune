@@ -263,7 +263,8 @@ namespace Sensors
         }
 
         // Input timeout.
-        m_last_stn.setTop(m_args.tout_input);
+        if (paramChanged(m_args.tout_input))
+          m_last_stn.setTop(m_args.tout_input);
       }
 
       void
@@ -600,13 +601,10 @@ namespace Sensors
         if (value == c_code_plan_ack)
         {
           inf(DTR("plan started"));
-          m_pc->setDestination(m_pc->getSource());
-          m_pc->setDestinationEntity(m_pc->getSourceEntity());
-          m_pc->setSource(getSystemId());
-          m_pc->setSourceEntity(getEntityId());
+          m_pc->setSource(m_mimap[src]);
           m_pc->type = IMC::PlanControl::PC_SUCCESS;
           m_pc->flags = 0;
-          dispatch(*m_pc);
+          dispatchReply(*m_pc, *m_pc, DF_KEEP_SRC_EID);
         }
         else if (value & c_mask_qtrack)
         {

@@ -172,6 +172,10 @@ namespace Monitors
         .units(Units::Percentage)
         .description("Minimum confidence for recomputing update");
 
+        param("Update Estimate Anytime", m_args.filter_args.update_anytime)
+        .defaultValue("false")
+        .description("Update estimate even if maneuvering");
+
         param("Estimated Entity Label List", m_args.est_list)
         .defaultValue("")
         .description("List of entity labels that must be estimated");

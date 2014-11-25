@@ -25,8 +25,8 @@
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
 
-#ifndef DUNE_MATH_RANDOM_KERNELDEVICE_HPP_INCLUDED_
-#define DUNE_MATH_RANDOM_KERNELDEVICE_HPP_INCLUDED_
+#ifndef DUNE_MATH_RANDOM_KERNEL_DEVICE_HPP_INCLUDED_
+#define DUNE_MATH_RANDOM_KERNEL_DEVICE_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <cstdio>

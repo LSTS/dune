@@ -27,8 +27,8 @@
 // Automatically generated.                                                 *
 //***************************************************************************
 
-#ifndef TRANSPORTS_SUNSET_TYPES_HPP_INCLUDED_
-#define TRANSPORTS_SUNSET_TYPES_HPP_INCLUDED_
+#ifndef TRANSPORTS_SUNSET_SSC_TYPES_HPP_INCLUDED_
+#define TRANSPORTS_SUNSET_SSC_TYPES_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>

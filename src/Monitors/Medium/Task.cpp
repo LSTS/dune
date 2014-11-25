@@ -195,7 +195,6 @@ namespace Monitors
       void
       onResourceInitialization(void)
       {
-        // Initialize timers.
         m_init.setTop(m_args.init_time);
         m_water_status.setTop(m_args.water_timeout);
         m_gps_status.setTop(m_args.gps_timeout);
@@ -351,7 +350,6 @@ namespace Monitors
                 m_vm.medium = IMC::VehicleMedium::VM_AIR;
             }
           }
-
 
           if (isActive())
           {

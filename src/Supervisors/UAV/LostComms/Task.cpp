@@ -44,19 +44,19 @@ namespace Supervisors
       struct Arguments
       {
         //! Heartbeat timeout.
-        float heartbeat_tout;
+        float tout_heartbeat;
+        //! Timeout if executing plan
+        float tout_mission;
         //! LostComms plan name.
         std::string plan;
-        //! Timeout if executing plan
-        float mission_tout;
       };
 
       struct Task: public DUNE::Tasks::Periodic
       {
-        //! Emergency message.
-        std::string m_emsg;
-        //! Time of last heartbeat.
-        double m_heartbeat_last;
+        //! Heartbeat timeout.
+        Time::Counter<double> m_tout_heartbeat;
+        //! Mission timeout.
+        Time::Counter<double> m_tout_mission;
         //! True if executing plan
         bool m_in_mission;
         //! True if executing LostComms plan
@@ -68,31 +68,38 @@ namespace Supervisors
           Tasks::Periodic(name, ctx),
           m_in_mission(false)
         {
-          param("Heartbeat Timeout", m_args.heartbeat_tout)
-          .units(Units::Second)
-          .defaultValue("5.0")
-          .description("Heartbeat Timeout");
-
-          param("In Mission Timeout", m_args.mission_tout)
+          param("Heartbeat Timeout", m_args.tout_heartbeat)
           .units(Units::Second)
           .defaultValue("10.0")
+          .minimumValue("0.0")
+          .maximumValue("60.0")
+          .description("Heartbeat Timeout");
+
+          param("In Mission Timeout", m_args.tout_mission)
+          .units(Units::Second)
+          .defaultValue("20.0")
+          .minimumValue("0.0")
+          .maximumValue("60.0")
           .description("Timeout if executing plan");
 
           param("Lost Comms Plan", m_args.plan)
           .defaultValue("lost_comms")
           .description("Plan to be executed in case of Lost Communications");
 
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
           bind<IMC::Heartbeat>(this);
           bind<IMC::PlanControlState>(this);
         }
 
         void
-        onResourceInitialization(void)
+        onUpdateParameters(void)
         {
-          // Initialize entity state.
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          if (paramChanged(m_args.tout_heartbeat))
+            m_tout_heartbeat.setTop(m_args.tout_heartbeat);
 
-          m_heartbeat_last = Clock::get();
+          if (paramChanged(m_args.tout_mission))
+            m_tout_mission.setTop(m_args.tout_mission);
         }
 
         void
@@ -101,34 +108,49 @@ namespace Supervisors
           if (msg->getSource() == getSystemId())
             return;
 
-          m_heartbeat_last = Clock::get();
+          // Use only console Heartbeats.
+          if ((msg->getSource() & 0x4000) == 0)
+            return;
+
+          resetTimers();
         }
 
         void
         consume(const IMC::PlanControlState* msg)
         {
-          m_in_mission = (msg->state & IMC::PlanControlState::PCS_EXECUTING) != 0;
+          m_in_mission = (msg->state == IMC::PlanControlState::PCS_EXECUTING);
           m_in_lc = (std::strcmp(msg->plan_id.c_str(), m_args.plan.c_str()) == 0);
+        }
+
+        void
+        resetTimers(void)
+        {
+          m_tout_heartbeat.reset();
+          m_tout_mission.reset();
+        }
+
+        void
+        startLostComms(void)
+        {
+          IMC::PlanControl p_control;
+          p_control.plan_id = m_args.plan;
+          p_control.op = IMC::PlanControl::PC_START;
+          p_control.type = IMC::PlanControl::PC_REQUEST;
+          p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
+
+          dispatch(p_control);
+          resetTimers();
         }
 
         void
         task(void)
         {
-          double now = Clock::get();
+          if (m_in_lc)
+            return;
 
-          if ((now > (m_heartbeat_last + m_args.mission_tout) && m_in_mission) ||
-              (now > (m_heartbeat_last + 2 * m_args.mission_tout) && m_in_lc) ||
-               now > (m_heartbeat_last + m_args.heartbeat_tout))
-          {
-            IMC::PlanControl p_control;
-            p_control.plan_id = m_args.plan;
-            p_control.op = IMC::PlanControl::PC_START;
-            p_control.type = IMC::PlanControl::PC_REQUEST;
-            p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
-
-            dispatch(p_control);
-            m_heartbeat_last = now;
-          }
+          if ((m_in_mission && m_tout_mission.overflow()) ||
+              (!m_in_mission && m_tout_heartbeat.overflow()))
+            startLostComms();
         }
       };
     }

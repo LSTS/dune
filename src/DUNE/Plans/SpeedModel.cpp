@@ -43,15 +43,20 @@ namespace DUNE
 
       config->get(sec, "Speed Conversion -- MPS",
                   "", m_models[IMC::SUNITS_METERS_PS]);
+
+      config->get(sec, "Time Of Arrival Factor",
+                  "5.0", m_time_factor);
     }
 
     SpeedModel::SpeedModel(const std::vector<float>& act,
                            const std::vector<float>& rpm,
-                           const std::vector<float>& mps)
+                           const std::vector<float>& mps,
+                           float time_factor)
     {
       m_models[IMC::SUNITS_PERCENTAGE] = act;
       m_models[IMC::SUNITS_METERS_PS] = rpm;
       m_models[IMC::SUNITS_RPM] = mps;
+      m_time_factor = time_factor;
     }
 
     float

@@ -44,8 +44,6 @@ namespace DUNE
 {
   namespace Control
   {
-    //! Timeout for new incoming path reference
-    static const double c_new_ref_timeout = 5;
     //! Loiter size factor to compute if inside the circle
     static const double c_lsize_factor = 0.75;
     //! Distance tolerance to loiter's center
@@ -137,6 +135,13 @@ namespace DUNE
       .units(Units::MeterPerSecond)
       .description("ETA minimum admissible speed");
 
+      param("New Reference Timeout", m_new_ref_timeout)
+      .defaultValue("5")
+      .minimumValue("3")
+      .maximumValue("10")
+      .units(Units::Second)
+      .description("Timeout for new incoming path reference");
+
       param("Bottom Track -- Enabled", m_btd.enabled)
       .defaultValue("false")
       .description("Enable or disable bottom track control");
@@ -195,6 +200,8 @@ namespace DUNE
 
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
+
+      m_ctx.config.get("General", "Time Of Arrival Factor", "5.0", m_time_factor);
 
       bind<IMC::Brake>(this);
       bind<IMC::ControlLoops>(this);
@@ -653,7 +660,7 @@ namespace DUNE
       m_ts.delta = now - m_ts.now;
       m_ts.now = now;
 
-      if (m_ts.nearby && m_ts.now - m_ts.end_time >= c_new_ref_timeout)
+      if (m_ts.nearby && m_ts.now - m_ts.end_time >= m_new_ref_timeout)
       {
         signalError(DTR("expected new path control reference"));
         return;
@@ -735,12 +742,12 @@ namespace DUNE
         float erry = std::abs(m_ts.track_pos.y);
         float s = std::max((double)m_eta_min_speed, m_ts.speed);
 
-        if (errx <= erry && erry < c_erry_factor * c_time_factor * s)
+        if (errx <= erry && erry < c_erry_factor * m_time_factor * s)
           m_ts.eta = errx / s;
         else
           m_ts.eta = Math::norm(errx, erry) / s;
 
-        m_ts.eta = std::min(65535.0, m_ts.eta - c_time_factor);
+        m_ts.eta = std::min(65535.0, m_ts.eta - m_time_factor);
 
         bool was_nearby = m_ts.nearby;
 

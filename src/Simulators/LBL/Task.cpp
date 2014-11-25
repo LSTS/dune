@@ -148,7 +148,8 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        m_pinger.setTop(m_args.ping_delay);
+        if (paramChanged(m_args.ping_delay))
+          m_pinger.setTop(m_args.ping_delay);
       }
 
       //! Acquire resources.
@@ -237,7 +238,7 @@ namespace Simulators
           if (hasLBLConfig())
             cfg.beacons = m_lbl_cfg->beacons;
 
-          dispatch(cfg);
+          dispatchReply(*msg, cfg);
         }
       }
 

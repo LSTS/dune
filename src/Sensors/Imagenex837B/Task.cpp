@@ -418,7 +418,9 @@ namespace Sensors
         m_power_channel_control.name = m_args.power_channel;
 
         m_countdown.setTop(getActivationTime());
-        m_range_counter.setTop(m_args.range_modifier_timer);
+
+        if (paramChanged(m_args.range_modifier_timer))
+          m_range_counter.setTop(m_args.range_modifier_timer);
 
         if (m_args.fill_state || m_args.range_modifier)
           bind<IMC::EstimatedState>(this);

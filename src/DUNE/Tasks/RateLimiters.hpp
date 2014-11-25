@@ -25,8 +25,8 @@
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
 
-#ifndef DUNE_IMC_RATE_LIMITERS_HPP_INCLUDED_
-#define DUNE_IMC_RATE_LIMITERS_HPP_INCLUDED_
+#ifndef DUNE_TASKS_RATE_LIMITERS_HPP_INCLUDED_
+#define DUNE_TASKS_RATE_LIMITERS_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <vector>

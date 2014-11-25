@@ -334,7 +334,6 @@ class Function:
                name + '(' + self._args_str + ')' + self._const_str +'\n' \
                '{\n'+ self._body + '\n}\n'
 
-
 import os.path
 
 class File:
@@ -369,7 +368,7 @@ class File:
             if type(self._ns) is list:
                 prefix = ('_'.join(self._ns)).upper()
             else:
-                prefix = 'TRANSPORTS_SUNSET'
+                prefix = 'TRANSPORTS_SUNSET_SSC'
             guard = prefix + '_' + self.name.upper() + '_HPP_INCLUDED_'
             text += '#ifndef ' + guard + '\n'
             text += '#define ' + guard + '\n\n'

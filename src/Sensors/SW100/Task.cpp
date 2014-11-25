@@ -50,6 +50,14 @@ namespace Sensors
       double data_timeout;
     };
 
+    enum CalibrationState
+    {
+      //! Unable to calibrate
+      CS_UNABLE,
+      //! Able to calibrate
+      CS_ABLE
+    };
+
     struct Task: public DUNE::Tasks::Periodic
     {
       //! Device driver.
@@ -68,8 +76,12 @@ namespace Sensors
       IMC::DepthOffset m_depth_offset;
       //! Moving average to compute depth offset.
       MovingAverage<double> m_depth_avg;
-      //! Depth offset calibration deadline.
-      double m_depth_cal_dline;
+      //! Vehicle is at the surface
+      bool m_at_surface;
+      //! Vehicle is maneuvering
+      bool m_maneuvering;
+      //! Calibration state
+      CalibrationState m_cs;
       //! Task arguments.
       Arguments m_args;
       //! Watchdog.
@@ -80,7 +92,9 @@ namespace Sensors
         m_driver(NULL),
         m_uart(NULL),
         m_depth_avg(10),
-        m_depth_cal_dline(-1.0)
+        m_at_surface(false),
+        m_maneuvering(false),
+        m_cs(CS_UNABLE)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -102,7 +116,9 @@ namespace Sensors
         .units(Units::Second)
         .description("Amount of seconds to wait for data before reporting an error");
 
-        bind<IMC::Calibration>(this);
+        // Register consumers.
+        bind<IMC::VehicleMedium>(this);
+        bind<IMC::VehicleState>(this);
       }
 
       void
@@ -126,10 +142,21 @@ namespace Sensors
       }
 
       void
-      consume(const IMC::Calibration* msg)
+      consume(const IMC::VehicleMedium* msg)
       {
-        m_depth_cal_dline = Clock::get() + msg->duration - 2.0;
-        m_depth_avg.clear();
+        m_at_surface = (msg->medium == IMC::VehicleMedium::VM_WATER);
+      }
+
+      void
+      consume(const IMC::VehicleState* msg)
+      {
+        m_maneuvering = (msg->op_mode == IMC::VehicleState::VS_MANEUVER);
+      }
+
+      bool
+      ableToCalibrate(void)
+      {
+        return (m_at_surface && !m_maneuvering);
       }
 
       void
@@ -148,6 +175,26 @@ namespace Sensors
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
             return;
           }
+        }
+
+        switch (m_cs)
+        {
+          case CS_UNABLE:
+            if (ableToCalibrate())
+            {
+              m_depth_avg.clear();
+              m_cs = CS_ABLE;
+            }
+            break;
+          case CS_ABLE:
+            if (!ableToCalibrate())
+            {
+              m_depth_offset.value = -m_depth_offset.value;
+              inf(DTR("depth offset is %0.2f m"), m_depth_offset.value);
+              dispatch(m_depth_offset);
+              m_cs = CS_UNABLE;
+            }
+            break;
         }
 
         if (m_driver->read())
@@ -170,20 +217,8 @@ namespace Sensors
           dispatch(m_conductivity, DF_KEEP_TIME);
 
           // Perform depth offset calibration.
-          if (m_depth_cal_dline > 0.0)
-          {
-            if (Clock::get() < m_depth_cal_dline)
-            {
-              m_depth_offset.value = m_depth_avg.update(m_depth.value);
-            }
-            else
-            {
-              m_depth_offset.value = -m_depth_offset.value;
-              inf(DTR("depth offset is %0.2f m"), m_depth_offset.value);
-              m_depth_cal_dline = -1.0;
-              dispatch(m_depth_offset);
-            }
-          }
+          if (m_cs == CS_ABLE)
+            m_depth_offset.value = m_depth_avg.update(m_depth.value);
         }
       }
     };

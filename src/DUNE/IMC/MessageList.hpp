@@ -124,7 +124,6 @@ namespace DUNE
         return m_list.end();
       }
 
-
       //! Add a new element at the end of the list, after its current
       //! last element. The content of this new element is initialized
       //! to a copy of 'msg'.

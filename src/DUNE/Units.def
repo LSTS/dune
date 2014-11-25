@@ -27,7 +27,6 @@
 
 // Name, Symbol
 
-
 // Acceleration.
 UNIT(MeterPerSquareSecond     , "m/s^2")
 

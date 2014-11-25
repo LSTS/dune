@@ -30,9 +30,13 @@
 
 namespace DUNE
 {
-  class Units
+  namespace Units
   {
-  public:
+    //! Conversion factor: m/s to knot.
+    static const double c_ms_to_knot = 1.94384449;
+    //! Conversion factor: m/s to km/h.
+    static const double c_ms_to_kmh = 3.6;
+
     enum Types
     {
 #define UNIT(t, a) t,
@@ -40,9 +44,9 @@ namespace DUNE
       TypeMax
     };
 
-    static const char*
+    const char*
     getAbbrev(Types);
-  };
+  }
 }
 
 #endif

@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_PROGRAMS_TESTS_TEST_HPP_INCLUDED_
-#define DUNE_PROGRAMS_TESTS_TEST_HPP_INCLUDED_
+#ifndef TRANSPORTS_SUNSET_TESTS_TEST_HPP_INCLUDED_
+#define TRANSPORTS_SUNSET_TESTS_TEST_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <cstdio>

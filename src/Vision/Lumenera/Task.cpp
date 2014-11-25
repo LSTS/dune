@@ -304,8 +304,27 @@ namespace Vision
       void
       onUpdateParameters(void)
       {
-        m_cfg_dirty = true;
         updateSlaveEntities();
+
+        if (isActive())
+        {
+          m_cfg_dirty = checkParameters();
+          return;
+        }
+
+        m_cfg_dirty = true;
+      }
+
+      bool
+      checkParameters(void)
+      {
+        return (paramChanged(m_args.fps) ||
+                paramChanged(m_args.gamma) ||
+                paramChanged(m_args.median_filter) ||
+                paramChanged(m_args.strobe) ||
+                checkExposure() ||
+                checkGain() ||
+                checkWhiteBalance());
       }
 
       void
@@ -462,7 +481,7 @@ namespace Vision
         setStrobePower(true);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        inf("activated");
+        inf(DTR("activated"));
       }
 
       void
@@ -485,7 +504,7 @@ namespace Vision
       {
         if (msg->getSourceEntity() == DUNE_IMC_CONST_UNK_EID)
         {
-          err("invalid entity");
+          err(DTR("invalid entity"));
           return;
         }
         m_slave_entities->onEntityActivationState(msg);
@@ -496,7 +515,6 @@ namespace Vision
       {
         m_slave_entities->onEntityInfo(msg);
       }
-
 
       void
       setStrobePower(bool value)
@@ -686,9 +704,25 @@ namespace Vision
       void
       setProperties(void)
       {
+        updateFps();
+        updateExposure();
+        updateGain();
+        updateWhiteBalance();
+        updateGamma();
+        updateMedianFilter();
+        updateStrobe();
+      }
+
+      void
+      updateFps(void)
+      {
         debug("setting frames per second to '%u'", m_args.fps);
         setProperty("maximum_framerate", uncastLexical(m_args.fps));
+      }
 
+      void
+      updateExposure(void)
+      {
         if (m_args.auto_exposure)
         {
           debug("enabling autoexposure");
@@ -705,7 +739,32 @@ namespace Vision
           debug("setting exposure value to '%f' miliseconds", m_args.exposure_value);
           setProperty("exposure", uncastLexical(m_args.exposure_value));
         }
+      }
 
+      bool
+      checkExposure(void)
+      {
+        if (paramChanged(m_args.auto_exposure))
+          return true;
+
+        if (m_args.auto_exposure)
+        {
+          if (paramChanged(m_args.exposure_max) ||
+              paramChanged(m_args.exposure_knee))
+            return true;
+        }
+        else
+        {
+          if (paramChanged(m_args.exposure_value))
+            return true;
+        }
+
+        return false;
+      }
+
+      void
+      updateGain(void)
+      {
         if (m_args.auto_gain)
         {
           debug("enabling autogain");
@@ -722,7 +781,32 @@ namespace Vision
           debug("setting gain value to '%f'", m_args.gain_value);
           setProperty("gain", uncastLexical(m_args.gain_value));
         }
+      }
 
+      bool
+      checkGain(void)
+      {
+        if (paramChanged(m_args.auto_gain))
+          return true;
+
+        if (m_args.auto_gain)
+        {
+          if (paramChanged(m_args.gain_max) ||
+              paramChanged(m_args.gain_knee))
+            return true;
+        }
+        else
+        {
+          if (paramChanged(m_args.gain_value))
+            return true;
+        }
+
+        return false;
+      }
+
+      void
+      updateWhiteBalance(void)
+      {
         if (m_args.auto_whitebalance)
         {
           debug("enabling continuous automatic whitebalance");
@@ -738,12 +822,42 @@ namespace Vision
           setProperty("gain_green", uncastLexical(m_args.gain_green));
           setProperty("gain_blue", uncastLexical(m_args.gain_blue));
         }
+      }
 
+      bool
+      checkWhiteBalance(void)
+      {
+        if (paramChanged(m_args.auto_whitebalance))
+          return true;
+
+        if (!m_args.auto_whitebalance)
+        {
+          if (paramChanged(m_args.gain_red) ||
+              paramChanged(m_args.gain_green) ||
+              paramChanged(m_args.gain_blue))
+            return true;
+        }
+
+        return false;
+      }
+
+      void
+      updateGamma(void)
+      {
         debug("setting gamma to '%f'", m_args.gamma);
         setProperty("gamma", uncastLexical(m_args.gamma));
+      }
+
+      void
+      updateMedianFilter(void)
+      {
         debug("setting median filtering to '%u'", m_args.median_filter);
         setProperty("median_filter", uncastLexical(m_args.median_filter));
+      }
 
+      void
+      updateStrobe(void)
+      {
         if (m_args.strobe)
         {
           debug("enabling strobe output");
@@ -804,7 +918,7 @@ namespace Vision
         {
           setProperties();
           m_cfg_dirty = false;
-          inf("successfully configured camera");
+          inf(DTR("successfully configured camera"));
           return true;
         }
         catch (...)

@@ -33,16 +33,19 @@
 
 namespace DUNE
 {
-  static const char* c_abbrevs[] =
+  namespace Units
   {
+    static const char* c_abbrevs[] =
+    {
 #define UNIT(t, a) a,
 #include <DUNE/Units.def>
-    NULL
-  };
+      NULL
+    };
 
-  const char*
-  Units::getAbbrev(Types type)
-  {
-    return c_abbrevs[type];
+    const char*
+    getAbbrev(Types type)
+    {
+      return c_abbrevs[type];
+    }
   }
 }

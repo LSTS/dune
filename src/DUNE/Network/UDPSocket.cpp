@@ -118,7 +118,7 @@ namespace DUNE
 #else
       throw NotImplemented("UDPSocket");
 #endif
-      
+
       createEventHandle();
     }
 

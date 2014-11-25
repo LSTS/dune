@@ -180,6 +180,14 @@ namespace DUNE
         return m_ctx.entities.resolve(id);
       }
 
+      //! Get current debug level.
+      //! @return debug level.
+      DebugLevel
+      getDebugLevel(void) const
+      {
+        return m_debug_level;
+      }
+
       //! Retrieve the task's activation time.
       //! @return activation time of the task.
       uint16_t

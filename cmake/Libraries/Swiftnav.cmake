@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ############################################################################
 # Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
@@ -23,58 +22,16 @@
 # language governing permissions and limitations at                        #
 # https://www.lsts.pt/dune/licence.                                        #
 ############################################################################
-# Author: Ricardo Martins                                                  #
+# Author: Kristian Klausen                                                 #
 ############################################################################
 
-import os
-import io
-import sys
-import shutil
-import os.path
+dune_test_lib(swiftnav-static sbp_state_init)
+dune_test_header("libswiftnav/sbp.h")
 
-def clean_whitespace(file):
-    ifd = open(file, 'r')
-    ofd = open(file + '.bak', 'w')
-    for line in ifd:
-        line = line.rstrip().replace('\t', '  ')
-        ofd.write(line + '\n')
-    ifd.close()
-    ofd.close()
-    os.rename(file + '.bak', file)
-
-EXCLUDE = [
-    '.git', 'vendor', 'etc/xml/IMC.xml'
-]
-
-INCLUDE_EXT = [
-    '.cpp', '.hpp', '.md', '.def', '.py', '.cmake', '.css', '.dox', '.el',
-    '.html', '.in', '.ini', '.js',  '.po', '.pot', '.rc', '.sh', '.tex',
-    '.txt', '.xml', '.xsl'
-]
-
-# Find source folder.
-script = os.path.abspath(__file__).replace('.pyc', '.py')
-wrk_dir = os.path.dirname(script)
-top_dir = os.path.abspath(os.path.join(wrk_dir, '..', '..'))
-src_dir = os.path.abspath(os.path.join(top_dir, 'src'))
-
-# Find sources.
-files = set()
-for dirname, dirnames, filenames in os.walk(top_dir):
-    for filename in filenames:
-        if os.path.splitext(filename)[1] not in INCLUDE_EXT:
-            continue
-
-        path = os.path.join(dirname, filename)
-        path = path.replace(top_dir + '/', '')
-        add = True
-        for exc in EXCLUDE:
-            if path.startswith(exc):
-                add = False
-                break
-        if add:
-            files.add(path)
-
-for f in files:
-    f = os.path.join(top_dir, f)
-    clean_whitespace(f)
+if(DUNE_SYS_HAS_LIB_SWIFTNAV_STATIC AND DUNE_SYS_HAS_LIBSWIFTNAV_SBP_H)
+  set(DUNE_SYS_HAS_SWIFTNAV 1 CACHE INTERNAL "Swiftnav library")
+  set(DUNE_USING_SWIFTNAV 1 CACHE INTERNAL "Swiftnav library")
+else( DUNE_SYS_HAS_LIB_SWIFTNAV_STATIC AND DUNE_SYS_HAS_LIBSWIFTNAV_SBP_H)
+  set(DUNE_SYS_HAS_SWIFTNAV 0 CACHE INTERNAL "Swiftnav library")
+  set(DUNE_USING_SWIFTNAV 0 CACHE INTERNAL "Swiftnav library")
+endif( DUNE_SYS_HAS_LIB_SWIFTNAV_STATIC AND DUNE_SYS_HAS_LIBSWIFTNAV_SBP_H)

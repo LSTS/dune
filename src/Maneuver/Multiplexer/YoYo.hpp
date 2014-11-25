@@ -26,8 +26,8 @@
 // Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-#ifndef MANEUVER_MULTIPLEXER_YOYO_HPP_INCLUDED_
-#define MANEUVER_MULTIPLEXER_YOYO_HPP_INCLUDED_
+#ifndef MANEUVER_MULTIPLEXER_YO_YO_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_YO_YO_HPP_INCLUDED_
 
 #include <DUNE/DUNE.hpp>
 

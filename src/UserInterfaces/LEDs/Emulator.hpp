@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_USER_INTERFACES_LEDS_EMULATOR_HPP_INCLUDED_
-#define DUNE_USER_INTERFACES_LEDS_EMULATOR_HPP_INCLUDED_
+#ifndef USER_INTERFACES_LEDS_EMULATOR_HPP_INCLUDED_
+#define USER_INTERFACES_LEDS_EMULATOR_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <cstdio>

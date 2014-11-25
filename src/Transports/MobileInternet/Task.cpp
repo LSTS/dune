@@ -102,6 +102,10 @@ namespace Transports
       std::string m_command_connect;
       //! Stop command.
       std::string m_command_disconnect;
+      //! Start NAT command.
+      std::string m_command_nat_start;
+      //! Stop NAT command.
+      std::string m_command_nat_stop;
       //! True if modem is powered on.
       bool m_powered;
       //! Current state machine state.
@@ -168,6 +172,8 @@ namespace Transports
         Path script = m_ctx.dir_scripts / "dune-mobile-inet.sh";
         m_command_connect = String::str("/bin/sh %s start > /dev/null 2>&1", script.c_str());
         m_command_disconnect = String::str("/bin/sh %s stop > /dev/null 2>&1", script.c_str());
+        m_command_nat_start = String::str("/bin/sh %s nat_start > /dev/null 2>&1", script.c_str());
+        m_command_nat_stop = String::str("/bin/sh %s nat_stop > /dev/null 2>&1", script.c_str());
 
         bind<IMC::PowerChannelState>(this);
       }
@@ -296,6 +302,20 @@ namespace Transports
       }
 
       void
+      startNAT(void)
+      {
+        if (std::system(m_command_nat_start.c_str()) == -1)
+          err(DTR("failed to start NAT"));
+      }
+
+      void
+      stopNAT(void)
+      {
+        if (std::system(m_command_nat_stop.c_str()) == -1)
+          err(DTR("failed to stop NAT"));
+      }
+
+      void
       updateStateMachine(void)
       {
         switch (m_sm_state)
@@ -352,6 +372,7 @@ namespace Transports
             if (isConnected(&m_address))
             {
               debug("connected: %s", m_address.c_str());
+              startNAT();
               setEntityState(IMC::EntityState::ESTA_NORMAL,
                              String::str(DTR("connected to the Internet with public address '%s'"), m_address.c_str()));
               m_sm_state = SM_ACT_CONNECTED;
@@ -361,6 +382,7 @@ namespace Transports
           case SM_ACT_CONNECTED:
             if (!isConnected())
             {
+              stopNAT();
               debug("disconnected");
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CONNECTING);
               m_sm_state = SM_ACT_DISCONNECTED;

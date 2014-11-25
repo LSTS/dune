@@ -116,8 +116,12 @@ namespace Transports
       void
       onUpdateParameters(void)
       {
-        m_sample_timer.setTop(m_args.sample_interval);
-        m_flush_timer.setTop(m_args.flush_interval);
+        if (paramChanged(m_args.sample_interval))
+          m_sample_timer.setTop(m_args.sample_interval);
+
+        if (paramChanged(m_args.flush_interval))
+          m_flush_timer.setTop(m_args.flush_interval);
+
         bind(this, m_args.messages);
       }
 
@@ -164,7 +168,7 @@ namespace Transports
           qinfo.setDestinationEntity(devs[i]->id);
           // The id field is deprecated!
           qinfo.id = devs[i]->id;
-          dispatch(qinfo, DF_KEEP_TIME);
+          dispatch(qinfo, DF_KEEP_TIME | DF_LOOP_BACK);
           logMessage(&qinfo);
         }
       }

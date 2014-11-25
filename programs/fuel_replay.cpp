@@ -45,7 +45,6 @@ const unsigned c_min_samples = 20;
 //! Discharge curve model names
 static const std::string c_model_names[] = {"Optimistic", "Pessimistic", "Zero", "Very Cold"};
 
-
 using namespace Monitors::FuelLevel;
 
 struct Arguments
@@ -165,6 +164,7 @@ readArgs(char* file, Arguments& args)
 
   cfg.get(sec, "Acceptable Temperature", "15.0", args.filter_args.acceptable_temperature);
   cfg.get(sec, "Minimum Update Confidence", "95.0", args.filter_args.min_update_conf);
+  cfg.get(sec, "Update Estimate Anytime", "true", args.filter_args.update_anytime);
 
   cfg.get(sec, "OP Mode Labels", "", args.op_labels);
   cfg.get(sec, "OP Mode Values", "", args.op_values);
@@ -336,7 +336,7 @@ main(int32_t argc, char** argv)
           IMC::FuelLevel fl;
           fl.setSourceEntity(250);
           fl.setTimeStamp(msg->getTimeStamp());
-          
+
           m_fuel_filter->fillMessage(fl, m_args.op_labels, m_args.op_values);
 
           if (ptr != NULL)
