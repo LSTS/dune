@@ -385,7 +385,7 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_VFR_HUD] = &Task::handleHUDPacket;
           m_mlh[MAVLINK_MSG_ID_SYSTEM_TIME] = &Task::handleSystemTimePacket;
           m_mlh[MAVLINK_MSG_ID_MISSION_REQUEST] = &Task::handleMissionRequestPacket;
-          m_mlh[MAVLINK_MSG_ID_SCALED_IMU] = &Task::handleImuRaw;
+          m_mlh[MAVLINK_MSG_ID_RAW_IMU] = &Task::handleImuRaw;
 
 
           // Setup processing of IMC messages
@@ -517,7 +517,7 @@ namespace Control
                                                m_sysid,
                                                0,
                                                MAV_DATA_STREAM_RAW_SENSORS,
-                                               1,
+                                               50,
                                                1);
 
           n = mavlink_msg_to_send_buffer(buf, &msg);
@@ -1582,29 +1582,29 @@ namespace Control
         void
         handleImuRaw(const mavlink_message_t* msg)
         {
-          mavlink_scaled_imu_t raw;
-          mavlink_msg_scaled_imu_decode(msg, &raw);
+          mavlink_raw_imu_t raw;
+          mavlink_msg_raw_imu_decode(msg, &raw);
 
           double tstamp = Clock::getSinceEpoch();
 
           IMC::Acceleration acce;
-          acce.x = raw.xacc * 1000;
-          acce.y = raw.yacc * 1000;
-          acce.z = raw.zacc * 1000;
+          acce.x = raw.xacc;
+          acce.y = raw.yacc;
+          acce.z = raw.zacc;
           acce.setTimeStamp(tstamp);
           dispatch(acce);
 
           IMC::AngularVelocity avel;
-          avel.x = raw.xgyro * 1000;
-          avel.y = raw.ygyro * 1000;
-          avel.z = raw.zgyro * 1000;
+          avel.x = raw.xgyro;
+          avel.y = raw.ygyro;
+          avel.z = raw.zgyro;
           avel.setTimeStamp(tstamp);
           dispatch(avel);
 
           IMC::MagneticField magn;
-          magn.x = raw.xmag * 1000;
-          magn.y = raw.ymag * 1000;
-          magn.z = raw.zmag * 1000;
+          magn.x = raw.xmag;
+          magn.y = raw.ymag;
+          magn.z = raw.zmag;
           magn.setTimeStamp(tstamp);
           dispatch(magn);
         }
