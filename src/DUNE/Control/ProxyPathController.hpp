@@ -43,6 +43,9 @@ namespace DUNE
     // Export DLL Symbol.
     class DUNE_DLL_SYM ProxyPathController;
 
+    //! ProxyPathController
+    //! PathController with the capability to control the path
+    //! of a system with an id different from the vehicle's id
     class ProxyPathController: public Control::PathController
     {
     public:
