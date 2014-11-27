@@ -57,10 +57,14 @@ namespace Supervisors
         Time::Counter<double> m_tout_heartbeat;
         //! Mission timeout.
         Time::Counter<double> m_tout_mission;
-        //! True if executing plan
+        //! True if executing plan.
         bool m_in_mission;
-        //! True if executing LostComms plan
+        //! True if executing LostComms plan.
         bool m_in_lc;
+        //! Got lost comms plan.
+        bool m_got_plan;
+        //! Plan specification for lost comms.
+        IMC::PlanSpecification m_plan;
         //! Task arguments.
         Arguments m_args;
 
@@ -86,9 +90,9 @@ namespace Supervisors
           .defaultValue("lost_comms")
           .description("Plan to be executed in case of Lost Communications");
 
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
           bind<IMC::Heartbeat>(this);
+          bind<IMC::PlanControl>(this);
+          bind<IMC::PlanDB>(this);
           bind<IMC::PlanControlState>(this);
         }
 
@@ -116,6 +120,28 @@ namespace Supervisors
         }
 
         void
+        consume(const IMC::PlanControl* msg)
+        {
+          if ((msg->type == IMC::PlanControl::PC_REQUEST) &&
+              (msg->op == IMC::PlanControl::PC_LOAD) &&
+              (msg->plan_id.compare(m_args.plan) == 0))
+          {
+            getPlanSpec(&msg->arg);
+          }
+        }
+
+        void
+        consume(const IMC::PlanDB* msg)
+        {
+          if ((msg->type == IMC::PlanDB::DBT_REQUEST) &&
+              (msg->op == IMC::PlanDB::DBOP_SET) &&
+              (msg->plan_id.compare(m_args.plan) == 0))
+          {
+            getPlanSpec(&msg->arg);
+          }
+        }
+
+        void
         consume(const IMC::PlanControlState* msg)
         {
           m_in_mission = (msg->state == IMC::PlanControlState::PCS_EXECUTING);
@@ -137,14 +163,46 @@ namespace Supervisors
           p_control.op = IMC::PlanControl::PC_START;
           p_control.type = IMC::PlanControl::PC_REQUEST;
           p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
+          p_control.arg.set(m_plan);
 
           dispatch(p_control);
           resetTimers();
         }
 
         void
+        getPlanSpec(const IMC::InlineMessage<IMC::Message>* msg)
+        {
+          if (msg->isNull())
+          {
+            m_got_plan = false;
+            return;
+          }
+
+          const IMC::PlanSpecification* spec = static_cast<const IMC::PlanSpecification*>(msg->get());
+
+          if (spec == NULL)
+          {
+            m_got_plan = false;
+            return;
+          }
+
+          m_got_plan = true;
+          m_plan = *spec;
+
+          debug("got lost comms plan");
+
+          if (!isActive())
+            requestActivation();
+
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        }
+
+        void
         task(void)
         {
+          if (!isActive())
+            return;
+
           if (m_in_lc)
             return;
 
