@@ -61,6 +61,8 @@ namespace Supervisors
         bool m_in_mission;
         //! True if executing LostComms plan.
         bool m_in_lc;
+        //! Lost comms checked.
+        bool m_check_plan;
         //! Got lost comms plan.
         bool m_got_plan;
         //! Plan specification for lost comms.
@@ -70,7 +72,10 @@ namespace Supervisors
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Periodic(name, ctx),
-          m_in_mission(false)
+          m_in_mission(false),
+          m_in_lc(false),
+          m_check_plan(false),
+          m_got_plan(false)
         {
           param("Heartbeat Timeout", m_args.tout_heartbeat)
           .units(Units::Second)
@@ -107,6 +112,17 @@ namespace Supervisors
         }
 
         void
+        checkPlan(void)
+        {
+          m_check_plan = true;
+          IMC::PlanDB db;
+          db.type = IMC::PlanDB::DBT_REQUEST;
+          db.op = IMC::PlanDB::DBOP_GET;
+          db.plan_id = m_args.plan;
+          dispatch(db);
+        }
+
+        void
         consume(const IMC::Heartbeat* msg)
         {
           if (msg->getSource() == getSystemId())
@@ -133,11 +149,21 @@ namespace Supervisors
         void
         consume(const IMC::PlanDB* msg)
         {
-          if ((msg->type == IMC::PlanDB::DBT_REQUEST) &&
-              (msg->op == IMC::PlanDB::DBOP_SET) &&
-              (msg->plan_id.compare(m_args.plan) == 0))
+          if (!m_check_plan)
           {
-            getPlanSpec(&msg->arg);
+            if (msg->op != IMC::PlanDB::DBOP_BOOT)
+              checkPlan();
+          }
+
+          if (msg->plan_id.compare(m_args.plan) == 0)
+          {
+            if (((msg->type == IMC::PlanDB::DBT_REQUEST) &&
+                 (msg->op == IMC::PlanDB::DBOP_SET)) ||
+                ((msg->type == IMC::PlanDB::DBT_SUCCESS) &&
+                 (msg->op == IMC::PlanDB::DBOP_GET)))
+            {
+              getPlanSpec(&msg->arg);
+            }
           }
         }
 
@@ -173,6 +199,12 @@ namespace Supervisors
         getPlanSpec(const IMC::InlineMessage<IMC::Message>* msg)
         {
           if (msg->isNull())
+          {
+            m_got_plan = false;
+            return;
+          }
+
+          if (msg->get()->getId() != DUNE_IMC_PLANSPECIFICATION)
           {
             m_got_plan = false;
             return;
