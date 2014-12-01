@@ -244,12 +244,6 @@ namespace Navigation
           m_estate.u = m_kal.getState(STATE_U);
           m_estate.v = m_kal.getState(STATE_V);
 
-          // Water Velocity in the navigation frame.
-          if (m_valid_gv && m_valid_wv && !m_time_without_dvl.overflow())
-            BodyFixedFrame::toInertialFrame(m_estate.phi, m_estate.theta, m_estate.psi,
-                                            (m_gvel.x - m_wvel.x), (m_gvel.y - m_wvel.y), (m_gvel.z - m_wvel.z),
-                                            &m_ewvel.x, &m_ewvel.y, &m_ewvel.z);
-
           // Log Navigation Uncertainty.
           m_uncertainty.u = m_kal.getCovariance(STATE_U, STATE_U);
           m_uncertainty.v = m_kal.getCovariance(STATE_V, STATE_V);
@@ -261,6 +255,9 @@ namespace Navigation
           // Navigation error.
           m_navdata.custom_x = Math::norm(m_kal.getInnovation(OUT_GPS_X),
                                           m_kal.getInnovation(OUT_GPS_Y));
+
+          // Stream Estimator.
+          m_stream_filter->consume(&m_estate);
         }
 
         //! Main loop.
