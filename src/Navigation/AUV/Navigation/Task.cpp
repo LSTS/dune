@@ -684,9 +684,6 @@ namespace Navigation
 
           double ang = m_estate.psi - Angles::normalizeRadian(getEuler(AXIS_Z));
           m_navdata.custom_z = Angles::degrees(Angles::normalizeRadian(ang));
-
-          // Stream Estimator.
-          m_stream_filter->consume(&m_estate);
         }
       };
     }
