@@ -36,7 +36,6 @@
 #include <DUNE/IMC/Definitions.hpp>
 #include <DUNE/Math/MovingAverage.hpp>
 #include <DUNE/Memory.hpp>
-#include <DUNE/Tasks/Task.hpp>
 #include <DUNE/Time/Counter.hpp>
 
 namespace DUNE
@@ -52,8 +51,7 @@ namespace DUNE
     {
     public:
       //! Constructor.
-      StreamEstimator(Tasks::Task* task):
-        m_task(task),
+      StreamEstimator(void):
         m_avg_speed(NULL),
         m_avg_yaw(NULL),
         m_estimate(false)
@@ -74,22 +72,25 @@ namespace DUNE
 
       //! Received EstimatedState estimate.
       //! @param[in] msg new EstimatedState.
-      void
-      consume(const IMC::EstimatedState* msg)
+      //! @param[out] stream Estimated stream velocity.
+      bool
+      consume(const IMC::EstimatedState* msg, IMC::EstimatedStreamVelocity& stream)
       {
         if (!m_estimate)
         {
           if (m_timer_rpm.overflow())
             m_estimate = true;
           else
-            return;
+            return false;
         }
+
+        bool estimated = false;
 
         if (m_timer_state.overflow())
         {
           m_timer_state.reset();
 
-          // Only if state
+          // Only if last state is recent.
           if (msg->getTimeStamp() - m_state.getTimeStamp() < 5.0)
           {
             // New position.
@@ -117,11 +118,9 @@ namespace DUNE
             m_avg_speed->update(speed);
             m_avg_yaw->update(angle);
 
-            IMC::EstimatedStreamVelocity stream;
             stream.x = m_avg_speed->mean() * std::cos(m_avg_yaw->mean());
             stream.y = m_avg_speed->mean() * std::sin(m_avg_yaw->mean());
-
-            m_task->dispatch(stream);
+            estimated = true;
           }
           else
           {
@@ -131,6 +130,8 @@ namespace DUNE
 
           m_state = *msg;
         }
+
+        return estimated;
       }
 
       //! Received new RPM reading.
@@ -148,8 +149,6 @@ namespace DUNE
       }
 
     private:
-      //! Pointer to task
-      Tasks::Task* m_task;
       //! Time with propeller stopped.
       Time::Counter<double> m_timer_rpm;
       //! Time with propeller stopped.
