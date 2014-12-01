@@ -42,6 +42,7 @@
 #include <DUNE/Math/MovingAverage.hpp>
 #include <DUNE/Navigation/KalmanFilter.hpp>
 #include <DUNE/Navigation/Ranging.hpp>
+#include <DUNE/Navigation/StreamEstimator.hpp>
 #include <DUNE/Time/Clock.hpp>
 #include <DUNE/Time/Counter.hpp>
 #include <DUNE/Time/Delta.hpp>
@@ -506,6 +507,8 @@ namespace DUNE
       Navigation::KalmanFilter m_kal;
       //! Ranging data.
       Navigation::Ranging m_ranging;
+      //! Stream Estimator.
+      Navigation::StreamEstimator* m_stream_filter;
       //! Propeller speed (RPM)
       int16_t m_rpm;
       //! Kalman Filter process noise covariance matrix parameters.
@@ -516,8 +519,6 @@ namespace DUNE
       std::vector<double> m_state_cov;
       //! Estimated state message.
       IMC::EstimatedState m_estate;
-      //! Estimated water velocity message.
-      IMC::EstimatedStreamVelocity m_ewvel;
       //! LBL range acceptance.
       IMC::LblRangeAcceptance m_lbl_ac;
       //! GPS fix rejection.
