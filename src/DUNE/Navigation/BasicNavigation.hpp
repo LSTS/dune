@@ -508,7 +508,7 @@ namespace DUNE
       //! Ranging data.
       Navigation::Ranging m_ranging;
       //! Stream Estimator.
-      Navigation::StreamEstimator* m_stream_filter;
+      Navigation::StreamEstimator m_stream_filter;
       //! Propeller speed (RPM)
       int16_t m_rpm;
       //! Kalman Filter process noise covariance matrix parameters.

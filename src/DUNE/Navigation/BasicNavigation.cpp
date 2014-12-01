@@ -45,7 +45,6 @@ namespace DUNE
 
     BasicNavigation::BasicNavigation(const std::string& name, Tasks::Context& ctx):
       Tasks::Periodic(name, ctx),
-      m_stream_filter(NULL),
       m_active(false),
       m_origin(NULL),
       m_avg_heave(NULL),
@@ -271,7 +270,6 @@ namespace DUNE
     {
       m_avg_heave = new Math::MovingAverage<double>(m_avg_heave_samples);
       m_avg_gps = new Math::MovingAverage<double>(m_avg_gps_samples);
-      m_stream_filter = new StreamEstimator(this);
       reset();
     }
 
@@ -702,7 +700,7 @@ namespace DUNE
     BasicNavigation::consume(const IMC::Rpm* msg)
     {
       m_rpm = msg->value;
-      m_stream_filter->consume(msg);
+      m_stream_filter.consume(msg);
     }
 
     void
@@ -984,6 +982,14 @@ namespace DUNE
       dispatch(m_estate, DF_KEEP_TIME);
       dispatch(m_uncertainty, DF_KEEP_TIME);
       dispatch(m_navdata, DF_KEEP_TIME);
+
+      // Stream Estimator.
+      IMC::EstimatedStreamVelocity stream;
+      if (m_stream_filter.consume(&m_estate, stream))
+      {
+        stream.setTimeStamp(tstamp);
+        dispatch(stream, DF_KEEP_TIME);
+      }
     }
 
     void
