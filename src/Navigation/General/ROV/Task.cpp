@@ -255,9 +255,6 @@ namespace Navigation
           // Navigation error.
           m_navdata.custom_x = Math::norm(m_kal.getInnovation(OUT_GPS_X),
                                           m_kal.getInnovation(OUT_GPS_Y));
-
-          // Stream Estimator.
-          m_stream_filter->consume(&m_estate);
         }
 
         //! Main loop.
