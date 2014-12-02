@@ -31,8 +31,12 @@
 
 namespace Power
 {
-  //! Device driver for LUEMB.
+  //! Device driver for LUEMB. 
   //!
+  //! This board is able to monitor voltages and currents, is also able to control:
+  //! 3x (5V Outputs)
+  //! 4x (12V Outputs)
+  //! 1x (48V Output)
   //!
   //! @author Filipe Ferreira
   namespace LUEMB
@@ -406,8 +410,8 @@ namespace Power
           uint16_t value = 0;
           frame.get(value, i * 2);
           if (m_adcs[i] != NULL)
-          {    
-            float tmp = m_args.adc_factors[i][0] * ((value - 160) / 4096.0) + m_args.adc_factors[i][1];
+          {   
+            float tmp = m_args.adc_factors[i][0] * (value / 4096.0) + m_args.adc_factors[i][1];
             m_adcs[i]->setValueFP(tmp);
             dispatch(m_adcs[i]);
           }
