@@ -373,6 +373,9 @@ namespace UserInterfaces
       void
       consume(const IMC::ButtonEvent* msg)
       {
+        if (m_sys.empty())
+          return;
+
         if (m_mode == MODE_NONE || m_mode == MODE_SYS_SELECT)
         {
           if (msg->button == m_args.btn_sys && msg->value == 0)
@@ -393,6 +396,9 @@ namespace UserInterfaces
       void
       selectSystem(bool increment = true)
       {
+        if (m_sys.empty())
+          return;
+
         if (increment)
         {
           if (m_mode == MODE_SYS_SELECT)
