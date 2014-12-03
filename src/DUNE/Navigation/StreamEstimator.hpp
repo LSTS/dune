@@ -42,6 +42,15 @@ namespace DUNE
 {
   namespace Navigation
   {
+    //! Number of samples.
+    static const unsigned c_samples = 10;
+    //! Time required with propeller stopped.
+    static const float c_time_no_rpm = 20.0;
+    //! Time between samples.
+    static const float c_sampler = 10.0;
+    //! Sampler factor.
+    static const float c_samp_f = 1.6;
+
     //! %StreamEstimator is responsible to estimate the stream
     //! of the liquid fluid surrounding a underwater or surface
     //! vehicle.
@@ -52,29 +61,29 @@ namespace DUNE
     public:
       //! Constructor.
       StreamEstimator(void):
-        m_avg_speed(NULL),
-        m_avg_yaw(NULL),
+        m_avg_north(NULL),
+        m_avg_east(NULL),
         m_estimate(false)
       {
-        m_avg_speed = new Math::MovingAverage<double>(5);
-        m_avg_yaw = new Math::MovingAverage<double>(5);
+        m_avg_north = new Math::MovingAverage<double>(c_samples);
+        m_avg_east = new Math::MovingAverage<double>(c_samples);
 
-        m_timer_rpm.setTop(5.0);
-        m_timer_state.setTop(3.0);
+        m_timer_rpm.setTop(c_time_no_rpm);
+        m_timer_gps.setTop(c_sampler);
       }
 
       //! Destructor.
       ~StreamEstimator(void)
       {
-        Memory::clear(m_avg_speed);
-        Memory::clear(m_avg_yaw);
+        Memory::clear(m_avg_north);
+        Memory::clear(m_avg_east);
       }
 
-      //! Received EstimatedState estimate.
-      //! @param[in] msg new EstimatedState.
+      //! Received GpsFix estimate.
+      //! @param[in] msg new GpsFix.
       //! @param[out] stream Estimated stream velocity.
       bool
-      consume(const IMC::EstimatedState* msg, IMC::EstimatedStreamVelocity& stream)
+      consume(const IMC::GpsFix* msg, IMC::EstimatedStreamVelocity& stream)
       {
         if (!m_estimate)
         {
@@ -86,49 +95,38 @@ namespace DUNE
 
         bool estimated = false;
 
-        if (m_timer_state.overflow())
+        if (m_timer_gps.overflow())
         {
-          m_timer_state.reset();
+          m_timer_gps.reset();
 
-          // Only if last state is recent.
-          if (msg->getTimeStamp() - m_state.getTimeStamp() < 5.0)
+          // Only if last fix is recent.
+          if (msg->getTimeStamp() - m_fix.getTimeStamp() < c_sampler * c_samp_f)
           {
-            // New position.
-            double lat, lon;
-            Coordinates::toWGS84(*msg, lat, lon);
-
-            // Reference.
-            double rlat, rlon;
-            Coordinates::toWGS84(m_state, rlat, rlon);
-
             // North-East-Down displacement.
             double n, e;
-            Coordinates::WGS84::displacement(rlat, rlon, 0.0,
-                                             lat, lon, 0.0,
+            Coordinates::WGS84::displacement(m_fix.lat, m_fix.lon, 0.0,
+                                             msg->lat, msg->lon, 0.0,
                                              &n, &e);
 
-            double time = msg->getTimeStamp() - m_state.getTimeStamp();
+            double time = msg->getTimeStamp() - m_fix.getTimeStamp();
 
             double x = n / time;
             double y = e / time;
 
-            double speed, angle;
-            Coordinates::toPolar(x, y, &angle, &speed);
+            stream.x = m_avg_north->update(x);
+            stream.y = m_avg_east->update(y);
 
-            m_avg_speed->update(speed);
-            m_avg_yaw->update(angle);
-
-            stream.x = m_avg_speed->mean() * std::cos(m_avg_yaw->mean());
-            stream.y = m_avg_speed->mean() * std::sin(m_avg_yaw->mean());
-            estimated = true;
+            // Signal estimated only when enough samples are available.
+            if (m_avg_north->sampleSize() >= c_samples / 2)
+              estimated = true;
           }
           else
           {
-            m_avg_speed->clear();
-            m_avg_yaw->clear();
+            m_avg_north->clear();
+            m_avg_east->clear();
           }
 
-          m_state = *msg;
+          m_fix = *msg;
         }
 
         return estimated;
@@ -142,8 +140,8 @@ namespace DUNE
         if (msg->value == 0)
           return;
 
-        m_avg_speed->clear();
-        m_avg_yaw->clear();
+        m_avg_north->clear();
+        m_avg_east->clear();
         m_timer_rpm.reset();
         m_estimate = false;
       }
@@ -151,14 +149,14 @@ namespace DUNE
     private:
       //! Time with propeller stopped.
       Time::Counter<double> m_timer_rpm;
-      //! Time with propeller stopped.
-      Time::Counter<double> m_timer_state;
-      //! Moving Average for speed
-      Math::MovingAverage<double>* m_avg_speed;
-      //! Moving Average for orientation.
-      Math::MovingAverage<double>* m_avg_yaw;
-      //! Estimated State.
-      IMC::EstimatedState m_state;
+      //! Time between accepted fixes.
+      Time::Counter<double> m_timer_gps;
+      //! Moving Average for North component.
+      Math::MovingAverage<double>* m_avg_north;
+      //! Moving Average for East component.
+      Math::MovingAverage<double>* m_avg_east;
+      //! GPS fix.
+      IMC::GpsFix m_fix;
       //! Estimate stream
       bool m_estimate;
     };
