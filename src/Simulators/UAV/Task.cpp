@@ -462,7 +462,7 @@ namespace Simulators
         uint32_t i_cmd;
         uint32_t i_cmd_final;
         uint32_t i_src;
-        uint32_t i_src_ini;
+        uint32_t i_src_ini = UINT_MAX;
         std::vector<std::string> parts;
         std::vector<std::string> systems;
         std::vector<std::string> entities;
