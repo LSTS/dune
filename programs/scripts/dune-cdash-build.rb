@@ -43,18 +43,18 @@ VBOX_TIMEOUT = '10800000'
 
 # Table of tools.
 TOOLS = {
-  'gnu32'   => ['Unix Makefiles'        , 'gcc -m32'  , 'g++ -m32'    ],
-  'gnu64'   => ['Unix Makefiles'        , 'gcc -m64'  , 'g++ -m64'    ],
-  'llvm32'  => ['Unix Makefiles'        , 'clang -m32', 'clang++ -m32'],
-  'llvm64'  => ['Unix Makefiles'        , 'clang -m64', 'clang++ -m64'],
-  'sun32'   => ['Unix Makefiles'        , 'suncc -m32', 'sunCC -m32'  ],
-  'sun64'   => ['Unix Makefiles'        , 'suncc -m64', 'sunCC -m64'  ],
-  'icc32'   => ['Unix Makefiles'        , 'icc -m32'  , 'icpc -m32'   ],
-  'icc64'   => ['Unix Makefiles'        , 'icc -m64'  , 'icpc -m64'   ],
-  'mvs32'   => ['Visual Studio 10'      , ''          , ''            ],
-  'mvs64'   => ['Visual Studio 10 Win64', ''          , ''            ],
-  'mgw32'   => ['MinGW Makefiles'       , 'gcc -m32'  , 'g++ -m32'    ],
-  'mgw64'   => ['MinGW Makefiles'       , 'gcc -m64'  , 'g++ -m64'    ],
+  'gnu32'   => [['Ninja', 'Unix Makefiles'] , 'gcc -m32'  , 'g++ -m32'    ],
+  'gnu64'   => [['Ninja', 'Unix Makefiles'] , 'gcc -m64'  , 'g++ -m64'    ],
+  'llvm32'  => [['Ninja', 'Unix Makefiles'] , 'clang -m32', 'clang++ -m32'],
+  'llvm64'  => [['Ninja', 'Unix Makefiles'] , 'clang -m64', 'clang++ -m64'],
+  'sun32'   => [['Ninja', 'Unix Makefiles'] , 'suncc -m32', 'sunCC -m32'  ],
+  'sun64'   => [['Ninja', 'Unix Makefiles'] , 'suncc -m64', 'sunCC -m64'  ],
+  'icc32'   => [['Ninja', 'Unix Makefiles'] , 'icc -m32'  , 'icpc -m32'   ],
+  'icc64'   => [['Ninja', 'Unix Makefiles'] , 'icc -m64'  , 'icpc -m64'   ],
+  'mvs32'   => [['Visual Studio 10']        , ''          , ''            ],
+  'mvs64'   => [['Visual Studio 10 Win64']  , ''          , ''            ],
+  'mgw32'   => [['MinGW Makefiles']         , 'gcc -m32'  , 'g++ -m32'    ],
+  'mgw64'   => [['MinGW Makefiles']         , 'gcc -m64'  , 'g++ -m64'    ],
 }
 
 # CMake test code.
@@ -130,27 +130,36 @@ class Builder
   end
 
   def usable?
-    src = File.join(@base_test, 'src')
-    FileUtils.mkdir_p(src)
-
-    write_file(File.join(src, 'CMakeLists.txt'), TEST_CMAKE)
-    write_file(File.join(src, 'test.c'), TEST_C)
-    write_file(File.join(src, 'test.cpp'), TEST_CXX)
-
-    bin = File.join(@base_test, 'bin')
-    FileUtils.mkdir_p(bin)
-
     ENV['CC'] = @cc
     ENV['CXX'] = @cxx
 
-    Dir.chdir(bin)
-    if run('cmake', '-G', @gen, src) == 0
-      rv = true if run('cmake', '--build', bin) == 0
+    @gen.each do |gen|
+      src = File.join(@base_test, 'src')
+      FileUtils.mkdir_p(src)
+
+      write_file(File.join(src, 'CMakeLists.txt'), TEST_CMAKE)
+      write_file(File.join(src, 'test.c'), TEST_C)
+      write_file(File.join(src, 'test.cpp'), TEST_CXX)
+
+      bin = File.join(@base_test, 'bin')
+      FileUtils.mkdir_p(bin)
+
+      Dir.chdir(bin)
+
+      if run('cmake', '-G', gen, src) == 0
+        rv = true if run('cmake', '--build', bin) == 0
+      end
+
+      Dir.chdir(@base)
+      FileUtils.rm_rf @base_test
+
+      if rv
+        @gen = gen
+        return true
+      end
     end
 
-    Dir.chdir(@base)
-    FileUtils.rm_rf @base_test
-    return rv
+    return false
   end
 
   def execute
