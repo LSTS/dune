@@ -61,22 +61,12 @@ namespace DUNE
     public:
       //! Constructor.
       StreamEstimator(void):
-        m_avg_north(NULL),
-        m_avg_east(NULL),
+        m_avg_north(c_samples),
+        m_avg_east(c_samples),
         m_estimate(false)
       {
-        m_avg_north = new Math::MovingAverage<double>(c_samples);
-        m_avg_east = new Math::MovingAverage<double>(c_samples);
-
         m_timer_rpm.setTop(c_time_no_rpm);
         m_timer_gps.setTop(c_sampler);
-      }
-
-      //! Destructor.
-      ~StreamEstimator(void)
-      {
-        Memory::clear(m_avg_north);
-        Memory::clear(m_avg_east);
       }
 
       //! Received GpsFix estimate.
@@ -113,17 +103,17 @@ namespace DUNE
             double x = n / time;
             double y = e / time;
 
-            stream.x = m_avg_north->update(x);
-            stream.y = m_avg_east->update(y);
+            stream.x = m_avg_north.update(x);
+            stream.y = m_avg_east.update(y);
 
             // Signal estimated only when enough samples are available.
-            if (m_avg_north->sampleSize() >= c_samples / 2)
+            if (m_avg_north.sampleSize() >= c_samples / 2)
               estimated = true;
           }
           else
           {
-            m_avg_north->clear();
-            m_avg_east->clear();
+            m_avg_north.clear();
+            m_avg_east.clear();
           }
 
           m_fix = *msg;
@@ -140,8 +130,8 @@ namespace DUNE
         if (msg->value == 0)
           return;
 
-        m_avg_north->clear();
-        m_avg_east->clear();
+        m_avg_north.clear();
+        m_avg_east.clear();
         m_timer_rpm.reset();
         m_estimate = false;
       }
@@ -152,9 +142,9 @@ namespace DUNE
       //! Time between accepted fixes.
       Time::Counter<double> m_timer_gps;
       //! Moving Average for North component.
-      Math::MovingAverage<double>* m_avg_north;
+      Math::MovingAverage<double> m_avg_north;
       //! Moving Average for East component.
-      Math::MovingAverage<double>* m_avg_east;
+      Math::MovingAverage<double> m_avg_east;
       //! GPS fix.
       IMC::GpsFix m_fix;
       //! Estimate stream
