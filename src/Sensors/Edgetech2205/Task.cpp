@@ -673,7 +673,7 @@ namespace Sensors
         if (data->time_msec_today > old_msec_today)
           msec_delta = data->time_msec_today - old_msec_today;
         else
-          msec_delta = -(old_msec_today - data->time_msec_today);
+          msec_delta = -(int)(old_msec_today - data->time_msec_today);
 
         int64_t msec_cpu_old = data->msec_cpu;
         data->msec_cpu = m_packet->getTimeStamp();
