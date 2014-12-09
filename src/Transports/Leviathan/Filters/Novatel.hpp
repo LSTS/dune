@@ -149,6 +149,8 @@ namespace Transports
       uint8_t m_crc_idx;
       uint32_t m_mcrc;
 
+      std::vector<uint8_t> m_msg_full;
+
       union
       {
         uint8_t raw[24];
@@ -175,6 +177,8 @@ namespace Transports
           case NOV_FSM_SYNC0:
             if (byte == 0xAA)
             {
+              m_msg_full.clear();
+              m_msg_full.push_back(byte);
               m_msec = msec;
               m_msec /= 1000;
               m_msec *= 1000;
@@ -190,24 +194,28 @@ namespace Transports
             break;
 
           case NOV_FSM_SYNC1:
+            m_msg_full.push_back(byte);
             updateCRC32(byte);
             if (byte == 0x44)
               m_fsm_state = NOV_FSM_SYNC2;
             break;
 
           case NOV_FSM_SYNC2:
+            m_msg_full.push_back(byte);
             updateCRC32(byte);
             if (byte == 0x12)
               m_fsm_state = NOV_FSM_HDR_LEN;
             break;
 
           case NOV_FSM_HDR_LEN:
+            m_msg_full.push_back(byte);
             updateCRC32(byte);
             m_hdr_len = byte - 4;
             m_fsm_state = NOV_FSM_HDR;
             break;
 
           case NOV_FSM_HDR:
+            m_msg_full.push_back(byte);
             updateCRC32(byte);
             m_hdr.raw[m_hdr_idx++] = byte;
             if (m_hdr_idx == m_hdr_len)
@@ -227,6 +235,7 @@ namespace Transports
             break;
 
           case NOV_FSM_MSG:
+            m_msg_full.push_back(byte);
             updateCRC32(byte);
             m_msg.raw[m_msg_idx++] = byte;
             if (m_msg_idx == m_msg_len)
@@ -236,6 +245,7 @@ namespace Transports
             break;
 
           case NOV_FSM_CRC:
+            m_msg_full.push_back(byte);
             m_crc.raw[m_crc_idx++] = byte;
             if (m_crc_idx == 4)
             {
@@ -347,7 +357,7 @@ namespace Transports
         if (dbIsActive())
         {
           sqlite3_bind_int64(m_data_ins, 1, m_msec);
-          sqlite3_bind_blob(m_data_ins, 2, m_msg.raw, m_msg_len, SQLITE_TRANSIENT);
+          sqlite3_bind_blob(m_data_ins, 2, &m_msg_full[0], m_msg_full.size(), SQLITE_TRANSIENT);
           sqlite3_step(m_data_ins);
           sqlite3_clear_bindings(m_data_ins);
           sqlite3_reset(m_data_ins);
