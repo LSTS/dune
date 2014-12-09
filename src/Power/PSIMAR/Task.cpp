@@ -52,6 +52,8 @@ namespace Power
       Hardware::ESCC* m_psu_escc;
       //! PSU handle.
       UCTK::Interface* m_psu_ctl;
+      //! Current power channel state.
+      IMC::PowerChannelState m_power_state;
       //! Task arguments.
       Arguments m_args;
 
@@ -69,6 +71,13 @@ namespace Power
         .description("ESCC device where PSU is connected");
 
         bind<IMC::PowerChannelControl>(this);
+        bind<IMC::QueryPowerChannelState>(this);
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        m_power_state.name = m_args.pwr_chn;
       }
 
       void
@@ -115,7 +124,13 @@ namespace Power
         frame.setId(c_pkt_power);
         frame.setPayloadSize(1);
         frame.set(value, 0);
-        return m_psu_ctl->sendFrame(frame, 2.0);
+        if (m_psu_ctl->sendFrame(frame, 2.0))
+        {
+          m_power_state.state = on ? IMC::PowerChannelState::PCS_ON : IMC::PowerChannelState::PCS_OFF;
+          return true;
+        }
+
+        return false;
       }
 
       void
@@ -125,23 +140,20 @@ namespace Power
         {
           bool rv = false;
 
-          IMC::PowerChannelState pcs;
-          pcs.name = m_args.pwr_chn;
-
           if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_ON)
-          {
             rv = setPower(true);
-            pcs.state = IMC::PowerChannelState::PCS_ON;
-          }
           else if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
-          {
             rv = setPower(false);
-            pcs.state = IMC::PowerChannelState::PCS_OFF;
-          }
 
           if (rv)
-            dispatchReply(*msg, pcs);
+            dispatchReply(*msg, m_power_state);
         }
+      }
+
+      void
+      consume(const IMC::QueryPowerChannelState* msg)
+      {
+        dispatchReply(*msg, m_power_state);
       }
 
       void
