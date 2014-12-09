@@ -61,7 +61,7 @@ namespace Power
         m_psu_ctl(NULL)
       {
         param("Power Channel", m_args.pwr_chn)
-        .defaultValue("IMU")
+        .defaultValue("Private (IMU)")
         .description("Device name to be activated");
 
         param("ESCC - PSU Device", m_args.psu_dev)
