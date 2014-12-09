@@ -123,10 +123,24 @@ namespace Power
       {
         if (msg->name == m_args.pwr_chn)
         {
+          bool rv = false;
+
+          IMC::PowerChannelState pcs;
+          pcs.name = m_args.pwr_chn;
+
           if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_ON)
-            setPower(true);
+          {
+            rv = setPower(true);
+            pcs.state = IMC::PowerChannelState::PCS_ON;
+          }
           else if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
-            setPower(false);
+          {
+            rv = setPower(false);
+            pcs.state = IMC::PowerChannelState::PCS_OFF;
+          }
+
+          if (rv)
+            dispatchReply(*msg, pcs);
         }
       }
 
