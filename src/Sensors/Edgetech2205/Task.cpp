@@ -346,6 +346,7 @@ namespace Sensors
       {
         activationFailed(message);
         controlPower(IMC::PowerChannelControl::PCC_OP_TURN_OFF);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
