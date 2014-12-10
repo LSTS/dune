@@ -59,7 +59,6 @@ namespace Maneuver
         m_moving(false)
       {
         bindToManeuver<Task, IMC::CommsRelay>();
-        bind<IMC::PathControlState>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::Announce>(this);
       }
@@ -101,6 +100,9 @@ namespace Maneuver
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         // set vehicle's position from estimated state
         m_cur_lat = msg->lat;
         m_cur_lon = msg->lon;

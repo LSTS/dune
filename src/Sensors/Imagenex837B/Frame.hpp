@@ -56,8 +56,6 @@ namespace Sensors
     static const unsigned c_ivx_frame_size = 272;
     //! Size of IUX body.
     static const unsigned c_iux_frame_size = 80;
-    //! Meter per Second to Knots conversion.
-    static const double c_ms_to_knots = 1.94384449;
     // Euler angles conversion factor.
     static const double c_euler_factor = (65536.0 / 360.0);
 
@@ -267,7 +265,7 @@ namespace Sensors
       void
       setSpeed(float speed)
       {
-        m_data[HDR_IDX_SPEED] = (int8_t)(speed * 10 * c_ms_to_knots);
+        m_data[HDR_IDX_SPEED] = (int8_t)(speed * 10 * DUNE::Units::c_ms_to_knot);
       }
 
       //! Set GNSS ships course.

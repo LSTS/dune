@@ -117,26 +117,6 @@ namespace Sensors
         .defaultValue("0, -90, 0")
         .size(3)
         .description("Device orientation");
-
-        IMC::BeamConfig bc;
-        bc.beam_width = Math::Angles::radians(c_beam_width);
-        bc.beam_height = Math::Angles::radians(c_beam_width);
-
-        IMC::DeviceState ds;
-        ds.x = m_args.position[0];
-        ds.y = m_args.position[1];
-        ds.z = m_args.position[2];
-        ds.phi = Math::Angles::radians(m_args.orientation[0]);
-        ds.theta = Math::Angles::radians(m_args.orientation[1]);
-        ds.psi = Math::Angles::radians(m_args.orientation[2]);
-
-        for (unsigned i = 0; i < 5; i++)
-        {
-          m_brange[i].location.clear();
-          m_brange[i].location.push_back(ds);
-          m_brange[i].beam_config.clear();
-          m_brange[i].beam_config.push_back(bc);
-        }
       }
 
       void
@@ -144,6 +124,29 @@ namespace Sensors
       {
         if (paramChanged(m_args.rotation))
           m_args.rotation = Angles::radians(m_args.rotation);
+
+        if (paramChanged(m_args.position) || paramChanged(m_args.orientation))
+        {
+          IMC::BeamConfig bc;
+          bc.beam_width = Math::Angles::radians(c_beam_width);
+          bc.beam_height = Math::Angles::radians(c_beam_width);
+
+          IMC::DeviceState ds;
+          ds.x = m_args.position[0];
+          ds.y = m_args.position[1];
+          ds.z = m_args.position[2];
+          ds.phi = Math::Angles::radians(m_args.orientation[0]);
+          ds.theta = Math::Angles::radians(m_args.orientation[1]);
+          ds.psi = Math::Angles::radians(m_args.orientation[2]);
+
+          for (unsigned i = 0; i < 5; i++)
+          {
+            m_brange[i].location.clear();
+            m_brange[i].location.push_back(ds);
+            m_brange[i].beam_config.clear();
+            m_brange[i].beam_config.push_back(bc);
+          }
+        }
       }
 
       void

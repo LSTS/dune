@@ -25,6 +25,7 @@
 // Author: Ricardo Martins                                                  *
 // Author: Bruno Terra                                                      *
 // Author: Eduardo Marques                                                  *
+// Author: José Braga                                                       *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -57,23 +58,6 @@ namespace Simulators
     //! Constant for "bad range"
     static const int c_huge_error = 700;
 
-    //! Beacon setup.
-    struct BeaconSetup
-    {
-      //! Beacon id.
-      uint8_t id;
-      //! WGS-84 latitude.
-      double lat;
-      //! WGS-84 longitude.
-      double lon;
-      //! Beacon north displacement relative to reference (m).
-      double x;
-      //! Beacon east displacement relative to reference (m).
-      double y;
-      //! Beacon depth (m).
-      double depth;
-    };
-
     //! %LBL entity states.
     struct Arguments
     {
@@ -87,6 +71,8 @@ namespace Simulators
       std::string prng_type;
       //! PRNG seed.
       int prng_seed;
+      //! Wait for incoming request;
+      bool wait_request;
     };
 
     //! %LBL simulator task.
@@ -98,14 +84,12 @@ namespace Simulators
       IMC::GpsFix* m_origin;
       //! LblConfig buffer.
       IMC::LblConfig* m_lbl_cfg;
+      //! Cursor.
+      MessageList<IMC::LblBeacon>::const_iterator m_cursor;
       //! Next ping time.
-      Counter<double> m_ping_time;
+      Counter<double> m_pinger;
       //! PRNG handle.
       Random::Generator* m_prng;
-      //! Configuration/position of LBL beacons.
-      std::vector<BeaconSetup> m_beacons;
-      //! Current active beacon.
-      std::vector<BeaconSetup>::const_iterator m_beacon;
       //! Task arguments.
       Arguments m_args;
 
@@ -118,7 +102,7 @@ namespace Simulators
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER,
-                    true);
+                    false);
 
         param("Ping Delay", m_args.ping_delay)
         .units(Units::Second)
@@ -148,26 +132,31 @@ namespace Simulators
         param("PRNG Seed", m_args.prng_seed)
         .defaultValue("-1");
 
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
-        requestDeactivation();
+        param("Wait for Ping Request", m_args.wait_request)
+        .defaultValue("false")
+        .description("When this parameter is active, the task will wait for"
+                     "ping requests from other entities");
 
         // Register consumers.
         bind<IMC::LblConfig>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::SimulatedState>(this);
+        bind<IMC::UamTxFrame>(this);
       }
 
       //! Update parameters.
       void
       onUpdateParameters(void)
       {
-        m_ping_time.setTop(m_args.ping_delay);
+        if (paramChanged(m_args.ping_delay))
+          m_pinger.setTop(m_args.ping_delay);
       }
 
       //! Acquire resources.
       void
       onResourceAcquisition(void)
       {
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
         m_prng = Random::Factory::create(m_args.prng_type, m_args.prng_seed);
       }
 
@@ -195,54 +184,19 @@ namespace Simulators
       bool
       isInitialized(void) const
       {
-        return hasOrigin() && hasLBLConfig() && (m_beacons.size() > 0);
+        return hasOrigin() && hasLBLConfig() && (m_lbl_cfg->beacons.size() > 0);
       }
 
       void
       updateBeacons(void)
       {
-        m_beacons.clear();
-        IMC::MessageList<IMC::LblBeacon>::const_iterator itr = m_lbl_cfg->beacons.begin();
-        for (unsigned i = 0; itr != m_lbl_cfg->beacons.end(); ++itr, ++i)
-          addBeacon(i, *itr);
-        m_beacon = m_beacons.begin();
-        m_ping_time.reset();
+        m_cursor = m_lbl_cfg->beacons.begin();
+        m_pinger.reset();
 
         if (isActive())
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         else
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-      }
-
-      //! Routine to add a new beacon.
-      //! @param[in] id beacon id.
-      //! @param[in] msg inline msg.
-      void
-      addBeacon(unsigned id, const IMC::LblBeacon* msg)
-      {
-        if (m_beacons.size() >= Navigation::c_max_transponders)
-        {
-          err(DTR("maximum amount of beacons is %u"), Navigation::c_max_transponders);
-          return;
-        }
-
-        if (msg == NULL)
-          return;
-
-        BeaconSetup setup;
-        setup.id = id;
-        setup.lat = msg->lat;
-        setup.lon = msg->lon;
-        setup.depth = msg->depth;
-
-        Coordinates::WGS84::displacement(m_origin->lat, m_origin->lon, 0.0,
-                                         msg->lat, msg->lon, msg->depth,
-                                         &(setup.x), &(setup.y));
-
-        m_beacons.push_back(setup);
-
-        debug("beacon %s (id %d): (%0.2f, %0.2f, %0.2f)", msg->beacon.c_str(),
-              setup.id, setup.x, setup.y, setup.depth);
       }
 
       void
@@ -252,6 +206,7 @@ namespace Simulators
           return;
 
         Memory::replace(m_origin, new IMC::GpsFix(*msg));
+
         if (hasLBLConfig())
           updateBeacons();
         else
@@ -270,6 +225,7 @@ namespace Simulators
           dispatch(cop);
 
           Memory::replace(m_lbl_cfg, new IMC::LblConfig(*msg));
+
           if (hasOrigin())
             updateBeacons();
           else
@@ -279,9 +235,10 @@ namespace Simulators
         {
           IMC::LblConfig cfg;
           cfg.op = IMC::LblConfig::OP_CUR_CFG;
-          if (m_lbl_cfg != NULL)
+          if (hasLBLConfig())
             cfg.beacons = m_lbl_cfg->beacons;
-          dispatch(cfg);
+
+          dispatchReply(*msg, cfg);
         }
       }
 
@@ -293,16 +250,93 @@ namespace Simulators
       }
 
       void
+      consume(const IMC::UamTxFrame* msg)
+      {
+        if (!m_args.wait_request)
+          return;
+
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->flags & IMC::UamTxFrame::UTF_ACK)
+          range(msg->sys_dst);
+      }
+
+      void
       onActivation(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        m_ping_time.reset();
+        m_pinger.reset();
       }
 
       void
       onDeactivation(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      //! Range system.
+      //! @param[in] sys_name system name.
+      void
+      range(const std::string& sys_name)
+      {
+        if (!hasLBLConfig())
+          return;
+
+        IMC::LblBeacon* beacon = NULL;
+
+        // Find beacon id.
+        unsigned id = 0;
+        bool exists = false;
+        MessageList<IMC::LblBeacon>::const_iterator itr = m_lbl_cfg->beacons.begin();
+        for (; itr < m_lbl_cfg->beacons.end(); ++itr)
+        {
+          if ((*itr) == NULL)
+            continue;
+
+          if ((*itr)->beacon == sys_name)
+          {
+            beacon = *itr;
+            exists = true;
+            break;
+          }
+
+          id++;
+        }
+
+        if (!exists)
+          return;
+
+        // Compute error.
+        double error = 0;
+        if (m_args.bad_range_prob > 0 && m_prng->random() % 100 <= m_args.bad_range_prob)
+          error = c_huge_error;
+        else if (m_args.sigma > 0)
+          error = m_prng->gaussian() * m_args.sigma;
+
+        double lat, lon;
+        Coordinates::toWGS84(m_sstate, lat, lon);
+
+        // Compute range.
+        double distance;
+        distance = WGS84::distance(lat, lon, m_sstate.z,
+                                   beacon->lat, beacon->lon, beacon->depth);
+
+        if (m_args.wait_request)
+        {
+          IMC::UamRxRange msg;
+          msg.sys = sys_name;
+          msg.value = distance + error;
+          dispatch(msg);
+        }
+        else
+        {
+          IMC::LblRange msg;
+          msg.id = id;
+          msg.range = distance;
+          msg.range += error;
+          dispatch(msg);
+        }
       }
 
       void
@@ -316,40 +350,25 @@ namespace Simulators
             continue;
           }
 
-          if (!m_ping_time.overflow())
+          if (m_args.wait_request)
+            continue;
+
+          if (!m_pinger.overflow())
           {
             waitForMessages(m_args.ping_delay);
             continue;
           }
 
-          double tstamp = Time::Clock::getSinceEpoch();
+          if (*m_cursor == NULL)
+            continue;
 
-          for (m_beacon = m_beacons.begin(); m_beacon < m_beacons.end(); ++m_beacon)
-          {
-            // Compute error.
-            double error = 0;
-            if (m_args.bad_range_prob > 0 && m_prng->random() % 100 <= m_args.bad_range_prob)
-              error = c_huge_error;
-            else if (m_args.sigma > 0)
-              error = m_prng->gaussian() * m_args.sigma;
-
-            //! Compute range.
-            double xd = m_sstate.x - m_beacon->x;
-            double yd = m_sstate.y - m_beacon->y;
-            double zd = m_sstate.z - m_beacon->depth;
-            IMC::LblRange range;
-            range.setTimeStamp(tstamp);
-            range.id = m_beacon->id;
-            range.range = std::sqrt(xd * xd + yd * yd + zd * zd);
-            range.range += error;
-            dispatch(range, DF_KEEP_TIME);
-
-            trace("beacon %u, range of %0.2f m, simulated error of %0.2f m",
-                  range.id, range.range, error);
-          }
+          range((*m_cursor)->beacon);
 
           // Setup next ping.
-          m_ping_time.reset();
+          m_pinger.reset();
+
+          if (++m_cursor == m_lbl_cfg->beacons.end())
+            m_cursor = m_lbl_cfg->beacons.begin();
         }
       }
     };

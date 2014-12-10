@@ -91,6 +91,7 @@ namespace Transports
         .defaultValue("");
 
         bind<IMC::LoggingControl>(this);
+        bind<IMC::EntityInfo>(this);
       }
 
       ~Task(void)
@@ -115,8 +116,12 @@ namespace Transports
       void
       onUpdateParameters(void)
       {
-        m_sample_timer.setTop(m_args.sample_interval);
-        m_flush_timer.setTop(m_args.flush_interval);
+        if (paramChanged(m_args.sample_interval))
+          m_sample_timer.setTop(m_args.sample_interval);
+
+        if (paramChanged(m_args.flush_interval))
+          m_flush_timer.setTop(m_args.flush_interval);
+
         bind(this, m_args.messages);
       }
 
@@ -151,20 +156,20 @@ namespace Transports
         }
 
         // Log entities.
-        double ref_time = Clock::getSinceEpoch();
-        std::vector<EntityDataBase::Entity*> devs;
+        double time_ref = Clock::getSinceEpoch();
+        std::vector<Entities::EntityDataBase::Entity*> devs;
         m_ctx.entities.contents(devs);
         for (unsigned int i = 0; i < devs.size(); ++i)
         {
-          IMC::EntityInfo info;
-          info.setTimeStamp(ref_time);
-          info.setSource(getSystemId());
-          info.id = devs[i]->id;
-          info.label = devs[i]->label;
-          info.component = devs[i]->task_name;
-          info.act_time = devs[i]->act_time;
-          info.deact_time = devs[i]->deact_time;
-          logMessage(&info);
+          IMC::QueryEntityInfo qinfo;
+          // Only query local entities
+          qinfo.setTimeStamp(time_ref);
+          qinfo.setDestination(getSystemId());
+          qinfo.setDestinationEntity(devs[i]->id);
+          // The id field is deprecated!
+          qinfo.id = devs[i]->id;
+          dispatch(qinfo, DF_KEEP_TIME | DF_LOOP_BACK);
+          logMessage(&qinfo);
         }
       }
 
@@ -198,6 +203,14 @@ namespace Transports
             stopLog();
             break;
         }
+      }
+
+       void
+       consume(const IMC::EntityInfo* msg)
+      {
+        // Only log messages we requested
+        if (msg->getDestinationEntity() == getEntityId())
+          logMessage(msg);
       }
 
       void

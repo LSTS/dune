@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_CONTROL_AUVMODEL_HPP_INCLUDED_
-#define DUNE_CONTROL_AUVMODEL_HPP_INCLUDED_
+#ifndef DUNE_CONTROL_AUV_MODEL_HPP_INCLUDED_
+#define DUNE_CONTROL_AUV_MODEL_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <cmath>

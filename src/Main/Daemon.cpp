@@ -67,7 +67,6 @@ registerStaticTasks(void);
 using DUNE_NAMESPACES;
 
 static bool s_stop = false;
-static const unsigned c_max_restarts = 5;
 static const double c_restart_period = 30.0;
 
 // POSIX implementation.
@@ -262,8 +261,18 @@ main(int argc, char** argv)
   }
   catch (std::runtime_error& e)
   {
-    std::cerr << String::str("ERROR: %s\n", e.what()) << std::endl;
-    return 1;
+    try
+    {
+      cfg_file = context.dir_usr_cfg / options.value("--config-file") + ".ini";
+      context.config.parseFile(cfg_file.c_str());
+      context.dir_cfg = context.dir_usr_cfg;
+    }
+    catch (std::runtime_error& e2)
+    {
+      std::cerr << String::str("ERROR: %s\n", e.what()) << std::endl;
+      std::cerr << String::str("ERROR: %s\n", e2.what()) << std::endl;
+      return 1;
+    }
   }
 
   if (!options.value("--vehicle").empty())

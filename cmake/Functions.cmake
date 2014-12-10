@@ -224,6 +224,18 @@ macro(dune_probe_functions)
     "sys/mman.h;sys/types.h"
     DUNE_SYS_HAS_MMAP64)
 
+  dune_test_function(mlockall
+    "int"
+    "int"
+    "sys/mman.h;sys/types.h"
+    DUNE_SYS_HAS_MLOCKALL)
+
+  dune_test_function(munlockall
+    "int"
+    ""
+    "sys/mman.h;sys/types.h"
+    DUNE_SYS_HAS_MUNLOCKALL)
+
   dune_test_function(round
     "double"
     "double"
@@ -715,5 +727,23 @@ macro(dune_probe_functions)
     "int;char*"
     "syslog.h"
     DUNE_SYS_HAS_SYSLOG)
+
+  dune_test_function(isnan
+    "int"
+    "double"
+    "math.h"
+    DUNE_SYS_HAS_ISNAN_POSIX)
+
+  dune_test_function(std::isnan
+    "int"
+    "double"
+    "cmath"
+    DUNE_SYS_HAS_ISNAN_CXX)
+
+  dune_test_function(_isnan
+    "int"
+    "double"
+    "float.h"
+    DUNE_SYS_HAS__ISNAN)
 
 endmacro(dune_probe_functions)

@@ -87,10 +87,10 @@ namespace DUNE
 
       bool
       poll(double timeout);
-      
+
       bool
       wasTriggered(const NativeHandle& handle);
-      
+
       bool
       wasTriggered(const Handle& handle)
       {

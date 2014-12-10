@@ -232,6 +232,9 @@ namespace DUNE
       replaceWhiteSpace(std::string& str, char rep);
 
       static std::string
+      replace(const std::string& str, char rep, const std::string& pat);
+
+      static std::string
       escape(const std::string& input);
 
       static std::string
@@ -243,6 +246,13 @@ namespace DUNE
       //! @return true if 'str' starts with 'prefix', false otherwise.
       static bool
       startsWith(const std::string& str, const std::string& prefix);
+
+      //! Test if string 'str' ends with a specified 'suffix'.
+      //! @param[in] str string.
+      //! @param[in] suffix suffix.
+      //! @return true if 'str' ends with 'suffix', false otherwise.
+      static bool
+      endsWith(const std::string& str, const std::string& suffix);
     };
   }
 }

@@ -69,6 +69,9 @@ namespace Maneuver
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         m_heading_c_current=msg->psi+(3.14/20);
         m_heading_v_desired=m_heading_c_current;
         m_heading_msg.value=m_heading_v_desired;

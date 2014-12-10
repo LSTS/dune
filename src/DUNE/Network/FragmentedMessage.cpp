@@ -63,7 +63,7 @@ namespace DUNE
         if (m_parent == NULL)
           DUNE_ERR("FragmentedMessage", "Invalid fragment received and it won't be processed.");
         else
-          m_parent->err("Invalid fragment received and it won't be processed.");
+          m_parent->err(DTR("Invalid fragment received and it won't be processed."));
 
         return NULL;
       }

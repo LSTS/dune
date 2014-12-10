@@ -118,7 +118,6 @@ namespace Maneuver
         return y_actual - (y_0_c + c_loiter_gama * c_loiter_dir * u * c_loiter_v_y + ((r * c_loiter_v_z) / sqrt(pow(c_loiter_v_z,2) + pow((c_loiter_v_x * cos(c_loiter_dir * u) + c_loiter_v_y * sin(c_loiter_dir * u)),2))) * sin(c_loiter_dir * u));
       }
 
-
       double
       x_path_derivative(double r, double u)
       {
@@ -156,6 +155,8 @@ namespace Maneuver
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
 
         m_estate = *msg;
         m_got_estate = true;

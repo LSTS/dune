@@ -58,6 +58,10 @@ namespace Plan
       int dive_time;
       //! The speed (in RPMS) to be commanded when generating maneuvers.
       int speed_rpms;
+      //! Maximum RPMs for urgent maneuvering
+      float max_rpms;
+      //! Plans to be generated at boot (example: dislodge:rpm=1200.0)
+      std::vector<std::string> generate_at_boot;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -97,6 +101,12 @@ namespace Plan
         .description("Speed in RPMs to be used in the generated maneuvers")
         .defaultValue("1000");
 
+        param("Generate At Boot", m_args.generate_at_boot)
+        .description("Set of commands for plans to generate at boot")
+        .defaultValue("");
+
+        m_ctx.config.get("General", "Maximum Underwater RPMs", "1700.0", m_args.max_rpms);
+
         bind<IMC::Announce>(this);
         bind<IMC::PlanGeneration>(this);
         bind<IMC::EstimatedState>(this);
@@ -122,6 +132,9 @@ namespace Plan
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         if (m_estate == NULL)
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -174,6 +187,9 @@ namespace Plan
       //! <em>sk</em>:
       //!   - This template is similar to 'go' but generates only the maneuver StationKeeping at the desired
       //!     location.
+      //!
+      //! <em>dislodge</em>:
+      //!   - Attempt to unstuck the vehicle from an entangled condition.
       void
       consume(const IMC::PlanGeneration* msg)
       {
@@ -221,6 +237,9 @@ namespace Plan
           if (tlist.get("calibrate") != "false")
             pcontrol.flags = IMC::PlanControl::FLG_CALIBRATE;
 
+          if (tlist.get("ignore_errors") == "true")
+            pcontrol.flags |= IMC::PlanControl::FLG_IGNORE_ERRORS;
+
           pcontrol.plan_id = spec.plan_id;
           pcontrol.request_id = 0;
           pcontrol.type = IMC::PlanControl::PC_REQUEST;
@@ -239,6 +258,29 @@ namespace Plan
       void
       onMain(void)
       {
+        // Generate plans at boot
+        if (!m_args.generate_at_boot.empty())
+        {
+          IMC::PlanGeneration pg;
+          pg.cmd = IMC::PlanGeneration::CMD_GENERATE;
+          pg.op = IMC::PlanGeneration::OP_REQUEST;
+
+          for (unsigned i = 0; i < m_args.generate_at_boot.size(); i++)
+          {
+            std::vector<std::string> lst;
+            Utils::String::split(m_args.generate_at_boot[i], ":", lst);
+
+            if (lst.size())
+            {
+              pg.plan_id = lst[0];
+              if (lst.size() >= 2)
+                pg.params = lst[1];
+
+              dispatch(pg, DF_LOOP_BACK);
+            }
+          }
+        }
+
         while (!stopping())
         {
           waitForMessages(1.0);
@@ -502,6 +544,36 @@ namespace Plan
           return true;
         }
 
+        // This template makes the vehicle come to the surface and
+        // keep the motor running while loitering
+        // (useful when the buoyancy may have been compromised)
+        if (plan_id == "force_surface")
+        {
+          IMC::MessageList<IMC::Maneuver> maneuvers;
+
+          double lat, lon, depth;
+          getCurrentPosition(&lat, &lon, &depth);
+
+          IMC::Loiter* loiter = new IMC::Loiter();
+          loiter->lat = lat;
+          loiter->lon = lon;
+          loiter->z = 0.0f;
+          loiter->z_units = IMC::Z_DEPTH;
+          loiter->type = IMC::Loiter::LT_CIRCULAR;
+          loiter->direction = IMC::Loiter::LD_CCLOCKW;
+          loiter->duration = m_args.dive_time;
+          loiter->speed = m_args.speed_rpms;
+          loiter->speed_units = IMC::SUNITS_RPM;
+          loiter->radius = m_args.radius;
+          maneuvers.push_back(*loiter);
+
+          delete loiter;
+
+          sequentialPlan(plan_id, &maneuvers, result);
+
+          return true;
+        }
+
         // This template makes the vehicle survey the water column around a moving point
         if (plan_id == "yoyo")
         {
@@ -586,6 +658,21 @@ namespace Plan
             }
             delete yoyo;
           }
+
+          sequentialPlan(plan_id, &maneuvers, result);
+          return true;
+        }
+
+        // This template generates a plan that attempts to dislodge the vehicle (dislodge)
+        if (plan_id == "dislodge")
+        {
+          IMC::MessageList<IMC::Maneuver> maneuvers;
+
+          IMC::Dislodge* dislodge = new IMC::Dislodge();
+          dislodge->rpm = params.get("rpm", m_args.max_rpms);
+          dislodge->direction = IMC::Dislodge::DIR_AUTO;
+          maneuvers.push_back(*dislodge);
+          delete dislodge;
 
           sequentialPlan(plan_id, &maneuvers, result);
           return true;

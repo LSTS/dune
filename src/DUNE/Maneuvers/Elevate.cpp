@@ -35,14 +35,13 @@ namespace DUNE
 {
   namespace Maneuvers
   {
-    //! Value to be consider at surface
-    static const float c_surface = 0.3;
+    //! Tolerance when elevating towards a new depth
+    static const float c_elevator_tolerance = 1.0f;
 
     //! Default constructor.
     Elevate::Elevate(const IMC::Elevator* maneuver, Maneuvers::Maneuver* task,
-                     float min_radius, float depth_tolerance):
-      m_dir(0),
-      m_depth_tolerance(depth_tolerance)
+                     float min_radius):
+      m_dir(0)
     {
       m_elevator = *maneuver;
       m_task = task;
@@ -71,8 +70,6 @@ namespace DUNE
       m_path.end_z_units = m_elevator.end_z_units;
 
       computeElevatorDirection(msg);
-
-      m_task->dispatch(m_path);
     }
 
     void
@@ -104,10 +101,11 @@ namespace DUNE
           m_els = ST_HELICOID;
 
           startHelicoid(msg);
+          m_task->dispatch(m_path);
           break;
         case ST_HELICOID:
           // check if it is in the neighborhood of the desired depth
-          if (getVerticalError(msg) <= m_depth_tolerance)
+          if (getVerticalError(msg) <= c_elevator_tolerance)
           {
             m_els = ST_DONE;
             m_task->debug("Reached target depth/altitude of %0.2f meters.",
@@ -118,7 +116,7 @@ namespace DUNE
           if (m_elevator.end_z_units == IMC::Z_ALTITUDE)
           {
             if ((m_elevator.end_z > msg->depth + msg->alt)
-                && msg->depth < c_surface)
+                && msg->depth < c_elevator_tolerance)
             {
               // water column is not deep enough so we bail
               m_els = ST_DONE;

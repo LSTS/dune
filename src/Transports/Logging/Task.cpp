@@ -66,8 +66,6 @@ namespace Transports
       std::string m_label;
       // Current log directory.
       Path m_dir;
-      // Reference time of log.
-      double m_ref_time;
       // Current LSF volume directory.
       std::string m_volume_dir;
       // Compression format.
@@ -116,6 +114,7 @@ namespace Transports
         bind<IMC::CacheControl>(this);
         bind<IMC::LoggingControl>(this);
         bind<IMC::PowerOperation>(this);
+        bind<IMC::EntityInfo>(this);
       }
 
       ~Task(void)
@@ -207,6 +206,14 @@ namespace Transports
       }
 
       void
+      consume(const IMC::EntityInfo* msg)
+      {
+        // Only log messages we requested
+        if (msg->getDestinationEntity() == getEntityId())
+          logMessage(msg);
+      }
+
+      void
       consume(const IMC::Message* msg)
       {
         if (m_active)
@@ -246,19 +253,20 @@ namespace Transports
         dune_term.open(out_path.c_str());
 
         // Log entities.
-        std::vector<EntityDataBase::Entity*> devs;
+        std::vector<Entities::EntityDataBase::Entity*> devs;
         m_ctx.entities.contents(devs);
         for (unsigned int i = 0; i < devs.size(); ++i)
         {
-          IMC::EntityInfo info;
-          info.setTimeStamp(m_ref_time);
-          info.setSource(getSystemId());
-          info.id = devs[i]->id;
-          info.label = devs[i]->label;
-          info.component = devs[i]->task_name;
-          info.act_time = devs[i]->act_time;
-          info.deact_time = devs[i]->deact_time;
-          logMessage(&info);
+          IMC::QueryEntityInfo qinfo;
+          // Only query local entities
+          qinfo.setTimeStamp(time_ref);
+          qinfo.setDestination(getSystemId());
+          qinfo.setDestinationEntity(devs[i]->id);
+
+          // The id field is deprecated!
+          qinfo.id = devs[i]->id;
+          dispatch(qinfo, DF_KEEP_TIME | DF_LOOP_BACK);
+          logMessage(&qinfo);
         }
 
         std::vector<IMC::TransportBindings *> bindings = m_ctx.mbus.getBindings();
@@ -318,7 +326,7 @@ namespace Transports
       {
         m_active = true;
 
-        m_ref_time = Clock::getSinceEpoch();
+        double ref_time = Clock::getSinceEpoch();
 
         // Replace white spaces with underscores.
         String::replaceWhiteSpace(label, '_');
@@ -329,8 +337,8 @@ namespace Transports
 
         m_dir = m_ctx.dir_log
         / m_volume_dir
-        / Time::Format::getDateSafe(m_ref_time)
-        / Time::Format::getTimeSafe(m_ref_time) + dir_label;
+        / Time::Format::getDateSafe(ref_time)
+        / Time::Format::getTimeSafe(ref_time) + dir_label;
 
         // Create log directory.
         m_dir.create();
@@ -348,13 +356,13 @@ namespace Transports
         // Log LoggingControl to facilitate posterior conversion to LLF.
         m_log_ctl.op = IMC::LoggingControl::COP_STARTED;
         m_log_ctl.name = m_ctx.dir_log.suffix(m_dir);
-        m_log_ctl.setTimeStamp(m_ref_time);
+        m_log_ctl.setTimeStamp(ref_time);
         logMessage(&m_log_ctl);
         dispatch(m_log_ctl, DF_KEEP_TIME);
 
         inf(DTR("log started '%s'"), m_log_ctl.name.c_str());
 
-        logAuxFiles(m_ref_time);
+        logAuxFiles(ref_time);
 
         m_label = label;
       }

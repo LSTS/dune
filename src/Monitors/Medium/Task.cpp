@@ -56,12 +56,18 @@ namespace Monitors
       float init_time;
       //! GPS timeout.
       float gps_timeout;
-      //! Depth threshold.
+      //! Depth threshold to be considered surface.
       float depth_threshold;
       //! Air Speed threshold.
       float airspeed_threshold;
+      //! Altitude threshold
+      float altitude_threshold;
       //! Vehicle type.
       std::string vtype;
+      //! Vehicle subtype
+      std::string stype;
+      //! Medium Sensor Entity Label.
+      std::string label_medium;
     };
 
     //! %Medium task.
@@ -83,14 +89,25 @@ namespace Monitors
       float m_depth;
       //! Vehicle airspeed.
       float m_airspeed;
+      //! Vehicle groundspeed.
+      float m_gndspeed;
+      //! Medium Sensor entity id.
+      unsigned m_medium_eid;
+      //! Vehicle Altitude
+      float m_altitude;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
         m_depth(0),
-        m_airspeed(0)
+        m_airspeed(0),
+        m_gndspeed(0),
+        m_altitude(0)
       {
+        paramActive(Tasks::Parameter::SCOPE_IDLE,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER, true);
+
         param("Initialization Time", m_args.init_time)
         .units(Units::Second)
         .defaultValue("30.0")
@@ -116,22 +133,31 @@ namespace Monitors
         .minimumValue("2.0")
         .description("No valid GPS fixes timeout");
 
-        param("Underwater Depth Threshold", m_args.depth_threshold)
-        .units(Units::Meter)
-        .defaultValue("0.3")
-        .minimumValue("0.2")
-        .maximumValue("0.8")
-        .description("Minimum depth necessary to consider a vehicle underwater");
+        m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_threshold);
 
         param("Air Speed Threshold", m_args.airspeed_threshold)
         .units(Units::Meter)
         .defaultValue("12.0")
         .description("Minimum air speed necessary to consider a vehicle in air");
 
+        param("Altitude Threshold", m_args.altitude_threshold)
+        .units(Units::Meter)
+        .defaultValue("1")
+        .description("Minimum altitude necessary to consider a vehicle (Copter) in air");
+
         param("Vehicle Type", m_args.vtype)
         .defaultValue("UUV")
         .values("UUV, ASV, UAV")
         .description("Type of vehicle");
+
+        param("Vehicle Sub-Type", m_args.stype)
+        .defaultValue("FixedWing")
+        .values("FixedWing, Copter")
+        .description("Sub-Type of vehicle");
+
+        param("Entity Label - Medium Sensor", m_args.label_medium)
+        .defaultValue("Medium Sensor")
+        .description("Entity label of 'EntityState' Medium Sensor messages");
 
         // GPS validity.
         m_gps_val_bits = (IMC::GpsFix::GFV_VALID_DATE |
@@ -145,6 +171,7 @@ namespace Monitors
         m_water_presence.setTop(c_water_presence);
 
         // Register consumers.
+        bind<IMC::EntityState>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::Salinity>(this);
@@ -153,18 +180,47 @@ namespace Monitors
       }
 
       void
+      onEntityResolution(void)
+      {
+        try
+        {
+          m_medium_eid = resolveEntity(m_args.label_medium);
+        }
+        catch (...)
+        {
+          m_medium_eid = UINT_MAX;
+        }
+      }
+
+      void
       onResourceInitialization(void)
       {
-        // Initialize timers.
         m_init.setTop(m_args.init_time);
         m_water_status.setTop(m_args.water_timeout);
         m_gps_status.setTop(m_args.gps_timeout);
       }
 
       void
+      consume(const IMC::EntityState* msg)
+      {
+        if (msg->getSourceEntity() != m_medium_eid)
+          return;
+
+        m_water_presence.reset();
+
+        if (msg->description == DTR("water"))
+          m_water_status.reset();
+      }
+
+      void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         m_depth = msg->depth;
+        // For UAVs: Height is positive upwards, z is positive downwards.
+        m_altitude = msg->height - msg->z;
       }
 
       void
@@ -184,6 +240,8 @@ namespace Monitors
       {
         if ((msg->validity & m_gps_val_bits) == m_gps_val_bits)
           m_gps_status.reset();
+
+        m_gndspeed = msg->sog;
       }
 
       void
@@ -277,40 +335,78 @@ namespace Monitors
           check();
           if (m_args.vtype == "UAV")
           {
-            if (m_airspeed < m_args.airspeed_threshold)
-              m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+            if (m_args.stype == "Copter")
+            {
+              if (m_altitude < m_args.altitude_threshold)
+                m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+              else
+                m_vm.medium = IMC::VehicleMedium::VM_AIR;
+            }
             else
-              m_vm.medium = IMC::VehicleMedium::VM_AIR;
+            {
+              if (m_airspeed < m_args.airspeed_threshold)
+                m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+              else
+                m_vm.medium = IMC::VehicleMedium::VM_AIR;
+            }
           }
 
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          dispatch(m_vm);
+          if (isActive())
+          {
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            dispatch(m_vm);
+          }
+          else
+          {
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+          }
 
           return;
         }
 
         // No way to detect medium properly.
-        if (m_water_presence.overflow() && m_args.vtype != "UAV")
+        if (m_water_presence.overflow() && m_args.vtype != "UAV" && isActive())
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
 
         if (getEntityState() == IMC::EntityState::ESTA_ERROR)
         {
-          if (!m_water_presence.overflow() && m_args.vtype != "UAV")
+          if (!m_water_presence.overflow() && m_args.vtype != "UAV" && isActive())
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          else
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
 
         // Task state machine.
         switch (m_vm.medium)
         {
           case (IMC::VehicleMedium::VM_AIR):
-            if (m_airspeed < m_args.airspeed_threshold)
-              m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+            {
+              if (m_args.stype == "Copter")
+              {
+                if (m_altitude < m_args.altitude_threshold)
+                  m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+              }
+              else {
+                if (m_airspeed < m_args.airspeed_threshold && m_gndspeed < 2)
+                  m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+              }
+            }
             break;
 
           case (IMC::VehicleMedium::VM_GROUND):
-            check();
-            if (m_airspeed > m_args.airspeed_threshold && m_args.vtype == "UAV")
-              m_vm.medium = IMC::VehicleMedium::VM_AIR;
+            {
+              check();
+              if (m_args.stype == "Copter")
+              {
+                if (m_altitude > m_args.altitude_threshold)
+                  m_vm.medium = IMC::VehicleMedium::VM_AIR;
+              }
+              else
+              {
+                if (m_airspeed > m_args.airspeed_threshold && m_args.vtype == "UAV")
+                  m_vm.medium = IMC::VehicleMedium::VM_AIR;
+              }
+            }
             break;
 
           case (IMC::VehicleMedium::VM_WATER):
@@ -327,7 +423,15 @@ namespace Monitors
             break;
         }
 
-        dispatch(m_vm);
+        if (isActive())
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          dispatch(m_vm);
+        }
+        else
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        }
       }
     };
   }

@@ -153,7 +153,6 @@ namespace DUNE
         }
       }
 
-
       //! Computes the smallest signed angle between two angles (radians).
       //! @param source reference angle.
       //! @param target target angle.

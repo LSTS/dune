@@ -179,8 +179,6 @@ namespace Vision
       double m_exposure;
       //! Automatic exposure control.
       AutoExposure m_ae;
-      //! True if task is activating.
-      bool m_activating;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -189,8 +187,7 @@ namespace Vision
         m_kalive(0.5),
         m_log_dir(ctx.dir_log),
         m_debayer(BayerDecoder::TILE_GBRG),
-        m_white(c_width, c_height),
-        m_activating(false)
+        m_white(c_width, c_height)
       {
         // Retrieve configuration values.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -318,7 +315,7 @@ namespace Vision
         m_jpeg.setOutputColorSpace(JPEGCompressor::CS_YUV);
 
         m_gvcp = new GVCP(m_args.raddr);
-        m_gvsp = new GVSP(m_args.port);
+        m_gvsp = new GVSP(this, m_args.port);
         m_gvsp->start();
 
         for (unsigned i = 0; i < m_args.buffer_count; ++i)
@@ -408,7 +405,7 @@ namespace Vision
       void
       consume(const IMC::LoggingControl* msg)
       {
-        if (!m_activating && (msg->getDestination() != getSystemId()))
+        if (!isActivating() && (msg->getDestination() != getSystemId()))
           return;
 
         if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
@@ -421,7 +418,6 @@ namespace Vision
       void
       onRequestActivation(void)
       {
-        m_activating = true;
         IMC::LoggingControl log_ctl;
         log_ctl.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
         dispatch(log_ctl);
@@ -430,7 +426,6 @@ namespace Vision
       void
       onActivation(void)
       {
-        m_activating = false;
         m_log_dir.create();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }

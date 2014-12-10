@@ -119,14 +119,16 @@ namespace Maneuver
         bind<IMC::RemoteState>(this);
         bind<IMC::EstimatedState>(this, true); // consume even if inactive
         bind<IMC::Announce>(this);
-        bind<IMC::PathControlState>(this);
       }
 
       void
       onUpdateParameters(void)
       {
-        m_last_update.setTop(m_args.timeout);
-        m_heading_timestamp.setTop(m_args.heading_cooldown);
+        if (paramChanged(m_args.timeout))
+          m_last_update.setTop(m_args.timeout);
+
+        if (paramChanged(m_args.heading_cooldown))
+          m_heading_timestamp.setTop(m_args.heading_cooldown);
       }
 
       void
@@ -139,6 +141,9 @@ namespace Maneuver
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         // do not do a thing if the announce method is not active
         if (!m_args.announce_active)
           return;
@@ -279,7 +284,7 @@ namespace Maneuver
 
       //! Function to check if the vehicle is getting near to the next waypoint
       void
-      consume(const IMC::PathControlState* pcs)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
         if (pcs->flags & IMC::PathControlState::FL_NEAR)
           enableMovement(false);

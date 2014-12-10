@@ -27,7 +27,7 @@ Ais1_2_3::Ais1_2_3(const char *nmea_payload, const size_t pad)
 
   rot_raw = sbits(bs, 42, 8);
   rot_over_range = std::abs((float)rot_raw) > 126 ? true : false;
-  rot = pow((rot_raw/4.733), 2);
+  rot = std::pow((rot_raw/4.733), 2);
   if (rot_raw < 0) rot = -rot;
 
   sog = ubits(bs, 50, 10) / 10.;

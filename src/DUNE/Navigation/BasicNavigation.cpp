@@ -161,9 +161,9 @@ namespace DUNE
       .description("Maximum Horizontal Dilution of Precision value accepted for GPS fixes");
 
       param("GPS Maximum HACC", m_max_hacc)
-      .defaultValue("6.0")
+      .defaultValue("14.0")
       .minimumValue("3.0")
-      .maximumValue("20.0")
+      .maximumValue("100.0")
       .description("Maximum Horizontal Accuracy Estimate value accepted for GPS fixes");
 
       param("GPS Maximum Dynamic HACC factor", m_gps_hacc_factor)
@@ -189,9 +189,6 @@ namespace DUNE
       param("Entity Label - Compass", m_elabel_ahrs)
       .defaultValue("AHRS")
       .description("Entity label of 'AHRS' messages");
-
-      param("Entity Label - Alignment", m_elabel_alignment)
-      .description("Entity label of 'EulerAngles' alignment messages");
 
       param("Entity Label - DVL", m_elabel_dvl)
       .description("Entity label of the DVL device");
@@ -300,15 +297,6 @@ namespace DUNE
 
       m_agvel_eid = m_ahrs_eid;
       m_accel_eid = m_ahrs_eid;
-
-      try
-      {
-        m_alignment_eid = resolveEntity(m_elabel_alignment);
-      }
-      catch (...)
-      {
-        m_alignment_eid = 0;
-      }
 
       try
       {
@@ -435,20 +423,11 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::EulerAngles* msg)
     {
-      if (msg->getSourceEntity() == m_alignment_eid)
-      {
-        correctAlignment(msg->psi);
-        m_phi_offset = msg->phi - Math::Angles::normalizeRadian(getEuler(AXIS_X));
-        m_theta_offset = msg->theta - Math::Angles::normalizeRadian(getEuler(AXIS_Y));
-        spew("Euler Angles offset - phi, theta: %f | %f", m_phi_offset, m_theta_offset);
-        return;
-      }
-
       if (msg->getSourceEntity() != m_ahrs_eid)
         return;
 
-      m_euler_bfr[AXIS_X] += msg->phi + m_phi_offset;
-      m_euler_bfr[AXIS_Y] += msg->theta + m_theta_offset;
+      m_euler_bfr[AXIS_X] += msg->phi;
+      m_euler_bfr[AXIS_Y] += msg->theta;
 
       // Heading buffer maintains sign.
       m_euler_bfr[AXIS_Z] += getEuler(AXIS_Z) + Math::Angles::minSignedAngle(getEuler(AXIS_Z), msg->psi);
@@ -477,6 +456,9 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::GpsFix* msg)
     {
+      if (msg->type == IMC::GpsFix::GFT_MANUAL_INPUT)
+        return;
+
       // GpsFix validation.
       m_gps_rej.utc_time = msg->utc_time;
       m_gps_rej.setTimeStamp(msg->getTimeStamp());
@@ -813,8 +795,6 @@ namespace DUNE
 
       m_gps_sog = 0.0;
       m_heading = 0.0;
-      m_phi_offset = 0.0;
-      m_theta_offset = 0.0;
       m_altitude = -1;
 
       m_navstate = SM_STATE_IDLE;
@@ -929,13 +909,6 @@ namespace DUNE
         m_kal.setOutput(u, m_wvel.x);
         m_kal.setOutput(v, m_wvel.y);
       }
-    }
-
-    void
-    BasicNavigation::correctAlignment(double psi)
-    {
-      // do nothing.
-      (void)psi;
     }
 
     void
@@ -1084,7 +1057,7 @@ namespace DUNE
       float hpos_var = std::max(m_kal.getCovariance(STATE_X, STATE_X), m_kal.getCovariance(STATE_Y, STATE_Y));
 
       // Check if it exceeds the specified threshold value.
-      if (abort && hpos_var > m_max_hpos_var)
+      if (hpos_var > m_max_hpos_var)
       {
         switch (m_navstate)
         {
@@ -1092,8 +1065,11 @@ namespace DUNE
             // do nothing
             break;
           case SM_STATE_NORMAL:
-            setEntityState(IMC::EntityState::ESTA_ERROR, getUncertaintyMessage(hpos_var));
-            m_navstate = SM_STATE_UNSAFE; // Change state
+            if (abort)
+            {
+              setEntityState(IMC::EntityState::ESTA_ERROR, getUncertaintyMessage(hpos_var));
+              m_navstate = SM_STATE_UNSAFE; // Change state
+            }
             break;
           case SM_STATE_UNSAFE:
             // do nothing;

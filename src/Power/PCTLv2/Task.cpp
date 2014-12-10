@@ -123,6 +123,8 @@ namespace Power
       std::string pwr_main;
       //! Leaks entity labels.
       std::string leak_elabels[c_leak_count];
+      //! True if leak sensor is in fact a medium sensor.
+      bool leak_medium[c_leak_count];
       //! Watchdog timeout.
       double wdog_tout;
       //! Channel state: emergency.
@@ -228,6 +230,9 @@ namespace Power
         {
           std::string option = String::str("Leak %u - Entity Label", i);
           param(option, m_args.leak_elabels[i]);
+          option = String::str("Leak %u - Medium Sensor", i);
+          param(option, m_args.leak_medium[i])
+          .defaultValue("false");
         }
 
         m_pwr_op.setDestination(getSystemId());
@@ -303,7 +308,7 @@ namespace Power
           {
             eid = resolveEntity(m_args.adc_elabels[i]);
           }
-          catch (Tasks::EntityDataBase::NonexistentLabel& e)
+          catch (Entities::EntityDataBase::NonexistentLabel& e)
           {
             (void)e;
             eid = reserveEntity(m_args.adc_elabels[i]);
@@ -325,8 +330,16 @@ namespace Power
       void
       onResourceAcquisition(void)
       {
-        m_proto.setUART(m_args.uart_dev);
-        m_proto.open();
+        try
+        {
+          m_proto.setUART(m_args.uart_dev);
+          m_proto.open();
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
+
         m_wdog.setTop(m_args.wdog_tout);
       }
 
@@ -551,6 +564,13 @@ namespace Power
       setLeakStatus(int idx, bool leak)
       {
         IMC::EntityState& es = m_leaks[idx];
+
+        if (m_args.leak_medium[idx])
+        {
+          es.description = leak ? DTR("water") : DTR("air");
+          dispatch(es);
+          return;
+        }
 
         if (leak)
         {

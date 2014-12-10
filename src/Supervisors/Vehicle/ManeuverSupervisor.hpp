@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef SUPERVISOR_VEHICLE_MANEUVERSUPERVISOR_HPP_INCLUDED_
-#define SUPERVISOR_VEHICLE_MANEUVERSUPERVISOR_HPP_INCLUDED_
+#ifndef SUPERVISORS_VEHICLE_MANEUVER_SUPERVISOR_HPP_INCLUDED_
+#define SUPERVISORS_VEHICLE_MANEUVER_SUPERVISOR_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <queue>
@@ -116,7 +116,7 @@ namespace Supervisors
             if (m_curr_req->isStop())
               m_task->debug("maneuver stopped");
             else
-              m_task->err("request doesn't match");
+              m_task->err(DTR("request doesn't match"));
             break;
           case IMC::ManeuverControlState::MCS_DONE:
           case IMC::ManeuverControlState::MCS_ERROR:
@@ -145,8 +145,8 @@ namespace Supervisors
         if (!isExpired())
           return;
 
-        m_task->err("reply to maneuver %s has timed out", m_curr_req->isStop() ? "stop" : "start");
-        m_task->err("system may need maintenance");
+        m_task->err(DTR("reply to maneuver %s has timed out"), m_curr_req->isStop() ? DTR("stop") : DTR("start"));
+        m_task->err(DTR("system may need maintenance"));
 
         // restart timer
         m_curr_req->issue();
@@ -195,7 +195,7 @@ namespace Supervisors
           {
             if (m_state == IMC::ManeuverControlState::MCS_EXECUTING)
             {
-              m_task->err("already executing, cannot start without stopping");
+              m_task->err(DTR("already executing, cannot start without stopping"));
               // clear this one and use next one
               clearCurrent();
               processRequests();
@@ -231,13 +231,13 @@ namespace Supervisors
               }
               else
               {
-                m_task->err("undefined state");
+                m_task->err(DTR("undefined state"));
               }
             }
           }
           else
           {
-            m_task->err("undefined state");
+            m_task->err(DTR("undefined state"));
           }
         }
         else if (m_curr_req->isStop())

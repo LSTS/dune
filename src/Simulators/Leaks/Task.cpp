@@ -52,9 +52,8 @@ namespace Simulators
     {
       //! Task arguments
       Arguments m_args;
-      //! Convenience typedef
-      typedef std::map<std::string, IMC::EntityState> LeakSet;
       //! Leak set
+      typedef std::vector<Entities::StatefulEntity*> LeakSet;
       LeakSet m_leaks;
 
       Task(const std::string& name, Tasks::Context& ctx):
@@ -77,21 +76,26 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        setStatus(m_args.leak_ents, true);
+        if (m_leaks.size() > 0 && m_leaks.size() != m_args.leak_ents.size())
+          throw std::runtime_error("attempted to change the number of reserved entities");
       }
 
       void
       onEntityReservation(void)
       {
-        for (LeakSet::iterator itr = m_leaks.begin(); itr != m_leaks.end(); ++itr)
-          itr->second.setSourceEntity(reserveEntity(itr->first));
+        for (unsigned i = 0; i < m_args.leak_ents.size(); ++i)
+        {
+          m_leaks.push_back(reserveEntity<Entities::StatefulEntity>(m_args.leak_ents[i]));
+          m_leaks.back()->setState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          spew("added entity %s", m_args.leak_ents[i].c_str());
+        }
       }
 
       void
       onReportEntityState(void)
       {
         for (LeakSet::iterator itr = m_leaks.begin(); itr != m_leaks.end(); ++itr)
-          dispatch(itr->second);
+          (*itr)->reportState();
       }
 
       void
@@ -117,13 +121,17 @@ namespace Simulators
       void
       setStatus(const std::vector<std::string>& v, bool ok)
       {
-        uint8_t state = ok ? IMC::EntityState::ESTA_NORMAL : IMC::EntityState::ESTA_FAILURE;
+        IMC::EntityState::StateEnum state = ok ? IMC::EntityState::ESTA_NORMAL : IMC::EntityState::ESTA_FAILURE;
 
         for (unsigned int i = 0; i < v.size(); ++i)
         {
-          m_leaks[v[i]].state = state;
-          m_leaks[v[i]].description = ok ? DTR(Status::getString(Status::CODE_ACTIVE)) : DTR("leak detected");
+          LeakSet::iterator itr = std::find(m_leaks.begin(), m_leaks.end(), v[i]);
+          if (itr == m_leaks.end())
+            continue;
+
+          (*itr)->setState(state, std::string(ok ? DTR(Status::getString(Status::CODE_ACTIVE)) : DTR("leak detected")));
           debug("%s | %s", v[i].c_str(), (ok ? "ok" : "leak"));
+          (*itr)->reportState();
         }
       }
 
@@ -132,13 +140,12 @@ namespace Simulators
       void
       setStatus(bool ok)
       {
-        uint8_t state = ok ? IMC::EntityState::ESTA_NORMAL : IMC::EntityState::ESTA_FAILURE;
+        IMC::EntityState::StateEnum state = ok ? IMC::EntityState::ESTA_NORMAL : IMC::EntityState::ESTA_FAILURE;
 
         for (LeakSet::iterator itr = m_leaks.begin(); itr != m_leaks.end(); ++itr)
         {
-          itr->second.state = state;
-          itr->second.description = ok ? DTR(Status::getString(Status::CODE_ACTIVE)) : DTR("leak detected");
-          debug("%s | %s", itr->first.c_str(), (ok ? "ok" : "leak"));
+          (*itr)->setState(state, ok ? DTR(Status::getString(Status::CODE_ACTIVE)) : DTR("leak detected"));
+          debug("%s | %s", (*itr)->getLabel().c_str(), (ok ? "ok" : "leak"));
         }
       }
 

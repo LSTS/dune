@@ -46,7 +46,6 @@ namespace DUNE
       bindToManeuver<VehicleFormation, IMC::VehicleFormation>();
       bind<IMC::EstimatedState>(this);
       bind<IMC::RemoteState>(this);
-      bind<IMC::PathControlState>(this);
     }
 
     VehicleFormation::~VehicleFormation(void)
@@ -184,9 +183,9 @@ namespace DUNE
     }
 
     void
-    VehicleFormation::consume(const IMC::PathControlState* msg)
+    VehicleFormation::onPathControlState(const IMC::PathControlState* pcs)
     {
-      if (msg->flags & IMC::PathControlState::FL_NEAR)
+      if (pcs->flags & IMC::PathControlState::FL_NEAR)
       {
         if (m_approach)
         {

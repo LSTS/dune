@@ -154,6 +154,8 @@ namespace Sensors
       float range_modifier_mul_k;
       //! Range Modifier Timer.
       float range_modifier_timer;
+      //! Distance between GPS (navigation origin) and device.
+      float offset;
       //! 837 file name.
       std::string file_name_837;
     };
@@ -181,7 +183,7 @@ namespace Sensors
     //! Delta T beam height.
     static const float c_beam_height = 120.0;
     //! Minimum altitude for dynamic range modifier.
-    static const float c_min_alt = 1.5;
+    static const float c_min_alt = 0.3;
 
     //! %Task.
     struct Task: public Tasks::Periodic
@@ -206,8 +208,6 @@ namespace Sensors
       Path m_log_path;
       //! Power channel control.
       IMC::PowerChannelControl m_power_channel_control;
-      //! True if task is activating.
-      bool m_activating;
       //! Activation/deactivation timer.
       Counter<double> m_countdown;
       //! Range adaptive modifier counter.
@@ -218,8 +218,7 @@ namespace Sensors
       //! Constructor.
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
-        m_sock(NULL),
-        m_activating(false)
+        m_sock(NULL)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -345,6 +344,11 @@ namespace Sensors
         .minimumValue("0")
         .description("Adaptive Multibeam range modifier timer");
 
+        param("X-Axis Distance to GPS", m_args.offset)
+        .defaultValue("0")
+        .units(Units::Meter)
+        .description("Position of the Multibeam relative to the GPS antenna in the x-axis of the body frame");
+
         // Initialize switch data.
         std::memset(m_sdata, 0, sizeof(m_sdata));
         m_sdata[0] = 0xfe;
@@ -414,7 +418,9 @@ namespace Sensors
         m_power_channel_control.name = m_args.power_channel;
 
         m_countdown.setTop(getActivationTime());
-        m_range_counter.setTop(m_args.range_modifier_timer);
+
+        if (paramChanged(m_args.range_modifier_timer))
+          m_range_counter.setTop(m_args.range_modifier_timer);
 
         if (m_args.fill_state || m_args.range_modifier)
           bind<IMC::EstimatedState>(this);
@@ -441,7 +447,6 @@ namespace Sensors
         dispatch(m_power_channel_control);
 
         m_countdown.reset();
-        m_activating = true;
       }
 
       void
@@ -449,7 +454,10 @@ namespace Sensors
       {
         inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        m_activating = false;
+
+        IMC::LoggingControl lc;
+        lc.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
+        dispatch(lc);
       }
 
       void
@@ -472,7 +480,6 @@ namespace Sensors
         if (m_countdown.overflow())
         {
           activationFailed(DTR("failed to contact device"));
-          m_activating = false;
           return;
         }
 
@@ -499,7 +506,7 @@ namespace Sensors
         closeLog();
 
         m_log_path = path;
-        m_log_file.open(m_log_path.c_str(), std::ios::binary);
+        m_log_file.open(m_log_path.c_str(), std::ofstream::app | std::ios::binary);
         debug("opening %s", m_log_path.c_str());
       }
 
@@ -515,12 +522,16 @@ namespace Sensors
             debug("removing empty log '%s'", m_log_path.c_str());
             m_log_path.remove();
           }
+          m_log_path = Path();
         }
       }
 
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         m_estate = *msg;
       }
 
@@ -536,7 +547,7 @@ namespace Sensors
         switch (msg->op)
         {
           case IMC::LoggingControl::COP_STARTED:
-            closeLog();
+          case IMC::LoggingControl::COP_CURRENT_NAME:
             openLog(m_ctx.dir_log / msg->name / m_args.file_name_837);
             break;
 
@@ -713,7 +724,8 @@ namespace Sensors
         m_frame.setSerialStatus(m_rdata_hdr[4]);
         m_frame.setFirmwareVersion(m_rdata_hdr[6]);
 
-        m_log_file.write((const char*)m_frame.getData(), m_frame.getSize());
+        if (m_log_file.is_open())
+          m_log_file.write((const char*)m_frame.getData(), m_frame.getSize());
       }
 
       //! Update vehicle state in 837 files.
@@ -727,6 +739,15 @@ namespace Sensors
 
         double lat, lon;
         Coordinates::toWGS84(m_estate, lat, lon);
+
+        // Do not correct if offset is null.
+        if (std::fabs(m_args.offset) > 0)
+        {
+          double x = m_args.offset * std::cos(m_estate.psi);
+          double y = m_args.offset * std::sin(m_estate.psi);
+          Coordinates::WGS84::displace(x, y, &lat, &lon);
+        }
+
         m_frame.setGpsData(lat, lon);
         m_frame.setSpeed(m_estate.u);
         m_frame.setCourse(m_estate.psi);
@@ -781,7 +802,7 @@ namespace Sensors
           else
           {
             waitForMessages(1.0);
-            if (m_activating)
+            if (isActivating())
               checkActivationProgress();
           }
         }

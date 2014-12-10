@@ -44,9 +44,9 @@ set(PROJECT_VENDOR "Universidade do Porto - LSTS")
 set(PROJECT_COPYRIGHT "Copyright (C) 2007-2014 - ${PROJECT_VENDOR}")
 set(PROJECT_CONTACT "DUNE <dune@lsts.pt>")
 set(PROJECT_VERSION_MAJ "2")
-set(PROJECT_VERSION_MIN "5")
-set(PROJECT_VERSION_PAT "0")
-set(PROJECT_VERSION_RCN "1")
+set(PROJECT_VERSION_MIN "6")
+set(PROJECT_VERSION_PAT "x")
+set(PROJECT_VERSION_RCN "0")
 
 # Version formats.
 set(PROJECT_VERSION
@@ -56,8 +56,13 @@ if(PROJECT_VERSION_RCN GREATER 0)
   set(PROJECT_VERSION "${PROJECT_VERSION}-rc${PROJECT_VERSION_RCN}")
 endif(PROJECT_VERSION_RCN GREATER 0)
 
-set(PROJECT_VERSION_PARTS
-  "${PROJECT_VERSION_MAJ},${PROJECT_VERSION_MIN},${PROJECT_VERSION_PAT},${PROJECT_VERSION_RCN}")
+if(PROJECT_VERSION_PAT STREQUAL "x")
+  set(PROJECT_VERSION_PARTS
+    "${PROJECT_VERSION_MAJ},${PROJECT_VERSION_MIN},99,${PROJECT_VERSION_RCN}")
+else()
+  set(PROJECT_VERSION_PARTS
+    "${PROJECT_VERSION_MAJ},${PROJECT_VERSION_MIN},${PROJECT_VERSION_PAT},${PROJECT_VERSION_RCN}")
+endif()
 
 # This directory will hold generated files.
 set(DUNE_GENERATED ${CMAKE_BINARY_DIR}/DUNEGeneratedFiles)
@@ -74,13 +79,14 @@ dune_option(SHARED "Build shared library and shared plugins")
 dune_option(DEBUG "Compile with debug information enabled")
 dune_option(PROFILE "Compile with profiling and debug information enabled")
 dune_option(TLSF "Include the TLSF O(1) memory allocator")
-dune_option(GUI "Include Qt based GUI")
+dune_option(QT5 "Include Qt5 based GUI")
 dune_option(DC1394 "Enable support for libdc1394")
 dune_option(V4L2 "Enable support for libv4l2")
 dune_option(JS "Enable support for SpiderMonkey javascript engine")
 dune_option(XENETH "Enable support for the Xeneth SDK")
 dune_option(BLUEVIEW "Enable support for the BlueView SDK")
 dune_option(OPENCV "Enable support for OpenCV")
+dune_option(NO_RTTI "Disable support for RTTI")
 
 # Internationalization.
 include(${PROJECT_SOURCE_DIR}/cmake/I18N.cmake)
@@ -102,27 +108,7 @@ endif(PROFILE)
 # Set a build name with more details than the default.
 set(BUILDNAME "${DUNE_SYSTEM_NAME_VAR}")
 
-##########################################################################
-# IMC                                                                    #
-##########################################################################
-set(DUNE_MESSAGES_IMC_XML ${PROJECT_SOURCE_DIR}/etc/xml/IMC.xml)
-
-if(DUNE_PROGRAM_PYTHON)
-  add_custom_target(imc
-    COMMAND ${DUNE_PROGRAM_PYTHON}
-    ${PROJECT_SOURCE_DIR}/programs/generators/imc_code.py
-    ${DUNE_MESSAGES_IMC_XML} ${PROJECT_SOURCE_DIR}/src/DUNE/IMC
-    COMMAND ${DUNE_PROGRAM_PYTHON}
-    ${PROJECT_SOURCE_DIR}/programs/generators/imc_blob.py
-    ${DUNE_MESSAGES_IMC_XML} ${PROJECT_SOURCE_DIR}/src/DUNE/IMC
-    COMMAND ${DUNE_PROGRAM_PYTHON}
-    ${PROJECT_SOURCE_DIR}/programs/generators/imc_tests.py
-    ${DUNE_MESSAGES_IMC_XML} ${PROJECT_SOURCE_DIR}/programs/tests
-    DEPENDS ${xml})
-endif(DUNE_PROGRAM_PYTHON)
-
-install(FILES ${DUNE_MESSAGES_IMC_XML} RENAME IMC.xml
-  DESTINATION etc/xml)
+include(cmake/IMC.cmake)
 
 ##########################################################################
 # Piccolo                                                                #
@@ -204,6 +190,12 @@ endforeach(extlib ${extlibs})
 
 # Private Libraries.
 file(GLOB extlibs ${PROJECT_SOURCE_DIR}/private/vendor/libraries/*/Library.cmake)
+foreach(extlib ${extlibs})
+  include(${extlib})
+endforeach(extlib ${extlibs})
+
+# User Libraries.
+file(GLOB extlibs ${PROJECT_SOURCE_DIR}/user/vendor/libraries/*/Library.cmake)
 foreach(extlib ${extlibs})
   include(${extlib})
 endforeach(extlib ${extlibs})
@@ -329,6 +321,11 @@ install(DIRECTORY www DESTINATION .)
 
 # Install configuration files.
 install(DIRECTORY etc DESTINATION .)
+
+if(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
+  # Install user configuration files.
+  install(DIRECTORY user/etc DESTINATION ./user/)
+endif(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
 
 # Install firmware files.
 install(DIRECTORY firmware DESTINATION .)

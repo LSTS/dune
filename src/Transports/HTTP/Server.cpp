@@ -76,10 +76,8 @@ namespace Transports
           {
             m_handler.handleRequest(sock);
           }
-          catch (std::runtime_error& e)
-          {
-            DUNE_ERR("Handler", e.what());
-          }
+          catch (...)
+          { }
 
           delete sock;
         }

@@ -37,6 +37,9 @@ namespace DUNE
 {
   namespace Maneuvers
   {
+    //! Factor for the radius to consider traveling at the surface
+    static const float c_surface_factor = 2.5f;
+
     //! Default constructor.
     StationKeep::StationKeep(const IMC::StationKeeping* maneuver, Maneuvers::Maneuver* task,
                              float min_radius)
@@ -91,11 +94,22 @@ namespace DUNE
     }
 
     void
-    StationKeep::startMoving(double range)
+    StationKeep::startMoving(double range, bool at_surface = false)
     {
       m_task->inf(DTR("outside safe region (distance: %.1f m)"), range);
       m_task->setControl(IMC::CL_PATH);
-      m_task->dispatch(m_path);
+
+      if (at_surface)
+      {
+        IMC::DesiredPath dp = m_path;
+        dp.end_z = 0.0f;
+        dp.end_z_units = IMC::Z_DEPTH;
+        m_task->dispatch(dp);
+      }
+      else
+      {
+        m_task->dispatch(m_path);
+      }
     }
 
     void
@@ -127,7 +141,9 @@ namespace DUNE
         case ST_ON_STATION:
           if (range > m_radius)
           {
-            startMoving(range);
+            bool go_at_surface = range < c_surface_factor * m_radius;
+
+            startMoving(range, go_at_surface);
             m_sks = ST_OFF_STATION;
           }
           break;

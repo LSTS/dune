@@ -104,7 +104,7 @@ main(int32_t argc, char** argv)
     {
       if (msg->getId() == DUNE_IMC_ESTIMATEDSTATE)
       {
-        IMC::EstimatedState* state = dynamic_cast<IMC::EstimatedState*>(msg);
+        IMC::EstimatedState* state = static_cast<IMC::EstimatedState*>(msg);
 
         if (!got_state)
         {
@@ -139,7 +139,7 @@ main(int32_t argc, char** argv)
       }
       else if (msg->getId() == DUNE_IMC_DESIREDZ)
       {
-        IMC::DesiredZ* ptr = dynamic_cast<IMC::DesiredZ*>(msg);
+        IMC::DesiredZ* ptr = static_cast<IMC::DesiredZ*>(msg);
 
         if (ptr->z_units == IMC::Z_ALTITUDE)
         {
@@ -153,7 +153,7 @@ main(int32_t argc, char** argv)
       }
       else if (msg->getId() == DUNE_IMC_LOGGINGCONTROL)
       {
-        IMC::LoggingControl* ptr = dynamic_cast<IMC::LoggingControl*>(msg);
+        IMC::LoggingControl* ptr = static_cast<IMC::LoggingControl*>(msg);
         IMC::Packet::serialize(ptr, buffer);
         lsf.write(buffer.getBufferSigned(), buffer.getSize());
         buffer.resetBuffer();

@@ -35,7 +35,7 @@
 // DUNE headers.
 #include <DUNE/Parsers/Config.hpp>
 #include <DUNE/FileSystem/Path.hpp>
-#include <DUNE/Tasks/EntityDataBase.hpp>
+#include <DUNE/Entities/EntityDataBase.hpp>
 #include <DUNE/Utils/ByteBuffer.hpp>
 #include <DUNE/Tasks/Profiles.hpp>
 #include <DUNE/IMC/Bus.hpp>
@@ -61,13 +61,15 @@ namespace DUNE
       //! IMC address resolver.
       IMC::AddressResolver resolver;
       //! Label data base.
-      EntityDataBase entities;
+      Entities::EntityDataBase entities;
       //! Execution profiles.
       Profiles profiles;
       //! DUNE's directory.
       FileSystem::Path dir_app;
       //! Path to configuration directory.
       FileSystem::Path dir_cfg;
+      //! Path to user configuration directory.
+      FileSystem::Path dir_usr_cfg;
       //! Path to HTTP server directory.
       FileSystem::Path dir_www;
       //! Path to log directory.

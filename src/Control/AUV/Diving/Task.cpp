@@ -57,8 +57,8 @@ namespace Control
       //! %Task arguments.
       struct Arguments
       {
-        //! Depth tolerance to consider submerged.
-        float depth_tol;
+        //! Depth threshold to consider submerged.
+        float depth_threshold;
         //! Speed tolerance to consider possibility of submergence.
         float speed_tol;
         //! Time after which diving controller kicks in to help submerge.
@@ -117,10 +117,9 @@ namespace Control
           m_braking(false),
           m_scope_ref(0)
         {
-          param("Depth Tolerance", m_args.depth_tol)
-          .defaultValue("0.5")
-          .units(Units::Meter)
-          .description("Depth tolerance to consider submerged");
+          m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_threshold);
+          // Make it double just to be safe for hysteresis purposes
+          m_args.depth_threshold *= 2.0;
 
           param("Speed Tolerance", m_args.speed_tol)
           .defaultValue("200.0")
@@ -259,6 +258,9 @@ namespace Control
           if (!isActive())
             return;
 
+          if (msg->getSource() != getSystemId())
+            return;
+
           m_depth = msg->depth;
           m_alt = msg->alt;
         }
@@ -385,7 +387,7 @@ namespace Control
         void
         onIdle(void)
         {
-          if ((m_depth < m_args.depth_tol) && (m_z_ref.value > m_args.depth_tol)
+          if ((m_depth < m_args.depth_threshold) && (m_z_ref.value > m_args.depth_threshold)
               && (m_dspeed.value > 0.0) && (m_rpm > m_args.speed_tol))
           {
             m_mstate = SM_CHECKING;
@@ -405,7 +407,7 @@ namespace Control
             debug("no longer attempting to submerge");
           }
 
-          if (m_depth > m_args.depth_tol)
+          if (m_depth > m_args.depth_threshold)
           {
             m_mstate = SM_SUBMERGED;
             debug("vehicle submerged");
@@ -430,7 +432,7 @@ namespace Control
           }
 
           // divide by two as an hysteresis mechanism
-          if (m_depth < m_args.depth_tol / 2.0)
+          if (m_depth < m_args.depth_threshold / 2.0)
           {
             m_counter_solo->reset();
             m_mstate = SM_CHECKING;
@@ -452,7 +454,7 @@ namespace Control
             return;
           }
 
-          if (m_depth > m_args.depth_tol)
+          if (m_depth > m_args.depth_threshold)
           {
             m_mstate = SM_SUBMERGED;
 
@@ -523,12 +525,12 @@ namespace Control
         {
           if (m_z_ref.z_units == IMC::Z_DEPTH)
           {
-            return (m_z_ref.value > m_args.depth_tol);
+            return (m_z_ref.value > m_args.depth_threshold);
           }
           else if (m_z_ref.z_units == IMC::Z_ALTITUDE)
           {
-            if (m_depth > m_args.depth_tol) // making sure dvl data is sane
-              return (m_z_ref.value < m_alt - m_args.depth_tol);
+            if (m_depth > m_args.depth_threshold) // making sure dvl data is sane
+              return (m_z_ref.value < m_alt - m_args.depth_threshold);
             else
               return true; // if dvl may not be sane yet, let it dive
           }

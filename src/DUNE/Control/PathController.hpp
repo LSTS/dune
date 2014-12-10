@@ -43,8 +43,6 @@ namespace DUNE
 {
   namespace Control
   {
-    //! Estimated time of arrival factor
-    static const float c_time_factor = 5.0f;
     //! Factor for path error in y direction to prevent too large cross track offsets
     static const float c_erry_factor = 1.75f;
 
@@ -64,6 +62,10 @@ namespace DUNE
       //! Entity reservation callback.
       void
       onEntityReservation(void);
+
+      //! Entity reservation callback.
+      void
+      onEntityResolution(void);
 
       //! Consumer for Brake message.
       //! @param brake message to consume.
@@ -232,7 +234,6 @@ namespace DUNE
       virtual void
       step(const IMC::EstimatedState& state, const TrackingState& ts) = 0;
 
-
       //! Default implementation for loiter control,
       //! that can be  overriden for a controller specific implementation.
       //! @param state navigation state
@@ -388,6 +389,8 @@ namespace DUNE
         //! Arguments for the bottom tracker
         BottomTracker::Arguments args;
       } m_btd;
+      //! Entity for the bottom tracker.
+      Entities::BasicEntity* m_bt_entity;
 
       //! Running path monitors
       bool m_running_monitors;
@@ -421,7 +424,10 @@ namespace DUNE
       float m_eta_min_speed;
       //! Active loops
       uint32_t m_aloops;
-
+      //! Timeout for new incoming path reference
+      double m_new_ref_timeout;
+      //! Time of arrival factor
+      float m_time_factor;
       //! Current tracking state
       TrackingState m_ts;
       //! Path control state message

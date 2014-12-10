@@ -82,7 +82,7 @@ namespace Sensors
 
       if (!passed)
       {
-        DUNE_DBG("SW100", "error setting up device (unable to stop continuous mode)");
+        m_task->debug("error setting up device (unable to stop continuous mode)");
         return false;
       }
       passed = false;
@@ -102,7 +102,7 @@ namespace Sensors
           if (sscanf((char*)bfr, "!%02d\r", &m_id) == 1)
             passed = true;
           else
-            DUNE_MSG("SW100 Protocol", "received garbage: " << Streams::sanitize(bfr));
+            m_task->debug("received garbage: %s", Streams::sanitize(bfr).c_str());
           break;
         }
 
@@ -111,7 +111,7 @@ namespace Sensors
 
       if (!passed)
       {
-        DUNE_DBG("SW100", "error setting up device (unable to request id)");
+        m_task->debug("error setting up device (unable to request id)");
         return false;
       }
       passed = false;
@@ -139,7 +139,7 @@ namespace Sensors
 
       if (!passed)
       {
-        DUNE_DBG("SW100", "error setting up device (unable to set output rate)");
+        m_task->debug("error setting up device (unable to set output rate)");
         return false;
       }
       passed = false;
@@ -171,7 +171,7 @@ namespace Sensors
 
       if (!passed)
       {
-        DUNE_DBG("SW100", "error setting up device (unable to request continuous mode)");
+        m_task->debug("error setting up device (unable to request continuous mode)");
         return false;
       }
 

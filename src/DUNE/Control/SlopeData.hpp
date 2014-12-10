@@ -84,8 +84,7 @@ namespace DUNE
       void
       reset(void)
       {
-        if (m_frange != NULL)
-          m_frange->clear();
+        Memory::clear(m_frange);
 
         m_last_slope = 0.0;
         m_curr_slope = 0.0;

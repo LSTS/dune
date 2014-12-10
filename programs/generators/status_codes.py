@@ -61,7 +61,7 @@ for line in fd:
     number += 1
 
 # Codes.
-fd = File('Codes.hpp', dst_folder, ns = ['DUNE', 'Status'])
+fd = File('Codes.hpp', dst_folder, ns = ['DUNE', 'Status'], skip_md5 = True)
 fd.add_dune_headers('Config.hpp')
 count = 0
 enum = Enum('Code', 'Status codes')
@@ -76,7 +76,7 @@ get = Function('getString', 'const char*',  [Var('code', 'Code')])
 get.add_body('return c_status_messages[code];')
 
 # CPP.
-fd = File('Messages.cpp', dst_folder, ns = ['DUNE', 'Status'])
+fd = File('Messages.cpp', dst_folder, ns = ['DUNE', 'Status'], skip_md5 = True)
 fd.add_dune_headers('Config.hpp', 'Status/Messages.hpp')
 fd.append('static const char* c_status_messages[%u] =\n{' % count)
 strings = ['DTR_RT("%(string)s")' % msg for msg in msgs]

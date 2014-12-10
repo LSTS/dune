@@ -84,9 +84,17 @@ namespace Sensors
       onResourceAcquisition(void)
       {
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-        m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-        m_uart->setCanonicalInput(true);
-        m_uart->flush();
+
+        try
+        {
+          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          m_uart->setCanonicalInput(true);
+          m_uart->flush();
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
       }
 
       void
@@ -120,13 +128,13 @@ namespace Sensors
         m_uart->flush();
 
         if (!sendCommand("\r", "\r\n"))
-          throw RestartNeeded(DTR("failed to enter command mode"), 5);
+          throw RestartNeeded(DTR("failed to enter command mode"), 5, false);
 
         if (!sendCommand("SET SAMPLE 1 s\r", ">SET SAMPLE 1 s\r\n"))
-          throw RestartNeeded(DTR("failed to set sampling rate"), 5);
+          throw RestartNeeded(DTR("failed to set sampling rate"), 5, false);
 
         if (!sendCommand("MONITOR\r", ">MONITOR\r\n"))
-          throw RestartNeeded(DTR("failed to enter monitor mode"), 5);
+          throw RestartNeeded(DTR("failed to enter monitor mode"), 5, false);
 
         m_wdog.setTop(m_args.input_timeout);
       }

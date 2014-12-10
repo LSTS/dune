@@ -47,9 +47,8 @@ namespace DUNE
       //! @param[in] maneuver pointer to rows maneuver
       //! @param[in] task pointer to task object (debug and inf)
       //! @param[in] min_radius minimum radius to consider in maneuver
-      //! @param[in] depth_tolerance tolerance when elevating towards a new depth
       Elevate(const IMC::Elevator* maneuver, Maneuvers::Maneuver* task,
-              float min_radius, float depth_tolerance);
+              float min_radius);
 
       //! Update object with EstimatedState message
       //! @param[in] msg pointer to EstimatedState message

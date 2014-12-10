@@ -61,10 +61,7 @@ namespace DUNE
       .defaultValue("false")
       .description("Bypass heading rate controller and use reference directly on torques");
 
-      param("Maximum Depth", m_max_depth)
-      .defaultValue("50.0")
-      .units(Units::Meter)
-      .description("Maximum admissible depth that the vehicle may sustain");
+      m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_max_depth);
 
       // Initialize entity state.
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
@@ -163,10 +160,12 @@ namespace DUNE
       {
         m_vertical_mode = VERTICAL_MODE_DEPTH;
 
-        if (m_vertical_ref > m_max_depth)
+        float limit = m_max_depth - c_depth_margin;
+
+        if (m_vertical_ref > limit)
         {
-          m_vertical_ref = m_max_depth;
-          war(DTR("limiting depth to %.1f"), m_max_depth);
+          m_vertical_ref = limit;
+          war(DTR("limiting depth to %.1f"), limit);
         }
       }
       else if (msg->z_units == IMC::Z_ALTITUDE)
@@ -214,6 +213,9 @@ namespace DUNE
     BasicAutopilot::consume(const IMC::EstimatedState* msg)
     {
       if (!isActive())
+        return;
+
+      if (msg->getSource() != getSystemId())
         return;
 
       m_estate = *msg;

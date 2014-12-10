@@ -26,6 +26,8 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
+// IMC XML MD5: 4ab0411c6256574a5ac1785347d0a9f2                            *
+//***************************************************************************
 
 // ISO C++ 98 headers.
 #include <algorithm>
@@ -63,7 +65,7 @@ namespace DUNE
     bool
     EntityState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EntityState& other__ = dynamic_cast<const EntityState&>(msg__);
+      const IMC::EntityState& other__ = static_cast<const EntityState&>(msg__);
       if (state != other__.state) return false;
       if (flags != other__.flags) return false;
       if (description != other__.description) return false;
@@ -172,7 +174,7 @@ namespace DUNE
     bool
     EntityInfo::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EntityInfo& other__ = dynamic_cast<const EntityInfo&>(msg__);
+      const IMC::EntityInfo& other__ = static_cast<const EntityInfo&>(msg__);
       if (id != other__.id) return false;
       if (label != other__.label) return false;
       if (component != other__.component) return false;
@@ -260,7 +262,7 @@ namespace DUNE
     bool
     QueryEntityInfo::fieldsEqual(const Message& msg__) const
     {
-      const IMC::QueryEntityInfo& other__ = dynamic_cast<const QueryEntityInfo&>(msg__);
+      const IMC::QueryEntityInfo& other__ = static_cast<const QueryEntityInfo&>(msg__);
       if (id != other__.id) return false;
       return true;
     }
@@ -329,7 +331,7 @@ namespace DUNE
     bool
     EntityList::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EntityList& other__ = dynamic_cast<const EntityList&>(msg__);
+      const IMC::EntityList& other__ = static_cast<const EntityList&>(msg__);
       if (op != other__.op) return false;
       if (list != other__.list) return false;
       return true;
@@ -375,62 +377,6 @@ namespace DUNE
       IMC::toJSON(os__, "list", list, nindent__);
     }
 
-    EntityControl::EntityControl(void)
-    {
-      m_header.mgid = 6;
-      clear();
-    }
-
-    void
-    EntityControl::clear(void)
-    {
-      op = 0;
-    }
-
-    bool
-    EntityControl::fieldsEqual(const Message& msg__) const
-    {
-      const IMC::EntityControl& other__ = dynamic_cast<const EntityControl&>(msg__);
-      if (op != other__.op) return false;
-      return true;
-    }
-
-    int
-    EntityControl::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    EntityControl::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(op, ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    EntityControl::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(op, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    EntityControl::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(op, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    void
-    EntityControl::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      IMC::toJSON(os__, "op", op, nindent__);
-    }
-
     CpuUsage::CpuUsage(void)
     {
       m_header.mgid = 7;
@@ -446,7 +392,7 @@ namespace DUNE
     bool
     CpuUsage::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CpuUsage& other__ = dynamic_cast<const CpuUsage&>(msg__);
+      const IMC::CpuUsage& other__ = static_cast<const CpuUsage&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -515,7 +461,7 @@ namespace DUNE
     bool
     TransportBindings::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TransportBindings& other__ = dynamic_cast<const TransportBindings&>(msg__);
+      const IMC::TransportBindings& other__ = static_cast<const TransportBindings&>(msg__);
       if (consumer != other__.consumer) return false;
       if (message_id != other__.message_id) return false;
       return true;
@@ -600,167 +546,6 @@ namespace DUNE
       return 0;
     }
 
-    Parameter::Parameter(void)
-    {
-      m_header.mgid = 10;
-      clear();
-    }
-
-    void
-    Parameter::clear(void)
-    {
-      section.clear();
-      param.clear();
-      value.clear();
-    }
-
-    bool
-    Parameter::fieldsEqual(const Message& msg__) const
-    {
-      const IMC::Parameter& other__ = dynamic_cast<const Parameter&>(msg__);
-      if (section != other__.section) return false;
-      if (param != other__.param) return false;
-      if (value != other__.value) return false;
-      return true;
-    }
-
-    int
-    Parameter::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    Parameter::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(section, ptr__);
-      ptr__ += IMC::serialize(param, ptr__);
-      ptr__ += IMC::serialize(value, ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    Parameter::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(section, bfr__, size__);
-      bfr__ += IMC::deserialize(param, bfr__, size__);
-      bfr__ += IMC::deserialize(value, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    Parameter::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::reverseDeserialize(section, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(param, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    void
-    Parameter::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      IMC::toJSON(os__, "section", section, nindent__);
-      IMC::toJSON(os__, "param", param, nindent__);
-      IMC::toJSON(os__, "value", value, nindent__);
-    }
-
-    ParameterControl::ParameterControl(void)
-    {
-      m_header.mgid = 11;
-      clear();
-      params.setParent(this);
-    }
-
-    void
-    ParameterControl::clear(void)
-    {
-      op = 0;
-      params.clear();
-    }
-
-    bool
-    ParameterControl::fieldsEqual(const Message& msg__) const
-    {
-      const IMC::ParameterControl& other__ = dynamic_cast<const ParameterControl&>(msg__);
-      if (op != other__.op) return false;
-      if (params != other__.params) return false;
-      return true;
-    }
-
-    int
-    ParameterControl::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    ParameterControl::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(op, ptr__);
-      ptr__ += params.serialize(ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    ParameterControl::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(op, bfr__, size__);
-      bfr__ += params.deserialize(bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    ParameterControl::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(op, bfr__, size__);
-      bfr__ += params.reverseDeserialize(bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    void
-    ParameterControl::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      IMC::toJSON(os__, "op", op, nindent__);
-      params.toJSON(os__, "params", nindent__);
-    }
-
-    void
-    ParameterControl::setTimeStampNested(double value__)
-    {
-      params.setTimeStamp(value__);
-    }
-
-    void
-    ParameterControl::setSourceNested(uint16_t value__)
-    {
-      params.setSource(value__);
-    }
-
-    void
-    ParameterControl::setSourceEntityNested(uint8_t value__)
-    {
-      params.setSourceEntity(value__);
-    }
-
-    void
-    ParameterControl::setDestinationNested(uint16_t value__)
-    {
-      params.setDestination(value__);
-    }
-
-    void
-    ParameterControl::setDestinationEntityNested(uint8_t value__)
-    {
-      params.setDestinationEntity(value__);
-    }
-
     DevCalibrationControl::DevCalibrationControl(void)
     {
       m_header.mgid = 12;
@@ -776,7 +561,7 @@ namespace DUNE
     bool
     DevCalibrationControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DevCalibrationControl& other__ = dynamic_cast<const DevCalibrationControl&>(msg__);
+      const IMC::DevCalibrationControl& other__ = static_cast<const DevCalibrationControl&>(msg__);
       if (op != other__.op) return false;
       return true;
     }
@@ -835,7 +620,7 @@ namespace DUNE
     bool
     DevCalibrationState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DevCalibrationState& other__ = dynamic_cast<const DevCalibrationState&>(msg__);
+      const IMC::DevCalibrationState& other__ = static_cast<const DevCalibrationState&>(msg__);
       if (total_steps != other__.total_steps) return false;
       if (step_number != other__.step_number) return false;
       if (step != other__.step) return false;
@@ -907,7 +692,7 @@ namespace DUNE
     bool
     EntityActivationState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EntityActivationState& other__ = dynamic_cast<const EntityActivationState&>(msg__);
+      const IMC::EntityActivationState& other__ = static_cast<const EntityActivationState&>(msg__);
       if (state != other__.state) return false;
       if (error != other__.error) return false;
       return true;
@@ -1024,7 +809,7 @@ namespace DUNE
     bool
     VehicleOperationalLimits::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VehicleOperationalLimits& other__ = dynamic_cast<const VehicleOperationalLimits&>(msg__);
+      const IMC::VehicleOperationalLimits& other__ = static_cast<const VehicleOperationalLimits&>(msg__);
       if (op != other__.op) return false;
       if (speed_min != other__.speed_min) return false;
       if (speed_max != other__.speed_max) return false;
@@ -1166,7 +951,7 @@ namespace DUNE
     bool
     MsgList::fieldsEqual(const Message& msg__) const
     {
-      const IMC::MsgList& other__ = dynamic_cast<const MsgList&>(msg__);
+      const IMC::MsgList& other__ = static_cast<const MsgList&>(msg__);
       if (msgs != other__.msgs) return false;
       return true;
     }
@@ -1269,7 +1054,7 @@ namespace DUNE
     bool
     SimulatedState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SimulatedState& other__ = dynamic_cast<const SimulatedState&>(msg__);
+      const IMC::SimulatedState& other__ = static_cast<const SimulatedState&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (height != other__.height) return false;
@@ -1411,7 +1196,7 @@ namespace DUNE
     bool
     LeakSimulation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LeakSimulation& other__ = dynamic_cast<const LeakSimulation&>(msg__);
+      const IMC::LeakSimulation& other__ = static_cast<const LeakSimulation&>(msg__);
       if (op != other__.op) return false;
       if (entities != other__.entities) return false;
       return true;
@@ -1474,7 +1259,7 @@ namespace DUNE
     bool
     UASimulation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::UASimulation& other__ = dynamic_cast<const UASimulation&>(msg__);
+      const IMC::UASimulation& other__ = static_cast<const UASimulation&>(msg__);
       if (type != other__.type) return false;
       if (speed != other__.speed) return false;
       if (data != other__.data) return false;
@@ -1542,7 +1327,7 @@ namespace DUNE
     bool
     DynamicsSimParam::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DynamicsSimParam& other__ = dynamic_cast<const DynamicsSimParam&>(msg__);
+      const IMC::DynamicsSimParam& other__ = static_cast<const DynamicsSimParam&>(msg__);
       if (op != other__.op) return false;
       if (tas2acc_pgain != other__.tas2acc_pgain) return false;
       if (bank2p_pgain != other__.bank2p_pgain) return false;
@@ -1609,7 +1394,7 @@ namespace DUNE
     bool
     StorageUsage::fieldsEqual(const Message& msg__) const
     {
-      const IMC::StorageUsage& other__ = dynamic_cast<const StorageUsage&>(msg__);
+      const IMC::StorageUsage& other__ = static_cast<const StorageUsage&>(msg__);
       if (available != other__.available) return false;
       if (value != other__.value) return false;
       return true;
@@ -1685,7 +1470,7 @@ namespace DUNE
     bool
     CacheControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CacheControl& other__ = dynamic_cast<const CacheControl&>(msg__);
+      const IMC::CacheControl& other__ = static_cast<const CacheControl&>(msg__);
       if (op != other__.op) return false;
       if (snapshot != other__.snapshot) return false;
       if (message != other__.message) return false;
@@ -1797,7 +1582,7 @@ namespace DUNE
     bool
     LoggingControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LoggingControl& other__ = dynamic_cast<const LoggingControl&>(msg__);
+      const IMC::LoggingControl& other__ = static_cast<const LoggingControl&>(msg__);
       if (op != other__.op) return false;
       if (name != other__.name) return false;
       return true;
@@ -1861,7 +1646,7 @@ namespace DUNE
     bool
     LogBookEntry::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LogBookEntry& other__ = dynamic_cast<const LogBookEntry&>(msg__);
+      const IMC::LogBookEntry& other__ = static_cast<const LogBookEntry&>(msg__);
       if (type != other__.type) return false;
       if (htime != other__.htime) return false;
       if (context != other__.context) return false;
@@ -1935,7 +1720,7 @@ namespace DUNE
     bool
     LogBookControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LogBookControl& other__ = dynamic_cast<const LogBookControl&>(msg__);
+      const IMC::LogBookControl& other__ = static_cast<const LogBookControl&>(msg__);
       if (command != other__.command) return false;
       if (htime != other__.htime) return false;
       if (msg != other__.msg) return false;
@@ -2032,7 +1817,7 @@ namespace DUNE
     bool
     ReplayControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ReplayControl& other__ = dynamic_cast<const ReplayControl&>(msg__);
+      const IMC::ReplayControl& other__ = static_cast<const ReplayControl&>(msg__);
       if (op != other__.op) return false;
       if (file != other__.file) return false;
       return true;
@@ -2095,7 +1880,7 @@ namespace DUNE
     bool
     ClockControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ClockControl& other__ = dynamic_cast<const ClockControl&>(msg__);
+      const IMC::ClockControl& other__ = static_cast<const ClockControl&>(msg__);
       if (op != other__.op) return false;
       if (clock != other__.clock) return false;
       if (tz != other__.tz) return false;
@@ -2206,7 +1991,7 @@ namespace DUNE
     bool
     Announce::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Announce& other__ = dynamic_cast<const Announce&>(msg__);
+      const IMC::Announce& other__ = static_cast<const Announce&>(msg__);
       if (sys_name != other__.sys_name) return false;
       if (sys_type != other__.sys_type) return false;
       if (owner != other__.owner) return false;
@@ -2293,7 +2078,7 @@ namespace DUNE
     bool
     AnnounceService::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AnnounceService& other__ = dynamic_cast<const AnnounceService&>(msg__);
+      const IMC::AnnounceService& other__ = static_cast<const AnnounceService&>(msg__);
       if (service != other__.service) return false;
       if (service_type != other__.service_type) return false;
       return true;
@@ -2354,7 +2139,7 @@ namespace DUNE
     bool
     RSSI::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RSSI& other__ = dynamic_cast<const RSSI&>(msg__);
+      const IMC::RSSI& other__ = static_cast<const RSSI&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -2422,7 +2207,7 @@ namespace DUNE
     bool
     VSWR::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VSWR& other__ = dynamic_cast<const VSWR&>(msg__);
+      const IMC::VSWR& other__ = static_cast<const VSWR&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -2490,7 +2275,7 @@ namespace DUNE
     bool
     LinkLevel::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LinkLevel& other__ = dynamic_cast<const LinkLevel&>(msg__);
+      const IMC::LinkLevel& other__ = static_cast<const LinkLevel&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -2560,7 +2345,7 @@ namespace DUNE
     bool
     Sms::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Sms& other__ = dynamic_cast<const Sms&>(msg__);
+      const IMC::Sms& other__ = static_cast<const Sms&>(msg__);
       if (number != other__.number) return false;
       if (timeout != other__.timeout) return false;
       if (contents != other__.contents) return false;
@@ -2629,7 +2414,7 @@ namespace DUNE
     bool
     SmsTx::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SmsTx& other__ = dynamic_cast<const SmsTx&>(msg__);
+      const IMC::SmsTx& other__ = static_cast<const SmsTx&>(msg__);
       if (seq != other__.seq) return false;
       if (destination != other__.destination) return false;
       if (timeout != other__.timeout) return false;
@@ -2701,7 +2486,7 @@ namespace DUNE
     bool
     SmsRx::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SmsRx& other__ = dynamic_cast<const SmsRx&>(msg__);
+      const IMC::SmsRx& other__ = static_cast<const SmsRx&>(msg__);
       if (source != other__.source) return false;
       if (data != other__.data) return false;
       return true;
@@ -2764,7 +2549,7 @@ namespace DUNE
     bool
     SmsState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SmsState& other__ = dynamic_cast<const SmsState&>(msg__);
+      const IMC::SmsState& other__ = static_cast<const SmsState&>(msg__);
       if (seq != other__.seq) return false;
       if (state != other__.state) return false;
       if (error != other__.error) return false;
@@ -2831,7 +2616,7 @@ namespace DUNE
     bool
     TextMessage::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TextMessage& other__ = dynamic_cast<const TextMessage&>(msg__);
+      const IMC::TextMessage& other__ = static_cast<const TextMessage&>(msg__);
       if (origin != other__.origin) return false;
       if (text != other__.text) return false;
       return true;
@@ -2896,7 +2681,7 @@ namespace DUNE
     bool
     IridiumMsgRx::fieldsEqual(const Message& msg__) const
     {
-      const IMC::IridiumMsgRx& other__ = dynamic_cast<const IridiumMsgRx&>(msg__);
+      const IMC::IridiumMsgRx& other__ = static_cast<const IridiumMsgRx&>(msg__);
       if (origin != other__.origin) return false;
       if (htime != other__.htime) return false;
       if (lat != other__.lat) return false;
@@ -2975,7 +2760,7 @@ namespace DUNE
     bool
     IridiumMsgTx::fieldsEqual(const Message& msg__) const
     {
-      const IMC::IridiumMsgTx& other__ = dynamic_cast<const IridiumMsgTx&>(msg__);
+      const IMC::IridiumMsgTx& other__ = static_cast<const IridiumMsgTx&>(msg__);
       if (req_id != other__.req_id) return false;
       if (ttl != other__.ttl) return false;
       if (destination != other__.destination) return false;
@@ -3048,7 +2833,7 @@ namespace DUNE
     bool
     IridiumTxStatus::fieldsEqual(const Message& msg__) const
     {
-      const IMC::IridiumTxStatus& other__ = dynamic_cast<const IridiumTxStatus&>(msg__);
+      const IMC::IridiumTxStatus& other__ = static_cast<const IridiumTxStatus&>(msg__);
       if (req_id != other__.req_id) return false;
       if (status != other__.status) return false;
       if (text != other__.text) return false;
@@ -3115,7 +2900,7 @@ namespace DUNE
     bool
     GroupMembershipState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::GroupMembershipState& other__ = dynamic_cast<const GroupMembershipState&>(msg__);
+      const IMC::GroupMembershipState& other__ = static_cast<const GroupMembershipState&>(msg__);
       if (group_name != other__.group_name) return false;
       if (links != other__.links) return false;
       return true;
@@ -3178,7 +2963,7 @@ namespace DUNE
     bool
     SystemGroup::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SystemGroup& other__ = dynamic_cast<const SystemGroup&>(msg__);
+      const IMC::SystemGroup& other__ = static_cast<const SystemGroup&>(msg__);
       if (groupname != other__.groupname) return false;
       if (action != other__.action) return false;
       if (grouplist != other__.grouplist) return false;
@@ -3245,7 +3030,7 @@ namespace DUNE
     bool
     LblRange::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LblRange& other__ = dynamic_cast<const LblRange&>(msg__);
+      const IMC::LblRange& other__ = static_cast<const LblRange&>(msg__);
       if (id != other__.id) return false;
       if (range != other__.range) return false;
       return true;
@@ -3303,74 +3088,6 @@ namespace DUNE
       IMC::toJSON(os__, "range", range, nindent__);
     }
 
-    LblDetection::LblDetection(void)
-    {
-      m_header.mgid = 201;
-      clear();
-    }
-
-    void
-    LblDetection::clear(void)
-    {
-      tx = 0;
-      channel = 0;
-      timer = 0;
-    }
-
-    bool
-    LblDetection::fieldsEqual(const Message& msg__) const
-    {
-      const IMC::LblDetection& other__ = dynamic_cast<const LblDetection&>(msg__);
-      if (tx != other__.tx) return false;
-      if (channel != other__.channel) return false;
-      if (timer != other__.timer) return false;
-      return true;
-    }
-
-    int
-    LblDetection::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    LblDetection::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(tx, ptr__);
-      ptr__ += IMC::serialize(channel, ptr__);
-      ptr__ += IMC::serialize(timer, ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    LblDetection::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(tx, bfr__, size__);
-      bfr__ += IMC::deserialize(channel, bfr__, size__);
-      bfr__ += IMC::deserialize(timer, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    LblDetection::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(tx, bfr__, size__);
-      bfr__ += IMC::deserialize(channel, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(timer, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    void
-    LblDetection::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      IMC::toJSON(os__, "tx", tx, nindent__);
-      IMC::toJSON(os__, "channel", channel, nindent__);
-      IMC::toJSON(os__, "timer", timer, nindent__);
-    }
-
     LblBeacon::LblBeacon(void)
     {
       m_header.mgid = 202;
@@ -3392,7 +3109,7 @@ namespace DUNE
     bool
     LblBeacon::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LblBeacon& other__ = dynamic_cast<const LblBeacon&>(msg__);
+      const IMC::LblBeacon& other__ = static_cast<const LblBeacon&>(msg__);
       if (beacon != other__.beacon) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -3480,7 +3197,7 @@ namespace DUNE
     bool
     LblConfig::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LblConfig& other__ = dynamic_cast<const LblConfig&>(msg__);
+      const IMC::LblConfig& other__ = static_cast<const LblConfig&>(msg__);
       if (op != other__.op) return false;
       if (beacons != other__.beacons) return false;
       return true;
@@ -3556,130 +3273,6 @@ namespace DUNE
       beacons.setDestinationEntity(value__);
     }
 
-    AcousticRange::AcousticRange(void)
-    {
-      m_header.mgid = 204;
-      clear();
-    }
-
-    void
-    AcousticRange::clear(void)
-    {
-      address = 0;
-    }
-
-    bool
-    AcousticRange::fieldsEqual(const Message& msg__) const
-    {
-      const IMC::AcousticRange& other__ = dynamic_cast<const AcousticRange&>(msg__);
-      if (address != other__.address) return false;
-      return true;
-    }
-
-    int
-    AcousticRange::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    AcousticRange::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(address, ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    AcousticRange::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(address, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    AcousticRange::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(address, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    void
-    AcousticRange::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      IMC::toJSON(os__, "address", address, nindent__);
-    }
-
-    AcousticRangeReply::AcousticRangeReply(void)
-    {
-      m_header.mgid = 205;
-      clear();
-    }
-
-    void
-    AcousticRangeReply::clear(void)
-    {
-      address = 0;
-      status = 0;
-      range = 0;
-    }
-
-    bool
-    AcousticRangeReply::fieldsEqual(const Message& msg__) const
-    {
-      const IMC::AcousticRangeReply& other__ = dynamic_cast<const AcousticRangeReply&>(msg__);
-      if (address != other__.address) return false;
-      if (status != other__.status) return false;
-      if (range != other__.range) return false;
-      return true;
-    }
-
-    int
-    AcousticRangeReply::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    AcousticRangeReply::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(address, ptr__);
-      ptr__ += IMC::serialize(status, ptr__);
-      ptr__ += IMC::serialize(range, ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    AcousticRangeReply::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(address, bfr__, size__);
-      bfr__ += IMC::deserialize(status, bfr__, size__);
-      bfr__ += IMC::deserialize(range, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    AcousticRangeReply::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(address, bfr__, size__);
-      bfr__ += IMC::deserialize(status, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(range, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    void
-    AcousticRangeReply::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      IMC::toJSON(os__, "address", address, nindent__);
-      IMC::toJSON(os__, "status", status, nindent__);
-      IMC::toJSON(os__, "range", range, nindent__);
-    }
-
     AcousticMessage::AcousticMessage(void)
     {
       m_header.mgid = 206;
@@ -3696,7 +3289,7 @@ namespace DUNE
     bool
     AcousticMessage::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AcousticMessage& other__ = dynamic_cast<const AcousticMessage&>(msg__);
+      const IMC::AcousticMessage& other__ = static_cast<const AcousticMessage&>(msg__);
       if (message != other__.message) return false;
       return true;
     }
@@ -3782,202 +3375,6 @@ namespace DUNE
       }
     }
 
-    AcousticDiagnostic::AcousticDiagnostic(void)
-    {
-      m_header.mgid = 207;
-      clear();
-    }
-
-    void
-    AcousticDiagnostic::clear(void)
-    {
-      enable = 0;
-    }
-
-    bool
-    AcousticDiagnostic::fieldsEqual(const Message& msg__) const
-    {
-      const IMC::AcousticDiagnostic& other__ = dynamic_cast<const AcousticDiagnostic&>(msg__);
-      if (enable != other__.enable) return false;
-      return true;
-    }
-
-    int
-    AcousticDiagnostic::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    AcousticDiagnostic::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(enable, ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    AcousticDiagnostic::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(enable, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    AcousticDiagnostic::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(enable, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    void
-    AcousticDiagnostic::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      IMC::toJSON(os__, "enable", enable, nindent__);
-    }
-
-    AcousticNoise::AcousticNoise(void)
-    {
-      m_header.mgid = 208;
-      clear();
-    }
-
-    void
-    AcousticNoise::clear(void)
-    {
-      summary = 0;
-      level = 0;
-    }
-
-    bool
-    AcousticNoise::fieldsEqual(const Message& msg__) const
-    {
-      const IMC::AcousticNoise& other__ = dynamic_cast<const AcousticNoise&>(msg__);
-      if (summary != other__.summary) return false;
-      if (level != other__.level) return false;
-      return true;
-    }
-
-    int
-    AcousticNoise::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    AcousticNoise::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(summary, ptr__);
-      ptr__ += IMC::serialize(level, ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    AcousticNoise::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(summary, bfr__, size__);
-      bfr__ += IMC::deserialize(level, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    AcousticNoise::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(summary, bfr__, size__);
-      bfr__ += IMC::deserialize(level, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    void
-    AcousticNoise::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      IMC::toJSON(os__, "summary", summary, nindent__);
-      IMC::toJSON(os__, "level", level, nindent__);
-    }
-
-    AcousticPing::AcousticPing(void)
-    {
-      m_header.mgid = 209;
-      clear();
-    }
-
-    void
-    AcousticPing::clear(void)
-    {
-    }
-
-    int
-    AcousticPing::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    AcousticPing::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    AcousticPing::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    AcousticPing::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    AcousticPingReply::AcousticPingReply(void)
-    {
-      m_header.mgid = 210;
-      clear();
-    }
-
-    void
-    AcousticPingReply::clear(void)
-    {
-    }
-
-    int
-    AcousticPingReply::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    AcousticPingReply::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    AcousticPingReply::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    AcousticPingReply::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
     AcousticOperation::AcousticOperation(void)
     {
       m_header.mgid = 211;
@@ -3997,7 +3394,7 @@ namespace DUNE
     bool
     AcousticOperation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AcousticOperation& other__ = dynamic_cast<const AcousticOperation&>(msg__);
+      const IMC::AcousticOperation& other__ = static_cast<const AcousticOperation&>(msg__);
       if (op != other__.op) return false;
       if (system != other__.system) return false;
       if (range != other__.range) return false;
@@ -4152,7 +3549,7 @@ namespace DUNE
     bool
     AcousticSystems::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AcousticSystems& other__ = dynamic_cast<const AcousticSystems&>(msg__);
+      const IMC::AcousticSystems& other__ = static_cast<const AcousticSystems&>(msg__);
       if (list != other__.list) return false;
       return true;
     }
@@ -4208,7 +3605,7 @@ namespace DUNE
     bool
     Rpm::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Rpm& other__ = dynamic_cast<const Rpm&>(msg__);
+      const IMC::Rpm& other__ = static_cast<const Rpm&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -4276,7 +3673,7 @@ namespace DUNE
     bool
     Voltage::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Voltage& other__ = dynamic_cast<const Voltage&>(msg__);
+      const IMC::Voltage& other__ = static_cast<const Voltage&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -4344,7 +3741,7 @@ namespace DUNE
     bool
     Current::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Current& other__ = dynamic_cast<const Current&>(msg__);
+      const IMC::Current& other__ = static_cast<const Current&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -4427,7 +3824,7 @@ namespace DUNE
     bool
     GpsFix::fieldsEqual(const Message& msg__) const
     {
-      const IMC::GpsFix& other__ = dynamic_cast<const GpsFix&>(msg__);
+      const IMC::GpsFix& other__ = static_cast<const GpsFix&>(msg__);
       if (validity != other__.validity) return false;
       if (type != other__.type) return false;
       if (utc_year != other__.utc_year) return false;
@@ -4562,7 +3959,7 @@ namespace DUNE
     bool
     EulerAngles::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EulerAngles& other__ = dynamic_cast<const EulerAngles&>(msg__);
+      const IMC::EulerAngles& other__ = static_cast<const EulerAngles&>(msg__);
       if (time != other__.time) return false;
       if (phi != other__.phi) return false;
       if (theta != other__.theta) return false;
@@ -4642,7 +4039,7 @@ namespace DUNE
     bool
     EulerAnglesDelta::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EulerAnglesDelta& other__ = dynamic_cast<const EulerAnglesDelta&>(msg__);
+      const IMC::EulerAnglesDelta& other__ = static_cast<const EulerAnglesDelta&>(msg__);
       if (time != other__.time) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -4721,7 +4118,7 @@ namespace DUNE
     bool
     AngularVelocity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AngularVelocity& other__ = dynamic_cast<const AngularVelocity&>(msg__);
+      const IMC::AngularVelocity& other__ = static_cast<const AngularVelocity&>(msg__);
       if (time != other__.time) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -4795,7 +4192,7 @@ namespace DUNE
     bool
     Acceleration::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Acceleration& other__ = dynamic_cast<const Acceleration&>(msg__);
+      const IMC::Acceleration& other__ = static_cast<const Acceleration&>(msg__);
       if (time != other__.time) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -4869,7 +4266,7 @@ namespace DUNE
     bool
     MagneticField::fieldsEqual(const Message& msg__) const
     {
-      const IMC::MagneticField& other__ = dynamic_cast<const MagneticField&>(msg__);
+      const IMC::MagneticField& other__ = static_cast<const MagneticField&>(msg__);
       if (time != other__.time) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -4943,7 +4340,7 @@ namespace DUNE
     bool
     GroundVelocity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::GroundVelocity& other__ = dynamic_cast<const GroundVelocity&>(msg__);
+      const IMC::GroundVelocity& other__ = static_cast<const GroundVelocity&>(msg__);
       if (validity != other__.validity) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -5017,7 +4414,7 @@ namespace DUNE
     bool
     WaterVelocity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::WaterVelocity& other__ = dynamic_cast<const WaterVelocity&>(msg__);
+      const IMC::WaterVelocity& other__ = static_cast<const WaterVelocity&>(msg__);
       if (validity != other__.validity) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -5091,7 +4488,7 @@ namespace DUNE
     bool
     VelocityDelta::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VelocityDelta& other__ = dynamic_cast<const VelocityDelta&>(msg__);
+      const IMC::VelocityDelta& other__ = static_cast<const VelocityDelta&>(msg__);
       if (time != other__.time) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -5167,7 +4564,7 @@ namespace DUNE
     bool
     DeviceState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DeviceState& other__ = dynamic_cast<const DeviceState&>(msg__);
+      const IMC::DeviceState& other__ = static_cast<const DeviceState&>(msg__);
       if (x != other__.x) return false;
       if (y != other__.y) return false;
       if (z != other__.z) return false;
@@ -5249,7 +4646,7 @@ namespace DUNE
     bool
     BeamConfig::fieldsEqual(const Message& msg__) const
     {
-      const IMC::BeamConfig& other__ = dynamic_cast<const BeamConfig&>(msg__);
+      const IMC::BeamConfig& other__ = static_cast<const BeamConfig&>(msg__);
       if (beam_width != other__.beam_width) return false;
       if (beam_height != other__.beam_height) return false;
       return true;
@@ -5315,7 +4712,7 @@ namespace DUNE
     bool
     Distance::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Distance& other__ = dynamic_cast<const Distance&>(msg__);
+      const IMC::Distance& other__ = static_cast<const Distance&>(msg__);
       if (validity != other__.validity) return false;
       if (location != other__.location) return false;
       if (beam_config != other__.beam_config) return false;
@@ -5438,7 +4835,7 @@ namespace DUNE
     bool
     Temperature::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Temperature& other__ = dynamic_cast<const Temperature&>(msg__);
+      const IMC::Temperature& other__ = static_cast<const Temperature&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5506,7 +4903,7 @@ namespace DUNE
     bool
     Pressure::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Pressure& other__ = dynamic_cast<const Pressure&>(msg__);
+      const IMC::Pressure& other__ = static_cast<const Pressure&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5574,7 +4971,7 @@ namespace DUNE
     bool
     Depth::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Depth& other__ = dynamic_cast<const Depth&>(msg__);
+      const IMC::Depth& other__ = static_cast<const Depth&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5642,7 +5039,7 @@ namespace DUNE
     bool
     DepthOffset::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DepthOffset& other__ = dynamic_cast<const DepthOffset&>(msg__);
+      const IMC::DepthOffset& other__ = static_cast<const DepthOffset&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5710,7 +5107,7 @@ namespace DUNE
     bool
     SoundSpeed::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SoundSpeed& other__ = dynamic_cast<const SoundSpeed&>(msg__);
+      const IMC::SoundSpeed& other__ = static_cast<const SoundSpeed&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5778,7 +5175,7 @@ namespace DUNE
     bool
     WaterDensity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::WaterDensity& other__ = dynamic_cast<const WaterDensity&>(msg__);
+      const IMC::WaterDensity& other__ = static_cast<const WaterDensity&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5846,7 +5243,7 @@ namespace DUNE
     bool
     Conductivity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Conductivity& other__ = dynamic_cast<const Conductivity&>(msg__);
+      const IMC::Conductivity& other__ = static_cast<const Conductivity&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5914,7 +5311,7 @@ namespace DUNE
     bool
     Salinity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Salinity& other__ = dynamic_cast<const Salinity&>(msg__);
+      const IMC::Salinity& other__ = static_cast<const Salinity&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -5984,7 +5381,7 @@ namespace DUNE
     bool
     WindSpeed::fieldsEqual(const Message& msg__) const
     {
-      const IMC::WindSpeed& other__ = dynamic_cast<const WindSpeed&>(msg__);
+      const IMC::WindSpeed& other__ = static_cast<const WindSpeed&>(msg__);
       if (direction != other__.direction) return false;
       if (speed != other__.speed) return false;
       if (turbulence != other__.turbulence) return false;
@@ -6050,7 +5447,7 @@ namespace DUNE
     bool
     RelativeHumidity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RelativeHumidity& other__ = dynamic_cast<const RelativeHumidity&>(msg__);
+      const IMC::RelativeHumidity& other__ = static_cast<const RelativeHumidity&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -6118,7 +5515,7 @@ namespace DUNE
     bool
     DevDataText::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DevDataText& other__ = dynamic_cast<const DevDataText&>(msg__);
+      const IMC::DevDataText& other__ = static_cast<const DevDataText&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -6174,7 +5571,7 @@ namespace DUNE
     bool
     DevDataBinary::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DevDataBinary& other__ = dynamic_cast<const DevDataBinary&>(msg__);
+      const IMC::DevDataBinary& other__ = static_cast<const DevDataBinary&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -6215,74 +5612,6 @@ namespace DUNE
       IMC::toJSON(os__, "value", value, nindent__);
     }
 
-    SonarConfig::SonarConfig(void)
-    {
-      m_header.mgid = 275;
-      clear();
-    }
-
-    void
-    SonarConfig::clear(void)
-    {
-      frequency = 0;
-      min_range = 0;
-      max_range = 0;
-    }
-
-    bool
-    SonarConfig::fieldsEqual(const Message& msg__) const
-    {
-      const IMC::SonarConfig& other__ = dynamic_cast<const SonarConfig&>(msg__);
-      if (frequency != other__.frequency) return false;
-      if (min_range != other__.min_range) return false;
-      if (max_range != other__.max_range) return false;
-      return true;
-    }
-
-    int
-    SonarConfig::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    SonarConfig::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(frequency, ptr__);
-      ptr__ += IMC::serialize(min_range, ptr__);
-      ptr__ += IMC::serialize(max_range, ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    SonarConfig::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(frequency, bfr__, size__);
-      bfr__ += IMC::deserialize(min_range, bfr__, size__);
-      bfr__ += IMC::deserialize(max_range, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    SonarConfig::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::reverseDeserialize(frequency, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(min_range, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(max_range, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    void
-    SonarConfig::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      IMC::toJSON(os__, "frequency", frequency, nindent__);
-      IMC::toJSON(os__, "min_range", min_range, nindent__);
-      IMC::toJSON(os__, "max_range", max_range, nindent__);
-    }
-
     SonarData::SonarData(void)
     {
       m_header.mgid = 276;
@@ -6306,7 +5635,7 @@ namespace DUNE
     bool
     SonarData::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SonarData& other__ = dynamic_cast<const SonarData&>(msg__);
+      const IMC::SonarData& other__ = static_cast<const SonarData&>(msg__);
       if (type != other__.type) return false;
       if (frequency != other__.frequency) return false;
       if (min_range != other__.min_range) return false;
@@ -6466,7 +5795,7 @@ namespace DUNE
     bool
     PulseDetectionControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PulseDetectionControl& other__ = dynamic_cast<const PulseDetectionControl&>(msg__);
+      const IMC::PulseDetectionControl& other__ = static_cast<const PulseDetectionControl&>(msg__);
       if (op != other__.op) return false;
       return true;
     }
@@ -6524,7 +5853,7 @@ namespace DUNE
     bool
     FuelLevel::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FuelLevel& other__ = dynamic_cast<const FuelLevel&>(msg__);
+      const IMC::FuelLevel& other__ = static_cast<const FuelLevel&>(msg__);
       if (value != other__.value) return false;
       if (confidence != other__.confidence) return false;
       if (opmodes != other__.opmodes) return false;
@@ -6616,7 +5945,7 @@ namespace DUNE
     bool
     GpsNavData::fieldsEqual(const Message& msg__) const
     {
-      const IMC::GpsNavData& other__ = dynamic_cast<const GpsNavData&>(msg__);
+      const IMC::GpsNavData& other__ = static_cast<const GpsNavData&>(msg__);
       if (itow != other__.itow) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -6743,7 +6072,7 @@ namespace DUNE
     bool
     ServoPosition::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ServoPosition& other__ = dynamic_cast<const ServoPosition&>(msg__);
+      const IMC::ServoPosition& other__ = static_cast<const ServoPosition&>(msg__);
       if (id != other__.id) return false;
       if (value != other__.value) return false;
       return true;
@@ -6828,7 +6157,7 @@ namespace DUNE
     bool
     DataSanity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DataSanity& other__ = dynamic_cast<const DataSanity&>(msg__);
+      const IMC::DataSanity& other__ = static_cast<const DataSanity&>(msg__);
       if (sane != other__.sane) return false;
       return true;
     }
@@ -6869,6 +6198,210 @@ namespace DUNE
       IMC::toJSON(os__, "sane", sane, nindent__);
     }
 
+    RhodamineDye::RhodamineDye(void)
+    {
+      m_header.mgid = 285;
+      clear();
+    }
+
+    void
+    RhodamineDye::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    RhodamineDye::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::RhodamineDye& other__ = static_cast<const RhodamineDye&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    RhodamineDye::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    RhodamineDye::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    RhodamineDye::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    RhodamineDye::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    RhodamineDye::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    RhodamineDye::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    RhodamineDye::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    CrudeOil::CrudeOil(void)
+    {
+      m_header.mgid = 286;
+      clear();
+    }
+
+    void
+    CrudeOil::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    CrudeOil::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::CrudeOil& other__ = static_cast<const CrudeOil&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    CrudeOil::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    CrudeOil::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    CrudeOil::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    CrudeOil::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    CrudeOil::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    CrudeOil::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    CrudeOil::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    FineOil::FineOil(void)
+    {
+      m_header.mgid = 287;
+      clear();
+    }
+
+    void
+    FineOil::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    FineOil::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FineOil& other__ = static_cast<const FineOil&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    FineOil::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    FineOil::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FineOil::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FineOil::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    FineOil::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    FineOil::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    FineOil::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
+    }
+
     CameraZoom::CameraZoom(void)
     {
       m_header.mgid = 300;
@@ -6886,7 +6419,7 @@ namespace DUNE
     bool
     CameraZoom::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CameraZoom& other__ = dynamic_cast<const CameraZoom&>(msg__);
+      const IMC::CameraZoom& other__ = static_cast<const CameraZoom&>(msg__);
       if (id != other__.id) return false;
       if (zoom != other__.zoom) return false;
       if (action != other__.action) return false;
@@ -6965,7 +6498,7 @@ namespace DUNE
     bool
     SetThrusterActuation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SetThrusterActuation& other__ = dynamic_cast<const SetThrusterActuation&>(msg__);
+      const IMC::SetThrusterActuation& other__ = static_cast<const SetThrusterActuation&>(msg__);
       if (id != other__.id) return false;
       if (value != other__.value) return false;
       return true;
@@ -7051,7 +6584,7 @@ namespace DUNE
     bool
     SetServoPosition::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SetServoPosition& other__ = dynamic_cast<const SetServoPosition&>(msg__);
+      const IMC::SetServoPosition& other__ = static_cast<const SetServoPosition&>(msg__);
       if (id != other__.id) return false;
       if (value != other__.value) return false;
       return true;
@@ -7137,7 +6670,7 @@ namespace DUNE
     bool
     SetControlSurfaceDeflection::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SetControlSurfaceDeflection& other__ = dynamic_cast<const SetControlSurfaceDeflection&>(msg__);
+      const IMC::SetControlSurfaceDeflection& other__ = static_cast<const SetControlSurfaceDeflection&>(msg__);
       if (id != other__.id) return false;
       if (angle != other__.angle) return false;
       return true;
@@ -7211,7 +6744,7 @@ namespace DUNE
     bool
     RemoteActionsRequest::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RemoteActionsRequest& other__ = dynamic_cast<const RemoteActionsRequest&>(msg__);
+      const IMC::RemoteActionsRequest& other__ = static_cast<const RemoteActionsRequest&>(msg__);
       if (op != other__.op) return false;
       if (actions != other__.actions) return false;
       return true;
@@ -7272,7 +6805,7 @@ namespace DUNE
     bool
     RemoteActions::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RemoteActions& other__ = dynamic_cast<const RemoteActions&>(msg__);
+      const IMC::RemoteActions& other__ = static_cast<const RemoteActions&>(msg__);
       if (actions != other__.actions) return false;
       return true;
     }
@@ -7329,7 +6862,7 @@ namespace DUNE
     bool
     ButtonEvent::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ButtonEvent& other__ = dynamic_cast<const ButtonEvent&>(msg__);
+      const IMC::ButtonEvent& other__ = static_cast<const ButtonEvent&>(msg__);
       if (button != other__.button) return false;
       if (value != other__.value) return false;
       return true;
@@ -7403,7 +6936,7 @@ namespace DUNE
     bool
     LcdControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LcdControl& other__ = dynamic_cast<const LcdControl&>(msg__);
+      const IMC::LcdControl& other__ = static_cast<const LcdControl&>(msg__);
       if (op != other__.op) return false;
       if (text != other__.text) return false;
       return true;
@@ -7466,7 +6999,7 @@ namespace DUNE
     bool
     PowerOperation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PowerOperation& other__ = dynamic_cast<const PowerOperation&>(msg__);
+      const IMC::PowerOperation& other__ = static_cast<const PowerOperation&>(msg__);
       if (op != other__.op) return false;
       if (time_remain != other__.time_remain) return false;
       if (sched_time != other__.sched_time) return false;
@@ -7534,7 +7067,7 @@ namespace DUNE
     bool
     PowerChannelControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PowerChannelControl& other__ = dynamic_cast<const PowerChannelControl&>(msg__);
+      const IMC::PowerChannelControl& other__ = static_cast<const PowerChannelControl&>(msg__);
       if (name != other__.name) return false;
       if (op != other__.op) return false;
       if (sched_time != other__.sched_time) return false;
@@ -7640,7 +7173,7 @@ namespace DUNE
     bool
     PowerChannelState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PowerChannelState& other__ = dynamic_cast<const PowerChannelState&>(msg__);
+      const IMC::PowerChannelState& other__ = static_cast<const PowerChannelState&>(msg__);
       if (name != other__.name) return false;
       if (state != other__.state) return false;
       return true;
@@ -7702,7 +7235,7 @@ namespace DUNE
     bool
     LedBrightness::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LedBrightness& other__ = dynamic_cast<const LedBrightness&>(msg__);
+      const IMC::LedBrightness& other__ = static_cast<const LedBrightness&>(msg__);
       if (name != other__.name) return false;
       if (value != other__.value) return false;
       return true;
@@ -7775,7 +7308,7 @@ namespace DUNE
     bool
     QueryLedBrightness::fieldsEqual(const Message& msg__) const
     {
-      const IMC::QueryLedBrightness& other__ = dynamic_cast<const QueryLedBrightness&>(msg__);
+      const IMC::QueryLedBrightness& other__ = static_cast<const QueryLedBrightness&>(msg__);
       if (name != other__.name) return false;
       return true;
     }
@@ -7832,7 +7365,7 @@ namespace DUNE
     bool
     SetLedBrightness::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SetLedBrightness& other__ = dynamic_cast<const SetLedBrightness&>(msg__);
+      const IMC::SetLedBrightness& other__ = static_cast<const SetLedBrightness&>(msg__);
       if (name != other__.name) return false;
       if (value != other__.value) return false;
       return true;
@@ -7907,7 +7440,7 @@ namespace DUNE
     bool
     SetPWM::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SetPWM& other__ = dynamic_cast<const SetPWM&>(msg__);
+      const IMC::SetPWM& other__ = static_cast<const SetPWM&>(msg__);
       if (id != other__.id) return false;
       if (period != other__.period) return false;
       if (duty_cycle != other__.duty_cycle) return false;
@@ -7987,7 +7520,7 @@ namespace DUNE
     bool
     PWM::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PWM& other__ = dynamic_cast<const PWM&>(msg__);
+      const IMC::PWM& other__ = static_cast<const PWM&>(msg__);
       if (id != other__.id) return false;
       if (period != other__.period) return false;
       if (duty_cycle != other__.duty_cycle) return false;
@@ -8084,7 +7617,7 @@ namespace DUNE
     bool
     EstimatedState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EstimatedState& other__ = dynamic_cast<const EstimatedState&>(msg__);
+      const IMC::EstimatedState& other__ = static_cast<const EstimatedState&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (height != other__.height) return false;
@@ -8237,7 +7770,7 @@ namespace DUNE
     bool
     EstimatedStreamVelocity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EstimatedStreamVelocity& other__ = dynamic_cast<const EstimatedStreamVelocity&>(msg__);
+      const IMC::EstimatedStreamVelocity& other__ = static_cast<const EstimatedStreamVelocity&>(msg__);
       if (x != other__.x) return false;
       if (y != other__.y) return false;
       if (z != other__.z) return false;
@@ -8303,7 +7836,7 @@ namespace DUNE
     bool
     IndicatedSpeed::fieldsEqual(const Message& msg__) const
     {
-      const IMC::IndicatedSpeed& other__ = dynamic_cast<const IndicatedSpeed&>(msg__);
+      const IMC::IndicatedSpeed& other__ = static_cast<const IndicatedSpeed&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -8371,7 +7904,7 @@ namespace DUNE
     bool
     TrueSpeed::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrueSpeed& other__ = dynamic_cast<const TrueSpeed&>(msg__);
+      const IMC::TrueSpeed& other__ = static_cast<const TrueSpeed&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -8452,7 +7985,7 @@ namespace DUNE
     bool
     NavigationUncertainty::fieldsEqual(const Message& msg__) const
     {
-      const IMC::NavigationUncertainty& other__ = dynamic_cast<const NavigationUncertainty&>(msg__);
+      const IMC::NavigationUncertainty& other__ = static_cast<const NavigationUncertainty&>(msg__);
       if (x != other__.x) return false;
       if (y != other__.y) return false;
       if (z != other__.z) return false;
@@ -8581,7 +8114,7 @@ namespace DUNE
     bool
     NavigationData::fieldsEqual(const Message& msg__) const
     {
-      const IMC::NavigationData& other__ = dynamic_cast<const NavigationData&>(msg__);
+      const IMC::NavigationData& other__ = static_cast<const NavigationData&>(msg__);
       if (bias_psi != other__.bias_psi) return false;
       if (bias_r != other__.bias_r) return false;
       if (cog != other__.cog) return false;
@@ -8678,7 +8211,7 @@ namespace DUNE
     bool
     GpsFixRejection::fieldsEqual(const Message& msg__) const
     {
-      const IMC::GpsFixRejection& other__ = dynamic_cast<const GpsFixRejection&>(msg__);
+      const IMC::GpsFixRejection& other__ = static_cast<const GpsFixRejection&>(msg__);
       if (utc_time != other__.utc_time) return false;
       if (reason != other__.reason) return false;
       return true;
@@ -8741,7 +8274,7 @@ namespace DUNE
     bool
     LblRangeAcceptance::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LblRangeAcceptance& other__ = dynamic_cast<const LblRangeAcceptance&>(msg__);
+      const IMC::LblRangeAcceptance& other__ = static_cast<const LblRangeAcceptance&>(msg__);
       if (id != other__.id) return false;
       if (range != other__.range) return false;
       if (acceptance != other__.acceptance) return false;
@@ -8822,7 +8355,7 @@ namespace DUNE
     bool
     DvlRejection::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DvlRejection& other__ = dynamic_cast<const DvlRejection&>(msg__);
+      const IMC::DvlRejection& other__ = static_cast<const DvlRejection&>(msg__);
       if (type != other__.type) return false;
       if (reason != other__.reason) return false;
       if (value != other__.value) return false;
@@ -8890,45 +8423,6 @@ namespace DUNE
       IMC::toJSON(os__, "timestep", timestep, nindent__);
     }
 
-    NavigationReset::NavigationReset(void)
-    {
-      m_header.mgid = 359;
-      clear();
-    }
-
-    void
-    NavigationReset::clear(void)
-    {
-    }
-
-    int
-    NavigationReset::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    NavigationReset::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    NavigationReset::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    NavigationReset::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
     LblEstimate::LblEstimate(void)
     {
       m_header.mgid = 360;
@@ -8950,7 +8444,7 @@ namespace DUNE
     bool
     LblEstimate::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LblEstimate& other__ = dynamic_cast<const LblEstimate&>(msg__);
+      const IMC::LblEstimate& other__ = static_cast<const LblEstimate&>(msg__);
       if (beacon != other__.beacon) return false;
       if (x != other__.x) return false;
       if (y != other__.y) return false;
@@ -9076,7 +8570,7 @@ namespace DUNE
     bool
     AlignmentState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AlignmentState& other__ = dynamic_cast<const AlignmentState&>(msg__);
+      const IMC::AlignmentState& other__ = static_cast<const AlignmentState&>(msg__);
       if (state != other__.state) return false;
       return true;
     }
@@ -9134,7 +8628,7 @@ namespace DUNE
     bool
     GroupStreamVelocity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::GroupStreamVelocity& other__ = dynamic_cast<const GroupStreamVelocity&>(msg__);
+      const IMC::GroupStreamVelocity& other__ = static_cast<const GroupStreamVelocity&>(msg__);
       if (x != other__.x) return false;
       if (y != other__.y) return false;
       if (z != other__.z) return false;
@@ -9200,7 +8694,7 @@ namespace DUNE
     bool
     DesiredHeading::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredHeading& other__ = dynamic_cast<const DesiredHeading&>(msg__);
+      const IMC::DesiredHeading& other__ = static_cast<const DesiredHeading&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -9269,7 +8763,7 @@ namespace DUNE
     bool
     DesiredZ::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredZ& other__ = dynamic_cast<const DesiredZ&>(msg__);
+      const IMC::DesiredZ& other__ = static_cast<const DesiredZ&>(msg__);
       if (value != other__.value) return false;
       if (z_units != other__.z_units) return false;
       return true;
@@ -9343,7 +8837,7 @@ namespace DUNE
     bool
     DesiredSpeed::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredSpeed& other__ = dynamic_cast<const DesiredSpeed&>(msg__);
+      const IMC::DesiredSpeed& other__ = static_cast<const DesiredSpeed&>(msg__);
       if (value != other__.value) return false;
       if (speed_units != other__.speed_units) return false;
       return true;
@@ -9416,7 +8910,7 @@ namespace DUNE
     bool
     DesiredRoll::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredRoll& other__ = dynamic_cast<const DesiredRoll&>(msg__);
+      const IMC::DesiredRoll& other__ = static_cast<const DesiredRoll&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -9484,7 +8978,7 @@ namespace DUNE
     bool
     DesiredPitch::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredPitch& other__ = dynamic_cast<const DesiredPitch&>(msg__);
+      const IMC::DesiredPitch& other__ = static_cast<const DesiredPitch&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -9552,7 +9046,7 @@ namespace DUNE
     bool
     DesiredVerticalRate::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredVerticalRate& other__ = dynamic_cast<const DesiredVerticalRate&>(msg__);
+      const IMC::DesiredVerticalRate& other__ = static_cast<const DesiredVerticalRate&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -9614,6 +9108,7 @@ namespace DUNE
     void
     DesiredPath::clear(void)
     {
+      path_ref = 0;
       start_lat = 0;
       start_lon = 0;
       start_z = 0;
@@ -9631,7 +9126,8 @@ namespace DUNE
     bool
     DesiredPath::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredPath& other__ = dynamic_cast<const DesiredPath&>(msg__);
+      const IMC::DesiredPath& other__ = static_cast<const DesiredPath&>(msg__);
+      if (path_ref != other__.path_ref) return false;
       if (start_lat != other__.start_lat) return false;
       if (start_lon != other__.start_lon) return false;
       if (start_z != other__.start_z) return false;
@@ -9657,6 +9153,7 @@ namespace DUNE
     DesiredPath::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(path_ref, ptr__);
       ptr__ += IMC::serialize(start_lat, ptr__);
       ptr__ += IMC::serialize(start_lon, ptr__);
       ptr__ += IMC::serialize(start_z, ptr__);
@@ -9676,6 +9173,7 @@ namespace DUNE
     DesiredPath::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(path_ref, bfr__, size__);
       bfr__ += IMC::deserialize(start_lat, bfr__, size__);
       bfr__ += IMC::deserialize(start_lon, bfr__, size__);
       bfr__ += IMC::deserialize(start_z, bfr__, size__);
@@ -9695,6 +9193,7 @@ namespace DUNE
     DesiredPath::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(path_ref, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(start_lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(start_lon, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(start_z, bfr__, size__);
@@ -9713,6 +9212,7 @@ namespace DUNE
     void
     DesiredPath::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      IMC::toJSON(os__, "path_ref", path_ref, nindent__);
       IMC::toJSON(os__, "start_lat", start_lat, nindent__);
       IMC::toJSON(os__, "start_lon", start_lon, nindent__);
       IMC::toJSON(os__, "start_z", start_z, nindent__);
@@ -9748,7 +9248,7 @@ namespace DUNE
     bool
     DesiredControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredControl& other__ = dynamic_cast<const DesiredControl&>(msg__);
+      const IMC::DesiredControl& other__ = static_cast<const DesiredControl&>(msg__);
       if (x != other__.x) return false;
       if (y != other__.y) return false;
       if (z != other__.z) return false;
@@ -9834,7 +9334,7 @@ namespace DUNE
     bool
     DesiredHeadingRate::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredHeadingRate& other__ = dynamic_cast<const DesiredHeadingRate&>(msg__);
+      const IMC::DesiredHeadingRate& other__ = static_cast<const DesiredHeadingRate&>(msg__);
       if (value != other__.value) return false;
       return true;
     }
@@ -9908,7 +9408,7 @@ namespace DUNE
     bool
     DesiredVelocity::fieldsEqual(const Message& msg__) const
     {
-      const IMC::DesiredVelocity& other__ = dynamic_cast<const DesiredVelocity&>(msg__);
+      const IMC::DesiredVelocity& other__ = static_cast<const DesiredVelocity&>(msg__);
       if (u != other__.u) return false;
       if (v != other__.v) return false;
       if (w != other__.w) return false;
@@ -9988,6 +9488,7 @@ namespace DUNE
     void
     PathControlState::clear(void)
     {
+      path_ref = 0;
       start_lat = 0;
       start_lon = 0;
       start_z = 0;
@@ -10011,7 +9512,8 @@ namespace DUNE
     bool
     PathControlState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PathControlState& other__ = dynamic_cast<const PathControlState&>(msg__);
+      const IMC::PathControlState& other__ = static_cast<const PathControlState&>(msg__);
+      if (path_ref != other__.path_ref) return false;
       if (start_lat != other__.start_lat) return false;
       if (start_lon != other__.start_lon) return false;
       if (start_z != other__.start_z) return false;
@@ -10043,6 +9545,7 @@ namespace DUNE
     PathControlState::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(path_ref, ptr__);
       ptr__ += IMC::serialize(start_lat, ptr__);
       ptr__ += IMC::serialize(start_lon, ptr__);
       ptr__ += IMC::serialize(start_z, ptr__);
@@ -10068,6 +9571,7 @@ namespace DUNE
     PathControlState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(path_ref, bfr__, size__);
       bfr__ += IMC::deserialize(start_lat, bfr__, size__);
       bfr__ += IMC::deserialize(start_lon, bfr__, size__);
       bfr__ += IMC::deserialize(start_z, bfr__, size__);
@@ -10093,6 +9597,7 @@ namespace DUNE
     PathControlState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(path_ref, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(start_lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(start_lon, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(start_z, bfr__, size__);
@@ -10117,6 +9622,7 @@ namespace DUNE
     void
     PathControlState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      IMC::toJSON(os__, "path_ref", path_ref, nindent__);
       IMC::toJSON(os__, "start_lat", start_lat, nindent__);
       IMC::toJSON(os__, "start_lon", start_lon, nindent__);
       IMC::toJSON(os__, "start_z", start_z, nindent__);
@@ -10154,7 +9660,7 @@ namespace DUNE
     bool
     AllocatedControlTorques::fieldsEqual(const Message& msg__) const
     {
-      const IMC::AllocatedControlTorques& other__ = dynamic_cast<const AllocatedControlTorques&>(msg__);
+      const IMC::AllocatedControlTorques& other__ = static_cast<const AllocatedControlTorques&>(msg__);
       if (k != other__.k) return false;
       if (m != other__.m) return false;
       if (n != other__.n) return false;
@@ -10223,7 +9729,7 @@ namespace DUNE
     bool
     ControlParcel::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ControlParcel& other__ = dynamic_cast<const ControlParcel&>(msg__);
+      const IMC::ControlParcel& other__ = static_cast<const ControlParcel&>(msg__);
       if (p != other__.p) return false;
       if (i != other__.i) return false;
       if (d != other__.d) return false;
@@ -10294,7 +9800,7 @@ namespace DUNE
     bool
     Brake::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Brake& other__ = dynamic_cast<const Brake&>(msg__);
+      const IMC::Brake& other__ = static_cast<const Brake&>(msg__);
       if (op != other__.op) return false;
       return true;
     }
@@ -10360,7 +9866,7 @@ namespace DUNE
     bool
     Goto::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Goto& other__ = dynamic_cast<const Goto&>(msg__);
+      const IMC::Goto& other__ = static_cast<const Goto&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -10476,7 +9982,7 @@ namespace DUNE
     bool
     PopUp::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PopUp& other__ = dynamic_cast<const PopUp&>(msg__);
+      const IMC::PopUp& other__ = static_cast<const PopUp&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -10582,7 +10088,7 @@ namespace DUNE
     bool
     Teleoperation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Teleoperation& other__ = dynamic_cast<const Teleoperation&>(msg__);
+      const IMC::Teleoperation& other__ = static_cast<const Teleoperation&>(msg__);
       if (custom != other__.custom) return false;
       return true;
     }
@@ -10651,7 +10157,7 @@ namespace DUNE
     bool
     Loiter::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Loiter& other__ = dynamic_cast<const Loiter&>(msg__);
+      const IMC::Loiter& other__ = static_cast<const Loiter&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -10773,7 +10279,7 @@ namespace DUNE
     bool
     IdleManeuver::fieldsEqual(const Message& msg__) const
     {
-      const IMC::IdleManeuver& other__ = dynamic_cast<const IdleManeuver&>(msg__);
+      const IMC::IdleManeuver& other__ = static_cast<const IdleManeuver&>(msg__);
       if (duration != other__.duration) return false;
       if (custom != other__.custom) return false;
       return true;
@@ -10837,7 +10343,7 @@ namespace DUNE
     bool
     LowLevelControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LowLevelControl& other__ = dynamic_cast<const LowLevelControl&>(msg__);
+      const IMC::LowLevelControl& other__ = static_cast<const LowLevelControl&>(msg__);
       if (control != other__.control) return false;
       if (duration != other__.duration) return false;
       if (custom != other__.custom) return false;
@@ -10963,7 +10469,7 @@ namespace DUNE
     bool
     Rows::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Rows& other__ = dynamic_cast<const Rows&>(msg__);
+      const IMC::Rows& other__ = static_cast<const Rows&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -11096,7 +10602,7 @@ namespace DUNE
     bool
     PathPoint::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PathPoint& other__ = dynamic_cast<const PathPoint&>(msg__);
+      const IMC::PathPoint& other__ = static_cast<const PathPoint&>(msg__);
       if (x != other__.x) return false;
       if (y != other__.y) return false;
       if (z != other__.z) return false;
@@ -11171,7 +10677,7 @@ namespace DUNE
     bool
     FollowPath::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FollowPath& other__ = dynamic_cast<const FollowPath&>(msg__);
+      const IMC::FollowPath& other__ = static_cast<const FollowPath&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -11306,7 +10812,7 @@ namespace DUNE
     bool
     YoYo::fieldsEqual(const Message& msg__) const
     {
-      const IMC::YoYo& other__ = dynamic_cast<const YoYo&>(msg__);
+      const IMC::YoYo& other__ = static_cast<const YoYo&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -11454,7 +10960,7 @@ namespace DUNE
     bool
     StationKeeping::fieldsEqual(const Message& msg__) const
     {
-      const IMC::StationKeeping& other__ = dynamic_cast<const StationKeeping&>(msg__);
+      const IMC::StationKeeping& other__ = static_cast<const StationKeeping&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (z != other__.z) return false;
@@ -11561,7 +11067,7 @@ namespace DUNE
     bool
     Elevator::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Elevator& other__ = dynamic_cast<const Elevator&>(msg__);
+      const IMC::Elevator& other__ = static_cast<const Elevator&>(msg__);
       if (timeout != other__.timeout) return false;
       if (flags != other__.flags) return false;
       if (lat != other__.lat) return false;
@@ -11675,7 +11181,7 @@ namespace DUNE
     bool
     TrajectoryPoint::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrajectoryPoint& other__ = dynamic_cast<const TrajectoryPoint&>(msg__);
+      const IMC::TrajectoryPoint& other__ = static_cast<const TrajectoryPoint&>(msg__);
       if (x != other__.x) return false;
       if (y != other__.y) return false;
       if (z != other__.z) return false;
@@ -11755,7 +11261,7 @@ namespace DUNE
     bool
     FollowTrajectory::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FollowTrajectory& other__ = dynamic_cast<const FollowTrajectory&>(msg__);
+      const IMC::FollowTrajectory& other__ = static_cast<const FollowTrajectory&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -11883,7 +11389,7 @@ namespace DUNE
     bool
     CustomManeuver::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CustomManeuver& other__ = dynamic_cast<const CustomManeuver&>(msg__);
+      const IMC::CustomManeuver& other__ = static_cast<const CustomManeuver&>(msg__);
       if (timeout != other__.timeout) return false;
       if (name != other__.name) return false;
       if (custom != other__.custom) return false;
@@ -11952,7 +11458,7 @@ namespace DUNE
     bool
     VehicleFormationParticipant::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VehicleFormationParticipant& other__ = dynamic_cast<const VehicleFormationParticipant&>(msg__);
+      const IMC::VehicleFormationParticipant& other__ = static_cast<const VehicleFormationParticipant&>(msg__);
       if (vid != other__.vid) return false;
       if (off_x != other__.off_x) return false;
       if (off_y != other__.off_y) return false;
@@ -12034,7 +11540,7 @@ namespace DUNE
     bool
     VehicleFormation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VehicleFormation& other__ = dynamic_cast<const VehicleFormation&>(msg__);
+      const IMC::VehicleFormation& other__ = static_cast<const VehicleFormation&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (z != other__.z) return false;
@@ -12214,7 +11720,7 @@ namespace DUNE
     bool
     RegisterManeuver::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RegisterManeuver& other__ = dynamic_cast<const RegisterManeuver&>(msg__);
+      const IMC::RegisterManeuver& other__ = static_cast<const RegisterManeuver&>(msg__);
       if (mid != other__.mid) return false;
       return true;
     }
@@ -12272,7 +11778,7 @@ namespace DUNE
     bool
     ManeuverControlState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ManeuverControlState& other__ = dynamic_cast<const ManeuverControlState&>(msg__);
+      const IMC::ManeuverControlState& other__ = static_cast<const ManeuverControlState&>(msg__);
       if (state != other__.state) return false;
       if (eta != other__.eta) return false;
       if (info != other__.info) return false;
@@ -12345,7 +11851,7 @@ namespace DUNE
     bool
     FollowSystem::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FollowSystem& other__ = dynamic_cast<const FollowSystem&>(msg__);
+      const IMC::FollowSystem& other__ = static_cast<const FollowSystem&>(msg__);
       if (system != other__.system) return false;
       if (duration != other__.duration) return false;
       if (speed != other__.speed) return false;
@@ -12443,7 +11949,7 @@ namespace DUNE
     bool
     CommsRelay::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CommsRelay& other__ = dynamic_cast<const CommsRelay&>(msg__);
+      const IMC::CommsRelay& other__ = static_cast<const CommsRelay&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (speed != other__.speed) return false;
@@ -12535,7 +12041,7 @@ namespace DUNE
     bool
     PolygonVertex::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PolygonVertex& other__ = dynamic_cast<const PolygonVertex&>(msg__);
+      const IMC::PolygonVertex& other__ = static_cast<const PolygonVertex&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       return true;
@@ -12604,7 +12110,7 @@ namespace DUNE
     bool
     CoverArea::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CoverArea& other__ = dynamic_cast<const CoverArea&>(msg__);
+      const IMC::CoverArea& other__ = static_cast<const CoverArea&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (z != other__.z) return false;
@@ -12737,7 +12243,7 @@ namespace DUNE
     bool
     CompassCalibration::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CompassCalibration& other__ = dynamic_cast<const CompassCalibration&>(msg__);
+      const IMC::CompassCalibration& other__ = static_cast<const CompassCalibration&>(msg__);
       if (timeout != other__.timeout) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -12857,7 +12363,7 @@ namespace DUNE
     bool
     FormationParameters::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FormationParameters& other__ = dynamic_cast<const FormationParameters&>(msg__);
+      const IMC::FormationParameters& other__ = static_cast<const FormationParameters&>(msg__);
       if (formation_name != other__.formation_name) return false;
       if (reference_frame != other__.reference_frame) return false;
       if (participants != other__.participants) return false;
@@ -12971,7 +12477,7 @@ namespace DUNE
     bool
     FormationPlanExecution::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FormationPlanExecution& other__ = dynamic_cast<const FormationPlanExecution&>(msg__);
+      const IMC::FormationPlanExecution& other__ = static_cast<const FormationPlanExecution&>(msg__);
       if (group_name != other__.group_name) return false;
       if (formation_name != other__.formation_name) return false;
       if (plan_id != other__.plan_id) return false;
@@ -13096,7 +12602,7 @@ namespace DUNE
     bool
     FollowReference::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FollowReference& other__ = dynamic_cast<const FollowReference&>(msg__);
+      const IMC::FollowReference& other__ = static_cast<const FollowReference&>(msg__);
       if (control_src != other__.control_src) return false;
       if (control_ent != other__.control_ent) return false;
       if (timeout != other__.timeout) return false;
@@ -13179,7 +12685,7 @@ namespace DUNE
     bool
     Reference::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Reference& other__ = dynamic_cast<const Reference&>(msg__);
+      const IMC::Reference& other__ = static_cast<const Reference&>(msg__);
       if (flags != other__.flags) return false;
       if (speed != other__.speed) return false;
       if (z != other__.z) return false;
@@ -13335,7 +12841,7 @@ namespace DUNE
     bool
     FollowRefState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FollowRefState& other__ = dynamic_cast<const FollowRefState&>(msg__);
+      const IMC::FollowRefState& other__ = static_cast<const FollowRefState&>(msg__);
       if (control_src != other__.control_src) return false;
       if (control_ent != other__.control_ent) return false;
       if (reference != other__.reference) return false;
@@ -13441,6 +12947,457 @@ namespace DUNE
       }
     }
 
+    RelativeState::RelativeState(void)
+    {
+      m_header.mgid = 482;
+      clear();
+    }
+
+    void
+    RelativeState::clear(void)
+    {
+      s_id.clear();
+      dist = 0;
+      err = 0;
+      ctrl_imp = 0;
+      rel_dir_x = 0;
+      rel_dir_y = 0;
+      rel_dir_z = 0;
+      err_x = 0;
+      err_y = 0;
+      err_z = 0;
+      rf_err_x = 0;
+      rf_err_y = 0;
+      rf_err_z = 0;
+      rf_err_vx = 0;
+      rf_err_vy = 0;
+      rf_err_vz = 0;
+      ss_x = 0;
+      ss_y = 0;
+      ss_z = 0;
+      virt_err_x = 0;
+      virt_err_y = 0;
+      virt_err_z = 0;
+    }
+
+    bool
+    RelativeState::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::RelativeState& other__ = static_cast<const RelativeState&>(msg__);
+      if (s_id != other__.s_id) return false;
+      if (dist != other__.dist) return false;
+      if (err != other__.err) return false;
+      if (ctrl_imp != other__.ctrl_imp) return false;
+      if (rel_dir_x != other__.rel_dir_x) return false;
+      if (rel_dir_y != other__.rel_dir_y) return false;
+      if (rel_dir_z != other__.rel_dir_z) return false;
+      if (err_x != other__.err_x) return false;
+      if (err_y != other__.err_y) return false;
+      if (err_z != other__.err_z) return false;
+      if (rf_err_x != other__.rf_err_x) return false;
+      if (rf_err_y != other__.rf_err_y) return false;
+      if (rf_err_z != other__.rf_err_z) return false;
+      if (rf_err_vx != other__.rf_err_vx) return false;
+      if (rf_err_vy != other__.rf_err_vy) return false;
+      if (rf_err_vz != other__.rf_err_vz) return false;
+      if (ss_x != other__.ss_x) return false;
+      if (ss_y != other__.ss_y) return false;
+      if (ss_z != other__.ss_z) return false;
+      if (virt_err_x != other__.virt_err_x) return false;
+      if (virt_err_y != other__.virt_err_y) return false;
+      if (virt_err_z != other__.virt_err_z) return false;
+      return true;
+    }
+
+    int
+    RelativeState::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    RelativeState::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(s_id, ptr__);
+      ptr__ += IMC::serialize(dist, ptr__);
+      ptr__ += IMC::serialize(err, ptr__);
+      ptr__ += IMC::serialize(ctrl_imp, ptr__);
+      ptr__ += IMC::serialize(rel_dir_x, ptr__);
+      ptr__ += IMC::serialize(rel_dir_y, ptr__);
+      ptr__ += IMC::serialize(rel_dir_z, ptr__);
+      ptr__ += IMC::serialize(err_x, ptr__);
+      ptr__ += IMC::serialize(err_y, ptr__);
+      ptr__ += IMC::serialize(err_z, ptr__);
+      ptr__ += IMC::serialize(rf_err_x, ptr__);
+      ptr__ += IMC::serialize(rf_err_y, ptr__);
+      ptr__ += IMC::serialize(rf_err_z, ptr__);
+      ptr__ += IMC::serialize(rf_err_vx, ptr__);
+      ptr__ += IMC::serialize(rf_err_vy, ptr__);
+      ptr__ += IMC::serialize(rf_err_vz, ptr__);
+      ptr__ += IMC::serialize(ss_x, ptr__);
+      ptr__ += IMC::serialize(ss_y, ptr__);
+      ptr__ += IMC::serialize(ss_z, ptr__);
+      ptr__ += IMC::serialize(virt_err_x, ptr__);
+      ptr__ += IMC::serialize(virt_err_y, ptr__);
+      ptr__ += IMC::serialize(virt_err_z, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    RelativeState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(s_id, bfr__, size__);
+      bfr__ += IMC::deserialize(dist, bfr__, size__);
+      bfr__ += IMC::deserialize(err, bfr__, size__);
+      bfr__ += IMC::deserialize(ctrl_imp, bfr__, size__);
+      bfr__ += IMC::deserialize(rel_dir_x, bfr__, size__);
+      bfr__ += IMC::deserialize(rel_dir_y, bfr__, size__);
+      bfr__ += IMC::deserialize(rel_dir_z, bfr__, size__);
+      bfr__ += IMC::deserialize(err_x, bfr__, size__);
+      bfr__ += IMC::deserialize(err_y, bfr__, size__);
+      bfr__ += IMC::deserialize(err_z, bfr__, size__);
+      bfr__ += IMC::deserialize(rf_err_x, bfr__, size__);
+      bfr__ += IMC::deserialize(rf_err_y, bfr__, size__);
+      bfr__ += IMC::deserialize(rf_err_z, bfr__, size__);
+      bfr__ += IMC::deserialize(rf_err_vx, bfr__, size__);
+      bfr__ += IMC::deserialize(rf_err_vy, bfr__, size__);
+      bfr__ += IMC::deserialize(rf_err_vz, bfr__, size__);
+      bfr__ += IMC::deserialize(ss_x, bfr__, size__);
+      bfr__ += IMC::deserialize(ss_y, bfr__, size__);
+      bfr__ += IMC::deserialize(ss_z, bfr__, size__);
+      bfr__ += IMC::deserialize(virt_err_x, bfr__, size__);
+      bfr__ += IMC::deserialize(virt_err_y, bfr__, size__);
+      bfr__ += IMC::deserialize(virt_err_z, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    RelativeState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(s_id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(dist, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(err, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ctrl_imp, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rel_dir_x, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rel_dir_y, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rel_dir_z, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(err_x, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(err_y, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(err_z, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rf_err_x, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rf_err_y, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rf_err_z, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rf_err_vx, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rf_err_vy, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rf_err_vz, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ss_x, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ss_y, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ss_z, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(virt_err_x, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(virt_err_y, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(virt_err_z, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    RelativeState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "s_id", s_id, nindent__);
+      IMC::toJSON(os__, "dist", dist, nindent__);
+      IMC::toJSON(os__, "err", err, nindent__);
+      IMC::toJSON(os__, "ctrl_imp", ctrl_imp, nindent__);
+      IMC::toJSON(os__, "rel_dir_x", rel_dir_x, nindent__);
+      IMC::toJSON(os__, "rel_dir_y", rel_dir_y, nindent__);
+      IMC::toJSON(os__, "rel_dir_z", rel_dir_z, nindent__);
+      IMC::toJSON(os__, "err_x", err_x, nindent__);
+      IMC::toJSON(os__, "err_y", err_y, nindent__);
+      IMC::toJSON(os__, "err_z", err_z, nindent__);
+      IMC::toJSON(os__, "rf_err_x", rf_err_x, nindent__);
+      IMC::toJSON(os__, "rf_err_y", rf_err_y, nindent__);
+      IMC::toJSON(os__, "rf_err_z", rf_err_z, nindent__);
+      IMC::toJSON(os__, "rf_err_vx", rf_err_vx, nindent__);
+      IMC::toJSON(os__, "rf_err_vy", rf_err_vy, nindent__);
+      IMC::toJSON(os__, "rf_err_vz", rf_err_vz, nindent__);
+      IMC::toJSON(os__, "ss_x", ss_x, nindent__);
+      IMC::toJSON(os__, "ss_y", ss_y, nindent__);
+      IMC::toJSON(os__, "ss_z", ss_z, nindent__);
+      IMC::toJSON(os__, "virt_err_x", virt_err_x, nindent__);
+      IMC::toJSON(os__, "virt_err_y", virt_err_y, nindent__);
+      IMC::toJSON(os__, "virt_err_z", virt_err_z, nindent__);
+    }
+
+    FormationMonitor::FormationMonitor(void)
+    {
+      m_header.mgid = 481;
+      clear();
+      rel_state.setParent(this);
+    }
+
+    void
+    FormationMonitor::clear(void)
+    {
+      ax_cmd = 0;
+      ay_cmd = 0;
+      az_cmd = 0;
+      ax_des = 0;
+      ay_des = 0;
+      az_des = 0;
+      virt_err_x = 0;
+      virt_err_y = 0;
+      virt_err_z = 0;
+      surf_fdbk_x = 0;
+      surf_fdbk_y = 0;
+      surf_fdbk_z = 0;
+      surf_unkn_x = 0;
+      surf_unkn_y = 0;
+      surf_unkn_z = 0;
+      ss_x = 0;
+      ss_y = 0;
+      ss_z = 0;
+      rel_state.clear();
+    }
+
+    bool
+    FormationMonitor::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FormationMonitor& other__ = static_cast<const FormationMonitor&>(msg__);
+      if (ax_cmd != other__.ax_cmd) return false;
+      if (ay_cmd != other__.ay_cmd) return false;
+      if (az_cmd != other__.az_cmd) return false;
+      if (ax_des != other__.ax_des) return false;
+      if (ay_des != other__.ay_des) return false;
+      if (az_des != other__.az_des) return false;
+      if (virt_err_x != other__.virt_err_x) return false;
+      if (virt_err_y != other__.virt_err_y) return false;
+      if (virt_err_z != other__.virt_err_z) return false;
+      if (surf_fdbk_x != other__.surf_fdbk_x) return false;
+      if (surf_fdbk_y != other__.surf_fdbk_y) return false;
+      if (surf_fdbk_z != other__.surf_fdbk_z) return false;
+      if (surf_unkn_x != other__.surf_unkn_x) return false;
+      if (surf_unkn_y != other__.surf_unkn_y) return false;
+      if (surf_unkn_z != other__.surf_unkn_z) return false;
+      if (ss_x != other__.ss_x) return false;
+      if (ss_y != other__.ss_y) return false;
+      if (ss_z != other__.ss_z) return false;
+      if (rel_state != other__.rel_state) return false;
+      return true;
+    }
+
+    int
+    FormationMonitor::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    FormationMonitor::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(ax_cmd, ptr__);
+      ptr__ += IMC::serialize(ay_cmd, ptr__);
+      ptr__ += IMC::serialize(az_cmd, ptr__);
+      ptr__ += IMC::serialize(ax_des, ptr__);
+      ptr__ += IMC::serialize(ay_des, ptr__);
+      ptr__ += IMC::serialize(az_des, ptr__);
+      ptr__ += IMC::serialize(virt_err_x, ptr__);
+      ptr__ += IMC::serialize(virt_err_y, ptr__);
+      ptr__ += IMC::serialize(virt_err_z, ptr__);
+      ptr__ += IMC::serialize(surf_fdbk_x, ptr__);
+      ptr__ += IMC::serialize(surf_fdbk_y, ptr__);
+      ptr__ += IMC::serialize(surf_fdbk_z, ptr__);
+      ptr__ += IMC::serialize(surf_unkn_x, ptr__);
+      ptr__ += IMC::serialize(surf_unkn_y, ptr__);
+      ptr__ += IMC::serialize(surf_unkn_z, ptr__);
+      ptr__ += IMC::serialize(ss_x, ptr__);
+      ptr__ += IMC::serialize(ss_y, ptr__);
+      ptr__ += IMC::serialize(ss_z, ptr__);
+      ptr__ += rel_state.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FormationMonitor::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(ax_cmd, bfr__, size__);
+      bfr__ += IMC::deserialize(ay_cmd, bfr__, size__);
+      bfr__ += IMC::deserialize(az_cmd, bfr__, size__);
+      bfr__ += IMC::deserialize(ax_des, bfr__, size__);
+      bfr__ += IMC::deserialize(ay_des, bfr__, size__);
+      bfr__ += IMC::deserialize(az_des, bfr__, size__);
+      bfr__ += IMC::deserialize(virt_err_x, bfr__, size__);
+      bfr__ += IMC::deserialize(virt_err_y, bfr__, size__);
+      bfr__ += IMC::deserialize(virt_err_z, bfr__, size__);
+      bfr__ += IMC::deserialize(surf_fdbk_x, bfr__, size__);
+      bfr__ += IMC::deserialize(surf_fdbk_y, bfr__, size__);
+      bfr__ += IMC::deserialize(surf_fdbk_z, bfr__, size__);
+      bfr__ += IMC::deserialize(surf_unkn_x, bfr__, size__);
+      bfr__ += IMC::deserialize(surf_unkn_y, bfr__, size__);
+      bfr__ += IMC::deserialize(surf_unkn_z, bfr__, size__);
+      bfr__ += IMC::deserialize(ss_x, bfr__, size__);
+      bfr__ += IMC::deserialize(ss_y, bfr__, size__);
+      bfr__ += IMC::deserialize(ss_z, bfr__, size__);
+      bfr__ += rel_state.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FormationMonitor::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(ax_cmd, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ay_cmd, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(az_cmd, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ax_des, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ay_des, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(az_des, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(virt_err_x, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(virt_err_y, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(virt_err_z, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(surf_fdbk_x, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(surf_fdbk_y, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(surf_fdbk_z, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(surf_unkn_x, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(surf_unkn_y, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(surf_unkn_z, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ss_x, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ss_y, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ss_z, bfr__, size__);
+      bfr__ += rel_state.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FormationMonitor::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "ax_cmd", ax_cmd, nindent__);
+      IMC::toJSON(os__, "ay_cmd", ay_cmd, nindent__);
+      IMC::toJSON(os__, "az_cmd", az_cmd, nindent__);
+      IMC::toJSON(os__, "ax_des", ax_des, nindent__);
+      IMC::toJSON(os__, "ay_des", ay_des, nindent__);
+      IMC::toJSON(os__, "az_des", az_des, nindent__);
+      IMC::toJSON(os__, "virt_err_x", virt_err_x, nindent__);
+      IMC::toJSON(os__, "virt_err_y", virt_err_y, nindent__);
+      IMC::toJSON(os__, "virt_err_z", virt_err_z, nindent__);
+      IMC::toJSON(os__, "surf_fdbk_x", surf_fdbk_x, nindent__);
+      IMC::toJSON(os__, "surf_fdbk_y", surf_fdbk_y, nindent__);
+      IMC::toJSON(os__, "surf_fdbk_z", surf_fdbk_z, nindent__);
+      IMC::toJSON(os__, "surf_unkn_x", surf_unkn_x, nindent__);
+      IMC::toJSON(os__, "surf_unkn_y", surf_unkn_y, nindent__);
+      IMC::toJSON(os__, "surf_unkn_z", surf_unkn_z, nindent__);
+      IMC::toJSON(os__, "ss_x", ss_x, nindent__);
+      IMC::toJSON(os__, "ss_y", ss_y, nindent__);
+      IMC::toJSON(os__, "ss_z", ss_z, nindent__);
+      rel_state.toJSON(os__, "rel_state", nindent__);
+    }
+
+    void
+    FormationMonitor::setTimeStampNested(double value__)
+    {
+      rel_state.setTimeStamp(value__);
+    }
+
+    void
+    FormationMonitor::setSourceNested(uint16_t value__)
+    {
+      rel_state.setSource(value__);
+    }
+
+    void
+    FormationMonitor::setSourceEntityNested(uint8_t value__)
+    {
+      rel_state.setSourceEntity(value__);
+    }
+
+    void
+    FormationMonitor::setDestinationNested(uint16_t value__)
+    {
+      rel_state.setDestination(value__);
+    }
+
+    void
+    FormationMonitor::setDestinationEntityNested(uint8_t value__)
+    {
+      rel_state.setDestinationEntity(value__);
+    }
+
+    Dislodge::Dislodge(void)
+    {
+      m_header.mgid = 483;
+      clear();
+    }
+
+    void
+    Dislodge::clear(void)
+    {
+      timeout = 0;
+      rpm = 0;
+      direction = 0;
+      custom.clear();
+    }
+
+    bool
+    Dislodge::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Dislodge& other__ = static_cast<const Dislodge&>(msg__);
+      if (timeout != other__.timeout) return false;
+      if (rpm != other__.rpm) return false;
+      if (direction != other__.direction) return false;
+      if (custom != other__.custom) return false;
+      return true;
+    }
+
+    int
+    Dislodge::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    Dislodge::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(timeout, ptr__);
+      ptr__ += IMC::serialize(rpm, ptr__);
+      ptr__ += IMC::serialize(direction, ptr__);
+      ptr__ += IMC::serialize(custom, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Dislodge::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(timeout, bfr__, size__);
+      bfr__ += IMC::deserialize(rpm, bfr__, size__);
+      bfr__ += IMC::deserialize(direction, bfr__, size__);
+      bfr__ += IMC::deserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Dislodge::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rpm, bfr__, size__);
+      bfr__ += IMC::deserialize(direction, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    Dislodge::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "timeout", timeout, nindent__);
+      IMC::toJSON(os__, "rpm", rpm, nindent__);
+      IMC::toJSON(os__, "direction", direction, nindent__);
+      IMC::toJSON(os__, "custom", custom, nindent__);
+    }
+
     VehicleState::VehicleState(void)
     {
       m_header.mgid = 500;
@@ -13465,7 +13422,7 @@ namespace DUNE
     bool
     VehicleState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VehicleState& other__ = dynamic_cast<const VehicleState&>(msg__);
+      const IMC::VehicleState& other__ = static_cast<const VehicleState&>(msg__);
       if (op_mode != other__.op_mode) return false;
       if (error_count != other__.error_count) return false;
       if (error_ents != other__.error_ents) return false;
@@ -13572,7 +13529,7 @@ namespace DUNE
     bool
     VehicleCommand::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VehicleCommand& other__ = dynamic_cast<const VehicleCommand&>(msg__);
+      const IMC::VehicleCommand& other__ = static_cast<const VehicleCommand&>(msg__);
       if (type != other__.type) return false;
       if (request_id != other__.request_id) return false;
       if (command != other__.command) return false;
@@ -13699,7 +13656,7 @@ namespace DUNE
     bool
     MonitorEntityState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::MonitorEntityState& other__ = dynamic_cast<const MonitorEntityState&>(msg__);
+      const IMC::MonitorEntityState& other__ = static_cast<const MonitorEntityState&>(msg__);
       if (command != other__.command) return false;
       if (entities != other__.entities) return false;
       return true;
@@ -13767,7 +13724,7 @@ namespace DUNE
     bool
     EntityMonitoringState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EntityMonitoringState& other__ = dynamic_cast<const EntityMonitoringState&>(msg__);
+      const IMC::EntityMonitoringState& other__ = static_cast<const EntityMonitoringState&>(msg__);
       if (mcount != other__.mcount) return false;
       if (mnames != other__.mnames) return false;
       if (ecount != other__.ecount) return false;
@@ -13869,7 +13826,7 @@ namespace DUNE
     bool
     OperationalLimits::fieldsEqual(const Message& msg__) const
     {
-      const IMC::OperationalLimits& other__ = dynamic_cast<const OperationalLimits&>(msg__);
+      const IMC::OperationalLimits& other__ = static_cast<const OperationalLimits&>(msg__);
       if (mask != other__.mask) return false;
       if (max_depth != other__.max_depth) return false;
       if (min_altitude != other__.min_altitude) return false;
@@ -14019,7 +13976,7 @@ namespace DUNE
     bool
     Calibration::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Calibration& other__ = dynamic_cast<const Calibration&>(msg__);
+      const IMC::Calibration& other__ = static_cast<const Calibration&>(msg__);
       if (duration != other__.duration) return false;
       return true;
     }
@@ -14077,7 +14034,7 @@ namespace DUNE
     bool
     ControlLoops::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ControlLoops& other__ = dynamic_cast<const ControlLoops&>(msg__);
+      const IMC::ControlLoops& other__ = static_cast<const ControlLoops&>(msg__);
       if (enable != other__.enable) return false;
       if (mask != other__.mask) return false;
       if (scope_ref != other__.scope_ref) return false;
@@ -14143,7 +14100,7 @@ namespace DUNE
     bool
     VehicleMedium::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VehicleMedium& other__ = dynamic_cast<const VehicleMedium&>(msg__);
+      const IMC::VehicleMedium& other__ = static_cast<const VehicleMedium&>(msg__);
       if (medium != other__.medium) return false;
       return true;
     }
@@ -14200,7 +14157,7 @@ namespace DUNE
     bool
     Collision::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Collision& other__ = dynamic_cast<const Collision&>(msg__);
+      const IMC::Collision& other__ = static_cast<const Collision&>(msg__);
       if (value != other__.value) return false;
       if (type != other__.type) return false;
       return true;
@@ -14278,7 +14235,7 @@ namespace DUNE
     bool
     FormState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FormState& other__ = dynamic_cast<const FormState&>(msg__);
+      const IMC::FormState& other__ = static_cast<const FormState&>(msg__);
       if (possimerr != other__.possimerr) return false;
       if (converg != other__.converg) return false;
       if (turbulence != other__.turbulence) return false;
@@ -14344,6 +14301,68 @@ namespace DUNE
       IMC::toJSON(os__, "convergmon", convergmon, nindent__);
     }
 
+    AutopilotMode::AutopilotMode(void)
+    {
+      m_header.mgid = 511;
+      clear();
+    }
+
+    void
+    AutopilotMode::clear(void)
+    {
+      autonomy = 0;
+      mode.clear();
+    }
+
+    bool
+    AutopilotMode::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::AutopilotMode& other__ = static_cast<const AutopilotMode&>(msg__);
+      if (autonomy != other__.autonomy) return false;
+      if (mode != other__.mode) return false;
+      return true;
+    }
+
+    int
+    AutopilotMode::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    AutopilotMode::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(autonomy, ptr__);
+      ptr__ += IMC::serialize(mode, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    AutopilotMode::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(autonomy, bfr__, size__);
+      bfr__ += IMC::deserialize(mode, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    AutopilotMode::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(autonomy, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(mode, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    AutopilotMode::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "autonomy", autonomy, nindent__);
+      IMC::toJSON(os__, "mode", mode, nindent__);
+    }
+
     Abort::Abort(void)
     {
       m_header.mgid = 550;
@@ -14401,7 +14420,7 @@ namespace DUNE
     bool
     PlanVariable::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanVariable& other__ = dynamic_cast<const PlanVariable&>(msg__);
+      const IMC::PlanVariable& other__ = static_cast<const PlanVariable&>(msg__);
       if (name != other__.name) return false;
       if (value != other__.value) return false;
       if (type != other__.type) return false;
@@ -14478,7 +14497,7 @@ namespace DUNE
     bool
     PlanManeuver::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanManeuver& other__ = dynamic_cast<const PlanManeuver&>(msg__);
+      const IMC::PlanManeuver& other__ = static_cast<const PlanManeuver&>(msg__);
       if (maneuver_id != other__.maneuver_id) return false;
       if (data != other__.data) return false;
       if (start_actions != other__.start_actions) return false;
@@ -14618,7 +14637,7 @@ namespace DUNE
     bool
     PlanTransition::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanTransition& other__ = dynamic_cast<const PlanTransition&>(msg__);
+      const IMC::PlanTransition& other__ = static_cast<const PlanTransition&>(msg__);
       if (source_man != other__.source_man) return false;
       if (dest_man != other__.dest_man) return false;
       if (conditions != other__.conditions) return false;
@@ -14732,7 +14751,7 @@ namespace DUNE
     bool
     PlanSpecification::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanSpecification& other__ = dynamic_cast<const PlanSpecification&>(msg__);
+      const IMC::PlanSpecification& other__ = static_cast<const PlanSpecification&>(msg__);
       if (plan_id != other__.plan_id) return false;
       if (description != other__.description) return false;
       if (vnamespace != other__.vnamespace) return false;
@@ -14900,7 +14919,7 @@ namespace DUNE
     bool
     EmergencyControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EmergencyControl& other__ = dynamic_cast<const EmergencyControl&>(msg__);
+      const IMC::EmergencyControl& other__ = static_cast<const EmergencyControl&>(msg__);
       if (command != other__.command) return false;
       if (plan != other__.plan) return false;
       return true;
@@ -15008,7 +15027,7 @@ namespace DUNE
     bool
     EmergencyControlState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EmergencyControlState& other__ = dynamic_cast<const EmergencyControlState&>(msg__);
+      const IMC::EmergencyControlState& other__ = static_cast<const EmergencyControlState&>(msg__);
       if (state != other__.state) return false;
       if (plan_id != other__.plan_id) return false;
       if (comm_level != other__.comm_level) return false;
@@ -15080,7 +15099,7 @@ namespace DUNE
     bool
     PlanDB::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanDB& other__ = dynamic_cast<const PlanDB&>(msg__);
+      const IMC::PlanDB& other__ = static_cast<const PlanDB&>(msg__);
       if (type != other__.type) return false;
       if (op != other__.op) return false;
       if (request_id != other__.request_id) return false;
@@ -15211,7 +15230,7 @@ namespace DUNE
     bool
     PlanDBInformation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanDBInformation& other__ = dynamic_cast<const PlanDBInformation&>(msg__);
+      const IMC::PlanDBInformation& other__ = static_cast<const PlanDBInformation&>(msg__);
       if (plan_id != other__.plan_id) return false;
       if (plan_size != other__.plan_size) return false;
       if (change_time != other__.change_time) return false;
@@ -15299,7 +15318,7 @@ namespace DUNE
     bool
     PlanDBState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanDBState& other__ = dynamic_cast<const PlanDBState&>(msg__);
+      const IMC::PlanDBState& other__ = static_cast<const PlanDBState&>(msg__);
       if (plan_count != other__.plan_count) return false;
       if (plan_size != other__.plan_size) return false;
       if (change_time != other__.change_time) return false;
@@ -15422,7 +15441,7 @@ namespace DUNE
     bool
     PlanControl::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanControl& other__ = dynamic_cast<const PlanControl&>(msg__);
+      const IMC::PlanControl& other__ = static_cast<const PlanControl&>(msg__);
       if (type != other__.type) return false;
       if (op != other__.op) return false;
       if (request_id != other__.request_id) return false;
@@ -15560,7 +15579,7 @@ namespace DUNE
     bool
     PlanControlState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanControlState& other__ = dynamic_cast<const PlanControlState&>(msg__);
+      const IMC::PlanControlState& other__ = static_cast<const PlanControlState&>(msg__);
       if (state != other__.state) return false;
       if (plan_id != other__.plan_id) return false;
       if (plan_eta != other__.plan_eta) return false;
@@ -15654,7 +15673,7 @@ namespace DUNE
     bool
     PlanGeneration::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PlanGeneration& other__ = dynamic_cast<const PlanGeneration&>(msg__);
+      const IMC::PlanGeneration& other__ = static_cast<const PlanGeneration&>(msg__);
       if (cmd != other__.cmd) return false;
       if (op != other__.op) return false;
       if (plan_id != other__.plan_id) return false;
@@ -15744,7 +15763,7 @@ namespace DUNE
     bool
     LeaderState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::LeaderState& other__ = dynamic_cast<const LeaderState&>(msg__);
+      const IMC::LeaderState& other__ = static_cast<const LeaderState&>(msg__);
       if (group_name != other__.group_name) return false;
       if (op != other__.op) return false;
       if (lat != other__.lat) return false;
@@ -15880,6 +15899,98 @@ namespace DUNE
       IMC::toJSON(os__, "svz", svz, nindent__);
     }
 
+    PlanStatistics::PlanStatistics(void)
+    {
+      m_header.mgid = 564;
+      clear();
+    }
+
+    void
+    PlanStatistics::clear(void)
+    {
+      plan_id.clear();
+      type = 0;
+      properties = 0;
+      durations.clear();
+      distances.clear();
+      actions.clear();
+      fuel.clear();
+    }
+
+    bool
+    PlanStatistics::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::PlanStatistics& other__ = static_cast<const PlanStatistics&>(msg__);
+      if (plan_id != other__.plan_id) return false;
+      if (type != other__.type) return false;
+      if (properties != other__.properties) return false;
+      if (durations != other__.durations) return false;
+      if (distances != other__.distances) return false;
+      if (actions != other__.actions) return false;
+      if (fuel != other__.fuel) return false;
+      return true;
+    }
+
+    int
+    PlanStatistics::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    PlanStatistics::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(plan_id, ptr__);
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(properties, ptr__);
+      ptr__ += IMC::serialize(durations, ptr__);
+      ptr__ += IMC::serialize(distances, ptr__);
+      ptr__ += IMC::serialize(actions, ptr__);
+      ptr__ += IMC::serialize(fuel, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    PlanStatistics::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(plan_id, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(properties, bfr__, size__);
+      bfr__ += IMC::deserialize(durations, bfr__, size__);
+      bfr__ += IMC::deserialize(distances, bfr__, size__);
+      bfr__ += IMC::deserialize(actions, bfr__, size__);
+      bfr__ += IMC::deserialize(fuel, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    PlanStatistics::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(plan_id, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(properties, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(durations, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(distances, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(actions, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(fuel, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    PlanStatistics::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "plan_id", plan_id, nindent__);
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "properties", properties, nindent__);
+      IMC::toJSON(os__, "durations", durations, nindent__);
+      IMC::toJSON(os__, "distances", distances, nindent__);
+      IMC::toJSON(os__, "actions", actions, nindent__);
+      IMC::toJSON(os__, "fuel", fuel, nindent__);
+    }
+
     ReportedState::ReportedState(void)
     {
       m_header.mgid = 600;
@@ -15903,7 +16014,7 @@ namespace DUNE
     bool
     ReportedState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ReportedState& other__ = dynamic_cast<const ReportedState&>(msg__);
+      const IMC::ReportedState& other__ = static_cast<const ReportedState&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (depth != other__.depth) return false;
@@ -16005,7 +16116,7 @@ namespace DUNE
     bool
     RemoteSensorInfo::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RemoteSensorInfo& other__ = dynamic_cast<const RemoteSensorInfo&>(msg__);
+      const IMC::RemoteSensorInfo& other__ = static_cast<const RemoteSensorInfo&>(msg__);
       if (id != other__.id) return false;
       if (sensor_class != other__.sensor_class) return false;
       if (lat != other__.lat) return false;
@@ -16093,7 +16204,7 @@ namespace DUNE
     bool
     MapPoint::fieldsEqual(const Message& msg__) const
     {
-      const IMC::MapPoint& other__ = dynamic_cast<const MapPoint&>(msg__);
+      const IMC::MapPoint& other__ = static_cast<const MapPoint&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (alt != other__.alt) return false;
@@ -16165,7 +16276,7 @@ namespace DUNE
     bool
     MapFeature::fieldsEqual(const Message& msg__) const
     {
-      const IMC::MapFeature& other__ = dynamic_cast<const MapFeature&>(msg__);
+      const IMC::MapFeature& other__ = static_cast<const MapFeature&>(msg__);
       if (id != other__.id) return false;
       if (feature_type != other__.feature_type) return false;
       if (rgb_red != other__.rgb_red) return false;
@@ -16278,7 +16389,7 @@ namespace DUNE
     bool
     Map::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Map& other__ = dynamic_cast<const Map&>(msg__);
+      const IMC::Map& other__ = static_cast<const Map&>(msg__);
       if (id != other__.id) return false;
       if (features != other__.features) return false;
       return true;
@@ -16372,7 +16483,7 @@ namespace DUNE
     bool
     CcuEvent::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CcuEvent& other__ = dynamic_cast<const CcuEvent&>(msg__);
+      const IMC::CcuEvent& other__ = static_cast<const CcuEvent&>(msg__);
       if (type != other__.type) return false;
       if (id != other__.id) return false;
       if (arg != other__.arg) return false;
@@ -16485,7 +16596,7 @@ namespace DUNE
     bool
     VehicleLinks::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VehicleLinks& other__ = dynamic_cast<const VehicleLinks&>(msg__);
+      const IMC::VehicleLinks& other__ = static_cast<const VehicleLinks&>(msg__);
       if (localname != other__.localname) return false;
       if (links != other__.links) return false;
       return true;
@@ -16578,7 +16689,7 @@ namespace DUNE
     bool
     TrexObservation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrexObservation& other__ = dynamic_cast<const TrexObservation&>(msg__);
+      const IMC::TrexObservation& other__ = static_cast<const TrexObservation&>(msg__);
       if (timeline != other__.timeline) return false;
       if (predicate != other__.predicate) return false;
       if (attributes != other__.attributes) return false;
@@ -16646,7 +16757,7 @@ namespace DUNE
     bool
     TrexCommand::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrexCommand& other__ = dynamic_cast<const TrexCommand&>(msg__);
+      const IMC::TrexCommand& other__ = static_cast<const TrexCommand&>(msg__);
       if (command != other__.command) return false;
       if (goal_id != other__.goal_id) return false;
       if (goal_xml != other__.goal_xml) return false;
@@ -16715,7 +16826,7 @@ namespace DUNE
     bool
     TrexAttribute::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrexAttribute& other__ = dynamic_cast<const TrexAttribute&>(msg__);
+      const IMC::TrexAttribute& other__ = static_cast<const TrexAttribute&>(msg__);
       if (name != other__.name) return false;
       if (attr_type != other__.attr_type) return false;
       if (min != other__.min) return false;
@@ -16789,7 +16900,7 @@ namespace DUNE
     bool
     TrexToken::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrexToken& other__ = dynamic_cast<const TrexToken&>(msg__);
+      const IMC::TrexToken& other__ = static_cast<const TrexToken&>(msg__);
       if (timeline != other__.timeline) return false;
       if (predicate != other__.predicate) return false;
       if (attributes != other__.attributes) return false;
@@ -16888,7 +16999,7 @@ namespace DUNE
     bool
     TrexOperation::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrexOperation& other__ = dynamic_cast<const TrexOperation&>(msg__);
+      const IMC::TrexOperation& other__ = static_cast<const TrexOperation&>(msg__);
       if (op != other__.op) return false;
       if (goal_id != other__.goal_id) return false;
       if (token != other__.token) return false;
@@ -17001,7 +17112,7 @@ namespace DUNE
     bool
     TrexPlan::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TrexPlan& other__ = dynamic_cast<const TrexPlan&>(msg__);
+      const IMC::TrexPlan& other__ = static_cast<const TrexPlan&>(msg__);
       if (reactor != other__.reactor) return false;
       if (tokens != other__.tokens) return false;
       return true;
@@ -17077,193 +17188,65 @@ namespace DUNE
       tokens.setDestinationEntity(value__);
     }
 
-    VideoData::VideoData(void)
+    Event::Event(void)
     {
-      m_header.mgid = 700;
+      m_header.mgid = 660;
       clear();
     }
 
     void
-    VideoData::clear(void)
+    Event::clear(void)
     {
-      id = 0;
-      width = 0;
-      height = 0;
-      widthstep = 0;
-      channels = 0;
-      depth = 0;
-      finaldata = 0;
+      topic.clear();
       data.clear();
     }
 
     bool
-    VideoData::fieldsEqual(const Message& msg__) const
+    Event::fieldsEqual(const Message& msg__) const
     {
-      const IMC::VideoData& other__ = dynamic_cast<const VideoData&>(msg__);
-      if (id != other__.id) return false;
-      if (width != other__.width) return false;
-      if (height != other__.height) return false;
-      if (widthstep != other__.widthstep) return false;
-      if (channels != other__.channels) return false;
-      if (depth != other__.depth) return false;
-      if (finaldata != other__.finaldata) return false;
+      const IMC::Event& other__ = static_cast<const Event&>(msg__);
+      if (topic != other__.topic) return false;
       if (data != other__.data) return false;
       return true;
     }
 
     int
-    VideoData::validate(void) const
+    Event::validate(void) const
     {
       return false;
     }
 
     uint8_t*
-    VideoData::serializeFields(uint8_t* bfr__) const
+    Event::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(id, ptr__);
-      ptr__ += IMC::serialize(width, ptr__);
-      ptr__ += IMC::serialize(height, ptr__);
-      ptr__ += IMC::serialize(widthstep, ptr__);
-      ptr__ += IMC::serialize(channels, ptr__);
-      ptr__ += IMC::serialize(depth, ptr__);
-      ptr__ += IMC::serialize(finaldata, ptr__);
+      ptr__ += IMC::serialize(topic, ptr__);
       ptr__ += IMC::serialize(data, ptr__);
       return ptr__;
     }
 
     uint16_t
-    VideoData::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    Event::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(id, bfr__, size__);
-      bfr__ += IMC::deserialize(width, bfr__, size__);
-      bfr__ += IMC::deserialize(height, bfr__, size__);
-      bfr__ += IMC::deserialize(widthstep, bfr__, size__);
-      bfr__ += IMC::deserialize(channels, bfr__, size__);
-      bfr__ += IMC::deserialize(depth, bfr__, size__);
-      bfr__ += IMC::deserialize(finaldata, bfr__, size__);
+      bfr__ += IMC::deserialize(topic, bfr__, size__);
       bfr__ += IMC::deserialize(data, bfr__, size__);
       return bfr__ - start__;
     }
 
     uint16_t
-    VideoData::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    Event::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(id, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(width, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(height, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(widthstep, bfr__, size__);
-      bfr__ += IMC::deserialize(channels, bfr__, size__);
-      bfr__ += IMC::deserialize(depth, bfr__, size__);
-      bfr__ += IMC::deserialize(finaldata, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    VideoData::getSubId(void) const
-    {
-      return id;
-    }
-
-    void
-    VideoData::setSubId(uint16_t subid)
-    {
-      id = (uint8_t)subid;
-    }
-
-    void
-    VideoData::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      IMC::toJSON(os__, "id", id, nindent__);
-      IMC::toJSON(os__, "width", width, nindent__);
-      IMC::toJSON(os__, "height", height, nindent__);
-      IMC::toJSON(os__, "widthstep", widthstep, nindent__);
-      IMC::toJSON(os__, "channels", channels, nindent__);
-      IMC::toJSON(os__, "depth", depth, nindent__);
-      IMC::toJSON(os__, "finaldata", finaldata, nindent__);
-      IMC::toJSON(os__, "data", data, nindent__);
-    }
-
-    RawImage::RawImage(void)
-    {
-      m_header.mgid = 701;
-      clear();
-    }
-
-    void
-    RawImage::clear(void)
-    {
-      width = 0;
-      height = 0;
-      channels = 0;
-      depth = 0;
-      data.clear();
-    }
-
-    bool
-    RawImage::fieldsEqual(const Message& msg__) const
-    {
-      const IMC::RawImage& other__ = dynamic_cast<const RawImage&>(msg__);
-      if (width != other__.width) return false;
-      if (height != other__.height) return false;
-      if (channels != other__.channels) return false;
-      if (depth != other__.depth) return false;
-      if (data != other__.data) return false;
-      return true;
-    }
-
-    int
-    RawImage::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    RawImage::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(width, ptr__);
-      ptr__ += IMC::serialize(height, ptr__);
-      ptr__ += IMC::serialize(channels, ptr__);
-      ptr__ += IMC::serialize(depth, ptr__);
-      ptr__ += IMC::serialize(data, ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    RawImage::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(width, bfr__, size__);
-      bfr__ += IMC::deserialize(height, bfr__, size__);
-      bfr__ += IMC::deserialize(channels, bfr__, size__);
-      bfr__ += IMC::deserialize(depth, bfr__, size__);
-      bfr__ += IMC::deserialize(data, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    RawImage::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::reverseDeserialize(width, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(height, bfr__, size__);
-      bfr__ += IMC::deserialize(channels, bfr__, size__);
-      bfr__ += IMC::deserialize(depth, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(topic, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
       return bfr__ - start__;
     }
 
     void
-    RawImage::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    Event::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
-      IMC::toJSON(os__, "width", width, nindent__);
-      IMC::toJSON(os__, "height", height, nindent__);
-      IMC::toJSON(os__, "channels", channels, nindent__);
-      IMC::toJSON(os__, "depth", depth, nindent__);
+      IMC::toJSON(os__, "topic", topic, nindent__);
       IMC::toJSON(os__, "data", data, nindent__);
     }
 
@@ -17283,7 +17266,7 @@ namespace DUNE
     bool
     CompressedImage::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CompressedImage& other__ = dynamic_cast<const CompressedImage&>(msg__);
+      const IMC::CompressedImage& other__ = static_cast<const CompressedImage&>(msg__);
       if (frameid != other__.frameid) return false;
       if (data != other__.data) return false;
       return true;
@@ -17347,7 +17330,7 @@ namespace DUNE
     bool
     ImageTxSettings::fieldsEqual(const Message& msg__) const
     {
-      const IMC::ImageTxSettings& other__ = dynamic_cast<const ImageTxSettings&>(msg__);
+      const IMC::ImageTxSettings& other__ = static_cast<const ImageTxSettings&>(msg__);
       if (fps != other__.fps) return false;
       if (quality != other__.quality) return false;
       if (reps != other__.reps) return false;
@@ -17422,7 +17405,7 @@ namespace DUNE
     bool
     RemoteState::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RemoteState& other__ = dynamic_cast<const RemoteState&>(msg__);
+      const IMC::RemoteState& other__ = static_cast<const RemoteState&>(msg__);
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (depth != other__.depth) return false;
@@ -17504,7 +17487,7 @@ namespace DUNE
     bool
     Target::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Target& other__ = dynamic_cast<const Target&>(msg__);
+      const IMC::Target& other__ = static_cast<const Target&>(msg__);
       if (label != other__.label) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
@@ -17591,7 +17574,7 @@ namespace DUNE
     bool
     EntityParameter::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EntityParameter& other__ = dynamic_cast<const EntityParameter&>(msg__);
+      const IMC::EntityParameter& other__ = static_cast<const EntityParameter&>(msg__);
       if (name != other__.name) return false;
       if (value != other__.value) return false;
       return true;
@@ -17654,7 +17637,7 @@ namespace DUNE
     bool
     EntityParameters::fieldsEqual(const Message& msg__) const
     {
-      const IMC::EntityParameters& other__ = dynamic_cast<const EntityParameters&>(msg__);
+      const IMC::EntityParameters& other__ = static_cast<const EntityParameters&>(msg__);
       if (name != other__.name) return false;
       if (params != other__.params) return false;
       return true;
@@ -17747,7 +17730,7 @@ namespace DUNE
     bool
     QueryEntityParameters::fieldsEqual(const Message& msg__) const
     {
-      const IMC::QueryEntityParameters& other__ = dynamic_cast<const QueryEntityParameters&>(msg__);
+      const IMC::QueryEntityParameters& other__ = static_cast<const QueryEntityParameters&>(msg__);
       if (name != other__.name) return false;
       if (visibility != other__.visibility) return false;
       if (scope != other__.scope) return false;
@@ -17815,7 +17798,7 @@ namespace DUNE
     bool
     SetEntityParameters::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SetEntityParameters& other__ = dynamic_cast<const SetEntityParameters&>(msg__);
+      const IMC::SetEntityParameters& other__ = static_cast<const SetEntityParameters&>(msg__);
       if (name != other__.name) return false;
       if (params != other__.params) return false;
       return true;
@@ -17906,7 +17889,7 @@ namespace DUNE
     bool
     SaveEntityParameters::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SaveEntityParameters& other__ = dynamic_cast<const SaveEntityParameters&>(msg__);
+      const IMC::SaveEntityParameters& other__ = static_cast<const SaveEntityParameters&>(msg__);
       if (name != other__.name) return false;
       return true;
     }
@@ -17962,7 +17945,7 @@ namespace DUNE
     bool
     CreateSession::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CreateSession& other__ = dynamic_cast<const CreateSession&>(msg__);
+      const IMC::CreateSession& other__ = static_cast<const CreateSession&>(msg__);
       if (timeout != other__.timeout) return false;
       return true;
     }
@@ -18018,7 +18001,7 @@ namespace DUNE
     bool
     CloseSession::fieldsEqual(const Message& msg__) const
     {
-      const IMC::CloseSession& other__ = dynamic_cast<const CloseSession&>(msg__);
+      const IMC::CloseSession& other__ = static_cast<const CloseSession&>(msg__);
       if (sessid != other__.sessid) return false;
       return true;
     }
@@ -18075,7 +18058,7 @@ namespace DUNE
     bool
     SessionSubscription::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SessionSubscription& other__ = dynamic_cast<const SessionSubscription&>(msg__);
+      const IMC::SessionSubscription& other__ = static_cast<const SessionSubscription&>(msg__);
       if (sessid != other__.sessid) return false;
       if (messages != other__.messages) return false;
       return true;
@@ -18136,7 +18119,7 @@ namespace DUNE
     bool
     SessionKeepAlive::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SessionKeepAlive& other__ = dynamic_cast<const SessionKeepAlive&>(msg__);
+      const IMC::SessionKeepAlive& other__ = static_cast<const SessionKeepAlive&>(msg__);
       if (sessid != other__.sessid) return false;
       return true;
     }
@@ -18193,7 +18176,7 @@ namespace DUNE
     bool
     SessionStatus::fieldsEqual(const Message& msg__) const
     {
-      const IMC::SessionStatus& other__ = dynamic_cast<const SessionStatus&>(msg__);
+      const IMC::SessionStatus& other__ = static_cast<const SessionStatus&>(msg__);
       if (sessid != other__.sessid) return false;
       if (status != other__.status) return false;
       return true;
@@ -18254,7 +18237,7 @@ namespace DUNE
     bool
     PushEntityParameters::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PushEntityParameters& other__ = dynamic_cast<const PushEntityParameters&>(msg__);
+      const IMC::PushEntityParameters& other__ = static_cast<const PushEntityParameters&>(msg__);
       if (name != other__.name) return false;
       return true;
     }
@@ -18310,7 +18293,7 @@ namespace DUNE
     bool
     PopEntityParameters::fieldsEqual(const Message& msg__) const
     {
-      const IMC::PopEntityParameters& other__ = dynamic_cast<const PopEntityParameters&>(msg__);
+      const IMC::PopEntityParameters& other__ = static_cast<const PopEntityParameters&>(msg__);
       if (name != other__.name) return false;
       return true;
     }
@@ -18367,7 +18350,7 @@ namespace DUNE
     bool
     IoEvent::fieldsEqual(const Message& msg__) const
     {
-      const IMC::IoEvent& other__ = dynamic_cast<const IoEvent&>(msg__);
+      const IMC::IoEvent& other__ = static_cast<const IoEvent&>(msg__);
       if (type != other__.type) return false;
       if (error != other__.error) return false;
       return true;
@@ -18431,7 +18414,7 @@ namespace DUNE
     bool
     UamTxFrame::fieldsEqual(const Message& msg__) const
     {
-      const IMC::UamTxFrame& other__ = dynamic_cast<const UamTxFrame&>(msg__);
+      const IMC::UamTxFrame& other__ = static_cast<const UamTxFrame&>(msg__);
       if (seq != other__.seq) return false;
       if (sys_dst != other__.sys_dst) return false;
       if (flags != other__.flags) return false;
@@ -18505,7 +18488,7 @@ namespace DUNE
     bool
     UamRxFrame::fieldsEqual(const Message& msg__) const
     {
-      const IMC::UamRxFrame& other__ = dynamic_cast<const UamRxFrame&>(msg__);
+      const IMC::UamRxFrame& other__ = static_cast<const UamRxFrame&>(msg__);
       if (sys_src != other__.sys_src) return false;
       if (sys_dst != other__.sys_dst) return false;
       if (flags != other__.flags) return false;
@@ -18578,7 +18561,7 @@ namespace DUNE
     bool
     UamTxStatus::fieldsEqual(const Message& msg__) const
     {
-      const IMC::UamTxStatus& other__ = dynamic_cast<const UamTxStatus&>(msg__);
+      const IMC::UamTxStatus& other__ = static_cast<const UamTxStatus&>(msg__);
       if (seq != other__.seq) return false;
       if (value != other__.value) return false;
       if (error != other__.error) return false;
@@ -18658,7 +18641,7 @@ namespace DUNE
     bool
     UamRxRange::fieldsEqual(const Message& msg__) const
     {
-      const IMC::UamRxRange& other__ = dynamic_cast<const UamRxRange&>(msg__);
+      const IMC::UamRxRange& other__ = static_cast<const UamRxRange&>(msg__);
       if (seq != other__.seq) return false;
       if (sys != other__.sys) return false;
       if (value != other__.value) return false;
@@ -18721,45 +18704,6 @@ namespace DUNE
       IMC::toJSON(os__, "value", value, nindent__);
     }
 
-    AbortAcked::AbortAcked(void)
-    {
-      m_header.mgid = 818;
-      clear();
-    }
-
-    void
-    AbortAcked::clear(void)
-    {
-    }
-
-    int
-    AbortAcked::validate(void) const
-    {
-      return false;
-    }
-
-    uint8_t*
-    AbortAcked::serializeFields(uint8_t* bfr__) const
-    {
-      return bfr__;
-    }
-
-    uint16_t
-    AbortAcked::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
-    uint16_t
-    AbortAcked::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      (void)bfr__;
-      (void)size__;
-      return 0;
-    }
-
     FormCtrlParam::FormCtrlParam(void)
     {
       m_header.mgid = 820;
@@ -18780,7 +18724,7 @@ namespace DUNE
     bool
     FormCtrlParam::fieldsEqual(const Message& msg__) const
     {
-      const IMC::FormCtrlParam& other__ = dynamic_cast<const FormCtrlParam&>(msg__);
+      const IMC::FormCtrlParam& other__ = static_cast<const FormCtrlParam&>(msg__);
       if (action != other__.action) return false;
       if (longain != other__.longain) return false;
       if (latgain != other__.latgain) return false;
@@ -18846,6 +18790,74 @@ namespace DUNE
       IMC::toJSON(os__, "deconflgain", deconflgain, nindent__);
     }
 
+    FormationEval::FormationEval(void)
+    {
+      m_header.mgid = 821;
+      clear();
+    }
+
+    void
+    FormationEval::clear(void)
+    {
+      err_mean = 0;
+      dist_min_abs = 0;
+      dist_min_mean = 0;
+    }
+
+    bool
+    FormationEval::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FormationEval& other__ = static_cast<const FormationEval&>(msg__);
+      if (err_mean != other__.err_mean) return false;
+      if (dist_min_abs != other__.dist_min_abs) return false;
+      if (dist_min_mean != other__.dist_min_mean) return false;
+      return true;
+    }
+
+    int
+    FormationEval::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    FormationEval::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(err_mean, ptr__);
+      ptr__ += IMC::serialize(dist_min_abs, ptr__);
+      ptr__ += IMC::serialize(dist_min_mean, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FormationEval::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(err_mean, bfr__, size__);
+      bfr__ += IMC::deserialize(dist_min_abs, bfr__, size__);
+      bfr__ += IMC::deserialize(dist_min_mean, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FormationEval::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(err_mean, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(dist_min_abs, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(dist_min_mean, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FormationEval::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "err_mean", err_mean, nindent__);
+      IMC::toJSON(os__, "dist_min_abs", dist_min_abs, nindent__);
+      IMC::toJSON(os__, "dist_min_mean", dist_min_mean, nindent__);
+    }
+
     MessagePart::MessagePart(void)
     {
       m_header.mgid = 877;
@@ -18864,7 +18876,7 @@ namespace DUNE
     bool
     MessagePart::fieldsEqual(const Message& msg__) const
     {
-      const IMC::MessagePart& other__ = dynamic_cast<const MessagePart&>(msg__);
+      const IMC::MessagePart& other__ = static_cast<const MessagePart&>(msg__);
       if (uid != other__.uid) return false;
       if (frag_number != other__.frag_number) return false;
       if (num_frags != other__.num_frags) return false;
@@ -18936,7 +18948,7 @@ namespace DUNE
     bool
     NeptusBlob::fieldsEqual(const Message& msg__) const
     {
-      const IMC::NeptusBlob& other__ = dynamic_cast<const NeptusBlob&>(msg__);
+      const IMC::NeptusBlob& other__ = static_cast<const NeptusBlob&>(msg__);
       if (content_type != other__.content_type) return false;
       if (content != other__.content) return false;
       return true;
@@ -18980,6 +18992,267 @@ namespace DUNE
     {
       IMC::toJSON(os__, "content_type", content_type, nindent__);
       IMC::toJSON(os__, "content", content, nindent__);
+    }
+
+    Aborted::Aborted(void)
+    {
+      m_header.mgid = 889;
+      clear();
+    }
+
+    void
+    Aborted::clear(void)
+    {
+    }
+
+    int
+    Aborted::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    Aborted::serializeFields(uint8_t* bfr__) const
+    {
+      return bfr__;
+    }
+
+    uint16_t
+    Aborted::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      (void)bfr__;
+      (void)size__;
+      return 0;
+    }
+
+    uint16_t
+    Aborted::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      (void)bfr__;
+      (void)size__;
+      return 0;
+    }
+
+    UsblAngles::UsblAngles(void)
+    {
+      m_header.mgid = 890;
+      clear();
+    }
+
+    void
+    UsblAngles::clear(void)
+    {
+      target = 0;
+      bearing = 0;
+      elevation = 0;
+    }
+
+    bool
+    UsblAngles::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::UsblAngles& other__ = static_cast<const UsblAngles&>(msg__);
+      if (target != other__.target) return false;
+      if (bearing != other__.bearing) return false;
+      if (elevation != other__.elevation) return false;
+      return true;
+    }
+
+    int
+    UsblAngles::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    UsblAngles::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(target, ptr__);
+      ptr__ += IMC::serialize(bearing, ptr__);
+      ptr__ += IMC::serialize(elevation, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    UsblAngles::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(target, bfr__, size__);
+      bfr__ += IMC::deserialize(bearing, bfr__, size__);
+      bfr__ += IMC::deserialize(elevation, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    UsblAngles::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(target, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(bearing, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(elevation, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    UsblAngles::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "target", target, nindent__);
+      IMC::toJSON(os__, "bearing", bearing, nindent__);
+      IMC::toJSON(os__, "elevation", elevation, nindent__);
+    }
+
+    UsblPosition::UsblPosition(void)
+    {
+      m_header.mgid = 891;
+      clear();
+    }
+
+    void
+    UsblPosition::clear(void)
+    {
+      target = 0;
+      x = 0;
+      y = 0;
+      z = 0;
+    }
+
+    bool
+    UsblPosition::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::UsblPosition& other__ = static_cast<const UsblPosition&>(msg__);
+      if (target != other__.target) return false;
+      if (x != other__.x) return false;
+      if (y != other__.y) return false;
+      if (z != other__.z) return false;
+      return true;
+    }
+
+    int
+    UsblPosition::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    UsblPosition::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(target, ptr__);
+      ptr__ += IMC::serialize(x, ptr__);
+      ptr__ += IMC::serialize(y, ptr__);
+      ptr__ += IMC::serialize(z, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    UsblPosition::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(target, bfr__, size__);
+      bfr__ += IMC::deserialize(x, bfr__, size__);
+      bfr__ += IMC::deserialize(y, bfr__, size__);
+      bfr__ += IMC::deserialize(z, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    UsblPosition::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(target, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(x, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(y, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(z, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    UsblPosition::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "target", target, nindent__);
+      IMC::toJSON(os__, "x", x, nindent__);
+      IMC::toJSON(os__, "y", y, nindent__);
+      IMC::toJSON(os__, "z", z, nindent__);
+    }
+
+    UsblFix::UsblFix(void)
+    {
+      m_header.mgid = 892;
+      clear();
+    }
+
+    void
+    UsblFix::clear(void)
+    {
+      target = 0;
+      lat = 0;
+      lon = 0;
+      z_units = 0;
+      z = 0;
+    }
+
+    bool
+    UsblFix::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::UsblFix& other__ = static_cast<const UsblFix&>(msg__);
+      if (target != other__.target) return false;
+      if (lat != other__.lat) return false;
+      if (lon != other__.lon) return false;
+      if (z_units != other__.z_units) return false;
+      if (z != other__.z) return false;
+      return true;
+    }
+
+    int
+    UsblFix::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    UsblFix::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(target, ptr__);
+      ptr__ += IMC::serialize(lat, ptr__);
+      ptr__ += IMC::serialize(lon, ptr__);
+      ptr__ += IMC::serialize(z_units, ptr__);
+      ptr__ += IMC::serialize(z, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    UsblFix::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(target, bfr__, size__);
+      bfr__ += IMC::deserialize(lat, bfr__, size__);
+      bfr__ += IMC::deserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      bfr__ += IMC::deserialize(z, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    UsblFix::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(target, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(z, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    UsblFix::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "target", target, nindent__);
+      IMC::toJSON(os__, "lat", lat, nindent__);
+      IMC::toJSON(os__, "lon", lon, nindent__);
+      IMC::toJSON(os__, "z_units", z_units, nindent__);
+      IMC::toJSON(os__, "z", z, nindent__);
     }
   }
 }

@@ -162,8 +162,13 @@ namespace DUNE
       cmd.append(str);
       m_last_cmd = cmd;
       cmd.append(getLineTermOut());
-      getTask()->spew("send: %s", DUNE::Streams::sanitize(cmd).c_str());
-      sendRaw((const uint8_t*)cmd.c_str(), cmd.size());
+
+      IMC::DevDataText txt;
+      txt.value = cmd;
+      txt.setDestination(getTask()->getSystemId());
+      getTask()->dispatch(txt);
+
+      send(cmd);
     }
 
     void

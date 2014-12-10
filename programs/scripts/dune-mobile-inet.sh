@@ -96,9 +96,19 @@ modem_probe()
     fi
 }
 
-ppp_get_ip()
+# Update DynDNS IPv4 address.
+# @param[in] ip IPv4 address.
+dyndns_update()
 {
-    ifconfig "$FWL_EXT_ITF" 2> /dev/null | grep inet | cut -f2 -d: | cut -f1 -d' '
+    echo $DYNDNS_USER $DYNDNS_PASS $DYNDNS_HOST
+
+    if [ -z "$DYNDNS_USER" ] || [ -z "$DYNDNS_PASS" ] || [ -z "$DYNDNS_HOST" ]; then
+        return 0
+    fi
+
+    ip="$1"
+    url="http://$DYNDNS_USER:$DYNDNS_PASS@members.dyndns.org/nic/update?hostname=$DYNDNS_HOST&myip=$ip&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG"
+    wget "$url" -O -
 }
 
 ppp_start()
@@ -137,55 +147,23 @@ ppp_start()
         hide-password \
         persist \
         holdoff 10 \
-        maxfail 1 \
-        updetach \
+        maxfail 0 \
         connect "/usr/sbin/chat -E -v -t15 $CHAT_SCRIPT" > /var/run/ppp.log 2>&1
 
     if [ $? -ne 0 ]; then
         log err "ppp: failed to establish a connection"
         exit 1
     fi
-
-    log info "ppp: connected"
 }
 
 ppp_stop()
 {
     log info "ppp: stopping"
-
-    pid="$(cat "/var/run/$FWL_EXT_ITF.pid" 2> /dev/null)"
-
-    if [ -n "$pid" ]; then
-        for n in 1 2 3 4 5; do
-            if ! [ -d "/proc/$pid" ]; then
-                log info "ppp: daemon stopped"
-                return 0
-            fi
-
-            kill "$pid" > /dev/null 2>&1
-            sleep 2
-        done
-
-        kill -9 "$pid" > /dev/null 2>&1
-    fi
-
+    killall -9 chat > /dev/null 2>&1
+    killall -9 pppd > /dev/null 2>&1
+    sleep 1
     log info "ppp: stopped"
     return 0
-}
-
-ppp_watch()
-{
-    log info "ppp: external IP is $(ppp_get_ip)"
-
-    while [ 1 ]; do
-        ip="$(ppp_get_ip)"
-        if [ -z "$ip" ]; then
-            log err "ppp: connection lost"
-            return 1
-        fi
-
-        sleep 1
-    done
 }
 
 nat_start()
@@ -233,18 +211,16 @@ nat_stop()
 
 start()
 {
-    ppp_start && nat_start
+    ppp_start
     if [ $? -ne 0 ]; then
         log err "failed to establish a connection"
         exit 1
     fi
-
-    ppp_watch
 }
 
 stop()
 {
-    nat_stop && ppp_stop
+    ppp_stop
     if [ $? -eq 0 ]; then
         log info "stopped"
     else
@@ -254,12 +230,16 @@ stop()
 
 case "$1" in
     start)
-        stop
-        sleep 2
         start
         ;;
     stop)
         stop
+        ;;
+    nat_start)
+        nat_start
+        ;;
+    nat_stop)
+        nat_stop
         ;;
     *)
         echo "Usage: $0 <start|stop>"

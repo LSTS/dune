@@ -25,6 +25,9 @@
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
+# This script will convert the IMC.xml definition to a stripped and        #
+# compressed C++ array.                                                    #
+############################################################################
 
 import sys
 import os.path
@@ -33,12 +36,32 @@ from imc.utils import *
 from imc.file import *
 from imc.code import *
 
-xml = sys.argv[1]
-folder = sys.argv[2]
+HPP = 'Blob.hpp'
+CXX = 'Blob.cpp'
+
+# Parse command line arguments.
+import argparse
+parser = argparse.ArgumentParser(
+    description="Strip, compress and generate IMC.xml blob.")
+parser.add_argument('dest_folder', metavar='DEST_FOLDER',
+                    help="destination folder")
+parser.add_argument('-x', '--xml', metavar='IMC_XML',
+                    help="IMC XML file")
+parser.add_argument('-f', '--force', action='store_true', required=False,
+                    help="Force creation of blob file")
+args = parser.parse_args()
+
+xml_md5 = compute_md5(args.xml);
+dest_folder = args.dest_folder
+
+if not args.force:
+    if file_md5_matches(os.path.join(dest_folder, CXX), xml_md5):
+        print('* ' + os.path.join(dest_folder, CXX) + ' [Skipped]')
+        sys.exit(0)
 
 # Parse XML specification.
 import xml.etree.ElementTree as ET
-tree = ET.parse(xml)
+tree = ET.parse(args.xml)
 
 # Remove 'description' tags.
 for parent in tree.getiterator():
@@ -54,7 +77,7 @@ text = b'<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(root, encoding 
 import tempfile
 tmp = tempfile.NamedTemporaryFile(delete = False)
 import gzip
-f_out = gzip.open(tmp.name, 'wb', compresslevel = 9)
+f_out = gzip.GzipFile(tmp.name, 'wb', compresslevel = 9, mtime = 0)
 f_out.write(text)
 f_out.close()
 
@@ -62,8 +85,8 @@ f_out.close()
 # Blob.cpp                                                                     #
 ################################################################################
 
-fd = File('Blob.cpp', folder)
-fd.add_dune_headers('IMC/Blob.hpp')
+fd = File(CXX, dest_folder, md5 = xml_md5)
+fd.add_dune_headers('IMC/' + HPP)
 
 # Byte array.
 fd.append('static const unsigned char c_imc_blob[] = \n{')

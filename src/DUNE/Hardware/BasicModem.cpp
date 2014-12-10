@@ -180,7 +180,7 @@ namespace DUNE
     void
     BasicModem::send(const std::string& str)
     {
-      getTask()->inf(DTR("send: %s"), Streams::sanitize(str).c_str());
+      getTask()->trace("send: %s", Streams::sanitize(str).c_str());
       sendRaw((uint8_t*)str.c_str(), str.size());
     }
 
@@ -261,7 +261,7 @@ namespace DUNE
 
       if (isFragment(m_line))
       {
-        getTask()->inf(DTR("fragment: %s"), Streams::sanitize(m_line).c_str());
+        getTask()->debug(DTR("fragment: %s"), Streams::sanitize(m_line).c_str());
         return false;
       }
 
@@ -286,7 +286,12 @@ namespace DUNE
       if (str.empty())
         return true;
 
-      m_task->spew("recv: %s", Streams::sanitize(str).c_str());
+      IMC::DevDataText txt;
+      txt.value = str;
+      txt.setDestination(getTask()->getSystemId());
+      getTask()->dispatch(txt);
+
+      m_task->trace("recv: %s", Streams::sanitize(str).c_str());
       m_line.clear();
 
       if (!m_skip_line.empty())

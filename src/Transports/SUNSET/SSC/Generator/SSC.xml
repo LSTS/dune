@@ -1,0 +1,1180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ssc revision="0">
+  <doc>
+    This document defines and describes a command-oriented protocol for
+    interaction with the SUNSET framework. The syntax defined herein is
+    applicable to resource constrained computational systems such as the
+    ones used in autonomous vehicles. However, the semantics of the
+    commands can be used with other data formats, such as XML.
+  </doc>
+
+  <types>
+    <doc>
+      Commands are sequences of arguments and each argument has an
+      associated type. The following subsections describe all the
+      valid types.
+    </doc>
+
+    <type name="Integer">
+      <doc>
+        A signed integer number.
+      </doc>
+    </type>
+
+    <type name="Unsigned">
+      <doc>
+        An unsigned (i.e., positive) integer number.
+      </doc>
+    </type>
+
+    <type name="Real">
+      <doc>
+        A real number.
+      </doc>
+    </type>
+
+    <type name="String">
+      <doc>
+        A sequence of characters with arbitrary length.
+      </doc>
+    </type>
+
+    <type name="ParamName">
+      <doc>
+        Name of a SUNSET internal parameter.
+      </doc>
+
+      <values>
+        <value name="NODE_ID">
+          <doc>
+            Network identifier of the local node.
+          </doc>
+        </value>
+        <value name="BROADCAST_ID">
+          <doc>
+            Network identifier of the broadcast address.
+          </doc>
+        </value>
+        <value name="TX_POWER">
+          <doc>
+            Transmission power level of the acoustic modem.
+          </doc>
+        </value>
+      </values>
+    </type>
+
+    <type name="ErrorType" prefix="ERR">
+      <doc>
+      </doc>
+      <values>
+        <value name="INVALID_CRC">
+          <doc>
+            The CRC of the command is not present or is invalid.
+          </doc>
+        </value>
+
+        <value name="INVALID_FORMAT">
+          <doc>
+            The command has an invalid format.
+          </doc>
+        </value>
+
+        <value name="INVALID_VERSION">
+          <doc>
+            The command has a version that it not supported.
+          </doc>
+        </value>
+
+        <value name="INVALID_REQUEST">
+          <doc>
+            The command contained an invalid request.
+          </doc>
+        </value>
+
+        <value name="INVALID_VALUE">
+          <doc>
+            The command contained an invalid value.
+          </doc>
+        </value>
+
+        <value name="BUSY">
+          <doc>
+            The command cannot be fulfilled at the present time.
+          </doc>
+        </value>
+      </values>
+    </type>
+
+    <type name="FailureType" prefix="FAIL">
+      <doc>
+      </doc>
+      <values>
+        <value name="INVALID_VERSION">
+          <doc>
+            The command has a version that it not supported by the
+            remote node.
+          </doc>
+        </value>
+
+        <value name="INVALID_REQUEST">
+          <doc>
+            The command contained a request that was considered
+            invalid by the remote node.
+          </doc>
+        </value>
+
+        <value name="EXPIRED">
+          <doc>
+            The command's time-to-live was reached.
+          </doc>
+        </value>
+
+        <value name="INTERNAL_ERROR">
+          <doc>
+            The system cannot execute the command for some
+            internal problem.
+          </doc>
+        </value>
+
+        <value name="BUSY">
+          <doc>
+            Remote node is busy.
+          </doc>
+        </value>
+      </values>
+    </type>
+
+    <type name="TxErrorType" prefix="TX_ERR">
+      <doc>
+      </doc>
+      <values>
+        <value name="SUCCESS">
+          <doc>
+            No error has occurred.
+          </doc>
+        </value>
+
+        <value name="TX_RETRY_LIMIT">
+          <doc>
+            Maximum number of transmission retries was reached.
+          </doc>
+        </value>
+      </values>
+    </type>
+
+    <type name="TxStatusType" prefix="TX_STA">
+      <doc>
+      </doc>
+      <values>
+        <value name="RECEIVED">
+          <doc>
+            The transmission request was received and is being
+            processed.
+          </doc>
+        </value>
+        <value name="ERROR">
+          <doc>
+            An error has occurred while processing the
+            transmission. See field Error Code for more
+            information.
+          </doc>
+        </value>
+        <value name="QUEUED">
+          <doc>
+            The transmission request has been queued and is
+            waiting to be transmitted.
+          </doc>
+        </value>
+        <value name="TX_START">
+          <doc>
+            Transmission of the request has started. In cases
+            where the request is broken down into several modem
+            frames several PacketTxStatus messages with this
+            Status Code shall be sent, one for each frame.
+          </doc>
+        </value>
+        <value name="TX_END">
+          <doc>
+            Transmission of the request has ended. The remarks
+            of START_TX also apply to this status code.
+          </doc>
+        </value>
+        <value name="TRANSMITTED">
+          <doc>
+            Packet was successfully transmitted in its entirety.
+          </doc>
+        </value>
+        <value name="DELIVERED">
+          <doc>
+            Packet was received in its entirety by the
+            destination nodes.
+          </doc>
+        </value>
+        <value name="EXPIRED">
+          <doc>
+            The time-to-live of the transmission request was
+            reached, and the packet was not transmitted or
+            delivered in its entirety.
+          </doc>
+        </value>
+        <value name="CANCELED">
+          <doc>
+            The packet transmission request was canceled.
+          </doc>
+        </value>
+      </values>
+    </type>
+
+    <type name="PositionType">
+      <doc>
+        Type describing the position of a system in the world.
+      </doc>
+
+      <args>
+        <arg name="Latitude" type="Real">
+          <doc>
+            WGS-84 latitude in decimal degrees.
+          </doc>
+        </arg>
+
+        <arg name="Longitude" type="Real">
+          <doc>
+            WGS-84 longitude in decimal degrees.
+          </doc>
+        </arg>
+
+        <arg name="Depth" type="Real">
+          <doc>
+            Depth in meters. Negative values denote invalid or unknown
+            depths.
+          </doc>
+        </arg>
+
+        <arg name="Altitude" type="Real">
+          <doc>
+            Altitude in meters. Negative values denote invalid or
+            unknown altitudes.
+          </doc>
+        </arg>
+      </args>
+    </type>
+
+    <type name="ZUnits">
+      <doc>
+        Z value units.
+      </doc>
+
+      <values>
+        <value name="DEPTH">
+          <doc>
+            Z value represents depth.
+          </doc>
+        </value>
+        <value name="ALTITUDE">
+          <doc>
+            Z value represents altitude.
+          </doc>
+        </value>
+      </values>
+    </type>
+
+    <type name="ZReference">
+      <doc>
+        Z reference.
+      </doc>
+      <args>
+        <arg name="Z Units" type="ZUnits">
+          <doc>Z Units</doc>
+        </arg>
+        <arg name="Z Reference" type="Real">
+          <doc>Z Reference</doc>
+        </arg>
+      </args>
+    </type>
+
+    <type name="SpeedUnits">
+      <doc>
+        Speed units.
+      </doc>
+      <values>
+        <value name="METER_PS">
+          <doc>
+            Speed is in m/s.
+          </doc>
+        </value>
+        <value name="RPM">
+          <doc>
+            Speed is in Rotations per Minute.
+          </doc>
+        </value>
+        <value name="PERCENTAGE">
+          <doc>
+            Speed is in percentage.
+          </doc>
+        </value>
+      </values>
+    </type>
+
+    <type name="SpeedReference">
+      <doc>
+        Speed reference.
+      </doc>
+
+      <args>
+        <arg name="Speed Units" type="SpeedUnits">
+          <doc>Speed Units</doc>
+        </arg>
+        <arg name="Speed Reference" type="Real">
+          <doc>Speed Reference</doc>
+        </arg>
+      </args>
+    </type>
+
+    <type name="SensorInfoTuple">
+      <doc>
+        Sensor info tuple.
+      </doc>
+
+      <args>
+        <arg name="Sensor Id" type="Integer">
+          <doc>Sensor Id</doc>
+        </arg>
+        <arg name="Sensor Vendor" type="String">
+          <doc>Speed Reference</doc>
+        </arg>
+        <arg name="Sensor Model" type="String">
+          <doc>Speed Reference</doc>
+        </arg>
+      </args>
+    </type>
+
+    <type name="Maneuver">
+      <doc>
+      </doc>
+      <type name="Goto">
+        <doc>
+          A "Goto" is a maneuver specifying a movement of the
+          vehicle to a target waypoint. The waypoint is described by
+          the WGS-84 waypoint coordinate and target Z reference.
+        </doc>
+
+        <args>
+          <arg name="Latitude" type="Real">
+            <doc>
+              WGS-84 Latitude of target waypoint in decimal degrees.
+            </doc>
+          </arg>
+
+          <arg name="Longitude" type="Real">
+            <doc>
+              WGS-84 Longitude of target waypoint in decimal degrees.
+            </doc>
+          </arg>
+
+          <arg name="Timeout" type="Integer" unit="s">
+            <min>0</min>
+            <max>65535</max>
+            <doc>
+              The amount of time the maneuver is allowed to run in
+              seconds.
+            </doc>
+          </arg>
+
+          <arg name="Z Reference" type="ZReference">
+            <doc>
+              Desired Z.
+            </doc>
+          </arg>
+
+          <arg name="Speed Reference" type="SpeedReference">
+            <doc>
+              Desired Z.
+            </doc>
+          </arg>
+        </args>
+      </type>
+
+      <type name="StationKeeping">
+        <doc>
+          The Station Keeping maneuver makes the vehicle come to the
+          surface and then enter a given circular perimeter around a
+          waypoint coordinate for a certain amount of time.
+        </doc>
+        <args>
+          <arg name="Latitude" type="Real">
+            <doc>
+              WGS-84 Latitude of target waypoint in decimal degrees.
+            </doc>
+          </arg>
+
+          <arg name="Longitude" type="Real">
+            <doc>
+              WGS-84 Longitude of target waypoint in decimal degrees.
+            </doc>
+          </arg>
+
+          <arg name="Z Reference" type="ZReference">
+            <doc>
+              Desired Z.
+            </doc>
+          </arg>
+
+          <arg name="Speed Reference" type="SpeedReference">
+            <doc>
+              Desired Z.
+            </doc>
+          </arg>
+
+          <arg name="Radius" type="Real" unit="m">
+            <doc>
+              Radius of the maneuver.
+            </doc>
+          </arg>
+
+          <arg name="Duration" type="Integer" unit="s">
+            <doc>
+              Maneuver duration. For unlimited duration use 0.
+            </doc>
+          </arg>
+        </args>
+      </type>
+    </type>
+  </types>
+
+  <header>
+    <doc>
+      Header format.
+    </doc>
+
+    <args>
+      <arg name="Prefix" type="String" value="SSC">
+        <doc>
+          Synchronization field of all SUNSET commands.
+        </doc>
+      </arg>
+
+      <arg name="Version" type="Integer">
+        <doc>
+          This field conveys the version of the command.
+        </doc>
+      </arg>
+
+      <arg name="Flags" type="Unsigned" format="Hexadecimal" size="2">
+        <doc>
+        </doc>
+
+        <bits>
+          <bit name="RELIABLE" number="1">
+            <doc>
+              Reliable command transmission.
+            </doc>
+          </bit>
+        </bits>
+      </arg>
+
+      <arg name="Time-to-live" type="Integer" unit="Second">
+        <min>0</min>
+
+        <doc>
+          The number of seconds, after which the command will expire
+          if not successfuly acted upon.
+        </doc>
+      </arg>
+
+      <arg name="Priority" type="Integer">
+        <min>0</min>
+
+        <doc>
+          The priority of the command. The higher the number the
+          higher the priority.
+        </doc>
+      </arg>
+
+      <arg name="Source" type="Integer">
+        <doc>
+          Source node identifier.
+        </doc>
+      </arg>
+
+      <arg name="Destinations" type="List" of="Integer">
+        <doc>
+          List of identifiers of destination nodes.
+        </doc>
+      </arg>
+
+      <arg name="Command Name" type="String" >
+        <doc>
+          Name of the command.
+        </doc>
+      </arg>
+
+    </args>
+  </header>
+
+  <footer>
+    <doc>
+      Footer.
+    </doc>
+
+    <args>
+      <arg name="CRC16" type="Integer" format="Hexadecimal" size="2">
+        <doc>
+          CRC-16-IBM of all preceding octects. The polynomial used is
+          x^16 + x^15 + x^2 + 1 (0x8005)
+        </doc>
+      </arg>
+
+      <arg name="Terminator" type="String" value="\n">
+        <doc>
+          Command terminator.
+        </doc>
+      </arg>
+    </args>
+  </footer>
+
+  <group name="General Commands">
+    <doc>
+      General Commands.
+    </doc>
+
+    <command name="CommandOk" version="0">
+      <doc>
+        This command shall be sent immediately in response to a
+        command that was received, decoded and correctly interpreted.
+      </doc>
+      <args>
+        <arg name="Name" type="String">
+          <doc>
+            Name of the received command.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="CommandError">
+      <doc>
+        This command shall be sent immediately in response to a
+        command that could not be interpreted or fulfilled.
+      </doc>
+      <args>
+        <arg name="Error Reason" type="ErrorType">
+          <doc>
+            This field conveys the reason for the error.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="CommandFailure">
+      <doc>
+        This command shall be sent asynchronously when a command that
+        was previously accepted fails permanently in an unrecoverable
+        way.
+      </doc>
+
+      <args>
+        <arg name="Failure Reason" type="FailureType">
+          <doc>
+            This field conveys the reason for the failure.
+          </doc>
+        </arg>
+        <arg name="Sequence Number" type="Integer">
+          <doc>
+            A non-negative number conveying the unique sequence number
+            of the request. The number -1 means no sequence number was
+            issued for this particular command (e.g., local
+            request). The sequence number will wrap around at an
+            unspecified number. However, SUNSET shall guarantee that
+            all requests currently being processed will have unique
+            sequence numbers.
+          </doc>
+        </arg>
+      </args>
+    </command>
+  </group>
+
+  <group name="Low-level Commands">
+    <doc>
+      Low-level commands.
+    </doc>
+
+    <command name="PacketTx">
+      <doc>
+        This command requests transmission of a packet with
+        user-defined data. Upon reception SUNSET shall reply with a
+        PacketTxStatus with a RECEIVED Status Code.
+      </doc>
+      <args>
+        <arg name="Data Length" type="Integer">
+          <doc>
+            Number of characters of the Data field.
+          </doc>
+        </arg>
+        <arg name="Data" type="String" format="Hexadecimal">
+          <doc>
+            Hexadecimal coded data octets. Two upper case characters
+            per octet (00-FF).
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="PacketTxStatus">
+      <doc>
+        This command conveys the status of a transmission
+        request. It shall be sent in reply to a PacketTx command
+        or asynchronously in the case of unsolicited SUNRISE
+        internal transmissions.
+      </doc>
+
+      <args>
+        <arg name="Sequence Number" type="Integer">
+          <doc>
+            A non-negative number conveying the unique sequence number
+            of the request. The number -1 means no sequence number was
+            issued for this particular command (e.g., local
+            request). The sequence number will wrap around at an
+            unspecified number. However, SUNSET shall guarantee that
+            all requests currently being processed will have unique
+            sequence numbers.
+          </doc>
+        </arg>
+
+        <arg name="Status" type="TxStatusType">
+          <doc>
+            Status of the transmission request.
+          </doc>
+        </arg>
+
+        <arg name="Error" type="TxErrorType">
+          <doc>
+            Error type.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="PacketRx">
+      <doc>
+        Notification of packet reception.
+      </doc>
+
+      <args>
+        <arg name="Data Length" type="Integer">
+          <doc>
+            Number of characters of the Data field.
+          </doc>
+        </arg>
+
+        <arg name="Data" type="String" format="Hexadecimal">
+          <doc>
+            Hexadecimal coded data octets. Two upper case characters
+            per octet (00-FF).
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="Param">
+      <doc>
+        The Param command shall be dispatched in response to a
+        ParamGet or ParamSet commands in response to a get or set
+        command.
+      </doc>
+
+      <args>
+        <arg name="Name" type="ParamName">
+          <doc>
+            The name of the setting/parameter to get.
+          </doc>
+        </arg>
+
+        <arg name="Value" type="String">
+          <doc>
+            The value for the requested setting. The format of the
+            value depends on the target setting. See Table X for a
+            description of valid parameters.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="ParamGet">
+      <doc>
+        The UamParamGet command shall instruct the destination
+        system(s) to return the value for the given setting
+        (parameter). Upon reception and interpretation, each
+        destination system shall reply with a UamParam command.
+      </doc>
+
+      <args>
+        <arg name="Name" type="ParamName">
+          <doc>
+            The name of the setting/parameter to get.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="ParamSet">
+      <doc>
+        The UamParamSet command shall instruct the destination
+        system(s) to set the target parameter with the given
+        value. Upon reception and interpretation, each destination
+        system shall reply with a UamParam command.
+      </doc>
+
+      <args>
+        <arg name="Name" type="ParamName">
+          <doc>
+            The name of the setting/parameter to get.
+          </doc>
+        </arg>
+
+        <arg name="Value" type="String">
+          <doc>
+            The value for the requested setting. The format of the
+            value depends on the target setting. See Table X for a
+            description of valid parameters.
+          </doc>
+        </arg>
+      </args>
+    </command>
+  </group>
+
+  <group name="Plan Management">
+    <doc>Plan management commands.</doc>
+
+    <command name="Abort">
+      <doc>
+        The Abort command shall instruct the destination system(s) to
+        cancel any type of automatic control and enter standby
+        mode. Upon reception and interpretation, each destination
+        system shall reply with an Aborted command.
+      </doc>
+    </command>
+
+    <command name="Aborted">
+      <doc>
+        The Aborted command shall be dispatched in response to an
+        Abort command.
+      </doc>
+    </command>
+
+    <command name="PlanListGet">
+      <doc>
+        The PlanListGet command shall instruct the destination
+        system(s) to return the list of plans that can be executed on
+        the target system(s). Upon reception and interpretation, each
+        destination system shall reply with a PlanList command.
+      </doc>
+    </command>
+
+    <command name="PlanList">
+      <doc>
+        The PlanList command shall be dispatched in response to a
+        PlanListGet command.
+      </doc>
+
+      <args>
+        <arg name="Plan Names" type="List" of="String">
+          <doc>
+            List of available plan names.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="PlanGet">
+      <doc>
+        The PlanGet command shall instruct the destination system(s)
+        to return the list of maneuvers for the requested plan. Upon
+        reception and interpretation, each destination system shall
+        reply with a Plan command.
+      </doc>
+
+      <args>
+        <arg name="Plan Name" type="String">
+          <doc>
+            Name of the desired plan.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="Plan">
+      <doc>
+        The Plan command shall be dispatched in response to a PlanGet
+        command.
+      </doc>
+
+      <args>
+        <arg name="Maneuver List" type="List" of="Maneuver">
+          <doc>
+            List of the maneuvers of the plan.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="PlanStart">
+      <doc>
+        The PlanStart command shall instruct the destination system(s)
+        to start the requested plan. Upon reception and
+        interpretation, each destination system shall reply with a
+        PlanStarted command.
+      </doc>
+
+      <args>
+        <arg name="Plan Name" type="String">
+          <doc>
+            The name of the plan to start.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="PlanStarted">
+      <doc>
+        The PlanStarted command shall be dispatched in response to a
+        PlanStart command.
+      </doc>
+
+      <args>
+        <arg name="Plan Name" type="String">
+          <doc>
+            The name of the started plan.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="PlanStop">
+      <doc>
+        The PlanStop command shall instruct the destination system(s)
+        to stop the plan currently running on the vehicle. Upon
+        reception and interpretation, each destination system shall
+        reply with a PlanStopped command.
+      </doc>
+    </command>
+
+    <command name="PlanStopped">
+      <doc>
+        The PlanStopped command shall be dispatched in response to a
+        PlanStop command.
+      </doc>
+
+      <args>
+        <arg name="Plan Name" type="String">
+          <doc>
+            The name of the plan that was stopped.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="PlanDelete">
+      <doc>
+        The PlanDelete command shall instruct the destination
+        system(s) to delete the requested plan. Upon reception and
+        interpretation, each destination system shall reply with a
+        PlanDeleted command.
+      </doc>
+
+      <args>
+        <arg name="Plan Name" type="String">
+          <doc>
+            The name of the plan to delete.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="PlanDeleted">
+      <doc>
+        The PlanDeleted command shall be dispatched in response to a
+        PlanDelete command.
+      </doc>
+
+      <args>
+        <arg name="Plan Name" type="String">
+          <doc>
+            The name of the deleted plan.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="PlanAdd">
+      <doc>
+        The PlanAdd command shall instruct the destination system(s)
+        to add the requested plan. Upon reception and interpretation,
+        each destination system shall reply with a PlanAdded command.
+      </doc>
+
+      <args>
+        <arg name="Plan Name" type="String">
+          <doc>
+            The name of the plan to add.
+          </doc>
+        </arg>
+
+        <arg name="Maneuver List" type="List" of="Maneuver">
+          <doc>
+            The maneuvers of the new plan.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="PlanAdded">
+      <doc>
+        The PlanAdded command shall be dispatched in response to a
+        PlanAdd command.
+      </doc>
+
+      <args>
+        <arg name="Plan Name" type="String">
+          <doc>
+            The name of the plan added to the system.
+          </doc>
+        </arg>
+      </args>
+    </command>
+  </group>
+
+  <group name="Sensor Management">
+    <doc>Sensor management commands.</doc>
+
+    <command name="SensorListGet">
+      <doc>
+        The SensorListGet command shall instruct the destination
+        system(s) to return the list of measurements available at the
+        target system(s). Multiple sensors can be available returning
+        the same measurement. Upon reception and interpretation, each
+        destination system shall reply with a SensorList command.
+      </doc>
+    </command>
+
+    <command name="SensorList">
+      <doc>
+        The SensorList command shall be dispatched in response to a
+        SensorListGet command.
+      </doc>
+
+      <args>
+        <arg name="Measurement Names" type="List" of="String">
+          <doc>
+            Name of the available measurements.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="SensorInfoGet">
+      <doc>
+        The SensorInfoGet command shall instruct the destination
+        system(s) to return the list of sensors for the requested
+        measurement. Upon reception and interpretation, each
+        destination system shall reply with a SensorInfo command.
+      </doc>
+
+      <args>
+        <arg name="Measurement Name" type="String">
+          <doc>
+            The name of the desired measurement.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="SensorInfo">
+      <doc>
+        The SensorInfo command shall be dispatched in response to a
+        SensorInfoGet command.
+      </doc>
+
+      <args>
+        <arg name="Measurement Name" type="String">
+          <doc>
+            The name of the desired measurement.
+          </doc>
+        </arg>
+      </args>
+
+      <args>
+        <arg name="Tuples" type="List" of="SensorInfoTuple">
+          <doc>
+            Sensor info tuple.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="SensorSampleGet">
+      <doc>
+        The SensorSampleGet command shall instruct the destination
+        system(s) to return the measurement for the target of
+        sensor. Upon reception and interpretation, each destination
+        system shall reply with a SensorSample command.
+      </doc>
+
+      <args>
+        <arg name="Measurement Name" type="String">
+          <doc>
+            The name of the desired measurement.
+          </doc>
+        </arg>
+
+        <arg name="Sensor Identifier" type="Integer">
+          <doc>
+            The sensor identifier, 0 is for the default sensor.
+          </doc>
+        </arg>
+
+        <arg name="Sampling Frequency" type="Real">
+          <doc>
+            Sampling frequency. If Hz is 0, single shot.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="SensorSample">
+      <doc>
+        The SensorSample command shall be dispatched in response to a
+        SensorSampleGet command.
+      </doc>
+
+      <args>
+        <arg name="Position" type="PositionType">
+          <doc>
+            Position where sample was collected.
+          </doc>
+        </arg>
+
+        <arg name="Measurement Name" type="String">
+          <doc>
+            The name of the target measurement.
+          </doc>
+        </arg>
+
+        <arg name="Sensor Identifier" type="Integer">
+          <doc>
+            The sensor identifier, 0 is for the default sensor.
+          </doc>
+        </arg>
+
+        <arg name="Sample" type="Real">
+          <doc>
+            The sample for the requested sensor. Its format depends on
+            the target sensor and measurement.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+  </group>
+
+  <group name="Position and Ranging">
+    <doc>
+      Position and ranging commands.
+    </doc>
+
+    <command name="PositionGet">
+      <doc>
+        The PositionGet command shall instruct the destination
+        systems to return their position in the world. Upon
+        reception and interpretation, each destination system shall
+        reply with a Position command.
+      </doc>
+
+      <args>
+        <arg name="Frequency" type="Real">
+          <doc>
+            Update frequency in Hertz. If this field is 0 then a
+            single position update will be requested.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="Position">
+      <doc>
+        The Position command shall be dispatched in response to a
+        PositionGet command or asynchronously every time such
+        estimation is available.
+      </doc>
+
+      <args>
+        <arg name="Value" type="PositionType">
+          <doc>
+          </doc>
+        </arg>
+
+        <arg name="Heading" type="Real">
+          <doc>
+            Heading in degrees.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="RangeGet">
+      <doc>
+        The RangeGet command shall instruct the destination
+        system(s) to return the estimated range to the target
+        system(s). Upon reception and interpretation, each
+        destination system shall reply with a Range command.
+      </doc>
+
+      <args>
+        <arg name="Targets" type="List" of="Integer">
+          <doc>
+            Number of target addresses.
+          </doc>
+        </arg>
+        <arg name="Frequency" type="Real">
+          <doc>
+            Range estimation frequency. If Hz is 0, single shot.
+          </doc>
+        </arg>
+      </args>
+    </command>
+
+    <command name="Range">
+      <doc>
+        The Range command shall be dispatched in response to a
+        RangeGet command or in an asychronous way every time such
+        estimation is available.
+      </doc>
+
+      <args>
+        <arg name="Target" type="Integer">
+          <doc>
+            Target address.
+          </doc>
+        </arg>
+
+        <arg name="Travel Time" type="Real">
+          <doc>
+            Estimated travel time to the target node in seconds.
+          </doc>
+        </arg>
+
+        <arg name="Bearing" type="Real">
+          <doc>
+            Estimated bearing angle to the target node in degrees.
+          </doc>
+        </arg>
+
+        <arg name="Elevation" type="Real">
+          <doc>
+            Estimated elevation angle to the target node in degrees.
+          </doc>
+        </arg>
+      </args>
+    </command>
+  </group>
+</ssc>

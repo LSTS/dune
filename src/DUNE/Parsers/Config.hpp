@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_UTILS_CONFIG_PARSER_HPP_INCLUDED_
-#define DUNE_UTILS_CONFIG_PARSER_HPP_INCLUDED_
+#ifndef DUNE_PARSERS_CONFIG_HPP_INCLUDED_
+#define DUNE_PARSERS_CONFIG_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <map>

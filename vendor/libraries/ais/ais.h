@@ -19,6 +19,7 @@ using std::bitset;
 using std::ostream;
 using std::string;
 using std::vector;
+using std::strlen;
 
 #define LIBAIS_VERSION_MAJOR 0
 #define LIBAIS_VERSION_MINOR 13

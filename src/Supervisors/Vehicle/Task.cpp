@@ -74,8 +74,6 @@ namespace Supervisors
       bool m_in_safe_plan;
       //! Counter for printing errors
       Time::Counter<float> m_err_timer;
-      //! Calibration message.
-      IMC::Calibration m_calibration;
       //! Vehicle command message.
       IMC::VehicleCommand m_vc_reply;
       //! Vehicle state message.
@@ -96,6 +94,8 @@ namespace Supervisors
       Time::Counter<float> m_loops_timer;
       //! Maneuver handler
       ManeuverSupervisor* m_man_sup;
+      //! A timeout for calibration state
+      float m_calib_timeout;
       //! Task arguments.
       Arguments m_args;
 
@@ -216,7 +216,7 @@ namespace Supervisors
           }
         }
 
-        if (maneuverMode())
+        if (maneuverMode() || (calibrationMode() && maneuver))
         {
           // original entity ID is the Plan.Engine's
           maneuver->setSourceEntity(getEntityId());
@@ -489,15 +489,35 @@ namespace Supervisors
         if (maneuverMode())
           reset();
 
-        changeMode(IMC::VehicleState::VS_CALIBRATION);
+        const IMC::Message* m = 0;
 
-        m_calibration.duration = msg->calib_time;
-        dispatch(m_calibration);
+        if (!msg->maneuver.isNull())
+        {
+          m = msg->maneuver.get();
 
-        m_switch_time = Clock::get();
+          m_man_sup->addStop();
+          IMC::Message* clone = m->clone();
+          changeMode(IMC::VehicleState::VS_CALIBRATION, clone);
+          delete clone;
+
+          inf(DTR("performing maneuver %s while calibrating"), m->getName());
+        }
+        else
+        {
+          changeMode(IMC::VehicleState::VS_CALIBRATION);
+        }
 
         requestOK(msg, String::str(DTR("calibrating vehicle for %u seconds"),
-                                   m_calibration.duration));
+                                   msg->calib_time));
+
+        IMC::Calibration calib;
+        calib.duration = msg->calib_time;
+        dispatch(calib);
+
+        // Make the timeout 1.5 times larger than the requested time
+        // And do not consider calibration times longer than 15 seconds
+        m_calib_timeout = 1.5 * std::max((uint16_t)15, msg->calib_time);
+        m_switch_time = Clock::get();
       }
 
       void
@@ -509,23 +529,23 @@ namespace Supervisors
           return;
         }
 
-        requestOK(msg, String::str(DTR("stopped calibration"), m_calibration.duration));
+        requestOK(msg, DTR("stopped calibration"));
 
         debug("calibration over");
         changeMode(IMC::VehicleState::VS_SERVICE);
       }
 
       void
-      startManeuver(const IMC::VehicleCommand* cmd)
+      startManeuver(const IMC::VehicleCommand* msg)
       {
         const IMC::Message* m = 0;
 
-        if (!cmd->maneuver.isNull())
-          m = cmd->maneuver.get();
+        if (!msg->maneuver.isNull())
+          m = msg->maneuver.get();
 
         if (!m)
         {
-          requestFailed(cmd, DTR("no maneuver specified"));
+          requestFailed(msg, DTR("no maneuver specified"));
           return;
         }
 
@@ -533,7 +553,7 @@ namespace Supervisors
 
         if (externalMode())
         {
-          requestFailed(cmd, mtype + DTR(" maneuver cannot be started in current mode"));
+          requestFailed(msg, mtype + DTR(" maneuver cannot be started in current mode"));
           return;
         }
 
@@ -542,7 +562,7 @@ namespace Supervisors
         changeMode(IMC::VehicleState::VS_MANEUVER, clone);
         delete clone;
 
-        requestOK(cmd, mtype + DTR(" maneuver started"));
+        requestOK(msg, mtype + DTR(" maneuver started"));
       }
 
       void
@@ -615,23 +635,25 @@ namespace Supervisors
 
         double delta = Clock::get() - m_switch_time;
 
-        if (calibrationMode() && (delta > m_calibration.duration))
-        {
-          debug("calibration over");
-          changeMode(IMC::VehicleState::VS_SERVICE);
-        }
-        else if (maneuverMode() && (delta > c_man_timeout))
+        bool timedout = false;
+
+        if (maneuverMode() && (delta > c_man_timeout))
         {
           inf(DTR("maneuver request timeout"));
-          reset();
-          changeMode(IMC::VehicleState::VS_SERVICE);
+          timedout = true;
         }
-        else
+        else if (calibrationMode() && (delta > m_calib_timeout))
         {
-          return;
+          inf(DTR("calibration timed out"));
+          timedout = true;
         }
 
-        m_switch_time = -1.0;
+        if (timedout)
+        {
+          reset();
+          changeMode(IMC::VehicleState::VS_SERVICE);
+          m_switch_time = -1.0;
+        }
       }
 
       //! Check if the entities in error are relevant for performing an emergency plan

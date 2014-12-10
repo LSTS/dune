@@ -77,7 +77,6 @@ namespace Maneuver
         static const uint8_t LOC_CHANGED       = 4;
         static const uint8_t RADIUS_CHANGED    = 8;
 
-
         Task(const std::string& name, Tasks::Context& ctx) :
           DUNE::Maneuvers::Maneuver(name, ctx)
         {
@@ -126,7 +125,6 @@ namespace Maneuver
           bindToManeuver<Task, IMC::FollowReference>();
           bind<IMC::Reference>(this);
           bind<IMC::EstimatedState>(this);
-          bind<IMC::PathControlState>(this);
         }
 
         void
@@ -149,7 +147,6 @@ namespace Maneuver
           m_path_sent = false;
           inf(DTR("waiting for first reference"));
         }
-
 
         uint8_t pathDifferences(const IMC::DesiredPath *msg1, const IMC::DesiredPath *msg2)
         {
@@ -257,6 +254,9 @@ namespace Maneuver
         void
         consume(const IMC::EstimatedState* msg)
         {
+          if (msg->getSource() != getSystemId())
+            return;
+
           m_estate = *msg;
           double delta = 0;
 
@@ -272,7 +272,7 @@ namespace Maneuver
         }
 
         void
-        consume(const IMC::PathControlState* pcs)
+        onPathControlState(const IMC::PathControlState* pcs)
         {
           m_pcs = *pcs;
         }
@@ -333,7 +333,7 @@ namespace Maneuver
           bool at_z_target = z_dist < m_args.vertical_tolerance;
           bool at_xy_target = xy_dist < std::fabs(ref->radius) + m_args.horizontal_tolerance;
           bool target_at_surface = desired_path.end_z == 0
-                                        && desired_path.end_z_units == Z_DEPTH;
+                                      && desired_path.end_z_units == Z_DEPTH;
 
           bool still_same_reference = sameReference(ref, &m_last_ref);
 
@@ -386,7 +386,7 @@ namespace Maneuver
           }
           else
           {
-        	  desired_path.lradius = 0;
+            desired_path.lradius = 0;
           }
 
           m_fref_state.proximity = 0;
@@ -554,7 +554,6 @@ namespace Maneuver
           return z_dist;
         }
 
-
         void
         dispatchDesiredPath(IMC::DesiredPath desired_path)
         {
@@ -629,7 +628,7 @@ namespace Maneuver
               {
                 dispatch(desired_path);
                 inf(DTR("going towards (%f, %f, %f)."), Angles::degrees(desired_path.end_lat),
-                  Angles::degrees(desired_path.end_lon), desired_path.end_z);
+                    Angles::degrees(desired_path.end_lon), desired_path.end_z);
               }
               break;
             default:

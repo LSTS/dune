@@ -201,6 +201,7 @@
 #endif
 
 #ifdef PTW32_INCLUDE_WINDOWS_H
+#include <winsock2.h>
 #include <windows.h>
 #endif
 

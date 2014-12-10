@@ -25,11 +25,27 @@
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
+# This script will generate parameter XML files for all vehicles in        #
+# all supported languages.                                                 #
+############################################################################
 
 import os
 import sys
 import glob
 import subprocess
+
+# Destination folder.
+for arg in sys.argv:
+    if arg in ['-h', '--help']:
+        print('Usage: %s [DESTINATION_FOLDER]' % sys.argv[0])
+        sys.exit(1)
+
+dst_dir = '.'
+if len(sys.argv) == 2:
+    if not os.path.isdir(sys.argv[1]):
+        print("ERROR: destination '%s' is not a folder." % sys.argv[1])
+        sys.exit(1)
+    dst_dir = sys.argv[1]
 
 # Find available locales.
 langs = subprocess.check_output(['localedef', '--list'], universal_newlines = True)
@@ -77,15 +93,18 @@ for i18n in sint:
     lang = name + '.UTF-8'
 
     for ini in list_ini:
-        out =  ini + '.' + name + '.xml'
         os.environ['LC_ALL'] = lang
         os.environ['LANG'] = lang
         os.environ['LANGUAGE'] = lang
-        subprocess.check_call(['./dune', '-c', ini, '-p', 'Hardware', '-X', '.'])
-        if os.path.exists(out):
-            try:
-                subprocess.check_call(['xmllint', '--format', out, '-o', 'tmp.xml'])
-                os.remove(out)
-                os.rename('tmp.xml', out)
-            except:
-                pass
+        sys.stderr.write('\n* Processing %s:\n\n' % ini)
+        sys.stderr.flush()
+        subprocess.check_call(['./dune', '-c', ini, '-p', 'Hardware', '-X', dst_dir])
+
+xmls = glob.glob(os.path.join(dst_dir, '*.xml'))
+for xml in xmls:
+    try:
+        subprocess.check_call(['xmllint', '--format', xml, '-o', 'tmp.xml'])
+        os.remove(xml)
+        os.rename('tmp.xml', xml)
+    except:
+        pass

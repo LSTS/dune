@@ -452,7 +452,7 @@ namespace Sensors
         ByteCopy::toBE(crc, &bfr[2]);
         write(bfr, 4);
         if (!read())
-          throw RestartNeeded(DTR("unable to initialize the device"), 5);
+          throw RestartNeeded(DTR("unable to initialize the device"), 5.0, false);
 
         bfr[0] = m_args.address;
         bfr[1] = CMD_READ_SERIAL_NUMBER;
@@ -460,7 +460,7 @@ namespace Sensors
         ByteCopy::toBE(crc, &bfr[2]);
         write(bfr, 4);
         if (!read())
-          throw RestartNeeded(DTR("unable to retrieve the serial number"), 5);
+          throw RestartNeeded(DTR("unable to retrieve the serial number"), 5.0, false);
       }
 
       void

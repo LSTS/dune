@@ -67,6 +67,8 @@ namespace Transports
       std::string sound_speed_elabel;
       //! Keep-alive timeout.
       double kalive_tout;
+      //! Highest address.
+      unsigned highest_addr;
     };
 
     // Type definition for mapping addresses.
@@ -157,6 +159,12 @@ namespace Transports
         .maximumValue("255")
         .description("Instant message retry count");
 
+        param("Highest Address", m_args.highest_addr)
+        .defaultValue("14")
+        .values("2, 6, 14, 30, 62, 126, 254")
+        .description("The highest address available for a device."
+                     "Highest Address values must match for all communicating devices.");
+
         param("Sound Speed - Default Value", m_args.sound_speed_def)
         .units(Units::MeterPerSecond)
         .defaultValue("1500");
@@ -203,7 +211,7 @@ namespace Transports
         }
         catch (...)
         {
-          inf(DTR("dynamic sound speed corrections are disabled"));
+          debug("dynamic sound speed corrections are disabled");
           m_sound_speed = m_args.sound_speed_def;
         }
       }
@@ -231,7 +239,7 @@ namespace Transports
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 5);
+          throw RestartNeeded(e.what(), 5, false);
         }
 
         m_driver = new Driver(this, m_sock);
@@ -264,6 +272,7 @@ namespace Transports
         m_driver->setRetryTimeout(m_args.con_retry_tout);
         m_driver->setRetryCountIM(m_args.im_retry_count);
         m_driver->setIdleTimeout(m_args.con_idle_tout);
+        m_driver->setHighestAddress(m_args.highest_addr);
         m_driver->setPositionDataOutput(true);
         m_driver->setPromiscuous(true);
         m_driver->setExtendedNotifications(true);
@@ -310,7 +319,9 @@ namespace Transports
         if (msg->getDestinationEntity() != getEntityId())
           return;
 
-        if (String::startsWith(msg->value, "RECVIM"))
+        if (String::startsWith(msg->value, "RECVIMS"))
+          return;
+        else if (String::startsWith(msg->value, "RECVIM"))
           handleInstantMessage(msg->value);
         else if (String::startsWith(msg->value, "DELIVEREDIM"))
           handleInstantMessageDelivered(msg->value);
@@ -429,6 +440,8 @@ namespace Transports
           { }
         }
 
+        m_driver->getMultipathStructure();
+
         // Clear ticket.
         m_driver->setBusy(false);
         clearTicket(IMC::UamTxStatus::UTS_DONE);
@@ -483,6 +496,8 @@ namespace Transports
           msg.flags |= IMC::UamRxFrame::URF_PROMISCUOUS;
 
         dispatch(msg);
+
+        m_driver->getMultipathStructure();
       }
 
       void

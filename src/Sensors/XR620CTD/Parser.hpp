@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef SENSORS_XR620CTD_PARSER_HPP_INCLUDED_
-#define SENSORS_XR620CTD_PARSER_HPP_INCLUDED_
+#ifndef SENSORS_XR620_CTD_PARSER_HPP_INCLUDED_
+#define SENSORS_XR620_CTD_PARSER_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>

@@ -234,6 +234,8 @@ namespace DUNE
       virtual void
       read(const std::string& value)
       {
+        m_copy = Math::Matrix();
+
         if (!castLexical(value, m_copy))
           throw std::runtime_error("value is not of the correct type");
       }

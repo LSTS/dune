@@ -118,7 +118,7 @@ class Message:
         # fieldsEqual()
         if self.has_fields():
             f = Function('fieldsEqual', 'bool', [Var('msg__', 'const Message&')], const = True)
-            f.add_body('const IMC::' + node.get('abbrev') + '& other__ = dynamic_cast<const ' + node.get('abbrev') + '&>(msg__);')
+            f.add_body('const IMC::' + node.get('abbrev') + '& other__ = static_cast<const ' + node.get('abbrev') + '&>(msg__);')
             f.add_body('\n'.join([get_not_equal(field) for field in node.findall('field')]))
             f.add_body('return true;')
             public.append(f)
@@ -352,28 +352,50 @@ class Message:
         return len(self._node.findall("field[@type='message']")) + \
                len(self._node.findall("field[@type='message-list']"))
 
-# Validate command line arguments.
-import sys
-if len(sys.argv) != 3:
-    print('Usage: {0} <IMC.xml> <destination folder>'.format(sys.argv[0]))
-    sys.exit(1)
+# Parse command line arguments.
+import argparse
+parser = argparse.ArgumentParser(
+    description="Strip, compress and generate IMC.xml blob.")
+parser.add_argument('dest_folder', metavar='DEST_FOLDER',
+                    help="destination folder")
+parser.add_argument('-x', '--xml', metavar='IMC_XML',
+                    help="IMC XML file")
+parser.add_argument('-f', '--force', action='store_true', required=False,
+                    help="Force creation of blob file")
+args = parser.parse_args()
+
+xml_md5 = compute_md5(args.xml)
+dest_folder = args.dest_folder
 
 # Parse XML specification.
 import xml.etree.ElementTree as ET
-tree = ET.parse(sys.argv[1])
+tree = ET.parse(args.xml)
 root = tree.getroot()
-
-# Get destination folder.
-folder = sys.argv[2]
 
 # Initialize constant values.
 consts = {}
 
-# Compute MD5 sum.
-import hashlib
-m = hashlib.md5()
-m.update(open(sys.argv[1], 'rb').read())
-consts['md5'] = m.hexdigest()
+# Retrieve Git info.
+import os
+import subprocess
+git_dir = os.path.dirname(args.xml)
+consts['git_info'] = 'unknown'
+cwd_old = os.getcwd()
+os.chdir(git_dir)
+try:
+    consts['git_info'] = subprocess.check_output(['git',
+                                                  'log',
+                                                  "--pretty=format:%ad %h %d",
+                                                  '--abbrev-commit',
+                                                  '--date=short', '-1'],
+                                                 universal_newlines = True).strip()
+except:
+    pass
+
+os.chdir(cwd_old)
+
+# Set MD5 sum.
+consts['md5'] = xml_md5
 
 # Retrieve synchronization number.
 sync = root.find("header/field/[@fixed='true']").get('value')
@@ -410,7 +432,7 @@ for f in root.findall('footer/field'):
 ################################################################################
 # Enumerations.hpp                                                             #
 ################################################################################
-f = File('Enumerations.hpp', folder)
+f = File('Enumerations.hpp', dest_folder, md5 = xml_md5)
 ens = root.findall('enumerations/def')
 for en in ens:
     enum = Enum(en.get('abbrev'), en.get('name'))
@@ -423,7 +445,7 @@ f.write()
 ################################################################################
 # Bitfields.hpp                                                                #
 ################################################################################
-f = File('Bitfields.hpp', folder)
+f = File('Bitfields.hpp', dest_folder, md5 = xml_md5)
 ens = root.findall('bitfields/def')
 for en in ens:
     enum = Enum(en.get('abbrev'), en.get('name'))
@@ -436,10 +458,11 @@ f.write()
 ################################################################################
 # Constants.hpp                                                                #
 ################################################################################
-f = File('Constants.hpp', folder, ns = False)
+f = File('Constants.hpp', dest_folder, ns = False, md5 = xml_md5)
 
 # Macros
 f.append(Macro('CONST_VERSION', '"%(version)s"' % consts, 'IMC version string'))
+f.append(Macro('CONST_GIT_INFO', '"%(git_info)s"' % consts, 'Git repository information'))
 f.append(Macro('CONST_MD5', '"%(md5)s"' % consts, 'MD5 sum of XML specification file'))
 f.append(Macro('CONST_SYNC', consts['sync'], 'Synchronization number'))
 f.append(Macro('CONST_SYNC_REV', consts['sync_rev'], 'Reversed synchronization number'))
@@ -454,7 +477,7 @@ f.write()
 ################################################################################
 # Macros.hpp                                                                   #
 ################################################################################
-f = File('Macros.hpp', folder, ns = False)
+f = File('Macros.hpp', dest_folder, ns = False, md5 = xml_md5)
 msgs = root.findall('message')
 for msg in msgs:
     f.append(Macro(msg.get('abbrev').upper(),
@@ -465,7 +488,7 @@ f.write()
 ################################################################################
 # Header.hpp                                                                   #
 ################################################################################
-f = File('Header.hpp', folder)
+f = File('Header.hpp', dest_folder, md5 = xml_md5)
 f.add_dune_headers('Config.hpp')
 s = Struct('Header', 'Header format')
 fields = root.findall("header/field")
@@ -477,7 +500,7 @@ f.write()
 ################################################################################
 # Factory.def                                                                  #
 ################################################################################
-f = File('Factory.def', folder, ns = False)
+f = File('Factory.def', dest_folder, ns = False, md5 = xml_md5)
 for msg in root.findall('message'):
     f.append('MESSAGE(%(id)s, %(abbrev)s)' % msg.attrib)
 f.append('#undef MESSAGE')
@@ -486,7 +509,7 @@ f.write()
 ################################################################################
 # SuperTypes.hpp                                                               #
 ################################################################################
-f = File('SuperTypes.hpp', folder)
+f = File('SuperTypes.hpp', dest_folder, md5 = xml_md5)
 f.add_dune_headers('IMC/Message.hpp')
 for group in root.findall("message-groups/message-group"):
     f.append(comment('Super type %s' % group.get('name'), nl = ''))
@@ -497,7 +520,7 @@ f.write()
 ################################################################################
 # Definitions.hpp                                                              #
 ################################################################################
-hpp = File('Definitions.hpp', folder)
+hpp = File('Definitions.hpp', dest_folder, md5 = xml_md5)
 hpp.add_isoc_headers('ostream', 'string', 'vector')
 hpp.add_dune_headers('Config.hpp', 'IMC/Message.hpp',
                      'IMC/InlineMessage.hpp', 'IMC/MessageList.hpp',
@@ -507,7 +530,7 @@ hpp.add_dune_headers('Config.hpp', 'IMC/Message.hpp',
 ################################################################################
 # Definitions.cpp                                                              #
 ################################################################################
-cpp = File('Definitions.cpp', folder)
+cpp = File('Definitions.cpp', dest_folder, md5 = xml_md5)
 cpp.add_isoc_headers('algorithm','iostream', 'iomanip', 'string', 'cstdio')
 cpp.add_dune_headers('Utils/ByteCopy.hpp', 'Utils/Utils.hpp',
                      'IMC/Exceptions.hpp', 'IMC/Definitions.hpp',

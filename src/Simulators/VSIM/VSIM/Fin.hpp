@@ -26,8 +26,8 @@
 // Author: José Braga                                                       *
 //***************************************************************************
 
-#ifndef SIMULATORS_VSIM_FINS_HPP_INCLUDED_
-#define SIMULATORS_VSIM_FINS_HPP_INCLUDED_
+#ifndef SIMULATORS_VSIM_VSIM_FIN_HPP_INCLUDED_
+#define SIMULATORS_VSIM_VSIM_FIN_HPP_INCLUDED_
 
 //! VSIM headers.
 #include <VSIM/Force.hpp>

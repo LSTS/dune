@@ -46,6 +46,27 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
+    // Abort code.
+    static const unsigned c_code_abort = 0x000a;
+    // Abort acked code.
+    static const unsigned c_code_abort_ack = 0x000b;
+    //! Start plan acknowledge code.
+    static const unsigned c_code_plan_ack = 0x000c;
+    // Quick tracking mask.
+    static const unsigned c_mask_qtrack = 0x1000;
+    // Quick tracking beacon mask.
+    static const unsigned c_mask_qtrack_beacon = 0x0c00;
+    // Quick tracking range mask.
+    static const unsigned c_mask_qtrack_range = 0x03ff;
+    // Maximum buffer size.
+    static const int c_bfr_size = 256;
+    // Acoustic Report code.
+    static const uint8_t c_code_report = 0x1;
+    // Start plan code.
+    static const uint8_t c_code_plan = 0x2;
+    // Binary message size.
+    static const uint8_t c_binary_size = 32;
+
     enum Operation
     {
       // No operation is in progress.
@@ -65,13 +86,10 @@ namespace Sensors
       unsigned query_freq;
       // Reply frequency.
       unsigned reply_freq;
-      // Abort frequency.
-      unsigned abort_freq;
 
-      Transponder(unsigned q, unsigned r, unsigned a):
+      Transponder(unsigned q, unsigned r):
         query_freq(q),
-        reply_freq(r),
-        abort_freq(a)
+        reply_freq(r)
       { }
     };
 
@@ -85,7 +103,7 @@ namespace Sensors
       // Sound speed on water.
       double sspeed;
       // Narrow band ping timeout.
-      double tout_nbping;
+      unsigned tout_nbping;
       // Micro-Modem ping timeout.
       double tout_mmping;
       // Abort timeout.
@@ -98,6 +116,8 @@ namespace Sensors
       unsigned tx_length;
       // Length of receive pings.
       unsigned rx_length;
+      //! Name of the section with modem addresses.
+      std::string addr_section;
     };
 
     // Type definition for mapping addresses.
@@ -107,22 +127,6 @@ namespace Sensors
 
     struct Task: public DUNE::Tasks::Task
     {
-      // Abort code.
-      static const unsigned c_code_abort = 0x000a;
-      // Abort acked code.
-      static const unsigned c_code_abort_ack = 0x000b;
-      //! Start plan acknowledge code.
-      static const unsigned c_code_plan_ack = 0x000c;
-      // Address used to send change plan messages.
-      static const unsigned c_plan_addr = 15;
-      // Quick tracking mask.
-      static const unsigned c_mask_qtrack = 0x1000;
-      // Quick tracking beacon mask.
-      static const unsigned c_mask_qtrack_beacon = 0x0c00;
-      // Quick tracking range mask.
-      static const unsigned c_mask_qtrack_range = 0x03ff;
-      // Maximum buffer size.
-      static const int c_bfr_size = 256;
       // Serial port handle.
       SerialPort* m_uart;
       // Map of narrow band transponders.
@@ -211,21 +215,9 @@ namespace Sensors
         param("GPIO - Transducer Detection", m_args.gpio_txd)
         .defaultValue("-1");
 
-        // Process micro-modem addresses.
-        std::string agent = getSystemName();
-        std::vector<std::string> addrs = ctx.config.options("Micromodem Addresses");
-        for (unsigned i = 0; i < addrs.size(); ++i)
-        {
-          unsigned iid = resolveSystemName(addrs[i]);
-          unsigned mid = 0;
-          ctx.config.get("Micromodem Addresses", addrs[i], "0", mid);
-          m_mimap[mid] = iid;
-          m_immap[iid] = mid;
-          m_ummap[addrs[i]] = mid;
-
-          if (addrs[i] == agent)
-            m_address = mid;
-        }
+        param("Address Section", m_args.addr_section)
+        .defaultValue("Micromodem Addresses")
+        .description("Name of the configuration section with modem addresses");
 
         // Process narrow band transponders.
         std::vector<std::string> txponders = ctx.config.options("Narrow Band Transponders");
@@ -233,9 +225,7 @@ namespace Sensors
         {
           std::vector<unsigned> freqs;
           ctx.config.get("Narrow Band Transponders", txponders[i], "", freqs);
-          if (freqs.size() == 2)
-            freqs.push_back(0);
-          m_nbmap.insert(std::make_pair(txponders[i], Transponder(freqs[0], freqs[1], freqs[2])));
+          m_nbmap.insert(std::make_pair(txponders[i], Transponder(freqs[0], freqs[1])));
         }
 
         // Register message handlers.
@@ -253,8 +243,28 @@ namespace Sensors
         if ((m_gpio_txd != NULL) && paramChanged(m_args.gpio_txd) )
           throw RestartNeeded(DTR("restarting to change transducer detection GPIO"), 1);
 
+        // Process micro-modem addresses.
+        m_mimap.clear();
+        m_immap.clear();
+        m_ummap.clear();
+        std::string agent = getSystemName();
+        std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
+        for (unsigned i = 0; i < addrs.size(); ++i)
+        {
+          unsigned iid = resolveSystemName(addrs[i]);
+          unsigned mid = 0;
+          m_ctx.config.get(m_args.addr_section, addrs[i], "0", mid);
+          m_mimap[mid] = iid;
+          m_immap[iid] = mid;
+          m_ummap[addrs[i]] = mid;
+
+          if (addrs[i] == agent)
+            m_address = mid;
+        }
+
         // Input timeout.
-        m_last_stn.setTop(m_args.tout_input);
+        if (paramChanged(m_args.tout_input))
+          m_last_stn.setTop(m_args.tout_input);
       }
 
       void
@@ -278,17 +288,12 @@ namespace Sensors
         m_uart->setCanonicalInput(true);
         m_uart->flush();
 
-        {
-          configureModem("CCCFG", "SRC", m_address);
-        }
-
-        {
-          configureModem("CCCFG", "XST", 0);
-        }
-
-        {
-          configureModem("CCCFG", "CTO", 10);
-        }
+        // Set unit number.
+        configureModem("CCCFG", "SRC", m_address);
+        // Transmit stats messages.
+        configureModem("CCCFG", "XST", 0);
+        // Cycle-init timeout time.
+        configureModem("CCCFG", "CTO", 10);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
@@ -396,8 +401,26 @@ namespace Sensors
 
           if (pc->op == IMC::PlanControl::PC_START)
           {
-            if (pc->plan_id.size() == 1)
-              command = String::str("$CCMUC,%u,%u,%04x\r\n", c_plan_addr, itr->second, pc->plan_id[0] & 0xff);
+            std::vector<char> pmsg(c_binary_size, 0);
+
+            if (pc->plan_id.size() > c_binary_size - 1)
+            {
+              err(DTR("unable to send plan %s"), pc->plan_id.c_str());
+              return;
+            }
+
+            // Make packet.
+            pmsg[0] = (char)c_code_plan;
+            std::memcpy(&pmsg[1], &pc->plan_id[0], std::min(c_binary_size - 1, (int)pc->plan_id.size()));
+
+            std::string hex = String::toHex(pmsg);
+            std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n",
+                                          m_address, itr->second, hex.c_str());
+            sendCommand(cmd);
+
+            std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n", m_address, itr->second);
+            sendCommand(cyc);
+
           }
         }
 
@@ -416,14 +439,9 @@ namespace Sensors
         NarrowBandMap::iterator nitr = m_nbmap.find(sys);
         if (nitr != m_nbmap.end())
         {
-          if (nitr->second.abort_freq == 0)
-          {
-            m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
-            dispatch(m_acop_out);
-            return;
-          }
-
-          abortNarrowBand(sys, nitr->second.abort_freq);
+          m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
+          dispatch(m_acop_out);
+          return;
         }
 
         MicroModemMap::iterator itr = m_ummap.find(sys);
@@ -438,28 +456,6 @@ namespace Sensors
         sendCommand(cmd);
         m_op = OP_ABORT;
         m_op_deadline = Clock::get() + m_args.tout_abort;
-      }
-
-      void
-      abortNarrowBand(const std::string& sys, unsigned freq)
-      {
-        m_acop_out.op = IMC::AcousticOperation::AOP_ABORT_IP;
-        m_acop_out.system = sys;
-        dispatch(m_acop_out);
-
-        char bfr[128];
-        for (unsigned i = 0; i < 10; ++i)
-        {
-          std::string cmd = String::str("$CCPNT,%u,%u,%u,100,23000,0,0,0,1\r\n", freq,
-                                        m_args.tx_length, m_args.rx_length);
-          sendCommand(cmd);
-          m_uart->read(bfr, sizeof(bfr));
-          Delay::wait(0.2);
-          m_uart->flushInput();
-        }
-
-        m_acop_out.op = IMC::AcousticOperation::AOP_ABORT_TIMEOUT;
-        dispatch(m_acop_out);
       }
 
       void
@@ -518,8 +514,9 @@ namespace Sensors
         unsigned query = itr->second.query_freq;
         unsigned reply = itr->second.reply_freq;
 
-        std::string cmd = String::str("$CCPNT,%u,%u,%u,1000,%u,0,0,0,1\r\n", query,
-                                      m_args.tx_length, m_args.rx_length, reply);
+        std::string cmd = String::str("$CCPNT,%u,%u,%u,%u,%u,0,0,0,1\r\n", query,
+                                      m_args.tx_length, m_args.rx_length,
+                                      m_args.tout_nbping * 1000, reply);
         sendCommand(cmd);
         m_op = OP_PING_NB;
         m_op_deadline = Clock::get() + m_args.tout_nbping;
@@ -604,13 +601,10 @@ namespace Sensors
         if (value == c_code_plan_ack)
         {
           inf(DTR("plan started"));
-          m_pc->setDestination(m_pc->getSource());
-          m_pc->setDestinationEntity(m_pc->getSourceEntity());
-          m_pc->setSource(getSystemId());
-          m_pc->setSourceEntity(getEntityId());
+          m_pc->setSource(m_mimap[src]);
           m_pc->type = IMC::PlanControl::PC_SUCCESS;
           m_pc->flags = 0;
-          dispatch(*m_pc);
+          dispatchReply(*m_pc, *m_pc, DF_KEEP_SRC_EID);
         }
         else if (value & c_mask_qtrack)
         {
@@ -678,68 +672,81 @@ namespace Sensors
         std::string msg = String::fromHex(hex);
         const char* msg_raw = msg.data();
 
-        float lat;
-        float lon;
-        uint8_t depth;
-        int16_t yaw;
-        int16_t alt;
-        uint16_t ranges[2];
+        uint8_t code = static_cast<uint8_t>(msg_raw[0]);
 
-        int8_t progress;
-        uint8_t fuel_level;
-        uint8_t fuel_conf;
-
-        std::memcpy(&lat, msg_raw + 0, 4);
-        std::memcpy(&lon, msg_raw + 4, 4);
-        std::memcpy(&depth, msg_raw + 8, 1);
-        std::memcpy(&yaw, msg_raw + 9, 2);
-        std::memcpy(&alt, msg_raw + 11, 2);
-        std::memcpy(&ranges[0], msg_raw + 13, 2);
-        std::memcpy(&ranges[1], msg_raw + 15, 2);
-        std::memcpy(&progress, msg_raw + 17, 1);
-        std::memcpy(&fuel_level, msg_raw + 18, 1);
-        std::memcpy(&fuel_conf, msg_raw + 19, 1);
-
-        for (int i = 0; i < 2; ++i)
+        if (code == c_code_report)
         {
-          if (ranges[i] == 0)
-            continue;
+          float lat;
+          float lon;
+          uint8_t depth;
+          int16_t yaw;
+          int16_t alt;
+          uint16_t ranges[2];
 
-          IMC::LblRangeAcceptance lmsg;
-          lmsg.setSource(m_mimap[src]);
-          lmsg.id = i;
-          lmsg.range = ranges[i];
-          lmsg.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
-          dispatch(lmsg);
-          inf("%s %u: %f", DTR("range to"), lmsg.id, lmsg.range);
+          int8_t progress;
+          uint8_t fuel_level;
+          uint8_t fuel_conf;
+
+          std::memcpy(&lat, msg_raw + 1, 4);
+          std::memcpy(&lon, msg_raw + 5, 4);
+          std::memcpy(&depth, msg_raw + 9, 1);
+          std::memcpy(&yaw, msg_raw + 10, 2);
+          std::memcpy(&alt, msg_raw + 12, 2);
+          std::memcpy(&ranges[0], msg_raw + 14, 2);
+          std::memcpy(&ranges[1], msg_raw + 16, 2);
+          std::memcpy(&progress, msg_raw + 18, 1);
+          std::memcpy(&fuel_level, msg_raw + 19, 1);
+          std::memcpy(&fuel_conf, msg_raw + 20, 1);
+
+          for (int i = 0; i < 2; ++i)
+          {
+            if (ranges[i] == 0)
+              continue;
+
+            IMC::LblRangeAcceptance lmsg;
+            lmsg.setSource(m_mimap[src]);
+            lmsg.id = i;
+            lmsg.range = ranges[i];
+            lmsg.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
+            dispatch(lmsg);
+            inf("%s %u: %f", DTR("range to"), lmsg.id, lmsg.range);
+          }
+
+          IMC::EstimatedState es;
+          es.setSource(m_mimap[src]);
+          es.lat = lat;
+          es.lon = lon;
+          es.depth = (float)depth;
+          es.psi = (float)yaw / 100.0;
+          es.alt = (float)alt / 10.0;
+          dispatch(es);
+
+          IMC::PlanControlState pcs;
+          pcs.setSource(m_mimap[src]);
+          pcs.plan_progress = (float)progress;
+          dispatch(pcs);
+
+          // Inform if progress is valid.
+          if (pcs.plan_progress >= 0)
+            inf(DTR("plan progress is %f"), pcs.plan_progress);
+
+          IMC::FuelLevel fuel;
+          fuel.setSource(m_mimap[src]);
+          fuel.value = (float)fuel_level;
+          fuel.confidence = (float)fuel_conf;
+          dispatch(fuel);
+
+          trace("lat %f | lon %f | depth %f | alt %f | yaw %f", es.lat, es.lon, es.depth, es.alt, es.psi);
+          trace("fuel %f | conf %f | plan progress %f", fuel.value, fuel.confidence, pcs.plan_progress);
         }
-
-        IMC::EstimatedState es;
-        es.setSource(m_mimap[src]);
-        es.lat = lat;
-        es.lon = lon;
-        es.depth = (float)depth;
-        es.psi = (float)yaw / 100.0;
-        es.alt = (float)alt / 10.0;
-        dispatch(es);
-
-        IMC::PlanControlState pcs;
-        pcs.setSource(m_mimap[src]);
-        pcs.plan_progress = (float)progress;
-        dispatch(pcs);
-
-        // Inform if progress is valid.
-        if (pcs.plan_progress >= 0)
-          inf(DTR("plan progress is %f"), pcs.plan_progress);
-
-        IMC::FuelLevel fuel;
-        fuel.setSource(m_mimap[src]);
-        fuel.value = (float)fuel_level;
-        fuel.confidence = (float)fuel_conf;
-        dispatch(fuel);
-
-        debug("lat %f | lon %f | depth %f | alt %f | yaw %f", es.lat, es.lon, es.depth, es.alt, es.psi);
-        debug("fuel %f | conf %f | plan progress %f", fuel.value, fuel.confidence, pcs.plan_progress);
+        else if (code == c_code_plan)
+        {
+          debug("ignore start plan");
+        }
+        else
+        {
+          debug("wrong code id");
+        }
       }
 
       void

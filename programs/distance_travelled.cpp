@@ -39,6 +39,31 @@
 
 using DUNE_NAMESPACES;
 
+struct Log
+{
+  std::string name;
+  double distance;
+  double duration;
+
+  Log(const std::string& a_name, double a_distance, double a_duration):
+    name(a_name),
+    distance(a_distance),
+    duration(a_duration)
+  { }
+};
+
+struct Vehicle
+{
+  double duration;
+  double distance;
+  std::vector<Log> logs;
+
+  Vehicle(void):
+    duration(0),
+    distance(0)
+  { }
+};
+
 // Minimum rpm before starting to assume that the vehicle is moving
 const float c_min_rpm = 400.0;
 // Maximum speed between to consider when integrating
@@ -56,10 +81,7 @@ main(int32_t argc, char** argv)
     return 1;
   }
 
-  double total_accum = 0;
-
-  // Accumulated travelled time
-  double duration = 0.0;
+  std::map<std::string, Vehicle> vehicles;
 
   for (int32_t i = 1; i < argc; ++i)
   {
@@ -80,26 +102,38 @@ main(int32_t argc, char** argv)
     double last_lon;
 
     // Accumulated travelled distance
-    double accum = 0.0;
+    double distance = 0.0;
+    // Accumulated travelled time
+    double duration = 0.0;
 
     bool got_name = false;
     std::string log_name = "unknown";
 
     bool ignore = false;
+    uint16_t sys_id = 0xffff;
+    std::string sys_name;
 
     try
     {
       while ((msg = IMC::Packet::deserialize(*is)) != 0)
       {
-
-        if (msg->getId() == DUNE_IMC_LOGGINGCONTROL)
+        if (msg->getId() == DUNE_IMC_ANNOUNCE)
+        {
+          IMC::Announce* ptr = static_cast<IMC::Announce*>(msg);
+          if (sys_id == ptr->getSource())
+          {
+            sys_name = ptr->sys_name;
+          }
+        }
+        else if (msg->getId() == DUNE_IMC_LOGGINGCONTROL)
         {
           if (!got_name)
           {
-            IMC::LoggingControl* ptr = dynamic_cast<IMC::LoggingControl*>(msg);
+            IMC::LoggingControl* ptr = static_cast<IMC::LoggingControl*>(msg);
 
             if (ptr->op == IMC::LoggingControl::COP_STARTED)
             {
+              sys_id = ptr->getSource();
               log_name = ptr->name;
               got_name = true;
             }
@@ -109,7 +143,7 @@ main(int32_t argc, char** argv)
         {
           if (msg->getTimeStamp() - estate.getTimeStamp() > c_timestep)
           {
-            IMC::EstimatedState* ptr = dynamic_cast<IMC::EstimatedState*>(msg);
+            IMC::EstimatedState* ptr = static_cast<IMC::EstimatedState*>(msg);
 
             if (!got_state)
             {
@@ -129,18 +163,19 @@ main(int32_t argc, char** argv)
               // Not faster than maximum considered speed
               if (dist / (ptr->getTimeStamp() - estate.getTimeStamp()) < c_max_speed)
               {
-                accum += dist;
+                distance += dist;
                 duration += msg->getTimeStamp() - estate.getTimeStamp();
               }
 
               estate = *ptr;
-              Coordinates::toWGS84(*ptr, last_lat, last_lon);
+              last_lat = lat;
+              last_lon = lon;
             }
           }
         }
         else if (msg->getId() == DUNE_IMC_RPM)
         {
-          IMC::Rpm* ptr = dynamic_cast<IMC::Rpm*>(msg);
+          IMC::Rpm* ptr = static_cast<IMC::Rpm*>(msg);
           curr_rpm = ptr->value;
         }
         else if (msg->getId() == DUNE_IMC_SIMULATEDSTATE)
@@ -155,7 +190,7 @@ main(int32_t argc, char** argv)
         delete msg;
 
         // ignore idles
-        // either has the string _idle or has only 
+        // either has the string _idle or has only the time.
         if (log_name.find("_idle") != std::string::npos ||
             log_name.size() == 15)
         {
@@ -178,17 +213,59 @@ main(int32_t argc, char** argv)
       continue;
     }
 
-    std::cerr << "Travelled " << accum << " in " << log_name << "." << std::endl;
-
-    total_accum += accum;
+    if (distance > 0)
+    {
+      vehicles[sys_name].duration += duration;
+      vehicles[sys_name].distance += distance;
+      vehicles[sys_name].logs.push_back(Log(log_name, distance, duration));
+    }
   }
 
-  std::cerr << "Total travelled distance is " << total_accum << "m" << std::endl
-            << " or " << total_accum / 1000.0 << " km." << std::endl;
+  double total_distance = 0;
+  double total_duration = 0;
 
-  std::cerr << "Travelled for " << (unsigned)duration / 60 / 60 << "h"
-            << (unsigned)(duration / 60) % 60 << "m"
-            << (unsigned)duration % 60 << "s" << "." << std::endl;
+  std::map<std::string, Vehicle>::const_iterator itr = vehicles.begin();
+  for (; itr != vehicles.end(); ++itr)
+  {
+    std::cout << std::endl;
+    std::cout << "## " << itr->first << std::endl << std::endl;
+    std::cout << "* Distance travelled per plan (m):" << std::endl;
+
+    for (size_t i = 0; i < itr->second.logs.size(); ++i)
+    {
+      std::cout << " - "
+                << itr->second.logs[i].distance
+                << " in " << String::replace(itr->second.logs[i].name, '_', "\\_")
+                << "." << std::endl;
+    }
+
+    total_distance += itr->second.distance;
+    total_duration += itr->second.duration;
+
+    std::cout << std::endl
+              << "* Total travelled distance:" << std::endl
+              << " - "
+              << std::setprecision(4)
+              << std::fixed
+              << itr->second.distance / 1000.0 << " km / "
+              << (unsigned)itr->second.duration / 60 / 60 << " h "
+              << (unsigned)(itr->second.duration / 60) % 60 << " m "
+              << (unsigned)itr->second.duration % 60 << " s" << "." << std::endl;
+  }
+
+  if (vehicles.size() > 1)
+  {
+    std::cout << std::endl
+              << "## Summary" << std::endl
+              << " - Total distance: "
+              << std::setprecision(2)
+              << std::fixed
+              << total_distance / 1000.0 << " km" << std::endl
+              << " - Total duration: "
+              << (unsigned)total_duration / 60 / 60 << " h "
+              << (unsigned)(total_duration / 60) % 60 << " m "
+              << (unsigned)total_duration % 60 << " s" << std::endl;
+  }
 
   return 0;
 }

@@ -111,6 +111,9 @@ namespace DUNE
       //! Concurrency lock.
       Concurrency::Mutex m_mutex;
 
+      //! Handle unsolicited or asynchronous commands.
+      //! @param[in] str command string.
+      //! @return true if command was handled, false otherwise.
       virtual bool
       handleUnsolicited(const std::string& str)
       {
@@ -126,6 +129,11 @@ namespace DUNE
       sendReset(void)
       { }
 
+      //! Test if command is not complete (i.e. is a fragment). This
+      //! method is useful when the protocol allows mixing ASCII with
+      //! binary data.
+      //! @param[in] str command string.
+      //! @return true if command is a fragment, false otherwise.
       virtual bool
       isFragment(const std::string& str)
       {

@@ -36,6 +36,7 @@
 
 // DUNE headers.
 #include <DUNE/Math/Matrix.hpp>
+#include <DUNE/Tasks/Task.hpp>
 
 namespace DUNE
 {
@@ -70,7 +71,8 @@ namespace DUNE
       //! Constructor.
       //! Create a simulation model with null initial state.
       //! 3 DOF simulation.
-      UAVSimulation(void);
+      //! @param[in] task - filter parent task.
+      UAVSimulation(Tasks::Task& task);
 
       //! Constructor.
       //! Create a simulation model as a copy of another
@@ -81,121 +83,134 @@ namespace DUNE
       //! Create a simulation model with null initial state
       //! and the vehicle model parameters.
       //! 4 DOF simulation with altitude dynamics.
+      //! @param[in] task - filter parent task.
       //! @param[in] alt_time_cst - altitude time constant
-      UAVSimulation(const double& alt_time_cst);
+      UAVSimulation(Tasks::Task& task, const double& alt_time_cst);
 
       //! Constructor.
       //! Create a simulation model with null initial state
       //! and the vehicle model parameters.
       //! 4 DOF simulation with bank and speed dynamics.
+      //! @param[in] task - filter parent task.
       //! @param[in] bank_time_cst - bank angle time constant
       //! @param[in] speed_time_cst - airspeed time constant
-      UAVSimulation(const double& bank_time_cst, const double& speed_time_cst);
+      UAVSimulation(Tasks::Task& task, const double& bank_time_cst, const double& speed_time_cst);
 
       //! Constructor.
       //! Create a simulation model with null initial state
       //! and the vehicle model parameters.
       //! 5 DOF simulation with bank, speed, and altitude dynamics.
+      //! @param[in] task - filter parent task.
       //! @param[in] bank_time_cst - bank angle time constant
       //! @param[in] speed_time_cst - airspeed time constant
       //! @param[in] alt_time_cst - altitude time constant
-      UAVSimulation(const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst);
+      UAVSimulation(Tasks::Task& task, const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst);
 
       //! Constructor.
       //! Create a simulation model based on the initial velocity state.
       //! 3 DOF simulation.
+      //! @param[in] task - filter parent task.
       //! @param[in] vel - initial velocity vector
-      UAVSimulation(const DUNE::Math::Matrix& vel);
+      UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel);
 
       //! Constructor.
       //! Create a simulation model based on the initial velocity state
       //! and the vehicle model parameters.
       //! 4 DOF simulation with altitude dynamics.
+      //! @param[in] task - filter parent task.
       //! @param[in] vel - initial velocity vector
       //! @param[in] alt_time_cst - altitude time constant
-      UAVSimulation(const DUNE::Math::Matrix& vel, const double& alt_time_cst);
+      UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel, const double& alt_time_cst);
 
       //! Constructor.
       //! Create a simulation model based on the initial velocity state
       //! and the vehicle model parameters.
       //! 4 DOF simulation with bank and speed dynamics.
+      //! @param[in] task - filter parent task.
       //! @param[in] vel - initial velocity vector
       //! @param[in] bank_time_cst - bank angle time constant
       //! @param[in] speed_time_cst - airspeed time constant
-      UAVSimulation(const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst);
+      UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst);
 
       //! Constructor.
       //! Create a simulation model based on the initial velocity state
       //! and the vehicle model parameters.
       //! 5 DOF simulation with bank, speed, and altitude dynamics.
+      //! @param[in] task - filter parent task.
       //! @param[in] vel - initial velocity vector
       //! @param[in] bank_time_cst - bank angle time constant
       //! @param[in] speed_time_cst - airspeed time constant
       //! @param[in] alt_time_cst - altitude time constant
-      UAVSimulation(const DUNE::Math::Matrix& vel,
+      UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel,
           const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst);
 
       //! Constructor.
       //! Create a simulation model based on the initial velocity state,
       //! the vehicle model parameters, and initial commands.
       //! 4 DOF simulation with bank and speed dynamics.
+      //! @param[in] task - filter parent task.
       //! @param[in] vel - initial velocity vector
       //! @param[in] bank_time_cst - bank angle time constant
       //! @param[in] speed_time_cst - airspeed time constant
       //! @param[in] airspeed_cmd - applied airspeed command
       //! @param[in] bank_cmd - applied bank command
-      UAVSimulation(const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst,
+      UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst,
           const double& airspeed_cmd, const double& bank_cmd);
 
       //! Constructor.
       //! Create a simulation model based on the initial state.
       //! 3 DOF simulation.
+      //! @param[in] task - filter parent task.
       //! @param[in] pos - initial position vector
       //! @param[in] vel - initial velocity vector
-      UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel);
+      UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel);
 
       //! Constructor.
       //! Create a simulation model based on the initial state
       //! and the vehicle model parameters.
       //! 4 DOF simulation with altitude dynamics.
+      //! @param[in] task - filter parent task.
       //! @param[in] pos - initial position vector
       //! @param[in] vel - initial velocity vector
       //! @param[in] alt_time_cst - altitude time constant
-      UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel, const double& alt_time_cst);
+      UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel, const double& alt_time_cst);
 
       //! Constructor.
       //! Create a simulation model based on the initial state
       //! and the vehicle model parameters.
       //! 4 DOF simulation with bank and speed dynamics.
+      //! @param[in] task - filter parent task.
       //! @param[in] pos - initial position vector
       //! @param[in] vel - initial velocity vector
       //! @param[in] bank_time_cst - bank angle time constant
       //! @param[in] speed_time_cst - airspeed time constant
-      UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst);
+      UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst);
 
       //! Constructor.
       //! Create a simulation model based on the initial state
       //! and the vehicle model parameters.
       //! 5 DOF simulation with bank, speed, and altitude dynamics.
+      //! @param[in] task - filter parent task.
       //! @param[in] pos - initial position vector
       //! @param[in] vel - initial velocity vector
       //! @param[in] bank_time_cst - bank angle time constant
       //! @param[in] speed_time_cst - airspeed time constant
       //! @param[in] alt_time_cst - altitude time constant
-      UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
+      UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
           const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst);
 
       //! Constructor.
       //! Create a simulation model based on the initial state,
       //! the vehicle model parameters, and initial commands.
       //! 4 DOF simulation with bank and speed dynamics.
+      //! @param[in] task - filter parent task.
       //! @param[in] pos - initial position vector
       //! @param[in] vel - initial velocity vector
       //! @param[in] bank_time_cst - bank angle time constant
       //! @param[in] speed_time_cst - airspeed time constant
       //! @param[in] airspeed_cmd - applied airspeed command
       //! @param[in] bank_cmd - applied bank command
-      UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
+      UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
           const double& bank_time_cst, const double& speed_time_cst,
           const double& airspeed_cmd, const double& bank_cmd);
 
@@ -203,6 +218,7 @@ namespace DUNE
       //! Create a simulation model based on the initial state,
       //! the vehicle model parameters, and initial commands.
       //! 5 DOF simulation with bank, speed, and altitude dynamics.
+      //! @param[in] task - filter parent task.
       //! @param[in] pos - initial position vector
       //! @param[in] vel - initial velocity vector
       //! @param[in] bank_time_cst - bank angle time constant
@@ -211,9 +227,15 @@ namespace DUNE
       //! @param[in] airspeed_cmd - applied airspeed command
       //! @param[in] bank_cmd - applied bank command
       //! @param[in] altitude_cmd - applied altitude command
-      UAVSimulation(const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
+      UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
           const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst,
           const double& airspeed_cmd, const double& bank_cmd, const double& altitude_cmd);
+
+      //! This method assigns a UAVSimulation with another UAVSimulation.
+      //! @param[in] model reference to UAV simulation model to be assigned
+      //! @return reference to resultant UAV simulation model
+      UAVSimulation&
+      operator=(const UAVSimulation& model);
 
       //! This method resets all the vehicle model variables.
       void
@@ -231,7 +253,6 @@ namespace DUNE
       //! @return the updated state
       UAVSimulation
       update(const double& timestep, const double& bank_cmd);
-
 
       //! This method updates the simulated state with the defined time step and controls.
       //! @param[in] timestep - time step for the update
@@ -329,6 +350,21 @@ namespace DUNE
       double
       getAirspeed(void);
 
+      //! This method gets the vehicle bank command.
+      //! @returns bank command
+      double
+      getBankCmd(void);
+
+      //! This method gets the vehicle airspeed command.
+      //! @returns airspeed command
+      double
+      getAirspeedCmd(void);
+
+      //! This method gets the vehicle altitude command.
+      //! @returns altitude command
+      double
+      getAltCmd(void);
+
       //! This method sets the vehicle state.
       //! @param[in] pos - new position vector
       void
@@ -357,21 +393,45 @@ namespace DUNE
       void
       command(const double& bank_cmd, const double& airspeed_cmd, const double& altitude_cmd);
 
+      //! This method sets the vehicle bank command.
+      //! @param[in] bank_cmd - applied bank command
+      void
+      commandBank(const double& bank_cmd);
+
+      //! This method sets the vehicle airspeed command.
+      //! @param[in] airspeed_cmd - applied airspeed command
+      void
+      commandAirspeed(const double& airspeed_cmd);
+
+      //! This method sets the vehicle altitude command.
+      //! @param[in] altitude_cmd - applied altitude command
+      void
+      commandAlt(const double& altitude_cmd);
+
+      //! This method sets the vehicle flight path angle command.
+      //! @param[in] fpa_cmd - applied flight path angle command
+      void
+      commandFPA(const double& fpa_cmd);
+
+      //! This method sets the vehicle pitch command.
+      //! @param[in] pitch_cmd - applied pitch command
+      void
+      commandPitch(const double& pitch_cmd);
+
+      // Parent task.
+      Tasks::Task& m_task;
+
       //! Simulation type
       std::string m_sim_type;
-      //! Control commands
-      //! - Bank
-      double m_bank_cmd;
-      //! - Airspeed
-      double m_airspeed_cmd;
-      //! - Altitude
-      double m_altitude_cmd;
 
       //! Wind state vector
       DUNE::Math::Matrix m_wind;
-
       //! Gravity acceleration
       double m_g;
+
+      //! Time step control
+      //! - If negative, the time step limitation is disabled
+      double m_timestep_lim;
 
     private:
       //! Vehicle position
@@ -392,11 +452,6 @@ namespace DUNE
       //! - Altitude time constant
       double m_alt_time_cst;
       bool m_alt_time_cst_f;
-      //! Control commands initialization flags
-      //! - Airspeed
-      bool m_airspeed_cmd_ini;
-      //! - Altitude
-      bool m_altitude_cmd_ini;
       //! Vehicle operation limits and respective initialization flags
       //! - Bank rate
       double m_bank_rate_lim;
@@ -408,10 +463,32 @@ namespace DUNE
       double m_vert_slope_lim;
       bool m_vert_slope_lim_f;
 
+      //! Control commands
+      //! - Bank
+      double m_bank_cmd;
+      //! - Airspeed
+      double m_airspeed_cmd;
+      //! - Altitude
+      double m_altitude_cmd;
+      //! - Flight path angle
+      double m_fpa_cmd;
+      //! - Pitch
+      double m_pitch_cmd;
+      //! Control commands initialization flags
+      //! - Airspeed
+      bool m_airspeed_cmd_ini;
+      //! - Altitude
+      bool m_altitude_cmd_ini;
+      //! - Flight path angle
+      bool m_fpa_cmd_ini;
+      //! - Pitch
+      bool m_pitch_cmd_ini;
+
       //! Airstream data
       double m_airspeed;
       double m_ang_attack;
       double m_sideslip;
+
       //! Simulation optimization variables
       double m_cos_yaw;
       double m_sin_yaw;

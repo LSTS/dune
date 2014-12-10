@@ -57,8 +57,8 @@
 
 //! DUNE was compiled with Piccolo avionics support.
 #cmakedefine DUNE_USING_PICCOLO
-//! DUNE was compiled with GUI.
-#cmakedefine DUNE_USING_GUI
+//! DUNE was compiled with Qt5.
+#cmakedefine DUNE_USING_QT5
 //! DUNE was compiled with TLSF.
 #cmakedefine DUNE_USING_TLSF
 //! DUNE was compiled with JPEG library.
@@ -96,11 +96,17 @@
 #cmakedefine DUNE_OS_OPENBSD
 //! Defined on BSD variants.
 #cmakedefine DUNE_OS_BSD
+//! Defined on Android.
+#cmakedefine DUNE_OS_ANDROID
 //! Defined on POSIX compliant systems.
 #cmakedefine DUNE_OS_POSIX
 
 //! Defined when using uClibc.
 #cmakedefine DUNE_CLIB_UC
+//! LLVM libc++
+#cmakedefine DUNE_CLIB_LIBCXX
+//! Android/Bionic.
+#cmakedefine DUNE_CLIB_BIONIC
 //! Defined when using the GNU C Library.
 #cmakedefine DUNE_CLIB_GNU
 //! Defined when using Newlib.
@@ -117,8 +123,6 @@
 #cmakedefine DUNE_CLIB_DINKUM
 //! Defined when using the BSD Library.
 #cmakedefine DUNE_CLIB_BSD
-//! Defined when using the LLVM libc++ Library.
-#cmakedefine DUNE_CLIB_LIBCPP
 //! Defined when using an unknown C Library.
 #cmakedefine DUNE_CLIB_UNKNOWN
 

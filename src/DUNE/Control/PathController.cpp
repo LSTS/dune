@@ -44,8 +44,6 @@ namespace DUNE
 {
   namespace Control
   {
-    //! Timeout for new incoming path reference
-    static const double c_new_ref_timeout = 5;
     //! Loiter size factor to compute if inside the circle
     static const double c_lsize_factor = 0.75;
     //! Distance tolerance to loiter's center
@@ -54,9 +52,12 @@ namespace DUNE
     static const double c_lkeep_distance = 30.0;
     //! Maximum admissible time for disabling monitors due to navigation jump
     static const float c_max_jump_time = 100.0;
+    //! Depth margin when limiting depth in bottom tracker
+    static const float c_depth_margin = 1.0;
 
     PathController::PathController(std::string name, Tasks::Context& ctx):
       Task(name, ctx),
+      m_bt_entity(NULL),
       m_running_monitors(true),
       m_error(false),
       m_setup(true),
@@ -134,6 +135,13 @@ namespace DUNE
       .units(Units::MeterPerSecond)
       .description("ETA minimum admissible speed");
 
+      param("New Reference Timeout", m_new_ref_timeout)
+      .defaultValue("5")
+      .minimumValue("3")
+      .maximumValue("10")
+      .units(Units::Second)
+      .description("Timeout for new incoming path reference");
+
       param("Bottom Track -- Enabled", m_btd.enabled)
       .defaultValue("false")
       .description("Enable or disable bottom track control");
@@ -172,11 +180,6 @@ namespace DUNE
       .units(Units::Meter)
       .description("Depth tolerance below which altitude is ignored");
 
-      param("Bottom Track -- Depth Limit", m_btd.args.depth_limit)
-      .defaultValue("48.0")
-      .units(Units::Meter)
-      .description("Depth limit for bottom tracking");
-
       param("Bottom Track -- Check Trend", m_btd.args.check_trend)
       .defaultValue("true")
       .description("Check slope angle trend in unsafe state");
@@ -194,6 +197,11 @@ namespace DUNE
       .defaultValue("3.0")
       .units(Units::Meter)
       .description("Admissible altitude when doing depth control");
+
+      m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
+      m_btd.args.depth_limit -= c_depth_margin;
+
+      m_ctx.config.get("General", "Time Of Arrival Factor", "5.0", m_time_factor);
 
       bind<IMC::Brake>(this);
       bind<IMC::ControlLoops>(this);
@@ -275,8 +283,13 @@ namespace DUNE
     void
     PathController::onEntityReservation(void)
     {
-      if (m_btd.enabled)
-        m_btd.args.eid = reserveEntity("Bottom Track");
+      m_bt_entity = reserveEntity<DUNE::Entities::BasicEntity>("Bottom Track");
+      m_btd.args.entity = m_bt_entity;
+    }
+
+    void
+    PathController::onEntityResolution(void)
+    {
     }
 
     void
@@ -299,6 +312,7 @@ namespace DUNE
 
       double now = Clock::get();
       m_pcs.flags = 0;
+      m_pcs.path_ref = dpath->path_ref;
       bool no_start = false;
 
       if (dpath->flags & IMC::DesiredPath::FL_START)
@@ -544,6 +558,10 @@ namespace DUNE
     void
     PathController::consume(const IMC::EstimatedState* es)
     {
+      // Allow only EstimatedState from the same vehicle.
+      if (es->getSource() != getSystemId())
+        return;
+
       if (m_btd.enabled)
       {
         try
@@ -642,7 +660,7 @@ namespace DUNE
       m_ts.delta = now - m_ts.now;
       m_ts.now = now;
 
-      if (m_ts.nearby && m_ts.now - m_ts.end_time >= c_new_ref_timeout)
+      if (m_ts.nearby && m_ts.now - m_ts.end_time >= m_new_ref_timeout)
       {
         signalError(DTR("expected new path control reference"));
         return;
@@ -724,12 +742,12 @@ namespace DUNE
         float erry = std::abs(m_ts.track_pos.y);
         float s = std::max((double)m_eta_min_speed, m_ts.speed);
 
-        if (errx <= erry && erry < c_erry_factor * c_time_factor * s)
+        if (errx <= erry && erry < c_erry_factor * m_time_factor * s)
           m_ts.eta = errx / s;
         else
           m_ts.eta = Math::norm(errx, erry) / s;
 
-        m_ts.eta = std::min(65535.0, m_ts.eta - c_time_factor);
+        m_ts.eta = std::min(65535.0, m_ts.eta - m_time_factor);
 
         bool was_nearby = m_ts.nearby;
 

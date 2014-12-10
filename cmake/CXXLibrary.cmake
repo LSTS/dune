@@ -36,8 +36,8 @@ macro(dune_probe_cxx_lib)
     check_cxx_source_compiles("#include <cstddef>\n int main(void) { return _LIBCPP_VERSION; }" LLVM_LIBC)
     if(LLVM_LIBC)
       set(DUNE_CLIB_NAME "libc++")
-      set(DUNE_CLIB_CANONICAL "libcpp")
-      set(DUNE_CLIB_LIBCPP 1)
+      set(DUNE_CLIB_CANONICAL "libcxx")
+      set(DUNE_CLIB_LIBCXX 1)
     endif(LLVM_LIBC)
   endif(NOT DUNE_CLIB_NAME)
 
@@ -49,6 +49,16 @@ macro(dune_probe_cxx_lib)
       set(DUNE_CLIB_CANONICAL "uclibc")
       set(DUNE_CLIB_UC 1)
     endif(UC_LIBC)
+  endif(NOT DUNE_CLIB_NAME)
+
+  # Bionic/Android C library.
+  if(NOT DUNE_CLIB_NAME)
+    check_symbol_exists(__BIONIC__ stdio.h BIONIC_LIBC)
+    if(BIONIC_LIBC)
+      set(DUNE_CLIB_NAME "bionic")
+      set(DUNE_CLIB_CANONICAL "bionic")
+      set(DUNE_CLIB_BIONIC 1)
+    endif(BIONIC_LIBC)
   endif(NOT DUNE_CLIB_NAME)
 
   # GNU C library

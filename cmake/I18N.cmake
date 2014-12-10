@@ -53,6 +53,8 @@ if(DUNE_PROGRAM_XGETTEXT)
   file(GLOB_RECURSE sources "${PROJECT_SOURCE_DIR}/src/*.cpp")
   file(GLOB_RECURSE private_headers "${PROJECT_SOURCE_DIR}/private/src/*.hpp")
   file(GLOB_RECURSE private_sources "${PROJECT_SOURCE_DIR}/private/src/*.cpp")
+  file(GLOB_RECURSE user_headers "${PROJECT_SOURCE_DIR}/user/src/*.hpp")
+  file(GLOB_RECURSE user_sources "${PROJECT_SOURCE_DIR}/user/src/*.cpp")
   file(GLOB_RECURSE texts   "${PROJECT_SOURCE_DIR}/i18n/*.txt")
 
   add_custom_target(i18n_extract
@@ -67,8 +69,7 @@ if(DUNE_PROGRAM_XGETTEXT)
     --keyword=DTR
     --keyword=DTR_RT
     --no-wrap
-    --indent
-    -o dune.pot ${headers} ${sources} ${private_headers} ${private_sources} ${texts}
+    -o dune.pot ${headers} ${sources} ${private_headers} ${private_sources} ${user_headers} ${user_sources} ${texts}
     DEPENDS i18n_texts
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/i18n)
 endif(DUNE_PROGRAM_XGETTEXT)
@@ -83,7 +84,6 @@ if(DUNE_PROGRAM_MSGMERGE)
     add_custom_target(i18n_update_${locale_name}
       msgmerge
       --quiet
-      --indent
       --no-wrap
       --update
       --backup=off

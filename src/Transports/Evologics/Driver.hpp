@@ -53,9 +53,12 @@ namespace Transports
       "DELIVEREDIM",
       "FAILEDIM",
       "CANCELEDIM",
+      "RECVIMS",
       "RECVIM",
       "USBLLONG",
       "USBLANGLES",
+      "USBLPHYD",
+      "USBLPHYP",
       "BITRATE",
       "SRCLEVEL",
       "PHYON",
@@ -178,6 +181,15 @@ namespace Transports
         expectOK();
       }
 
+      //! Set highest address.
+      //! @param[in] value highest address.
+      void
+      setHighestAddress(unsigned value)
+      {
+        sendAT(String::str("!AM%u", value));
+        expectOK();
+      }
+
       //! Send instant message.
       //! @param[in] data data to send.
       //! @param[in] data_size number of bytes to send.
@@ -259,6 +271,53 @@ namespace Transports
         return value;
       }
 
+      //! Retrieve a table illustrating the structure of the last
+      //! received acoustic signal’s multipath propagation from its
+      //! source to the local device.
+      //! @return multipath structure.
+      std::vector<unsigned>
+      getMultipathStructure(void)
+      {
+        std::vector<unsigned> mp;
+        mp.resize(16, 0);
+
+        sendAT("?P");
+        std::string str = readLine();
+        std::istringstream ss(str);
+        for (unsigned i = 0; i < 16; ++i)
+        {
+          ss >> mp[i];
+          if (ss.fail())
+            throw Hardware::InvalidFormat(str);
+        }
+
+        return mp;
+      }
+
+      void
+      switchToNoiseState(void)
+      {
+        sendAT("N");
+        std::string rv = readLine();
+        if (rv != "INITIATION NOISE")
+          throw UnexpectedReply("INITIATION NOISE", rv);
+      }
+
+      void
+      switchToListenState(void)
+      {
+        sendAT("A");
+        std::string rv = readLine();
+        if (rv != "INITIATION LISTEN")
+          throw UnexpectedReply("INITIATION LISTEN", rv);
+      }
+
+      void
+      getRSSI(void)
+      {
+
+      }
+
       void
       parse(const std::string& str, RecvIM& msg)
       {
@@ -300,13 +359,32 @@ namespace Transports
     private:
       //! Firmware version.
       std::string m_version;
+      //! Physical layer protocol version.
+      std::string m_phy_ptl_version;
+      //! Data-link layer protocol version.
+      std::string m_mac_ptl_version;
 
       void
       sendInitialization(void)
       {
+        // Get firmware version.
         sendAT("I0");
         m_version = readLine();
-        getTask()->debug("firmware version: %s", m_version.c_str());
+
+        // Get PHY and MAC versions.
+        char phy[64] = {0};
+        char mac[64] = {0};
+
+        sendAT("I1");
+        std::string str = readLine();
+        if (std::sscanf(str.c_str(), "phy:%*[^0]%[^,], mac:%*[^v]v%s", phy, mac) != 2)
+          throw Hardware::InvalidFormat(str);
+        m_phy_ptl_version = phy;
+        m_mac_ptl_version = mac;
+
+        getTask()->debug("firmware version: %s (MAC: %s, PHY: %s)", m_version.c_str(),
+                         m_mac_ptl_version.c_str(),
+                         m_phy_ptl_version.c_str());
       }
 
       int
@@ -338,6 +416,10 @@ namespace Transports
             last_comma = getCommaIndex(str, 10);
           else
             last_comma = getCommaIndex(str, 9);
+        }
+        else if (std::sscanf(str.c_str(), "RECVIMS,%u", &length) == 1)
+        {
+          last_comma = getCommaIndex(str, 9);
         }
         else
         {
@@ -381,8 +463,6 @@ namespace Transports
       expectOK(void)
       {
         std::string rv = readLine();
-        getTask()->inf("readline is %s", sanitize(rv).c_str());
-
         if ((rv != "OK") && (rv != "[*]OK"))
           throw UnexpectedReply("OK", rv);
       }

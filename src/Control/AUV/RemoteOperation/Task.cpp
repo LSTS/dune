@@ -83,6 +83,8 @@ namespace Control
           m_hrate(0),
           m_thrust(0),
           m_acceleration(0),
+          m_verfin(0),
+          m_horfin(0),
           m_torque_control(false),
           m_analog_thrust(false)
         {
@@ -152,7 +154,9 @@ namespace Control
           }
 
           m_args.max_thrust = Math::trimValue(m_args.max_thrust, 0.0, 1.0);
-          m_last_estate.setTop(m_args.estate_tout);
+
+          if (paramChanged(m_args.estate_tout))
+            m_last_estate.setTop(m_args.estate_tout);
         }
 
         void
@@ -247,7 +251,9 @@ namespace Control
         void
         consume(const IMC::EstimatedState* msg)
         {
-          (void)msg;
+          if (msg->getSource() != getSystemId())
+            return;
+
           m_last_estate.reset();
         }
 

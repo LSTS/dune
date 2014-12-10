@@ -40,6 +40,16 @@
 // DUNE headers.
 #include <DUNE/Config.hpp>
 
+// C99/POSIX headers.
+#if defined(DUNE_SYS_HAS_MATH_H)
+#  include <math.h>
+#endif
+
+// Microsoft Windows headers.
+#if defined(DUNE_SYS_HAS_FLOAT_H)
+#  include <float.h>
+#endif
+
 namespace DUNE
 {
   namespace Math
@@ -383,6 +393,24 @@ namespace DUNE
         a = aux;
       }
       return a;
+    }
+
+    //! Test if a floating point variable holds a value that is not a
+    //! number.
+    //! @return true if variable is not a number, false otherwise.
+    template <typename T> bool
+    isNaN(const T& var)
+    {
+#if defined(DUNE_SYS_HAS_ISNAN_CXX)
+      return std::isnan(var) != 0;
+
+#elif defined(DUNE_SYS_HAS_ISNAN_POSIX)
+      return isnan(var) != 0;
+
+#elif defined(DUNE_SYS_HAS__ISNAN)
+      return _isnan(var) != 0;
+
+#endif
     }
   }
 }

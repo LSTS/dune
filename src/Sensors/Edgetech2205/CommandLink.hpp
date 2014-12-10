@@ -28,6 +28,9 @@
 #ifndef SENSORS_EDGETECH_2205_COMMAND_LINK_HPP_INCLUDED_
 #define SENSORS_EDGETECH_2205_COMMAND_LINK_HPP_INCLUDED_
 
+// ISO C++ 98 headers.
+#include <limits>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -43,8 +46,9 @@ namespace Sensors
     class CommandLink
     {
     public:
-      CommandLink(const Address& addr, unsigned port):
-        m_avg_time_diff(0)
+      CommandLink(Tasks::Task* parent, const Address& addr, unsigned port):
+        m_parent(parent),
+        m_time_delta(0)
       {
         m_sock.setNoDelay(true);
         setSocketTimeout(1.0);
@@ -61,38 +65,6 @@ namespace Sensors
       {
         m_sock.setSendTimeout(value);
         m_sock.setReceiveTimeout(value);
-      }
-
-      int64_t
-      getTimeDifference(void)
-      {
-        m_pkt.setMessageType(MSG_ID_SYSTEM_TIME);
-        m_pkt.setSubsystemNumber(0);
-        m_pkt.setChannel(0);
-        m_pkt.setCommandType(COMMAND_TYPE_GET);
-        m_pkt.setMessageSize(0);
-
-        int64_t send_time = Clock::getSinceEpochMsec();
-        sendPacket(m_pkt);
-
-        const Packet* reply = read(MSG_ID_SYSTEM_TIME, COMMAND_TYPE_REPLY, 0, 0, 1.0);
-        if (reply == NULL)
-          throw std::runtime_error(DTR("failed to get time"));
-
-        int64_t recv_time = Clock::getSinceEpochMsec();
-        int64_t rtt = static_cast<int64_t>((recv_time - send_time) / 2.0);
-
-        const uint8_t* data = reply->getMessageData();
-        uint32_t sec = 0;
-        ByteCopy::fromLE(sec, data);
-        uint32_t msec = 0;
-        ByteCopy::fromLE(msec, data + 4);
-
-        int64_t remote_time = sec;
-        remote_time *= 1000;
-        remote_time += msec;
-
-        return (remote_time - (send_time + rtt));
       }
 
       void
@@ -209,6 +181,92 @@ namespace Sensors
       }
 
       void
+      dispatchDebugData(const std::string& text)
+      {
+        if (m_parent->getDebugLevel() < DEBUG_LEVEL_DEBUG)
+          return;
+
+        IMC::DevDataText msg;
+        msg.value = text;
+        m_parent->dispatch(msg);
+      }
+
+      //! Estimate time difference between local CPU and sidescan CPU.
+      //! @return time difference from previous estimate.
+      int64_t
+      estimateTimeDelta(unsigned max_latency)
+      {
+        int64_t local_time = 0;
+
+        // Request sidescan time.
+        m_pkt.setMessageType(MSG_ID_SYSTEM_TIME);
+        m_pkt.setSubsystemNumber(0);
+        m_pkt.setChannel(0);
+        m_pkt.setCommandType(COMMAND_TYPE_GET);
+        local_time = Clock::getSinceEpochMsec();
+        sendPacket(m_pkt);
+
+        // Wait for reply.
+        const Packet* reply = read(MSG_ID_SYSTEM_TIME, COMMAND_TYPE_REPLY, 0, 0, 1.0);
+        if (reply == NULL)
+        {
+          m_parent->debug("no reply to system time request");
+          return std::numeric_limits<long int>::max();
+        }
+
+        // Convert to milliseconds since epoch.
+        uint32_t secs = 0;
+        reply->get<uint32_t>(secs, 0);
+        uint32_t msecs = 0;
+        reply->get<uint32_t>(msecs, 4);
+
+        int64_t ss_time = secs;
+        ss_time *= 1000;
+        ss_time += msecs % 1000;
+
+        // Compute network latency.
+        int64_t latency = (reply->getTimeStamp() - local_time) / 2;
+        if (latency > max_latency)
+        {
+          dispatchDebugData(String::str("latency = %lld, exceeds %u",
+                                        latency,
+                                        max_latency));
+          return std::numeric_limits<long int>::max();
+        }
+
+        int64_t time_delta = local_time - ss_time - latency;
+        if (m_time_delta == 0)
+        {
+          m_time_delta = time_delta;
+
+          dispatchDebugData(String::str("latency = %lld, initial delta = %lld",
+                                        latency,
+                                        m_time_delta));
+          return std::numeric_limits<long int>::max();
+        }
+
+        int64_t delta_diff = m_time_delta - time_delta;
+        if (delta_diff < 0)
+          delta_diff *= -1;
+
+        m_time_delta += time_delta;
+        m_time_delta /= 2;
+
+        dispatchDebugData(String::str("latency = %lld, delta = %lld : %lld",
+                                      latency,
+                                      delta_diff,
+                                      m_time_delta));
+
+        return delta_diff;
+      }
+
+      int64_t
+      getEstimatedTimeDelta(void)
+      {
+        return m_time_delta;
+      }
+
+      void
       shutdown(void)
       {
         m_pkt.setMessageType(MSG_ID_SYSTEM_SHUTDOWN);
@@ -219,22 +277,13 @@ namespace Sensors
         sendPacket(m_pkt);
       }
 
-      int64_t
-      estimateTimeDifference(void)
-      {
-        int64_t delta = 0;
-
-        for (unsigned i = 0; i < c_time_diff_sample_count; ++i)
-          delta += getTimeDifference();
-
-        return delta / c_time_diff_sample_count;
-      }
-
     private:
       //! Maximum packet size.
       static const unsigned c_max_size = 4096;
       //! Time difference estimation: samples per average.
       static const unsigned c_time_diff_sample_count = 10;
+      //! Parent task.
+      Tasks::Task* m_parent;
       //! TCP socket.
       TCPSocket m_sock;
       //! I/O multiplexer.
@@ -245,8 +294,8 @@ namespace Sensors
       Packet m_pkt;
       //! Read buffer.
       std::vector<uint8_t> m_bfr;
-      //! Average time difference between CPU and sidescan.
-      int64_t m_avg_time_diff;
+      //! Time delta.
+      int64_t m_time_delta;
 
       void
       sendPacket(const Packet& pkt)

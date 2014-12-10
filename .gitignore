@@ -3,5 +3,8 @@
 */__pycache__
 private/
 *~
+\#*
+.\#*
 *.mo
 CMakeLists.txt.user
+user/

@@ -63,6 +63,61 @@ namespace DUNE
       //! @return task name.
       virtual const char*
       getName(void) const = 0;
+
+      //! Send an human-readable informational message to all
+      //! configured output channels and files.
+      //! @param format string format (similar to printf(3)).
+      //! @param ... arguments.
+      virtual void
+      inf(const char* format, ...) DUNE_PRINTF_FORMAT(2, 3) = 0;
+
+      //! Send an human-readable warning message to all
+      //! configured output channels and files.
+      //! @param format string format (similar to printf(3)).
+      //! @param ... arguments.
+      virtual void
+      war(const char* format, ...) DUNE_PRINTF_FORMAT(2, 3) = 0;
+
+      //! Send an human-readable error message to all
+      //! configured output channels and files.
+      //! @param format string format (similar to printf(3)).
+      //! @param ... arguments.
+      virtual void
+      err(const char* format, ...) DUNE_PRINTF_FORMAT(2, 3) = 0;
+
+      //! Send an human-readable critical error message to all
+      //! configured output channels and files.
+      //! @param format string format (similar to printf(3)).
+      //! @param ... arguments.
+      virtual void
+      cri(const char* format, ...) DUNE_PRINTF_FORMAT(2, 3) = 0;
+
+      //! Send an human-readable debug message to all configured
+      //! output channels and files. The message will only be
+      //! processed if the configured log level is DEBUG_LEVEL_DEBUG
+      //! or greater.
+      //! @param format string format (similar to printf(3)).
+      //! @param ... arguments.
+      virtual void
+      debug(const char* format, ...) DUNE_PRINTF_FORMAT(2, 3) = 0;
+
+      //! Send a verbose or frequent human-readable debug message to
+      //! all configured output channels and files. The message will
+      //! only be processed if the configured log level is
+      //! DEBUG_LEVEL_TRACE or greater.
+      //! @param format string format (similar to printf(3)).
+      //! @param ... arguments.
+      virtual void
+      trace(const char* format, ...) DUNE_PRINTF_FORMAT(2, 3) = 0;
+
+      //! Send a very verbose or frequent human-readable debug message
+      //! to all configured output channels and files. The message
+      //! will only be processed if the configured log level is
+      //! DEBUG_LEVEL_SPEW.
+      //! @param format string format (similar to printf(3)).
+      //! @param ... arguments.
+      virtual void
+      spew(const char* format, ...) DUNE_PRINTF_FORMAT(2, 3) = 0;
     };
   }
 }

@@ -223,7 +223,7 @@ int WMM_CalculateSecularVariation(WMMtype_MagneticResults MagneticVariation, WMM
 	MagneticElements->Xdot = MagneticVariation.Bx;
 	MagneticElements->Ydot = MagneticVariation.By;
 	MagneticElements->Zdot = MagneticVariation.Bz;
-	MagneticElements->Hdot = (MagneticElements->X * MagneticElements->Xdot + MagneticElements->Y * MagneticElements->Ydot) / MagneticElements->H; //See equation 19 in the WMM technical report
+	MagneticElements->Hdot = (MagneticElements->X * MagneticElements->Xdot + MagneticElements->Y * MagneticElements->Ydot) / MagneticElements->H; /* See equation 19 in the WMM technical report */
 	MagneticElements->Fdot = (MagneticElements->X * MagneticElements->Xdot + MagneticElements->Y * MagneticElements->Ydot + MagneticElements->Z * MagneticElements->Zdot) / MagneticElements->F;
 	MagneticElements->Decldot = 180.0 / M_PI * (MagneticElements->X * MagneticElements->Ydot - MagneticElements->Y * MagneticElements->Xdot) / (MagneticElements->H * MagneticElements->H);
 	MagneticElements->Incldot = 180.0 / M_PI * (MagneticElements->H * MagneticElements->Zdot - MagneticElements->Z * MagneticElements->Hdot) / (MagneticElements->F * MagneticElements->F);
@@ -312,63 +312,6 @@ int WMM_ComputeSphericalHarmonicVariables(	 WMMtype_Ellipsoid  Ellip, WMMtype_Co
 	return TRUE;
 	}  /*WMM_ComputeSphericalHarmonicVariables*/
 
-
-int WMM_DateToYear (WMMtype_Date *CalendarDate, char *Error)
-
-	/* Converts a given calendar date into a decimal year,
-	it also outputs an error string if there is a problem
-	INPUT  CalendarDate  Pointer to the  data  structure with the following elements
-				int	Year;
-				int	Month;
-				int	Day;
-				double DecimalYear;      decimal years
-	OUTPUT  CalendarDate  Pointer to the  data  structure with the following elements updated
-				double DecimalYear;      decimal years
-			Error	pointer to an error string
-	CALLS : none
-
-	*/
-
-	{
-	int temp = 0; /*Total number of days */
-	int MonthDays[13];
-	int ExtraDay = 0;
-	int i;
-	if((CalendarDate->Year%4 == 0 && CalendarDate->Year%100 != 0) || CalendarDate->Year%400 == 0)
-		ExtraDay = 1;
-	MonthDays[0] = 0;
-	MonthDays[1] = 31;
-	MonthDays[2] = 28 + ExtraDay;
-	MonthDays[3] = 31;
-	MonthDays[4] = 30;
-	MonthDays[5] = 31;
-	MonthDays[6] = 30;
-	MonthDays[7] = 31;
-	MonthDays[8] = 31;
-	MonthDays[9] = 30;
-	MonthDays[10] = 31;
-	MonthDays[11] = 30;
-	MonthDays[12] = 31;
-
-	/******************Validation********************************/
-	if(CalendarDate->Month <= 0 || CalendarDate->Month > 12)
-	{
-		strcpy(Error, "\nError: The Month entered is invalid, valid months are '1 to 12'\n");
-		return 0;
-	}
-	if(CalendarDate->Day <= 0 || CalendarDate->Day > MonthDays[CalendarDate->Month])
-	{
-		printf("\nThe number of days in month %d is %d\n", CalendarDate->Month, MonthDays[CalendarDate->Month]);
-		strcpy(Error, "\nError: The day entered is invalid\n");
-		return 0;
-	}
-	/****************Calculation of t***************************/
-	for(i = 1; i <= CalendarDate->Month; i++)
-		temp+=MonthDays[i-1];
-	temp+=CalendarDate->Day;
-	CalendarDate->DecimalYear = CalendarDate->Year + (temp-1)/(365.0 + ExtraDay);
-	return TRUE;
-}  /*WMM_DateToYear*/
 
 void WMM_DegreeToDMSstring (double DegreesOfArc, int UnitDepth, char *DMSstring)
 
@@ -799,7 +742,6 @@ int WMM_InitializeGeoid(const char *filename, WMMtype_Geoid *Geoid)
 	Geoid->GeoidHeightBuffer = ( float *) malloc ( (Geoid->NumbGeoidElevs + 1) * sizeof(float) );
 	if (!Geoid->GeoidHeightBuffer){
 								WMM_Error(3);
-								//   printf("error allocating in WMM_InitializeGeoid\n");
 								return (FALSE);
 							}
 
@@ -814,7 +756,6 @@ int WMM_InitializeGeoid(const char *filename, WMMtype_Geoid *Geoid)
   if (( GeoidHeightFile = fopen( filename , "rb" ) ) == NULL)
   {
 	WMM_Error(16);
-	//printf("Error in opening EGM9615.BIN file\n");
 	return (FALSE);
   }
 
@@ -824,7 +765,6 @@ int WMM_InitializeGeoid(const char *filename, WMMtype_Geoid *Geoid)
   {
 
 	WMM_Error(3);
-	//printf("Error in Geoid initilazation\n");
 	return ( FALSE );
 
   }
@@ -883,7 +823,6 @@ int WMM_GetGeoidHeight (double Latitude,
   if (!Geoid->Geoid_Initialized)
   {
 	WMM_Error(5);
-	//printf("Geoid not initialized\n");
 	return (FALSE);
   }
   if ((Latitude < -90) || (Latitude > 90))
@@ -941,7 +880,6 @@ int WMM_GetGeoidHeight (double Latitude,
   else
   {
 	WMM_Error(17);
-	//printf("Latitude OR Longitude out of range in WMM_GetGeoidHeight\n");
   return (FALSE);
   }
   return TRUE;
@@ -964,7 +902,7 @@ int WMM_ConvertGeoidToEllipsoidHeight (WMMtype_CoordGeodetic *CoordGeodetic, WMM
 
  */
 {
-  double  DeltaHeight;
+  double  DeltaHeight = 0;
   int Error_Code;
 
   if (Geoid->UseGeoid == 1) {      /* Geoid correction required */
@@ -979,227 +917,6 @@ int WMM_ConvertGeoidToEllipsoidHeight (WMMtype_CoordGeodetic *CoordGeodetic, WMM
     }
   return ( Error_Code );
 } /* WMM_ConvertGeoidToEllipsoidHeight*/
-
-int WMM_Grid(WMMtype_CoordGeodetic minimum, WMMtype_CoordGeodetic maximum, double
-cord_step_size, double altitude_step_size, double time_step, WMMtype_MagneticModel *MagneticModel, WMMtype_Geoid
-*Geoid, WMMtype_Ellipsoid Ellip, WMMtype_Date StartDate, WMMtype_Date EndDate, int ElementOption, int PrintOption, char *OutputFile)
-
-	/*This function calls WMM subroutines to generate a grid as defined by the user. The function may be used
-	to generate a grid of magnetic field elements, time series or a profile. The selected geomagnetic element
-	is either printed to the file GridResults.txt or to the screen depending on user option.
-
-
-	INPUT: minimum :Data structure with the following elements (minimum limits of the grid)
-					double lambda; (longitude)
-					double phi; ( geodetic latitude)
-					double HeightAboveEllipsoid; (height above the ellipsoid (HaE) )
-					double HeightAboveGeoid;(height above the Geoid )
-			maximum : same as the above (maximum limist of the grid)
-			step_size  : double  : spatial step size, in decimal degrees
-			a_step_size : double  :  double altitude step size (km)
-			step_time : double  : time step size (decimal years)
-			StartDate :  data structure with the following elements used
-						double DecimalYear;     ( decimal years )
-			EndDate :	Same as the above;
-			MagneticModel :	 data structure with the following elements
-				double EditionDate;
-				double epoch;       Base time of Geomagnetic model epoch (yrs)
-				char  ModelName[20];
-				double *Main_Field_Coeff_G;          C - Gauss coefficients of main geomagnetic model (nT)
-				double *Main_Field_Coeff_H;          C - Gauss coefficients of main geomagnetic model (nT)
-				double *Secular_Var_Coeff_G;  CD - Gauss coefficients of secular geomagnetic model (nT/yr)
-				double *Secular_Var_Coeff_H;  CD - Gauss coefficients of secular geomagnetic model (nT/yr)
-				int nMax;  Maximum degree of spherical harmonic model
-				int nMaxSecVar; Maxumum degree of spherical harmonic secular model
-				int SecularVariationUsed; Whether or not the magnetic secular variation vector will be needed by program
-			Geoid :  data structure with the following elements
-                Pointer to data structure Geoid with the following elements
-				int NumbGeoidCols ;   ( 360 degrees of longitude at 15 minute spacing )
-				int NumbGeoidRows ;   ( 180 degrees of latitude  at 15 minute spacing )
-				int NumbHeaderItems ;    ( min, max lat, min, max long, lat, long spacing )
-				int	ScaleFactor;    ( 4 grid cells per degree at 15 minute spacing  )
-				float *GeoidHeightBuffer;   (Pointer to the memory to store the Geoid elevation data )
-				int NumbGeoidElevs;    (number of points in the gridded file )
-				int  Geoid_Initialized ;  ( indicates successful initialization )
-           Ellip  data  structure with the following elements
-				double a; semi-major axis of the ellipsoid
-				double b; semi-minor axis of the ellipsoid
-				double fla;  flattening
-				double epssq; first eccentricity squared
-				double eps;  first eccentricity
-				double re; mean radius of  ellipsoid
-		  ElementOption : int : Geomagnetic Elelment to print
-		  PrintOption : int : 1 Print to File, Otherwise, print to screen
-
-	   OUTPUT: none (prints the output to a file )
-
-	   CALLS : WMM_AllocateModelMemory To allocate memory for model coefficients
-              WMM_TimelyModifyMagneticModel This modifies the Magnetic coefficients to the correct date.
-			  WMM_ConvertGeoidToEllipsoidHeight (&CoordGeodetic, &Geoid);   Convert height above msl to height above WGS-84 ellipsoid
-			  WMM_GeodeticToSpherical Convert from geodeitic to Spherical Equations: 7-8, WMM Technical report
-			  WMM_ComputeSphericalHarmonicVariables Compute Spherical Harmonic variables
-			  WMM_AssociatedLegendreFunction Compute ALF  Equations 5-6, WMM Technical report
-			  WMM_Summation Accumulate the spherical harmonic coefficients Equations 10:12 , WMM Technical report
-			  WMM_RotateMagneticVector Map the computed Magnetic fields to Geodeitic coordinates Equation 16 , WMM Technical report
-			  WMM_CalculateGeoMagneticElements Calculate the geoMagnetic elements, Equation 18 , WMM Technical report
-
-	*/
-
-
-{
-	int NumTerms;
-	double a, b, c, d, PrintElement;
-
-	WMMtype_MagneticModel *TimedMagneticModel;
-	WMMtype_CoordSpherical CoordSpherical;
-	WMMtype_MagneticResults MagneticResultsSph, MagneticResultsGeo, MagneticResultsSphVar, MagneticResultsGeoVar;
-	WMMtype_SphericalHarmonicVariables SphVariables;
-	WMMtype_GeoMagneticElements GeoMagneticElements = {0};
-	WMMtype_LegendreFunction *LegendreFunction;
-
-	FILE *fileout = NULL;
-
-	if (PrintOption == 1) {
-						fileout = fopen(OutputFile, "w");
-							}
-	if (!fileout)
-	{
-		printf("Error opening %s to write", OutputFile);
-		return FALSE;
-	}
-
-
-	if(fabs(cord_step_size) < 1.0e-10 )	 	cord_step_size = 99999.0; //checks to make sure that the step_size is not too small
-	if(fabs(altitude_step_size) < 1.0e-10)  altitude_step_size = 99999.0;
-	if(fabs(time_step)  < 1.0e-10)     		time_step = 99999.0;
-
-
-	NumTerms = ( ( WMM_MAX_MODEL_DEGREES + 1 ) * ( WMM_MAX_MODEL_DEGREES + 2) / 2 );
-	TimedMagneticModel = WMM_AllocateModelMemory(NumTerms);
-	LegendreFunction   = WMM_AllocateLegendreFunctionMemory(NumTerms);  /* For storing the ALF functions */
-	a = minimum.HeightAboveGeoid; //sets the loop intialization values
-	b = minimum.phi;
-	c = minimum.lambda;
-	d = StartDate.DecimalYear;
-
-
-
-   	for(minimum.HeightAboveGeoid = a; minimum.HeightAboveGeoid<=maximum.HeightAboveGeoid; minimum.HeightAboveGeoid += altitude_step_size) /* Altitude loop*/
-		{
-
-
-			for(minimum.phi = b; minimum.phi<= maximum.phi; minimum.phi+= cord_step_size) /*Latitude loop*/
-			{
-
-
-
-				for(minimum.lambda = c; minimum.lambda <= maximum.lambda; minimum.lambda += cord_step_size) /*Longitude loop*/
-				{
-					if(Geoid->UseGeoid == 1)
-						WMM_ConvertGeoidToEllipsoidHeight(&minimum, Geoid); //This converts the height above mean sea level to height above the WGS-84 ellipsoid
-					else
-						minimum.HeightAboveEllipsoid = minimum.HeightAboveGeoid;
-					WMM_GeodeticToSpherical(Ellip, minimum, &CoordSpherical);
-					WMM_ComputeSphericalHarmonicVariables( Ellip, CoordSpherical, MagneticModel->nMax, &SphVariables); /* Compute Spherical Harmonic variables  */
-					WMM_AssociatedLegendreFunction(CoordSpherical, MagneticModel->nMax, LegendreFunction);  	/* Compute ALF  Equations 5-6, WMM Technical report*/
-
-					for(StartDate.DecimalYear = d ; StartDate.DecimalYear <= EndDate.DecimalYear; StartDate.DecimalYear += time_step) /*Year loop*/
-					{
-
-					WMM_TimelyModifyMagneticModel(StartDate, MagneticModel, TimedMagneticModel); /*This modifies the Magnetic coefficients to the correct date. */
-					WMM_Summation(LegendreFunction, TimedMagneticModel, SphVariables, CoordSpherical, &MagneticResultsSph); /* Accumulate the spherical harmonic coefficients Equations 10:12 , WMM Technical report*/
-					WMM_SecVarSummation(LegendreFunction, TimedMagneticModel, SphVariables, CoordSpherical, &MagneticResultsSphVar); /*Sum the Secular Variation Coefficients, Equations 13:15 , WMM Technical report  */
-					WMM_RotateMagneticVector(CoordSpherical, minimum, MagneticResultsSph, &MagneticResultsGeo); /* Map the computed Magnetic fields to Geodeitic coordinates Equation 16 , WMM Technical report */
-					WMM_RotateMagneticVector(CoordSpherical, minimum, MagneticResultsSphVar, &MagneticResultsGeoVar); /* Map the secular variation field components to Geodetic coordinates, Equation 17 , WMM Technical report*/
-					WMM_CalculateGeoMagneticElements(&MagneticResultsGeo, &GeoMagneticElements);   /* Calculate the Geomagnetic elements, Equation 18 , WMM Technical report */
-					WMM_CalculateSecularVariation(MagneticResultsGeoVar, &GeoMagneticElements); /*Calculate the secular variation of each of the Geomagnetic elements, Equation 19, WMM Technical report*/
-
-					switch(ElementOption)
-					{
-					case 1:
-					PrintElement = GeoMagneticElements.Decl; 	/*1. Angle between the magnetic field vector and true north, positive east*/
-					break;
-					case 2:
-					PrintElement = GeoMagneticElements.Incl;	/*2. Angle between the magnetic field vector and the horizontal plane, positive downward*/
-					break;
-					case 3:
-					PrintElement = GeoMagneticElements.F; 		/*3. Magnetic Field Strength*/
-					break;
-					case 4:
-					PrintElement = GeoMagneticElements.H; 		/*4. Horizontal Magnetic Field Strength*/
-					break;
-					case 5:
-					PrintElement = GeoMagneticElements.X; 		/*5. Northern component of the magnetic field vector*/
-					break;
-					case 6:
-					PrintElement = GeoMagneticElements.Y; 		/*6. Eastern component of the magnetic field vector*/
-					break;
-					case 7:
-					PrintElement = GeoMagneticElements.Z; 		/*7. Downward component of the magnetic field vector*/
-					break;
-					case 8:
-					PrintElement = GeoMagneticElements.GV; 		/*8. The Grid Variation*/
-					break;
-					case 9:
-					PrintElement = GeoMagneticElements.Decldot;	/*9. Yearly Rate of change in declination*/
-					break;
-					case 10:
-					PrintElement = GeoMagneticElements.Incldot;	/*10. Yearly Rate of change in inclination*/
-					break;
-					case 11:
-					PrintElement = GeoMagneticElements.Fdot; 	/*11. Yearly rate of change in Magnetic field strength*/
-					break;
-					case 12:
-					PrintElement = GeoMagneticElements.Hdot; 	/*12. Yearly rate of change in horizontal field strength*/
-					break;
-					case 13:
-					PrintElement = GeoMagneticElements.Xdot; 	/*13. Yearly rate of change in the northern component*/
-					break;
-					case 14:
-					PrintElement = GeoMagneticElements.Ydot; 	/*14. Yearly rate of change in the eastern component*/
-					break;
-					case 15:
-					PrintElement = GeoMagneticElements.Zdot; 	/*15. Yearly rate of change in the downward component*/
-					break;
-					case 16:
-					PrintElement = GeoMagneticElements.GVdot;	/*16. Yearly rate of chnage in grid variation*/;
-					break;
-					default:
-					PrintElement = GeoMagneticElements.Decl; 	/* 1. Angle between the magnetic field vector and true north, positive east*/
-					}
-
-					if(Geoid->UseGeoid == 1)
-					{
-						if (PrintOption == 1) fprintf(fileout, "%5.2lf %6.2lf %8.4lf %7.2lf %10.2lf\n", minimum.phi, minimum.lambda, minimum.HeightAboveGeoid, StartDate.DecimalYear, PrintElement) ;
-						else  printf("%5.2lf %6.2lf %8.4lf %7.2lf %10.2lf\n", minimum.phi, minimum.lambda, minimum.HeightAboveGeoid, StartDate.DecimalYear, PrintElement);
-					}
-					else
-					{
-						if (PrintOption == 1) fprintf(fileout, "%5.2lf %6.2lf %8.4lf %7.2lf %10.2lf\n", minimum.phi, minimum.lambda, minimum.HeightAboveEllipsoid, StartDate.DecimalYear, PrintElement) ;
-						else  printf("%5.2lf %6.2lf %8.4lf %7.2lf %10.2lf\n", minimum.phi, minimum.lambda, minimum.HeightAboveEllipsoid, StartDate.DecimalYear, PrintElement);
-					}
-
-
-
-
-
-				} /* year loop */
-
-			} /*Longitude Loop */
-
-		} /* Latitude Loop */
-
-	} /* Altitude Loop */
-		if (PrintOption == 1)  fclose(fileout);
-
-
-   WMM_FreeMagneticModelMemory(TimedMagneticModel);
-   WMM_FreeLegendreMemory(LegendreFunction);
-
-  return TRUE;
-	} /*WMM_Grid*/
-
-
 
 WMMtype_LegendreFunction *WMM_AllocateLegendreFunctionMemory(int NumTerms)
 
@@ -1226,21 +943,18 @@ WMMtype_LegendreFunction *WMM_AllocateLegendreFunctionMemory(int NumTerms)
 
 	if (!LegendreFunction) {
 		WMM_Error(1);
-		//printf("error allocating in WWMM_AllocateLegendreFunctionMemory\n");
 		return NULL;
 					}
 	LegendreFunction->Pcup = (double *) 	malloc	( (NumTerms +1) * sizeof ( double ) );
 	if (LegendreFunction->Pcup == 0)
 	{
 		WMM_Error(1);
-		//printf("error allocating in WMM_AllocateLegendreFunctionMemory\n");
 		return NULL;
 	}
 	LegendreFunction->dPcup = (double *) 	malloc	( (NumTerms +1) * sizeof ( double ) );
 	if (LegendreFunction->dPcup == 0)
 	{
 		WMM_Error(1);
-		//printf("error allocating in WMM_AllocateLegendreFunctionMemory\n");
 		return NULL;
 	}
 	return LegendreFunction;
@@ -1278,7 +992,6 @@ WMMtype_MagneticModel *WMM_AllocateModelMemory(int NumTerms)
 
 	if (!MagneticModel) {
 		WMM_Error(2);
-		//printf("error allocating in WMM_AllocateModelMemory\n");
 		return NULL;
 					}
 
@@ -1287,7 +1000,6 @@ WMMtype_MagneticModel *WMM_AllocateModelMemory(int NumTerms)
 	if (MagneticModel->Main_Field_Coeff_G == 0)
 	{
 		WMM_Error(2);
-		//printf("error allocating in WMM_AllocateModelMemory\n");
 		return NULL;
 	}
 
@@ -1296,21 +1008,18 @@ WMMtype_MagneticModel *WMM_AllocateModelMemory(int NumTerms)
 	if (MagneticModel->Main_Field_Coeff_H == 0)
 	{
 		WMM_Error(2);
-		//printf("error allocating in WMM_AllocateModelMemory\n");
 		return NULL;
 	}
 	MagneticModel->Secular_Var_Coeff_G =  (double *) 	malloc	( (NumTerms +1) * sizeof ( double ) );
 	if (MagneticModel->Secular_Var_Coeff_G == 0)
 	{
 		WMM_Error(2);
-		//printf("error allocating in WMM_AllocateModelMemory\n");
 		return NULL;
 	}
 	MagneticModel->Secular_Var_Coeff_H =  (double *) 	malloc	( (NumTerms +1) * sizeof ( double ) );
 	if (MagneticModel->Secular_Var_Coeff_H == 0)
 	{
 		WMM_Error(2);
-		//printf("error allocating in WMM_AllocateModelMemory\n");
 		return NULL;
 	}
 	return MagneticModel;
@@ -1378,7 +1087,6 @@ int WMM_PcupHigh(double *Pcup, double *dPcup, double x, int nMax)
 	if (f1 == 0)
 	{
 		WMM_Error(18);
-		//printf("error allocating in WMM_PcupHigh\n");
 		return FALSE;
 	}
 
@@ -1388,7 +1096,6 @@ int WMM_PcupHigh(double *Pcup, double *dPcup, double x, int nMax)
 	if (PreSqr == 0)
 	{
 		WMM_Error(18);
-		//printf("error allocating in WMM_PcupHigh\n");
 		return FALSE;
 	}
 
@@ -1397,7 +1104,6 @@ int WMM_PcupHigh(double *Pcup, double *dPcup, double x, int nMax)
 	if (f2 == 0)
 	{
 		WMM_Error(18);
-		//printf("error allocating in WMM_PcupHigh\n");
 		return FALSE;
 	}
 
@@ -1516,7 +1222,7 @@ int WMM_PcupLow( double *Pcup, double *dPcup, double x, int nMax)
   the Associated Legendre Functions.
 */
 {
-	int n, m, index, index1, index2, NumTerms;
+	int n, m, indx, indx1, indx2, NumTerms;
 	double k, z, *schmidtQuasiNorm;
 	Pcup[0] = 1.0;
 	dPcup[0] = 0.0;
@@ -1529,7 +1235,6 @@ int WMM_PcupLow( double *Pcup, double *dPcup, double x, int nMax)
 	if (schmidtQuasiNorm == 0)
 	{
 		WMM_Error(19);
-		//printf("error allocating in WMM_PcupLow\n");
 		return FALSE;
 	}
 
@@ -1538,33 +1243,33 @@ int WMM_PcupLow( double *Pcup, double *dPcup, double x, int nMax)
 	{
 		for (m=0;m<=n;m++)
 		{
-		index = (n * (n + 1) / 2 + m);
+		indx = (n * (n + 1) / 2 + m);
 			if (n == m)
 			{
-				index1 = ( n - 1 ) * n / 2 + m -1;
-				Pcup [index]  = z * Pcup[index1];
-				dPcup[index] = z *  dPcup[index1] + x *  Pcup[index1];
+				indx1 = ( n - 1 ) * n / 2 + m -1;
+				Pcup [indx]  = z * Pcup[indx1];
+				dPcup[indx] = z *  dPcup[indx1] + x *  Pcup[indx1];
 			}
 			else if (n == 1 && m == 0)
 			{
-				index1 = ( n - 1 ) * n / 2 + m;
-				Pcup[index]  = x *  Pcup[index1];
-				dPcup[index] = x *  dPcup[index1] - z *  Pcup[index1];
+				indx1 = ( n - 1 ) * n / 2 + m;
+				Pcup[indx]  = x *  Pcup[indx1];
+				dPcup[indx] = x *  dPcup[indx1] - z *  Pcup[indx1];
 			}
 			else if (n > 1 && n != m)
 			{
-				index1 = ( n - 2 ) * ( n - 1 ) / 2 + m;
-				index2 = ( n - 1) * n / 2 + m;
+				indx1 = ( n - 2 ) * ( n - 1 ) / 2 + m;
+				indx2 = ( n - 1) * n / 2 + m;
 				if (m > n - 2)
 				{
-					Pcup[index]  = x *  Pcup[index2];
-					dPcup[index] = x *  dPcup[index2] - z *  Pcup[index2];
+					Pcup[indx]  = x *  Pcup[indx2];
+					dPcup[indx] = x *  dPcup[indx2] - z *  Pcup[indx2];
 				}
 				else
 				{
 					k = (double)( ( ( n - 1 ) * ( n - 1 ) ) - ( m * m ) ) / ( double ) ( ( 2 * n - 1 ) * ( 2 * n - 3 ) );
-					Pcup[index]  = x *  Pcup[index2]  - k  *  Pcup[index1];
-					dPcup[index] = x *  dPcup[index2] - z *  Pcup[index2] - k *  dPcup[index1];
+					Pcup[indx]  = x *  Pcup[indx2]  - k  *  Pcup[indx1];
+					dPcup[indx] = x *  dPcup[indx2] - z *  Pcup[indx2] - k *  dPcup[indx1];
 				}
 			}
 		}
@@ -1576,16 +1281,16 @@ int WMM_PcupLow( double *Pcup, double *dPcup, double x, int nMax)
 	schmidtQuasiNorm[0] = 1.0;
 	for (n = 1; n <= nMax; n++)
 	{
-		index = (n * (n + 1) / 2);
-		index1 = (n - 1)  * n / 2 ;
+		indx = (n * (n + 1) / 2);
+		indx1 = (n - 1)  * n / 2 ;
 		/* for m = 0 */
-		schmidtQuasiNorm[index] =  schmidtQuasiNorm[index1] * (double) (2 * n - 1) / (double) n;
+		schmidtQuasiNorm[indx] =  schmidtQuasiNorm[indx1] * (double) (2 * n - 1) / (double) n;
 
 		for ( m = 1; m <= n; m++)
 		{
-			index = (n * (n + 1) / 2 + m);
-			index1 = (n * (n + 1) / 2 + m - 1);
-			schmidtQuasiNorm[index] = schmidtQuasiNorm[index1] * sqrt( (double) ((n - m + 1) * (m == 1 ? 2 : 1)) / (double) (n + m));
+			indx = (n * (n + 1) / 2 + m);
+			indx1 = (n * (n + 1) / 2 + m - 1);
+			schmidtQuasiNorm[indx] = schmidtQuasiNorm[indx1] * sqrt( (double) ((n - m + 1) * (m == 1 ? 2 : 1)) / (double) (n + m));
 		}
 
 	}
@@ -1598,9 +1303,9 @@ int WMM_PcupLow( double *Pcup, double *dPcup, double x, int nMax)
 	{
 		for (m=0;m<=n;m++)
 		{
-			 index = (n * (n + 1) / 2 + m);
-			 Pcup[index]  = Pcup[index]  *  schmidtQuasiNorm[index];
-			 dPcup[index] =  - dPcup[index] *  schmidtQuasiNorm[index];
+			 indx = (n * (n + 1) / 2 + m);
+			 Pcup[indx]  = Pcup[indx]  *  schmidtQuasiNorm[indx];
+			 dPcup[indx] =  - dPcup[indx] *  schmidtQuasiNorm[indx];
 			 /* The sign is changed since the new WMM routines use derivative with respect to latitude
 			 insted of co-latitude */
 		}
@@ -1631,13 +1336,12 @@ int WMM_readMagneticModel(const char *filename, WMMtype_MagneticModel * Magnetic
 
 	FILE *WMM_COF_File;
 	char c_str[81], c_new[5];   /*these strings are used to read a line from coefficient file*/
-	int i, icomp, m, n, EOF_Flag = 0, index;
+	int i, icomp, m, n, EOF_Flag = 0, indx;
 	double epoch, gnm, hnm, dgnm, dhnm;
 	WMM_COF_File = fopen(filename,"r");
 	if (WMM_COF_File == NULL)
 	{
 		WMM_Error(20);
-		//printf("Error in opening %s File\n",filename);
 		return FALSE;
 		/* should we have a standard error printing routine ?*/
 	}
@@ -1670,11 +1374,11 @@ int WMM_readMagneticModel(const char *filename, WMMtype_MagneticModel * Magnetic
 		sscanf(c_str,"%d%d%lf%lf%lf%lf",&n,&m,&gnm,&hnm,&dgnm,&dhnm);
 		if (m <= n)
 		{
-			index = (n * (n + 1) / 2 + m);
-			MagneticModel->Main_Field_Coeff_G[index] = gnm;
-			MagneticModel->Secular_Var_Coeff_G[index] = dgnm;
-			MagneticModel->Main_Field_Coeff_H[index] = hnm;
-			MagneticModel->Secular_Var_Coeff_H[index] = dhnm;
+			indx = (n * (n + 1) / 2 + m);
+			MagneticModel->Main_Field_Coeff_G[indx] = gnm;
+			MagneticModel->Secular_Var_Coeff_G[indx] = dgnm;
+			MagneticModel->Main_Field_Coeff_H[indx] = hnm;
+			MagneticModel->Secular_Var_Coeff_H[indx] = dhnm;
 		}
 	}
 
@@ -1710,15 +1414,14 @@ int WMM_readMagneticModel_Large(const char *filename, char *filenameSV, WMMtype_
 {
 	FILE *WMM_COF_File;
 	FILE *WMM_COFSV_File;
-	char c_str[81], c_str2[81];   //these strings are used to read a line from coefficient file
-	int i, m, n, EOF_Flag = 0, index, a, b;
+	char c_str[81], c_str2[81];   /* these strings are used to read a line from coefficient file */
+	int i, m, n, indx, a, b;
 	double epoch, gnm, hnm, dgnm, dhnm;
 	WMM_COF_File = fopen(filename,"r");
 	WMM_COFSV_File = fopen(filenameSV,"r");
 	if (WMM_COF_File == NULL || WMM_COFSV_File == NULL)
 	{
 		WMM_Error(20);
-		//printf("Error in opening %s File\n",filename);
 		return FALSE;
 	}
 	MagneticModel->Main_Field_Coeff_H[0] = 0.0;
@@ -1731,7 +1434,7 @@ int WMM_readMagneticModel_Large(const char *filename, char *filenameSV, WMMtype_
 	MagneticModel->epoch = epoch;
 	a = (MagneticModel->nMaxSecVar * (MagneticModel->nMaxSecVar + 1) / 2 + MagneticModel->nMaxSecVar);
 	b = (MagneticModel->nMax * (MagneticModel->nMax + 1) / 2 + MagneticModel->nMax);
-	//MagneticModel->ModelName = "WMM-720: 2005";
+	/* MagneticModel->ModelName = "WMM-720: 2005"; */
 	for(i = 0; i <= a; i++)
 	{
           if (fgets(c_str, 80, WMM_COF_File) == NULL)
@@ -1742,12 +1445,11 @@ int WMM_readMagneticModel_Large(const char *filename, char *filenameSV, WMMtype_
           sscanf(c_str2,"%d%d%lf%lf",&n,&m,&dgnm,&dhnm);
 		if (m <= n)
 		{
-			index = (n * (n + 1) / 2 + m);
-		//	printf("%d, %d,\n %lf, %lf: %lf, %lf\n", n, m, gnm, hnm, dgnm, dhnm);
-			MagneticModel->Main_Field_Coeff_G[index] = gnm;
-			MagneticModel->Secular_Var_Coeff_G[index] = dgnm;
-			MagneticModel->Main_Field_Coeff_H[index] = hnm;
-			MagneticModel->Secular_Var_Coeff_H[index] = dhnm;
+			indx = (n * (n + 1) / 2 + m);
+			MagneticModel->Main_Field_Coeff_G[indx] = gnm;
+			MagneticModel->Secular_Var_Coeff_G[indx] = dgnm;
+			MagneticModel->Main_Field_Coeff_H[indx] = hnm;
+			MagneticModel->Secular_Var_Coeff_H[indx] = dhnm;
 		}
 	}
 	for(i = a + 1; i < b; i++)
@@ -1757,14 +1459,11 @@ int WMM_readMagneticModel_Large(const char *filename, char *filenameSV, WMMtype_
           sscanf(c_str,"%d%d%lf%lf", &n, &m, &gnm, &hnm);
 		if (m <= n)
 		{
-			index = (n * (n + 1) / 2 + m);
-			MagneticModel->Main_Field_Coeff_G[index] = gnm;
-			//MagneticModel->Secular_Var_Coeff_G[index] = dgnm;
-			MagneticModel->Main_Field_Coeff_H[index] = hnm;
-			//MagneticModel->Secular_Var_Coeff_H[index] = dhnm;
+			indx = (n * (n + 1) / 2 + m);
+			MagneticModel->Main_Field_Coeff_G[indx] = gnm;
+			MagneticModel->Main_Field_Coeff_H[indx] = hnm;
 		}
 	}
-	//printf("%d, %d, %lf, %lf", index, m, gnm, hnm);
 	return TRUE;
 
  failure:
@@ -1873,7 +1572,7 @@ int WMM_SecVarSummation(WMMtype_LegendreFunction *LegendreFunction, WMMtype_Magn
 	CALLS : WMM_SecVarSummationSpecial
 
 	*/
-	int m, n, index;
+	int m, n, indx;
 	double cos_phi;
 	MagneticModel->SecularVariationUsed = TRUE;
 	MagneticResults->Bz = 0.0;
@@ -1883,34 +1582,34 @@ int WMM_SecVarSummation(WMMtype_LegendreFunction *LegendreFunction, WMMtype_Magn
 	{
 		for (m=0;m<=n;m++)
 		{
-			index = (n * (n + 1) / 2 + m);
+			indx = (n * (n + 1) / 2 + m);
 
 /*		    nMax  	(n+2) 	  n     m            m           m
 	Bz =   -SUM (a/r)   (n+1) SUM  [g cos(m p) + h sin(m p)] P (sin(phi))
 			n=1      	      m=0   n            n           n  */
 /*  Derivative with respect to radius.*/
 			MagneticResults->Bz -= 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Secular_Var_Coeff_G[index]*SphVariables.cos_mlambda[m] +
-						MagneticModel->Secular_Var_Coeff_H[index]*SphVariables.sin_mlambda[m]	)
-						* (double) (n+1) * LegendreFunction-> Pcup[index];
+					(	MagneticModel->Secular_Var_Coeff_G[indx]*SphVariables.cos_mlambda[m] +
+						MagneticModel->Secular_Var_Coeff_H[indx]*SphVariables.sin_mlambda[m]	)
+						* (double) (n+1) * LegendreFunction-> Pcup[indx];
 
 /*		  1 nMax  (n+2)    n     m            m           m
 	By =    SUM (a/r) (m)  SUM  [g cos(m p) + h sin(m p)] dP (sin(phi))
 		   n=1             m=0   n            n           n  */
 /* Derivative with respect to longitude, divided by radius. */
 			MagneticResults->By += 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Secular_Var_Coeff_G[index]*SphVariables.sin_mlambda[m] -
-						MagneticModel->Secular_Var_Coeff_H[index]*SphVariables.cos_mlambda[m]  )
-						* (double) (m) * LegendreFunction-> Pcup[index];
+					(	MagneticModel->Secular_Var_Coeff_G[indx]*SphVariables.sin_mlambda[m] -
+						MagneticModel->Secular_Var_Coeff_H[indx]*SphVariables.cos_mlambda[m]  )
+						* (double) (m) * LegendreFunction-> Pcup[indx];
 /*		   nMax  (n+2) n     m            m           m
 	Bx = - SUM (a/r)   SUM  [g cos(m p) + h sin(m p)] dP (sin(phi))
 		   n=1         m=0   n            n           n  */
 /* Derivative with respect to latitude, divided by radius. */
 
 			MagneticResults->Bx -= 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Secular_Var_Coeff_G[index]*SphVariables.cos_mlambda[m]  +
-						MagneticModel->Secular_Var_Coeff_H[index]*SphVariables.sin_mlambda[m]  )
-						* LegendreFunction-> dPcup[index];
+					(	MagneticModel->Secular_Var_Coeff_G[indx]*SphVariables.cos_mlambda[m]  +
+						MagneticModel->Secular_Var_Coeff_H[indx]*SphVariables.sin_mlambda[m]  )
+						* LegendreFunction-> dPcup[indx];
 		}
 	}
 	cos_phi = cos ( DEG2RAD ( CoordSpherical.phig ) );
@@ -1939,7 +1638,7 @@ int WMM_SecVarSummationSpecial(WMMtype_MagneticModel *MagneticModel, WMMtype_Sph
 
 
 	*/
-	int n, index;
+	int n, indx;
 	double k, sin_phi, *PcupS, schmidtQuasiNorm1, schmidtQuasiNorm2, schmidtQuasiNorm3;
 
 	PcupS = (double *) malloc ( (MagneticModel->nMaxSecVar +1) * sizeof (double) );
@@ -1947,7 +1646,6 @@ int WMM_SecVarSummationSpecial(WMMtype_MagneticModel *MagneticModel, WMMtype_Sph
 	if (PcupS == 0)
 	{
 		WMM_Error(15);
-		//printf("error allocating in WMM_SummationSpecial\n");
 		return FALSE;
 	}
 
@@ -1959,7 +1657,7 @@ int WMM_SecVarSummationSpecial(WMMtype_MagneticModel *MagneticModel, WMMtype_Sph
 
 	for (n = 1; n <=  MagneticModel->nMaxSecVar; n++)
 	{
-		index = (n * (n + 1) / 2 + 1);
+		indx = (n * (n + 1) / 2 + 1);
 		schmidtQuasiNorm2 = schmidtQuasiNorm1 * (double) (2 * n - 1) / (double) n;
 		schmidtQuasiNorm3 = schmidtQuasiNorm2 *  sqrt( (double) (n * 2) / (double) (n + 1));
 		schmidtQuasiNorm1 = schmidtQuasiNorm2;
@@ -1979,8 +1677,8 @@ int WMM_SecVarSummationSpecial(WMMtype_MagneticModel *MagneticModel, WMMtype_Sph
 /* Derivative with respect to longitude, divided by radius. */
 
 		MagneticResults->By += 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Secular_Var_Coeff_G[index]*SphVariables.sin_mlambda[1] -
-						MagneticModel->Secular_Var_Coeff_H[index]*SphVariables.cos_mlambda[1]  )
+					(	MagneticModel->Secular_Var_Coeff_G[indx]*SphVariables.sin_mlambda[1] -
+						MagneticModel->Secular_Var_Coeff_H[indx]*SphVariables.cos_mlambda[1]  )
 						*  PcupS[n] * schmidtQuasiNorm3;
 	}
 
@@ -2015,7 +1713,7 @@ int WMM_Summation(WMMtype_LegendreFunction *LegendreFunction, WMMtype_MagneticMo
 
    Manoj Nair, June, 2009 Manoj.C.Nair@Noaa.Gov
    */
-	int m, n, index;
+	int m, n, indx;
 	double cos_phi;
 	MagneticResults->Bz = 0.0;
 	MagneticResults->By = 0.0;
@@ -2024,34 +1722,34 @@ int WMM_Summation(WMMtype_LegendreFunction *LegendreFunction, WMMtype_MagneticMo
 	{
 		for (m=0;m<=n;m++)
 		{
-			index = (n * (n + 1) / 2 + m);
+			indx = (n * (n + 1) / 2 + m);
 
 /*		    nMax  	(n+2) 	  n     m            m           m
 	Bz =   -SUM (a/r)   (n+1) SUM  [g cos(m p) + h sin(m p)] P (sin(phi))
 			n=1      	      m=0   n            n           n  */
 /* Equation 12 in the WMM Technical report.  Derivative with respect to radius.*/
 			MagneticResults->Bz -= 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Main_Field_Coeff_G[index]*SphVariables.cos_mlambda[m] +
-						MagneticModel->Main_Field_Coeff_H[index]*SphVariables.sin_mlambda[m]	)
-						* (double) (n+1) * LegendreFunction-> Pcup[index];
+					(	MagneticModel->Main_Field_Coeff_G[indx]*SphVariables.cos_mlambda[m] +
+						MagneticModel->Main_Field_Coeff_H[indx]*SphVariables.sin_mlambda[m]	)
+						* (double) (n+1) * LegendreFunction-> Pcup[indx];
 
 /*		  1 nMax  (n+2)    n     m            m           m
 	By =    SUM (a/r) (m)  SUM  [g cos(m p) + h sin(m p)] dP (sin(phi))
 		   n=1             m=0   n            n           n  */
 /* Equation 11 in the WMM Technical report. Derivative with respect to longitude, divided by radius. */
 			MagneticResults->By += 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Main_Field_Coeff_G[index]*SphVariables.sin_mlambda[m] -
-						MagneticModel->Main_Field_Coeff_H[index]*SphVariables.cos_mlambda[m]  )
-						* (double) (m) * LegendreFunction-> Pcup[index];
+					(	MagneticModel->Main_Field_Coeff_G[indx]*SphVariables.sin_mlambda[m] -
+						MagneticModel->Main_Field_Coeff_H[indx]*SphVariables.cos_mlambda[m]  )
+						* (double) (m) * LegendreFunction-> Pcup[indx];
 /*		   nMax  (n+2) n     m            m           m
 	Bx = - SUM (a/r)   SUM  [g cos(m p) + h sin(m p)] dP (sin(phi))
 		   n=1         m=0   n            n           n  */
 /* Equation 10  in the WMM Technical report. Derivative with respect to latitude, divided by radius. */
 
 			MagneticResults->Bx -= 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Main_Field_Coeff_G[index]*SphVariables.cos_mlambda[m]  +
-						MagneticModel->Main_Field_Coeff_H[index]*SphVariables.sin_mlambda[m]  )
-						* LegendreFunction-> dPcup[index];
+					(	MagneticModel->Main_Field_Coeff_G[indx]*SphVariables.cos_mlambda[m]  +
+						MagneticModel->Main_Field_Coeff_H[indx]*SphVariables.sin_mlambda[m]  )
+						* LegendreFunction-> dPcup[indx];
 
 
 
@@ -2088,14 +1786,13 @@ int WMM_SummationSpecial(WMMtype_MagneticModel *MagneticModel, WMMtype_Spherical
 
 	*/
 	{
-	int n, index;
+	int n, indx;
 	double k, sin_phi, *PcupS, schmidtQuasiNorm1, schmidtQuasiNorm2, schmidtQuasiNorm3;
 
 	PcupS = (double *) malloc ( (MagneticModel->nMax +1) * sizeof (double) );
 	if (PcupS == 0)
 	{
 		WMM_Error(14);
-		//printf("error allocating in WMM_SummationSpecial\n");
 		return FALSE;
 	}
 
@@ -2112,7 +1809,7 @@ int WMM_SummationSpecial(WMMtype_MagneticModel *MagneticModel, WMMtype_Spherical
   functions and the Schmidt quasi-normalized version. This is equivalent to
   sqrt((m==0?1:2)*(n-m)!/(n+m!))*(2n-1)!!/(n-m)!  */
 
-		index = (n * (n + 1) / 2 + 1);
+		indx = (n * (n + 1) / 2 + 1);
 		schmidtQuasiNorm2 = schmidtQuasiNorm1 * (double) (2 * n - 1) / (double) n;
 		schmidtQuasiNorm3 = schmidtQuasiNorm2 *  sqrt( (double) (n * 2) / (double) (n + 1));
 		schmidtQuasiNorm1 = schmidtQuasiNorm2;
@@ -2132,8 +1829,8 @@ int WMM_SummationSpecial(WMMtype_MagneticModel *MagneticModel, WMMtype_Spherical
 /* Equation 11 in the WMM Technical report. Derivative with respect to longitude, divided by radius. */
 
 		MagneticResults->By += 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Main_Field_Coeff_G[index]*SphVariables.sin_mlambda[1] -
-						MagneticModel->Main_Field_Coeff_H[index]*SphVariables.cos_mlambda[1]  )
+					(	MagneticModel->Main_Field_Coeff_G[indx]*SphVariables.sin_mlambda[1] -
+						MagneticModel->Main_Field_Coeff_H[indx]*SphVariables.cos_mlambda[1]  )
 						*  PcupS[n] * schmidtQuasiNorm3;
 	}
 
@@ -2157,7 +1854,7 @@ int WMM_TimelyModifyMagneticModel(WMMtype_Date UserDate, WMMtype_MagneticModel *
 	*/
 
 	{
-	int n, m, index, a, b;
+	int n, m, indx, a, b;
 	TimedMagneticModel->EditionDate = MagneticModel->EditionDate;
 	TimedMagneticModel->epoch	   = MagneticModel->epoch;
         TimedMagneticModel->nMax	   	   = MagneticModel->nMax;
@@ -2169,18 +1866,18 @@ int WMM_TimelyModifyMagneticModel(WMMtype_Date UserDate, WMMtype_MagneticModel *
 	{
 		for (m=0;m<=n;m++)
 		{
-			index = (n * (n + 1) / 2 + m);
-			if(index <= b)
+			indx = (n * (n + 1) / 2 + m);
+			if(indx <= b)
 			{
-				TimedMagneticModel->Main_Field_Coeff_H[index]   = MagneticModel->Main_Field_Coeff_H[index] + (UserDate.DecimalYear - MagneticModel->epoch) * MagneticModel->Secular_Var_Coeff_H[index];
-				TimedMagneticModel->Main_Field_Coeff_G[index]   = MagneticModel->Main_Field_Coeff_G[index] + (UserDate.DecimalYear - MagneticModel->epoch) * MagneticModel->Secular_Var_Coeff_G[index];
-				TimedMagneticModel->Secular_Var_Coeff_H[index]  = MagneticModel->Secular_Var_Coeff_H[index]; // We need a copy of the secular var coef to calculate secular change
-				TimedMagneticModel->Secular_Var_Coeff_G[index]  = MagneticModel->Secular_Var_Coeff_G[index];
+				TimedMagneticModel->Main_Field_Coeff_H[indx]   = MagneticModel->Main_Field_Coeff_H[indx] + (UserDate.DecimalYear - MagneticModel->epoch) * MagneticModel->Secular_Var_Coeff_H[indx];
+				TimedMagneticModel->Main_Field_Coeff_G[indx]   = MagneticModel->Main_Field_Coeff_G[indx] + (UserDate.DecimalYear - MagneticModel->epoch) * MagneticModel->Secular_Var_Coeff_G[indx];
+				TimedMagneticModel->Secular_Var_Coeff_H[indx]  = MagneticModel->Secular_Var_Coeff_H[indx]; /* We need a copy of the secular var coef to calculate secular change */
+				TimedMagneticModel->Secular_Var_Coeff_G[indx]  = MagneticModel->Secular_Var_Coeff_G[indx];
 			}
 			else
 			{
-				TimedMagneticModel->Main_Field_Coeff_H[index] = MagneticModel->Main_Field_Coeff_H[index];
-				TimedMagneticModel->Main_Field_Coeff_G[index] = MagneticModel->Main_Field_Coeff_G[index];
+				TimedMagneticModel->Main_Field_Coeff_H[indx] = MagneticModel->Main_Field_Coeff_H[indx];
+				TimedMagneticModel->Main_Field_Coeff_G[indx] = MagneticModel->Main_Field_Coeff_G[indx];
 			}
 		}
 	}
@@ -2205,7 +1902,7 @@ int WMM_ValidateDMSstringlat(char *input, char *Error)
 	second = -1;
 	n = strlen(input);
 
-	for (i = 0; i <= n-1; i++) //tests for legal characters
+	for (i = 0; i <= n-1; i++) /* tests for legal characters */
 	{
 		if ((input[i] < '0'|| input[i] > '9') && (input[i] != ',' && input[i]!=' ' && input[i] != '-' && input[i] != '\0' && input[i] != '\n'))
 		{
@@ -2216,7 +1913,7 @@ int WMM_ValidateDMSstringlat(char *input, char *Error)
 			j++;
 	}
 	if(j == 2)
-		j = sscanf(input, "%d, %d, %d", &degree, &minute, &second);  //tests for legal formatting and range
+          j = sscanf(input, "%d, %d, %d", &degree, &minute, &second);  /* tests for legal formatting and range */
 	else
 		j = sscanf(input, "%d %d %d", &degree, &minute, &second);
 	if(j == 1)
@@ -2272,7 +1969,7 @@ int WMM_ValidateDMSstringlong(char *input, char *Error)
 	second = -1;
 	n = strlen(input);
 
-	for (i = 0; i <= n-1; i++) //tests for legal characters
+	for (i = 0; i <= n-1; i++) /* tests for legal characters */
 	{
 		if ((input[i] < '0'|| input[i] > '9') && (input[i] != ',' && input[i]!=' ' && input[i] != '-' && input[i] != '\0' && input[i] != '\n'))
 		{
@@ -2283,7 +1980,7 @@ int WMM_ValidateDMSstringlong(char *input, char *Error)
 			j++;
 	}
 	if(j >= 2)
-		j = sscanf(input, "%d, %d, %d", &degree, &minute, &second);  //tests for legal formatting and range
+          j = sscanf(input, "%d, %d, %d", &degree, &minute, &second);  /* tests for legal formatting and range */
 	else
 		j = sscanf(input, "%d %d %d", &degree, &minute, &second);
 	if(j == 1)
@@ -2297,7 +1994,7 @@ int WMM_ValidateDMSstringlong(char *input, char *Error)
 		strcpy(Error, "\nError: Not enough numbers read for Degrees, Minutes, Seconds format\n or they were incorrectly formatted\n The legal format is DD,MM,SS or DD MM SS\n");
 		return FALSE;
 	}
-	sscanf(input, "%d, %d, %d", &degree, &minute, &second);  //tests for legal formatting and range
+	sscanf(input, "%d, %d, %d", &degree, &minute, &second);  /* tests for legal formatting and range */
 	if (degree > 180 || degree < -180)
 	{
 		strcpy(Error, "\nError: Degree input is outside legal range\n The legal range is from -180 to 180\n");
@@ -2486,7 +2183,7 @@ int WMM_GetTransverseMercator(WMMtype_CoordGeodetic CoordGeodetic, WMMtype_UTMPa
 	falseE=500000;
 
 
-   //WGS84 ellipsoid
+        /* WGS84 ellipsoid */
 
 	 Eps=0.081819190842621494335;
 	 Epssq=0.0066943799901413169961;
@@ -2503,7 +2200,7 @@ int WMM_GetTransverseMercator(WMMtype_CoordGeodetic CoordGeodetic, WMMtype_UTMPa
 	Acoeff[6] = 4.10762410937071532000E-20;
 	Acoeff[7] = 1.21078503892257704200E-22;
 
-	//WGS84 ellipsoid
+	/* WGS84 ellipsoid */
 
 
 /*   Execution of the forward T.M. algorithm  */
@@ -2800,5 +2497,59 @@ void WMM_TMfwd4(double Eps, double Epssq, double K0R4, double K0R4oa,
       }
    }
 
+int WMM_DateToYear (WMMtype_Date *CalendarDate, char *Error)
 
+	/* Converts a given calendar date into a decimal year,
+	it also outputs an error string if there is a problem
+	INPUT  CalendarDate  Pointer to the  data  structure with the following elements
+				int	Year;
+				int	Month;
+				int	Day;
+				double DecimalYear;      decimal years
+	OUTPUT  CalendarDate  Pointer to the  data  structure with the following elements updated
+				double DecimalYear;      decimal years
+			Error	pointer to an error string
+	CALLS : none
 
+	*/
+
+	{
+	int temp = 0; /*Total number of days */
+	int MonthDays[13];
+	int ExtraDay = 0;
+	int i;
+	if((CalendarDate->Year%4 == 0 && CalendarDate->Year%100 != 0) || CalendarDate->Year%400 == 0)
+		ExtraDay = 1;
+	MonthDays[0] = 0;
+	MonthDays[1] = 31;
+	MonthDays[2] = 28 + ExtraDay;
+	MonthDays[3] = 31;
+	MonthDays[4] = 30;
+	MonthDays[5] = 31;
+	MonthDays[6] = 30;
+	MonthDays[7] = 31;
+	MonthDays[8] = 31;
+	MonthDays[9] = 30;
+	MonthDays[10] = 31;
+	MonthDays[11] = 30;
+	MonthDays[12] = 31;
+
+	/******************Validation********************************/
+	if(CalendarDate->Month <= 0 || CalendarDate->Month > 12)
+	{
+		strcpy(Error, "\nError: The Month entered is invalid, valid months are '1 to 12'\n");
+		return 0;
+	}
+	if(CalendarDate->Day <= 0 || CalendarDate->Day > MonthDays[CalendarDate->Month])
+	{
+		printf("\nThe number of days in month %d is %d\n", CalendarDate->Month, MonthDays[CalendarDate->Month]);
+		strcpy(Error, "\nError: The day entered is invalid\n");
+		return 0;
+	}
+	/****************Calculation of t***************************/
+	for(i = 1; i <= CalendarDate->Month; i++)
+		temp+=MonthDays[i-1];
+	temp+=CalendarDate->Day;
+	CalendarDate->DecimalYear = CalendarDate->Year + (temp-1)/(365.0 + ExtraDay);
+	return TRUE;
+}  /*WMM_DateToYear*/
