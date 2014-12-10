@@ -25,22 +25,50 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_ALGORITHMS_HPP_INCLUDED_
-#define DUNE_ALGORITHMS_HPP_INCLUDED_
+// DUNE headers.
+#include <DUNE/Algorithms/Base64.hpp>
 
 namespace DUNE
 {
-  //! %General purpose algorithms.
   namespace Algorithms
-  { }
+  {
+    //! Base64 alphabet.
+    static const std::string c_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"  \
+    "abcdefghijklmnopqrstuvwxyz"                                        \
+    "0123456789"                                                        \
+    "+/";
+
+    std::string
+    Base64::encode(const std::string& str)
+    {
+      size_t output_size = (str.size() + 2 - ((str.size() + 2) % 3)) / 3 * 4;
+      std::string output(output_size, '=');
+
+      const uint8_t* s = (uint8_t*)&str[0];
+      size_t ri = 0;
+      for (size_t i = 0; i < str.size() / 3; ++i)
+      {
+        output[ri++] = c_alphabet[s[0] >> 2];
+        output[ri++] = c_alphabet[((s[0] << 4) | (s[1] >> 4)) & 0x3f];
+        output[ri++] = c_alphabet[((s[1] << 2) | (s[2] >> 6)) & 0x3f];
+        output[ri++] = c_alphabet[s[2] & 0x3f];
+        s += 3;
+      }
+
+      size_t remaining = str.size() % 3;
+      if (remaining == 1)
+      {
+        output[ri++] = c_alphabet[s[0] >> 2];
+        output[ri++] = c_alphabet[(s[0] << 4) & 0x3f];
+      }
+      else if (remaining == 2)
+      {
+        output[ri++] = c_alphabet[s[0] >> 2];
+        output[ri++] = c_alphabet[((s[0] << 4) | (s[1] >> 4)) & 0x3f];
+        output[ri++] = c_alphabet[(s[1] << 2) & 0x3f];
+      }
+
+      return output;
+    }
+  }
 }
-
-#include <DUNE/Algorithms/CRC8.hpp>
-#include <DUNE/Algorithms/CRC16.hpp>
-#include <DUNE/Algorithms/FletcherChecksum.hpp>
-#include <DUNE/Algorithms/MD5.hpp>
-#include <DUNE/Algorithms/XORChecksum.hpp>
-#include <DUNE/Algorithms/UNESCO1983.hpp>
-#include <DUNE/Algorithms/Base64.hpp>
-
-#endif

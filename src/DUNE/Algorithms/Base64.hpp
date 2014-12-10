@@ -25,22 +25,33 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_ALGORITHMS_HPP_INCLUDED_
-#define DUNE_ALGORITHMS_HPP_INCLUDED_
+#ifndef DUNE_ALGORITHMS_BASE64_HPP_INCLUDED_
+#define DUNE_ALGORITHMS_BASE64_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <string>
+
+// DUNE headers.
+#include <DUNE/Config.hpp>
 
 namespace DUNE
 {
-  //! %General purpose algorithms.
   namespace Algorithms
-  { }
-}
+  {
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM Base64;
 
-#include <DUNE/Algorithms/CRC8.hpp>
-#include <DUNE/Algorithms/CRC16.hpp>
-#include <DUNE/Algorithms/FletcherChecksum.hpp>
-#include <DUNE/Algorithms/MD5.hpp>
-#include <DUNE/Algorithms/XORChecksum.hpp>
-#include <DUNE/Algorithms/UNESCO1983.hpp>
-#include <DUNE/Algorithms/Base64.hpp>
+    //! Base64 routines as describe in RFC2045-MIME.
+    class Base64
+    {
+    public:
+      //! Encode string in Base64 format.
+      //! @param[in] str input string.
+      //! @return Base64 encoded string.
+      static std::string
+      encode(const std::string& str);
+    };
+  }
+}
 
 #endif
