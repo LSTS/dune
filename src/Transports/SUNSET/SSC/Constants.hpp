@@ -28,6 +28,9 @@
 #ifndef TRANSPORTS_SUNSET_SSC_CONSTANTS_HPP_INCLUDED_
 #define TRANSPORTS_SUNSET_SSC_CONSTANTS_HPP_INCLUDED_
 
+// ISO C++ 98 headers.
+#include <cstddef>
+
 namespace Transports
 {
   namespace SUNSET

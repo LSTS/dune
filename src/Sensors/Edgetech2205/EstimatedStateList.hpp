@@ -31,11 +31,13 @@
 // ISO C++ 98 headers.
 #include <list>
 #include <iterator>
+#include <limits>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
 // Local headers.
+#include "Packet.hpp"
 #include "EstimatedStateEntry.hpp"
 
 namespace Sensors
@@ -94,7 +96,7 @@ namespace Sensors
       find(int64_t time, int64_t& delta)
       {
         std::list<EstimatedStateEntry*>::iterator itr_min = m_list.end();
-        delta = 9223372036854775807LL;
+        delta = std::numeric_limits<int>::max();
 
         // Find closest.
         EstimatedStateEntry* entry = NULL;

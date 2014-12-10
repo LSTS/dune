@@ -25,148 +25,87 @@
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
+# Script to process merge commit messages and output a Changelog.          #
+############################################################################
 
 import os
 import sys
 import os.path
 import subprocess
+import functools
 import textwrap
 import re
 
-# Common typos.
-TYPOS = {
-    '^common/imc-addresses': 'Config: common/imc-addresses',
-    'common/imc-adresses': 'common/imc-addresses',
-    'taks': 'tasks',
-    'Transports.ArdupilotSITL': 'Transports/ArdupilotSITL',
-    'Monitors.Medium': 'Monitors/Medium',
-    'Maneuver.VehicleFormation.FormCollAvoid': 'Maneuver/VehicleFormation/FormCollAvoid',
-    'IMC Protocol': 'DUNE/IMC'
-    }
+# Find source folder.
+SCRIPT = os.path.abspath(__file__).replace('.pyc', '.py')
+TOP_DIR = os.path.abspath(os.path.join(os.path.dirname(SCRIPT), '..', '..'))
 
-# Modules with submodules.
-SUBMODS = ['Config', 'Programs', 'Vendor']
+class Changelog:
+    def __init__(self, previous_version):
+        self._previous = 'dune-' + previous_version
+        self._fixes = []
+        self._features = []
 
-def get_version(src_dir):
-    vers = {}
-    fd = open(os.path.join(src_dir, 'CMakeLists.txt'))
-    for line in fd:
-        line = line.strip()
-        if line.startswith('set(PROJECT_VERSION_'):
-            v = line.replace('set(PROJECT_VERSION_', '').replace('"', '').replace(')', '')
-            p = v.split()
-            if len(p) == 2:
-                vers[p[0]] = p[1]
-    if vers['PAT'] != '0':
-        return '%(MAJ)s.%(MIN)s.%(PAT)s' % vers
-    return '%(MAJ)s.%(MIN)s.%(PAT)s-rc%(RCN)s' % vers
+    def _print_msg(self, s):
+        w = textwrap.wrap('-' + s, width=77)
+        print(w[0])
+        w.pop(0)
+        for l in w:
+            print(' ', l.strip())
 
-def fix_whitespace(s):
-    return ' '.join(s.split())
+    def _get_commits(self):
+        '''Get merge commit messages.'''
+        out = subprocess.check_output(['git', '-C', TOP_DIR,
+                                       'log', '--merges',
+                                       '--pretty=-----------%n%b',
+                                       '%s..HEAD' % self._previous],
+                                      universal_newlines = True)
+        return out.split('\n')
 
-def fix_typos(s):
-    for t in TYPOS.keys():
-        s = re.sub(t, TYPOS[t], s)
-    return s
+    def _process_commit(self, lines):
+        if len(lines) == 0:
+            return
 
-def fix_punctuation(s):
-    if not s.endswith('.'):
-        return s + '.'
-    return s
+        text = []
+        for line in lines:
+            line = line.strip()
+            if len(line) == 0:
+                break
+            else:
+                text.append(line)
 
-def fix(s):
-    return fix_punctuation(fix_whitespace(fix_typos(s)))
+        text = ' '.join(text)
+        sep_idx = text.find(':') + 1
+        if text.startswith('Fixed Bug'):
+            self._fixes.append(text[sep_idx:])
+        elif text.startswith('Feature'):
+            self._features.append(text[sep_idx:])
 
-def print_msg(s):
-    w = textwrap.wrap('- ' + s, width=77)
-    print(w[0])
-    w.pop(0)
-    for l in w:
-        print(' ', l.strip())
+    def process(self):
+        commit = []
+        lines = self._get_commits()
+        for line in lines:
+             line = line.strip()
+             if line.startswith('-----'):
+                 self._process_commit(commit)
+                 commit = []
+             else:
+                 commit.append(line)
+        self._process_commit(commit)
 
-def sort_keys(k):
-    p = []
-    t = []
-    b = []
-    for e in k:
-        if e.startswith('Programs') or e.startswith('Config'):
-            p.append(e)
-        elif e.startswith('DUNE'):
-            t.append(e)
-        else:
-            b.append(e)
-    p.sort()
-    t.sort()
-    b.sort()
-    return p + t + b
+        print('# Features')
+        for feature in self._features:
+            self._print_msg(feature)
+            print()
+
+        print('# Bug Fixes')
+        for fix in self._fixes:
+            self._print_msg(fix)
+            print()
 
 if len(sys.argv) != 2:
-    print('Usage:', sys.argv[0], '<DUNE_SOURCE>')
+    print('Usage:', sys.argv[0], '<PREVIOUS_RELEASE>')
     sys.exit(1)
 
-# Find source folder.
-src_dir = sys.argv[1]
-
-# Get previous version.
-out = subprocess.check_output(['git', '-C', src_dir, 'tag', '-l', 'dune-*'], universal_newlines = True)
-lines = out.split('\n')
-lines.remove('')
-lines.sort()
-last = lines[-1].strip()
-
-# Get commit messages.
-out = subprocess.check_output(['git', '-C', src_dir, 'log', '--pretty=oneline', '%s..HEAD' % last], universal_newlines = True)
-lines = out.split('\n')
-lines.remove('')
-
-MODS = {}
-
-for l in lines:
-    parts = l.split(' ', 1)
-    l = fix(parts[1])
-
-    parts = l.split(':', 1)
-    if len(parts) != 2:
-        continue
-
-    mod = parts[0].strip()
-    smod = ''
-    msg = parts[1].strip()
-
-    if mod in SUBMODS:
-        s = msg.split(':', 2)
-        smod = s[0].strip()
-        msg = s[1].strip()
-
-    if mod not in MODS:
-        MODS[mod] = {}
-
-    if smod in MODS[mod]:
-        MODS[mod][smod].append(msg)
-    else:
-        MODS[mod][smod] = [msg]
-
-vers = get_version(src_dir)
-title = 'DUNE v' + vers
-print(title)
-print('=' * len(title))
-print()
-
-keys = sort_keys(list(MODS.keys()))
-for k in keys:
-    l = k
-    if k == 'Config':
-        l = 'Configurations'
-    print(l)
-    print('-' * len(l))
-
-    sks = list(MODS[k].keys())
-    sks.sort()
-    for sk in sks:
-        if sk.startswith('development/'):
-            continue
-        if len(sk) > 0:
-            print('\n###', sk)
-        for msg in MODS[k][sk]:
-            print_msg(msg)
-    print()
+c = Changelog(sys.argv[1])
+c.process()

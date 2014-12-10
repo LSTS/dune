@@ -25,8 +25,8 @@
 // Author: Rui Gomes                                                        *
 //***************************************************************************
 
-#ifndef DUNE_CONTROL_LINEARSYSTEM_HPP_INCLUDED_
-#define DUNE_CONTROL_LINEARSYSTEM_HPP_INCLUDED_
+#ifndef DUNE_CONTROL_LINEAR_SYSTEM_HPP_INCLUDED_
+#define DUNE_CONTROL_LINEAR_SYSTEM_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <iostream>

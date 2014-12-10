@@ -150,7 +150,6 @@ namespace Control
           dispatch(m_motor[1]);
         }
 
-
         void
         onResourceInitialization(void)
         {

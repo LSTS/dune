@@ -77,7 +77,6 @@ namespace Maneuver
         static const uint8_t LOC_CHANGED       = 4;
         static const uint8_t RADIUS_CHANGED    = 8;
 
-
         Task(const std::string& name, Tasks::Context& ctx) :
           DUNE::Maneuvers::Maneuver(name, ctx)
         {
@@ -148,7 +147,6 @@ namespace Maneuver
           m_path_sent = false;
           inf(DTR("waiting for first reference"));
         }
-
 
         uint8_t pathDifferences(const IMC::DesiredPath *msg1, const IMC::DesiredPath *msg2)
         {
@@ -555,7 +553,6 @@ namespace Maneuver
 
           return z_dist;
         }
-
 
         void
         dispatchDesiredPath(IMC::DesiredPath desired_path)

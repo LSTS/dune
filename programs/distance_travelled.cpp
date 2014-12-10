@@ -106,14 +106,12 @@ main(int32_t argc, char** argv)
     // Accumulated travelled time
     double duration = 0.0;
 
-
     bool got_name = false;
     std::string log_name = "unknown";
 
     bool ignore = false;
     uint16_t sys_id = 0xffff;
     std::string sys_name;
-
 
     try
     {

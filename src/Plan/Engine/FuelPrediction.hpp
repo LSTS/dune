@@ -25,19 +25,14 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLAN_ENGINE_FUELPREDICTION_HPP_INCLUDED_
-#define DUNE_PLAN_ENGINE_FUELPREDICTION_HPP_INCLUDED_
+#ifndef PLAN_ENGINE_FUEL_PREDICTION_HPP_INCLUDED_
+#define PLAN_ENGINE_FUEL_PREDICTION_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>
 
 // DUNE headers.
-#include <DUNE/IMC.hpp>
-#include <DUNE/Parsers.hpp>
-#include <DUNE/Memory.hpp>
-#include <DUNE/Plans/TimeProfile.hpp>
-#include <DUNE/Plans/PowerModel.hpp>
-#include <DUNE/Plans/SpeedModel.hpp>
+#include <DUNE/DUNE.hpp>
 
 // Local headers.
 #include "ComponentActiveTime.hpp"

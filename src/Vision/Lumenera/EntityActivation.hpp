@@ -25,6 +25,9 @@
 // Author: Renato Caldas                                                    *
 //***************************************************************************
 
+#ifndef VISION_LUMENERA_ENTITY_ACTIVATION_HPP_INCLUDED_
+#define VISION_LUMENERA_ENTITY_ACTIVATION_HPP_INCLUDED_
+
 // ISO C++ 98 headers.
 #include <string>
 
@@ -222,3 +225,5 @@ namespace Vision
     };
   }
 }
+
+#endif

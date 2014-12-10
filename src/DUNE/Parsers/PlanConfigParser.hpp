@@ -26,8 +26,8 @@
 // Author: Pedro Calado (added some maneuvers)                              *
 //***************************************************************************
 
-#ifndef DUNE_PARSERS_PLANCONFIGPARSER_HPP_INCLUDED_
-#define DUNE_PARSERS_PLANCONFIGPARSER_HPP_INCLUDED_
+#ifndef DUNE_PARSERS_PLAN_CONFIG_PARSER_HPP_INCLUDED_
+#define DUNE_PARSERS_PLAN_CONFIG_PARSER_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/Coordinates.hpp>

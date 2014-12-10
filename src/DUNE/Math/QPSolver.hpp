@@ -25,8 +25,8 @@
 // Author: Eduardo Marques (port)                                           *
 //***************************************************************************
 
-#ifndef DUNE_MATH_QPSOLVER_HPP_INCLUDED_
-#define DUNE_MATH_QPSOLVER_HPP_INCLUDED_
+#ifndef DUNE_MATH_QP_SOLVER_HPP_INCLUDED_
+#define DUNE_MATH_QP_SOLVER_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/Config.hpp>

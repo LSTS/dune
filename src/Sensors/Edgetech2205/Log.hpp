@@ -35,6 +35,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "Packet.hpp"
+
 namespace Sensors
 {
   namespace Edgetech2205

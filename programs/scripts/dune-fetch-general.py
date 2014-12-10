@@ -186,7 +186,6 @@ start_row = 1;
 for i in range(start_row, len(first_col)):
     options.append(first_col[i]);
 
-
  # Get values for each vehicle and write ini file for each
 for v in range(len(profile_cols)):
 

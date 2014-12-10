@@ -36,6 +36,7 @@
 
 // DUNE headers.
 #include <DUNE/Math/Matrix.hpp>
+#include <DUNE/Tasks/Task.hpp>
 
 namespace DUNE
 {
@@ -252,7 +253,6 @@ namespace DUNE
       //! @return the updated state
       UAVSimulation
       update(const double& timestep, const double& bank_cmd);
-
 
       //! This method updates the simulated state with the defined time step and controls.
       //! @param[in] timestep - time step for the update
