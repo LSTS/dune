@@ -30,6 +30,9 @@
 
 // DUNE headers.
 #include <DUNE/IMC/Definitions.hpp>
+#include <DUNE/Math/MovingAverage.hpp>
+#include <DUNE/Time/Counter.hpp>
+#include <DUNE/Memory.hpp>
 
 namespace DUNE
 {
@@ -55,7 +58,7 @@ namespace DUNE
         m_mave(NULL)
       {
         m_timer.setTop(timeout);
-        m_mave = new MovingAverage<float>(c_vsamples);
+        m_mave = new Math::MovingAverage<float>(c_vsamples);
       }
 
       ~VerticalMonitor(void)
@@ -97,7 +100,7 @@ namespace DUNE
       //! Progress below minimum
       bool m_slow_progress;
       //! Moving average for progress samples
-      MovingAverage<float>* m_mave;
+      Math::MovingAverage<float>* m_mave;
     };
   }
 }

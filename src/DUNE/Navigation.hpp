@@ -35,7 +35,6 @@ namespace DUNE
   { }
 }
 
-#include <DUNE/Navigation/AAKR.hpp>
 #include <DUNE/Navigation/BasicNavigation.hpp>
 #include <DUNE/Navigation/BeamFilter.hpp>
 #include <DUNE/Navigation/CompassCalibration.hpp>

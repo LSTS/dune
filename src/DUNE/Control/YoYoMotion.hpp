@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_CONTROL_YOYOMOTION_HPP_INCLUDED_
-#define DUNE_CONTROL_YOYOMOTION_HPP_INCLUDED_
+#ifndef DUNE_CONTROL_YO_YO_MOTION_HPP_INCLUDED_
+#define DUNE_CONTROL_YO_YO_MOTION_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <sstream>

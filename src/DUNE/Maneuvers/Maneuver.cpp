@@ -133,7 +133,6 @@ namespace DUNE
       }
     }
 
-
     void
     Maneuver::consume(const IMC::StopManeuver* sm)
     {

@@ -46,7 +46,7 @@ namespace Control
         bool dh_control;
         bool as_control;
         float depth_rate;
-	int depth_deadzone;
+        int depth_deadzone;
         float heading_rate;
       };
 

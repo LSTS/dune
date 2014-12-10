@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_HARDWARE_HAYES_MODEM_EXCEPTIONS_HPP_INCLUDED_
-#define DUNE_HARDWARE_HAYES_MODEM_EXCEPTIONS_HPP_INCLUDED_
+#ifndef DUNE_HARDWARE_EXCEPTIONS_HPP_INCLUDED_
+#define DUNE_HARDWARE_EXCEPTIONS_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <stdexcept>

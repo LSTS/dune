@@ -190,9 +190,6 @@ namespace DUNE
       .defaultValue("AHRS")
       .description("Entity label of 'AHRS' messages");
 
-      param("Entity Label - Alignment", m_elabel_alignment)
-      .description("Entity label of 'EulerAngles' alignment messages");
-
       param("Entity Label - DVL", m_elabel_dvl)
       .description("Entity label of the DVL device");
 
@@ -300,15 +297,6 @@ namespace DUNE
 
       m_agvel_eid = m_ahrs_eid;
       m_accel_eid = m_ahrs_eid;
-
-      try
-      {
-        m_alignment_eid = resolveEntity(m_elabel_alignment);
-      }
-      catch (...)
-      {
-        m_alignment_eid = 0;
-      }
 
       try
       {
@@ -435,20 +423,11 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::EulerAngles* msg)
     {
-      if (msg->getSourceEntity() == m_alignment_eid)
-      {
-        correctAlignment(msg->psi);
-        m_phi_offset = msg->phi - Math::Angles::normalizeRadian(getEuler(AXIS_X));
-        m_theta_offset = msg->theta - Math::Angles::normalizeRadian(getEuler(AXIS_Y));
-        spew("Euler Angles offset - phi, theta: %f | %f", m_phi_offset, m_theta_offset);
-        return;
-      }
-
       if (msg->getSourceEntity() != m_ahrs_eid)
         return;
 
-      m_euler_bfr[AXIS_X] += msg->phi + m_phi_offset;
-      m_euler_bfr[AXIS_Y] += msg->theta + m_theta_offset;
+      m_euler_bfr[AXIS_X] += msg->phi;
+      m_euler_bfr[AXIS_Y] += msg->theta;
 
       // Heading buffer maintains sign.
       m_euler_bfr[AXIS_Z] += getEuler(AXIS_Z) + Math::Angles::minSignedAngle(getEuler(AXIS_Z), msg->psi);
@@ -816,8 +795,6 @@ namespace DUNE
 
       m_gps_sog = 0.0;
       m_heading = 0.0;
-      m_phi_offset = 0.0;
-      m_theta_offset = 0.0;
       m_altitude = -1;
 
       m_navstate = SM_STATE_IDLE;
@@ -932,13 +909,6 @@ namespace DUNE
         m_kal.setOutput(u, m_wvel.x);
         m_kal.setOutput(v, m_wvel.y);
       }
-    }
-
-    void
-    BasicNavigation::correctAlignment(double psi)
-    {
-      // do nothing.
-      (void)psi;
     }
 
     void

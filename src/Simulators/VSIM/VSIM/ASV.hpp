@@ -25,8 +25,8 @@
 // Author: José Braga                                                       *
 //***************************************************************************
 
-#ifndef SIMULATORS_VSIM_ASV_HPP_INCLUDED_
-#define SIMULATORS_VSIM_ASV_HPP_INCLUDED_
+#ifndef SIMULATORS_VSIM_VSIM_ASV_HPP_INCLUDED_
+#define SIMULATORS_VSIM_VSIM_ASV_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <numeric>

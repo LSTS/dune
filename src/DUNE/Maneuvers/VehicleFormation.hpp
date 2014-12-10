@@ -25,8 +25,8 @@
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
 
-#ifndef DUNE_MANEUVERS_VEHICLEFORMATION_HPP_INCLUDED_
-#define DUNE_MANEUVERS_VEHICLEFORMATION_HPP_INCLUDED_
+#ifndef DUNE_MANEUVERS_VEHICLE_FORMATION_HPP_INCLUDED_
+#define DUNE_MANEUVERS_VEHICLE_FORMATION_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <vector>

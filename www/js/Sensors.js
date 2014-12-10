@@ -189,7 +189,6 @@ Sensors.prototype.updateField = function(root, msg)
         root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);
     }
 
-
     root.childNodes[1].firstChild.data = Number(msg.value).toFixed(2);
 };
 

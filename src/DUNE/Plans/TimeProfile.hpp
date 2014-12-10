@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLANS_TIMEPROFILE_HPP_INCLUDED_
-#define DUNE_PLANS_TIMEPROFILE_HPP_INCLUDED_
+#ifndef DUNE_PLANS_TIME_PROFILE_HPP_INCLUDED_
+#define DUNE_PLANS_TIME_PROFILE_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/Coordinates.hpp>

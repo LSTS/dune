@@ -25,6 +25,9 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+#ifndef SENSORS_IMAGENEX_852_TRIGGER_HPP_INCLUDED_
+#define SENSORS_IMAGENEX_852_TRIGGER_HPP_INCLUDED_
+
 // ISO C++ 98 headers.
 #include <cmath>
 
@@ -127,3 +130,5 @@ namespace Sensors
     };
   }
 }
+
+#endif

@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLANS_SPEEDMODEL_HPP_INCLUDED_
-#define DUNE_PLANS_SPEEDMODEL_HPP_INCLUDED_
+#ifndef DUNE_PLANS_SPEED_MODEL_HPP_INCLUDED_
+#define DUNE_PLANS_SPEED_MODEL_HPP_INCLUDED_
 
 //! ISO C++ headers.
 #include <vector>
@@ -57,9 +57,11 @@ namespace DUNE
       //! @param[in] act values for the actuation
       //! @param[in] rpm values for the rpms
       //! @param[in] mps values for the meters per second
+      //! @param[in] time_factor time of arrival factor
       SpeedModel(const std::vector<float>& act,
                  const std::vector<float>& rpm,
-                 const std::vector<float>& mps);
+                 const std::vector<float>& mps,
+                 float time_factor = 5.0);
 
       //! Convert to meters per second
       //! @param[in] value speed value from which to convert
@@ -86,6 +88,14 @@ namespace DUNE
       void
       validate(void) const;
 
+      //! Get time of arrival factor
+      //! @return time of arrival in seconds
+      float
+      getTimeFactor(void) const
+      {
+        return m_time_factor;
+      }
+
     private:
       //! Convert from any unit to any other unit
       //! @param[in] value speed value from which to convert
@@ -96,6 +106,8 @@ namespace DUNE
 
       //! Vector of values for each axis
       std::vector<float> m_models[3];
+      //! Time of arrival factor
+      float m_time_factor;
     };
   }
 }

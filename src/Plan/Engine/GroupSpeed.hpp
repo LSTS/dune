@@ -25,12 +25,15 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLAN_ENGINE_GROUPSPEEDS_HPP_INCLUDED_
-#define DUNE_PLAN_ENGINE_GROUPSPEEDS_HPP_INCLUDED_
+#ifndef PLAN_ENGINE_GROUP_SPEED_HPP_INCLUDED_
+#define PLAN_ENGINE_GROUP_SPEED_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <map>
 #include <cmath>
+
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
 
 namespace Plan
 {

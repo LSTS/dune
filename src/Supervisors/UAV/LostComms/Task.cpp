@@ -57,16 +57,25 @@ namespace Supervisors
         Time::Counter<double> m_tout_heartbeat;
         //! Mission timeout.
         Time::Counter<double> m_tout_mission;
-        //! True if executing plan
+        //! True if executing plan.
         bool m_in_mission;
-        //! True if executing LostComms plan
+        //! True if executing LostComms plan.
         bool m_in_lc;
+        //! Lost comms checked.
+        bool m_check_plan;
+        //! Got lost comms plan.
+        bool m_got_plan;
+        //! Plan specification for lost comms.
+        IMC::PlanSpecification m_plan;
         //! Task arguments.
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Periodic(name, ctx),
-          m_in_mission(false)
+          m_in_mission(false),
+          m_in_lc(false),
+          m_check_plan(false),
+          m_got_plan(false)
         {
           param("Heartbeat Timeout", m_args.tout_heartbeat)
           .units(Units::Second)
@@ -86,9 +95,9 @@ namespace Supervisors
           .defaultValue("lost_comms")
           .description("Plan to be executed in case of Lost Communications");
 
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
           bind<IMC::Heartbeat>(this);
+          bind<IMC::PlanControl>(this);
+          bind<IMC::PlanDB>(this);
           bind<IMC::PlanControlState>(this);
         }
 
@@ -103,6 +112,17 @@ namespace Supervisors
         }
 
         void
+        checkPlan(void)
+        {
+          m_check_plan = true;
+          IMC::PlanDB db;
+          db.type = IMC::PlanDB::DBT_REQUEST;
+          db.op = IMC::PlanDB::DBOP_GET;
+          db.plan_id = m_args.plan;
+          dispatch(db);
+        }
+
+        void
         consume(const IMC::Heartbeat* msg)
         {
           if (msg->getSource() == getSystemId())
@@ -113,6 +133,38 @@ namespace Supervisors
             return;
 
           resetTimers();
+        }
+
+        void
+        consume(const IMC::PlanControl* msg)
+        {
+          if ((msg->type == IMC::PlanControl::PC_REQUEST) &&
+              (msg->op == IMC::PlanControl::PC_LOAD) &&
+              (msg->plan_id.compare(m_args.plan) == 0))
+          {
+            getPlanSpec(&msg->arg);
+          }
+        }
+
+        void
+        consume(const IMC::PlanDB* msg)
+        {
+          if (!m_check_plan)
+          {
+            if (msg->op != IMC::PlanDB::DBOP_BOOT)
+              checkPlan();
+          }
+
+          if (msg->plan_id.compare(m_args.plan) == 0)
+          {
+            if (((msg->type == IMC::PlanDB::DBT_REQUEST) &&
+                 (msg->op == IMC::PlanDB::DBOP_SET)) ||
+                ((msg->type == IMC::PlanDB::DBT_SUCCESS) &&
+                 (msg->op == IMC::PlanDB::DBOP_GET)))
+            {
+              getPlanSpec(&msg->arg);
+            }
+          }
         }
 
         void
@@ -137,14 +189,52 @@ namespace Supervisors
           p_control.op = IMC::PlanControl::PC_START;
           p_control.type = IMC::PlanControl::PC_REQUEST;
           p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
+          p_control.arg.set(m_plan);
 
           dispatch(p_control);
           resetTimers();
         }
 
         void
+        getPlanSpec(const IMC::InlineMessage<IMC::Message>* msg)
+        {
+          if (msg->isNull())
+          {
+            m_got_plan = false;
+            return;
+          }
+
+          if (msg->get()->getId() != DUNE_IMC_PLANSPECIFICATION)
+          {
+            m_got_plan = false;
+            return;
+          }
+
+          const IMC::PlanSpecification* spec = static_cast<const IMC::PlanSpecification*>(msg->get());
+
+          if (spec == NULL)
+          {
+            m_got_plan = false;
+            return;
+          }
+
+          m_got_plan = true;
+          m_plan = *spec;
+
+          debug("got lost comms plan");
+
+          if (!isActive())
+            requestActivation();
+
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        }
+
+        void
         task(void)
         {
+          if (!isActive())
+            return;
+
           if (m_in_lc)
             return;
 

@@ -84,7 +84,6 @@ namespace DUNE
         *w = t10 * t23 + t14 * sphi + t17 * t23 - t19 * sphi + cphi * ctheta * vz;
       }
 
-
       //! Body to inertial frame conversion of linear velocities.
       //! Given the angles of a body in respect to the reference axes
       //! (psi, theta, psi)

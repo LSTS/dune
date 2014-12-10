@@ -1327,7 +1327,6 @@ namespace Maneuver
             double vt_body_vel[3] = {msg->u, msg->v, msg->w};
             Matrix vd_vel = md_rot_body2ground*Matrix(vt_body_vel, 3, 1);
 
-
             //! Update leader state variables
             double t_leader[12] = {msg->x,       msg->y,       msg->z,
                 vd_vel(0),    vd_vel(1),    vd_vel(2),
@@ -3162,7 +3161,6 @@ namespace Maneuver
           //!-------------------------------------------
           //! Control influence merging
           //!-------------------------------------------
-
 
           //! UAV weight on control strategy
           Matrix vd_ctrl_weight = Matrix(m_uav_n+1, 1, 1.0);
