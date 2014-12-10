@@ -49,8 +49,13 @@ namespace Transports
       unsigned server_port;
       //
       std::string server_path;
-      //
-      std::string server_pass;
+
+      //! Node hostname.
+      std::string node_host;
+      //! Node username.
+      std::string node_user;
+      //! Node password.
+      std::string node_pass;
       //! Network interface.
       std::string interface;
       //! Update periodicity.
@@ -63,6 +68,8 @@ namespace Transports
       Address m_address;
       //! Update Timer.
       Counter<double> m_timer;
+      //! Base64 authentication token.
+      std::string m_auth_base64;
       //! Task arguments.
       Arguments m_args;
 
@@ -84,7 +91,17 @@ namespace Transports
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("/ldns/put.php");
 
-        param("Server - Password", m_args.server_pass)
+        param("Node - Hostname", m_args.node_host)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("");
+
+        param("Node - Username", m_args.node_user)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("");
+
+        param("Node - Password", m_args.node_pass)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("");
@@ -103,9 +120,7 @@ namespace Transports
       }
 
       ~Task(void)
-      {
-
-      }
+      { }
 
       void
       onResourceAcquisition(void)
@@ -117,6 +132,38 @@ namespace Transports
       onUpdateParameters(void)
       {
         m_timer.setTop(m_args.update_period);
+
+        std::string auth = String::str("%s:%s", m_args.node_user.c_str(),
+                                       m_args.node_pass.c_str());
+
+        m_auth_base64 = Base64::encode(auth);
+      }
+
+      std::string
+      buildRequest(const Address& address) const
+      {
+        std::ostringstream os;
+        os << "GET " << m_args.server_path
+           << "?hostname=" << m_args.node_host
+           << "&myip=" << address
+           << "&wildcard=NOCHG"
+           << "&mx=NOCHG"
+           << "&backmx=NOCHG"
+           << " HTTP/1.1" << "\r\n"
+           << "User-Agent: LSTS - DUNE - " << DUNE_VERSION_STR << "\r\n"
+           << "Accept: */*" << "\r\n"
+           << "Host: " << m_args.server_host << "\r\n"
+           << "Connection: close\r\n"
+           << "Authorization: Basic " << m_auth_base64 << "\r\n"
+           << "\r\n";
+
+        return os.str();
+      }
+
+      Address
+      lookupNodeHost(void) const
+      {
+        return Address(m_args.node_host.c_str());
       }
 
       void
@@ -131,22 +178,14 @@ namespace Transports
         TCPSocket socket;
         socket.connect(Address(m_args.server_host.c_str()), m_args.server_port);
 
-        std::ostringstream os;
-        os << "GET " << m_args.server_path
-           << "?host=" << getSystemName()
-           << "&pass=" << m_args.server_pass
-           << "&addr=" << address
-           << "\r\n"
-           << "Host: " << m_args.server_host << "\r\n"
-           << "Connection: close\r\n\r\n";
-
-        std::string request = os.str();
-
+        std::string request = buildRequest(address);
         socket.write(request.c_str(), request.size());
 
         char bfr[1024];
         socket.readString(bfr, sizeof(bfr));
-        if (std::strcmp(bfr, "Recorded") == 0)
+
+        if (String::endsWith(bfr, "good")
+            || String::endsWith(bfr, "nochg"))
         {
           m_address = address;
           debug("address updated");
