@@ -272,10 +272,13 @@ namespace Control
           param("Roll Compensation -- Speed Bounds", m_args.rc.speed_bounds)
           .defaultValue("")
           .size(2)
+          .units(Units::MeterPerSecond)
           .description("Lower and upper speed bounds when doing roll speed compensation");
 
           param("Roll Compensation -- Speed Gain", m_args.rc.speed_gain)
           .defaultValue("0.0")
+          .minimumValue("0.0")
+          .maximumValue("2.0")
           .description("Roll's minimum proportional gain in speed compensation");
 
           m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_threshold);
