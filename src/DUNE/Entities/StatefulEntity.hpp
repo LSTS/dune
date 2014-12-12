@@ -175,6 +175,26 @@ namespace DUNE
       void
       consume(const IMC::QueryEntityActivationState* msg);
 
+      //! Check if an activation request arrived while the entity was
+      //! being deactivated.
+      //! @return true if an activation request is pending, false
+      //! otherwise.
+      bool
+      hasPendingActivation(void) const
+      {
+        return m_next_act_state == NAS_ACTIVE;
+      }
+
+      //! Check if a deactivation request arrived while the entity was
+      //! being activated.
+      //! @return true if a deactivation request is pending, false
+      //! otherwise.
+      bool
+      hasPendingDeactivation(void) const
+      {
+        return m_next_act_state == NAS_INACTIVE;
+      }
+
     private:
       enum NextActivationState
       {
