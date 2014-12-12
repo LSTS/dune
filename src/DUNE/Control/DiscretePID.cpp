@@ -62,6 +62,24 @@ namespace DUNE
     }
 
     void
+    DiscretePID::setProportionalGain(float gain)
+    {
+      m_kp = gain;
+    }
+
+    void
+    DiscretePID::setIntegralGain(float gain)
+    {
+      m_ki = gain;
+    }
+
+    void
+    DiscretePID::setDerivativeGain(float gain)
+    {
+      m_kd = gain;
+    }
+
+    void
     DiscretePID::setOutputLimits(float lower, float upper)
     {
       if ((lower == 0.0) && (upper == 0.0))

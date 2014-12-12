@@ -48,40 +48,58 @@ namespace DUNE
       //! Destructor.
       ~DiscretePID(void);
 
-      //! Set PID gains using vector
-      //! @param[in] gains pid gains vector in order p, i, d
+      //! Set PID gains using vector.
+      //! @param[in] gains pid gains vector in order p, i, d.
       void
       setGains(const std::vector<float>& gains);
 
-      //! Set output upper and lower limit
-      //! @param[in] lower lower limit
-      //! @param[in] upper upper limit
+      //! Set proportional gain.
+      //! @param[in] gain proportional gain p.
+      void
+      setProportionalGain(float gain);
+
+      //! Set integral gain.
+      //! @param[in] gain integral gain i.
+      void
+      setIntegralGain(float gain);
+
+      //! Set derivative gain.
+      //! @param[in] gain derivative gain p.
+      void
+      setDerivativeGain(float gain);
+
+      //! Set output upper and lower limit.
+      //! @param[in] lower lower limit.
+      //! @param[in] upper upper limit.
       void
       setOutputLimits(float lower, float upper);
 
-      //! Set integral bounds (limits)
-      //! @param[in] value absolute value of bound, lower bound will be negative
+      //! Set integral bounds (limits).
+      //! @param[in] value absolute value of bound, lower bound will be
+      //! negative.
       void
       setIntegralLimits(float value);
 
-      //! Enable debug using control parcels logged using bus dispatch
-      //! @param[in] t pointer to a task object
-      //! @param[in] p pointer to control parcel message
+      //! Enable debug using control parcels logged using bus dispatch.
+      //! @param[in] t pointer to a task object.
+      //! @param[in] p pointer to control parcel message.
       void
       enableParcels(Tasks::Task* t, IMC::ControlParcel* p);
 
       //! Step forward, using an internal error derivative estimate.
-      //! @param[in] timestep amount of time to be used in derivative and integral part
-      //! @param[in] error error between reference and measure
-      //! @return pid output
+      //! @param[in] timestep amount of time to be used in derivative and
+      //! integral part.
+      //! @param[in] error error between reference and measure.
+      //! @return pid output.
       float
       step(double timestep, float error);
 
       //! Step forward, using the supplied error derivative.
-      //! @param[in] timestep amount of time to be used in derivative and integral part
-      //! @param[in] error error between reference and measure
-      //! @param[in] err_derivative error derivative
-      //! @return pid output
+      //! @param[in] timestep amount of time to be used in derivative and
+      //! integral part.
+      //! @param[in] error error between reference and measure.
+      //! @param[in] err_derivative error derivative.
+      //! @return pid output.
       float
       step(double timestep, float error, float err_derivative);
 
@@ -99,25 +117,25 @@ namespace DUNE
 
       //! Integral error.
       float m_int_err;
-      //! Boolean for limiting integral part or not
+      //! Boolean for limiting integral part or not.
       bool m_limit_int;
-      //! Boolean for limiting output of pid
+      //! Boolean for limiting output of pid.
       bool m_limit_out;
-      //! Integral limits for anti windup
+      //! Integral limits for anti windup.
       float m_max_int;
       //! Previous error sample.
       float m_prev_err;
-      //! Windup lower limit
+      //! Windup lower limit.
       float m_lower_limit;
-      //! Windup upper limit
+      //! Windup upper limit.
       float m_upper_limit;
 
       // Debug Parcels
       //! Debug flag
       bool m_debug;
-      //! Pointer to task to call dispatch
+      //! Pointer to task to call dispatch.
       Tasks::Task* m_task;
-      //! Pointer to control parcel
+      //! Pointer to control parcel.
       IMC::ControlParcel* m_parcel;
     };
   }
