@@ -47,20 +47,21 @@ namespace DUNE
       public:
       //! base64 constructor
       Base64();
-        
+
       //! base64 destructor
       ~Base64();
-			
+
       //! base64 encode
       //! @param[in] bytes  pointers to characters.
       //! @param[in] len length of the string
       std::string
       encode(unsigned char const* bytes , size_t len);
-        
+
       //! base64 decode
       //! @param pass string by reference to const
       std::string
       decode(const std::string& s);
+
     };
   }
 }
