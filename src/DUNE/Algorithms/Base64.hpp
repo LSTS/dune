@@ -27,7 +27,6 @@
 
 // ISO C++ 98 headers.
 #include <string>
-using namespace std;
 
 #ifndef DUNE_ALGORITHMS_BASE64_HPP_INCLUDED_
 #define DUNE_ALGORITHMS_BASE64_HPP_INCLUDED_
@@ -45,21 +44,21 @@ namespace DUNE
     //! Collection of algorithms for encode and decode strings with base 64 encoding rfc-2045
     class Base64
     {
-        public:
-        //! base64 constructor
-        Base64();
+      public:
+      //! base64 constructor
+      Base64();
         
       //! base64 destructor
       ~Base64();
 			
-        //! base64 encode
-        //! @param[in] bytes  pointers to characters.
-        //! @param[in] len length of the string
+      //! base64 encode
+      //! @param[in] bytes  pointers to characters.
+      //! @param[in] len length of the string
       std::string
       encode(unsigned char const* bytes , size_t len);
         
-        //! base64 decode
-        //! @param pass string by reference to const
+      //! base64 decode
+      //! @param pass string by reference to const
       std::string
       decode(const std::string& s);
     };
