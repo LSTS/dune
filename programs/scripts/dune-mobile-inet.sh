@@ -88,6 +88,11 @@ log()
 
 modem_probe()
 {
+    if [ -n "$UART_DEV" ]; then
+        echo "$UART_DEV"
+        return 0
+    fi
+
     nr="$(cat /proc/tty/driver/usbserial 2> /dev/null | grep GSM | head -n 1 | cut -f1 -d:)"
     if [ -z "$nr" ]; then
         echo ""

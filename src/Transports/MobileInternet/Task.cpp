@@ -92,6 +92,8 @@ namespace Transports
       std::string uart_dev;
       //! Power channel name.
       std::string power_channel;
+      //! Disconnect on exit.
+      bool disconnect;
     };
 
     struct Task: public Tasks::Task
@@ -169,6 +171,12 @@ namespace Transports
         .defaultValue("ppp0")
         .description("PPP Interface");
 
+        param("Disconnect On Exit", m_args.disconnect)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("true")
+        .description("Disconnect on exit");
+
         Path script = m_ctx.dir_scripts / "dune-mobile-inet.sh";
         m_command_connect = String::str("/bin/sh %s start > /dev/null 2>&1", script.c_str());
         m_command_disconnect = String::str("/bin/sh %s stop > /dev/null 2>&1", script.c_str());
@@ -180,7 +188,8 @@ namespace Transports
 
       ~Task(void)
       {
-        disconnect();
+        if (m_args.disconnect)
+          disconnect();
       }
 
       void
@@ -271,6 +280,7 @@ namespace Transports
         Environment::set("GSM_APN", m_args.gsm_apn);
         Environment::set("GSM_PIN", pin);
         Environment::set("GSM_MODE", m_args.gsm_mode);
+        Environment::set("UART_DEV", m_args.uart_dev);
 
         if (std::system(m_command_connect.c_str()) == -1)
           err(DTR("failed to execute connect command"));
