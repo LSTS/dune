@@ -36,7 +36,8 @@ namespace Transports
     {
       ID_LIMU_DATA = 0,
       ID_NOVATEL_TIME = 1,
-      ID_NOVATEL_DATA = 2
+      ID_NOVATEL_DATA = 2,
+      ID_PCTL_DATA = 3
     };
   }
 }

@@ -10,6 +10,7 @@
 // Local headers.
 #include "Filters/Filter.hpp"
 #include "Filters/Factory.hpp"
+#include "Filters/Ids.hpp"
 #include "Definitions/Power.hpp"
 
 namespace Transports
@@ -50,6 +51,18 @@ namespace Transports
       ~Table(void)
       {
         flushLog();
+      }
+
+      void
+      setADCReference(double ref)
+      {
+        m_adc_ref = ref;
+      }
+
+      void
+      setBatConversion(const std::vector<double>& conv)
+      {
+        m_volt_conv = conv;
       }
 
       void
@@ -175,6 +188,25 @@ namespace Transports
             m_fsm_state = FSM_ST_CLOSE;
           return;
         }
+        else if (m_frame.getId() == 9)
+        {
+          unsigned volt_raw = m_frame.getPayload()[0] << 8 | m_frame.getPayload()[1];
+          fp32_t volt = m_volt_conv[0] * ((volt_raw / 1024.0) * m_adc_ref) + m_volt_conv[1];
+
+          if (m_bin_ofs != NULL)
+          {
+            IMC::DevDataBinary data;
+            data.setSourceEntity(ID_PCTL_DATA);
+            data.value.resize(sizeof(m_msec) + sizeof(volt));
+            uint8_t* ptr__ = (uint8_t*)&data.value[0];
+            ptr__ += IMC::serialize(m_msec, ptr__);
+            ptr__ += IMC::serialize(volt, ptr__);
+            Packet::serialize(&data, *m_bin_ofs);
+          }
+
+          m_task->inf("%0.2f", volt);
+          return;
+        }
         else if (m_frame.getId() != 1)
         {
           return;
@@ -268,6 +300,9 @@ namespace Transports
       Path m_log_tmp;
 
       std::ostream* m_bin_ofs;
+      double m_adc_ref;
+      std::vector<double> m_volt_conv;
+
 
       void
       printCount(void) const

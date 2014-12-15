@@ -103,6 +103,24 @@ processNovatelData(const IMC::DevDataBinary* msg)
 }
 
 void
+processBatteryData(const IMC::DevDataBinary* msg)
+{
+  int64_t msec;
+  float volt;
+
+  const uint8_t* bfr__ = (const uint8_t*)&msg->value[0];
+  uint16_t size__ = msg->value.size();
+
+  bfr__ += IMC::deserialize(msec, bfr__, size__);
+  bfr__ += IMC::deserialize(volt, bfr__, size__);
+
+  std::cout << "INSERT INTO battery_data VALUES ("
+            << msec << ", "
+            << volt
+            << ");" << std::endl;
+}
+
+void
 toSQL(const Path& path)
 {
   std::cerr << "* Processing " << path << std::endl;
@@ -133,6 +151,9 @@ toSQL(const Path& path)
             break;
           case Transports::Leviathan::ID_NOVATEL_TIME:
             processNovatelTime(bin);
+            break;
+          case Transports::Leviathan::ID_PCTL_DATA:
+            processBatteryData(bin);
             break;
         }
       }

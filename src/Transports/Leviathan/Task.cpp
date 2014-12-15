@@ -48,6 +48,8 @@ namespace Transports
       std::vector<std::string> chan_bauds;
       std::vector<std::string> chan_frames;
       int time_reference;
+      std::vector<double> bat_volt_conv;
+      double adc_ref;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -103,6 +105,15 @@ namespace Transports
         .defaultValue("-1")
         .description("Time reference channel");
 
+        param("Battery Voltage Conversion", m_args.bat_volt_conv)
+        .size(2)
+        .defaultValue("31.3030, 0.0")
+        .description("Voltage conversion formula");
+
+        param("ADC Reference", m_args.adc_ref)
+        .defaultValue("1.1")
+        .description("ADC reference voltage");
+
         m_power_config.resize(c_power_channel_count, 0);
 
         m_table = new Table(this, ctx.dir_log);
@@ -144,6 +155,10 @@ namespace Transports
           // Time reference.
           m_table->setTimeReferenceChannel(m_args.time_reference);
         }
+
+
+        m_table->setADCReference(m_args.adc_ref);
+        m_table->setBatConversion(m_args.bat_volt_conv);
       }
 
       //! Acquire resources.
