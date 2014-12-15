@@ -533,6 +533,11 @@ namespace DUNE
                                        msg->lat, msg->lon, msg->height,
                                        &x, &y, &m_last_z);
 
+      // Stream Estimator.
+      IMC::EstimatedStreamVelocity stream;
+      if (m_stream_filter.consume(msg, stream))
+        dispatch(stream);
+
       // Correct for roll angle.
       y += std::sin(getEuler(AXIS_X)) * m_dist_gps_cg;
 
@@ -700,6 +705,7 @@ namespace DUNE
     BasicNavigation::consume(const IMC::Rpm* msg)
     {
       m_rpm = msg->value;
+      m_stream_filter.consume(msg);
     }
 
     void
@@ -977,12 +983,10 @@ namespace DUNE
       m_estate.setTimeStamp(tstamp);
       m_uncertainty.setTimeStamp(tstamp);
       m_navdata.setTimeStamp(tstamp);
-      m_ewvel.setTimeStamp(tstamp);
 
       dispatch(m_estate, DF_KEEP_TIME);
       dispatch(m_uncertainty, DF_KEEP_TIME);
       dispatch(m_navdata, DF_KEEP_TIME);
-      dispatch(m_ewvel, DF_KEEP_TIME);
     }
 
     void
