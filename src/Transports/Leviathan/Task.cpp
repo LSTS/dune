@@ -105,7 +105,7 @@ namespace Transports
 
         m_power_config.resize(c_power_channel_count, 0);
 
-        m_table = new Table(this, ctx.dir_log / Path("Leviathan.db"));
+        m_table = new Table(this, ctx.dir_log);
       }
 
       ~Task(void)

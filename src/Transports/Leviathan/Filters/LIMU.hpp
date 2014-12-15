@@ -34,6 +34,7 @@ using DUNE_NAMESPACES;
 
 // Local headers.
 #include "Filter.hpp"
+#include "Ids.hpp"
 
 namespace Transports
 {
@@ -42,33 +43,28 @@ namespace Transports
     class LIMU: public Filter
     {
     public:
-      LIMU(sqlite3* db):
-        Filter(db)
+      struct Fields
       {
-        dbCreate("CREATE TABLE IF NOT EXISTS limu ("
-                 "  time   UNSIGNED BIG INT NOT NULL,"
-                 "  limu_temp   REAL NOT NULL,"
-                 "  limu_accl_x REAL NOT NULL,"
-                 "  limu_accl_y REAL NOT NULL,"
-                 "  limu_accl_z REAL NOT NULL,"
-                 "  limu_avel_x REAL NOT NULL,"
-                 "  limu_avel_y REAL NOT NULL,"
-                 "  limu_avel_z REAL NOT NULL,"
-                 "  limu_magn_x REAL NOT NULL,"
-                 "  limu_magn_y REAL NOT NULL,"
-                 "  limu_magn_z REAL NOT NULL,"
-                 "  limu_phi    REAL NOT NULL,"
-                 "  limu_theta  REAL NOT NULL,"
-                 "  limu_psi    REAL NOT NULL,"
-                 "  PRIMARY KEY(time)"
-                 " )"
-                 );
+        double temp;
+        double accl_x;
+        double accl_y;
+        double accl_z;
+        double avel_x;
+        double avel_y;
+        double avel_z;
+        double magn_x;
+        double magn_y;
+        double magn_z;
+        double phi;
+        double theta;
+        double psi;
+      };
 
-        dbPrepare("INSERT INTO limu VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-      }
+      LIMU(void)
+      { }
 
       bool
-      doFilter(int64_t msec, uint8_t byte)
+      doFilter(int64_t msec, uint8_t byte, std::ostream* os)
       {
         if (m_parser.stateIsSync())
         {
@@ -77,14 +73,14 @@ namespace Transports
 
         if (m_parser.parse(byte, m_frame))
         {
-          return interpret();
+          return interpret(os);
         }
 
         return false;
       }
 
       bool
-      interpret(void)
+      interpret(std::ostream* os)
       {
         uint8_t id = m_frame.getId();
         if (id != 0x05)
@@ -93,7 +89,7 @@ namespace Transports
           return false;
         }
 
-        int16_t s16;
+        int16_t s16 = 0;
 
         const uint8_t* ptr = m_frame.getPayload();
         ByteCopy::fromLE(s16, ptr);
@@ -140,27 +136,50 @@ namespace Transports
         m_fields.accl_y *= 9.7982543981;
         m_fields.accl_z *= 9.7982543981;
 
-        if (dbIsActive())
+        if (os != NULL)
         {
-          dbBindInt64(1, m_msec);
-          dbBindDouble(2, m_fields.temp);
-          dbBindDouble(3, m_fields.accl_x);
-          dbBindDouble(4, m_fields.accl_y);
-          dbBindDouble(5, m_fields.accl_z);
-          dbBindDouble(6, m_fields.avel_x);
-          dbBindDouble(7, m_fields.avel_y);
-          dbBindDouble(8, m_fields.avel_z);
-          dbBindDouble(9, m_fields.magn_x);
-          dbBindDouble(10, m_fields.magn_y);
-          dbBindDouble(11, m_fields.magn_z);
-          dbBindDouble(12, m_fields.phi);
-          dbBindDouble(13, m_fields.theta);
-          dbBindDouble(14, m_fields.psi);
+          IMC::DevDataBinary data;
+          data.setSourceEntity(ID_LIMU_DATA);
+          data.value.resize(getLogSizeData());
 
-          dbStep();
+          uint8_t* ptr__ = (uint8_t*)&data.value[0];
+          ptr__ += IMC::serialize(m_msec, ptr__);
+          ptr__ += IMC::serialize(m_fields.temp, ptr__);
+          ptr__ += IMC::serialize(m_fields.accl_x, ptr__);
+          ptr__ += IMC::serialize(m_fields.accl_y, ptr__);
+          ptr__ += IMC::serialize(m_fields.accl_z, ptr__);
+          ptr__ += IMC::serialize(m_fields.avel_x, ptr__);
+          ptr__ += IMC::serialize(m_fields.avel_y, ptr__);
+          ptr__ += IMC::serialize(m_fields.avel_z, ptr__);
+          ptr__ += IMC::serialize(m_fields.magn_x, ptr__);
+          ptr__ += IMC::serialize(m_fields.magn_y, ptr__);
+          ptr__ += IMC::serialize(m_fields.magn_z, ptr__);
+          ptr__ += IMC::serialize(m_fields.phi, ptr__);
+          ptr__ += IMC::serialize(m_fields.theta, ptr__);
+          ptr__ += IMC::serialize(m_fields.psi, ptr__);
+          Packet::serialize(&data, *os);
         }
 
         return true;
+      }
+
+      size_t
+      getLogSizeData(void) const
+      {
+        return sizeof(m_msec)
+        + sizeof(m_fields.temp)
+        + sizeof(m_fields.accl_x)
+        + sizeof(m_fields.accl_y)
+        + sizeof(m_fields.accl_z)
+        + sizeof(m_fields.avel_x)
+        + sizeof(m_fields.avel_y)
+        + sizeof(m_fields.avel_z)
+        + sizeof(m_fields.magn_x)
+        + sizeof(m_fields.magn_y)
+        + sizeof(m_fields.magn_z)
+        + sizeof(m_fields.phi)
+        + sizeof(m_fields.theta)
+        + sizeof(m_fields.psi);
       }
 
       void
@@ -198,23 +217,6 @@ namespace Transports
       }
 
     private:
-      struct Fields
-      {
-        double temp;
-        double accl_x;
-        double accl_y;
-        double accl_z;
-        double avel_x;
-        double avel_y;
-        double avel_z;
-        double magn_x;
-        double magn_y;
-        double magn_z;
-        double phi;
-        double theta;
-        double psi;
-      };
-
       //! UCTK parser.
       UCTK::Parser m_parser;
       //! UCTK frame.

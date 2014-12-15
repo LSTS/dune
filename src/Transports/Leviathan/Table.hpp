@@ -7,9 +7,6 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// SQLite headers.
-#include <sqlite3/sqlite3.h>
-
 // Local headers.
 #include "Filters/Filter.hpp"
 #include "Filters/Factory.hpp"
@@ -20,67 +17,75 @@ namespace Transports
   namespace Leviathan
   {
     static const unsigned c_db_flush = 10000;
+    static const unsigned c_log_switch = 10 * c_db_flush;
     static const uint8_t c_pulse_channel = 0xcc;
     static const uint8_t c_off_channel = 0xcf;
 
     class Table: public DUNE::Concurrency::Thread
     {
     public:
-      Table(Tasks::Task* task, const Path& db_file):
+      Table(Tasks::Task* task, const Path& log_folder):
         m_task(task),
         m_fsm_state(FSM_ST_ACQUIRE_TIME),
         m_pulse(0),
         m_sync(false),
         m_msec(-1),
         m_time_channel(0),
-        m_db(NULL),
-        m_db_file(db_file)
+        m_log_folder(log_folder),
+        m_bin_ofs(NULL)
       {
         m_filters.resize(16, NULL);
-        openDataBase();
+
+        m_log_tmp = log_folder / "tmp";
+        try
+        {
+          m_log_tmp.remove(Path::MODE_RECURSIVE);
+        }
+        catch (...)
+        { }
+
+        m_log_tmp.create();
       }
 
       ~Table(void)
       {
-        closeDataBase();
+        flushLog();
       }
 
       void
-      openDataBase(void)
+      openLog(void)
       {
-        sqlite3_open(m_db_file.c_str(), &m_db);
-        sqlite3_exec(m_db, "BEGIN TRANSACTION", NULL, NULL, NULL);
+        std::string name(String::str("%lld.gz", m_msec));
+        m_log_file_tmp = m_log_tmp / name ;
+        m_log_file = m_log_folder / name;
+        m_bin_ofs = new Compression::FileOutput(m_log_file_tmp.c_str(), Compression::METHOD_GZIP);
+        m_task->inf("opened log: %s", m_log_file_tmp.c_str());
       }
 
       void
-      closeDataBase(void)
+      flushLog(void)
       {
-        if (m_db != NULL)
+        if (m_bin_ofs == NULL)
+          return;
+
+        if ((m_msec % c_log_switch) == 0)
         {
-          m_task->inf("closing database");
-          flushDataBase();
-
-          for (size_t i = 0; i < m_filters.size(); ++i)
-          {
-            if (m_filters[i] != NULL)
-            {
-              m_filters[i]->dbSetActive(false);
-              delete m_filters[i];
-              m_filters[i] = NULL;
-            }
-          }
-
-          sqlite3_close(m_db);
-          m_db = NULL;
+          closeLog();
+          openLog();
         }
+
+        printCount();
       }
 
       void
-      flushDataBase(void)
+      closeLog(void)
       {
-        sqlite3_exec(m_db, "END TRANSACTION", NULL, NULL, NULL);
-        sqlite3_exec(m_db, "BEGIN TRANSACTION", NULL, NULL, NULL);
-        printCount();
+        if (m_bin_ofs == NULL)
+          return;
+
+        Memory::clear(m_bin_ofs);
+        std::rename(m_log_file_tmp.c_str(), m_log_file.c_str());
+        m_task->inf("closed log: %s", m_log_file_tmp.c_str());
       }
 
       void
@@ -92,7 +97,7 @@ namespace Transports
       void
       setFilter(unsigned index, const std::string& name)
       {
-        m_filters[index] = Factory::create(name, m_db);
+        m_filters[index] = Factory::create(name);
       }
 
       bool
@@ -102,7 +107,7 @@ namespace Transports
           return false;
 
         Filter* f = m_filters[channel];
-        f->filter(0, byte);
+        f->filter(0, byte, m_bin_ofs);
         m_msec = f->getTime();
         if (m_msec < 0)
           return false;
@@ -132,7 +137,7 @@ namespace Transports
 
         m_msec += 10;
         if ((m_msec % c_db_flush) == 0)
-          flushDataBase();
+          flushLog();
       }
 
       void
@@ -144,7 +149,7 @@ namespace Transports
           return;
         }
 
-        m_filters[channel]->filter(m_msec, byte);
+        m_filters[channel]->filter(m_msec, byte, m_bin_ofs);
       }
 
       void
@@ -189,7 +194,7 @@ namespace Transports
           case FSM_ST_ACQUIRE_PULSE:
             if (acquirePulse(pchannel, pbyte))
             {
-              dbSetActive(true);
+              openLog();
               m_fsm_state = FSM_ST_STREAM;
             }
             break;
@@ -203,7 +208,7 @@ namespace Transports
 
           case FSM_ST_CLOSE:
             m_task->war("turning off");
-            closeDataBase();
+            closeLog();
             sendPowerDownIP();
             m_fsm_state = FSM_ST_IDLE;
             break;
@@ -217,17 +222,6 @@ namespace Transports
       push(uint8_t byte)
       {
         m_queue.push(byte);
-      }
-
-      void
-      dbSetActive(bool active)
-      {
-        m_task->inf("activating database");
-        for (size_t i = 0; i < m_filters.size(); ++i)
-        {
-          if (m_filters[i] != NULL)
-            m_filters[i]->dbSetActive(active);
-        }
       }
 
       void
@@ -268,8 +262,12 @@ namespace Transports
       //! Channel with absolute time reference.
       size_t m_time_channel;
 
-      sqlite3* m_db;
-      Path m_db_file;
+      Path m_log_file_tmp;
+      Path m_log_file;
+      Path m_log_folder;
+      Path m_log_tmp;
+
+      std::ostream* m_bin_ofs;
 
       void
       printCount(void) const

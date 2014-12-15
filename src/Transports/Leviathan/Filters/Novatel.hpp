@@ -18,6 +18,7 @@ using DUNE_NAMESPACES;
 
 // Local headers.
 #include "Filter.hpp"
+#include "Ids.hpp"
 
 namespace Transports
 {
@@ -29,45 +30,15 @@ namespace Transports
     class Novatel: public Filter
     {
     public:
-      Novatel(sqlite3* db):
-        Filter(db),
+      Novatel(void):
         m_time(-1),
         m_fsm_state(NOV_FSM_SYNC0)
-      {
-        dbCreate("CREATE TABLE IF NOT EXISTS nvtl_time ("
-                 "  time   UNSIGNED BIG INT NOT NULL,"
-                 "  nvtl_year   INTEGER NOT NULL,"
-                 "  nvtl_month  INTEGER NOT NULL,"
-                 "  nvtl_day    INTEGER NOT NULL,"
-                 "  nvtl_hour   INTEGER NOT NULL,"
-                 "  nvtl_minute INTEGER NOT NULL,"
-                 "  nvtl_second INTEGER NOT NULL,"
-                 "  PRIMARY KEY(time)"
-                 " )"
-                 );
-
-        dbPrepare("INSERT INTO nvtl_time VALUES(?,?,?,?,?,?,?)");
-
-        dbCreate("CREATE TABLE IF NOT EXISTS nvtl_data ("
-                 "  time   UNSIGNED BIG INT NOT NULL,"
-                 "  nvtl_data   BLOB NOT NULL,"
-                 "  PRIMARY KEY(time)"
-                 " )"
-                 );
-
-        std::string sql = "INSERT INTO nvtl_data VALUES(?, ?)";
-        sqlite3_prepare_v2(db, sql.c_str(), sql.size() + 1, &m_data_ins, NULL);
-      }
+      { }
 
       int64_t
       getTime(void) const
       {
         return m_time;
-      }
-
-      ~Novatel(void)
-      {
-        sqlite3_finalize(m_data_ins);
       }
 
     private:
@@ -138,9 +109,6 @@ namespace Transports
       //!
       int64_t m_msec;
 
-      //! Insert statement.
-      sqlite3_stmt* m_data_ins;
-
       uint8_t m_fsm_state;
       uint8_t m_hdr_len;
       uint8_t m_hdr_idx;
@@ -149,7 +117,7 @@ namespace Transports
       uint8_t m_crc_idx;
       uint32_t m_mcrc;
 
-      std::vector<uint8_t> m_msg_full;
+      std::vector<char> m_msg_full;
 
       union
       {
@@ -170,7 +138,7 @@ namespace Transports
       } m_msg;
 
       bool
-      doFilter(int64_t msec, uint8_t byte)
+      doFilter(int64_t msec, uint8_t byte, std::ostream* os)
       {
         switch (m_fsm_state)
         {
@@ -178,7 +146,7 @@ namespace Transports
             if (byte == 0xAA)
             {
               m_msg_full.clear();
-              m_msg_full.push_back(byte);
+              m_msg_full.push_back((char)byte);
               m_msec = msec;
               m_msec /= 1000;
               m_msec *= 1000;
@@ -194,28 +162,28 @@ namespace Transports
             break;
 
           case NOV_FSM_SYNC1:
-            m_msg_full.push_back(byte);
+            m_msg_full.push_back((char)byte);
             updateCRC32(byte);
             if (byte == 0x44)
               m_fsm_state = NOV_FSM_SYNC2;
             break;
 
           case NOV_FSM_SYNC2:
-            m_msg_full.push_back(byte);
+            m_msg_full.push_back((char)byte);
             updateCRC32(byte);
             if (byte == 0x12)
               m_fsm_state = NOV_FSM_HDR_LEN;
             break;
 
           case NOV_FSM_HDR_LEN:
-            m_msg_full.push_back(byte);
+            m_msg_full.push_back((char)byte);
             updateCRC32(byte);
             m_hdr_len = byte - 4;
             m_fsm_state = NOV_FSM_HDR;
             break;
 
           case NOV_FSM_HDR:
-            m_msg_full.push_back(byte);
+            m_msg_full.push_back((char)byte);
             updateCRC32(byte);
             m_hdr.raw[m_hdr_idx++] = byte;
             if (m_hdr_idx == m_hdr_len)
@@ -235,7 +203,7 @@ namespace Transports
             break;
 
           case NOV_FSM_MSG:
-            m_msg_full.push_back(byte);
+            m_msg_full.push_back((char)byte);
             updateCRC32(byte);
             m_msg.raw[m_msg_idx++] = byte;
             if (m_msg_idx == m_msg_len)
@@ -245,7 +213,7 @@ namespace Transports
             break;
 
           case NOV_FSM_CRC:
-            m_msg_full.push_back(byte);
+            m_msg_full.push_back((char)byte);
             m_crc.raw[m_crc_idx++] = byte;
             if (m_crc_idx == 4)
             {
@@ -258,7 +226,7 @@ namespace Transports
               }
               else
               {
-                interpret();
+                interpret(os);
                 return true;
               }
             }
@@ -305,7 +273,7 @@ namespace Transports
       }
 
       void
-      parseTime(void)
+      parseTime(std::ostream* os)
       {
         if (m_msg.time.utc_status == 1 && timeIsFine())
         {
@@ -332,36 +300,65 @@ namespace Transports
                      (uint8_t)m_msg.time.utc_status);
 #endif
 
-        if (dbIsActive())
-        {
-          dbBindInt64(1, m_msec);
-          dbBindInt(2, m_msg.time.utc_year);
-          dbBindInt(3, m_msg.time.utc_month);
-          dbBindInt(4, m_msg.time.utc_day);
-          dbBindInt(5, m_msg.time.utc_hour);
-          dbBindInt(6, m_msg.time.utc_min);
-          dbBindInt(7, m_msg.time.utc_ms / 1000);
-          dbStep();
-        }
+        if (os == NULL)
+          return;
+
+        IMC::DevDataBinary data;
+        data.setSourceEntity(ID_NOVATEL_TIME);
+        data.value.resize(getLogSizeTime());
+
+        uint8_t* ptr = (uint8_t*)&data.value[0];
+        ptr += IMC::serialize(m_msec, ptr);
+        ptr += IMC::serialize(m_msg.time.utc_year, ptr);
+        ptr += IMC::serialize(m_msg.time.utc_month, ptr);
+        ptr += IMC::serialize(m_msg.time.utc_day, ptr);
+        ptr += IMC::serialize(m_msg.time.utc_hour, ptr);
+        ptr += IMC::serialize(m_msg.time.utc_min, ptr);
+        m_msg.time.utc_ms /= 1000;
+        ptr += IMC::serialize(m_msg.time.utc_ms, ptr);
+        Packet::serialize(&data, *os);
+      }
+
+      size_t
+      getLogSizeData(void) const
+      {
+        return sizeof(m_msec)
+        + getSerializationSize(m_msg_full);
+      }
+
+      size_t
+      getLogSizeTime(void) const
+      {
+        return sizeof(m_msec)
+        + sizeof(m_msg.time.utc_year)
+        + sizeof(m_msg.time.utc_month)
+        + sizeof(m_msg.time.utc_day)
+        + sizeof(m_msg.time.utc_hour)
+        + sizeof(m_msg.time.utc_min)
+        + sizeof(m_msg.time.utc_ms);
       }
 
       void
-      interpret(void)
+      interpret(std::ostream* os)
       {
         if (m_hdr.field.msg_id == NOV_MSG_ID_TIME)
         {
-          parseTime();
+          parseTime(os);
           return;
         }
 
-        if (dbIsActive())
-        {
-          sqlite3_bind_int64(m_data_ins, 1, m_msec);
-          sqlite3_bind_blob(m_data_ins, 2, &m_msg_full[0], m_msg_full.size(), SQLITE_TRANSIENT);
-          sqlite3_step(m_data_ins);
-          sqlite3_clear_bindings(m_data_ins);
-          sqlite3_reset(m_data_ins);
-        }
+        if (os == NULL)
+          return;
+
+        IMC::DevDataBinary data;
+        data.setSourceEntity(ID_NOVATEL_DATA);
+        data.value.resize(getLogSizeData());
+
+        uint8_t* ptr = (uint8_t*)&data.value[0];
+        ptr += IMC::serialize(m_msec, ptr);
+        ptr += IMC::serialize(m_msg_full, ptr);
+        Packet::serialize(&data, *os);
+
       }
     };
   }

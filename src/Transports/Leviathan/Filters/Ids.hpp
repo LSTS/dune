@@ -25,71 +25,19 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef LCB_FILTERS_FILTER_HPP_INCLUDED_
-#define LCB_FILTERS_FILTER_HPP_INCLUDED_
-
-// ISO C++ 98 headers.
-#include <string>
-
-// DUNE headers.
-#include <DUNE/DUNE.hpp>
-
-// SQLite headers.
-#include <sqlite3/sqlite3.h>
-
-#define LCB_FILTER_EXPORT(class)                        \
-  extern "C" LCB::Filters::Filter*                      \
-  lcb_filter_create(sqlite3* db)                        \
-  {                                                     \
-    return new class(db);                               \
-  }
+#ifndef TRANSPORTS_LEVIATHAN_FILTERS_IDS_HPP_INCLUDED_
+#define TRANSPORTS_LEVIATHAN_FILTERS_IDS_HPP_INCLUDED_
 
 namespace Transports
 {
   namespace Leviathan
   {
-    class Filter
+    enum Ids
     {
-    public:
-      Filter(void):
-        m_count(0)
-      { }
-
-      virtual
-      ~Filter(void)
-      { }
-
-      bool
-      filter(int64_t msec, uint8_t byte, std::ostream* os)
-      {
-        bool rv = doFilter(msec, byte, os);
-        if (rv)
-          ++m_count;
-
-        return rv;
-      }
-
-      uint64_t
-      getCount(void) const
-      {
-        return m_count;
-      }
-
-      virtual int64_t
-      getTime(void) const
-      {
-        return -1;
-      }
-
-    protected:
-      virtual bool
-      doFilter(int64_t msec, uint8_t byte, std::ostream* os) = 0;
-
-    private:
-      uint64_t m_count;
+      ID_LIMU_DATA = 0,
+      ID_NOVATEL_TIME = 1,
+      ID_NOVATEL_DATA = 2
     };
-
-    typedef Filter* (*Creator)(sqlite3* db);
   }
 }
 

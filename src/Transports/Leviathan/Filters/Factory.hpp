@@ -49,9 +49,9 @@ namespace Transports
     {
     public:
       static Filter*
-      create(const std::string& name, sqlite3* db)
+      create(const std::string& name)
       {
-#define FILTER(s, c) if (name == s) return new c(db);
+#define FILTER(s, c) if (name == s) return new c();
 #include "Factory.def"
 
         return NULL;
