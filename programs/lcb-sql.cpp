@@ -33,6 +33,7 @@ processLIMUData(const IMC::DevDataBinary* msg)
 
   std::cout << "INSERT INTO limu_data VALUES ("
             << msec << ","
+            << std::setprecision(16) << std::fixed
             << fields.temp << ","
             << fields.accl_x << ","
             << fields.accl_y << ","
@@ -116,6 +117,7 @@ processBatteryData(const IMC::DevDataBinary* msg)
 
   std::cout << "INSERT INTO battery_data VALUES ("
             << msec << ", "
+            << std::setprecision(16) << std::fixed
             << volt
             << ");" << std::endl;
 }

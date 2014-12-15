@@ -358,7 +358,6 @@ namespace Transports
         ptr += IMC::serialize(m_msec, ptr);
         ptr += IMC::serialize(m_msg_full, ptr);
         Packet::serialize(&data, *os);
-
       }
     };
   }
