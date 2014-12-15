@@ -31,7 +31,6 @@ processLIMUData(const IMC::DevDataBinary* msg)
   bfr__ += IMC::deserialize(fields.theta, bfr__, size__);
   bfr__ += IMC::deserialize(fields.psi, bfr__, size__);
 
-  #if 0
   std::cout << "INSERT INTO limu_data VALUES ("
             << msec << ","
             << fields.temp << ","
@@ -48,7 +47,6 @@ processLIMUData(const IMC::DevDataBinary* msg)
             << fields.theta << ","
             << fields.psi
             << ");" << std::endl;
-  #endif
 }
 
 void
@@ -73,7 +71,6 @@ processNovatelTime(const IMC::DevDataBinary* msg)
   bfr__ += IMC::deserialize(utc_min, bfr__, size__);
   bfr__ += IMC::deserialize(utc_sec, bfr__, size__);
 
-  #if 0
   std::cout << "INSERT INTO novatel_time VALUES ("
             << msec << ","
             << utc_year << ","
@@ -83,8 +80,6 @@ processNovatelTime(const IMC::DevDataBinary* msg)
             << (unsigned)utc_min << ","
             << (unsigned)utc_sec
             << ");" << std::endl;
-
-  #endif
 }
 
 void
