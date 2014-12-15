@@ -58,7 +58,7 @@ namespace DUNE
             // Found placement, replace older Reference.
             if (frame->data[i * getSize() + 1] == id)
             {
-              encode(msg, frame, i);
+              encode(msg, frame, (uint8_t)i);
               return;
             }
           }
@@ -68,7 +68,7 @@ namespace DUNE
             // Empty message.
             if (frame->data[i * getSize() + 1] == 0)
             {
-              encode(msg, frame, i);
+              encode(msg, frame, (uint8_t)i);
               return;
             }
           }
@@ -89,7 +89,7 @@ namespace DUNE
           {
             if (frame->data[i * getSize() + 1] == id)
             {
-              IMC::Message* m = decode(frame, i);
+              IMC::Message* m = decode(frame, (uint8_t)i);
               return m;
             }
           }

@@ -473,16 +473,6 @@ namespace Navigation
         }
 
         void
-        correctAlignment(double psi)
-        {
-          // Vehicle heading is coarse aligned.
-          m_kal.setState(STATE_PSI, psi);
-          m_kal.setState(STATE_PSI_BIAS, m_heading - psi);
-          m_kal.resetCovariance(STATE_PSI_BIAS);
-          m_kal.setCovariance(STATE_PSI_BIAS, m_state_cov[SC_BIASES]);
-        }
-
-        void
         getSpeedOutputStates(unsigned* u, unsigned* v)
         {
           *u = OUT_U;

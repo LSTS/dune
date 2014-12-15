@@ -441,11 +441,6 @@ namespace DUNE
       virtual void
       runKalmanDVL(void);
 
-      //! Routine called when an alignment result is received.
-      //! @param[in] psi heading angle.
-      virtual void
-      correctAlignment(double psi);
-
       //! Get EKF output matrix speed indexes.
       //! @param[out] u forward speed state index.
       //! @param[out] v transversal speed state index.
@@ -567,8 +562,6 @@ namespace DUNE
       unsigned m_accel_eid;
       //! IMU entity id.
       unsigned m_imu_eid;
-      //! Orientation alignment entity id.
-      unsigned m_alignment_eid;
       //! LBL threshold.
       float m_lbl_threshold;
       //! Heading value (rad).
@@ -612,7 +605,6 @@ namespace DUNE
       double m_last_hae;
       //! Entity labels.
       std::string m_elabel_ahrs;
-      std::string m_elabel_alignment;
       std::string m_elabel_depth;
       //! Task state machine.
       SMStates m_navstate;
@@ -715,9 +707,6 @@ namespace DUNE
       uint8_t m_gvel_val_bits;
       //! DVL water velocity validation bits.
       uint8_t m_wvel_val_bits;
-      //! Euler Angles offset.
-      double m_phi_offset;
-      double m_theta_offset;
     };
   }
 }
