@@ -151,19 +151,14 @@ toSQL(const Path& path)
 int
 main(int argc, char** argv)
 {
-  Directory dir(argv[1]);
-  std::vector<std::string> paths;
-
-  const char* entry = NULL;
-  while ((entry = dir.readEntry(Directory::RD_FULL_NAME)))
+  if (argc != 2)
   {
-    if (String::endsWith(entry, ".gz"))
-      paths.push_back(entry);
+    std::cerr << "Usage: " << argv[0] << " GZ" << std::endl;
+    return 1;
   }
 
-  std::sort(paths.begin(), paths.end());
-  for (size_t i = 0; i < paths.size(); ++i)
-    toSQL(paths[i]);
+  if (String::endsWith(argv[1], ".gz"))
+    toSQL(argv[1]);
 
   return 0;
 }
