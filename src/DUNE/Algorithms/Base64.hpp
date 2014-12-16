@@ -25,11 +25,11 @@
 // Author: Mauro Brandão                                                    *
 //***************************************************************************
 
-// ISO C++ 98 headers.
-#include <string>
-
 #ifndef DUNE_ALGORITHMS_BASE64_HPP_INCLUDED_
 #define DUNE_ALGORITHMS_BASE64_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <string>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
@@ -41,10 +41,10 @@ namespace DUNE
     // Export DLL Symbol.
     class DUNE_DLL_SYM Base64;
 
-    //! Collection of algorithms for encode and decode strings with base 64 encoding rfc-2045
+    //! Collection of algorithms to encode and decode strings with base 64 encoding rfc-2045
     class Base64
     {
-      public:
+    public:
       //! base64 constructor
       Base64();
 
@@ -52,16 +52,34 @@ namespace DUNE
       ~Base64();
 
       //! base64 encode
-      //! @param[in] bytes  pointers to characters.
+      //! @param[in] c++ string, passed ref-to-const
+      static std::string
+      encode(const std::string& s);
+      
+      //! @param[in] c string, pointer to character
       //! @param[in] len length of the string
-      std::string
+      static std::string
+      encode(const char *str, size_t len);
+      
+      //! @param[in] bytes unsigned char arrays, pointers to characters.
+      //! @param[in] len length of the string
+      static std::string
       encode(unsigned char const* bytes , size_t len);
 
       //! base64 decode
-      //! @param pass string by reference to const
+      //! @param c++ string, passed ref-to-const
       std::string
       decode(const std::string& s);
-
+      
+      //! @param[in] c string, pointer to character
+      //! @param[in] len length of the string
+      static std::string
+      decode(const char *str, size_t len);
+      
+      //! @param[in] bytes unsigned char arrays, pointers to characters.
+      //! @param[in] len length of the string
+      static std::string
+      decode(unsigned char const* bytes , size_t len);
     };
   }
 }
