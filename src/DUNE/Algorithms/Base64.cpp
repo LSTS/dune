@@ -36,35 +36,35 @@ namespace DUNE
   namespace Algorithms
   {
       //! Encode a sequence of bytes in Base64.
-      static std::string
-      encode(const std::string& str){
+      std::string
+      Base64::encode(const std::string& str){
         return encode(str.c_str(), str.size());
       }
       
-      static std::string
-      encode(const char* str, size_t len){
+      std::string
+      Base64::encode(const char* str, size_t len){
         return encode(str.c_str(), len);
       }
       
-      static std::string
-      encode(const unsigned char* bytes, size_t len){
+      std::string
+      Base64::encode(const unsigned char* bytes, size_t len){
         return encode((const char*)bytes, len);
       }
 
       //! Decode a sequence of bytes in Base64.
-      static std::string
-      decode(const std::string& str){
-        
+      std::string
+      Base64::decode(const std::string& str){
+        return "decode";
       }
       
-      static std::string
-      decode(const char* str, size_t len){
-      
+      std::string
+      Base64::decode(const char* str, size_t len){
+        return "decode";
       }
       
-      static std::string
-      decode(const unsigned char* bytes, size_t len){
-        
+      std::string
+      Base64::decode(const unsigned char* bytes, size_t len){
+        return "decode";
       }
   }
 }
