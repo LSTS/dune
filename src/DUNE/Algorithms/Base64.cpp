@@ -55,11 +55,18 @@ namespace DUNE
         return encode((const char*)bytes, len);
       }
 
+      int decode_to(const unsigned char* first,  unsigned long f_len, unsigned char* last, unsigned long* l_len);
+
       //! Decode a sequence of bytes in Base64.
       std::string
       Base64::decode(const std::string& str)
       {
-        return "decode";
+        unsigned char* last = new unsigned char[str.size()];
+        unsigned long l_len = str.size();
+        decode_to((unsigned char*) str.c_str(), str.size(), last, &l_len);
+        std::string msg((char*) last, l_len);
+        delete[] last;
+        return msg;
       }
       
       std::string
