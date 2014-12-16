@@ -214,7 +214,7 @@ namespace Transports
 
         m_fields.phi = Angles::degrees(Angles::normalizeRadian2(phi, 0));
         m_fields.theta = Angles::degrees(Angles::normalizeRadian2(theta, 0));
-        m_fields.psi = Angles::degrees(Angles::normalizeRadian2(c_pi - psi, 0));
+        m_fields.psi = Angles::degrees(Angles::normalizeRadian2(psi, 0));
       }
 
     private:
