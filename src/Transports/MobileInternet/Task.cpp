@@ -92,8 +92,6 @@ namespace Transports
       std::string uart_dev;
       //! Power channel name.
       std::string power_channel;
-      //! Disconnect on exit.
-      bool disconnect;
     };
 
     struct Task: public Tasks::Task
@@ -171,12 +169,6 @@ namespace Transports
         .defaultValue("ppp0")
         .description("PPP Interface");
 
-        param("Disconnect On Exit", m_args.disconnect)
-        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
-        .scope(Tasks::Parameter::SCOPE_GLOBAL)
-        .defaultValue("true")
-        .description("Disconnect on exit");
-
         Path script = m_ctx.dir_scripts / "dune-mobile-inet.sh";
         m_command_connect = String::str("/bin/sh %s start > /dev/null 2>&1", script.c_str());
         m_command_disconnect = String::str("/bin/sh %s stop > /dev/null 2>&1", script.c_str());
@@ -188,8 +180,7 @@ namespace Transports
 
       ~Task(void)
       {
-        if (m_args.disconnect)
-          disconnect();
+        disconnect();
       }
 
       void
