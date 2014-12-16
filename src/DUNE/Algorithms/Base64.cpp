@@ -38,28 +38,33 @@ namespace DUNE
   {
       //! Encode a sequence of bytes in Base64.
       std::string
-      Base64::encode(const std::string& str){
+      Base64::encode(const std::string& str)
+      {
         return encode(str.c_str(), str.size());
       }
       
       std::string
-      Base64::encode(const char* str, size_t len){
-        return encode(str.c_str(), len);
+      Base64::encode(const char* str, size_t len)
+      {
+        return encode(str, len);
       }
       
       std::string
-      Base64::encode(const unsigned char* bytes, size_t len){
+      Base64::encode(const unsigned char* bytes, size_t len)
+      {
         return encode((const char*)bytes, len);
       }
 
       //! Decode a sequence of bytes in Base64.
       std::string
-      Base64::decode(const std::string& str){
+      Base64::decode(const std::string& str)
+      {
         return "decode";
       }
       
       std::string
-      Base64::decode(const char* str, size_t len){
+      Base64::decode(const char* str, size_t len)
+      {
         return "decode";
       }
       
