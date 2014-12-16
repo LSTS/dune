@@ -133,8 +133,19 @@ namespace Transports
       {
         m_timer.setTop(m_args.update_period);
 
+        // If password is a file read its contents.
+        std::ifstream ifs(m_args.node_pass.c_str());
+        char bfr[128];
+        if (ifs.is_open())
+        {
+          ifs.getline(bfr, sizeof(bfr));
+          if (ifs.gcount() > 0)
+            m_args.node_pass = bfr;
+        }
+
         std::string auth = String::str("%s:%s", m_args.node_user.c_str(),
                                        m_args.node_pass.c_str());
+
 
         m_auth_base64 = Base64::encode(auth);
       }
