@@ -27,6 +27,7 @@
 
 // ISO C++ 98 headers.
 #include <iostream>
+#include <cstring>
 
 // DUNE headers.
 #include <DUNE/Algorithms/Base64.hpp>
