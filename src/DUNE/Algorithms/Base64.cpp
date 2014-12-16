@@ -25,64 +25,46 @@
 // Author: Mauro Brandão                                                    *
 //***************************************************************************
 
-#ifndef DUNE_ALGORITHMS_BASE64_HPP_INCLUDED_
-#define DUNE_ALGORITHMS_BASE64_HPP_INCLUDED_
-
 // ISO C++ 98 headers.
-#include <string>
+#include <iostream>
 
 // DUNE headers.
-#include <DUNE/Config.hpp>
+#include <DUNE/Algorithms/Base64.hpp>
 
 namespace DUNE
 {
   namespace Algorithms
   {
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM Base64;
-
-    //! Base64 encoding and decoding as defined by RFC 2045.
-    class Base64
-    {
-    public:
       //! Encode a sequence of bytes in Base64.
-      //! @param[in] str source string.
-      //! @return Base64 encoded string.
       static std::string
-      encode(const std::string& str);
+      encode(const std::string& str){
+        return encode(str.c_str(), str.size());
+      }
       
-      //! @param[in] str source string.
-      //! @param[in] len length of the string.
-      //! @return Base64 encoded string.
       static std::string
-      encode(const char* str, size_t len);
+      encode(const char* str, size_t len){
+        return encode(str.c_str(), len);
+      }
       
-      //! @param[in] bytes unsigned char.
-      //! @param[in] len length of the string.
-      //! @return Base64 encoded string.
       static std::string
-      encode(const unsigned char* bytes, size_t len);
+      encode(const unsigned char* bytes, size_t len){
+        return encode((const char*)bytes, len);
+      }
 
       //! Decode a sequence of bytes in Base64.
-      //! @param[in] str source string.
-      //! @return Base64 decoded string.
       static std::string
-      decode(const std::string& str);
+      decode(const std::string& str){
+        
+      }
       
-      //! @param[in] str source string.
-      //! @param[in] len length of the string.
-      //! @return Base64 encoded string.
       static std::string
-      decode(const char* str, size_t len);
+      decode(const char* str, size_t len){
       
-      //! @param[in] bytes unsigned char.
-      //! @param[in] len length of the string.
-      //! @return Base64 encoded string.
+      }
+      
       static std::string
-      decode(const unsigned char* bytes, size_t len);
-    };
+      decode(const unsigned char* bytes, size_t len){
+        
+      }
   }
 }
-
-#endif
-        
