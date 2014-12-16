@@ -100,13 +100,13 @@ namespace Transports
 
         // Acceleration X.
         ByteCopy::fromLE(s16, ptr + 8);
-        m_fields.accl_x = s16 * 0.0008;
+        m_fields.accl_x = (double)s16 * 0.0008;
         // Acceleration Y.
         ByteCopy::fromLE(s16, ptr + 10);
-        m_fields.accl_y = s16 * 0.0008;
+        m_fields.accl_y = (double)s16 * 0.0008;
         // Acceleration Z.
         ByteCopy::fromLE(s16, ptr + 12);
-        m_fields.accl_z = s16 * 0.0008;
+        m_fields.accl_z = (double)s16 * 0.0008;
 
         // Angular Velocity X.
         ByteCopy::fromLE(s16, ptr + 2);
@@ -131,7 +131,7 @@ namespace Transports
         // Compute Euler Angles.
         compensate();
 
-        // Convert acceleration to m/s.
+        // Convert acceleration to m/s².
         m_fields.accl_x *= 9.7982543981;
         m_fields.accl_y *= 9.7982543981;
         m_fields.accl_z *= 9.7982543981;
@@ -160,6 +160,7 @@ namespace Transports
           Packet::serialize(&data, *os);
         }
 
+        //std::fprintf(stderr, "%0.2f | %0.2f | %0.2f\r", m_fields.phi, m_fields.theta, m_fields.psi);
         return true;
       }
 
@@ -190,6 +191,7 @@ namespace Transports
         double accl_x = -m_fields.accl_x;
         double accl_y = -m_fields.accl_y;
         double accl_z = -m_fields.accl_z;
+
         double magn_x = m_fields.magn_x;
         double magn_y = m_fields.magn_y;
         double magn_z = m_fields.magn_z;
@@ -205,13 +207,12 @@ namespace Transports
         double sin_phi = sin(phi);
         double cos_theta = cos(theta);
         double sin_theta = sin(theta);
-        double psi = atan2(magn_z * sin_phi
-                           - magn_y * cos_phi,
+        double psi = atan2(magn_z * sin_phi - magn_y * cos_phi,
                            magn_x * cos_theta
                            + magn_y * sin_theta * sin_phi
                            + magn_z * sin_theta * cos_phi);
 
-        m_fields.phi = -Angles::degrees(Angles::normalizeRadian2(phi, 0));
+        m_fields.phi = Angles::degrees(Angles::normalizeRadian2(phi, 0));
         m_fields.theta = Angles::degrees(Angles::normalizeRadian2(theta, 0));
         m_fields.psi = Angles::degrees(Angles::normalizeRadian2(c_pi - psi, 0));
       }
