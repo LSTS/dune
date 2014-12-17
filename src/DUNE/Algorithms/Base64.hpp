@@ -52,12 +52,14 @@ namespace DUNE
       static std::string
       encode(const std::string& str);
       
+      //! Encode a sequence of bytes in Base64.
       //! @param[in] str source string.
       //! @param[in] len length of the string.
       //! @return Base64 encoded string.
       static std::string
       encode(const char* str, size_t len);
       
+      //! Encode a sequence of bytes in Base64.
       //! @param[in] bytes unsigned char.
       //! @param[in] len length of the string.
       //! @return Base64 encoded string.
@@ -70,12 +72,14 @@ namespace DUNE
       static std::string
       decode(const std::string& str);
       
+      //! Decode a sequence of bytes in Base64.
       //! @param[in] str source string.
       //! @param[in] len length of the string.
       //! @return Base64 encoded string.
       static std::string
       decode(const char* str, size_t len);
       
+      //! Decode a sequence of bytes in Base64.
       //! @param[in] bytes unsigned char.
       //! @param[in] len length of the string.
       //! @return Base64 encoded string.
